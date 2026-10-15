@@ -48,6 +48,48 @@ export const CONTRAIL = {
   drift: 6,          // px/s extra leftward spread
 };
 
+export const TAKEOFF = {
+  seconds: 2.0,        // auto-climb with no player control
+  climbVelocity: -90,
+};
+
+export const AIRPORT = {
+  every: 1500,         // px (= m) between airports
+  runwayLen: 220,
+  stormClearBefore: 120,  // no storms this far before the runway...
+  stormClearAfter: 40,    // ...or this far after it
+  signFrom: 700,       // show "Next: PARIS" this far ahead
+  rollSeconds: 1.4,    // decelerate along the runway after touchdown
+  names: ['PARIS', 'AMSTERDAM', 'BERLIN', 'ROME', 'MADRID', 'OSLO', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BEIJING', 'TOKYO', 'SYDNEY'],
+  home: 'LONDON',
+};
+
+export const DAYNIGHT = {
+  daySeconds: 15,
+  nightSeconds: 15,
+  blendSeconds: 3,     // dusk / dawn colour blend at the end of each half
+  skyNight: 0x1b2140,
+};
+
+export const RADIATION = {
+  sunEvery: 110,       // ms between sunbeams (day)
+  sunSpeed: 230,       // px/s downward
+  heatEvery: 130,      // ms between heat arrows (night)
+  heatSpeed: 150,      // px/s upward
+};
+
+// Units are play units, not W/m^2. The bar ends the run at dangerLine.
+export const CLIMATE = {
+  co2Cruise: 1.0,      // CO2 gauge reading while cruising (fuel upgrades lower this)
+  co2Takeoff: 3.0,     // gauge reading during takeoff and landing
+  co2ToHeat: 1.8,      // heat per second per gauge unit
+  sunBlocked: -1.5,    // per sunbeam a contrail blocks
+  heatTrapped: 2.5,    // per heat arrow a contrail traps
+  dangerLine: 100,
+  barMin: -50,
+  gaugeMax: 3.0,
+};
+
 export const COLOURS = {
   skyDay: 0x6ec6e8,
   ground: 0x5a8f3c,
@@ -59,4 +101,12 @@ export const COLOURS = {
   issr: 0xf4fbff,
   contrail: 0xffffff,
   text: '#ffffff',
+  runway: 0x55555f,
+  runwayMark: 0xf2f2f2,
+  sun: 0xffe15a,
+  heat: 0xff6a3d,
+  cool: 0x7fd3ff,
+  warm: 0xff4040,
+  co2: 0x9a9a9a,
+  hudBack: 0x000000,
 };

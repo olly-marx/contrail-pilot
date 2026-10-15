@@ -23,12 +23,15 @@ On a phone on the same Wi-Fi, open `http://<your-laptop-ip>:8000`.
 |---|---|
 | `index.html` | Page shell |
 | `src/config.js` | All tuning numbers (speeds, gaps, ISSR sizes, colours) — edit here when playtesting |
-| `src/GameScene.js` | The game loop |
+| `src/GameScene.js` | The game loop: flight, airports, ISSRs, contrails, day/night, radiation |
+| `src/Hud.js` | CO2 gauge, net-heating bar and planet face |
 | `vendor/phaser.min.js` | Phaser 3.90 (MIT), vendored so the game works offline |
 
 ## Status
 
-Week 1 prototype: flap controls, scrolling storms, faint ISSRs, contrail squares, crash and restart.
+Week 2: takeoff from London, airports every 1500 m (glide onto a runway to land, or fly on),
+CO2 gauge (left), day/night cycle with sunbeams and heat arrows that contrails block or trap,
+net-heating bar with planet face (right), overheat ending, end-of-flight card with CO2 per km.
 Art is placeholder blocks at 288×512, scaled up with no smoothing for the pixel look.
 
 ## Checks
@@ -40,4 +43,8 @@ is visible from further than `revealPx`, or if ISSRs aren't clearly visible from
 python3 -m http.server 8000 &
 npm i --no-save playwright-core
 node tests/issr-reveal.cjs        # set CHROME=/path/to/chrome if needed
+node tests/flight.cjs             # takeoff, landing, day/night radiation, overheat, crash
 ```
+
+`tests/flight.cjs` lands an autopilot at the second airport and forces day and night over a line
+of contrails to check that sunbeams are blocked by day and heat is trapped only at night.
