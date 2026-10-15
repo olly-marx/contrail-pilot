@@ -91,7 +91,12 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
-    const inIssr = this.issrs.some(i => overlaps(box, { x: i.x, y: i.y, w: i.width, h: i.height }));
+    let inIssr = false;
+    for (const i of this.issrs) {
+      const inside = overlaps(box, { x: i.x, y: i.y, w: i.width, h: i.height });
+      if (inside) { inIssr = true; i.entered = true; }
+      i.setAlpha(this.issrAlpha(i, box, inside));
+    }
     if (inIssr && time - this.lastContrail > CONTRAIL.every) {
       this.lastContrail = time;
       this.addContrail(time);
@@ -136,9 +141,22 @@ export class GameScene extends Phaser.Scene {
     const w = Phaser.Math.Between(ISSR.minW, ISSR.maxW);
     const h = Phaser.Math.Between(ISSR.minH, ISSR.maxH);
     const y = Phaser.Math.Between(10, SKY_H - h - 10);
-    const r = this.add.rectangle(WIDTH + 10, y, w, h, COLOURS.issr, ISSR.alpha).setOrigin(0);
+    const r = this.add.rectangle(WIDTH + 10, y, w, h, COLOURS.issr).setOrigin(0).setAlpha(ISSR.hiddenAlpha);
     this.issrLayer.add(r);
     this.issrs.push(r);
+  }
+
+  issrAlpha(i, box, inside) {
+    if (inside) return ISSR.insideAlpha;
+    if (i.entered) return ISSR.revealAlpha;   // once found, it stays found
+    // Distance from the plane's nose to the ISSR's nearest edge, horizontally and vertically.
+    const gapX = Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width));
+    const gapY = Math.max(0, i.y - (box.y + box.h), box.y - (i.y + i.height));
+    const d = Math.max(gapX, gapY);
+    if (d >= ISSR.revealPx) return ISSR.hiddenAlpha;
+    // Three-step fade keeps the pixel-art look instead of a smooth gradient.
+    const step = Math.min(3, Math.floor((1 - d / ISSR.revealPx) * 4));
+    return ISSR.hiddenAlpha + (ISSR.revealAlpha - ISSR.hiddenAlpha) * (step / 3);
   }
 
   addContrail(time) {

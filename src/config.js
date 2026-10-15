@@ -24,21 +24,26 @@ export const STORMS = {
   startGap: 150,
   minGap: 105,
   gapShrinkPerPair: 2,
-  spacing: 190,      // px between storm pairs
+  spacing: 260,      // px between storm pairs
   marginTop: 40,     // gap centre never closer than this to the top/ground
 };
 
 export const ISSR = {
   minW: 140, maxW: 320,
   minH: 50, maxH: 110,
-  spawnEvery: 260,   // px of scroll between ISSR spawn attempts
-  spawnChance: 0.75,
-  alpha: 0.12,       // faint at the start; research upgrades will raise this
+  spawnEvery: 180,   // px of scroll between ISSR spawn attempts
+  spawnChance: 0.85,
+  // ISSRs are invisible until the plane is within revealPx of one, then fade in.
+  // Research upgrades will raise revealPx (see you earlier) and hiddenAlpha (faint shimmer).
+  hiddenAlpha: 0,
+  revealPx: 50,
+  revealAlpha: 0.3,   // fully faded in, just before entry
+  insideAlpha: 0.5,   // once you're in one, show it clearly so you can find the way out
 };
 
 export const CONTRAIL = {
   size: 4,
-  every: 40,         // ms between squares while inside an ISSR
+  every: 12,         // ms between squares while inside an ISSR
   life: 7000,        // ms until fully faded
   drift: 6,          // px/s extra leftward spread
 };
@@ -51,7 +56,7 @@ export const COLOURS = {
   planeTail: 0xd94040,
   storm: 0x4a4e69,
   stormEdge: 0x22223b,
-  issr: 0xbfe8ff,
+  issr: 0xf4fbff,
   contrail: 0xffffff,
   text: '#ffffff',
 };

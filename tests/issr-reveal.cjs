@@ -1,0 +1,34 @@
+// ISSR visibility check: hidden until within revealPx, clearly visible once inside.
+// Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/issr-reveal.cjs
+const { chromium } = require('playwright-core');
+(async () => {
+  const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
+  const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  const errs = []; p.on('pageerror', e => errs.push(String(e)));
+  await p.goto(process.env.URL || 'http://localhost:8000/'); await p.waitForTimeout(800);
+  await p.mouse.click(195, 400);
+  let farVisible = 0, nearVisible = 0, insideSeen = 0, maxC = 0, shot = false;
+  for (let i = 0; i < 300; i++) {
+    const r = await p.evaluate(() => { const s = game.scene.getScene('game');
+      const next = s.storms.find(st => st.rects[0].x + 44 > s.plane.x);
+      const target = next ? next.rects[0].height + 45 : 230;
+      const b = { x: s.plane.x, y: s.plane.y, w: 20, h: 10 };
+      const issr = s.issrs.map(i => { const gx = Math.max(0, i.x - (b.x + b.w), b.x - (i.x + i.width));
+        const gy = Math.max(0, i.y - (b.y + b.h), b.y - (i.y + i.height)); return { d: Math.max(gx, gy), a: i.alpha * i.fillAlpha, entered: !!i.entered }; });
+      return { tap: s.state === 'playing' && s.plane.y > target && s.plane.vy > -50, state: s.state, issr, c: s.contrails.length }; });
+    for (const i of r.issr) {
+      if (!i.entered && i.d >= 50 && i.a > 0) farVisible++;
+      if (i.d < 25 && i.a > 0) nearVisible++;
+      if (i.d === 0 && i.a >= 0.5) insideSeen++;
+    }
+    maxC = Math.max(maxC, r.c);
+    if (r.c > 30 && !shot) { shot = true; }
+    if (r.tap) await p.mouse.click(195, 400);
+    if (r.state === 'over') break;
+    await p.waitForTimeout(50);
+  }
+  console.log({ farVisible, nearVisible, insideSeen, maxC, errs });
+  const ok = farVisible === 0 && insideSeen > 0 && errs.length === 0;
+  console.log(ok ? 'PASS' : 'FAIL'); process.exitCode = ok ? 0 : 1;
+  await b.close();
+})();

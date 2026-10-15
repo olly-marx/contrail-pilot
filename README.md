@@ -30,3 +30,14 @@ On a phone on the same Wi-Fi, open `http://<your-laptop-ip>:8000`.
 
 Week 1 prototype: flap controls, scrolling storms, faint ISSRs, contrail squares, crash and restart.
 Art is placeholder blocks at 288×512, scaled up with no smoothing for the pixel look.
+
+## Checks
+
+`tests/issr-reveal.cjs` flies the game with an autopilot in headless Chrome and fails if any ISSR
+is visible from further than `revealPx`, or if ISSRs aren't clearly visible from inside.
+
+```sh
+python3 -m http.server 8000 &
+npm i --no-save playwright-core
+node tests/issr-reveal.cjs        # set CHROME=/path/to/chrome if needed
+```
