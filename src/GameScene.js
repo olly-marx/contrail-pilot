@@ -180,6 +180,45 @@ export class GameScene extends Phaser.Scene {
       g.generateTexture(key, w, h);
     };
     for (const kind of ['spruce', 'oak', 'orchard']) for (let s = 0; s < 3; s++) tree(`tree-${kind}-${s}`, s, kind);
+
+    // Storm column body: irregular cloud lumps with light from the left; tiles every 48 px.
+    const SW = STORMS.width, dark = 0x3b3f58, mid = 0x4a4e69, light = 0x5f6382, rim = 0x7a7e9c;
+    g.clear();
+    const TH = 48;
+    for (let y = 0; y < TH; y++) {
+      const t = (2 * Math.PI * y) / TH;
+      const l = Math.round(3 + 2.5 * Math.sin(t) + 1.5 * Math.sin(3 * t + 1));       // left edge inset
+      const r = Math.round(3 + 2.5 * Math.sin(t + 2) + 1.5 * Math.sin(2 * t + 4));   // right edge inset
+      const w = SW - l - r;
+      g.fillStyle(mid).fillRect(l, y, w, 1);
+      g.fillStyle(light).fillRect(l, y, Math.round(w * 0.3), 1);                   // lit side
+      g.fillStyle(rim).fillRect(l, y, 1, 1);                                       // bright rim
+      g.fillStyle(dark).fillRect(SW - r - Math.round(w * 0.25), y, Math.round(w * 0.25), 1);  // shadow side
+    }
+    g.generateTexture('storm-body', SW, TH);
+
+    // Rounded cloud ends: one for the hanging storm's bottom, one for the rising storm's top.
+    const cap = (key, flip) => {
+      g.clear();
+      const rows = [[10, 24], [6, 32], [3, 38], [1, 42], [0, 44], [0, 44], [0, 44], [0, 44], [0, 44], [0, 44]];
+      rows.forEach(([x0, w], i) => {
+        const y = flip ? 9 - i : i;
+        g.fillStyle(mid).fillRect(x0, y, w, 1);
+        g.fillStyle(i < 2 ? light : mid).fillRect(x0, y, Math.min(4, w), 1);
+      });
+      g.fillStyle(light).fillRect(8, flip ? 3 : 5, 10, 2).fillRect(24, flip ? 2 : 6, 8, 2);
+      g.generateTexture(key, SW, 10);
+    };
+    cap('storm-top', false);      // rounded top of a rising storm (widest at the bottom of the cap)
+    cap('storm-bottom', true);    // rounded bottom of a hanging storm
+
+    // ISSR fill: pale ice with scattered crystal sparkles, tiling every 32 px.
+    g.clear();
+    g.fillStyle(COLOURS.issr).fillRect(0, 0, 32, 32);
+    const flake = (fx, fy) => { g.fillStyle(0x8fc9ef).fillRect(fx, fy - 1, 1, 3).fillRect(fx - 1, fy, 3, 1); g.fillStyle(0xffffff).fillRect(fx, fy, 1, 1); };
+    [[5, 6], [20, 3], [12, 15], [27, 19], [4, 25], [18, 28]].forEach(([fx, fy]) => flake(fx, fy));
+    g.fillStyle(0xb5ddf5).fillRect(9, 10, 1, 1).fillRect(24, 11, 1, 1).fillRect(14, 23, 1, 1).fillRect(29, 29, 1, 1);
+    g.generateTexture('issr-tile', 32, 32);
     g.destroy();
   }
 
@@ -263,6 +302,7 @@ export class GameScene extends Phaser.Scene {
     this.scroll(dx);
     this.updateScenery(dx);
     this.updateDayNight(time);
+    this.updateLightning(time);
 
     const box = this.hitbox();
     let inIssr = false;
@@ -270,6 +310,7 @@ export class GameScene extends Phaser.Scene {
       const inside = overlaps(box, { x: i.x, y: i.y, w: i.width, h: i.height });
       if (inside) { inIssr = true; i.entered = true; }
       i.setAlpha(this.issrAlpha(i, box, inside));
+      i.tilePositionY += dt * 4;
     }
     if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
     this.wasInIssr = inIssr;
@@ -482,18 +523,38 @@ export class GameScene extends Phaser.Scene {
     const hi = SKY_H - STORMS.marginTop - gap / 2;
     const gapY = Phaser.Math.Between(lo, hi);
     const x = WIDTH + 10;
-    const top = this.add.rectangle(x, 0, STORMS.width, gapY - gap / 2, COLOURS.storm).setOrigin(0).setStrokeStyle(2, COLOURS.stormEdge);
-    const bottom = this.add.rectangle(x, gapY + gap / 2, STORMS.width, SKY_H - (gapY + gap / 2), COLOURS.storm).setOrigin(0).setStrokeStyle(2, COLOURS.stormEdge);
-    this.stormLayer.add([top, bottom]);
-    this.storms.push({ rects: [top, bottom] });
+    const topH = gapY - gap / 2, botY = gapY + gap / 2;
+    // Collision boxes are plain rectangles; the drawn cloud is a tiled body plus a rounded cap.
+    const top = { x, y: 0, width: STORMS.width, height: topH };
+    const bottom = { x, y: botY, width: STORMS.width, height: SKY_H - botY };
+    const parts = [
+      this.add.tileSprite(x, 0, STORMS.width, Math.max(1, topH - 10), 'storm-body').setOrigin(0),
+      this.add.image(x, topH - 10, 'storm-bottom').setOrigin(0),
+      this.add.tileSprite(x, botY + 10, STORMS.width, Math.max(1, SKY_H - botY - 10), 'storm-body').setOrigin(0),
+      this.add.image(x, botY, 'storm-top').setOrigin(0),
+    ];
+    this.stormLayer.add(parts);
+    this.storms.push({ rects: [top, bottom], parts, flashUntil: 0 });
     this.stormCount++;
+  }
+
+  // Now and then a storm flickers with lightning.
+  updateLightning(time) {
+    for (const st of this.storms) {
+      if (st.flashUntil && time > st.flashUntil) { st.parts.forEach(p => p.clearTint()); st.flashUntil = 0; }
+      else if (!st.flashUntil && Math.random() < 0.002) {
+        st.parts.forEach(p => p.setTint(0xe8e8ff));
+        st.flashUntil = time + 90;
+      }
+    }
   }
 
   addIssr() {
     const w = Phaser.Math.Between(ISSR.minW, ISSR.maxW);
     const h = Phaser.Math.Between(ISSR.minH, ISSR.maxH);
     const y = Phaser.Math.Between(10, SKY_H - h - 10);
-    const r = this.add.rectangle(WIDTH + 10, y, w, h, COLOURS.issr).setOrigin(0).setAlpha(this.kit.hiddenAlpha);
+    const r = this.add.tileSprite(WIDTH + 10, y, w, h, 'issr-tile').setOrigin(0).setAlpha(this.kit.hiddenAlpha);
+    r.tilePositionX = Phaser.Math.Between(0, 31); r.tilePositionY = Phaser.Math.Between(0, 31);
     this.issrLayer.add(r);
     this.issrs.push(r);
   }
@@ -528,9 +589,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   scroll(dx) {
-    for (const s of this.storms) for (const r of s.rects) r.x -= dx;
+    for (const s of this.storms) { for (const p of s.parts) p.x -= dx; for (const r of s.rects) r.x -= dx; }
     this.storms = this.storms.filter(s => {
-      if (s.rects[0].x + STORMS.width < -5) { s.rects.forEach(r => r.destroy()); return false; }
+      if (s.rects[0].x + STORMS.width < -5) { s.parts.forEach(p => p.destroy()); return false; }
       return true;
     });
     for (const i of this.issrs) i.x -= dx;

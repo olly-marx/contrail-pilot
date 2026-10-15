@@ -46,7 +46,7 @@ async function fly(p, { landAt }) {
     await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(2200);
     const before = await p.evaluate((elapsed) => { const s = game.scene.getScene('game');
       s.elapsed = elapsed;
-      s.heat = 0; s.sunBlocked = 0; s.heatTrapped = 0; s.storms.forEach(st => st.rects.forEach(r => r.destroy())); s.storms = [];
+      s.heat = 0; s.sunBlocked = 0; s.heatTrapped = 0; s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = [];
       s.nextStormAt = 1e9;   // no storms during the probe
       return s.heat; }, elapsed);
     for (let i = 0; i < 20; i++) {

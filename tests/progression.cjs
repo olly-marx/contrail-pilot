@@ -42,7 +42,7 @@ const KEY = 'contrailPilot.v1';
   await p.click('#hBackBtn'); await p.click('#goBtn'); await p.waitForTimeout(2600);
   const co2 = await scene(() => game.scene.getScene('game').co2Rate);
   check(Math.abs(co2 - 0.6) < 1e-9, `SAF cruise CO2 should be 0.6, got ${co2}`);
-  await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.rects.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; });
+  await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; });
   const hold = () => scene(() => { const s = game.scene.getScene('game'); s.plane.y = 200; s.plane.vy = 0; });
   await hold();
   await p.mouse.click(195, 740);   // tap the ground strip (canvas spans y 75..768 here)

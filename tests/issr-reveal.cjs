@@ -14,7 +14,7 @@ const { chromium } = require('playwright-core');
       const target = next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : 230;
       const b = s.hitbox();
       const issr = s.issrs.map(i => { const gx = Math.max(0, i.x - (b.x + b.w), b.x - (i.x + i.width));
-        const gy = Math.max(0, i.y - (b.y + b.h), b.y - (i.y + i.height)); return { d: Math.max(gx, gy), a: i.alpha * i.fillAlpha, entered: !!i.entered }; });
+        const gy = Math.max(0, i.y - (b.y + b.h), b.y - (i.y + i.height)); return { d: Math.max(gx, gy), a: i.alpha * (i.fillAlpha ?? 1), entered: !!i.entered }; });
       return { tap: s.state === 'playing' && s.plane.y > target && s.plane.vy > -50, state: s.state, issr, c: s.contrails.length }; });
     for (const i of r.issr) {
       if (!i.entered && i.d >= 50 && i.a > 0) farVisible++;
