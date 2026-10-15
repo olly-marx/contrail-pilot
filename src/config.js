@@ -78,10 +78,14 @@ export const DAYNIGHT = {
 };
 
 export const RADIATION = {
-  sunEvery: 110,       // ms between sunbeams (day)
-  sunSpeed: 230,       // px/s downward
-  heatEvery: 130,      // ms between heat arrows (night)
-  heatSpeed: 150,      // px/s upward
+  spacing: 12,         // px between light/heat columns
+  margin: 18,          // keep columns clear of the HUD bars
+  beamAlpha: 0.3,       // night heat haze
+  dayAlpha: 0.2,        // day sunlight bands (kept faint so the shadows stand out)
+  hazeSeg: 6,          // px per wiggling segment of a heat column
+  hazeRise: 0.05,      // how fast the wiggle drifts upward
+  shadowAlpha: 0.5,    // ground shadow under a contrail (day)
+  glowAlpha: 0.6,      // ground glow under a contrail (night)
 };
 
 // Units are play units, not W/m^2. The bar ends the run at dangerLine.
@@ -89,8 +93,8 @@ export const CLIMATE = {
   co2Cruise: 1.0,      // CO2 gauge reading while cruising (fuel upgrades lower this)
   co2Takeoff: 3.0,     // gauge reading during takeoff and landing
   co2ToHeat: 1.8,      // heat per second per gauge unit
-  sunBlocked: -1.5,    // per sunbeam a contrail blocks
-  heatTrapped: 2.5,    // per heat arrow a contrail traps
+  sunBlockedPerCol: -0.66,  // per second, per light column a contrail blocks (day)
+  heatTrappedPerCol: 0.93,  // per second, per heat column a contrail traps (night)
   dangerLine: 100,
   barMin: -50,
   gaugeMax: 3.0,

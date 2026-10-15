@@ -45,7 +45,7 @@ async function fly(p, { landAt }) {
   for (const [label, elapsed, key] of [['night', 16, 'heatTrapped'], ['day', 1, 'sunBlocked']]) {
     await p.goto(URL); await p.waitForTimeout(600); await p.mouse.click(195, 400); await p.waitForTimeout(2200);
     const before = await p.evaluate((elapsed) => { const s = game.scene.getScene('game');
-      s.elapsed = elapsed; s.rays.forEach(r => r.destroy()); s.rays = [];
+      s.elapsed = elapsed;
       s.heat = 0; s.sunBlocked = 0; s.heatTrapped = 0; s.storms.forEach(st => st.rects.forEach(r => r.destroy())); s.storms = [];
       s.nextStormAt = 1e9;   // no storms during the probe
       return s.heat; }, elapsed);

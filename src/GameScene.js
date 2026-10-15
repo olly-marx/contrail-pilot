@@ -35,14 +35,12 @@ export class GameScene extends Phaser.Scene {
     this.storms = [];
     this.issrs = [];
     this.contrails = [];
-    this.rays = [];
+    this.blockers = [];
     this.runways = [];
     this.nextStormAt = WIDTH + 200;  // first storm arrives after the climb-out
     this.nextIssrAt = 300;
     this.stormCount = 0;
     this.lastContrail = 0;
-    this.lastSun = 0;
-    this.lastHeat = 0;
 
     this.heat = 0;                   // net heating (play units)
     this.totalCo2 = 0;
@@ -58,7 +56,7 @@ export class GameScene extends Phaser.Scene {
     // Draw order: ISSRs, contrails, rays, storms, plane, ground, runways, HUD.
     this.issrLayer = this.add.layer();
     this.contrailLayer = this.add.layer();
-    this.rayLayer = this.add.layer();
+    this.rayGfx = this.add.graphics();
     this.stormLayer = this.add.layer();
 
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
@@ -66,6 +64,7 @@ export class GameScene extends Phaser.Scene {
 
     this.add.rectangle(0, SKY_H, WIDTH, GROUND_H, COLOURS.ground).setOrigin(0);
     this.add.rectangle(0, SKY_H, WIDTH, 3, COLOURS.groundEdge).setOrigin(0);
+    this.groundFx = this.add.graphics();   // contrail shadows (day) and trapped-heat glow (night)
     this.runwayLayer = this.add.layer();
     this.addRunway(-60, AIRPORT.home);  // home runway under the plane
 
@@ -366,47 +365,66 @@ export class GameScene extends Phaser.Scene {
 
   showHint(text, time) { this.hint = { text, until: time + 3000 }; }
 
+  // Light (day) and heat (night) are fixed columns. Each frame we find, per column, the
+  // contrail square that blocks it, draw the beam up to that point, and score the block.
   updateRays(dt, time, scoring) {
-    if (scoring && this.state !== 'landing') {
-      if (this.isDay && time - this.lastSun > RADIATION.sunEvery) {
-        this.lastSun = time;
-        const r = this.add.rectangle(Phaser.Math.Between(20, WIDTH - 20), -6, 1, 6, COLOURS.sun).setOrigin(0);
-        r.kind = 'sun'; r.vy = RADIATION.sunSpeed;
-        this.rayLayer.add(r); this.rays.push(r);
+    const g = this.rayGfx, ground = this.groundFx;
+    g.clear(); ground.clear();
+    const { isDay, toOther } = this.dayNightPhase();
+    const strength = 1 - toOther;            // fade out through dusk / dawn
+    if (strength <= 0) return;
+
+    for (const c of this.blockers) if (c.active) c.setFillStyle(COLOURS.contrail);
+    this.blockers = [];
+
+    const S = CONTRAIL.size;
+    let blocked = 0;
+    for (let x = RADIATION.margin; x < WIDTH - RADIATION.margin; x += RADIATION.spacing) {
+      // Sun comes down, so the highest contrail in the column blocks it; heat comes up,
+      // so the lowest one does.
+      let hit = null;
+      for (const c of this.contrails) {
+        if (x < c.x || x >= c.x + S) continue;
+        if (!hit || (isDay ? c.y < hit.y : c.y > hit.y)) hit = c;
       }
-      if (!this.isDay && time - this.lastHeat > RADIATION.heatEvery) {
-        this.lastHeat = time;
-        const r = this.add.rectangle(Phaser.Math.Between(20, WIDTH - 20), SKY_H - 6, 2, 5, COLOURS.heat).setOrigin(0);
-        r.kind = 'heat'; r.vy = -RADIATION.heatSpeed;
-        this.rayLayer.add(r); this.rays.push(r);
+      const colour = isDay ? COLOURS.sun : COLOURS.heat;
+      const a = (isDay ? RADIATION.dayAlpha : RADIATION.beamAlpha) * strength;
+
+      if (isDay) {
+        // Soft band of sunlight with a slightly brighter core.
+        const end = hit ? hit.y : SKY_H;
+        g.fillStyle(colour, a * 0.5).fillRect(x - 1, 0, 3, end);
+        g.fillStyle(colour, a).fillRect(x, 0, 1, end);
+        if (hit) {
+          g.fillStyle(0xffffff, 0.9 * strength).fillRect(x - 1, hit.y - 2, 1, 1).fillRect(x + 1, hit.y - 3, 1, 1);  // glint
+          // Shadow: a darker column under the contrail and a dark patch on the ground.
+          g.fillStyle(0x000000, RADIATION.shadowAlpha * 0.3 * strength).fillRect(x - 1, hit.y + S, 3, SKY_H - hit.y - S);
+          ground.fillStyle(0x000000, RADIATION.shadowAlpha * strength).fillRect(x - RADIATION.spacing / 2, SKY_H, RADIATION.spacing, 4);
+        }
+      } else {
+        // Heat haze: short segments that wiggle and drift upward.
+        const top = hit ? hit.y + S : 0;
+        for (let y = SKY_H; y > top; y -= RADIATION.hazeSeg) {
+          const off = Math.round(Math.sin((y + time * RADIATION.hazeRise) / 9 + x) * 1.4);
+          const h = Math.min(RADIATION.hazeSeg, y - top);
+          g.fillStyle(colour, a).fillRect(x + off, y - h, 2, h);
+        }
+        if (hit) {
+          g.fillStyle(COLOURS.warm, 0.9 * strength).fillRect(x - 1, top + 1, 1, 1).fillRect(x + 1, top + 2, 1, 1);  // bounce
+          ground.fillStyle(COLOURS.warm, RADIATION.glowAlpha * strength).fillRect(x - RADIATION.spacing / 2, SKY_H, RADIATION.spacing, 4);
+        }
+      }
+      if (hit) {
+        blocked++;
+        hit.setFillStyle(isDay ? COLOURS.cool : COLOURS.warm);
+        this.blockers.push(hit);
       }
     }
 
-    this.rays = this.rays.filter(r => {
-      r.y += r.vy * dt;
-      if (r.y > SKY_H || r.y < -10) { r.destroy(); return false; }
-      if (!scoring || r.bounced) return true;
-      const rb = { x: r.x, y: r.y, w: r.width, h: r.height };
-      const hit = this.contrails.find(c => overlaps(rb, { x: c.x, y: c.y, w: CONTRAIL.size, h: CONTRAIL.size }));
-      if (!hit) return true;
-      hit.flashUntil = time + 150;
-      if (r.kind === 'sun') {
-        // Sunlight blocked: reflected back to space, the planet cools.
-        hit.setFillStyle(COLOURS.cool);
-        this.heat += CLIMATE.sunBlocked;
-        this.sunBlocked++;
-        r.destroy();
-        return false;
-      }
-      // Heat trapped: bounced back down to the ground, the planet warms.
-      hit.setFillStyle(COLOURS.warm);
-      this.heat += CLIMATE.heatTrapped;
-      this.heatTrapped++;
-      r.bounced = true;
-      r.vy = RADIATION.heatSpeed;
-      r.setFillStyle(COLOURS.warm);
-      return true;
-    });
+    if (!scoring) return;
+    const rate = (isDay ? CLIMATE.sunBlockedPerCol : CLIMATE.heatTrappedPerCol) * blocked * strength;
+    this.heat += rate * dt;
+    if (isDay) this.sunBlocked += -rate * dt; else this.heatTrapped += rate * dt;
   }
 
   // ---------- text and the end of a flight ----------
@@ -437,16 +455,17 @@ export class GameScene extends Phaser.Scene {
     const km = m / 1000;
     const perKm = km > 0 ? (this.totalCo2 / km).toFixed(1) : '-';
     const heat = Math.round(this.heat);
-    this.result = { landed, landedAt: this.landedAt, distance: m, heat, co2PerKm: Number(perKm), sunBlocked: this.sunBlocked, heatTrapped: this.heatTrapped };
+    this.result = { landed, landedAt: this.landedAt, distance: m, heat, co2PerKm: Number(perKm), sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10 };
 
     const title = landed ? `Landed in ${this.landedAt}!` : reason;
     const planet = heat < 0 ? 'cooled' : 'warmed';
+    const sun = Math.round(this.sunBlocked), trapped = Math.round(this.heatTrapped);
     this.distText.setText(`${m} m`);
     this.nextText.setText('');
     this.hintText.setText('');
     this.cardBack.setVisible(true);
     this.msgText.setFontSize(13).setText(
       `${title}\n\n${m} m flown\nYou ${planet} the planet: ${heat > 0 ? '+' : ''}${heat}\n` +
-      `CO2 per km: ${perKm}\nSunbeams blocked: ${this.sunBlocked}\nHeat trapped: ${this.heatTrapped}\n\nTap to fly again`);
+      `CO2 per km: ${perKm}\nSunlight blocked: -${sun}\nHeat trapped: +${trapped}\n\nTap to fly again`);
   }
 }
