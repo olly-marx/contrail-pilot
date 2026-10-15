@@ -80,7 +80,7 @@ export const DAYNIGHT = {
 export const RADIATION = {
   spacing: 12,         // px between light/heat columns
   margin: 18,          // keep columns clear of the HUD bars
-  beamAlpha: 0.3,       // night heat haze
+  beamAlpha: 0.16,      // night heat haze
   dayAlpha: 0.2,        // day sunlight bands (kept faint so the shadows stand out)
   hazeSeg: 6,          // px per wiggling segment of a heat column
   hazeRise: 0.05,      // how fast the wiggle drifts upward

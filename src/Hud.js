@@ -12,13 +12,13 @@ function barY(v, lo, hi) {
 
 export class Hud {
   constructor(scene) {
-    const small = { fontFamily: 'monospace', fontSize: '8px', color: COLOURS.text, stroke: '#000', strokeThickness: 2 };
+    const small = { fontFamily: 'Pixel, monospace', fontSize: '8px', color: COLOURS.text, stroke: '#000', strokeThickness: 2 };
 
     // Left: CO2 production-rate gauge.
     const gx = 6;
     scene.add.rectangle(gx - 1, BAR_TOP - 1, BAR_W + 2, BAR_H + 2, COLOURS.hudBack, 0.45).setOrigin(0);
     this.co2Fill = scene.add.rectangle(gx, BAR_TOP + BAR_H, BAR_W, 0, COLOURS.co2).setOrigin(0, 1);
-    scene.add.text(gx + BAR_W / 2, BAR_TOP - 4, 'CO2', small).setOrigin(0.5, 1);
+    scene.add.text(2, BAR_TOP - 4, 'CO2', small).setOrigin(0, 1);
 
     // Right: net-heating bar with a zero line and the danger line at the top.
     const hx = WIDTH - 6 - BAR_W;

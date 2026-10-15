@@ -4,9 +4,9 @@ const { chromium } = require('playwright-core');
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  await p.addInitScript(() => localStorage.clear());
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
-  await p.goto(process.env.URL || 'http://localhost:8000/'); await p.waitForTimeout(800);
-  await p.mouse.click(195, 400);
+  await p.goto(process.env.URL || 'http://localhost:8000/'); await p.waitForTimeout(800); await p.click('#goBtn');
   let farVisible = 0, nearVisible = 0, insideSeen = 0, maxC = 0, shot = false;
   for (let i = 0; i < 300; i++) {
     const r = await p.evaluate(() => { const s = game.scene.getScene('game');

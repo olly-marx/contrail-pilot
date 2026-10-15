@@ -25,6 +25,11 @@ On a phone on the same Wi-Fi, open `http://<your-laptop-ip>:8000`.
 | `src/config.js` | All tuning numbers (speeds, gaps, ISSR sizes, colours) — edit here when playtesting |
 | `src/GameScene.js` | The game loop: flight, airports, ISSRs, contrails, day/night, radiation |
 | `src/Hud.js` | CO2 gauge, net-heating bar and planet face |
+| `src/ui.js` | Title/briefing, results, hangar (shop) and in-flight tips (HTML overlays) |
+| `src/upgrades.js` | Upgrades, fuels, tree species, badges, and how they change a flight |
+| `src/save.js` | Progress saved on the device (localStorage) |
+| `src/sound.js` | Chiptune sound effects synthesised in code |
+| `style.css` | Pixel-style screens |
 | `vendor/phaser.min.js` | Phaser 3.90 (MIT), vendored so the game works offline |
 
 ## Status
@@ -44,6 +49,7 @@ python3 -m http.server 8000 &
 npm i --no-save playwright-core
 node tests/issr-reveal.cjs        # set CHROME=/path/to/chrome if needed
 node tests/flight.cjs             # takeoff, landing, day/night radiation, overheat, crash
+node tests/progression.cjs        # trees saved, hangar purchases, upgrades change the flight, planting
 ```
 
 `tests/flight.cjs` lands an autopilot at the second airport and forces day and night over a line

@@ -2,16 +2,97 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1b1b2f">
   <title>Contrail Pilot</title>
-  <style>
-    html, body { margin: 0; height: 100%; background: #1b1b2f; overflow: hidden; touch-action: none; }
-    #game { width: 100%; height: 100%; }
-    canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
-  </style>
+  <link rel="icon" href="assets/plane.png">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="game"></div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- Title / briefing -->
+  <section id="title" class="overlay" hidden>
+    <div class="panel">
+      <h1>CONTRAIL<br>PILOT</h1>
+      <p class="lead">Fly far. Land safe. Keep the planet cool.</p>
+      <ol class="howto">
+        <li><span class="pic pic-tap"></span><span><b>Tap</b> to fly up. Dodge the storms.</span></li>
+        <li><span class="pic pic-issr"></span><span>Hidden <b>icy air</b> (ISSRs) turns your exhaust into <b>contrails</b>.</span></li>
+        <li><span class="pic pic-day"></span><span><b>Day:</b> contrails shade the Earth. <span class="cool">Cooler!</span></span></li>
+        <li><span class="pic pic-night"></span><span><b>Night:</b> contrails trap heat. <span class="warm">Hotter!</span></span></li>
+        <li><span class="pic pic-land"></span><span><b>Glide onto a runway</b> to land and keep your trees.</span></li>
+      </ol>
+      <div class="stats"><span>Trees: <b id="tTrees">0</b></span><span>Best: <b id="tBest">0</b> m</span></div>
+      <div class="buttons">
+        <button id="goBtn" class="btn go" type="button">TAKE OFF</button>
+        <button id="hangarBtn" class="btn" type="button">HANGAR</button>
+      </div>
+      <button id="muteBtn" class="btn tiny" type="button">sound: on</button>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section id="results" class="overlay" hidden>
+    <div class="panel">
+      <p class="eyebrow" id="rEyebrow">Flight over</p>
+      <h2 id="rTitle">Landed!</h2>
+      <p class="newbest" id="rRecord" hidden>NEW RECORD!</p>
+      <div class="bigstat"><span id="rDist">0</span> m</div>
+      <div class="climate">
+        <p class="label">What your flight did to the planet</p>
+        <div class="split" aria-hidden="true">
+          <div class="side cool-side"><div id="barTrees" class="seg trees"></div><div id="barSun" class="seg sun"></div></div>
+          <div class="mid"></div>
+          <div class="side warm-side"><div id="barCo2" class="seg co2"></div><div id="barNight" class="seg night"></div></div>
+        </div>
+        <ul class="legend">
+          <li><i class="co2"></i>CO2 from fuel <b id="rCo2">+0</b></li>
+          <li><i class="night"></i>Night contrails <b id="rNight">+0</b></li>
+          <li><i class="sun"></i>Day contrails <b id="rSun">-0</b></li>
+          <li><i class="trees"></i>Trees planted <b id="rTreesCool">-0</b></li>
+        </ul>
+        <p class="total">Total: <b id="rTotal">+0</b> <span id="rFace"></span></p>
+        <p class="small">CO2 per km: <b id="rPerKm">0</b> (short hops are worst: takeoff burns lots of fuel)</p>
+      </div>
+      <div class="earned">
+        <p class="label">Trees earned</p>
+        <ul id="rEarned"></ul>
+      </div>
+      <div id="rBadges" class="badges-new" hidden></div>
+      <div class="fact"><p class="label">Did you know?</p><p id="rFact"></p></div>
+      <div class="buttons">
+        <button id="againBtn" class="btn go" type="button">FLY AGAIN</button>
+        <button id="rHangarBtn" class="btn" type="button">HANGAR</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hangar (shop) -->
+  <section id="hangar" class="overlay" hidden>
+    <div class="panel wide">
+      <div class="hangar-head">
+        <h2>HANGAR</h2>
+        <span class="treebank"><i class="treeicon"></i><b id="hTrees">0</b></span>
+      </div>
+      <div id="hFuel" class="fuel"></div>
+      <div id="hUpgrades" class="upgrades"></div>
+      <h3>Badges</h3>
+      <div id="hBadges" class="badges"></div>
+      <div class="realtree">
+        <p><b>Plant a real tree!</b> Citizen Zoo plants trees and rewilds land in London.</p>
+        <button id="realTreeBtn" class="btn green" type="button">ASK A GROWN-UP</button>
+        <p id="gateMsg" class="small" hidden>Grown-ups: press and hold the button for 2 seconds.</p>
+      </div>
+      <div class="buttons">
+        <button id="hBackBtn" class="btn go" type="button">BACK</button>
+        <button id="resetBtn" class="btn tiny" type="button">reset progress</button>
+      </div>
+    </div>
+  </section>
+
   <script src="vendor/phaser.min.js"></script>
   <script type="module" src="src/main.js"></script>
 </body>

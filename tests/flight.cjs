@@ -5,8 +5,7 @@ const { chromium } = require('playwright-core');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 async function fly(p, { landAt }) {
-  await p.goto(URL); await p.waitForTimeout(600);
-  await p.mouse.click(195, 400);
+  await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn');
   const log = { states: new Set(), maxCo2: 0, sawNight: false, heatSamples: [] };
   for (let i = 0; i < 1200; i++) {
     const r = await p.evaluate((landAt) => { const s = game.scene.getScene('game');
@@ -30,6 +29,7 @@ async function fly(p, { landAt }) {
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  await p.addInitScript(() => localStorage.clear());
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const fails = [];
 
@@ -43,7 +43,7 @@ async function fly(p, { landAt }) {
 
   // Radiation, deterministically: lay a line of contrails, force day or night, count hits.
   for (const [label, elapsed, key] of [['night', 16, 'heatTrapped'], ['day', 1, 'sunBlocked']]) {
-    await p.goto(URL); await p.waitForTimeout(600); await p.mouse.click(195, 400); await p.waitForTimeout(2200);
+    await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(2200);
     const before = await p.evaluate((elapsed) => { const s = game.scene.getScene('game');
       s.elapsed = elapsed;
       s.heat = 0; s.sunBlocked = 0; s.heatTrapped = 0; s.storms.forEach(st => st.rects.forEach(r => r.destroy())); s.storms = [];
@@ -62,7 +62,7 @@ async function fly(p, { landAt }) {
   }
 
   // Overheat: force heat to the line mid-flight.
-  await p.goto(URL); await p.waitForTimeout(600); await p.mouse.click(195, 400); await p.waitForTimeout(2600);
+  await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(2600);
   await p.evaluate(() => { game.scene.getScene('game').heat = 100; });
   await p.waitForTimeout(200);
   const oh = await p.evaluate(() => game.scene.getScene('game').result);
@@ -70,7 +70,7 @@ async function fly(p, { landAt }) {
   if (!oh || oh.landed) fails.push('overheat did not end the run');
 
   // Ground away from a runway is a crash.
-  await p.goto(URL); await p.waitForTimeout(600); await p.mouse.click(195, 400); await p.waitForTimeout(6000);
+  await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(6000);
   const cr = await p.evaluate(() => game.scene.getScene('game').result);
   console.log('no-tap:', JSON.stringify(cr));
   if (!cr || cr.landed) fails.push('ground away from runway did not crash');
