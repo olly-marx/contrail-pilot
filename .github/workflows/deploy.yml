@@ -1,0 +1,58 @@
+# Test the game in a real browser, then publish it to GitHub Pages.
+# A failing test stops the deploy, so the live game is never broken.
+name: Test and deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test driver
+        run: npm i --no-save playwright-core@1
+      - name: Serve the game
+        run: python3 -m http.server 8000 >/dev/null 2>&1 &
+      - name: Run tests
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: |
+          for t in tests/*.cjs; do
+            echo "== $t"
+            node "$t"
+          done
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle the site (game files only)
+        run: |
+          mkdir _site
+          cp -r index.html style.css .nojekyll src assets vendor _site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

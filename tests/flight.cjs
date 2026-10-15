@@ -29,7 +29,8 @@ async function fly(p, { landAt }) {
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
-  await p.addInitScript(() => localStorage.clear());
+  // Fresh progress for every load (so upgrades don't change the physics), flight school already done.
+  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true })); });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const fails = [];
 
@@ -45,7 +46,7 @@ async function fly(p, { landAt }) {
   for (const [label, elapsed, key] of [['night', 16, 'heatTrapped'], ['day', 1, 'sunBlocked']]) {
     await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(2200);
     const before = await p.evaluate((elapsed) => { const s = game.scene.getScene('game');
-      s.elapsed = elapsed;
+      s.clock = elapsed;
       s.heat = 0; s.sunBlocked = 0; s.heatTrapped = 0; s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = [];
       s.nextStormAt = 1e9;   // no storms during the probe
       return s.heat; }, elapsed);

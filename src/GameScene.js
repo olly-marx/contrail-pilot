@@ -1,7 +1,8 @@
 import {
   WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
-  TAKEOFF, AIRPORT, DAYNIGHT, RADIATION, CLIMATE,
+  TAKEOFF, AIRPORT, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO,
 } from './config.js';
+import { School } from './school.js';
 import { Hud } from './Hud.js';
 import { loadout } from './upgrades.js';
 import { writeSave } from './save.js';
@@ -9,7 +10,6 @@ import { sfx } from './sound.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const FONT = 'Pixel, monospace';
-const AIRPORT_BONUS = 4;   // extra trees per airport skipped before landing
 
 function overlaps(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -31,7 +31,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('plane', 'assets/plane.png');
   }
 
-  init(data) { this.autostart = !!(data && data.go); }
+  init(data) { this.autostart = data && data.go ? data.mode || 'normal' : null; }
 
   create() {
     this.save = this.registry.get('save');
@@ -51,6 +51,13 @@ export class GameScene extends Phaser.Scene {
     this.runways = [];
     this.trees = [];                 // planted trees: keep cooling after they scroll away
     this.popups = [];
+    this.tokens = [];                // floating trees to collect
+    this.cargo = 0;                  // trees on board: kept only if you land
+    this.nextTokenAt = 420;
+    this.clock = 0;                  // drives day and night (flight school can set it)
+    this.gameTime = 0;               // ms of unfrozen flight, used for contrail ages
+    this.frozen = false;             // flight school pauses the action to explain
+    this.school = null;
     this.nextStormAt = WIDTH + 200;  // first storm arrives after the climb-out
     this.nextIssrAt = 300;
     this.stormCount = 0;
@@ -108,6 +115,11 @@ export class GameScene extends Phaser.Scene {
     this.hintText = this.add.text(WIDTH / 2, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, align: 'center', lineSpacing: 4 }).setOrigin(0.5, 0);
     this.parcelText = this.add.text(WIDTH / 2, HEIGHT - 11, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0.5, 0);
 
+    this.cargoIcon = this.add.image(28, 12, 'token').setOrigin(0, 0);
+    this.cargoText = this.add.text(45, 13, '0', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0, 0);
+    this.multText = this.add.text(60, 13, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a' }).setOrigin(0, 0);
+    this.cargoIcon.setVisible(false);
+
     this.input.on('pointerdown', p => this.onTap(p));
     this.input.keyboard.on('keydown-SPACE', () => this.flap());
     this.input.keyboard.on('keydown-UP', () => this.flap());
@@ -123,7 +135,8 @@ export class GameScene extends Phaser.Scene {
     this.drawPlane();
     this.updateScenery(0);
     this.drawSky(0);
-    if (this.autostart) this.startFlight();
+    if (this.autostart === 'school') this.startSchool();
+    else if (this.autostart) this.startFlight();
   }
 
   // ---------- textures drawn in code (placeholders until real pixel art arrives) ----------
@@ -219,10 +232,46 @@ export class GameScene extends Phaser.Scene {
     [[5, 6], [20, 3], [12, 15], [27, 19], [4, 25], [18, 28]].forEach(([fx, fy]) => flake(fx, fy));
     g.fillStyle(0xb5ddf5).fillRect(9, 10, 1, 1).fillRect(24, 11, 1, 1).fillRect(14, 23, 1, 1).fillRect(29, 29, 1, 1);
     g.generateTexture('issr-tile', 32, 32);
+
+    // Floating tree token: a tree in a white bubble (and a golden one worth 3).
+    const token = (key, ring) => {
+      g.clear();
+      g.fillStyle(ring).fillRect(4, 0, 6, 14).fillRect(0, 4, 14, 6).fillRect(2, 2, 10, 10);
+      g.fillStyle(0xffffff).fillRect(4, 1, 6, 12).fillRect(1, 4, 12, 6).fillRect(3, 2, 8, 10).fillRect(2, 3, 10, 8);
+      g.fillStyle(0x2e7d32).fillRect(6, 3, 2, 1);
+      g.fillStyle(0x4caf50).fillRect(5, 4, 4, 2);
+      g.fillStyle(0x2e7d32).fillRect(4, 6, 6, 2);
+      g.fillStyle(0x7a4a24).fillRect(6, 8, 2, 3);
+      g.generateTexture(key, 14, 14);
+    };
+    token('token', 0x2e7d32);
+    token('token-gold', 0xffc23d);
     g.destroy();
   }
 
   setState(s) { this.state = s; this.stateTime = 0; }
+
+  startSchool() {
+    if (this.state !== 'idle') { this.scene.restart({ go: true, mode: 'school' }); return; }
+    this.school = new School(this, this.ui);
+    this.nextAirport = { worldX: 1e9, name: AIRPORT.names[0], spawned: false };
+    this.startFlight();
+    this.school.begin();
+  }
+
+  // Leave flight school and carry on as a normal flight.
+  skipSchool() {
+    if (!this.school) return;
+    this.school = null;
+    this.frozen = false;
+    this.ui.hideCoach();
+    this.save.tutorialDone = true;
+    writeSave(this.save);
+    this.nextAirport = { worldX: this.distancePx + AIRPORT.every, name: AIRPORT.names[0], spawned: false };
+    this.nextStormAt = this.distancePx + WIDTH + 100;
+    this.nextIssrAt = this.distancePx + 100;
+    this.nextTokenAt = this.distancePx + 100;
+  }
 
   startFlight() {
     if (this.state !== 'idle') { this.scene.restart({ go: true }); return; }
@@ -230,12 +279,16 @@ export class GameScene extends Phaser.Scene {
     this.kit = loadout(this.save);
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.setState('takeoff');
-    this.save.flights++;
-    writeSave(this.save);
-    this.ui.tipOnce('takeoff', 'Take off!', 'Tap to fly up. Dodge the storms. Watch for hidden icy air.', 'good', 3);
+    this.cargoIcon.setVisible(true);
+    if (!this.school) {
+      this.save.flights++;
+      writeSave(this.save);
+      this.ui.tipOnce('takeoff', 'Take off!', 'Tap to fly up. Grab the trees. Land to keep them!', 'good', 3);
+    }
   }
 
   onTap(p) {
+    if (this.school && this.school.onTap()) return;   // flight school uses the tap to continue
     // Tapping the ground strip plants a tree; anywhere else flaps.
     if (p.y > SKY_H && this.state === 'playing' && this.kit.tree) { this.plantTree(); return; }
     this.flap();
@@ -251,11 +304,16 @@ export class GameScene extends Phaser.Scene {
     const dt = Math.min(deltaMs, 50) / 1000;   // clamp so a background tab doesn't teleport the plane
     this.updatePopups(dt);
     if (this.state === 'idle') { this.updateScenery(dt * 30); return; }
+    if (this.school) this.school.update(dt);
+    if (this.frozen) { this.updateRays(dt, this.gameTime, false); this.drawSky(this.gameTime); return; }
+    this.gameTime += dt * 1000;
+    time = this.gameTime;   // contrail ages etc. stop while frozen
     if (this.state === 'over') {
       this.updateContrails(dt, time);
       this.updateRays(dt, time, false);
       return;
     }
+    if (!this.school || !this.school.holdClock) this.clock += dt;
 
     this.elapsed += dt;
     this.stateTime += dt;
@@ -264,7 +322,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state === 'landing') {
       this.speed = Math.max(0, this.landingSpeed * (1 - this.stateTime / AIRPORT.rollSeconds));
     } else {
-      this.speed = Math.min(WORLD.maxSpeed, WORLD.startSpeed + WORLD.speedGain * this.elapsed);
+      this.speed = this.school ? WORLD.startSpeed : Math.min(WORLD.maxSpeed, WORLD.startSpeed + WORLD.speedGain * this.elapsed);
     }
     const dx = this.speed * dt;
     this.distancePx += dx;
@@ -312,6 +370,7 @@ export class GameScene extends Phaser.Scene {
       i.setAlpha(this.issrAlpha(i, box, inside));
       i.tilePositionY += dt * 4;
     }
+    this.updateTokens(dt, box);
     if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
     this.wasInIssr = inIssr;
     if (inIssr && this.state !== 'landing' && time - this.lastContrail > this.kit.contrailEvery) {
@@ -331,6 +390,7 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.state !== 'playing') return;
 
+    if (this.school) { this.school.forgive(box); this.updateTexts(inIssr); return; }
     if (this.heat >= CLIMATE.dangerLine * 0.75 && !this.warnedHot) {
       this.warnedHot = true;
       this.ui.toast('Planet overheating!', this.isDay ? 'Make contrails in the sunshine, or land soon!' : 'Stay out of icy air at night, or land soon!', 'bad', 3);
@@ -347,6 +407,8 @@ export class GameScene extends Phaser.Scene {
       }
     }
   }
+
+  multiplier() { return 1 + CARGO.multiplierPerSkip * this.airportsSkipped; }
 
   hitbox() { return { x: this.plane.x, y: this.plane.y, w: PLANE.w, h: PLANE.h }; }
 
@@ -389,7 +451,7 @@ export class GameScene extends Phaser.Scene {
     }
     // Sun by day, moon by night, each arcing across the top of the sky.
     const { daySeconds: D, nightSeconds: N } = DAYNIGHT;
-    const p = this.elapsed % (D + N);
+    const p = this.clock % (D + N);
     const isDay = p < D;
     const f = isDay ? p / D : (p - D) / N;
     const x = Math.round(30 + f * (WIDTH - 60)), y = Math.round(70 - Math.sin(f * Math.PI) * 30);
@@ -448,10 +510,7 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- trees ----------
 
-  treeKind() {
-    const n = this.kit.tree && this.kit.tree.name;
-    return n === 'Oak' ? 'oak' : n === 'Fruit' ? 'orchard' : 'spruce';
-  }
+  treeKind() { return this.kit.tree ? this.kit.tree.kind : 'spruce'; }
 
   plantTree() {
     if (this.state !== 'playing' || !this.kit.tree) return;
@@ -495,8 +554,8 @@ export class GameScene extends Phaser.Scene {
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
       this.airportIndex++;
       this.airportsSkipped++;
-      this.popup(WIDTH / 2, 60, `Skipped! +${AIRPORT_BONUS} trees if you land later`, '#8dffb0');
-      if (this.airportsSkipped === 1) this.ui.tipOnce('skipped', 'Flying on!', 'Each airport you skip adds trees when you land. But crash and you lose them!', 'good', 3.5);
+      this.popup(WIDTH / 2, 60, `Long flight! Landing bonus x${this.multiplier()}`, '#ffe15a');
+      if (this.airportsSkipped === 1) this.ui.tipOnce('skipped', 'Flying on!', 'Longer flights = more trees when you land. But crash and you lose them all!', 'good', 3.5);
       this.nextAirport = {
         worldX: na.worldX + AIRPORT.every,
         name: AIRPORT.names[this.airportIndex % AIRPORT.names.length],
@@ -504,7 +563,10 @@ export class GameScene extends Phaser.Scene {
       };
     }
     const toAirport = this.nextAirport.worldX - this.distancePx;
-    if (toAirport < 400 && toAirport > 0) this.ui.tipOnce('airport', 'Airport ahead!', 'Glide down onto the grey runway to land and keep your trees. Or fly on!', 'good', 3.5);
+    if (this.school) return;   // flight school places everything itself
+    if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Stop tapping and glide onto the grey runway to land. Or fly on for more trees!', 'good', 3.5);
+
+    if (this.school) return;   // flight school places everything itself
 
     if (this.distancePx >= this.nextStormAt - WIDTH) {
       const worldX = this.distancePx + (WIDTH + 10 - PLANE.x);
@@ -515,14 +577,73 @@ export class GameScene extends Phaser.Scene {
       if (Math.random() < ISSR.spawnChance) this.addIssr();
       this.nextIssrAt += ISSR.spawnEvery;
     }
+    if (this.distancePx >= this.nextTokenAt) {
+      const chance = Math.min(TOKENS.maxChance, TOKENS.chance + TOKENS.chancePerKm * this.distancePx / 1000);
+      if (Math.random() < chance) this.addToken();
+      this.nextTokenAt += TOKENS.spawnEvery;
+    }
+  }
+
+  // A floating tree. Often placed in a storm gap or inside icy air, so grabbing it is a choice.
+  addToken(x = WIDTH + 10, y = null, golden = null) {
+    if (y === null) {
+      const storm = this.storms[this.storms.length - 1];
+      const issr = this.issrs.find(i => i.x + i.width > WIDTH - 20);
+      if (storm && storm.rects[0].x > WIDTH - 80 && !storm.hasToken) {
+        storm.hasToken = true;
+        const gapTop = storm.rects[0].height, gapBot = storm.rects[1].y;
+        y = Phaser.Math.Between(gapTop + 12, gapBot - 26);
+        x = storm.rects[0].x + STORMS.width / 2 - 7;
+      } else if (issr && Math.random() < 0.4) {
+        y = Phaser.Math.Between(issr.y + 4, issr.y + issr.height - 18);
+      } else {
+        y = Phaser.Math.Between(50, SKY_H - 70);
+      }
+    }
+    if (golden === null) golden = this.distancePx > TOKENS.goldenAfter && Math.random() < TOKENS.goldenChance;
+    const img = this.add.image(x, y, golden ? 'token-gold' : 'token').setOrigin(0);
+    this.fxLayer.add(img);
+    this.tokens.push({ img, baseY: y, phase: Math.random() * 6, value: golden ? 3 : 1 });
+  }
+
+  updateTokens(dt, box) {
+    const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+    this.tokens = this.tokens.filter(t => {
+      t.phase += dt * 4;
+      const tx = t.img.x + 7, ty = t.img.y + 7;
+      // Distance from the token's centre to the plane's hitbox.
+      const dxB = Math.max(box.x - tx, 0, tx - (box.x + box.w)), dyB = Math.max(box.y - ty, 0, ty - (box.y + box.h));
+      const d = Math.hypot(dxB, dyB);
+      if (this.kit.pickup > 12 && d < this.kit.pickup * 2.5) {
+        // Magnet: pull towards the plane.
+        const a = Math.atan2(cy - ty, cx - tx);
+        t.img.x += Math.cos(a) * TOKENS.magnetPull * dt;
+        t.baseY += Math.sin(a) * TOKENS.magnetPull * dt;
+      }
+      t.img.y = Math.round(t.baseY + Math.sin(t.phase) * TOKENS.bob);
+      if (d <= this.kit.pickup - 6 && this.state === 'playing') {
+        this.cargo += t.value;
+        this.popup(tx, ty - 8, `+${t.value} tree${t.value > 1 ? 's' : ''}`, t.value > 1 ? '#ffe15a' : '#8dffb0');
+        this.burst(tx, ty, 0x4caf50, 5);
+        sfx.coin();
+        this.tweens.add({ targets: this.cargoIcon, scale: 1.4, duration: 80, yoyo: true });
+        if (this.cargo === t.value) this.ui.tipOnce('firstToken', 'You grabbed a tree!', 'It is on board now (top left). Land safely to keep it!', 'good', 3.5);
+        t.img.destroy();
+        return false;
+      }
+      if (t.img.x < -20) { t.img.destroy(); return false; }
+      return true;
+    });
   }
 
   addStormPair() {
     const gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * this.stormCount);
     const lo = STORMS.marginTop + gap / 2;
     const hi = SKY_H - STORMS.marginTop - gap / 2;
-    const gapY = Phaser.Math.Between(lo, hi);
-    const x = WIDTH + 10;
+    this.addStormPairAt(WIDTH + 10, Phaser.Math.Between(lo, hi), gap);
+  }
+
+  addStormPairAt(x, gapY, gap) {
     const topH = gapY - gap / 2, botY = gapY + gap / 2;
     // Collision boxes are plain rectangles; the drawn cloud is a tiled body plus a rounded cap.
     const top = { x, y: 0, width: STORMS.width, height: topH };
@@ -552,11 +673,15 @@ export class GameScene extends Phaser.Scene {
   addIssr() {
     const w = Phaser.Math.Between(ISSR.minW, ISSR.maxW);
     const h = Phaser.Math.Between(ISSR.minH, ISSR.maxH);
-    const y = Phaser.Math.Between(10, SKY_H - h - 10);
-    const r = this.add.tileSprite(WIDTH + 10, y, w, h, 'issr-tile').setOrigin(0).setAlpha(this.kit.hiddenAlpha);
+    this.addIssrAt(WIDTH + 10, Phaser.Math.Between(10, SKY_H - h - 10), w, h);
+  }
+
+  addIssrAt(x, y, w, h) {
+    const r = this.add.tileSprite(x, y, w, h, 'issr-tile').setOrigin(0).setAlpha(this.kit.hiddenAlpha);
     r.tilePositionX = Phaser.Math.Between(0, 31); r.tilePositionY = Phaser.Math.Between(0, 31);
     this.issrLayer.add(r);
     this.issrs.push(r);
+    return r;
   }
 
   issrAlpha(i, box, inside) {
@@ -606,6 +731,7 @@ export class GameScene extends Phaser.Scene {
       return true;
     });
     for (const t of this.trees) if (t.sprite.active) { t.sprite.x -= dx; if (t.sprite.x < -20) t.sprite.destroy(); }
+    for (const t of this.tokens) t.img.x -= dx;
   }
 
   updateContrails(dt, time) {
@@ -625,7 +751,7 @@ export class GameScene extends Phaser.Scene {
 
   dayNightPhase() {
     const { daySeconds: D, nightSeconds: N, blendSeconds: B } = DAYNIGHT;
-    const p = this.elapsed % (D + N);
+    const p = this.clock % (D + N);
     if (p < D) return { isDay: true, toOther: Math.max(0, (p - (D - B)) / B) };
     const q = p - D;
     return { isDay: false, toOther: Math.max(0, (q - (N - B)) / B) };
@@ -778,7 +904,10 @@ export class GameScene extends Phaser.Scene {
     if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! Contrails shade: cooler' : 'ICY AIR! Contrails trap heat!');
     else this.hintText.setText('');
 
-    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? `TREES x${this.parcels}: tap the grass to plant` : '');
+    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? `PARCELS x${this.parcels}: tap the grass to plant` : '');
+    this.cargoText.setText(`${this.cargo}`);
+    this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');
+    this.multText.x = this.cargoText.x + this.cargoText.width + 4;
   }
 
   finish({ landed = false, reason = '', sound = 'crash' }) {
@@ -800,14 +929,14 @@ export class GameScene extends Phaser.Scene {
     const perKm = km > 0 ? (this.totalCo2 / km).toFixed(1) : '-';
     const heat = Math.round(this.heat);
 
-    // Trees: distance is always kept; the landing bonus only if you land.
+    // Trees: only what you carry home. Longer flights multiply it; a cooler Earth adds a bonus.
     const earned = [];
-    const distTrees = Math.floor(m / 500);
-    if (distTrees) earned.push({ label: `Distance (${m}m)`, n: distTrees });
-    const landBonus = 3 + AIRPORT_BONUS * this.airportsSkipped;
-    earned.push({ label: !landed ? 'Landing bonus' : this.airportsSkipped ? `Landing + ${this.airportsSkipped} skipped` : 'Safe landing', n: landBonus, lost: !landed });
-    if (landed && heat < 0) earned.push({ label: 'Cooler planet bonus', n: Math.ceil(-heat / 5) });
-    const gained = earned.filter(e => !e.lost).reduce((a, e) => a + e.n, 0);
+    const mult = this.multiplier();
+    earned.push({ label: `Trees grabbed in the sky`, n: this.cargo, lost: !landed });
+    if (mult > 1 && this.cargo) earned.push({ label: `Long flight bonus x${mult}`, n: Math.round(this.cargo * (mult - 1)), lost: !landed });
+    if (heat < 0) earned.push({ label: 'Cooler Earth bonus', n: CARGO.coolBonus, lost: !landed });
+    const gained = landed ? earned.reduce((a, e) => a + e.n, 0) : 0;
+    if (!landed && this.cargo) this.popup(this.plane.x + 25, this.plane.y - 14, `-${this.cargo} trees lost!`, '#ff6a5a', 16);
 
     const newBadges = [];
     const award = (id, cond) => { if (cond && !this.save.badges.includes(id)) { this.save.badges.push(id); newBadges.push(id); } };
@@ -817,8 +946,9 @@ export class GameScene extends Phaser.Scene {
     award('nightOwl', this.nightOwl);
     award('coolPlanet', landed && heat < 0);
     award('forester', this.planted >= 3);
+    award('treeHunter', landed && this.cargo >= 15);
 
-    const newRecord = landed && m > this.save.bestDistance;
+    const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
     this.save.trees += gained;
     writeSave(this.save);
@@ -827,7 +957,9 @@ export class GameScene extends Phaser.Scene {
       landed, landedAt: this.landedAt, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
+      cargo: this.cargo, school: !!this.school,
     };
+    if (this.school) this.school.finished(this.result);
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());
     this.time.delayedCall(landed ? 900 : 1100, () => this.ui.showResults(this.result));
   }

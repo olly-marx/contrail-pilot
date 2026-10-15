@@ -57,6 +57,7 @@ p { margin: 0; }
 .pic-issr  { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%236ec6e8'/%3E%3Crect x='0' y='4' width='16' height='8' fill='%23f4fbff' fill-opacity='.5'/%3E%3Crect x='0' y='8' width='9' height='1' fill='%23fff'/%3E%3Crect x='9' y='7' width='5' height='3' fill='%23fff'/%3E%3C/svg%3E"); }
 .pic-day   { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%236ec6e8'/%3E%3Crect x='2' y='0' width='1' height='13' fill='%23ffe15a'/%3E%3Crect x='13' y='0' width='1' height='13' fill='%23ffe15a'/%3E%3Crect x='7' y='0' width='1' height='6' fill='%23ffe15a'/%3E%3Crect x='10' y='0' width='1' height='6' fill='%23ffe15a'/%3E%3Crect x='5' y='6' width='8' height='2' fill='%237fd3ff'/%3E%3Crect x='6' y='8' width='6' height='5' fill='%23000' fill-opacity='.15'/%3E%3Crect x='0' y='13' width='16' height='3' fill='%235a8f3c'/%3E%3Crect x='5' y='13' width='8' height='1' fill='%23000' fill-opacity='.4'/%3E%3C/svg%3E"); }
 .pic-night { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%231b2140'/%3E%3Crect x='2' y='0' width='1' height='13' fill='%23ff6a3d'/%3E%3Crect x='13' y='0' width='1' height='13' fill='%23ff6a3d'/%3E%3Crect x='7' y='8' width='1' height='5' fill='%23ff6a3d'/%3E%3Crect x='10' y='8' width='1' height='5' fill='%23ff6a3d'/%3E%3Crect x='5' y='6' width='8' height='2' fill='%23ff4040'/%3E%3Crect x='0' y='13' width='16' height='3' fill='%235a8f3c'/%3E%3Crect x='5' y='13' width='8' height='1' fill='%23ff4040'/%3E%3Crect x='12' y='2' width='2' height='2' fill='%23fff'/%3E%3C/svg%3E"); }
+.pic-tree  { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%236ec6e8'/%3E%3Crect x='4' y='2' width='8' height='12' fill='%23fff' fill-opacity='.6'/%3E%3Crect x='2' y='4' width='12' height='8' fill='%23fff' fill-opacity='.6'/%3E%3Crect x='7' y='4' width='2' height='1' fill='%232e7d32'/%3E%3Crect x='6' y='5' width='4' height='2' fill='%234caf50'/%3E%3Crect x='5' y='7' width='6' height='2' fill='%232e7d32'/%3E%3Crect x='7' y='9' width='2' height='3' fill='%237a4a24'/%3E%3C/svg%3E"); }
 .pic-land  { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%236ec6e8'/%3E%3Crect x='0' y='12' width='16' height='4' fill='%235a8f3c'/%3E%3Crect x='1' y='11' width='14' height='2' fill='%2355555f'/%3E%3Crect x='3' y='11' width='2' height='1' fill='%23fff'/%3E%3Crect x='8' y='11' width='2' height='1' fill='%23fff'/%3E%3Crect x='6' y='6' width='6' height='3' fill='%23fff'/%3E%3Crect x='3' y='3' width='1' height='1' fill='%23fff'/%3E%3Crect x='4' y='4' width='1' height='1' fill='%23fff'/%3E%3C/svg%3E"); }
 
 .stats { display: flex; justify-content: space-between; font-size: 8px; }
@@ -138,3 +139,38 @@ p { margin: 0; }
 .iconbtn.off { text-decoration: line-through; opacity: .6; }
 
 @media (prefers-reduced-motion: reduce) { .newbest { animation: none; } }
+
+/* ---------- upgrade lines ---------- */
+.line { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 8px; background: #fff; align-items: center; }
+.line .group { font-size: 6px; color: var(--muted); text-transform: uppercase; }
+.line .name { font-size: 9px; }
+.line .pips { display: flex; gap: 3px; margin-top: 3px; }
+.line .pip { width: 10px; height: 6px; background: #d8d4c8; }
+.line .pip.on { background: var(--green); }
+.line .next { grid-column: 1 / -1; font-size: 7px; display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.line .next .btn { font-size: 8px; padding: 6px 8px; white-space: nowrap; }
+.line .row { display: flex; gap: 6px; align-items: center; }
+.line.maxed { background: #e7f6e7; }
+.infobtn { font-family: 'Pixel', monospace; font-size: 9px; width: 22px; height: 22px; border: 0; background: var(--sky); cursor: pointer;
+  box-shadow: 0 -2px 0 0 var(--ink), 0 2px 0 0 var(--ink), -2px 0 0 0 var(--ink), 2px 0 0 0 var(--ink); }
+.overlay.top { z-index: 30; }
+.levels { margin: 0; padding-left: 16px; display: grid; gap: 3px; font-size: 7px; }
+.levels li.have { color: var(--green-dark); }
+.links { display: grid; gap: 6px; }
+.links a, .links span { font-size: 8px; color: var(--night); background: #e3f1fb; padding: 6px 8px; text-decoration: none; display: block; }
+.links span { color: var(--muted); }
+
+/* ---------- flight school ---------- */
+.coach {
+  position: fixed; left: 50%; bottom: 15%; transform: translateX(-50%); z-index: 25;
+  width: min(320px, calc(100% - 24px)); box-sizing: border-box; padding: 10px; display: grid; grid-template-columns: 40px 1fr; gap: 10px;
+  background: var(--paper); font-size: 9px; line-height: 1.6;
+  box-shadow: 0 -3px 0 0 var(--ink), 0 3px 0 0 var(--ink), -3px 0 0 0 var(--ink), 3px 0 0 0 var(--ink), 0 6px 0 0 rgba(0,0,0,.3);
+  pointer-events: none;
+}
+.coach.waiting { pointer-events: auto; cursor: pointer; }
+.coach-face { width: 40px; height: 40px; image-rendering: pixelated; background-size: 40px 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' shape-rendering='crispEdges'%3E%3Crect width='10' height='10' fill='%236ec6e8'/%3E%3Crect x='1' y='3' width='8' height='6' fill='%23fff'/%3E%3Crect x='2' y='2' width='6' height='2' fill='%23fff'/%3E%3Crect x='2' y='1' width='6' height='2' fill='%231b2140'/%3E%3Crect x='1' y='2' width='8' height='1' fill='%231b2140'/%3E%3Crect x='4' y='1' width='2' height='1' fill='%23ffc23d'/%3E%3Crect x='3' y='5' width='1' height='1' fill='%231b1b2f'/%3E%3Crect x='6' y='5' width='1' height='1' fill='%231b1b2f'/%3E%3Crect x='3' y='7' width='4' height='1' fill='%231b1b2f'/%3E%3C/svg%3E"); }
+.coach-name { font-size: 7px; color: var(--muted); margin-bottom: 2px; }
+.coach-tap { font-size: 7px; color: var(--cool); margin-top: 6px; animation: blink .8s steps(2) infinite; }
+.skip { position: fixed; bottom: 8px; right: 8px; z-index: 26; background: rgba(255,255,255,.8) !important; }

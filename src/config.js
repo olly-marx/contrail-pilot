@@ -70,6 +70,22 @@ export const AIRPORT = {
   home: 'LONDON',
 };
 
+export const TOKENS = {
+  spawnEvery: 240,     // px between chances to place a floating tree
+  chance: 0.5,         // ...rising with distance (see chancePerKm)
+  chancePerKm: 0.08,
+  maxChance: 0.85,
+  goldenAfter: 2500,   // m; golden trees (worth 3) start appearing
+  goldenChance: 0.15,
+  bob: 3,              // px up/down
+  magnetPull: 140,     // px/s, how fast a magnet pulls trees in
+};
+
+export const CARGO = {
+  multiplierPerSkip: 0.5,   // landing bonus: x1, x1.5, x2 ... per airport skipped
+  coolBonus: 3,             // extra trees for landing with the Earth cooler than at take off
+};
+
 export const DAYNIGHT = {
   daySeconds: 15,
   nightSeconds: 15,

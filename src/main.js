@@ -8,7 +8,11 @@ const save = loadSave();
 // Wait for the pixel font so canvas text doesn't render in a fallback font first.
 try { await document.fonts.load('8px Pixel'); } catch (e) { /* play on with the fallback */ }
 
-const ui = new UI(save, { onStart: () => game.scene.getScene('game').startFlight() });
+const scene = () => game.scene.getScene('game');
+const ui = new UI(save, { onStart: () => scene().startFlight(), onSchool: () => scene().startSchool() });
+document.getElementById('skipSchool').onclick = () => scene().skipSchool();
+// Taps on the flight-school bubble count as taps on the game.
+document.getElementById('coach').addEventListener('pointerdown', () => scene().school && scene().school.onTap());
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

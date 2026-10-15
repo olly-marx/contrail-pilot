@@ -26,7 +26,9 @@ On a phone on the same Wi-Fi, open `http://<your-laptop-ip>:8000`.
 | `src/GameScene.js` | The game loop: flight, airports, ISSRs, contrails, day/night, radiation |
 | `src/Hud.js` | CO2 gauge, net-heating bar and planet face |
 | `src/ui.js` | Title/briefing, results, hangar (shop) and in-flight tips (HTML overlays) |
-| `src/upgrades.js` | Upgrades, fuels, tree species, badges, and how they change a flight |
+| `src/upgrades.js` | Upgrade lines and levels, fuels, tree species, badges, and how they change a flight |
+| `src/school.js` | Flight school: the guided first flight |
+| `src/links.js` | "Learn more" links in the info pop-ups (some still to be filled in) |
 | `src/save.js` | Progress saved on the device (localStorage) |
 | `src/sound.js` | Chiptune sound effects synthesised in code |
 | `style.css` | Pixel-style screens |
@@ -39,6 +41,11 @@ CO2 gauge (left), day/night cycle with sunbeams and heat arrows that contrails b
 net-heating bar with planet face (right), overheat ending, end-of-flight card with CO2 per km.
 Art is placeholder blocks at 288×512, scaled up with no smoothing for the pixel look.
 
+## Deploying
+
+Every push to `main` runs all the checks in headless Chrome on GitHub Actions
+(`.github/workflows/deploy.yml`) and only publishes to GitHub Pages if they all pass.
+
 ## Checks
 
 `tests/issr-reveal.cjs` flies the game with an autopilot in headless Chrome and fails if any ISSR
@@ -49,7 +56,8 @@ python3 -m http.server 8000 &
 npm i --no-save playwright-core
 node tests/issr-reveal.cjs        # set CHROME=/path/to/chrome if needed
 node tests/flight.cjs             # takeoff, landing, day/night radiation, overheat, crash
-node tests/progression.cjs        # trees saved, hangar purchases, upgrades change the flight, planting
+node tests/progression.cjs        # trees banked only on landing, multiplier, hangar levels, info pop-ups, planting
+node tests/school.cjs             # a new player can finish flight school by following the captain
 ```
 
 `tests/flight.cjs` lands an autopilot at the second airport and forces day and night over a line

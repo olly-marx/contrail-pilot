@@ -17,20 +17,24 @@
   <section id="title" class="overlay" hidden>
     <div class="panel">
       <h1>CONTRAIL<br>PILOT</h1>
-      <p class="lead">Fly far. Land safe. Keep the planet cool.</p>
+      <p class="lead">Fly far. Grab trees. Land safely. Keep the Earth cool!</p>
       <ol class="howto">
-        <li><span class="pic pic-tap"></span><span><b>Tap</b> to fly up. Dodge the storms.</span></li>
-        <li><span class="pic pic-issr"></span><span>Hidden <b>icy air</b> (ISSRs) turns your exhaust into <b>contrails</b>.</span></li>
-        <li><span class="pic pic-day"></span><span><b>Day:</b> contrails shade the Earth. <span class="cool">Cooler!</span></span></li>
-        <li><span class="pic pic-night"></span><span><b>Night:</b> contrails trap heat. <span class="warm">Hotter!</span></span></li>
-        <li><span class="pic pic-land"></span><span><b>Glide onto a runway</b> to land and keep your trees.</span></li>
+        <li><span class="pic pic-tap"></span><span><b>Tap</b> to fly up. Fly between the storm clouds.</span></li>
+        <li><span class="pic pic-tree"></span><span><b>Grab the trees</b> floating in the sky.</span></li>
+        <li><span class="pic pic-issr"></span><span>Some air is <b>icy</b>. It makes your plane leave a cloud line: a <b>contrail</b>.</span></li>
+        <li><span class="pic pic-day"></span><span><b>Day:</b> contrails make shade. The Earth gets <span class="cool">cooler</span>.</span></li>
+        <li><span class="pic pic-night"></span><span><b>Night:</b> contrails are like a blanket. The Earth gets <span class="warm">hotter</span>.</span></li>
+        <li><span class="pic pic-land"></span><span><b>Land</b> on a runway to keep your trees!</span></li>
       </ol>
       <div class="stats"><span>Trees: <b id="tTrees">0</b></span><span>Best: <b id="tBest">0</b> m</span></div>
       <div class="buttons">
         <button id="goBtn" class="btn go" type="button">TAKE OFF</button>
         <button id="hangarBtn" class="btn" type="button">HANGAR</button>
       </div>
-      <button id="muteBtn" class="btn tiny" type="button">sound: on</button>
+      <div class="buttons">
+        <button id="schoolBtn" class="btn tiny" type="button">flight school</button>
+        <button id="muteBtn" class="btn tiny" type="button">sound: on</button>
+      </div>
     </div>
   </section>
 
@@ -42,7 +46,7 @@
       <p class="newbest" id="rRecord" hidden>NEW RECORD!</p>
       <div class="bigstat"><span id="rDist">0</span> m</div>
       <div class="climate">
-        <p class="label">What your flight did to the planet</p>
+        <p class="label">What your flight did to the Earth</p>
         <div class="split" aria-hidden="true">
           <div class="side cool-side"><div id="barTrees" class="seg trees"></div><div id="barSun" class="seg sun"></div></div>
           <div class="mid"></div>
@@ -50,15 +54,15 @@
         </div>
         <ul class="legend">
           <li><i class="co2"></i>CO2 from fuel <b id="rCo2">+0</b></li>
-          <li><i class="night"></i>Night contrails <b id="rNight">+0</b></li>
-          <li><i class="sun"></i>Day contrails <b id="rSun">-0</b></li>
+          <li><i class="night"></i>Night contrails (blanket) <b id="rNight">+0</b></li>
+          <li><i class="sun"></i>Day contrails (shade) <b id="rSun">-0</b></li>
           <li><i class="trees"></i>Trees planted <b id="rTreesCool">-0</b></li>
         </ul>
         <p class="total">Total: <b id="rTotal">+0</b> <span id="rFace"></span></p>
-        <p class="small">CO2 per km: <b id="rPerKm">0</b> (short hops are worst: takeoff burns lots of fuel)</p>
+        <p class="small">CO2 per km: <b id="rPerKm">0</b>. Short flights are worst: taking off burns lots of fuel!</p>
       </div>
       <div class="earned">
-        <p class="label">Trees earned</p>
+        <p class="label">Trees</p>
         <ul id="rEarned"></ul>
       </div>
       <div id="rBadges" class="badges-new" hidden></div>
@@ -77,12 +81,13 @@
         <h2>HANGAR</h2>
         <span class="treebank"><i class="treeicon"></i><b id="hTrees">0</b></span>
       </div>
+      <p class="small">Spend the trees you landed with. Tap <b>i</b> to learn what each one does.</p>
       <div id="hFuel" class="fuel"></div>
       <div id="hUpgrades" class="upgrades"></div>
       <h3>Badges</h3>
       <div id="hBadges" class="badges"></div>
       <div class="realtree">
-        <p><b>Plant a real tree!</b> Citizen Zoo plants trees and rewilds land in London.</p>
+        <p><b>Plant a real tree!</b> Citizen Zoo plants real trees in London.</p>
         <button id="realTreeBtn" class="btn green" type="button">ASK A GROWN-UP</button>
         <p id="gateMsg" class="small" hidden>Grown-ups: press and hold the button for 2 seconds.</p>
       </div>
@@ -92,6 +97,31 @@
       </div>
     </div>
   </section>
+
+  <!-- Upgrade info pop-up -->
+  <section id="info" class="overlay top" hidden>
+    <div class="panel">
+      <p class="eyebrow" id="iGroup"></p>
+      <h2 id="iName"></h2>
+      <ol id="iLevels" class="levels"></ol>
+      <div><p class="label">What is it?</p><p id="iWhat"></p></div>
+      <div><p class="label">How does it help?</p><p id="iWhy"></p></div>
+      <div class="fact"><p class="label">Did you know?</p><p id="iFact"></p></div>
+      <div id="iLinks" class="links"></div>
+      <div class="buttons"><button id="iClose" class="btn go" type="button">OK</button></div>
+    </div>
+  </section>
+
+  <!-- Flight school speech bubble -->
+  <div id="coach" class="coach" hidden>
+    <div class="coach-face" aria-hidden="true"></div>
+    <div class="coach-body">
+      <p class="coach-name">Captain Cumulus</p>
+      <p id="coachText"></p>
+      <p id="coachTap" class="coach-tap">TAP TO CONTINUE</p>
+    </div>
+  </div>
+  <button id="skipSchool" class="btn tiny skip" type="button" hidden>skip flight school</button>
 
   <script src="vendor/phaser.min.js"></script>
   <script type="module" src="src/main.js"></script>

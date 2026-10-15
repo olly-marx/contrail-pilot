@@ -1,9 +1,10 @@
-// Progression check: trees are saved, the hangar sells upgrades, upgrades change the flight,
-// tree parcels plant and cool, and the results screen adds up.
+// Progression check: trees are only banked on landing (with the long-flight multiplier),
+// the hangar sells levelled upgrades with info pop-ups, upgrades change the flight, and
+// planted trees cool.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/progression.cjs
 const { chromium } = require('playwright-core');
 const URL = process.env.URL || 'http://localhost:8000/';
-const KEY = 'contrailPilot.v1';
+const KEY = 'contrailPilot.v2';
 
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
@@ -12,46 +13,77 @@ const KEY = 'contrailPilot.v1';
   p.on('dialog', d => d.accept());
   const fails = [];
   const check = (cond, msg) => { if (!cond) fails.push(msg); };
-  const scene = fn => p.evaluate(fn);
+  const scene = (fn, arg) => p.evaluate(fn, arg);
+  const setSave = s => p.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [KEY, s]);
+  const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
+  const base = { tutorialDone: true, muted: true, seenTips: [] };
+  const noStorms = () => scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; });
+  const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; }, y);
+  const grab = n => scene(n => { const s = game.scene.getScene('game'); for (let i = 0; i < n; i++) s.addToken(s.plane.x + 20 + i * 3, s.plane.y - 2, false); }, n);
 
-  // 1. A crash with no landing keeps distance trees only.
-  await p.goto(URL); await p.evaluate(k => localStorage.removeItem(k), KEY); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#goBtn'); await p.waitForTimeout(400);
-  await scene(() => { const s = game.scene.getScene('game'); s.distancePx = 1200; });
-  await p.waitForTimeout(6000);   // no taps: falls and crashes
+  // 1. Grab trees, then crash: nothing is banked.
+  await p.goto(URL); await setSave({ ...base, trees: 5 }); await p.reload(); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await p.waitForTimeout(2300);
+  await noStorms(); await hold(); await grab(3);
+  for (let i = 0; i < 8; i++) { await hold(); await p.waitForTimeout(60); }
+  const carried = await scene(() => game.scene.getScene('game').cargo);
+  check(carried === 3, `should carry 3 trees after grabbing 3, got ${carried}`);
+  await p.waitForTimeout(3500);   // no taps: falls and crashes
   let r = await scene(() => game.scene.getScene('game').result);
-  check(r && !r.landed, 'expected a crash');
-  check(r && r.gained === 2, `crash at ~1200m should keep 2 distance trees, got ${r && r.gained}`);
-  check(await p.isVisible('#results'), 'results screen not shown');
+  check(r && !r.landed && r.gained === 0, `crash should bank 0 trees, got ${r && r.gained}`);
+  check((await getSave()).trees === 5, 'trees in the bank changed after a crash');
+  check((await p.textContent('#rEarned')).includes('LOST'), 'results should say the trees were LOST');
 
-  // 2. Give trees, buy SAF and parcels in the hangar, and check the save.
-  await p.evaluate(k => { const s = JSON.parse(localStorage.getItem(k)); s.trees = 30; localStorage.setItem(k, JSON.stringify(s)); }, KEY);
-  await p.reload(); await p.waitForTimeout(600);
+  // 2. Grab 4, skip one airport, land: 4 x 1.5 = 6 trees banked.
+  await p.click('#againBtn'); await p.waitForTimeout(2300);
+  await noStorms(); await hold(); await grab(4);
+  for (let i = 0; i < 8; i++) { await hold(); await p.waitForTimeout(60); }
+  await scene(() => { const s = game.scene.getScene('game'); s.airportsSkipped = 1; s.heat = 20; s.distancePx = s.nextAirport.worldX - 250; });
+  for (let i = 0; i < 150; i++) {
+    const st = await scene(() => { const s = game.scene.getScene('game'); s.heat = Math.max(s.heat, 20);
+      const toA = s.nextAirport.worldX - s.distancePx; if (toA > -20) { s.plane.y = 300; s.plane.vy = 0; } return s.state; });
+    if (st === 'over') break;
+    await p.waitForTimeout(40);
+  }
+  r = await scene(() => game.scene.getScene('game').result);
+  check(r && r.landed, 'did not land');
+  check(r && r.gained === 6, `4 trees x1.5 should bank 6, got ${r && r.gained}`);
+  check((await getSave()).trees === 11, `bank should be 5 + 6 = 11, got ${(await getSave()).trees}`);
+
+  // 3. Hangar: levelled lines, prices, info pop-up.
+  await setSave({ ...base, trees: 50 }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#hangarBtn');
-  await p.click('[data-buy="saf"]');
-  await p.click('[data-buy="parcels"]');
-  let save = await p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
-  check(save.trees === 12, `30 - 10 - 8 should leave 12 trees, got ${save.trees}`);
-  check(save.owned.includes('saf') && save.owned.includes('parcels'), 'purchases not saved');
-  check(save.fuel === 'saf', 'SAF not equipped after buying');
-  check(await p.isDisabled('[data-buy="sensor"]') === false, 'sensor (6) should be affordable with 12');
-  check(await p.isDisabled('[data-buy="hydrogen"]'), 'hydrogen (35) should be unlocked by SAF but unaffordable with 12');
-  check(await p.$('[data-buy="forecast"]') === null, 'forecast should be locked until the sensor is bought');
+  await p.click('[data-buy="radar"]');     // 15
+  await p.click('[data-buy="fuel"]');      // 20
+  const save = await getSave();
+  check(save.trees === 15, `50 - 15 - 20 should leave 15, got ${save.trees}`);
+  check(save.levels.radar === 1 && save.levels.fuel === 1, 'levels not saved');
+  check(save.fuel === 'saf25', `new fuel should be equipped, got ${save.fuel}`);
+  check(await p.isDisabled('[data-buy="engine"]'), 'engine (25) should be unaffordable with 15');
+  check((await p.textContent('[data-buy="radar"]')).includes('45'), 'radar level 2 should cost 45');
+  await p.click('[data-info="fuel"]');
+  check(await p.isVisible('#info'), 'info pop-up did not open');
+  check((await p.textContent('#iWhat')).length > 20, 'info pop-up has no text');
+  check((await p.$$('#iLinks a, #iLinks span')).length > 0, 'info pop-up has no links');
+  await p.click('#iClose');
 
-  // 3. Fly with SAF: cruise CO2 is lower than kerosene's 1.0; plant a tree and see it cool.
-  await p.click('#hBackBtn'); await p.click('#goBtn'); await p.waitForTimeout(2600);
-  const co2 = await scene(() => game.scene.getScene('game').co2Rate);
-  check(Math.abs(co2 - 0.6) < 1e-9, `SAF cruise CO2 should be 0.6, got ${co2}`);
-  await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; });
-  const hold = () => scene(() => { const s = game.scene.getScene('game'); s.plane.y = 200; s.plane.vy = 0; });
-  await hold();
-  await p.mouse.click(195, 740);   // tap the ground strip (canvas spans y 75..768 here)
-  for (let i = 0; i < 26; i++) { await scene(() => { const s = game.scene.getScene('game'); s.plane.y = 200; s.plane.vy = 0; }); await p.waitForTimeout(100); }
-  const t = await scene(() => { const s = game.scene.getScene('game'); return { planted: s.planted, parcels: s.parcels, treeCool: s.breakdown.trees, trees: s.trees.length, state: s.state, tweens: s.tweens.getTweens().length, paused: s.scene.isPaused() }; });
-  check(t.planted === 1 && t.parcels === 2, `tap on ground should plant 1 of 3 parcels, got ${JSON.stringify(t)}`);
-  check(t.treeCool > 0, 'planted tree is not cooling ' + JSON.stringify(t));
+  // 4. The flight uses the upgrades: SAF 25% = 0.85 CO2; radar reveals icy air from 100 px.
+  await p.click('#hBackBtn'); await p.click('#goBtn'); await p.waitForTimeout(2400);
+  const kit = await scene(() => { const s = game.scene.getScene('game'); return { co2: s.co2Rate, reveal: s.kit.revealPx }; });
+  check(Math.abs(kit.co2 - 0.85) < 1e-9, `SAF 25% cruise CO2 should be 0.85, got ${kit.co2}`);
+  check(kit.reveal === 100, `radar 1 should reveal at 100, got ${kit.reveal}`);
 
-  // 4. The breakdown (CO2 + night contrails - day contrails - trees) adds up to the heating bar.
+  // 5. Planting: with tree parcels, tapping the grass plants a tree that cools.
+  await setSave({ ...base, levels: { trees: 1 } }); await p.reload(); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await p.waitForTimeout(2400);
+  await noStorms(); await hold();
+  await p.mouse.click(195, 740);   // tap the grass (canvas spans y 75..768 here)
+  for (let i = 0; i < 26; i++) { await hold(); await p.waitForTimeout(100); }
+  const t = await scene(() => { const s = game.scene.getScene('game'); return { planted: s.planted, parcels: s.parcels, cool: s.breakdown.trees, state: s.state }; });
+  check(t.planted === 1 && t.parcels === 1, `should plant 1 of 2 parcels, got ${JSON.stringify(t)}`);
+  check(t.cool > 0, 'planted tree is not cooling ' + JSON.stringify(t));
+
+  // 6. The breakdown (CO2 + night - day - trees) adds up to the heating bar.
   const m = await scene(() => { const s = game.scene.getScene('game'); const d = s.breakdown; return { heat: s.heat, sum: d.co2 + d.night - d.sun - d.trees }; });
   check(Math.abs(m.heat - m.sum) < 1e-6, `breakdown ${m.sum} != heat ${m.heat}`);
 
