@@ -11,8 +11,8 @@ const { chromium } = require('playwright-core');
   for (let i = 0; i < 300; i++) {
     const r = await p.evaluate(() => { const s = game.scene.getScene('game');
       const next = s.storms.find(st => st.rects[0].x + 44 > s.plane.x);
-      const target = next ? next.rects[0].height + 45 : 230;
-      const b = { x: s.plane.x, y: s.plane.y, w: 20, h: 10 };
+      const target = next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : 230;
+      const b = s.hitbox();
       const issr = s.issrs.map(i => { const gx = Math.max(0, i.x - (b.x + b.w), b.x - (i.x + i.width));
         const gy = Math.max(0, i.y - (b.y + b.h), b.y - (i.y + i.height)); return { d: Math.max(gx, gy), a: i.alpha * i.fillAlpha, entered: !!i.entered }; });
       return { tap: s.state === 'playing' && s.plane.y > target && s.plane.vy > -50, state: s.state, issr, c: s.contrails.length }; });

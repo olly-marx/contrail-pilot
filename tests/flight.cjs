@@ -13,7 +13,7 @@ async function fly(p, { landAt }) {
       const toA = s.nextAirport.worldX - s.distancePx;
       const landing = s.airportIndex === landAt && toA < 60 && toA > -150;
       const next = s.storms.find(st => st.rects[0].x + 44 > s.plane.x);
-      const target = landing ? 999 : next ? next.rects[0].height + 45 : 200;
+      const target = landing ? 999 : next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : 200;
       return { tap: s.state === 'playing' && s.plane.y > target && s.plane.vy > -50,
         state: s.state, co2: s.co2Rate, isDay: s.isDay, heat: s.heat, result: s.result || null }; }, landAt);
     log.states.add(r.state); log.maxCo2 = Math.max(log.maxCo2, r.co2);

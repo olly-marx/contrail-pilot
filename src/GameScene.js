@@ -22,6 +22,10 @@ function lerpColour(a, b, t) {
 export class GameScene extends Phaser.Scene {
   constructor() { super('game'); }
 
+  preload() {
+    this.load.image('plane', 'assets/plane.png');
+  }
+
   create() {
     this.state = 'ready';            // ready -> takeoff -> playing -> landing | over
     this.speed = WORLD.startSpeed;
@@ -57,9 +61,8 @@ export class GameScene extends Phaser.Scene {
     this.rayLayer = this.add.layer();
     this.stormLayer = this.add.layer();
 
-    this.plane = { x: PLANE.x, y: SKY_H - PLANE.h, vy: 0 };
-    this.planeBody = this.add.rectangle(0, 0, PLANE.w, PLANE.h, COLOURS.plane).setOrigin(0);
-    this.planeTail = this.add.rectangle(0, 0, 4, 6, COLOURS.planeTail).setOrigin(0);
+    this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
+    this.planeSprite = this.add.image(0, 0, 'plane');
 
     this.add.rectangle(0, SKY_H, WIDTH, GROUND_H, COLOURS.ground).setOrigin(0);
     this.add.rectangle(0, SKY_H, WIDTH, 3, COLOURS.groundEdge).setOrigin(0);
@@ -142,7 +145,7 @@ export class GameScene extends Phaser.Scene {
     this.scroll(dx);
     this.updateDayNight(time);
 
-    const box = { x: this.plane.x, y: this.plane.y, w: PLANE.w, h: PLANE.h };
+    const box = this.hitbox();
     let inIssr = false;
     for (const i of this.issrs) {
       const inside = overlaps(box, { x: i.x, y: i.y, w: i.width, h: i.height });
@@ -167,7 +170,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'playing') return;
 
     if (this.heat >= CLIMATE.dangerLine) return this.finish({ reason: 'The planet got too hot!\nFlight grounded.' });
-    if (box.y + box.h >= SKY_H) {
+    if (this.spriteBottom() >= SKY_H) {
       const rw = this.runwayUnder(box);
       if (rw) return this.land(rw);
       return this.finish({ reason: 'You hit the ground!' });
@@ -179,9 +182,22 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  hitbox() { return { x: this.plane.x, y: this.plane.y, w: PLANE.w, h: PLANE.h }; }
+
+  // Hitbox y at which the sprite's wheels touch the ground.
+  groundedY() { return SKY_H - PLANE.spriteH + PLANE.spriteOffY; }
+
+  // Bottom of the drawn plane (wheels), used for ground contact.
+  spriteBottom() { return this.plane.y - PLANE.spriteOffY + PLANE.spriteH; }
+
   drawPlane() {
-    this.planeBody.setPosition(Math.round(this.plane.x), Math.round(this.plane.y));
-    this.planeTail.setPosition(Math.round(this.plane.x), Math.round(this.plane.y) - 4);
+    // Sprite is centred on its image; place it so the hitbox sits at spriteOff inside it.
+    const cx = this.plane.x - PLANE.spriteOffX + PLANE.spriteW / 2;
+    const cy = this.plane.y - PLANE.spriteOffY + PLANE.spriteH / 2;
+    this.planeSprite.setPosition(Math.round(cx), Math.round(cy));
+    const flying = this.state === 'playing' || this.state === 'over';
+    const tilt = flying ? Phaser.Math.Clamp(this.plane.vy / 600, -PLANE.maxTilt, PLANE.maxTilt) : 0;
+    this.planeSprite.setRotation(this.state === 'takeoff' ? -0.15 : tilt);
   }
 
   // ---------- airports ----------
@@ -212,7 +228,7 @@ export class GameScene extends Phaser.Scene {
   land(rw) {
     this.landedAt = rw.name;
     this.landingSpeed = this.speed;
-    this.plane.y = SKY_H - PLANE.h;
+    this.plane.y = this.groundedY();
     this.plane.vy = 0;
     this.setState('landing');
     this.drawPlane();
@@ -284,7 +300,7 @@ export class GameScene extends Phaser.Scene {
 
   addContrail(time) {
     const s = CONTRAIL.size;
-    const r = this.add.rectangle(this.plane.x - s, this.plane.y + PLANE.h / 2 - s / 2 + Phaser.Math.Between(-1, 1), s, s, COLOURS.contrail).setOrigin(0);
+    const r = this.add.rectangle(this.plane.x - PLANE.spriteOffX, this.plane.y + PLANE.h / 2 - s / 2 + Phaser.Math.Between(-1, 1), s, s, COLOURS.contrail).setOrigin(0);
     r.born = time;
     this.contrailLayer.add(r);
     this.contrails.push(r);

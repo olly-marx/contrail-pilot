@@ -4,9 +4,15 @@ export const HEIGHT = 512;
 export const GROUND_H = 48;
 
 export const PLANE = {
-  x: 70,
-  w: 20,
-  h: 10,
+  x: 60,             // hitbox left edge on screen
+  // Hitbox is the fuselage only (forgiving); the sprite is drawn around it.
+  w: 50,
+  h: 12,
+  spriteW: 62,       // assets/plane.png
+  spriteH: 27,
+  spriteOffX: 8,     // hitbox position inside the sprite
+  spriteOffY: 12,
+  maxTilt: 0.35,     // radians, nose up/down with vertical speed
   gravity: 900,     // px/s^2
   flapVelocity: -260,
   maxFall: 400,
@@ -94,8 +100,6 @@ export const COLOURS = {
   skyDay: 0x6ec6e8,
   ground: 0x5a8f3c,
   groundEdge: 0x3e6b28,
-  plane: 0xf2f2f2,
-  planeTail: 0xd94040,
   storm: 0x4a4e69,
   stormEdge: 0x22223b,
   issr: 0xf4fbff,
