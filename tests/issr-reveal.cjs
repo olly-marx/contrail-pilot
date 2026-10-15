@@ -8,6 +8,10 @@ const { chromium } = require('playwright-core');
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true })); });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.goto(process.env.URL || 'http://localhost:8000/'); await p.waitForTimeout(800); await p.click('#goBtn');
+  // Always put one ISSR across the plane's path after take-off, so the "visible from inside" check
+  // doesn't depend on a random ISSR happening to cross the autopilot's route.
+  await p.waitForTimeout(2300);
+  await p.evaluate(() => { const s = game.scene.getScene('game'); s.addIssrAt(300, s.plane.y - 60, 320, 140); });
   let farVisible = 0, nearVisible = 0, insideSeen = 0, maxC = 0, shot = false;
   for (let i = 0; i < 300; i++) {
     const r = await p.evaluate(() => { const s = game.scene.getScene('game');
