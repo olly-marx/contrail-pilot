@@ -331,31 +331,9 @@ def stork():
 
 # ---------- ground features ----------
 
-def plot():
-    # 32x9: a raised mound (rows 0-2, above the grass line) over a bed of dug soil (rows 3-8).
-    s = Sprite(32, 9)
-    c = {'m': hexc('#8a5530'), 'M': hexc('#a46a3e'), 'f': hexc('#5a3318'), 's': hexc('#6a3c1c'),
-         'S': hexc('#55301a'), 'p': hexc('#93694a')}
-    for x in range(2, 30):                        # mound
-        s.px(x, 1, c['M'] if x < 12 else c['m'])
-        s.px(x, 2, c['m'])
-    for x in range(4, 28):
-        s.px(x, 0, c['M'] if x < 10 else c['m'])
-    for i in range(5, 27, 6):                     # furrows
-        s.px(i, 1, c['f']); s.px(i + 1, 1, c['f']); s.px(i + 2, 2, c['f'])
-    for y in range(3, 9):                         # dug soil bed
-        for x in range(32):
-            s.px(x, y, c['S'] if (y == 8 or (y == 7 and (x + y) % 2 == 0)) else c['s'])
-    rnd = random.Random('plot')
-    for _ in range(9):
-        s.px(rnd.randrange(1, 31), rnd.randrange(4, 7), c['p'])
-    s.save('plot')
-
-
-
 def plot_parts():
     # Any-width plot: 'plot-left' 4x9 + 'plot-mid' 8x9 (tiles horizontally) + 'plot-right' 4x9.
-    # Same rows as 'plot': mound in rows 0-2 above the grass line, dug soil in rows 3-8.
+    # Mound in rows 0-2 above the grass line, dug soil in rows 3-8.
     c = {'M': hexc('#a46a3e'), 'm': hexc('#8a5530'), 'f': hexc('#5a3318'), 's': hexc('#6a3c1c'),
          'S': hexc('#55301a'), 'p': hexc('#93694a'), 'd': hexc('#7a4a24')}
     soil = ['ssssssss', 'sssspsss', 'spssssss', 'sssssssp', 'sSsSsSsS', 'SSSSSSSS']
@@ -368,6 +346,26 @@ def plot_parts():
     right = Sprite(4, 9)
     right.grid(['mm..', 'mmd.', 'mmdd'] + [r[4:] for r in soil], c)  # shaded slope
     right.save('plot-right')
+
+
+
+def turbulence():
+    # 'turb' 32x16, tiles both ways; GameScene scrolls tilePositionX for the wobble.
+    # Two broken wind lines (gusts) of white at partial alpha over a very faint fill, so
+    # the sky shows through and it never reads as cloud or ice.
+    s = Sprite(32, 16)
+    for y in range(16):
+        for x in range(32):
+            s.px(x, y, (255, 255, 255, 14))
+    for base, phase, a in ((4, 0.0, 150), (12, 2.4, 95)):
+        for x in range(32):
+            if (x + int(phase * 5)) % 16 >= 11:      # gaps make it gusty, not a solid line
+                continue
+            y = base + round(2 * math.sin(2 * math.pi * x / 32 + phase))
+            s.px(x, y, (255, 255, 255, a))
+            if (x + int(phase * 5)) % 16 in (0, 10):  # soft dash ends
+                s.px(x, y, (255, 255, 255, a // 2))
+    s.save('turb')
 
 
 def plot_sign():
@@ -614,8 +612,8 @@ def puff():
 
 
 if __name__ == '__main__':
-    plot()
     plot_parts()
+    turbulence()
     plot_sign()
     plot_arrow()
     runway_tile()
