@@ -12,7 +12,7 @@ const scene = () => game.scene.getScene('game');
 const ui = new UI(save, { onStart: () => scene().startFlight(), onSchool: () => scene().startSchool() });
 document.getElementById('skipSchool').onclick = () => scene().skipSchool();
 // Taps on the flight-school bubble count as taps on the game.
-document.getElementById('coach').addEventListener('pointerdown', () => scene().school && scene().school.onTap());
+document.getElementById('coach').addEventListener('pointerdown', () => scene().onCoachTap());
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

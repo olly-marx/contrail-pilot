@@ -1,4 +1,5 @@
 import { CLIMATE, CONTRAIL, ISSR } from './config.js';
+import { SPECIES, PROJECTS, biodiversity } from './nature.js';
 
 // Each upgrade line has levels bought in order. Costs are in trees.
 // `info` is the pop-up shown by the (i) button: short words for 7-10 year olds.
@@ -18,7 +19,7 @@ export const LINES = [
     },
   },
   {
-    id: 'fuel', name: 'Cleaner Fuel', group: 'Fuel',
+    id: 'fuel', name: 'Cleaner Fuel', group: 'Fuel', unlock: { landings: 3 },
     levels: [
       { cost: 20, name: 'A bit of SAF', short: 'A little less CO2.', fuel: 'saf25' },
       { cost: 55, name: 'Half SAF', short: 'Less CO2. Thinner contrails.', fuel: 'saf50' },
@@ -33,7 +34,7 @@ export const LINES = [
     },
   },
   {
-    id: 'engine', name: 'Better Engines', group: 'Plane',
+    id: 'engine', name: 'Better Engines', group: 'Plane', unlock: { landings: 3 },
     levels: [
       { cost: 25, name: 'Engine tune-up', short: '10% less CO2.', co2: 0.9 },
       { cost: 60, name: 'New engines', short: '20% less CO2.', co2: 0.8 },
@@ -49,15 +50,40 @@ export const LINES = [
   {
     id: 'trees', name: 'Tree Planting', group: 'Trees',
     levels: [
-      { cost: 30, name: 'Tree parcels', short: 'Drop 2 trees per flight. Tap the grass!', tree: 'spruce', parcels: 2 },
-      { cost: 60, name: 'More parcels', short: 'Drop 4 trees per flight.', tree: 'spruce', parcels: 4 },
-      { cost: 100, name: 'Oak trees', short: 'Oaks grow big and cool more.', tree: 'oak', parcels: 4 },
-      { cost: 170, name: 'Fruit trees', short: '5 fruit trees. They cool the most!', tree: 'orchard', parcels: 5 },
+      { cost: 25, name: 'Tree parcels', short: 'Drop 2 trees per flight onto brown soil.', parcels: 2 },
+      { cost: 50, name: 'More parcels', short: 'Drop 3 trees per flight.', parcels: 3 },
+      { cost: 90, name: 'Big cargo hold', short: 'Drop 4 trees per flight.', parcels: 4 },
+      { cost: 150, name: 'Tree drop plane', short: 'Drop 6 trees per flight!', parcels: 6 },
     ],
     info: {
-      what: 'Trees take CO2 out of the air as they grow.',
-      why: 'Plant early in your flight: trees grow bigger and help more the longer they have.',
+      what: 'Parcels hold young trees. Drop them from your plane onto brown soil to plant them.',
+      why: 'Trees take CO2 out of the air as they grow. Plant early: they grow bigger and help more.',
       fact: 'A tree takes many years to grow big. Not making CO2 in the first place works faster.',
+      links: ['citizenzoo', 'project'],
+    },
+  },
+  {
+    id: 'species', name: 'Tree Species', group: 'Nature', unlock: { planted: 1 },
+    levels: [
+      { cost: 25, name: 'Birch', short: 'A new native tree. Big boost for nature!', species: 'birch' },
+      { cost: 55, name: 'Oak', short: 'Home to over 2,000 kinds of wildlife.', species: 'oak' },
+      { cost: 85, name: 'Rowan', short: 'Berries for the birds.', species: 'rowan' },
+      { cost: 130, name: 'Fruit trees', short: 'Food for people, bees and birds.', species: 'orchard' },
+    ],
+    info: {
+      what: 'You start with spruce. It grows fast but few animals live in it. Native trees are trees that have always grown here.',
+      why: 'Every NEW kind of tree you plant fills your Wild Land meter much more than planting the same kind again.',
+      fact: 'A wood with many kinds of trees is home to many more animals than rows of just one kind.',
+      links: ['citizenzoo', 'project'],
+    },
+  },
+  {
+    id: 'rewild', name: 'Rewilding', group: 'Nature', unlock: { planted: 1 },
+    levels: PROJECTS.map(p => ({ cost: p.cost, name: p.name, short: p.short, needsBio: p.needs, project: p.id })),
+    info: {
+      what: 'Rewilding means helping nature look after itself again: wild places, and bringing back animals that used to live here.',
+      why: 'Each project fills your Wild Land meter, and healthy land soaks up a little CO2 on every flight.',
+      fact: 'Beaver dams slow floods and make wetlands that store carbon. Citizen Zoo works with beavers in London!',
       links: ['citizenzoo', 'project'],
     },
   },
@@ -85,11 +111,6 @@ export const FUELS = {
   hydrogen: { name: 'Hydrogen', co2: 0.0, contrailEvery: 8, contrailLife: 9000 },
 };
 
-export const TREE_KINDS = {
-  spruce:  { name: 'Spruce', coolPerStage: [0.15, 0.3, 0.45] },
-  oak:     { name: 'Oak', coolPerStage: [0.2, 0.4, 0.6] },
-  orchard: { name: 'Fruit tree', coolPerStage: [0.25, 0.5, 0.8] },
-};
 
 export const BADGES = [
   { id: 'firstLanding', name: 'First Landing', desc: 'Land at an airport.' },
@@ -106,9 +127,33 @@ export const level = (save, lineId) => save.levels[lineId] || 0;
 export const lineById = id => LINES.find(l => l.id === id);
 export const nextLevel = (save, line) => line.levels[level(save, line.id)] || null;
 
+// Lines appear as you progress, so the hangar isn't overwhelming at the start.
+export function unlocked(save, line) {
+  const u = line.unlock;
+  if (!u) return true;
+  if (u.landings && (save.landings || 0) < u.landings) return false;
+  if (u.planted && Object.values(save.planted || {}).reduce((a, n) => a + n, 0) < u.planted) return false;
+  return true;
+}
+export function unlockText(line) {
+  const u = line.unlock || {};
+  return u.landings ? `Unlocks after ${u.landings} landings` : u.planted ? 'Unlocks when you plant your first tree' : '';
+}
+
+// Is the next level waiting for the Wild Land meter to grow?
+export function needsMoreNature(save, line) {
+  const next = nextLevel(save, line);
+  return !!(next && next.needsBio && biodiversity(save) < next.needsBio);
+}
+
 export function canBuy(save, line) {
   const next = nextLevel(save, line);
-  return !!next && save.trees >= next.cost;
+  return !!next && unlocked(save, line) && !needsMoreNature(save, line) && save.trees >= next.cost;
+}
+
+// Tree kinds you can plant: spruce, plus each native species unlocked.
+export function speciesOwned(save) {
+  return ['spruce', ...lineById('species').levels.slice(0, level(save, 'species')).map(l => l.species)];
 }
 
 // Fuels the player may pick: normal, their best SAF, and hydrogen once bought.
@@ -135,7 +180,7 @@ export function loadout(save) {
     contrailLife: fuel.contrailLife,
     revealPx: radar ? radar.reveal : ISSR.revealPx,
     hiddenAlpha: radar ? radar.hidden : ISSR.hiddenAlpha,
-    tree: trees ? { kind: trees.tree, parcels: trees.parcels, ...TREE_KINDS[trees.tree] } : null,
+    tree: trees ? { parcels: trees.parcels, species: speciesOwned(save) } : null,
     pickup: magnet ? magnet.pickup : 12,
   };
 }

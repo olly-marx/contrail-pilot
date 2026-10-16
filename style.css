@@ -218,3 +218,15 @@ p { margin: 0; }
 .btn.free { background: var(--gold); }
 
 .dropbtn { position: fixed; right: 10px; bottom: 9%; z-index: 6; font-size: 11px; padding: 12px 12px; touch-action: none; }
+
+/* ---------- Wild Land meter ---------- */
+.meter { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; font-size: 7px; }
+.mlabel { color: var(--green-dark); }
+.mtrack { position: relative; height: 8px; background: #e3ddcc; display: block; }
+.mfill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #9ccc65, #2e7d32); }
+.mtrack i { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--ink); opacity: .35; }
+.nature-head { background: #e7f6e7; padding: 8px; display: grid; gap: 4px; }
+.nature-head h3 { margin: 0; color: var(--green-dark); }
+.tally-row.nature b { color: var(--green-dark); }
+.line.locked { opacity: .5; }
+.coach.high { bottom: auto; top: 14%; }

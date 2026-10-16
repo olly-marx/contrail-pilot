@@ -1,10 +1,11 @@
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
-import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices } from './upgrades.js';
+import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature } from './upgrades.js';
+import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
 
-export const FACTS = [
+export const FACTS_BASE = [
   'Contrail means "condensation trail". It is made of tiny bits of ice.',
   'Where planes fly, the air is colder than -40 C. Much colder than your freezer!',
   'In dry air a contrail is gone in seconds. In icy air it can stay for hours.',
@@ -18,7 +19,14 @@ export const FACTS = [
   'Trees take CO2 out of the air, but it takes many years. Not making CO2 works faster.',
 ];
 
+export const FACTS = [...FACTS_BASE, ...NATURE_FACTS];
 const $ = id => document.getElementById(id);
+
+// The Wild Land meter as HTML: a bar plus the stage name.
+export function meterHTML(save) {
+  const b = biodiversity(save), st = stage(b);
+  return `<div class="meter"><span class="mlabel">Wild Land</span><span class="mtrack"><span class="mfill" style="width:${b}%"></span>${STAGES.slice(1).map(x => `<i style="left:${x.at}%"></i>`).join('')}</span><b>${st.name}</b></div>`;
+}
 const sign = v => (v > 0 ? '+' : v < 0 ? '-' : '') + Math.abs(v);
 
 export class UI {
@@ -76,12 +84,14 @@ export class UI {
     $('tBest').textContent = this.save.bestDistance;
     $('goBtn').textContent = this.save.tutorialDone ? 'TAKE OFF' : 'START';
     $('tNew').hidden = !this.hasNew();
+    const any = Object.values(this.save.planted || {}).some(n => n > 0);
+    $('tMeter').innerHTML = any ? meterHTML(this.save) : '';
     this.showOnly('title');
   }
 
   // ---------- results ----------
   // Something to spend in the hangar? Drives the NEW! tags and the glowing button.
-  hasNew() { return !!this.save.freeUpgrade || LINES.some(l => canBuy(this.save, l)); }
+  hasNew() { return !!this.save.freeUpgrade || LINES.some(l => canBuy(this.save, l)); }   // canBuy checks unlocks
 
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
@@ -107,6 +117,8 @@ export class UI {
     $('rDist').textContent = '0';
     $('rGrab').textContent = '0';
     $('rMultRow').hidden = true; $('rCoolRow').hidden = true; $('rLost').hidden = true;
+    $('rNatureRow').hidden = true;
+    $('rNature').textContent = `+${r.natureGain}`;
     $('rTotalRow').classList.remove('zero', 'stamp');
     $('rGain').textContent = '+0';
     for (const id of ['barCo2', 'barNight', 'barSun', 'barTrees']) $(id).style.width = '0';
@@ -136,6 +148,7 @@ export class UI {
     const mult = r.earned.find(e => e.label.startsWith('Long'));
     if (mult) { await wait(250); $('rMultRow').hidden = false; $('rMult').textContent = `x${(1 + mult.n / Math.max(1, grab)).toFixed(1).replace('.0', '')}`; $('rMultRow').classList.add('stamp'); sfx.coin(); }
     if (r.earned.some(e => e.label.startsWith('Cool'))) { await wait(250); $('rCoolRow').hidden = false; $('rCoolRow').classList.add('stamp'); sfx.coin(); }
+    if (r.natureGain > 0) { await wait(250); $('rNatureRow').hidden = false; $('rNatureRow').classList.add('stamp'); sfx.plant(); }
     await wait(300);
     const total = r.earned.reduce((a, e) => a + e.n, 0);
     if (r.landed) {
@@ -202,17 +215,27 @@ export class UI {
       s.fuel = btn.dataset.fuel; writeSave(s); sfx.coin(); this.renderHangar();
     });
 
+    let lastGroup = null;
     $('hUpgrades').innerHTML = LINES.map(line => {
+      // The Nature group gets a header with the Wild Land meter.
+      const head = line.group === 'Nature' && lastGroup !== 'Nature' && unlocked(s, line)
+        ? `<div class="nature-head"><h3>NATURE</h3>${meterHTML(s)}<p class="small">Plant different kinds of trees and rewild land to fill it.</p></div>` : '';
+      lastGroup = line.group;
+      if (!unlocked(s, line)) {
+        return `<div class="line locked"><div><div class="group">${line.group}</div><div class="name">???</div><div class="small">${unlockText(line)}</div></div></div>`;
+      }
       const have = level(s, line.id), next = nextLevel(s, line);
       const pips = line.levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
       const nowName = have ? line.levels[have - 1].name : 'Not yet';
-      const isFree = free && next && have === 0;
+      const waitBio = needsMoreNature(s, line);
+      const isFree = free && next && have === 0 && !waitBio;
       const ok = isFree || canBuy(s, line);
+      const btn = waitBio ? `<span class="small">needs Wild Land ${next.needsBio}</span>`
+        : `<button class="btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : next.cost + ' trees'}</button>`;
       const nextRow = next
-        ? `<div class="next"><span>Next: <b>${next.name}</b>. ${next.short}</span>
-             <button class="btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : next.cost + ' trees'}</button></div>`
+        ? `<div class="next"><span>Next: <b>${next.name}</b>. ${next.short}</span>${btn}</div>`
         : '<div class="next"><span><b>All done!</b></span></div>';
-      return `<div class="line ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}">
+      return head + `<div class="line ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}">
         <div><div class="group">${line.group}</div><div class="name">${line.name}</div><div class="small">${nowName}</div><div class="pips">${pips}</div></div>
         <button class="infobtn" data-info="${line.id}" type="button" aria-label="About ${line.name}">i</button>
         ${nextRow}</div>`;
@@ -242,7 +265,8 @@ export class UI {
     $('iGroup').textContent = line.group;
     $('iName').textContent = line.name;
     $('iLevels').innerHTML = line.levels.map((l, i) =>
-      `<li class="${i < have ? 'have' : ''}"><b>${l.name}</b> (${l.cost} trees): ${l.short}${i < have ? ' - yours!' : ''}</li>`).join('');
+      `<li class="${i < have ? 'have' : ''}"><b>${l.name}</b> (${l.cost} trees${l.needsBio ? `, Wild Land ${l.needsBio}` : ''}): ${l.short}${i < have ? ' - yours!' : ''}` +
+      (l.species ? `<br><span class="small">${SPECIES[l.species].fact}</span>` : '') + '</li>').join('');
     $('iWhat').textContent = line.info.what;
     $('iWhy').textContent = line.info.why;
     $('iFact').textContent = line.info.fact;
@@ -297,12 +321,13 @@ export class UI {
 
   // ---------- flight school ----------
   // waiting=true: the game is frozen and a tap on the bubble (or screen) continues.
-  coach(text, waiting) {
+  coach(text, waiting, school = true) {
     $('coachText').innerHTML = text;
     $('coachTap').hidden = !waiting;
     $('coach').classList.toggle('waiting', !!waiting);
     $('coach').hidden = false;
-    $('skipSchool').hidden = false;
+    $('coach').classList.toggle('high', !school);   // explanations sit high, so the ground stays visible
+    $('skipSchool').hidden = !school;
   }
   hideCoach() { $('coach').hidden = true; $('skipSchool').hidden = true; }
 }

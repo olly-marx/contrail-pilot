@@ -16,7 +16,7 @@ const KEY = 'contrailPilot.v2';
   const scene = (fn, arg) => p.evaluate(fn, arg);
   const setSave = s => p.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [KEY, s]);
   const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
-  const base = { tutorialDone: true, muted: true, seenTips: [] };
+  const base = { tutorialDone: true, muted: true, seenTips: ['*'] };   // '*' = skip the captain's explanations
   const noStorms = () => scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; s.tokens.forEach(t => t.img.destroy()); s.tokens = []; s.nextTokenAt = 1e9; });
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; }, y);
   const grab = n => scene(n => { const s = game.scene.getScene('game'); for (let i = 0; i < n; i++) s.addToken(s.plane.x + 20 + i * 3, s.plane.y - 2, false); }, n);
@@ -52,8 +52,14 @@ const KEY = 'contrailPilot.v2';
   check(r && r.gained === 6, `4 trees x1.5 should bank 6, got ${r && r.gained}`);
   check((await getSave()).trees === 11, `bank should be 5 + 6 = 11, got ${(await getSave()).trees}`);
 
-  // 3. Hangar: levelled lines, prices, info pop-up.
+  // 3. Hangar: lines unlock as you progress. A new player sees Fuel as locked.
   await setSave({ ...base, trees: 50 }); await p.reload(); await p.waitForTimeout(600);
+  await p.click('#hangarBtn');
+  check(await p.$('[data-buy="fuel"]') === null, 'fuel should be locked before 3 landings');
+  check((await p.textContent('#hUpgrades')).includes('Unlocks after 3 landings'), 'locked lines should say how to unlock them');
+  check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
+  // Levelled lines, prices, info pop-up.
+  await setSave({ ...base, trees: 50, landings: 3 }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#hangarBtn');
   await p.click('[data-buy="radar"]');     // 15
   await p.click('[data-buy="fuel"]');      // 20

@@ -7,6 +7,7 @@ import { Hud } from './Hud.js';
 import { loadout } from './upgrades.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
+import { SPECIES, biodiversity, plantGain, hasProject, natureCooling } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const FONT = 'Pixel, monospace';
@@ -29,6 +30,12 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     this.load.image('plane', 'assets/plane.png');
+    // Background strips: drawn by tools/art/make_background.py, 288 px wide, tile seamlessly.
+    for (const k of ['clouds', 'hills', 'city']) this.load.image(k, `assets/${k}.png`);
+    // Sprites: drawn by tools/art/make_sprites.py.
+    for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork'])
+      this.load.image(k, `assets/${k}.png`);
+    for (const kind of Object.keys(SPECIES)) for (let s = 0; s < 3; s++) this.load.image(`tree-${kind}-${s}`, `assets/tree-${kind}-${s}.png`);
   }
 
   init(data) { this.autostart = data && data.go ? data.mode || 'normal' : null; }
@@ -37,6 +44,7 @@ export class GameScene extends Phaser.Scene {
     this.save = this.registry.get('save');
     this.ui = this.registry.get('ui');
     this.kit = loadout(this.save);
+    this.builtWith = JSON.stringify(this.save.levels);   // scenery depends on upgrades (e.g. meadow flowers)
     this.makeTextures();
 
     this.state = 'idle';             // idle -> takeoff -> playing -> landing | over
@@ -60,6 +68,11 @@ export class GameScene extends Phaser.Scene {
     this.parcelsFalling = [];
     this.nextPlotAt = 200;
     this.treeFeedback = 0;
+    this.speciesIdx = 0;
+    this.decor = [];                 // ponds etc. scrolling on the ground
+    this.nextDecorAt = 500;
+    this.storks = [];
+    this.explaining = false;
     this.popups = [];
     this.tokens = [];                // floating trees to collect
     this.cargo = 0;                  // trees on board: kept only if you land
@@ -98,6 +111,8 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar = this.add.tileSprite(0, 60, WIDTH, 40, 'clouds').setOrigin(0).setAlpha(0.55);
     this.hills = this.add.tileSprite(0, SKY_H - 46, WIDTH, 46, 'hills').setOrigin(0);
     this.city = this.add.tileSprite(0, SKY_H - 30, WIDTH, 30, 'city').setOrigin(0);
+    this.hedge = hasProject(this.save, 'hedgerow') ? this.add.tileSprite(0, SKY_H - 6, WIDTH, 6, 'hedge').setOrigin(0) : null;
+    this.storkLayer = this.add.layer();
 
     this.issrLayer = this.add.layer();
     this.contrailLayer = this.add.layer();
@@ -112,6 +127,8 @@ export class GameScene extends Phaser.Scene {
     this.add.rectangle(0, SKY_H, WIDTH, GROUND_H, COLOURS.ground).setOrigin(0);
     this.add.rectangle(0, SKY_H, WIDTH, 3, COLOURS.groundEdge).setOrigin(0);
     this.groundFx = this.add.graphics();   // contrail shadows (day) and trapped-heat glow (night)
+    this.flowers = hasProject(this.save, 'meadow') ? this.add.tileSprite(0, SKY_H + 6, WIDTH, 4, 'flowers').setOrigin(0) : null;
+    this.decorLayer = this.add.layer();
     this.plotLayer = this.add.layer();
     this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
     this.treeLayer = this.add.layer();
@@ -147,6 +164,7 @@ export class GameScene extends Phaser.Scene {
     this.dropBox = { x: bx, y: by, w: 64, h: 32 };
     this.dropBg = this.add.rectangle(bx, by, 64, 32, 0x4caf50).setOrigin(0).setStrokeStyle(2, 0x1b1b2f);
     this.dropLabel = this.add.text(bx + 32, by + 16, 'DROP', { ...font, fontSize: '8px', strokeThickness: 3, align: 'center', lineSpacing: 3 }).setOrigin(0.5);
+    this.dropLabel.setFontSize(7);
     this.setDropVisible(false);
 
     // Pause when the tab is hidden, so a phone in a pocket doesn't crash the plane.
@@ -164,90 +182,24 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- textures drawn in code (placeholders until real pixel art arrives) ----------
   makeTextures() {
-    if (this.textures.exists('hills')) return;
+    if (this.textures.exists('chute')) return;
     const g = this.make.graphics({ x: 0, y: 0 }, false);
 
-    // Far clouds: puffy blobs, tiling across 288 px.
+    // Rewilding you can see: flowers in the grass, hedgerows, ponds and storks.
     g.clear();
-    const puff = (x, y, w) => { g.fillStyle(0xffffff); g.fillRect(x + 4, y, w - 8, 10); g.fillRect(x, y + 4, w, 8); g.fillRect(x + 8, y - 4, w / 2, 6); };
-    puff(10, 16, 46); puff(110, 22, 36); puff(190, 12, 60);
-    g.generateTexture('clouds', WIDTH, 40);
-
-    // Hills: two sine waves whose periods divide 288, so the strip tiles seamlessly.
+    const fr = new Phaser.Math.RandomDataGenerator(['flowers']);
+    for (let x = 0; x < WIDTH; x += fr.between(3, 7)) g.fillStyle([0xffeb3b, 0xffffff, 0xe040fb, 0xff7043][fr.between(0, 3)]).fillRect(x, fr.between(0, 3), 1, 1);
+    g.generateTexture('flowers', WIDTH, 4);
     g.clear();
-    for (let x = 0; x < WIDTH; x++) {
-      const h = Math.round(22 + 9 * Math.sin((2 * Math.PI * x) / 144) + 6 * Math.sin((2 * Math.PI * x) / 57.6 + 1));
-      g.fillStyle(0x7fb48a).fillRect(x, 46 - h, 1, h);
-      g.fillStyle(0x9cc9a5).fillRect(x, 46 - h, 1, 2);
-    }
-    g.generateTexture('hills', WIDTH, 46);
-
-    // City skyline with lit windows.
+    for (let x = 0; x < WIDTH; x++) { const h = 3 + Math.round(1.5 * Math.sin(x / 3) + Math.sin(x / 7)); g.fillStyle(0x2e6b2e).fillRect(x, 6 - h, 1, h); }
+    g.generateTexture('hedge', WIDTH, 6);
     g.clear();
-    let x = 2;
-    const rnd = new Phaser.Math.RandomDataGenerator(['contrail']);
-    while (x < WIDTH - 14) {
-      const w = rnd.between(10, 22), h = rnd.between(8, 28);
-      g.fillStyle(0x5d6d88).fillRect(x, 30 - h, w, h);
-      g.fillStyle(0xbfd3e6);
-      for (let wy = 30 - h + 3; wy < 28; wy += 5) for (let wx = x + 2; wx < x + w - 2; wx += 4) if (rnd.frac() < 0.6) g.fillRect(wx, wy, 2, 2);
-      x += w + rnd.between(2, 10);
-    }
-    g.generateTexture('city', WIDTH, 30);
-
-    // Trees: three growth stages for each species.
-    const tree = (key, stage, kind) => {
-      g.clear();
-      const trunk = 0x7a4a24, leaf = kind === 'spruce' ? 0x2e7d32 : 0x4caf50, dark = kind === 'spruce' ? 0x1b5e20 : 0x2e7d32;
-      const [w, h] = [[3, 4], [7, 9], [11, 14]][stage];
-      const trunkH = Math.max(1, Math.round(h / 4));
-      g.fillStyle(trunk).fillRect(Math.floor(w / 2) - (stage ? 1 : 0), h - trunkH, stage ? 2 : 1, trunkH);
-      const crownH = h - trunkH;
-      if (kind === 'spruce') {
-        for (let row = 0; row < crownH; row++) {
-          const rw = Math.max(1, Math.round((row + 1) / crownH * w));
-          g.fillStyle(row % 3 === 2 ? dark : leaf).fillRect(Math.floor((w - rw) / 2), row, rw, 1);
-        }
-      } else {
-        g.fillStyle(dark).fillRect(1, 1, w - 2, crownH - 1);
-        g.fillStyle(leaf).fillRect(0, 2, w, Math.max(1, crownH - 3)).fillRect(2, 0, Math.max(1, w - 4), crownH);
-        if (kind === 'orchard' && stage === 2) { g.fillStyle(0xe53935); [[2, 3], [7, 2], [4, 6], [8, 6]].forEach(([fx, fy]) => g.fillRect(fx, fy, 2, 2)); }
-      }
-      g.generateTexture(key, w, h);
-    };
-    for (const kind of ['spruce', 'oak', 'orchard']) for (let s = 0; s < 3; s++) tree(`tree-${kind}-${s}`, s, kind);
-
-    // Storm column body: irregular cloud lumps with light from the left; tiles every 48 px.
-    const SW = STORMS.width, dark = 0x3b3f58, mid = 0x4a4e69, light = 0x5f6382, rim = 0x7a7e9c;
+    g.fillStyle(0x3d8fd1).fillRect(2, 0, 22, 4).fillRect(0, 1, 26, 2);
+    g.fillStyle(0x8fd3ff).fillRect(5, 1, 6, 1);
+    g.generateTexture('pond', 26, 4);
     g.clear();
-    const TH = 48;
-    for (let y = 0; y < TH; y++) {
-      const t = (2 * Math.PI * y) / TH;
-      const l = Math.round(3 + 2.5 * Math.sin(t) + 1.5 * Math.sin(3 * t + 1));       // left edge inset
-      const r = Math.round(3 + 2.5 * Math.sin(t + 2) + 1.5 * Math.sin(2 * t + 4));   // right edge inset
-      const w = SW - l - r;
-      g.fillStyle(mid).fillRect(l, y, w, 1);
-      g.fillStyle(light).fillRect(l, y, Math.round(w * 0.3), 1);                   // lit side
-      g.fillStyle(rim).fillRect(l, y, 1, 1);                                       // bright rim
-      g.fillStyle(dark).fillRect(SW - r - Math.round(w * 0.25), y, Math.round(w * 0.25), 1);  // shadow side
-    }
-    g.generateTexture('storm-body', SW, TH);
-
-    // Rounded cloud ends: one for the hanging storm's bottom, one for the rising storm's top.
-    const cap = (key, flip) => {
-      g.clear();
-      const rows = [[10, 24], [6, 32], [3, 38], [1, 42], [0, 44], [0, 44], [0, 44], [0, 44], [0, 44], [0, 44]];
-      rows.forEach(([x0, w], i) => {
-        const y = flip ? 9 - i : i;
-        g.fillStyle(mid).fillRect(x0, y, w, 1);
-        g.fillStyle(i < 2 ? light : mid).fillRect(x0, y, Math.min(4, w), 1);
-      });
-      g.fillStyle(light).fillRect(8, flip ? 3 : 5, 10, 2).fillRect(24, flip ? 2 : 6, 8, 2);
-      g.generateTexture(key, SW, 10);
-    };
-    cap('storm-top', false);      // rounded top of a rising storm (widest at the bottom of the cap)
-    cap('storm-bottom', true);    // rounded bottom of a hanging storm
-
+    g.fillStyle(0x6d4c2f).fillRect(0, 0, 6, 2).fillRect(1, 2, 4, 1);
+    g.generateTexture('dam', 6, 3);
     // ISSR fill: pale ice with scattered crystal sparkles, tiling every 32 px.
     g.clear();
     g.fillStyle(COLOURS.issr).fillRect(0, 0, 32, 32);
@@ -256,22 +208,6 @@ export class GameScene extends Phaser.Scene {
     g.fillStyle(0xb5ddf5).fillRect(9, 10, 1, 1).fillRect(24, 11, 1, 1).fillRect(14, 23, 1, 1).fillRect(29, 29, 1, 1);
     g.generateTexture('issr-tile', 32, 32);
 
-    // Floating tree token: a tree in a white bubble (and a golden one worth 3).
-    const token = (key, ring) => {
-      g.clear();
-      g.fillStyle(ring).fillRect(4, 0, 6, 14).fillRect(0, 4, 14, 6).fillRect(2, 2, 10, 10);
-      g.fillStyle(0xffffff).fillRect(4, 1, 6, 12).fillRect(1, 4, 12, 6).fillRect(3, 2, 8, 10).fillRect(2, 3, 10, 8);
-      g.fillStyle(0x2e7d32).fillRect(6, 3, 2, 1);
-      g.fillStyle(0x4caf50).fillRect(5, 4, 4, 2);
-      g.fillStyle(0x2e7d32).fillRect(4, 6, 6, 2);
-      g.fillStyle(0x7a4a24).fillRect(6, 8, 2, 3);
-      g.generateTexture(key, 14, 14);
-    };
-    g.clear();
-    g.fillStyle(0xffffff).fillRect(1, 0, 7, 1).fillRect(0, 1, 9, 2);
-    g.fillStyle(0xe0483c).fillRect(3, 0, 3, 1).fillRect(3, 1, 3, 2);
-    g.fillStyle(0xdddddd).fillRect(0, 3, 1, 3).fillRect(8, 3, 1, 3).fillRect(4, 3, 1, 3);
-    g.generateTexture('chute', 9, 6);
     g.clear();
     g.fillStyle(0x7a4a24).fillRect(2, 4, 1, 5);
     g.fillStyle(0xf4f1e8).fillRect(0, 0, 6, 4);
@@ -287,27 +223,13 @@ export class GameScene extends Phaser.Scene {
     g.fillStyle(0xd02a2a);
     for (let i = 0; i < 8; i++) { g.fillRect(i, (i + 0) % 8, 1, 1); g.fillRect(i, (i + 1) % 8, 1, 1); g.fillRect(i, (i + 2) % 8, 1, 1); g.fillRect(i, (i + 3) % 8, 1, 1); }
     g.generateTexture('nofly', 8, 8);
-    // Birds: 9x6, wings up and wings down, with a white eye so they read against any sky.
-    const bird = (key, rows) => {
-      g.clear();
-      rows.forEach((row, y) => [...row].forEach((ch, x) => {
-        if (ch === '#') g.fillStyle(0x2b2b3f).fillRect(x, y, 1, 1);
-        if (ch === 'o') g.fillStyle(0xffffff).fillRect(x, y, 1, 1);
-        if (ch === '>') g.fillStyle(0xffa000).fillRect(x, y, 1, 1);
-      }));
-      g.generateTexture(key, 9, 6);
-    };
-    bird('bird-0', ['#.......#', '##.....##', '.##...##.', '..#####o>', '...###...', '.........']);
-    bird('bird-1', ['.........', '.........', '.........', '#########', '.#######o', '..##.##.>']);
-    token('token', 0x2e7d32);
-    token('token-gold', 0xffc23d);
     g.destroy();
   }
 
   setState(s) { this.state = s; this.stateTime = 0; }
 
   startSchool() {
-    if (this.state !== 'idle') { this.scene.restart({ go: true, mode: 'school' }); return; }
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify(this.save.levels)) { this.scene.restart({ go: true, mode: 'school' }); return; }
     this.school = new School(this, this.ui);
     this.nextAirport = { worldX: 1e9, name: AIRPORT.names[0], spawned: false };
     this.startFlight();
@@ -329,12 +251,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   startFlight() {
-    if (this.state !== 'idle') { this.scene.restart({ go: true }); return; }
+    // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify(this.save.levels)) { this.scene.restart({ go: true }); return; }
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.setState('takeoff');
     this.cargoIcon.setVisible(true);
+    this.bioStart = biodiversity(this.save);
     if (!this.school) {
       this.save.flights++;
       writeSave(this.save);
@@ -342,10 +266,30 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  // A new mechanic: pause the game and let the captain explain it, once per device.
+  // seenTips containing '*' skips all explanations (used by automated tests).
+  explain(id, html) {
+    if (this.school || this.explaining) return false;
+    const seen = this.save.seenTips;
+    if (seen.includes(id) || seen.includes('*')) return false;
+    seen.push(id);
+    writeSave(this.save);
+    this.ui.hideToast();
+    this.frozen = true;
+    this.explaining = true;
+    this.ui.coach(html, true, false);
+    return true;
+  }
+
+  onCoachTap() {
+    if (this.explaining) { this.explaining = false; this.frozen = false; this.ui.hideCoach(); return true; }
+    return !!(this.school && this.school.onTap());
+  }
+
   setDropVisible(v) { this.dropBg.setVisible(v); this.dropLabel.setVisible(v); this.dropShown = v; }
 
   onTap(p) {
-    if (this.school && this.school.onTap()) return;   // flight school uses the tap to continue
+    if (this.onCoachTap()) return;   // the captain is talking: a tap continues
     const d = this.dropBox;
     if (this.dropShown && p.x >= d.x && p.x <= d.x + d.w && p.y >= d.y && p.y <= d.y + d.h) {
       this.dropParcel();
@@ -404,7 +348,10 @@ export class GameScene extends Phaser.Scene {
     if (this.state === 'takeoff') {
       this.plane.vy = TAKEOFF.climbVelocity;
       this.plane.y += this.plane.vy * dt;
-      if (this.stateTime >= TAKEOFF.seconds) { this.setState('playing'); this.plane.vy = 0; }
+      if (this.stateTime >= TAKEOFF.seconds) {
+        this.setState('playing'); this.plane.vy = 0;
+        if (!this.school) this.time.delayedCall(1500, () => this.explain('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!'));
+      }
     } else if (this.state === 'playing') {
       this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
       this.plane.y += this.plane.vy * dt;
@@ -424,15 +371,22 @@ export class GameScene extends Phaser.Scene {
       const age = this.elapsed - t.plantedAt;
       const stage = age < 4 ? 0 : age < 9 ? 1 : 2;
       if (stage !== t.stage) { t.stage = stage; if (t.sprite.active) t.sprite.setTexture(`tree-${t.kind}-${stage}`); }
-      const cool = this.kit.tree.coolPerStage[stage] * dt;
+      const cool = SPECIES[t.kind].coolPerStage[stage] * dt;
       this.heat -= cool;
       this.breakdown.trees += cool;
       this.treeFeedback += cool;
     }
+    const land = natureCooling(this.save) * dt;   // rewilded land soaks up a little CO2
+    this.heat -= land; this.breakdown.trees += land;
     if (this.treeFeedback >= 1) {
       this.popup(WIDTH / 2, SKY_H - 12, `-${this.treeFeedback.toFixed(1)} from your forest`, '#8dffb0');
       this.coolSparkle();
       this.treeFeedback = 0;
+    this.speciesIdx = 0;
+    this.decor = [];                 // ponds etc. scrolling on the ground
+    this.nextDecorAt = 500;
+    this.storks = [];
+    this.explaining = false;
     }
 
     this.spawn();
@@ -476,6 +430,7 @@ export class GameScene extends Phaser.Scene {
     if (this.school) { this.school.forgive(box); this.updateTexts(inIssr); return; }
     if (this.heat >= CLIMATE.dangerLine * 0.75 && !this.warnedHot) {
       this.warnedHot = true;
+      if (this.explain('x-hot', 'The Earth is getting <b>too hot</b>! If the red bar on the right reaches the top, your flight is over.<br>Land soon, make <b>shade</b> in the daytime, or stay out of icy air at night.')) return;
       this.ui.toast('Planet overheating!', this.isDay ? 'Make contrails in the sunshine, or land soon!' : 'Stay out of icy air at night, or land soon!', 'bad', 3);
     }
     if (this.heat >= CLIMATE.dangerLine) return this.finish({ reason: 'The planet got too hot!\nFlight grounded.', sound: 'overheat' });
@@ -520,6 +475,28 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar.tilePositionX += dx * 0.15;
     this.hills.tilePositionX += dx * 0.3;
     this.city.tilePositionX += dx * 0.55;
+    if (this.hedge) this.hedge.tilePositionX += dx;
+    if (this.flowers) this.flowers.tilePositionX += dx;
+    // Ponds (with a beaver dam once beavers are back) and storks gliding far away.
+    if (this.distancePx >= this.nextDecorAt && hasProject(this.save, 'pond') && dx > 0) {
+      const x = WIDTH + 10;
+      if (!this.runways.some(r => r.strip.x < x + 40 && r.strip.x + AIRPORT.runwayLen > x - 10)) {
+        const parts = [this.add.image(x, SKY_H + 12, 'pond').setOrigin(0)];
+        if (hasProject(this.save, 'beavers')) parts.push(this.add.image(x + 20, SKY_H + 10, 'dam').setOrigin(0));
+        this.decorLayer.add(parts);
+        this.decor.push(...parts);
+      }
+      this.nextDecorAt += Phaser.Math.Between(500, 900);
+    }
+    for (const d of this.decor) d.x -= dx;
+    this.decor = this.decor.filter(d => { if (d.x < -40) { d.destroy(); return false; } return true; });
+    if (hasProject(this.save, 'storks') && dx > 0 && Math.random() < 0.002 && this.storks.length < 2) {
+      const st = this.add.image(WIDTH + 10, Phaser.Math.Between(80, 160), 'stork').setOrigin(0).setAlpha(0.8);
+      this.storkLayer.add(st);
+      this.storks.push(st);
+    }
+    for (const st of this.storks) st.x -= dx * 0.25 + 0.3;
+    this.storks = this.storks.filter(st => { if (st.x < -20) { st.destroy(); return false; } return true; });
   }
 
   nightAmount() {
@@ -596,7 +573,11 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- trees ----------
 
-  treeKind() { return this.kit.tree ? this.kit.tree.kind : 'spruce'; }
+  // Parcels take turns through the kinds of tree you own, so variety comes naturally.
+  treeKind() {
+    const list = this.kit.tree ? this.kit.tree.species : ['spruce'];
+    return list[this.speciesIdx % list.length];
+  }
 
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
   // drop them before you reach a soil plot. This works out where one would land if dropped now.
@@ -616,11 +597,12 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
     if (this.parcels <= 0) { sfx.nope(); return; }
     this.parcels--;
-    const crate = this.add.rectangle(0, 0, 5, 5, 0xc8a165).setStrokeStyle(1, 0x7a4a24);
-    const chute = this.add.image(0, -7, 'chute').setVisible(false);
+    const crate = this.add.image(0, 0, 'crate');
+    const chute = this.add.image(0, -8, 'chute').setVisible(false);
     const box = this.add.container(this.plane.x + PLANE.w / 2, this.plane.y + PLANE.h, [chute, crate]);
     this.fxLayer.add(box);
-    this.parcelsFalling.push({ box, chute, t: 0, vy: 0 });
+    this.parcelsFalling.push({ box, chute, t: 0, vy: 0, kind: this.treeKind() });
+    this.speciesIdx++;
     sfx.flap();
     this.ui.tipOnce('firstDrop', 'Parcel away!', 'It floats down AND forwards. Drop it before the brown soil to plant a tree!', 'good', 3.5);
   }
@@ -634,13 +616,13 @@ export class GameScene extends Phaser.Scene {
       p.box.y += p.vy * dt;
       p.box.rotation = Math.sin(p.t * 6) * 0.15;   // swing under the parachute
       if (p.box.y < SKY_H) return true;
-      this.parcelLanded(p.box.x);
+      this.parcelLanded(p.box.x, p.kind);
       p.box.destroy();
       return false;
     });
   }
 
-  parcelLanded(x) {
+  parcelLanded(x, kind) {
     const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + PARCEL.plotW + 3);
     if (!plot) {
       this.burst(x, SKY_H, 0xc8a165, 6);
@@ -649,7 +631,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     plot.used = true;
-    const cx = plot.x + PARCEL.plotW / 2, kind = this.treeKind();
+    const cx = plot.x + PARCEL.plotW / 2;
     const sprite = this.add.image(cx, SKY_H + 1, `tree-${kind}-0`).setOrigin(0.5, 1).setScale(0.2);
     this.treeLayer.add(sprite);
     this.tweens.add({ targets: sprite, scale: 1, duration: 300, ease: 'Back.easeOut' });
@@ -658,9 +640,16 @@ export class GameScene extends Phaser.Scene {
     this.planted++;
     this.burst(cx, SKY_H - 2, 0x8dffb0, 12);
     this.burst(cx, SKY_H - 2, 0xffe15a, 6);
-    this.popup(cx, SKY_H - 24, 'TREE PLANTED!', '#8dffb0', 8);
+    // Wild Land: a new kind of tree is a big boost; the same kind again adds less.
+    const first = !(this.save.planted[kind] > 0);
+    const gain = plantGain(this.save, kind);
+    this.save.planted[kind] = (this.save.planted[kind] || 0) + 1;
+    this.popup(cx, SKY_H - 24, `${SPECIES[kind].name.toUpperCase()} PLANTED!`, '#8dffb0', 8);
+    this.time.delayedCall(450, () => this.popup(cx, SKY_H - 36, `+${gain.toFixed(1)} wild land${first ? ' (new kind!)' : ''}`, first ? '#ffe15a' : '#b8f5c8'));
     sfx.plant();
     buzz(30);
+    if (first && SPECIES[kind].native) this.explain(`x-species-${kind}`, `<b>${SPECIES[kind].name}!</b> ${SPECIES[kind].fact}<br>New kinds of tree fill your <b>Wild Land</b> meter the most.`);
+    this.explain('x-nature', 'Your <b>Wild Land</b> meter grew! It shows how full of life your land is.<br><b>Different kinds</b> of trees help wildlife much more than lots of the same kind.');
     this.ui.tipOnce('firstTree', 'Tree planted!', 'It cools the Earth for the rest of your flight. Plant early: trees grow!', 'good', 3.5);
   }
 
@@ -677,6 +666,7 @@ export class GameScene extends Phaser.Scene {
     parts.push(marker);
     this.plotLayer.add(parts);
     this.plots.push({ x, parts, marker, used: false });
+    if (this.parcels > 0) this.time.delayedCall(900, () => this.explain('x-plots', '<b>Brown soil</b> = a place to plant a tree!<br>Press <b>DROP</b> a little <b>before</b> you reach it: parcels float forwards as they fall. The X shows where it will land.'));
   }
 
   drawAim() {
@@ -704,7 +694,7 @@ export class GameScene extends Phaser.Scene {
       this.airportIndex++;
       this.airportsSkipped++;
       this.popup(WIDTH / 2, 60, `Long flight! Landing bonus x${this.multiplier()}`, '#ffe15a');
-      if (this.airportsSkipped === 1) this.ui.tipOnce('skipped', 'Flying on!', 'Longer flights = more trees when you land. But crash and you lose them all!', 'good', 3.5);
+      this.explain('x-multiplier', 'You flew past an airport! Your <b>landing bonus</b> is now <b>x1.5</b> (top left).<br>Each airport you pass makes it bigger. But crash, and you lose ALL your trees!');
       this.nextAirport = {
         worldX: na.worldX + AIRPORT.every,
         name: AIRPORT.names[this.airportIndex % AIRPORT.names.length],
@@ -737,7 +727,7 @@ export class GameScene extends Phaser.Scene {
     if (this.distancePx >= this.nextTurbAt) {
       if (Math.random() < T.chance) {
         this.turbs.push({ x: WIDTH + 10, w: Phaser.Math.Between(T.minW, T.maxW) });
-        this.newHazard('turbulence', 'NEW HAZARD: TURBULENCE', 'Bumpy air! Your taps work late. Tap a bit early.');
+        this.newHazard('turbulence', 'NEW HAZARD: TURBULENCE', 'Wavy lines = bumpy air! Your plane gets pushed about and your taps work a little late. Tap a bit early!');
       }
       this.nextTurbAt += T.every;
     }
@@ -765,12 +755,12 @@ export class GameScene extends Phaser.Scene {
       birds.push({ img, ox, oy });
     }
     this.birds.push({ birds, x, y, phase: Math.random() * 6 });
-    this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds! Fly around them.');
+    this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds is flying at you! Fly over or under them. Hitting a bird ends your flight.');
   }
 
   newHazard(id, title, body) {
     if (this.school) return;
-    if (!this.ui.tipOnce(`hazard-${id}`, title, body, 'bad', 3.5)) {
+    if (!this.explain(`hazard-${id}`, `<b>${title}</b><br>${body}`)) {
       if (!this.hazardSeen) this.hazardSeen = {};
       if (!this.hazardSeen[id]) { this.hazardSeen[id] = true; this.popup(WIDTH / 2, 70, `${{ noFly: 'No-fly zone', turbulence: 'Turbulence', birds: 'Birds' }[id]} ahead!`, '#ff8080'); }
     }
@@ -840,6 +830,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
     if (golden === null) golden = this.distancePx > TOKENS.goldenAfter && Math.random() < TOKENS.goldenChance;
+    if (golden) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN tree</b>! It is worth <b>3 trees</b>. They only appear on long flights.'));
     const img = this.add.image(x, y, golden ? 'token-gold' : 'token').setOrigin(0);
     this.fxLayer.add(img);
     this.tokens.push({ img, baseY: y, phase: Math.random() * 6, value: golden ? 3 : 1 });
@@ -903,7 +894,7 @@ export class GameScene extends Phaser.Scene {
     this.stormLayer.add(parts);
     this.storms.push({ rects: [top, bottom], parts, flashUntil: 0, noFly: true });
     this.stormCount++;
-    this.newHazard('noFly', 'NEW HAZARD: NO-FLY ZONE', 'Red stripes = planes not allowed. Squeeze through the gap!');
+    this.newHazard('noFly', 'NEW HAZARD: NO-FLY ZONE', 'Red stripes mean planes are not allowed there, like near airports or big events. Squeeze through the gap: touching it ends your flight!');
   }
 
   addStormPairAt(x, gapY, gap) {
@@ -1219,7 +1210,7 @@ export class GameScene extends Phaser.Scene {
     this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.parcels ? `drop on soil! ${forest}` : forest) : '');
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen;
     this.setDropVisible(showDrop);
-    if (showDrop) this.dropLabel.setText(`DROP\nx${this.parcels}`);
+    if (showDrop) this.dropLabel.setText(`DROP x${this.parcels}\n${SPECIES[this.treeKind()].name.toUpperCase()}`);
     this.cargoText.setText(`${this.cargo}`);
     this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');
     this.multText.x = this.cargoText.x + this.cargoText.width + 4;
@@ -1266,6 +1257,8 @@ export class GameScene extends Phaser.Scene {
     award('forester', this.planted >= 3);
     award('treeHunter', landed && this.cargo >= 15);
 
+    if (landed) this.save.landings = (this.save.landings || 0) + 1;
+    const natureGain = biodiversity(this.save) - (this.bioStart || 0);
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
     this.save.trees += gained;
@@ -1277,7 +1270,7 @@ export class GameScene extends Phaser.Scene {
       landed, landedAt: this.landedAt, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
-      cargo: this.cargo, school: !!this.school,
+      cargo: this.cargo, school: !!this.school, natureGain, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());

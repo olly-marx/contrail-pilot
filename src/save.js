@@ -13,6 +13,8 @@ const DEFAULTS = {
   tutorialDone: false,
   freeUpgrade: false,  // true after the first landing until the free upgrade is picked
   freeGiven: false,
+  landings: 0,
+  planted: {},         // species id -> trees planted, all flights (drives the Wild Land meter)
   muted: false,
 };
 

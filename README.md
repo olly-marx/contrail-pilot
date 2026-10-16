@@ -28,6 +28,7 @@ On a phone on the same Wi-Fi, open `http://<your-laptop-ip>:8000`.
 | `src/ui.js` | Title/briefing, results, hangar (shop) and in-flight tips (HTML overlays) |
 | `src/upgrades.js` | Upgrade lines and levels, fuels, tree species, badges, and how they change a flight |
 | `src/school.js` | Flight school: the guided first flight |
+| `src/nature.js` | Tree species, rewilding projects and the Wild Land (biodiversity) meter |
 | `src/links.js` | "Learn more" links in the info pop-ups (some still to be filled in) |
 | `src/save.js` | Progress saved on the device (localStorage) |
 | `src/sound.js` | Chiptune sound effects synthesised in code |
@@ -59,6 +60,7 @@ node tests/flight.cjs             # takeoff, landing, day/night radiation, overh
 node tests/progression.cjs        # trees banked only on landing, multiplier, hangar levels, info pop-ups, planting
 node tests/school.cjs             # a new player can finish flight school by following the captain
 node tests/hazards.cjs            # turbulence, no-fly zones, birds: distances, delayed taps, crashes
+node tests/nature.cjs             # Wild Land meter: variety beats quantity, species rotation, rewilding
 ```
 
 `tests/flight.cjs` lands an autopilot at the second airport and forces day and night over a line

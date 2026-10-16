@@ -19,6 +19,7 @@
       <h1>CONTRAIL<br>PILOT</h1>
       <p class="lead">Fly far. Grab trees. Keep the Earth cool!</p>
       <div class="stats"><span><i class="treeicon"></i> <b id="tTrees">0</b></span><span>Best <b id="tBest">0</b>m</span></div>
+      <div id="tMeter"></div>
       <button id="goBtn" class="btn go big" type="button">TAKE OFF</button>
       <button id="hangarBtn" class="btn" type="button">HANGAR <span id="tNew" class="newtag" hidden>NEW!</span></button>
       <div class="buttons">
@@ -56,6 +57,7 @@
         <div class="tally-row"><span>Trees grabbed</span><b id="rGrab">0</b></div>
         <div class="tally-row mult" id="rMultRow" hidden><span>Long flight</span><b id="rMult">x1</b></div>
         <div class="tally-row cool" id="rCoolRow" hidden><span>Cool Earth</span><b>+3</b></div>
+        <div class="tally-row nature" id="rNatureRow" hidden><span>Wild Land</span><b id="rNature">+0</b></div>
         <div class="tally-total" id="rTotalRow"><i class="treeicon"></i><b id="rGain">+0</b></div>
         <p class="lost-msg" id="rLost" hidden>CRASHED! Trees lost.<br>Land to keep them!</p>
       </div>
@@ -66,7 +68,7 @@
           <div class="ebar"><span class="elabel">CO2</span><span class="etrack"><span id="barCo2" class="efill co2"></span></span><b id="rCo2">+0</b></div>
           <div class="ebar"><span class="elabel">Night</span><span class="etrack"><span id="barNight" class="efill night"></span></span><b id="rNight">+0</b></div>
           <div class="ebar"><span class="elabel">Shade</span><span class="etrack"><span id="barSun" class="efill sun"></span></span><b id="rSun">-0</b></div>
-          <div class="ebar"><span class="elabel">Trees</span><span class="etrack"><span id="barTrees" class="efill trees"></span></span><b id="rTreesCool">-0</b></div>
+          <div class="ebar"><span class="elabel">Nature</span><span class="etrack"><span id="barTrees" class="efill trees"></span></span><b id="rTreesCool">-0</b></div>
         </div>
       </div>
 

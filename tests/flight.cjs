@@ -6,6 +6,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
 async function fly(p, { landAt }) {
   await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn');
+  // Hazards have their own test; keep this flight about takeoff, day/night and landing.
+  await p.evaluate(() => { const s = game.scene.getScene('game'); s.nextTurbAt = s.nextBirdsAt = 1e9; });
   const log = { states: new Set(), maxCo2: 0, sawNight: false, heatSamples: [] };
   for (let i = 0; i < 1200; i++) {
     const r = await p.evaluate((landAt) => { const s = game.scene.getScene('game');
@@ -30,7 +32,7 @@ async function fly(p, { landAt }) {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   // Fresh progress for every load (so upgrades don't change the physics), flight school already done.
-  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true })); });
+  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'] })); });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const fails = [];
 
