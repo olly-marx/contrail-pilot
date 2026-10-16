@@ -58,6 +58,7 @@ node tests/issr-reveal.cjs        # set CHROME=/path/to/chrome if needed
 node tests/flight.cjs             # takeoff, landing, day/night radiation, overheat, crash
 node tests/progression.cjs        # trees banked only on landing, multiplier, hangar levels, info pop-ups, planting
 node tests/school.cjs             # a new player can finish flight school by following the captain
+node tests/hazards.cjs            # turbulence, no-fly zones, birds: distances, delayed taps, crashes
 ```
 
 `tests/flight.cjs` lands an autopilot at the second airport and forces day and night over a line

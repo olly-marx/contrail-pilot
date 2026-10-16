@@ -1,6 +1,6 @@
 import {
   WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
-  TAKEOFF, AIRPORT, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL,
+  TAKEOFF, AIRPORT, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL, HAZARDS,
 } from './config.js';
 import { School } from './school.js';
 import { Hud } from './Hud.js';
@@ -51,6 +51,12 @@ export class GameScene extends Phaser.Scene {
     this.runways = [];
     this.trees = [];                 // planted trees: keep cooling after they scroll away
     this.plots = [];                 // soil plots on the ground to aim parcels at
+    this.turbs = [];                 // turbulence zones {x, w}
+    this.birds = [];                 // flocks {birds: [{img, ox, oy}], x, y, phase}
+    this.nextTurbAt = HAZARDS.turbulence.from;
+    this.nextBirdsAt = HAZARDS.birds.from;
+    this.inTurb = false;
+    this.bumpIn = 0;
     this.parcelsFalling = [];
     this.nextPlotAt = 200;
     this.treeFeedback = 0;
@@ -97,6 +103,8 @@ export class GameScene extends Phaser.Scene {
     this.contrailLayer = this.add.layer();
     this.rayGfx = this.add.graphics();
     this.stormLayer = this.add.layer();
+    this.turbGfx = this.add.graphics();
+    this.birdLayer = this.add.layer();
 
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
     this.planeSprite = this.add.image(0, 0, 'plane');
@@ -273,6 +281,24 @@ export class GameScene extends Phaser.Scene {
     g.fillStyle(0x1b5e20).fillRect(0, 0, 9, 1).fillRect(1, 1, 7, 1).fillRect(2, 2, 5, 1).fillRect(3, 3, 3, 1).fillRect(4, 4, 1, 1);
     g.fillStyle(0x8dffb0).fillRect(1, 0, 7, 1).fillRect(2, 1, 5, 1).fillRect(3, 2, 3, 1);
     g.generateTexture('plot-arrow', 9, 5);
+    // No-fly zone: red and white diagonal stripes, tiling every 8 px.
+    g.clear();
+    g.fillStyle(0xf4f1e8).fillRect(0, 0, 8, 8);
+    g.fillStyle(0xd02a2a);
+    for (let i = 0; i < 8; i++) { g.fillRect(i, (i + 0) % 8, 1, 1); g.fillRect(i, (i + 1) % 8, 1, 1); g.fillRect(i, (i + 2) % 8, 1, 1); g.fillRect(i, (i + 3) % 8, 1, 1); }
+    g.generateTexture('nofly', 8, 8);
+    // Birds: 9x6, wings up and wings down, with a white eye so they read against any sky.
+    const bird = (key, rows) => {
+      g.clear();
+      rows.forEach((row, y) => [...row].forEach((ch, x) => {
+        if (ch === '#') g.fillStyle(0x2b2b3f).fillRect(x, y, 1, 1);
+        if (ch === 'o') g.fillStyle(0xffffff).fillRect(x, y, 1, 1);
+        if (ch === '>') g.fillStyle(0xffa000).fillRect(x, y, 1, 1);
+      }));
+      g.generateTexture(key, 9, 6);
+    };
+    bird('bird-0', ['#.......#', '##.....##', '.##...##.', '..#####o>', '...###...', '.........']);
+    bird('bird-1', ['.........', '.........', '.........', '#########', '.#######o', '..##.##.>']);
     token('token', 0x2e7d32);
     token('token-gold', 0xffc23d);
     g.destroy();
@@ -332,7 +358,18 @@ export class GameScene extends Phaser.Scene {
 
   flap() {
     if (this.state !== 'playing') return;
+    if (this.inTurb) {
+      // Turbulence: the tap works, but a little late.
+      const [a, b] = HAZARDS.turbulence.delay;
+      this.time.delayedCall(Phaser.Math.Between(a, b), () => { if (this.state === 'playing') this.applyFlap(); });
+      return;
+    }
+    this.applyFlap();
+  }
+
+  applyFlap() {
     this.plane.vy = PLANE.flapVelocity;
+    this.flaps = (this.flaps || 0) + 1;
     sfx.flap();
   }
 
@@ -413,6 +450,7 @@ export class GameScene extends Phaser.Scene {
       i.tilePositionY += dt * 4;
     }
     this.updateTokens(dt, box);
+    this.updateHazards(dt, box);
     this.updateParcels(dt);
     this.drawAim();
     if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
@@ -448,9 +486,12 @@ export class GameScene extends Phaser.Scene {
     }
     for (const s of this.storms) {
       for (const r of s.rects) {
-        if (overlaps(box, { x: r.x, y: r.y, w: r.width, h: r.height })) return this.finish({ reason: 'Turbulence!\nYou hit a storm.' });
+        if (overlaps(box, { x: r.x, y: r.y, w: r.width, h: r.height })) {
+          return this.finish({ reason: s.noFly ? 'Restricted airspace!\nFlight stopped.' : 'Storm!\nYou flew into a storm.' });
+        }
       }
     }
+    if (this.hitBird(box)) return this.finish({ reason: 'Bird strike!\nYou hit a bird.' });
   }
 
   multiplier() { return 1 + CARGO.multiplierPerSkip * this.airportsSkipped; }
@@ -692,11 +733,94 @@ export class GameScene extends Phaser.Scene {
       if (Math.random() < ISSR.spawnChance) this.addIssr();
       this.nextIssrAt += ISSR.spawnEvery;
     }
+    const T = HAZARDS.turbulence;
+    if (this.distancePx >= this.nextTurbAt) {
+      if (Math.random() < T.chance) {
+        this.turbs.push({ x: WIDTH + 10, w: Phaser.Math.Between(T.minW, T.maxW) });
+        this.newHazard('turbulence', 'NEW HAZARD: TURBULENCE', 'Bumpy air! Your taps work late. Tap a bit early.');
+      }
+      this.nextTurbAt += T.every;
+    }
+    const B = HAZARDS.birds;
+    if (this.distancePx >= this.nextBirdsAt) {
+      if (Math.random() < B.chance) this.addFlock();
+      this.nextBirdsAt += B.every;
+    }
     if (this.distancePx >= this.nextTokenAt) {
       const chance = Math.min(TOKENS.maxChance, TOKENS.chance + TOKENS.chancePerKm * this.distancePx / 1000);
       if (Math.random() < chance) this.addToken();
       this.nextTokenAt += TOKENS.spawnEvery;
     }
+  }
+
+  addFlock(x = WIDTH + 20, y = null) {
+    const B = HAZARDS.birds, n = Phaser.Math.Between(B.flock[0], B.flock[1]);
+    y = y === null ? Phaser.Math.Between(60, SKY_H - 90) : y;
+    const birds = [];
+    for (let i = 0; i < n; i++) {
+      // A loose V shape.
+      const ox = Math.abs(i - (n - 1) / 2) * 13, oy = (i - (n - 1) / 2) * 9;
+      const img = this.add.image(x + ox, y + oy, 'bird-0').setOrigin(0).setFlipX(true);   // facing the plane
+      this.birdLayer.add(img);
+      birds.push({ img, ox, oy });
+    }
+    this.birds.push({ birds, x, y, phase: Math.random() * 6 });
+    this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds! Fly around them.');
+  }
+
+  newHazard(id, title, body) {
+    if (this.school) return;
+    if (!this.ui.tipOnce(`hazard-${id}`, title, body, 'bad', 3.5)) {
+      if (!this.hazardSeen) this.hazardSeen = {};
+      if (!this.hazardSeen[id]) { this.hazardSeen[id] = true; this.popup(WIDTH / 2, 70, `${{ noFly: 'No-fly zone', turbulence: 'Turbulence', birds: 'Birds' }[id]} ahead!`, '#ff8080'); }
+    }
+  }
+
+  updateHazards(dt, box) {
+    // Turbulence: wavy lines; inside it, taps lag and the plane gets bumped.
+    const g = this.turbGfx;
+    g.clear();
+    const cx = box.x + box.w / 2;
+    this.inTurb = false;
+    for (const z of this.turbs) {
+      g.fillStyle(0xffffff, 0.07).fillRect(z.x, 0, z.w, SKY_H);
+      for (let row = 10; row < SKY_H; row += 16) {
+        for (let x = 0; x < z.w; x += 2) {
+          const y = row + Math.round(Math.sin((x + this.gameTime * 0.12 + row * 3) / 7) * 2);
+          g.fillStyle(0xffffff, 0.35).fillRect(z.x + x, y, 2, 1);
+        }
+      }
+      if (cx >= z.x && cx <= z.x + z.w) this.inTurb = true;
+    }
+    this.turbs = this.turbs.filter(z => z.x + z.w > -10);
+    if (this.inTurb && this.state === 'playing') {
+      this.bumpIn -= dt;
+      if (this.bumpIn <= 0) {
+        const T = HAZARDS.turbulence;
+        this.plane.vy += Phaser.Math.Between(-T.bump, T.bump);
+        this.bumpIn = Phaser.Math.FloatBetween(T.bumpEvery[0], T.bumpEvery[1]);
+        this.cameras.main.shake(80, 0.004);
+      }
+      this.planeSprite.x += Phaser.Math.Between(-1, 1);
+    }
+
+    // Birds fly towards you, bobbing up and down; hitting one ends the flight.
+    const B = HAZARDS.birds;
+    for (const f of this.birds) {
+      f.x -= B.extraSpeed * dt;
+      f.phase += dt * 2;
+      const fy = f.y + Math.sin(f.phase) * B.wobble;
+      const frame = Math.floor(this.gameTime / 120) % 2;
+      for (const b of f.birds) { b.img.setPosition(Math.round(f.x + b.ox), Math.round(fy + b.oy)); b.img.setTexture(`bird-${frame}`); }
+    }
+    this.birds = this.birds.filter(f => { if (f.x < -60) { f.birds.forEach(b => b.img.destroy()); return false; } return true; });
+  }
+
+  hitBird(box) {
+    for (const f of this.birds) for (const b of f.birds) {
+      if (overlaps(box, { x: b.img.x, y: b.img.y, w: 9, h: 6 })) return true;
+    }
+    return false;
   }
 
   // A floating tree. Often placed in a storm gap or inside icy air, so grabbing it is a choice.
@@ -752,10 +876,34 @@ export class GameScene extends Phaser.Scene {
   }
 
   addStormPair() {
-    const gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * this.stormCount);
+    let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * this.stormCount);
+    const nf = HAZARDS.noFly;
+    const noFly = this.distancePx >= nf.from && Math.random() < nf.chance;
+    if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess);
     const lo = STORMS.marginTop + gap / 2;
     const hi = SKY_H - STORMS.marginTop - gap / 2;
-    this.addStormPairAt(WIDTH + 10, Phaser.Math.Between(lo, hi), gap);
+    if (noFly) this.addNoFlyAt(WIDTH + 10, Phaser.Math.Between(lo, hi), gap);
+    else this.addStormPairAt(WIDTH + 10, Phaser.Math.Between(lo, hi), gap);
+  }
+
+  // Restricted airspace: thinner than a storm, but the gap is tighter.
+  addNoFlyAt(x, gapY, gap) {
+    const W = HAZARDS.noFly.width, topH = gapY - gap / 2, botY = gapY + gap / 2;
+    const top = { x, y: 0, width: W, height: topH };
+    const bottom = { x, y: botY, width: W, height: SKY_H - botY };
+    const style = { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#d02a2a', strokeThickness: 3 };
+    const parts = [
+      this.add.tileSprite(x, 0, W, topH, 'nofly').setOrigin(0),
+      this.add.tileSprite(x, botY, W, SKY_H - botY, 'nofly').setOrigin(0),
+      this.add.rectangle(x, topH - 2, W, 2, 0x8a1010).setOrigin(0),
+      this.add.rectangle(x, botY, W, 2, 0x8a1010).setOrigin(0),
+      this.add.text(x + W / 2, topH - 12, 'NO', style).setOrigin(0.5),
+      this.add.text(x + W / 2, botY + 12, 'FLY', style).setOrigin(0.5),
+    ];
+    this.stormLayer.add(parts);
+    this.storms.push({ rects: [top, bottom], parts, flashUntil: 0, noFly: true });
+    this.stormCount++;
+    this.newHazard('noFly', 'NEW HAZARD: NO-FLY ZONE', 'Red stripes = planes not allowed. Squeeze through the gap!');
   }
 
   addStormPairAt(x, gapY, gap) {
@@ -777,6 +925,7 @@ export class GameScene extends Phaser.Scene {
   // Now and then a storm flickers with lightning.
   updateLightning(time) {
     for (const st of this.storms) {
+      if (st.noFly) continue;
       if (st.flashUntil && time > st.flashUntil) { st.parts.forEach(p => p.clearTint()); st.flashUntil = 0; }
       else if (!st.flashUntil && Math.random() < 0.002) {
         st.parts.forEach(p => p.setTint(0xe8e8ff));
@@ -847,6 +996,8 @@ export class GameScene extends Phaser.Scene {
     });
 
     for (const t of this.tokens) t.img.x -= dx;
+    for (const z of this.turbs) z.x -= dx;
+    for (const f of this.birds) f.x -= dx;
     const bob = Math.round(Math.sin(this.gameTime / 180) * 2);
     for (const pl of this.plots) {
       pl.x -= dx; for (const part of pl.parts) part.x -= dx;
@@ -1061,6 +1212,7 @@ export class GameScene extends Phaser.Scene {
     else this.nextText.setText('');
 
     if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! shade: cooler' : 'ICY AIR! heat trapped!');
+    else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');
     else this.hintText.setText('');
 
     const forest = this.trees.length ? `FOREST x${this.trees.length}` : '';

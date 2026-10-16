@@ -81,6 +81,13 @@ export const TOKENS = {
   magnetPull: 140,     // px/s, how fast a magnet pulls trees in
 };
 
+// Hazards that join the storms as the flight gets longer (distances in m = px).
+export const HAZARDS = {
+  turbulence: { from: 2500, every: 650, chance: 0.5, minW: 150, maxW: 260, delay: [60, 260], bump: 150, bumpEvery: [0.25, 0.55] },
+  noFly:      { from: 4000, chance: 0.45, width: 30, gapLess: 28, minGap: 82 },
+  birds:      { from: 6000, every: 700, chance: 0.55, flock: [4, 6], extraSpeed: 45, wobble: 22 },
+};
+
 export const PARCEL = {
   gravity: 320,        // px/s^2 until the parachute opens
   chuteAfter: 0.25,    // s
