@@ -37,7 +37,7 @@ export class Hud {
 
   setCo2(rate) {
     const h = Math.round(Phaser.Math.Clamp(rate / CLIMATE.gaugeMax, 0, 1) * BAR_H);
-    this.co2Fill.height = h;
+    this.co2Fill.setSize(BAR_W, h);   // setSize keeps the bottom origin; .height alone grew it downwards
     this.co2Fill.setFillStyle(rate > CLIMATE.co2Cruise * 1.5 ? 0xd0d0d0 : COLOURS.co2);
   }
 

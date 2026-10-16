@@ -23,17 +23,17 @@ face (right), overheat ending. Tree tokens float in the sky as cargo, banked onl
 landing, x1.5 per airport skipped. Hangar with 7 levelled upgrade lines that unlock gradually
 (fuel/engines after 3 landings, nature after the first tree), free first upgrade after the first
 landing, info pop-ups with Learn more links. Parcel-drop planting onto soil plots (parachute,
-forward drift, aim X). Wild Land biodiversity meter across flights (variety beats quantity;
+forward drift, aim X). Biodiversity meter across flights (barren land -> grassland -> young woodland -> forest -> rainforest; was "Wild Land") (variety beats quantity;
 spruce, then native birch/oak/rowan/fruit) and rewilding projects (meadow → hedgerows → pond →
 water voles → beavers → storks) visible in the world. Hazards: turbulence from 4 km, no-fly
 zones from 8 km, birds from 10 km. Flight School (guided first flight with Captain Cumulus) and
 one-time pause-and-explain for every new mechanic (`explain()` in GameScene; `seenTips` holds
 seen ids; `'*'` in seenTips skips all, used by tests). Arcade-style results reveal.
 
-Wildlife that grows with Wild Land (`wildlifeScene()` in `src/nature.js`): bare land = a few
+Wildlife that grows with Biodiversity (`wildlifeScene()` in `src/nature.js`): bare land = a few
 cows/sheep, a few identical spruce, empty sky; rising meter adds trees of the planted kinds, wild
-animals (rabbit 10, hedgehog 30, fox 55, deer 85) and harmless sky birds (robin, swallow,
-buzzard). Extend `WILD_ANIMALS`/`SKY_BIRDS` as new regions unlock. Exhaust plume: grey puffs as
+animals (rabbit 8, hedgehog 20, fox 40, deer 65) and harmless sky birds (robin 8, swallow 20,
+buzzard 40). Extend `WILD_ANIMALS`/`SKY_BIRDS` as new regions unlock. Exhaust plume: grey puffs as
 dark as CO2 (`kit.smoke`) plus white water-vapour wisps (`kit.vapour`, hydrogen 2.5x). Greener
 Cabin upgrade line (veggie meals, no single-use plastic, only food ordered, lighter trolleys;
 -2% to -8% CO2, unlocks after 1 landing); its facts await the fact-check with nature.js.
@@ -49,7 +49,8 @@ bump +-60, tap lag 30-120 ms. Mid-run tips (`explain()`) close only with their O
 Two currencies (2026-10-16): SEEDS (the old "trees" money: grabbed in the sky, kept only on
 landing; `save.seeds`, old saves' `trees` key migrates in `loadSave()`; dropped parcels and planted
 trees are still "trees") and ICE CRYSTALS (`save.crystals`, always kept, even on a crash): +1 for
-passing icy air you came close to at night without a contrail, +3 for a clean night (Night Owl).
+passing icy air that was in your path at night without a contrail (max 3 a night), +2 for a
+clean night (Night Owl); see `CRYSTALS` in config.js.
 Daytime contrails earn none (not always cooling in reality). Crystals are also spent on Rewilding
 (2-8 each) and the upper Radar levels (2, 5). Hangar has PLANE and NATURE tabs (`tabOf()`).
 Difficulty: first 1.5 km is a warm-up (no speed-up, no gap narrowing); then speed 90 -> 140 at
@@ -62,6 +63,12 @@ corners (31 such placements in one sweep). Storms forgive a nick of `HAZARDS.sto
 pixels (`hitsStorm()`); no-fly zones and birds forgive nothing. Turbulence is cloud-shaped
 (`cloudShape()`/`inCloud()`, shared with ISSRs). Every upgrade costs at least 1 ice crystal; seed
 prices were cut ~30%. Soil plots from 1 km.
+
+Review fixes (2026-10-17): no CO2 while parked waiting for the HOLD; CO2 gauge uses setSize (it
+grew downward); crystals+multiplier on HUD row 2, airport sign at y 46; birds drawn pale at night;
+"Flight over! Seeds lost." for any non-landing. Lightning: `flashStorm()` shows pixel-identical
+flash overlays + a bolt (visual only, not in collisions), flickering twice. Biodiversity fills
+faster (native 6*sqrt(n) cap 18, spruce 2*sqrt(n) cap 6; rewilding needs 3/8/15/22/32/45).
 
 ## Decisions (don't re-litigate without the user)
 
@@ -93,7 +100,7 @@ when a texture moves to a PNG the guard must be a code-only key, or better a per
    currently "coming soon").
 2. Supabase project (URL + anon key) for the shared leaderboard and festival tree counter.
 3. Should the landing X for parcels be an upgrade ("Drop sight") rather than free?
-4. Should trees planted on a flight that later crashes count for Wild Land? (currently yes)
+4. Should trees planted on a flight that later crashes count for Biodiversity? (currently yes)
 5. Fact-check by the group / Citizen Zoo of the nature facts in `src/nature.js`.
 6. Pace: first upgrade after ~2 good flights; maybe faster for a festival (3-6 flights a kid).
 

@@ -19,6 +19,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
   let s1 = await scene(() => { const s = game.scene.getScene('game'); return { state: s.state, airborne: s.airborne, hint: s.holdText.text }; });
   check(s1.state === 'takeoff' && !s1.airborne, `taps alone should not take off: ${JSON.stringify(s1)}`);
   check(/HOLD/.test(s1.hint), `a HOLD hint should show on the runway, got "${s1.hint}"`);
+  // Parked on the runway the engines idle: the Earth must not heat up while a child reads.
+  const parked = await scene(() => { const s = game.scene.getScene('game'); const f = s.hud.co2Fill.getBounds(), frame = s.hud.co2Fill.y;
+    return { heat: s.heat, fillBottom: Math.round(f.bottom), frame }; });
+  check(Math.abs(parked.heat) < 0.01, `the Earth heated up while parked on the runway (${parked.heat})`);
+  // While rolling the gauge shows take-off CO2: it must grow UP from the bottom of its frame.
+  await p.mouse.move(195, 400); await p.mouse.down(); await p.waitForTimeout(200);
+  const g = await scene(() => { const s = game.scene.getScene('game'), r = s.hud.co2Fill.getBounds(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), base: s.hud.co2Fill.y, h: r.height, dispOrigin: s.hud.co2Fill.displayOriginY, geomH: s.hud.co2Fill.geom.height }; });
+  await p.mouse.up();
+  check(g.h > 0 && g.dispOrigin === g.h && g.geomH === g.h && g.bottom === Math.round(g.base), `the CO2 gauge should grow upwards from its base: ${JSON.stringify(g)}`);
   // 2. Holding speeds up; letting go before lift-off slows down without failing.
   await p.mouse.move(195, 400); await p.mouse.down(); await p.waitForTimeout(300); await p.mouse.up();
   const r1 = await scene(() => game.scene.getScene('game').rollSpeed);
@@ -27,7 +36,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(r1 > 10, `holding should speed the plane up (roll ${r1})`);
   check(r2.roll < r1 && r2.state === 'takeoff', `letting go should slow down, not fail: ${r1} -> ${JSON.stringify(r2)}`);
   // 3. Holding long enough takes off, then normal flight.
-  await p.mouse.down(); await p.waitForTimeout(2500); await p.mouse.up();
+  await p.mouse.down();
+  for (let i = 0; i < 40 && await scene(() => game.scene.getScene('game').state) === 'takeoff'; i++) await p.waitForTimeout(100);
+  await p.mouse.up();
   const s3 = await scene(() => game.scene.getScene('game').state);
   check(s3 === 'playing', `holding should take off, state ${s3}`);
 

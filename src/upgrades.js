@@ -100,7 +100,7 @@ export const LINES = [
     ],
     info: {
       what: 'You start with spruce. It grows fast but few animals live in it. Native trees are trees that have always grown here.',
-      why: 'Every NEW kind of tree you plant fills your Wild Land meter much more than planting the same kind again.',
+      why: 'Every NEW kind of tree you plant fills your Biodiversity meter much more than planting the same kind again.',
       fact: 'A wood with many kinds of trees is home to many more animals than rows of just one kind.',
       links: ['citizenzoo', 'project'],
     },
@@ -110,7 +110,7 @@ export const LINES = [
     levels: PROJECTS.map(p => ({ cost: p.cost, crystals: p.crystals, name: p.name, short: p.short, needsBio: p.needs, project: p.id })),
     info: {
       what: 'Rewilding means helping nature look after itself again: wild places, and bringing back animals that used to live here.',
-      why: 'Each project fills your Wild Land meter, and healthy land soaks up a little CO2 on every flight.',
+      why: 'Each project fills your Biodiversity meter, and healthy land soaks up a little CO2 on every flight.',
       fact: 'Beaver dams slow floods and make wetlands that store carbon. Citizen Zoo works with beavers in London!',
       links: ['citizenzoo', 'project'],
     },
@@ -172,7 +172,7 @@ export function unlockText(line) {
   return u.landings ? `Unlocks after ${u.landings} landing${u.landings > 1 ? 's' : ''}` : u.planted ? 'Unlocks when you plant your first tree' : '';
 }
 
-// Is the next level waiting for the Wild Land meter to grow?
+// Is the next level waiting for the Biodiversity meter to grow?
 export function needsMoreNature(save, line) {
   const next = nextLevel(save, line);
   return !!(next && next.needsBio && biodiversity(save) < next.needsBio);

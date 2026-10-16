@@ -105,6 +105,11 @@ export const PARCEL = {
   firstAt: 1000,       // m: soil plots start 1 km in
 };
 
+export const CRYSTALS = {
+  dodge: 1,            // icy air that was in your path at night, flown around
+  dodgesPerNight: 3,   // at most this many dodge crystals each night
+  cleanNight: 2,       // a whole night with no heat trapped (Night Owl)
+};
 export const CARGO = {
   multiplierPerSkip: 0.5,   // landing bonus: x1, x1.5, x2 ... per airport skipped
   coolBonus: 3,             // extra trees for landing with the Earth cooler than at take off

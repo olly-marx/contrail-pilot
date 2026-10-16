@@ -22,10 +22,10 @@ export const FACTS_BASE = [
 export const FACTS = [...FACTS_BASE, ...NATURE_FACTS];
 const $ = id => document.getElementById(id);
 
-// The Wild Land meter as HTML: a bar plus the stage name.
+// The Biodiversity meter as HTML: a bar plus the stage name.
 export function meterHTML(save) {
   const b = biodiversity(save), st = stage(b);
-  return `<div class="meter"><span class="mlabel">Wild Land</span><span class="mtrack"><span class="mfill" style="width:${b}%"></span>${STAGES.slice(1).map(x => `<i style="left:${x.at}%"></i>`).join('')}</span><b>${st.name}</b></div>`;
+  return `<div class="meter"><span class="mlabel">Biodiversity</span><span class="mtrack"><span class="mfill" style="width:${b}%"></span>${STAGES.slice(1).map(x => `<i style="left:${x.at}%"></i>`).join('')}</span><b>${st.name}</b></div>`;
 }
 const sign = v => (v > 0 ? '+' : v < 0 ? '-' : '') + Math.abs(v);
 
@@ -122,7 +122,7 @@ export class UI {
     $('rCrysRow').hidden = true; $('rCrysRow').classList.remove('stamp');
     $('rNature').textContent = `+${r.natureGain}`;
     $('rTotalRow').classList.remove('zero', 'stamp');
-    $('rGain').textContent = '+0';
+    $('rGain').textContent = '';
     for (const id of ['barCo2', 'barNight', 'barSun', 'barTrees']) $(id).style.width = '0';
     for (const id of ['rCo2', 'rNight', 'rSun', 'rTreesCool']) $(id).textContent = '';
     $('rFree').hidden = !this.save.freeUpgrade;
@@ -229,7 +229,7 @@ export class UI {
     const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
     let lastGroup = null;
     $('hUpgrades').innerHTML = LINES.filter(line => tabOf(line) === tab).map(line => {
-      // The Nature group gets a header with the Wild Land meter.
+      // The Nature group gets a header with the Biodiversity meter.
       const head = line.group === 'Nature' && lastGroup !== 'Nature' && unlocked(s, line)
         ? `<div class="nature-head"><h3>NATURE</h3>${meterHTML(s)}<p class="small">Plant different kinds of trees and rewild land to fill it.</p></div>` : '';
       lastGroup = line.group;
@@ -242,7 +242,7 @@ export class UI {
       const waitBio = needsMoreNature(s, line);
       const isFree = free && next && have === 0 && !waitBio;
       const ok = isFree || canBuy(s, line);
-      const btn = waitBio ? `<span class="small">needs Wild Land ${next.needsBio}</span>`
+      const btn = waitBio ? `<span class="small">needs Biodiversity ${next.needsBio}</span>`
         : `<button class="btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>`;
       const nextRow = next
         ? `<div class="next"><span>Next: <b>${next.name}</b>. ${next.short}</span>${btn}</div>`
@@ -277,7 +277,7 @@ export class UI {
     $('iGroup').textContent = line.group;
     $('iName').textContent = line.name;
     $('iLevels').innerHTML = line.levels.map((l, i) =>
-      `<li class="${i < have ? 'have' : ''}"><b>${l.name}</b> (${l.cost} seeds${l.crystals ? ` + ${l.crystals} ice crystals` : ''}${l.needsBio ? `, Wild Land ${l.needsBio}` : ''}): ${l.short}${i < have ? ' - yours!' : ''}` +
+      `<li class="${i < have ? 'have' : ''}"><b>${l.name}</b> (${l.cost} seeds${l.crystals ? ` + ${l.crystals} ice crystals` : ''}${l.needsBio ? `, Biodiversity ${l.needsBio}` : ''}): ${l.short}${i < have ? ' - yours!' : ''}` +
       (l.species ? `<br><span class="small">${SPECIES[l.species].fact}</span>` : '') + '</li>').join('');
     $('iWhat').textContent = line.info.what;
     $('iWhy').textContent = line.info.why;

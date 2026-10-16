@@ -1,6 +1,6 @@
 import {
   WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
-  TAKEOFF, AIRPORT, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL, HAZARDS,
+  TAKEOFF, AIRPORT, CRYSTALS, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL, HAZARDS,
 } from './config.js';
 import { School } from './school.js';
 import { Hud } from './Hud.js';
@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
     for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
     // Sprites: drawn by tools/art/make_sprites.py.
     for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
-      'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
+      'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'storm-flash', 'storm-flash-top', 'storm-flash-bottom', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
       this.load.image(k, `assets/${k}.png`);
     // Background wildlife: two frames each (legs / wings).
     for (const a of ['cow', 'sheep', ...WILD_ANIMALS.map(a => a.id)]) for (let f = 0; f < 2; f++) this.load.image(`animal-${a}-${f}`, `assets/animal-${a}-${f}.png`);
@@ -82,6 +82,7 @@ export class GameScene extends Phaser.Scene {
     this.tokens = [];                // floating trees to collect
     this.cargo = 0;                  // seeds on board: kept only if you land
     this.crystals = 0;               // ice crystals earned this flight: always kept
+    this.nightDodges = 0;            // dodge crystals so far tonight (capped)
     this.nextTokenAt = 420;
     this.clock = 0;                  // drives day and night (flight school can set it)
     this.gameTime = 0;               // ms of unfrozen flight, used for contrail ages
@@ -157,7 +158,7 @@ export class GameScene extends Phaser.Scene {
 
     const font = { fontFamily: FONT, fontSize: '16px', color: COLOURS.text, stroke: '#000', strokeThickness: 4 };
     this.distText = this.add.text(WIDTH / 2, 8, '', font).setOrigin(0.5, 0);
-    this.nextText = this.add.text(WIDTH / 2, 30, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
+    this.nextText = this.add.text(WIDTH / 2, 46, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
     this.hintText = this.add.text(4, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, lineSpacing: 4 }).setOrigin(0, 0);
     this.parcelText = this.add.text(4, HEIGHT - 11, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0);
 
@@ -372,7 +373,8 @@ export class GameScene extends Phaser.Scene {
     this.drawPlane();
 
     // CO2: high during takeoff and the landing roll, steady while cruising.
-    this.co2Rate = (this.state === 'playing') ? this.kit.co2Cruise : this.kit.co2Takeoff;
+    const parked = this.state === 'takeoff' && !this.airborne && this.rollSpeed < 5;   // engines idle: waiting for the HOLD
+    this.co2Rate = parked ? 0 : (this.state === 'playing') ? this.kit.co2Cruise : this.kit.co2Takeoff;
     this.totalCo2 += this.co2Rate * dt;
     const co2Heat = this.co2Rate * CLIMATE.co2ToHeat * dt;
     this.heat += co2Heat;
@@ -414,11 +416,16 @@ export class GameScene extends Phaser.Scene {
       const inside = this.inIssrShape(i, box);
       if (inside) { inIssr = true; i.entered = true; }
       i.setAlpha(this.issrAlpha(i, box, inside));
-      if (i.alpha > this.kit.hiddenAlpha + 0.01) i.near = true;   // the player saw it coming
-      // Dodged: icy air you came close to at night, passed without making a contrail.
+      // In your path: level with the plane while it was coming up ahead, so you had to climb or dive.
+      const ahead = i.x - (box.x + box.w), cy = box.y + box.h / 2;
+      if (ahead > 0 && ahead < 120 && cy >= i.y && cy <= i.y + i.height) i.inPath = true;
+      // Dodged: icy air that was in your path at night, passed without making a contrail.
       if (!i.scored && i.x + i.width < box.x) {
         i.scored = true;
-        if (i.near && !i.entered && !this.isDay && this.state === 'playing' && !this.school) this.earnCrystals(1, 'dodged icy air!');
+        if (i.inPath && !i.entered && !this.isDay && this.state === 'playing' && !this.school && this.nightDodges < CRYSTALS.dodgesPerNight) {
+          this.nightDodges++;
+          this.earnCrystals(CRYSTALS.dodge, 'dodged icy air!');
+        }
       }
       i.tilePositionY += dt * 4;
     }
@@ -490,7 +497,7 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- scenery ----------
 
-  // Background life from the Wild Land meter (see wildlifeScene in nature.js). Purely for looks:
+  // Background life from the Biodiversity meter (see wildlifeScene in nature.js). Purely for looks:
   // nothing here can be hit. Filled across the screen at the start so the first view shows it too.
   buildWildlife() {
     this.wildlife = wildlifeScene(this.save);
@@ -738,16 +745,16 @@ export class GameScene extends Phaser.Scene {
     this.planted++;
     this.burst(cx, SKY_H - 2, 0x8dffb0, 12);
     this.burst(cx, SKY_H - 2, 0xffe15a, 6);
-    // Wild Land: a new kind of tree is a big boost; the same kind again adds less.
+    // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
     const first = !(this.save.planted[kind] > 0);
     const gain = plantGain(this.save, kind);
     this.save.planted[kind] = (this.save.planted[kind] || 0) + 1;
     this.popup(cx, SKY_H - 24, `${SPECIES[kind].name.toUpperCase()} PLANTED!`, '#8dffb0', 8);
-    this.time.delayedCall(450, () => this.popup(cx, SKY_H - 36, `+${gain.toFixed(1)} wild land${first ? ' (new kind!)' : ''}`, first ? '#ffe15a' : '#b8f5c8'));
+    this.time.delayedCall(450, () => this.popup(cx, SKY_H - 36, `+${gain.toFixed(1)} biodiversity${first ? ' (new kind!)' : ''}`, first ? '#ffe15a' : '#b8f5c8'));
     sfx.plant();
     buzz(30);
-    if (first && SPECIES[kind].native) this.explain(`x-species-${kind}`, `<b>${SPECIES[kind].name}!</b> ${SPECIES[kind].fact}<br>New kinds of tree fill your <b>Wild Land</b> meter the most.`);
-    this.explain('x-nature', 'Your <b>Wild Land</b> meter grew! It shows how full of life your land is.<br><b>Different kinds</b> of trees help wildlife much more than lots of the same kind.');
+    if (first && SPECIES[kind].native) this.explain(`x-species-${kind}`, `<b>${SPECIES[kind].name}!</b> ${SPECIES[kind].fact}<br>New kinds of tree fill your <b>Biodiversity</b> meter the most.`);
+    this.explain('x-nature', 'Your <b>Biodiversity</b> meter grew! It shows how full of life your land is.<br><b>Different kinds</b> of trees help wildlife much more than lots of the same kind.');
     this.ui.tipOnce('firstTree', 'Tree planted!', 'It cools the Earth for the rest of your flight. Plant early: trees grow!', 'good', 3.5);
   }
 
@@ -897,7 +904,8 @@ export class GameScene extends Phaser.Scene {
       f.phase += dt * 2;
       const fy = f.y + Math.sin(f.phase) * B.wobble;
       const frame = Math.floor(this.gameTime / 120) % 2;
-      for (const b of f.birds) { b.img.setPosition(Math.round(f.x + b.ox), Math.round(fy + b.oy)); b.img.setTexture(`bird-${frame}`); }
+      const night = this.nightAmount() > 0.5;   // dark birds vanish on a night sky: draw them pale
+      for (const b of f.birds) { b.img.setPosition(Math.round(f.x + b.ox), Math.round(fy + b.oy)); b.img.setTexture(`bird-${frame}`); if (night) b.img.setTintFill(0xd8def0); else b.img.clearTint(); }
     }
     this.birds = this.birds.filter(f => { if (f.x < -60) { f.birds.forEach(b => b.img.destroy()); return false; } return true; });
   }
@@ -1072,17 +1080,35 @@ export class GameScene extends Phaser.Scene {
     this.stormCount++;
   }
 
-  // Now and then a storm flickers with lightning.
+  // Now and then a storm flickers with lightning: the cloud lights up (flash overlays drawn
+  // pixel-identical to the storm) and a bolt hangs from the top column's cap, twice in quick
+  // succession. Purely for looks: bolts are not in the collision check.
   updateLightning(time) {
     for (const st of this.storms) {
       if (st.noFly) continue;
-      if (st.flashUntil && time > st.flashUntil) { st.parts.forEach(p => p.clearTint()); st.flashUntil = 0; }
-      else if (!st.flashUntil && Math.random() < 0.002) {
-        st.parts.forEach(p => p.setTint(0xe8e8ff));
-        st.flashUntil = time + 90;
+      if (!st.flash && Math.random() < 0.002 && st.rects[0].x < WIDTH) this.flashStorm(st, time);
+      if (st.flash) {
+        const t = time - st.flash.t0, on = t < 90 || (t > 150 && t < 230);   // flicker: on, off, on
+        st.flash.fx.forEach(o => o.setVisible(on));
+        if (t >= 230) { st.flash.fx.forEach(o => o.destroy()); st.parts = st.parts.filter(o => !st.flash.fx.includes(o)); st.flash = null; }
       }
     }
   }
+
+  flashStorm(st, time) {
+        const [bodyT, capT, bodyB, capB] = st.parts, x = st.rects[0].x, topH = st.rects[0].height;
+        const fx = [
+          this.add.tileSprite(bodyT.x, bodyT.y, bodyT.width, bodyT.height, 'storm-flash').setOrigin(0),
+          this.add.image(capT.x, capT.y, 'storm-flash-bottom').setOrigin(0),
+          this.add.tileSprite(bodyB.x, bodyB.y, bodyB.width, bodyB.height, 'storm-flash').setOrigin(0),
+          this.add.image(capB.x, capB.y, 'storm-flash-top').setOrigin(0),
+          this.add.image(x + 22 + Phaser.Math.Between(-8, 8), topH - 2, `bolt-${Phaser.Math.Between(0, 2)}`).setOrigin(0.5, 0),
+        ];
+        this.stormLayer.add(fx);
+        st.parts.push(...fx);   // scroll with the storm
+        st.flash = { fx, t0: time };
+  }
+
 
   addIssr() {
     const w = Phaser.Math.Between(ISSR.minW, ISSR.maxW);
@@ -1228,11 +1254,12 @@ export class GameScene extends Phaser.Scene {
       if (half === 'dusk') { sfx.dusk(); this.ui.toast('Night is coming!', 'At night contrails TRAP heat. Avoid the icy air!', 'bad', 3); }
       if (half === 'dawn') { sfx.dawn(); this.ui.toast('Sunrise!', 'In sunshine contrails BLOCK sunlight. Find the icy air!', 'good', 3); }
       // Night Owl: a whole night flown without trapping any heat.
+      if (half === 'night') this.nightDodges = 0;
       if (half === 'night' && this.state === 'playing') this.night = { started: true, trappedAtStart: this.heatTrapped };
       if (half === 'dawn' && this.night.started && this.heatTrapped - this.night.trappedAtStart < 0.5) {
         this.nightOwl = true;
         this.popup(WIDTH / 2, 60, 'NIGHT OWL!', '#ffe15a', 16);
-        this.earnCrystals(3, 'clean night!');
+        this.earnCrystals(CRYSTALS.cleanNight, 'clean night!');
       }
       if (half === 'dawn') this.night.started = false;
       this.lastHalf = half;
@@ -1351,7 +1378,7 @@ export class GameScene extends Phaser.Scene {
   earnCrystals(n, why) {
     this.crystals += n;
     sfx.coin();
-    this.popup(this.plane.x + 25, this.plane.y - 16, `+${n} ice crystal${n > 1 ? 's' : ''}: ${why}`, '#9fe0ff');
+    this.popup(this.plane.x + 25, this.plane.y - 16, `+${n} crystal${n > 1 ? 's' : ''}: ${why}`, '#9fe0ff');
     const c = this.add.image(this.plane.x + 25, this.plane.y, 'crystal').setScale(2);
     this.fxLayer.add(c);
     this.tweens.add({ targets: c, x: this.crysIcon.x, y: this.crysIcon.y, scale: 1, duration: 600, ease: 'Quad.easeIn', onComplete: () => c.destroy() });
@@ -1371,7 +1398,7 @@ export class GameScene extends Phaser.Scene {
     const t = this.add.text(Math.round(x), Math.round(y), text,
       { fontFamily: FONT, fontSize: `${size}px`, color: colour, stroke: '#000', strokeThickness: 3 }).setOrigin(0.5);
     // Keep popups on screen.
-    t.x = Phaser.Math.Clamp(t.x, t.width / 2 + 2, WIDTH - t.width / 2 - 2);
+    t.x = Phaser.Math.Clamp(t.x, Math.min(t.width / 2 + 24, WIDTH / 2), WIDTH - Math.min(t.width / 2 + 24, WIDTH / 2));   // clear of the side bars
     this.fxLayer.add(t);
     this.popups.push({ t, life: 1.1, vy: -22 });
   }
@@ -1422,7 +1449,7 @@ export class GameScene extends Phaser.Scene {
     this.cargoText.setText(`${this.cargo}`);
     this.crysText.setText(`${this.crystals}`);
     this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');
-    this.multText.x = this.cargoText.x + this.cargoText.width + 4;
+    this.multText.x = this.crysText.x + this.crysText.width + 6; this.multText.y = this.crysText.y;   // row 2, clear of the distance
   }
 
   finish({ landed = false, reason = '', sound = 'crash' }) {

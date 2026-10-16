@@ -27,18 +27,22 @@ const KEY = 'contrailPilot.v2';
   await p.close();
 
   // 2-4. Fly past icy air: night dodge = +1; day dodge = 0; night contrail = 0. Crystals kept on a crash.
-  async function pass({ night, through }) {
+  async function pass({ night, through, dive = false }) {
     const p = await page({ ...base, crystals: 0 });
     await p.click('#goBtn'); await p.waitForTimeout(2300);
-    const r = await p.evaluate(({ night, through }) => new Promise(res => { const s = game.scene.getScene('game');
+    const r = await p.evaluate(({ night, through, dive }) => new Promise(res => { const s = game.scene.getScene('game');
       s.storms.forEach(st => st.parts.forEach(q => q.destroy())); s.storms = []; s.nextStormAt = 1e9; s.nextIssrAt = 1e9; s.nextTurbAt = 1e9;
       s.issrs.forEach(i => { i.maskGfx.destroy(); i.destroy(); }); s.issrs = [];
       s.clock = night ? 15 + 4 : 2; s.heat = 0;
       const y = 250, h = 60;
-      s.addIssrAt(s.plane.x + 60, through ? y - h / 2 : y - h - 25, 120, h);   // through the middle, or 25 px above the plane
-      let most = 0; const iv = setInterval(() => { most = Math.max(most, s.contrails.length); s.plane.y = y - 6; s.plane.vy = 0; s.heat = 0; s.clock = night ? 15 + 4 : 2; }, 10);
-      setTimeout(() => { clearInterval(iv); res({ crystals: s.crystals, contrails: most }); }, 3500);
-    }), { night, through });
+      // through: flies the middle. dive: icy air level with the plane, which dives under it at the
+      // last moment. Otherwise: passes 25 px above, never in the plane's path.
+      const i = s.addIssrAt(s.plane.x + 160, through || dive ? y - h / 2 : y - h - 25, 120, h);
+      let most = 0, py = y - 6; const iv = setInterval(() => { most = Math.max(most, s.contrails.length);
+        if (dive && i.x - (s.plane.x + 50) < 40) py = y + h / 2 + 4;   // duck under it
+        s.plane.y = py; s.plane.vy = 0; s.heat = 0; s.clock = night ? 15 + 4 : 2; }, 10);
+      setTimeout(() => { clearInterval(iv); res({ crystals: s.crystals, contrails: most }); }, 4500);
+    }), { night, through, dive });
     // Crash: crystals are still banked.
     await p.evaluate(() => { const s = game.scene.getScene('game'); s.plane.y = 600; });
     await p.waitForTimeout(800);
@@ -46,11 +50,13 @@ const KEY = 'contrailPilot.v2';
     await p.close();
     return r;
   }
-  const nightDodge = await pass({ night: true, through: false });
-  const dayDodge = await pass({ night: false, through: false });
+  const nightDodge = await pass({ night: true, through: false, dive: true });
+  const nightNear = await pass({ night: true, through: false });
+  const dayDodge = await pass({ night: false, through: false, dive: true });
   const nightThrough = await pass({ night: true, through: true });
   check(nightDodge.crystals === 1, `dodging icy air at night should earn 1 crystal: ${JSON.stringify(nightDodge)}`);
   check(nightDodge.saved === 1, `crystals should be kept after a crash, saved ${nightDodge.saved}`);
+  check(nightNear.crystals === 0, `icy air that was never in your path should earn none: ${JSON.stringify(nightNear)}`);
   check(dayDodge.crystals === 0, `dodging icy air by day should earn none: ${JSON.stringify(dayDodge)}`);
   check(nightThrough.contrails > 0 && nightThrough.crystals === 0, `a night contrail should earn none: ${JSON.stringify(nightThrough)}`);
 

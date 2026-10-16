@@ -1,4 +1,4 @@
-// Nature: tree species, rewilding projects and the biodiversity ("Wild Land") meter.
+// Nature: tree species, rewilding projects and the Biodiversity meter (barren land to rainforest).
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
 // native kind is a big boost; more of the same kind adds less and less.
 
@@ -15,35 +15,35 @@ export const SPECIES = {
     fact: 'Fruit trees feed people, bees and birds. Old orchards are full of wildlife.' },
 };
 
-// Bought in order in the hangar, with seeds AND ice crystals. `bio` is the Wild Land points it adds; `needs` is the meter
+// Bought in order in the hangar, with seeds AND ice crystals. `bio` is the Biodiversity points it adds; `needs` is the meter
 // level you must reach first. Effects in the world are drawn in GameScene.
 export const PROJECTS = [
-  { id: 'meadow', name: 'Wildflower meadow', cost: 20, crystals: 2, bio: 8, needs: 5,
+  { id: 'meadow', name: 'Wildflower meadow', cost: 20, crystals: 2, bio: 8, needs: 3,
     short: 'Flowers for bees and butterflies.',
     fact: 'Since the 1930s, the UK has lost almost all its wildflower meadows. Bees need them!' },
-  { id: 'hedgerow', name: 'Hedgerows', cost: 35, crystals: 3, bio: 10, needs: 12,
+  { id: 'hedgerow', name: 'Hedgerows', cost: 35, crystals: 3, bio: 10, needs: 8,
     short: 'Green lines that animals travel along.',
     fact: 'Hedgerows are like wildlife roads: hedgehogs, birds and bats use them to get around.' },
-  { id: 'pond', name: 'Pond', cost: 50, crystals: 4, bio: 12, needs: 20,
+  { id: 'pond', name: 'Pond', cost: 50, crystals: 4, bio: 12, needs: 15,
     short: 'A home for frogs and dragonflies.',
     fact: 'A new pond can have frogs, newts and dragonflies living in it in just one year.' },
-  { id: 'voles', name: 'Water voles return', cost: 70, crystals: 5, bio: 10, needs: 30,
+  { id: 'voles', name: 'Water voles return', cost: 70, crystals: 5, bio: 10, needs: 22,
     short: 'Bring back Ratty from The Wind in the Willows!',
     fact: 'Water voles are one of the UK\'s fastest-disappearing mammals. Ponds and wild riverbanks help them come back.' },
-  { id: 'beavers', name: 'Beavers return', cost: 105, crystals: 6, bio: 15, needs: 45,
+  { id: 'beavers', name: 'Beavers return', cost: 105, crystals: 6, bio: 15, needs: 32,
     short: 'Nature\'s engineers build dams and wetlands.',
     fact: 'Beaver dams slow down floods and make wetlands that store carbon and water. Citizen Zoo works with beavers in London!' },
-  { id: 'storks', name: 'White storks return', cost: 140, crystals: 8, bio: 15, needs: 60,
+  { id: 'storks', name: 'White storks return', cost: 140, crystals: 8, bio: 15, needs: 45,
     short: 'Big birds back in the sky!',
     fact: 'White storks used to nest in Britain hundreds of years ago. Now they are coming back.' },
 ];
 
 export const STAGES = [
-  { at: 0, name: 'Bare field' },
-  { at: 10, name: 'Seedlings' },
-  { at: 30, name: 'Young wood' },
-  { at: 55, name: 'Wild wood' },
-  { at: 85, name: 'Rewilded!' },
+  { at: 0, name: 'Barren land' },
+  { at: 8, name: 'Grassland' },
+  { at: 20, name: 'Young woodland' },
+  { at: 40, name: 'Forest' },
+  { at: 65, name: 'Rainforest!' },
 ];
 
 export const NATURE_FACTS = [
@@ -57,7 +57,7 @@ export const NATURE_FACTS = [
 // Points from one species, given how many have been planted: grows slowly with repeats.
 function speciesPoints(id, n) {
   if (!n) return 0;
-  return SPECIES[id].native ? Math.min(15, 4 * Math.sqrt(n)) : Math.min(4, Math.sqrt(n));
+  return SPECIES[id].native ? Math.min(18, 6 * Math.sqrt(n)) : Math.min(6, 2 * Math.sqrt(n));
 }
 
 export function biodiversity(save) {
@@ -81,20 +81,20 @@ export const hasProject = (save, id) => projectsDone(save).some(p => p.id === id
 // Healthy land soaks up a little CO2 on every flight.
 export const natureCooling = save => 0.04 * projectsDone(save).length;
 
-// Background wildlife you can see but not hit, rebuilt each flight from the Wild Land meter.
+// Background wildlife you can see but not hit, rebuilt each flight from the Biodiversity meter.
 // A bare field is sad on purpose: a few cows and sheep, a few spruce all the same, empty sky.
 // As the meter grows: more trees (of the kinds you have planted), wild animals, then birds.
 // Add new animals/birds here (with an `at` meter level) as new regions unlock.
 export const WILD_ANIMALS = [
-  { id: 'rabbit', at: 10 }, { id: 'hedgehog', at: 30 }, { id: 'fox', at: 55 }, { id: 'deer', at: 85 },
+  { id: 'rabbit', at: 8 }, { id: 'hedgehog', at: 20 }, { id: 'fox', at: 40 }, { id: 'deer', at: 65 },
 ];
 export const SKY_BIRDS = [
-  { id: 'robin', at: 10 }, { id: 'swallow', at: 30 }, { id: 'buzzard', at: 55 },
+  { id: 'robin', at: 8 }, { id: 'swallow', at: 20 }, { id: 'buzzard', at: 40 },
 ];
 export function wildlifeScene(save) {
   const bio = biodiversity(save);
   const planted = Object.keys(save.planted || {}).filter(k => SPECIES[k] && save.planted[k] > 0);
-  const treeKinds = bio < 10 ? ['spruce'] : [...new Set(['spruce', ...planted])];
+  const treeKinds = bio < 8 ? ['spruce'] : [...new Set(['spruce', ...planted])];
   const wild = WILD_ANIMALS.filter(a => bio >= a.at).map(a => a.id);
   return {
     bio,
@@ -104,6 +104,6 @@ export function wildlifeScene(save) {
     wildPerScreen: wild.length ? 1 + bio / 20 : 0,
     wildKinds: wild,
     skyKinds: SKY_BIRDS.filter(b => bio >= b.at).map(b => b.id),
-    birdsPerScreen: bio < 10 ? 0 : bio / 25,      // none at first, up to 4
+    birdsPerScreen: bio < 8 ? 0 : bio / 25,      // none at first, up to 4
   };
 }
