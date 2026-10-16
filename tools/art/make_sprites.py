@@ -352,6 +352,24 @@ def plot():
     s.save('plot')
 
 
+
+def plot_parts():
+    # Any-width plot: 'plot-left' 4x9 + 'plot-mid' 8x9 (tiles horizontally) + 'plot-right' 4x9.
+    # Same rows as 'plot': mound in rows 0-2 above the grass line, dug soil in rows 3-8.
+    c = {'M': hexc('#a46a3e'), 'm': hexc('#8a5530'), 'f': hexc('#5a3318'), 's': hexc('#6a3c1c'),
+         'S': hexc('#55301a'), 'p': hexc('#93694a'), 'd': hexc('#7a4a24')}
+    soil = ['ssssssss', 'sssspsss', 'spssssss', 'sssssssp', 'sSsSsSsS', 'SSSSSSSS']
+    mid = Sprite(8, 9)
+    mid.grid(['MMMMMMMM', 'mmmffmmm', 'mmmmmfmm'] + soil, c)
+    mid.save('plot-mid')
+    left = Sprite(4, 9)
+    left.grid(['..MM', '.MMM', 'Mmmm'] + [r[:4] for r in soil], c)   # sunlit slope
+    left.save('plot-left')
+    right = Sprite(4, 9)
+    right.grid(['mm..', 'mmd.', 'mmdd'] + [r[4:] for r in soil], c)  # shaded slope
+    right.save('plot-right')
+
+
 def plot_sign():
     s = Sprite(6, 9)
     c = {'b': hexc('#f4f1e8'), 'B': hexc('#c9c2ae'), 'g': hexc('#4caf50'), 'G': hexc('#2e7d32'), 'p': hexc('#7a4a24'), 'P': hexc('#57341a')}
@@ -596,8 +614,15 @@ def puff():
 
 
 if __name__ == '__main__':
-    plot(); plot_sign(); plot_arrow(); runway_tile(); tower(); issr_tile(); nofly(); faces()
-
+    plot()
+    plot_parts()
+    plot_sign()
+    plot_arrow()
+    runway_tile()
+    tower()
+    issr_tile()
+    nofly()
+    faces()
     storm_body()
     storm_cap(False)
     storm_cap(True)
