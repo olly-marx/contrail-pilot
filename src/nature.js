@@ -80,3 +80,30 @@ export const projectsDone = save => PROJECTS.slice(0, (save.levels || {}).rewild
 export const hasProject = (save, id) => projectsDone(save).some(p => p.id === id);
 // Healthy land soaks up a little CO2 on every flight.
 export const natureCooling = save => 0.04 * projectsDone(save).length;
+
+// Background wildlife you can see but not hit, rebuilt each flight from the Wild Land meter.
+// A bare field is sad on purpose: a few cows and sheep, a few spruce all the same, empty sky.
+// As the meter grows: more trees (of the kinds you have planted), wild animals, then birds.
+// Add new animals/birds here (with an `at` meter level) as new regions unlock.
+export const WILD_ANIMALS = [
+  { id: 'rabbit', at: 10 }, { id: 'hedgehog', at: 30 }, { id: 'fox', at: 55 }, { id: 'deer', at: 85 },
+];
+export const SKY_BIRDS = [
+  { id: 'robin', at: 10 }, { id: 'swallow', at: 30 }, { id: 'buzzard', at: 55 },
+];
+export function wildlifeScene(save) {
+  const bio = biodiversity(save);
+  const planted = Object.keys(save.planted || {}).filter(k => SPECIES[k] && save.planted[k] > 0);
+  const treeKinds = bio < 10 ? ['spruce'] : [...new Set(['spruce', ...planted])];
+  const wild = WILD_ANIMALS.filter(a => bio >= a.at).map(a => a.id);
+  return {
+    bio,
+    treesPerScreen: 2 + bio / 8,                  // 2 lonely spruce up to ~14 trees
+    treeKinds,
+    farmPerScreen: 1.5,                           // cows and sheep: always a few, never many
+    wildPerScreen: wild.length ? 1 + bio / 20 : 0,
+    wildKinds: wild,
+    skyKinds: SKY_BIRDS.filter(b => bio >= b.at).map(b => b.id),
+    birdsPerScreen: bio < 10 ? 0 : bio / 25,      // none at first, up to 4
+  };
+}

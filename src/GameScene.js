@@ -7,7 +7,7 @@ import { Hud } from './Hud.js';
 import { loadout } from './upgrades.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
-import { SPECIES, biodiversity, plantGain, hasProject, natureCooling } from './nature.js';
+import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const FONT = 'Pixel, monospace';
@@ -36,6 +36,10 @@ export class GameScene extends Phaser.Scene {
     for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
       'plot', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
       this.load.image(k, `assets/${k}.png`);
+    // Background wildlife: two frames each (legs / wings).
+    for (const a of ['cow', 'sheep', ...WILD_ANIMALS.map(a => a.id)]) for (let f = 0; f < 2; f++) this.load.image(`animal-${a}-${f}`, `assets/animal-${a}-${f}.png`);
+    for (const b of SKY_BIRDS) for (let f = 0; f < 2; f++) this.load.image(`sky-${b.id}-${f}`, `assets/sky-${b.id}-${f}.png`);
+    this.load.image('puff', 'assets/puff.png');
     for (const kind of Object.keys(SPECIES)) for (let s = 0; s < 3; s++) this.load.image(`tree-${kind}-${s}`, `assets/tree-${kind}-${s}.png`);
   }
 
@@ -112,6 +116,7 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar = this.add.tileSprite(0, 60, WIDTH, 40, 'clouds').setOrigin(0).setAlpha(0.55);
     this.hills = this.add.tileSprite(0, SKY_H - 46, WIDTH, 46, 'hills').setOrigin(0);
     this.city = this.add.tileSprite(0, SKY_H - 30, WIDTH, 30, 'city').setOrigin(0);
+    this.farTreeLayer = this.add.layer();   // background trees on the horizon
     this.hedge = hasProject(this.save, 'hedgerow') ? this.add.tileSprite(0, SKY_H - 6, WIDTH, 6, 'hedge').setOrigin(0) : null;
     this.storkLayer = this.add.layer();
 
@@ -123,12 +128,17 @@ export class GameScene extends Phaser.Scene {
     this.birdLayer = this.add.layer();
 
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
+    this.exhaustLayer = this.add.layer();
+    this.puffs = [];
+    this.nextPuff = 0;
     this.planeSprite = this.add.image(0, 0, 'plane');
 
     this.ground = this.add.tileSprite(0, SKY_H, WIDTH, GROUND_H, 'ground').setOrigin(0);
     this.groundFx = this.add.graphics();   // contrail shadows (day) and trapped-heat glow (night)
     this.flowers = hasProject(this.save, 'meadow') ? this.add.tileSprite(0, SKY_H + 6, WIDTH, 4, 'flowers').setOrigin(0) : null;
     this.decorLayer = this.add.layer();
+    this.wildLayer = this.add.layer();     // cows, sheep and wild animals
+    this.buildWildlife();
     this.plotLayer = this.add.layer();
     this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
     this.treeLayer = this.add.layer();
@@ -370,6 +380,7 @@ export class GameScene extends Phaser.Scene {
     this.spawn();
     this.scroll(dx);
     this.updateScenery(dx);
+    this.updateExhaust(dt, dx);
     this.updateDayNight(time);
     this.updateLightning(time);
 
@@ -449,6 +460,84 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- scenery ----------
 
+  // Background life from the Wild Land meter (see wildlifeScene in nature.js). Purely for looks:
+  // nothing here can be hit. Filled across the screen at the start so the first view shows it too.
+  buildWildlife() {
+    this.wildlife = wildlifeScene(this.save);
+    this.life = [];
+    this.lifeNext = { tree: 0, farm: 0, wild: 0, bird: 0 };
+    for (let x = 0; x < WIDTH + 10; x += 4) this.updateWildlife(4, x);
+  }
+
+  updateWildlife(dx, atX = WIDTH + 12) {
+    const W = this.wildlife, pick = a => a[Math.floor(Math.random() * a.length)];
+    const gap = perScreen => WIDTH / perScreen * Phaser.Math.FloatBetween(0.5, 1.5);
+    const clearOfRunway = x => !this.runways || !this.runways.some(r => r.strip.x < x + 20 && r.strip.x + AIRPORT.runwayLen > x - 20);
+    const due = (k, perScreen) => {
+      if (!perScreen) return false;
+      this.lifeNext[k] -= dx;
+      if (this.lifeNext[k] > 0) return false;
+      this.lifeNext[k] = gap(perScreen);
+      return true;
+    };
+    if (due('tree', W.treesPerScreen)) {
+      const t = this.add.image(atX, SKY_H + 1, `tree-${pick(W.treeKinds)}-2`).setOrigin(0.5, 1).setScale(Phaser.Math.FloatBetween(0.9, 1.1));
+      this.farTreeLayer.add(t); this.life.push({ img: t, k: 1 });
+    }
+    const animal = kind => {
+      if (!clearOfRunway(atX)) return;
+      const left = Math.random() < 0.5;
+      const img = this.add.image(atX, SKY_H + 4, `animal-${kind}-0`).setOrigin(0.5, 1).setFlipX(left);
+      this.wildLayer.add(img);
+      this.life.push({ img, k: 1, kind: `animal-${kind}`, walk: (left ? -1 : 1) * Phaser.Math.FloatBetween(0, 3), t: Math.random() });
+    };
+    if (due('farm', W.farmPerScreen)) animal(pick(['cow', 'sheep']));
+    if (due('wild', W.wildPerScreen)) animal(pick(W.wildKinds));
+    if (due('bird', W.birdsPerScreen)) {
+      const b = pick(W.skyKinds);
+      const img = this.add.image(atX, Phaser.Math.Between(70, SKY_H - 70), `sky-${b}-0`).setOrigin(0.5).setAlpha(0.7);
+      this.storkLayer.add(img);
+      this.life.push({ img, k: 0.35, kind: `sky-${b}`, walk: Phaser.Math.FloatBetween(4, 10), t: Math.random(), bob: Math.random() * 6, y0: img.y });
+    }
+    const dt = this.game.loop.delta / 1000 || 0.016;
+    for (const l of this.life) {
+      l.img.x -= dx * l.k - (l.walk || 0) * dt;
+      if (l.kind) {
+        l.t += dt;
+        l.img.setTexture(`${l.kind}-${Math.floor(l.t * (l.y0 ? 4 : 2)) % 2}`);
+        if (l.y0) l.img.y = l.y0 + Math.sin(l.t * 2 + l.bob) * 3;
+      }
+    }
+    this.life = this.life.filter(l => { if (l.img.x < -30) { l.img.destroy(); return false; } return true; });
+  }
+
+  // Exhaust behind the engines: grey puffs as dark as the plane's CO2, white wisps for the water
+  // vapour (hydrogen makes lots). Not to scale: real exhaust is near-invisible. Contrails are separate.
+  updateExhaust(dt, dx) {
+    const flying = this.state === 'takeoff' || this.state === 'playing' || (this.state === 'landing' && this.speed > 20);
+    this.nextPuff -= dt;
+    if (flying && this.nextPuff <= 0) {
+      this.nextPuff = 0.03;
+      const x = this.plane.x - 2, y = this.plane.y + PLANE.h / 2 + Phaser.Math.Between(-1, 1);
+      const add = (tint, alpha) => {
+        if (alpha <= 0.01) return;
+        const img = this.add.image(x, y, 'puff').setTint(tint).setAlpha(alpha).setScale(0.6);
+        this.exhaustLayer.add(img);
+        this.puffs.push({ img, a0: alpha, t: 0 });
+      };
+      add(0x5a5a5a, 0.6 * this.kit.smoke);
+      add(0xffffff, 0.12 * this.kit.vapour);
+    }
+    for (const p of this.puffs) {
+      p.t += dt;
+      const f = p.t / 0.9;
+      p.img.x -= dx * 0.9;
+      p.img.y -= 8 * dt;   // warm exhaust rises
+      p.img.setScale(0.6 + 1.4 * f).setAlpha(p.a0 * (1 - f));
+    }
+    this.puffs = this.puffs.filter(p => { if (p.t >= 0.9) { p.img.destroy(); return false; } return true; });
+  }
+
   updateScenery(dx) {
     this.cloudsFar.tilePositionX += dx * 0.15;
     this.hills.tilePositionX += dx * 0.3;
@@ -474,6 +563,7 @@ export class GameScene extends Phaser.Scene {
       this.storkLayer.add(st);
       this.storks.push(st);
     }
+    this.updateWildlife(dx);
     for (const st of this.storks) st.x -= dx * 0.25 + 0.3;
     this.storks = this.storks.filter(st => { if (st.x < -20) { st.destroy(); return false; } return true; });
   }

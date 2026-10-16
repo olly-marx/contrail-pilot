@@ -30,6 +30,14 @@ zones from 5 km, birds from 10 km. Flight School (guided first flight with Capta
 one-time pause-and-explain for every new mechanic (`explain()` in GameScene; `seenTips` holds
 seen ids; `'*'` in seenTips skips all, used by tests). Arcade-style results reveal.
 
+Wildlife that grows with Wild Land (`wildlifeScene()` in `src/nature.js`): bare land = a few
+cows/sheep, a few identical spruce, empty sky; rising meter adds trees of the planted kinds, wild
+animals (rabbit 10, hedgehog 30, fox 55, deer 85) and harmless sky birds (robin, swallow,
+buzzard). Extend `WILD_ANIMALS`/`SKY_BIRDS` as new regions unlock. Exhaust plume: grey puffs as
+dark as CO2 (`kit.smoke`) plus white water-vapour wisps (`kit.vapour`, hydrogen 2.5x). Greener
+Cabin upgrade line (veggie meals, no single-use plastic, only food ordered, lighter trolleys;
+-2% to -8% CO2, unlocks after 1 landing); its facts await the fact-check with nature.js.
+
 ## Decisions (don't re-litigate without the user)
 
 - Trees are only kept on a safe landing; crash/overheat loses all cargo. No distance trees.
@@ -73,6 +81,6 @@ min), festival kiosk mode and QR poster.
 ## Checks
 
 `python3 -m http.server 8000` in the repo, then `NODE_PATH=<dir with playwright-core>
-node tests/<name>.cjs` for flight, issr-reveal, progression, school, hazards, nature. Each was
+node tests/<name>.cjs` for flight, issr-reveal, progression, school, hazards, nature, textures, wildlife. Each was
 validated by planting a defect and seeing it fail. The local scratch install used so far is
 `/tmp/cp-test/node_modules` (may be gone after a reboot: `npm i --no-save playwright-core`).

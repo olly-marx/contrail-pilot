@@ -48,6 +48,21 @@ export const LINES = [
     },
   },
   {
+    id: 'cabin', name: 'Greener Cabin', group: 'Plane', unlock: { landings: 1 },
+    levels: [
+      { cost: 10, name: 'Cheaper veggie meals', short: 'More people pick veggie food.', co2: 0.98 },
+      { cost: 20, name: 'No single-use plastic', short: 'Refill water, less rubbish.', co2: 0.96 },
+      { cost: 35, name: 'Only the food ordered', short: 'Less wasted food to carry.', co2: 0.94 },
+      { cost: 55, name: 'Lighter trolleys and seats', short: 'A lighter plane burns less fuel.', co2: 0.92 },
+    ],
+    info: {
+      what: 'Airlines can make small changes inside the plane: the food, the cups, and how heavy things are.',
+      why: 'Meat makes much more CO2 to farm than veggie food. And every bit of weight a plane carries needs fuel to lift.',
+      fact: 'These changes are small next to cleaner fuel and engines, but every little bit adds up!',
+      links: ['project'],
+    },
+  },
+  {
     id: 'trees', name: 'Tree Planting', group: 'Trees',
     levels: [
       { cost: 25, name: 'Tree parcels', short: 'Drop 2 trees per flight onto brown soil.', parcels: 2 },
@@ -104,11 +119,12 @@ export const LINES = [
 ];
 
 export const FUELS = {
-  kerosene: { name: 'Normal fuel', co2: 1.0, contrailEvery: CONTRAIL.every, contrailLife: CONTRAIL.life },
-  saf25:    { name: 'A bit of SAF', co2: 0.85, contrailEvery: 14, contrailLife: 6500 },
-  saf50:    { name: 'Half SAF', co2: 0.7, contrailEvery: 17, contrailLife: 5500 },
-  saf100:   { name: 'All SAF', co2: 0.45, contrailEvery: 22, contrailLife: 4500 },
-  hydrogen: { name: 'Hydrogen', co2: 0.0, contrailEvery: 8, contrailLife: 9000 },
+  // `water`: water vapour in the exhaust (drawn as white wisps). Hydrogen makes about 2.5x as much.
+  kerosene: { name: 'Normal fuel', co2: 1.0, water: 1.0, contrailEvery: CONTRAIL.every, contrailLife: CONTRAIL.life },
+  saf25:    { name: 'A bit of SAF', co2: 0.85, water: 1.05, contrailEvery: 14, contrailLife: 6500 },
+  saf50:    { name: 'Half SAF', co2: 0.7, water: 1.1, contrailEvery: 17, contrailLife: 5500 },
+  saf100:   { name: 'All SAF', co2: 0.45, water: 1.15, contrailEvery: 22, contrailLife: 4500 },
+  hydrogen: { name: 'Hydrogen', co2: 0.0, water: 2.5, contrailEvery: 8, contrailLife: 9000 },
 };
 
 
@@ -137,7 +153,7 @@ export function unlocked(save, line) {
 }
 export function unlockText(line) {
   const u = line.unlock || {};
-  return u.landings ? `Unlocks after ${u.landings} landings` : u.planted ? 'Unlocks when you plant your first tree' : '';
+  return u.landings ? `Unlocks after ${u.landings} landing${u.landings > 1 ? 's' : ''}` : u.planted ? 'Unlocks when you plant your first tree' : '';
 }
 
 // Is the next level waiting for the Wild Land meter to grow?
@@ -169,13 +185,17 @@ export function loadout(save) {
   const fuelId = choices.includes(save.fuel) ? save.fuel : choices[choices.length - 1];
   const fuel = FUELS[fuelId];
   const eng = level(save, 'engine') ? lineById('engine').levels[level(save, 'engine') - 1].co2 : 1;
+  const cabin = level(save, 'cabin') ? lineById('cabin').levels[level(save, 'cabin') - 1].co2 : 1;
   const radar = level(save, 'radar') ? lineById('radar').levels[level(save, 'radar') - 1] : null;
   const trees = level(save, 'trees') ? lineById('trees').levels[level(save, 'trees') - 1] : null;
   const magnet = level(save, 'magnet') ? lineById('magnet').levels[level(save, 'magnet') - 1] : null;
   return {
     fuelId,
-    co2Cruise: CLIMATE.co2Cruise * fuel.co2 * eng,
-    co2Takeoff: CLIMATE.co2Takeoff * fuel.co2 * eng,
+    co2Cruise: CLIMATE.co2Cruise * fuel.co2 * eng * cabin,
+    co2Takeoff: CLIMATE.co2Takeoff * fuel.co2 * eng * cabin,
+    // Exhaust plume: grey puffs as dark as the CO2, white wisps as thick as the water vapour.
+    smoke: fuel.co2 * eng * cabin,
+    vapour: fuel.water,
     contrailEvery: fuel.contrailEvery,
     contrailLife: fuel.contrailLife,
     revealPx: radar ? radar.reveal : ISSR.revealPx,
