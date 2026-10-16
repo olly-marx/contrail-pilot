@@ -44,7 +44,7 @@ save (test-only, like `'*'` in seenTips); `tests/controls.cjs` exercises the rea
 aim X used to mark the screen spot, ignoring ground scroll during the fall (measured miss 58-234
 px vs 32 px plots); `predictLanding()` now returns the ground spot. Soil patches 48 px, widened by
 the separate Soil Patches line (64, 80). Turbulence is a bounded patch (fly over/under), from 4 km,
-bump +-60, tap lag 30-120 ms.
+bump +-60, tap lag 30-120 ms. Mid-run tips (`explain()`) close only with their OK button (`#coachOk`, enabled after 0.7 s); taps on the game are ignored while a tip is up. Only the school "tap the screen" step keeps tap-anywhere.
 
 ## Decisions (don't re-litigate without the user)
 

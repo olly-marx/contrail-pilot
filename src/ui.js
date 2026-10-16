@@ -320,14 +320,20 @@ export class UI {
   }
 
   // ---------- flight school ----------
-  // waiting=true: the game is frozen and a tap on the bubble (or screen) continues.
-  coach(text, waiting, school = true) {
+  // waiting=true: the game is frozen until the player continues. button=true (the default): only
+  // the OK button continues, enabled after a short pause so a tap meant for the plane can't hit it.
+  // button=false: a tap anywhere continues (the "tap the screen" lesson in flight school).
+  coach(text, waiting, school = true, button = true) {
     $('coachText').innerHTML = text;
-    $('coachTap').hidden = !waiting;
+    const ok = $('coachOk');
+    this.coachButton = !!waiting && button;
+    $('coachTap').hidden = !waiting || this.coachButton;
+    ok.hidden = !this.coachButton;
+    if (this.coachButton) { ok.disabled = true; clearTimeout(this.okTimer); this.okTimer = setTimeout(() => { ok.disabled = false; }, 700); }
     $('coach').classList.toggle('waiting', !!waiting);
     $('coach').hidden = false;
     $('coach').classList.toggle('high', !school);   // explanations sit high, so the ground stays visible
     $('skipSchool').hidden = !school;
   }
-  hideCoach() { $('coach').hidden = true; $('skipSchool').hidden = true; }
+  hideCoach() { $('coach').hidden = true; $('skipSchool').hidden = true; this.coachButton = false; }
 }

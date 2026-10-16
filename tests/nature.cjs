@@ -59,7 +59,7 @@ const KEY = 'contrailPilot.v2';
   await scene(() => { const s = game.scene.getScene('game'); s.storms = []; s.nextStormAt = 1e9; s.plane.y = 200; s.plane.vy = 0; s.addPlot(100); s.parcelLanded(110, 'spruce'); });
   const ex = await scene(() => { const s = game.scene.getScene('game'); return { explaining: s.explaining, frozen: s.frozen, text: document.getElementById('coachText').textContent }; });
   check(ex.explaining && ex.frozen && /Wild Land/.test(ex.text), `first planting should pause and explain Wild Land: ${JSON.stringify(ex)}`);
-  await p.click('#coach');
+  await p.click('#coachOk');
   check(await scene(() => !game.scene.getScene('game').frozen), 'tapping the captain should carry on');
 
   console.log({ fails, errs, bio, kinds });

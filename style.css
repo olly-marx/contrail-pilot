@@ -173,6 +173,10 @@ p { margin: 0; }
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10' shape-rendering='crispEdges'%3E%3Crect width='10' height='10' fill='%236ec6e8'/%3E%3Crect x='1' y='3' width='8' height='6' fill='%23fff'/%3E%3Crect x='2' y='2' width='6' height='2' fill='%23fff'/%3E%3Crect x='2' y='1' width='6' height='2' fill='%231b2140'/%3E%3Crect x='1' y='2' width='8' height='1' fill='%231b2140'/%3E%3Crect x='4' y='1' width='2' height='1' fill='%23ffc23d'/%3E%3Crect x='3' y='5' width='1' height='1' fill='%231b1b2f'/%3E%3Crect x='6' y='5' width='1' height='1' fill='%231b1b2f'/%3E%3Crect x='3' y='7' width='4' height='1' fill='%231b1b2f'/%3E%3C/svg%3E"); }
 .coach-name { font-size: 7px; color: var(--muted); margin-bottom: 2px; }
 .coach-tap { font-size: 7px; color: var(--cool); margin-top: 6px; animation: blink .8s steps(2) infinite; }
+/* Only this button closes a tip, so taps meant for the plane can't dismiss it by mistake. */
+.coach-ok { margin-top: 8px; font: inherit; font-size: 9px; padding: 8px 12px; background: var(--cool); color: var(--ink); border: 0; cursor: pointer;
+  box-shadow: 0 -2px 0 0 var(--ink), 0 2px 0 0 var(--ink), -2px 0 0 0 var(--ink), 2px 0 0 0 var(--ink); }
+.coach-ok:disabled { opacity: .4; cursor: default; }
 .skip { position: fixed; bottom: 8px; right: 8px; z-index: 26; background: rgba(255,255,255,.8) !important; }
 
 /* ---------- simpler screens ---------- */

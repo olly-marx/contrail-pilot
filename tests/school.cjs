@@ -30,7 +30,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       if (process.env.SHOTS) { await p.waitForTimeout(250); await p.screenshot({ path: `${process.env.SHOTS}/school-${String(shot++).padStart(2, '0')}.png` }); }
     }
     if (st.state === 'over') break;
-    if (st.waiting) { await p.click('#coach'); await p.waitForTimeout(120); continue; }
+    if (st.waiting) { await p.click(await p.isVisible('#coachOk') ? '#coachOk' : '#coach'); await p.waitForTimeout(120); continue; }
     // Take off the way the captain says: press and hold until the plane is flying.
     if (st.state === 'takeoff') { if (!held) { held = true; await p.mouse.move(195, 400); await p.mouse.down(); } await p.waitForTimeout(100); continue; }
     if (held) { held = false; await p.mouse.up(); }

@@ -1,5 +1,5 @@
 // Controls check: take-off is press-and-hold (tapping or waiting does nothing, letting go just
-// slows down, never fails), and a dropped parcel lands on the ground spot under the aim X from any height.
+// slows down, never fails), mid-run tips close only with their OK button, and a dropped parcel lands on the ground spot under the aim X from any height.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/controls.cjs
 const { chromium } = require('playwright-core');
 const URL = process.env.URL || 'http://localhost:8000/';
@@ -44,6 +44,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(typeof r.miss === 'number' && Math.abs(r.miss) <= 6, `parcel from y=${hy} should land under the X, missed by ${r.miss} px`);
     await p.waitForTimeout(200);
   }
+  // 5. A mid-run tip closes only with its OK button: taps on the game (meant for the plane) don't.
+  await scene(() => { const s = game.scene.getScene('game'); s.save.seenTips = s.save.seenTips.filter(t => t !== '*'); s.explain('test-tip', 'Test tip'); });
+  await p.mouse.click(195, 700); await p.mouse.click(195, 700);
+  const tip1 = await scene(() => ({ ex: game.scene.getScene('game').explaining, okDisabled: document.getElementById('coachOk').disabled }));
+  check(tip1.ex, 'tapping the game should not close a tip');
+  check(tip1.okDisabled, 'the OK button should wait a moment before it works');
+  await p.waitForTimeout(800); await p.click('#coachOk');
+  const tip2 = await scene(() => ({ ex: game.scene.getScene('game').explaining, frozen: game.scene.getScene('game').frozen }));
+  check(!tip2.ex && !tip2.frozen, `the OK button should close the tip and resume: ${JSON.stringify(tip2)}`);
   check(errs.length === 0, `page errors: ${errs}`);
   console.log(fails.length ? 'FAIL\n- ' + fails.join('\n- ') : 'PASS');
   process.exitCode = fails.length ? 1 : 0;

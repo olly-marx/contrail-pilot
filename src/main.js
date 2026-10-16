@@ -11,8 +11,10 @@ try { await document.fonts.load('8px Pixel'); } catch (e) { /* play on with the 
 const scene = () => game.scene.getScene('game');
 const ui = new UI(save, { onStart: () => scene().startFlight(), onSchool: () => scene().startSchool() });
 document.getElementById('skipSchool').onclick = () => scene().skipSchool();
-// Taps on the flight-school bubble count as taps on the game.
-document.getElementById('coach').addEventListener('pointerdown', () => scene().onCoachTap());
+// Tips close only with their OK button. The bubble itself counts as a tap only for the
+// flight-school "tap the screen" step, which has no button.
+document.getElementById('coachOk').addEventListener('click', e => { e.stopPropagation(); scene().onCoachTap(); });
+document.getElementById('coach').addEventListener('pointerdown', () => { if (!ui.coachButton) scene().onCoachTap(); });
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

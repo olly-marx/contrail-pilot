@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
     for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
     // Sprites: drawn by tools/art/make_sprites.py.
     for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
-      'plot', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
+      'plot-left', 'plot-mid', 'plot-right', 'turb', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
       this.load.image(k, `assets/${k}.png`);
     // Background wildlife: two frames each (legs / wings).
     for (const a of ['cow', 'sheep', ...WILD_ANIMALS.map(a => a.id)]) for (let f = 0; f < 2; f++) this.load.image(`animal-${a}-${f}`, `assets/animal-${a}-${f}.png`);
@@ -125,6 +125,7 @@ export class GameScene extends Phaser.Scene {
     this.rayGfx = this.add.graphics();
     this.stormLayer = this.add.layer();
     this.turbGfx = this.add.graphics();
+    this.turbLayer = this.add.layer();
     this.birdLayer = this.add.layer();
 
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
@@ -285,7 +286,8 @@ export class GameScene extends Phaser.Scene {
   setDropVisible(v) { this.dropBg.setVisible(v); this.dropLabel.setVisible(v); this.dropShown = v; }
 
   onTap(p) {
-    if (this.onCoachTap()) return;   // the captain is talking: a tap continues
+    if (this.ui.coachButton) return;   // a tip is up: only its OK button closes it
+    if (this.onCoachTap()) return;     // flight school's "tap the screen" step
     const d = this.dropBox;
     if (this.dropShown && p.x >= d.x && p.x <= d.x + d.w && p.y >= d.y && p.y <= d.y + d.h) {
       this.dropParcel();
@@ -742,7 +744,10 @@ export class GameScene extends Phaser.Scene {
   addPlot(x) {
     const W = this.kit.plotW;
     // A raised mound of dark soil with furrows, a little sign, and a marker that bobs above it.
-    const parts = [this.add.image(x, SKY_H - 3, 'plot').setOrigin(0).setDisplaySize(W, 9)];   // 32x9 art, stretched to the plot width
+    // Built from tileable pieces so any width works (W = 8 + 8n): sunlit left slope, soil, shaded right.
+    const parts = [this.add.image(x, SKY_H - 3, 'plot-left').setOrigin(0),
+      this.add.tileSprite(x + 4, SKY_H - 3, W - 8, 9, 'plot-mid').setOrigin(0),
+      this.add.image(x + W - 4, SKY_H - 3, 'plot-right').setOrigin(0)];
     parts.push(this.add.image(x + W - 3, SKY_H - 3, 'plot-sign').setOrigin(0.5, 1));
     const marker = this.add.image(x + W / 2, SKY_H - 18, 'plot-arrow').setOrigin(0.5);
     parts.push(marker);
@@ -856,17 +861,15 @@ export class GameScene extends Phaser.Scene {
     const cx = box.x + box.w / 2;
     this.inTurb = false;
     for (const z of this.turbs) {
-      g.fillStyle(0xffffff, 0.07).fillRect(z.x, z.y, z.w, z.h);
-      for (let row = z.y + 8; row < z.y + z.h - 4; row += 16) {
-        for (let x = 0; x < z.w; x += 2) {
-          const y = row + Math.round(Math.sin((x + this.gameTime * 0.12 + row * 3) / 7) * 2);
-          g.fillStyle(0xffffff, 0.35).fillRect(z.x + x, y, 2, 1);
-        }
-      }
+      // Tileable gusts (assets/turb.png): drift sideways and churn slowly up and down.
+      if (!z.img) z.img = this.turbLayer.add(this.add.tileSprite(z.x, z.y, z.w, z.h, 'turb').setOrigin(0));
+      z.img.setPosition(Math.round(z.x), z.y);
+      z.img.tilePositionX += 20 * dt;
+      z.img.tilePositionY = Math.round(Math.sin(this.gameTime / 700));
       const cy = box.y + box.h / 2;
       if (cx >= z.x && cx <= z.x + z.w && cy >= z.y && cy <= z.y + z.h) this.inTurb = true;
     }
-    this.turbs = this.turbs.filter(z => z.x + z.w > -10);
+    this.turbs = this.turbs.filter(z => { if (z.x + z.w > -10) return true; if (z.img) z.img.destroy(); return false; });
     if (this.inTurb && this.state === 'playing') {
       this.bumpIn -= dt;
       if (this.bumpIn <= 0) {

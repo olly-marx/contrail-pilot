@@ -17,7 +17,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   let sawPause = false;
   const dismiss = async () => {
     const st = await p.evaluate(() => { const s = game.scene.getScene('game'); return { ex: s.explaining, frozen: s.frozen }; });
-    if (st.ex) { if (st.frozen) sawPause = true; await p.click('#coach'); }
+    if (st.ex) { if (st.frozen) sawPause = true; await p.click('#coachOk'); }
   };
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; s.heat = 0; }, y);
 

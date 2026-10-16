@@ -71,7 +71,7 @@ export class School {
     if (step.setup) step.setup();
     const text = typeof step.say === 'function' ? step.say() : step.say;
     this.s.frozen = !!step.tap;
-    this.ui.coach(text, !!step.tap);
+    this.ui.coach(text, !!step.tap, true, !step.flapOnTap);
   }
 
   // Returns true if flight school used the tap.
