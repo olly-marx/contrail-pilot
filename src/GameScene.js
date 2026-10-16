@@ -182,7 +182,7 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- textures drawn in code (placeholders until real pixel art arrives) ----------
   makeTextures() {
-    if (this.textures.exists('chute')) return;
+    if (this.textures.exists('issr-tile')) return;   // guard on a code-only texture: others now come from PNGs
     const g = this.make.graphics({ x: 0, y: 0 }, false);
 
     // Rewilding you can see: flowers in the grass, hedgerows, ponds and storks.
