@@ -521,6 +521,80 @@ def faces():
         s.save(f'face-{mood}')
 
 
+# ---------- wildlife and exhaust (wired up in GameScene by the gameplay session) ----------
+# Ground animals stand on the grass line, side view, facing right; frame 1 swaps the legs.
+# Sky birds are harmless scenery: small, soft colours, no dark outline, so they never read
+# as the hazard birds (bird-0/1, near-black with a white eye).
+
+def two_frames(name, rows0, rows1, colours):
+    for i, rows in enumerate((rows0, rows1)):
+        w, h = max(len(r) for r in rows), len(rows)
+        s = Sprite(w, h)
+        s.grid(rows, colours)
+        s.save(f'{name}-{i}')
+
+
+def wildlife():
+    cow = ['k.............', 'wkkwwwkwwwwkk.', 'wwwkkwwwwwwwkk', 'wwwkkwwwwwwkkw', 'wwwwwwwkkwwwwp', '.wwwwwwwwww...', '.k.k....k.k...', '.k.k....k.k...']
+    cow_c = {'k': hexc('#2b2b33'), 'w': hexc('#f4f1e8'), 'p': hexc('#f2a3a8')}
+    two_frames('animal-cow', cow, cow[:-1] + ['k...k..k...k..'], cow_c)
+
+    sheep_c = {'w': hexc('#f7f5ee'), 'W': hexc('#d9d4c4'), 'k': hexc('#2b2b33')}
+    sheep = ['..wwwwww...', '.wwwwwwwwkk', 'wwwwwwwwwkk', 'WwwwwwwwW..', '.WWWWWWW...', '.k.k..k.k..']
+    two_frames('animal-sheep', sheep, sheep[:-1] + ['k...k..k.k.'], sheep_c)
+
+    rab_c = {'b': hexc('#a98a6a'), 'B': hexc('#7f6449'), 'w': hexc('#ffffff'), 'k': hexc('#2b2b33')}
+    rab = ['....bb.', '....bb.', '...bbkb', 'wbbbbbb', '.bbbbB.', '.BB.BB.']
+    two_frames('animal-rabbit', rab, ['....bb.', '...bb..', '..bbbkb', 'wbbbbbb', 'bbbbbB.', 'B....BB'], rab_c)
+
+    hog_c = {'s': hexc('#6e5236'), 'S': hexc('#4a3622'), 'f': hexc('#c9a27a'), 'k': hexc('#1b1b2f')}
+    hog = ['.S.S.S..', 'SsSsSs..', 'sSsSsSff', 'SsSsSfkf', '.f..f...']
+    two_frames('animal-hedgehog', hog, hog[:-1] + ['f....f..'], hog_c)
+
+    fox_c = {'o': hexc('#e0702a'), 'O': hexc('#b9531c'), 'w': hexc('#ffffff'), 'k': hexc('#2b2b33')}
+    fox = ['.........o.o', '.........ooo', 'w.......ooko', 'oo.ooooooow.', '.oOooooooOw.', '...k.k..k.k.']
+    two_frames('animal-fox', fox, fox[:-1] + ['..k...k.k..k'], fox_c)
+
+    deer_c = {'d': hexc('#9a5a32'), 'D': hexc('#6e3c1e'), 'a': hexc('#c9b08a'), 'w': hexc('#efe2c8'), 'k': hexc('#2b2b33')}
+    deer = ['.........a.a',
+            '.........aaa',
+            '..........a.',
+            '.........dd.',
+            '.........dkd',
+            '.........dd.',
+            '........dd..',
+            'wddddddddd..',
+            '.dddddddd...',
+            '.Dddddddd...',
+            '..D.D..D.D..',
+            '..D.D..D.D..',
+            '..k.k..k.k..']
+    two_frames('animal-deer', deer, deer[:-3] + ['..D..D.D..D.', '.D...D.D...D', '.k...k.k...k'], deer_c)
+
+    # Sky birds, flying right.
+    robin_c = {'b': hexc('#a07a5a'), 'r': hexc('#f07850'), 'B': hexc('#c8a888')}
+    two_frames('sky-robin', ['B...B', '.B.B.', '.rbbb'], ['.....', '.....', 'Brbbb'], robin_c)
+    swal_c = {'n': hexc('#5a6a9a'), 'N': hexc('#8a9ac8'), 'r': hexc('#e08070')}
+    two_frames('sky-swallow', ['N.....N', '.N...N.', 'n.nnnr.'], ['.......', '.......', 'NnnnnrN'], swal_c)
+    buz_c = {'b': hexc('#8a6a4a'), 'B': hexc('#b8987a'), 'y': hexc('#e8c070')}
+    two_frames('sky-buzzard',
+               ['bb.......bb', '.Bbb...bbB.', '...bBBBby..', '....bbb....'],
+               ['...........', '...bBBBby..', '.Bbb...bbB.', 'bb.......bb'], buz_c)
+
+
+def puff():
+    # 6x6 soft round puff, greyscale with alpha falloff; GameScene tints and fades it.
+    s = Sprite(6, 6)
+    for y in range(6):
+        for x in range(6):
+            d = math.hypot(x - 2.5, y - 2.5)
+            if d <= 3.0:
+                a = 255 if d < 1.6 else 170 if d < 2.4 else 80
+                v = 255 if (x + y) < 5 else 225          # lit upper left
+                s.px(x, y, (v, v, v, a))
+    s.save('puff')
+
+
 if __name__ == '__main__':
     plot(); plot_sign(); plot_arrow(); runway_tile(); tower(); issr_tile(); nofly(); faces()
 
@@ -536,3 +610,5 @@ if __name__ == '__main__':
             tree(kind, st)
     birds()
     stork()
+    wildlife()
+    puff()
