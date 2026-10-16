@@ -671,6 +671,60 @@ def puff():
     s.save('puff')
 
 
+# ---------- lightning (timing and wiring live in GameScene) ----------
+
+def line(x0, y0, x1, y1):
+    """Bresenham: every pixel on the straight line between two points."""
+    pts, dx, dy = [], abs(x1 - x0), -abs(y1 - y0)
+    sx, sy, err = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1), abs(x1 - x0) - abs(y1 - y0)
+    while True:
+        pts.append((x0, y0))
+        if (x0, y0) == (x1, y1):
+            return pts
+        e2 = 2 * err
+        if e2 >= dy:
+            err += dy; x0 += sx
+        if e2 <= dx:
+            err += dx; y0 += sy
+
+
+def bolt(name, w, h, main, forks=()):
+    """Lightning from hand-placed corners (sharp, deliberate angles): white core,
+    pale-yellow edge each side, soft blue glow. Forks are thinner."""
+    s = Sprite(w, h)
+    core, edge, glow = hexc('#ffffff'), hexc('#fff3a0'), (190, 215, 255, 110)
+    trace = lambda pts: [p for a, b in zip(pts, pts[1:]) for p in line(*a, *b)]
+    m = trace(main)
+    f = [p for fk in forks for p in trace(fk)]
+    for x, y in m + f:
+        for dx in (-2, -1, 0, 1, 2):
+            if not s.filled(x + dx, y):
+                s.px(x + dx, y, glow)
+    for x, y in m:
+        s.px(x - 1, y, edge); s.px(x + 1, y, edge)
+    for x, y in f:
+        s.px(x + 1, y, edge)
+    for x, y in m + f:
+        s.px(x, y, core)
+    s.save(name)
+
+
+def storm_flash():
+    """Lit-up storm: the same pixels as each storm piece, every shade stepped brighter.
+    Same silhouette, so it overlays exactly (and adds no hitbox of its own)."""
+    up = {STORM['deep']: STORM['mid'], STORM['dark']: STORM['light'], STORM['mid']: STORM['rim'],
+          STORM['light']: hexc('#c8ccec'), STORM['rim']: hexc('#eef0ff')}
+    for src, dst in (('storm-body', 'storm-flash'), ('storm-top', 'storm-flash-top'), ('storm-bottom', 'storm-flash-bottom')):
+        im = Image.open(OUT / f'{src}.png').convert('RGBA')
+        px = im.load()
+        for y in range(im.height):
+            for x in range(im.width):
+                c = px[x, y]
+                if c[3]:
+                    px[x, y] = up.get(c, c)
+        im.save(OUT / f'{dst}.png'); print('wrote', dst)
+
+
 if __name__ == '__main__':
     plot_parts()
     turbulence()
@@ -697,3 +751,7 @@ if __name__ == '__main__':
     stork()
     wildlife()
     puff()
+    bolt('bolt-0', 16, 44, [(8, 0), (5, 10), (11, 15), (5, 27), (10, 31), (7, 43)])
+    bolt('bolt-1', 14, 58, [(7, 0), (10, 11), (4, 19), (9, 23), (5, 37), (10, 42), (6, 57)])
+    bolt('bolt-2', 20, 36, [(9, 0), (6, 9), (13, 14), (8, 25), (11, 35)], forks=[[(13, 14), (17, 21), (15, 29)]])
+    storm_flash()
