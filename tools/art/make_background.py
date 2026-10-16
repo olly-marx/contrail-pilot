@@ -27,6 +27,9 @@ P = {
     'bld_b': hexc('#5d6d8c'), 'bld_b_lit': hexc('#73849f'),
     'bld_dark': hexc('#4b5873'),
     'window': hexc('#c7dcef'), 'window_lit': hexc('#ffe9a8'),
+    'grass_rim': hexc('#9ad46a'), 'grass_lit': hexc('#7cbf4e'), 'grass': hexc('#5a9a3c'),
+    'grass_dark': hexc('#467f2e'), 'grass_edge': hexc('#3a6a26'),
+    'soil': hexc('#8a6a48'), 'soil_dark': hexc('#735637'), 'soil_light': hexc('#a1825e'), 'pebble': hexc('#b9a68c'),
     'cloud': hexc('#ffffff'), 'cloud_shade': hexc('#dceaf5'), 'cloud_deep': hexc('#c3d8ea'),
 }
 
@@ -155,7 +158,52 @@ def clouds():
     s.save('clouds.png')
 
 
+def ground():
+    # 288x48, scrolls with the world.  Grass on top (plots, runways and trees sit on its
+    # first rows, so it stays plain enough for them to stand out), soil below kept muted
+    # because the hint text is drawn over it.
+    s = Strip(48)
+    rnd = random.Random('ground')
+    GRASS = 13
+    for x in range(W):
+        for y in range(48):
+            if y < GRASS:
+                c = P['grass']
+                if y >= GRASS - 3 or (y >= GRASS - 5 and (x + y) % 2 == 0):
+                    c = P['grass_dark']
+            else:
+                c = P['soil']
+                band = (y - GRASS) // 9
+                if (y - GRASS) % 9 == 8 or ((y - GRASS) % 9 == 7 and (x + y) % 2 == 0):
+                    c = P['soil_dark']          # gentle strata lines
+            s.px(x, y, c)
+        s.px(x, 0, P['grass_rim'])
+        s.px(x, 1, P['grass_lit'])
+        s.px(x, GRASS, P['grass_edge'])
+    # Grass tufts and darker flecks, so scrolling is visible on the ground too.
+    for _ in range(70):
+        x, y = rnd.randrange(W), rnd.randrange(3, GRASS - 3)
+        s.px(x, y, P['grass_lit']); s.px(x, y - 1, P['grass_lit'])
+        s.px(x + 1, y, P['grass_dark'])
+    # Grass roots hanging into the soil.
+    for x in range(0, W, 3):
+        if rnd.random() < 0.6:
+            s.px(x, GRASS + 1, P['grass_edge'])
+            if rnd.random() < 0.4:
+                s.px(x, GRASS + 2, P['grass_edge'])
+    # Pebbles in the soil.
+    for _ in range(40):
+        x, y = rnd.randrange(W), rnd.randrange(GRASS + 4, 46)
+        w = rnd.choice([1, 2, 2, 3])
+        for dx in range(w):
+            s.px(x + dx, y, P['pebble'])
+            s.px(x + dx, y + 1, P['soil_dark'])
+        s.px(x, y, P['soil_light'])
+    s.save('ground.png')
+
+
 if __name__ == '__main__':
+    ground()
     hills()
     city()
     clouds()

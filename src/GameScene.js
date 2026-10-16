@@ -31,9 +31,10 @@ export class GameScene extends Phaser.Scene {
   preload() {
     this.load.image('plane', 'assets/plane.png');
     // Background strips: drawn by tools/art/make_background.py, 288 px wide, tile seamlessly.
-    for (const k of ['clouds', 'hills', 'city']) this.load.image(k, `assets/${k}.png`);
+    for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
     // Sprites: drawn by tools/art/make_sprites.py.
-    for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork'])
+    for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
+      'plot', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
       this.load.image(k, `assets/${k}.png`);
     for (const kind of Object.keys(SPECIES)) for (let s = 0; s < 3; s++) this.load.image(`tree-${kind}-${s}`, `assets/tree-${kind}-${s}.png`);
   }
@@ -124,8 +125,7 @@ export class GameScene extends Phaser.Scene {
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
     this.planeSprite = this.add.image(0, 0, 'plane');
 
-    this.add.rectangle(0, SKY_H, WIDTH, GROUND_H, COLOURS.ground).setOrigin(0);
-    this.add.rectangle(0, SKY_H, WIDTH, 3, COLOURS.groundEdge).setOrigin(0);
+    this.ground = this.add.tileSprite(0, SKY_H, WIDTH, GROUND_H, 'ground').setOrigin(0);
     this.groundFx = this.add.graphics();   // contrail shadows (day) and trapped-heat glow (night)
     this.flowers = hasProject(this.save, 'meadow') ? this.add.tileSprite(0, SKY_H + 6, WIDTH, 4, 'flowers').setOrigin(0) : null;
     this.decorLayer = this.add.layer();
@@ -182,47 +182,25 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- textures drawn in code (placeholders until real pixel art arrives) ----------
   makeTextures() {
-    if (this.textures.exists('issr-tile')) return;   // guard on a code-only texture: others now come from PNGs
     const g = this.make.graphics({ x: 0, y: 0 }, false);
+    // Per-key: a texture already loaded from a PNG wins; code only fills the gaps.
+    const gen = (key, w, h) => { if (!this.textures.exists(key)) g.generateTexture(key, w, h); };
 
     // Rewilding you can see: flowers in the grass, hedgerows, ponds and storks.
     g.clear();
     const fr = new Phaser.Math.RandomDataGenerator(['flowers']);
     for (let x = 0; x < WIDTH; x += fr.between(3, 7)) g.fillStyle([0xffeb3b, 0xffffff, 0xe040fb, 0xff7043][fr.between(0, 3)]).fillRect(x, fr.between(0, 3), 1, 1);
-    g.generateTexture('flowers', WIDTH, 4);
+    gen('flowers', WIDTH, 4);
     g.clear();
     for (let x = 0; x < WIDTH; x++) { const h = 3 + Math.round(1.5 * Math.sin(x / 3) + Math.sin(x / 7)); g.fillStyle(0x2e6b2e).fillRect(x, 6 - h, 1, h); }
-    g.generateTexture('hedge', WIDTH, 6);
+    gen('hedge', WIDTH, 6);
     g.clear();
     g.fillStyle(0x3d8fd1).fillRect(2, 0, 22, 4).fillRect(0, 1, 26, 2);
     g.fillStyle(0x8fd3ff).fillRect(5, 1, 6, 1);
-    g.generateTexture('pond', 26, 4);
+    gen('pond', 26, 4);
     g.clear();
     g.fillStyle(0x6d4c2f).fillRect(0, 0, 6, 2).fillRect(1, 2, 4, 1);
-    g.generateTexture('dam', 6, 3);
-    // ISSR fill: pale ice with scattered crystal sparkles, tiling every 32 px.
-    g.clear();
-    g.fillStyle(COLOURS.issr).fillRect(0, 0, 32, 32);
-    const flake = (fx, fy) => { g.fillStyle(0x8fc9ef).fillRect(fx, fy - 1, 1, 3).fillRect(fx - 1, fy, 3, 1); g.fillStyle(0xffffff).fillRect(fx, fy, 1, 1); };
-    [[5, 6], [20, 3], [12, 15], [27, 19], [4, 25], [18, 28]].forEach(([fx, fy]) => flake(fx, fy));
-    g.fillStyle(0xb5ddf5).fillRect(9, 10, 1, 1).fillRect(24, 11, 1, 1).fillRect(14, 23, 1, 1).fillRect(29, 29, 1, 1);
-    g.generateTexture('issr-tile', 32, 32);
-
-    g.clear();
-    g.fillStyle(0x7a4a24).fillRect(2, 4, 1, 5);
-    g.fillStyle(0xf4f1e8).fillRect(0, 0, 6, 4);
-    g.fillStyle(0x4caf50).fillRect(2, 1, 2, 2);
-    g.generateTexture('plot-sign', 6, 9);
-    g.clear();
-    g.fillStyle(0x1b5e20).fillRect(0, 0, 9, 1).fillRect(1, 1, 7, 1).fillRect(2, 2, 5, 1).fillRect(3, 3, 3, 1).fillRect(4, 4, 1, 1);
-    g.fillStyle(0x8dffb0).fillRect(1, 0, 7, 1).fillRect(2, 1, 5, 1).fillRect(3, 2, 3, 1);
-    g.generateTexture('plot-arrow', 9, 5);
-    // No-fly zone: red and white diagonal stripes, tiling every 8 px.
-    g.clear();
-    g.fillStyle(0xf4f1e8).fillRect(0, 0, 8, 8);
-    g.fillStyle(0xd02a2a);
-    for (let i = 0; i < 8; i++) { g.fillRect(i, (i + 0) % 8, 1, 1); g.fillRect(i, (i + 1) % 8, 1, 1); g.fillRect(i, (i + 2) % 8, 1, 1); g.fillRect(i, (i + 3) % 8, 1, 1); }
-    g.generateTexture('nofly', 8, 8);
+    gen('dam', 6, 3);
     g.destroy();
   }
 
@@ -475,6 +453,7 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar.tilePositionX += dx * 0.15;
     this.hills.tilePositionX += dx * 0.3;
     this.city.tilePositionX += dx * 0.55;
+    this.ground.tilePositionX += dx;
     if (this.hedge) this.hedge.tilePositionX += dx;
     if (this.flowers) this.flowers.tilePositionX += dx;
     // Ponds (with a beaver dam once beavers are back) and storks gliding far away.
@@ -529,6 +508,7 @@ export class GameScene extends Phaser.Scene {
     const tint = lerpColour(lerpColour(0xffffff, 0x4a5a80, n), 0xff7a5a, (this.heatLevel ? this.heatLevel() : 0) * 0.7);
     this.hills.setTint(tint);
     this.city.setTint(tint);
+    this.ground.setTint(tint);
     this.cloudsFar.setAlpha(0.55 - 0.35 * n);
   }
 
@@ -536,14 +516,10 @@ export class GameScene extends Phaser.Scene {
 
   addRunway(worldX, name) {
     const x = PLANE.x + worldX - this.distancePx;
-    const strip = this.add.rectangle(x, SKY_H, AIRPORT.runwayLen, 6, COLOURS.runway).setOrigin(0);
+    const strip = this.add.tileSprite(x, SKY_H, AIRPORT.runwayLen, 6, 'runway').setOrigin(0);   // centre dash every 20 px
     const parts = [strip];
-    for (let m = 8; m < AIRPORT.runwayLen - 8; m += 20) {
-      parts.push(this.add.rectangle(x + m, SKY_H + 2, 10, 2, COLOURS.runwayMark).setOrigin(0));
-    }
     // Control tower at the far end.
-    parts.push(this.add.rectangle(x + AIRPORT.runwayLen - 14, SKY_H - 22, 6, 22, 0xd8d4c8).setOrigin(0));
-    parts.push(this.add.rectangle(x + AIRPORT.runwayLen - 17, SKY_H - 28, 12, 7, 0x3e4a61).setOrigin(0));
+    parts.push(this.add.image(x + AIRPORT.runwayLen - 17, SKY_H, 'tower').setOrigin(0, 1));
     parts.push(this.add.text(x + AIRPORT.runwayLen / 2, SKY_H + 8, name,
       { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 0));
     this.runwayLayer.add(parts);
@@ -656,11 +632,7 @@ export class GameScene extends Phaser.Scene {
   addPlot(x) {
     const W = PARCEL.plotW;
     // A raised mound of dark soil with furrows, a little sign, and a marker that bobs above it.
-    const parts = [
-      this.add.rectangle(x + 2, SKY_H - 3, W - 4, 3, 0x7a4a24).setOrigin(0),
-      this.add.rectangle(x, SKY_H, W, 6, 0x6a3c1c).setOrigin(0),
-    ];
-    for (let i = 4; i < W - 3; i += 6) parts.push(this.add.rectangle(x + i, SKY_H - 2, 3, 1, 0x4a2a10).setOrigin(0));
+    const parts = [this.add.image(x, SKY_H - 3, 'plot').setOrigin(0)];   // 32x9: mound above the grass line, soil below
     parts.push(this.add.image(x + W - 3, SKY_H - 3, 'plot-sign').setOrigin(0.5, 1));
     const marker = this.add.image(x + W / 2, SKY_H - 18, 'plot-arrow').setOrigin(0.5);
     parts.push(marker);
