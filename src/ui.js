@@ -1,5 +1,5 @@
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
-import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature } from './upgrades.js';
+import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
@@ -50,7 +50,7 @@ export class UI {
     $('results').addEventListener('pointerdown', () => { this.skipReveal = true; }, true);
     $('iClose').onclick = () => { $('info').hidden = true; };
     $('resetBtn').onclick = () => {
-      if (!confirm('Delete all trees, upgrades and badges on this device?')) return;
+      if (!confirm('Delete all seeds, ice crystals, upgrades and badges on this device?')) return;
       Object.assign(this.save, resetSave());
       this.renderHangar();
     };
@@ -80,7 +80,8 @@ export class UI {
   }
 
   showTitle() {
-    $('tTrees').textContent = this.save.trees;
+    $('tTrees').textContent = this.save.seeds;
+    $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = this.save.bestDistance;
     $('goBtn').textContent = this.save.tutorialDone ? 'TAKE OFF' : 'START';
     $('tNew').hidden = !this.hasNew();
@@ -118,6 +119,7 @@ export class UI {
     $('rGrab').textContent = '0';
     $('rMultRow').hidden = true; $('rCoolRow').hidden = true; $('rLost').hidden = true;
     $('rNatureRow').hidden = true;
+    $('rCrysRow').hidden = true; $('rCrysRow').classList.remove('stamp');
     $('rNature').textContent = `+${r.natureGain}`;
     $('rTotalRow').classList.remove('zero', 'stamp');
     $('rGain').textContent = '+0';
@@ -162,6 +164,7 @@ export class UI {
       $('rLost').hidden = false;
       sfx.nope();
     }
+    if (r.crystals) { await wait(250); $('rCrysRow').hidden = false; $('rCrys').textContent = `+${r.crystals}`; $('rCrysRow').classList.add('stamp'); sfx.coin(); }
     await wait(450);
 
     // The Earth: each cause grows in turn.
@@ -202,9 +205,9 @@ export class UI {
 
   renderHangar() {
     const s = this.save;
-    $('hTrees').textContent = s.trees;
+    $('hTrees').textContent = s.seeds; $('hCrystals').textContent = s.crystals || 0;
     const free = !!s.freeUpgrade;
-    $('hHint').innerHTML = free ? '<b>Pick ONE upgrade for FREE!</b> Tap <b>i</b> to learn what it does.' : 'Spend your trees. Tap <b>i</b> to learn more.';
+    $('hHint').innerHTML = free ? '<b>Pick ONE upgrade for FREE!</b> Tap <b>i</b> to learn what it does.' : 'Spend your seeds and ice crystals. Tap <b>i</b> to learn more.';
 
     const choices = fuelChoices(s);
     const current = choices.includes(s.fuel) ? s.fuel : choices[choices.length - 1];
@@ -215,8 +218,17 @@ export class UI {
       s.fuel = btn.dataset.fuel; writeSave(s); sfx.coin(); this.renderHangar();
     });
 
+    // Two tabs: PLANE (fuel, engines, cabin, icy-air research) and NATURE (trees and rewilding).
+    const tab = this.hTab || 'plane';
+    $('hTabs').querySelectorAll('[data-tab]').forEach(b => {
+      const t = b.dataset.tab, buyable = LINES.some(l => tabOf(l) === t && canBuy(s, l));
+      b.classList.toggle('on', t === tab);
+      b.innerHTML = t.toUpperCase() + (t !== tab && buyable ? '<span class="dot"></span>' : '');
+      b.onclick = () => { this.hTab = t; sfx.flap(); this.renderHangar(); };
+    });
+    const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
     let lastGroup = null;
-    $('hUpgrades').innerHTML = LINES.map(line => {
+    $('hUpgrades').innerHTML = LINES.filter(line => tabOf(line) === tab).map(line => {
       // The Nature group gets a header with the Wild Land meter.
       const head = line.group === 'Nature' && lastGroup !== 'Nature' && unlocked(s, line)
         ? `<div class="nature-head"><h3>NATURE</h3>${meterHTML(s)}<p class="small">Plant different kinds of trees and rewild land to fill it.</p></div>` : '';
@@ -231,7 +243,7 @@ export class UI {
       const isFree = free && next && have === 0 && !waitBio;
       const ok = isFree || canBuy(s, line);
       const btn = waitBio ? `<span class="small">needs Wild Land ${next.needsBio}</span>`
-        : `<button class="btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : next.cost + ' trees'}</button>`;
+        : `<button class="btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>`;
       const nextRow = next
         ? `<div class="next"><span>Next: <b>${next.name}</b>. ${next.short}</span>${btn}</div>`
         : '<div class="next"><span><b>All done!</b></span></div>';
@@ -251,7 +263,7 @@ export class UI {
     const s = this.save, line = LINES.find(l => l.id === id), next = nextLevel(s, line);
     const isFree = s.freeUpgrade && level(s, id) === 0;
     if (!isFree && !canBuy(s, line)) { sfx.nope(); return; }
-    if (isFree) s.freeUpgrade = false; else s.trees -= next.cost;
+    if (isFree) s.freeUpgrade = false; else { s.seeds -= next.cost; s.crystals = (s.crystals || 0) - (next.crystals || 0); }
     s.levels[id] = level(s, id) + 1;
     if (next.fuel) s.fuel = next.fuel;              // switch to the new fuel straight away
     if (next.fuel === 'hydrogen' && !s.badges.includes('zeroCarbon')) s.badges.push('zeroCarbon');
@@ -265,7 +277,7 @@ export class UI {
     $('iGroup').textContent = line.group;
     $('iName').textContent = line.name;
     $('iLevels').innerHTML = line.levels.map((l, i) =>
-      `<li class="${i < have ? 'have' : ''}"><b>${l.name}</b> (${l.cost} trees${l.needsBio ? `, Wild Land ${l.needsBio}` : ''}): ${l.short}${i < have ? ' - yours!' : ''}` +
+      `<li class="${i < have ? 'have' : ''}"><b>${l.name}</b> (${l.cost} seeds${l.crystals ? ` + ${l.crystals} ice crystals` : ''}${l.needsBio ? `, Wild Land ${l.needsBio}` : ''}): ${l.short}${i < have ? ' - yours!' : ''}` +
       (l.species ? `<br><span class="small">${SPECIES[l.species].fact}</span>` : '') + '</li>').join('');
     $('iWhat').textContent = line.info.what;
     $('iWhy').textContent = line.info.why;

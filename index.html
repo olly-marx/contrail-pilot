@@ -17,8 +17,8 @@
   <section id="title" class="overlay clear" hidden>
     <div class="panel slim">
       <h1>CONTRAIL<br>PILOT</h1>
-      <p class="lead">Fly far. Grab trees. Keep the Earth cool!</p>
-      <div class="stats"><span><i class="treeicon"></i> <b id="tTrees">0</b></span><span>Best <b id="tBest">0</b>m</span></div>
+      <p class="lead">Fly far. Dodge icy air at night. Keep the Earth cool!</p>
+      <div class="stats"><span><i class="seedicon"></i> <b id="tTrees">0</b></span><span><i class="crysicon"></i> <b id="tCrystals">0</b></span><span>Best <b id="tBest">0</b>m</span></div>
       <div id="tMeter"></div>
       <button id="goBtn" class="btn go big" type="button">TAKE OFF</button>
       <button id="hangarBtn" class="btn" type="button">HANGAR <span id="tNew" class="newtag" hidden>NEW!</span></button>
@@ -36,11 +36,11 @@
       <h2>How to play</h2>
       <ol class="howto">
         <li><span class="pic pic-tap"></span><span><b>Tap</b> to fly up. Miss the storms.</span></li>
-        <li><span class="pic pic-tree"></span><span><b>Grab trees</b> in the sky.</span></li>
+        <li><span class="pic pic-tree"></span><span><b>Grab seeds</b> in the sky.</span></li>
         <li><span class="pic pic-issr"></span><span><b>Icy air</b> makes a cloud line: a <b>contrail</b>.</span></li>
         <li><span class="pic pic-day"></span><span><b>Day:</b> contrails make shade. <span class="cool">Cooler!</span></span></li>
         <li><span class="pic pic-night"></span><span><b>Night:</b> contrails are a blanket. <span class="warm">Hotter!</span></span></li>
-        <li><span class="pic pic-land"></span><span><b>Land</b> to keep your trees.</span></li>
+        <li><span class="pic pic-land"></span><span><b>Land</b> to keep your seeds.</span></li>
       </ol>
       <div class="buttons"><button id="howClose" class="btn go" type="button">OK</button></div>
     </div>
@@ -54,12 +54,13 @@
       <p class="newbest step" id="rRecord" hidden>NEW RECORD!</p>
 
       <div class="step tally">
-        <div class="tally-row"><span>Trees grabbed</span><b id="rGrab">0</b></div>
+        <div class="tally-row"><span>Seeds grabbed</span><b id="rGrab">0</b></div>
         <div class="tally-row mult" id="rMultRow" hidden><span>Long flight</span><b id="rMult">x1</b></div>
         <div class="tally-row cool" id="rCoolRow" hidden><span>Cool Earth</span><b>+3</b></div>
         <div class="tally-row nature" id="rNatureRow" hidden><span>Wild Land</span><b id="rNature">+0</b></div>
-        <div class="tally-total" id="rTotalRow"><i class="treeicon"></i><b id="rGain">+0</b></div>
-        <p class="lost-msg" id="rLost" hidden>CRASHED! Trees lost.<br>Land to keep them!</p>
+        <div class="tally-total" id="rTotalRow"><i class="seedicon"></i><b id="rGain">+0</b></div>
+        <p class="lost-msg" id="rLost" hidden>CRASHED! Seeds lost.<br>Land to keep them!</p>
+        <div class="tally-row crys" id="rCrysRow" hidden><span>Ice crystals (always kept)</span><b><i class="crysicon"></i> <span id="rCrys">+0</span></b></div>
       </div>
 
       <div class="step earth">
@@ -89,11 +90,12 @@
     <div class="panel wide">
       <div class="hangar-head">
         <h2>HANGAR</h2>
-        <span class="treebank"><i class="treeicon"></i><b id="hTrees">0</b></span>
+        <span class="treebank"><i class="seedicon"></i><b id="hTrees">0</b><i class="crysicon"></i><b id="hCrystals">0</b></span>
         <button id="hGoTop" class="btn go" type="button">TAKE OFF</button>
       </div>
-      <p class="small" id="hHint">Spend your trees. Tap <b>i</b> to learn more.</p>
+      <p class="small" id="hHint">Spend your seeds and ice crystals. Tap <b>i</b> to learn more.</p>
       <div id="hFuel" class="fuel"></div>
+      <div id="hTabs" class="tabs"><button class="btn" data-tab="plane" type="button">PLANE</button><button class="btn" data-tab="nature" type="button">NATURE</button></div>
       <div id="hUpgrades" class="upgrades"></div>
       <h3>Badges</h3>
       <div id="hBadges" class="badges"></div>

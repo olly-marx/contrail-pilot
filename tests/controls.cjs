@@ -1,5 +1,5 @@
 // Controls check: take-off is press-and-hold (tapping or waiting does nothing, letting go just
-// slows down, never fails), mid-run tips close only with their OK button, and a dropped parcel lands on the ground spot under the aim X from any height.
+// slows down, never fails), mid-run tips close only with their OK button, icy air is lumpy (not a box), and a dropped parcel lands on the ground spot under the aim X from any height.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/controls.cjs
 const { chromium } = require('playwright-core');
 const URL = process.env.URL || 'http://localhost:8000/';
@@ -53,6 +53,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.waitForTimeout(800); await p.click('#coachOk');
   const tip2 = await scene(() => ({ ex: game.scene.getScene('game').explaining, frozen: game.scene.getScene('game').frozen }));
   check(!tip2.ex && !tip2.frozen, `the OK button should close the tip and resume: ${JSON.stringify(tip2)}`);
+  // 6. Icy air is lumpy, not a box: the box's corner is outside it, the middle line inside.
+  const shape = await scene(() => { const s = game.scene.getScene('game');
+    const i = s.addIssrAt(100, 100, 240, 100), hb = (x, y) => ({ x, y: y - 6, w: 4, h: 12 });
+    const r = { corner: s.inIssrShape(i, hb(101, 102)), middle: s.inIssrShape(i, hb(220, 150)) };
+    s.issrs = s.issrs.filter(z => z !== i); i.maskGfx.destroy(); i.destroy(); return r; });
+  check(!shape.corner, 'the corner of an icy-air box should be outside its lumpy shape');
+  check(shape.middle, 'the middle of an icy-air patch should be inside it');
   check(errs.length === 0, `page errors: ${errs}`);
   console.log(fails.length ? 'FAIL\n- ' + fails.join('\n- ') : 'PASS');
   process.exitCode = fails.length ? 1 : 0;

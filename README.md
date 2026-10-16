@@ -57,10 +57,14 @@ python3 -m http.server 8000 &
 npm i --no-save playwright-core
 node tests/issr-reveal.cjs        # set CHROME=/path/to/chrome if needed
 node tests/flight.cjs             # takeoff, landing, day/night radiation, overheat, crash
-node tests/progression.cjs        # trees banked only on landing, multiplier, hangar levels, info pop-ups, planting
+node tests/progression.cjs        # seeds banked only on landing, multiplier, hangar levels, info pop-ups, planting
 node tests/school.cjs             # a new player can finish flight school by following the captain
 node tests/hazards.cjs            # turbulence, no-fly zones, birds: distances, delayed taps, crashes
 node tests/nature.cjs             # Wild Land meter: variety beats quantity, species rotation, rewilding
+node tests/textures.cjs           # every assets/*.png and code-drawn texture exists (assets/ui/ is HTML-only)
+node tests/wildlife.cjs           # wildlife grows with Wild Land, exhaust plume, Greener Cabin
+node tests/controls.cjs           # hold to take off, aim X accuracy, OK-button tips, lumpy icy air
+node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earning rules, costs, hangar tabs
 ```
 
 `tests/flight.cjs` lands an autopilot at the second airport and forces day and night over a line

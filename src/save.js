@@ -3,7 +3,8 @@
 const KEY = 'contrailPilot.v2';
 
 const DEFAULTS = {
-  trees: 0,            // currency, only added when you land safely
+  seeds: 0,            // main money: grabbed in the sky, kept only if you land safely (was 'trees')
+  crystals: 0,         // ice crystals: earned by smart contrail flying, kept even if you crash
   levels: {},          // upgrade line id -> levels bought
   fuel: 'kerosene',    // chosen fuel id
   badges: [],
@@ -21,7 +22,10 @@ const DEFAULTS = {
 export function loadSave() {
   try {
     const raw = localStorage.getItem(KEY);
-    return raw ? { ...DEFAULTS, ...JSON.parse(raw) } : structuredClone(DEFAULTS);
+    if (!raw) return structuredClone(DEFAULTS);
+    const s = { ...DEFAULTS, ...JSON.parse(raw) };
+    if ('trees' in s) { s.seeds = (s.seeds || 0) + s.trees; delete s.trees; }   // money was called 'trees' before 2026-10-16
+    return s;
   } catch (e) {
     return structuredClone(DEFAULTS);
   }

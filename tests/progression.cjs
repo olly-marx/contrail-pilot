@@ -22,7 +22,7 @@ const KEY = 'contrailPilot.v2';
   const grab = n => scene(n => { const s = game.scene.getScene('game'); for (let i = 0; i < n; i++) s.addToken(s.plane.x + 20 + i * 3, s.plane.y - 2, false); }, n);
 
   // 1. Grab trees, then crash: nothing is banked.
-  await p.goto(URL); await setSave({ ...base, trees: 5 }); await p.reload(); await p.waitForTimeout(600);
+  await p.goto(URL); await setSave({ ...base, seeds: 5 }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#goBtn'); await p.waitForTimeout(2300);
   await noStorms(); await hold(); await grab(3);
   for (let i = 0; i < 8; i++) { await hold(); await p.waitForTimeout(60); }
@@ -31,7 +31,7 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(3500);   // no taps: falls and crashes
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && !r.landed && r.gained === 0, `crash should bank 0 trees, got ${r && r.gained}`);
-  check((await getSave()).trees === 5, 'trees in the bank changed after a crash');
+  check((await getSave()).seeds === 5, 'seeds in the bank changed after a crash');
   await p.waitForTimeout(1300); await p.click('#results');   // results reveal; a tap skips to the end
   await p.waitForTimeout(300);
   check(await p.isVisible('#rLost'), 'results should say the trees were lost');
@@ -50,21 +50,21 @@ const KEY = 'contrailPilot.v2';
   r = await scene(() => game.scene.getScene('game').result);
   check(r && r.landed, 'did not land');
   check(r && r.gained === 6, `4 trees x1.5 should bank 6, got ${r && r.gained}`);
-  check((await getSave()).trees === 11, `bank should be 5 + 6 = 11, got ${(await getSave()).trees}`);
+  check((await getSave()).seeds === 11, `bank should be 5 + 6 = 11, got ${(await getSave()).seeds}`);
 
   // 3. Hangar: lines unlock as you progress. A new player sees Fuel as locked.
-  await setSave({ ...base, trees: 50 }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seeds: 50 }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#hangarBtn');
   check(await p.$('[data-buy="fuel"]') === null, 'fuel should be locked before 3 landings');
   check((await p.textContent('#hUpgrades')).includes('Unlocks after 3 landings'), 'locked lines should say how to unlock them');
   check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
   // Levelled lines, prices, info pop-up.
-  await setSave({ ...base, trees: 50, landings: 3 }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seeds: 50, landings: 3 }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#hangarBtn');
   await p.click('[data-buy="radar"]');     // 15
   await p.click('[data-buy="fuel"]');      // 20
   const save = await getSave();
-  check(save.trees === 15, `50 - 15 - 20 should leave 15, got ${save.trees}`);
+  check(save.seeds === 15, `50 - 15 - 20 should leave 15, got ${save.seeds}`);
   check(save.levels.radar === 1 && save.levels.fuel === 1, 'levels not saved');
   check(save.fuel === 'saf25', `new fuel should be equipped, got ${save.fuel}`);
   check(await p.isDisabled('[data-buy="engine"]'), 'engine (25) should be unaffordable with 15');

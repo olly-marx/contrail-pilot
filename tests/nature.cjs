@@ -34,19 +34,22 @@ const KEY = 'contrailPilot.v2';
   check(JSON.stringify(kinds) === '["spruce","birch","oak"]', `parcels should rotate spruce, birch, oak; got ${kinds}`);
 
   // 3. Rewilding waits for the meter: meadow needs Wild Land 5.
-  await setSave({ ...base, seenTips: ['*'], trees: 200, planted: {} }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: {} }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#hangarBtn');
+  await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
   check(await p.$('[data-buy="rewild"]') === null, 'rewilding should be locked before any tree is planted');
-  await setSave({ ...base, seenTips: ['*'], trees: 200, planted: { spruce: 1 } }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { spruce: 1 } }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#hangarBtn');
+  await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
   check((await p.textContent('#hUpgrades')).includes('needs Wild Land 5'), 'meadow should wait for Wild Land 5');
-  await setSave({ ...base, seenTips: ['*'], trees: 200, planted: { birch: 2 } }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { birch: 2 } }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#hangarBtn');
+  await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
   const before = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
   await p.click('[data-buy="rewild"]');
   const save = await getSave();
   const after = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
-  check(save.levels.rewild === 1 && save.trees === 170, `meadow should cost 30 and be bought, got ${JSON.stringify(save.levels)} trees ${save.trees}`);
+  check(save.levels.rewild === 1 && save.seeds === 170 && save.crystals === 3, `meadow should cost 30 seeds + 2 crystals and be bought, got ${JSON.stringify(save.levels)} seeds ${save.seeds} crystals ${save.crystals}`);
   check(after - before === 8, `meadow should add 8 Wild Land, added ${after - before}`);
 
   // 4. The meadow shows up in the world as flowers in the grass.

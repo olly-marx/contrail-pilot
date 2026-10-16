@@ -34,7 +34,7 @@ export class GameScene extends Phaser.Scene {
     for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
     // Sprites: drawn by tools/art/make_sprites.py.
     for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
-      'plot-left', 'plot-mid', 'plot-right', 'turb', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
+      'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
       this.load.image(k, `assets/${k}.png`);
     // Background wildlife: two frames each (legs / wings).
     for (const a of ['cow', 'sheep', ...WILD_ANIMALS.map(a => a.id)]) for (let f = 0; f < 2; f++) this.load.image(`animal-${a}-${f}`, `assets/animal-${a}-${f}.png`);
@@ -71,7 +71,7 @@ export class GameScene extends Phaser.Scene {
     this.inTurb = false;
     this.bumpIn = 0;
     this.parcelsFalling = [];
-    this.nextPlotAt = 200;
+    this.nextPlotAt = PARCEL.firstAt;
     this.treeFeedback = 0;
     this.speciesIdx = 0;
     this.decor = [];                 // ponds etc. scrolling on the ground
@@ -80,7 +80,8 @@ export class GameScene extends Phaser.Scene {
     this.explaining = false;
     this.popups = [];
     this.tokens = [];                // floating trees to collect
-    this.cargo = 0;                  // trees on board: kept only if you land
+    this.cargo = 0;                  // seeds on board: kept only if you land
+    this.crystals = 0;               // ice crystals earned this flight: always kept
     this.nextTokenAt = 420;
     this.clock = 0;                  // drives day and night (flight school can set it)
     this.gameTime = 0;               // ms of unfrozen flight, used for contrail ages
@@ -163,7 +164,9 @@ export class GameScene extends Phaser.Scene {
     this.cargoIcon = this.add.image(28, 12, 'token').setOrigin(0, 0);
     this.cargoText = this.add.text(45, 13, '0', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0, 0);
     this.multText = this.add.text(60, 13, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a' }).setOrigin(0, 0);
-    this.cargoIcon.setVisible(false);
+    this.crysIcon = this.add.image(32, 34, 'crystal').setOrigin(0.5);
+    this.crysText = this.add.text(45, 30, '0', { ...font, fontSize: '8px', strokeThickness: 3, color: '#9fe0ff' }).setOrigin(0, 0);
+    this.cargoIcon.setVisible(false); this.crysIcon.setVisible(false); this.crysText.setVisible(false);
 
     this.input.on('pointerdown', p => this.onTap(p));
     // Take-off is press-and-hold. Watched on the window so the captain's speech bubble can't swallow it.
@@ -255,7 +258,7 @@ export class GameScene extends Phaser.Scene {
     this.setState('takeoff');
     this.rollSpeed = 0;
     this.airborne = false;
-    this.cargoIcon.setVisible(true);
+    this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
     this.bioStart = biodiversity(this.save);
     if (!this.school) {
       this.save.flights++;
@@ -343,7 +346,8 @@ export class GameScene extends Phaser.Scene {
       this.speed = this.rollSpeed;
       this.elapsed = 0;   // the speed ramp starts at lift-off
     } else {
-      this.speed = this.school ? WORLD.startSpeed : Math.min(WORLD.maxSpeed, WORLD.startSpeed + WORLD.speedGain * this.elapsed);
+      if (this.distancePx < WORLD.warmup) this.warmTime = this.elapsed;   // speed-up starts after the warm-up leg
+      this.speed = this.school ? WORLD.startSpeed : Math.min(WORLD.maxSpeed, WORLD.startSpeed + WORLD.speedGain * (this.elapsed - (this.warmTime || 0)));
     }
     const dx = this.speed * dt;
     this.distancePx += dx;
@@ -407,9 +411,15 @@ export class GameScene extends Phaser.Scene {
     const box = this.hitbox();
     let inIssr = false;
     for (const i of this.issrs) {
-      const inside = overlaps(box, { x: i.x, y: i.y, w: i.width, h: i.height });
+      const inside = this.inIssrShape(i, box);
       if (inside) { inIssr = true; i.entered = true; }
       i.setAlpha(this.issrAlpha(i, box, inside));
+      if (i.alpha > this.kit.hiddenAlpha + 0.01) i.near = true;   // the player saw it coming
+      // Dodged: icy air you came close to at night, passed without making a contrail.
+      if (!i.scored && i.x + i.width < box.x) {
+        i.scored = true;
+        if (i.near && !i.entered && !this.isDay && this.state === 'playing' && !this.school) this.earnCrystals(1, 'dodged icy air!');
+      }
       i.tilePositionY += dt * 4;
     }
     this.updateTokens(dt, box);
@@ -781,7 +791,7 @@ export class GameScene extends Phaser.Scene {
       this.airportIndex++;
       this.airportsSkipped++;
       this.popup(WIDTH / 2, 60, `Long flight! Landing bonus x${this.multiplier()}`, '#ffe15a');
-      this.explain('x-multiplier', 'You flew past an airport! Your <b>landing bonus</b> is now <b>x1.5</b> (top left).<br>Each airport you pass makes it bigger. But crash, and you lose ALL your trees!');
+      this.explain('x-multiplier', 'You flew past an airport! Your <b>landing bonus</b> is now <b>x1.5</b> (top left).<br>Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!');
       this.nextAirport = {
         worldX: na.worldX + AIRPORT.every,
         name: AIRPORT.names[this.airportIndex % AIRPORT.names.length],
@@ -790,7 +800,7 @@ export class GameScene extends Phaser.Scene {
     }
     const toAirport = this.nextAirport.worldX - this.distancePx;
     if (this.school) return;   // flight school places everything itself
-    if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Stop tapping and glide onto the grey runway to land. Or fly on for more trees!', 'good', 3.5);
+    if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Stop tapping and glide onto the grey runway to land. Or fly on for more seeds!', 'good', 3.5);
 
     if (this.kit.tree && this.distancePx >= this.nextPlotAt) {
       const x = WIDTH + 10;
@@ -917,7 +927,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
     if (golden === null) golden = this.distancePx > TOKENS.goldenAfter && Math.random() < TOKENS.goldenChance;
-    if (golden) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN tree</b>! It is worth <b>3 trees</b>. They only appear on long flights.'));
+    if (golden) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN seed</b>! It is worth <b>3 seeds</b>. They only appear on long flights.'));
     const img = this.add.image(x, y, golden ? 'token-gold' : 'token').setOrigin(0);
     this.fxLayer.add(img);
     this.tokens.push({ img, baseY: y, phase: Math.random() * 6, value: golden ? 3 : 1 });
@@ -940,11 +950,11 @@ export class GameScene extends Phaser.Scene {
       t.img.y = Math.round(t.baseY + Math.sin(t.phase) * TOKENS.bob);
       if (d <= this.kit.pickup - 6 && this.state === 'playing') {
         this.cargo += t.value;
-        this.popup(tx, ty - 8, `+${t.value} tree${t.value > 1 ? 's' : ''}`, t.value > 1 ? '#ffe15a' : '#8dffb0');
+        this.popup(tx, ty - 8, `+${t.value} seed${t.value > 1 ? 's' : ''}`, t.value > 1 ? '#ffe15a' : '#8dffb0');
         this.burst(tx, ty, 0x4caf50, 5);
         sfx.coin();
         this.tweens.add({ targets: this.cargoIcon, scale: 1.4, duration: 80, yoyo: true });
-        if (this.cargo === t.value) this.ui.tipOnce('firstToken', 'You grabbed a tree!', 'It is on board now (top left). Land safely to keep it!', 'good', 3.5);
+        if (this.cargo === t.value) this.ui.tipOnce('firstToken', 'You grabbed a seed!', 'It is on board now (top left). Land safely to keep it!', 'good', 3.5);
         t.img.destroy();
         return false;
       }
@@ -954,7 +964,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   addStormPair() {
-    let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * this.stormCount);
+    if (this.distancePx < WORLD.warmup) this.warmStorms = this.stormCount;   // gaps only narrow after the warm-up
+    let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * (this.stormCount - (this.warmStorms || 0)));
     const nf = HAZARDS.noFly;
     const noFly = this.distancePx >= nf.from && Math.random() < nf.chance;
     if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess);
@@ -1018,12 +1029,40 @@ export class GameScene extends Phaser.Scene {
     this.addIssrAt(WIDTH + 10, Phaser.Math.Between(10, SKY_H - h - 10), w, h);
   }
 
+  // An ISSR is a lumpy patch, not a box: 3-5 overlapping ellipses inside its bounding box. Every
+  // ellipse crosses the box's middle line, so the patch is one piece and flying through the
+  // middle always makes a contrail. The texture is masked to the ellipses.
   addIssrAt(x, y, w, h) {
     const r = this.add.tileSprite(x, y, w, h, 'issr-tile').setOrigin(0).setAlpha(this.kit.hiddenAlpha);
     r.tilePositionX = Phaser.Math.Between(0, 31); r.tilePositionY = Phaser.Math.Between(0, 31);
+    const n = Phaser.Math.Clamp(Math.round(w / 70), 3, 5);
+    r.blobs = [];
+    for (let k = 0; k < n; k++) {
+      const rx = Math.min(w / 2, (w / n) * Phaser.Math.FloatBetween(0.75, 1.0));
+      const cx = Phaser.Math.Clamp((k + 0.5) * w / n + Phaser.Math.Between(-6, 6), rx, w - rx);
+      const ry = h * Phaser.Math.FloatBetween(0.32, 0.5);
+      const cy = Phaser.Math.Clamp(h / 2 + Phaser.Math.FloatBetween(-0.15, 0.15) * h, ry, h - ry);
+      r.blobs.push({ cx, cy, rx, ry });
+    }
+    const m = this.make.graphics({ x, y }, false);
+    m.fillStyle(0xffffff);
+    for (const b of r.blobs) m.fillEllipse(b.cx, b.cy, b.rx * 2, b.ry * 2, 24);
+    r.maskGfx = m;
+    r.setMask(m.createGeometryMask());
     this.issrLayer.add(r);
     this.issrs.push(r);
     return r;
+  }
+
+  // Is any point along the plane's middle line inside one of the ISSR's ellipses?
+  inIssrShape(i, box) {
+    if (!overlaps(box, { x: i.x, y: i.y, w: i.width, h: i.height })) return false;
+    const py = box.y + box.h / 2 - i.y;
+    for (let px = box.x; px <= box.x + box.w; px += 5) {
+      const lx = px - i.x;
+      if (i.blobs.some(b => ((lx - b.cx) / b.rx) ** 2 + ((py - b.cy) / b.ry) ** 2 <= 1)) return true;
+    }
+    return false;
   }
 
   issrAlpha(i, box, inside) {
@@ -1061,9 +1100,9 @@ export class GameScene extends Phaser.Scene {
       if (s.rects[0].x + STORMS.width < -5) { s.parts.forEach(p => p.destroy()); return false; }
       return true;
     });
-    for (const i of this.issrs) i.x -= dx;
+    for (const i of this.issrs) { i.x -= dx; i.maskGfx.x = i.x; i.maskGfx.y = i.y; }
     this.issrs = this.issrs.filter(i => {
-      if (i.x + i.width < -5) { i.destroy(); return false; }
+      if (i.x + i.width < -5) { i.maskGfx.destroy(); i.destroy(); return false; }
       return true;
     });
     for (const c of this.contrails) c.x -= dx;
@@ -1125,6 +1164,7 @@ export class GameScene extends Phaser.Scene {
       if (half === 'dawn' && this.night.started && this.heatTrapped - this.night.trappedAtStart < 0.5) {
         this.nightOwl = true;
         this.popup(WIDTH / 2, 60, 'NIGHT OWL!', '#ffe15a', 16);
+        this.earnCrystals(3, 'clean night!');
       }
       if (half === 'dawn') this.night.started = false;
       this.lastHalf = half;
@@ -1238,6 +1278,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   // Blue sparkles at the Earth face when contrails or trees cool it.
+  // Ice crystals: the contrail currency, for smart flying (dodging icy air at night, clean nights).
+  // Daytime contrails earn none: in real life they are not always cooling.
+  earnCrystals(n, why) {
+    this.crystals += n;
+    sfx.coin();
+    this.popup(this.plane.x + 25, this.plane.y - 16, `+${n} ice crystal${n > 1 ? 's' : ''}: ${why}`, '#9fe0ff');
+    const c = this.add.image(this.plane.x + 25, this.plane.y, 'crystal').setScale(2);
+    this.fxLayer.add(c);
+    this.tweens.add({ targets: c, x: this.crysIcon.x, y: this.crysIcon.y, scale: 1, duration: 600, ease: 'Quad.easeIn', onComplete: () => c.destroy() });
+    this.explain('x-crystals', '<b>ICE CRYSTALS!</b> Contrails are made of ice crystals. You earn them for <b>smart contrail flying</b>: dodging icy air at night, and nights with no contrails.<br>Spend them in the hangar on research and rewilding. You keep them even if you crash!');
+  }
+
   coolSparkle() {
     for (let i = 0; i < 4; i++) {
       const r = this.add.rectangle(WIDTH - 10 + Phaser.Math.Between(-10, 6), 38 + Phaser.Math.Between(-8, 8), 2, 2, 0x9fe0ff);
@@ -1299,6 +1351,7 @@ export class GameScene extends Phaser.Scene {
     this.setDropVisible(showDrop);
     if (showDrop) this.dropLabel.setText(`DROP x${this.parcels}\n${SPECIES[this.treeKind()].name.toUpperCase()}`);
     this.cargoText.setText(`${this.cargo}`);
+    this.crysText.setText(`${this.crystals}`);
     this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');
     this.multText.x = this.cargoText.x + this.cargoText.width + 4;
   }
@@ -1328,11 +1381,11 @@ export class GameScene extends Phaser.Scene {
     // Trees: only what you carry home. Longer flights multiply it; a cooler Earth adds a bonus.
     const earned = [];
     const mult = this.multiplier();
-    earned.push({ label: `Trees grabbed in the sky`, n: this.cargo, lost: !landed });
+    earned.push({ label: `Seeds grabbed in the sky`, n: this.cargo, lost: !landed });
     if (mult > 1 && this.cargo) earned.push({ label: `Long flight bonus x${mult}`, n: Math.round(this.cargo * (mult - 1)), lost: !landed });
     if (heat < 0) earned.push({ label: 'Cooler Earth bonus', n: CARGO.coolBonus, lost: !landed });
     const gained = landed ? earned.reduce((a, e) => a + e.n, 0) : 0;
-    if (!landed && this.cargo) this.popup(this.plane.x + 25, this.plane.y - 14, `-${this.cargo} trees lost!`, '#ff6a5a', 16);
+    if (!landed && this.cargo) this.popup(this.plane.x + 25, this.plane.y - 14, `-${this.cargo} seeds lost!`, '#ff6a5a', 16);
 
     const newBadges = [];
     const award = (id, cond) => { if (cond && !this.save.badges.includes(id)) { this.save.badges.push(id); newBadges.push(id); } };
@@ -1348,7 +1401,8 @@ export class GameScene extends Phaser.Scene {
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
-    this.save.trees += gained;
+    this.save.seeds += gained;
+    this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
     writeSave(this.save);
@@ -1357,7 +1411,7 @@ export class GameScene extends Phaser.Scene {
       landed, landedAt: this.landedAt, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
-      cargo: this.cargo, school: !!this.school, natureGain, bio: biodiversity(this.save),
+      cargo: this.cargo, crystals: this.crystals, school: !!this.school, natureGain, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());

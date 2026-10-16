@@ -30,12 +30,12 @@ export class School {
       { say: '<b>Storm clouds!</b> Fly through the gap.',
         setup: () => { this.storm = stormAt(Phaser.Math.Clamp(s.plane.y + 6, 120, SKY_H - 120)); },
         done: () => this.storm.rects[0].x + STORMS.width < s.plane.x },
-      { say: '<b>Trees!</b> Fly into them to grab them.',
+      { say: '<b>Seeds!</b> Fly into them to grab them. Seeds grow into trees!',
         setup: () => { const y = Phaser.Math.Clamp(s.plane.y, 80, SKY_H - 100); [0, 40, 80].forEach(dx => s.addToken(ahead() + dx, y, false)); },
         done: () => s.tokens.length === 0 },
       { say: () => s.cargo
-          ? `You grabbed <b>${s.cargo}</b>! Your trees are <b>on board</b> (top left).<br>You only keep them if you <b>land safely</b>.`
-          : 'Missed them! That is OK. Trees you grab go <b>on board</b> (top left). You only keep them if you <b>land safely</b>.',
+          ? `You grabbed <b>${s.cargo}</b>! Your seeds are <b>on board</b> (top left).<br>You only keep them if you <b>land safely</b>.`
+          : 'Missed them! That is OK. Seeds you grab go <b>on board</b> (top left). You only keep them if you <b>land safely</b>.',
         tap: true },
       { say: 'Some air up here is <b>icy</b>. You can\'t see it until you are close. Fly into the icy air ahead!',
         setup: () => { this.issr = s.addIssrAt(ahead(), Phaser.Math.Clamp(s.plane.y - 35, 20, SKY_H - 120), 300, 80); },

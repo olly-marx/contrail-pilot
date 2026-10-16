@@ -8,8 +8,8 @@ export const LINES = [
     id: 'radar', name: 'Icy Air Radar', group: 'Research',
     levels: [
       { cost: 15, name: 'Humidity sensor', short: 'See icy air sooner.', reveal: 100, hidden: 0.03 },
-      { cost: 45, name: 'Weather balloon', short: 'See icy air even sooner.', reveal: 150, hidden: 0.05 },
-      { cost: 100, name: 'Contrail forecast', short: 'See icy air from far away!', reveal: 220, hidden: 0.08 },
+      { cost: 45, crystals: 2, name: 'Weather balloon', short: 'See icy air even sooner.', reveal: 150, hidden: 0.05 },
+      { cost: 100, crystals: 5, name: 'Contrail forecast', short: 'See icy air from far away!', reveal: 220, hidden: 0.08 },
     ],
     info: {
       what: 'Icy air is invisible. Scientists measure how wet the air is, so they can guess where it is.',
@@ -107,7 +107,7 @@ export const LINES = [
   },
   {
     id: 'rewild', name: 'Rewilding', group: 'Nature', unlock: { planted: 1 },
-    levels: PROJECTS.map(p => ({ cost: p.cost, name: p.name, short: p.short, needsBio: p.needs, project: p.id })),
+    levels: PROJECTS.map(p => ({ cost: p.cost, crystals: p.crystals, name: p.name, short: p.short, needsBio: p.needs, project: p.id })),
     info: {
       what: 'Rewilding means helping nature look after itself again: wild places, and bringing back animals that used to live here.',
       why: 'Each project fills your Wild Land meter, and healthy land soaks up a little CO2 on every flight.',
@@ -116,15 +116,15 @@ export const LINES = [
     },
   },
   {
-    id: 'magnet', name: 'Tree Magnet', group: 'Plane',
+    id: 'magnet', name: 'Seed Magnet', group: 'Plane',
     levels: [
-      { cost: 20, name: 'Tree magnet', short: 'Grab trees from further away.', pickup: 22 },
-      { cost: 50, name: 'Strong magnet', short: 'Grab trees from even further.', pickup: 30 },
-      { cost: 100, name: 'Super magnet', short: 'Trees fly to you!', pickup: 40 },
+      { cost: 20, name: 'Seed magnet', short: 'Grab seeds from further away.', pickup: 22 },
+      { cost: 50, name: 'Strong magnet', short: 'Grab seeds from even further.', pickup: 30 },
+      { cost: 100, name: 'Super magnet', short: 'Seeds fly to you!', pickup: 40 },
     ],
     info: {
-      what: 'A pretend gadget that pulls floating trees towards your plane.',
-      why: 'More trees on board means more trees when you land. Only if you land safely!',
+      what: 'A pretend gadget that pulls floating seeds towards your plane.',
+      why: 'More seeds on board means more seeds when you land. Only if you land safely!',
       fact: 'In real life, trees are planted by people. Citizen Zoo plants trees in London.',
       links: ['citizenzoo'],
     },
@@ -144,13 +144,16 @@ export const FUELS = {
 export const BADGES = [
   { id: 'firstLanding', name: 'First Landing', desc: 'Land at an airport.' },
   { id: 'longHaul', name: 'Long Haul', desc: 'Fly past 2 airports, then land.' },
-  { id: 'treeHunter', name: 'Tree Hunter', desc: 'Land with 15 trees on board.' },
+  { id: 'treeHunter', name: 'Seed Hunter', desc: 'Land with 15 seeds on board.' },
   { id: 'sunShield', name: 'Sun Shield', desc: 'Make lots of shade (-30) in one flight.' },
   { id: 'nightOwl', name: 'Night Owl', desc: 'Fly a whole night without trapping heat.' },
   { id: 'coolPlanet', name: 'Cool Planet', desc: 'Land with the planet cooler than at take off.' },
   { id: 'forester', name: 'Forester', desc: 'Plant 3 trees in one flight.' },
   { id: 'zeroCarbon', name: 'Zero Carbon Pilot', desc: 'Get the hydrogen engine.' },
 ];
+
+// The hangar has two tabs: the plane (and contrail research) first, nature second.
+export const tabOf = line => (['Trees', 'Nature'].includes(line.group) ? 'nature' : 'plane');
 
 export const level = (save, lineId) => save.levels[lineId] || 0;
 export const lineById = id => LINES.find(l => l.id === id);
@@ -177,7 +180,7 @@ export function needsMoreNature(save, line) {
 
 export function canBuy(save, line) {
   const next = nextLevel(save, line);
-  return !!next && unlocked(save, line) && !needsMoreNature(save, line) && save.trees >= next.cost;
+  return !!next && unlocked(save, line) && !needsMoreNature(save, line) && save.seeds >= next.cost && (save.crystals || 0) >= (next.crystals || 0);
 }
 
 // Tree kinds you can plant: spruce, plus each native species unlocked.

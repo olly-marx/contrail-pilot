@@ -46,6 +46,16 @@ px vs 32 px plots); `predictLanding()` now returns the ground spot. Soil patches
 the separate Soil Patches line (64, 80). Turbulence is a bounded patch (fly over/under), from 4 km,
 bump +-60, tap lag 30-120 ms. Mid-run tips (`explain()`) close only with their OK button (`#coachOk`, enabled after 0.7 s); taps on the game are ignored while a tip is up. Only the school "tap the screen" step keeps tap-anywhere.
 
+Two currencies (2026-10-16): SEEDS (the old "trees" money: grabbed in the sky, kept only on
+landing; `save.seeds`, old saves' `trees` key migrates in `loadSave()`; dropped parcels and planted
+trees are still "trees") and ICE CRYSTALS (`save.crystals`, always kept, even on a crash): +1 for
+passing icy air you came close to at night without a contrail, +3 for a clean night (Night Owl).
+Daytime contrails earn none (not always cooling in reality). Crystals are also spent on Rewilding
+(2-8 each) and the upper Radar levels (2, 5). Hangar has PLANE and NATURE tabs (`tabOf()`).
+Difficulty: first 1.5 km is a warm-up (no speed-up, no gap narrowing); then speed 90 -> 140 at
+0.55/s, gaps 150 -> 115 at 1 px/pair. Soil plots from 1.5 km; floating seeds start at 25%.
+ISSRs are lumpy (3-5 ellipses, `inIssrShape()`), not boxes.
+
 ## Decisions (don't re-litigate without the user)
 
 - Trees are only kept on a safe landing; crash/overheat loses all cargo. No distance trees.

@@ -59,7 +59,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const end = await p.evaluate(() => ({ r: game.scene.getScene('game').result, save: JSON.parse(localStorage.getItem('contrailPilot.v2')) }));
   await p.waitForTimeout(1500);
   if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/school-${String(shot++).padStart(2, '0')}.png` });
-  console.log({ stepsSeen: seen, landed: end.r && end.r.landed, cargo: end.r && end.r.cargo, trees: end.save.trees, tutorialDone: end.save.tutorialDone, errs });
+  console.log({ stepsSeen: seen, landed: end.r && end.r.landed, cargo: end.r && end.r.cargo, seeds: end.save.seeds, tutorialDone: end.save.tutorialDone, errs });
   if (!end.r || !end.r.landed) fails.push('flight school did not end in a landing');
   if (!end.save.tutorialDone) fails.push('tutorialDone not saved');
   if (seen.filter(x => x >= 0).length < 12) fails.push(`only saw ${seen.length} steps`);

@@ -20,16 +20,17 @@ export const PLANE = {
 
 export const WORLD = {
   startSpeed: 90,    // px/s scroll speed
-  speedGain: 1.5,    // px/s added per second flown
-  maxSpeed: 170,
+  speedGain: 0.55,   // px/s added per second flown after the warm-up (top speed ~1.5 min in)
+  maxSpeed: 140,
+  warmup: 1500,      // m: no speed-up or narrowing gaps before the first airport
   pxPerMetre: 1,     // distance shown = px scrolled / this
 };
 
 export const STORMS = {
   width: 44,
   startGap: 150,
-  minGap: 105,
-  gapShrinkPerPair: 2,
+  minGap: 115,
+  gapShrinkPerPair: 1,   // only counts pairs after WORLD.warmup
   spacing: 260,      // px between storm pairs
   marginTop: 40,     // gap centre never closer than this to the top/ground
 };
@@ -76,8 +77,8 @@ export const AIRPORT = {
 
 export const TOKENS = {
   spawnEvery: 240,     // px between chances to place a floating tree
-  chance: 0.5,         // ...rising with distance (see chancePerKm)
-  chancePerKm: 0.08,
+  chance: 0.25,        // ...rising with distance (see chancePerKm)
+  chancePerKm: 0.1,
   maxChance: 0.85,
   goldenAfter: 2500,   // m; golden trees (worth 3) start appearing
   goldenChance: 0.15,
@@ -100,6 +101,7 @@ export const PARCEL = {
   dragTime: 3.0,       // s; how quickly the parcel loses the plane's forward speed
   plotW: 48,           // soil plot width on the ground (the Soil upgrade line widens it)
   plotEvery: [260, 420],  // px between soil plots
+  firstAt: 1500,       // m: soil plots start after the first airport
 };
 
 export const CARGO = {
