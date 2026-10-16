@@ -11,6 +11,8 @@ const DEFAULTS = {
   flights: 0,
   seenTips: [],        // first-time tips already shown
   tutorialDone: false,
+  freeUpgrade: false,  // true after the first landing until the free upgrade is picked
+  freeGiven: false,
   muted: false,
 };
 

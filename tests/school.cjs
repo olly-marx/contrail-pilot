@@ -60,7 +60,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   if (!end.save.tutorialDone) fails.push('tutorialDone not saved');
   if (seen.filter(x => x >= 0).length < 12) fails.push(`only saw ${seen.length} steps`);
   if (!(await p.isVisible('#results'))) fails.push('results not shown after school');
-  if ((await p.textContent('#rEyebrow')).indexOf('school') < 0) fails.push('results do not say flight school');
+  if ((await p.textContent('#rTitle')).toLowerCase().indexOf('school') < 0) fails.push('results do not say flight school');
   // Second visit: the button says TAKE OFF and starts a normal flight.
   await p.click('#againBtn'); await p.waitForTimeout(500);
   if (await p.evaluate(() => !!game.scene.getScene('game').school)) fails.push('second flight went to school again');

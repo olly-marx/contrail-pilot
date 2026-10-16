@@ -44,7 +44,14 @@ function noise({ dur = 0.3, vol = 0.12 }) {
   s.start();
 }
 
+// Phone vibration (Android browsers; iPhones ignore it). Off when sound is muted.
+export function buzz(pattern) {
+  if (muted || !navigator.vibrate) return;
+  try { navigator.vibrate(pattern); } catch (e) {}
+}
+
 export const sfx = {
+  heartbeat: () => { tone({ freq: 70, to: 50, dur: 0.12, type: 'sine', vol: 0.18 }); tone({ freq: 70, to: 50, dur: 0.12, type: 'sine', vol: 0.12, delay: 0.18 }); },
   flap: () => tone({ freq: 520, to: 780, dur: 0.07, vol: 0.04 }),
   issr: () => tone({ freq: 900, to: 1300, dur: 0.12, type: 'triangle', vol: 0.06 }),
   cool: () => tone({ freq: 1400, to: 1800, dur: 0.06, type: 'sine', vol: 0.03 }),

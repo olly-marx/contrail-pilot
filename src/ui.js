@@ -34,6 +34,12 @@ export class UI {
     $('hangarBtn').onclick = () => this.showHangar('title');
     $('rHangarBtn').onclick = () => this.showHangar('results');
     $('hBackBtn').onclick = () => (this.hangarFrom === 'results' ? this.showOnly('results') : this.showTitle());
+    $('hGoBtn').onclick = () => this.start();
+    $('hGoTop').onclick = () => this.start();
+    $('howBtn').onclick = () => { $('how').hidden = false; };
+    $('howClose').onclick = () => { $('how').hidden = true; };
+    // Tap anywhere on the results while it is revealing to skip to the end.
+    $('results').addEventListener('pointerdown', () => { this.skipReveal = true; }, true);
     $('iClose').onclick = () => { $('info').hidden = true; };
     $('resetBtn').onclick = () => {
       if (!confirm('Delete all trees, upgrades and badges on this device?')) return;
@@ -69,41 +75,109 @@ export class UI {
     $('tTrees').textContent = this.save.trees;
     $('tBest').textContent = this.save.bestDistance;
     $('goBtn').textContent = this.save.tutorialDone ? 'TAKE OFF' : 'START';
+    $('tNew').hidden = !this.hasNew();
     this.showOnly('title');
   }
 
   // ---------- results ----------
-  showResults(r) {
-    $('rEyebrow').textContent = r.school ? 'Flight school complete!' : r.landed ? 'Flight complete' : 'Flight over';
-    $('rTitle').textContent = r.landed ? `Landed in ${r.landedAt}!` : r.reason.replace('\n', ' ');
+  // Something to spend in the hangar? Drives the NEW! tags and the glowing button.
+  hasNew() { return !!this.save.freeUpgrade || LINES.some(l => canBuy(this.save, l)); }
+
+  // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
+  // then the Earth bars grow one by one. A tap skips to the end.
+  async showResults(r) {
+    const steps = [...document.querySelectorAll('#results .step')];
+    steps.forEach(el => el.classList.remove('in'));
+    this.skipReveal = false;
+    const wait = ms => new Promise(res => (this.skipReveal ? res() : setTimeout(res, ms)));
+    const show = el => el.classList.add('in');
+    const count = async (el, to, ms, fmt = v => v) => {
+      const t0 = performance.now();
+      while (!this.skipReveal) {
+        const f = Math.min(1, (performance.now() - t0) / ms);
+        el.textContent = fmt(Math.round(to * f));
+        if (f >= 1) break;
+        await new Promise(res => requestAnimationFrame(res));
+      }
+      el.textContent = fmt(to);
+    };
+
+    $('rTitle').textContent = r.school ? 'Flight school done!' : r.landed ? `Landed in ${r.landedAt}!` : r.reason.replace('\n', ' ');
     $('rRecord').hidden = !r.newRecord;
-    $('rDist').textContent = r.distance;
-
-    const b = r.breakdown;
-    const scale = Math.max(30, b.co2 + b.night, b.sun + b.trees);
-    const pct = v => `${Math.min(100, (v / scale) * 100)}%`;
-    $('barCo2').style.width = pct(b.co2);
-    $('barNight').style.width = pct(b.night);
-    $('barSun').style.width = pct(b.sun);
-    $('barTrees').style.width = pct(b.trees);
-    $('rCo2').textContent = sign(Math.round(b.co2));
-    $('rNight').textContent = sign(Math.round(b.night));
-    $('rSun').textContent = sign(-Math.round(b.sun));
-    $('rTreesCool').textContent = sign(-Math.round(b.trees));
-    $('rTotal').textContent = sign(r.heat);
-    $('rFace').textContent = r.heat < 0 ? '(cooler!)' : r.heat < 50 ? '(a bit hotter)' : '(much hotter)';
-    $('rPerKm').textContent = r.co2PerKm;
-
-    $('rEarned').innerHTML = r.earned.map(e =>
-      `<li class="${e.lost ? 'lost' : ''}"><span>${e.label}</span><b>${e.lost ? 'LOST' : '+' + e.n}</b></li>`).join('') +
-      (r.landed ? '' : '<li class="lost"><span>You only keep trees if you land!</span></li>') +
-      `<li><span><b>Your trees</b></span><b>${this.save.trees}</b></li>`;
-
+    $('rDist').textContent = '0';
+    $('rGrab').textContent = '0';
+    $('rMultRow').hidden = true; $('rCoolRow').hidden = true; $('rLost').hidden = true;
+    $('rTotalRow').classList.remove('zero', 'stamp');
+    $('rGain').textContent = '+0';
+    for (const id of ['barCo2', 'barNight', 'barSun', 'barTrees']) $(id).style.width = '0';
+    for (const id of ['rCo2', 'rNight', 'rSun', 'rTreesCool']) $(id).textContent = '';
+    $('rFree').hidden = !this.save.freeUpgrade;
+    $('rSkip').hidden = false;
+    $('rHangarBtn').classList.toggle('glow', this.hasNew());
+    $('rNew').hidden = !this.hasNew();
+    $('rHangarBtn').firstChild.textContent = this.save.freeUpgrade ? 'FREE UPGRADE ' : 'HANGAR ';
     const nb = r.newBadges.map(id => BADGES.find(x => x.id === id)?.name).filter(Boolean);
     $('rBadges').hidden = !nb.length;
-    $('rBadges').innerHTML = nb.length ? `NEW BADGE${nb.length > 1 ? 'S' : ''}: <b>${nb.join(', ')}</b>` : '';
+    $('rBadges').innerHTML = nb.length ? `NEW BADGE: <b>${nb.join(', ')}</b>` : '';
     $('rFact').textContent = FACTS[Math.floor(Math.random() * FACTS.length)];
     this.showOnly('results');
+
+    const [title, dist, record, tally, earth, ...rest] = steps;
+    show(title);
+    await wait(350);
+    show(dist); await count($('rDist'), r.distance, 600);
+    if (r.newRecord) { show(record); sfx.buy(); }
+    await wait(200);
+
+    // Trees: tally what was grabbed, then the bonuses, then stamp the total.
+    show(tally);
+    const grab = r.earned[0] ? r.earned[0].n : 0;
+    await count($('rGrab'), grab, 400);
+    const mult = r.earned.find(e => e.label.startsWith('Long'));
+    if (mult) { await wait(250); $('rMultRow').hidden = false; $('rMult').textContent = `x${(1 + mult.n / Math.max(1, grab)).toFixed(1).replace('.0', '')}`; $('rMultRow').classList.add('stamp'); sfx.coin(); }
+    if (r.earned.some(e => e.label.startsWith('Cool'))) { await wait(250); $('rCoolRow').hidden = false; $('rCoolRow').classList.add('stamp'); sfx.coin(); }
+    await wait(300);
+    const total = r.earned.reduce((a, e) => a + e.n, 0);
+    if (r.landed) {
+      $('rTotalRow').classList.add('stamp');
+      await count($('rGain'), total, 300, v => `+${v}`);
+      if (total) sfx.buy();
+    } else {
+      $('rGain').textContent = `+${total}`;
+      await wait(300);
+      $('rTotalRow').classList.add('zero', 'stamp');
+      $('rLost').hidden = false;
+      sfx.nope();
+    }
+    await wait(450);
+
+    // The Earth: each cause grows in turn.
+    show(earth);
+    this.drawEarthFace($('rFace'), r.heat);
+    const b = r.breakdown;
+    const scale = Math.max(30, b.co2, b.night, b.sun, b.trees);
+    const bars = [['barCo2', 'rCo2', b.co2, '+'], ['barNight', 'rNight', b.night, '+'], ['barSun', 'rSun', b.sun, '-'], ['barTrees', 'rTreesCool', b.trees, '-']];
+    for (const [bar, label, v, sg] of bars) {
+      $(bar).style.width = `${Math.min(100, (v / scale) * 100)}%`;
+      $(label).textContent = `${sg}${Math.round(v)}`;
+      if (v >= 0.5) { sg === '+' ? sfx.warm() : sfx.cool(); await wait(380); }
+    }
+    await wait(200);
+    for (const el of rest) { if (!el.hidden) show(el); }
+    $('rSkip').hidden = true;
+  }
+
+  // Small pixel Earth for the results, matching the in-game face.
+  drawEarthFace(el, heat) {
+    const mood = heat < 0 ? 0 : heat < 50 ? 1 : heat < 80 ? 2 : 3;
+    const body = ['3fa8e0', '5fb860', 'e8a33c', 'e0483c'][mood];
+    const mouth = ["<rect x='6' y='11' width='1' height='1'/><rect x='7' y='12' width='4' height='1'/><rect x='11' y='11' width='1' height='1'/>",
+      "<rect x='7' y='12' width='4' height='1'/>",
+      "<rect x='7' y='11' width='4' height='1'/><rect x='6' y='12' width='1' height='1'/><rect x='11' y='12' width='1' height='1'/>",
+      "<rect x='7' y='11' width='4' height='1'/><rect x='6' y='12' width='1' height='1'/><rect x='11' y='12' width='1' height='1'/>"][mood];
+    const sweat = mood >= 2 ? "<rect x='14' y='3' width='2' height='3' fill='%239fe0ff'/>" + (mood === 3 ? "<rect x='1' y='6' width='2' height='3' fill='%239fe0ff'/>" : '') : '';
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18' shape-rendering='crispEdges'><rect x='4' y='0' width='10' height='18'/><rect x='0' y='4' width='18' height='10'/><rect x='2' y='2' width='14' height='14'/><g fill='%23${body}'><rect x='5' y='1' width='8' height='16'/><rect x='1' y='5' width='16' height='8'/><rect x='3' y='3' width='12' height='12'/></g><rect x='4' y='5' width='3' height='3' fill='%232f7a2f'/><rect x='12' y='10' width='3' height='2' fill='%232f7a2f'/><rect x='6' y='7' width='2' height='2'/><rect x='10' y='7' width='2' height='2'/>${mouth}${sweat}</svg>`;
+    el.style.backgroundImage = `url("data:image/svg+xml,${svg.replace(/</g, '%3C').replace(/>/g, '%3E')}")`;
   }
 
   // ---------- hangar ----------
@@ -116,6 +190,8 @@ export class UI {
   renderHangar() {
     const s = this.save;
     $('hTrees').textContent = s.trees;
+    const free = !!s.freeUpgrade;
+    $('hHint').innerHTML = free ? '<b>Pick ONE upgrade for FREE!</b> Tap <b>i</b> to learn what it does.' : 'Spend your trees. Tap <b>i</b> to learn more.';
 
     const choices = fuelChoices(s);
     const current = choices.includes(s.fuel) ? s.fuel : choices[choices.length - 1];
@@ -130,11 +206,13 @@ export class UI {
       const have = level(s, line.id), next = nextLevel(s, line);
       const pips = line.levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
       const nowName = have ? line.levels[have - 1].name : 'Not yet';
+      const isFree = free && next && have === 0;
+      const ok = isFree || canBuy(s, line);
       const nextRow = next
         ? `<div class="next"><span>Next: <b>${next.name}</b>. ${next.short}</span>
-             <button class="btn ${canBuy(s, line) ? 'go' : ''}" data-buy="${line.id}" type="button" ${canBuy(s, line) ? '' : 'disabled'}>${next.cost} trees</button></div>`
+             <button class="btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : next.cost + ' trees'}</button></div>`
         : '<div class="next"><span><b>All done!</b></span></div>';
-      return `<div class="line ${next ? '' : 'maxed'}">
+      return `<div class="line ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}">
         <div><div class="group">${line.group}</div><div class="name">${line.name}</div><div class="small">${nowName}</div><div class="pips">${pips}</div></div>
         <button class="infobtn" data-info="${line.id}" type="button" aria-label="About ${line.name}">i</button>
         ${nextRow}</div>`;
@@ -148,8 +226,9 @@ export class UI {
 
   buy(id) {
     const s = this.save, line = LINES.find(l => l.id === id), next = nextLevel(s, line);
-    if (!canBuy(s, line)) { sfx.nope(); return; }
-    s.trees -= next.cost;
+    const isFree = s.freeUpgrade && level(s, id) === 0;
+    if (!isFree && !canBuy(s, line)) { sfx.nope(); return; }
+    if (isFree) s.freeUpgrade = false; else s.trees -= next.cost;
     s.levels[id] = level(s, id) + 1;
     if (next.fuel) s.fuel = next.fuel;              // switch to the new fuel straight away
     if (next.fuel === 'hydrogen' && !s.badges.includes('zeroCarbon')) s.badges.push('zeroCarbon');

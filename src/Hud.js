@@ -41,13 +41,16 @@ export class Hud {
     this.co2Fill.setFillStyle(rate > CLIMATE.co2Cruise * 1.5 ? 0xd0d0d0 : COLOURS.co2);
   }
 
-  setHeat(heat) {
+  setHeat(heat, time = 0) {
     const y = barY(heat, CLIMATE.barMin, CLIMATE.dangerLine);
     if (heat >= 0) {
       this.heatFill.setPosition(this.hx, y).setSize(BAR_W, this.zeroY - y).setFillStyle(COLOURS.warm);
     } else {
       this.heatFill.setPosition(this.hx, this.zeroY + 1).setSize(BAR_W, y - this.zeroY).setFillStyle(COLOURS.cool);
     }
+    // A hot Earth trembles.
+    const shake = heat > 75 ? Math.round(Math.sin(time / 35)) : 0;
+    this.face.x = shake;
     this.drawFace(heat);
   }
 

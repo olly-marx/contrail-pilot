@@ -1,12 +1,12 @@
 import {
   WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
-  TAKEOFF, AIRPORT, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO,
+  TAKEOFF, AIRPORT, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL,
 } from './config.js';
 import { School } from './school.js';
 import { Hud } from './Hud.js';
 import { loadout } from './upgrades.js';
 import { writeSave } from './save.js';
-import { sfx } from './sound.js';
+import { sfx, buzz } from './sound.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const FONT = 'Pixel, monospace';
@@ -50,6 +50,10 @@ export class GameScene extends Phaser.Scene {
     this.blockers = [];
     this.runways = [];
     this.trees = [];                 // planted trees: keep cooling after they scroll away
+    this.plots = [];                 // soil plots on the ground to aim parcels at
+    this.parcelsFalling = [];
+    this.nextPlotAt = 200;
+    this.treeFeedback = 0;
     this.popups = [];
     this.tokens = [];                // floating trees to collect
     this.cargo = 0;                  // trees on board: kept only if you land
@@ -100,11 +104,16 @@ export class GameScene extends Phaser.Scene {
     this.add.rectangle(0, SKY_H, WIDTH, GROUND_H, COLOURS.ground).setOrigin(0);
     this.add.rectangle(0, SKY_H, WIDTH, 3, COLOURS.groundEdge).setOrigin(0);
     this.groundFx = this.add.graphics();   // contrail shadows (day) and trapped-heat glow (night)
+    this.plotLayer = this.add.layer();
+    this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
     this.treeLayer = this.add.layer();
     this.runwayLayer = this.add.layer();
     this.addRunway(-60, AIRPORT.home);     // home runway under the plane
     this.fxLayer = this.add.layer();       // particles and popups
 
+    this.heatFx = this.add.graphics();   // red edges when the Earth overheats
+    this.heatWarned = { 50: false, 75: false, 90: false };
+    this.nextBeat = 0;
     this.hud = new Hud(this);
     this.hud.setCo2(0);
     this.hud.setHeat(0);
@@ -112,8 +121,8 @@ export class GameScene extends Phaser.Scene {
     const font = { fontFamily: FONT, fontSize: '16px', color: COLOURS.text, stroke: '#000', strokeThickness: 4 };
     this.distText = this.add.text(WIDTH / 2, 8, '', font).setOrigin(0.5, 0);
     this.nextText = this.add.text(WIDTH / 2, 30, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
-    this.hintText = this.add.text(WIDTH / 2, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, align: 'center', lineSpacing: 4 }).setOrigin(0.5, 0);
-    this.parcelText = this.add.text(WIDTH / 2, HEIGHT - 11, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0.5, 0);
+    this.hintText = this.add.text(4, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, lineSpacing: 4 }).setOrigin(0, 0);
+    this.parcelText = this.add.text(4, HEIGHT - 11, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0);
 
     this.cargoIcon = this.add.image(28, 12, 'token').setOrigin(0, 0);
     this.cargoText = this.add.text(45, 13, '0', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0, 0);
@@ -123,8 +132,14 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', p => this.onTap(p));
     this.input.keyboard.on('keydown-SPACE', () => this.flap());
     this.input.keyboard.on('keydown-UP', () => this.flap());
-    this.input.keyboard.on('keydown-T', () => this.plantTree());
-    this.input.keyboard.on('keydown-DOWN', () => this.plantTree());
+    this.input.keyboard.on('keydown-T', () => this.dropParcel());
+    this.input.keyboard.on('keydown-DOWN', () => this.dropParcel());
+    // DROP button, drawn in the ground strip so it sits in the same place on every screen.
+    const bx = WIDTH - 70, by = SKY_H + 12;
+    this.dropBox = { x: bx, y: by, w: 64, h: 32 };
+    this.dropBg = this.add.rectangle(bx, by, 64, 32, 0x4caf50).setOrigin(0).setStrokeStyle(2, 0x1b1b2f);
+    this.dropLabel = this.add.text(bx + 32, by + 16, 'DROP', { ...font, fontSize: '8px', strokeThickness: 3, align: 'center', lineSpacing: 3 }).setOrigin(0.5);
+    this.setDropVisible(false);
 
     // Pause when the tab is hidden, so a phone in a pocket doesn't crash the plane.
     this.onVis = () => { if (document.hidden) this.scene.pause(); else this.scene.resume(); };
@@ -244,6 +259,20 @@ export class GameScene extends Phaser.Scene {
       g.fillStyle(0x7a4a24).fillRect(6, 8, 2, 3);
       g.generateTexture(key, 14, 14);
     };
+    g.clear();
+    g.fillStyle(0xffffff).fillRect(1, 0, 7, 1).fillRect(0, 1, 9, 2);
+    g.fillStyle(0xe0483c).fillRect(3, 0, 3, 1).fillRect(3, 1, 3, 2);
+    g.fillStyle(0xdddddd).fillRect(0, 3, 1, 3).fillRect(8, 3, 1, 3).fillRect(4, 3, 1, 3);
+    g.generateTexture('chute', 9, 6);
+    g.clear();
+    g.fillStyle(0x7a4a24).fillRect(2, 4, 1, 5);
+    g.fillStyle(0xf4f1e8).fillRect(0, 0, 6, 4);
+    g.fillStyle(0x4caf50).fillRect(2, 1, 2, 2);
+    g.generateTexture('plot-sign', 6, 9);
+    g.clear();
+    g.fillStyle(0x1b5e20).fillRect(0, 0, 9, 1).fillRect(1, 1, 7, 1).fillRect(2, 2, 5, 1).fillRect(3, 3, 3, 1).fillRect(4, 4, 1, 1);
+    g.fillStyle(0x8dffb0).fillRect(1, 0, 7, 1).fillRect(2, 1, 5, 1).fillRect(3, 2, 3, 1);
+    g.generateTexture('plot-arrow', 9, 5);
     token('token', 0x2e7d32);
     token('token-gold', 0xffc23d);
     g.destroy();
@@ -287,10 +316,17 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  setDropVisible(v) { this.dropBg.setVisible(v); this.dropLabel.setVisible(v); this.dropShown = v; }
+
   onTap(p) {
     if (this.school && this.school.onTap()) return;   // flight school uses the tap to continue
+    const d = this.dropBox;
+    if (this.dropShown && p.x >= d.x && p.x <= d.x + d.w && p.y >= d.y && p.y <= d.y + d.h) {
+      this.dropParcel();
+      this.tweens.add({ targets: [this.dropBg, this.dropLabel], scale: 0.9, duration: 60, yoyo: true });
+      return;
+    }
     // Tapping the ground strip plants a tree; anywhere else flaps.
-    if (p.y > SKY_H && this.state === 'playing' && this.kit.tree) { this.plantTree(); return; }
     this.flap();
   }
 
@@ -354,6 +390,12 @@ export class GameScene extends Phaser.Scene {
       const cool = this.kit.tree.coolPerStage[stage] * dt;
       this.heat -= cool;
       this.breakdown.trees += cool;
+      this.treeFeedback += cool;
+    }
+    if (this.treeFeedback >= 1) {
+      this.popup(WIDTH / 2, SKY_H - 12, `-${this.treeFeedback.toFixed(1)} from your forest`, '#8dffb0');
+      this.coolSparkle();
+      this.treeFeedback = 0;
     }
 
     this.spawn();
@@ -371,6 +413,8 @@ export class GameScene extends Phaser.Scene {
       i.tilePositionY += dt * 4;
     }
     this.updateTokens(dt, box);
+    this.updateParcels(dt);
+    this.drawAim();
     if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
     this.wasInIssr = inIssr;
     if (inIssr && this.state !== 'landing' && time - this.lastContrail > this.kit.contrailEvery) {
@@ -381,7 +425,8 @@ export class GameScene extends Phaser.Scene {
     this.updateRays(dt, time, true);
 
     this.hud.setCo2(this.co2Rate);
-    this.hud.setHeat(this.heat);
+    this.hud.setHeat(this.heat, time);
+    this.drawHeatFx(time);
     this.updateTexts(inIssr);
 
     if (this.state === 'landing') {
@@ -463,7 +508,7 @@ export class GameScene extends Phaser.Scene {
       g.fillStyle(0xf4f1e8).fillRect(x - 5, y - 4, 10, 8).fillRect(x - 4, y - 5, 8, 10);
       g.fillStyle(0xc9c4b4).fillRect(x - 2, y - 2, 2, 2).fillRect(x + 2, y + 1, 2, 2).fillRect(x - 3, y + 2, 1, 1);  // craters
     }
-    const tint = lerpColour(0xffffff, 0x4a5a80, n);
+    const tint = lerpColour(lerpColour(0xffffff, 0x4a5a80, n), 0xff7a5a, (this.heatLevel ? this.heatLevel() : 0) * 0.7);
     this.hills.setTint(tint);
     this.city.setTint(tint);
     this.cloudsFar.setAlpha(0.55 - 0.35 * n);
@@ -512,34 +557,97 @@ export class GameScene extends Phaser.Scene {
 
   treeKind() { return this.kit.tree ? this.kit.tree.kind : 'spruce'; }
 
-  plantTree() {
-    if (this.state !== 'playing' || !this.kit.tree) return;
-    if (this.parcels <= 0) { sfx.nope(); this.popup(this.plane.x + 25, SKY_H - 20, 'no parcels left', '#ff8080'); return; }
-    const x = Math.round(this.plane.x + PLANE.w / 2);
-    if (this.runways.some(r => x >= r.strip.x - 6 && x <= r.strip.x + AIRPORT.runwayLen + 6)) {
-      sfx.nope(); this.popup(x, SKY_H - 20, 'not on the runway!', '#ff8080'); return;
+  // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
+  // drop them before you reach a soil plot. This works out where one would land if dropped now.
+  predictLanding() {
+    let x = this.plane.x + PLANE.w / 2, y = this.plane.y + PLANE.h, vy = 0, vx = 0, t = 0;
+    const dt = 1 / 60;
+    while (y < SKY_H && t < 8) {
+      t += dt;
+      vy = t < PARCEL.chuteAfter ? vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, vy + PARCEL.gravity * dt);
+      vx = -this.speed * (1 - Math.exp(-t / PARCEL.dragTime));   // on screen: drifts back as it slows
+      x += vx * dt; y += vy * dt;
     }
+    return x;
+  }
+
+  dropParcel() {
+    if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
+    if (this.parcels <= 0) { sfx.nope(); return; }
     this.parcels--;
-    this.planted++;
-    const kind = this.treeKind();
-    // The parcel drops from the plane, then a sapling pops up where it lands.
-    const parcel = this.add.rectangle(x, this.plane.y + PLANE.h, 4, 4, 0xc8a165).setOrigin(0.5);
-    this.fxLayer.add(parcel);
-    this.tweens.add({
-      targets: parcel, y: SKY_H, duration: 350, ease: 'Quad.easeIn',
-      onUpdate: () => { parcel.x -= this.speed / 60; },
-      onComplete: () => {
-        const px = parcel.x;
-        parcel.destroy();
-        const sprite = this.add.image(px, SKY_H + 1, `tree-${kind}-0`).setOrigin(0.5, 1);
-        this.treeLayer.add(sprite);
-        this.trees.push({ sprite, kind, plantedAt: this.elapsed, stage: 0 });
-        this.burst(px, SKY_H, 0x4caf50, 6);
-        this.popup(px, SKY_H - 16, 'TREE!', '#8dffb0');
-        sfx.plant();
-      },
+    const crate = this.add.rectangle(0, 0, 5, 5, 0xc8a165).setStrokeStyle(1, 0x7a4a24);
+    const chute = this.add.image(0, -7, 'chute').setVisible(false);
+    const box = this.add.container(this.plane.x + PLANE.w / 2, this.plane.y + PLANE.h, [chute, crate]);
+    this.fxLayer.add(box);
+    this.parcelsFalling.push({ box, chute, t: 0, vy: 0 });
+    sfx.flap();
+    this.ui.tipOnce('firstDrop', 'Parcel away!', 'It floats down AND forwards. Drop it before the brown soil to plant a tree!', 'good', 3.5);
+  }
+
+  updateParcels(dt) {
+    this.parcelsFalling = this.parcelsFalling.filter(p => {
+      p.t += dt;
+      p.vy = p.t < PARCEL.chuteAfter ? p.vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, p.vy + PARCEL.gravity * dt);
+      if (p.t >= PARCEL.chuteAfter) p.chute.setVisible(true);
+      p.box.x += -this.speed * (1 - Math.exp(-p.t / PARCEL.dragTime)) * dt;
+      p.box.y += p.vy * dt;
+      p.box.rotation = Math.sin(p.t * 6) * 0.15;   // swing under the parachute
+      if (p.box.y < SKY_H) return true;
+      this.parcelLanded(p.box.x);
+      p.box.destroy();
+      return false;
     });
-    if (this.planted === 1) this.ui.tipOnce('firstTree', 'Tree planted!', 'It cools the planet for the rest of your flight. Plant early: trees grow!', 'good', 3);
+  }
+
+  parcelLanded(x) {
+    const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + PARCEL.plotW + 3);
+    if (!plot) {
+      this.burst(x, SKY_H, 0xc8a165, 6);
+      this.popup(x, SKY_H - 14, 'missed!', '#ff8080');
+      sfx.nope();
+      return;
+    }
+    plot.used = true;
+    const cx = plot.x + PARCEL.plotW / 2, kind = this.treeKind();
+    const sprite = this.add.image(cx, SKY_H + 1, `tree-${kind}-0`).setOrigin(0.5, 1).setScale(0.2);
+    this.treeLayer.add(sprite);
+    this.tweens.add({ targets: sprite, scale: 1, duration: 300, ease: 'Back.easeOut' });
+    plot.parts.push(sprite);
+    this.trees.push({ sprite, kind, plantedAt: this.elapsed, stage: 0 });
+    this.planted++;
+    this.burst(cx, SKY_H - 2, 0x8dffb0, 12);
+    this.burst(cx, SKY_H - 2, 0xffe15a, 6);
+    this.popup(cx, SKY_H - 24, 'TREE PLANTED!', '#8dffb0', 8);
+    sfx.plant();
+    buzz(30);
+    this.ui.tipOnce('firstTree', 'Tree planted!', 'It cools the Earth for the rest of your flight. Plant early: trees grow!', 'good', 3.5);
+  }
+
+  addPlot(x) {
+    const W = PARCEL.plotW;
+    // A raised mound of dark soil with furrows, a little sign, and a marker that bobs above it.
+    const parts = [
+      this.add.rectangle(x + 2, SKY_H - 3, W - 4, 3, 0x7a4a24).setOrigin(0),
+      this.add.rectangle(x, SKY_H, W, 6, 0x6a3c1c).setOrigin(0),
+    ];
+    for (let i = 4; i < W - 3; i += 6) parts.push(this.add.rectangle(x + i, SKY_H - 2, 3, 1, 0x4a2a10).setOrigin(0));
+    parts.push(this.add.image(x + W - 3, SKY_H - 3, 'plot-sign').setOrigin(0.5, 1));
+    const marker = this.add.image(x + W / 2, SKY_H - 18, 'plot-arrow').setOrigin(0.5);
+    parts.push(marker);
+    this.plotLayer.add(parts);
+    this.plots.push({ x, parts, marker, used: false });
+  }
+
+  drawAim() {
+    const g = this.aimGfx;
+    g.clear();
+    if (!this.kit.tree || this.parcels <= 0 || this.state !== 'playing') return;
+    const x = Math.round(this.predictLanding());
+    const onPlot = this.plots.some(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + PARCEL.plotW + 3);
+    g.fillStyle(0x000000, 0.6);
+    for (let i = -5; i <= 5; i++) { g.fillRect(x + i - 1, SKY_H - 6 + i, 3, 2); g.fillRect(x + i - 1, SKY_H - 6 - i, 3, 2); }
+    g.fillStyle(onPlot ? 0x8dffb0 : 0xffffff, 1);
+    for (let i = -5; i <= 5; i++) { g.fillRect(x + i, SKY_H - 6 + i, 1, 1); g.fillRect(x + i, SKY_H - 6 - i, 1, 1); }
   }
 
   // ---------- spawning and scrolling ----------
@@ -566,6 +674,13 @@ export class GameScene extends Phaser.Scene {
     if (this.school) return;   // flight school places everything itself
     if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Stop tapping and glide onto the grey runway to land. Or fly on for more trees!', 'good', 3.5);
 
+    if (this.kit.tree && this.distancePx >= this.nextPlotAt) {
+      const x = WIDTH + 10;
+      const onRunway = this.runways.some(r => x + PARCEL.plotW > r.strip.x - 10 && x < r.strip.x + AIRPORT.runwayLen + 10)
+        || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - PARCEL.plotW - 40;
+      if (!onRunway) this.addPlot(x);
+      this.nextPlotAt += Phaser.Math.Between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
+    }
     if (this.school) return;   // flight school places everything itself
 
     if (this.distancePx >= this.nextStormAt - WIDTH) {
@@ -730,8 +845,14 @@ export class GameScene extends Phaser.Scene {
       if (rw.strip.x + AIRPORT.runwayLen < -5) { rw.parts.forEach(p => p.destroy()); return false; }
       return true;
     });
-    for (const t of this.trees) if (t.sprite.active) { t.sprite.x -= dx; if (t.sprite.x < -20) t.sprite.destroy(); }
+
     for (const t of this.tokens) t.img.x -= dx;
+    const bob = Math.round(Math.sin(this.gameTime / 180) * 2);
+    for (const pl of this.plots) {
+      pl.x -= dx; for (const part of pl.parts) part.x -= dx;
+      pl.marker.setVisible(!pl.used && this.parcels > 0).setY(SKY_H - 18 + bob);
+    }
+    this.plots = this.plots.filter(pl => { if (pl.x + PARCEL.plotW < -30) { pl.parts.forEach(p => p.destroy()); return false; } return true; });
   }
 
   updateContrails(dt, time) {
@@ -851,9 +972,47 @@ export class GameScene extends Phaser.Scene {
       if (Math.abs(amt) >= 0.3) {
         const cooling = amt < 0;
         this.popup(this.plane.x + 6, this.plane.y - 10, `${cooling ? '-' : '+'}${Math.abs(amt).toFixed(1)} ${cooling ? 'cooler' : 'hotter'}`, cooling ? '#7fd3ff' : '#ff6a5a');
-        cooling ? sfx.cool() : sfx.warm();
+        if (cooling) { sfx.cool(); this.coolSparkle(); } else { sfx.warm(); buzz(25); }
       }
       this.feedback = { amount: 0, timer: 0 };
+    }
+  }
+
+  // ---------- heat feedback: the player should feel that warming is bad ----------
+  heatLevel() { return Phaser.Math.Clamp((this.heat - 30) / 70, 0, 1); }
+
+  drawHeatFx(time) {
+    const g = this.heatFx, lvl = this.heatLevel();
+    g.clear();
+    if (lvl > 0) {
+      // Red creeping in from the edges, in pixel steps; past 75 it beats like a heart.
+      const beat = this.heat > 75 ? 0.5 + 0.5 * Math.max(0, Math.sin(time / 140)) ** 8 : 0;
+      const depth = Math.round(10 + 30 * lvl + 10 * beat);
+      for (let i = 0; i < 4; i++) {
+        const d = Math.round(depth * (1 - i / 4)), a = (0.08 + 0.18 * lvl + 0.15 * beat) * (i + 1) / 4;
+        g.fillStyle(0xd02020, a);
+        g.fillRect(0, 0, WIDTH, d).fillRect(0, SKY_H - d, WIDTH, d).fillRect(0, d, d, SKY_H - 2 * d).fillRect(WIDTH - d, d, d, SKY_H - 2 * d);
+      }
+    }
+    for (const t of [50, 75, 90]) {
+      if (this.heat >= t && !this.heatWarned[t]) {
+        this.heatWarned[t] = true;
+        buzz(t === 90 ? [80, 60, 80, 60, 160] : t === 75 ? [80, 60, 80] : 60);
+        if (t >= 75) this.popup(WIDTH - 50, 70, t === 90 ? 'DANGER!' : 'TOO HOT!', '#ff5a5a', 16);
+      }
+      if (this.heat < t - 10) this.heatWarned[t] = false;   // re-arm after cooling down
+    }
+    if (this.heat > 75 && time > this.nextBeat && this.state === 'playing') {
+      this.nextBeat = time + Phaser.Math.Linear(900, 450, (this.heat - 75) / 25);
+      sfx.heartbeat();
+    }
+  }
+
+  // Blue sparkles at the Earth face when contrails or trees cool it.
+  coolSparkle() {
+    for (let i = 0; i < 4; i++) {
+      const r = this.add.rectangle(WIDTH - 10 + Phaser.Math.Between(-10, 6), 38 + Phaser.Math.Between(-8, 8), 2, 2, 0x9fe0ff);
+      this.tweens.add({ targets: r, y: r.y - 10, alpha: 0, duration: 500, onComplete: () => r.destroy() });
     }
   }
 
@@ -901,10 +1060,14 @@ export class GameScene extends Phaser.Scene {
     else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${toAirport}m`);
     else this.nextText.setText('');
 
-    if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! Contrails shade: cooler' : 'ICY AIR! Contrails trap heat!');
+    if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! shade: cooler' : 'ICY AIR! heat trapped!');
     else this.hintText.setText('');
 
-    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? `PARCELS x${this.parcels}: tap the grass to plant` : '');
+    const forest = this.trees.length ? `FOREST x${this.trees.length}` : '';
+    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.parcels ? `drop on soil! ${forest}` : forest) : '');
+    const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen;
+    this.setDropVisible(showDrop);
+    if (showDrop) this.dropLabel.setText(`DROP\nx${this.parcels}`);
     this.cargoText.setText(`${this.cargo}`);
     this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');
     this.multText.x = this.cargoText.x + this.cargoText.width + 4;
@@ -917,9 +1080,12 @@ export class GameScene extends Phaser.Scene {
     this.ui.hideToast();
     this.hintText.setText('');
     this.parcelText.setText('');
+    this.setDropVisible(false);
+    this.aimGfx.clear();
     if (!landed) {
       this.cameras.main.shake(200, 0.012);
       this.cameras.main.flash(150, 255, 80, 80);
+      buzz([120, 40, 200]);
       this.burst(this.plane.x + PLANE.w / 2, this.plane.y + PLANE.h / 2, 0x888888, 14);
       sfx[sound]();
     }
@@ -951,6 +1117,8 @@ export class GameScene extends Phaser.Scene {
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
     this.save.trees += gained;
+    // The first safe landing earns one free upgrade, to show what the hangar is for.
+    if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
     writeSave(this.save);
 
     this.result = {

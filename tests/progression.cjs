@@ -17,7 +17,7 @@ const KEY = 'contrailPilot.v2';
   const setSave = s => p.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [KEY, s]);
   const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
   const base = { tutorialDone: true, muted: true, seenTips: [] };
-  const noStorms = () => scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; });
+  const noStorms = () => scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; s.tokens.forEach(t => t.img.destroy()); s.tokens = []; s.nextTokenAt = 1e9; });
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; }, y);
   const grab = n => scene(n => { const s = game.scene.getScene('game'); for (let i = 0; i < n; i++) s.addToken(s.plane.x + 20 + i * 3, s.plane.y - 2, false); }, n);
 
@@ -32,7 +32,9 @@ const KEY = 'contrailPilot.v2';
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && !r.landed && r.gained === 0, `crash should bank 0 trees, got ${r && r.gained}`);
   check((await getSave()).trees === 5, 'trees in the bank changed after a crash');
-  check((await p.textContent('#rEarned')).includes('LOST'), 'results should say the trees were LOST');
+  await p.waitForTimeout(1300); await p.click('#results');   // results reveal; a tap skips to the end
+  await p.waitForTimeout(300);
+  check(await p.isVisible('#rLost'), 'results should say the trees were lost');
 
   // 2. Grab 4, skip one airport, land: 4 x 1.5 = 6 trees banked.
   await p.click('#againBtn'); await p.waitForTimeout(2300);
@@ -73,15 +75,31 @@ const KEY = 'contrailPilot.v2';
   check(Math.abs(kit.co2 - 0.85) < 1e-9, `SAF 25% cruise CO2 should be 0.85, got ${kit.co2}`);
   check(kit.reveal === 100, `radar 1 should reveal at 100, got ${kit.reveal}`);
 
-  // 5. Planting: with tree parcels, tapping the grass plants a tree that cools.
+  // 5. Planting: a parcel dropped so it lands on a soil plot plants a tree that cools; one that
+  //    lands on bare ground is missed.
   await setSave({ ...base, levels: { trees: 1 } }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#goBtn'); await p.waitForTimeout(2400);
   await noStorms(); await hold();
-  await p.mouse.click(195, 740);   // tap the grass (canvas spans y 75..768 here)
-  for (let i = 0; i < 26; i++) { await hold(); await p.waitForTimeout(100); }
-  const t = await scene(() => { const s = game.scene.getScene('game'); return { planted: s.planted, parcels: s.parcels, cool: s.breakdown.trees, state: s.state }; });
-  check(t.planted === 1 && t.parcels === 1, `should plant 1 of 2 parcels, got ${JSON.stringify(t)}`);
+  check(await scene(() => game.scene.getScene('game').dropShown), 'DROP button should show while carrying parcels');
+  // Miss: no plots anywhere.
+  await scene(() => { const s = game.scene.getScene('game'); s.plots.forEach(pl => pl.parts.forEach(x => x.destroy())); s.plots = []; s.nextPlotAt = 1e9; });
+  await p.mouse.click(340, 740);   // the DROP button in the ground strip (game x 218-282, y 476-508)
+  for (let i = 0; i < 25; i++) { await hold(); await p.waitForTimeout(100); }
+  let t = await scene(() => { const s = game.scene.getScene('game'); return { planted: s.planted, parcels: s.parcels }; });
+  check(t.planted === 0 && t.parcels === 1, `a parcel with no soil below should miss, got ${JSON.stringify(t)}`);
+  // Hit: put a plot where the parcel will land, then drop.
+  await scene(() => { const s = game.scene.getScene('game'); const x = s.predictLanding(); s.addPlot(x - 16 + s.speed * 0.0); });
+  await scene(() => { const s = game.scene.getScene('game'); const pl = s.plots[0]; pl.parts.forEach(q => q.x += 0); });
+  // The plot scrolls with the ground while the parcel falls, so place it where the parcel will be at landing.
+  await scene(() => { const s = game.scene.getScene('game');
+    const pl = s.plots[0]; const fallS = (() => { let y = s.plane.y + 12, vy = 0, tt = 0; while (y < 464) { tt += 1/60; vy = tt < 0.25 ? vy + 320/60 : Math.min(160, vy + 320/60); y += vy/60; } return tt; })();
+    const shift = s.speed * fallS; pl.x += shift; pl.parts.forEach(q => q.x += shift); });
+  await p.mouse.click(340, 740);   // the DROP button in the ground strip (game x 218-282, y 476-508)
+  for (let i = 0; i < 30; i++) { await hold(); await p.waitForTimeout(100); }
+  t = await scene(() => { const s = game.scene.getScene('game'); return { planted: s.planted, parcels: s.parcels, cool: s.breakdown.trees, state: s.state }; });
+  check(t.planted === 1 && t.parcels === 0, `a parcel aimed at a plot should plant a tree, got ${JSON.stringify(t)}`);
   check(t.cool > 0, 'planted tree is not cooling ' + JSON.stringify(t));
+  check(!(await scene(() => game.scene.getScene('game').dropShown)), 'DROP button should hide with no parcels left');
 
   // 6. The breakdown (CO2 + night - day - trees) adds up to the heating bar.
   const m = await scene(() => { const s = game.scene.getScene('game'); const d = s.breakdown; return { heat: s.heat, sum: d.co2 + d.night - d.sun - d.trees }; });

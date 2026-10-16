@@ -81,6 +81,15 @@ export const TOKENS = {
   magnetPull: 140,     // px/s, how fast a magnet pulls trees in
 };
 
+export const PARCEL = {
+  gravity: 320,        // px/s^2 until the parachute opens
+  chuteAfter: 0.25,    // s
+  terminal: 160,       // px/s falling under the parachute
+  dragTime: 3.0,       // s; how quickly the parcel loses the plane's forward speed
+  plotW: 32,           // soil plot width on the ground
+  plotEvery: [260, 420],  // px between soil plots
+};
+
 export const CARGO = {
   multiplierPerSkip: 0.5,   // landing bonus: x1, x1.5, x2 ... per airport skipped
   coolBonus: 3,             // extra trees for landing with the Earth cooler than at take off
