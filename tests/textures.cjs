@@ -8,6 +8,8 @@ const { chromium } = require('playwright-core');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 const root = path.join(__dirname, '..');
+// Scope is declared by folder: assets/*.png are game textures and must all load; assets/ui/ holds
+// HTML-only icons (used from CSS), so it is deliberately not scanned (readdirSync is not recursive).
 const pngs = fs.readdirSync(path.join(root, 'assets')).filter(f => f.endsWith('.png')).map(f => f.slice(0, -4));
 const src = fs.readFileSync(path.join(root, 'src/GameScene.js'), 'utf8');
 const drawn = [...src.matchAll(/\bgen\('([\w-]+)'/g)].map(m => m[1]);

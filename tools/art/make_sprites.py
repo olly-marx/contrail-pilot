@@ -156,27 +156,87 @@ def storm_cap(flip):
 
 # ---------- tokens and parcels ----------
 
-def token(name, ring, ring_light):
+SEED_C = {'k': hexc('#5a3a1e'), 'b': hexc('#9a6a3a'), 'B': hexc('#c08a50'), 'h': hexc('#e2b884'),
+          'g': hexc('#4caf50'), 'G': hexc('#2e7d32'), 'l': hexc('#8bd48e')}
+GOLD_C = {'k': hexc('#8a5a10'), 'b': hexc('#e0a020'), 'B': hexc('#ffc23d'), 'h': hexc('#fff0b0'),
+          'g': hexc('#4caf50'), 'G': hexc('#2e7d32'), 'l': hexc('#8bd48e')}
+# A seed (teardrop, lit upper left) with a two-leaf sprout: the collectable currency.
+SEED_8 = ['...lg...',
+          '..lgGg..',
+          '...gG...',
+          '..kBBk..',
+          '.kBhBbk.',
+          '.kBBbbk.',
+          '.kbbbbk.',
+          '..kbbk..',
+          '...kk...']
+
+
+def token(name, ring, ring_light, seed_c):
     s = Sprite(14, 14)
-    c = {'R': ring, 'L': ring_light, 'w': hexc('#ffffff'), 'p': hexc('#e3f2ea'),
-         'g': hexc('#4caf50'), 'G': hexc('#2e7d32'), 'h': hexc('#8bd48e'), 't': hexc('#7a4a24')}
+    bub = {'R': ring, 'L': ring_light, 'w': hexc('#ffffff'), 'p': hexc('#e3f2ea')}
     s.grid([
         '....RRRRRR....',
         '..RRLwwwwwRR..',
-        '.RLwwwhwwwppR.',
-        '.RwwwhggwwwpR.',
-        'RLwwhgggGwwwpR',
-        'RwwwgggGGwwwpR',
-        'RwwhgggggGwwpR',
-        'RwwggggGGGGwpR',
-        'RwwwwGtGGwwwpR',
-        'RwwwwwtwwwwppR',
-        '.Rwwwwtwwwwpp.',
+        '.RLwwwwwwwppR.',
+        '.RwwwwwwwwwpR.',
+        'RLwwwwwwwwwwpR',
+        'RwwwwwwwwwwwpR',
+        'RwwwwwwwwwwwpR',
+        'RwwwwwwwwwwwpR',
+        'RwwwwwwwwwwwpR',
+        'RwwwwwwwwwwppR',
+        '.RwwwwwwwwwppR',
         '.RpwwwwwwwppR.',
         '..RRppppppRR..',
         '....RRRRRR....',
-    ], c)
+    ], bub)
+    s.grid(SEED_8, seed_c, ox=3, oy=2)
     s.save(name)
+
+
+def crystal(name, size, branches=False):
+    # Six-armed ice crystal in the ISSR palette: 1 px arms (no outline, or the gaps fill in),
+    # mid ice-blue so it still shows on pale sky, white hub and tip sparkles.
+    s = Sprite(size, size)
+    c = size // 2
+    arm, hub, hi = hexc('#5fa8d8'), hexc('#a8daf5'), hexc('#ffffff')
+    long_, diag = c, round(c * 0.7)
+    for k in range(1, long_ + 1):
+        for x, y in ((c + k, c), (c - k, c), (c, c + k), (c, c - k)):
+            s.px(x, y, arm)
+    for k in range(1, diag + 1):
+        for x, y in ((c + k, c + k), (c - k, c - k), (c + k, c - k), (c - k, c + k)):
+            s.px(x, y, arm)
+    if branches:                                   # a V of side twigs on each long arm
+        b = c // 2 + 1
+        for k in (b,):
+            for d in (-1, 1):
+                for x, y in ((c + k + 1, c + d), (c - k - 1, c + d), (c + d, c + k + 1), (c + d, c - k - 1)):
+                    s.px(x, y, arm)
+    for x, y in ((c, 0), (c, size - 1), (0, c), (size - 1, c)):
+        s.px(x, y, hub)
+    s.px(c, c, hi)
+    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        s.px(c + dx, c + dy, hub)
+    s.save(name)
+
+
+def ui_icons():
+    # HTML-only icons (hangar/results): written to assets/ui/, which tests/textures.cjs does
+    # not scan because the game engine never loads them.
+    ui = OUT / 'ui'
+    ui.mkdir(exist_ok=True)
+    s = Sprite(16, 16)
+    big = [''.join(ch * 2 for ch in row) for row in SEED_8[:8]]  # 2x seed, 16x16 from the 8x8 core
+    big = [r for row in big for r in (row, row)]
+    s.grid(big, SEED_C)
+    s.img.save(ui / 'icon-seed.png'); print('wrote ui/icon-seed')
+    s = Sprite(16, 16)
+    crystal('_tmp', 15, branches=True)   # drawn to a scratch PNG, then placed in a 16x16 icon
+    s.img.paste(Image.open(OUT / '_tmp.png'), (0, 0))
+    (OUT / '_tmp.png').unlink()
+    s.img.save(ui / 'icon-crystal.png'); print('wrote ui/icon-crystal')
 
 
 def chute():
@@ -624,8 +684,10 @@ if __name__ == '__main__':
     storm_body()
     storm_cap(False)
     storm_cap(True)
-    token('token', hexc('#2e7d32'), hexc('#5cbf60'))
-    token('token-gold', hexc('#e0a020'), hexc('#ffe08a'))
+    token('token', hexc('#2e7d32'), hexc('#5cbf60'), SEED_C)
+    token('token-gold', hexc('#e0a020'), hexc('#ffe08a'), GOLD_C)
+    crystal('crystal', 9)
+    ui_icons()
     chute()
     crate()
     for kind in SPECIES:
