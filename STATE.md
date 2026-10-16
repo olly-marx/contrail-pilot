@@ -26,7 +26,7 @@ landing, info pop-ups with Learn more links. Parcel-drop planting onto soil plot
 forward drift, aim X). Wild Land biodiversity meter across flights (variety beats quantity;
 spruce, then native birch/oak/rowan/fruit) and rewilding projects (meadow → hedgerows → pond →
 water voles → beavers → storks) visible in the world. Hazards: turbulence from 4 km, no-fly
-zones from 5 km, birds from 10 km. Flight School (guided first flight with Captain Cumulus) and
+zones from 8 km, birds from 10 km. Flight School (guided first flight with Captain Cumulus) and
 one-time pause-and-explain for every new mechanic (`explain()` in GameScene; `seenTips` holds
 seen ids; `'*'` in seenTips skips all, used by tests). Arcade-style results reveal.
 
