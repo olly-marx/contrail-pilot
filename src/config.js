@@ -89,7 +89,7 @@ export const TOKENS = {
 export const HAZARDS = {
   // A patch of bumpy air (like an ISSR) you can fly over or under.
   turbulence: { from: 4000, every: 650, chance: 0.5, minW: 140, maxW: 220, minH: 90, maxH: 150, delay: [30, 120], bump: 60, bumpEvery: [0.3, 0.6] },
-  noFly:      { from: 5000, chance: 0.45, width: 30, gapLess: 28, minGap: 82 },
+  noFly:      { from: 8000, chance: 0.45, width: 30, gapLess: 28, minGap: 82 },
   birds:      { from: 10000, every: 700, chance: 0.55, flock: [4, 6], extraSpeed: 45, wobble: 22 },
 };
 

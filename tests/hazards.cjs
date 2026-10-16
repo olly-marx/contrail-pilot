@@ -33,6 +33,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(c.d > 3500, `test should have flown past 3500 m, got ${c.d}`);
   check(c.seen.length === 0, `hazards appeared before their distance: ${JSON.stringify(c)}`);
 
+  // 1b. No no-fly zone before 8 km (turbulence may appear from 4 km).
+  await start();
+  for (let i = 0; i < 60; i++) {
+    await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.rects.forEach(r => { if (!st.noFly) r.y = -9999; })); s.plane.y = 200; s.plane.vy = 0; s.heat = 0; s.distancePx = Math.min(s.distancePx + 120, 7600); });
+    await dismiss();
+    await p.waitForTimeout(30);
+  }
+  const nf = await scene(() => ({ d: game.scene.getScene('game').distancePx, seen: JSON.parse(localStorage.getItem('contrailPilot.v2')).seenTips.includes('hazard-noFly') }));
+  check(nf.d > 7000 && !nf.seen, `no-fly zone appeared before 8000 m: ${JSON.stringify(nf)}`);
+
   // 2. Far into a flight: all three appear.
   await start();
   for (let i = 0; i < 120; i++) {
@@ -45,7 +55,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const spawned = await scene(() => { const s = game.scene.getScene('game'); return { t: s.turbs.length + (s.hazardSeen?.turbulence ? 1 : 0), seen: JSON.parse(localStorage.getItem('contrailPilot.v2')).seenTips }; });
   check(spawned.seen.includes('hazard-turbulence'), 'turbulence never appeared after 4000 m');
   check(sawPause, 'a new hazard should pause the game to explain it');
-  check(spawned.seen.includes('hazard-noFly'), 'no-fly zone never appeared after 5000 m');
+  check(spawned.seen.includes('hazard-noFly'), 'no-fly zone never appeared after 8000 m');
   check(spawned.seen.includes('hazard-birds'), 'birds never appeared after 10000 m');
 
   // 3. Turbulence delays a tap.
