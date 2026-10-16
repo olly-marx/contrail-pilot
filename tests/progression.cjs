@@ -16,7 +16,7 @@ const KEY = 'contrailPilot.v2';
   const scene = (fn, arg) => p.evaluate(fn, arg);
   const setSave = s => p.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [KEY, s]);
   const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
-  const base = { tutorialDone: true, muted: true, seenTips: ['*'] };   // '*' = skip the captain's explanations
+  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'] };   // '*' = skip the captain's explanations
   const noStorms = () => scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; s.tokens.forEach(t => t.img.destroy()); s.tokens = []; s.nextTokenAt = 1e9; });
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; }, y);
   const grab = n => scene(n => { const s = game.scene.getScene('game'); for (let i = 0; i < n; i++) s.addToken(s.plane.x + 20 + i * 3, s.plane.y - 2, false); }, n);
@@ -94,12 +94,9 @@ const KEY = 'contrailPilot.v2';
   let t = await scene(() => { const s = game.scene.getScene('game'); return { planted: s.planted, parcels: s.parcels }; });
   check(t.planted === 0 && t.parcels === 1, `a parcel with no soil below should miss, got ${JSON.stringify(t)}`);
   // Hit: put a plot where the parcel will land, then drop.
-  await scene(() => { const s = game.scene.getScene('game'); const x = s.predictLanding(); s.addPlot(x - 16 + s.speed * 0.0); });
-  await scene(() => { const s = game.scene.getScene('game'); const pl = s.plots[0]; pl.parts.forEach(q => q.x += 0); });
-  // The plot scrolls with the ground while the parcel falls, so place it where the parcel will be at landing.
-  await scene(() => { const s = game.scene.getScene('game');
-    const pl = s.plots[0]; const fallS = (() => { let y = s.plane.y + 12, vy = 0, tt = 0; while (y < 464) { tt += 1/60; vy = tt < 0.25 ? vy + 320/60 : Math.min(160, vy + 320/60); y += vy/60; } return tt; })();
-    const shift = s.speed * fallS; pl.x += shift; pl.parts.forEach(q => q.x += shift); });
+  // The X (predictLanding) already allows for the ground scrolling while the parcel falls,
+  // so a plot centred under the X must be hit with no correction.
+  await scene(() => { const s = game.scene.getScene('game'); s.addPlot(s.predictLanding() - s.kit.plotW / 2); });
   await p.mouse.click(340, 740);   // the DROP button in the ground strip (game x 218-282, y 476-508)
   for (let i = 0; i < 30; i++) { await hold(); await p.waitForTimeout(100); }
   t = await scene(() => { const s = game.scene.getScene('game'); return { planted: s.planted, parcels: s.parcels, cool: s.breakdown.trees, state: s.state }; });

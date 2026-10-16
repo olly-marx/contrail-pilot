@@ -25,7 +25,7 @@ landing, x1.5 per airport skipped. Hangar with 7 levelled upgrade lines that unl
 landing, info pop-ups with Learn more links. Parcel-drop planting onto soil plots (parachute,
 forward drift, aim X). Wild Land biodiversity meter across flights (variety beats quantity;
 spruce, then native birch/oak/rowan/fruit) and rewilding projects (meadow → hedgerows → pond →
-water voles → beavers → storks) visible in the world. Hazards: turbulence from 2.5 km, no-fly
+water voles → beavers → storks) visible in the world. Hazards: turbulence from 4 km, no-fly
 zones from 5 km, birds from 10 km. Flight School (guided first flight with Captain Cumulus) and
 one-time pause-and-explain for every new mechanic (`explain()` in GameScene; `seenTips` holds
 seen ids; `'*'` in seenTips skips all, used by tests). Arcade-style results reveal.
@@ -37,6 +37,14 @@ buzzard). Extend `WILD_ANIMALS`/`SKY_BIRDS` as new regions unlock. Exhaust plume
 dark as CO2 (`kit.smoke`) plus white water-vapour wisps (`kit.vapour`, hydrogen 2.5x). Greener
 Cabin upgrade line (veggie meals, no single-use plastic, only food ordered, lighter trolleys;
 -2% to -8% CO2, unlocks after 1 landing); its facts await the fact-check with nature.js.
+
+Controls (2026-10-16): take-off is press-and-HOLD (`TAKEOFF` in config; letting go only slows the
+roll, never fails), then "Now TAP to fly!". Tests skip the hold with `autoTakeoff: true` in the
+save (test-only, like `'*'` in seenTips); `tests/controls.cjs` exercises the real hold. The parcel
+aim X used to mark the screen spot, ignoring ground scroll during the fall (measured miss 58-234
+px vs 32 px plots); `predictLanding()` now returns the ground spot. Soil patches 48 px, widened by
+the separate Soil Patches line (64, 80). Turbulence is a bounded patch (fly over/under), from 4 km,
+bump +-60, tap lag 30-120 ms.
 
 ## Decisions (don't re-litigate without the user)
 
@@ -81,6 +89,6 @@ min), festival kiosk mode and QR poster.
 ## Checks
 
 `python3 -m http.server 8000` in the repo, then `NODE_PATH=<dir with playwright-core>
-node tests/<name>.cjs` for flight, issr-reveal, progression, school, hazards, nature, textures, wildlife. Each was
+node tests/<name>.cjs` for flight, issr-reveal, progression, school, hazards, nature, textures, wildlife, controls. Each was
 validated by planting a defect and seeing it fail. The local scratch install used so far is
 `/tmp/cp-test/node_modules` (may be gone after a reboot: `npm i --no-save playwright-core`).

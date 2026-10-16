@@ -165,6 +165,13 @@ export class GameScene extends Phaser.Scene {
     this.cargoIcon.setVisible(false);
 
     this.input.on('pointerdown', p => this.onTap(p));
+    // Take-off is press-and-hold. Watched on the window so the captain's speech bubble can't swallow it.
+    this.holding = false;
+    const down = () => { this.holding = true; }, up = () => { this.holding = false; };
+    window.addEventListener('pointerdown', down); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
+    this.input.keyboard.on('keydown-SPACE', down); this.input.keyboard.on('keyup-SPACE', up);
+    this.events.once('shutdown', () => { window.removeEventListener('pointerdown', down); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); });
+    this.holdText = this.add.text(WIDTH / 2, SKY_H / 2, '', { fontFamily: FONT, fontSize: '16px', color: '#ffe15a', stroke: '#000', strokeThickness: 4, align: 'center', lineSpacing: 6 }).setOrigin(0.5).setDepth(10);
     this.input.keyboard.on('keydown-SPACE', () => this.flap());
     this.input.keyboard.on('keydown-UP', () => this.flap());
     this.input.keyboard.on('keydown-T', () => this.dropParcel());
@@ -245,12 +252,13 @@ export class GameScene extends Phaser.Scene {
     this.kit = loadout(this.save);
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.setState('takeoff');
+    this.rollSpeed = 0;
+    this.airborne = false;
     this.cargoIcon.setVisible(true);
     this.bioStart = biodiversity(this.save);
     if (!this.school) {
       this.save.flights++;
       writeSave(this.save);
-      this.ui.tipOnce('takeoff', 'Take off!', 'Tap to fly up. Grab the trees. Land to keep them!', 'good', 3);
     }
   }
 
@@ -326,6 +334,12 @@ export class GameScene extends Phaser.Scene {
     // Speed: ramps up while flying, rolls to a stop after touchdown.
     if (this.state === 'landing') {
       this.speed = Math.max(0, this.landingSpeed * (1 - this.stateTime / AIRPORT.rollSeconds));
+    } else if (this.state === 'takeoff') {
+      // Holding speeds the plane up along the runway; letting go slows it down again.
+      const held = this.holding || this.save.autoTakeoff || this.airborne;   // autoTakeoff: tests only
+      this.rollSpeed = held ? Math.min(TAKEOFF.liftSpeed, this.rollSpeed + TAKEOFF.rollAccel * dt) : Math.max(0, this.rollSpeed - TAKEOFF.rollBrake * dt);
+      this.speed = this.rollSpeed;
+      this.elapsed = 0;   // the speed ramp starts at lift-off
     } else {
       this.speed = this.school ? WORLD.startSpeed : Math.min(WORLD.maxSpeed, WORLD.startSpeed + WORLD.speedGain * this.elapsed);
     }
@@ -334,10 +348,14 @@ export class GameScene extends Phaser.Scene {
 
     // Plane
     if (this.state === 'takeoff') {
-      this.plane.vy = TAKEOFF.climbVelocity;
+      if (!this.airborne && this.rollSpeed >= TAKEOFF.liftSpeed) { this.airborne = true; this.stateTime = 0; }
+      this.holdText.setText(this.airborne ? '' : 'HOLD\nto take off!').setScale(1 + 0.08 * Math.sin(this.gameTime / 150));
+      this.plane.vy = this.airborne ? TAKEOFF.climbVelocity : 0;
       this.plane.y += this.plane.vy * dt;
-      if (this.stateTime >= TAKEOFF.seconds) {
+      if (this.airborne && this.stateTime >= TAKEOFF.seconds) {
         this.setState('playing'); this.plane.vy = 0;
+        this.holdText.setText('');
+        if (!this.school) this.popup(WIDTH / 2, SKY_H / 2, 'Now TAP to fly!', '#ffe15a', 16);
         if (!this.school) this.time.delayedCall(1500, () => this.explain('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!'));
       }
     } else if (this.state === 'playing') {
@@ -455,7 +473,7 @@ export class GameScene extends Phaser.Scene {
     this.planeSprite.setPosition(Math.round(cx), Math.round(cy));
     const flying = this.state === 'playing' || this.state === 'over';
     const tilt = flying ? Phaser.Math.Clamp(this.plane.vy / 600, -PLANE.maxTilt, PLANE.maxTilt) : 0;
-    this.planeSprite.setRotation(this.state === 'takeoff' ? -0.15 : tilt);
+    this.planeSprite.setRotation(this.state === 'takeoff' && this.airborne ? -0.15 : tilt);
   }
 
   // ---------- scenery ----------
@@ -514,7 +532,7 @@ export class GameScene extends Phaser.Scene {
   // Exhaust behind the engines: grey puffs as dark as the plane's CO2, white wisps for the water
   // vapour (hydrogen makes lots). Not to scale: real exhaust is near-invisible. Contrails are separate.
   updateExhaust(dt, dx) {
-    const flying = this.state === 'takeoff' || this.state === 'playing' || (this.state === 'landing' && this.speed > 20);
+    const flying = (this.state === 'takeoff' && this.rollSpeed > 5) || this.state === 'playing' || (this.state === 'landing' && this.speed > 20);
     this.nextPuff -= dt;
     if (flying && this.nextPuff <= 0) {
       this.nextPuff = 0.03;
@@ -646,7 +664,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
-  // drop them before you reach a soil plot. This works out where one would land if dropped now.
+  // drop them before you reach a soil plot. This works out which bit of ground (in today's screen
+  // position) one would land on if dropped now. The ground keeps scrolling while it falls, so
+  // that is the parcel's screen drift plus the scroll: it lands ahead of the plane.
   predictLanding() {
     let x = this.plane.x + PLANE.w / 2, y = this.plane.y + PLANE.h, vy = 0, vx = 0, t = 0;
     const dt = 1 / 60;
@@ -654,7 +674,7 @@ export class GameScene extends Phaser.Scene {
       t += dt;
       vy = t < PARCEL.chuteAfter ? vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, vy + PARCEL.gravity * dt);
       vx = -this.speed * (1 - Math.exp(-t / PARCEL.dragTime));   // on screen: drifts back as it slows
-      x += vx * dt; y += vy * dt;
+      x += (vx + this.speed) * dt; y += vy * dt;
     }
     return x;
   }
@@ -689,7 +709,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   parcelLanded(x, kind) {
-    const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + PARCEL.plotW + 3);
+    const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
     if (!plot) {
       this.burst(x, SKY_H, 0xc8a165, 6);
       this.popup(x, SKY_H - 14, 'missed!', '#ff8080');
@@ -697,7 +717,7 @@ export class GameScene extends Phaser.Scene {
       return;
     }
     plot.used = true;
-    const cx = plot.x + PARCEL.plotW / 2;
+    const cx = plot.x + this.kit.plotW / 2;
     const sprite = this.add.image(cx, SKY_H + 1, `tree-${kind}-0`).setOrigin(0.5, 1).setScale(0.2);
     this.treeLayer.add(sprite);
     this.tweens.add({ targets: sprite, scale: 1, duration: 300, ease: 'Back.easeOut' });
@@ -720,9 +740,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   addPlot(x) {
-    const W = PARCEL.plotW;
+    const W = this.kit.plotW;
     // A raised mound of dark soil with furrows, a little sign, and a marker that bobs above it.
-    const parts = [this.add.image(x, SKY_H - 3, 'plot').setOrigin(0)];   // 32x9: mound above the grass line, soil below
+    const parts = [this.add.image(x, SKY_H - 3, 'plot').setOrigin(0).setDisplaySize(W, 9)];   // 32x9 art, stretched to the plot width
     parts.push(this.add.image(x + W - 3, SKY_H - 3, 'plot-sign').setOrigin(0.5, 1));
     const marker = this.add.image(x + W / 2, SKY_H - 18, 'plot-arrow').setOrigin(0.5);
     parts.push(marker);
@@ -736,7 +756,7 @@ export class GameScene extends Phaser.Scene {
     g.clear();
     if (!this.kit.tree || this.parcels <= 0 || this.state !== 'playing') return;
     const x = Math.round(this.predictLanding());
-    const onPlot = this.plots.some(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + PARCEL.plotW + 3);
+    const onPlot = this.plots.some(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
     g.fillStyle(0x000000, 0.6);
     for (let i = -5; i <= 5; i++) { g.fillRect(x + i - 1, SKY_H - 6 + i, 3, 2); g.fillRect(x + i - 1, SKY_H - 6 - i, 3, 2); }
     g.fillStyle(onPlot ? 0x8dffb0 : 0xffffff, 1);
@@ -769,8 +789,8 @@ export class GameScene extends Phaser.Scene {
 
     if (this.kit.tree && this.distancePx >= this.nextPlotAt) {
       const x = WIDTH + 10;
-      const onRunway = this.runways.some(r => x + PARCEL.plotW > r.strip.x - 10 && x < r.strip.x + AIRPORT.runwayLen + 10)
-        || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - PARCEL.plotW - 40;
+      const onRunway = this.runways.some(r => x + this.kit.plotW > r.strip.x - 10 && x < r.strip.x + AIRPORT.runwayLen + 10)
+        || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
       if (!onRunway) this.addPlot(x);
       this.nextPlotAt += Phaser.Math.Between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
     }
@@ -788,8 +808,9 @@ export class GameScene extends Phaser.Scene {
     const T = HAZARDS.turbulence;
     if (this.distancePx >= this.nextTurbAt) {
       if (Math.random() < T.chance) {
-        this.turbs.push({ x: WIDTH + 10, w: Phaser.Math.Between(T.minW, T.maxW) });
-        this.newHazard('turbulence', 'NEW HAZARD: TURBULENCE', 'Wavy lines = bumpy air! Your plane gets pushed about and your taps work a little late. Tap a bit early!');
+        const h = Phaser.Math.Between(T.minH, T.maxH);
+        this.turbs.push({ x: WIDTH + 10, w: Phaser.Math.Between(T.minW, T.maxW), y: Phaser.Math.Between(30, SKY_H - 60 - h), h });
+        this.newHazard('turbulence', 'NEW HAZARD: TURBULENCE', 'Wavy lines = bumpy air! Inside it your plane gets pushed about and your taps work a little late. Fly over or under it!');
       }
       this.nextTurbAt += T.every;
     }
@@ -835,14 +856,15 @@ export class GameScene extends Phaser.Scene {
     const cx = box.x + box.w / 2;
     this.inTurb = false;
     for (const z of this.turbs) {
-      g.fillStyle(0xffffff, 0.07).fillRect(z.x, 0, z.w, SKY_H);
-      for (let row = 10; row < SKY_H; row += 16) {
+      g.fillStyle(0xffffff, 0.07).fillRect(z.x, z.y, z.w, z.h);
+      for (let row = z.y + 8; row < z.y + z.h - 4; row += 16) {
         for (let x = 0; x < z.w; x += 2) {
           const y = row + Math.round(Math.sin((x + this.gameTime * 0.12 + row * 3) / 7) * 2);
           g.fillStyle(0xffffff, 0.35).fillRect(z.x + x, y, 2, 1);
         }
       }
-      if (cx >= z.x && cx <= z.x + z.w) this.inTurb = true;
+      const cy = box.y + box.h / 2;
+      if (cx >= z.x && cx <= z.x + z.w && cy >= z.y && cy <= z.y + z.h) this.inTurb = true;
     }
     this.turbs = this.turbs.filter(z => z.x + z.w > -10);
     if (this.inTurb && this.state === 'playing') {
@@ -1056,7 +1078,7 @@ export class GameScene extends Phaser.Scene {
       pl.x -= dx; for (const part of pl.parts) part.x -= dx;
       pl.marker.setVisible(!pl.used && this.parcels > 0).setY(SKY_H - 18 + bob);
     }
-    this.plots = this.plots.filter(pl => { if (pl.x + PARCEL.plotW < -30) { pl.parts.forEach(p => p.destroy()); return false; } return true; });
+    this.plots = this.plots.filter(pl => { if (pl.x + this.kit.plotW < -30) { pl.parts.forEach(p => p.destroy()); return false; } return true; });
   }
 
   updateContrails(dt, time) {

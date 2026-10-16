@@ -24,7 +24,7 @@ export class School {
       return s.storms[s.storms.length - 1];
     };
     return [
-      { say: 'Hi pilot! I am Captain Cumulus. Let\'s learn to fly. Taking off...', done: () => s.state === 'playing' },
+      { say: 'Hi pilot! I am Captain Cumulus. Let\'s learn to fly.<br><b>Press and HOLD</b> the screen to take off!', done: () => s.state === 'playing' },
       { say: '<b>Tap the screen</b> to fly up.<br>Stop tapping and you go down.', tap: true, flapOnTap: true },
       { say: 'Keep tapping to stay in the sky!', done: () => this.t > 3 },
       { say: '<b>Storm clouds!</b> Fly through the gap.',

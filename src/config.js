@@ -55,8 +55,12 @@ export const CONTRAIL = {
 };
 
 export const TAKEOFF = {
-  seconds: 2.0,        // auto-climb with no player control
-  climbVelocity: -90,
+  // Hold the screen to roll down the runway; let go and the plane just slows down (never fails).
+  rollAccel: 150,      // px/s^2 while holding
+  rollBrake: 60,       // px/s^2 slowing down when you let go
+  liftSpeed: 90,       // roll speed at which the wheels leave the ground (= WORLD.startSpeed)
+  seconds: 1.4,        // auto-climb after lift-off, then tapping takes over
+  climbVelocity: -120,
 };
 
 export const AIRPORT = {
@@ -83,7 +87,8 @@ export const TOKENS = {
 
 // Hazards that join the storms as the flight gets longer (distances in m = px).
 export const HAZARDS = {
-  turbulence: { from: 2500, every: 650, chance: 0.5, minW: 150, maxW: 260, delay: [60, 260], bump: 150, bumpEvery: [0.25, 0.55] },
+  // A patch of bumpy air (like an ISSR) you can fly over or under.
+  turbulence: { from: 4000, every: 650, chance: 0.5, minW: 140, maxW: 220, minH: 90, maxH: 150, delay: [30, 120], bump: 60, bumpEvery: [0.3, 0.6] },
   noFly:      { from: 5000, chance: 0.45, width: 30, gapLess: 28, minGap: 82 },
   birds:      { from: 10000, every: 700, chance: 0.55, flock: [4, 6], extraSpeed: 45, wobble: 22 },
 };
@@ -93,7 +98,7 @@ export const PARCEL = {
   chuteAfter: 0.25,    // s
   terminal: 160,       // px/s falling under the parachute
   dragTime: 3.0,       // s; how quickly the parcel loses the plane's forward speed
-  plotW: 32,           // soil plot width on the ground
+  plotW: 48,           // soil plot width on the ground (the Soil upgrade line widens it)
   plotEvery: [260, 420],  // px between soil plots
 };
 

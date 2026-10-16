@@ -15,7 +15,7 @@ const drawn = [...src.matchAll(/\bgen\('([\w-]+)'/g)].map(m => m[1]);
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
-  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true })); });
+  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true })); });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.goto(URL); await p.waitForTimeout(800);
   const want = [...new Set([...pngs, ...drawn])];

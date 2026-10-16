@@ -16,6 +16,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#goBtn');
 
   const seen = [];
+  let held = false;
   let shot = 0;
   for (let i = 0; i < 1500; i++) {
     const st = await p.evaluate(() => {
@@ -30,6 +31,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     }
     if (st.state === 'over') break;
     if (st.waiting) { await p.click('#coach'); await p.waitForTimeout(120); continue; }
+    // Take off the way the captain says: press and hold until the plane is flying.
+    if (st.state === 'takeoff') { if (!held) { held = true; await p.mouse.move(195, 400); await p.mouse.down(); } await p.waitForTimeout(100); continue; }
+    if (held) { held = false; await p.mouse.up(); }
 
     // Autopilot that does what the captain asks.
     const tap = await p.evaluate(() => {

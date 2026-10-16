@@ -1,4 +1,4 @@
-import { CLIMATE, CONTRAIL, ISSR } from './config.js';
+import { CLIMATE, CONTRAIL, ISSR, PARCEL } from './config.js';
 import { SPECIES, PROJECTS, biodiversity } from './nature.js';
 
 // Each upgrade line has levels bought in order. Costs are in trees.
@@ -75,6 +75,19 @@ export const LINES = [
       why: 'Trees take CO2 out of the air as they grow. Plant early: they grow bigger and help more.',
       fact: 'A tree takes many years to grow big. Not making CO2 in the first place works faster.',
       links: ['citizenzoo', 'project'],
+    },
+  },
+  {
+    id: 'soil', name: 'Soil Patches', group: 'Trees', unlock: { planted: 1 },
+    levels: [
+      { cost: 15, name: 'Bigger soil patches', short: 'Easier to hit with a parcel.', plotW: 64 },
+      { cost: 40, name: 'Huge soil patches', short: 'Really easy to hit!', plotW: 80 },
+    ],
+    info: {
+      what: 'Patches of ready soil where your tree parcels can land and grow.',
+      why: 'Bigger patches are easier to hit, so fewer trees are wasted.',
+      fact: 'In real life, people get the ground ready first: clearing weeds and choosing the right spot for each tree.',
+      links: ['citizenzoo'],
     },
   },
   {
@@ -188,6 +201,7 @@ export function loadout(save) {
   const cabin = level(save, 'cabin') ? lineById('cabin').levels[level(save, 'cabin') - 1].co2 : 1;
   const radar = level(save, 'radar') ? lineById('radar').levels[level(save, 'radar') - 1] : null;
   const trees = level(save, 'trees') ? lineById('trees').levels[level(save, 'trees') - 1] : null;
+  const soil = level(save, 'soil') ? lineById('soil').levels[level(save, 'soil') - 1] : null;
   const magnet = level(save, 'magnet') ? lineById('magnet').levels[level(save, 'magnet') - 1] : null;
   return {
     fuelId,
@@ -202,5 +216,6 @@ export function loadout(save) {
     hiddenAlpha: radar ? radar.hidden : ISSR.hiddenAlpha,
     tree: trees ? { parcels: trees.parcels, species: speciesOwned(save) } : null,
     pickup: magnet ? magnet.pickup : 12,
+    plotW: soil ? soil.plotW : PARCEL.plotW,
   };
 }

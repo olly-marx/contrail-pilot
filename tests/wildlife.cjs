@@ -16,7 +16,7 @@ const WILD = { planted: { spruce: 3, birch: 4, oak: 4, rowan: 4, orchard: 4 }, l
   async function fly(save) {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     p.on('pageerror', e => errs.push(String(e)));
-    await p.addInitScript(([k, s]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], landings: 5, ...s })); }, [KEY, save]);
+    await p.addInitScript(([k, s]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 5, ...s })); }, [KEY, save]);
     await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
     for (let i = 0; i < 10; i++) { await p.mouse.click(195, 300); await p.waitForTimeout(200); }
     const r = await p.evaluate(() => { const s = game.scene.getScene('game');
