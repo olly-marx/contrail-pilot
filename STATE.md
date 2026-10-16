@@ -53,8 +53,15 @@ passing icy air you came close to at night without a contrail, +3 for a clean ni
 Daytime contrails earn none (not always cooling in reality). Crystals are also spent on Rewilding
 (2-8 each) and the upper Radar levels (2, 5). Hangar has PLANE and NATURE tabs (`tabOf()`).
 Difficulty: first 1.5 km is a warm-up (no speed-up, no gap narrowing); then speed 90 -> 140 at
-0.55/s, gaps 150 -> 115 at 1 px/pair. Soil plots from 1.5 km; floating seeds start at 25%.
+0.55/s, gaps 150 -> 115 at 1 px/pair. Soil plots from 1 km (was 1.5); floating seeds start at 25%.
 ISSRs are lumpy (3-5 ellipses, `inIssrShape()`), not boxes.
+
+Collisions (2026-10-17) are pixel-accurate: the plane's drawn pixels (rotated with its tilt,
+`planePixels()`) against the hazard's drawn pixels (`alphaMask()`); boxes used to crash on empty
+corners (31 such placements in one sweep). Storms forgive a nick of `HAZARDS.stormForgive` (5)
+pixels (`hitsStorm()`); no-fly zones and birds forgive nothing. Turbulence is cloud-shaped
+(`cloudShape()`/`inCloud()`, shared with ISSRs). Every upgrade costs at least 1 ice crystal; seed
+prices were cut ~30%. Soil plots from 1 km.
 
 ## Decisions (don't re-litigate without the user)
 

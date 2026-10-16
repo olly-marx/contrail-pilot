@@ -88,6 +88,7 @@ export const TOKENS = {
 
 // Hazards that join the storms as the flight gets longer (distances in m = px).
 export const HAZARDS = {
+  stormForgive: 5,   // plane pixels that may brush a storm cloud before it counts as a crash (no-fly and birds: 0)
   // A patch of bumpy air (like an ISSR) you can fly over or under.
   turbulence: { from: 4000, every: 650, chance: 0.5, minW: 140, maxW: 220, minH: 90, maxH: 150, delay: [30, 120], bump: 60, bumpEvery: [0.3, 0.6] },
   noFly:      { from: 8000, chance: 0.45, width: 30, gapLess: 28, minGap: 82 },
@@ -101,7 +102,7 @@ export const PARCEL = {
   dragTime: 3.0,       // s; how quickly the parcel loses the plane's forward speed
   plotW: 48,           // soil plot width on the ground (the Soil upgrade line widens it)
   plotEvery: [260, 420],  // px between soil plots
-  firstAt: 1500,       // m: soil plots start after the first airport
+  firstAt: 1000,       // m: soil plots start 1 km in
 };
 
 export const CARGO = {

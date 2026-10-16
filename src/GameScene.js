@@ -458,11 +458,11 @@ export class GameScene extends Phaser.Scene {
       if (rw) return this.land(rw);
       return this.finish({ reason: 'You hit the ground!' });
     }
+    // Pixel-accurate: the plane's drawn pixels against the hazard's drawn pixels. Storms forgive a
+    // nick (a few pixels); no-fly zones and birds forgive nothing.
     for (const s of this.storms) {
-      for (const r of s.rects) {
-        if (overlaps(box, { x: r.x, y: r.y, w: r.width, h: r.height })) {
-          return this.finish({ reason: s.noFly ? 'Restricted airspace!\nFlight stopped.' : 'Storm!\nYou flew into a storm.' });
-        }
+      if (this.hitsStorm(s)) {
+        return this.finish({ reason: s.noFly ? 'Restricted airspace!\nFlight stopped.' : 'Storm!\nYou flew into a storm.' });
       }
     }
     if (this.hitBird(box)) return this.finish({ reason: 'Bird strike!\nYou hit a bird.' });
@@ -872,14 +872,13 @@ export class GameScene extends Phaser.Scene {
     this.inTurb = false;
     for (const z of this.turbs) {
       // Tileable gusts (assets/turb.png): drift sideways and churn slowly up and down.
-      if (!z.img) z.img = this.turbLayer.add(this.add.tileSprite(z.x, z.y, z.w, z.h, 'turb').setOrigin(0));
-      z.img.setPosition(Math.round(z.x), z.y);
+      if (!z.img) { z.img = this.turbLayer.add(this.add.tileSprite(z.x, z.y, z.w, z.h, 'turb').setOrigin(0)); this.cloudShape(z.img, z.w, z.h); }
+      z.img.setPosition(Math.round(z.x), z.y); z.img.maskGfx.setPosition(z.img.x, z.img.y);
       z.img.tilePositionX += 20 * dt;
       z.img.tilePositionY = Math.round(Math.sin(this.gameTime / 700));
-      const cy = box.y + box.h / 2;
-      if (cx >= z.x && cx <= z.x + z.w && cy >= z.y && cy <= z.y + z.h) this.inTurb = true;
+      if (this.inCloud(z.img.blobs, z.x, z.y, z.w, z.h, box)) this.inTurb = true;
     }
-    this.turbs = this.turbs.filter(z => { if (z.x + z.w > -10) return true; if (z.img) z.img.destroy(); return false; });
+    this.turbs = this.turbs.filter(z => { if (z.x + z.w > -10) return true; if (z.img) { z.img.maskGfx.destroy(); z.img.destroy(); } return false; });
     if (this.inTurb && this.state === 'playing') {
       this.bumpIn -= dt;
       if (this.bumpIn <= 0) {
@@ -904,10 +903,72 @@ export class GameScene extends Phaser.Scene {
   }
 
   hitBird(box) {
+    const pts = this.planePixels();
     for (const f of this.birds) for (const b of f.birds) {
-      if (overlaps(box, { x: b.img.x, y: b.img.y, w: 9, h: 6 })) return true;
+      const m = this.alphaMask(b.img.texture.key);
+      if (!overlaps(box, { x: b.img.x - 12, y: b.img.y - 16, w: m.w + 24, h: m.h + 32 })) continue;   // far away: skip
+      for (const [x, y] of pts) {
+        let lx = x - b.img.x; const ly = y - b.img.y;
+        if (b.img.flipX) lx = m.w - 1 - lx;
+        if (m.at(lx, ly)) return true;
+      }
     }
     return false;
+  }
+
+  // ---------- pixel collisions ----------
+
+  // Which pixels of a texture are drawn (alpha > 40). Cached per texture key.
+  alphaMask(key) {
+    this.masks = this.masks || {};
+    if (this.masks[key]) return this.masks[key];
+    const img = this.textures.get(key).getSourceImage(), w = img.width, h = img.height;
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, w, h).data, solid = new Uint8Array(w * h);
+    for (let i = 0; i < w * h; i++) solid[i] = data[i * 4 + 3] > 40 ? 1 : 0;
+    const at = (x, y) => { x = Math.floor(x); y = Math.floor(y); return x >= 0 && y >= 0 && x < w && y < h && solid[y * w + x] === 1; };
+    return (this.masks[key] = { w, h, at });
+  }
+
+  // World positions of the plane's drawn pixels, turned with the plane's tilt. Once per frame.
+  planePixels() {
+    if (this.planePtsAt === this.gameTime && this.planePts) return this.planePts;
+    const m = this.alphaMask('plane'), sp = this.planeSprite;
+    if (!this.planeOffsets) {
+      this.planeOffsets = [];
+      for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (m.at(x, y)) this.planeOffsets.push([x + 0.5 - m.w / 2, y + 0.5 - m.h / 2]);
+    }
+    const c = Math.cos(sp.rotation), s = Math.sin(sp.rotation);
+    this.planePts = this.planeOffsets.map(([ox, oy]) => [sp.x + ox * c - oy * s, sp.y + ox * s + oy * c]);
+    this.planePtsAt = this.gameTime;
+    return this.planePts;
+  }
+
+  // Storms forgive a nick of up to HAZARDS.stormForgive pixels; no-fly zones forgive nothing.
+  hitsStorm(st) {
+    const forgive = st.noFly ? 0 : HAZARDS.stormForgive;
+    return this.stormPixelsHit(st, forgive + 1) > forgive;
+  }
+
+  // How many plane pixels touch the storm's (or no-fly zone's) drawn pixels. Stops counting at `enough`.
+  stormPixelsHit(st, enough) {
+    const r0 = st.rects[0], r1 = st.rects[1], W = r0.width;
+    const sp = this.planeSprite;
+    if (sp.x + 40 < r0.x || sp.x - 40 > r0.x + W) return 0;   // not level with it
+    const topH = r0.height, botY = r1.y;
+    const cap = this.alphaMask('storm-top'), capB = this.alphaMask('storm-bottom'), body = this.alphaMask('storm-body');
+    let n = 0;
+    for (const [x, y] of this.planePixels()) {
+      const lx = x - r0.x;
+      if (lx < 0 || lx >= W) continue;
+      let solid;
+      if (st.noFly) solid = y < topH || y >= botY;   // a no-fly zone is a solid block
+      else if (y < topH) solid = y >= topH - 10 ? capB.at(lx, y - (topH - 10)) : body.at(lx, y % body.h);
+      else if (y >= botY) solid = y < botY + 10 ? cap.at(lx, y - botY) : body.at(lx, (y - botY - 10) % body.h);
+      if (solid && ++n >= enough) return n;
+    }
+    return n;
   }
 
   // A floating tree. Often placed in a storm gap or inside icy air, so grabbing it is a choice.
@@ -1035,6 +1096,15 @@ export class GameScene extends Phaser.Scene {
   addIssrAt(x, y, w, h) {
     const r = this.add.tileSprite(x, y, w, h, 'issr-tile').setOrigin(0).setAlpha(this.kit.hiddenAlpha);
     r.tilePositionX = Phaser.Math.Between(0, 31); r.tilePositionY = Phaser.Math.Between(0, 31);
+    this.cloudShape(r, w, h);
+    this.issrLayer.add(r);
+    this.issrs.push(r);
+    return r;
+  }
+
+  // Cloud shape for icy air and turbulence: 3-5 overlapping ellipses inside a w x h box, all
+  // crossing the middle line, used as the sprite's mask. Keep maskGfx at the sprite's x, y.
+  cloudShape(r, w, h) {
     const n = Phaser.Math.Clamp(Math.round(w / 70), 3, 5);
     r.blobs = [];
     for (let k = 0; k < n; k++) {
@@ -1044,26 +1114,24 @@ export class GameScene extends Phaser.Scene {
       const cy = Phaser.Math.Clamp(h / 2 + Phaser.Math.FloatBetween(-0.15, 0.15) * h, ry, h - ry);
       r.blobs.push({ cx, cy, rx, ry });
     }
-    const m = this.make.graphics({ x, y }, false);
+    const m = this.make.graphics({ x: r.x, y: r.y }, false);
     m.fillStyle(0xffffff);
     for (const b of r.blobs) m.fillEllipse(b.cx, b.cy, b.rx * 2, b.ry * 2, 24);
     r.maskGfx = m;
     r.setMask(m.createGeometryMask());
-    this.issrLayer.add(r);
-    this.issrs.push(r);
-    return r;
   }
 
-  // Is any point along the plane's middle line inside one of the ISSR's ellipses?
-  inIssrShape(i, box) {
-    if (!overlaps(box, { x: i.x, y: i.y, w: i.width, h: i.height })) return false;
-    const py = box.y + box.h / 2 - i.y;
+  // Is any point along the plane's middle line inside the cloud's ellipses? (x, y, w, h: its box)
+  inCloud(blobs, x, y, w, h, box) {
+    if (!overlaps(box, { x, y, w, h })) return false;
+    const py = box.y + box.h / 2 - y;
     for (let px = box.x; px <= box.x + box.w; px += 5) {
-      const lx = px - i.x;
-      if (i.blobs.some(b => ((lx - b.cx) / b.rx) ** 2 + ((py - b.cy) / b.ry) ** 2 <= 1)) return true;
+      const lx = px - x;
+      if (blobs.some(b => ((lx - b.cx) / b.rx) ** 2 + ((py - b.cy) / b.ry) ** 2 <= 1)) return true;
     }
     return false;
   }
+  inIssrShape(i, box) { return this.inCloud(i.blobs, i.x, i.y, i.width, i.height, box); }
 
   issrAlpha(i, box, inside) {
     if (inside) return ISSR.insideAlpha;
@@ -1346,7 +1414,8 @@ export class GameScene extends Phaser.Scene {
     else this.hintText.setText('');
 
     const forest = this.trees.length ? `FOREST x${this.trees.length}` : '';
-    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.parcels ? `drop on soil! ${forest}` : forest) : '');
+    const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
+    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.parcels && soilSoon ? `drop on soil! ${forest}` : forest) : '');
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen;
     this.setDropVisible(showDrop);
     if (showDrop) this.dropLabel.setText(`DROP x${this.parcels}\n${SPECIES[this.treeKind()].name.toUpperCase()}`);

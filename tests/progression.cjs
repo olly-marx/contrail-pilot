@@ -59,16 +59,16 @@ const KEY = 'contrailPilot.v2';
   check((await p.textContent('#hUpgrades')).includes('Unlocks after 3 landings'), 'locked lines should say how to unlock them');
   check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
   // Levelled lines, prices, info pop-up.
-  await setSave({ ...base, seeds: 50, landings: 3 }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seeds: 50, crystals: 2, landings: 3 }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#hangarBtn');
-  await p.click('[data-buy="radar"]');     // 15
-  await p.click('[data-buy="fuel"]');      // 20
+  await p.click('[data-buy="radar"]');     // 10 seeds + 1 crystal
+  await p.click('[data-buy="fuel"]');      // 15 seeds + 1 crystal
   const save = await getSave();
-  check(save.seeds === 15, `50 - 15 - 20 should leave 15, got ${save.seeds}`);
+  check(save.seeds === 25 && save.crystals === 0, `50 - 10 - 15 should leave 25 seeds and 2 - 1 - 1 = 0 crystals, got ${save.seeds}, ${save.crystals}`);
   check(save.levels.radar === 1 && save.levels.fuel === 1, 'levels not saved');
   check(save.fuel === 'saf25', `new fuel should be equipped, got ${save.fuel}`);
-  check(await p.isDisabled('[data-buy="engine"]'), 'engine (25) should be unaffordable with 15');
-  check((await p.textContent('[data-buy="radar"]')).includes('45'), 'radar level 2 should cost 45');
+  check(await p.isDisabled('[data-buy="engine"]'), 'engine (20 seeds + 1 crystal) should be unaffordable with 25 seeds but no crystals');
+  check(/^30\D+2$/.test((await p.textContent('[data-buy="radar"]')).trim()), 'radar level 2 should cost 30 seeds + 2 crystals');
   await p.click('[data-info="fuel"]');
   check(await p.isVisible('#info'), 'info pop-up did not open');
   check((await p.textContent('#iWhat')).length > 20, 'info pop-up has no text');

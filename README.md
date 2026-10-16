@@ -64,6 +64,7 @@ node tests/nature.cjs             # Wild Land meter: variety beats quantity, spe
 node tests/textures.cjs           # every assets/*.png and code-drawn texture exists (assets/ui/ is HTML-only)
 node tests/wildlife.cjs           # wildlife grows with Wild Land, exhaust plume, Greener Cabin
 node tests/controls.cjs           # hold to take off, aim X accuracy, OK-button tips, lumpy icy air
+node tests/collisions.cjs         # pixel-accurate hits: storms forgive a nick, no-fly and birds don't
 node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earning rules, costs, hangar tabs
 ```
 

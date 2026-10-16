@@ -7,9 +7,9 @@ export const LINES = [
   {
     id: 'radar', name: 'Icy Air Radar', group: 'Research',
     levels: [
-      { cost: 15, name: 'Humidity sensor', short: 'See icy air sooner.', reveal: 100, hidden: 0.03 },
-      { cost: 45, crystals: 2, name: 'Weather balloon', short: 'See icy air even sooner.', reveal: 150, hidden: 0.05 },
-      { cost: 100, crystals: 5, name: 'Contrail forecast', short: 'See icy air from far away!', reveal: 220, hidden: 0.08 },
+      { cost: 10, crystals: 1, name: 'Humidity sensor', short: 'See icy air sooner.', reveal: 100, hidden: 0.03 },
+      { cost: 30, crystals: 2, name: 'Weather balloon', short: 'See icy air even sooner.', reveal: 150, hidden: 0.05 },
+      { cost: 70, crystals: 5, name: 'Contrail forecast', short: 'See icy air from far away!', reveal: 220, hidden: 0.08 },
     ],
     info: {
       what: 'Icy air is invisible. Scientists measure how wet the air is, so they can guess where it is.',
@@ -21,10 +21,10 @@ export const LINES = [
   {
     id: 'fuel', name: 'Cleaner Fuel', group: 'Fuel', unlock: { landings: 3 },
     levels: [
-      { cost: 20, name: 'A bit of SAF', short: 'A little less CO2.', fuel: 'saf25' },
-      { cost: 55, name: 'Half SAF', short: 'Less CO2. Thinner contrails.', fuel: 'saf50' },
-      { cost: 110, name: 'All SAF', short: 'Much less CO2. Thin contrails.', fuel: 'saf100' },
-      { cost: 220, name: 'Hydrogen', short: 'ZERO CO2! But MORE contrails.', fuel: 'hydrogen' },
+      { cost: 15, crystals: 1, name: 'A bit of SAF', short: 'A little less CO2.', fuel: 'saf25' },
+      { cost: 40, crystals: 2, name: 'Half SAF', short: 'Less CO2. Thinner contrails.', fuel: 'saf50' },
+      { cost: 75, crystals: 4, name: 'All SAF', short: 'Much less CO2. Thin contrails.', fuel: 'saf100' },
+      { cost: 155, crystals: 9, name: 'Hydrogen', short: 'ZERO CO2! But MORE contrails.', fuel: 'hydrogen' },
     ],
     info: {
       what: 'SAF is plane fuel made from things like old cooking oil. Hydrogen is a gas that burns without making CO2.',
@@ -36,9 +36,9 @@ export const LINES = [
   {
     id: 'engine', name: 'Better Engines', group: 'Plane', unlock: { landings: 3 },
     levels: [
-      { cost: 25, name: 'Engine tune-up', short: '10% less CO2.', co2: 0.9 },
-      { cost: 60, name: 'New engines', short: '20% less CO2.', co2: 0.8 },
-      { cost: 120, name: 'Super engines', short: '30% less CO2.', co2: 0.7 },
+      { cost: 20, crystals: 1, name: 'Engine tune-up', short: '10% less CO2.', co2: 0.9 },
+      { cost: 40, crystals: 2, name: 'New engines', short: '20% less CO2.', co2: 0.8 },
+      { cost: 85, crystals: 5, name: 'Super engines', short: '30% less CO2.', co2: 0.7 },
     ],
     info: {
       what: 'New engines burn less fuel to fly the same distance.',
@@ -50,10 +50,10 @@ export const LINES = [
   {
     id: 'cabin', name: 'Greener Cabin', group: 'Plane', unlock: { landings: 1 },
     levels: [
-      { cost: 10, name: 'Cheaper veggie meals', short: 'More people pick veggie food.', co2: 0.98 },
-      { cost: 20, name: 'No single-use plastic', short: 'Refill water, less rubbish.', co2: 0.96 },
-      { cost: 35, name: 'Only the food ordered', short: 'Less wasted food to carry.', co2: 0.94 },
-      { cost: 55, name: 'Lighter trolleys and seats', short: 'A lighter plane burns less fuel.', co2: 0.92 },
+      { cost: 5, crystals: 1, name: 'Cheaper veggie meals', short: 'More people pick veggie food.', co2: 0.98 },
+      { cost: 15, crystals: 1, name: 'No single-use plastic', short: 'Refill water, less rubbish.', co2: 0.96 },
+      { cost: 25, crystals: 1, name: 'Only the food ordered', short: 'Less wasted food to carry.', co2: 0.94 },
+      { cost: 40, crystals: 2, name: 'Lighter trolleys and seats', short: 'A lighter plane burns less fuel.', co2: 0.92 },
     ],
     info: {
       what: 'Airlines can make small changes inside the plane: the food, the cups, and how heavy things are.',
@@ -65,10 +65,10 @@ export const LINES = [
   {
     id: 'trees', name: 'Tree Planting', group: 'Trees',
     levels: [
-      { cost: 25, name: 'Tree parcels', short: 'Drop 2 trees per flight onto brown soil.', parcels: 2 },
-      { cost: 50, name: 'More parcels', short: 'Drop 3 trees per flight.', parcels: 3 },
-      { cost: 90, name: 'Big cargo hold', short: 'Drop 4 trees per flight.', parcels: 4 },
-      { cost: 150, name: 'Tree drop plane', short: 'Drop 6 trees per flight!', parcels: 6 },
+      { cost: 20, crystals: 1, name: 'Tree parcels', short: 'Drop 2 trees per flight onto brown soil.', parcels: 2 },
+      { cost: 35, crystals: 2, name: 'More parcels', short: 'Drop 3 trees per flight.', parcels: 3 },
+      { cost: 65, crystals: 4, name: 'Big cargo hold', short: 'Drop 4 trees per flight.', parcels: 4 },
+      { cost: 105, crystals: 6, name: 'Tree drop plane', short: 'Drop 6 trees per flight!', parcels: 6 },
     ],
     info: {
       what: 'Parcels hold young trees. Drop them from your plane onto brown soil to plant them.',
@@ -80,8 +80,8 @@ export const LINES = [
   {
     id: 'soil', name: 'Soil Patches', group: 'Trees', unlock: { planted: 1 },
     levels: [
-      { cost: 15, name: 'Bigger soil patches', short: 'Easier to hit with a parcel.', plotW: 64 },
-      { cost: 40, name: 'Huge soil patches', short: 'Really easy to hit!', plotW: 80 },
+      { cost: 10, crystals: 1, name: 'Bigger soil patches', short: 'Easier to hit with a parcel.', plotW: 64 },
+      { cost: 30, crystals: 2, name: 'Huge soil patches', short: 'Really easy to hit!', plotW: 80 },
     ],
     info: {
       what: 'Patches of ready soil where your tree parcels can land and grow.',
@@ -93,10 +93,10 @@ export const LINES = [
   {
     id: 'species', name: 'Tree Species', group: 'Nature', unlock: { planted: 1 },
     levels: [
-      { cost: 25, name: 'Birch', short: 'A new native tree. Big boost for nature!', species: 'birch' },
-      { cost: 55, name: 'Oak', short: 'Home to over 2,000 kinds of wildlife.', species: 'oak' },
-      { cost: 85, name: 'Rowan', short: 'Berries for the birds.', species: 'rowan' },
-      { cost: 130, name: 'Fruit trees', short: 'Food for people, bees and birds.', species: 'orchard' },
+      { cost: 20, crystals: 1, name: 'Birch', short: 'A new native tree. Big boost for nature!', species: 'birch' },
+      { cost: 40, crystals: 2, name: 'Oak', short: 'Home to over 2,000 kinds of wildlife.', species: 'oak' },
+      { cost: 60, crystals: 3, name: 'Rowan', short: 'Berries for the birds.', species: 'rowan' },
+      { cost: 90, crystals: 5, name: 'Fruit trees', short: 'Food for people, bees and birds.', species: 'orchard' },
     ],
     info: {
       what: 'You start with spruce. It grows fast but few animals live in it. Native trees are trees that have always grown here.',
@@ -118,9 +118,9 @@ export const LINES = [
   {
     id: 'magnet', name: 'Seed Magnet', group: 'Plane',
     levels: [
-      { cost: 20, name: 'Seed magnet', short: 'Grab seeds from further away.', pickup: 22 },
-      { cost: 50, name: 'Strong magnet', short: 'Grab seeds from even further.', pickup: 30 },
-      { cost: 100, name: 'Super magnet', short: 'Seeds fly to you!', pickup: 40 },
+      { cost: 15, crystals: 1, name: 'Seed magnet', short: 'Grab seeds from further away.', pickup: 22 },
+      { cost: 35, crystals: 2, name: 'Strong magnet', short: 'Grab seeds from even further.', pickup: 30 },
+      { cost: 70, crystals: 4, name: 'Super magnet', short: 'Seeds fly to you!', pickup: 40 },
     ],
     info: {
       what: 'A pretend gadget that pulls floating seeds towards your plane.',
