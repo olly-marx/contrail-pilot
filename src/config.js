@@ -71,7 +71,8 @@ export const AIRPORT = {
   stormClearAfter: 40,    // ...or this far after it
   signFrom: 700,       // show "Next: PARIS" this far ahead
   rollSeconds: 1.4,    // decelerate along the runway after touchdown
-  names: ['PARIS', 'AMSTERDAM', 'BERLIN', 'ROME', 'MADRID', 'OSLO', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BEIJING', 'TOKYO', 'SYDNEY'],
+  // The route east from London, then across the Pacific to NEW YORK (the last mission), then round again.
+  names: ['PARIS', 'AMSTERDAM', 'BERLIN', 'ROME', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BEIJING', 'TOKYO', 'LOS ANGELES', 'NEW YORK'],
   home: 'LONDON',
 };
 
@@ -137,7 +138,7 @@ export const RADIATION = {
 export const CLIMATE = {
   co2Cruise: 1.0,      // CO2 gauge reading while cruising (fuel upgrades lower this)
   co2Takeoff: 3.0,     // gauge reading during takeoff and landing
-  co2ToHeat: 1.8,      // heat per second per gauge unit
+  co2ToHeat: 1.5,      // heat per second per gauge unit (normal fuel overheats at ~6.5 km: ROME needs upgrades)
   sunBlockedPerCol: -0.66,  // per second, per light column a contrail blocks (day)
   heatTrappedPerCol: 0.93,  // per second, per heat column a contrail traps (night)
   dangerLine: 100,

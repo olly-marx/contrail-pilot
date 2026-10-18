@@ -79,6 +79,16 @@ Flight School is now 7 short steps (hold, tap, storm, seeds, day icy air, night 
 and ends on the How to play page (`#how`: one-line goal + 5 pictures), which GOT IT! closes to
 the results; the page is also on the title screen.
 
+Missions (2026-10-18, `src/missions.js`, `save.mission` index): the game's spine, 10 in order:
+Land in PARIS; land with 5 seeds; a night with no contrail; reach AMSTERDAM; make 10 shade;
+reach ROME (CO2 makes this need fuel/engines: `co2ToHeat` 1.5 = kerosene overheats ~6.5 km);
+plant a tree (hard gate: Tree parcels); reach CAIRO; 5 crystals in one flight; round the world
+to NEW YORK (12 airports). Route is now PARIS..TOKYO, LOS ANGELES, NEW YORK. Card on the title
+(`renderMission()`), live line under the distance (`missionText`), results step `#rMission`.
+Passing an airport shows "Passed X. Next: Y" for 4 s. The user dropped "Earth cooler than at
+take-off" as a mission (too hard: CO2). Still to do from this redesign: freeze-show-do Flight
+School with the `assets/ui/lesson-*.png` diagrams, How to play BEFORE Flight School.
+
 ## Decisions (don't re-litigate without the user)
 
 - Trees are only kept on a safe landing; crash/overheat loses all cargo. No distance trees.

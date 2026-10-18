@@ -1,6 +1,7 @@
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
+import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -75,6 +76,18 @@ export class UI {
     this.onSchool();
   }
 
+  // The mission card on the title screen: this flight's goal, and what you need for it.
+  renderMission() {
+    const s = this.save, m = currentMission(s), el = $('tMission');
+    if (!s.tutorialDone) { el.hidden = true; return; }
+    el.hidden = false;
+    if (!m) { el.innerHTML = `<div class="mis-head">ALL MISSIONS DONE!</div><p>You are a real Contrail Pilot. Now fly as far as you can!</p>`; return; }
+    const n = (s.mission || 0) + 1, lock = missionBlocked(s, m);
+    el.innerHTML = `<div class="mis-head"><span class="mis-no">MISSION ${n}/${MISSIONS.length}</span></div>
+      <div class="mis-body"><i class="mi ${m.icon}"></i><div><b>${m.title}</b><p>${m.sub}</p>
+      ${lock ? `<p class="mis-need">Needs: <b>${m.needs.text}</b></p>` : m.tip ? `<p class="mis-tip">${m.tip}</p>` : ''}</div></div>`;
+  }
+
   showOnly(id) {
     for (const s of ['title', 'results', 'hangar']) $(s).hidden = s !== id;
   }
@@ -87,6 +100,7 @@ export class UI {
     $('tNew').hidden = !this.hasNew();
     const any = Object.values(this.save.planted || {}).some(n => n > 0);
     $('tMeter').innerHTML = any ? meterHTML(this.save) : '';
+    this.renderMission();
     this.showOnly('title');
   }
 
@@ -121,6 +135,14 @@ export class UI {
     };
 
     $('rTitle').textContent = r.school ? 'Flight school done!' : r.landed ? `Landed in ${r.landedAt}!` : r.reason.replace('\n', ' ');
+    const mb = $('rMission');
+    mb.hidden = !r.mission;
+    if (r.mission) {
+      mb.className = `step mission ${r.mission.done ? 'done' : 'notyet'}`;
+      mb.innerHTML = r.mission.done
+        ? `<b>MISSION DONE!</b> ${r.mission.title}${r.mission.last ? '<br>You finished ALL the missions!' : r.mission.next ? `<br>Next: <b>${r.mission.next}</b>` : ''}`
+        : `<b>Not this time:</b> ${r.mission.title}<br><span class="small">${r.mission.fail}</span>`;
+    }
     $('rRecord').hidden = !r.newRecord;
     $('rDist').textContent = '0';
     $('rGrab').textContent = '0';
@@ -143,9 +165,10 @@ export class UI {
     $('rFact').textContent = FACTS[Math.floor(Math.random() * FACTS.length)];
     this.showOnly('results');
 
-    const [title, dist, record, tally, earth, ...rest] = steps;
+    const [title, missionStep, dist, record, tally, earth, ...rest] = steps;
     show(title);
     await wait(350);
+    if (r.mission) { show(missionStep); if (r.mission.done) sfx.buy(); await wait(600); }
     show(dist); await count($('rDist'), r.distance, 600);
     if (r.newRecord) { show(record); sfx.buy(); }
     await wait(200);

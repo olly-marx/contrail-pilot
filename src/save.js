@@ -15,7 +15,8 @@ const DEFAULTS = {
   freeUpgrade: false,  // true after the first landing until the free upgrade is picked
   freeGiven: false,
   landings: 0,
-  planted: {},         // species id -> trees planted, all flights (drives the Wild Land meter)
+  planted: {},         // species id -> trees planted, all flights (drives the Biodiversity meter)
+  mission: 0,          // index into MISSIONS (src/missions.js); the game's spine
   muted: false,
 };
 

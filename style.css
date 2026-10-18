@@ -250,3 +250,21 @@ p { margin: 0; }
 /* How to play: the one-line goal, and a seed picture */
 .goal { font-size: 10px; line-height: 1.6; background: #fff4c2; padding: 8px; margin: 6px 0 10px; }
 .pic-seed { background-image: url('assets/ui/icon-seed.png'); background-color: #6ec6e8; background-size: 24px 24px; background-position: center; background-repeat: no-repeat; }
+
+/* ---------- missions ---------- */
+.mission-card { background: #fff4c2; padding: 8px 10px; margin: 6px 0 10px; text-align: left; font-size: 9px; line-height: 1.5;
+  box-shadow: 0 -2px 0 0 var(--ink), 0 2px 0 0 var(--ink), -2px 0 0 0 var(--ink), 2px 0 0 0 var(--ink); }
+.mission-card p { margin: 2px 0 0; }
+.mis-head { font-size: 7px; color: var(--muted); margin-bottom: 4px; }
+.mis-body { display: flex; gap: 8px; align-items: flex-start; }
+.mis-body b { font-size: 11px; }
+.mis-need { color: #c0392b; }
+.mis-tip { color: var(--muted); }
+.mi { flex: 0 0 24px; width: 24px; height: 24px; image-rendering: pixelated; background-size: 24px 24px; background-color: #6ec6e8; }
+.mi-land { background-image: url('assets/ui/mi-land.png'); } .mi-seed { background-image: url('assets/ui/mi-seed.png'); }
+.mi-night { background-image: url('assets/ui/mi-night.png'); } .mi-airports { background-image: url('assets/ui/mi-airports.png'); }
+.mi-shade { background-image: url('assets/ui/mi-shade.png'); } .mi-tree { background-image: url('assets/ui/mi-tree.png'); }
+.mi-crystal { background-image: url('assets/ui/mi-crystal.png'); } .mi-globe { background-image: url('assets/ui/mi-globe.png'); }
+#results .mission { font-size: 9px; line-height: 1.6; padding: 8px; margin: 4px 0 8px; }
+#results .mission.done { background: #d6f5d6; }
+#results .mission.notyet { background: #fde2e2; }
