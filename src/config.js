@@ -70,6 +70,8 @@ export const AIRPORT = {
   stormClearBefore: 120,  // no storms this far before the runway...
   stormClearAfter: 40,    // ...or this far after it
   signFrom: 700,       // show "Next: PARIS" this far ahead
+  glideFrom: 450,      // glide assist: within this of the runway middle, not tapping sinks you onto it
+  glideMinVy: 70,      // px/s: never glide slower than this
   rollSeconds: 1.4,    // decelerate along the runway after touchdown
   // The route east from London, then across the Pacific to NEW YORK (the last mission), then round again.
   names: ['PARIS', 'AMSTERDAM', 'BERLIN', 'ROME', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BEIJING', 'TOKYO', 'LOS ANGELES', 'NEW YORK'],

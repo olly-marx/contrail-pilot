@@ -41,6 +41,21 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.mouse.up();
   const s3 = await scene(() => game.scene.getScene('game').state);
   check(s3 === 'playing', `holding should take off, state ${s3}`);
+  // A child who doesn't tap straight away gets a breather, not an instant crash.
+  await p.waitForTimeout(900);
+  const s4 = await scene(() => game.scene.getScene('game').state);
+  check(s4 === 'playing', `0.9 s after take-off with no tap the plane should still be flying, state ${s4}`);
+  // Glide assist: "stop tapping and glide down" from 300 m out, from cruise height, must land.
+  const glide = await scene(() => new Promise(res => { const s = game.scene.getScene('game');
+    s.storms.forEach(st => st.parts.forEach(q => q.destroy())); s.storms = []; s.nextStormAt = 1e9; s.graceUntil = 0;
+    s.plane.y = 150; s.plane.vy = 0; s.heat = 0; s.distancePx = s.nextAirport.worldX - 300;
+    const iv = setInterval(() => { s.heat = 0; if (s.state === 'over') { clearInterval(iv); res({ landed: s.result.landed, reason: s.result.reason }); } }, 30);
+    setTimeout(() => { clearInterval(iv); res({ landed: false, reason: 'still flying' }); }, 8000); }));
+  check(glide.landed, `a no-tap glide from 300 m out should land, got ${glide.reason}`);
+  await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+  await p.mouse.move(195, 400); await p.mouse.down();
+  for (let i = 0; i < 40 && await scene(() => game.scene.getScene('game').state) === 'takeoff'; i++) await p.waitForTimeout(100);
+  await p.mouse.up(); await p.mouse.click(195, 300);
 
   // 4. Aim: the parcel lands on the bit of ground under the X, from any height.
   await scene(() => { const s = game.scene.getScene('game'); s.finish = () => {}; setInterval(() => { if (s.plane.y > 380) s.plane.vy = -150; }, 50); });

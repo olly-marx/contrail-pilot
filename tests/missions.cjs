@@ -28,7 +28,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
   const line = await scene(() => game.scene.getScene('game').missionText.text);
   check(/PARIS: \d+ m/.test(line), `the mission line should show PARIS distance, got "${line}"`);
-  await scene(() => { game.scene.getScene('game').plane.y = 600; }); await p.waitForTimeout(1500);
+  await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.plane.y = 600; }); await p.waitForTimeout(2500);
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && r.mission && !r.mission.done, `a crash should not complete the mission: ${JSON.stringify(r && r.mission)}`);
   check((await getSave()).mission === 0, 'mission index should stay 0 after a crash');
@@ -48,6 +48,18 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(1800);   // the results reveal starts 900 ms after landing
   const rm = await p.textContent('#rMission');
   check(/MISSION DONE/.test(rm) && /Land with 5 seeds/.test(rm), `results should say MISSION DONE and name the next: ${rm}`);
+
+  // 3b. Landing at AMSTERDAM (past PARIS) does not count as Land in PARIS.
+  await setSave({ ...base, mission: 0 }); await p.reload(); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
+  await scene(() => { const s = game.scene.getScene('game'); s.airportsSkipped = 1; s.heat = 0; s.distancePx = s.nextAirport.worldX - 250; });
+  for (let i = 0; i < 150; i++) {
+    const st = await scene(() => { const s = game.scene.getScene('game'); s.heat = 0; const toA = s.nextAirport.worldX - s.distancePx; if (toA > -20) { s.plane.y = 300; s.plane.vy = 0; } return s.state; });
+    if (st === 'over') break;
+    await p.waitForTimeout(40);
+  }
+  r = await scene(() => game.scene.getScene('game').result);
+  check(r && r.landed && r.mission && !r.mission.done && /FIRST airport/.test(r.mission.fail), `landing past PARIS should not complete Land in PARIS: ${JSON.stringify(r && r.mission)}`);
 
   // 4. Passing an airport shows where the next one is.
   await p.click('#againBtn'); await p.waitForTimeout(2300); await calm();

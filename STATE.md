@@ -91,6 +91,15 @@ shown in the coach bubble with the game frozen and dimmed, `#coachDim`; `ui.coac
 How to play shows BEFORE Flight School (`startSchool()`), no longer after. `hud.highlight()` frames
 the Earth bar during the contrail lesson.
 
+Fresh-player review fixes (2026-10-18): a no-tap "glide" only covered ~90 m but the sign said
+glide from 300 m, so everyone crashed short -> glide assist (`AIRPORT.glideFrom` 450 m: when
+falling near a runway, vy is capped to the slope that touches down mid-runway; validated by
+test). Breather after "Now TAP to fly!"; the first tip (`explainWhenClear()`) waits for a clear
+sky. School: the night step clears the day's icy air first and gives pass/fail feedback (17
+steps now); the contrail step's words are honest about the bar (CO2 keeps it red) and the bubble
+sits high so the ground shows. Mission 1 requires landing at the FIRST airport. Results use the
+real multiplier. Not fixed (cosmetic): FREE "pick" frames overflow the hangar panel.
+
 ## Decisions (don't re-litigate without the user)
 
 - Trees are only kept on a safe landing; crash/overheat loses all cargo. No distance trees.

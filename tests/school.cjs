@@ -20,7 +20,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#howClose'); await p.waitForTimeout(300);
 
   const seen = [], lessons = {};
-  let held = false;
+  let held = false, nightStart = null;
   let shot = 0;
   for (let i = 0; i < 1500; i++) {
     const st = await p.evaluate(() => {
@@ -28,10 +28,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
       const coach = document.getElementById('coach');
       const pic = document.getElementById('coachPic');
       return { step: sc ? sc.i : -1, waiting: coach.classList.contains('waiting') && !coach.hidden,
-        text: document.getElementById('coachText').textContent, state: s.state, school: !!sc,
+        text: document.getElementById('coachText').textContent, state: s.state, school: !!sc, inIssr: !!s.wasInIssr,
         lesson: !pic.hidden && !coach.hidden ? { frozen: s.frozen, dim: !document.getElementById('coachDim').hidden, src: pic.getAttribute('src') } : null };
     });
     if (st.lesson) lessons[st.step] = st.lesson;
+    if (st.step === 12 && nightStart === null) nightStart = st.inIssr;   // the night dodge must not begin inside icy air
     if (!seen.includes(st.step)) {
       seen.push(st.step);
       if (process.env.SHOTS) { await p.waitForTimeout(250); await p.screenshot({ path: `${process.env.SHOTS}/school-${String(shot++).padStart(2, '0')}.png` }); }
@@ -66,6 +67,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const end = await p.evaluate(() => ({ r: game.scene.getScene('game').result, save: JSON.parse(localStorage.getItem('contrailPilot.v2')) }));
   await p.waitForTimeout(1500);
   if (!await p.isVisible('#results')) fails.push('flight school should end on the results');
+  if (nightStart !== false) fails.push(`the night step should start clear of icy air (inIssr=${nightStart})`);
   // Every lesson (a diagram) is shown with the game frozen and dimmed behind it.
   const ls = Object.values(lessons);
   if (ls.length !== 7) fails.push(`expected 7 diagram lessons, saw ${ls.length}`);
@@ -85,8 +87,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   console.log({ stepsSeen: seen, landed: end.r && end.r.landed, cargo: end.r && end.r.cargo, seeds: end.save.seeds, tutorialDone: end.save.tutorialDone, errs });
   if (!end.r || !end.r.landed) fails.push('flight school did not end in a landing');
   if (!end.save.tutorialDone) fails.push('tutorialDone not saved');
-  const steps = seen.filter(x => x >= 0 && x < 16);   // 16 = finished
-  if (steps.length !== 16 || Math.max(...seen) > 16) fails.push(`flight school should be exactly 16 steps (7 diagram lessons), all completed; saw ${JSON.stringify(steps)}`);
+  const steps = seen.filter(x => x >= 0 && x < 17);   // 17 = finished
+  if (steps.length !== 17 || Math.max(...seen) > 17) fails.push(`flight school should be exactly 17 steps (7 diagram lessons), all completed; saw ${JSON.stringify(steps)}`);
   if (!(await p.isVisible('#results'))) fails.push('results not shown after school');
   if ((await p.textContent('#rTitle')).toLowerCase().indexOf('school') < 0) fails.push('results do not say flight school');
   // Second visit: the button says TAKE OFF and starts a normal flight.

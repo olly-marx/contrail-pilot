@@ -18,13 +18,13 @@ const reach = name => {
 
 export const MISSIONS = [
   { id: 'land-paris', icon: 'mi-land', title: 'Land in PARIS', sub: 'Fly to the first airport and glide down onto the runway.',
-    check: r => r.landed, progress: s => s.nextAirport ? `PARIS: ${Math.max(0, Math.round(s.nextAirport.worldX - s.distancePx))} m` : '',
-    fail: () => 'Stop tapping near the grey runway and glide down onto it.' },
+    check: r => r.landed && r.airportsSkipped === 0, progress: s => s.airportsSkipped ? 'Passed PARIS! Land at the next airport to practise.' : s.nextAirport ? `PARIS: ${Math.max(0, Math.round(s.nextAirport.worldX - s.distancePx))} m` : '',
+    fail: r => r.landed ? `You landed in ${r.landedAt}. PARIS is the FIRST airport.` : 'Near the grey runway, stop tapping and glide down onto it.' },
   { id: 'seeds-5', icon: 'mi-seed', title: 'Land with 5 seeds', sub: 'Grab seeds in the sky. You only keep them if you land.',
     check: r => r.landed && r.cargo >= 5, progress: s => `Seeds on board: ${s.cargo}/5`,
     fail: r => r.landed ? `You landed with ${r.cargo}. Grab 5 next time!` : `You had ${r.cargo} seeds but did not land.` },
   { id: 'clean-night', icon: 'mi-night', title: 'A night with no contrail', sub: 'Fly a whole night without touching icy air. Dodging it also earns ice crystals.',
-    check: r => r.nightOwl, progress: s => s.isDay ? 'Wait for night...' : (s.night.started && s.heatTrapped - s.night.trappedAtStart < 0.5 ? 'Night: no contrail so far!' : 'Night: contrail made. Try the next night.'),
+    check: r => r.nightOwl, progress: s => s.isDay ? 'Wait for night...' : (s.night.started && s.heatTrapped - s.night.trappedAtStart < 0.5 ? 'Night: no contrail yet!' : 'Night: contrail made. Next night!'),
     fail: () => 'At night, fly above or below the icy air.' },
   reach('AMSTERDAM'),
   { id: 'shade-10', icon: 'mi-shade', title: 'Make 10 shade in one flight', sub: 'In sunshine, fly INTO icy air. Your contrail shades the Earth.',

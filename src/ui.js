@@ -174,7 +174,7 @@ export class UI {
     const grab = r.earned[0] ? r.earned[0].n : 0;
     await count($('rGrab'), grab, 400);
     const mult = r.earned.find(e => e.label.startsWith('Long'));
-    if (mult) { await wait(250); $('rMultRow').hidden = false; $('rMult').textContent = `x${(1 + mult.n / Math.max(1, grab)).toFixed(1).replace('.0', '')}`; $('rMultRow').classList.add('stamp'); sfx.coin(); }
+    if (mult) { await wait(250); $('rMultRow').hidden = false; $('rMult').textContent = `x${r.mult}`; $('rMultRow').classList.add('stamp'); sfx.coin(); }
     if (r.earned.some(e => e.label.startsWith('Cool'))) { await wait(250); $('rCoolRow').hidden = false; $('rCoolRow').classList.add('stamp'); sfx.coin(); }
     if (r.natureGain > 0) { await wait(250); $('rNatureRow').hidden = false; $('rNatureRow').classList.add('stamp'); sfx.plant(); }
     await wait(300);

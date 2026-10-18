@@ -295,6 +295,20 @@ export class GameScene extends Phaser.Scene {
   }
   inGrace() { return this.graceUntil && this.gameTime < this.graceUntil; }
 
+  // A tip that waits for a calm moment: flying, nothing to hit on screen. Checks every 0.5 s.
+  explainWhenClear(id, html) {
+    if (this.save.seenTips.includes(id) || this.save.seenTips.includes('*')) return;
+    const tryNow = () => {
+      if (this.state === 'over' || this.state === 'landing') return;
+      const busy = this.state !== 'playing' || this.inGrace() || this.explaining
+        || this.storms.some(st => st.rects[0].x < WIDTH && st.rects[0].x + st.rects[0].width > this.plane.x - 20)
+        || this.birds.length || this.turbs.length;
+      if (busy) { this.time.delayedCall(500, tryNow); return; }
+      this.explain(id, html);
+    };
+    this.time.delayedCall(1200, tryNow);
+  }
+
   onCoachTap() {
     if (this.explaining) { this.explaining = false; this.frozen = false; this.ui.hideCoach(); this.startGrace(); return true; }
     return !!(this.school && this.school.onTap());
@@ -376,8 +390,8 @@ export class GameScene extends Phaser.Scene {
       if (this.airborne && this.stateTime >= TAKEOFF.seconds) {
         this.setState('playing'); this.plane.vy = 0;
         this.holdText.setText('');
-        if (!this.school) this.popup(WIDTH / 2, SKY_H / 2, 'Now TAP to fly!', '#ffe15a', 16);
-        if (!this.school) this.time.delayedCall(1500, () => this.explain('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!'));
+        if (!this.school) { this.popup(WIDTH / 2, SKY_H / 2, 'Now TAP to fly!', '#ffe15a', 16); this.startGrace(); }
+        if (!this.school) this.explainWhenClear('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!');
       }
     } else if (this.state === 'playing' && this.inGrace()) {
       this.plane.vy = 0;   // hover during the breather
@@ -385,6 +399,14 @@ export class GameScene extends Phaser.Scene {
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
       this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
+      // Glide assist: "stop tapping and glide down" must be true. Within reach of the next runway
+      // and falling, the plane sinks no faster than the slope that touches down mid-runway.
+      const toMid = this.nextAirport.worldX + AIRPORT.runwayLen / 2 - this.distancePx;
+      if (this.plane.vy > 0 && toMid > 0 && toMid < AIRPORT.glideFrom) {
+        const drop = SKY_H - this.spriteBottom();
+        const glideVy = Math.max(AIRPORT.glideMinVy, drop / (toMid / Math.max(1, this.speed)));
+        this.plane.vy = Math.min(this.plane.vy, glideVy);
+      }
       this.plane.y += this.plane.vy * dt;
       if (this.plane.y < 0) { this.plane.y = 0; this.plane.vy = 0; }
     }
@@ -816,7 +838,6 @@ export class GameScene extends Phaser.Scene {
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
       this.airportIndex++;
       this.airportsSkipped++;
-      this.popup(WIDTH / 2, 90, `Long flight! Landing bonus x${this.multiplier()}`, '#ffe15a');
       this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${AIRPORT.every} m ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`);
       this.nextAirport = {
         worldX: na.worldX + AIRPORT.every,
@@ -1537,7 +1558,7 @@ export class GameScene extends Phaser.Scene {
       landed, landedAt: this.landedAt, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
-      cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl,
+      cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       mission: mission ? { title: mission.title, done: missionDone, fail: missionDone ? '' : mission.fail(partial), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);
