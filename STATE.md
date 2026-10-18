@@ -86,8 +86,10 @@ plant a tree (hard gate: Tree parcels); reach CAIRO; 5 crystals in one flight; r
 to NEW YORK (12 airports). Route is now PARIS..TOKYO, LOS ANGELES, NEW YORK. Card on the title
 (`renderMission()`), live line under the distance (`missionText`), results step `#rMission`.
 Passing an airport shows "Passed X. Next: Y" for 4 s. The user dropped "Earth cooler than at
-take-off" as a mission (too hard: CO2). Still to do from this redesign: freeze-show-do Flight
-School with the `assets/ui/lesson-*.png` diagrams, How to play BEFORE Flight School.
+take-off" as a mission (too hard: CO2). Flight School is freeze-show-do (16 steps, 7 diagram lessons from `assets/ui/lesson-*.png`
+shown in the coach bubble with the game frozen and dimmed, `#coachDim`; `ui.coach(..., pic)`);
+How to play shows BEFORE Flight School (`startSchool()`), no longer after. `hud.highlight()` frames
+the Earth bar during the contrail lesson.
 
 ## Decisions (don't re-litigate without the user)
 

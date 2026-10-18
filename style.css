@@ -268,3 +268,8 @@ p { margin: 0; }
 #results .mission { font-size: 9px; line-height: 1.6; padding: 8px; margin: 4px 0 8px; }
 #results .mission.done { background: #d6f5d6; }
 #results .mission.notyet { background: #fde2e2; }
+
+/* Flight school lessons: a diagram in the bubble, the game dimmed behind it */
+.coach-pic { display: block; width: 240px; max-width: 100%; image-rendering: pixelated; margin: 2px 0 8px; box-shadow: 0 0 0 2px var(--ink); }
+.coach-dim { position: fixed; inset: 0; background: rgba(10, 14, 40, .55); z-index: 24; }
+.coach.lesson { bottom: auto; top: 50%; transform: translate(-50%, -50%); }

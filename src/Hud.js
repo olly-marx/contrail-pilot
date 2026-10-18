@@ -33,6 +33,14 @@ export class Hud {
     this.faceX = hx + BAR_W / 2;
     this.faceY = BAR_TOP - 14;
     this.face = scene.add.image(this.faceX, this.faceY, 'face-ok');
+    // A blinking frame around the Earth bar, for the flight-school lesson about overheating.
+    this.frame = scene.add.rectangle(hx - 6, BAR_TOP - 30, BAR_W + 12, BAR_H + 36).setOrigin(0).setStrokeStyle(2, 0xffe15a).setVisible(false).setDepth(5);
+    this.frameTween = scene.tweens.add({ targets: this.frame, alpha: 0.2, duration: 300, yoyo: true, repeat: -1, paused: true });
+  }
+
+  highlight(on) {
+    this.frame.setVisible(on).setAlpha(1);
+    if (on) this.frameTween.resume(); else this.frameTween.pause();
   }
 
   setCo2(rate) {

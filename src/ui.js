@@ -70,10 +70,12 @@ export class UI {
     this.onStart();
   }
 
+  // How to play comes first, so the lessons have something to hang on. Then flight school.
   startSchool() {
     unlockAudio();
     this.showOnly(null);
-    this.onSchool();
+    $('how').hidden = false;
+    $('howClose').onclick = () => { $('how').hidden = true; $('howClose').onclick = () => { $('how').hidden = true; }; this.onSchool(); };
   }
 
   // The mission card on the title screen: this flight's goal, and what you need for it.
@@ -111,13 +113,7 @@ export class UI {
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
   async showResults(r) {
-    // Straight after flight school: the whole game on one page first, then the results.
-    if (r.school && !r.howShown) {
-      r.howShown = true;
-      $('how').hidden = false;
-      $('howClose').onclick = () => { $('how').hidden = true; $('howClose').onclick = () => { $('how').hidden = true; }; this.showResults(r); };
-      return;
-    }
+
     const steps = [...document.querySelectorAll('#results .step')];
     steps.forEach(el => el.classList.remove('in'));
     this.skipReveal = false;
@@ -365,8 +361,13 @@ export class UI {
   // waiting=true: the game is frozen until the player continues. button=true (the default): only
   // the OK button continues, enabled after a short pause so a tap meant for the plane can't hit it.
   // button=false: a tap anywhere continues (the "tap the screen" lesson in flight school).
-  coach(text, waiting, school = true, button = true) {
+  coach(text, waiting, school = true, button = true, pic = null) {
     $('coachText').innerHTML = text;
+    const img = $('coachPic');
+    img.hidden = !pic;
+    if (pic) img.src = `assets/ui/${pic}.png`;
+    $('coachDim').hidden = !(pic && waiting);           // a lesson: the game is frozen and dimmed behind it
+    $('coach').classList.toggle('lesson', !!(pic && waiting));
     const ok = $('coachOk');
     this.coachButton = !!waiting && button;
     $('coachTap').hidden = !waiting || this.coachButton;
@@ -377,5 +378,5 @@ export class UI {
     $('coach').classList.toggle('high', !school);   // explanations sit high, so the ground stays visible
     $('skipSchool').hidden = !school;
   }
-  hideCoach() { $('coach').hidden = true; $('skipSchool').hidden = true; this.coachButton = false; }
+  hideCoach() { $('coach').hidden = true; $('coachDim').hidden = true; $('skipSchool').hidden = true; this.coachButton = false; }
 }

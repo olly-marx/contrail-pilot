@@ -23,30 +23,42 @@ export class School {
       s.addStormPairAt(x, y, gap);
       return s.storms[s.storms.length - 1];
     };
-    // Seven short steps: fly, storms, seeds, day contrails, night contrails, land. The How to play
-    // card at the end puts it all on one page.
+    // Freeze, show, do. Each lesson: the game freezes and dims, a diagram explains the idea
+    // (`pic`, an assets/ui/lesson-*.png), then the player tries it with only that thing on screen.
+    const lesson = (pic, say) => ({ say, tap: true, pic });
     return [
       { say: 'Hi pilot! I am Captain Cumulus.<br><b>Press and HOLD</b> the screen to take off!', done: () => s.state === 'playing' },
-      { say: '<b>Tap the screen</b> to fly up. Stop tapping and you go down.', tap: true, flapOnTap: true },
-      { say: '<b>Storm clouds!</b> Keep tapping and fly through the gap.',
+      lesson('lesson-tap', '<b>Tap</b> the screen and the plane goes <b>up</b>.<br>Stop tapping and it goes <b>down</b>.'),
+      { say: 'Tap now!', tap: true, flapOnTap: true },
+      { say: 'Keep tapping to stay in the sky!', done: () => this.t > 2.5 },
+      lesson('lesson-storm', '<b>Storm clouds</b> come in pairs. Fly through the <b>gap</b> between them.'),
+      { say: 'Storm ahead! Through the gap.',
         setup: () => { this.storm = stormAt(Phaser.Math.Clamp(s.plane.y + 6, 120, SKY_H - 120)); },
         done: () => this.storm.rects[0].x + STORMS.width < s.plane.x },
-      { say: '<b>Seeds!</b> Fly into them. You only keep them if you <b>land safely</b>.',
+      lesson('lesson-seed', '<b>Seeds</b> float in the sky. Fly into them to grab them.<br>You only <b>keep</b> them if you <b>land safely</b>. Crash, and they are gone.'),
+      { say: 'Seeds ahead! Grab them.',
         setup: () => { const y = Phaser.Math.Clamp(s.plane.y, 80, SKY_H - 100); [0, 40, 80].forEach(dx => s.addToken(ahead() + dx, y, false)); },
         done: () => s.tokens.length === 0 },
-      { say: 'It is <b>sunny</b>. See the <b>icy air</b>? Fly INTO it! Your <b>contrail</b> makes shade, and shade <span class="cool">cools</span> the Earth.',
+      lesson('lesson-day', 'Some air up here is <b>icy</b>. Fly through it and your plane leaves a cloud line: a <b>contrail</b>.<br>In <b>sunshine</b>, the contrail makes <b>shade</b>. Shade <span class="cool">cools</span> the Earth.'),
+      { say: 'Icy air ahead! <b>Fly INTO it</b>.',
         setup: () => { this.issr = this.bigIssr(); },
         // Missed it? Put more icy air right in front of the plane, so this step can always be done.
         retry: () => { if (s.contrails.length <= 25 && this.issr.x + this.issr.width < s.plane.x) { this.issr = this.bigIssr(); this.ui.coach('Missed it! That is OK. Here is more icy air: <b>fly INTO it</b>!', false); } },
         done: () => s.contrails.length > 25 },
-      { say: 'Now it is <b>night</b>. At night a contrail traps heat: <span class="warm">HOTTER</span>! Fly <b>above or below</b> the icy air.',
+      { say: 'You made a <b>contrail</b>! See the <b>shadow</b> on the ground?<br>The Earth bar (right) went <span class="cool">blue</span>: a bit <b>cooler</b>.', tap: true,
+        setup: () => s.hud.highlight(true) },
+      lesson('lesson-night', 'At <b>night</b> there is no sun to block. A contrail is like a <b>lid on a pot</b>: heat cannot get out. The Earth gets <span class="warm">HOTTER</span>.<br>So at night, fly <b>above or below</b> icy air.'),
+      { say: 'Night! Icy air ahead: fly <b>above or below</b> it.',
         setup: () => {
+          s.hud.highlight(false);
           this.holdClock = true; s.clock = DAYNIGHT.daySeconds + DAYNIGHT.blendSeconds + 1;   // straight to night
           this.issr = s.addIssrAt(ahead() + 40, Phaser.Math.Clamp(s.plane.y - 30, 70, SKY_H - 160), 220, 70);
           this.issr.entered = true;   // visible at once
         },
         done: () => this.issr.x + this.issr.width < s.plane.x - 10 },
-      { say: 'Morning! <b>An airport</b> is coming. Stop tapping and <b>glide down</b> onto the grey runway.',
+      lesson('lesson-heat', 'Watch the <b>Earth bar</b>! CO2 and night contrails fill it <span class="warm">red</span>. If it reaches the <b>top</b>, the Earth is too hot: your flight <b>ends</b> and you lose your seeds.<br>Shade and trees bring it down.'),
+      lesson('lesson-land', 'Morning! An <b>airport</b> is coming. <b>Stop tapping</b> and glide down onto the grey runway to land.'),
+      { say: 'Glide down onto the runway!',
         setup: () => {
           this.holdClock = true; s.clock = 2;
           s.nextAirport = { worldX: s.distancePx + 520, name: AIRPORT.names[0], spawned: false };
@@ -65,7 +77,7 @@ export class School {
     if (step.setup) step.setup();
     const text = typeof step.say === 'function' ? step.say() : step.say;
     this.s.frozen = !!step.tap;
-    this.ui.coach(text, !!step.tap, true, !step.flapOnTap);
+    this.ui.coach(text, !!step.tap, true, !step.flapOnTap, step.pic || null);
   }
 
   // Returns true if flight school used the tap.
@@ -116,6 +128,7 @@ export class School {
 
   finished(result) {
     this.ui.hideCoach();
+    this.s.hud.highlight(false);
     this.s.save.tutorialDone = true;
     writeSave(this.s.save);
   }
