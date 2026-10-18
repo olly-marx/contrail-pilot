@@ -70,6 +70,12 @@ grew downward); crystals+multiplier on HUD row 2, airport sign at y 46; birds dr
 flash overlays + a bolt (visual only, not in collisions), flickering twice. Biodiversity fills
 faster (native 6*sqrt(n) cap 18, spruce 2*sqrt(n) cap 6; rewilding needs 3/8/15/22/32/45).
 
+Playtest fixes (2026-10-18, Oliver's cousin): Flight School's icy-air step could get stuck if
+the ISSR was missed; now school ISSRs are big, at plane height and shown at once (`bigIssr()`),
+and a missed one is replaced ("Missed it!", `retry`). After any tip closes (and after skipping
+school) there is a 1.2 s breather (`startGrace()`, `GRACE_MS`): plane hovers and blinks, can't
+crash; the first tap ends it. Open: the goal of the game was confusing to a new player.
+
 ## Decisions (don't re-litigate without the user)
 
 - Trees are only kept on a safe landing; crash/overheat loses all cargo. No distance trees.

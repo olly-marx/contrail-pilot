@@ -37,8 +37,10 @@ export class School {
           ? `You grabbed <b>${s.cargo}</b>! Your seeds are <b>on board</b> (top left).<br>You only keep them if you <b>land safely</b>.`
           : 'Missed them! That is OK. Seeds you grab go <b>on board</b> (top left). You only keep them if you <b>land safely</b>.',
         tap: true },
-      { say: 'Some air up here is <b>icy</b>. You can\'t see it until you are close. Fly into the icy air ahead!',
-        setup: () => { this.issr = s.addIssrAt(ahead(), Phaser.Math.Clamp(s.plane.y - 35, 20, SKY_H - 120), 300, 80); },
+      { say: 'Some air up here is <b>icy</b>. Usually you can\'t see it. Here it is: <b>fly INTO the icy air</b> ahead!',
+        setup: () => { this.issr = this.bigIssr(); },
+        // Missed it? Put more icy air right in front of the plane, so this step can always be done.
+        retry: () => { if (s.contrails.length <= 25 && this.issr.x + this.issr.width < s.plane.x) { this.issr = this.bigIssr(); this.ui.coach('Missed it! That is OK. Here is more icy air: <b>fly INTO it</b>!', false); } },
         done: () => s.contrails.length > 25 },
       { say: 'See the white line? That is a <b>contrail</b>: a cloud made by your plane.<br>It is <b>daytime</b>, so the contrail makes <b>shade</b>. Shade cools the Earth! <span class="cool">Blue = cooler</span>.',
         tap: true },
@@ -79,15 +81,24 @@ export class School {
     const step = this.steps[this.i];
     if (!step || !step.tap) return false;
     this.s.frozen = false;
+    this.s.startGrace();
     if (step.flapOnTap) { this.next(); this.s.flap(); return true; }
     this.next();
     return true;
+  }
+
+  // Flight-school icy air: big, at the plane's height, and shown at once (no hidden reveal).
+  bigIssr() {
+    const s = this.s, i = s.addIssrAt(WIDTH + 10, Phaser.Math.Clamp(s.plane.y + 6 - 55, 20, SKY_H - 130), 300, 110);
+    i.entered = true;   // drawn at full reveal straight away
+    return i;
   }
 
   update(dt) {
     const step = this.steps[this.i];
     if (!step || step.tap) return;
     this.t += dt;
+    if (step.retry) step.retry();
     if (step.done && step.done()) this.next();
   }
 

@@ -10,6 +10,7 @@ import { sfx, buzz } from './sound.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
+const GRACE_MS = 1200;   // breather after a pop-up closes
 const FONT = 'Pixel, monospace';
 
 function overlaps(a, b) {
@@ -248,6 +249,7 @@ export class GameScene extends Phaser.Scene {
     this.nextStormAt = this.distancePx + WIDTH + 100;
     this.nextIssrAt = this.distancePx + 100;
     this.nextTokenAt = this.distancePx + 100;
+    this.startGrace();
   }
 
   startFlight() {
@@ -282,8 +284,17 @@ export class GameScene extends Phaser.Scene {
     return true;
   }
 
+  // A breather after a pop-up closes: the plane hovers level and can't crash for a moment, so a
+  // tap you were about to make isn't too late. Your first tap ends it and flies as normal.
+  startGrace() {
+    if (this.state !== 'playing') return;
+    this.graceUntil = this.gameTime + GRACE_MS;
+    this.plane.vy = 0;
+  }
+  inGrace() { return this.graceUntil && this.gameTime < this.graceUntil; }
+
   onCoachTap() {
-    if (this.explaining) { this.explaining = false; this.frozen = false; this.ui.hideCoach(); return true; }
+    if (this.explaining) { this.explaining = false; this.frozen = false; this.ui.hideCoach(); this.startGrace(); return true; }
     return !!(this.school && this.school.onTap());
   }
 
@@ -314,6 +325,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   applyFlap() {
+    this.graceUntil = 0;   // flying again ends the breather
     this.plane.vy = PLANE.flapVelocity;
     this.flaps = (this.flaps || 0) + 1;
     sfx.flap();
@@ -365,7 +377,11 @@ export class GameScene extends Phaser.Scene {
         if (!this.school) this.popup(WIDTH / 2, SKY_H / 2, 'Now TAP to fly!', '#ffe15a', 16);
         if (!this.school) this.time.delayedCall(1500, () => this.explain('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!'));
       }
+    } else if (this.state === 'playing' && this.inGrace()) {
+      this.plane.vy = 0;   // hover during the breather
+      this.planeSprite.setAlpha(Math.floor(this.gameTime / 120) % 2 ? 0.45 : 1);
     } else if (this.state === 'playing') {
+      this.planeSprite.setAlpha(1);
       this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
       this.plane.y += this.plane.vy * dt;
       if (this.plane.y < 0) { this.plane.y = 0; this.plane.vy = 0; }
@@ -454,6 +470,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'playing') return;
 
     if (this.school) { this.school.forgive(box); this.updateTexts(inIssr); return; }
+    if (this.inGrace()) { this.updateTexts(inIssr); return; }   // the breather: nothing can crash you
     if (this.heat >= CLIMATE.dangerLine * 0.75 && !this.warnedHot) {
       this.warnedHot = true;
       if (this.explain('x-hot', 'The Earth is getting <b>too hot</b>! If the red bar on the right reaches the top, your flight is over.<br>Land soon, make <b>shade</b> in the daytime, or stay out of icy air at night.')) return;

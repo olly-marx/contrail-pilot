@@ -59,6 +59,17 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const end = await p.evaluate(() => ({ r: game.scene.getScene('game').result, save: JSON.parse(localStorage.getItem('contrailPilot.v2')) }));
   await p.waitForTimeout(1500);
   if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/school-${String(shot++).padStart(2, '0')}.png` });
+  // Missing the icy air must not get flight school stuck: more icy air appears.
+  const p2 = await b.newPage({ viewport: { width: 390, height: 844 } });
+  await p2.goto(URL); await p2.evaluate(() => localStorage.clear()); await p2.reload(); await p2.waitForTimeout(700);
+  await p2.click('#goBtn'); await p2.mouse.move(195, 400); await p2.mouse.down(); await p2.waitForTimeout(2500); await p2.mouse.up();
+  const stuck = await p2.evaluate(() => new Promise(res => { const s = game.scene.getScene('game'), sc = s.school;
+    sc.i = 5; sc.next(); s.frozen = false; const first = sc.issr;
+    const iv = setInterval(() => { s.plane.y = sc.issr === first ? 420 - 60 : s.plane.y; s.plane.vy = 0; s.contrails.forEach(c => c.destroy()); s.contrails = []; }, 16);
+    setTimeout(() => { clearInterval(iv); res({ step: sc.i, newIssr: sc.issr !== first, text: document.getElementById('coachText').textContent }); }, 6000); }));
+  if (!(stuck.step === 6 && stuck.newIssr && /Missed it/.test(stuck.text))) fails.push(`missing the icy air should bring more, not get stuck: ${JSON.stringify(stuck)}`);
+  await p2.close();
+
   console.log({ stepsSeen: seen, landed: end.r && end.r.landed, cargo: end.r && end.r.cargo, seeds: end.save.seeds, tutorialDone: end.save.tutorialDone, errs });
   if (!end.r || !end.r.landed) fails.push('flight school did not end in a landing');
   if (!end.save.tutorialDone) fails.push('tutorialDone not saved');

@@ -82,7 +82,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 4. A no-fly zone ends the flight with its own reason.
   await start();
   await scene(() => { const s = game.scene.getScene('game'); s.storms = []; s.nextStormAt = 1e9; s.addNoFlyAt(s.plane.x + 10, s.plane.y + 200, 90); });
-  await p.waitForTimeout(100); await dismiss(); await p.waitForTimeout(300);
+  await p.waitForTimeout(100); await dismiss();
+  await scene(() => { game.scene.getScene('game').graceUntil = 0; });   // skip the post-tip breather (tested in controls.cjs)
+  await p.waitForTimeout(300);
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && /Restricted/.test(r.reason), `no-fly zone should end the flight as restricted airspace, got ${r && r.reason}`);
 
@@ -90,6 +92,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await start();
   await scene(() => { const s = game.scene.getScene('game'); s.storms = []; s.nextStormAt = 1e9; s.addFlock(s.plane.x + 20, s.plane.y); });
   await p.waitForTimeout(100); await dismiss();
+  await scene(() => { game.scene.getScene('game').graceUntil = 0; });   // skip the post-tip breather (tested in controls.cjs)
   for (let i = 0; i < 10; i++) { await scene(() => { const s = game.scene.getScene('game'); if (s.state === 'playing') { s.plane.vy = 0; s.birds.forEach(f => { f.y = s.plane.y + 2; f.phase = 0; }); } }); await p.waitForTimeout(40); }
   r = await scene(() => game.scene.getScene('game').result);
   check(r && /Bird/.test(r.reason), `birds should end the flight as a bird strike, got ${r && r.reason}`);

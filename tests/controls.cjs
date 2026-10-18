@@ -64,6 +64,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.waitForTimeout(800); await p.click('#coachOk');
   const tip2 = await scene(() => ({ ex: game.scene.getScene('game').explaining, frozen: game.scene.getScene('game').frozen }));
   check(!tip2.ex && !tip2.frozen, `the OK button should close the tip and resume: ${JSON.stringify(tip2)}`);
+  // ...then a breather: the plane hovers and a storm right on it doesn't end the flight; a tap ends it.
+  const gr = await scene(() => new Promise(res => { const s = game.scene.getScene('game'); const y0 = s.plane.y, f = s.finish; let crashed = false;
+    s.finish = () => { crashed = true; }; s.addStormPairAt(s.plane.x, s.plane.y - 100, 40);
+    setTimeout(() => { const r = { grace: s.inGrace(), drop: Math.round(s.plane.y - y0), crashed };
+      s.storms.pop().parts.forEach(q => q.destroy()); s.applyFlap(); r.afterTap = s.inGrace(); s.finish = f; res(r); }, 700); }));
+  check(gr.grace && Math.abs(gr.drop) <= 2 && !gr.crashed, `after a tip the plane should hover safely for a moment: ${JSON.stringify(gr)}`);
+  check(!gr.afterTap, 'a tap should end the breather');
   // 6. Icy air is lumpy, not a box: the box's corner is outside it, the middle line inside.
   const shape = await scene(() => { const s = game.scene.getScene('game');
     const i = s.addIssrAt(100, 100, 240, 100), hb = (x, y) => ({ x, y: y - 6, w: 4, h: 12 });
