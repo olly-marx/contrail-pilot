@@ -74,7 +74,10 @@ Playtest fixes (2026-10-18, Oliver's cousin): Flight School's icy-air step could
 the ISSR was missed; now school ISSRs are big, at plane height and shown at once (`bigIssr()`),
 and a missed one is replaced ("Missed it!", `retry`). After any tip closes (and after skipping
 school) there is a 1.2 s breather (`startGrace()`, `GRACE_MS`): plane hovers and blinks, can't
-crash; the first tap ends it. Open: the goal of the game was confusing to a new player.
+crash; the first tap ends it. The goal was confusing to a new player, so (user chose options 2+4):
+Flight School is now 7 short steps (hold, tap, storm, seeds, day icy air, night icy air, land)
+and ends on the How to play page (`#how`: one-line goal + 5 pictures), which GOT IT! closes to
+the results; the page is also on the title screen.
 
 ## Decisions (don't re-litigate without the user)
 

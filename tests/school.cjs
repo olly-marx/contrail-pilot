@@ -58,22 +58,26 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
   const end = await p.evaluate(() => ({ r: game.scene.getScene('game').result, save: JSON.parse(localStorage.getItem('contrailPilot.v2')) }));
   await p.waitForTimeout(1500);
+  // Flight school ends on the How to play page; GOT IT! goes on to the results.
+  if (!await p.isVisible('#how')) fails.push('flight school should end on the How to play page');
+  else { await p.click('#howClose'); await p.waitForTimeout(300); if (!await p.isVisible('#results')) fails.push('GOT IT! should go on to the results'); }
   if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/school-${String(shot++).padStart(2, '0')}.png` });
   // Missing the icy air must not get flight school stuck: more icy air appears.
   const p2 = await b.newPage({ viewport: { width: 390, height: 844 } });
   await p2.goto(URL); await p2.evaluate(() => localStorage.clear()); await p2.reload(); await p2.waitForTimeout(700);
   await p2.click('#goBtn'); await p2.mouse.move(195, 400); await p2.mouse.down(); await p2.waitForTimeout(2500); await p2.mouse.up();
   const stuck = await p2.evaluate(() => new Promise(res => { const s = game.scene.getScene('game'), sc = s.school;
-    sc.i = 5; sc.next(); s.frozen = false; const first = sc.issr;
+    sc.i = 3; sc.next(); s.frozen = false; const first = sc.issr;   // step 4: day icy air
     const iv = setInterval(() => { s.plane.y = sc.issr === first ? 420 - 60 : s.plane.y; s.plane.vy = 0; s.contrails.forEach(c => c.destroy()); s.contrails = []; }, 16);
-    setTimeout(() => { clearInterval(iv); res({ step: sc.i, newIssr: sc.issr !== first, text: document.getElementById('coachText').textContent }); }, 6000); }));
-  if (!(stuck.step === 6 && stuck.newIssr && /Missed it/.test(stuck.text))) fails.push(`missing the icy air should bring more, not get stuck: ${JSON.stringify(stuck)}`);
+    setTimeout(() => { clearInterval(iv); res({ step: sc.i, newIssr: sc.issr !== first, text: document.getElementById("coachText").textContent }); }, 9000); }));   // a 300 px patch takes ~6 s to pass
+  if (!(stuck.step === 4 && stuck.newIssr && /Missed it/.test(stuck.text))) fails.push(`missing the icy air should bring more, not get stuck: ${JSON.stringify(stuck)}`);
   await p2.close();
 
   console.log({ stepsSeen: seen, landed: end.r && end.r.landed, cargo: end.r && end.r.cargo, seeds: end.save.seeds, tutorialDone: end.save.tutorialDone, errs });
   if (!end.r || !end.r.landed) fails.push('flight school did not end in a landing');
   if (!end.save.tutorialDone) fails.push('tutorialDone not saved');
-  if (seen.filter(x => x >= 0).length < 12) fails.push(`only saw ${seen.length} steps`);
+  const steps = seen.filter(x => x >= 0 && x < 7);   // 7 = finished
+  if (steps.length !== 7 || Math.max(...seen) > 7) fails.push(`flight school should be exactly 7 short steps, all completed; saw ${JSON.stringify(steps)}`);
   if (!(await p.isVisible('#results'))) fails.push('results not shown after school');
   if ((await p.textContent('#rTitle')).toLowerCase().indexOf('school') < 0) fails.push('results do not say flight school');
   // Second visit: the button says TAKE OFF and starts a normal flight.

@@ -23,37 +23,29 @@ export class School {
       s.addStormPairAt(x, y, gap);
       return s.storms[s.storms.length - 1];
     };
+    // Seven short steps: fly, storms, seeds, day contrails, night contrails, land. The How to play
+    // card at the end puts it all on one page.
     return [
-      { say: 'Hi pilot! I am Captain Cumulus. Let\'s learn to fly.<br><b>Press and HOLD</b> the screen to take off!', done: () => s.state === 'playing' },
-      { say: '<b>Tap the screen</b> to fly up.<br>Stop tapping and you go down.', tap: true, flapOnTap: true },
-      { say: 'Keep tapping to stay in the sky!', done: () => this.t > 3 },
-      { say: '<b>Storm clouds!</b> Fly through the gap.',
+      { say: 'Hi pilot! I am Captain Cumulus.<br><b>Press and HOLD</b> the screen to take off!', done: () => s.state === 'playing' },
+      { say: '<b>Tap the screen</b> to fly up. Stop tapping and you go down.', tap: true, flapOnTap: true },
+      { say: '<b>Storm clouds!</b> Keep tapping and fly through the gap.',
         setup: () => { this.storm = stormAt(Phaser.Math.Clamp(s.plane.y + 6, 120, SKY_H - 120)); },
         done: () => this.storm.rects[0].x + STORMS.width < s.plane.x },
-      { say: '<b>Seeds!</b> Fly into them to grab them. Seeds grow into trees!',
+      { say: '<b>Seeds!</b> Fly into them. You only keep them if you <b>land safely</b>.',
         setup: () => { const y = Phaser.Math.Clamp(s.plane.y, 80, SKY_H - 100); [0, 40, 80].forEach(dx => s.addToken(ahead() + dx, y, false)); },
         done: () => s.tokens.length === 0 },
-      { say: () => s.cargo
-          ? `You grabbed <b>${s.cargo}</b>! Your seeds are <b>on board</b> (top left).<br>You only keep them if you <b>land safely</b>.`
-          : 'Missed them! That is OK. Seeds you grab go <b>on board</b> (top left). You only keep them if you <b>land safely</b>.',
-        tap: true },
-      { say: 'Some air up here is <b>icy</b>. Usually you can\'t see it. Here it is: <b>fly INTO the icy air</b> ahead!',
+      { say: 'It is <b>sunny</b>. See the <b>icy air</b>? Fly INTO it! Your <b>contrail</b> makes shade, and shade <span class="cool">cools</span> the Earth.',
         setup: () => { this.issr = this.bigIssr(); },
         // Missed it? Put more icy air right in front of the plane, so this step can always be done.
         retry: () => { if (s.contrails.length <= 25 && this.issr.x + this.issr.width < s.plane.x) { this.issr = this.bigIssr(); this.ui.coach('Missed it! That is OK. Here is more icy air: <b>fly INTO it</b>!', false); } },
         done: () => s.contrails.length > 25 },
-      { say: 'See the white line? That is a <b>contrail</b>: a cloud made by your plane.<br>It is <b>daytime</b>, so the contrail makes <b>shade</b>. Shade cools the Earth! <span class="cool">Blue = cooler</span>.',
-        tap: true },
-      { say: 'Now it is <b>night</b>...', setup: () => { this.holdClock = false; s.clock = DAYNIGHT.daySeconds - DAYNIGHT.blendSeconds; },
-        done: () => !s.isDay && s.nightAmount() > 0.95 },
-      { say: 'At night a contrail is like a <b>blanket</b>. It keeps heat in, and the Earth gets <span class="warm">HOTTER</span>.<br>So at night, <b>stay out of icy air</b>!',
-        tap: true, setup: () => { this.holdClock = true; } },
-      { say: 'Icy air ahead! Fly <b>above or below</b> it.',
-        setup: () => { this.night = s.heatTrapped; this.issr = s.addIssrAt(ahead() + 40, Phaser.Math.Clamp(s.plane.y - 30, 70, SKY_H - 160), 220, 70); },
+      { say: 'Now it is <b>night</b>. At night a contrail traps heat: <span class="warm">HOTTER</span>! Fly <b>above or below</b> the icy air.',
+        setup: () => {
+          this.holdClock = true; s.clock = DAYNIGHT.daySeconds + DAYNIGHT.blendSeconds + 1;   // straight to night
+          this.issr = s.addIssrAt(ahead() + 40, Phaser.Math.Clamp(s.plane.y - 30, 70, SKY_H - 160), 220, 70);
+          this.issr.entered = true;   // visible at once
+        },
         done: () => this.issr.x + this.issr.width < s.plane.x - 10 },
-      { say: () => (s.heatTrapped - this.night > 0.5
-          ? 'Oops, a night contrail! See the red? That is heat trapped. Next time fly around it.'
-          : 'Great flying! No night contrail. The Earth says thank you!'), tap: true },
       { say: 'Morning! <b>An airport</b> is coming. Stop tapping and <b>glide down</b> onto the grey runway.',
         setup: () => {
           this.holdClock = true; s.clock = 2;

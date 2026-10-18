@@ -97,6 +97,13 @@ export class UI {
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
   async showResults(r) {
+    // Straight after flight school: the whole game on one page first, then the results.
+    if (r.school && !r.howShown) {
+      r.howShown = true;
+      $('how').hidden = false;
+      $('howClose').onclick = () => { $('how').hidden = true; $('howClose').onclick = () => { $('how').hidden = true; }; this.showResults(r); };
+      return;
+    }
     const steps = [...document.querySelectorAll('#results .step')];
     steps.forEach(el => el.classList.remove('in'));
     this.skipReveal = false;

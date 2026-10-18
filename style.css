@@ -246,3 +246,7 @@ p { margin: 0; }
 .tabs .btn { flex: 1; }
 .tabs .btn.on { background: var(--cool); }
 .tabs .btn .dot { display: inline-block; width: 6px; height: 6px; background: #ff5a5a; margin-left: 4px; vertical-align: middle; }
+
+/* How to play: the one-line goal, and a seed picture */
+.goal { font-size: 10px; line-height: 1.6; background: #fff4c2; padding: 8px; margin: 6px 0 10px; }
+.pic-seed { background-image: url('assets/ui/icon-seed.png'); background-color: #6ec6e8; background-size: 24px 24px; background-position: center; background-repeat: no-repeat; }
