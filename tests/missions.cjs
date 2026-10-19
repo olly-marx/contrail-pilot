@@ -59,7 +59,7 @@ const KEY = 'contrailPilot.v2';
     await p.waitForTimeout(40);
   }
   r = await scene(() => game.scene.getScene('game').result);
-  check(r && r.landed && r.mission && !r.mission.done && /FIRST airport/.test(r.mission.fail), `landing past PARIS should not complete Land in PARIS: ${JSON.stringify(r && r.mission)}`);
+  check(r && r.landed && r.mission && !r.mission.done && /You landed in [A-Z]+\. PARIS is the FIRST airport/.test(r.mission.fail), `landing past PARIS should not complete Land in PARIS: ${JSON.stringify(r && r.mission)}`);
 
   // 4. Passing an airport shows where the next one is.
   await p.click('#againBtn'); await p.waitForTimeout(2300); await calm();

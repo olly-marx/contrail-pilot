@@ -43,9 +43,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const nf = await scene(() => ({ d: game.scene.getScene('game').distancePx, seen: JSON.parse(localStorage.getItem('contrailPilot.v2')).seenTips.includes('hazard-noFly') }));
   check(nf.d > 7000 && !nf.seen, `no-fly zone appeared before 8000 m: ${JSON.stringify(nf)}`);
 
-  // 2. Far into a flight: all three appear.
+  // 2. Far into a flight: all three appear. Loop until they have (each new hazard pauses for its
+  // tip and a breather, so a slow machine needs more steps), up to a generous limit.
   await start();
-  for (let i = 0; i < 120; i++) {
+  const allSeen = () => p.evaluate(() => { const t = JSON.parse(localStorage.getItem('contrailPilot.v2')).seenTips; return ['hazard-turbulence', 'hazard-noFly', 'hazard-birds'].every(h => t.includes(h)); });
+  for (let i = 0; i < 600 && !(i % 20 === 0 && await allSeen()); i++) {
     await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.rects.forEach(r => { r.y = -9999; })); s.birds.forEach(f => f.birds.forEach(b => b.img.y = -999)); s.birds.forEach(f => { f.y = -999; });
       s.plane.y = 200; s.plane.vy = 0; s.heat = 0; s.distancePx = Math.max(s.distancePx, 10000) + 60; });
     await dismiss();

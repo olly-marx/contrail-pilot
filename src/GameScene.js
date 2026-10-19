@@ -1550,7 +1550,7 @@ export class GameScene extends Phaser.Scene {
     if (landed) this.save.landings = (this.save.landings || 0) + 1;
     // Mission: done or not, and move on to the next one.
     const mission = this.school ? null : currentMission(this.save);
-    const partial = { landed, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals };
+    const partial = { landed, landedAt: this.landedAt, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals };
     const missionDone = !!(mission && mission.check(partial));
     if (missionDone) this.save.mission = (this.save.mission || 0) + 1;
     const nextMission = this.school ? null : currentMission(this.save);
