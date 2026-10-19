@@ -15,7 +15,7 @@ export const LINES = [
       what: 'Icy air is invisible. Scientists measure how wet the air is, so they can guess where it is.',
       why: 'If pilots know where the icy air is, they can fly a bit higher or lower and not make a contrail.',
       fact: 'Icy air is often only a few hundred metres thick. That is shorter than a walk to the shops!',
-      links: ['forecast', 'project'],
+      links: ['trial', 'project'],
     },
   },
   {
@@ -30,7 +30,7 @@ export const LINES = [
       what: 'SAF is plane fuel made from things like old cooking oil. Hydrogen is a gas that burns without making CO2.',
       why: 'Less CO2 means less warming. SAF also makes less soot, so contrails are thinner. Hydrogen makes lots of water, so it makes MORE contrails!',
       fact: 'There is not enough SAF for every plane yet. Making more is a big job for the future.',
-      links: ['project'],
+      links: ['brahmal', 'project'],
     },
   },
   {
@@ -44,7 +44,7 @@ export const LINES = [
       what: 'New engines burn less fuel to fly the same distance.',
       why: 'Less fuel burned means less CO2, and less CO2 means less warming.',
       fact: 'Planes today use about half the fuel per passenger that planes used 50 years ago.',
-      links: ['project'],
+      links: ['brahmal', 'project'],
     },
   },
   {
@@ -59,7 +59,7 @@ export const LINES = [
       what: 'Airlines can make small changes inside the plane: the food, the cups, and how heavy things are.',
       why: 'Meat makes much more CO2 to farm than veggie food. And every bit of weight a plane carries needs fuel to lift.',
       fact: 'These changes are small next to cleaner fuel and engines, but every little bit adds up!',
-      links: ['project'],
+      links: ['brahmal', 'project'],
     },
   },
   {

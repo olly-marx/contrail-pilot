@@ -131,8 +131,10 @@ when a texture moves to a PNG the guard must be a code-only key, or better a per
 
 ## Open questions waiting on the user
 
-1. URLs for Merrick's contrail-forecast site and the Imperial project page (`src/links.js`,
-   currently "coming soon").
+1. URL for Merrick's contrail-forecast site (`forecast` in `src/links.js`, not used anywhere until
+   it exists). DONE 2026-10-19: AEIS group, Brahmal Institute, North Atlantic trial news and
+   Citizen Zoo links (checked in a browser); About page + title credit. Logos are text
+   wordmarks until the user supplies official files (brand rules).
 2. Supabase project (URL + anon key) for the shared leaderboard and festival tree counter.
 3. Should the landing X for parcels be an upgrade ("Drop sight") rather than free?
 4. Should trees planted on a flight that later crashes count for Biodiversity? (currently yes)

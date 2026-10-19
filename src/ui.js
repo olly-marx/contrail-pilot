@@ -47,6 +47,8 @@ export class UI {
     $('hGoTop').onclick = () => this.start();
     $('howBtn').onclick = () => { $('how').hidden = false; };
     $('howClose').onclick = () => { $('how').hidden = true; };
+    $('aboutBtn').onclick = () => { $('about').hidden = false; };
+    $('aboutClose').onclick = () => { $('about').hidden = true; };
     // Tap anywhere on the results while it is revealing to skip to the end.
     $('results').addEventListener('pointerdown', () => { this.skipReveal = true; }, true);
     $('iClose').onclick = () => { $('info').hidden = true; };

@@ -273,3 +273,12 @@ p { margin: 0; }
 .coach-pic { display: block; width: 240px; max-width: 100%; image-rendering: pixelated; margin: 2px 0 8px; box-shadow: 0 0 0 2px var(--ink); }
 .coach-dim { position: fixed; inset: 0; background: rgba(10, 14, 40, .55); z-index: 24; }
 .coach.lesson { bottom: auto; top: 50%; transform: translate(-50%, -50%); }
+
+/* ---------- credits and About ---------- */
+.credit { font-size: 7px; line-height: 1.6; color: var(--muted); margin: 10px 0 0; }
+.org { margin: 8px 0 12px; text-align: left; font-size: 9px; line-height: 1.6; }
+.org p { margin: 4px 0; }
+/* Text wordmarks until official logo files are supplied (brand rules: don't recreate logos). */
+.wordmark { display: inline-block; font-weight: bold; padding: 6px 8px; margin-bottom: 4px; line-height: 1.2; }
+.wordmark.imperial { background: #0000cd; color: #fff; font-size: 10px; }
+.wordmark.citizenzoo { background: #2e7d32; color: #fff; font-size: 11px; }
