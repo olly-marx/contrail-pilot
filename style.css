@@ -282,3 +282,9 @@ p { margin: 0; }
 .wordmark { display: inline-block; font-weight: bold; padding: 6px 8px; margin-bottom: 4px; line-height: 1.2; }
 .wordmark.imperial { background: #0000cd; color: #fff; font-size: 10px; }
 .wordmark.citizenzoo { background: #2e7d32; color: #fff; font-size: 11px; }
+
+/* Grown-up gate: hold to fill the bar; then a real link appears (opened by a tap, so never blocked). */
+.btn.gate { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.gate-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(0,0,0,.25); }
+.btn.gate.holding .gate-fill { width: 100%; transition: width 2s linear; }
+.gate-label { position: relative; }

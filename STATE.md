@@ -111,7 +111,8 @@ real multiplier. Not fixed (cosmetic): FREE "pick" frames overflow the hangar pa
 - Leaderboard ranks the longest LANDED flight, not "coolest" (a tiny hop would win otherwise).
   Not built yet: needs a Supabase project from the user.
 - Real trees: a "Plant a real one" link out to Citizen Zoo behind a hold-2-seconds grown-up gate;
-  the game takes no payments.
+  the game takes no payments. (2026-10-19: the hold shows a filling bar, then reveals a real link
+  the grown-up taps; it used to window.open from a timer, which phones block.)
 - ISSRs: the user prefers the LIGHT pale-cloud look (pale ice fill, faint sparkles). Not dark.
 - Language for 7-10 year olds; screens show little text, things are taught in play.
 - Physics is deliberately simplified (daytime contrails are not always net cooling); stand

@@ -317,18 +317,24 @@ export class UI {
     $('info').hidden = false;
   }
 
+  // Grown-up gate: hold the button for 2 s (a bar fills). Then it turns into a real link, which
+  // the grown-up taps. Opening the site straight from a tap means no browser blocks it (a link
+  // opened from a timer is blocked on phones, Safari especially). The link hides again after 10 s.
   setupRealTree() {
-    const btn = $('realTreeBtn');
-    let timer = null;
+    const btn = $('realTreeBtn'), link = $('realTreeLink');
+    link.href = LINKS.citizenzoo.url;
+    let timer = null, back = null;
     const cancel = () => { clearTimeout(timer); timer = null; btn.classList.remove('holding'); };
+    const reset = () => { clearTimeout(back); link.hidden = true; btn.hidden = false; $('gateMsg').hidden = false; };
     btn.addEventListener('pointerdown', e => {
       e.preventDefault();
-      $('gateMsg').hidden = false;
+      btn.setPointerCapture?.(e.pointerId);   // keep the hold even if the finger wobbles off the button
       btn.classList.add('holding');
-      timer = setTimeout(() => { cancel(); window.open(LINKS.citizenzoo.url, '_blank', 'noopener'); }, 2000);
+      timer = setTimeout(() => { cancel(); btn.hidden = true; $('gateMsg').hidden = true; link.hidden = false; back = setTimeout(reset, 10000); }, 2000);
     });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, cancel));
-    btn.addEventListener('click', e => e.preventDefault());
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => btn.addEventListener(ev, cancel));
+    btn.addEventListener('contextmenu', e => e.preventDefault());   // no long-press menu
+    link.addEventListener('click', () => setTimeout(reset, 500));
   }
 
   setupMute() {
