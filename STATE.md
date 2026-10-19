@@ -134,8 +134,11 @@ when a texture moves to a PNG the guard must be a code-only key, or better a per
 
 1. URL for Merrick's contrail-forecast site (`forecast` in `src/links.js`, not used anywhere until
    it exists). DONE 2026-10-19: AEIS group, Brahmal Institute, North Atlantic trial news and
-   Citizen Zoo links (checked in a browser); About page + title credit. Logos are text
-   wordmarks until the user supplies official files (brand rules).
+   Citizen Zoo links (checked in a browser); About page + title credit. Logos: the user
+   supplied official files; pixel versions by the art session (`assets/ui/logo-*.png`,
+   `tools/art/make_logos.py`) are on the About page, title credit and grown-up link. Get sign-off
+   from Imperial comms / Citizen Zoo before the festival. `logo-aeis.png` is unused until the user
+   confirms it is the AEIS mark.
 2. Supabase project (URL + anon key) for the shared leaderboard and festival tree counter.
 3. Should the landing X for parcels be an upgrade ("Drop sight") rather than free?
 4. Should trees planted on a flight that later crashes count for Biodiversity? (currently yes)
