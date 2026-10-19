@@ -45,13 +45,42 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.waitForTimeout(900);
   const s4 = await scene(() => game.scene.getScene('game').state);
   check(s4 === 'playing', `0.9 s after take-off with no tap the plane should still be flying, state ${s4}`);
-  // Glide assist: "stop tapping and glide down" from 300 m out, from cruise height, must land.
-  const glide = await scene(() => new Promise(res => { const s = game.scene.getScene('game');
+  // Landing flare. (a) Far from the runway there is no glide: you fall at full speed, so you can dive
+  // through storm gaps. (b) Arriving low just before the runway, with no taps, the plane lands itself.
+  const far = await scene(() => new Promise(res => { const s = game.scene.getScene('game');
     s.storms.forEach(st => st.parts.forEach(q => q.destroy())); s.storms = []; s.nextStormAt = 1e9; s.graceUntil = 0;
-    s.plane.y = 150; s.plane.vy = 0; s.heat = 0; s.distancePx = s.nextAirport.worldX - 300;
-    const iv = setInterval(() => { s.heat = 0; if (s.state === 'over') { clearInterval(iv); res({ landed: s.result.landed, reason: s.result.reason }); } }, 30);
-    setTimeout(() => { clearInterval(iv); res({ landed: false, reason: 'still flying' }); }, 8000); }));
-  check(glide.landed, `a no-tap glide from 300 m out should land, got ${glide.reason}`);
+    s.plane.y = 120; s.plane.vy = 0; s.heat = 0; s.distancePx = s.nextAirport.worldX - 300;
+    setTimeout(() => res({ vy: Math.round(s.plane.vy), flaring: s.flaring }), 350); }));
+  check(far.vy > 200 && !far.flaring, `300 m out the plane should fall freely, not glide (vy ${far.vy})`);
+  const flare = await scene(() => new Promise(res => { const s = game.scene.getScene('game');
+    s.graceUntil = 0; s.heat = 0; s.distancePx = s.nextAirport.worldX - 90; s.plane.y = s.groundedY() - 45; s.plane.vy = 250;
+    let co2 = 0; const iv = setInterval(() => { s.heat = 0; if (s.flaring) co2 = Math.max(co2, s.co2Rate);
+      if (s.state === 'over' || s.state === 'landing') { clearInterval(iv); res({ landed: s.state === 'landing' || (s.result && s.result.landed), reason: s.result && s.result.reason, co2 }); } }, 10);
+    setTimeout(() => { clearInterval(iv); res({ landed: false, reason: 'still flying' }); }, 5000); }));
+  check(flare.landed, `diving low just before the runway should flare and land, got ${flare.reason}`);
+  check(flare.co2 > 1.2, `the flare should burn extra CO2 (rate ${flare.co2})`);
+  // (b2) Already over the runway and still fairly high: it must touch down before the far end.
+  const freshFlight = async () => {
+    await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+    await p.mouse.move(195, 400); await p.mouse.down();
+    for (let i = 0; i < 40 && await scene(() => game.scene.getScene('game').state) === 'takeoff'; i++) await p.waitForTimeout(100);
+    await p.mouse.up();
+  };
+  await freshFlight();
+  const over = await scene(() => new Promise(res => { const s = game.scene.getScene('game');
+    s.storms.forEach(st => st.parts.forEach(q => q.destroy())); s.storms = []; s.nextStormAt = 1e9;
+    s.graceUntil = 0; s.heat = 0; s.distancePx = s.nextAirport.worldX + 90; s.plane.y = s.groundedY() - 75; s.plane.vy = 300;   // 90 m along the runway
+    const iv = setInterval(() => { s.heat = 0; if (s.state !== 'playing') { clearInterval(iv); res({ state: s.state, reason: s.result && s.result.reason }); } }, 10);
+    setTimeout(() => { clearInterval(iv); res({ state: 'still flying' }); }, 5000); }));
+  check(over.state === 'landing', `flaring from over the runway should land before its end, got ${over.state} ${over.reason || ''}`);
+  // (c) Low with a storm between you and the runway: no flare, so you can still dive through its gap.
+  await freshFlight();
+  const blocked = await scene(() => new Promise(res => { const s = game.scene.getScene('game');
+    s.storms.forEach(st => st.parts.forEach(q => q.destroy())); s.storms = []; s.nextStormAt = 1e9; s.graceUntil = 0; s.heat = 0;
+    s.distancePx = s.nextAirport.worldX - 250; s.plane.y = s.groundedY() - 70; s.plane.vy = 100;
+    s.addStormPairAt(s.plane.x + 120, 200, 110);
+    setTimeout(() => res({ flaring: s.flaring, vy: Math.round(s.plane.vy) }), 100); }));
+  check(!blocked.flaring && blocked.vy > 150, `with a storm before the runway there should be no flare (flaring ${blocked.flaring}, vy ${blocked.vy})`);
   await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
   await p.mouse.move(195, 400); await p.mouse.down();
   for (let i = 0; i < 40 && await scene(() => game.scene.getScene('game').state) === 'takeoff'; i++) await p.waitForTimeout(100);

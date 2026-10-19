@@ -70,8 +70,12 @@ export const AIRPORT = {
   stormClearBefore: 120,  // no storms this far before the runway...
   stormClearAfter: 40,    // ...or this far after it
   signFrom: 700,       // show "Next: PARIS" this far ahead
-  glideFrom: 450,      // glide assist: within this of the runway middle, not tapping sinks you onto it
-  glideMinVy: 70,      // px/s: never glide slower than this
+  // Landing flare: low, falling, within flareFrom of the runway start and with no storm in the
+  // way, the plane floats onto the runway.
+  flareFrom: 320,      // px (= m) before the runway start
+  flareHeight: 80,     // px above the ground
+  flareVy: 60,         // px/s: gentle sink once over the runway
+  flareCo2: 1.5,       // CO2 x this while flaring
   rollSeconds: 1.4,    // decelerate along the runway after touchdown
   // The route east from London, then across the Pacific to NEW YORK (the last mission), then round again.
   names: ['PARIS', 'AMSTERDAM', 'BERLIN', 'ROME', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BEIJING', 'TOKYO', 'LOS ANGELES', 'NEW YORK'],

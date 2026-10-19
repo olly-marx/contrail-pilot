@@ -72,8 +72,8 @@ export class School {
           ? 'Oops, a <b>night contrail</b>! See the <span class="warm">red</span>? That is heat trapped. Next time fly around it.'
           : 'Great flying! <b>No night contrail.</b> The Earth says thank you!'), tap: true },
       lesson('lesson-heat', 'Watch the <b>Earth bar</b>! CO2 and night contrails fill it <span class="warm">red</span>. If it reaches the <b>top</b>, the Earth is too hot: your flight <b>ends</b> and you lose your seeds.<br>Shade and trees bring it down.'),
-      lesson('lesson-land', 'Morning! An <b>airport</b> is coming. <b>Stop tapping</b> and glide down onto the grey runway to land.', () => { this.holdClock = true; s.clock = 2; }),
-      { say: 'Glide down onto the runway!',
+      lesson('lesson-land', 'Morning! An <b>airport</b> is coming. Fly <b>low</b> as you reach the grey runway. At the end, the plane <b>lands itself</b>.', () => { this.holdClock = true; s.clock = 2; }),
+      { say: 'Get <b>low</b> just before the runway!',
         setup: () => {
           this.holdClock = true; s.clock = 2;
           s.nextAirport = { worldX: s.distancePx + 520, name: AIRPORT.names[0], spawned: false };

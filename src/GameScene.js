@@ -400,13 +400,21 @@ export class GameScene extends Phaser.Scene {
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
       this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
-      // Glide assist: "stop tapping and glide down" must be true. Within reach of the next runway
-      // and falling, the plane sinks no faster than the slope that touches down mid-runway.
-      const toMid = this.nextAirport.worldX + AIRPORT.runwayLen / 2 - this.distancePx;
-      if (this.plane.vy > 0 && toMid > 0 && toMid < AIRPORT.glideFrom) {
-        const drop = SKY_H - this.spriteBottom();
-        const glideVy = Math.max(AIRPORT.glideMinVy, drop / (toMid / Math.max(1, this.speed)));
-        this.plane.vy = Math.min(this.plane.vy, glideVy);
+      // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
+      // between you and it, the plane levels out and floats down onto the runway. With a storm in
+      // the way you fall normally, so you can dive through its gap. Flaring burns extra CO2.
+      this.flaring = false;
+      const toStart = this.nextAirport.worldX - this.distancePx;          // runway start, ahead of the plane's x
+      const drop = SKY_H - this.spriteBottom();
+      const clearPath = !this.storms.some(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < this.plane.x + Math.max(0, toStart) + PLANE.w);
+      const room = toStart + AIRPORT.runwayLen - PLANE.w - 10;          // runway left before the far end
+      if (this.plane.vy > 0 && drop < AIRPORT.flareHeight && toStart < AIRPORT.flareFrom && room > 0 && clearPath) {
+        const v = Math.max(1, this.speed);
+        // Before the runway: sink just slowly enough to reach it. Over it: gently, but fast
+        // enough to touch down before the far end.
+        const cap = toStart > 0 ? Math.max(15, drop / ((toStart + 20) / v)) : Math.max(AIRPORT.flareVy, drop / (room / v));
+        this.plane.vy = Math.min(this.plane.vy, cap);
+        this.flaring = true;
       }
       this.plane.y += this.plane.vy * dt;
       if (this.plane.y < 0) { this.plane.y = 0; this.plane.vy = 0; }
@@ -415,7 +423,7 @@ export class GameScene extends Phaser.Scene {
 
     // CO2: high during takeoff and the landing roll, steady while cruising.
     const parked = this.state === 'takeoff' && !this.airborne && this.rollSpeed < 5;   // engines idle: waiting for the HOLD
-    this.co2Rate = parked ? 0 : (this.state === 'playing') ? this.kit.co2Cruise : this.kit.co2Takeoff;
+    this.co2Rate = parked ? 0 : (this.state === 'playing') ? this.kit.co2Cruise * (this.flaring ? AIRPORT.flareCo2 : 1) : this.kit.co2Takeoff;
     this.totalCo2 += this.co2Rate * dt;
     const co2Heat = this.co2Rate * CLIMATE.co2ToHeat * dt;
     this.heat += co2Heat;
@@ -849,7 +857,7 @@ export class GameScene extends Phaser.Scene {
     }
     const toAirport = this.nextAirport.worldX - this.distancePx;
     if (this.school) return;   // flight school places everything itself
-    if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Stop tapping and glide onto the grey runway to land. Or fly on for more seeds!', 'good', 3.5);
+    if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Get low as you reach the grey runway: the plane lands itself. Or fly on for more seeds!', 'good', 3.5);
 
     if (this.kit.tree && this.distancePx >= this.nextPlotAt) {
       const x = WIDTH + 10;
@@ -1474,7 +1482,7 @@ export class GameScene extends Phaser.Scene {
     const toAirport = Math.round(this.nextAirport.worldX - this.distancePx);
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
     else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
-    else if (toAirport < 300) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: glide down!`);
+    else if (toAirport < 300) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);
     else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${toAirport}m`);
     else if (this.missedSign && this.gameTime < this.missedSign.until) this.nextText.setText(`${this.missedSign.text} ${toAirport}m`);
     else this.nextText.setText('');

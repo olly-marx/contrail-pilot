@@ -91,10 +91,12 @@ shown in the coach bubble with the game frozen and dimmed, `#coachDim`; `ui.coac
 How to play shows BEFORE Flight School (`startSchool()`), no longer after. `hud.highlight()` frames
 the Earth bar during the contrail lesson.
 
-Fresh-player review fixes (2026-10-18): a no-tap "glide" only covered ~90 m but the sign said
-glide from 300 m, so everyone crashed short -> glide assist (`AIRPORT.glideFrom` 450 m: when
-falling near a runway, vy is capped to the slope that touches down mid-runway; validated by
-test). Breather after "Now TAP to fly!"; the first tip (`explainWhenClear()`) waits for a clear
+Landing (2026-10-19): the old glide assist (from 450 m) held the plane nearly flat into storms
+near airports; replaced by a landing FLARE (`AIRPORT.flare*`): only when low (<80 px), falling,
+within 320 m of the runway start, and with no storm between the plane and the runway, the plane
+sinks just fast enough to touch down on the runway (before its far end), burning CO2 x1.5. Far
+out or behind a storm you fall freely. Signs say "get LOW to land". Tests: free fall far out,
+flare lands, over-runway flare lands before the end, no flare with a storm in the way. Breather after "Now TAP to fly!"; the first tip (`explainWhenClear()`) waits for a clear
 sky. School: the night step clears the day's icy air first and gives pass/fail feedback; (2026-10-19)
 the day contrail step ends only 1.2 s after you leave the icy air (it froze 0.44 s after the first
 contrail square before), then a dusk leg fades to night over ~6 s while you fly two storms (18

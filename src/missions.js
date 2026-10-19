@@ -17,9 +17,9 @@ const reach = name => {
 };
 
 export const MISSIONS = [
-  { id: 'land-paris', icon: 'mi-land', title: 'Land in PARIS', sub: 'Fly to the first airport and glide down onto the runway.',
+  { id: 'land-paris', icon: 'mi-land', title: 'Land in PARIS', sub: 'Fly to the first airport. Get low as you reach the runway.',
     check: r => r.landed && r.airportsSkipped === 0, progress: s => s.airportsSkipped ? 'Passed PARIS! Land at the next airport to practise.' : s.nextAirport ? `PARIS: ${Math.max(0, Math.round(s.nextAirport.worldX - s.distancePx))} m` : '',
-    fail: r => r.landed ? `You landed in ${r.landedAt}. PARIS is the FIRST airport.` : 'Near the grey runway, stop tapping and glide down onto it.' },
+    fail: r => r.landed ? `You landed in ${r.landedAt}. PARIS is the FIRST airport.` : 'Get LOW just before the grey runway. The plane lands itself!' },
   { id: 'seeds-5', icon: 'mi-seed', title: 'Land with 5 seeds', sub: 'Grab seeds in the sky. You only keep them if you land.',
     check: r => r.landed && r.cargo >= 5, progress: s => `Seeds on board: ${s.cargo}/5`,
     fail: r => r.landed ? `You landed with ${r.cargo}. Grab 5 next time!` : `You had ${r.cargo} seeds but did not land.` },
