@@ -389,5 +389,6 @@ export class UI {
     $('coach').classList.toggle('high', !school);   // explanations sit high, so the ground stays visible
     $('skipSchool').hidden = !school;
   }
+  setRunwayBack(on) { const b = $('runwayBack'); if (b.hidden === on) b.hidden = !on; }   // only touch the DOM on a change
   hideCoach() { $('coach').hidden = true; $('coachDim').hidden = true; $('skipSchool').hidden = true; this.coachButton = false; }
 }

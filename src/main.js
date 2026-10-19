@@ -11,6 +11,10 @@ try { await document.fonts.load('8px Pixel'); } catch (e) { /* play on with the 
 const scene = () => game.scene.getScene('game');
 const ui = new UI(save, { onStart: () => scene().startFlight(), onSchool: () => scene().startSchool() });
 document.getElementById('skipSchool').onclick = () => scene().skipSchool();
+// Back to the menu from the runway. Stop the press reaching the window, where it would count as HOLD.
+const runwayBack = document.getElementById('runwayBack');
+runwayBack.addEventListener('pointerdown', e => e.stopPropagation());
+runwayBack.onclick = () => scene().backToMenu();
 // Tips close only with their OK button. The bubble itself counts as a tap only for the
 // flight-school "tap the screen" step, which has no button.
 document.getElementById('coachOk').addEventListener('click', e => { e.stopPropagation(); scene().onCoachTap(); });

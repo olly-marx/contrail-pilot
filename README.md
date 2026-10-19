@@ -69,6 +69,7 @@ node tests/missions.cjs           # mission card, completion on landing, not on 
 node tests/features.cjs           # Citizen Zoo switch: off = no trace of it anywhere; ?citizenzoo = all back
 node tests/gate.cjs               # grown-up gate: hold 2 s (mouse + touch) reveals a real Citizen Zoo link
 node tests/links.cjs              # every Learn more link has a real https URL; About page links and credit
+node tests/runway-back.cjs        # MENU button while parked on the runway: back to title, no flight counted
 node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earning rules, costs, hangar tabs
 ```
 

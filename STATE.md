@@ -114,8 +114,17 @@ Possible future collaboration; nothing was removed.
 ## NEXT TASK (handed off 2026-10-19)
 
 Leaderboard + light profiles + a menu from the runway:
-1. Way back from the "HOLD to take off" runway state to the title/hangar without crashing (today
-   there is NO menu/back button once TAKE OFF is pressed; `state === 'takeoff'`, `!airborne`).
+1. DONE 2026-10-19: `#runwayBack` "◀ MENU" button (and Esc) while parked on the runway ->
+   `GameScene.backToMenu()` -> title, no crash. `save.flights` now counts at LIFT-OFF, not on
+   TAKE OFF. Test: `tests/runway-back.cjs`.
+   Decided with the user: names = typed first name (letters only, <=12, word-filtered) + builder
+   word + number, e.g. "Ollie the Puffin 27". Ultimate Flyer = transparent weighted sum (ⓘ button)
+   of longest landed, total landed distance, species, day shade + night dodges, CO2/km vs base
+   plane, missions. Boards: Today / Week / Month / All time.
+   Supabase: project `contrail-pilot`, ref `mkucbsjzbipjaiqzrlkj` (NOT drift_db). CLI at
+   `~/.local/bin/supabase`, logged in, linked; `supabase/config.toml` pushed (anonymous sign-ins
+   on, 300/h per IP, `[storage.vector] enabled = false` — vector buckets are paid, push 402s).
+   Publishable key: sb_publishable_Oa3FSfnjmRu2xL_RmiKOqA_j3tEfgMd (public by design).
 2. Nickname sign-in (no passwords; a nickname + device id is enough) and a simple profile page.
 3. Supabase back end: overall leaderboard plus per-stat boards, e.g. longest LANDED flight (see
    Decisions: never "coolest"), best contrail choices (shade made by day / night contrails dodged /
@@ -148,6 +157,13 @@ hunks). Uncommitted art files in `git status` belong to that session; leave them
 Gotcha that broke the live site once: `makeTextures()` returns early if a guard texture exists;
 when a texture moves to a PNG the guard must be a code-only key, or better a per-key
 `if (!this.textures.exists(key))` skip (asked the art session to do this).
+
+## Known flaky tests
+
+- `tests/hazards.cjs` fails ~1 in 6 runs ON c1bf7d1 TOO (measured 2026-10-19: 6/16 on the clean
+  commit): the teleporting autopilot's flight ends (`state "over"` near 46 km) after birds missed
+  their 55% spawn roll at 10 km. Rerun before blaming a change. `tests/school.cjs` crashed once in
+  ~5 runs.
 
 ## Open questions waiting on the user
 

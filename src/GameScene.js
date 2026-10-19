@@ -184,6 +184,7 @@ export class GameScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-UP', () => this.flap());
     this.input.keyboard.on('keydown-T', () => this.dropParcel());
     this.input.keyboard.on('keydown-DOWN', () => this.dropParcel());
+    this.input.keyboard.on('keydown-ESC', () => this.backToMenu());
     // DROP button, drawn in the ground strip so it sits in the same place on every screen.
     const bx = WIDTH - 70, by = SKY_H + 12;
     this.dropBox = { x: bx, y: by, w: 64, h: 32 };
@@ -265,11 +266,15 @@ export class GameScene extends Phaser.Scene {
     this.rollSpeed = 0;
     this.airborne = false;
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
-    this.bioStart = biodiversity(this.save);
-    if (!this.school) {
-      this.save.flights++;
-      writeSave(this.save);
-    }
+    this.bioStart = biodiversity(this.save);   // flights is counted at lift-off: going back to the menu from the runway is not a flight
+  }
+
+  // The MENU button / Esc while parked on the runway: back to the title, nothing lost, no flight counted.
+  backToMenu() {
+    if (this.state !== 'takeoff' || this.airborne || this.rollSpeed >= 5 || this.school) return;   // parked only: never mid-roll
+    this.ui.setRunwayBack(false);
+    this.scene.restart();
+    this.ui.showTitle();
   }
 
   // A new mechanic: pause the game and let the captain explain it, once per device.
@@ -384,7 +389,10 @@ export class GameScene extends Phaser.Scene {
 
     // Plane
     if (this.state === 'takeoff') {
-      if (!this.airborne && this.rollSpeed >= TAKEOFF.liftSpeed) { this.airborne = true; this.stateTime = 0; }
+      if (!this.airborne && this.rollSpeed >= TAKEOFF.liftSpeed) {
+        this.airborne = true; this.stateTime = 0;
+        if (!this.school) { this.save.flights++; writeSave(this.save); }
+      }
       this.holdText.setText(this.airborne ? '' : 'HOLD\nto take off!').setScale(1 + 0.08 * Math.sin(this.gameTime / 150));
       this.plane.vy = this.airborne ? TAKEOFF.climbVelocity : 0;
       this.plane.y += this.plane.vy * dt;
@@ -423,6 +431,7 @@ export class GameScene extends Phaser.Scene {
 
     // CO2: high during takeoff and the landing roll, steady while cruising.
     const parked = this.state === 'takeoff' && !this.airborne && this.rollSpeed < 5;   // engines idle: waiting for the HOLD
+    this.ui.setRunwayBack(parked && !this.school && !this.frozen);
     this.co2Rate = parked ? 0 : (this.state === 'playing') ? this.kit.co2Cruise * (this.flaring ? AIRPORT.flareCo2 : 1) : this.kit.co2Takeoff;
     this.totalCo2 += this.co2Rate * dt;
     const co2Heat = this.co2Rate * CLIMATE.co2ToHeat * dt;
