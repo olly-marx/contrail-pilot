@@ -62,7 +62,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
       else if (issr && s.isDay) target = issr.y + issr.height / 2 - 6;
       else if (issr && !s.isDay) target = issr.y + issr.height + 40;      // fly below at night
       const toA = s.nextAirport.worldX - s.distancePx;
-      if (toA < 140 && toA > -150) return false;                           // glide down to land
+      if (toA < 300 && toA > 60) target = s.groundedY() - 60;            // get low before the runway
+      else if (toA <= 60 && toA > -150) return false;                     // then let the flare land it
       return s.plane.y > target && s.plane.vy > -40;
     });
     if (tap) await p.mouse.click(195, 300);
