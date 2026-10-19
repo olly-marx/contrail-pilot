@@ -30,7 +30,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(/AEIS/.test(await p.textContent('#title .credit')), 'title should credit the AEIS group');
   // Logos load (a missing file would show as a broken image).
   const logos = await p.$$eval('#about img.logo, #title img.logo-mark', is => is.map(i => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0 })));
-  check(logos.length >= 3 && logos.every(l => l.ok), `logos should load: ${JSON.stringify(logos)}`);
+  check(logos.length >= 4 && logos.some(l => /logo-aeis/.test(l.src)) && logos.every(l => l.ok), `logos should load: ${JSON.stringify(logos)}`);
   await p.click('#aboutClose'); check(!(await p.isVisible('#about')), 'OK should close About');
 
   check(errs.length === 0, `page errors: ${errs}`);

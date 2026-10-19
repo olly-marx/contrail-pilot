@@ -137,8 +137,9 @@ when a texture moves to a PNG the guard must be a code-only key, or better a per
    Citizen Zoo links (checked in a browser); About page + title credit. Logos: the user
    supplied official files; pixel versions by the art session (`assets/ui/logo-*.png`,
    `tools/art/make_logos.py`) are on the About page, title credit and grown-up link. Get sign-off
-   from Imperial comms / Citizen Zoo before the festival. `logo-aeis.png` is unused until the user
-   confirms it is the AEIS mark.
+   from Imperial comms / Citizen Zoo before the festival. `logo-aeis.png` is the real AEIS lockup
+   (user-supplied 2026-10-19; greyscale, needs a light background); the dotted mark first thought
+   to be AEIS is not, and is parked as `tools/art/logos/dotted-i-unknown.png`.
 2. Supabase project (URL + anon key) for the shared leaderboard and festival tree counter.
 3. Should the landing X for parcels be an upgrade ("Drop sight") rather than free?
 4. Should trees planted on a flight that later crashes count for Biodiversity? (currently yes)
