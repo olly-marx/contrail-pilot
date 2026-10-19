@@ -1,3 +1,4 @@
+import { FEATURES } from './config.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
@@ -58,7 +59,9 @@ export class UI {
       this.renderHangar();
     };
     this.setupMute();
-    this.setupRealTree();
+    // Feature switches: hide whole sections whose feature is off (see FEATURES in config.js).
+    document.querySelectorAll('[data-feature]').forEach(el => { if (!FEATURES[el.dataset.feature]) el.hidden = true; });
+    if (FEATURES.citizenZoo) this.setupRealTree();
     window.addEventListener('keydown', e => {
       if ((e.key === 'Enter' || e.key === ' ') && !$('title').hidden) { e.preventDefault(); this.start(); }
     });
@@ -310,7 +313,7 @@ export class UI {
     $('iWhat').textContent = line.info.what;
     $('iWhy').textContent = line.info.why;
     $('iFact').textContent = line.info.fact;
-    $('iLinks').innerHTML = line.info.links.map(k => {
+    $('iLinks').innerHTML = line.info.links.filter(k => k !== 'citizenzoo' || FEATURES.citizenZoo).map(k => {
       const l = LINKS[k];
       return l.url ? `<a href="${l.url}" target="_blank" rel="noopener">${l.label} &gt;</a>` : `<span>${l.label} (coming soon)</span>`;
     }).join('');

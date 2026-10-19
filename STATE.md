@@ -105,6 +105,12 @@ real flight doesn't repeat them; the contrail step's words are honest about the 
 sits high so the ground shows. Mission 1 requires landing at the FIRST airport. Results use the
 real multiplier. Not fixed (cosmetic): FREE "pick" frames overflow the hangar panel.
 
+Citizen Zoo is behind a switch (2026-10-19, the group didn't take to it): `FEATURES.citizenZoo`
+in `src/config.js`, currently false. Off hides every `[data-feature="citizenZoo"]` element (the
+hangar's real-tree gate, the About section), drops `citizenzoo` Learn more links, and `cz()`
+picks Citizen-Zoo-free versions of the facts. `?citizenzoo` in the URL turns it on (demos).
+Possible future collaboration; nothing was removed.
+
 ## Decisions (don't re-litigate without the user)
 
 - Trees are only kept on a safe landing; crash/overheat loses all cargo. No distance trees.

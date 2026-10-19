@@ -25,12 +25,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#aboutBtn'); await p.waitForTimeout(200);
   check(await p.isVisible('#about'), 'about us should open the About page');
   const hrefs = await p.$$eval('#about a', as => as.map(a => a.href));
-  for (const want of ['imperial.ac.uk/aerospace-environmental-impacts', 'imperial.ac.uk/brahmal-institute', 'citizenzoo.org'])
+  for (const want of ['imperial.ac.uk/aerospace-environmental-impacts', 'imperial.ac.uk/brahmal-institute'])   // Citizen Zoo: see features.cjs
     check(hrefs.some(h => h.includes(want)), `About page should link to ${want}`);
   check(/AEIS/.test(await p.textContent('#title .credit')), 'title should credit the AEIS group');
   // Logos load (a missing file would show as a broken image).
-  const logos = await p.$$eval('#about img.logo, #title img.logo-mark', is => is.map(i => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0 })));
-  check(logos.length >= 4 && logos.some(l => /logo-aeis/.test(l.src)) && logos.every(l => l.ok), `logos should load: ${JSON.stringify(logos)}`);
+  const logos = await p.$$eval('#about img.logo, #title img.logo-mark', is => is.filter(i => !i.closest('[hidden]')).map(i => ({ src: i.getAttribute('src'), ok: i.complete && i.naturalWidth > 0 })));
+  check(logos.length >= 3 && logos.some(l => /logo-aeis/.test(l.src)) && logos.every(l => l.ok), `logos should load: ${JSON.stringify(logos)}`);
   await p.click('#aboutClose'); check(!(await p.isVisible('#about')), 'OK should close About');
 
   check(errs.length === 0, `page errors: ${errs}`);

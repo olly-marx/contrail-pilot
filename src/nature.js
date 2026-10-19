@@ -1,3 +1,4 @@
+import { cz } from './config.js';
 // Nature: tree species, rewilding projects and the Biodiversity meter (barren land to rainforest).
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
 // native kind is a big boost; more of the same kind adds less and less.
@@ -32,7 +33,7 @@ export const PROJECTS = [
     fact: 'Water voles are one of the UK\'s fastest-disappearing mammals. Ponds and wild riverbanks help them come back.' },
   { id: 'beavers', name: 'Beavers return', cost: 105, crystals: 6, bio: 15, needs: 32,
     short: 'Nature\'s engineers build dams and wetlands.',
-    fact: 'Beaver dams slow down floods and make wetlands that store carbon and water. Citizen Zoo works with beavers in London!' },
+    fact: 'Beaver dams slow down floods and make wetlands that store carbon and water.' + cz(' Citizen Zoo works with beavers in London!') },
   { id: 'storks', name: 'White storks return', cost: 140, crystals: 8, bio: 15, needs: 45,
     short: 'Big birds back in the sky!',
     fact: 'White storks used to nest in Britain hundreds of years ago. Now they are coming back.' },

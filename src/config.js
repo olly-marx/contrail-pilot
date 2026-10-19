@@ -1,4 +1,13 @@
 // All gameplay tuning lives here so playtesting changes are one-line edits.
+
+// Feature switches. citizenZoo: the Citizen Zoo partnership (the hangar's "plant a real tree"
+// grown-up link, the About-page section, Learn more links, and facts naming them). Off for now;
+// set true to bring it all back. Adding ?citizenzoo to the URL also turns it on (for demos).
+export const FEATURES = {
+  citizenZoo: false || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('citizenzoo')),
+};
+// Text that only appears with the Citizen Zoo feature on (else `off`).
+export const cz = (on, off = '') => (FEATURES.citizenZoo ? on : off);
 export const WIDTH = 288;   // Flappy Bird's original resolution
 export const HEIGHT = 512;
 export const GROUND_H = 48;

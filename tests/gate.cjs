@@ -15,7 +15,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const errs = []; p.on('pageerror', e => errs.push(String(e)));
     await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true }));
       window.__opened = 0; window.open = () => { window.__opened++; return null; }; });
-    await p.goto(URL); await p.waitForTimeout(700);
+    await p.goto(URL + '?citizenzoo'); await p.waitForTimeout(700);   // the gate is part of the Citizen Zoo feature (off by default)
     await p.click('#hangarBtn'); await p.waitForTimeout(300);
     await p.locator('#realTreeBtn').scrollIntoViewIfNeeded();
     const box = await p.locator('#realTreeBtn').boundingBox(), x = box.x + box.width / 2, y = box.y + box.height / 2;

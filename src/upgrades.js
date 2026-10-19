@@ -1,4 +1,4 @@
-import { CLIMATE, CONTRAIL, ISSR, PARCEL } from './config.js';
+import { CLIMATE, CONTRAIL, ISSR, PARCEL, cz } from './config.js';
 import { SPECIES, PROJECTS, biodiversity } from './nature.js';
 
 // Each upgrade line has levels bought in order. Costs are in trees.
@@ -111,7 +111,7 @@ export const LINES = [
     info: {
       what: 'Rewilding means helping nature look after itself again: wild places, and bringing back animals that used to live here.',
       why: 'Each project fills your Biodiversity meter, and healthy land soaks up a little CO2 on every flight.',
-      fact: 'Beaver dams slow floods and make wetlands that store carbon. Citizen Zoo works with beavers in London!',
+      fact: 'Beaver dams slow floods and make wetlands that store carbon.' + cz(' Citizen Zoo works with beavers in London!'),
       links: ['citizenzoo', 'project'],
     },
   },
@@ -125,7 +125,7 @@ export const LINES = [
     info: {
       what: 'A pretend gadget that pulls floating seeds towards your plane.',
       why: 'More seeds on board means more seeds when you land. Only if you land safely!',
-      fact: 'In real life, trees are planted by people. Citizen Zoo plants trees in London.',
+      fact: cz('In real life, trees are planted by people. Citizen Zoo plants trees in London.', 'In real life, trees are planted by people, often volunteers.'),
       links: ['citizenzoo'],
     },
   },

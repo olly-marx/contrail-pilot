@@ -66,6 +66,7 @@ node tests/wildlife.cjs           # wildlife grows with Wild Land, exhaust plume
 node tests/controls.cjs           # hold to take off, aim X accuracy, OK-button tips, lumpy icy air
 node tests/collisions.cjs         # pixel-accurate hits: storms forgive a nick, no-fly and birds don't
 node tests/missions.cjs           # mission card, completion on landing, not on a crash, airport-pass sign, upgrade gate
+node tests/features.cjs           # Citizen Zoo switch: off = no trace of it anywhere; ?citizenzoo = all back
 node tests/gate.cjs               # grown-up gate: hold 2 s (mouse + touch) reveals a real Citizen Zoo link
 node tests/links.cjs              # every Learn more link has a real https URL; About page links and credit
 node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earning rules, costs, hangar tabs
