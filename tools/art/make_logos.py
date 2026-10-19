@@ -4,7 +4,7 @@ Run from the repo root:  python3 tools/art/make_logos.py
 Originals live in tools/art/logos/ (not deployed: the site ships only index/style/src/assets/vendor).
 Faithful by construction, not redrawn by eye: each logo is cropped to its content, shrunk with
 area averaging, then every pixel is snapped to the logo's own brand colours (or transparent).
-The dotted mark is rebuilt dot by dot, because averaging would smear the dots into a blob.
+A dotted mark is rebuilt dot by dot (dots()), because averaging would smear the dots into a blob.
 """
 from pathlib import Path
 
@@ -75,7 +75,8 @@ def square(file, ink_test, ink, bg, size, name, thresh=128):
 
 
 def dots(file, name, pad=2):
-    """Rebuild the dotted mark: find each dot, place it at its centre, sized by its area."""
+    """Not called: for logos/dotted-i-unknown.png once we know whose mark it is.
+    Rebuild the dotted mark: find each dot, place it at its centre, sized by its area."""
     im = Image.open(SRC / file).convert('RGB')
     px = im.load()
     green = lambda c: c[1] > 150 and c[2] < 200
@@ -120,12 +121,41 @@ def dots(file, name, pad=2):
     save(out, name)
 
 
+
+def greyscale_lockup(file, width, name, keep_subtitle):
+    """Greyscale logo on white: shrink, then snap to four greys (white -> transparent).
+    The original's soft gradient (the AEIS globe) becomes a few clear pixel bands."""
+    im = Image.open(SRC / file).convert('RGBA')
+    flat = Image.new('RGBA', im.size, (255, 255, 255, 255))
+    flat.alpha_composite(im)
+    g = flat.convert('L')
+    ink = g.point(lambda v: 255 if v < 245 else 0)
+    l, t, r, b = ink.getbbox()
+    if not keep_subtitle:                 # the subtitle sits below a blank band: cut at the last gap
+        rows = [any(ink.getpixel((x, y)) for x in range(l, r)) for y in range(t, b)]
+        gaps = [i for i in range(1, len(rows)) if rows[i - 1] and not rows[i]]
+        b = t + gaps[-1]
+    g = g.crop((l, t, r, b))
+    h = round(g.height * width / g.width)
+    small = g.resize((width, h), Image.LANCZOS)
+    levels = [(70, (0, 0, 0)), (130, (85, 85, 85)), (180, (136, 136, 136)), (225, (187, 187, 187))]
+    out = Image.new('RGBA', small.size, (0, 0, 0, 0))
+    sp, op = small.load(), out.load()
+    for y in range(h):
+        for x in range(width):
+            for cut, c in levels:
+                if sp[x, y] < cut:
+                    op[x, y] = c + (255,)
+                    break
+    save(out, name)
+
+
 if __name__ == '__main__':
     blue = lambda c: c[3] > 128 and c[2] > 150 and c[0] < 80 and c[1] < 80
     light = lambda c: c[0] > 200 and c[1] > 200 and c[2] > 200
     orange = lambda c: c[3] > 128 and c[0] > 200 and 80 < c[1] < 160 and c[2] < 100
     wordmark('imperial-wordmark.png', blue, IMPERIAL_BLUE, 14, 'logo-imperial')
     square('imperial-i.png', light, OFF_WHITE, IMPERIAL_BLUE, 24, 'logo-imperial-i')
-    dots('aeis-dots.png', 'logo-aeis')
+    greyscale_lockup('aeis-official.png', 120, 'logo-aeis', keep_subtitle=False)
     wordmark('citizenzoo-wordmark.png', orange, CZ_ORANGE, 28, 'logo-citizenzoo')
     square('citizenzoo-cz.png', orange, CZ_SQUARE_ORANGE, CZ_BROWN, 32, 'logo-cz')
