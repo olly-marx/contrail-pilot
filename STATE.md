@@ -111,6 +111,19 @@ hangar's real-tree gate, the About section), drops `citizenzoo` Learn more links
 picks Citizen-Zoo-free versions of the facts. `?citizenzoo` in the URL turns it on (demos).
 Possible future collaboration; nothing was removed.
 
+## NEXT TASK (handed off 2026-10-19)
+
+Leaderboard + light profiles + a menu from the runway:
+1. Way back from the "HOLD to take off" runway state to the title/hangar without crashing (today
+   there is NO menu/back button once TAKE OFF is pressed; `state === 'takeoff'`, `!airborne`).
+2. Nickname sign-in (no passwords; a nickname + device id is enough) and a simple profile page.
+3. Supabase back end: overall leaderboard plus per-stat boards, e.g. longest LANDED flight (see
+   Decisions: never "coolest"), best contrail choices (shade made by day / night contrails dodged /
+   crystals), biodiversity, missions done. Supabase is NOT installed on this machine and no
+   Supabase connector is set up: the user must create a project and give the URL + anon key (or
+   install the CLI). The game is a static site on GitHub Pages: client-side supabase-js with
+   row-level security; never ship a service key. Kids' festival: nicknames need a word filter.
+
 ## Decisions (don't re-litigate without the user)
 
 - Trees are only kept on a safe landing; crash/overheat loses all cargo. No distance trees.
@@ -146,7 +159,7 @@ when a texture moves to a PNG the guard must be a code-only key, or better a per
    from Imperial comms / Citizen Zoo before the festival. `logo-aeis.png` is the real AEIS lockup
    (user-supplied 2026-10-19; greyscale, needs a light background); the dotted mark first thought
    to be AEIS is not, and is parked as `tools/art/logos/dotted-i-unknown.png`.
-2. Supabase project (URL + anon key) for the shared leaderboard and festival tree counter.
+2. Supabase project (URL + anon key) for the shared leaderboard: now the NEXT TASK (above).
 3. Should the landing X for parcels be an upgrade ("Drop sight") rather than free?
 4. Should trees planted on a flight that later crashes count for Biodiversity? (currently yes)
 5. Fact-check by the group / Citizen Zoo of the nature facts in `src/nature.js`.
