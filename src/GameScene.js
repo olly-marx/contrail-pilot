@@ -242,6 +242,7 @@ export class GameScene extends Phaser.Scene {
   // Leave flight school and carry on as a normal flight.
   skipSchool() {
     if (!this.school) return;
+    this.school.markTaught();   // skipped: they chose not to be taught, but don't nag with the old tips either
     this.school = null;
     this.frozen = false;
     this.ui.hideCoach();

@@ -20,19 +20,24 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#howClose'); await p.waitForTimeout(300);
 
   const seen = [], lessons = {};
-  let held = false, nightStart = null;
+  let held = false, nightStart = null, dayT0 = null, dayGap = null;
+  const duskSeen = new Set();
   let shot = 0;
-  for (let i = 0; i < 1500; i++) {
+  for (let i = 0; i < 3000; i++) {   // ~3 min of real time: school is slower now (dusk leg)
     const st = await p.evaluate(() => {
       const s = game.scene.getScene('game'), sc = s.school;
       const coach = document.getElementById('coach');
       const pic = document.getElementById('coachPic');
       return { step: sc ? sc.i : -1, waiting: coach.classList.contains('waiting') && !coach.hidden,
         text: document.getElementById('coachText').textContent, state: s.state, school: !!sc, inIssr: !!s.wasInIssr,
+        contrails: s.contrails.length, night: s.nightAmount(),
         lesson: !pic.hidden && !coach.hidden ? { frozen: s.frozen, dim: !document.getElementById('coachDim').hidden, src: pic.getAttribute('src') } : null };
     });
     if (st.lesson) lessons[st.step] = st.lesson;
-    if (st.step === 12 && nightStart === null) nightStart = st.inIssr;   // the night dodge must not begin inside icy air
+    if (st.step === 9 && st.contrails > 0 && dayT0 === null) dayT0 = Date.now();
+    if (st.step === 10 && dayT0 !== null && dayGap === null) dayGap = Date.now() - dayT0;
+    if (st.step === 11) duskSeen.add(st.night > 0.05 && st.night < 0.95 ? 'fading' : st.night >= 0.95 ? 'night' : 'day');
+    if (st.step === 13 && nightStart === null) nightStart = st.inIssr;   // the night dodge must not begin inside icy air
     if (!seen.includes(st.step)) {
       seen.push(st.step);
       if (process.env.SHOTS) { await p.waitForTimeout(250); await p.screenshot({ path: `${process.env.SHOTS}/school-${String(shot++).padStart(2, '0')}.png` }); }
@@ -67,6 +72,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const end = await p.evaluate(() => ({ r: game.scene.getScene('game').result, save: JSON.parse(localStorage.getItem('contrailPilot.v2')) }));
   await p.waitForTimeout(1500);
   if (!await p.isVisible('#results')) fails.push('flight school should end on the results');
+  // The day contrail: time to see it before the lesson freezes; then night fades in while you fly.
+  if (!(dayGap >= 1500)) fails.push(`after the first contrail the player needs time to see it before the lesson (got ${dayGap} ms)`);
+  if (!duskSeen.has('fading') || !duskSeen.has('night')) fails.push(`night should fade in while flying (saw ${[...duskSeen]})`);
+  // Tips flight school taught are marked seen, so the first real flight doesn't repeat them.
+  const taught = ['x-bars', 'x-hot', 'issrDay', 'issrNight', 'firstToken', 'airport'];
+  const missing = taught.filter(id => !end.save.seenTips.includes(id));
+  if (missing.length) fails.push(`after flight school these old tips would repeat: ${missing}`);
   if (nightStart !== false) fails.push(`the night step should start clear of icy air (inIssr=${nightStart})`);
   // Every lesson (a diagram) is shown with the game frozen and dimmed behind it.
   const ls = Object.values(lessons);
@@ -87,8 +99,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   console.log({ stepsSeen: seen, landed: end.r && end.r.landed, cargo: end.r && end.r.cargo, seeds: end.save.seeds, tutorialDone: end.save.tutorialDone, errs });
   if (!end.r || !end.r.landed) fails.push('flight school did not end in a landing');
   if (!end.save.tutorialDone) fails.push('tutorialDone not saved');
-  const steps = seen.filter(x => x >= 0 && x < 17);   // 17 = finished
-  if (steps.length !== 17 || Math.max(...seen) > 17) fails.push(`flight school should be exactly 17 steps (7 diagram lessons), all completed; saw ${JSON.stringify(steps)}`);
+  const steps = seen.filter(x => x >= 0 && x < 18);   // 18 = finished
+  if (steps.length !== 18 || Math.max(...seen) > 18) fails.push(`flight school should be exactly 18 steps (7 diagram lessons), all completed; saw ${JSON.stringify(steps)}`);
   if (!(await p.isVisible('#results'))) fails.push('results not shown after school');
   if ((await p.textContent('#rTitle')).toLowerCase().indexOf('school') < 0) fails.push('results do not say flight school');
   // Second visit: the button says TAKE OFF and starts a normal flight.

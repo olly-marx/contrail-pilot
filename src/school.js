@@ -43,16 +43,26 @@ export class School {
       { say: 'Icy air ahead! <b>Fly INTO it</b>.',
         setup: () => { this.issr = this.bigIssr(); },
         // Missed it? Put more icy air right in front of the plane, so this step can always be done.
-        retry: () => { if (s.contrails.length <= 25 && this.issr.x + this.issr.width < s.plane.x) { this.issr = this.bigIssr(); this.ui.coach('Missed it! That is OK. Here is more icy air: <b>fly INTO it</b>!', false); } },
-        done: () => s.contrails.length > 25 },
+        retry: () => { if (s.contrails.length > 25) this.madeDay = true;
+          if (!this.madeDay && this.issr.x + this.issr.width < s.plane.x) { this.issr = this.bigIssr(); this.ui.coach('Missed it! That is OK. Here is more icy air: <b>fly INTO it</b>!', false); } },
+        // Done once you are OUT the other side and have had a second to see the contrail behind you.
+        // (Contrail squares scroll off screen fast, so remember that it was made.)
+        done: () => { if (!this.madeDay || s.wasInIssr) { this.outT = 0; return false; } this.outT = (this.outT || 0) + 1 / 60; return this.outT > 1.2; } },
       { say: 'You made a <b>contrail</b>! It is making <b>shade</b> on the ground below.<br>Shade pulls the Earth bar (right) <b>down</b>. Down = <span class="cool">cooler</span>.', tap: true, high: true,
         setup: () => s.hud.highlight(true) },
-      lesson('lesson-night', 'At <b>night</b> there is no sun to block. A contrail is like a <b>lid on a pot</b>: heat cannot get out. The Earth gets <span class="warm">HOTTER</span>.<br>So at night, fly <b>above or below</b> icy air.'),
-      { say: 'Night! Icy air ahead: fly <b>above or below</b> it.',
+      { say: 'The sun is setting... <b>Keep flying</b> through the storms!',
         setup: () => {
           s.hud.highlight(false);
+          this.holdClock = false; s.clock = DAYNIGHT.daySeconds - DAYNIGHT.blendSeconds - 3;   // dusk in ~3 s, dark ~3 s later
+          this.dusk = [stormAt(Phaser.Math.Clamp(s.plane.y + 6, 120, SKY_H - 120))];
+          s.time.delayedCall(2800, () => { if (this.i >= 0) this.dusk.push(stormAt(Phaser.Math.Between(150, SKY_H - 150))); });
+        },
+        done: () => !s.isDay && s.nightAmount() > 0.95 && this.dusk.length === 2 && this.dusk.every(st => st.rects[0].x + STORMS.width < s.plane.x) },
+      lesson('lesson-night', 'Now it is <b>night</b>. There is no sun to block. A contrail is like a <b>lid on a pot</b>: heat cannot get out. The Earth gets <span class="warm">HOTTER</span>.<br>So at night, fly <b>above or below</b> icy air.'),
+      { say: 'Night! Icy air ahead: fly <b>above or below</b> it.',
+        setup: () => {
           s.issrs.forEach(i => { i.maskGfx.destroy(); i.destroy(); }); s.issrs = [];   // clear the day's icy air first
-          this.holdClock = true; s.clock = DAYNIGHT.daySeconds + DAYNIGHT.blendSeconds + 1;   // straight to night
+          this.holdClock = true;   // stay night for the dodge
           this.night = s.heatTrapped;
           this.issr = s.addIssrAt(ahead() + 40, Phaser.Math.Clamp(s.plane.y - 30, 70, SKY_H - 160), 220, 70);
           this.issr.entered = true;   // visible at once
@@ -131,7 +141,16 @@ export class School {
     s.heat = Math.min(s.heat, 90);   // no overheating in flight school
   }
 
+  // Tips that flight school has already taught are marked seen, so the first real flight
+  // doesn't say it all again.
+  static TAUGHT = ['x-bars', 'x-hot', 'issrDay', 'issrNight', 'firstToken', 'airport', 'takeoff'];
+  markTaught() {
+    const seen = this.s.save.seenTips;
+    for (const id of School.TAUGHT) if (!seen.includes(id)) seen.push(id);
+  }
+
   finished(result) {
+    this.markTaught();
     this.ui.hideCoach();
     this.s.hud.highlight(false);
     this.s.save.tutorialDone = true;

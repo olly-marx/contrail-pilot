@@ -95,8 +95,11 @@ Fresh-player review fixes (2026-10-18): a no-tap "glide" only covered ~90 m but 
 glide from 300 m, so everyone crashed short -> glide assist (`AIRPORT.glideFrom` 450 m: when
 falling near a runway, vy is capped to the slope that touches down mid-runway; validated by
 test). Breather after "Now TAP to fly!"; the first tip (`explainWhenClear()`) waits for a clear
-sky. School: the night step clears the day's icy air first and gives pass/fail feedback (17
-steps now); the contrail step's words are honest about the bar (CO2 keeps it red) and the bubble
+sky. School: the night step clears the day's icy air first and gives pass/fail feedback; (2026-10-19)
+the day contrail step ends only 1.2 s after you leave the icy air (it froze 0.44 s after the first
+contrail square before), then a dusk leg fades to night over ~6 s while you fly two storms (18
+steps now). Tips school teaches (`School.TAUGHT`) are marked seen on finish or skip, so the first
+real flight doesn't repeat them; the contrail step's words are honest about the bar (CO2 keeps it red) and the bubble
 sits high so the ground shows. Mission 1 requires landing at the FIRST airport. Results use the
 real multiplier. Not fixed (cosmetic): FREE "pick" frames overflow the hangar panel.
 
