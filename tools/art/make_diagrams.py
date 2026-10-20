@@ -278,6 +278,164 @@ def lesson_heat():
     p.save('lesson-heat')
 
 
+# ---------- later in-game tips ----------
+
+GLYPHS = {  # 3x5 pixel numbers and signs, for the few pictures that need a number (no words)
+    'x': ['...', 'x.x', '.x.', 'x.x', '...'], '1': ['.x.', 'xx.', '.x.', '.x.', 'xxx'],
+    '.': ['...', '...', '...', '...', '.x.'], '5': ['xxx', 'x..', 'xx.', '..x', 'xx.'],
+    '3': ['xx.', '..x', '.x.', '..x', 'xx.'], '=': ['...', 'xxx', '...', 'xxx', '...'],
+}
+
+
+def number(p, text, x, y, c, scale=2):
+    for ch in text:
+        for r, row in enumerate(GLYPHS[ch]):
+            for k, v in enumerate(row):
+                if v == 'x':
+                    p.rect(x + k * scale, y + r * scale, scale, scale, c)
+        x += 4 * scale
+
+
+def scaled(p, name, x, y, k, folder=A):
+    im = Image.open(folder / f'{name}.png').convert('RGBA')
+    p.img.alpha_composite(im.resize((im.width * k, im.height * k), Image.NEAREST), (x, y))
+
+
+def puff_cloud(p, cx, cy, r, c=hexc('#8a8a8a')):
+    for y in range(cy - r, cy + r + 1):
+        for x in range(cx - r * 2, cx + r * 2 + 1):
+            if ((x - cx) / 2) ** 2 + (y - cy) ** 2 <= r * r:
+                p.px(x, y, c)
+
+
+def lesson_plot():
+    p = Pic(120, 64, C['sky'])
+    ground(p, 52)
+    p.sprite('plot-left', 70, 49); [p.sprite('plot-mid', 74 + 8 * k, 49) for k in range(3)]; p.sprite('plot-right', 98, 49)
+    plane(p, 6, 6)
+    path = [(22, 13), (34, 20), (44, 28), (52, 36), (58, 43)]       # falls down AND forwards
+    for (x0, y0), (x1, y1) in zip(path, path[1:]):
+        p.line(x0, y0, x1, y1, C['white'], dash=2)
+    p.sprite('chute', 52, 25); p.sprite('crate', 53, 31)
+    cross(p, 82, 44, 7, C['white'])                                    # the X on the soil: where it will land
+    p.line(59, 44, 81, 47, C['white'], dash=2)
+    p.save('lesson-plot')
+
+
+def lesson_tree_co2():
+    p = Pic(120, 64, C['sky'])
+    ground(p, 56)
+    plane(p, 70, 10)
+    for cx, cy, r in ((58, 14, 5), (48, 18, 6), (36, 13, 5), (44, 9, 4)):   # the plane's big CO2 cloud
+        puff_cloud(p, cx, cy, r)
+    scaled(p, 'tree-oak-2', 12, 28, 2)
+    for cx, cy in ((20, 22), (28, 18), (36, 24)):                      # a few small bubbles drawn into the tree
+        puff_cloud(p, cx, cy, 1)
+    arrow(p, 26, 24, 8, False, C['up'], C['up_d'])
+    p.save('lesson-tree-co2')
+
+
+def lesson_biodiversity():
+    p = Pic(120, 64, C['sky'])
+    ground(p, 54)
+    for k, (name, x) in enumerate((('tree-spruce-2', 10), ('tree-oak-2', 46), ('tree-orchard-2', 84))):
+        scaled(p, name, x, 54 - 28, 2)
+    for name, x, y in (('animal-fox-0', 30, 48), ('animal-hedgehog-0', 70, 49), ('animal-rabbit-0', 104, 48),
+                       ('animal-deer-0', 60, 41)):
+        p.sprite(name, x, y)
+    for name, x, y in (('sky-robin-0', 32, 12), ('sky-swallow-0', 70, 8), ('sky-robin-1', 100, 16)):
+        scaled(p, name, x, y, 2)
+    p.save('lesson-biodiversity')
+
+
+def lesson_bars():
+    p = Pic(120, 64, C['sky'])
+    p.rect(30, 6, 6, 52, C['ink']); p.rect(31, 7, 4, 50, hexc('#3f6f7f'))   # CO2 gauge, left
+    p.rect(31, 33, 4, 24, hexc('#9a9a9a'))
+    puff_cloud(p, 33, 2, 1)
+    bar(p, 86, 8, 48, C['warm'], 0.45)                                   # Earth bar, right
+    p.rect(83, 8 + 48 - 22, 10, 1, C['white'])                            # its zero line
+    scaled(p, 'face-ok', 79, 0, 1)
+    plane(p, 50, 30)
+    p.save('lesson-bars')
+
+
+def lesson_hot():
+    p = Pic(120, 64, C['sky'])
+    bar(p, 58, 8, 50, C['warm'], 1.0)
+    p.rect(55, 7, 12, 2, C['warm'])
+    scaled(p, 'face-hot', 22, 14, 2)
+    for x, y in ((74, 20), (80, 30), (76, 42)):                           # heat waves
+        p.line(x, y, x + 3, y - 3, C['heat']); p.line(x + 3, y - 3, x + 6, y, C['heat'])
+    p.save('lesson-hot')
+
+
+def lesson_bonus():
+    p = Pic(120, 64, C['sky'])
+    ground(p, 52)
+    for x in range(10, 70, 20):
+        p.sprite('runway', x, 52)
+    p.sprite('tower', 60, 22)
+    plane(p, 70, 14)
+    p.line(10, 18, 68, 17, C['white'], dash=2)                            # flies on past the airport
+    number(p, 'x1.5', 84, 28, hexc('#ffc23d'))
+    p.save('lesson-bonus')
+
+
+def lesson_gold():
+    p = Pic(120, 64, C['sky'])
+    scaled(p, 'token-gold', 6, 18, 2)
+    number(p, '=', 40, 27, C['white'])
+    number(p, '3', 52, 27, C['white'])
+    for k in range(3):
+        p.sprite('token', 70 + k * 16, 25)
+    p.save('lesson-gold')
+
+
+def lesson_crystals():
+    p = Pic(120, 64, C['sky'])
+    p.rect(14, 30, 50, 2, C['white'])                                     # a contrail...
+    plane(p, 64, 27)
+    for x, y in ((18, 22), (30, 36), (44, 22), (56, 38)):                 # ...is made of ice crystals
+        p.sprite('crystal', x, y)
+    scaled(p, 'icon-crystal', 84, 16, 2, folder=UI)
+    p.save('lesson-crystals')
+
+
+def lesson_turbulence():
+    p = Pic(120, 64, C['sky'])
+    for x in range(30, 94, 32):
+        for y in range(10, 58, 16):
+            p.sprite('turb', x, y, crop=(0, 0, min(32, 94 - x), min(16, 58 - y)))
+    plane(p, 50, 30, tilt=1)
+    plane(p, 6, 24)
+    p.line(22, 27, 34, 28, C['white'], dash=2)
+    for x, y in ((48, 26), (68, 38)):                                      # shake marks
+        p.px(x, y, C['white']); p.px(x + 1, y - 1, C['white'])
+    p.save('lesson-turbulence')
+
+
+def lesson_birds():
+    p = Pic(120, 64, C['sky'])
+    plane(p, 8, 30)
+    for x, y in ((60, 24), (70, 30), (64, 36), (80, 26), (76, 38)):
+        scaled(p, 'bird-0' if (x + y) % 2 else 'bird-1', x, y, 1)
+    p.line(26, 31, 44, 20, C['white'], dash=2)                             # fly over the flock
+    p.line(44, 20, 96, 18, C['white'], dash=2)
+    p.save('lesson-birds')
+
+
+def lesson_nofly():
+    p = Pic(120, 64, C['sky'])
+    for x in range(52, 76, 16):
+        for y in range(0, 64, 16):
+            p.sprite('nofly', x, y, crop=(0, 0, min(16, 76 - x), 16))
+    plane(p, 6, 30)
+    p.line(24, 32, 46, 32, C['white'], dash=2)
+    cross(p, 56, 24, 16, C['ink'])
+    p.save('lesson-nofly')
+
+
 # ---------- mission icons (24x24) ----------
 
 def icon(name, draw, night=False):
@@ -362,6 +520,17 @@ if __name__ == '__main__':
     lesson_night()
     lesson_land()
     lesson_heat()
+    lesson_plot()
+    lesson_tree_co2()
+    lesson_biodiversity()
+    lesson_bars()
+    lesson_hot()
+    lesson_bonus()
+    lesson_gold()
+    lesson_crystals()
+    lesson_turbulence()
+    lesson_birds()
+    lesson_nofly()
     for spec in (('mi-land', mi_land), ('mi-seed', mi_seed), ('mi-night', mi_night, True), ('mi-airports', mi_airports),
                  ('mi-shade', mi_shade), ('mi-tree', mi_tree), ('mi-crystal', mi_crystal, True), ('mi-globe', mi_globe)):
         icon(*spec)
