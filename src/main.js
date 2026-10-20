@@ -37,5 +37,5 @@ const game = new Phaser.Game({
 window.game = game;   // exposed for debugging and automated tests
 
 ui.showTitle();
-new PilotScreens(save);
+ui.pilot = new PilotScreens(save);
 flush();   // flights saved while offline last time

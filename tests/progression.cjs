@@ -54,13 +54,13 @@ const KEY = 'contrailPilot.v2';
 
   // 3. Hangar: lines unlock as you progress. A new player sees Fuel as locked.
   await setSave({ ...base, seeds: 50 }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#hangarBtn');
+  await p.click('#tabHangar');
   check(await p.$('[data-buy="fuel"]') === null, 'fuel should be locked before 3 landings');
   check((await p.textContent('#hUpgrades')).includes('Unlocks after 3 landings'), 'locked lines should say how to unlock them');
   check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
   // Levelled lines, prices, info pop-up.
   await setSave({ ...base, seeds: 50, crystals: 2, landings: 3 }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#hangarBtn');
+  await p.click('#tabHangar');
   await p.click('[data-buy="radar"]');     // 10 seeds + 1 crystal
   await p.click('[data-buy="fuel"]');      // 15 seeds + 1 crystal
   const save = await getSave();
@@ -76,7 +76,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('#iClose');
 
   // 4. The flight uses the upgrades: SAF 25% = 0.85 CO2; radar reveals icy air from 100 px.
-  await p.click('#hBackBtn'); await p.click('#goBtn'); await p.waitForTimeout(2400);
+  await p.click('#tabFly'); await p.click('#goBtn'); await p.waitForTimeout(2400);
   const kit = await scene(() => { const s = game.scene.getScene('game'); return { co2: s.co2Rate, reveal: s.kit.revealPx }; });
   check(Math.abs(kit.co2 - 0.85) < 1e-9, `SAF 25% cruise CO2 should be 0.85, got ${kit.co2}`);
   check(kit.reveal === 100, `radar 1 should reveal at 100, got ${kit.reveal}`);

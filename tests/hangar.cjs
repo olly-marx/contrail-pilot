@@ -21,7 +21,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
   // 1. Buy the last radar level.
   let p = await open(9);
-  await p.click('#hangarBtn'); await p.waitForTimeout(300);
+  await p.click('#tabHangar'); await p.waitForTimeout(300);
   await p.click('[data-buy=radar]'); await p.waitForTimeout(400);
   const s = JSON.parse(await p.evaluate(() => localStorage.getItem('contrailPilot.v2')));
   check(s.levels.radar === 3 && s.seeds === 130 && s.crystals === 4, `last radar level should be bought: ${JSON.stringify({ radar: s.levels.radar, seeds: s.seeds, crystals: s.crystals })}`);
@@ -29,20 +29,29 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(await p.textContent('#hTrees') === '130', `the seed count on screen should drop to 130, shows ${await p.textContent('#hTrees')}`);
   check(p.errs.length === 0, `buying the last level threw: ${p.errs.join(' | ')}`);
 
-  // 2. BACK at the top of each screen returns to the title.
-  for (const [btn, back, name] of [['#hangarBtn', '#hBackTop', 'hangar'], ['#pilotBtn', '#pBackTop', 'my pilot'], ['#boardsBtn', '#bBackTop', 'leaderboard']]) {
-    await p.evaluate(() => game.registry.get('ui').showTitle());
-    await p.click(btn); await p.waitForTimeout(300);
-    const box = await p.locator(back).boundingBox();
-    check(box && box.y < 300 && box.height >= 24, `${name}: BACK should be big and near the top: ${JSON.stringify(box)}`);
-    await p.click(back); await p.waitForTimeout(300);
-    check(await p.isVisible('#goBtn'), `${name}: BACK should return to the title`);
+  // 2. The bar along the bottom: from EVERY screen, one tap reaches EVERY other; exactly one
+  // screen is open; the right tab is lit; nothing is left open underneath (e.g. a pop-up).
+  const SCREENS = { fly: 'title', hangar: 'hangar', nature: 'hangar', pilot: 'pilot', boards: 'boards' };
+  const state = () => p.evaluate(() => ({ open: ['title', 'results', 'hangar', 'pilot', 'boards', 'how', 'about', 'info', 'scoreInfo'].filter(id => !document.getElementById(id).hidden),
+    lit: [...document.querySelectorAll('#tabbar .tab.on')].map(t => t.dataset.go), bar: !document.getElementById('tabbar').hidden, natureTab: document.querySelector('#hTabs .on')?.dataset.tab }));
+  for (const from of Object.keys(SCREENS)) for (const to of Object.keys(SCREENS)) {
+    await p.click(`[data-go=${from}]`); await p.waitForTimeout(80);
+    await p.evaluate(() => { document.getElementById('about').hidden = false; });   // a pop-up left open
+    await p.evaluate(to => document.querySelector(`[data-go=${to}]`).click(), to); await p.waitForTimeout(80);   // (a real pop-up covers the bar; moving must still close it)
+    const st = await state();
+    check(st.bar && st.open.length === 1 && st.open[0] === SCREENS[to] && st.lit.join() === to, `${from} -> ${to}: ${JSON.stringify(st)}`);
+    if (to === 'nature' || to === 'hangar') check(st.natureTab === (to === 'nature' ? 'nature' : 'plane'), `${from} -> ${to}: hangar should open on the ${to} tab, got ${st.natureTab}`);
   }
+  const box = await p.locator('#tabbar').boundingBox();
+  check(box && box.y + box.height >= 840 && box.height >= 48, `the bar should sit at the bottom, big enough to tap: ${JSON.stringify(box)}`);
+  // No bar while flying; back after the flight.
+  await p.click('[data-go=fly]'); await p.click('#goBtn'); await p.waitForTimeout(400);
+  check(!(await state()).bar, 'no bar while flying');
   await p.close();
 
   // 3. Short of crystals: the button is grey and says what is missing.
   p = await open(2);
-  await p.click('#hangarBtn'); await p.waitForTimeout(300);
+  await p.click('#tabHangar'); await p.waitForTimeout(300);
   check(await p.isDisabled('[data-buy=radar]'), 'short of crystals: BUY should be grey');
   check(/need 3 more/.test(await radarRow(p)), `short of crystals: should say "need 3 more": "${await radarRow(p)}"`);
   await p.close();

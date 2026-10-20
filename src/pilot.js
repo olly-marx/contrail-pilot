@@ -23,10 +23,6 @@ export class PilotScreens {
     this.save = save;
     this.board = 'ultimate';
     this.period = 'today';
-    $('pilotBtn').onclick = () => this.showPilot();
-    $('boardsBtn').onclick = () => this.showBoards();
-    $('pBack').onclick = $('pBackTop').onclick = () => { $('pilot').hidden = true; };
-    $('bBack').onclick = $('bBackTop').onclick = () => { $('boards').hidden = true; };
     $('bInfo').onclick = () => { $('scoreInfo').hidden = false; };
     $('siClose').onclick = () => { $('scoreInfo').hidden = true; };
     $('pChange').onclick = () => this.edit(true);
@@ -50,14 +46,13 @@ export class PilotScreens {
 
   renderButton() {
     const p = getPilot();
-    $('pilotBtn').textContent = p ? p.first.toUpperCase() : 'MY PILOT';
+    $('tabPilotName').textContent = p ? p.first.toUpperCase() : 'PILOT';   // the bar's PILOT tab shows your name
   }
 
   // ---------- my pilot ----------
   showPilot() {
     this.edit(!getPilot());
     this.renderStats();
-    $('pilot').hidden = false;
   }
 
   edit(on) {
@@ -110,7 +105,6 @@ export class PilotScreens {
 
   // ---------- leaderboards ----------
   showBoards() {
-    $('boards').hidden = false;
     this.renderBoard();
   }
 

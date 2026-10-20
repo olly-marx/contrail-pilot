@@ -20,7 +20,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const visibleText = () => p.evaluate(() => document.body.innerText);
     seen.push(await visibleText());
     await p.click('#aboutBtn'); await p.waitForTimeout(150); seen.push(await visibleText()); await p.click('#aboutClose');
-    await p.click('#hangarBtn'); await p.waitForTimeout(200);
+    await p.click('#tabHangar'); await p.waitForTimeout(200);
     for (const tab of ['plane', 'nature']) {
       await p.click(`[data-tab="${tab}"]`); await p.waitForTimeout(150); seen.push(await visibleText());
       for (const id of await p.$$eval('[data-info]', bs => bs.map(x => x.dataset.info))) {

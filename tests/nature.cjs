@@ -35,15 +35,15 @@ const KEY = 'contrailPilot.v2';
 
   // 3. Rewilding waits for the meter: meadow needs Biodiversity 3.
   await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: {} }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#hangarBtn');
+  await p.click('#tabHangar');
   await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
   check(await p.$('[data-buy="rewild"]') === null, 'rewilding should be locked before any tree is planted');
   await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { spruce: 1 } }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#hangarBtn');
+  await p.click('#tabHangar');
   await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
   check((await p.textContent('#hUpgrades')).includes('needs Biodiversity 3'), 'meadow should wait for Biodiversity 3');
   await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { birch: 2 } }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#hangarBtn');
+  await p.click('#tabHangar');
   await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
   const before = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
   await p.click('[data-buy="rewild"]');

@@ -50,14 +50,14 @@ const UID = '11111111-2222-3333-4444-555555555555';
   };
 
   // 1. Title buttons.
-  check(await p.isVisible('#pilotBtn') && await p.isVisible('#boardsBtn'), 'MY PILOT and LEADERBOARD buttons should be on the title');
+  check(await p.isVisible('#tabPilot') && await p.isVisible('#tabBoards'), 'PILOT and BOARDS tabs should be on the title');
 
   // 2. A flight before having a name is not sent, and no account is made.
   await fly();
   check(net.flights.length === 0 && net.signups === 0, `nothing should be sent before a name: ${net.flights.length} flights, ${net.signups} sign-ups`);
 
   // 3. The name form: letters only, SAVE off until name + word.
-  await p.click('#pilotBtn');
+  await p.click('#tabPilot');
   await p.fill('#pFirst', 'ol1ie!'); await p.dispatchEvent('#pFirst', 'input');
   check(await p.inputValue('#pFirst') === 'olie', `only letters should stay in the name box, got "${await p.inputValue('#pFirst')}"`);
   await p.fill('#pFirst', 'ollie'); await p.dispatchEvent('#pFirst', 'input');
@@ -85,12 +85,12 @@ const UID = '11111111-2222-3333-4444-555555555555';
   await p.click('#pSave'); await p.waitForTimeout(1000);
   check(net.players && net.players.first_name === 'Ollie' && net.players.word === 'Puffin' && net.players.tag >= 10 && net.players.tag <= 99, `player row sent: ${JSON.stringify(net.players)}`);
   check(await p.isHidden('#pEdit') && /^Ollie the Puffin/.test(await p.textContent('#pName')), 'after saving, the profile should show the name');
-  check((await p.textContent('#pilotBtn')) === 'OLLIE', `title button should become the first name, got "${await p.textContent('#pilotBtn')}"`);
+  check((await p.textContent('#tabPilotName')) === 'OLLIE', `the PILOT tab should become the first name, got "${await p.textContent('#tabPilotName')}"`);
   await p.waitForTimeout(800);
   await p.screenshot({ path: '/tmp/online-profile.png' });
   const stats = await p.textContent('#pStats');
   check(/3000 km/.test(stats) && /#2/.test(stats), `profile should show best flight and today's place: "${stats}"`);
-  await p.click('#pBack');
+  await p.click('#tabFly');
 
   // 7. A landed flight is sent with the right fields.
   await fly(true);
@@ -117,7 +117,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
 
   // 10. Leaderboard: rows shown, mine highlighted, tabs ask the right board.
   await p.waitForTimeout(1500); await p.evaluate(() => game.registry.get('ui').showTitle());
-  await p.click('#boardsBtn'); await p.waitForTimeout(800);
+  await p.click('#tabBoards'); await p.waitForTimeout(800);
   check(/ultimate\/today/.test(await p.textContent('#bList')), 'opening the board should ask for ultimate / today');
   check((await p.textContent('#bList li.me')).includes('Ollie the Puffin 27'), 'my row should be highlighted');
   await p.click('[data-board="longest"]'); await p.click('[data-period="week"]'); await p.waitForTimeout(800);

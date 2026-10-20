@@ -41,9 +41,7 @@ export class UI {
     $('goBtn').onclick = () => this.start();
     $('againBtn').onclick = () => this.start();
     $('schoolBtn').onclick = () => this.startSchool();
-    $('hangarBtn').onclick = () => this.showHangar('title');
-    $('rHangarBtn').onclick = () => this.showHangar('results');
-    $('hBackBtn').onclick = $('hBackTop').onclick = () => (this.hangarFrom === 'results' ? this.showOnly('results') : this.showTitle());
+    document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
     $('hGoBtn').onclick = () => this.start();
     $('hGoTop').onclick = () => this.start();
     $('howBtn').onclick = () => { $('how').hidden = false; };
@@ -95,8 +93,24 @@ export class UI {
       ${lock ? `<p class="mis-need">Needs: <b>${m.needs.text}</b></p>` : m.tip ? `<p class="mis-tip">${m.tip}</p>` : ''}</div></div>`;
   }
 
+  // ---------- navigation ----------
+  // One screen at a time, chosen from the bar along the bottom. Pop-ups (how to play, about,
+  // info, points) close on any move. `this.pilot` (PilotScreens) renders PILOT and BOARDS.
+  go(tab) {
+    if (tab === 'fly') return this.showTitle();
+    if (tab === 'hangar' || tab === 'nature') { this.hTab = tab === 'nature' ? 'nature' : 'plane'; return this.showHangar(); }
+    if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
+    if (tab === 'boards') { this.showOnly('boards'); return this.pilot && this.pilot.showBoards(); }
+  }
+
   showOnly(id) {
-    for (const s of ['title', 'results', 'hangar']) $(s).hidden = s !== id;
+    for (const s of ['title', 'results', 'hangar', 'pilot', 'boards']) $(s).hidden = s !== id;
+    for (const s of ['how', 'about', 'info', 'scoreInfo']) $(s).hidden = true;
+    $('tabbar').hidden = !id;   // no bar while flying
+    const on = { title: 'fly', results: 'fly', hangar: this.hTab === 'nature' ? 'nature' : 'hangar', pilot: 'pilot', boards: 'boards' }[id];
+    document.querySelectorAll('#tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === on));
+    $('tNew').hidden = !this.hasNew();
+    $('tNew').textContent = this.save.freeUpgrade ? 'FREE!' : 'NEW!';
   }
 
   showTitle() {
@@ -157,9 +171,7 @@ export class UI {
     for (const id of ['rCo2', 'rNight', 'rSun', 'rTreesCool']) $(id).textContent = '';
     $('rFree').hidden = !this.save.freeUpgrade;
     $('rSkip').hidden = false;
-    $('rHangarBtn').classList.toggle('glow', this.hasNew());
-    $('rNew').hidden = !this.hasNew();
-    $('rHangarBtn').firstChild.textContent = this.save.freeUpgrade ? 'FREE UPGRADE ' : 'HANGAR ';
+    $('tabHangar').classList.toggle('glow', this.hasNew());   // something to spend: the bar's HANGAR glows
     const nb = r.newBadges.map(id => BADGES.find(x => x.id === id)?.name).filter(Boolean);
     $('rBadges').hidden = !nb.length;
     $('rBadges').innerHTML = nb.length ? `NEW BADGE: <b>${nb.join(', ')}</b>` : '';
@@ -228,8 +240,7 @@ export class UI {
   }
 
   // ---------- hangar ----------
-  showHangar(from) {
-    this.hangarFrom = from;
+  showHangar() {
     this.renderHangar();
     this.showOnly('hangar');
   }
@@ -255,7 +266,7 @@ export class UI {
       const t = b.dataset.tab, buyable = LINES.some(l => tabOf(l) === t && canBuy(s, l));
       b.classList.toggle('on', t === tab);
       b.innerHTML = t.toUpperCase() + (t !== tab && buyable ? '<span class="dot"></span>' : '');
-      b.onclick = () => { this.hTab = t; sfx.flap(); this.renderHangar(); };
+      b.onclick = () => { this.hTab = t; sfx.flap(); this.showHangar(); };   // keeps the bar's HANGAR / NATURE in step
     });
     const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
     let lastGroup = null;
