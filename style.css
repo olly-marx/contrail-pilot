@@ -344,3 +344,12 @@ h2.sub { margin-top: -4px; }
 .jdot.done { background: var(--green); box-shadow: 0 0 0 2px var(--green); }
 .jdot.here { width: 11px; height: 11px; background: var(--gold); box-shadow: 0 0 0 2px var(--ink); }
 .jdot.home { background: var(--cool); }
+
+/* rewards: mission prize, challenges (FLY screen), the rewards box (results) */
+.prize { white-space: nowrap; font-weight: bold; color: var(--green-dark); }
+.mis-head { display: flex; justify-content: space-between; align-items: center; }
+.challenges { display: grid; gap: 3px; font-size: 8px; text-align: left; }
+.chal { display: flex; justify-content: space-between; gap: 6px; padding: 4px 6px; background: rgba(0,0,0,.05); }
+.rewards { display: grid; gap: 3px; font-size: 8px; }
+.rw { display: flex; justify-content: space-between; gap: 6px; padding: 5px 6px; background: #eaf7e6; }
+.rw.lap { background: var(--gold); font-size: 10px; }

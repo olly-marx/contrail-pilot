@@ -150,6 +150,7 @@ export const BADGES = [
   { id: 'coolPlanet', name: 'Cool Planet', desc: 'Land with the planet cooler than at take off.' },
   { id: 'forester', name: 'Forester', desc: 'Plant 3 trees in one flight.' },
   { id: 'zeroCarbon', name: 'Zero Carbon Pilot', desc: 'Get the hydrogen engine.' },
+  { id: 'roundTheWorld', name: 'Round the World', desc: 'Fly all the way round the world, back to LONDON.' },
 ];
 
 // The hangar has two tabs: the plane (and contrail research) first, nature second.

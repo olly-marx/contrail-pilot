@@ -7,6 +7,7 @@ import { Hud } from './Hud.js';
 import { loadout } from './upgrades.js';
 import { sendFlight } from './online.js';
 import { ROUTE, cityAt, legKm } from './route.js';
+import { payRewards } from './rewards.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
@@ -1636,15 +1637,16 @@ export class GameScene extends Phaser.Scene {
 
     if (landed) this.save.landings = (this.save.landings || 0) + 1;
     // Mission: done or not, and move on to the next one.
-    const mission = this.school ? null : currentMission(this.save);
-    const partial = { landed, landedAt: this.landedAt, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals };
-    const missionDone = !!(mission && mission.check(partial));
-    if (missionDone) this.save.mission = (this.save.mission || 0) + 1;
-    const nextMission = this.school ? null : currentMission(this.save);
-    const natureGain = biodiversity(this.save) - (this.bioStart || 0);
     // The journey: landing moves you to that city; reaching LONDON again (or passing it) is a lap.
     const reached = this.startCity + this.airportIndex + 1;   // index along the loop, past ROUTE.length after LONDON
     const lap = landed && !this.school && reached >= ROUTE.length;
+    const mission = this.school ? null : currentMission(this.save);
+    const partial = { landed, landedAt: this.landedAt, lap, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals };
+    const missionDone = !!(mission && mission.check(partial));
+    const missionIndex = missionDone ? (this.save.mission || 0) : null;
+    if (missionDone) this.save.mission = (this.save.mission || 0) + 1;
+    const nextMission = this.school ? null : currentMission(this.save);
+    const natureGain = biodiversity(this.save) - (this.bioStart || 0);
     if (landed && !this.school) { this.save.city = reached % ROUTE.length; if (lap) this.save.laps = (this.save.laps || 0) + 1; }
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
@@ -1652,6 +1654,10 @@ export class GameScene extends Phaser.Scene {
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
+    // Missions, challenges, new cities and laps pay seeds + crystals (src/rewards.js).
+    if (lap && !this.save.badges.includes('roundTheWorld')) { this.save.badges.push('roundTheWorld'); newBadges.push('roundTheWorld'); }
+    const rewards = this.school ? [] : payRewards(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, dodges: this.dodgesTotal,
+      kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionIndex, mission && mission.title);
     writeSave(this.save);
 
     this.result = {
@@ -1659,6 +1665,7 @@ export class GameScene extends Phaser.Scene {
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
+      rewards,
       mission: mission ? { title: mission.title, done: missionDone, fail: missionDone ? '' : mission.fail(partial), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);

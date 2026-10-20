@@ -1,5 +1,6 @@
 import { FEATURES, km } from './config.js';
 import { ROUTE, cityAt, legKm } from './route.js';
+import { missionReward, activeChallenges } from './rewards.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
@@ -24,6 +25,8 @@ export const FACTS_BASE = [
 
 export const FACTS = [...FACTS_BASE, ...NATURE_FACTS];
 const $ = id => document.getElementById(id);
+// A prize as icons: "+40 [seed] +3 [crystal]".
+const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;
 
 // The Biodiversity meter as HTML: a bar plus the stage name.
 export function meterHTML(save) {
@@ -89,9 +92,18 @@ export class UI {
     el.hidden = false;
     if (!m) { el.innerHTML = `<div class="mis-head">ALL MISSIONS DONE!</div><p>You are a real Contrail Pilot. Now fly as far as you can!</p>`; return; }
     const n = (s.mission || 0) + 1, lock = missionBlocked(s, m);
-    el.innerHTML = `<div class="mis-head"><span class="mis-no">MISSION ${n}/${MISSIONS.length}</span></div>
+    el.innerHTML = `<div class="mis-head"><span class="mis-no">MISSION ${n}/${MISSIONS.length}</span>${prize(missionReward(n - 1))}</div>
       <div class="mis-body"><i class="mi ${m.icon}"></i><div><b>${m.title}</b><p>${m.sub}</p>
       ${lock ? `<p class="mis-need">Needs: <b>${m.needs.text}</b></p>` : m.tip ? `<p class="mis-tip">${m.tip}</p>` : ''}</div></div>`;
+  }
+
+  // Three challenges at a time, each with its prize; a done one is replaced after the flight.
+  renderChallenges() {
+    const s = this.save, el = $('tChallenges');
+    el.hidden = !s.tutorialDone;
+    if (el.hidden) return;
+    el.innerHTML = '<p class="label">Challenges</p>' + activeChallenges(s).map(c => `<div class="chal"><span>${c.text}</span>${prize(c)}</div>`).join('');
+    writeSave(s);   // the chosen three are kept
   }
 
   // The journey strip on the FLY screen: where you are, the next city, a dot per city round the loop.
@@ -132,6 +144,7 @@ export class UI {
     const any = Object.values(this.save.planted || {}).some(n => n > 0);
     $('tMeter').innerHTML = any ? meterHTML(this.save) : '';
     this.renderMission();
+    this.renderChallenges();
     this.renderJourney();
     this.showOnly('title');
   }
@@ -184,6 +197,9 @@ export class UI {
     $('rSkip').hidden = false;
     $('tabHangar').classList.toggle('glow', this.hasNew());   // something to spend: the bar's HANGAR glows
     const nb = r.newBadges.map(id => BADGES.find(x => x.id === id)?.name).filter(Boolean);
+    const rw = r.rewards || [];
+    $('rRewards').hidden = !rw.length;
+    $('rRewards').innerHTML = rw.map(x => `<div class="rw ${x.kind}"><span>${{ mission: 'MISSION', challenge: 'CHALLENGE', city: '', lap: '' }[x.kind]} ${x.label}</span>${prize(x)}</div>`).join('');
     $('rBadges').hidden = !nb.length;
     $('rBadges').innerHTML = nb.length ? `NEW BADGE: <b>${nb.join(', ')}</b>` : '';
     $('rFact').textContent = FACTS[Math.floor(Math.random() * FACTS.length)];

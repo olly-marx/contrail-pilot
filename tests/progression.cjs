@@ -16,7 +16,10 @@ const KEY = 'contrailPilot.v2';
   const scene = (fn, arg) => p.evaluate(fn, arg);
   const setSave = s => p.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [KEY, s]);
   const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
-  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'] };   // '*' = skip the captain's explanations
+  // '*' = skip the captain's explanations. Missions all done, every city visited and challenges this
+  // test can't finish: so only the flight's own seeds are banked (rewards are tested in rewards.cjs).
+  const ALL = ['LONDON', 'PARIS', 'BERLIN', 'ROME', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BANGKOK', 'BEIJING', 'TOKYO', 'ANCHORAGE', 'VANCOUVER', 'CHICAGO', 'NEW YORK', 'REYKJAVIK'];
+  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], mission: 99, visited: ALL, challenges: ['far-4000', 'night-owl', 'dodge-3'] };
   const noStorms = () => scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; s.tokens.forEach(t => t.img.destroy()); s.tokens = []; s.nextTokenAt = 1e9; });
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; }, y);
   const grab = n => scene(n => { const s = game.scene.getScene('game'); for (let i = 0; i < n; i++) s.addToken(s.plane.x + 20 + i * 3, s.plane.y - 2, false); }, n);

@@ -19,6 +19,8 @@ const DEFAULTS = {
   planted: {},         // species id -> trees planted, all flights (drives the Biodiversity meter)
   city: 0,             // the journey: index into ROUTE (src/route.js) of the city you are in; flights start there
   laps: 0,             // times round the world back to LONDON
+  visited: ['LONDON'], // cities landed in (a first landing in a new city pays a bonus)
+  challenges: [],      // ids of the 3 active challenges (src/rewards.js)
   mission: 0,          // index into MISSIONS (src/missions.js); the game's spine
   muted: false,
 };
