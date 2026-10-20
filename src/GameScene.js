@@ -477,11 +477,6 @@ export class GameScene extends Phaser.Scene {
       this.popup(WIDTH / 2, SKY_H - 12, `-${this.treeFeedback.toFixed(1)} from your forest`, '#8dffb0');
       this.coolSparkle();
       this.treeFeedback = 0;
-    this.speciesIdx = 0;
-    this.decor = [];                 // ponds etc. scrolling on the ground
-    this.nextDecorAt = 500;
-    this.storks = [];
-    this.explaining = false;
     }
 
     this.spawn();

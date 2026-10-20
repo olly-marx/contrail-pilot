@@ -111,7 +111,32 @@ hangar's real-tree gate, the About section), drops `citizenzoo` Learn more links
 picks Citizen-Zoo-free versions of the facts. `?citizenzoo` in the URL turns it on (demos).
 Possible future collaboration; nothing was removed.
 
-## NEXT TASK (handed off 2026-10-19)
+## NEXT TASK (asked 2026-10-20) — "Phase 1b", before Phase 2
+
+Asked by the user, in this order of their message (nothing started yet; explain + pause first):
+1. Missions/challenges reward more, and MORE challenges that pay currency (seeds/crystals).
+2. Much wider and deeper upgrade trees.
+3. Real-ish distances to real major cities, and more cities (today: AIRPORT.names, every 1500 km).
+4. A lap of the world: getting back to LONDON pays an extra bonus.
+5. UX overhaul: "navigating back and forth is still super strange" (title / hangar / pilot /
+   boards / results / about are separate pop-ups with their own back buttons; design one clear
+   navigation model).
+DONE 2026-10-20 from the same message: ponds that "follow the plane" after a while — fixed
+(stray flight-setup lines inside the per-frame tree-cooling code emptied the pond list each
+time trees cooled); `tests/ponds.cjs`.
+
+## PHASE 2 (written down 2026-10-20 at the user's request; not started)
+
+- **Wild area**: from the Biodiversity screen, a screen showing your forest/land.
+- **Continents and geography**: regions with their own land type (forest, mountain, plains, ...),
+  each with its own trees and animals, feeding the wild area.
+- **Deeper plane engineering**: different planes and much deeper plane upgrades, for the
+  engineering-minded.
+- **Science upgrades**: advanced routing (predicted best lines), turbulence control (and make
+  turbulence STRONGER so this matters), bird detection, and an AUTOPILOT boost you can pick up
+  while flying (must be unlocked first).
+
+## Earlier task (2026-10-19), all DONE and live
 
 Leaderboard + light profiles + a menu from the runway:
 1. DONE 2026-10-19: `#runwayBack` "◀ MENU" button (and Esc) while parked on the runway ->
