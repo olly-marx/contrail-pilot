@@ -125,6 +125,18 @@ Leaderboard + light profiles + a menu from the runway:
    `~/.local/bin/supabase`, logged in, linked; `supabase/config.toml` pushed (anonymous sign-ins
    on, 300/h per IP, `[storage.vector] enabled = false` — vector buckets are paid, push 402s).
    Publishable key: sb_publishable_Oa3FSfnjmRu2xL_RmiKOqA_j3tEfgMd (public by design).
+2+3. BUILT 2026-10-20, committed locally (6d5a80e database, 0728494 game), NOT pushed:
+   `supabase/migrations/20261019220000_leaderboard.sql` (players, flights, RLS, word filter,
+   leaderboard(board, period)); `src/online.js`, `src/pilot.js`; tests `tests/online.cjs` (fake
+   Supabase) and `supabase/tests/run.sh` (throwaway Postgres in Docker). ORDER MATTERS: the
+   migration must be live (`supabase db push`, the user runs it or approves it) BEFORE the game is
+   pushed, or naming says "No internet". Then check against the real project (anonymous sign-in,
+   a test player, one flight, leaderboard()) and ask the user to delete the test player.
+   Ultimate weights measured on autopilot flights: shade ~2-4/km flying straight, so 5 pts per
+   net shade unit; "cleaner" uses the plane's cruising CO2 (`kit.co2Cruise`, normal 1, hydrogen 0)
+   because CO2/km falls with distance. Boards count LANDED flights only, including tree kinds:
+   this differs from the in-game Biodiversity meter, which counts trees from crashed flights too
+   (open question 4).
 2. Nickname sign-in (no passwords; a nickname + device id is enough) and a simple profile page.
 3. Supabase back end: overall leaderboard plus per-stat boards, e.g. longest LANDED flight (see
    Decisions: never "coolest"), best contrail choices (shade made by day / night contrails dodged /
