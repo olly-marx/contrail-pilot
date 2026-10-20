@@ -441,7 +441,7 @@ export class GameScene extends Phaser.Scene {
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
       this.autoText.setVisible(false);
-      this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * this.kit.gravity * dt);   // Long Wings: gentler
+      this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
       // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
       // between you and it, the plane levels out and floats down onto the runway. With a storm in
       // the way you fall normally, so you can dive through its gap. Flaring burns extra CO2.
@@ -562,6 +562,10 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.hitBird(box)) return this.finish({ reason: 'Bird strike!\nYou hit a bird.' });
   }
+
+  // 1 until CLIMATE.lateFrom km into a flight, then grows by latePer10k every 10,000 km.
+  // Only NIGHTS get harder (more and bigger icy air): day shade, and saving up cooling, stay as they are.
+  lateRamp() { return this.isDay ? 1 : 1 + CLIMATE.latePer10k * Math.max(0, this.distancePx - CLIMATE.lateFrom) / 10000; }
 
   multiplier() { return 1 + this.kit.perSkip * this.airportsSkipped; }   // Bigger Hold: grows faster
 
@@ -916,7 +920,7 @@ export class GameScene extends Phaser.Scene {
       this.nextStormAt += STORMS.spacing;
     }
     if (this.distancePx >= this.nextIssrAt) {
-      if (Math.random() < ISSR.spawnChance) this.addIssr();
+      if (Math.random() < Math.min(1, ISSR.spawnChance * this.lateRamp())) this.addIssr();   // more icy air on long flights
       this.nextIssrAt += ISSR.spawnEvery;
     }
     const T = HAZARDS.turbulence;
@@ -1233,8 +1237,9 @@ export class GameScene extends Phaser.Scene {
 
 
   addIssr() {
-    const w = Phaser.Math.Between(ISSR.minW, ISSR.maxW);
-    const h = Phaser.Math.Between(ISSR.minH, ISSR.maxH), x = WIDTH + 10;
+    const grow = Math.sqrt(this.lateRamp());   // long flights: bigger patches (area grows with the ramp)
+    const w = Math.round(Phaser.Math.Between(ISSR.minW, ISSR.maxW) * grow);
+    const h = Math.min(SKY_H - 40, Math.round(Phaser.Math.Between(ISSR.minH, ISSR.maxH) * grow)), x = WIDTH + 10;
     // Never fill a storm gap: there is always a way through without a contrail (10 tries, else skip).
     for (let k = 0; k < 10; k++) {
       const y = Phaser.Math.Between(10, SKY_H - h - 10);
@@ -1464,7 +1469,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (!scoring) return;
-    const rate = (isDay ? CLIMATE.sunBlockedPerCol : CLIMATE.heatTrappedPerCol) * blocked * strength;
+    const rate = (isDay ? CLIMATE.sunBlockedPerCol * this.kit.vapour ** CLIMATE.dayWaterPower : CLIMATE.heatTrappedPerCol * this.kit.vapour ** CLIMATE.nightWaterPower) * blocked * strength;
     this.heat += rate * dt;
     if (isDay) { this.sunBlocked += -rate * dt; this.breakdown.sun += -rate * dt; }
     else { this.heatTrapped += rate * dt; this.breakdown.night += rate * dt; }

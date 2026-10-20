@@ -78,10 +78,10 @@ const KEY = 'contrailPilot.v2';
   check((await p.$$('#iLinks a, #iLinks span')).length > 0, 'info pop-up has no links');
   await p.click('#iClose');
 
-  // 4. The flight uses the upgrades: SAF 25% = 0.85 CO2; radar reveals icy air from 100 px.
+  // 4. The flight uses the upgrades: SAF 25% = 0.9 CO2 (raised 2026-10-21 for balance); radar reveals icy air from 100 px.
   await p.click('#tabFly'); await p.click('#goBtn'); await p.waitForTimeout(2400);
   const kit = await scene(() => { const s = game.scene.getScene('game'); return { co2: s.co2Rate, reveal: s.kit.revealPx }; });
-  check(Math.abs(kit.co2 - 0.85) < 1e-9, `SAF 25% cruise CO2 should be 0.85, got ${kit.co2}`);
+  check(Math.abs(kit.co2 - 0.9) < 1e-9, `SAF 25% cruise CO2 should be 0.9, got ${kit.co2}`);
   check(kit.reveal === 100, `radar 1 should reveal at 100, got ${kit.reveal}`);
 
   // 5. Planting: a parcel dropped so it lands on a soil plot plants a tree that cools; one that

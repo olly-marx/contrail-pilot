@@ -159,6 +159,11 @@ export const CLIMATE = {
   co2ToHeat: 1.5,      // heat per second per gauge unit (normal fuel overheats at ~6.5 km: ROME needs upgrades)
   sunBlockedPerCol: -0.66,  // per second, per light column a contrail blocks (day)
   heatTrappedPerCol: 0.93,  // per second, per heat column a contrail traps (night)
+  // Late game (2026-10-21): once CO2 is solved, contrails are the big thing left, as in real life.
+  nightWaterPower: 1,       // night trapping x (fuel water)^this: hydrogen's extra water = thicker night contrails
+  dayWaterPower: 0,         // day shade x (fuel water)^this: ...and more shade by day, so good flying pays
+  lateFrom: 3000,           // km into a flight where the long-haul ramp starts...
+  latePer10k: 2.0,          // ...then +this x icy air AT NIGHT (how often and how big) per 10,000 km: dodging matters more and more
   dangerLine: 100,
   barMin: -50,
   gaugeMax: 3.0,

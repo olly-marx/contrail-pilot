@@ -135,8 +135,15 @@ time trees cooled); `tests/ponds.cjs`.
 
 ## TO DO: balance, progression and onboarding (asked 2026-10-21; not started unless marked)
 
-Balance (IN PROGRESS, local only, not committed: hydrogen CO2 0.25, night contrails x fuel water,
-long-flight icy-air ramp at NIGHT only; `tools/balance.cjs` = seeded straight vs smart autopilots).
+Balance DONE 2026-10-21 (`tools/balance.cjs`: seeded, repeatable; straight vs smart autopilots;
+crashes off; median of seeds 1-3). Changes: hydrogen CO2 0 -> 0.25; SAF CO2 0.85/0.7/0.45 ->
+0.9/0.8/0.65; night contrail heat x fuel water (hydrogen 2.5x); from 3,000 km into a flight icy air
+AT NIGHT comes more often and bigger (+2.0x per 10,000 km). Results (straight / smart, km):
+none 5,423 / 6,130 (unchanged early game); SAF max 13,285 / 33,375; hydrogen max 9,394 / 25,813.
+Tried and dropped: stronger night contrails on long flights (hurt careful flying as much as careless);
+hydrogen day shade boost (helped the straight pilot as much); ramping day icy air (SAF smart pilot then
+never overheated: shade banked without limit). The smart pilot sees all icy air and still spends
+~15% of the night in it (each tap hops ~40 px).
 User's rules:
 - Option (a): ignoring contrails is punished. Target for a fully upgraded plane: straight pilot
   overheats ~10,000 km, near-perfect pilot ~25,000-30,000 km and STILL overheats eventually

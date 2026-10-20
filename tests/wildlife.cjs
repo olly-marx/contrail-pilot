@@ -42,7 +42,7 @@ const WILD = { planted: { spruce: 3, birch: 4, oak: 4, rowan: 4, orchard: 4 }, l
   check(wild.w.treeKinds.length >= 4, `high biodiversity should show several tree kinds: ${wild.w.treeKinds}`);
   check(wild.sky > 0 && wild.w.wildKinds.length >= 3, `high biodiversity should have birds (${wild.sky}) and wild animals (${wild.w.wildKinds})`);
   check(bare.grey > 0.4, `normal fuel exhaust should be clearly grey (alpha ${bare.grey})`);
-  check(wild.grey < 0.05 && wild.white > 1.5 * bare.white, `hydrogen exhaust should be white vapour, not grey (grey ${wild.grey}, white ${wild.white} vs ${bare.white})`);
+  check(wild.grey < 0.3 * bare.grey && wild.white > 1.5 * bare.white, `hydrogen exhaust should be mostly white vapour, far less grey than normal fuel (hydrogen CO2 is 0.25 since 2026-10-21) (grey ${wild.grey}, white ${wild.white} vs ${bare.white})`);
   check(cabinOnly.co2 < bare.co2, `Greener Cabin should lower CO2 (${cabinOnly.co2} vs ${bare.co2})`);
   check(errs.length === 0, `page errors: ${errs}`);
 

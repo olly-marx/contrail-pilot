@@ -34,7 +34,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const k = lv => loadout({ levels: lv, fuel: 'kerosene' });
     return { none: k({}), air3: k({ airframe: 3 }), wings2: k({ wings: 2 }), gear2: k({ gear: 2 }), hold3: k({ hold: 3 }), lens2: k({ lens: 2 }), fc2: k({ forecast: 2 }), nur2: k({ nursery: 2 }), eng5: k({ engine: 5 }), soil3: k({ soil: 3 }), radar4: k({ radar: 4 }) }; });
   check(Math.abs(kit.air3.co2Takeoff / kit.none.co2Takeoff - 0.6) < 1e-6 && kit.air3.co2Cruise === kit.none.co2Cruise, `Lighter Plane 3: take-off CO2 x0.6, cruise unchanged: ${kit.none.co2Takeoff} -> ${kit.air3.co2Takeoff}`);
-  check(kit.none.gravity === 1 && kit.wings2.gravity === 0.8 && kit.gear2.flare === 1.5 && kit.hold3.perSkip === 0.8 && kit.none.perSkip === 0.5, `wings / gear / hold values: ${JSON.stringify([kit.wings2.gravity, kit.gear2.flare, kit.hold3.perSkip, kit.none.perSkip])}`);
+  check(Math.abs(kit.wings2.co2Cruise / kit.none.co2Cruise - 0.9) < 1e-6 && kit.gear2.flare === 1.5 && kit.hold3.perSkip === 0.8 && kit.none.perSkip === 0.5, `wings / gear / hold values: ${JSON.stringify([kit.wings2.co2Cruise, kit.gear2.flare, kit.hold3.perSkip, kit.none.perSkip])}`);
   check(kit.none.dodgeCrystals === 1 && kit.lens2.dodgeCrystals === 3 && kit.none.dodgesPerNight === 3 && kit.fc2.dodgesPerNight === 8 && kit.nur2.grow === 0.5, `lens / forecast / nursery values: ${JSON.stringify([kit.lens2.dodgeCrystals, kit.fc2.dodgesPerNight, kit.nur2.grow])}`);
   check(Math.abs(kit.eng5.co2Cruise / kit.none.co2Cruise - 0.55) < 1e-6 && kit.soil3.plotW === 96 && kit.radar4.revealPx === 300, `deeper levels: engine 5, soil 3, radar 4: ${[kit.eng5.co2Cruise, kit.soil3.plotW, kit.radar4.revealPx]}`);
 
@@ -50,7 +50,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       setTimeout(() => { res({ mult, fall, stage: s.trees[s.trees.length - 1].stage, kit: { dc: s.kit.dodgeCrystals, dpn: s.kit.dodgesPerNight } }); s.finish = () => {}; }, 100);
     }, 150); }));
   check(Math.abs(g.mult - 2.6) < 1e-6, `Bigger Hold 3: 2 airports passed should be x2.6, got x${g.mult}`);
-  check(g.fall > 0 && g.fall < 900 * 0.85, `Long Wings 2: the plane should fall at ~0.8 of normal gravity (900), got ${Math.round(g.fall)} px/s^2`);
+  check(Math.abs(g.fall - 900) < 60, `no upgrade changes the controls: the plane should fall at normal gravity (900) even with Long Wings, got ${Math.round(g.fall)} px/s^2`);
   check(g.stage >= 1, `Tree Nursery 2: a 5 s old tree should be young (stage 1), got stage ${g.stage}`);
 
   // 4. An old save (before trees of upgrades) still loads and shows the hangar without errors.

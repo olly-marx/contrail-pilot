@@ -152,12 +152,12 @@ export const LINES = [
   {
     id: 'wings', name: 'Long Wings', group: 'Plane', tree: 'Plane', requires: { line: 'airframe', level: 1 },
     levels: [
-      { cost: 45, crystals: 3, name: 'Longer wings', short: 'Your plane falls more gently.', gravity: 0.9 },
-      { cost: 110, crystals: 6, name: 'Glider wings', short: 'Floats like a glider!', gravity: 0.8 },
+      { cost: 45, crystals: 3, name: 'Longer wings', short: 'Less fuel to stay up: 5% less CO2.', co2: 0.95 },
+      { cost: 110, crystals: 6, name: 'Glider wings', short: 'Glider-like wings: 10% less CO2.', co2: 0.9 },
     ],
     info: {
       what: 'Long thin wings make lots of lift without much drag, like a glider.',
-      why: 'With more lift your plane drops more slowly, so it is easier to steer through gaps.',
+      why: 'More lift for less drag means the engines work less hard, so they burn less fuel.',
       fact: 'Some new plane wings are so long that the tips fold up so the plane fits at the airport!',
       links: ['brahmal'],
     },
@@ -233,10 +233,11 @@ export const LINES = [
 export const FUELS = {
   // `water`: water vapour in the exhaust (drawn as white wisps). Hydrogen makes about 2.5x as much.
   kerosene: { name: 'Normal fuel', co2: 1.0, water: 1.0, contrailEvery: CONTRAIL.every, contrailLife: CONTRAIL.life },
-  saf25:    { name: 'A bit of SAF', co2: 0.85, water: 1.05, contrailEvery: 14, contrailLife: 6500 },
-  saf50:    { name: 'Half SAF', co2: 0.7, water: 1.1, contrailEvery: 17, contrailLife: 5500 },
-  saf100:   { name: 'All SAF', co2: 0.45, water: 1.15, contrailEvery: 22, contrailLife: 4500 },
-  hydrogen: { name: 'Hydrogen', co2: 0.0, water: 2.5, contrailEvery: 8, contrailLife: 9000 },
+  saf25:    { name: 'A bit of SAF', co2: 0.9, water: 1.05, contrailEvery: 14, contrailLife: 6500 },
+  saf50:    { name: 'Half SAF', co2: 0.8, water: 1.1, contrailEvery: 17, contrailLife: 5500 },
+  saf100:   { name: 'All SAF', co2: 0.65, water: 1.15, contrailEvery: 22, contrailLife: 4500 },
+  hydrogen: { name: 'Hydrogen', co2: 0.25, water: 2.5,   // co2 0.25: making hydrogen uses energy, so never quite zero
+    contrailEvery: 8, contrailLife: 9000 },
 };
 
 
@@ -313,12 +314,13 @@ export function loadout(save) {
   const magnet = level(save, 'magnet') ? lineById('magnet').levels[level(save, 'magnet') - 1] : null;
   const at = (id, key, none) => level(save, id) ? lineById(id).levels[level(save, id) - 1][key] : none;   // the bought level's value
   const airframe = at('airframe', 'takeoff', 1);
+  const wings = at('wings', 'co2', 1);   // Long Wings: less CO2. (Upgrades never change the controls: players learn them.)
   return {
     fuelId,
-    co2Cruise: CLIMATE.co2Cruise * fuel.co2 * eng * cabin,
-    co2Takeoff: CLIMATE.co2Takeoff * fuel.co2 * eng * cabin * airframe,
+    co2Cruise: CLIMATE.co2Cruise * fuel.co2 * eng * cabin * wings,
+    co2Takeoff: CLIMATE.co2Takeoff * fuel.co2 * eng * cabin * wings * airframe,
     // Exhaust plume: grey puffs as dark as the CO2, white wisps as thick as the water vapour.
-    smoke: fuel.co2 * eng * cabin,
+    smoke: fuel.co2 * eng * cabin * wings,
     vapour: fuel.water,
     contrailEvery: fuel.contrailEvery,
     contrailLife: fuel.contrailLife,
@@ -327,7 +329,6 @@ export function loadout(save) {
     tree: trees ? { parcels: trees.parcels, species: speciesOwned(save) } : null,
     pickup: magnet ? magnet.pickup : 12,
     plotW: soil ? soil.plotW : PARCEL.plotW,
-    gravity: at('wings', 'gravity', 1),           // x PLANE.gravity
     flare: at('gear', 'flare', 1),                // x the landing window (AIRPORT.flareFrom / flareHeight)
     perSkip: at('hold', 'perSkip', CARGO.multiplierPerSkip),
     dodgeCrystals: at('lens', 'dodge', CRYSTALS.dodge),

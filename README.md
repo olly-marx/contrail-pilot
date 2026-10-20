@@ -89,3 +89,10 @@ node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earn
 
 `tests/flight.cjs` lands an autopilot at the second airport and forces day and night over a line
 of contrails to check that sunbeams are blocked by day and heat is trapped only at night.
+
+### Balance probe
+
+`node tools/balance.cjs` (with the server running) flies a straight pilot and a near-perfect "smart"
+pilot on fixed random seeds, much faster than real time, and prints how far each gets before the
+Earth overheats, per plane (none / all SAF / hydrogen). `PLANES=hydrogen SEEDS=1,2,3 MAX=100000`.
+Slow (minutes), so it is a tool, not a CI test. Latest numbers are in STATE.md.
