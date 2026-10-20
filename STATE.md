@@ -133,6 +133,34 @@ DONE 2026-10-20 from the same message: ponds that "follow the plane" after a whi
 (stray flight-setup lines inside the per-frame tree-cooling code emptied the pond list each
 time trees cooled); `tests/ponds.cjs`.
 
+## TO DO: balance, progression and onboarding (asked 2026-10-21; not started unless marked)
+
+Balance (IN PROGRESS, local only, not committed: hydrogen CO2 0.25, night contrails x fuel water,
+long-flight icy-air ramp at NIGHT only; `tools/balance.cjs` = seeded straight vs smart autopilots).
+User's rules:
+- Option (a): ignoring contrails is punished. Target for a fully upgraded plane: straight pilot
+  overheats ~10,000 km, near-perfect pilot ~25,000-30,000 km and STILL overheats eventually
+  (possible but very hard, never impossible).
+- Saving up cooling is GOOD (bank it when it's easy, spend it when it's hard). No floor on cooling.
+- NO upgrade may change the controls (people learn them). Long Wings was changed to CO2 for this.
+- Upgrades are what let you keep completing missions.
+- The longest runs must be IMPOSSIBLE without a full set of trees planted (trees as the late-game
+  enabler for very long flights).
+
+Progression:
+- Tiered sets of missions/challenges by level and upgrades owned: each stage has its own kinds of
+  challenge. Some funny, e.g. "Crash into birds for the first time" when you first reach the
+  distances where birds appear.
+- Super-tiered plane and nature upgrades that get more and more technical, as a chance to present
+  research from other groups at Imperial (needs the user to name groups / projects).
+- Re-measure every upgrade's price and value per stage (flights of saving needed; no useless or
+  dominant level), after the balance is settled.
+
+Onboarding ("forced action" tutorials, like proper games):
+- First time in the game: must choose a pilot name, then be shown the leaderboard.
+- After the first flight: a full guided tour of the hangar.
+- Whenever something new unlocks: a "tap here" pointer tutorial that walks you through it.
+
 ## PHASE 2 (written down 2026-10-20 at the user's request; not started)
 
 - **Wild area**: from the Biodiversity screen, a screen showing your forest/land.
