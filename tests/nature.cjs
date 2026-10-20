@@ -56,14 +56,19 @@ const KEY = 'contrailPilot.v2';
   await p.click('#hGoTop'); await p.waitForTimeout(800);
   check(await scene(() => !!game.scene.getScene('game').flowers), 'meadow flowers should appear on the ground');
 
-  // 5. The first planted tree pauses the game to explain the Biodiversity meter.
-  await setSave({ ...base, seenTips: ['x-bars', 'x-plots'], levels: { trees: 1 } }); await p.reload(); await p.waitForTimeout(600);
+  // 5. Tree school: the first planted tree pauses to explain what trees do for the climate (CO2,
+  // and that a cleaner plane + contrails matter more), then, once calm, the Biodiversity meter.
+  await setSave({ ...base, seenTips: ['x-bars', 'x-plots', 'tree-1'], levels: { trees: 1 } }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#goBtn'); await p.waitForTimeout(2400);
   await scene(() => { const s = game.scene.getScene('game'); s.storms = []; s.nextStormAt = 1e9; s.plane.y = 200; s.plane.vy = 0; s.addPlot(100); s.parcelLanded(110, 'spruce'); });
   const ex = await scene(() => { const s = game.scene.getScene('game'); return { explaining: s.explaining, frozen: s.frozen, text: document.getElementById('coachText').textContent }; });
-  check(ex.explaining && ex.frozen && /Biodiversity/.test(ex.text), `first planting should pause and explain Biodiversity: ${JSON.stringify(ex)}`);
-  await p.click('#coachOk');
-  check(await scene(() => !game.scene.getScene('game').frozen), 'tapping the captain should carry on');
+  check(ex.explaining && ex.frozen && /CO2/.test(ex.text) && /cleaner plane/.test(ex.text), `first planting should pause and explain trees and CO2: ${JSON.stringify(ex)}`);
+  await p.waitForTimeout(800); await p.click('#coachOk');
+  check(await scene(() => !game.scene.getScene('game').frozen), 'OK should carry on');
+  await scene(() => { const s = game.scene.getScene('game'); s.nextStormAt = 1e9; s.storms = []; s.birds = []; s.turbs = []; s.heat = 0; });
+  let bioTip = '';
+  for (let i = 0; i < 40 && !/Biodiversity/.test(bioTip); i++) { await p.waitForTimeout(200); await scene(() => { const s = game.scene.getScene('game'); s.plane.y = 200; s.plane.vy = 0; s.heat = 0; }); bioTip = await scene(() => game.scene.getScene('game').explaining ? document.getElementById('coachText').textContent : ''); }
+  check(/Biodiversity/.test(bioTip), `then the Biodiversity step should follow: "${bioTip}"`);
 
   console.log({ fails, errs, bio, kinds });
   if (errs.length) fails.push('page errors');

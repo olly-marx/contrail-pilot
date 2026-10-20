@@ -170,6 +170,16 @@ Gotcha that broke the live site once: `makeTextures()` returns early if a guard 
 when a texture moves to a PNG the guard must be a code-only key, or better a per-key
 `if (!this.textures.exists(key))` skip (asked the art session to do this).
 
+## Tip pictures wanted from the art session (requested 2026-10-20)
+
+Tips name a drawing; it shows once `assets/ui/<name>.png` exists (words only until then; same
+style and size as `lesson-storm.png` etc.). Wanted:
+`lesson-plot` (brown soil patch, parcel falling down-and-forwards, the X), `lesson-tree-co2`
+(a tree pulling CO2 bubbles from the air, small next to a plane's CO2 cloud), `lesson-biodiversity`
+(3 different trees with animals), `lesson-bars` (the CO2 gauge + Earth bar), `lesson-hot` (red-full
+Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (golden seed = 3),
+`lesson-crystals` (ice crystal icon), `lesson-turbulence`, `lesson-birds`, `lesson-nofly`.
+
 ## Known flaky tests
 
 - `tests/hazards.cjs` fails ~1 in 6 runs ON c1bf7d1 TOO (measured 2026-10-19: 6/16 on the clean

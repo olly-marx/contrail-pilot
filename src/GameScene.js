@@ -283,7 +283,8 @@ export class GameScene extends Phaser.Scene {
 
   // A new mechanic: pause the game and let the captain explain it, once per device.
   // seenTips containing '*' skips all explanations (used by automated tests).
-  explain(id, html) {
+  // `pic`: an assets/ui/*.png drawing shown with the words; text only until the file exists.
+  explain(id, html, pic = null) {
     if (this.school || this.explaining) return false;
     const seen = this.save.seenTips;
     if (seen.includes(id) || seen.includes('*')) return false;
@@ -292,7 +293,8 @@ export class GameScene extends Phaser.Scene {
     this.ui.hideToast();
     this.frozen = true;
     this.explaining = true;
-    this.ui.coach(html, true, false);
+    this.autoText.setVisible(false);
+    this.ui.coach(html, true, false, true, pic);
     return true;
   }
 
@@ -319,7 +321,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   // A tip that waits for a calm moment: flying, nothing to hit on screen. Checks every 0.5 s.
-  explainWhenClear(id, html) {
+  explainWhenClear(id, html, pic = null) {
     if (this.save.seenTips.includes(id) || this.save.seenTips.includes('*')) return;
     const tryNow = () => {
       if (this.state === 'over' || this.state === 'landing') return;
@@ -327,7 +329,7 @@ export class GameScene extends Phaser.Scene {
         || this.storms.some(st => st.rects[0].x < WIDTH && st.rects[0].x + st.rects[0].width > this.plane.x - 20)
         || this.birds.length || this.turbs.length;
       if (busy) { this.time.delayedCall(500, tryNow); return; }
-      this.explain(id, html);
+      this.explain(id, html, pic);
     };
     this.time.delayedCall(1200, tryNow);
   }
@@ -417,7 +419,7 @@ export class GameScene extends Phaser.Scene {
         this.setState('playing'); this.plane.vy = 0;
         this.holdText.setText('');
         if (!this.school) { this.popup(WIDTH / 2, SKY_H / 2, 'Now TAP to fly!', '#ffe15a', 16); this.startGrace(); }
-        if (!this.school) this.explainWhenClear('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!');
+        if (!this.school) this.explainWhenClear('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!', 'lesson-bars');
       }
     } else if (this.state === 'playing' && this.inGrace()) {
       const target = this.autopilotTarget();
@@ -536,7 +538,7 @@ export class GameScene extends Phaser.Scene {
     if (this.inGrace()) { this.updateTexts(inIssr); return; }   // the breather: nothing can crash you
     if (this.heat >= CLIMATE.dangerLine * 0.75 && !this.warnedHot) {
       this.warnedHot = true;
-      if (this.explain('x-hot', 'The Earth is getting <b>too hot</b>! If the red bar on the right reaches the top, your flight is over.<br>Land soon, make <b>shade</b> in the daytime, or stay out of icy air at night.')) return;
+      if (this.explain('x-hot', 'The Earth is getting <b>too hot</b>! If the red bar on the right reaches the top, your flight is over.<br>Land soon, make <b>shade</b> in the daytime, or stay out of icy air at night.', 'lesson-hot')) return;
       this.ui.toast('Planet overheating!', this.isDay ? 'Make contrails in the sunshine, or land soon!' : 'Stay out of icy air at night, or land soon!', 'bad', 3);
     }
     if (this.heat >= CLIMATE.dangerLine) return this.finish({ reason: 'The planet got too hot!\nFlight grounded.', sound: 'overheat' });
@@ -834,9 +836,11 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(450, () => this.popup(cx, SKY_H - 36, `+${gain.toFixed(1)} biodiversity${first ? ' (new kind!)' : ''}`, first ? '#ffe15a' : '#b8f5c8'));
     sfx.plant();
     buzz(30);
-    if (first && SPECIES[kind].native) this.explain(`x-species-${kind}`, `<b>${SPECIES[kind].name}!</b> ${SPECIES[kind].fact}<br>New kinds of tree fill your <b>Biodiversity</b> meter the most.`);
-    this.explain('x-nature', 'Your <b>Biodiversity</b> meter grew! It shows how full of life your land is.<br><b>Different kinds</b> of trees help wildlife much more than lots of the same kind.');
-    this.ui.tipOnce('firstTree', 'Tree planted!', 'It cools the Earth for the rest of your flight. Plant early: trees grow!', 'good', 3.5);
+    // Tree school, steps 2 and 3 (step 1 is the first soil patch): what a tree does for the
+    // climate, then Biodiversity. A new native kind's fact waits until both are done.
+    const taught = this.explain('tree-2', '<b>TREE SCHOOL</b><br>Your tree takes <b>CO2</b> out of the air as it grows. Bigger trees take a bit more.<br>But trees are slow! A <b>cleaner plane</b> and <b>smart contrails</b> help the Earth much more.', 'lesson-tree-co2');
+    if (taught) this.explainWhenClear('tree-3', '<b>TREE SCHOOL</b><br>Your <b>Biodiversity</b> meter shows how full of life your land is.<br><b>Different kinds</b> of trees bring much more wildlife than lots of the same kind. Fill it up!', 'lesson-biodiversity');
+    else if (first && SPECIES[kind].native) this.explain(`x-species-${kind}`, `<b>${SPECIES[kind].name}!</b> ${SPECIES[kind].fact}<br>New kinds of tree fill your <b>Biodiversity</b> meter the most.`);
   }
 
   addPlot(x) {
@@ -851,7 +855,7 @@ export class GameScene extends Phaser.Scene {
     parts.push(marker);
     this.plotLayer.add(parts);
     this.plots.push({ x, parts, marker, used: false });
-    if (this.parcels > 0) this.time.delayedCall(900, () => this.explain('x-plots', '<b>Brown soil</b> = a place to plant a tree!<br>Press <b>DROP</b> a little <b>before</b> you reach it: parcels float forwards as they fall. The X shows where it will land.'));
+    if (this.parcels > 0) this.time.delayedCall(900, () => this.explain('tree-1', '<b>TREE SCHOOL</b><br><b>Brown soil</b> = a place to plant a tree!<br>Press <b>DROP</b> a little <b>before</b> you reach it: parcels float down AND forwards. The X shows where it will land.', 'lesson-plot'));
   }
 
   drawAim() {
@@ -878,7 +882,7 @@ export class GameScene extends Phaser.Scene {
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
       this.airportIndex++;
       this.airportsSkipped++;
-      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${km(AIRPORT.every)} ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`);
+      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${km(AIRPORT.every)} ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`, 'lesson-bonus');
       this.nextAirport = {
         worldX: na.worldX + AIRPORT.every,
         name: AIRPORT.names[this.airportIndex % AIRPORT.names.length],
@@ -962,7 +966,7 @@ export class GameScene extends Phaser.Scene {
 
   newHazard(id, title, body) {
     if (this.school) return;
-    if (!this.explain(`hazard-${id}`, `<b>${title}</b><br>${body}`)) {
+    if (!this.explain(`hazard-${id}`, `<b>${title}</b><br>${body}`, `lesson-${id.toLowerCase()}`)) {
       if (!this.hazardSeen) this.hazardSeen = {};
       if (!this.hazardSeen[id]) { this.hazardSeen[id] = true; this.popup(WIDTH / 2, 70, `${{ noFly: 'No-fly zone', turbulence: 'Turbulence', birds: 'Birds' }[id]} ahead!`, '#ff8080'); }
     }
@@ -1102,7 +1106,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
     if (golden === null) golden = this.distancePx > TOKENS.goldenAfter && Math.random() < TOKENS.goldenChance;
-    if (golden) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN seed</b>! It is worth <b>3 seeds</b>. They only appear on long flights.'));
+    if (golden) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN seed</b>! It is worth <b>3 seeds</b>. They only appear on long flights.', 'lesson-gold'));
     const img = this.add.image(x, y, golden ? 'token-gold' : 'token').setOrigin(0);
     this.fxLayer.add(img);
     this.tokens.push({ img, baseY: y, phase: Math.random() * 6, value: golden ? 3 : 1 });
@@ -1512,7 +1516,7 @@ export class GameScene extends Phaser.Scene {
     const c = this.add.image(this.plane.x + 25, this.plane.y, 'crystal').setScale(2);
     this.fxLayer.add(c);
     this.tweens.add({ targets: c, x: this.crysIcon.x, y: this.crysIcon.y, scale: 1, duration: 600, ease: 'Quad.easeIn', onComplete: () => c.destroy() });
-    this.explain('x-crystals', '<b>ICE CRYSTALS!</b> Contrails are made of ice crystals. You earn them for <b>smart contrail flying</b>: dodging icy air at night, and nights with no contrails.<br>Spend them in the hangar on research and rewilding. You keep them even if you crash!');
+    this.explain('x-crystals', '<b>ICE CRYSTALS!</b> Contrails are made of ice crystals. You earn them for <b>smart contrail flying</b>: dodging icy air at night, and nights with no contrails.<br>Spend them in the hangar on research and rewilding. You keep them even if you crash!', 'lesson-crystals');
   }
 
   coolSparkle() {

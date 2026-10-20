@@ -380,7 +380,7 @@ export class UI {
     $('coachText').innerHTML = text;
     const img = $('coachPic');
     img.hidden = !pic;
-    if (pic) img.src = `assets/ui/${pic}.png`;
+    if (pic) { img.onerror = () => { img.hidden = true; }; img.src = `assets/ui/${pic}.png`; }   // no drawing yet: words only
     $('coachDim').hidden = !(pic && waiting);           // a lesson: the game is frozen and dimmed behind it
     $('coach').classList.toggle('lesson', !!(pic && waiting));
     const ok = $('coachOk');
