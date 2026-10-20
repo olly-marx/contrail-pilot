@@ -156,12 +156,25 @@ Progression:
 - Re-measure every upgrade's price and value per stage (flights of saving needed; no useless or
   dominant level), after the balance is settled.
 
+Trees for long runs (user agreed 2026-10-21): trees stay small on short flights but grow bigger
+and keep helping the longer a flight goes, so a full forest of every kind is what takes a top plane
+from ~25,000 km to a full lap. Without the full set, the longest runs are impossible.
+
 Onboarding ("forced action" tutorials, like proper games):
 - First time in the game: must choose a pilot name, then be shown the leaderboard.
 - After the first flight: a full guided tour of the hangar.
 - Whenever something new unlocks: a "tap here" pointer tutorial that walks you through it.
 
 ## PHASE 2 (written down 2026-10-20 at the user's request; not started)
+
+Added 2026-10-21:
+- **Regional climates and geology** along the route (feeds the land types below).
+- **Pixel cities to fly past**: city skylines and landmarks (Eiffel Tower etc.) at each city on the
+  route (art session).
+- **More cities in the southern hemisphere**, and NOT one fixed order: choose directions and globe-trot
+  (the journey in `src/route.js` is currently one fixed eastward loop; laps would need redefining).
+- **Wild area, by region / continent**: a collection screen of the tiny animals, birds and plants
+  you've gathered, like a Pokedex but fun rather than detailed.
 
 - **Wild area**: from the Biodiversity screen, a screen showing your forest/land.
 - **Continents and geography**: regions with their own land type (forest, mountain, plains, ...),
