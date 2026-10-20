@@ -121,6 +121,14 @@ Asked by the user, in this order of their message (nothing started yet; explain 
 5. UX overhaul: "navigating back and forth is still super strange" (title / hangar / pilot /
    boards / results / about are separate pop-ups with their own back buttons; design one clear
    navigation model).
+STATUS 2026-10-20: all five built and pushed. 1 rewards (`src/rewards.js`: mission prizes, 3 of 16
+challenges, +15/+1 new city, +300/+25 lap + Round the World badge); 2 upgrade trees (16 lines,
+53 levels; `tree` + `requires` branches; new: Lighter Plane, Long Wings, Landing Gear, Bigger Hold,
+Crystal Lens, Weather Forecast, Tree Nursery); 3 journey (`src/route.js`, 16 cities, legs real km
+clamped 1000-3000, a lap 31,520 km; flights start at `save.city`); 4 lap bonus; 5 the bottom bar
+(FLY / HANGAR / NATURE / PILOT / BOARDS, `ui.go()`). Decided by the user: flights start where you
+landed; distances real up to a max with short legs stretched; bottom bar.
+PENDING (needs the user's OK: database change): a "laps" stat on the online leaderboard.
 DONE 2026-10-20 from the same message: ponds that "follow the plane" after a while — fixed
 (stray flight-setup lines inside the per-frame tree-cooling code emptied the pond list each
 time trees cooled); `tests/ponds.cjs`.

@@ -75,6 +75,7 @@ node tests/features.cjs           # Citizen Zoo switch: off = no trace of it any
 node tests/gate.cjs               # grown-up gate: hold 2 s (mouse + touch) reveals a real Citizen Zoo link
 node tests/links.cjs              # every Learn more link has a real https URL; About page links and credit
 node tests/runway-back.cjs        # MENU button while parked on the runway: back to title, no flight counted
+node tests/upgrades.cjs           # upgrade trees: branches open after their parent; every new line changes the flight
 node tests/rewards.cjs            # mission prizes, 3 challenges, new-city bonus, lap of the world
 node tests/journey.cjs            # start where you landed, real-ish leg lengths, crash keeps you, lap at LONDON
 node tests/ponds.cjs              # ponds keep scrolling all flight (they used to freeze once trees cooled)

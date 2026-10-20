@@ -353,3 +353,10 @@ h2.sub { margin-top: -4px; }
 .rewards { display: grid; gap: 3px; font-size: 8px; }
 .rw { display: flex; justify-content: space-between; gap: 6px; padding: 5px 6px; background: #eaf7e6; }
 .rw.lap { background: var(--gold); font-size: 10px; }
+
+/* upgrade trees: a heading per tree, branches indented with a joining line */
+.tree-head { font-size: 11px; margin: 10px 0 2px; color: var(--night); border-bottom: 3px solid var(--ink); }
+.line.branch { position: relative; }
+.line.branch.d1 { margin-left: 14px; } .line.branch.d2 { margin-left: 28px; } .line.branch.d3 { margin-left: 42px; }
+.line.branch::before { content: ''; position: absolute; left: -10px; top: -8px; width: 8px; height: 26px;
+  border-left: 3px solid var(--muted); border-bottom: 3px solid var(--muted); }

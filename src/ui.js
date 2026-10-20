@@ -2,7 +2,7 @@ import { FEATURES, km } from './config.js';
 import { ROUTE, cityAt, legKm } from './route.js';
 import { missionReward, activeChallenges } from './rewards.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
-import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf } from './upgrades.js';
+import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
@@ -296,14 +296,20 @@ export class UI {
       b.onclick = () => { this.hTab = t; sfx.flap(); this.showHangar(); };   // keeps the bar's HANGAR / NATURE in step
     });
     const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
-    let lastGroup = null;
-    $('hUpgrades').innerHTML = LINES.filter(line => tabOf(line) === tab).map(line => {
-      // The Nature group gets a header with the Biodiversity meter.
-      const head = line.group === 'Nature' && lastGroup !== 'Nature' && unlocked(s, line)
-        ? `<div class="nature-head"><h3>NATURE</h3>${meterHTML(s)}<p class="small">Plant different kinds of trees and rewild land to fill it.</p></div>` : '';
-      lastGroup = line.group;
-      if (!unlocked(s, line)) {
-        return `<div class="line locked"><div><div class="group">${line.group}</div><div class="name">???</div><div class="small">${unlockText(line)}</div></div></div>`;
+    // Upgrade trees: a heading per tree, then each line followed by its branches (indented).
+    const TREES = tab === 'nature' ? ['Nature'] : ['Plane', 'Fuel', 'Science'];
+    const ordered = [];
+    const addWithBranches = (line, depth) => { ordered.push({ line, depth }); LINES.filter(l => l.requires && l.requires.line === line.id).forEach(l => addWithBranches(l, depth + 1)); };
+    for (const t of TREES) {
+      ordered.push({ head: t });
+      LINES.filter(l => l.tree === t && !(l.requires && lineById(l.requires.line).tree === t)).forEach(l => addWithBranches(l, 0));
+    }
+    $('hUpgrades').innerHTML = ordered.map(({ line, depth, head: tree }) => {
+      if (tree === 'Nature') return `<div class="nature-head"><h3>NATURE</h3>${meterHTML(s)}<p class="small">Plant different kinds of trees and rewild land to fill it.</p></div>`;
+      if (tree) return `<h3 class="tree-head">${tree.toUpperCase()}</h3>`;
+      const head = '', indent = depth ? ` branch d${Math.min(depth, 3)}` : '';
+      if (!unlocked(s, line)) {   // a branch shows its name and what it needs; other locked lines stay a surprise
+        return `<div class="line locked${indent}"><div><div class="group">${line.group}</div><div class="name">${line.requires ? line.name : '???'}</div><div class="small">${unlockText(line, s)}</div></div></div>`;
       }
       const have = level(s, line.id), next = nextLevel(s, line);
       const pips = line.levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
@@ -320,7 +326,7 @@ export class UI {
       const nextRow = next
         ? `<div class="next"><span>Next: <b>${next.name}</b>. ${next.short}</span>${btn}</div>`
         : '<div class="next"><span><b>All done!</b></span></div>';
-      return head + `<div class="line ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}">
+      return head + `<div class="line ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}${indent}">
         <div><div class="group">${line.group}</div><div class="name">${line.name}</div><div class="small">${nowName}</div><div class="pips">${pips}</div></div>
         <button class="infobtn" data-info="${line.id}" type="button" aria-label="About ${line.name}">i</button>
         ${nextRow}</div>`;

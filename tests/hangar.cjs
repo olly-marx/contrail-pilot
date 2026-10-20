@@ -13,7 +13,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
-    await p.addInitScript(c => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], landings: 9, seeds: 200, crystals: c, levels: { radar: 2 } })); }, crystals);
+    await p.addInitScript(c => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], landings: 9, seeds: 200, crystals: c, levels: { radar: 3 } })); }, crystals);
     await p.goto(URL); await p.waitForTimeout(900);
     return p;
   };
@@ -24,9 +24,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   await p.click('[data-buy=radar]'); await p.waitForTimeout(400);
   const s = JSON.parse(await p.evaluate(() => localStorage.getItem('contrailPilot.v2')));
-  check(s.levels.radar === 3 && s.seeds === 130 && s.crystals === 4, `last radar level should be bought: ${JSON.stringify({ radar: s.levels.radar, seeds: s.seeds, crystals: s.crystals })}`);
+  check(s.levels.radar === 4 && s.seeds === 50 && s.crystals === 0, `last radar level should be bought: ${JSON.stringify({ radar: s.levels.radar, seeds: s.seeds, crystals: s.crystals })}`);
   check(/All done!/.test(await radarRow(p)), `the maxed row should say All done!: "${await radarRow(p)}"`);
-  check(await p.textContent('#hTrees') === '130', `the seed count on screen should drop to 130, shows ${await p.textContent('#hTrees')}`);
+  check(await p.textContent('#hTrees') === '50', `the seed count on screen should drop to 50, shows ${await p.textContent('#hTrees')}`);
   check(p.errs.length === 0, `buying the last level threw: ${p.errs.join(' | ')}`);
 
   // 2. The bar along the bottom: from EVERY screen, one tap reaches EVERY other; exactly one
@@ -53,7 +53,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   p = await open(2);
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   check(await p.isDisabled('[data-buy=radar]'), 'short of crystals: BUY should be grey');
-  check(/need 3 more/.test(await radarRow(p)), `short of crystals: should say "need 3 more": "${await radarRow(p)}"`);
+  check(/need 7 more/.test(await radarRow(p)), `short of crystals: should say "need 7 more": "${await radarRow(p)}"`);
   await p.close();
 
   await b.close();

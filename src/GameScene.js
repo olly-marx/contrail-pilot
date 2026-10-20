@@ -437,7 +437,7 @@ export class GameScene extends Phaser.Scene {
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
       this.autoText.setVisible(false);
-      this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
+      this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * this.kit.gravity * dt);   // Long Wings: gentler
       // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
       // between you and it, the plane levels out and floats down onto the runway. With a storm in
       // the way you fall normally, so you can dive through its gap. Flaring burns extra CO2.
@@ -446,7 +446,7 @@ export class GameScene extends Phaser.Scene {
       const drop = SKY_H - this.spriteBottom();
       const clearPath = !this.storms.some(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < this.plane.x + Math.max(0, toStart) + PLANE.w);
       const room = toStart + AIRPORT.runwayLen - PLANE.w - 10;          // runway left before the far end
-      if (this.plane.vy > 0 && drop < AIRPORT.flareHeight && toStart < AIRPORT.flareFrom && room > 0 && clearPath) {
+      if (this.plane.vy > 0 && drop < AIRPORT.flareHeight * this.kit.flare && toStart < AIRPORT.flareFrom * this.kit.flare && room > 0 && clearPath) {   // Landing Gear: wider window
         const v = Math.max(1, this.speed);
         // Before the runway: sink just slowly enough to reach it. Over it: gently, but fast
         // enough to touch down before the far end.
@@ -471,7 +471,7 @@ export class GameScene extends Phaser.Scene {
     // Trees keep cooling for the rest of the flight, more as they grow.
     for (const t of this.trees) {
       const age = this.elapsed - t.plantedAt;
-      const stage = age < 4 ? 0 : age < 9 ? 1 : 2;
+      const g = this.kit.grow, stage = age < 4 * g ? 0 : age < 9 * g ? 1 : 2;   // Tree Nursery: grows faster
       if (stage !== t.stage) { t.stage = stage; if (t.sprite.active) t.sprite.setTexture(`tree-${t.kind}-${stage}`); }
       const cool = SPECIES[t.kind].coolPerStage[stage] * dt;
       this.heat -= cool;
@@ -505,9 +505,9 @@ export class GameScene extends Phaser.Scene {
       // Dodged: icy air that was in your path at night, passed without making a contrail.
       if (!i.scored && i.x + i.width < box.x) {
         i.scored = true;
-        if (i.inPath && !i.entered && !this.isDay && this.state === 'playing' && !this.school && this.nightDodges < CRYSTALS.dodgesPerNight) {
+        if (i.inPath && !i.entered && !this.isDay && this.state === 'playing' && !this.school && this.nightDodges < this.kit.dodgesPerNight) {   // Weather Forecast: more per night
           this.nightDodges++; this.dodgesTotal++;
-          this.earnCrystals(CRYSTALS.dodge, 'dodged icy air!');
+          this.earnCrystals(this.kit.dodgeCrystals, 'dodged icy air!');   // Crystal Lens: more per dodge
         }
       }
       i.tilePositionY += dt * 4;
@@ -559,7 +559,7 @@ export class GameScene extends Phaser.Scene {
     if (this.hitBird(box)) return this.finish({ reason: 'Bird strike!\nYou hit a bird.' });
   }
 
-  multiplier() { return 1 + CARGO.multiplierPerSkip * this.airportsSkipped; }
+  multiplier() { return 1 + this.kit.perSkip * this.airportsSkipped; }   // Bigger Hold: grows faster
 
   hitbox() { return { x: this.plane.x, y: this.plane.y, w: PLANE.w, h: PLANE.h }; }
 
