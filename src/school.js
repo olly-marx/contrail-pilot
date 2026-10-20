@@ -76,7 +76,7 @@ export class School {
       { say: 'Get <b>low</b> just before the runway!',
         setup: () => {
           this.holdClock = true; s.clock = 2;
-          s.nextAirport = { worldX: s.distancePx + 520, name: AIRPORT.names[0], spawned: false };
+          s.nextAirport = { worldX: s.distancePx + 520, name: 'PARIS', spawned: false };   // flight school: LONDON to PARIS
         },
         done: () => s.state === 'landing' || s.state === 'over' },
     ];

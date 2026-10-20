@@ -6,6 +6,7 @@ import { School } from './school.js';
 import { Hud } from './Hud.js';
 import { loadout } from './upgrades.js';
 import { sendFlight } from './online.js';
+import { ROUTE, cityAt, legKm } from './route.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
@@ -113,9 +114,13 @@ export class GameScene extends Phaser.Scene {
     this.nightOwl = false;
     this.warnedHot = false;
 
+    // The journey (src/route.js): take off from the city you last landed in; flight school always
+    // starts in LONDON. airportIndex = airports passed so far this flight.
+    this.startCity = this.autostart === 'school' || !this.save.tutorialDone ? 0 : (this.save.city || 0);
+    this.homeName = cityAt(this.startCity).name;
     this.airportIndex = 0;
     this.airportsSkipped = 0;
-    this.nextAirport = { worldX: AIRPORT.every, name: AIRPORT.names[0], spawned: false };
+    this.nextAirport = this.airportAhead(0);
 
     // ---- draw order: sky scenery, ISSRs, contrails, light, storms, plane, ground, HUD ----
     this.skyGfx = this.add.graphics();   // stars, sun, moon
@@ -151,7 +156,7 @@ export class GameScene extends Phaser.Scene {
     this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
     this.treeLayer = this.add.layer();
     this.runwayLayer = this.add.layer();
-    this.addRunway(-60, AIRPORT.home);     // home runway under the plane
+    this.addRunway(-60, this.homeName);    // home runway under the plane: the city you take off from
     this.fxLayer = this.add.layer();       // particles and popups
 
     this.heatFx = this.add.graphics();   // red edges when the Earth overheats
@@ -237,9 +242,10 @@ export class GameScene extends Phaser.Scene {
   setState(s) { this.state = s; this.stateTime = 0; }
 
   startSchool() {
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify(this.save.levels)) { this.scene.restart({ go: true, mode: 'school' }); return; }
+    // Rebuild unless this scene is fresh, built with these upgrades AND in LONDON (school starts there).
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify(this.save.levels) || this.startCity !== 0) { this.scene.restart({ go: true, mode: 'school' }); return; }
     this.school = new School(this, this.ui);
-    this.nextAirport = { worldX: 1e9, name: AIRPORT.names[0], spawned: false };
+    this.nextAirport = { worldX: 1e9, name: cityAt(1).name, spawned: false };
     this.startFlight();
     this.school.begin();
   }
@@ -253,7 +259,7 @@ export class GameScene extends Phaser.Scene {
     this.ui.hideCoach();
     this.save.tutorialDone = true;
     writeSave(this.save);
-    this.nextAirport = { worldX: this.distancePx + AIRPORT.every, name: AIRPORT.names[0], spawned: false };
+    this.nextAirport = { worldX: this.distancePx + legKm(this.startCity), name: cityAt(this.startCity + 1).name, spawned: false };
     this.nextStormAt = this.distancePx + WIDTH + 100;
     this.nextIssrAt = this.distancePx + 100;
     this.nextTokenAt = this.distancePx + 100;
@@ -731,7 +737,12 @@ export class GameScene extends Phaser.Scene {
   }
 
   runwayUnder(box) {
-    return this.runways.find(r => r.strip.x <= box.x && box.x + box.w <= r.strip.x + AIRPORT.runwayLen && r.name !== AIRPORT.home);
+    return this.runways.find(r => r.strip.x <= box.x && box.x + box.w <= r.strip.x + AIRPORT.runwayLen && r.name !== this.homeName);
+  }
+
+  // The k-th airport ahead of the start city (0 = the next one), at worldX `from` + that leg.
+  airportAhead(k, from = 0) {
+    return { worldX: from + legKm(this.startCity + k), name: cityAt(this.startCity + k + 1).name, spawned: false };
   }
 
   inStormClearZone(worldX) {
@@ -877,12 +888,8 @@ export class GameScene extends Phaser.Scene {
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
       this.airportIndex++;
       this.airportsSkipped++;
-      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${km(AIRPORT.every)} ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`, 'lesson-bonus');
-      this.nextAirport = {
-        worldX: na.worldX + AIRPORT.every,
-        name: AIRPORT.names[this.airportIndex % AIRPORT.names.length],
-        spawned: false,
-      };
+      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${km(legKm(this.startCity + this.airportIndex))} ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`, 'lesson-bonus');
+      this.nextAirport = this.airportAhead(this.airportIndex, na.worldX);
       this.missedSign = { text: `Passed ${na.name}. Next: ${this.nextAirport.name}`, until: this.gameTime + 4000 };
     }
     const toAirport = this.nextAirport.worldX - this.distancePx;
@@ -1635,6 +1642,10 @@ export class GameScene extends Phaser.Scene {
     if (missionDone) this.save.mission = (this.save.mission || 0) + 1;
     const nextMission = this.school ? null : currentMission(this.save);
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
+    // The journey: landing moves you to that city; reaching LONDON again (or passing it) is a lap.
+    const reached = this.startCity + this.airportIndex + 1;   // index along the loop, past ROUTE.length after LONDON
+    const lap = landed && !this.school && reached >= ROUTE.length;
+    if (landed && !this.school) { this.save.city = reached % ROUTE.length; if (lap) this.save.laps = (this.save.laps || 0) + 1; }
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
     this.save.seeds += gained;
@@ -1644,7 +1655,7 @@ export class GameScene extends Phaser.Scene {
     writeSave(this.save);
 
     this.result = {
-      landed, landedAt: this.landedAt, reason, distance: m, heat, co2PerKm: Number(perKm),
+      landed, landedAt: this.landedAt, from: this.homeName, lap, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,

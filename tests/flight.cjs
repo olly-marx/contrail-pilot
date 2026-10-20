@@ -43,7 +43,7 @@ async function fly(p, { landAt }) {
   console.log('land-at-2nd:', JSON.stringify(a));
   if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT });
   if (!a.result || !a.result.landed) fails.push('did not land');
-  else if (a.result.landedAt !== 'AMSTERDAM') fails.push('landed at wrong airport ' + a.result.landedAt);
+  else if (a.result.landedAt !== 'BERLIN') fails.push('landed at wrong airport ' + a.result.landedAt);
   if (!a.states.includes('takeoff') || !a.states.includes('landing')) fails.push('missing takeoff/landing state');
   if (!a.sawNight) fails.push('never reached night');
 

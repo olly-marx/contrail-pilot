@@ -31,6 +31,7 @@ On a phone on the same Wi-Fi, open `http://<your-laptop-ip>:8000`.
 | `src/nature.js` | Tree species, rewilding projects and the Wild Land (biodiversity) meter |
 | `src/links.js` | "Learn more" links in the info pop-ups (some still to be filled in) |
 | `src/save.js` | Progress saved on the device (localStorage) |
+| `src/route.js` | The journey: 16 real cities round the world, leg lengths (real km, 1000-3000) |
 | `src/online.js` | Supabase: anonymous sign-in, pilot name, flight outbox, leaderboard() (optional: the game plays on offline) |
 | `src/pilot.js` | MY PILOT (name + profile) and LEADERBOARD screens |
 | `supabase/migrations/` | Database: players, flights, row-level security, word filter, the board scores |
@@ -73,6 +74,7 @@ node tests/features.cjs           # Citizen Zoo switch: off = no trace of it any
 node tests/gate.cjs               # grown-up gate: hold 2 s (mouse + touch) reveals a real Citizen Zoo link
 node tests/links.cjs              # every Learn more link has a real https URL; About page links and credit
 node tests/runway-back.cjs        # MENU button while parked on the runway: back to title, no flight counted
+node tests/journey.cjs            # start where you landed, real-ish leg lengths, crash keeps you, lap at LONDON
 node tests/ponds.cjs              # ponds keep scrolling all flight (they used to freeze once trees cooled)
 node tests/lanes.cjs              # every storm gap keeps a clear lane: no icy air or birds filling it
 node tests/banners.cjs            # day/night banners stop after the first 3 of each

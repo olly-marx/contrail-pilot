@@ -49,10 +49,10 @@ const KEY = 'contrailPilot.v2';
   const rm = await p.textContent('#rMission');
   check(/MISSION DONE/.test(rm) && /Land with 5 seeds/.test(rm), `results should say MISSION DONE and name the next: ${rm}`);
 
-  // 3b. Landing at AMSTERDAM (past PARIS) does not count as Land in PARIS.
+  // 3b. Landing at BERLIN (past PARIS) does not count as Land in PARIS.
   await setSave({ ...base, mission: 0 }); await p.reload(); await p.waitForTimeout(600);
   await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
-  await scene(() => { const s = game.scene.getScene('game'); s.airportsSkipped = 1; s.heat = 0; s.distancePx = s.nextAirport.worldX - 250; });
+  await scene(() => { const s = game.scene.getScene('game'); s.airportIndex = 1; s.airportsSkipped = 1; s.heat = 0; s.nextAirport = { ...s.airportAhead(1), worldX: s.distancePx + 250 }; });   // BERLIN, just ahead
   for (let i = 0; i < 150; i++) {
     const st = await scene(() => { const s = game.scene.getScene('game'); s.heat = 0; const toA = s.nextAirport.worldX - s.distancePx; if (toA > -20) { s.plane.y = 300; s.plane.vy = 0; } return s.state; });
     if (st === 'over') break;
@@ -61,12 +61,13 @@ const KEY = 'contrailPilot.v2';
   r = await scene(() => game.scene.getScene('game').result);
   check(r && r.landed && r.mission && !r.mission.done && /You landed in [A-Z]+\. PARIS is the FIRST airport/.test(r.mission.fail), `landing past PARIS should not complete Land in PARIS: ${JSON.stringify(r && r.mission)}`);
 
-  // 4. Passing an airport shows where the next one is.
-  await p.click('#againBtn'); await p.waitForTimeout(2300); await calm();
+  // 4. Passing an airport shows where the next one is (from LONDON: PARIS, then BERLIN).
+  await setSave({ ...base, mission: 0, city: 0 }); await p.reload(); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
   await scene(() => { const s = game.scene.getScene('game'); s.distancePx = s.nextAirport.worldX + 230; });
   for (let i = 0; i < 6; i++) { await hold(); await p.waitForTimeout(60); }
   const sign = await scene(() => game.scene.getScene('game').nextText.text);
-  check(/Passed PARIS\. Next: AMSTERDAM/.test(sign), `after passing PARIS the sign should name AMSTERDAM, got "${sign}"`);
+  check(/Passed PARIS\. Next: BERLIN/.test(sign), `after passing PARIS the sign should name BERLIN, got "${sign}"`);
 
   // 5. A mission needing an upgrade says so on the card.
   await setSave({ ...base, mission: 6 }); await p.reload(); await p.waitForTimeout(600);

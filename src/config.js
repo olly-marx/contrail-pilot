@@ -79,7 +79,7 @@ export const TAKEOFF = {
 };
 
 export const AIRPORT = {
-  every: 1500,         // px (= m) between airports
+  // Which cities and how far apart: the journey in src/route.js.
   runwayLen: 220,
   stormClearBefore: 120,  // no storms this far before the runway...
   stormClearAfter: 40,    // ...or this far after it
@@ -91,9 +91,6 @@ export const AIRPORT = {
   flareVy: 60,         // px/s: gentle sink once over the runway
   flareCo2: 1.5,       // CO2 x this while flaring
   rollSeconds: 1.4,    // decelerate along the runway after touchdown
-  // The route east from London, then across the Pacific to NEW YORK (the last mission), then round again.
-  names: ['PARIS', 'AMSTERDAM', 'BERLIN', 'ROME', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BEIJING', 'TOKYO', 'LOS ANGELES', 'NEW YORK'],
-  home: 'LONDON',
 };
 
 export const TOKENS = {

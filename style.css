@@ -335,3 +335,12 @@ h2.sub { margin-top: -4px; }
 .ti-pilot { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Cpath d='M2 0h4v1H2zM1 1h6v1H1zM2 2h4v3H2zM1 6h6v2H1z'/%3E%3C/svg%3E"); }
 .ti-boards { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Cpath d='M3 1h2v7H3zM0 4h2v4H0zM6 3h2v5H6z'/%3E%3C/svg%3E"); }
 .tab.glow:not(.on) { color: var(--gold); animation: glow 1s steps(2) infinite; }
+
+/* the journey strip (FLY screen) */
+.journey { font-size: 8px; text-align: center; display: grid; gap: 4px; }
+.jdots { display: flex; justify-content: space-between; align-items: center; padding: 0 4px;
+  background: linear-gradient(var(--muted), var(--muted)) center / 100% 2px no-repeat; }
+.jdot { width: 7px; height: 7px; background: #fff; box-shadow: 0 0 0 2px var(--muted); }
+.jdot.done { background: var(--green); box-shadow: 0 0 0 2px var(--green); }
+.jdot.here { width: 11px; height: 11px; background: var(--gold); box-shadow: 0 0 0 2px var(--ink); }
+.jdot.home { background: var(--cool); }

@@ -1,4 +1,5 @@
 import { FEATURES, km } from './config.js';
+import { ROUTE, cityAt, legKm } from './route.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
@@ -93,6 +94,15 @@ export class UI {
       ${lock ? `<p class="mis-need">Needs: <b>${m.needs.text}</b></p>` : m.tip ? `<p class="mis-tip">${m.tip}</p>` : ''}</div></div>`;
   }
 
+  // The journey strip on the FLY screen: where you are, the next city, a dot per city round the loop.
+  renderJourney() {
+    const s = this.save, at = s.tutorialDone ? (s.city || 0) : 0, next = cityAt(at + 1);
+    const dots = ROUTE.map((c, i) => `<i class="jdot ${i === at ? 'here' : i < at ? 'done' : ''}" title="${c.name}"></i>`).join('');
+    $('tJourney').innerHTML = `<p>You are in <b>${cityAt(at).name}</b>. Next: <b>${next.name}</b> (${km(legKm(at))})</p>
+      <div class="jdots">${dots}<i class="jdot home" title="LONDON"></i></div>
+      <p class="small">${s.laps ? `Laps of the world: <b>${s.laps}</b>` : 'Fly east all the way round the world, back to LONDON!'}</p>`;
+  }
+
   // ---------- navigation ----------
   // One screen at a time, chosen from the bar along the bottom. Pop-ups (how to play, about,
   // info, points) close on any move. `this.pilot` (PilotScreens) renders PILOT and BOARDS.
@@ -122,6 +132,7 @@ export class UI {
     const any = Object.values(this.save.planted || {}).some(n => n > 0);
     $('tMeter').innerHTML = any ? meterHTML(this.save) : '';
     this.renderMission();
+    this.renderJourney();
     this.showOnly('title');
   }
 

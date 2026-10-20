@@ -2,23 +2,26 @@
 // basics; later ones need a cleaner plane (CO2 overheats the Earth long before CAIRO on normal
 // fuel) or a specific upgrade. `check(r)` looks at the flight result; `progress(s)` is the live
 // line under the distance; `needs` says what to buy if the mission is impossible without it.
-import { AIRPORT, km } from './config.js';
+import { km } from './config.js';
+import { cityIndex, stopsBetween } from './route.js';
 
-const airportNo = name => AIRPORT.names.indexOf(name) + 1;   // PARIS = 1
+// Reach a city on the journey (src/route.js): done when you land there or anywhere further along
+// the loop, including back at LONDON (a lap), so a player who is already past it is never stuck.
 const reach = name => {
-  const n = airportNo(name);
+  const at = cityIndex(name);
+  const stops = s => stopsBetween(s.startCity + s.airportIndex, at);   // 1 = it is the next airport
   return {
     id: `reach-${name.toLowerCase()}`, icon: 'mi-airports',
-    title: `Reach ${name}`, sub: `Fly past ${n - 1} airport${n > 2 ? 's' : ''} and land at the ${n === 2 ? '2nd' : n === 3 ? '3rd' : n + 'th'}.`,
-    check: r => r.landed && r.airportsSkipped >= n - 1,
-    progress: s => s.state === 'landing' || s.state === 'over' ? '' : `${name}: ${Math.max(0, n - 1 - s.airportsSkipped)} more airport${n - 1 - s.airportsSkipped === 1 ? '' : 's'} to pass`,
-    fail: r => r.landed ? `You landed after ${r.airportsSkipped} airport${r.airportsSkipped === 1 ? '' : 's'}. ${name} needs ${n - 1}.` : `You got past ${r.airportsSkipped} airport${r.airportsSkipped === 1 ? '' : 's'}. Land safely at ${name}!`,
+    title: `Reach ${name}`, sub: `Fly east along the journey and land in ${name}. Every city you land in is your next start.`,
+    check: r => r.landed && (r.lap || cityIndex(r.landedAt) >= at),
+    progress: s => s.state === 'landing' || s.state === 'over' ? '' : `${name}: ${stops(s) <= 1 ? 'the next airport!' : `${stops(s)} airports away`}`,
+    fail: r => r.landed ? `You landed in ${r.landedAt}. Keep flying east to ${name}!` : `Land safely to move on along the journey to ${name}.`,
   };
 };
 
 export const MISSIONS = [
   { id: 'land-paris', icon: 'mi-land', title: 'Land in PARIS', sub: 'Fly to the first airport. Get low as you reach the runway.',
-    check: r => r.landed && r.airportsSkipped === 0, progress: s => s.airportsSkipped ? 'Passed PARIS! Land at the next airport to practise.' : s.nextAirport ? `PARIS: ${km(s.nextAirport.worldX - s.distancePx)}` : '',
+    check: r => r.landed && r.landedAt === 'PARIS', progress: s => s.airportsSkipped ? 'Passed PARIS! Land at the next airport to practise.' : s.nextAirport ? `PARIS: ${km(s.nextAirport.worldX - s.distancePx)}` : '',
     fail: r => r.landed ? `You landed in ${r.landedAt}. PARIS is the FIRST airport.` : 'Get LOW just before the grey runway. The plane lands itself!' },
   { id: 'seeds-5', icon: 'mi-seed', title: 'Land with 5 seeds', sub: 'Grab seeds in the sky. You only keep them if you land.',
     check: r => r.landed && r.cargo >= 5, progress: s => `Seeds on board: ${s.cargo}/5`,
@@ -26,7 +29,7 @@ export const MISSIONS = [
   { id: 'clean-night', icon: 'mi-night', title: 'A night with no contrail', sub: 'Fly a whole night without touching icy air. Dodging it also earns ice crystals.',
     check: r => r.nightOwl, progress: s => s.isDay ? 'Wait for night...' : (s.night.started && s.heatTrapped - s.night.trappedAtStart < 0.5 ? 'Night: no contrail yet!' : 'Night: contrail made. Next night!'),
     fail: () => 'At night, fly above or below the icy air.' },
-  reach('AMSTERDAM'),
+  reach('BERLIN'),
   { id: 'shade-10', icon: 'mi-shade', title: 'Make 10 shade in one flight', sub: 'In sunshine, fly INTO icy air. Your contrail shades the Earth.',
     check: r => r.sunBlocked >= 10, progress: s => `Shade: ${Math.min(10, Math.floor(s.sunBlocked))}/10`,
     fail: r => `You made ${Math.floor(r.sunBlocked)} shade. Fly into icy air when the sun is up.` },
