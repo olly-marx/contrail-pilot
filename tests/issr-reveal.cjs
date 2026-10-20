@@ -14,6 +14,9 @@ const { chromium } = require('playwright-core');
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.addIssrAt(300, s.plane.y - 60, 320, 140); });
   let farVisible = 0, nearVisible = 0, insideSeen = 0, maxC = 0, shot = false;
   for (let i = 0; i < 300; i++) {
+    // Storm gaps now keep a lane clear of icy air, so the gap-following autopilot can miss the
+    // patch above. Halfway with nothing seen from inside: put another right on its path.
+    if (i === 150 && insideSeen === 0) await p.evaluate(() => { const s = game.scene.getScene('game'); s.addIssrAt(200, s.plane.y - 60, 320, 140); });
     const r = await p.evaluate(() => { const s = game.scene.getScene('game');
       const next = s.storms.find(st => st.rects[0].x + 44 > s.plane.x);
       const target = next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : 230;

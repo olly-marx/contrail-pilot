@@ -12,7 +12,7 @@ import { current as currentMission, MISSIONS } from './missions.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
-const GRACE_MS = 1200;   // breather after a pop-up closes
+const GRACE_MS = 1500;   // breather after a pop-up closes: the autopilot flies, then hands back
 const FONT = 'Pixel, monospace';
 
 function overlaps(a, b) {
@@ -182,6 +182,7 @@ export class GameScene extends Phaser.Scene {
     window.addEventListener('pointerdown', down); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up);
     this.input.keyboard.on('keydown-SPACE', down); this.input.keyboard.on('keyup-SPACE', up);
     this.events.once('shutdown', () => { window.removeEventListener('pointerdown', down); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up); });
+    this.autoText = this.add.text(0, 0, 'AUTOPILOT - tap to fly!', { fontFamily: FONT, fontSize: '8px', color: '#ffe15a', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(10).setVisible(false);
     this.holdText = this.add.text(WIDTH / 2, SKY_H / 2, '', { fontFamily: FONT, fontSize: '16px', color: '#ffe15a', stroke: '#000', strokeThickness: 4, align: 'center', lineSpacing: 6 }).setOrigin(0.5).setDepth(10);
     this.input.keyboard.on('keydown-SPACE', () => this.flap());
     this.input.keyboard.on('keydown-UP', () => this.flap());
@@ -295,14 +296,27 @@ export class GameScene extends Phaser.Scene {
     return true;
   }
 
-  // A breather after a pop-up closes: the plane hovers level and can't crash for a moment, so a
-  // tap you were about to make isn't too late. Your first tap ends it and flies as normal.
+  // A breather after a pop-up closes: for a moment the AUTOPILOT flies (towards the next storm
+  // gap, round birds) and nothing can crash you, so a tap you were about to make isn't too late.
+  // Your first tap ends it and you fly as normal. (It used to just hover, which felt stuck.)
   startGrace() {
     if (this.state !== 'playing') return;
     this.graceUntil = this.gameTime + GRACE_MS;
     this.plane.vy = 0;
   }
   inGrace() { return this.graceUntil && this.gameTime < this.graceUntil; }
+
+  // Where the autopilot steers (plane top y): the middle of the next storm gap ahead, else a safe
+  // height; nudged above or below a flock of birds near that line.
+  autopilotTarget() {
+    const ahead = this.storms.filter(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < WIDTH)
+      .sort((a, b) => a.rects[0].x - b.rects[0].x)[0];
+    let y = ahead ? (ahead.rects[0].height + ahead.rects[1].y) / 2 - PLANE.h / 2 : this.plane.y;
+    for (const f of this.birds) {
+      if (f.x > this.plane.x - 20 && f.x < this.plane.x + 220 && Math.abs(f.y - y) < 50) y = f.y > y ? f.y - 60 : f.y + 60;
+    }
+    return Phaser.Math.Clamp(y, 40, SKY_H - 60);
+  }
 
   // A tip that waits for a calm moment: flying, nothing to hit on screen. Checks every 0.5 s.
   explainWhenClear(id, html) {
@@ -406,10 +420,14 @@ export class GameScene extends Phaser.Scene {
         if (!this.school) this.explainWhenClear('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!');
       }
     } else if (this.state === 'playing' && this.inGrace()) {
-      this.plane.vy = 0;   // hover during the breather
-      this.planeSprite.setAlpha(Math.floor(this.gameTime / 120) % 2 ? 0.45 : 1);
+      const target = this.autopilotTarget();
+      this.plane.vy = Phaser.Math.Clamp((target - this.plane.y) * 4, -180, 180);
+      this.plane.y += this.plane.vy * dt;
+      this.planeSprite.setAlpha(1);
+      this.autoText.setPosition(Math.max(this.autoText.width / 2 + 4, this.plane.x + PLANE.w / 2), Math.max(10, this.plane.y - 14)).setVisible(true);
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
+      this.autoText.setVisible(false);
       this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
       // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
       // between you and it, the plane levels out and floats down onto the runway. With a storm in
@@ -913,7 +931,10 @@ export class GameScene extends Phaser.Scene {
 
   addFlock(x = WIDTH + 20, y = null) {
     const B = HAZARDS.birds, n = Phaser.Math.Between(B.flock[0], B.flock[1]);
-    y = y === null ? Phaser.Math.Between(60, SKY_H - 90) : y;
+    if (y === null) {   // never a flock in a storm gap just as the plane goes through it (10 tries, else skip)
+      for (let k = 0; k < 10 && y === null; k++) { const t = Phaser.Math.Between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, n)) y = t; }
+      if (y === null) return;
+    }
     const birds = [];
     for (let i = 0; i < n; i++) {
       // A loose V shape.
@@ -924,6 +945,19 @@ export class GameScene extends Phaser.Scene {
     }
     this.birds.push({ birds, x, y, phase: Math.random() * 6 });
     this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds is flying at you! Fly over or under them. Hitting a bird ends your flight.');
+  }
+
+  // A flock at (x, y) flies at speed + extraSpeed; each storm on screen at speed. When the plane
+  // reaches a storm, would the flock be near the plane and inside that storm's gap?
+  flockBlocksGap(x, y, n) {
+    const B = HAZARDS.birds, v = Math.max(1, this.speed), half = (n - 1) / 2;
+    const top = y - half * 9 - 4 - B.wobble, bottom = y + half * 9 + 16 + B.wobble;   // the V's height, bird size and bobbing
+    return this.storms.some(st => {
+      const r = st.rects[0], t = (r.x - this.plane.x) / v;
+      if (t < 0) return false;
+      const fx = x - (v + B.extraSpeed) * t;
+      return fx < this.plane.x + PLANE.w + 120 && fx + half * 26 + 16 > this.plane.x - 80 && top < st.rects[1].y && bottom > r.height;   // wide margin: the speed creeps up
+    });
   }
 
   newHazard(id, title, body) {
@@ -964,6 +998,15 @@ export class GameScene extends Phaser.Scene {
     const B = HAZARDS.birds;
     for (const f of this.birds) {
       f.x -= B.extraSpeed * dt;
+      // Birds steer out of a storm gap the plane is about to fly through (a flock there would
+      // leave no way past). The spawn check usually prevents it; this catches the rest.
+      const n = f.birds.length, half = (n - 1) / 2, top = f.y - half * 9 - 4 - B.wobble, bottom = f.y + half * 9 + 16 + B.wobble;
+      for (const st of this.storms) {
+        const r = st.rects[0], gTop = r.height, gBot = st.rects[1].y;
+        if (r.x + r.width < this.plane.x - 10 || r.x > this.plane.x + 200) continue;     // only gaps the plane is reaching
+        if (f.x > r.x + r.width + 40 || f.x + half * 26 + 16 < this.plane.x - 40) continue;   // flock not near that column
+        if (top < gBot && bottom > gTop) f.y += (f.y - (gTop + gBot) / 2 < 0 ? -1 : 1) * 160 * dt;
+      }
       f.phase += dt * 2;
       const fy = f.y + Math.sin(f.phase) * B.wobble;
       const frame = Math.floor(this.gameTime / 120) % 2;
@@ -1103,8 +1146,13 @@ export class GameScene extends Phaser.Scene {
     if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess);
     const lo = STORMS.marginTop + gap / 2;
     const hi = SKY_H - STORMS.marginTop - gap / 2;
-    if (noFly) this.addNoFlyAt(WIDTH + 10, Phaser.Math.Between(lo, hi), gap);
-    else this.addStormPairAt(WIDTH + 10, Phaser.Math.Between(lo, hi), gap);
+    const w = noFly ? nf.width : STORMS.width, x = WIDTH + 10;
+    // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time).
+    let gapY = null;
+    for (let k = 0; k < 20 && gapY === null; k++) { const t = Phaser.Math.Between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2)) gapY = t; }
+    if (gapY === null) return;
+    if (noFly) this.addNoFlyAt(x, gapY, gap);
+    else this.addStormPairAt(x, gapY, gap);
   }
 
   // Restricted airspace: thinner than a storm, but the gap is tighter.
@@ -1175,8 +1223,25 @@ export class GameScene extends Phaser.Scene {
 
   addIssr() {
     const w = Phaser.Math.Between(ISSR.minW, ISSR.maxW);
-    const h = Phaser.Math.Between(ISSR.minH, ISSR.maxH);
-    this.addIssrAt(WIDTH + 10, Phaser.Math.Between(10, SKY_H - h - 10), w, h);
+    const h = Phaser.Math.Between(ISSR.minH, ISSR.maxH), x = WIDTH + 10;
+    // Never fill a storm gap: there is always a way through without a contrail (10 tries, else skip).
+    for (let k = 0; k < 10; k++) {
+      const y = Phaser.Math.Between(10, SKY_H - h - 10);
+      const blocks = this.storms.some(st => { const r = st.rects[0]; return r.x < x + w && r.x + r.width > x
+        && !this.laneClear(r.x, r.width, r.height, st.rects[1].y, [...this.issrs, { x, y, width: w, height: h }]); });   // with the icy air already there
+      if (!blocks) { this.addIssrAt(x, y, w, h); return; }
+    }
+  }
+
+  // Is there still a clear lane (plane height + margin) through the gap gTop..gBot of a storm
+  // column at x..x+w, past the icy air in `issrs` that overlaps the column?
+  laneClear(x, w, gTop, gBot, issrs = this.issrs) {
+    const lane = PLANE.h + STORMS.clearLane;
+    const blocked = issrs.filter(i => i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop)
+      .map(i => [Math.max(gTop, i.y), Math.min(gBot, i.y + i.height)]).sort((a, b) => a[0] - b[0]);
+    let free = gTop;
+    for (const [t, btm] of blocked) { if (t - free >= lane) return true; free = Math.max(free, btm); }
+    return gBot - free >= lane;
   }
 
   // An ISSR is a lumpy patch, not a box: 3-5 overlapping ellipses inside its bounding box. Every
@@ -1530,6 +1595,7 @@ export class GameScene extends Phaser.Scene {
     this.parcelText.setText('');
     this.setDropVisible(false);
     this.aimGfx.clear();
+    this.autoText.setVisible(false);
     if (!landed) {
       this.cameras.main.shake(200, 0.012);
       this.cameras.main.flash(150, 255, 80, 80);

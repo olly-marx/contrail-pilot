@@ -45,6 +45,7 @@ export const STORMS = {
   minGap: 115,
   gapShrinkPerPair: 1,   // only counts pairs after WORLD.warmup
   spacing: 260,      // px between storm pairs
+  clearLane: 24,     // every storm gap keeps a lane this much taller than the plane free of icy air and birds
   marginTop: 40,     // gap centre never closer than this to the top/ground
 };
 

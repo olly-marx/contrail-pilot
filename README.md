@@ -73,6 +73,7 @@ node tests/features.cjs           # Citizen Zoo switch: off = no trace of it any
 node tests/gate.cjs               # grown-up gate: hold 2 s (mouse + touch) reveals a real Citizen Zoo link
 node tests/links.cjs              # every Learn more link has a real https URL; About page links and credit
 node tests/runway-back.cjs        # MENU button while parked on the runway: back to title, no flight counted
+node tests/lanes.cjs              # every storm gap keeps a clear lane: no icy air or birds filling it
 node tests/banners.cjs            # day/night banners stop after the first 3 of each
 node tests/hangar.cjs             # buying the LAST level of an upgrade, "need N more" hint, big BACK buttons
 node tests/online.cjs             # pilot names + leaderboards against a FAKE Supabase: name form, rude/offline messages, flights sent, outbox

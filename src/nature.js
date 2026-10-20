@@ -3,16 +3,19 @@ import { cz } from './config.js';
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
 // native kind is a big boost; more of the same kind adds less and less.
 
+// coolPerStage: Earth cooling per second as seedling / young / grown. Kept small on purpose
+// (2026-10-20, measured on autopilot): 3 grown trees offset ~15% of a flight's CO2. A cleaner
+// plane and contrail choices are the big levers; trees are slow, and bigger trees help a bit more.
 export const SPECIES = {
-  spruce:  { name: 'Spruce', native: false, coolPerStage: [0.2, 0.35, 0.5],
+  spruce:  { name: 'Spruce', native: false, coolPerStage: [0.02, 0.05, 0.1],
     fact: 'Spruce grows fast, so it soaks up CO2 quickly. But rows of one kind of tree are home to very few animals.' },
-  birch:   { name: 'Birch', native: true, coolPerStage: [0.15, 0.3, 0.45],
+  birch:   { name: 'Birch', native: true, coolPerStage: [0.02, 0.04, 0.09],
     fact: 'Birch is one of the first trees to grow on bare land. It makes space for other plants to follow.' },
-  oak:     { name: 'Oak', native: true, coolPerStage: [0.2, 0.4, 0.6],
+  oak:     { name: 'Oak', native: true, coolPerStage: [0.02, 0.05, 0.12],
     fact: 'One big oak tree can be home to over 2,000 kinds of insects, birds, fungi and more!' },
-  rowan:   { name: 'Rowan', native: true, coolPerStage: [0.15, 0.3, 0.45],
+  rowan:   { name: 'Rowan', native: true, coolPerStage: [0.02, 0.04, 0.09],
     fact: 'Rowan berries feed birds like thrushes in autumn.' },
-  orchard: { name: 'Fruit tree', native: true, coolPerStage: [0.25, 0.5, 0.7],
+  orchard: { name: 'Fruit tree', native: true, coolPerStage: [0.03, 0.06, 0.13],
     fact: 'Fruit trees feed people, bees and birds. Old orchards are full of wildlife.' },
 };
 
