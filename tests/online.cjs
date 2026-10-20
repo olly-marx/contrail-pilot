@@ -125,6 +125,8 @@ const UID = '11111111-2222-3333-4444-555555555555';
   await p.click('[data-board="crashes"]'); await p.waitForTimeout(800);
   check(await p.isHidden('#bPeriods') && /crashes\/today/.test(await p.textContent('#bList')) && /Oops/.test(await p.textContent('#bWhat')), `crash champion: today only, explained: "${await p.textContent('#bWhat')}" ${await p.textContent('#bList')}`);
   check(/900 crashes/.test(await p.textContent('#bList')), `crash board shows "900 crashes": ${await p.textContent('#bList')}`);
+  await p.click('[data-board="longestCrash"]'); await p.waitForTimeout(600);
+  check(/longestCrash\/today/.test(await p.textContent('#bList')) && /900 km/.test(await p.textContent('#bList')), `longest crash board: today, in km: ${await p.textContent('#bList')}`);
   await p.click('[data-board="ultimate"]'); await p.waitForTimeout(600);
   check(await p.isVisible('#bPeriods'), 'leaving an Oops board brings the period tabs back');
   await p.click('[data-board="longest"]'); await p.click('[data-period="week"]'); await p.waitForTimeout(800);

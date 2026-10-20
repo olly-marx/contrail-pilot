@@ -21,6 +21,8 @@ export const BOARDS = [
   { id: 'crashes', name: 'CRASH CHAMPION', oops: true, what: 'Oops! Most crashes today. Just for fun.', fmt: v => `${n(v)} crash${v == 1 ? '' : 'es'}` },
   { id: 'trapped', name: 'HEAT TRAPPER', oops: true, what: 'Oops! Most heat trapped by night contrails today.', fmt: v => `${n(v)} heat` },
   { id: 'co2', name: 'CO2 CLOUD', oops: true, what: 'Oops! Most CO2 made today.', fmt: v => `${n(Math.round(v / 100))} CO2` },
+  { id: 'longestCrash', name: 'LONGEST CRASH', oops: true, what: 'Oops! The furthest a flight got before it crashed today.', fmt: v => km(v) },
+  { id: 'avgCrash', name: 'AVERAGE CRASH', oops: true, what: 'Oops! How far your crashed flights got today, on average.', fmt: v => km(v) },
 ];
 const place = p => ['', '1st', '2nd', '3rd'][p] || `${p}th`;
 const PERIODS = [{ id: 'today', name: 'TODAY' }, { id: 'week', name: 'WEEK' }, { id: 'month', name: 'MONTH' }, { id: 'all', name: 'EVER' }];

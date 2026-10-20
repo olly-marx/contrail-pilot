@@ -50,6 +50,10 @@ select name, score from leaderboard('laps', 'all');
 reset role; insert into flights (player_id, landed, distance_m, lap) values ('aaaaaaaa-0000-0000-0000-000000000001', true, 1900, true); set role anon;
 select name, score from leaderboard('laps', 'all');
 \echo EXPECT laps: Ollie 1
+select name, score from leaderboard('longestCrash', 'all');
+\echo EXPECT longest crash: Priya 9000, Ollie 10
+select name, score from leaderboard('avgCrash', 'all');
+\echo EXPECT average crash: Priya 9000, Ollie 10
 reset role; insert into flights (player_id, landed, distance_m, crash) values ('aaaaaaaa-0000-0000-0000-000000000001', false, 10, 'meteor');
 \echo EXPECT refused: crash must be storm/bird/nofly/ground/overheat
 set role anon;
