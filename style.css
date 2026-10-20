@@ -311,3 +311,8 @@ p { margin: 0; }
 .points { font-size: 9px; border-collapse: collapse; width: 100%; }
 .points td { padding: 4px; border-bottom: 1px solid rgba(0,0,0,.1); vertical-align: top; }
 .points td:last-child { text-align: right; white-space: nowrap; font-weight: bold; }
+.buywrap { display: grid; justify-items: center; gap: 2px; }
+.need { color: #c0392b; white-space: nowrap; }
+.screen-head { display: flex; align-items: center; gap: 10px; }
+.backtop { font-size: 9px; padding: 8px 10px; flex: none; }
+h2.sub { margin-top: -4px; }

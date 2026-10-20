@@ -43,7 +43,7 @@ export class UI {
     $('schoolBtn').onclick = () => this.startSchool();
     $('hangarBtn').onclick = () => this.showHangar('title');
     $('rHangarBtn').onclick = () => this.showHangar('results');
-    $('hBackBtn').onclick = () => (this.hangarFrom === 'results' ? this.showOnly('results') : this.showTitle());
+    $('hBackBtn').onclick = $('hBackTop').onclick = () => (this.hangarFrom === 'results' ? this.showOnly('results') : this.showTitle());
     $('hGoBtn').onclick = () => this.start();
     $('hGoTop').onclick = () => this.start();
     $('howBtn').onclick = () => { $('how').hidden = false; };
@@ -273,8 +273,12 @@ export class UI {
       const waitBio = needsMoreNature(s, line);
       const isFree = free && next && have === 0 && !waitBio;
       const ok = isFree || canBuy(s, line);
-      const btn = waitBio ? `<span class="small">needs Biodiversity ${next.needsBio}</span>`
-        : `<button class="btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>`;
+      // What is missing, so a grey button is never a mystery.
+      const short = next && !ok && !waitBio ? [Math.max(0, next.cost - s.seeds) && `${next.cost - s.seeds}<i class="seedicon"></i>`,
+        Math.max(0, (next.crystals || 0) - (s.crystals || 0)) && `${next.crystals - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ') : '';
+      const btn = !next ? ''   // maxed: nothing to buy (cost(null) used to crash the redraw, so buying the last level looked like it did nothing)
+        : waitBio ? `<span class="small">needs Biodiversity ${next.needsBio}</span>`
+        : `<span class="buywrap"><button class="btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>${short ? `<span class="small need">need ${short} more</span>` : ''}</span>`;
       const nextRow = next
         ? `<div class="next"><span>Next: <b>${next.name}</b>. ${next.short}</span>${btn}</div>`
         : '<div class="next"><span><b>All done!</b></span></div>';

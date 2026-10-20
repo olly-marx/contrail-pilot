@@ -73,6 +73,7 @@ node tests/features.cjs           # Citizen Zoo switch: off = no trace of it any
 node tests/gate.cjs               # grown-up gate: hold 2 s (mouse + touch) reveals a real Citizen Zoo link
 node tests/links.cjs              # every Learn more link has a real https URL; About page links and credit
 node tests/runway-back.cjs        # MENU button while parked on the runway: back to title, no flight counted
+node tests/hangar.cjs             # buying the LAST level of an upgrade, "need N more" hint, big BACK buttons
 node tests/online.cjs             # pilot names + leaderboards against a FAKE Supabase: name form, rude/offline messages, flights sent, outbox
 supabase/tests/run.sh             # the database itself in a throwaway Postgres (Docker): word filter, row-level security, scores
 node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earning rules, costs, hangar tabs

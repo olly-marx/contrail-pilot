@@ -24,8 +24,8 @@ export class PilotScreens {
     this.period = 'today';
     $('pilotBtn').onclick = () => this.showPilot();
     $('boardsBtn').onclick = () => this.showBoards();
-    $('pBack').onclick = () => { $('pilot').hidden = true; };
-    $('bBack').onclick = () => { $('boards').hidden = true; };
+    $('pBack').onclick = $('pBackTop').onclick = () => { $('pilot').hidden = true; };
+    $('bBack').onclick = $('bBackTop').onclick = () => { $('boards').hidden = true; };
     $('bInfo').onclick = () => { $('scoreInfo').hidden = false; };
     $('siClose').onclick = () => { $('scoreInfo').hidden = true; };
     $('pChange').onclick = () => this.edit(true);

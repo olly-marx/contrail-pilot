@@ -114,6 +114,7 @@
   <section id="hangar" class="overlay" hidden>
     <div class="panel wide">
       <div class="hangar-head">
+        <button id="hBackTop" class="btn backtop" type="button">&#9664; BACK</button>
         <h2>HANGAR</h2>
         <span class="treebank"><i class="seedicon"></i><b id="hTrees">0</b><i class="crysicon"></i><b id="hCrystals">0</b></span>
         <button id="hGoTop" class="btn go" type="button">TAKE OFF</button>
@@ -132,7 +133,7 @@
       </div>
       <div class="buttons">
         <button id="hGoBtn" class="btn go big" type="button">TAKE OFF</button>
-        <button id="hBackBtn" class="btn tiny" type="button">back</button>
+        <button id="hBackBtn" class="btn" type="button">&#9664; BACK</button>
         <button id="resetBtn" class="btn tiny" type="button">reset progress</button>
       </div>
     </div>
@@ -141,7 +142,7 @@
   <!-- Pilot: a light sign-in (first name + a word + a number, no password) and a simple profile. -->
   <section id="pilot" class="overlay top" hidden>
     <div class="panel">
-      <h2>My pilot</h2>
+      <div class="screen-head"><button id="pBackTop" class="btn backtop" type="button">&#9664; BACK</button><h2>My pilot</h2></div>
       <p id="pName" class="pilot-name"></p>
       <div id="pEdit">
         <p class="label">Your first name</p>
@@ -154,19 +155,20 @@
       </div>
       <button id="pChange" class="btn tiny" type="button" hidden>change my name</button>
       <div id="pStats" class="pilot-stats"></div>
-      <div class="buttons"><button id="pBack" class="btn tiny" type="button">back</button></div>
+      <div class="buttons"><button id="pBack" class="btn" type="button">&#9664; BACK</button></div>
     </div>
   </section>
 
   <!-- Leaderboards: landed flights only. -->
   <section id="boards" class="overlay top" hidden>
     <div class="panel">
-      <h2>Leaderboard <button id="bInfo" class="btn tiny" type="button" aria-label="How points work">&#9432; how points work</button></h2>
+      <div class="screen-head"><button id="bBackTop" class="btn backtop" type="button">&#9664; BACK</button><h2>Leaderboard</h2></div>
+      <h2 class="sub"><button id="bInfo" class="btn tiny" type="button" aria-label="How points work">&#9432; how points work</button></h2>
       <div id="bBoards" class="board-pick"></div>
       <div id="bPeriods" class="tabs"></div>
       <ol id="bList" class="board"></ol>
       <p id="bMsg" class="small msg"></p>
-      <div class="buttons"><button id="bBack" class="btn tiny" type="button">back</button></div>
+      <div class="buttons"><button id="bBack" class="btn" type="button">&#9664; BACK</button></div>
     </div>
   </section>
 
