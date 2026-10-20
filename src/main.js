@@ -2,6 +2,8 @@ import { WIDTH, HEIGHT } from './config.js';
 import { GameScene } from './GameScene.js';
 import { loadSave } from './save.js';
 import { UI } from './ui.js';
+import { PilotScreens } from './pilot.js';
+import { flush } from './online.js';
 
 const save = loadSave();
 
@@ -35,3 +37,5 @@ const game = new Phaser.Game({
 window.game = game;   // exposed for debugging and automated tests
 
 ui.showTitle();
+new PilotScreens(save);
+flush();   // flights saved while offline last time

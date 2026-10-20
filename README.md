@@ -31,6 +31,9 @@ On a phone on the same Wi-Fi, open `http://<your-laptop-ip>:8000`.
 | `src/nature.js` | Tree species, rewilding projects and the Wild Land (biodiversity) meter |
 | `src/links.js` | "Learn more" links in the info pop-ups (some still to be filled in) |
 | `src/save.js` | Progress saved on the device (localStorage) |
+| `src/online.js` | Supabase: anonymous sign-in, pilot name, flight outbox, leaderboard() (optional: the game plays on offline) |
+| `src/pilot.js` | MY PILOT (name + profile) and LEADERBOARD screens |
+| `supabase/migrations/` | Database: players, flights, row-level security, word filter, the board scores |
 | `src/sound.js` | Chiptune sound effects synthesised in code |
 | `style.css` | Pixel-style screens |
 | `vendor/phaser.min.js` | Phaser 3.90 (MIT), vendored so the game works offline |
@@ -70,6 +73,8 @@ node tests/features.cjs           # Citizen Zoo switch: off = no trace of it any
 node tests/gate.cjs               # grown-up gate: hold 2 s (mouse + touch) reveals a real Citizen Zoo link
 node tests/links.cjs              # every Learn more link has a real https URL; About page links and credit
 node tests/runway-back.cjs        # MENU button while parked on the runway: back to title, no flight counted
+node tests/online.cjs             # pilot names + leaderboards against a FAKE Supabase: name form, rude/offline messages, flights sent, outbox
+supabase/tests/run.sh             # the database itself in a throwaway Postgres (Docker): word filter, row-level security, scores
 node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earning rules, costs, hangar tabs
 ```
 

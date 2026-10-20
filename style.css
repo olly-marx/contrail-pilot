@@ -290,3 +290,24 @@ p { margin: 0; }
 .gate-label { position: relative; }
 .logo-sub { margin: -4px 0 8px; letter-spacing: 1px; }
 .logo-aeis { margin-top: 14px; }
+
+/* ---------- pilot name + leaderboards ---------- */
+.row2 { display: flex; gap: 8px; }
+.row2 .btn { flex: 1; }
+.pilot-name { font-size: 12px; color: var(--night); text-align: center; min-height: 14px; }
+.name-input { font-family: 'Pixel', monospace; font-size: 14px; padding: 8px; border: 3px solid var(--ink); width: 100%; box-sizing: border-box; text-transform: none; }
+.word-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.word-grid .btn { font-size: 8px; padding: 8px 2px; }
+.word-grid .btn.on, .board-pick .btn.on { background: var(--cool); }
+.msg { min-height: 12px; color: #c0392b; }
+.pilot-stats { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 9px; }
+.pilot-stats b { text-align: right; }
+.board-pick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.board-pick .btn { font-size: 8px; padding: 8px 2px; }
+.board-pick .btn:first-child { grid-column: 1 / -1; }
+.board { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; font-size: 9px; max-height: 40vh; overflow-y: auto; }
+.board li { display: grid; grid-template-columns: 2.4em 1fr auto; gap: 6px; padding: 4px 6px; background: rgba(0,0,0,.05); }
+.board li.me { background: var(--gold); }
+.points { font-size: 9px; border-collapse: collapse; width: 100%; }
+.points td { padding: 4px; border-bottom: 1px solid rgba(0,0,0,.1); vertical-align: top; }
+.points td:last-child { text-align: right; white-space: nowrap; font-weight: bold; }

@@ -5,6 +5,7 @@ import {
 import { School } from './school.js';
 import { Hud } from './Hud.js';
 import { loadout } from './upgrades.js';
+import { sendFlight } from './online.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
@@ -85,6 +86,7 @@ export class GameScene extends Phaser.Scene {
     this.cargo = 0;                  // seeds on board: kept only if you land
     this.crystals = 0;               // ice crystals earned this flight: always kept
     this.nightDodges = 0;            // dodge crystals so far tonight (capped)
+    this.dodgesTotal = 0;            // all nights this flight (for the online boards)
     this.nextTokenAt = 420;
     this.clock = 0;                  // drives day and night (flight school can set it)
     this.gameTime = 0;               // ms of unfrozen flight, used for contrail ages
@@ -105,6 +107,7 @@ export class GameScene extends Phaser.Scene {
     this.feedback = { amount: 0, timer: 0 };
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.planted = 0;
+    this.speciesPlanted = new Set();   // kinds of tree planted this flight (for the online boards)
     this.lastHalf = 'day';
     this.night = { started: false, trappedAtStart: 0 };
     this.nightOwl = false;
@@ -481,7 +484,7 @@ export class GameScene extends Phaser.Scene {
       if (!i.scored && i.x + i.width < box.x) {
         i.scored = true;
         if (i.inPath && !i.entered && !this.isDay && this.state === 'playing' && !this.school && this.nightDodges < CRYSTALS.dodgesPerNight) {
-          this.nightDodges++;
+          this.nightDodges++; this.dodgesTotal++;
           this.earnCrystals(CRYSTALS.dodge, 'dodged icy air!');
         }
       }
@@ -802,6 +805,7 @@ export class GameScene extends Phaser.Scene {
     plot.parts.push(sprite);
     this.trees.push({ sprite, kind, plantedAt: this.elapsed, stage: 0 });
     this.planted++;
+    this.speciesPlanted.add(kind);
     this.burst(cx, SKY_H - 2, 0x8dffb0, 12);
     this.burst(cx, SKY_H - 2, 0xffe15a, 6);
     // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
@@ -1580,6 +1584,10 @@ export class GameScene extends Phaser.Scene {
       mission: mission ? { title: mission.title, done: missionDone, fail: missionDone ? '' : mission.fail(partial), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);
+    else sendFlight({   // to the online boards, if this device has a pilot name; queued when offline
+      landed, distance_m: m, shade: Math.max(0, -this.sunBlocked), heat_trapped: this.heatTrapped, night_dodges: this.dodgesTotal,
+      crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesPlanted], mission_done: missionDone,
+    });
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());
     this.time.delayedCall(landed ? 900 : 1100, () => this.ui.showResults(this.result));
   }

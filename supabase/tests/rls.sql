@@ -9,8 +9,10 @@ insert into players (id, first_name, word, tag) values ('cccccccc-0000-0000-0000
 \echo EXPECT refused: player row for someone else
 insert into flights (landed, distance_m, shade, heat_trapped, night_dodges, plane_co2, species, mission_done) values (true, 3000, 12, 2, 1, 0.8, '{oak,birch}', true);
 \echo EXPECT-OK: A lands 3000 m. Ultimate = 300 + 30 + 100 + (12-2)*5 + 25 + 200*0.2 + 40 = 585
+insert into flights (landed, distance_m) values (false, 10), (false, 10), (false, 10), (false, 10);
+\echo EXPECT-OK: 4 more queued flights at once (5 in a minute is allowed)
 insert into flights (landed, distance_m) values (false, 9000);
-\echo EXPECT refused: too fast
+\echo EXPECT refused: a 6th within a minute is too fast
 update flights set created_at = created_at - interval '1 minute';
 \echo (update silently does nothing: no update policy)
 insert into flights (player_id, landed, distance_m) values ('bbbbbbbb-0000-0000-0000-000000000002', true, 99999);

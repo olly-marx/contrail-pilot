@@ -23,6 +23,7 @@
       <div id="tMission" class="mission-card" hidden></div>
       <button id="goBtn" class="btn go big" type="button">TAKE OFF</button>
       <button id="hangarBtn" class="btn" type="button">HANGAR <span id="tNew" class="newtag" hidden>NEW!</span></button>
+      <div class="row2"><button id="pilotBtn" class="btn" type="button">MY PILOT</button><button id="boardsBtn" class="btn" type="button">LEADERBOARD</button></div>
       <div class="buttons">
         <button id="howBtn" class="btn tiny" type="button">how to play</button>
         <button id="schoolBtn" class="btn tiny" type="button">flight school</button>
@@ -137,6 +138,57 @@
     </div>
   </section>
 
+  <!-- Pilot: a light sign-in (first name + a word + a number, no password) and a simple profile. -->
+  <section id="pilot" class="overlay top" hidden>
+    <div class="panel">
+      <h2>My pilot</h2>
+      <p id="pName" class="pilot-name"></p>
+      <div id="pEdit">
+        <p class="label">Your first name</p>
+        <input id="pFirst" class="name-input" maxlength="12" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="e.g. Ollie">
+        <p class="label">Pick a word</p>
+        <div id="pWords" class="word-grid"></div>
+        <p class="label">Your number: <b id="pTag"></b> <button id="pDice" class="btn tiny" type="button">new number</button></p>
+        <p id="pMsg" class="small msg"></p>
+        <button id="pSave" class="btn go" type="button">SAVE MY NAME</button>
+      </div>
+      <button id="pChange" class="btn tiny" type="button" hidden>change my name</button>
+      <div id="pStats" class="pilot-stats"></div>
+      <div class="buttons"><button id="pBack" class="btn tiny" type="button">back</button></div>
+    </div>
+  </section>
+
+  <!-- Leaderboards: landed flights only. -->
+  <section id="boards" class="overlay top" hidden>
+    <div class="panel">
+      <h2>Leaderboard <button id="bInfo" class="btn tiny" type="button" aria-label="How points work">&#9432; how points work</button></h2>
+      <div id="bBoards" class="board-pick"></div>
+      <div id="bPeriods" class="tabs"></div>
+      <ol id="bList" class="board"></ol>
+      <p id="bMsg" class="small msg"></p>
+      <div class="buttons"><button id="bBack" class="btn tiny" type="button">back</button></div>
+    </div>
+  </section>
+
+  <!-- How Ultimate Flyer points work: the same numbers as leaderboard() in supabase/migrations/. -->
+  <section id="scoreInfo" class="overlay top" hidden>
+    <div class="panel">
+      <h2>Ultimate Flyer points</h2>
+      <p>Only flights where you <b>land safely</b> count.</p>
+      <table class="points">
+        <tr><td>Longest flight</td><td>1 per 10 m</td></tr>
+        <tr><td>All flights added up</td><td>1 per 100 m</td></tr>
+        <tr><td>Each kind of tree</td><td>50</td></tr>
+        <tr><td>Sun shade, minus night heat</td><td>5 each</td></tr>
+        <tr><td>Icy air dodged at night</td><td>25 each</td></tr>
+        <tr><td>Clean plane</td><td>up to 200</td></tr>
+        <tr><td>Each mission</td><td>40</td></tr>
+      </table>
+      <p class="small">Clean plane: a normal plane gets 0, hydrogen gets 200. Better engines and fuel are in between.</p>
+      <div class="buttons"><button id="siClose" class="btn go" type="button">OK</button></div>
+    </div>
+  </section>
+
   <!-- Upgrade info pop-up -->
   <section id="info" class="overlay top" hidden>
     <div class="panel">
@@ -167,6 +219,7 @@
   <button id="skipSchool" class="btn tiny skip" type="button" hidden>skip flight school</button>
 
   <script src="vendor/phaser.min.js"></script>
+  <script src="vendor/supabase.min.js"></script>
   <script type="module" src="src/main.js"></script>
 </body>
 </html>

@@ -82,11 +82,12 @@ create table public.flights (
 create index flights_player_time on public.flights (player_id, created_at);
 create index flights_time on public.flights (created_at);
 
--- No more than one flight every 10 seconds per player (a real flight takes far longer).
+-- At most 5 flights a minute per player. A real flight takes over a minute, but up to 5 flights
+-- saved while the wifi was down arrive together (the game keeps no more than 5 unsent).
 create function public.flights_rate_limit() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
-  if exists (select 1 from flights where player_id = new.player_id and created_at > now() - interval '10 seconds') then
+  if (select count(*) from flights where player_id = new.player_id and created_at > now() - interval '1 minute') >= 5 then
     raise exception 'too many flights too fast';
   end if;
   new.created_at := now();   -- the server's clock, not the device's
