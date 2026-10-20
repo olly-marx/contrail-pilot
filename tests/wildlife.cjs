@@ -18,13 +18,17 @@ const WILD = { planted: { spruce: 3, birch: 4, oak: 4, rowan: 4, orchard: 4 }, l
     p.on('pageerror', e => errs.push(String(e)));
     await p.addInitScript(([k, s]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 5, ...s })); }, [KEY, save]);
     await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
-    for (let i = 0; i < 10; i++) { await p.mouse.click(195, 300); await p.waitForTimeout(200); }
-    const r = await p.evaluate(() => { const s = game.scene.getScene('game');
-      const kinds = new Set(s.life.map(l => l.kind || l.img.texture.key));
+    // Collect what appears over a few seconds: animals are random (cows/sheep ~1.5 a screen, none on
+    // the runway), so one snapshot right after take-off sometimes has none yet (failed CI once).
+    const seen = new Set();
+    for (let i = 0; i < 20; i++) { await p.mouse.click(195, 300); await p.waitForTimeout(200);
+      (await p.evaluate(() => game.scene.getScene('game').life.map(l => l.kind || l.img.texture.key))).forEach(k => seen.add(k)); }
+    const r = await p.evaluate(seen => { const s = game.scene.getScene('game');
+      const kinds = new Set([...seen, ...s.life.map(l => l.kind || l.img.texture.key)]);
       return { w: s.wildlife, kinds: [...kinds], sky: s.life.filter(l => (l.kind || '').startsWith('sky-')).length,
         grey: s.puffs.filter(p => p.img.tintTopLeft !== 0xffffff).reduce((m, p) => Math.max(m, p.a0), 0),
         white: s.puffs.filter(p => p.img.tintTopLeft === 0xffffff).reduce((m, p) => Math.max(m, p.a0), 0),
-        co2: s.kit.co2Cruise }; });
+        co2: s.kit.co2Cruise }; }, [...seen]);
     await p.close();
     return r;
   }
