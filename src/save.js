@@ -11,6 +11,7 @@ const DEFAULTS = {
   bestDistance: 0,     // longest landed flight, m
   flights: 0,
   seenTips: [],        // first-time tips already shown
+  dayNightSeen: {},    // dusk/dawn -> how many times the day/night banner has shown (it stops after DAYNIGHT.bannerTimes)
   tutorialDone: false,
   freeUpgrade: false,  // true after the first landing until the free upgrade is picked
   freeGiven: false,

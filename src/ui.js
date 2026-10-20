@@ -1,4 +1,4 @@
-import { FEATURES } from './config.js';
+import { FEATURES, km } from './config.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
@@ -102,7 +102,7 @@ export class UI {
   showTitle() {
     $('tTrees').textContent = this.save.seeds;
     $('tCrystals').textContent = this.save.crystals || 0;
-    $('tBest').textContent = this.save.bestDistance;
+    $('tBest').textContent = km(this.save.bestDistance);
     $('goBtn').textContent = this.save.tutorialDone ? 'TAKE OFF' : 'START';
     $('tNew').hidden = !this.hasNew();
     const any = Object.values(this.save.planted || {}).some(n => n > 0);
@@ -145,7 +145,7 @@ export class UI {
         : `<b>Not this time:</b> ${r.mission.title}<br><span class="small">${r.mission.fail}</span>`;
     }
     $('rRecord').hidden = !r.newRecord;
-    $('rDist').textContent = '0';
+    $('rDist').textContent = km(0);
     $('rGrab').textContent = '0';
     $('rMultRow').hidden = true; $('rCoolRow').hidden = true; $('rLost').hidden = true;
     $('rNatureRow').hidden = true;
@@ -170,7 +170,7 @@ export class UI {
     show(title);
     await wait(350);
     if (r.mission) { show(missionStep); if (r.mission.done) sfx.buy(); await wait(600); }
-    show(dist); await count($('rDist'), r.distance, 600);
+    show(dist); await count($('rDist'), r.distance, 600, km);
     if (r.newRecord) { show(record); sfx.buy(); }
     await wait(200);
 

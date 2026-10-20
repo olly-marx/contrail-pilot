@@ -27,6 +27,10 @@ export const PLANE = {
   maxFall: 400,
 };
 
+// The game's distance unit is shown as km: PARIS at 1500 is "1500 km" (a real-ish flight
+// length). The code still calls the unit m / px; only the label changes.
+export const km = d => `${Math.max(0, Math.round(d))} km`;
+
 export const WORLD = {
   startSpeed: 90,    // px/s scroll speed
   speedGain: 0.55,   // px/s added per second flown after the warm-up (top speed ~1.5 min in)
@@ -132,6 +136,7 @@ export const CARGO = {
 };
 
 export const DAYNIGHT = {
+  bannerTimes: 3,     // the 'Night is coming!' / 'Sunrise!' banner shows this many times per device, then only the sky + sound
   daySeconds: 15,
   nightSeconds: 15,
   blendSeconds: 3,     // dusk / dawn colour blend at the end of each half

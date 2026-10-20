@@ -1,5 +1,5 @@
 import {
-  WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
+  km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
   TAKEOFF, AIRPORT, CRYSTALS, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL, HAZARDS,
 } from './config.js';
 import { School } from './school.js';
@@ -860,7 +860,7 @@ export class GameScene extends Phaser.Scene {
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
       this.airportIndex++;
       this.airportsSkipped++;
-      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${AIRPORT.every} m ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`);
+      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${km(AIRPORT.every)} ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`);
       this.nextAirport = {
         worldX: na.worldX + AIRPORT.every,
         name: AIRPORT.names[this.airportIndex % AIRPORT.names.length],
@@ -1314,8 +1314,10 @@ export class GameScene extends Phaser.Scene {
     // Teach the switch the moment it starts.
     const half = isDay ? (toOther > 0 ? 'dusk' : 'day') : (toOther > 0 ? 'dawn' : 'night');
     if (half !== this.lastHalf) {
-      if (half === 'dusk') { sfx.dusk(); this.ui.toast('Night is coming!', 'At night contrails TRAP heat. Avoid the icy air!', 'bad', 3); }
-      if (half === 'dawn') { sfx.dawn(); this.ui.toast('Sunrise!', 'In sunshine contrails BLOCK sunlight. Find the icy air!', 'good', 3); }
+      // The banner only for the first few of each: after that the sky and the sound say it.
+      const banner = k => { const seen = this.save.dayNightSeen || (this.save.dayNightSeen = {}); seen[k] = (seen[k] || 0) + 1; return seen[k] <= DAYNIGHT.bannerTimes; };
+      if (half === 'dusk') { sfx.dusk(); if (banner('dusk')) this.ui.toast('Night is coming!', 'At night contrails TRAP heat. Avoid the icy air!', 'bad', 3); }
+      if (half === 'dawn') { sfx.dawn(); if (banner('dawn')) this.ui.toast('Sunrise!', 'In sunshine contrails BLOCK sunlight. Find the icy air!', 'good', 3); }
       // Night Owl: a whole night flown without trapping any heat.
       if (half === 'night') this.nightDodges = 0;
       if (half === 'night' && this.state === 'playing') this.night = { started: true, trappedAtStart: this.heatTrapped };
@@ -1490,14 +1492,14 @@ export class GameScene extends Phaser.Scene {
   // ---------- text and the end of a flight ----------
 
   updateTexts(inIssr) {
-    this.distText.setText(`${Math.floor(this.distancePx / WORLD.pxPerMetre)}m`);
+    this.distText.setText(km(this.distancePx / WORLD.pxPerMetre));
 
     const toAirport = Math.round(this.nextAirport.worldX - this.distancePx);
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
     else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
     else if (toAirport < 300) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);
-    else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${toAirport}m`);
-    else if (this.missedSign && this.gameTime < this.missedSign.until) this.nextText.setText(`${this.missedSign.text} ${toAirport}m`);
+    else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${km(toAirport)}`);
+    else if (this.missedSign && this.gameTime < this.missedSign.until) this.nextText.setText(`${this.missedSign.text} ${km(toAirport)}`);
     else this.nextText.setText('');
     // The mission line: what this flight is for.
     const mis = this.school ? null : currentMission(this.save);

@@ -89,7 +89,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
   await p.waitForTimeout(800);
   await p.screenshot({ path: '/tmp/online-profile.png' });
   const stats = await p.textContent('#pStats');
-  check(/3000 m/.test(stats) && /#2/.test(stats), `profile should show best flight and today's place: "${stats}"`);
+  check(/3000 km/.test(stats) && /#2/.test(stats), `profile should show best flight and today's place: "${stats}"`);
   await p.click('#pBack');
 
   // 7. A landed flight is sent with the right fields.

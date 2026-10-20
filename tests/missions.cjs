@@ -27,7 +27,7 @@ const KEY = 'contrailPilot.v2';
   // 2. Crash before PARIS: mission not done, stays at 0.
   await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
   const line = await scene(() => game.scene.getScene('game').missionText.text);
-  check(/PARIS: \d+ m/.test(line), `the mission line should show PARIS distance, got "${line}"`);
+  check(/PARIS: \d+ km/.test(line), `the mission line should show PARIS distance, got "${line}"`);
   await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.plane.y = 600; }); await p.waitForTimeout(2500);
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && r.mission && !r.mission.done, `a crash should not complete the mission: ${JSON.stringify(r && r.mission)}`);

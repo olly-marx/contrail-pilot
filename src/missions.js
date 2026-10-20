@@ -2,7 +2,7 @@
 // basics; later ones need a cleaner plane (CO2 overheats the Earth long before CAIRO on normal
 // fuel) or a specific upgrade. `check(r)` looks at the flight result; `progress(s)` is the live
 // line under the distance; `needs` says what to buy if the mission is impossible without it.
-import { AIRPORT } from './config.js';
+import { AIRPORT, km } from './config.js';
 
 const airportNo = name => AIRPORT.names.indexOf(name) + 1;   // PARIS = 1
 const reach = name => {
@@ -18,7 +18,7 @@ const reach = name => {
 
 export const MISSIONS = [
   { id: 'land-paris', icon: 'mi-land', title: 'Land in PARIS', sub: 'Fly to the first airport. Get low as you reach the runway.',
-    check: r => r.landed && r.airportsSkipped === 0, progress: s => s.airportsSkipped ? 'Passed PARIS! Land at the next airport to practise.' : s.nextAirport ? `PARIS: ${Math.max(0, Math.round(s.nextAirport.worldX - s.distancePx))} m` : '',
+    check: r => r.landed && r.airportsSkipped === 0, progress: s => s.airportsSkipped ? 'Passed PARIS! Land at the next airport to practise.' : s.nextAirport ? `PARIS: ${km(s.nextAirport.worldX - s.distancePx)}` : '',
     fail: r => r.landed ? `You landed in ${r.landedAt}. PARIS is the FIRST airport.` : 'Get LOW just before the grey runway. The plane lands itself!' },
   { id: 'seeds-5', icon: 'mi-seed', title: 'Land with 5 seeds', sub: 'Grab seeds in the sky. You only keep them if you land.',
     check: r => r.landed && r.cargo >= 5, progress: s => `Seeds on board: ${s.cargo}/5`,

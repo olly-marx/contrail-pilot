@@ -1,6 +1,7 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
 import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard } from './online.js';
 import { MISSIONS } from './missions.js';
+import { km } from './config.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -8,8 +9,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 // Same ids and order as leaderboard() in supabase/migrations/.
 export const BOARDS = [
   { id: 'ultimate', name: 'ULTIMATE FLYER', unit: 'points' },
-  { id: 'longest', name: 'LONGEST FLIGHT', unit: 'm' },
-  { id: 'total', name: 'FURTHEST IN TOTAL', unit: 'm' },
+  { id: 'longest', name: 'LONGEST FLIGHT', fmt: km },
+  { id: 'total', name: 'FURTHEST IN TOTAL', fmt: km },
   { id: 'nature', name: 'TREE KINDS', unit: 'kinds' },
   { id: 'cooler', name: 'COOL CONTRAILS', unit: 'points' },
   { id: 'cleaner', name: 'CLEAN PLANE', unit: 'points' },
@@ -95,7 +96,7 @@ export class PilotScreens {
   async renderStats() {
     const s = this.save, kinds = Object.values(s.planted || {}).filter(n => n > 0).length;
     const row = (k, v) => `<span>${k}</span><b>${v}</b>`;
-    const local = row('Longest landed flight', `${s.bestDistance} m`) + row('Safe landings', s.landings || 0)
+    const local = row('Longest landed flight', km(s.bestDistance)) + row('Safe landings', s.landings || 0)
       + row('Kinds of tree planted', kinds) + row('Missions done', `${Math.min(s.mission || 0, MISSIONS.length)} / ${MISSIONS.length}`);
     $('pStats').innerHTML = local;
     if (!getPilot()) return;
@@ -123,6 +124,6 @@ export class PilotScreens {
     if (this.board !== board.id || this.period !== period) return;   // tapped another tab meanwhile
     if (!rows) { $('bMsg').textContent = 'No internet right now. Try again soon!'; return; }
     $('bMsg').textContent = rows.length ? '' : 'Nobody yet. Land a flight to be first!';
-    $('bList').innerHTML = rows.map(r => `<li class="${r.is_me ? 'me' : ''}"><span>#${r.place}</span><span>${esc(r.name)}</span><b>${Number(r.score).toLocaleString('en-GB')} ${board.unit}</b></li>`).join('');
+    $('bList').innerHTML = rows.map(r => `<li class="${r.is_me ? 'me' : ''}"><span>#${r.place}</span><span>${esc(r.name)}</span><b>${board.fmt ? board.fmt(Number(r.score)) : `${Number(r.score).toLocaleString('en-GB')} ${board.unit}`}</b></li>`).join('');
   }
 }
