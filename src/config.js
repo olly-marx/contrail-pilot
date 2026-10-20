@@ -29,7 +29,7 @@ export const PLANE = {
 
 // The game's distance unit is shown as km: PARIS at 1500 is "1500 km" (a real-ish flight
 // length). The code still calls the unit m / px; only the label changes.
-export const km = d => `${Math.max(0, Math.round(d))} km`;
+export const km = d => `${Math.max(0, Math.round(d)).toLocaleString('en-GB')} km`;   // 1,900 km
 
 export const WORLD = {
   startSpeed: 90,    // px/s scroll speed

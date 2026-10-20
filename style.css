@@ -360,3 +360,15 @@ h2.sub { margin-top: -4px; }
 .line.branch.d1 { margin-left: 14px; } .line.branch.d2 { margin-left: 28px; } .line.branch.d3 { margin-left: 42px; }
 .line.branch::before { content: ''; position: absolute; left: -10px; top: -8px; width: 8px; height: 26px;
   border-left: 3px solid var(--muted); border-bottom: 3px solid var(--muted); }
+
+/* leaderboard rows: place, name (+ small pilot number), score in its own box */
+.board li { grid-template-columns: 2.6em 1fr auto; align-items: center; }
+.board .place { font-weight: bold; }
+.board li.p1 .place { color: #c98a00; } .board li.p2 .place { color: #7d8a96; } .board li.p3 .place { color: #a0602c; }
+.board .who { display: grid; } .board .who small { font-size: 7px; color: var(--muted); }
+.board .score { background: var(--paper, #fff); border: 2px solid var(--ink); padding: 3px 5px; white-space: nowrap; }
+.board-what { font-size: 8px; text-align: center; margin: 2px 0; }
+.board-what.oops { color: #c0392b; }
+.oops-head { grid-column: 1 / -1; font-size: 9px; color: #c0392b; margin: 6px 0 0; text-align: center; }
+.board-pick .btn.oops { background: #f6d6d0; }
+.board-pick .btn.oops.on { background: #e8735f; color: #fff; }

@@ -1,5 +1,5 @@
 // The journey (src/route.js): flights start in the city you last landed in; the airports ahead
-// are the next cities, spaced by real-ish leg lengths (600-3000 km); a crash keeps you where you
+// are the next cities, spaced by real-ish leg lengths (1,000-3,000 km); a crash keeps you where you
 // were; landing in LONDON from REYKJAVIK is a lap; "Reach CITY" also counts landing further on.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/journey.cjs
 const { chromium } = require('playwright-core');
@@ -28,7 +28,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
   await p.goto(URL); await setSave(base); await reload();
   // 1. A new journey: LONDON, PARIS next at 1000 km (real 347, stretched to the 1000 km minimum).
-  check(/You are in LONDON/.test(await p.textContent('#tJourney')) && /PARIS \(1000 km\)/.test(await p.textContent('#tJourney')), `title should say LONDON, next PARIS (1000 km): "${await p.textContent('#tJourney')}"`);
+  check(/You are in LONDON/.test(await p.textContent('#tJourney')) && /PARIS \(1,000 km\)/.test(await p.textContent('#tJourney')), `title should say LONDON, next PARIS (1000 km): "${await p.textContent('#tJourney')}"`);
   let f = await fly();
   check(f.home === 'LONDON' && f.next === 'PARIS' && f.at === 1000, `first flight: ${JSON.stringify(f)}`);
 

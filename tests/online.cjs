@@ -34,7 +34,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
     if (u.pathname === '/rest/v1/flights' && m === 'POST') { net.flights.push(r.postDataJSON()); return route.fulfill({ status: 201, body: '' }); }
     if (u.pathname === '/rest/v1/rpc/leaderboard') {
       const { board, period } = r.postDataJSON();
-      return json(route, 200, [{ place: 1, name: `Zara the Owl 12 ${board}/${period}`, score: 900, is_me: false }, { place: 2, name: 'Ollie the Puffin 27', score: 585, is_me: true }]);
+      return json(route, 200, [{ place: 1, name: `Zara the Owl ${board}/${period}`, tag: 12, score: 900, is_me: false }, { place: 2, name: 'Ollie the Puffin', tag: 27, score: 585, is_me: true }]);
     }
     return json(route, 404, { message: 'not faked: ' + m + ' ' + u.pathname });
   });
@@ -89,7 +89,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
   await p.waitForTimeout(800);
   await p.screenshot({ path: '/tmp/online-profile.png' });
   const stats = await p.textContent('#pStats');
-  check(/3000 km/.test(stats) && /#2/.test(stats), `profile should show best flight and today's place: "${stats}"`);
+  check(/3,000 km/.test(stats) && /2nd/.test(stats), `profile should show best flight and today's place: "${stats}"`);
   await p.click('#tabFly');
 
   // 7. A landed flight is sent with the right fields.
@@ -119,7 +119,14 @@ const UID = '11111111-2222-3333-4444-555555555555';
   await p.waitForTimeout(1500); await p.evaluate(() => game.registry.get('ui').showTitle());
   await p.click('#tabBoards'); await p.waitForTimeout(800);
   check(/ultimate\/today/.test(await p.textContent('#bList')), 'opening the board should ask for ultimate / today');
-  check((await p.textContent('#bList li.me')).includes('Ollie the Puffin 27'), 'my row should be highlighted');
+  const me = await p.textContent('#bList li.me');
+  check(me.includes('Ollie the Puffin') && me.includes('#27') && me.includes('2nd') && /585 points/.test(me), `my row: highlighted, 2nd, name, #27 apart from "585 points": "${me}"`);
+  // Oops boards: today only (no period tabs), say what they count, and ask the right board.
+  await p.click('[data-board="crashes"]'); await p.waitForTimeout(800);
+  check(await p.isHidden('#bPeriods') && /crashes\/today/.test(await p.textContent('#bList')) && /Oops/.test(await p.textContent('#bWhat')), `crash champion: today only, explained: "${await p.textContent('#bWhat')}" ${await p.textContent('#bList')}`);
+  check(/900 crashes/.test(await p.textContent('#bList')), `crash board shows "900 crashes": ${await p.textContent('#bList')}`);
+  await p.click('[data-board="ultimate"]'); await p.waitForTimeout(600);
+  check(await p.isVisible('#bPeriods'), 'leaving an Oops board brings the period tabs back');
   await p.click('[data-board="longest"]'); await p.click('[data-period="week"]'); await p.waitForTimeout(800);
   check(/longest\/week/.test(await p.textContent('#bList')), `tabs should ask for longest / week: ${await p.textContent('#bList')}`);
   await p.screenshot({ path: '/tmp/online-board.png' });

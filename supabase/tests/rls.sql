@@ -40,6 +40,19 @@ select count(*) from flights;
 \echo EXPECT refused: anon cannot read flights
 select * from blocked_words limit 1;
 \echo EXPECT refused or empty: blocklist hidden
+\echo EXPECT name 'Ollie the Puffin' and tag 27 as separate columns (above)
+select * from leaderboard('crashes', 'today');
+\echo EXPECT Oops crashes: Ollie 4 (the 4 tiny queued test crashes), Priya 1
+select * from leaderboard('trapped', 'all');
+\echo EXPECT Oops trapped: Ollie 2 (trapped heat counts on any flight)
+select name, score from leaderboard('laps', 'all');
+\echo EXPECT laps: nobody (0 rows)
+reset role; insert into flights (player_id, landed, distance_m, lap) values ('aaaaaaaa-0000-0000-0000-000000000001', true, 1900, true); set role anon;
+select name, score from leaderboard('laps', 'all');
+\echo EXPECT laps: Ollie 1
+reset role; insert into flights (player_id, landed, distance_m, crash) values ('aaaaaaaa-0000-0000-0000-000000000001', false, 10, 'meteor');
+\echo EXPECT refused: crash must be storm/bird/nofly/ground/overheat
+set role anon;
 reset role; update players set hidden = true where first_name = 'Ollie';
 set role anon; select count(*) as rows_after_hiding from leaderboard('ultimate', 'all');
 \echo EXPECT 0

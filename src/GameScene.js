@@ -30,6 +30,10 @@ function lerpColour(a, b, t) {
 // "World x" of something = the scroll distance at which its left edge reaches the plane.
 // Screen x = PLANE.x + worldX - distancePx.
 
+// How a flight ended, for the online Oops boards (from the crash message shown to the player).
+const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
+  : /too hot/.test(reason) ? 'overheat' : 'ground';
+
 export class GameScene extends Phaser.Scene {
   constructor() { super('game'); }
 
@@ -1672,6 +1676,7 @@ export class GameScene extends Phaser.Scene {
     else sendFlight({   // to the online boards, if this device has a pilot name; queued when offline
       landed, distance_m: m, shade: Math.max(0, -this.sunBlocked), heat_trapped: this.heatTrapped, night_dodges: this.dodgesTotal,
       crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesPlanted], mission_done: missionDone,
+      lap, crash: landed ? null : crashKind(reason),
     });
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());
     this.time.delayedCall(landed ? 900 : 1100, () => this.ui.showResults(this.result));

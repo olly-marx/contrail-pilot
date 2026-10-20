@@ -6,16 +6,23 @@ import { km } from './config.js';
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 
-// Same ids and order as leaderboard() in supabase/migrations/.
+// Same ids as leaderboard() in supabase/migrations/. `what`: one plain line saying what is counted.
+// Oops boards are for fun, TODAY only, and never count towards Ultimate Flyer.
+const n = v => Number(v).toLocaleString('en-GB');
 export const BOARDS = [
-  { id: 'ultimate', name: 'ULTIMATE FLYER', unit: 'points' },
-  { id: 'longest', name: 'LONGEST FLIGHT', fmt: km },
-  { id: 'total', name: 'FURTHEST IN TOTAL', fmt: km },
-  { id: 'nature', name: 'TREE KINDS', unit: 'kinds' },
-  { id: 'cooler', name: 'COOL CONTRAILS', unit: 'points' },
-  { id: 'cleaner', name: 'CLEAN PLANE', unit: 'points' },
-  { id: 'missions', name: 'MISSIONS', unit: '' },
+  { id: 'ultimate', name: 'ULTIMATE FLYER', what: 'Points for everything you do well. Tap "how points work".', fmt: v => `${n(v)} points` },
+  { id: 'longest', name: 'LONGEST', what: 'Your longest flight that LANDED.', fmt: v => km(v) },
+  { id: 'total', name: 'FURTHEST', what: 'All your landed flights added up.', fmt: v => km(v) },
+  { id: 'laps', name: 'LAPS', what: 'Times round the world, back to LONDON.', fmt: v => `${n(v)} lap${v == 1 ? '' : 's'}` },
+  { id: 'nature', name: 'TREE KINDS', what: 'Different kinds of tree planted on landed flights.', fmt: v => `${n(v)} kind${v == 1 ? '' : 's'}` },
+  { id: 'cooler', name: 'COOL CONTRAILS', what: 'Shade made in the sun, minus heat trapped at night, plus icy air dodged.', fmt: v => `${n(v)} points` },
+  { id: 'cleaner', name: 'CLEAN PLANE', what: 'How clean your plane is. Hydrogen gets 200.', fmt: v => `${n(v)} points` },
+  { id: 'missions', name: 'MISSIONS', what: 'Missions done.', fmt: v => `${n(v)} done` },
+  { id: 'crashes', name: 'CRASH CHAMPION', oops: true, what: 'Oops! Most crashes today. Just for fun.', fmt: v => `${n(v)} crash${v == 1 ? '' : 'es'}` },
+  { id: 'trapped', name: 'HEAT TRAPPER', oops: true, what: 'Oops! Most heat trapped by night contrails today.', fmt: v => `${n(v)} heat` },
+  { id: 'co2', name: 'CO2 CLOUD', oops: true, what: 'Oops! Most CO2 made today.', fmt: v => `${n(Math.round(v / 100))} CO2` },
 ];
+const place = p => ['', '1st', '2nd', '3rd'][p] || `${p}th`;
 const PERIODS = [{ id: 'today', name: 'TODAY' }, { id: 'week', name: 'WEEK' }, { id: 'month', name: 'MONTH' }, { id: 'all', name: 'EVER' }];
 
 export class PilotScreens {
@@ -37,7 +44,8 @@ export class PilotScreens {
     $('pSave').onclick = () => this.savePilot();
     $('pWords').innerHTML = NAME_WORDS.map(w => `<button class="btn" type="button" data-word="${w}">${w}</button>`).join('');
     $('pWords').querySelectorAll('[data-word]').forEach(b => b.onclick = () => { this.draft.word = b.dataset.word; this.renderDraft(); });
-    $('bBoards').innerHTML = BOARDS.map(b => `<button class="btn" type="button" data-board="${b.id}">${b.name}</button>`).join('');
+    $('bBoards').innerHTML = BOARDS.filter(b => !b.oops).map(b => `<button class="btn" type="button" data-board="${b.id}">${b.name}</button>`).join('')
+      + '<p class="oops-head">OOPS!</p>' + BOARDS.filter(b => b.oops).map(b => `<button class="btn oops" type="button" data-board="${b.id}">${b.name}</button>`).join('');
     $('bBoards').querySelectorAll('[data-board]').forEach(b => b.onclick = () => { this.board = b.dataset.board; this.renderBoard(); });
     $('bPeriods').innerHTML = PERIODS.map(p => `<button class="btn" type="button" data-period="${p.id}">${p.name}</button>`).join('');
     $('bPeriods').querySelectorAll('[data-period]').forEach(b => b.onclick = () => { this.period = b.dataset.period; this.renderBoard(); });
@@ -95,10 +103,10 @@ export class PilotScreens {
       + row('Kinds of tree planted', kinds) + row('Missions done', `${Math.min(s.mission || 0, MISSIONS.length)} / ${MISSIONS.length}`);
     $('pStats').innerHTML = local;
     if (!getPilot()) return;
-    // Where am I today? Only boards I am on.
-    const places = (await Promise.all(BOARDS.map(async b => {
+    // Where am I today? Only the good boards I am on (not the Oops boards).
+    const places = (await Promise.all(BOARDS.filter(b => !b.oops).map(async b => {
       const rows = await leaderboard(b.id, 'today'), me = rows && rows.find(r => r.is_me);
-      return me ? row(`Today: ${b.name.toLowerCase()}`, `#${me.place}`) : '';
+      return me ? row(`Today: ${b.name.toLowerCase()}`, place(Number(me.place))) : '';
     }))).join('');
     if (!$('pilot').hidden) $('pStats').innerHTML = local + places;
   }
@@ -109,15 +117,19 @@ export class PilotScreens {
   }
 
   async renderBoard() {
-    const board = BOARDS.find(b => b.id === this.board), period = this.period;
+    const board = BOARDS.find(b => b.id === this.board), period = board.oops ? 'today' : this.period;
     $('bBoards').querySelectorAll('[data-board]').forEach(b => b.classList.toggle('on', b.dataset.board === board.id));
     $('bPeriods').querySelectorAll('[data-period]').forEach(b => b.classList.toggle('on', b.dataset.period === period));
+    $('bPeriods').hidden = !!board.oops;   // Oops boards: today only
+    $('bWhat').textContent = board.what;
+    $('bWhat').classList.toggle('oops', !!board.oops);
     $('bMsg').textContent = 'Loading...';
     $('bList').innerHTML = '';
     const rows = await leaderboard(board.id, period);
-    if (this.board !== board.id || this.period !== period) return;   // tapped another tab meanwhile
+    if (this.board !== board.id || (!board.oops && this.period !== period)) return;   // tapped another tab meanwhile
     if (!rows) { $('bMsg').textContent = 'No internet right now. Try again soon!'; return; }
-    $('bMsg').textContent = rows.length ? '' : 'Nobody yet. Land a flight to be first!';
-    $('bList').innerHTML = rows.map(r => `<li class="${r.is_me ? 'me' : ''}"><span>#${r.place}</span><span>${esc(r.name)}</span><b>${board.fmt ? board.fmt(Number(r.score)) : `${Number(r.score).toLocaleString('en-GB')} ${board.unit}`}</b></li>`).join('');
+    $('bMsg').textContent = rows.length ? '' : board.oops ? 'Nobody yet today. Phew!' : 'Nobody yet. Land a flight to be first!';
+    $('bList').innerHTML = rows.map(r => `<li class="${r.is_me ? 'me' : ''} p${Math.min(r.place, 4)}"><span class="place">${place(Number(r.place))}</span>`
+      + `<span class="who"><b>${esc(r.name)}</b><small>#${esc(r.tag)}${r.is_me ? ' (you)' : ''}</small></span><span class="score">${board.fmt(Number(r.score))}</span></li>`).join('');
   }
 }
