@@ -70,6 +70,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await fly(); r = await end(false);
   check(r.rewards.length === 0 && (await save()).seeds === 100, `a crash should pay nothing here: ${JSON.stringify(r.rewards)}`);
 
+  // 5b. A challenge just done never comes straight back (it did ~1 in 14 times; failed CI 9e1a8b8).
+  const back = await p.evaluate(async () => { const { payRewards } = await import('./src/rewards.js'); let n = 0;
+    for (let i = 0; i < 300; i++) { const s = { seeds: 0, crystals: 0, levels: {}, challenges: ['pass-1', 'seeds-15', 'far-4000'], visited: ['LONDON', 'PARIS'] };
+      payRewards(s, { landed: true, landedAt: 'PARIS', airportsSkipped: 1, cargo: 0, distance: 100 }, null, null); if (s.challenges.includes('pass-1')) n++; } return n; });
+  check(back === 0, `a challenge just done came straight back ${back} times in 300`);
+
   // 6. Never offered before you can do it: no tree challenges without Tree Planting.
   const offered = await p.evaluate(async () => { const { fillChallenges } = await import('./src/rewards.js'); const seen = new Set();
     for (let i = 0; i < 300; i++) { const s = { levels: {}, challenges: [] }; fillChallenges(s).forEach(c => seen.add(c.id)); } return [...seen]; });

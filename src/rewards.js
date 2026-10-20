@@ -32,9 +32,10 @@ export const CHALLENGES = [
 const byId = id => CHALLENGES.find(c => c.id === id);
 
 // Keep 3 active challenges, never two the same, only ones you can do. Random fill.
-export function fillChallenges(save, rand = Math.random) {
+// `not`: ids that must not be drawn (e.g. the ones just completed, so they don't come straight back).
+export function fillChallenges(save, rand = Math.random, not = []) {
   const active = (save.challenges || []).filter(id => byId(id));
-  const pool = CHALLENGES.filter(c => !active.includes(c.id) && (!c.can || c.can(save)));
+  const pool = CHALLENGES.filter(c => !active.includes(c.id) && !not.includes(c.id) && (!c.can || c.can(save)));
   while (active.length < ACTIVE_CHALLENGES && pool.length) active.push(pool.splice(Math.floor(rand() * pool.length), 1)[0].id);
   save.challenges = active;
   return active.map(byId);
@@ -47,10 +48,11 @@ export function payRewards(save, r, missionIndex, missionTitle) {
   const paid = [];
   const pay = (kind, label, x) => { save.seeds += x.seeds; save.crystals = (save.crystals || 0) + x.crystals; paid.push({ kind, label, seeds: x.seeds, crystals: x.crystals }); };
   if (missionIndex !== null && missionIndex !== undefined) pay('mission', missionTitle, missionReward(missionIndex));
+  const done = [];
   for (const c of fillChallenges(save)) {
-    if (c.check(r)) { pay('challenge', c.text, c); save.challenges = save.challenges.filter(id => id !== c.id); }
+    if (c.check(r)) { pay('challenge', c.text, c); done.push(c.id); save.challenges = save.challenges.filter(id => id !== c.id); }
   }
-  fillChallenges(save);
+  fillChallenges(save, Math.random, done);   // a challenge just done never comes straight back
   if (r.landed && r.landedAt) {
     save.visited = save.visited || [];
     if (!save.visited.includes(r.landedAt)) { save.visited.push(r.landedAt); pay('city', `New city: ${r.landedAt}`, NEW_CITY); }
