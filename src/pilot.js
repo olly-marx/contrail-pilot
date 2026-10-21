@@ -7,7 +7,8 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 
 // Same ids as leaderboard() in supabase/migrations/. `what`: one plain line saying what is counted.
-// Oops boards are for fun, TODAY only, and never count towards Ultimate Flyer.
+// Oops boards are for fun and never count towards Ultimate Flyer. (TODAY only until 2026-10-21;
+// now every period, like the other boards: the user asked.)
 const n = v => Number(v).toLocaleString('en-GB');
 export const BOARDS = [
   { id: 'ultimate', name: 'ULTIMATE FLYER', what: 'Points for everything you do well. Tap "how points work".', fmt: v => `${n(v)} points` },
@@ -18,11 +19,11 @@ export const BOARDS = [
   { id: 'cooler', name: 'COOL CONTRAILS', what: 'Shade made in the sun, minus heat trapped at night, plus icy air dodged.', fmt: v => `${n(v)} points` },
   { id: 'cleaner', name: 'CLEAN PLANE', what: 'How clean your plane is. Hydrogen gets 200.', fmt: v => `${n(v)} points` },
   { id: 'missions', name: 'MISSIONS', what: 'Missions done.', fmt: v => `${n(v)} done` },
-  { id: 'crashes', name: 'CRASH CHAMPION', oops: true, what: 'Oops! Most crashes today. Just for fun.', fmt: v => `${n(v)} crash${v == 1 ? '' : 'es'}` },
-  { id: 'trapped', name: 'HEAT TRAPPER', oops: true, what: 'Oops! Most heat trapped by night contrails today.', fmt: v => `${n(v)} heat` },
-  { id: 'co2', name: 'CO2 CLOUD', oops: true, what: 'Oops! Most CO2 made today.', fmt: v => `${n(Math.round(v / 100))} CO2` },
-  { id: 'longestCrash', name: 'LONGEST CRASH', oops: true, what: 'Oops! The furthest a flight got before it crashed today.', fmt: v => km(v) },
-  { id: 'avgCrash', name: 'AVERAGE CRASH', oops: true, what: 'Oops! How far your crashed flights got today, on average.', fmt: v => km(v) },
+  { id: 'crashes', name: 'CRASH CHAMPION', oops: true, what: 'Oops! Most crashes. Just for fun.', fmt: v => `${n(v)} crash${v == 1 ? '' : 'es'}` },
+  { id: 'trapped', name: 'HEAT TRAPPER', oops: true, what: 'Oops! Most heat trapped by night contrails.', fmt: v => `${n(v)} heat` },
+  { id: 'co2', name: 'CO2 CLOUD', oops: true, what: 'Oops! Most CO2 made.', fmt: v => `${n(Math.round(v / 100))} CO2` },
+  { id: 'longestCrash', name: 'LONGEST CRASH', oops: true, what: 'Oops! The furthest a flight got before it crashed.', fmt: v => km(v) },
+  { id: 'avgCrash', name: 'AVERAGE CRASH', oops: true, what: 'Oops! How far your crashed flights got, on average.', fmt: v => km(v) },
 ];
 const place = p => ['', '1st', '2nd', '3rd'][p] || `${p}th`;
 const PERIODS = [{ id: 'today', name: 'TODAY' }, { id: 'week', name: 'WEEK' }, { id: 'month', name: 'MONTH' }, { id: 'all', name: 'EVER' }];
@@ -119,18 +120,17 @@ export class PilotScreens {
   }
 
   async renderBoard() {
-    const board = BOARDS.find(b => b.id === this.board), period = board.oops ? 'today' : this.period;
+    const board = BOARDS.find(b => b.id === this.board), period = this.period;
     $('bBoards').querySelectorAll('[data-board]').forEach(b => b.classList.toggle('on', b.dataset.board === board.id));
     $('bPeriods').querySelectorAll('[data-period]').forEach(b => b.classList.toggle('on', b.dataset.period === period));
-    $('bPeriods').hidden = !!board.oops;   // Oops boards: today only
     $('bWhat').textContent = board.what;
     $('bWhat').classList.toggle('oops', !!board.oops);
     $('bMsg').textContent = 'Loading...';
     $('bList').innerHTML = '';
     const rows = await leaderboard(board.id, period);
-    if (this.board !== board.id || (!board.oops && this.period !== period)) return;   // tapped another tab meanwhile
+    if (this.board !== board.id || this.period !== period) return;   // tapped another tab meanwhile
     if (!rows) { $('bMsg').textContent = 'No internet right now. Try again soon!'; return; }
-    $('bMsg').textContent = rows.length ? '' : board.oops ? 'Nobody yet today. Phew!' : 'Nobody yet. Land a flight to be first!';
+    $('bMsg').textContent = rows.length ? '' : board.oops ? 'Nobody yet. Phew!' : 'Nobody yet. Land a flight to be first!';
     $('bList').innerHTML = rows.map(r => `<li class="${r.is_me ? 'me' : ''} p${Math.min(r.place, 4)}"><span class="place">${place(Number(r.place))}</span>`
       + `<span class="who"><b>${esc(r.name)}</b><small>#${esc(r.tag)}${r.is_me ? ' (you)' : ''}</small></span><span class="score">${board.fmt(Number(r.score))}</span></li>`).join('');
   }

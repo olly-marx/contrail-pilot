@@ -121,14 +121,15 @@ const UID = '11111111-2222-3333-4444-555555555555';
   check(/ultimate\/today/.test(await p.textContent('#bList')), 'opening the board should ask for ultimate / today');
   const me = await p.textContent('#bList li.me');
   check(me.includes('Ollie the Puffin') && me.includes('#27') && me.includes('2nd') && /585 points/.test(me), `my row: highlighted, 2nd, name, #27 apart from "585 points": "${me}"`);
-  // Oops boards: today only (no period tabs), say what they count, and ask the right board.
+  // Oops boards: every period like the other boards (TODAY only until 2026-10-21), say what they count, ask the right board.
   await p.click('[data-board="crashes"]'); await p.waitForTimeout(800);
-  check(await p.isHidden('#bPeriods') && /crashes\/today/.test(await p.textContent('#bList')) && /Oops/.test(await p.textContent('#bWhat')), `crash champion: today only, explained: "${await p.textContent('#bWhat')}" ${await p.textContent('#bList')}`);
+  check(await p.isVisible('#bPeriods') && /crashes\/today/.test(await p.textContent('#bList')) && /Oops/.test(await p.textContent('#bWhat')), `crash champion: period tabs, explained: "${await p.textContent('#bWhat')}" ${await p.textContent('#bList')}`);
   check(/900 crashes/.test(await p.textContent('#bList')), `crash board shows "900 crashes": ${await p.textContent('#bList')}`);
+  await p.click('[data-period="month"]'); await p.waitForTimeout(800);
+  check(/crashes\/month/.test(await p.textContent('#bList')), `an Oops board asks for the chosen period: ${await p.textContent('#bList')}`);
   await p.click('[data-board="longestCrash"]'); await p.waitForTimeout(600);
-  check(/longestCrash\/today/.test(await p.textContent('#bList')) && /900 km/.test(await p.textContent('#bList')), `longest crash board: today, in km: ${await p.textContent('#bList')}`);
-  await p.click('[data-board="ultimate"]'); await p.waitForTimeout(600);
-  check(await p.isVisible('#bPeriods'), 'leaving an Oops board brings the period tabs back');
+  check(/longestCrash\/month/.test(await p.textContent('#bList')) && /900 km/.test(await p.textContent('#bList')), `longest crash board keeps the period, in km: ${await p.textContent('#bList')}`);
+  await p.click('[data-period="today"]'); await p.waitForTimeout(600);
   await p.click('[data-board="longest"]'); await p.click('[data-period="week"]'); await p.waitForTimeout(800);
   check(/longest\/week/.test(await p.textContent('#bList')), `tabs should ask for longest / week: ${await p.textContent('#bList')}`);
   await p.screenshot({ path: '/tmp/online-board.png' });
