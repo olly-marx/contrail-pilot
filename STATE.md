@@ -303,7 +303,7 @@ Project `contrail-pilot`, ref `mkucbsjzbipjaiqzrlkj` (NOT drift_db). CLI `~/.loc
 logged in and linked. Migrations in `supabase/migrations/` (leaderboard, oops_and_laps,
 crash_distance_boards), all pushed. DB tests: `supabase/tests/run.sh` (throwaway Postgres in Docker).
 Game side: `src/online.js` (publishable key, anonymous sign-in, 5-flight outbox), `src/pilot.js`
-(PILOT + BOARDS screens; Oops boards are today-only). `supabase/config.toml` has
+(PILOT + BOARDS screens; Oops boards have every period since 2026-10-21, user's request: no DB change was needed). `supabase/config.toml` has
 `[storage.vector] enabled = false` (paid feature: config push 402s otherwise).
 
 ## Open questions waiting on the user
