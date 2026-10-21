@@ -1,12 +1,14 @@
 import { WIDTH, HEIGHT } from './config.js';
 import { GameScene } from './GameScene.js';
-import { loadSave } from './save.js';
+import { loadSave, writeSave } from './save.js';
+import { repriceSave } from './reprice.js';
 import { UI } from './ui.js';
 import { PilotScreens } from './pilot.js';
 import { flush } from './online.js';
 import { Tour } from './tour.js';
 
 const save = loadSave();
+if (repriceSave(save)) writeSave(save);   // once, for saves from before the new prices
 
 // Wait for the pixel font so canvas text doesn't render in a fallback font first.
 try { await document.fonts.load('8px Pixel'); } catch (e) { /* play on with the fallback */ }

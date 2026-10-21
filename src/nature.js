@@ -23,22 +23,22 @@ export const SPECIES = {
 // Bought in order in the hangar, with seeds AND ice crystals. `bio` is the Biodiversity points it adds; `needs` is the meter
 // level you must reach first. Effects in the world are drawn in GameScene.
 export const PROJECTS = [
-  { id: 'meadow', name: 'Wildflower meadow', cost: 20, crystals: 2, bio: 8, needs: 3,
+  { id: 'meadow', name: 'Wildflower meadow', cost: 30, crystals: 2, bio: 8, needs: 3,
     short: 'Flowers for bees and butterflies.',
     fact: 'Since the 1930s, the UK has lost almost all its wildflower meadows. Bees need them!' },
-  { id: 'hedgerow', name: 'Hedgerows', cost: 35, crystals: 3, bio: 10, needs: 8,
+  { id: 'hedgerow', name: 'Hedgerows', cost: 140, crystals: 8, bio: 10, needs: 8,
     short: 'Green lines that animals travel along.',
     fact: 'Hedgerows are like wildlife roads: hedgehogs, birds and bats use them to get around.' },
-  { id: 'pond', name: 'Pond', cost: 50, crystals: 4, bio: 12, needs: 15,
+  { id: 'pond', name: 'Pond', cost: 170, crystals: 9, bio: 12, needs: 15,
     short: 'A home for frogs and dragonflies.',
     fact: 'A new pond can have frogs, newts and dragonflies living in it in just one year.' },
-  { id: 'voles', name: 'Water voles return', cost: 70, crystals: 5, bio: 10, needs: 22,
+  { id: 'voles', name: 'Water voles return', cost: 450, crystals: 25, bio: 10, needs: 22,
     short: 'Bring back Ratty from The Wind in the Willows!',
     fact: 'Water voles are one of the UK\'s fastest-disappearing mammals. Ponds and wild riverbanks help them come back.' },
-  { id: 'beavers', name: 'Beavers return', cost: 105, crystals: 6, bio: 15, needs: 32,
+  { id: 'beavers', name: 'Beavers return', cost: 550, crystals: 31, bio: 15, needs: 32,
     short: 'Nature\'s engineers build dams and wetlands.',
     fact: 'Beaver dams slow down floods and make wetlands that store carbon and water.' + cz(' Citizen Zoo works with beavers in London!') },
-  { id: 'storks', name: 'White storks return', cost: 140, crystals: 8, bio: 15, needs: 45,
+  { id: 'storks', name: 'White storks return', cost: 1300, crystals: 72, bio: 15, needs: 45,
     short: 'Big birds back in the sky!',
     fact: 'White storks used to nest in Britain hundreds of years ago. Now they are coming back.' },
 ];

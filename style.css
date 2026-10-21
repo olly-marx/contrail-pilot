@@ -390,3 +390,4 @@ h2.sub { margin-top: -4px; }
 @keyframes tourBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
 @keyframes tourPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 @keyframes tourShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+#rpBody p { margin: 0 0 8px; }

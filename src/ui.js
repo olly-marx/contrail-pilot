@@ -147,7 +147,22 @@ export class UI {
     this.renderChallenges();
     this.renderJourney();
     this.showOnly('title');
+    if (this.showRepriced()) return;
     if (this.tour) this.tour.maybe('title');
+  }
+
+  // Once, after an old save was re-valued at the new prices (src/reprice.js).
+  showRepriced() {
+    const r = this.save.repriced;
+    if (!r || r.shown) return false;
+    const names = r.lost.map(l => `<b>${l.name}</b>`), list = names.length > 4 ? `${names.slice(0, 4).join(', ')} and more` : names.join(', ');
+    $('rpBody').innerHTML = `<p>Upgrades now cost more, so the best ones take real saving up.</p>`
+      + `<p>We rebuilt your plane with <b>everything you earned</b>: ${r.worth.seeds} seeds and ${r.worth.crystals} ice crystals.</p>`
+      + (names.length ? `<p>Save up again for: ${list}.</p>` : '<p>You keep every upgrade!</p>')
+      + `<p>Left in your bank: <b>${r.seeds}</b> seeds and <b>${r.crystals}</b> ice crystals.</p>`;
+    $('repriced').hidden = false;
+    $('rpOk').onclick = () => { $('repriced').hidden = true; r.shown = true; writeSave(this.save); if (this.tour) this.tour.maybe('title'); };
+    return true;
   }
 
   // ---------- results ----------
@@ -346,6 +361,7 @@ export class UI {
     if (!isFree && !canBuy(s, line)) { sfx.nope(); return; }
     if (isFree) s.freeUpgrade = false; else { s.seeds -= next.cost; s.crystals = (s.crystals || 0) - (next.crystals || 0); }
     s.levels[id] = level(s, id) + 1;
+    s.sparkle = true;   // the plane sparkles on its next take-off (GameScene.syncPlaneParts)
     if (next.fuel) s.fuel = next.fuel;              // switch to the new fuel straight away
     if (next.fuel === 'hydrogen' && !s.badges.includes('zeroCarbon')) s.badges.push('zeroCarbon');
     writeSave(s);

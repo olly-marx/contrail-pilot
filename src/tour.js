@@ -38,7 +38,7 @@ export class Tour {
   // Called when the menu shows, and when the results have finished. Starts at most one tour.
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
-    if ($(where === 'title' ? 'title' : 'results').hidden) return;   // only on a screen that is showing: never in flight
+    if ($(where === 'title' ? 'title' : 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
     if (where === 'title' && !this.done('name') && !getPilot()) return this.run('name', this.nameSteps());
     if (where === 'results' && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     if (where === 'title' && (this.done('name') || getPilot())) {

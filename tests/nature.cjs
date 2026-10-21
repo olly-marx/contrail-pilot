@@ -49,7 +49,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('[data-buy="rewild"]');
   const save = await getSave();
   const after = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
-  check(save.levels.rewild === 1 && save.seeds === 180 && save.crystals === 3, `meadow should cost 20 seeds + 2 crystals and be bought, got ${JSON.stringify(save.levels)} seeds ${save.seeds} crystals ${save.crystals}`);
+  check(save.levels.rewild === 1 && save.seeds === 170 && save.crystals === 3, `meadow should cost 30 seeds + 2 crystals and be bought, got ${JSON.stringify(save.levels)} seeds ${save.seeds} crystals ${save.crystals}`);
   check(after - before === 8, `meadow should add 8 Biodiversity, added ${after - before}`);
 
   // 4. The meadow shows up in the world as flowers in the grass.

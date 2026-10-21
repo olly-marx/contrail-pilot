@@ -23,13 +23,15 @@ const DEFAULTS = {
   challenges: [],      // ids of the 3 active challenges (src/rewards.js)
   mission: 0,          // index into MISSIONS (src/missions.js); the game's spine
   muted: false,
+  priceVersion: 2,     // saves from before the 2026-10-21 price change are re-valued once (src/reprice.js)
 };
 
 export function loadSave() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return structuredClone(DEFAULTS);
-    const s = { ...DEFAULTS, ...JSON.parse(raw) };
+    const saved = JSON.parse(raw), s = { ...DEFAULTS, ...saved };
+    if (!('priceVersion' in saved)) s.priceVersion = 1;   // from before the price change: re-valued once (src/reprice.js)
     if ('trees' in s) { s.seeds = (s.seeds || 0) + s.trees; delete s.trees; }   // money was called 'trees' before 2026-10-16
     return s;
   } catch (e) {

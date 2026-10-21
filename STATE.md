@@ -134,7 +134,12 @@ onboarding" below, in any order, each its own tested commit:
    TAKE OFF); a walk-through when upgrade lines open (all lines of one tab at once). Only starts on
    a screen that is showing (a new branch once started one mid-take-off). save.tours,
    save.shownLines. Tests opt out with seenTips ['*'] or tours ['*'].
-2. Upgrade prices: MEASURED, NOT CHANGED, waiting for the user. `tools/income.cjs` (campaign
+2. DONE 2026-10-21: new prices (user OK'd the ~20,000-seed table: 20,125 seeds, 1,119 crystals at
+   ~1 per 18 seeds; crystal income NOT measured against this). Old saves re-valued ONCE at full value
+   (user's choice, no bonus) by `src/reprice.js`: bank + old prices of owned levels, rebuilt at new
+   prices from levels already owned, cheapest first, branches valid; message `#repriced`. No save =
+   left alone. A fully bought old plane is worth 3,535 seeds and keeps 33 of 53 levels.
+   Measurement notes (earlier): `tools/income.cjs` (campaign
    autopilot): all 53 levels after 20-24 landed flights; most levels cost < 1 landed flight of
    income. Real players land 17% of flights (DB, 236 flights). The user expected prices much
    higher (a 17,000 km landing pays ~300 seeds: income grows ~distance squared, which the

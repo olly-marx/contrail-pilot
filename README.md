@@ -28,6 +28,7 @@ On a phone on the same Wi-Fi, open `http://<your-laptop-ip>:8000`.
 | `src/ui.js` | Title/briefing, results, hangar (shop) and in-flight tips (HTML overlays) |
 | `src/upgrades.js` | Upgrade lines and levels, fuels, tree species, badges, and how they change a flight |
 | `src/school.js` | Flight school: the guided first flight |
+| `src/reprice.js` | One-time re-value of saves from before the 2026-10-21 price change (old prices kept here) |
 | `src/tour.js` | "Tap here" tutorials on the menus: pilot name + leaderboard, hangar tour, new unlocks |
 | `src/nature.js` | Tree species, rewilding projects and the Wild Land (biodiversity) meter |
 | `src/links.js` | "Learn more" links in the info pop-ups (some still to be filled in) |
@@ -86,6 +87,7 @@ node tests/hangar.cjs             # buying the LAST level of an upgrade, "need N
 node tests/online.cjs             # pilot names + leaderboards against a FAKE Supabase: name form, rude/offline messages, flights sent, outbox
 supabase/tests/run.sh             # the database itself in a throwaway Postgres (Docker): word filter, row-level security, scores
 node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earning rules, costs, hangar tabs
+node tests/reprice.cjs            # old saves re-valued once at full value at the new prices; others left alone
 node tests/tours.cjs              # "tap here" tutorials: name + boards, hangar tour, new unlocks; taps elsewhere are swallowed
 node tests/forest.cjs             # trees on long flights: old-wood boost (all 5 kinds = full), a forest fills up and stops cooling
 ```
