@@ -12,6 +12,7 @@ import { payRewards } from './rewards.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
+import { PART_LINES, natureBadge } from './planeparts.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
@@ -32,12 +33,6 @@ function lerpColour(a, b, t) {
 // Screen x = PLANE.x + worldX - distancePx.
 
 // How a flight ended, for the online Oops boards (from the crash message shown to the player).
-// Plane upgrade overlays (the art session, eaa6303): 74x39 PNGs centred on the plane, one per line
-// and level, drawn in this order above it. Looks only: collisions read the base 'plane' (planePixels).
-const PART_LINES = { wings: 2, engine: 5, gear: 2, hold: 3, lens: 2, airframe: 3, fuel: 4, cabin: 4, radar: 4, magnet: 3, forecast: 2 };
-const NATURE_LINES = ['trees', 'soil', 'species', 'rewild', 'nursery'];   // total levels -> the tail badge
-const natureBadge = save => { const n = NATURE_LINES.reduce((a, id) => a + ((save.levels || {})[id] || 0), 0); return n >= 15 ? 4 : n >= 10 ? 3 : n >= 5 ? 2 : n >= 1 ? 1 : 0; };
-
 const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
   : /too hot/.test(reason) ? 'overheat' : 'ground';
 
@@ -623,7 +618,7 @@ export class GameScene extends Phaser.Scene {
     const lv = id => (this.save.levels || {})[id] || 0, add = (key, kind) => { const img = this.add.image(0, 0, key); this.planeParts.push({ img, kind }); return img; };
     this.planeParts = [];
     for (const id of Object.keys(PART_LINES)) if (lv(id)) add(`plane-${id}-${Math.min(lv(id), PART_LINES[id])}`, id === 'gear' ? 'gear' : 'part');
-    const badge = natureBadge(this.save);
+    const badge = natureBadge(this.save.levels);
     if (badge) add(`plane-nature-${badge}`, 'part');
     add('plane-lights', 'lights');
     add('plane-shimmer-0', 'shimmer').setAlpha(0.8);

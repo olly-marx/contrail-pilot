@@ -391,3 +391,15 @@ h2.sub { margin-top: -4px; }
 @keyframes tourPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 @keyframes tourShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 #rpBody p { margin: 0 0 8px; }
+
+/* Hangar plane model (ui.js renderPlaneModel): 74x39 overlays stacked on the 62x27 base, 3x. */
+.hplane { position: relative; width: 222px; height: 117px; margin: 4px auto 6px; overflow: hidden; cursor: pointer;
+  background: linear-gradient(#bfe6f7, #e8f6fc); border: 3px solid #1b1b2f; border-radius: 6px; }
+.hplane .hp-stage { position: absolute; left: 0; top: 0; width: 74px; height: 39px; transform-origin: 0 0; transition: transform 0.45s ease; }
+.hplane img { position: absolute; image-rendering: pixelated; }
+.hplane .hp-base { left: 6px; top: 6px; width: 62px; height: 27px; }
+.hplane .hp-part { left: 0; top: 0; width: 74px; height: 39px; }
+.hplane .hp-preview { animation: hpPulse 0.8s ease-in-out infinite; }
+.hplane.zoomed { border-color: #ffe15a; }
+@keyframes hpPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+#hUpgrades .line.focus { outline: 3px solid #ffe15a; }

@@ -56,6 +56,31 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(/need 7 more/.test(await radarRow(p)), `short of crystals: should say "need 7 more": "${await radarRow(p)}"`);
   await p.close();
 
+  // 4. The plane model at the top: your parts (gear down), a card tap zooms in and previews the
+  // next level, a second tap zooms out, buying sparkles.
+  p = await b.newPage({ viewport: { width: 390, height: 844 } });
+  p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
+  await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
+  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], landings: 9, priceVersion: 2, seeds: 2000, crystals: 200,
+    levels: { engine: 2, gear: 1, trees: 2, soil: 1, species: 2 } })); });
+  await p.goto(URL); await p.waitForTimeout(900); await p.click('#tabHangar'); await p.waitForTimeout(300);
+  const model = () => p.evaluate(() => ({ parts: [...document.querySelectorAll('#hPlane img.hp-part:not(.hp-sparkle)')].map(i => i.getAttribute('src').replace(/^assets\/|\.png$/g, '')),
+    preview: document.querySelector('#hPlane .hp-preview')?.getAttribute('src') || null, zoomed: document.getElementById('hPlane').classList.contains('zoomed'),
+    t: document.querySelector('#hPlane .hp-stage').style.transform, sparkle: !document.querySelector('#hPlane .hp-sparkle').hidden }));
+  let m = await model();
+  check(m.parts.join() === 'plane-engine-2,plane-gear-1,plane-nature-2' && !m.zoomed && /scale\(3\)/.test(m.t), `model: owned parts, gear down, nature badge 2 (5 levels), not zoomed: ${JSON.stringify(m)}`);
+  await p.click('.line[data-line="engine"] .name'); await p.waitForTimeout(200);
+  m = await model();
+  check(m.zoomed && m.preview === 'assets/plane-engine-3.png' && m.parts.includes('plane-engine-3') && !m.parts.includes('plane-engine-2') && !/scale\(3\)/.test(m.t), `tapping Engines zooms in and previews engine 3: ${JSON.stringify(m)}`);
+  await p.click('.line[data-line="engine"] .name'); await p.waitForTimeout(200);
+  m = await model();
+  check(!m.zoomed && !m.preview && m.parts.includes('plane-engine-2'), `tapping it again zooms out: ${JSON.stringify(m)}`);
+  await p.click('[data-buy="engine"]'); await p.waitForTimeout(100);
+  m = await model();
+  check(m.parts.includes('plane-engine-3') && m.sparkle, `buying shows the new part with sparkles: ${JSON.stringify(m)}`);
+  check(p.errs.length === 0, `model errors: ${p.errs.join(' | ')}`);
+  await p.close();
+
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
   console.log('PASS hangar');

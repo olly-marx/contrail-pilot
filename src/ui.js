@@ -7,6 +7,7 @@ import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js'
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
+import { partKeys, zoomBox } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
 
 export const FACTS_BASE = [
@@ -343,16 +344,56 @@ export class UI {
       const nextRow = next
         ? `<div class="next"><span>Next: <b>${next.name}</b>. ${next.short}</span>${btn}</div>`
         : '<div class="next"><span><b>All done!</b></span></div>';
-      return head + `<div class="line ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}${indent}">
+      return head + `<div class="line ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}${indent}${this.hFocus === line.id ? ' focus' : ''}" data-line="${line.id}">
         <div><div class="group">${line.group}</div><div class="name">${line.name}</div><div class="small">${nowName}</div><div class="pips">${pips}</div></div>
         <button class="infobtn" data-info="${line.id}" type="button" aria-label="About ${line.name}">i</button>
         ${nextRow}</div>`;
     }).join('');
     $('hUpgrades').querySelectorAll('[data-buy]').forEach(btn => btn.onclick = () => this.buy(btn.dataset.buy));
+    // Tap a card (not its buttons): the model zooms to that part and shows its next level.
+    $('hUpgrades').querySelectorAll('.line[data-line]').forEach(el => el.onclick = e => {
+      if (e.target.closest('button')) return;
+      this.hFocus = this.hFocus === el.dataset.line ? null : el.dataset.line;
+      sfx.flap(); this.renderHangar();
+    });
+    $('hPlane').onclick = () => { if (this.hFocus) { this.hFocus = null; this.renderHangar(); } };
+    this.renderPlaneModel();
     $('hUpgrades').querySelectorAll('[data-info]').forEach(btn => btn.onclick = () => this.showInfo(btn.dataset.info));
 
     $('hBadges').innerHTML = BADGES.map(b =>
       `<div class="badge ${s.badges.includes(b.id) ? 'got' : ''}"><b>${b.name}</b>${b.desc}</div>`).join('');
+  }
+
+  // The hangar model: the plane as it looks now (gear down: it is parked), 3x. With a line in
+  // focus it zooms to that part (planeparts.js ZOOM) and shows the NEXT level, pulsing.
+  renderPlaneModel() {
+    const s = this.save, id = this.hFocus, line = id && LINES.find(l => l.id === id);
+    const levels = { ...s.levels };
+    let preview = null;
+    if (line && nextLevel(s, line)) {
+      levels[id] = level(s, id) + 1;
+      const now = new Set(partKeys(s.levels));
+      preview = partKeys(levels).find(k => !now.has(k)) || null;   // the part that changes (none for lines with no look)
+    }
+    const img = (k, cls = '') => `<img class="hp-part ${cls}" src="assets/${k}.png" alt="">`;
+    const stage = $('hPlane').querySelector('.hp-stage');
+    stage.innerHTML = '<img class="hp-base" src="assets/plane.png" alt="">' + partKeys(levels).map(k => img(k, k === preview ? 'hp-preview' : '')).join('')
+      + '<img class="hp-part hp-sparkle" alt="" hidden>';
+    // Zoom: fit the part's box (base pixels; overlays have a 6 px margin) in the 222 x 117 window.
+    const box = id && !['fuel', 'airframe'].includes(id) ? zoomBox(id) : null;
+    let t = 'translate(0px, 0px) scale(3)';
+    if (box) {
+      const [x, y, w, h] = box, z = Math.min(9, 0.7 * Math.min(222 / w, 117 / h));
+      t = `translate(${111 - (x + 6 + w / 2) * z}px, ${58.5 - (y + 6 + h / 2) * z}px) scale(${z})`;
+    }
+    stage.style.transform = t;
+    $('hPlane').classList.toggle('zoomed', !!id);
+    if (this.sparkleModel) {
+      this.sparkleModel = false;
+      const sp = stage.querySelector('.hp-sparkle');
+      [0, 1, 2, 3].forEach(f => setTimeout(() => { sp.hidden = false; sp.src = `assets/plane-sparkle-${f}.png`; }, f * 70));
+      setTimeout(() => { sp.hidden = true; }, 280);
+    }
   }
 
   buy(id) {
@@ -362,6 +403,7 @@ export class UI {
     if (isFree) s.freeUpgrade = false; else { s.seeds -= next.cost; s.crystals = (s.crystals || 0) - (next.crystals || 0); }
     s.levels[id] = level(s, id) + 1;
     s.sparkle = true;   // the plane sparkles on its next take-off (GameScene.syncPlaneParts)
+    this.sparkleModel = true;
     if (next.fuel) s.fuel = next.fuel;              // switch to the new fuel straight away
     if (next.fuel === 'hydrogen' && !s.badges.includes('zeroCarbon')) s.badges.push('zeroCarbon');
     writeSave(s);
