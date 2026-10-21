@@ -124,13 +124,20 @@ def nacelle(o, x0, x1, y0=21, y1=26, band=True, intake=None, chevrons=False, len
 def engine(level):
     o = Overlay()
     for x0, x1 in PODS:
-        if level == 1:                           # tune-up: a bright ring round each intake
+        if level == 1:                           # tune-up: bright intake rings and a blue band on the old pods
             for y in range(22, 26):
-                o.px(x1, y, C['cyan'])
+                o.px(x1, y, C['cyan']); o.px(x1 - 1, y, (60, 160, 220, 255))
+            for x in range(x0 + 1, x1 - 1):
+                if is_base(x, 23):
+                    o.px(x, 23, BLUE)
         elif level == 2:
             nacelle(o, x0, x1)
-        elif level == 3:
+        elif level == 3:                         # super engines: white nacelles, blue band, chevron nozzles
             nacelle(o, x0, x1, chevrons=True)
+            for y in range(22, 25):
+                for x in range(x0 + 1, x1 - 1):
+                    if y != 24:
+                        o.px(x, y, C['white'] if y == 22 else C['lit'])
         elif level == 4:                         # open rotor: shorter pod, a spinning see-through disc at the back
             nacelle(o, x0, x1, length_cut=3)
             bx = x0 + 1                              # spinning blades read as a pale blur, not as legs
@@ -158,20 +165,31 @@ def engine(level):
 
 # ---------- Lighter Plane (carbon-fibre parts, sleeker panels) ----------
 
+def carbon(o, x, y):
+    o.px(x, y, C['carbon'] if (x + y) % 2 else C['carbon_l'])
+
+
 def airframe(level):
+    # Carbon-fibre parts: the grey belly first, then nose and fin root; super-light adds a silver sheen.
     o = Overlay()
-    for y in range(8, 13):                       # carbon weave patch at the root of the tail fin
-        for x in range(6 + (y - 8) // 2, 12 + (y - 8) // 2):
-            if is_base(x, y) and BASE.getpixel((x, y))[2] > 120:
-                o.px(x, y, C['carbon'] if (x + y) % 2 else C['carbon_l'])
-    if level >= 2:                               # carbon nose cone
-        for y, xs in ((12, range(57, 59)), (13, range(57, 60)), (14, range(58, 61)), (15, range(59, 61))):
+    for y in (19, 20):
+        for x in range(13, 58):
+            if is_base(x, y) and 150 < sum(BASE.getpixel((x, y))[:3]) / 3 < 235:
+                carbon(o, x, y)
+    if level >= 2:
+        for y, xs in ((12, range(56, 59)), (13, range(56, 60)), (14, range(57, 61)), (15, range(58, 61)), (16, range(58, 61))):
             for x in xs:
                 if is_base(x, y):
-                    o.px(x, y, C['carbon'] if (x + y) % 2 else C['carbon_l'])
-    if level >= 3:                               # silver speed stripe along the upper body
-        for x in range(18, 55):
-            o.px(x, 13, C['silver'])
+                    carbon(o, x, y)
+        for y in range(10, 14):
+            for x in range(9 + (y - 10) // 2, 15 + (y - 10) // 2):
+                if is_base(x, y) and BASE.getpixel((x, y))[2] > 120:
+                    carbon(o, x, y)
+    if level >= 3:                               # polished silver sheen along the whole upper body
+        for x in range(18, 57):
+            for y in (13, 14):
+                if is_base(x, y) and sum(BASE.getpixel((x, y))[:3]) / 3 > 200:
+                    o.px(x, y, C['silver'] if (x // 3) % 2 else (240, 246, 255, 255))
     o.save(f'plane-airframe-{level}')
 
 
@@ -185,15 +203,31 @@ def leaf(o, x, y, big):
                 o.px(x + c, y + r, {'g': C['green'], 'G': C['green_d'], 'l': C['leaf_l']}[ch])
 
 
+def livery(o, target):
+    """Repaint the base's blue livery (tail fin, cheatline) in a new colour, keeping its shading.
+    Windows (row 15) are left alone: Greener Cabin owns them."""
+    blues = [(x, y) for y in range(BH) for x in range(BW)
+             if BASE.getpixel((x, y))[3] and BASE.getpixel((x, y))[2] > BASE.getpixel((x, y))[0] + 60 and y != 15]
+    lum = lambda c: (c[0] + c[1] + c[2]) / 3
+    mean = sum(lum(BASE.getpixel(p)) for p in blues) / len(blues)
+    for x, y in blues:
+        k = lum(BASE.getpixel((x, y))) / mean
+        o.px(x, y, tuple(max(0, min(255, round(v * k))) for v in target) + (255,))
+
+
 def fuel(level):
+    # The plane's paint follows its fuel: teal, then green as SAF rises; hydrogen goes bright cyan.
     o = Overlay()
-    if level in (1, 2, 3):
-        leaf(o, 20, 13 if level == 1 else 12, level >= 2)
-    if level == 3:                               # green cheatline under the blue one
-        for x in range(17, 58):                  # on the white band under the windows
+    livery(o, {1: (20, 130, 150), 2: (30, 140, 95), 3: (50, 150, 60), 4: (40, 175, 225)}[level])
+    if level in (2, 3):
+        leaf(o, 20, 12, True)
+    if level == 1:
+        leaf(o, 20, 13, False)
+    if level == 3:
+        for x in range(17, 58):
             if is_base(x, 16):
                 o.px(x, 16, C['green'])
-    if level == 4:                               # hydrogen: cyan stripe and a tank on top
+    if level == 4:                               # hydrogen: white tail flash, cyan stripe, a tank on top
         for x in range(17, 58):
             if is_base(x, 16):
                 o.px(x, 16, C['cyan'])
@@ -209,20 +243,32 @@ def fuel(level):
 # ---------- Greener Cabin: windows tinted green, a quarter more per level ----------
 
 def cabin(level):
+    # Greener cabin: windows glow green, deeper each level; the top level adds a lit eco door.
     o = Overlay()
     wins = [(x, 15) for x in range(BW) if is_base(x, 15) and BASE.getpixel((x, 15))[2] > BASE.getpixel((x, 15))[0] + 60]
+    shade = {1: (150, 220, 150), 2: (100, 200, 110), 3: (76, 175, 80), 4: (120, 230, 120)}[level]
+    cockpit = [(x, y) for y in (11, 12) for x in range(52, 60) if is_base(x, y) and sum(BASE.getpixel((x, y))[:3]) / 3 < 120
+               and BASE.getpixel((x, y))[2] > 40]
+    for x, y in wins + cockpit:
+        o.px(x, y, shade + (255,))
     for i, (x, y) in enumerate(wins):
-        if i % 4 < level:
-            o.px(x, y, C['green'])
+        if (level == 2 and i % 2 == 0) or level >= 3:
+            o.px(x, 14, (200, 240, 200, 255))      # warm green glow above the windows
+    if level == 4:                               # cabin door with a leaf
+        for y in (13, 14, 15, 16):
+            o.px(51, y, K); o.px(54, y, K)
+        for x in (52, 53):
+            o.px(x, 12, K); o.px(x, 13, C['green']); o.px(x, 14, C['leaf_l']); o.px(x, 15, C['green']); o.px(x, 16, C['green'])
     o.save(f'plane-cabin-{level}')
 
 
 # ---------- Landing Gear (shown near the ground only) ----------
 
 def wheel(o, x, y):
-    for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):
-        o.px(x + dx, y + dy, C['ink'])
-    o.px(x, y, C['dark'])
+    for dx in range(3):
+        for dy in range(3):
+            o.px(x + dx, y + dy, C['ink'])
+    o.px(x + 1, y + 1, C['grey'])
 
 
 def gear(level):
@@ -231,7 +277,7 @@ def gear(level):
         for y in range(21, 27):
             if not is_base(sx, y):
                 o.px(sx, y, C['dark'])
-        wheel(o, sx - 2, 27); wheel(o, sx + 1, 27)
+        wheel(o, sx - 3, 27); wheel(o, sx + 1, 27)
     if level >= 2:                               # nose gear and a green "auto-land" light
         for y in range(20, 26):
             if not is_base(53, y):
@@ -245,12 +291,14 @@ def gear(level):
 
 def hold(level):
     o = Overlay()
-    doors = [(44, 49)] if level == 1 else [(42, 46), (48, 52)]
+    doors = [(42, 51)] if level == 1 else [(38, 45), (47, 54)]
     for x0, x1 in doors:
         for x in range(x0, x1 + 1):
             o.px(x, 19, K); o.px(x, 21, K) if is_base(x, 21) else None
         o.px(x0, 20, K); o.px(x1, 20, K)
         o.px(x0 + 1, 20, C['amber'])            # door handle
+        for x in range(x0 + 2, x1):
+            o.px(x, 20, C['lit'])                 # the door panel, lighter than the belly
     if level == 3:                               # cargo belly pod
         pod = {(x, y) for x in range(40, 54) for y in (21, 22, 23)} - {(40, 23), (53, 23)}
         for x, y in pod:
@@ -263,19 +311,27 @@ def hold(level):
 # ---------- Seed Magnet: antenna on top ----------
 
 def magnet(level):
+    # Seed magnet: a 2 px mast on top with a glowing green bulb that grows; the top level adds a dish.
     o = Overlay()
-    ax, top = 45, {1: 6, 2: 4, 3: 4}[level]
-    for y in range(top + 1, 9):
-        o.px(ax, y, C['dark'])
-    o.px(ax, top, C['green'])
-    if level >= 2:                               # glow
-        for dx, dy in ((-1, 0), (1, 0), (0, -1)):
-            o.px(ax + dx, top + dy, C['leaf_l'])
-    if level == 3:                               # dish and sparkle
-        for x in range(ax - 2, ax + 3):
-            o.px(x, top + 2, C['grey'])
-        o.px(ax - 2, top + 1, C['grey']); o.px(ax + 2, top + 1, C['grey'])
-        o.px(ax + 3, top - 2, C['white']); o.px(ax - 3, top - 1, C['white'])
+    ax, top = 45, {1: 2, 2: 0, 3: 0}[level]
+    mast = {(ax, y) for y in range(top + 2, 9)} | {(ax + 1, y) for y in range(top + 2, 9)}
+    bulb = {(ax, top), (ax + 1, top), (ax, top + 1), (ax + 1, top + 1)}
+    if level >= 2:
+        bulb |= {(ax - 1, top), (ax + 2, top), (ax - 1, top + 1), (ax + 2, top + 1), (ax, top - 1), (ax + 1, top - 1)}
+    for x, y in mast:
+        o.px(x, y, C['dark'] if x == ax else C['grey'])
+    for x, y in bulb:
+        o.px(x, y, C['green'] if (x + y) % 2 else C['leaf_l'])
+    outline_set(o, mast | bulb)
+    for dx, dy in ((-2, 0), (3, 0), (0, -2), (1, -2), (-2, 1), (3, 1)) if level >= 2 else ((-1, 0), (2, 0)):
+        o.px(ax + dx, top + dy, (139, 212, 142, 150))   # glow halo
+    if level == 3:                               # dish and sparkles
+        dish = {(x, top + 4) for x in range(ax - 3, ax + 5)} | {(ax - 3, top + 3), (ax + 4, top + 3)}
+        for x, y in dish:
+            o.px(x, y, C['lit'])
+        outline_set(o, dish | mast | bulb)
+        for x, y in ((ax + 5, top - 2), (ax - 4, top - 1), (ax + 3, top - 4)):
+            o.px(x, y, C['white'])
     o.save(f'plane-magnet-{level}')
 
 
@@ -283,62 +339,86 @@ def magnet(level):
 
 def radar(level):
     o = Overlay()
-    o.px(62, 14, C['dark']); o.px(63, 14, C['dark']); o.px(64, 14, C['red'])   # nose humidity probe
-    if level >= 2:                               # small sensor dome on top, behind the cockpit
-        for x in (49, 50, 51):
-            o.px(x, 8, C['lit'])
-        o.px(50, 7, C['white']); o.px(48, 8, K); o.px(52, 8, K); o.px(49, 7, K); o.px(51, 7, K); o.px(50, 6, K)
+    # Level 1: red-and-white nose band and a long humidity probe.
+    for y in range(11, 19):
+        for x in (54, 55, 56):
+            if is_base(x, y) and sum(BASE.getpixel((x, y))[:3]) / 3 > 40:
+                o.px(x, y, C['red'] if (y // 2) % 2 else C['white'])
+    for x in range(62, 66):
+        o.px(x, 14, C['dark']); o.px(x, 15, K) if x < 65 else None
+    o.px(66, 14, C['red']); o.px(66, 13, (255, 140, 140, 180))
+    if level >= 2:                               # sensor dome on top, behind the cockpit
+        dome = {(x, 8) for x in range(47, 53)} | {(x, 7) for x in range(48, 52)} | {(49, 6), (50, 6)}
+        for x, y in dome:
+            o.px(x, y, C['white'] if y < 8 else C['lit'])
+        outline_set(o, dome)
     if level >= 3:                               # grey radome nose
-        for y, xs in ((14, range(59, 61)), (15, range(59, 61)), (16, range(58, 61))):
+        for y, xs in ((12, range(58, 60)), (13, range(58, 61)), (14, range(58, 61)), (15, range(58, 61)), (16, range(58, 61)), (17, range(58, 60))):
             for x in xs:
                 if is_base(x, y):
-                    o.px(x, y, C['dark'])
-    if level >= 4:                               # satellite hump on the upper deck
-        hump = {(x, 7) for x in range(38, 43)} | {(x, 6) for x in range(39, 42)}
+                    o.px(x, y, C['dark'] if (x + y) % 3 else C['grey'])
+    if level >= 4:                               # satellite hump with a blue panel
+        hump = {(x, 7) for x in range(36, 44)} | {(x, 6) for x in range(37, 43)} | {(x, 5) for x in range(38, 42)}
         for x, y in hump:
-            o.px(x, y, C['white'] if y == 6 else C['lit'])
+            o.px(x, y, C['white'] if y == 5 else C['lit'] if y == 6 else C['grey'])
+        o.px(39, 6, BLUE); o.px(40, 6, BLUE)
         outline_set(o, hump)
     o.save(f'plane-radar-{level}')
 
 
 def lens(level):
+    # Crystal lens: an ice-blue sensor dome under the nose, bigger with a sparkle at level 2.
     o = Overlay()
-    dome = {(x, 21) for x in range(47, 51)} | ({(x, 22) for x in range(48, 50)} if level == 2 else set())
+    w = 9 if level == 1 else 12
+    dome = {(x, 20) for x in range(45, 45 + w)} | {(x, 21) for x in range(46, 44 + w)} | {(x, 22) for x in range(47, 43 + w)}
     for x, y in dome:
-        o.px(x, y, C['cyan'] if (x + y) % 2 else (180, 240, 255, 255))
+        o.px(x, y, (180, 240, 255, 255) if (x + y) % 3 == 0 else C['cyan'] if y < 22 else (60, 160, 220, 255))
     outline_set(o, dome)
+    o.px(46, 21, C['white'])
     if level == 2:
-        o.px(51, 23, C['white']); o.px(52, 24, C['white'])
+        for x, y in ((56, 24), (57, 25), (55, 25), (56, 26), (52, 26)):
+            o.px(x, y, C['white'])
     o.save(f'plane-lens-{level}')
 
 
 def forecast(level):
+    # Weather antennas on top by the tail, with an amber tip; level 2 adds a second, taller mast.
     o = Overlay()
-    for ax, h in ((24, 4),) + (((28, 3),) if level == 2 else ()):
-        for y in range(12 - h, 12):
-            if not is_base(ax, y):
-                o.px(ax, y, C['dark'])
-        o.px(ax, 11 - h, C['white'])
-        o.px(ax - 1, 12 - h, C['dark']); o.px(ax + 1, 12 - h, C['dark'])   # little cross-bar
+    for ax, h in ((24, 6),) + (((29, 8),) if level == 2 else ()):
+        mast = {(ax, y) for y in range(12 - h, 12)} | {(ax - 2, 12 - h + 1), (ax - 1, 12 - h + 1), (ax + 1, 12 - h + 1), (ax + 2, 12 - h + 1)}
+        mast = {p for p in mast if not is_base(*p)}
+        for x, y in mast:
+            o.px(x, y, C['grey'])
+        outline_set(o, mast)
+        o.px(ax, 11 - h, C['amber']); o.px(ax, 10 - h, (255, 194, 61, 140))
     o.save(f'plane-forecast-{level}')
 
 
 # ---------- Nature badge on the tail (driven by the total of the nature lines) ----------
 
 def nature(stage):
+    # 7 px badge on the tail fin: sprout, sapling, tree, then a blossoming tree in a gold ring.
     o = Overlay()
-    cx, cy = 8, 6                                # inside the tail fin
-    disc = {(cx + dx, cy + dy) for dx in range(-2, 3) for dy in range(-2, 3) if abs(dx) + abs(dy) <= 3}
+    cx, cy = 8, 7
+    disc = {(cx + dx, cy + dy) for dx in range(-3, 4) for dy in range(-3, 4) if dx * dx + dy * dy <= 10}
     for x, y in disc:
         o.px(x, y, C['white'])
-    outline_set(o, disc, skip_base=False)
+    ring = C['amber'] if stage == 4 else K
+    for x, y in disc:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            if (x + dx, y + dy) not in disc:
+                o.px(x + dx, y + dy, ring)
     g, G, b, w = C['green'], C['green_d'], (122, 74, 36, 255), (255, 150, 190, 255)
-    art = {1: [(0, 1, b), (0, 0, g), (-1, -1, g)],
-           2: [(0, 1, b), (0, 0, b), (-1, -1, g), (1, -1, g), (0, -1, g)],
-           3: [(0, 1, b), (0, 0, G), (-1, -1, g), (1, -1, g), (0, -1, g), (-1, 0, G), (1, 0, G), (0, -2, g)],
-           4: [(0, 1, b), (0, 0, G), (-1, -1, w), (1, -1, g), (0, -1, g), (-1, 0, G), (1, 0, w), (0, -2, w)]}[stage]
-    for dx, dy, c in art:
-        o.px(cx + dx, cy + dy, c)
+    art = {
+        1: ['.....', '.....', '..g..', '.gG..', '..b..'],
+        2: ['..g..', '.ggg.', 'ggGgg', '..G..', '..b..'],
+        3: ['ggggg', 'gGgGg', 'ggGgg', '.gbg.', '..b..'],
+        4: ['.gwg.', 'wgGgw', 'gGgwg', '.wGg.', '..b..'],
+    }[stage]
+    for r, row in enumerate(art):
+        for c, ch in enumerate(row):
+            if ch != '.':
+                o.px(cx - 2 + c, cy - 2 + r, {'g': g, 'G': G, 'b': b, 'w': w}[ch])
     o.save(f'plane-nature-{stage}')
 
 
