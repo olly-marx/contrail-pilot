@@ -75,8 +75,30 @@ const KEY = 'contrailPilot.v2';
   check(/Plant a tree/.test(c7) && /Needs:/.test(c7) && /Tree parcels/.test(c7), `mission 7 should say it needs Tree parcels: ${c7}`);
   await setSave({ ...base, mission: 6, levels: { trees: 1 } }); await p.reload(); await p.waitForTimeout(600);
   check(!/Needs:/.test(await p.textContent('#tMission')), 'with Tree parcels owned the card should not say Needs');
-  // 6. All done.
-  await setSave({ ...base, mission: 10 }); await p.reload(); await p.waitForTimeout(600);
+  // 6. The later missions: needing several upgrades; funny "crash" missions done by a crash, and
+  // straight away if it already happened on an earlier flight.
+  const later = await p.evaluate(async () => { const M = await import('./src/missions.js'); const m = id => M.MISSIONS.find(x => x.id === id);
+    return { n: M.MISSIONS.length,
+      kinds5blocked: [M.blocked({ levels: { species: 4 } }, m('kinds-5')), M.blocked({ levels: { species: 4, trees: 3 } }, m('kinds-5')), M.blocked({ levels: { species: 4, trees: 4 } }, m('kinds-5'))],
+      birdsNow: m('oops-birds').check({ landed: false, crash: 'bird', crashes: { bird: 1 } }), birdsBefore: m('oops-birds').check({ landed: true, crashes: { bird: 2 } }),
+      birdsNever: m('oops-birds').check({ landed: false, crash: 'storm', crashes: { storm: 3 } }),
+      lap: [m('nonstop-lap').check({ landed: true, distance: 32060 }), m('nonstop-lap').check({ landed: true, distance: 31520 })] }; });
+  check(later.n >= 19, `missions for every stage: ${later.n}`);
+  check(String(later.kinds5blocked) === 'true,true,false', `all-5-kinds needs Fruit trees AND Tree drop plane: ${later.kinds5blocked}`);
+  check(later.birdsNow && later.birdsBefore && !later.birdsNever, `bird mission: done by a bird crash, now or before, not by a storm: ${JSON.stringify(later)}`);
+  check(String(later.lap) === 'true,false', `non-stop lap needs the whole 32,060 km: ${later.lap}`);
+  // 6b. In a real flight: a bird crash completes the bird mission and the results say OUCH.
+  const birdIdx = await p.evaluate(async () => (await import('./src/missions.js')).MISSIONS.findIndex(m => m.id === 'oops-birds'));
+  await setSave({ ...base, mission: birdIdx, landings: 9 }); await p.reload(); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await p.waitForTimeout(2300);
+  await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.finish({ reason: 'Bird strike!\nYou hit a bird.' }); });
+  await p.waitForTimeout(3500);
+  const sv = await getSave();
+  check(sv.mission === birdIdx + 1 && sv.crashes && sv.crashes.bird === 1, `a bird crash should complete the bird mission and be counted: mission ${sv.mission}, crashes ${JSON.stringify(sv.crashes)}`);
+  check(/OUCH/.test(await p.textContent('#rMission')), `results should say OUCH: ${await p.textContent('#rMission')}`);
+  await p.screenshot({ path: '/tmp/mission-birds.png' });
+  // 7. All done.
+  await setSave({ ...base, mission: later.n }); await p.reload(); await p.waitForTimeout(600);
   check(/ALL MISSIONS DONE/.test(await p.textContent('#tMission')), 'after the last mission the card should say all done');
 
   check(errs.length === 0, `page errors: ${errs}`);

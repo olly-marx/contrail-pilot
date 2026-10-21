@@ -36,5 +36,7 @@ export const cityAt = i => ROUTE[((i % ROUTE.length) + ROUTE.length) % ROUTE.len
 export const cityIndex = name => ROUTE.findIndex(c => c.name === name);
 // Game length (km) of the leg from city i to city i + 1, rounded to 10 km.
 export const legKm = i => Math.round(Math.min(LEG_MAX, Math.max(LEG_MIN, realKm(cityAt(i), cityAt(i + 1)))) / 10) * 10;
+// A whole lap of the world, in game km (32,060).
+export const LAP_KM = ROUTE.reduce((a, _, i) => a + legKm(i), 0);
 // How many stops from city `from` to city `to`, going forwards round the loop (0 = same city).
 export const stopsBetween = (from, to) => ((to - from) % ROUTE.length + ROUTE.length) % ROUTE.length;

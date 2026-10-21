@@ -372,3 +372,5 @@ h2.sub { margin-top: -4px; }
 .oops-head { grid-column: 1 / -1; font-size: 9px; color: #c0392b; margin: 6px 0 0; text-align: center; }
 .board-pick .btn.oops { background: #f6d6d0; }
 .board-pick .btn.oops.on { background: #e8735f; color: #fff; }
+.mission .done-text { display: block; margin: 4px 0; font-style: italic; color: #1e7a3c; }
+

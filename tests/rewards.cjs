@@ -76,10 +76,17 @@ const URL = process.env.URL || 'http://localhost:8000/';
       payRewards(s, { landed: true, landedAt: 'PARIS', airportsSkipped: 1, cargo: 0, distance: 100 }, null, null); if (s.challenges.includes('pass-1')) n++; } return n; });
   check(back === 0, `a challenge just done came straight back ${back} times in 300`);
 
-  // 6. Never offered before you can do it: no tree challenges without Tree Planting.
-  const offered = await p.evaluate(async () => { const { fillChallenges } = await import('./src/rewards.js'); const seen = new Set();
-    for (let i = 0; i < 300; i++) { const s = { levels: {}, challenges: [] }; fillChallenges(s).forEach(c => seen.add(c.id)); } return [...seen]; });
-  check(!offered.includes('plant-2') && !offered.includes('kinds-2') && offered.length >= 12, `tree challenges offered without trees, or too few kinds: ${offered}`);
+  // 6. Never offered before you can do it (no tree challenges without Tree Planting), and only
+  // from your stage or the one below (stages by upgrade levels owned: 0, 5, 15, 30, 45).
+  const offered = await p.evaluate(async () => { const { fillChallenges, CHALLENGES } = await import('./src/rewards.js'); const out = {};
+    for (const [name, levels] of [['new', {}], ['stage3', { fuel: 3, engine: 3, radar: 2, cabin: 4, magnet: 2, gear: 2 }], ['stage5', { fuel: 4, engine: 5, cabin: 4, trees: 4, species: 4, rewild: 6, radar: 4, magnet: 3, airframe: 3, wings: 2, gear: 2, hold: 3, soil: 3 }]]) {
+      const seen = new Set(); for (let i = 0; i < 300; i++) { const s = { levels, challenges: [] }; fillChallenges(s).forEach(c => seen.add(c.id)); }
+      out[name] = [...seen].map(id => CHALLENGES.find(c => c.id === id)); }
+    return out; });
+  const ids = cs => cs.map(c => c.id).join(',');
+  check(offered.new.every(c => c.stage === 1) && !ids(offered.new).includes('plant-2') && offered.new.length >= 6, `a new pilot gets only stage-1 challenges, no tree ones: ${ids(offered.new)}`);
+  check(offered.stage3.every(c => c.stage === 2 || c.stage === 3) && offered.stage3.some(c => c.stage === 3) && !ids(offered.stage3).includes('kinds-2'), `16 levels (stage 3): stage 2-3 challenges only, no tree ones: ${ids(offered.stage3)}`);
+  check(offered.stage5.every(c => c.stage >= 4) && ids(offered.stage5).includes('kinds-5'), `47 levels (stage 5): stage 4-5 challenges, incl. all 5 kinds: ${ids(offered.stage5)}`);
 
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
   await b.close();

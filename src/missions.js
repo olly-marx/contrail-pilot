@@ -3,7 +3,7 @@
 // fuel) or a specific upgrade. `check(r)` looks at the flight result; `progress(s)` is the live
 // line under the distance; `needs` says what to buy if the mission is impossible without it.
 import { km } from './config.js';
-import { cityIndex, stopsBetween } from './route.js';
+import { cityIndex, stopsBetween, LAP_KM } from './route.js';
 
 // Reach a city on the journey (src/route.js): done when you land there or anywhere further along
 // the loop, including back at LONDON (a lap), so a player who is already past it is never stuck.
@@ -42,9 +42,39 @@ export const MISSIONS = [
     check: r => r.crystals >= 5, progress: s => `Ice crystals: ${s.crystals}/5`,
     fail: r => `You earned ${r.crystals}. Dodging icy air at night earns them.` },
   { ...reach('NEW YORK'), icon: 'mi-globe', title: 'Round the world to NEW YORK', tip: 'The big one: across the whole world. Only the cleanest plane can do it.' },
+  // Stage 3, long haul: the hazards of long flights. Two funny ones count a crash: done the first
+  // time it happens (or straight away if it already has).
+  { id: 'turbulence', icon: 'mi-airports', title: 'Bump through turbulence', sub: 'Turbulence starts 4,000 km into a flight. Fly into the wavy air and feel the bumps!',
+    check: r => r.bumped, progress: s => s.bumped ? 'Bumpy! Now land or fly on.' : s.distancePx < 4000 ? `Turbulence from 4,000 km: ${km(4000 - s.distancePx)} to go` : 'Find the wavy air!',
+    fail: r => r.distance < 4000 ? 'Turbulence only starts 4,000 km into a flight. Fly further!' : 'Fly INTO the wavy air.' },
+  { id: 'far-10000', icon: 'mi-airports', title: 'Fly 10,000 km and land', sub: 'A really long flight. Land safely at the end!',
+    check: r => r.landed && r.distance >= 10000, progress: s => `${km(Math.min(10000, s.distancePx))} / 10,000 km`,
+    fail: r => r.landed ? `You flew ${km(r.distance)}. Keep going to 10,000 km!` : 'So close! Land safely to finish it.' },
+  { id: 'oops-birds', icon: 'mi-airports', title: 'Crash into birds for the first time', sub: 'Birds appear 10,000 km into a flight. They fly fast! Find out the hard way...',
+    check: r => !!(r.crashes && r.crashes.bird), progress: s => s.distancePx < 10000 ? `Birds from 10,000 km: ${km(10000 - s.distancePx)} to go` : 'Birds about!',
+    fail: r => r.distance < 10000 ? 'Birds only appear 10,000 km into a flight.' : 'You missed them all! Next time, maybe...', done: 'OUCH! Birds fly fast. Now you know: watch out for them!' },
+  { id: 'oops-nofly', icon: 'mi-airports', title: 'Get told off by air traffic control', sub: 'No-fly zones start 8,000 km into a flight. What happens if you fly into one?',
+    check: r => !!(r.crashes && r.crashes.nofly), progress: s => s.distancePx < 8000 ? `No-fly zones from 8,000 km: ${km(8000 - s.distancePx)} to go` : 'Red and white = no-fly zone!',
+    fail: r => r.distance < 8000 ? 'No-fly zones only start 8,000 km into a flight.' : 'You stayed out. Good pilot! (But this mission wants a telling-off...)', done: 'TOLD OFF! Real pilots must never fly into a no-fly zone.' },
+  // Stage 4, nature builder.
+  { id: 'kinds-3', icon: 'mi-tree', title: 'Plant 3 kinds of tree in one flight', sub: 'Your parcels take turns through your kinds of tree.', needs: { line: 'species', level: 2, text: 'Oak (hangar, NATURE)' },
+    check: r => r.kinds >= 3, progress: s => `Kinds planted: ${s.speciesPlanted.size}/3`, fail: r => `You planted ${r.kinds} kind${r.kinds === 1 ? '' : 's'}. Hit more brown soil!` },
+  { id: 'kinds-5', icon: 'mi-tree', title: 'Plant ALL 5 kinds in one flight', sub: 'A full forest! Only a forest of every kind can soak up enough CO2 for the longest flights.',
+    needs: { lines: [['species', 4], ['trees', 4]], text: 'Fruit trees AND Tree drop plane (NATURE)' },
+    check: r => r.kinds >= 5, progress: s => `Kinds planted: ${s.speciesPlanted.size}/5`, fail: r => `You planted ${r.kinds} kinds. Don't miss the soil!` },
+  { id: 'beavers', icon: 'mi-tree', title: 'Bring back the beavers', sub: 'Rewild your land until beavers can come home, then fly.', needs: { line: 'rewild', level: 5, text: 'Rewilding: Beavers return (NATURE)' },
+    check: r => (r.projects || []).includes('beavers'), progress: () => 'Beavers are home!', fail: () => 'Rewild your land in the hangar.' },
+  // Stage 5, round the world.
+  { id: 'far-20000', icon: 'mi-globe', title: 'Fly 20,000 km and land', sub: 'Half way round the world in one go!',
+    check: r => r.landed && r.distance >= 20000, progress: s => `${km(Math.min(20000, s.distancePx))} / 20,000 km`,
+    fail: r => r.landed ? `You flew ${km(r.distance)}.` : 'Land safely to finish it.' },
+  { id: 'nonstop-lap', icon: 'mi-globe', title: 'Round the world without landing', sub: 'All the way round in ONE flight, then land. You will need a full forest of every kind!',
+    check: r => r.landed && r.distance >= LAP_KM, progress: s => `${km(Math.min(LAP_KM, s.distancePx))} / ${km(LAP_KM)}`,
+    fail: r => `You flew ${km(r.distance)}. Plant all 5 kinds of tree early in the flight!` },
 ];
 
 export const current = save => MISSIONS[save.mission || 0] || null;   // null: all done
 export const allDone = save => (save.mission || 0) >= MISSIONS.length;
 // Can this mission be done with what the player owns? (Only hard gates; CO2 does the rest.)
-export const blocked = (save, m) => !!(m && m.needs && !((save.levels || {})[m.needs.line] > 0));
+// `needs`: { line, level } (level 1 if not given), or { lines: [[line, level], ...] } for several.
+export const blocked = (save, m) => !!(m && m.needs && (m.needs.lines || [[m.needs.line, m.needs.level || 1]]).some(([l, n]) => !(((save.levels || {})[l] || 0) >= n)));

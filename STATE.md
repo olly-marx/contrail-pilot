@@ -118,8 +118,15 @@ onboarding" below, in any order, each its own tested commit:
 1. DONE 2026-10-21 (fb3c048): trees for long runs. See "Trees for long runs" below.
 2. Re-price every upgrade per stage (income per flight at each stage; flights of saving per level;
    no useless or dominant level). Show the user the table before changing prices.
-3. Tiered missions/challenges by stage, incl. funny ones ("Crash into birds for the first time" when
-   you first reach bird distances). Upgrades are what let you keep completing missions.
+3. DONE 2026-10-21: tiered missions/challenges. Stages by upgrade levels owned (0/5/15/30/45:
+   Learner, Cleaner plane, Long haul, Nature builder, Round the world; `stageOf` in rewards.js).
+   9 new missions after the first 10 (19 now): turbulence, 10,000 km, "Crash into birds for the
+   first time" and "Get told off by air traffic control" (done by a crash, or at once if it already
+   happened: save.crashes counts crash kinds), 3 kinds, all 5 kinds (needs Fruit trees AND Tree drop
+   plane: `needs.lines`), beavers, 20,000 km, a non-stop lap. 35 challenges with a `stage`; offered
+   from your stage and the one below; prizes grow by stage (stage 5: 300-400 seeds). Funny ones:
+   land with exactly 7 seeds, land with none, drop a parcel on a runway. A lap is 32,060 km
+   (LAP_KM), NOT 31,520 as written before.
 4. Forced "tap here" tutorials: name + leaderboard on first play; hangar tour after the first
    flight; a pointer walk-through whenever something new unlocks.
 Rules: no upgrade may change the controls; saving up cooling stays (no floor); explain the
@@ -140,7 +147,7 @@ STATUS 2026-10-20: all five built and pushed. 1 rewards (`src/rewards.js`: missi
 challenges, +15/+1 new city, +300/+25 lap + Round the World badge); 2 upgrade trees (16 lines,
 53 levels; `tree` + `requires` branches; new: Lighter Plane, Long Wings, Landing Gear, Bigger Hold,
 Crystal Lens, Weather Forecast, Tree Nursery); 3 journey (`src/route.js`, 16 cities, legs real km
-clamped 1000-3000, a lap 31,520 km; flights start at `save.city`); 4 lap bonus; 5 the bottom bar
+clamped 1000-3000, a lap 32,060 km (sum of legKm; "31,520" was written here until 2026-10-21 and was always wrong); flights start at `save.city`); 4 lap bonus; 5 the bottom bar
 (FLY / HANGAR / NATURE / PILOT / BOARDS, `ui.go()`). Decided by the user: flights start where you
 landed; distances real up to a max with short legs stretched; bottom bar.
 PENDING (needs the user's OK: database change): a "laps" stat on the online leaderboard.
@@ -190,7 +197,7 @@ flight. Built (`FOREST` in config.js): trees x0.5; old-wood boost for grown tree
 (x up to 3 with 5 kinds, x(kinds/5)^2); a forest can only soak up 80 CO2 per flight with 5 kinds
 (x(kinds/5)^4, min 12), rewilded land 30; then "Your forest is full of carbon!".
 Results (smart, hydrogenMax, PLANT=1, seeds 1-5): 5 kinds 30,313 / 25,407 / 33,907 / 54,323 /
-33,046 (median 33,046); 4 kinds (seeds 1-3) 25,129 / 37,421 / 25,841. Straight with a full forest
+33,046 (median 33,046, past a lap of 32,060); 4 kinds (seeds 1-3) 25,129 / 37,421 / 25,841. Straight with a full forest
 16,627 / 12,513 / 9,219 / 16,982 / 12,641 (no trees: median 12,048). Every run overheats.
 
 Onboarding ("forced action" tutorials, like proper games):

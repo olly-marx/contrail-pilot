@@ -117,6 +117,9 @@ export class GameScene extends Phaser.Scene {
     this.forestFullSaid = false;
     this.landStored = 0;               // ...and rewilded land
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
+    this.goldens = 0;                  // golden seeds grabbed
+    this.bumped = false;               // shaken by turbulence
+    this.parcelOnRunway = false;       // a parcel landed on a runway (oops!)
     this.speciesPlanted = new Set();   // kinds of tree planted this flight (for the online boards)
     this.lastHalf = 'day';
     this.night = { started: false, trappedAtStart: 0 };
@@ -852,7 +855,9 @@ export class GameScene extends Phaser.Scene {
     const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
     if (!plot) {
       this.burst(x, SKY_H, 0xc8a165, 6);
-      this.popup(x, SKY_H - 14, 'missed!', '#ff8080');
+      const onRunway = this.runways.some(r => x >= r.strip.x && x <= r.strip.x + AIRPORT.runwayLen);
+      if (onRunway) this.parcelOnRunway = true;   // a funny challenge
+      this.popup(x, SKY_H - 14, onRunway ? 'on the runway!' : 'missed!', '#ff8080');
       sfx.nope();
       return;
     }
@@ -1027,6 +1032,7 @@ export class GameScene extends Phaser.Scene {
       if (this.bumpIn <= 0) {
         const T = HAZARDS.turbulence;
         this.plane.vy += Phaser.Math.Between(-T.bump, T.bump);
+        this.bumped = true;
         this.bumpIn = Phaser.Math.FloatBetween(T.bumpEvery[0], T.bumpEvery[1]);
         this.cameras.main.shake(80, 0.004);
       }
@@ -1164,6 +1170,7 @@ export class GameScene extends Phaser.Scene {
       t.img.y = Math.round(t.baseY + Math.sin(t.phase) * TOKENS.bob);
       if (d <= this.kit.pickup - 6 && this.state === 'playing') {
         this.cargo += t.value;
+        if (t.value > 1) this.goldens++;
         this.popup(tx, ty - 8, `+${t.value} seed${t.value > 1 ? 's' : ''}`, t.value > 1 ? '#ffe15a' : '#8dffb0');
         this.burst(tx, ty, 0x4caf50, 5);
         sfx.coin();
@@ -1669,12 +1676,16 @@ export class GameScene extends Phaser.Scene {
     award('treeHunter', landed && this.cargo >= 15);
 
     if (landed) this.save.landings = (this.save.landings || 0) + 1;
+    const crash = landed ? null : crashKind(reason);
+    if (crash && !this.school) { this.save.crashes = this.save.crashes || {}; this.save.crashes[crash] = (this.save.crashes[crash] || 0) + 1; }
     // Mission: done or not, and move on to the next one.
     // The journey: landing moves you to that city; reaching LONDON again (or passing it) is a lap.
     const reached = this.startCity + this.airportIndex + 1;   // index along the loop, past ROUTE.length after LONDON
     const lap = landed && !this.school && reached >= ROUTE.length;
     const mission = this.school ? null : currentMission(this.save);
-    const partial = { landed, landedAt: this.landedAt, lap, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals };
+    const partial = { landed, landedAt: this.landedAt, lap, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
+      crash, crashes: this.save.crashes || {}, distance: m, kinds: this.speciesPlanted.size, bumped: this.bumped, goldens: this.goldens,
+      onRunway: this.parcelOnRunway, forestFull: this.forestFullSaid, projects: projectsDone(this.save).map(p => p.id) };
     const missionDone = !!(mission && mission.check(partial));
     const missionIndex = missionDone ? (this.save.mission || 0) : null;
     if (missionDone) this.save.mission = (this.save.mission || 0) + 1;
@@ -1699,13 +1710,13 @@ export class GameScene extends Phaser.Scene {
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       rewards,
-      mission: mission ? { title: mission.title, done: missionDone, fail: missionDone ? '' : mission.fail(partial), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
+      mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);
     else sendFlight({   // to the online boards, if this device has a pilot name; queued when offline
       landed, distance_m: m, shade: Math.max(0, -this.sunBlocked), heat_trapped: this.heatTrapped, night_dodges: this.dodgesTotal,
       crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesPlanted], mission_done: missionDone,
-      lap, crash: landed ? null : crashKind(reason),
+      lap, crash,
     });
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());
     this.time.delayedCall(landed ? 900 : 1100, () => this.ui.showResults(this.result));

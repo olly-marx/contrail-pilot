@@ -127,7 +127,7 @@ export const PARCEL = {
 // a little on short flights; from `from` km into a flight, GROWN trees get an old-wood boost
 // that rises over `span` km up to x(1 + boost). The boost is x(kinds planted THIS flight / 5)^power,
 // so only a forest of all 5 kinds gets it all. Measured with tools/balance.cjs PLANT=1 (smart
-// pilot, top plane, median of 5 seeds): all 5 kinds ~33,000 km (a lap is 31,520), 4 kinds ~26,000,
+// pilot, top plane, median of 5 seeds): all 5 kinds ~33,000 km (a lap is 32,060: LAP_KM in route.js), 4 kinds ~26,000,
 // no trees ~25,000; every run still overheats in the end.
 export const FOREST = {
   early: 0.5,     // x every tree's cooling (stage values in nature.js)

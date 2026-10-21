@@ -179,7 +179,7 @@ export class UI {
     if (r.mission) {
       mb.className = `step mission ${r.mission.done ? 'done' : 'notyet'}`;
       mb.innerHTML = r.mission.done
-        ? `<b>MISSION DONE!</b> ${r.mission.title}${r.mission.last ? '<br>You finished ALL the missions!' : r.mission.next ? `<br>Next: <b>${r.mission.next}</b>` : ''}`
+        ? `<b>MISSION DONE!</b> ${r.mission.title}${r.mission.doneText ? `<span class="done-text">${r.mission.doneText}</span>` : ''}${r.mission.last ? '<br>You finished ALL the missions!' : r.mission.next ? `<br>Next: <b>${r.mission.next}</b>` : ''}`
         : `<b>Not this time:</b> ${r.mission.title}<br><span class="small">${r.mission.fail}</span>`;
     }
     $('rRecord').hidden = !r.newRecord;
