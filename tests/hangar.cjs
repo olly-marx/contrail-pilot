@@ -89,6 +89,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('[data-buy="engine"]'); await p.waitForTimeout(100);
   m = await model();
   check(m.parts.includes('plane-engine-3') && m.sparkle, `buying shows the new part with sparkles: ${JSON.stringify(m)}`);
+  // Scrolled down: a card far down the list still shows the model on screen (it sticks to the top).
+  await p.evaluate(() => document.getElementById('hangar').scrollTo(0, 99999)); await p.waitForTimeout(200);
+  const far = await p.evaluate(() => [...document.querySelectorAll('#hUpgrades .line[data-line]')].pop().dataset.line);
+  await p.click(`.line[data-line="${far}"] .name`); await p.waitForTimeout(600);
+  const dock = await p.evaluate(() => { const r = document.getElementById('hPlane').getBoundingClientRect(), q = document.getElementById('hPart').getBoundingClientRect(); return { top: r.top, bottom: q.bottom, scrolled: document.getElementById('hangar').scrollTop }; });
+  check(dock.scrolled > 200 && dock.top >= 0 && dock.top < 40 && dock.bottom < 844 - 70, `scrolled down (${far}): the model and its panel are on screen at the top: ${JSON.stringify(dock)}`);
+  await p.screenshot({ path: '/tmp/hangar-scrolled.png' });
   check(p.errs.length === 0, `model errors: ${p.errs.join(' | ')}`);
   await p.close();
 

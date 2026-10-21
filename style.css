@@ -408,3 +408,6 @@ h2.sub { margin-top: -4px; }
 .hpart { margin: 0 auto 8px; max-width: 360px; padding: 6px 8px; border: 2px solid #ffe15a; background: #fffbe8; font-size: 12px; text-align: center; }
 .hpart p { margin: 0 0 4px; }
 .hpart .buttons { justify-content: center; gap: 6px; }
+/* The model stays at the top of the hangar while the list scrolls (the user: a card tapped far
+   down zoomed a model that was off screen). The overlay is the scroller, with 12 px padding. */
+.hp-dock { position: sticky; top: -12px; z-index: 5; background: var(--paper); padding: 4px 0 2px; margin: 0 -16px; box-shadow: 0 3px 0 rgba(0,0,0,.12); }
