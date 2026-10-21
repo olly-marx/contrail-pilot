@@ -436,6 +436,34 @@ def lesson_nofly():
     p.save('lesson-nofly')
 
 
+def tour_finger():
+    """32x32 pointing-down hand for the guided tour (drawn 16x16, doubled for chunky pixels)."""
+    p = Pic(16, 16)
+    k, s_, S = C['ink'], C['skin'], C['skin_d']
+    # The classic hand cursor (pointing up), flipped below so it points down.
+    hand = ['.....kk.........',
+            '....kssk........',
+            '....kssk........',
+            '....kssk........',
+            '....ksskkk......',
+            '....ksskSskk....',
+            '.kk.ksskSsksk...',
+            'ksskssssssssk...',
+            'kSssssssssssk...',
+            '.kSssssssssssk..',
+            '..ksssssssssk...',
+            '..kssssssssssk..',
+            '...ksssssssssk..',
+            '....ksssssssk...',
+            '....kssssssssk..',
+            '....kkkkkkkkkk..']
+    p.grid(hand, {'k': k, 's': s_, 'S': S}, 0, 0)
+    p.img = p.img.transpose(Image.FLIP_TOP_BOTTOM)
+    big = Pic(32, 32)
+    big.img.alpha_composite(p.img.resize((32, 32), Image.NEAREST))
+    big.save('tour-finger')
+
+
 # ---------- mission icons (24x24) ----------
 
 def icon(name, draw, night=False):
@@ -531,6 +559,7 @@ if __name__ == '__main__':
     lesson_turbulence()
     lesson_birds()
     lesson_nofly()
+    tour_finger()
     for spec in (('mi-land', mi_land), ('mi-seed', mi_seed), ('mi-night', mi_night, True), ('mi-airports', mi_airports),
                  ('mi-shade', mi_shade), ('mi-tree', mi_tree), ('mi-crystal', mi_crystal, True), ('mi-globe', mi_globe)):
         icon(*spec)
