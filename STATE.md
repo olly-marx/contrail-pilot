@@ -225,6 +225,26 @@ Added 2026-10-21:
   turbulence STRONGER so this matters), bird detection, and an AUTOPILOT boost you can pick up
   while flying (must be unlocked first).
 
+### Phase 2 art brief (relayed 2026-10-21 from session ojm-92; owned by the art session)
+
+1. **Regions**, one per stretch of `src/route.js` (each region: ground strip, hills backdrop,
+   3 growth stages per tree, 2-frame animals and birds; ~150 sprites, existing sizes/style):
+   Woodland & farms (London, Paris, Berlin; exists) / Mediterranean (Rome, Athens): olive, cypress,
+   umbrella pine; wild boar, tortoise, lizard; hoopoe, bee-eater / Desert (Cairo, Dubai): date palm,
+   acacia; camel, fennec fox, oryx; falcon / Monsoon & rainforest (Delhi, Bangkok): banyan, bamboo,
+   teak; elephant, macaque, tiger; hornbill, peacock / East Asia & mountains (Beijing, Tokyo): cherry
+   blossom, maple, pine; panda, tanuki, snow monkey; crane / Boreal & mountains (Anchorage,
+   Vancouver): fir, spruce; moose, bear, beaver; bald eagle / Plains & eastern forest (Chicago,
+   New York): prairie grass, sugar maple; bison, raccoon; cardinal / Volcanic tundra (Reykjavik):
+   moss, birch scrub; arctic fox; puffin. New cities: map onto a region or ask the user.
+2. **Plane looks upgraded**: base plane + one overlay layer per upgrade line (`src/upgrades.js`),
+   changing with level, so every combination works; plus motion (nav-light blink, engine shimmer,
+   a sparkle when a level is bought).
+3. **RULE (user decided): upgrades change only the LOOK.** Collisions use the BASE plane outline:
+   `planePixels()` reads `alphaMask('plane')`, so overlays must be separate sprites/keys drawn on
+   top and must never be baked into the `'plane'` texture. Game session owns the collision code.
+4. Split as usual: the art session commits only its own files/hunks; the game session pushes.
+
 ## Earlier task (2026-10-19), all DONE and live
 
 Leaderboard + light profiles + a menu from the runway:
