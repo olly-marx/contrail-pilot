@@ -50,6 +50,7 @@ def main(preview=None):
         rows.append({'id': sp['id'], 'name': sp['name'], 'region': sp['region'], 'kind': sp['kind'],
                      'sprite': key(sp) if has else None, 'frames': 2 if has else 0,
                      'portrait': f'assets/ui/portrait-{key(sp)}' if has else None,
+                     'pose': {'flyer': 'flying', 'wader': 'standing'}.get(sp['art']['template'], 'ground') if has else None,
                      'fact': sp['fact'], 'factChecked': sp['factChecked']})
     for t in TREES:
         rows.append({'id': t['id'], 'name': t['name'], 'region': t['region'], 'kind': 'tree',
