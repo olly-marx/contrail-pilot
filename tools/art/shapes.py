@@ -219,6 +219,9 @@ def quad_parts(s, frame):
     parts.append(body)
     if 'belly' in s:
         parts.append(Masked(body, lambda x, y: y > cyb + H * 0.18, 'belly'))
+    if 'bib' in s:                          # pine marten: a pale patch on throat and chest
+        pal['bib'] = s['bib']
+        parts.append(Masked(body, lambda x, y: x > L - 2.2 and y > cyb - H * 0.3, 'bib'))
     pat = s.get('pattern')
     if pat == 'spots':
         dots = [(L * f, cyb + H * g) for f, g in ((0.2, -0.1), (0.35, 0.2), (0.5, -0.2), (0.62, 0.15), (0.78, -0.05), (0.42, -0.35), (0.7, -0.3))]
@@ -310,6 +313,8 @@ def quad_parts(s, frame):
     if s.get('beard'):
         parts.append(Poly([(hcx + 0.2, hcy + hh / 2 - 0.1), (hcx + 1.0, hcy + hh / 2 - 0.1), (hcx + 0.5, hcy + hh / 2 + 1.3)], 'beard'))
     ex, ey = hcx + hw * 0.18, hcy - hh * 0.12
+    if 'bib' in s:
+        parts.append(Masked(head, lambda x, y: y > hcy + hh * 0.15, 'bib'))
     if 'mask' in s:
         parts.append(Masked(head, lambda x, y: abs(y - ey) < 0.5 and x < hcx + hw / 2, 'mask'))
     if s.get('eye_patch'):
@@ -537,8 +542,30 @@ def wader_parts(s, frame):
     return parts, pal, (hx + 0.25, hy - 0.2, 0.2)
 
 
+# ---------- frog: crouched, folded back legs, eyes bulging on top ----------
+
+def frog_parts(s, frame):
+    pal = {'body': s['colour'], 'belly': s.get('belly', '#d8d8a0'), 'spot': s.get('pattern_colour', '#3a5a20'),
+           'leg': s.get('shade', s['colour'])}
+    parts = []
+    leap = frame == 1
+    if leap:                                       # mid-hop: back legs kicked out behind
+        parts += [Capsule(1.0, 1.4, -1.6, 2.2, 0.55, 0.35, 'leg'), Capsule(-1.6, 2.2, -3.0, 2.6, 0.35, 0.3, 'leg')]
+    else:                                          # sitting: big thigh folded under, foot forward
+        parts += [Ellipse(1.0, 1.6, 1.4, 0.9, 'leg'), Capsule(0.4, 2.3, 2.4, 2.5, 0.3, 0.3, 'leg')]
+    body = Ellipse(2.4, 1.2 - (0.4 if leap else 0), 2.2, 1.2, 'body', rot=-0.25 if not leap else -0.05)
+    parts.append(body)
+    parts.append(Masked(body, lambda x, y: y > 1.5 - (0.4 if leap else 0), 'belly'))
+    spots = [(1.6, 0.6), (2.6, 0.3), (3.2, 0.9), (2.0, 1.2)]
+    parts.append(Masked(body, lambda x, y: any((x - a) ** 2 + (y - b) ** 2 < 0.09 for a, b in spots), 'spot'))
+    parts.append(Capsule(3.6, 1.6 - (0.4 if leap else 0), 4.0, 2.5 - (0.6 if leap else 0), 0.25, 0.25, 'leg'))   # front leg
+    ey = 0.0 - (0.4 if leap else 0)
+    parts.append(Ellipse(3.6, ey, 0.6, 0.55, 'body'))                                     # eye bulge
+    return parts, pal, (3.75, ey - 0.05, 0.3)
+
+
 BUILDERS = {'quad': quad_parts, 'flyer': flyer_parts, 'low': low_parts, 'long': long_parts,
-            'sitter': sitter_parts, 'hopper': hopper_parts, 'wader': wader_parts}
+            'sitter': sitter_parts, 'hopper': hopper_parts, 'wader': wader_parts, 'frog': frog_parts}
 
 
 def render(species_dials, frame, scale, outline=True):

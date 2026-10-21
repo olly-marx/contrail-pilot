@@ -302,3 +302,21 @@ SPECIES += [
 ]
 for sp in SPECIES:
     sp.setdefault('factChecked', False)
+
+# ---- UK Wild Area (2026-10-21, asked for by the game session; facts kept short, theirs are sourced) ----
+SPECIES += [
+    dict(id='watervole', name='Water vole', region='woodland', kind='animal', fact='Water voles dig burrows in riverbanks.',
+         art=dict(template='quad', body=(6, 3), leg=1, colour='#6a5040', belly='#8a7058', head=(3, 3), snout=1, ears='round', tail='long', legs='#3a2a20')),
+    dict(id='stork', name='White stork', region='woodland', kind='bird', fact='White storks build huge nests on rooftops and chimneys.',
+         art=dict(template='wader', body=(6, 3), leg=6, colour='#f4f1e8', wing='#2b2b33', neck=4, neck_colour='#f4f1e8', head_colour='#f4f1e8', beak='#e04030', beak_len=3, legs='#e04030')),
+    dict(id='pinemarten', name='Pine marten', region='woodland', kind='animal', fact='Pine martens climb trees with ease and have a creamy-yellow bib.',
+         art=dict(template='quad', body=(8, 2), leg=1, colour='#6a4020', bib='#f0c060', head=(3, 2), neck=1, snout=1, ears='round', tail='bushy', legs='#3a2410')),
+    dict(id='dormouse', name='Hazel dormouse', region='woodland', kind='animal', fact='Hazel dormice can sleep for up to seven months a year.',
+         art=dict(template='sitter', body=(3, 3), colour='#e0a040', face='#f0c878', head=(3, 2), ears='round', tail='bushy')),
+    dict(id='barnowl', name='Barn owl', region='woodland', kind='bird', fact='A barn owl\'s heart-shaped face funnels sound to its ears.',
+         art=dict(template='flyer', body=(4, 1), colour='#e8c890', head='#f8f4ec', belly='#f8f4ec', wing='#dcb878', wing_tip='#a88050', big_head=True, span=3, broad=True)),
+    dict(id='frog', name='Common frog', region='woodland', kind='animal', fact='Frogs can breathe through their skin.',
+         art=dict(template='frog', colour='#7aa040', shade='#5a8030', belly='#d8d8a0', pattern_colour='#3e5a24')),
+]
+for sp in SPECIES:
+    sp.setdefault('factChecked', False)
