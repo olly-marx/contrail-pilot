@@ -32,6 +32,12 @@ function lerpColour(a, b, t) {
 // Screen x = PLANE.x + worldX - distancePx.
 
 // How a flight ended, for the online Oops boards (from the crash message shown to the player).
+// Plane upgrade overlays (the art session, eaa6303): 74x39 PNGs centred on the plane, one per line
+// and level, drawn in this order above it. Looks only: collisions read the base 'plane' (planePixels).
+const PART_LINES = { wings: 2, engine: 5, gear: 2, hold: 3, lens: 2, airframe: 3, fuel: 4, cabin: 4, radar: 4, magnet: 3, forecast: 2 };
+const NATURE_LINES = ['trees', 'soil', 'species', 'rewild', 'nursery'];   // total levels -> the tail badge
+const natureBadge = save => { const n = NATURE_LINES.reduce((a, id) => a + ((save.levels || {})[id] || 0), 0); return n >= 15 ? 4 : n >= 10 ? 3 : n >= 5 ? 2 : n >= 1 ? 1 : 0; };
+
 const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
   : /too hot/.test(reason) ? 'overheat' : 'ground';
 
@@ -40,6 +46,11 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     this.load.image('plane', 'assets/plane.png');
+    for (const [id, n] of Object.entries(PART_LINES)) for (let i = 1; i <= n; i++) this.load.image(`plane-${id}-${i}`, `assets/plane-${id}-${i}.png`);
+    for (let i = 1; i <= 4; i++) this.load.image(`plane-nature-${i}`, `assets/plane-nature-${i}.png`);
+    this.load.image('plane-lights', 'assets/plane-lights.png');
+    for (let i = 0; i < 3; i++) this.load.image(`plane-shimmer-${i}`, `assets/plane-shimmer-${i}.png`);
+    for (let i = 0; i < 4; i++) this.load.image(`plane-sparkle-${i}`, `assets/plane-sparkle-${i}.png`);
     // Background strips: drawn by tools/art/make_background.py, 288 px wide, tile seamlessly.
     for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
     // Sprites: drawn by tools/art/make_sprites.py.
@@ -157,6 +168,7 @@ export class GameScene extends Phaser.Scene {
     this.puffs = [];
     this.nextPuff = 0;
     this.planeSprite = this.add.image(0, 0, 'plane');
+    this.buildPlaneParts();
 
     this.ground = this.add.tileSprite(0, SKY_H, WIDTH, GROUND_H, 'ground').setOrigin(0);
     this.groundFx = this.add.graphics();   // contrail shadows (day) and trapped-heat glow (night)
@@ -603,6 +615,38 @@ export class GameScene extends Phaser.Scene {
     const flying = this.state === 'playing' || this.state === 'over';
     const tilt = flying ? Phaser.Math.Clamp(this.plane.vy / 600, -PLANE.maxTilt, PLANE.maxTilt) : 0;
     this.planeSprite.setRotation(this.state === 'takeoff' && this.airborne ? -0.15 : tilt);
+    this.syncPlaneParts();
+  }
+
+  // One image per owned upgrade part, plus the nature badge, lights, engine shimmer and sparkles.
+  buildPlaneParts() {
+    const lv = id => (this.save.levels || {})[id] || 0, add = (key, kind) => { const img = this.add.image(0, 0, key); this.planeParts.push({ img, kind }); return img; };
+    this.planeParts = [];
+    for (const id of Object.keys(PART_LINES)) if (lv(id)) add(`plane-${id}-${Math.min(lv(id), PART_LINES[id])}`, id === 'gear' ? 'gear' : 'part');
+    const badge = natureBadge(this.save);
+    if (badge) add(`plane-nature-${badge}`, 'part');
+    add('plane-lights', 'lights');
+    add('plane-shimmer-0', 'shimmer').setAlpha(0.8);
+    add('plane-sparkle-0', 'sparkle').setVisible(false);
+    this.sparkleAt = this.save.sparkle ? -1 : null;   // bought something: sparkle on take-off
+  }
+
+  syncPlaneParts() {
+    const sp = this.planeSprite, t = this.gameTime || 0;
+    const grounded = (this.state === 'takeoff' && !this.airborne) || this.state === 'landing' || this.flaring;   // real gear is up in flight
+    const running = this.state !== 'over' && (this.co2Rate || 0) > 0;
+    if (this.sparkleAt === -1 && this.airborne) { this.sparkleAt = t; this.save.sparkle = false; }
+    for (const o of this.planeParts) {
+      const img = o.img;
+      img.setPosition(sp.x, sp.y).setRotation(sp.rotation).setFlipX(sp.flipX);
+      if (o.kind === 'gear') img.setVisible(grounded && sp.visible);
+      else if (o.kind === 'lights') { const c = t % 1200; img.setVisible(sp.visible && (c < 120 || (c > 240 && c < 360))); }   // double blink
+      else if (o.kind === 'shimmer') { img.setVisible(running && sp.visible); img.setTexture(`plane-shimmer-${Math.floor(t / 90) % 3}`); }
+      else if (o.kind === 'sparkle') { const f = this.sparkleAt === null || this.sparkleAt < 0 ? -1 : Math.floor((t - this.sparkleAt) / 70);
+        img.setVisible(f >= 0 && f < 4); if (f >= 0 && f < 4) img.setTexture(`plane-sparkle-${f}`); }
+      else img.setVisible(sp.visible);
+      if (o.kind !== 'shimmer') img.setAlpha(sp.alpha);
+    }
   }
 
   // ---------- scenery ----------
@@ -1036,7 +1080,9 @@ export class GameScene extends Phaser.Scene {
         this.bumpIn = Phaser.Math.FloatBetween(T.bumpEvery[0], T.bumpEvery[1]);
         this.cameras.main.shake(80, 0.004);
       }
-      this.planeSprite.x += Phaser.Math.Between(-1, 1);
+      const j = Phaser.Math.Between(-1, 1);
+      this.planeSprite.x += j;
+      for (const o of this.planeParts) o.img.x += j;
     }
 
     // Birds fly towards you, bobbing up and down; hitting one ends the flight.
