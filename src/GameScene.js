@@ -13,7 +13,8 @@ import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge } from './planeparts.js';
-import { WILDLIFE } from './wildlife.js';
+import { WILDLIFE, REGIONS } from './wildlife.js';
+import { LANDMARKS } from './landmarks.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
@@ -49,6 +50,7 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < 4; i++) this.load.image(`plane-sparkle-${i}`, `assets/plane-sparkle-${i}.png`);
     // Background strips: drawn by tools/art/make_background.py, 288 px wide, tile seamlessly.
     for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
+    for (const c in LANDMARKS) this.load.image(LANDMARKS[c].key, `assets/${LANDMARKS[c].key}.png`);   // art session: one per city
     // Sprites: drawn by tools/art/make_sprites.py.
     for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
       'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'storm-flash', 'storm-flash-top', 'storm-flash-bottom', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
@@ -57,7 +59,9 @@ export class GameScene extends Phaser.Scene {
     for (const a of ['cow', 'sheep', ...WILD_ANIMALS.map(a => a.id)]) for (let f = 0; f < 2; f++) this.load.image(`animal-${a}-${f}`, `assets/animal-${a}-${f}.png`);
     for (const b of SKY_BIRDS) for (let f = 0; f < 2; f++) this.load.image(`sky-${b.id}-${f}`, `assets/sky-${b.id}-${f}.png`);
     // Every species the art session has drawn (src/wildlife.js, generated): new ones load themselves.
-    for (const w of WILDLIFE) if (w.sprite) for (let f = 0; f < 2; f++) if (!this.textures.exists(`${w.sprite}-${f}`)) this.load.image(`${w.sprite}-${f}`, `assets/${w.sprite}-${f}.png`);
+    for (const w of WILDLIFE) if (w.sprite) for (let f = 0; f < (w.frames || 2); f++) { const k = `${w.sprite}-${f}`; if (!this.textures.exists(k)) this.load.image(k, `assets/${k}.png`); }   // trees: 3 growth stages
+    // Each region's ground strip and hills (woodland's are 'ground' and 'hills', loaded above).
+    for (const r in REGIONS) for (const k of [REGIONS[r].ground, REGIONS[r].hills]) if (k && !['ground', 'hills'].includes(k)) this.load.image(k, `assets/${k}.png`);
     this.load.image('puff', 'assets/puff.png');
     for (const kind of Object.keys(SPECIES)) for (let s = 0; s < 3; s++) this.load.image(`tree-${kind}-${s}`, `assets/tree-${kind}-${s}.png`);
   }
@@ -148,6 +152,8 @@ export class GameScene extends Phaser.Scene {
     this.stars = Array.from({ length: 45 }, () => ({ x: Phaser.Math.Between(0, WIDTH), y: Phaser.Math.Between(0, SKY_H - 120), tw: Math.random() * 6 }));
     this.cloudsFar = this.add.tileSprite(0, 60, WIDTH, 40, 'clouds').setOrigin(0).setAlpha(0.55);
     this.hills = this.add.tileSprite(0, SKY_H - 46, WIDTH, 46, 'hills').setOrigin(0);
+    this.landmarks = [];               // each city's landmark (Big Ben ...), behind its runway in the skyline
+    this.landmarkLayer = this.add.layer();
     this.city = this.add.tileSprite(0, SKY_H - 30, WIDTH, 30, 'city').setOrigin(0);
     this.farTreeLayer = this.add.layer();   // background trees on the horizon
     this.hedge = hasProject(this.save, 'hedgerow') ? this.add.tileSprite(0, SKY_H - 6, WIDTH, 6, 'hedge').setOrigin(0) : null;
@@ -731,6 +737,7 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar.tilePositionX += dx * 0.15;
     this.hills.tilePositionX += dx * 0.3;
     this.city.tilePositionX += dx * 0.55;
+    this.landmarks = this.landmarks.filter(l => { l.x -= dx * 0.55; if (l.x + l.width < -10) { l.destroy(); return false; } return true; });
     this.ground.tilePositionX += dx;
     if (this.hedge) this.hedge.tilePositionX += dx;
     if (this.flowers) this.flowers.tilePositionX += dx;
@@ -787,6 +794,7 @@ export class GameScene extends Phaser.Scene {
     const tint = lerpColour(lerpColour(0xffffff, 0x4a5a80, n), 0xff7a5a, (this.heatLevel ? this.heatLevel() : 0) * 0.7);
     this.hills.setTint(tint);
     this.city.setTint(tint);
+    for (const l of this.landmarks) l.setTint(tint);
     this.ground.setTint(tint);
     this.cloudsFar.setAlpha(0.55 - 0.35 * n);
   }
@@ -803,6 +811,14 @@ export class GameScene extends Phaser.Scene {
       { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 0));
     this.runwayLayer.add(parts);
     this.runways.push({ worldX, name, parts, strip });
+    // The city's landmark, in the skyline (it scrolls at 0.55 x the ground): start it where it will
+    // stand just behind the runway's middle as the runway passes the middle of the screen.
+    const lm = LANDMARKS[name];
+    if (lm && this.textures.exists(lm.key)) {
+      const d = x + AIRPORT.runwayLen / 2 - WIDTH / 2;
+      const img = this.add.image(WIDTH / 2 + 24 + 0.55 * d, SKY_H, lm.key).setOrigin(0.5, 1);
+      this.landmarkLayer.add(img); this.landmarks.push(img);
+    }
   }
 
   runwayUnder(box) {
