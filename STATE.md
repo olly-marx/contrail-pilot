@@ -143,6 +143,18 @@ onboarding" below, in any order, each its own tested commit:
    golden seeds, ...) and an advanced autopilot with safe hand-back (see the chat of 2026-10-21:
    only "recoverable" lines, tap to take over, no switching on in a bad spot; open: does
    autopilot time earn crystals / count for boards?).
+6. WILD AREA: decided by the user 2026-10-21, research in progress, NOT built:
+   - ALL nature upgrades move to the NATURE tab (out of the hangar). NATURE = wild area + its projects.
+   - Per region: you buy HABITAT PROJECTS (things people do to land/vegetation: hedgerows, ponds,
+     meadows, bee-friendly actions, rewetting; or a reintroduction like beavers that changes the land).
+     Each has a KNOCK-ON chain a kid can follow; it raises that terrain's biodiversity.
+   - Animals are NEVER bought: species appear in flight over their region when conditions are met
+     (rarer ones only when the land flourishes); "found" = seen on screen in flight; collection
+     cards (art session portraits) with facts. All facts factChecked:false: the group must check.
+   - Order: UK first end to end, then other regions. Add African SAVANNA and South American
+     RAINFOREST too, even with no route city over them yet.
+   - Leaderboard: one total "Biodiversity King" board; the user wants a wider boards revamp later.
+   - Research first, with sources, shown to the user before code.
 2. DONE 2026-10-21: new prices (user OK'd the ~20,000-seed table: 20,125 seeds, 1,119 crystals at
    ~1 per 18 seeds; crystal income NOT measured against this). Old saves re-valued ONCE at full value
    (user's choice, no bonus) by `src/reprice.js`: bank + old prices of owned levels, rebuilt at new
