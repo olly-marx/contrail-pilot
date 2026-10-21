@@ -133,3 +133,46 @@ SPECIES = [
 
 for sp in SPECIES:
     sp.setdefault('factChecked', False)
+
+# Trees per region: kind 'tree' -> tree-<id>-0/1/2 (three growth stages). 'hand' = drawn in make_sprites.py.
+TREES = [
+    dict(id='spruce', name='Norway spruce', region='woodland', art='hand', fact='Spruce trees stay green all winter.'),
+    dict(id='birch', name='Silver birch', region='woodland', art='hand', fact='Birch bark is white to reflect sunlight.'),
+    dict(id='oak', name='English oak', region='woodland', art='hand', fact='An oak can live for 1,000 years.'),
+    dict(id='rowan', name='Rowan', region='woodland', art='hand', fact='Rowan berries are a winter feast for birds.'),
+    dict(id='orchard', name='Apple tree', region='woodland', art='hand', fact='There are thousands of kinds of apple.'),
+    dict(id='olive', name='Olive', region='mediterranean', fact='Some olive trees are more than 2,000 years old.',
+         art=dict(shape='round', leaf='#8a9a6a', lit='#aab890', dark='#6a7a50', trunk='#7a6a5a', fruit='#3a4a2a')),
+    dict(id='cypress', name='Italian cypress', region='mediterranean', fact='Cypress trees grow tall and thin like green flames.',
+         art=dict(shape='cypress', leaf='#2e5e34', lit='#4a7e4a', dark='#1e4224', w=(4, 5), h=(10, 17), trunk_h=(1, 1))),
+    dict(id='umbrellapine', name='Umbrella pine', region='mediterranean', fact='Pine nuts come from the cones of umbrella pines.',
+         art=dict(shape='umbrella', leaf='#3e6e3a', lit='#5a8e50', dark='#2a4e28', w=(8, 13), trunk_h=(1, 1), trunk='#8a5a3a')),
+    dict(id='datepalm', name='Date palm', region='desert', fact='One date palm can grow 100 kg of dates a year.',
+         art=dict(shape='palm', leaf='#4a8a3a', lit='#6aaa50', dark='#2e6a28', trunk='#9a7a4a', h=(10, 16), dates=True)),
+    dict(id='acacia', name='Acacia', region='desert', fact='Acacia roots reach deep underground to find water.',
+         art=dict(shape='umbrella', leaf='#6a8a3a', lit='#8aaa50', dark='#4a6a28', w=(9, 15), trunk_h=(1, 1), trunk='#6a4a2a')),
+    dict(id='banyan', name='Banyan', region='monsoon', fact='A banyan grows new trunks from roots that hang down from its branches.',
+         art=dict(shape='banyan', leaf='#2e7a3a', lit='#4a9a4a', dark='#1e5a28', trunk='#8a6a4a', w=(8, 13))),
+    dict(id='bamboo', name='Bamboo', region='monsoon', fact='Some bamboo can grow almost a metre in one day.',
+         art=dict(shape='bamboo', leaf='#6aaa3a', lit='#9ad06a', dark='#4a7a28', h=(10, 16))),
+    dict(id='teak', name='Teak', region='monsoon', fact='Teak wood is so tough it is used to build boats.',
+         art=dict(shape='round', leaf='#5a8a2a', lit='#7aaa40', dark='#3e6a1e', trunk='#7a5a3a')),
+    dict(id='cherry', name='Cherry blossom', region='eastasia', fact='In Japan, people hold picnics under the cherry blossom each spring.',
+         art=dict(shape='blossom', leaf='#f2a8c0', lit='#ffd0e0', dark='#d080a0', flower='#ffffff', trunk='#5a3a30')),
+    dict(id='maple', name='Japanese maple', region='eastasia', fact='Maple leaves turn bright red in autumn.',
+         art=dict(shape='round', leaf='#d04030', lit='#f07050', dark='#a02a20', trunk='#5a3a30')),
+    dict(id='pine', name='Japanese black pine', region='eastasia', fact='Pines can grow on rocky cliffs by the sea.',
+         art=dict(shape='umbrella', leaf='#2e5e3a', lit='#4a7e50', dark='#1e4228', w=(7, 12), trunk_h=(1, 2), trunk='#5a4a3a')),
+    dict(id='fir', name='Subalpine fir', region='boreal', fact='Fir trees have soft, flat needles.',
+         art=dict(shape='cone', leaf='#2e5a44', lit='#4a7a5a', dark='#1e3e30', h=(10, 16), snow=True)),
+    dict(id='prairiegrass', name='Big bluestem grass', region='plains', fact='Prairie grass roots can go 3 metres underground.',
+         art=dict(shape='grass', leaf='#8aa04a', lit='#b0c070', dark='#6a7a30', w=(6, 9), h=(7, 10))),
+    dict(id='sugarmaple', name='Sugar maple', region='plains', fact='Maple syrup is made from the sap of sugar maples.',
+         art=dict(shape='round', leaf='#e8822a', lit='#f8a84a', dark='#c0601a', trunk='#6a4a3a')),
+    dict(id='moss', name='Woolly moss', region='tundra', fact='Moss can cover old lava fields for hundreds of years.',
+         art=dict(shape='moss', leaf='#8aa070', lit='#b0c090', dark='#6a7a50', flower='#d080c0', h=(5, 6))),
+    dict(id='birchscrub', name='Dwarf birch', region='tundra', fact='Dwarf birch hugs the ground to stay out of the cold wind.',
+         art=dict(shape='scrub', leaf='#8aaa3a', lit='#aac860', dark='#6a8a28', h=(4, 5), trunk_h=(1, 1))),
+]
+for t in TREES:
+    t.setdefault('factChecked', False)

@@ -438,3 +438,132 @@ def draw(species):
     t = TEMPLATES[species['template']]
     a, b = t(species, 0), t(species, 1)
     return frames_same_size(a, b)
+
+
+# ---------- trees: three growth stages (seedling, young, grown), base on the bottom row ----------
+# Same stage sizes as the hand-coded trees in make_sprites.py: 3x4, 7x9, 11x14, except where the
+# shape itself is taller or wider (cypress, palm, acacia). Lit from the upper left.
+
+def _crown_shade(x, y, cx, cy, w, h, leaf, lit, dark):
+    u = (x - cx) / max(1, w / 2); v = (y - cy) / max(1, h / 2)
+    k = -0.6 * u - 0.8 * v
+    return lit if k > 0.45 else dark if k < -0.35 else leaf
+
+
+def tree(s, stage):
+    g = Grid()
+    leaf = hexc(s['leaf']); lit = hexc(s.get('lit', '#000000')) if 'lit' in s else shade(leaf, 1.25)
+    dark = hexc(s['dark']) if 'dark' in s else shade(leaf, 0.7)
+    trunk = hexc(s.get('trunk', '#7a4a24'))
+    shape = s['shape']
+    if stage == 0:                                   # seedling: stem and two leaves (grass: a tuft)
+        if shape in ('grass', 'moss'):
+            for x, y in ((0, 2), (1, 1), (2, 2), (1, 2)):
+                g.px(x, y, leaf if shape == 'grass' else dark)
+            g.px(1, 0, lit)
+        else:
+            g.px(1, 3, trunk); g.px(1, 2, dark); g.px(0, 1, leaf); g.px(2, 1, lit); g.px(1, 0, lit)
+        return g.image()
+    big = stage == 2
+    W, H = (11, 14) if big else (7, 9)
+    W = s.get('w', (W, W))[stage - 1] if 'w' in s else W
+    H = s.get('h', (H, H))[stage - 1] if 'h' in s else H
+    cx = W // 2
+    th = s.get('trunk_h', (2, 4))[stage - 1]
+    tw = 2 if big and shape not in ('palm', 'bamboo', 'grass', 'moss', 'cypress') else 1
+    if shape not in ('grass', 'moss', 'bamboo'):     # trunk
+        for y in range(H - th, H):
+            for x in range(cx - (tw // 2), cx - (tw // 2) + tw):
+                g.px(x, y, trunk if x <= cx - (tw // 2) else shade(trunk, 0.75))
+    ch = H - th                                      # crown height
+    if shape == 'round' or shape == 'blossom' or shape == 'banyan':
+        rw = W / 2 + (1 if shape == 'banyan' else 0)
+        for y in range(ch + 1):
+            for x in range(-1 if shape == 'banyan' else 0, W + (1 if shape == 'banyan' else 0)):
+                if ((x - cx) / rw) ** 2 + ((y - ch / 2) / (ch / 2 + 0.5)) ** 2 <= 1:
+                    g.px(x, y, _crown_shade(x, y, cx, ch / 2, W, ch, leaf, lit, dark))
+        if shape == 'blossom':                       # pink flowers dotted through
+            fl = hexc(s.get('flower', '#ffb0c8'))
+            for i, (x, y) in enumerate(sorted(g.p)):
+                if y < ch and (x * 7 + y * 3) % 5 == 0:
+                    g.px(x, y, fl)
+        if shape == 'banyan':                        # aerial roots hanging from the crown
+            for x in range(0, W, 3):
+                for y in range(ch, H - 1):
+                    if x != cx:
+                        g.px(x, y, shade(trunk, 0.9))
+    elif shape == 'cypress':                         # tall narrow flame
+        for y in range(ch):
+            hw = max(0, round((W / 2 - 0.5) * min(1, (y + 1) / (ch * 0.35)) * (1 - 0.25 * y / ch)))
+            for x in range(cx - hw, cx + hw + 1):
+                g.px(x, y, lit if x < cx else dark if x > cx else leaf)
+    elif shape == 'cone':                            # fir / pine: stacked tiers
+        for y in range(ch + 1):
+            hw = round((y + 1) / (ch + 1) * (W / 2 - 0.5)) - (1 if y % 3 == 0 and y > 0 else 0)
+            for x in range(cx - max(0, hw), cx + max(0, hw) + 1):
+                g.px(x, y, (lit if x < cx else leaf) if y % 3 != 2 else dark)
+        if s.get('snow'):
+            for y in range(0, ch, 3):
+                hw = round((y + 1) / (ch + 1) * (W / 2 - 0.5))
+                g.px(cx - hw, y, hexc('#ffffff'))
+    elif shape == 'umbrella':                        # umbrella pine / acacia: a flat wide top
+        top = max(2, ch // 2)
+        for y in range(top):
+            hw = round(W / 2) - (1 if y == 0 else 0)
+            for x in range(cx - hw, cx + hw + 1):
+                g.px(x, y, lit if y == 0 else (leaf if y < top - 1 else dark))
+        for y in range(top, ch):                     # bare forked trunk under the canopy
+            g.px(cx - 1 + (y - top) // 2, y, trunk); g.px(cx + 1 - (y - top) // 2, y, trunk)
+    elif shape == 'palm':                            # date palm: tall bare trunk, fronds on top
+        for y in range(3, H):
+            g.px(cx + (1 if y < H // 2 else 0), y, trunk if y % 2 else shade(trunk, 0.8))
+        fr = 3 if big else 2
+        for k in range(1, fr + 2):
+            for dx, dy in ((-k, k // 2), (k, k // 2), (-k, -1 + k // 2), (k, -1 + k // 2)):
+                g.px(cx + 1 + dx, 2 + dy, leaf if abs(dx) < fr else dark)
+        g.px(cx + 1, 1, lit); g.px(cx, 1, lit)
+        if s.get('dates'):
+            g.px(cx, 4, hexc('#c06020')); g.px(cx + 2, 4, hexc('#c06020'))
+    elif shape == 'bamboo':                          # a clump of jointed stalks
+        stalks = (1, 3, 5) if not big else (1, 3, 5, 7, 9)
+        for i, x in enumerate(stalks):
+            top = 1 + (i % 2) * 2
+            for y in range(top, H):
+                g.px(x, y, dark if (y - top) % 3 == 0 else leaf)
+            g.px(x + 1, top + 1, lit); g.px(x - 1, top + 2, lit)
+    elif shape == 'grass':                           # prairie grass: tall blades
+        for x in range(W):
+            hgt = H - (x * 5 % 4) - (0 if x % 2 else 2)
+            for y in range(H - hgt, H):
+                g.px(x, y, lit if y == H - hgt else (leaf if (x + y) % 3 else dark))
+        if s.get('seedheads'):
+            for x in range(1, W, 3):
+                g.px(x, H - (H - (x * 5 % 4)) - 1 if False else 0, hexc(s['seedheads']))
+    elif shape == 'moss':                            # a low cushion
+        mh = 3 if big else 2
+        for y in range(H - mh, H):
+            for x in range(W):
+                if not (y == H - mh and x in (0, W - 1)):
+                    g.px(x, y, lit if y == H - mh else leaf if (x + y) % 3 else dark)
+        if s.get('flower'):
+            g.px(2, H - mh, hexc(s['flower'])); g.px(W - 3, H - mh, hexc(s['flower']))
+    elif shape == 'scrub':                           # dwarf birch: short brown stems with leafy clumps
+        stems = (1, 4) if not big else (1, 4, 7, 9)
+        for i, x in enumerate(stems):
+            top = 1 + (i % 2)
+            for y in range(top + 1, H):
+                g.px(x, y, trunk if y > top + 1 else shade(trunk, 0.8))
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    if abs(dx) + abs(dy) < 2:
+                        c = lit if dy < 0 or dx < 0 else (leaf if (dx + dy) % 2 == 0 else dark)
+                        g.px(x + dx, top + dy, c)
+    if 'fruit' in s and big:
+        for x, y in ((2, 4), (7, 3), (4, 7), (8, 7)):
+            if (x, y) in g.p:
+                g.px(x, y, hexc(s['fruit']))
+    return g.image()
+
+
+def tree_stages(s):
+    return [tree(s, st) for st in range(3)]
