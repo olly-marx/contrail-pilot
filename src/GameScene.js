@@ -1,6 +1,7 @@
 import {
   km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
   TAKEOFF, AIRPORT, CRYSTALS, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL, HAZARDS,
+  FOREST,
 } from './config.js';
 import { School } from './school.js';
 import { Hud } from './Hud.js';
@@ -11,7 +12,7 @@ import { payRewards } from './rewards.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
-import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
+import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const GRACE_MS = 1500;   // breather after a pop-up closes: the autopilot flies, then hands back
@@ -113,6 +114,9 @@ export class GameScene extends Phaser.Scene {
     this.feedback = { amount: 0, timer: 0 };
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.planted = 0;
+    this.forestFullSaid = false;
+    this.landStored = 0;               // ...and rewilded land
+    this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
     this.speciesPlanted = new Set();   // kinds of tree planted this flight (for the online boards)
     this.lastHalf = 'day';
     this.night = { started: false, trappedAtStart: 0 };
@@ -472,17 +476,28 @@ export class GameScene extends Phaser.Scene {
     this.heat += co2Heat;
     this.breakdown.co2 += co2Heat;
 
-    // Trees keep cooling for the rest of the flight, more as they grow.
+    // Trees keep cooling for the rest of the flight, more as they grow; on long flights a mixed
+    // forest grows into old wood (FOREST in config.js).
+    const oldWood = this.oldWood(), forestFull = this.trees.length > 0 && this.forestStored >= this.forestStore();
+    if (forestFull && !this.forestFullSaid) {
+      this.forestFullSaid = true;
+      this.popup(WIDTH / 2, SKY_H - 24, 'Your forest is full of carbon!', '#ffe15a', 10);
+      this.ui.tipOnce('forestFull', 'Forest full!', 'A forest can only soak up so much CO2 in one flight. Plant ALL 5 kinds of tree to make it hold much more!', 'good', 4.5);
+    }
     for (const t of this.trees) {
       const age = this.elapsed - t.plantedAt;
       const g = this.kit.grow, stage = age < 4 * g ? 0 : age < 9 * g ? 1 : 2;   // Tree Nursery: grows faster
       if (stage !== t.stage) { t.stage = stage; if (t.sprite.active) t.sprite.setTexture(`tree-${t.kind}-${stage}`); }
-      const cool = SPECIES[t.kind].coolPerStage[stage] * dt;
+      const cool = forestFull ? 0 : SPECIES[t.kind].coolPerStage[stage] * FOREST.early * (stage === 2 ? 1 + oldWood : 1) * dt;
+      this.forestStored += cool;
+      if (stage === 2 && t.sprite.active) t.sprite.setScale(1 + 0.15 * oldWood);   // old trees keep getting bigger
       this.heat -= cool;
       this.breakdown.trees += cool;
       this.treeFeedback += cool;
     }
-    const land = natureCooling(this.save) * dt;   // rewilded land soaks up a little CO2
+    const landFull = this.landStored >= FOREST.landStore * projectsDone(this.save).length / PROJECTS.length;
+    const land = landFull ? 0 : natureCooling(this.save) * dt;   // rewilded land soaks up a little CO2, until it is full
+    this.landStored += land;
     this.heat -= land; this.breakdown.trees += land;
     if (this.treeFeedback >= 1) {
       this.popup(WIDTH / 2, SKY_H - 12, `-${this.treeFeedback.toFixed(1)} from your forest`, '#8dffb0');
@@ -772,6 +787,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ---------- trees ----------
+
+  // Old-wood boost for grown trees: 0 before FOREST.from km, rising to FOREST.boost, scaled by
+  // how many kinds of tree were planted this flight (all 5 = the full boost).
+  oldWood() {
+    const ramp = Phaser.Math.Clamp((this.distancePx - FOREST.from) / FOREST.span, 0, 1);
+    return ramp * FOREST.boost * Math.pow(Math.min(1, this.speciesPlanted.size / FOREST.kinds), FOREST.power);
+  }
+  // A forest can only soak up so much CO2 in one flight (more with more kinds); then it is full.
+  forestStore() { return Math.max(FOREST.storeMin, FOREST.store * Math.pow(Math.min(1, this.speciesPlanted.size / FOREST.kinds), FOREST.storePower)); }
 
   // Parcels take turns through the kinds of tree you own, so variety comes naturally.
   treeKind() {

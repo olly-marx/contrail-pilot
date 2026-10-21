@@ -5,11 +5,15 @@
 //   smart:    near-perfect contrail choices: out of icy air at night, into it by day, always
 //             inside the next storm gap. It sees ALL icy air (even unrevealed), so it is a bit
 //             better than a real player.
+// PLANT=1 adds tree planting to either pilot: it drops a parcel whenever the landing X is on
+// fresh soil, so a plane with every tree upgrade plants a full forest early in the flight.
 // Usage: python3 -m http.server 8000 & node tools/balance.cjs            (prints a table)
 //        PLANES=hydrogen PILOTS=smart MAX=100000 node tools/balance.cjs
 const { chromium } = require('playwright-core');
 const URL = process.env.URL || 'http://localhost:8000/';
 const MAX = Number(process.env.MAX || 100000);   // km
+const PLANT = !!Number(process.env.PLANT || 0);
+const FOREST = JSON.parse(process.env.FOREST || '{}');   // try other forest numbers, e.g. FOREST='{"boost":2}'
 
 const ALL_NATURE = { trees: 4, species: 4, rewild: 9 };
 const PLANES = {
@@ -17,6 +21,7 @@ const PLANES = {
   saf: { levels: { fuel: 3, engine: 3, cabin: 4, ...ALL_NATURE }, fuel: 'saf100' },
   hydrogen: { levels: { fuel: 4, engine: 3, cabin: 4, ...ALL_NATURE }, fuel: 'hydrogen' },
   hydrogenMax: { levels: { fuel: 4, engine: 5, cabin: 4, airframe: 3, ...ALL_NATURE }, fuel: 'hydrogen' },
+  hydrogenMax4: { levels: { fuel: 4, engine: 5, cabin: 4, airframe: 3, ...ALL_NATURE, species: 3 }, fuel: 'hydrogen' },   // trees of 4 kinds, not 5
 };
 
 async function run(b, plane, pilot, seed = 1) {
@@ -28,16 +33,18 @@ async function run(b, plane, pilot, seed = 1) {
     planted: { oak: 5, birch: 5, rowan: 5, spruce: 5, orchard: 5 }, ...cfg })); }, PLANES[plane]);
   // Seed Phaser's RND the moment the library loads (it would otherwise seed from the clock).
   await p.addInitScript(() => { let P; Object.defineProperty(window, 'Phaser', { configurable: true, get: () => P, set: v => { P = v; v.Math.RND.sow(['balance']); } }); });
-  await p.goto(URL); await p.waitForTimeout(900);
-  const r = await p.evaluate(async ([pilot, MAX]) => {
-    const { DAYNIGHT } = await import('./src/config.js');
+  await p.goto(URL); await p.waitForFunction(() => window.game && game.scene.getScene('game') && game.registry.get('ui'), null, { timeout: 60000 }); await p.waitForTimeout(900);
+  const r = await p.evaluate(async ([pilot, MAX, PLANT, FOREST]) => {
+    const { DAYNIGHT, FOREST: F } = await import('./src/config.js');
+    Object.assign(F, FOREST);
     // Pause the real-time loop, re-seed both random sources, and rebuild the scene from scratch, so
     // nothing the title screen did in real time (it animates wildlife) changes the flight.
     game.loop.sleep(); window.__reseed(); Phaser.Math.RND.sow(['balance']);
     let t0 = game.loop.now || performance.now();
     game.scene.getScene('game').scene.restart({ go: true });
-    for (let i = 0; i < 3; i++) { t0 += 16.67; game.step(t0, 16.67); }
     const s = game.scene.getScene('game'), SKY_H = 512 - 48;
+    // Step until the restarted scene is built (under load its asset loader can take real time).
+    for (let i = 0; i < 3 || !(s.nextAirport && s.sys.isActive()); i++) { if (i > 3) await new Promise(r => setTimeout(r, 20)); t0 += 16.67; game.step(t0, 16.67); if (i > 3000) throw new Error('scene never started'); }
     // Shade is only worth it if the contrail is gone before sunset: contrails on screen at night
     // trap heat whenever they were made. So "day" for the smart pilot ends one contrail life early.
     const goodDay = () => { const c = s.clock % (DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds);
@@ -62,11 +69,12 @@ async function run(b, plane, pilot, seed = 1) {
       }
       return best;
     };
-    let t = t0, steps = 0, peak = -1e9, low = 1e9, nightFrames = 0, nightIn = 0, nightGap = 0;
+    const drops = []; let t = t0, steps = 0, peak = -1e9, low = 1e9, nightFrames = 0, nightIn = 0, nightGap = 0;
     const marks = [];
     while (s.state === 'playing' && s.distancePx < MAX && steps < 3e6) {
       t += 16.67; steps++;
       if (s.plane.y > target() && s.plane.vy > -40) s.applyFlap();
+      if (PLANT && s.parcels > 0) { const x = s.predictLanding(), pl = s.plots.find(pl => !pl.used && !pl.aimed && x >= pl.x + 4 && x <= pl.x + s.kit.plotW - 4); if (pl) { pl.aimed = true; s.dropParcel(); drops.push([Math.round(s.distancePx), s.trees.length]); } }
       game.step(t, 16.67);
       peak = Math.max(peak, s.heat); low = Math.min(low, s.heat);
       if (!s.isDay) { nightFrames++; if (s.issrs.some(i => s.inIssrShape(i, s.hitbox()))) nightIn++; if (s.storms.some(t => t.rects[0].x < s.plane.x + 60 && t.rects[0].x + t.rects[0].width > s.plane.x)) nightGap++; }
@@ -74,8 +82,8 @@ async function run(b, plane, pilot, seed = 1) {
     }
     const B = s.breakdown;
     return { km: Math.round(s.distancePx), overheated: s.state === 'over', heat: Math.round(s.heat), low: Math.round(low),
-      co2: Math.round(B.co2), night: Math.round(B.night), sun: Math.round(B.sun), trees: Math.round(B.trees), nightIn: +(nightIn / Math.max(1, nightFrames)).toFixed(3), marks: marks.filter((_, i) => i % 5 === 0) };
-  }, [pilot, MAX]);
+      co2: Math.round(B.co2), night: Math.round(B.night), sun: Math.round(B.sun), trees: Math.round(B.trees), planted: s.trees.map(t => t.kind).join(' '), drops, nightIn: +(nightIn / Math.max(1, nightFrames)).toFixed(3), marks: marks.filter((_, i) => i % 5 === 0) };
+  }, [pilot, MAX, PLANT, FOREST]);
   await p.close();
   return r;
 }
@@ -83,14 +91,15 @@ async function run(b, plane, pilot, seed = 1) {
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const planes = (process.env.PLANES || 'none,saf,hydrogen').split(','), pilots = (process.env.PILOTS || 'straight,smart').split(',');
-  const rows = [];
+  const rows = [], debug = [];
   const seeds = (process.env.SEEDS || '1,2,3').split(',').map(Number);
   for (const plane of planes) for (const pilot of pilots) {
     const rs = []; for (const seed of seeds) rs.push(await run(b, plane, pilot, seed));
     const kms = rs.map(r => r.overheated ? r.km : Infinity).sort((x, y) => x - y), median = kms[Math.floor(kms.length / 2)];
-    rows.push({ plane, pilot, median, runs: rs.map(r => ({ km: r.km, overheated: r.overheated, nightIn: r.nightIn })) });
-    console.log(`${plane.padEnd(12)} ${pilot.padEnd(9)} median ${median === Infinity ? `> ${MAX}` : median} km   runs: ${rs.map(r => `${r.overheated ? '' : '>'}${r.km} (${Math.round(r.nightIn * 100)}% icy at night)`).join(', ')}`);
+    debug.push(rs.map(r => r.drops)); rows.push({ plane, pilot, median, runs: rs.map(r => ({ km: r.km, overheated: r.overheated, nightIn: r.nightIn })) });
+    console.log(`${plane.padEnd(12)} ${pilot.padEnd(9)} median ${median === Infinity ? `> ${MAX}` : median} km   runs: ${rs.map(r => `${r.overheated ? '' : '>'}${r.km} (${Math.round(r.nightIn * 100)}% icy at night${PLANT ? `, trees ${r.planted.split(' ').filter(Boolean).length} cooled ${r.trees}` : ''})`).join(', ')}`);
   }
   await b.close();
   if (process.env.JSON) console.log(JSON.stringify(rows));
+  if (process.env.DEBUG) console.log(JSON.stringify(debug));
 })();

@@ -3,9 +3,10 @@ import { cz } from './config.js';
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
 // native kind is a big boost; more of the same kind adds less and less.
 
-// coolPerStage: Earth cooling per second as seedling / young / grown. Kept small on purpose
-// (2026-10-20, measured on autopilot): 3 grown trees offset ~15% of a flight's CO2. A cleaner
-// plane and contrail choices are the big levers; trees are slow, and bigger trees help a bit more.
+// coolPerStage: Earth cooling per second as seedling / young / grown, before FOREST (config.js)
+// scales it: x0.5 on short flights, an old-wood boost after 10,000 km, and a limit on how much a
+// forest soaks up in one flight. A cleaner plane and contrail choices are the big levers; trees
+// matter most on the longest flights, where a forest of all 5 kinds is needed for a lap.
 export const SPECIES = {
   spruce:  { name: 'Spruce', native: false, coolPerStage: [0.02, 0.05, 0.1],
     fact: 'Spruce grows fast, so it soaks up CO2 quickly. But rows of one kind of tree are home to very few animals.' },

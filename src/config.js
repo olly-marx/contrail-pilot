@@ -123,6 +123,27 @@ export const PARCEL = {
   firstAt: 1000,       // m: soil plots start 1 km in
 };
 
+// Trees on long flights (2026-10-21, user: the longest runs must need a full forest). Trees cool
+// a little on short flights; from `from` km into a flight, GROWN trees get an old-wood boost
+// that rises over `span` km up to x(1 + boost). The boost is x(kinds planted THIS flight / 5)^power,
+// so only a forest of all 5 kinds gets it all. Measured with tools/balance.cjs PLANT=1 (smart
+// pilot, top plane, median of 5 seeds): all 5 kinds ~33,000 km (a lap is 31,520), 4 kinds ~26,000,
+// no trees ~25,000; every run still overheats in the end.
+export const FOREST = {
+  early: 0.5,     // x every tree's cooling (stage values in nature.js)
+  from: 10000,    // km
+  span: 15000,    // km to reach the full boost
+  boost: 2,
+  kinds: 5,
+  power: 2,
+  // A forest can only soak up so much CO2 in one flight, then it is full and stops cooling
+  // (measured 2026-10-21: any cooling that never stops let a careful pilot fly for ever).
+  store: 80,      // with all 5 kinds; x(kinds / 5)^storePower with fewer
+  storePower: 4,
+  storeMin: 12,   // ...but never less: more than a short early flight's trees soak up
+  landStore: 30,  // rewilded land (natureCooling) fills up too: this much with all 6 projects
+};
+
 export const CRYSTALS = {
   dodge: 1,            // icy air that was in your path at night, flown around
   dodgesPerNight: 3,   // at most this many dodge crystals each night

@@ -85,6 +85,7 @@ node tests/hangar.cjs             # buying the LAST level of an upgrade, "need N
 node tests/online.cjs             # pilot names + leaderboards against a FAKE Supabase: name form, rude/offline messages, flights sent, outbox
 supabase/tests/run.sh             # the database itself in a throwaway Postgres (Docker): word filter, row-level security, scores
 node tests/crystals.cjs           # seeds/ice crystals: old-save migration, earning rules, costs, hangar tabs
+node tests/forest.cjs             # trees on long flights: old-wood boost (all 5 kinds = full), a forest fills up and stops cooling
 ```
 
 `tests/flight.cjs` lands an autopilot at the second airport and forces day and night over a line
@@ -95,4 +96,8 @@ of contrails to check that sunbeams are blocked by day and heat is trapped only 
 `node tools/balance.cjs` (with the server running) flies a straight pilot and a near-perfect "smart"
 pilot on fixed random seeds, much faster than real time, and prints how far each gets before the
 Earth overheats, per plane (none / all SAF / hydrogen). `PLANES=hydrogen SEEDS=1,2,3 MAX=100000`.
-Slow (minutes), so it is a tool, not a CI test. Latest numbers are in STATE.md.
+`PLANT=1` makes both pilots plant trees (a parcel whenever the landing X is on fresh soil);
+`FOREST='{"store":100}'` tries other forest numbers without editing `src/config.js`. Planes include
+`hydrogenMax` (everything) and `hydrogenMax4` (trees of only 4 kinds). Slow (minutes, and much
+slower with many runs at once: keep it to ~8 in parallel), so it is a tool, not a CI test. Latest
+numbers are in STATE.md.
