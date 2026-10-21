@@ -35,6 +35,8 @@ function lerpColour(a, b, t) {
 // Screen x = PLANE.x + worldX - distancePx.
 
 // How a flight ended, for the online Oops boards (from the crash message shown to the player).
+const LANDMARK_SCALE = 2;   // the user: bigger landmarks (whole numbers keep the pixels crisp)
+
 const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
   : /too hot/.test(reason) ? 'overheat' : 'ground';
 
@@ -816,7 +818,7 @@ export class GameScene extends Phaser.Scene {
     const lm = LANDMARKS[name];
     if (lm && this.textures.exists(lm.key)) {
       const d = x + AIRPORT.runwayLen / 2 - WIDTH / 2;
-      const img = this.add.image(WIDTH / 2 + 24 + 0.55 * d, SKY_H, lm.key).setOrigin(0.5, 1);
+      const img = this.add.image(WIDTH / 2 + 24 + 0.55 * d, SKY_H, lm.key).setOrigin(0.5, 1).setScale(LANDMARK_SCALE);
       this.landmarkLayer.add(img); this.landmarks.push(img);
     }
   }
