@@ -11,7 +11,10 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from creatures import draw, tree_stages   # noqa: E402
+from creatures import tree_stages, frames_same_size   # noqa: E402
+from shapes import render   # noqa: E402
+
+SMALL, PORTRAIT = 1.5, 4      # px per unit: in-flight sprite, collection-screen portrait
 from species import REGIONS, SPECIES, TREES   # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -26,9 +29,12 @@ def main(preview=None):
     drawn = []
     for sp in SPECIES:
         if isinstance(sp['art'], dict):
-            frames = draw(sp['art'])
+            frames = frames_same_size(render(sp['art'], 0, SMALL), render(sp['art'], 1, SMALL))
             for i, im in enumerate(frames):
                 im.save(A / f'{key(sp)}-{i}.png')
+            big = frames_same_size(render(sp['art'], 0, PORTRAIT), render(sp['art'], 1, PORTRAIT))
+            for i, im in enumerate(big):
+                im.save(A / 'ui' / f'portrait-{key(sp)}-{i}.png')
             drawn.append((sp, frames))
             print('drew', key(sp), frames[0].size)
     for t in TREES:
@@ -43,6 +49,7 @@ def main(preview=None):
         has = sp['art'] is not None
         rows.append({'id': sp['id'], 'name': sp['name'], 'region': sp['region'], 'kind': sp['kind'],
                      'sprite': key(sp) if has else None, 'frames': 2 if has else 0,
+                     'portrait': f'assets/ui/portrait-{key(sp)}' if has else None,
                      'fact': sp['fact'], 'factChecked': sp['factChecked']})
     for t in TREES:
         rows.append({'id': t['id'], 'name': t['name'], 'region': t['region'], 'kind': 'tree',

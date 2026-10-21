@@ -23,23 +23,23 @@ REGIONS = {
 # art: generator dials (see creatures.py), 'hand' (already hand-drawn in make_sprites.py), or None (to do)
 SPECIES = [
     # ---- woodland (hand-drawn already) ----
-    dict(id='rabbit', name='Rabbit', region='woodland', kind='animal', art='hand',
+    dict(id='rabbit', name='Rabbit', region='woodland', kind='animal', art=dict(template='hopper', body=(5, 3), colour='#a98a6a', shade='#7f6449', ear_len=2, ear_inner='#e8b0b0', tail_colour='#ffffff'),
          fact='Rabbits thump the ground with their back feet to warn each other of danger.'),
-    dict(id='hedgehog', name='Hedgehog', region='woodland', kind='animal', art='hand',
+    dict(id='hedgehog', name='Hedgehog', region='woodland', kind='animal', art=dict(template='low', body=(6, 3), colour='#8a6a48', shade='#4a3622', skin='#c9a27a', spines=True),
          fact='A hedgehog has about 5,000 spines and rolls into a prickly ball when scared.'),
-    dict(id='fox', name='Red fox', region='woodland', kind='animal', art='hand',
+    dict(id='fox', name='Red fox', region='woodland', kind='animal', art=dict(template='quad', body=(8, 3), leg=1, colour='#e0702a', belly='#f4f1e8', head=(3, 2), neck=1, snout=1, snout_colour='#ffffff', ears='pointy', tail='bushy', tail_tip='#ffffff', legs='#2b2b33'),
          fact='Foxes can hear a mouse squeak from 100 metres away.'),
-    dict(id='deer', name='Red deer', region='woodland', kind='animal', art='hand',
+    dict(id='deer', name='Red deer', region='woodland', kind='animal', art=dict(template='quad', body=(9, 3), leg=3, colour='#9a5a32', belly='#d8b890', head=(2, 2), neck=4, snout=1, ears='round', horns='antlers', tail='short', tail_colour='#efe2c8', legs='#6e3c1e', hoof='#2b2b33'),
          fact='A stag grows a new set of antlers every year.'),
-    dict(id='cow', name='Cow', region='woodland', kind='animal', art='hand',
+    dict(id='cow', name='Cow', region='woodland', kind='animal', art=dict(template='quad', body=(11, 4), leg=2, colour='#f4f1e8', pattern='patches', pattern_colour='#2b2b33', head=(3, 3), snout=1, snout_colour='#f2a3a8', ears='round', ear_colour='#2b2b33', horns='short', tail='tuft', tail_tip='#2b2b33', legs='#f4f1e8', hoof='#2b2b33'),
          fact='Cows have best friends and get stressed when they are apart.'),
-    dict(id='sheep', name='Sheep', region='woodland', kind='animal', art='hand',
+    dict(id='sheep', name='Sheep', region='woodland', kind='animal', art=dict(template='quad', body=(8, 4), leg=1, colour='#f7f5ee', pattern='wool', head=(2, 2), snout=1, snout_colour='#2b2b33', legs='#2b2b33', ears='round', ear_colour='#2b2b33', tail='short'),
          fact='Sheep can remember the faces of up to 50 other sheep.'),
-    dict(id='robin', name='Robin', region='woodland', kind='bird', art='hand',
+    dict(id='robin', name='Robin', region='woodland', kind='bird', art=dict(template='flyer', body=(3, 1), colour='#a07a5a', head='#a07a5a', breast='#f07850', wing='#8a6a4a', beak='#2b2b33', beak_len=0, span=2),
          fact='Robins sing all year round, even in winter.'),
-    dict(id='swallow', name='Swallow', region='woodland', kind='bird', art='hand',
+    dict(id='swallow', name='Swallow', region='woodland', kind='bird', art=dict(template='flyer', body=(4, 1), colour='#2a3a7a', head='#2a3a7a', belly='#f4f1e8', wing='#3a4a8a', beak='#2b2b33', beak_len=0, span=3, fork=True),
          fact='Swallows fly all the way to Africa and back every year.'),
-    dict(id='buzzard', name='Buzzard', region='woodland', kind='bird', art='hand',
+    dict(id='buzzard', name='Buzzard', region='woodland', kind='bird', art=dict(template='flyer', body=(5, 1), colour='#8a6a4a', head='#8a6a4a', belly='#d8c0a0', wing='#7a5a3a', wing_tip='#3a2a1e', beak='#e0c040', beak_len=1, span=4, broad=True),
          fact='Buzzards circle high on warm rising air without flapping.'),
 
     # ---- mediterranean ----
@@ -105,7 +105,7 @@ SPECIES = [
          fact='Cranes dance together, leaping and bowing.'),
 
     # ---- boreal & mountains ----
-    dict(id='moose', name='Moose', region='boreal', kind='animal', art=dict(template='quad', body=(10, 5), leg=4, colour='#4a3424', shade='#2e2016', head=(3, 3), neck=1, head_drop=2, snout=2, snout_colour='#4a3424', horns='palmate', horn_colour='#c9b08a', ears='round', tail='short', legs='#3a2818', hoof='#1b1b1f'),
+    dict(id='moose', name='Moose', region='boreal', kind='animal', art=dict(template='quad', body=(10, 5), leg=4, colour='#4a3424', shade='#2e2016', head=(3, 3), neck=1, head_drop=2, snout=0, droop=True, horns='palmate', horn_colour='#c9b08a', ears='round', tail='short', legs='#3a2818', hoof='#1b1b1f'),
          fact='Moose are great swimmers and dive for water plants.'),
     dict(id='bear', name='Brown bear', region='boreal', kind='animal', art=dict(template='quad', body=(10, 5), leg=2, leg_width=2, colour='#6a4428', shade='#4a2e18', hump=(7, 3, 1), head=(3, 3), snout=1, snout_colour='#8a6040', ears='round', tail='short', legs='#4a2e18'),
          fact='Bears can smell food from kilometres away.'),
@@ -115,7 +115,7 @@ SPECIES = [
          fact='Bald eagles build the biggest nests of any bird in North America.'),
 
     # ---- plains & eastern forest ----
-    dict(id='bison', name='American bison', region='plains', kind='animal', art=dict(template='quad', body=(10, 5), leg=2, colour='#6a4a2a', shade='#4a321c', hump=(6, 4, 2), mane='#4a321c', head=(3, 3), head_drop=1, snout=1, horns='curved', horn_colour='#2b2b33', tail='tuft', legs='#3a2818'),
+    dict(id='bison', name='American bison', region='plains', kind='animal', art=dict(template='quad', body=(10, 5), leg=2, colour='#7a5632', shade='#4a321c', hump=(6, 4, 2), mane='#3a2414', head=(3, 3), head_drop=1, snout=1, horns='curved', horn_colour='#d8d0b8', tail='tuft', tail_tip='#3a2414', legs='#3a2818'),
          fact='Bison can run as fast as a horse.'),
     dict(id='raccoon', name='Raccoon', region='plains', kind='animal', art=dict(template='quad', body=(7, 3), leg=1, colour='#8a8a90', shade='#6a6a70', head=(3, 2), neck=1, snout=1, snout_colour='#f4f1e8', mask='#2b2b33', ears='pointy', tail='ringed', tail_tip='#2b2b33', legs='#2b2b33'),
          fact='Raccoons use their clever hands to open things.'),
@@ -224,9 +224,9 @@ SPECIES += [
          art=dict(template='flyer', body=(5, 1), colour='#4a3a30', head='#e07070', wing='#3a2c24', wing_tip='#2b2b33', beak='#c9b08a', beak_len=1, span=4, broad=True)),
     # monsoon
     dict(id='rhino', name='Indian rhinoceros', region='monsoon', kind='animal', fact='A rhino horn is made of the same stuff as your fingernails.',
-         art=dict(template='quad', body=(11, 5), leg=2, leg_width=2, colour='#8a8a90', shade='#6a6a70', head=(4, 3), snout=1, horns='short', horn_colour='#5a5a60', ears='round', tail='tuft', legs='#7a7a80')),
+         art=dict(template='quad', body=(11, 5), leg=2, leg_width=2, colour='#8a8a90', shade='#6a6a70', head=(4, 3), snout=1, nose_horn=True, horn_colour='#6a6a70', ears='round', tail='tuft', legs='#7a7a80')),
     dict(id='buffalo', name='Water buffalo', region='monsoon', kind='animal', fact='Water buffalo love wallowing in mud to stay cool.',
-         art=dict(template='quad', body=(10, 4), leg=2, colour='#3a3a40', shade='#2a2a30', head=(3, 3), snout=1, horns='curved', horn_colour='#8a8a80', ears='round', tail='tuft', legs='#2a2a30')),
+         art=dict(template='quad', body=(10, 4), leg=2, colour='#3a3a40', shade='#2a2a30', head=(3, 3), snout=1, horns='wide', horn_colour='#8a8a80', ears='round', tail='tuft', legs='#2a2a30')),
     dict(id='orangutan', name='Orangutan', region='monsoon', kind='animal', fact='Orangutans make a new leafy nest to sleep in every night.',
          art=dict(template='sitter', body=(5, 5), colour='#c05a20', shade='#9a4418', face='#e0a070', head=(4, 3), ears=None)),
     dict(id='cobra', name='King cobra', region='monsoon', kind='animal', fact='The king cobra is the longest venomous snake.',
