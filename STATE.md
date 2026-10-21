@@ -115,10 +115,7 @@ Possible future collaboration; nothing was removed.
 
 Live and clean at 27b143d (CI green). Do all four items from "## TO DO: balance, progression and
 onboarding" below, in any order, each its own tested commit:
-1. Trees for long runs: a full forest of every kind takes a fully upgraded plane from ~25,000 km
-   to a full lap (31,520 km); without it the longest runs are impossible; trees stay small on short
-   flights. Needs a tree-planting pilot in `tools/balance.cjs` (its pilots never drop parcels today;
-   their "trees" cooling is rewilding only). Re-run the balance table after.
+1. DONE 2026-10-21 (fb3c048): trees for long runs. See "Trees for long runs" below.
 2. Re-price every upgrade per stage (income per flight at each stage; flights of saving per level;
    no useless or dominant level). Show the user the table before changing prices.
 3. Tiered missions/challenges by stage, incl. funny ones ("Crash into birds for the first time" when
@@ -184,6 +181,17 @@ Progression:
 Trees for long runs (user agreed 2026-10-21): trees stay small on short flights but grow bigger
 and keep helping the longer a flight goes, so a full forest of every kind is what takes a top plane
 from ~25,000 km to a full lap. Without the full set, the longest runs are impossible.
+DONE 2026-10-21 (fb3c048). Measured first: once the autopilot really planted (new `PLANT=1`),
+today's 6 trees made the smart top plane fly FOR EVER (>100,000 km, 5/5 seeds) and lifted the
+straight pilot ~12,000 -> ~17,000 km. Also found: ANY cooling that never stops (even half
+today's forest, or rewilding's 0.04/s per project) lets a careful pilot fly for ever, because
+its late-game warming is nearly flat. User agreed: "full forest" = all 5 kinds planted on THIS
+flight. Built (`FOREST` in config.js): trees x0.5; old-wood boost for grown trees from 10,000 km
+(x up to 3 with 5 kinds, x(kinds/5)^2); a forest can only soak up 80 CO2 per flight with 5 kinds
+(x(kinds/5)^4, min 12), rewilded land 30; then "Your forest is full of carbon!".
+Results (smart, hydrogenMax, PLANT=1, seeds 1-5): 5 kinds 30,313 / 25,407 / 33,907 / 54,323 /
+33,046 (median 33,046); 4 kinds (seeds 1-3) 25,129 / 37,421 / 25,841. Straight with a full forest
+16,627 / 12,513 / 9,219 / 16,982 / 12,641 (no trees: median 12,048). Every run overheats.
 
 Onboarding ("forced action" tutorials, like proper games):
 - First time in the game: must choose a pilot name, then be shown the leaderboard.
