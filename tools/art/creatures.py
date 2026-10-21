@@ -83,6 +83,10 @@ def pattern(g, kind, x0, y0, w, h, col, seed=1):
     elif kind == 'saddle':            # dark back
         for dx in range(1, w - 1):
             g.px(x0 + dx, y0, col)
+    elif kind == 'band':              # panda: dark band over the shoulders
+        for dx in (w - 3, w - 2):
+            for dy in range(h + 1):
+                g.px(x0 + dx, y0 + dy, col)
     elif kind == 'bristle':           # spiky ridge along the back
         for dx in range(0, w, 2):
             g.px(x0 + dx, y0 - 1, col)
@@ -208,6 +212,9 @@ def quad(s, frame):
     g.px(hx + hw - 2, hy, INK) if hh <= 2 else g.px(hx + hw - 1, hy + 1, INK)   # eye
     if 'mask' in s:
         g.px(hx, hy + 1, hexc(s['mask'])); g.px(hx + 1, hy + 1, hexc(s['mask']))
+    if s.get('eye_patch'):            # panda: a dark patch round the eye, white shine in it
+        g.px(hx + hw - 2, hy + 1, INK); g.px(hx + hw - 1, hy + 1, INK); g.px(hx + hw - 2, hy + 2, INK)
+        g.px(hx + hw - 1, hy + 1, hexc('#ffffff'))
     if s.get('trunk'):                # elephant
         for k in range(s['trunk']):
             g.px(hx + hw + snout - 1 + (1 if k < 2 else 0), hy + hh - 1 + k, col)
