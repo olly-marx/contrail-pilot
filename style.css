@@ -397,9 +397,14 @@ h2.sub { margin-top: -4px; }
   background: linear-gradient(#bfe6f7, #e8f6fc); border: 3px solid #1b1b2f; border-radius: 6px; }
 .hplane .hp-stage { position: absolute; left: 0; top: 0; width: 74px; height: 39px; transform-origin: 0 0; transition: transform 0.45s ease; }
 .hplane img { position: absolute; image-rendering: pixelated; }
+.hplane .hp-bg { left: 0; top: 0; width: 74px; height: 39px; }
+.hplane .hp-corner { width: 5px; height: 5px; animation: hpPulse 1.2s ease-in-out infinite; }
 .hplane .hp-base { left: 6px; top: 6px; width: 62px; height: 27px; }
 .hplane .hp-part { left: 0; top: 0; width: 74px; height: 39px; }
 .hplane .hp-preview { animation: hpPulse 0.8s ease-in-out infinite; }
 .hplane.zoomed { border-color: #ffe15a; }
 @keyframes hpPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 #hUpgrades .line.focus { outline: 3px solid #ffe15a; }
+.hpart { margin: 0 auto 8px; max-width: 360px; padding: 6px 8px; border: 2px solid #ffe15a; background: #fffbe8; font-size: 12px; text-align: center; }
+.hpart p { margin: 0 0 4px; }
+.hpart .buttons { justify-content: center; gap: 6px; }

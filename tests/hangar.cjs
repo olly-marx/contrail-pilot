@@ -72,6 +72,17 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('.line[data-line="engine"] .name'); await p.waitForTimeout(200);
   m = await model();
   check(m.zoomed && m.preview === 'assets/plane-engine-3.png' && m.parts.includes('plane-engine-3') && !m.parts.includes('plane-engine-2') && !/scale\(3\)/.test(m.t), `tapping Engines zooms in and previews engine 3: ${JSON.stringify(m)}`);
+  // Zoomed in: the part panel says what it does; HIDE / SHOW compares with and without it; more info opens (i).
+  const panel = await p.textContent('#hPart');
+  check(await p.isVisible('#hPart') && /Better Engines/.test(panel) && /Next: Super engines/.test(panel) && /30% less CO2/.test(panel), `part panel: name, next level and what it does: "${panel}"`);
+  await p.click('#hpToggle'); await p.waitForTimeout(100);
+  m = await model();
+  check(!m.parts.some(k => k.startsWith('plane-engine-')) && m.parts.includes('plane-gear-1') && /SHOW PART/.test(await p.textContent('#hpToggle')), `HIDE takes only the engines off: ${JSON.stringify(m.parts)}`);
+  await p.click('#hpToggle'); await p.waitForTimeout(100);
+  check((await model()).parts.includes('plane-engine-3'), 'SHOW puts them back');
+  await p.click('#hpMore'); await p.waitForTimeout(200);
+  check(await p.isVisible('#info') && /Better Engines/.test(await p.textContent('#iName')), 'more info opens the full (i) page');
+  await p.click('#iClose');
   await p.click('.line[data-line="engine"] .name'); await p.waitForTimeout(200);
   m = await model();
   check(!m.zoomed && !m.preview && m.parts.includes('plane-engine-2'), `tapping it again zooms out: ${JSON.stringify(m)}`);

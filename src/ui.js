@@ -7,7 +7,7 @@ import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js'
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
-import { partKeys, zoomBox } from './planeparts.js';
+import { NATURE_LINES, partKeys, zoomBox } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
 
 export const FACTS_BASE = [
@@ -354,9 +354,13 @@ export class UI {
     $('hUpgrades').querySelectorAll('.line[data-line]').forEach(el => el.onclick = e => {
       if (e.target.closest('button')) return;
       this.hFocus = this.hFocus === el.dataset.line ? null : el.dataset.line;
+      this.hHide = false;
       sfx.flap(); this.renderHangar();
     });
-    $('hPlane').onclick = () => { if (this.hFocus) { this.hFocus = null; this.renderHangar(); } };
+    // Zoomed in: tap the model (or HIDE / SHOW) to compare the plane with and without the part.
+    $('hPlane').onclick = () => { if (this.hFocus) { this.hHide = !this.hHide; sfx.flap(); this.renderPlaneModel(); } };
+    $('hpToggle').onclick = () => { this.hHide = !this.hHide; sfx.flap(); this.renderPlaneModel(); };
+    $('hpMore').onclick = () => this.hFocus && this.showInfo(this.hFocus);
     this.renderPlaneModel();
     $('hUpgrades').querySelectorAll('[data-info]').forEach(btn => btn.onclick = () => this.showInfo(btn.dataset.info));
 
@@ -377,14 +381,29 @@ export class UI {
     }
     const img = (k, cls = '') => `<img class="hp-part ${cls}" src="assets/${k}.png" alt="">`;
     const stage = $('hPlane').querySelector('.hp-stage');
-    stage.innerHTML = '<img class="hp-base" src="assets/plane.png" alt="">' + partKeys(levels).map(k => img(k, k === preview ? 'hp-preview' : '')).join('')
-      + '<img class="hp-part hp-sparkle" alt="" hidden>';
-    // Zoom: fit the part's box (base pixels; overlays have a 6 px margin) in the 222 x 117 window.
+    // This line's part: 'plane-<line>-N', or the tail badge for nature lines. HIDE takes it off.
+    const mine = k => line && (NATURE_LINES.includes(id) ? k.startsWith('plane-nature-') : k.startsWith(`plane-${id}-`));
+    const keys = partKeys(levels).filter(k => !(this.hHide && mine(k)));
     const box = id && !['fuel', 'airframe'].includes(id) ? zoomBox(id) : null;
+    const corners = box ? [[0, 0, 0], [1, 0, 90], [1, 1, 180], [0, 1, 270]].map(([cx, cy, r]) =>
+      `<img class="hp-corner" src="assets/ui/focus-corner.png" alt="" style="left:${box[0] + 6 + cx * (box[2] - 5)}px;top:${box[1] + 6 + cy * (box[3] - 5)}px;transform:rotate(${r}deg)">`).join('') : '';
+    stage.innerHTML = '<img class="hp-bg" src="assets/ui/hangar-bg.png" alt=""><img class="hp-bg" src="assets/ui/hangar-spot.png" alt="">'
+      + '<img class="hp-base" src="assets/plane.png" alt="">' + keys.map(k => img(k, k === preview ? 'hp-preview' : '')).join('')
+      + corners + '<img class="hp-part hp-sparkle" alt="" hidden>';
+    // The part panel: what it is and what the next level does; HIDE / SHOW; the full (i) page.
+    $('hPart').hidden = !line;
+    if (line) {
+      const next = nextLevel(s, line), have = level(s, id);
+      $('hpText').innerHTML = `<b>${line.name}</b>${have ? ` <span class="small">(now: ${line.levels[have - 1].name})</span>` : ''}<br>`
+        + (next ? `Next: <b>${next.name}</b>. ${next.short}` : '<b>All done!</b>') + `<br><span class="small">${line.info.why}</span>`;
+      $('hpToggle').textContent = this.hHide ? 'SHOW PART' : 'HIDE PART';
+    }
+    // Zoom: fit the part's box (base pixels; overlays have a 6 px margin) in the 222 x 117 window.
     let t = 'translate(0px, 0px) scale(3)';
     if (box) {
       const [x, y, w, h] = box, z = Math.min(9, 0.7 * Math.min(222 / w, 117 / h));
-      t = `translate(${111 - (x + 6 + w / 2) * z}px, ${58.5 - (y + 6 + h / 2) * z}px) scale(${z})`;
+      const clamp = (v, lo) => Math.min(0, Math.max(lo, v));   // never show past the edge of the hangar picture
+      t = `translate(${clamp(111 - (x + 6 + w / 2) * z, 222 - 74 * z)}px, ${clamp(58.5 - (y + 6 + h / 2) * z, 117 - 39 * z)}px) scale(${z})`;
     }
     stage.style.transform = t;
     $('hPlane').classList.toggle('zoomed', !!id);
