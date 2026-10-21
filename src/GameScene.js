@@ -13,6 +13,7 @@ import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge } from './planeparts.js';
+import { WILDLIFE } from './wildlife.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
@@ -55,6 +56,8 @@ export class GameScene extends Phaser.Scene {
     // Background wildlife: two frames each (legs / wings).
     for (const a of ['cow', 'sheep', ...WILD_ANIMALS.map(a => a.id)]) for (let f = 0; f < 2; f++) this.load.image(`animal-${a}-${f}`, `assets/animal-${a}-${f}.png`);
     for (const b of SKY_BIRDS) for (let f = 0; f < 2; f++) this.load.image(`sky-${b.id}-${f}`, `assets/sky-${b.id}-${f}.png`);
+    // Every species the art session has drawn (src/wildlife.js, generated): new ones load themselves.
+    for (const w of WILDLIFE) if (w.sprite) for (let f = 0; f < 2; f++) if (!this.textures.exists(`${w.sprite}-${f}`)) this.load.image(`${w.sprite}-${f}`, `assets/${w.sprite}-${f}.png`);
     this.load.image('puff', 'assets/puff.png');
     for (const kind of Object.keys(SPECIES)) for (let s = 0; s < 3; s++) this.load.image(`tree-${kind}-${s}`, `assets/tree-${kind}-${s}.png`);
   }

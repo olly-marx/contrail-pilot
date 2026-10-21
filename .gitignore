@@ -1,3 +1,4 @@
-node_modules/
 .DS_Store
+node_modules/
 package*.json
+__pycache__/
