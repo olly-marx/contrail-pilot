@@ -14,7 +14,7 @@ for Oliver's Imperial contrail research group. Phaser 3, static site, no build s
   https://claude.ai/code/artifact/f83412c6-0386-4b2c-9bb0-e1ff46b3b8fa
 - `README.md` has the file map and how to run the checks.
 
-## What is built (all live as of commit 792672e)
+## What is built (as of commit 792672e; much more since: see the NEXT TASK / Phase 1b sections and git log)
 
 Flight with takeoff, airports every 1500 m (glide onto a runway to land or fly on), storms,
 hidden ISSRs that fade in near the plane, contrails, day/night with sunlight beams blocked by
@@ -111,7 +111,25 @@ hangar's real-tree gate, the About section), drops `citizenzoo` Learn more links
 picks Citizen-Zoo-free versions of the facts. `?citizenzoo` in the URL turns it on (demos).
 Possible future collaboration; nothing was removed.
 
-## NEXT TASK (asked 2026-10-20) — "Phase 1b", before Phase 2
+## NEXT TASK (handed off 2026-10-21) — the four to-do items, any order
+
+Live and clean at 27b143d (CI green). Do all four items from "## TO DO: balance, progression and
+onboarding" below, in any order, each its own tested commit:
+1. Trees for long runs: a full forest of every kind takes a fully upgraded plane from ~25,000 km
+   to a full lap (31,520 km); without it the longest runs are impossible; trees stay small on short
+   flights. Needs a tree-planting pilot in `tools/balance.cjs` (its pilots never drop parcels today;
+   their "trees" cooling is rewilding only). Re-run the balance table after.
+2. Re-price every upgrade per stage (income per flight at each stage; flights of saving per level;
+   no useless or dominant level). Show the user the table before changing prices.
+3. Tiered missions/challenges by stage, incl. funny ones ("Crash into birds for the first time" when
+   you first reach bird distances). Upgrades are what let you keep completing missions.
+4. Forced "tap here" tutorials: name + leaderboard on first play; hangar tour after the first
+   flight; a pointer walk-through whenever something new unlocks.
+Rules: no upgrade may change the controls; saving up cooling stays (no floor); explain the
+mechanism and pause before each non-trivial change; database changes (Supabase) need the user's OK
+before `~/.local/bin/supabase db push` and must go live BEFORE the game that depends on them.
+
+## Phase 1b (asked 2026-10-20) — DONE and live
 
 Asked by the user, in this order of their message (nothing started yet; explain + pause first):
 1. Missions/challenges reward more, and MORE challenges that pay currency (seeds/crystals).
@@ -270,6 +288,15 @@ Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (gold
   commit): the teleporting autopilot's flight ends (`state "over"` near 46 km) after birds missed
   their 55% spawn roll at 10 km. Rerun before blaming a change. `tests/school.cjs` crashed once in
   ~5 runs.
+
+## Supabase (online names + leaderboards)
+
+Project `contrail-pilot`, ref `mkucbsjzbipjaiqzrlkj` (NOT drift_db). CLI `~/.local/bin/supabase`,
+logged in and linked. Migrations in `supabase/migrations/` (leaderboard, oops_and_laps,
+crash_distance_boards), all pushed. DB tests: `supabase/tests/run.sh` (throwaway Postgres in Docker).
+Game side: `src/online.js` (publishable key, anonymous sign-in, 5-flight outbox), `src/pilot.js`
+(PILOT + BOARDS screens; Oops boards are today-only). `supabase/config.toml` has
+`[storage.vector] enabled = false` (paid feature: config push 402s otherwise).
 
 ## Open questions waiting on the user
 
