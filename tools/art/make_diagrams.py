@@ -464,6 +464,67 @@ def tour_finger():
     big.save('tour-finger')
 
 
+# ---------- hangar (behind the 3x plane model; same 74x39 pixel grid as the plane overlays) ----------
+
+def hangar_bg():
+    """Hangar interior: trusses, ribbed wall, doors open onto the sky, concrete floor.
+    The floor line is at y=35, where the landing-gear wheels touch (base y 29 + 6 px margin)."""
+    p = Pic(74, 39)
+    wall, wall_d, rib = hexc('#3e4a61'), hexc('#2f3a4f'), hexc('#55637e')
+    for y in range(39):
+        for x in range(74):
+            p.px(x, y, wall if x % 6 else rib)
+    for x in range(14, 60):                         # the big doors, open: a slice of sky
+        for y in range(5, 31):
+            p.px(x, y, C['sky'] if y > 8 else hexc('#8fd3f0'))
+    for x in (14, 59):                              # door frame
+        for y in range(4, 32):
+            p.px(x, y, wall_d)
+    for x in range(14, 60):
+        p.px(x, 4, wall_d)
+    for x in range(16, 58, 11):                     # a far-off runway light or two
+        p.px(x, 29, hexc('#ffe15a'))
+    p.rect(14, 30, 46, 1, hexc('#5a9a3c'))          # grass outside
+    for x in range(74):                             # roof truss along the top
+        p.px(x, 0, wall_d); p.px(x, 3, wall_d)
+        if x % 8 in (0, 4):
+            p.px(x, 1, wall_d); p.px(x, 2, wall_d)
+        elif x % 8 in (1, 7):
+            p.px(x, 1 if x % 8 == 1 else 2, wall_d)
+    for y in range(35, 39):                         # concrete floor, lit nearest the plane
+        for x in range(74):
+            p.px(x, y, hexc('#9aa0aa') if y == 35 else hexc('#80868f') if (x + y) % 2 else hexc('#878d96'))
+    for x in range(6, 68, 4):                       # yellow guide line on the floor
+        p.px(x, 37, hexc('#ffc23d')); p.px(x + 1, 37, hexc('#ffc23d'))
+    for x in range(4, 70, 5):                       # hanging lamps
+        if x % 3 == 0:
+            p.px(x, 4, hexc('#c9c4b4')); p.px(x, 5, hexc('#fff3a0'))
+    p.save('hangar-bg')
+
+
+def hangar_spot():
+    """Soft spotlight cone falling on the plane (translucent; lay it over hangar-bg, under the plane)."""
+    p = Pic(74, 39)
+    for y in range(4, 39):
+        half = 6 + (y - 4) * 0.75
+        for x in range(74):
+            d = abs(x - 37)
+            if d <= half:
+                a = int(42 * (1 - d / (half + 1)) + (16 if y >= 35 else 0))
+                p.px(x, y, (255, 243, 200, max(0, a)))
+    p.save('hangar-spot')
+
+
+def focus_corner():
+    """5x5 gold corner bracket (top-left). Rotate for the other three corners."""
+    p = Pic(5, 5)
+    for k in range(5):
+        p.px(k, 0, hexc('#ffe15a')); p.px(0, k, hexc('#ffe15a'))
+    for k in range(1, 4):
+        p.px(k, 1, hexc('#b8860b')); p.px(1, k, hexc('#b8860b'))
+    p.save('focus-corner')
+
+
 # ---------- mission icons (24x24) ----------
 
 def icon(name, draw, night=False):
@@ -560,6 +621,9 @@ if __name__ == '__main__':
     lesson_birds()
     lesson_nofly()
     tour_finger()
+    hangar_bg()
+    hangar_spot()
+    focus_corner()
     for spec in (('mi-land', mi_land), ('mi-seed', mi_seed), ('mi-night', mi_night, True), ('mi-airports', mi_airports),
                  ('mi-shade', mi_shade), ('mi-tree', mi_tree), ('mi-crystal', mi_crystal, True), ('mi-globe', mi_globe)):
         icon(*spec)
