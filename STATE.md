@@ -134,6 +134,15 @@ onboarding" below, in any order, each its own tested commit:
    TAKE OFF); a walk-through when upgrade lines open (all lines of one tab at once). Only starts on
    a screen that is showing (a new branch once started one mid-take-off). save.tours,
    save.shownLines. Tests opt out with seenTips ['*'] or tours ['*'].
+5. DONE 2026-10-21 (user's asks, after the four): plane overlays in flight (art 74x39 layers,
+   `src/planeparts.js` shared list); hangar plane model (`#hPlane`, ui.js renderPlaneModel): tap a
+   card to zoom to that part and preview its next level, HIDE/SHOW PART to compare, a short part
+   panel + more info; hangar backdrop/spot/brackets (art). Species from the art session's generated
+   `src/wildlife.js` load by themselves (GameScene preload loop).
+   NOT STARTED, discussed: upgrades tied to new variables (hazard warnings, turbulence control,
+   golden seeds, ...) and an advanced autopilot with safe hand-back (see the chat of 2026-10-21:
+   only "recoverable" lines, tap to take over, no switching on in a bad spot; open: does
+   autopilot time earn crystals / count for boards?).
 2. DONE 2026-10-21: new prices (user OK'd the ~20,000-seed table: 20,125 seeds, 1,119 crystals at
    ~1 per 18 seeds; crystal income NOT measured against this). Old saves re-valued ONCE at full value
    (user's choice, no bonus) by `src/reprice.js`: bank + old prices of owned levels, rebuilt at new
