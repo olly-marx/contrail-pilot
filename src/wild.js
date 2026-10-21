@@ -53,9 +53,11 @@ export class WildScreen {
     const bits = found.map((w, i) => {
       const fly = w.kind === 'bird' && w.pose !== 'standing';
       const left = (x = (x + 37 + (i * 53) % 29) % 250);
-      return `<img class="w-critter ${fly ? 'fly' : ''}" src="assets/${w.sprite}-0.png" alt="${esc(w.name)}" style="left:${left}px;${fly ? `top:${10 + (i * 17) % 40}px` : 'bottom:10px'}">`;
+      // Backdrop (art session): 288 x 120, grass line at y=100: feet at y=103 (bottom 17/120).
+      return `<img class="w-critter ${fly ? 'fly' : ''}" src="assets/${w.sprite}-0.png" alt="${esc(w.name)}" style="left:${(left / 288 * 100).toFixed(1)}%;${fly ? `top:${(8 + (i * 17) % 36) / 1.2}%` : `bottom:${(17 / 120 * 100).toFixed(1)}%`}">`;
     }).join('');
-    $('wScene').innerHTML = `<div class="w-hills"></div><div class="w-ground"></div>${bits}${found.length ? '' : '<p class="w-empty">No wild animals yet. Start a habitat project!</p>'}`;
+    $('wScene').style.backgroundImage = `url('assets/ui/scene-${this.region}.png')`;
+    $('wScene').innerHTML = `${bits}${found.length ? '' : '<p class="w-empty">No wild animals yet. Start a habitat project!</p>'}`;
   }
 
   found(id) { return !!(this.save.found || {})[id]; }
@@ -68,7 +70,7 @@ export class WildScreen {
         : waiting ? `<span class="small">needs Biodiversity ${p.needs}</span>`
         : `<button class="btn ${ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${cost(p)}</button>`;
       return `<div class="line project ${have ? 'maxed' : ''}" data-pline="${p.id}">
-        <div><div class="name">${esc(p.name)}</div><div class="small">${esc(p.short)}</div>
+        <div><div class="name"><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="">${esc(p.name)}</div><div class="small">${esc(p.short)}</div>
         <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div></div>
         <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
         <div class="next">${btn}</div></div>`;

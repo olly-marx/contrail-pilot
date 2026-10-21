@@ -417,17 +417,18 @@ h2.sub { margin-top: -4px; }
 .wregions .btn { flex: 0 0 auto; }
 .wregions .btn { font-size: 8px; padding: 4px 6px; }
 .wregions .btn small { font-size: 6px; opacity: .7; }
-.wscene { position: relative; height: 120px; overflow: hidden; border: 3px solid var(--ink); background: #8ed3ef; image-rendering: pixelated; }
-.wscene .w-hills { position: absolute; left: 0; right: 0; bottom: 30px; height: 92px; background: url('assets/hills.png') repeat-x bottom / auto 92px; image-rendering: pixelated; }
-.wscene .w-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 32px; background: url('assets/ground.png') repeat-x top / auto 96px; image-rendering: pixelated; }
+.wscene { position: relative; width: 100%; aspect-ratio: 288 / 120; overflow: hidden; border: 3px solid var(--ink); box-sizing: content-box;
+  background: #8ed3ef no-repeat center / 100% 100%; image-rendering: pixelated; }
 .wscene .w-critter { position: absolute; transform: scale(2); transform-origin: bottom center; image-rendering: pixelated; }
 .wscene .w-critter.fly { transform-origin: center; }
 .wscene .w-empty { position: absolute; inset: 30px 10px auto; text-align: center; color: #1b1b2f; background: rgba(255,255,255,.7); padding: 4px; }
 .w-chain { font-size: 8px; color: #1e7a3c; margin-top: 2px; }
 .w-done { font-weight: bold; color: #1e7a3c; }
 .wfound { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
-.w-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 4px; border: 2px solid var(--ink); background: #fffbe8; font-family: inherit; font-size: 8px; cursor: pointer; }
+.w-card { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 2px; border: 8px solid transparent; border-image: url('assets/ui/card-frame-locked.png') 4 / 8px stretch; image-rendering: pixelated; background: #e9e6dc; font-family: inherit; font-size: 8px; cursor: pointer; }
 .w-card img { height: 40px; max-width: 76px; object-fit: contain; image-rendering: pixelated; filter: brightness(0) opacity(.35); }
 .w-card.got img { filter: none; }
 .w-portrait { display: block; margin: 0 auto; height: 96px; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
 .w-portrait.w-shadow { filter: brightness(0) opacity(.35); }
+.w-card.got { border-image: url('assets/ui/card-frame.png') 4 / 8px stretch; background: #fffbe8; }
+.w-icon { width: 24px; height: 24px; vertical-align: middle; margin-right: 4px; image-rendering: pixelated; }

@@ -12,7 +12,7 @@ import { cz } from './config.js';   // Citizen Zoo mentions only when that featu
 export const UK_PROJECTS = [
   { id: 'deadwood', name: 'Leave dead wood', cost: 20, crystals: 1, bio: 4, needs: 0,
     short: 'Leave fallen logs to rot instead of tidying them.',
-    chain: ['Rotting logs', 'beetle grubs and fungi', 'food for woodpeckers and hedgehogs'],
+    chain: ['Rotting logs', 'beetles, grubs and fungi', 'woodpeckers feed and nest in the holes'],
     fact: "Dead, rotting wood is home to thousands of creatures, like about 650 kinds of beetle, and woodpeckers nest in the holes.", src: [["Worcestershire Wildlife Trust: dead wood", "https://www.worcswildlifetrust.co.uk/node/3757"]] },
   { id: 'meadow', name: 'Wildflower meadow', cost: 30, crystals: 2, bio: 8, needs: 3,
     short: 'Sow wild flowers and cut them for hay once a year.',
@@ -91,7 +91,7 @@ export const UK_SPECIES = {
     fact: "Grey herons stand as still as statues at the water's edge, waiting to catch their food.", src: [["BTO: grey heron", "https://www.bto.org/understanding-birds/birdfacts/grey-heron"]] },
   frog: { needs: ['pond'], bio: 15, why: 'Frogs lay their spawn in ponds with no fish.',
     fact: "Common frogs lay their spawn in shallow water, even in small garden ponds.", src: [["Froglife: common frog", "https://www.froglife.org/info-advice/amphibians-and-reptiles/common-frog/"]] },
-  hedgehog: { needs: ['hedgerow', 'deadwood'], bio: 15, why: 'Hedges are roads for hedgehogs, and dead wood is full of beetles to eat.',
+  hedgehog: { needs: ['hedgerow'], bio: 15, why: 'Hedges and rough corners give hedgehogs safe places to travel, hide and find food.',
     fact: "Countryside hedgehogs have dropped by a third to three-quarters since 2000, and losing hedgerows is part of the reason.", src: [["Natural History Museum: rural hedgehogs decline", "https://nhm.ac.uk/discover/news/2022/february/britains-rural-hedgehogs-see-dramatic-population-decline.html"]] },
   badger: { needs: ['hedgerow'], bio: 20, why: 'Badgers dig their setts in hedge banks and woods, and eat lots of earthworms.',
     fact: "Badgers live in family groups in burrows called setts and can eat hundreds of earthworms in one night.", src: [["The Wildlife Trusts: badger", "https://www.wildlifetrusts.org/wildlife-explorer/mammals/badger"]] },
