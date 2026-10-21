@@ -127,8 +127,19 @@ onboarding" below, in any order, each its own tested commit:
    from your stage and the one below; prizes grow by stage (stage 5: 300-400 seeds). Funny ones:
    land with exactly 7 seeds, land with none, drop a parcel on a runway. A lap is 32,060 km
    (LAP_KM), NOT 31,520 as written before.
-4. Forced "tap here" tutorials: name + leaderboard on first play; hangar tour after the first
-   flight; a pointer walk-through whenever something new unlocks.
+4. DONE 2026-10-21: "tap here" tutorials, `src/tour.js` (dim panels round a hole, the art
+   session's `assets/ui/tour-finger.png`, a bubble; only the target works). name tour on the menu
+   after flight school (PILOT, name, word, SAVE, BOARDS, FLY; offline: says so and ends); hangar
+   tour at the end of the first real flight's results (HANGAR, seeds, any FREE!, i, NATURE,
+   TAKE OFF); a walk-through when upgrade lines open (all lines of one tab at once). Only starts on
+   a screen that is showing (a new branch once started one mid-take-off). save.tours,
+   save.shownLines. Tests opt out with seenTips ['*'] or tours ['*'].
+2. Upgrade prices: MEASURED, NOT CHANGED, waiting for the user. `tools/income.cjs` (campaign
+   autopilot): all 53 levels after 20-24 landed flights; most levels cost < 1 landed flight of
+   income. Real players land 17% of flights (DB, 236 flights). The user expected prices much
+   higher (a 17,000 km landing pays ~300 seeds: income grows ~distance squared, which the
+   autopilot under-measures because it lands early). Proposed a ~20,000-seed hangar (stage 1-2
+   unchanged, stage 3 x1.5, 4 x2.5, 5 x4); waiting for the user's answer.
 Rules: no upgrade may change the controls; saving up cooling stays (no floor); explain the
 mechanism and pause before each non-trivial change; database changes (Supabase) need the user's OK
 before `~/.local/bin/supabase db push` and must go live BEFORE the game that depends on them.

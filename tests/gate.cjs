@@ -13,7 +13,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: mode === 'touch', isMobile: mode === 'touch' });
     const p = await ctx.newPage();
     const errs = []; p.on('pageerror', e => errs.push(String(e)));
-    await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true }));
+    await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, tours: ['*'], muted: true }));
       window.__opened = 0; window.open = () => { window.__opened++; return null; }; });
     await p.goto(URL + '?citizenzoo'); await p.waitForTimeout(700);   // the gate is part of the Citizen Zoo feature (off by default)
     await p.click('#tabHangar'); await p.waitForTimeout(300);

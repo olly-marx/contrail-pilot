@@ -374,3 +374,19 @@ h2.sub { margin-top: -4px; }
 .board-pick .btn.oops.on { background: #e8735f; color: #fff; }
 .mission .done-text { display: block; margin: 4px 0; font-style: italic; color: #1e7a3c; }
 
+/* "Tap here" tutorials (src/tour.js): dark panels round a hole, a ring, a bouncing pointer, a bubble. */
+#tour { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
+#tour .tdim { position: fixed; background: rgba(10, 10, 30, 0.62); pointer-events: auto; }
+#tour .tring { position: fixed; border: 3px solid #ffe15a; border-radius: 6px; box-shadow: 0 0 0 3px #1b1b2f, 0 0 14px #ffe15a; animation: tourPulse 1s ease-in-out infinite; }
+#tour .tfinger { position: fixed; width: 32px; height: 32px; animation: tourBob 0.7s ease-in-out infinite; }
+#tour .tfinger i { display: block; width: 32px; height: 32px; background: url('assets/ui/tour-finger.png') no-repeat; image-rendering: pixelated; }
+#tour .tfinger.up i { transform: scaleY(-1); }
+#tour .tbubble { position: fixed; left: 12px; right: 12px; max-width: 380px; margin: 0 auto; background: #fffbe8; color: #1b1b2f; border: 3px solid #1b1b2f;
+  padding: 10px 12px; font-size: 13px; line-height: 1.4; pointer-events: auto; text-align: center; box-shadow: 0 4px 0 #1b1b2f; }
+#tour .tbubble p { margin: 0 0 6px; }
+#tour .tbubble .btn { margin-top: 4px; }
+#tour .tbubble.shake { animation: tourShake 0.3s; }
+#tour.waiting .tring { animation: none; opacity: 0.5; }
+@keyframes tourBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+@keyframes tourPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes tourShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }

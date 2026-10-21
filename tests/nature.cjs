@@ -15,7 +15,7 @@ const KEY = 'contrailPilot.v2';
   const setSave = v => p.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [KEY, v]);
   const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
   const scene = (fn, a) => p.evaluate(fn, a);
-  const base = { tutorialDone: true, autoTakeoff: true, muted: true, landings: 3 };
+  const base = { tutorialDone: true, tours: ['*'], autoTakeoff: true, muted: true, landings: 3 };
   await p.goto(URL); await p.waitForTimeout(500);
 
   // 1. Variety beats quantity: 9 spruce < 3 different native trees.

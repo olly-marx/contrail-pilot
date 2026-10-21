@@ -4,6 +4,7 @@ import { loadSave } from './save.js';
 import { UI } from './ui.js';
 import { PilotScreens } from './pilot.js';
 import { flush } from './online.js';
+import { Tour } from './tour.js';
 
 const save = loadSave();
 
@@ -38,4 +39,6 @@ window.game = game;   // exposed for debugging and automated tests
 
 ui.showTitle();
 ui.pilot = new PilotScreens(save);
+ui.tour = new Tour(ui);   // "tap here" tutorials (src/tour.js)
+ui.tour.maybe('title');
 flush();   // flights saved while offline last time

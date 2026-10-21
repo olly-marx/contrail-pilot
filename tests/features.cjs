@@ -13,7 +13,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   async function scan(query) {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     const errs = []; p.on('pageerror', e => errs.push(String(e)));
-    await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, landings: 5, planted: { spruce: 2, birch: 2 } })); });
+    await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, tours: ['*'], muted: true, landings: 5, planted: { spruce: 2, birch: 2 } })); });
     await p.goto(URL + query); await p.waitForTimeout(700);
     // Everything a player can read: visible page text, every info pop-up, and every fact list.
     const seen = [];

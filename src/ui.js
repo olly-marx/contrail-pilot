@@ -147,6 +147,7 @@ export class UI {
     this.renderChallenges();
     this.renderJourney();
     this.showOnly('title');
+    if (this.tour) this.tour.maybe('title');
   }
 
   // ---------- results ----------
@@ -251,6 +252,7 @@ export class UI {
     await wait(200);
     for (const el of rest) { if (!el.hidden) show(el); }
     $('rSkip').hidden = true;
+    if (this.tour && !r.school) this.tour.maybe('results');
   }
 
   // Small pixel Earth for the results, matching the in-game face.

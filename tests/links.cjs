@@ -10,7 +10,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
-  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true })); });
+  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, tours: ['*'], muted: true })); });
   await p.goto(URL); await p.waitForTimeout(700);
 
   const r = await p.evaluate(async () => {
