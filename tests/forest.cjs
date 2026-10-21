@@ -14,7 +14,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const check = (c, m) => { if (!c) fails.push(m); };
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 9,
-    levels: { trees: 4, species: 4, rewild: 9 }, planted: { oak: 9, birch: 9, rowan: 9, spruce: 9, orchard: 9 } })); });
+    levels: { trees: 4, species: 4 }, habitat: { woodland: ['deadwood', 'meadow', 'margins', 'hedgerow', 'pond', 'woodland', 'voles', 'beavers', 'rewet', 'storks', 'martens'] }, planted: { oak: 9, birch: 9, rowan: 9, spruce: 9, orchard: 9 } })); });
   await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
   for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
   const r = await p.evaluate(async () => {

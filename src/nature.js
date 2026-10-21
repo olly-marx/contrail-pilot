@@ -1,4 +1,6 @@
 import { cz } from './config.js';
+import { UK_PROJECTS, UK_SPECIES } from './habitats.js';
+import { WILDLIFE } from './wildlife.js';
 // Nature: tree species, rewilding projects and the Biodiversity meter (barren land to rainforest).
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
 // native kind is a big boost; more of the same kind adds less and less.
@@ -20,28 +22,10 @@ export const SPECIES = {
     fact: 'Fruit trees feed people, bees and birds. Old orchards are full of wildlife.' },
 };
 
-// Bought in order in the hangar, with seeds AND ice crystals. `bio` is the Biodiversity points it adds; `needs` is the meter
-// level you must reach first. Effects in the world are drawn in GameScene.
-export const PROJECTS = [
-  { id: 'meadow', name: 'Wildflower meadow', cost: 30, crystals: 2, bio: 8, needs: 3,
-    short: 'Flowers for bees and butterflies.',
-    fact: 'Since the 1930s, the UK has lost almost all its wildflower meadows. Bees need them!' },
-  { id: 'hedgerow', name: 'Hedgerows', cost: 140, crystals: 8, bio: 10, needs: 8,
-    short: 'Green lines that animals travel along.',
-    fact: 'Hedgerows are like wildlife roads: hedgehogs, birds and bats use them to get around.' },
-  { id: 'pond', name: 'Pond', cost: 170, crystals: 9, bio: 12, needs: 15,
-    short: 'A home for frogs and dragonflies.',
-    fact: 'A new pond can have frogs, newts and dragonflies living in it in just one year.' },
-  { id: 'voles', name: 'Water voles return', cost: 450, crystals: 25, bio: 10, needs: 22,
-    short: 'Bring back Ratty from The Wind in the Willows!',
-    fact: 'Water voles are one of the UK\'s fastest-disappearing mammals. Ponds and wild riverbanks help them come back.' },
-  { id: 'beavers', name: 'Beavers return', cost: 550, crystals: 31, bio: 15, needs: 32,
-    short: 'Nature\'s engineers build dams and wetlands.',
-    fact: 'Beaver dams slow down floods and make wetlands that store carbon and water.' + cz(' Citizen Zoo works with beavers in London!') },
-  { id: 'storks', name: 'White storks return', cost: 1300, crystals: 72, bio: 15, needs: 45,
-    short: 'Big birds back in the sky!',
-    fact: 'White storks used to nest in Britain hundreds of years ago. Now they are coming back.' },
-];
+// Habitat projects (src/habitats.js): bought one by one on the NATURE screen, each once the
+// meter reaches its `needs`. `bio` is the Biodiversity points it adds. Effects in the world are
+// drawn in GameScene (meadow flowers, hedges, ponds, beaver dams, storks).
+export const PROJECTS = UK_PROJECTS;
 
 export const STAGES = [
   { at: 0, name: 'Barren land' },
@@ -80,35 +64,35 @@ export function plantGain(save, id) {
 
 export function stage(bio) { return [...STAGES].reverse().find(s => bio >= s.at); }
 
-// Rewilding projects are bought in order as levels of the 'rewild' upgrade line.
-export const projectsDone = save => PROJECTS.slice(0, (save.levels || {}).rewild || 0);
+// Projects done in the UK (save.habitat.woodland; before 2026-10-21 the 'rewild' line, see migrateHabitat).
+export const projectsDone = save => PROJECTS.filter(p => ((save.habitat || {}).woodland || []).includes(p.id));
 export const hasProject = (save, id) => projectsDone(save).some(p => p.id === id);
 // Healthy land soaks up a little CO2 on every flight.
 export const natureCooling = save => 0.04 * projectsDone(save).length;
 
-// Background wildlife you can see but not hit, rebuilt each flight from the Biodiversity meter.
+// UK species that can appear now: their projects done and the meter high enough (UK_SPECIES).
+export const ukSpecies = () => WILDLIFE.filter(w => w.region === 'woodland' && w.sprite && UK_SPECIES[w.id]);
+export const canAppear = (save, id) => { const c = UK_SPECIES[id], done = projectsDone(save).map(p => p.id);
+  return !!c && c.needs.every(n => done.includes(n)) && biodiversity(save) >= c.bio; };
+
+// Background wildlife you can see but not hit, rebuilt each flight from the habitat (above).
 // A bare field is sad on purpose: a few cows and sheep, a few spruce all the same, empty sky.
-// As the meter grows: more trees (of the kinds you have planted), wild animals, then birds.
-// Add new animals/birds here (with an `at` meter level) as new regions unlock.
-export const WILD_ANIMALS = [
-  { id: 'rabbit', at: 8 }, { id: 'hedgehog', at: 20 }, { id: 'fox', at: 40 }, { id: 'deer', at: 65 },
-];
-export const SKY_BIRDS = [
-  { id: 'robin', at: 8 }, { id: 'swallow', at: 20 }, { id: 'buzzard', at: 40 },
-];
+// As projects bring life back: more trees (of the kinds you have planted), wild animals, birds.
 export function wildlifeScene(save) {
   const bio = biodiversity(save);
   const planted = Object.keys(save.planted || {}).filter(k => SPECIES[k] && save.planted[k] > 0);
   const treeKinds = bio < 8 ? ['spruce'] : [...new Set(['spruce', ...planted])];
-  const wild = WILD_ANIMALS.filter(a => bio >= a.at).map(a => a.id);
+  const here = ukSpecies().filter(w => canAppear(save, w.id) && !['cow', 'sheep'].includes(w.id));
+  const wild = here.filter(w => w.kind === 'animal' || w.pose === 'standing').map(w => w.sprite);   // walk or stand on the ground
+  const sky = here.filter(w => w.kind === 'bird' && w.pose !== 'standing').map(w => w.sprite);
   return {
     bio,
     treesPerScreen: 2 + bio / 8,                  // 2 lonely spruce up to ~14 trees
     treeKinds,
     farmPerScreen: 1.5,                           // cows and sheep: always a few, never many
     wildPerScreen: wild.length ? 1 + bio / 20 : 0,
-    wildKinds: wild,
-    skyKinds: SKY_BIRDS.filter(b => bio >= b.at).map(b => b.id),
-    birdsPerScreen: bio < 8 ? 0 : bio / 25,      // none at first, up to 4
+    wildKinds: wild,                              // texture prefixes, e.g. 'animal-otter', 'sky-heron'
+    skyKinds: sky,
+    birdsPerScreen: sky.length ? 0.4 + bio / 25 : 0,    birdsPerScreen: bio < 8 ? 0 : bio / 25,      // none at first, up to 4
   };
 }

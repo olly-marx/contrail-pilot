@@ -141,7 +141,7 @@ export const FOREST = {
   store: 80,      // with all 5 kinds; x(kinds / 5)^storePower with fewer
   storePower: 4,
   storeMin: 12,   // ...but never less: more than a short early flight's trees soak up
-  landStore: 30,  // rewilded land (natureCooling) fills up too: this much with all 6 projects
+  landStore: 30,  // rewilded land (natureCooling) fills up too: this much with ALL habitat projects (src/habitats.js)
 };
 
 export const CRYSTALS = {

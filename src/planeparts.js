@@ -2,7 +2,9 @@
 // the 62x27 base plus a 6 px margin, centred on the plane. Looks only: collisions use 'plane'.
 // Shared by the flying plane (GameScene) and the hangar model (ui.js).
 export const PART_LINES = { wings: 2, engine: 5, gear: 2, hold: 3, lens: 2, airframe: 3, fuel: 4, cabin: 4, radar: 4, magnet: 3, forecast: 2 };   // draw order
-export const NATURE_LINES = ['trees', 'soil', 'species', 'rewild', 'nursery'];   // total levels -> the tail badge
+export const NATURE_LINES = ['trees', 'soil', 'species', 'rewild', 'nursery'];   // total levels -> the tail badge ('rewild' = habitat projects done: natureLevels)
+// Levels for the badge: upgrade levels plus habitat projects done (src/habitats.js) counted as 'rewild'.
+export const natureLevels = save => ({ ...(save.levels || {}), rewild: ((save.habitat || {}).woodland || []).length });
 export const natureStage = n => n >= 15 ? 4 : n >= 10 ? 3 : n >= 5 ? 2 : n >= 1 ? 1 : 0;
 export const natureBadge = levels => natureStage(NATURE_LINES.reduce((a, id) => a + ((levels || {})[id] || 0), 0));
 // Overlay keys for a set of levels, bottom to top.

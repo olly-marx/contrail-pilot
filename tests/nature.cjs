@@ -35,25 +35,22 @@ const KEY = 'contrailPilot.v2';
 
   // 3. Rewilding waits for the meter: meadow needs Biodiversity 3.
   await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: {} }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#tabHangar');
-  await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
-  check(await p.$('[data-buy="rewild"]') === null, 'rewilding should be locked before any tree is planted');
+  await p.click('#tabNature');   // habitat projects live on the NATURE screen
+  check(await p.$('[data-project="meadow"]') === null, 'the meadow should wait before any tree is planted');
   await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { spruce: 1 } }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#tabHangar');
-  await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
-  check((await p.textContent('#hUpgrades')).includes('needs Biodiversity 3'), 'meadow should wait for Biodiversity 3');
+  await p.click('#tabNature');
+  check((await p.textContent('[data-pline="meadow"]')).includes('needs Biodiversity 3'), 'meadow should wait for Biodiversity 3');
   await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { birch: 2 } }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#tabHangar');
-  await p.click('[data-tab="nature"]');   // rewilding lives on the NATURE tab
+  await p.click('#tabNature');
   const before = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
-  await p.click('[data-buy="rewild"]');
+  await p.click('[data-project="meadow"]');
   const save = await getSave();
   const after = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
-  check(save.levels.rewild === 1 && save.seeds === 170 && save.crystals === 3, `meadow should cost 30 seeds + 2 crystals and be bought, got ${JSON.stringify(save.levels)} seeds ${save.seeds} crystals ${save.crystals}`);
+  check(save.habitat.woodland.join() === 'meadow' && save.seeds === 170 && save.crystals === 3, `meadow should cost 30 seeds + 2 crystals and be bought, got ${JSON.stringify(save.habitat)} seeds ${save.seeds} crystals ${save.crystals}`);
   check(after - before === 8, `meadow should add 8 Biodiversity, added ${after - before}`);
 
   // 4. The meadow shows up in the world as flowers in the grass.
-  await p.click('#hGoTop'); await p.waitForTimeout(800);
+  await p.click('#tabFly'); await p.click('#goBtn'); await p.waitForTimeout(800);
   check(await scene(() => !!game.scene.getScene('game').flowers), 'meadow flowers should appear on the ground');
 
   // 5. Tree school: the first planted tree pauses to explain what trees do for the climate (CO2,

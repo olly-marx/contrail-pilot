@@ -43,6 +43,29 @@
     </div>
   </section>
 
+  <!-- NATURE: the wild area (src/wild.js). Regions; your land's meter; habitat projects; trees;
+       the animals you have found. -->
+  <section id="nature" class="overlay screen" hidden>
+    <div class="panel wide">
+      <div class="hangar-head"><h2>NATURE</h2><span class="treebank"><i class="seedicon"></i><b id="wSeeds">0</b><i class="crysicon"></i><b id="wCrystals">0</b></span></div>
+      <div id="wRegions" class="wregions"></div>
+      <div id="wScene" class="wscene"></div>
+      <div id="wMeter"></div>
+      <h3>Habitat projects</h3>
+      <p class="small">Things people really do to help nature. Each one helps life come back, and new animals may appear on your flights!</p>
+      <div id="wProjects" class="upgrades"></div>
+      <h3>Trees</h3>
+      <div id="wTrees" class="upgrades"></div>
+      <h3 id="wFoundHead">Wildlife found</h3>
+      <div id="wFound" class="wfound"></div>
+    </div>
+  </section>
+
+  <!-- A habitat project or an animal: what it is, why, and where the facts come from. -->
+  <section id="wInfo" class="overlay top" hidden>
+    <div class="panel"><div id="wInfoBody"></div><div class="buttons"><button id="wInfoClose" class="btn go" type="button">OK</button></div></div>
+  </section>
+
   <!-- About: who made the game and where to learn more. -->
   <section id="about" class="overlay top" hidden>
     <div class="panel">
@@ -133,7 +156,6 @@
       </div>
       <p class="small" id="hHint">Spend your seeds and ice crystals. Tap <b>i</b> to learn more.</p>
       <div id="hFuel" class="fuel"></div>
-      <div id="hTabs" class="tabs"><button class="btn" data-tab="plane" type="button">PLANE</button><button class="btn" data-tab="nature" type="button">NATURE</button></div>
       <div id="hUpgrades" class="upgrades"></div>
       <h3>Badges</h3>
       <div id="hBadges" class="badges"></div>

@@ -29,11 +29,13 @@ const KEY = 'contrailPilot.v2';
   let s = await get(p);
   const { LINES } = await p.evaluate(async () => ({ LINES: (await import('./src/upgrades.js')).LINES.map(l => ({ id: l.id, requires: l.requires, costs: l.levels.map(v => [v.cost, v.crystals]) })) }));
   const { OLD_PRICES } = await p.evaluate(async () => ({ OLD_PRICES: (await import('./src/reprice.js')).OLD_PRICES }));
-  let worth = [old.seeds, old.crystals]; for (const [id, n] of Object.entries(all)) for (let i = 0; i < n; i++) { worth[0] += OLD_PRICES[id][i][0]; worth[1] += OLD_PRICES[id][i][1]; }
+  // (rewilding became habitat projects, kept as they are: not part of the worth)
+  let worth = [old.seeds, old.crystals]; for (const [id, n] of Object.entries(all)) for (let i = 0; i < n && id !== 'rewild'; i++) { worth[0] += OLD_PRICES[id][i][0]; worth[1] += OLD_PRICES[id][i][1]; }
   let spent = [0, 0]; for (const [id, n] of Object.entries(s.levels)) for (let i = 0; i < n; i++) { const c = LINES.find(l => l.id === id).costs[i]; spent[0] += c[0]; spent[1] += c[1]; }
   check(s.priceVersion === 2 && s.repriced, 'the old save is re-valued');
+  check(JSON.stringify((s.habitat || {}).woodland) === JSON.stringify(['meadow', 'hedgerow', 'pond', 'voles', 'beavers', 'storks']) && !('rewild' in s.levels), `old rewilding (6 levels) became the same 6 habitat projects: ${JSON.stringify(s.habitat)}`);
   check(spent[0] + s.seeds === worth[0] && spent[1] + s.crystals === worth[1], `full value: new cost of kept levels + bank = old worth: ${spent} + ${s.seeds}/${s.crystals} vs ${worth}`);
-  check(Object.entries(s.levels).every(([id, n]) => n <= all[id]), `never more than it had: ${JSON.stringify(s.levels)}`);
+  check(Object.entries(s.levels).every(([id, n]) => n <= (all[id] || 0)), `never more than it had: ${JSON.stringify(s.levels)}`);
   check(Object.entries(s.levels).every(([id, n]) => { const l = LINES.find(x => x.id === id); return !n || !l.requires || (s.levels[l.requires.line] || 0) >= l.requires.level; }), `branches stay valid: ${JSON.stringify(s.levels)}`);
   check((s.levels.fuel || 0) < 4 && s.fuel !== 'hydrogen', `hydrogen (1,800 now) is gone and the fuel is one it still owns: fuel ${s.levels.fuel}, ${s.fuel}`);
   const cheapest = LINES.flatMap(l => (s.levels[l.id] || 0) < all[l.id] && (!l.requires || (s.levels[l.requires.line] || 0) >= l.requires.level) ? [l.costs[s.levels[l.id] || 0]] : []);
@@ -52,7 +54,8 @@ const KEY = 'contrailPilot.v2';
 
   // 2. Left alone: a save already on the new prices, one with nothing bought, and no save.
   p = await open({ ...old, priceVersion: 2 });
-  check(JSON.stringify((await get(p)).levels) === JSON.stringify(all) && !(await p.isVisible('#repriced')), 'a new-price save is not touched');
+  const { rewild, ...noRewild } = all, ns = await get(p);
+  check(JSON.stringify(ns.levels) === JSON.stringify(noRewild) && ns.habitat.woodland.length === 6 && !(await p.isVisible('#repriced')), `a new-price save is not re-valued (its rewilding still becomes projects): ${JSON.stringify(ns.levels)}`);
   await p.close();
   p = await open({ ...old, levels: {}, seeds: 40 });
   s = await get(p);

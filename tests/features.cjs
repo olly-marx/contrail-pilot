@@ -20,10 +20,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const visibleText = () => p.evaluate(() => document.body.innerText);
     seen.push(await visibleText());
     await p.click('#aboutBtn'); await p.waitForTimeout(150); seen.push(await visibleText()); await p.click('#aboutClose');
-    await p.click('#tabHangar'); await p.waitForTimeout(200);
-    for (const tab of ['plane', 'nature']) {
-      await p.click(`[data-tab="${tab}"]`); await p.waitForTimeout(150); seen.push(await visibleText());
-      for (const id of await p.$$eval('[data-info]', bs => bs.map(x => x.dataset.info))) {
+    // The hangar (plane upgrades) and the NATURE screen (tree upgrades, habitat projects, animals).
+    for (const tab of ['#tabHangar', '#tabNature']) {
+      await p.click(tab); await p.waitForTimeout(200); seen.push(await visibleText());
+      for (const sel of ['data-pinfo', 'data-species']) for (const id of await p.$$eval(`[${sel}]`, (bs, sel) => bs.map(x => x.getAttribute(sel)), sel)) {
+        await p.click(`[${sel}="${id}"]`); await p.waitForTimeout(80);
+        seen.push(await visibleText());
+        await p.click('#wInfoClose');
+      }
+      for (const id of await p.$$eval('[data-info]', bs => bs.filter(x => x.offsetParent !== null).map(x => x.dataset.info))) {
         await p.click(`[data-info="${id}"]`); await p.waitForTimeout(100);
         seen.push(await visibleText());
         seen.push((await p.$$eval('#iLinks a', as => as.map(a => a.href))).join(' '));
@@ -31,8 +36,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
       }
     }
     const facts = await p.evaluate(async () => { const n = await import('./src/nature.js'), u = await import('./src/upgrades.js');
-      return [...n.PROJECTS.map(x => x.fact), ...n.NATURE_FACTS, ...Object.values(n.SPECIES).map(x => x.fact), ...u.LINES.map(l => l.info.fact)].join(' '); });
+      const h = await import('./src/habitats.js');
+      return [...n.PROJECTS.map(x => x.fact + ' ' + x.src.map(s => s[0]).join(' ')), ...Object.values(h.UK_SPECIES).map(x => (x.fact || '') + ' ' + (x.src || []).map(s => s[0]).join(' ')), ...n.NATURE_FACTS, ...Object.values(n.SPECIES).map(x => x.fact), ...u.LINES.map(l => l.info.fact)].join(' '); });
     seen.push(facts);
+    await p.click('#tabHangar'); await p.waitForTimeout(150);   // the grown-up gate is in the hangar
     const gateShown = await p.isVisible('#realTreeBtn');
     await p.close();
     return { text: seen.join('\n'), gateShown, errs };

@@ -7,7 +7,7 @@ import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js'
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
-import { NATURE_LINES, partKeys, zoomBox } from './planeparts.js';
+import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
 
 export const FACTS_BASE = [
@@ -121,16 +121,17 @@ export class UI {
   // info, points) close on any move. `this.pilot` (PilotScreens) renders PILOT and BOARDS.
   go(tab) {
     if (tab === 'fly') return this.showTitle();
-    if (tab === 'hangar' || tab === 'nature') { this.hTab = tab === 'nature' ? 'nature' : 'plane'; return this.showHangar(); }
+    if (tab === 'hangar') return this.showHangar();
+    if (tab === 'nature') { this.showOnly('nature'); return this.wild && this.wild.render(); }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
     if (tab === 'boards') { this.showOnly('boards'); return this.pilot && this.pilot.showBoards(); }
   }
 
   showOnly(id) {
-    for (const s of ['title', 'results', 'hangar', 'pilot', 'boards']) $(s).hidden = s !== id;
-    for (const s of ['how', 'about', 'info', 'scoreInfo']) $(s).hidden = true;
+    for (const s of ['title', 'results', 'hangar', 'nature', 'pilot', 'boards']) $(s).hidden = s !== id;
+    for (const s of ['how', 'about', 'info', 'scoreInfo', 'wInfo']) $(s).hidden = true;
     $('tabbar').hidden = !id;   // no bar while flying
-    const on = { title: 'fly', results: 'fly', hangar: this.hTab === 'nature' ? 'nature' : 'hangar', pilot: 'pilot', boards: 'boards' }[id];
+    const on = { title: 'fly', results: 'fly', hangar: 'hangar', nature: 'nature', pilot: 'pilot', boards: 'boards' }[id];
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === on));
     $('tNew').hidden = !this.hasNew();
     $('tNew').textContent = this.save.freeUpgrade ? 'FREE!' : 'NEW!';
@@ -305,17 +306,10 @@ export class UI {
       s.fuel = btn.dataset.fuel; writeSave(s); sfx.coin(); this.renderHangar();
     });
 
-    // Two tabs: PLANE (fuel, engines, cabin, icy-air research) and NATURE (trees and rewilding).
-    const tab = this.hTab || 'plane';
-    $('hTabs').querySelectorAll('[data-tab]').forEach(b => {
-      const t = b.dataset.tab, buyable = LINES.some(l => tabOf(l) === t && canBuy(s, l));
-      b.classList.toggle('on', t === tab);
-      b.innerHTML = t.toUpperCase() + (t !== tab && buyable ? '<span class="dot"></span>' : '');
-      b.onclick = () => { this.hTab = t; sfx.flap(); this.showHangar(); };   // keeps the bar's HANGAR / NATURE in step
-    });
-    const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
+    // The hangar is the plane (fuel, engines, cabin, icy-air research). Trees, soil and habitat
+    // projects are on the NATURE screen (src/wild.js, the user 2026-10-21).
     // Upgrade trees: a heading per tree, then each line followed by its branches (indented).
-    const TREES = tab === 'nature' ? ['Nature'] : ['Plane', 'Fuel', 'Science'];
+    const TREES = ['Plane', 'Fuel', 'Science'];
     const ordered = [];
     const addWithBranches = (line, depth) => { ordered.push({ line, depth }); LINES.filter(l => l.requires && l.requires.line === line.id).forEach(l => addWithBranches(l, depth + 1)); };
     for (const t of TREES) {
@@ -323,9 +317,32 @@ export class UI {
       LINES.filter(l => l.tree === t && !(l.requires && lineById(l.requires.line).tree === t)).forEach(l => addWithBranches(l, 0));
     }
     $('hUpgrades').innerHTML = ordered.map(({ line, depth, head: tree }) => {
-      if (tree === 'Nature') return `<div class="nature-head"><h3>NATURE</h3>${meterHTML(s)}<p class="small">Plant different kinds of trees and rewild land to fill it.</p></div>`;
       if (tree) return `<h3 class="tree-head">${tree.toUpperCase()}</h3>`;
-      const head = '', indent = depth ? ` branch d${Math.min(depth, 3)}` : '';
+      return this.lineCardHTML(line, depth);
+    }).join('');
+    $('hUpgrades').querySelectorAll('[data-buy]').forEach(btn => btn.onclick = () => this.buy(btn.dataset.buy));
+    // Tap a card (not its buttons): the model zooms to that part and shows its next level.
+    $('hUpgrades').querySelectorAll('.line[data-line]').forEach(el => el.onclick = e => {
+      if (e.target.closest('button')) return;
+      this.hFocus = this.hFocus === el.dataset.line ? null : el.dataset.line;
+      this.hHide = false;
+      sfx.flap(); this.renderHangar();
+    });
+    // Zoomed in: tap the model (or HIDE / SHOW) to compare the plane with and without the part.
+    $('hPlane').onclick = () => { if (this.hFocus) { this.hHide = !this.hHide; sfx.flap(); this.renderPlaneModel(); } };
+    $('hpToggle').onclick = () => { this.hHide = !this.hHide; sfx.flap(); this.renderPlaneModel(); };
+    $('hpMore').onclick = () => this.hFocus && this.showInfo(this.hFocus);
+    this.renderPlaneModel();
+    $('hUpgrades').querySelectorAll('[data-info]').forEach(btn => btn.onclick = () => this.showInfo(btn.dataset.info));
+
+    $('hBadges').innerHTML = BADGES.map(b =>
+      `<div class="badge ${s.badges.includes(b.id) ? 'got' : ''}"><b>${b.name}</b>${b.desc}</div>`).join('');
+  }
+
+  // One upgrade line's card (hangar and NATURE screen): name, level pips, (i), next level + BUY.
+  lineCardHTML(line, depth = 0) {
+    const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
+      const s = this.save, free = !!s.freeUpgrade, head = '', indent = depth ? ` branch d${Math.min(depth, 3)}` : '';
       if (!unlocked(s, line)) {   // a branch shows its name and what it needs; other locked lines stay a surprise
         return `<div class="line locked${indent}"><div><div class="group">${line.group}</div><div class="name">${line.requires ? line.name : '???'}</div><div class="small">${unlockText(line, s)}</div></div></div>`;
       }
@@ -348,35 +365,17 @@ export class UI {
         <div><div class="group">${line.group}</div><div class="name">${line.name}</div><div class="small">${nowName}</div><div class="pips">${pips}</div></div>
         <button class="infobtn" data-info="${line.id}" type="button" aria-label="About ${line.name}">i</button>
         ${nextRow}</div>`;
-    }).join('');
-    $('hUpgrades').querySelectorAll('[data-buy]').forEach(btn => btn.onclick = () => this.buy(btn.dataset.buy));
-    // Tap a card (not its buttons): the model zooms to that part and shows its next level.
-    $('hUpgrades').querySelectorAll('.line[data-line]').forEach(el => el.onclick = e => {
-      if (e.target.closest('button')) return;
-      this.hFocus = this.hFocus === el.dataset.line ? null : el.dataset.line;
-      this.hHide = false;
-      sfx.flap(); this.renderHangar();
-    });
-    // Zoomed in: tap the model (or HIDE / SHOW) to compare the plane with and without the part.
-    $('hPlane').onclick = () => { if (this.hFocus) { this.hHide = !this.hHide; sfx.flap(); this.renderPlaneModel(); } };
-    $('hpToggle').onclick = () => { this.hHide = !this.hHide; sfx.flap(); this.renderPlaneModel(); };
-    $('hpMore').onclick = () => this.hFocus && this.showInfo(this.hFocus);
-    this.renderPlaneModel();
-    $('hUpgrades').querySelectorAll('[data-info]').forEach(btn => btn.onclick = () => this.showInfo(btn.dataset.info));
-
-    $('hBadges').innerHTML = BADGES.map(b =>
-      `<div class="badge ${s.badges.includes(b.id) ? 'got' : ''}"><b>${b.name}</b>${b.desc}</div>`).join('');
   }
 
   // The hangar model: the plane as it looks now (gear down: it is parked), 3x. With a line in
   // focus it zooms to that part (planeparts.js ZOOM) and shows the NEXT level, pulsing.
   renderPlaneModel() {
     const s = this.save, id = this.hFocus, line = id && LINES.find(l => l.id === id);
-    const levels = { ...s.levels };
+    const levels = natureLevels(s);
     let preview = null;
     if (line && nextLevel(s, line)) {
       levels[id] = level(s, id) + 1;
-      const now = new Set(partKeys(s.levels));
+      const now = new Set(partKeys(natureLevels(s)));
       preview = partKeys(levels).find(k => !now.has(k)) || null;   // the part that changes (none for lines with no look)
     }
     const img = (k, cls = '') => `<img class="hp-part ${cls}" src="assets/${k}.png" alt="">`;
@@ -427,8 +426,11 @@ export class UI {
     if (next.fuel === 'hydrogen' && !s.badges.includes('zeroCarbon')) s.badges.push('zeroCarbon');
     writeSave(s);
     sfx.buy();
-    this.renderHangar();
+    this.refresh();
   }
+
+  // Redraw whichever shop screen is open (the hangar, or NATURE: src/wild.js).
+  refresh() { if (!$('nature').hidden && this.wild) this.wild.render(); else this.renderHangar(); }
 
   showInfo(id) {
     const line = LINES.find(l => l.id === id), have = level(this.save, id);

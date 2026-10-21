@@ -62,7 +62,7 @@ export const MISSIONS = [
   { id: 'kinds-5', icon: 'mi-tree', title: 'Plant ALL 5 kinds in one flight', sub: 'A full forest! Only a forest of every kind can soak up enough CO2 for the longest flights.',
     needs: { lines: [['species', 4], ['trees', 4]], text: 'Fruit trees AND Tree drop plane (NATURE)' },
     check: r => r.kinds >= 5, progress: s => `Kinds planted: ${s.speciesPlanted.size}/5`, fail: r => `You planted ${r.kinds} kinds. Don't miss the soil!` },
-  { id: 'beavers', icon: 'mi-tree', title: 'Bring back the beavers', sub: 'Rewild your land until beavers can come home, then fly.', needs: { line: 'rewild', level: 5, text: 'Rewilding: Beavers return (NATURE)' },
+  { id: 'beavers', icon: 'mi-tree', title: 'Bring back the beavers', sub: 'Rewild your land until beavers can come home, then fly.', needs: { project: 'beavers', text: 'Beavers return (NATURE)' },
     check: r => (r.projects || []).includes('beavers'), progress: () => 'Beavers are home!', fail: () => 'Rewild your land in the hangar.' },
   // Stage 5, round the world.
   { id: 'far-20000', icon: 'mi-globe', title: 'Fly 20,000 km and land', sub: 'Half way round the world in one go!',
@@ -77,4 +77,4 @@ export const current = save => MISSIONS[save.mission || 0] || null;   // null: a
 export const allDone = save => (save.mission || 0) >= MISSIONS.length;
 // Can this mission be done with what the player owns? (Only hard gates; CO2 does the rest.)
 // `needs`: { line, level } (level 1 if not given), or { lines: [[line, level], ...] } for several.
-export const blocked = (save, m) => !!(m && m.needs && (m.needs.lines || [[m.needs.line, m.needs.level || 1]]).some(([l, n]) => !(((save.levels || {})[l] || 0) >= n)));
+export const blocked = (save, m) => !!(m && m.needs && (m.needs.project ? !((save.habitat || {}).woodland || []).includes(m.needs.project) : (m.needs.lines || [[m.needs.line, m.needs.level || 1]]).some(([l, n]) => !(((save.levels || {})[l] || 0) >= n))));

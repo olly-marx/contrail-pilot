@@ -2,13 +2,16 @@ import { WIDTH, HEIGHT } from './config.js';
 import { GameScene } from './GameScene.js';
 import { loadSave, writeSave } from './save.js';
 import { repriceSave } from './reprice.js';
+import { migrateHabitat } from './habitats.js';
 import { UI } from './ui.js';
 import { PilotScreens } from './pilot.js';
 import { flush } from './online.js';
 import { Tour } from './tour.js';
+import { WildScreen } from './wild.js';
 
 const save = loadSave();
-if (repriceSave(save)) writeSave(save);   // once, for saves from before the new prices
+const moved = migrateHabitat(save);   // old 'rewild' levels -> UK habitat projects (before the re-value: projects are kept as they are)
+if (repriceSave(save) || moved) writeSave(save);   // once, for saves from before the new prices
 
 // Wait for the pixel font so canvas text doesn't render in a fallback font first.
 try { await document.fonts.load('8px Pixel'); } catch (e) { /* play on with the fallback */ }
@@ -41,6 +44,7 @@ window.game = game;   // exposed for debugging and automated tests
 
 ui.showTitle();
 ui.pilot = new PilotScreens(save);
+ui.wild = new WildScreen(ui);   // the NATURE screen (src/wild.js)
 ui.tour = new Tour(ui);   // "tap here" tutorials (src/tour.js)
 ui.tour.maybe('title');
 flush();   // flights saved while offline last time

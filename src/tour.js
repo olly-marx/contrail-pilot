@@ -72,14 +72,14 @@ export class Tour {
       { skipIf: () => !free(), area: '#hUpgrades', target: '#hUpgrades .btn.free', text: 'You got a <b>FREE upgrade</b>! Tap any <b>FREE!</b> button to choose one.', tap: true },
       { target: '#hUpgrades .infobtn', text: 'Tap <b>i</b> to find out what an upgrade does.', tap: true },
       { target: '#iClose', text: 'Every upgrade is real science! Tap <b>OK</b>.', tap: true },
-      { target: '#hTabs [data-tab="nature"]', text: 'Trees and wild places are in <b>NATURE</b>. Tap it!', tap: true },
-      { target: '#hUpgrades', text: 'Plant trees and bring back wildlife here.', ok: true },
-      { target: '#hGoTop', text: 'Ready? <b>TAKE OFF!</b>', tap: true },
+      { target: '#tabNature', text: 'Trees and wild places are in <b>NATURE</b>. Tap it!', tap: true },
+      { target: '#wProjects', text: 'Help nature here, and wild animals will come back. Spot them on your flights!', ok: true },
+      { target: '#tabFly', text: 'Ready? Tap <b>FLY</b>!', tap: true },
     ];
   }
 
   newSteps(lines) {
-    const line = lines[0], tab = tabOf(line), card = `#hUpgrades [data-info="${line.id}"]`;
+    const line = lines[0], tab = tabOf(line), card = `${tab === 'nature' ? '#wTrees' : '#hUpgrades'} [data-info="${line.id}"]`;
     const names = lines.map(l => `<b>${l.name}</b>`), list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
     return [
       { target: tab === 'nature' ? '#tabNature' : '#tabHangar', text: `Something <b>NEW</b> in the hangar! Tap <b>${tab === 'nature' ? 'NATURE' : 'HANGAR'}</b>.`, tap: true },

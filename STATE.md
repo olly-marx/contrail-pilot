@@ -143,7 +143,16 @@ onboarding" below, in any order, each its own tested commit:
    golden seeds, ...) and an advanced autopilot with safe hand-back (see the chat of 2026-10-21:
    only "recoverable" lines, tap to take over, no switching on in a bad spot; open: does
    autopilot time earn crystals / count for boards?).
-6. WILD AREA: decided by the user 2026-10-21, research in progress, NOT built:
+6. WILD AREA, UK: BUILT 2026-10-21 (src/wild.js NATURE screen, src/habitats.js data; tests/wild.cjs).
+   11 UK projects (deadwood, meadow, margins+bee banks [NOT beehives: honeybees compete with wild
+   bees, Bumblebee Conservation Trust], hedgerow, pond, woodland, voles, beavers, rewet, storks,
+   martens), bought one by one (save.habitat.woodland; old levels.rewild -> projects by
+   migrateHabitat). 23 UK animals with needs (projects + meter); found when seen in a real flight
+   (save.found). Every project/animal has >=1 source (2 research passes; ~7 claims only partly
+   sourced: see the chat of 2026-10-21; facts were corrected to match sources). Group must still
+   fact-check. Other regions + savanna/rainforest: NOT started (tabs say "soon"); regional terrain
+   swap in flight NOT started. Art asked for: per-region scene backdrops, project icons.
+   Original decisions:
    - ALL nature upgrades move to the NATURE tab (out of the hangar). NATURE = wild area + its projects.
    - Per region: you buy HABITAT PROJECTS (things people do to land/vegetation: hedgerows, ponds,
      meadows, bee-friendly actions, rewetting; or a reintroduction like beavers that changes the land).

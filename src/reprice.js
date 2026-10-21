@@ -34,7 +34,7 @@ export function repriceSave(save) {
   const had = { ...(save.levels || {}) };
   if (!Object.values(had).some(n => n > 0)) return null;   // nothing bought: nothing to re-value
   let seeds = save.seeds || 0, crystals = save.crystals || 0;
-  for (const [id, n] of Object.entries(had)) for (let i = 0; i < n && OLD_PRICES[id] && i < OLD_PRICES[id].length; i++) { seeds += OLD_PRICES[id][i][0]; crystals += OLD_PRICES[id][i][1]; }
+  for (const [id, n] of Object.entries(had)) for (let i = 0; i < n && OLD_PRICES[id] && lineById(id) && i < OLD_PRICES[id].length; i++) { seeds += OLD_PRICES[id][i][0]; crystals += OLD_PRICES[id][i][1]; }
   const worth = { seeds, crystals };
   const levels = {}, lv = id => levels[id] || 0;
   for (;;) {

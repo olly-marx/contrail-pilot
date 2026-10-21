@@ -1,5 +1,5 @@
 import { CLIMATE, CONTRAIL, ISSR, PARCEL, CARGO, CRYSTALS, cz } from './config.js';
-import { SPECIES, PROJECTS, biodiversity } from './nature.js';
+import { SPECIES, biodiversity } from './nature.js';
 
 // Each upgrade line has levels bought in order. Costs are in seeds (+ ice crystals).
 // `tree`: which upgrade tree it sits in (Plane / Fuel / Science / Nature). `requires`: a branch
@@ -108,16 +108,6 @@ export const LINES = [
       what: 'You start with spruce. It grows fast but few animals live in it. Native trees are trees that have always grown here.',
       why: 'Every NEW kind of tree you plant fills your Biodiversity meter much more than planting the same kind again.',
       fact: 'A wood with many kinds of trees is home to many more animals than rows of just one kind.',
-      links: ['citizenzoo', 'project'],
-    },
-  },
-  {
-    id: 'rewild', name: 'Rewilding', group: 'Nature', tree: 'Nature', unlock: { planted: 1 },
-    levels: PROJECTS.map(p => ({ cost: p.cost, crystals: p.crystals, name: p.name, short: p.short, needsBio: p.needs, project: p.id })),
-    info: {
-      what: 'Rewilding means helping nature look after itself again: wild places, and bringing back animals that used to live here.',
-      why: 'Each project fills your Biodiversity meter, and healthy land soaks up a little CO2 on every flight.',
-      fact: 'Beaver dams slow floods and make wetlands that store carbon.' + cz(' Citizen Zoo works with beavers in London!'),
       links: ['citizenzoo', 'project'],
     },
   },

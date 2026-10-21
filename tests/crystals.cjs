@@ -62,16 +62,18 @@ const KEY = 'contrailPilot.v2';
 
   // 5. Rewilding costs seeds AND crystals.
   p = await page({ ...base, seeds: 500, crystals: 0, landings: 3, planted: { birch: 3, oak: 3 } });
-  const buy = await p.evaluate(async () => { const u = await import('./src/upgrades.js'); const s = game.registry.get('save'); const line = u.lineById('rewild');
-    const without = u.canBuy(s, line); s.crystals = 2; const withC = u.canBuy(s, line); return { without, withC }; });
+  // (Habitat projects on the NATURE screen since 2026-10-21: the meadow's button is grey without crystals.)
+  const buy = await p.evaluate(() => { const ui = game.registry.get('ui'), s = ui.save; ui.go('nature');
+    const without = !document.querySelector('[data-project="meadow"]').disabled; s.crystals = 2; ui.wild.render();
+    const withC = !document.querySelector('[data-project="meadow"]').disabled; return { without, withC }; });
   check(!buy.without && buy.withC, `the meadow should need 2 crystals as well as seeds: ${JSON.stringify(buy)}`);
 
-  // 6. Hangar tabs: rewilding only on the NATURE tab.
-  const tabs = await p.evaluate(() => { const ui = game.registry.get('ui'); ui.hTab = 'plane'; ui.showHangar('title');
-    const plane = document.getElementById('hUpgrades').textContent; ui.hTab = 'nature'; ui.renderHangar();
-    return { plane, nature: document.getElementById('hUpgrades').textContent }; });
-  check(!/Rewilding/.test(tabs.plane) && /Engines|Radar/.test(tabs.plane), 'PLANE tab should show plane lines, not rewilding');
-  check(/Rewilding/.test(tabs.nature) && !/Engines/.test(tabs.nature), 'NATURE tab should show rewilding, not engines');
+  // 6. The hangar is the plane; trees and habitat projects are on the NATURE screen (the user, 2026-10-21).
+  const tabs = await p.evaluate(() => { const ui = game.registry.get('ui'); ui.showHangar();
+    const plane = document.getElementById('hUpgrades').textContent; ui.go('nature');
+    return { plane, nature: document.getElementById('nature').textContent }; });
+  check(!/Tree Planting|meadow/i.test(tabs.plane) && /Engines|Radar/.test(tabs.plane), 'the hangar should show plane lines, not trees or habitats');
+  check(/Wildflower meadow/.test(tabs.nature) && /Tree Planting/.test(tabs.nature) && !/Engines/.test(tabs.nature), 'NATURE should show habitats and trees, not engines');
   await p.close();
 
   check(errs.length === 0, `page errors: ${errs}`);

@@ -12,10 +12,10 @@ import { payRewards } from './rewards.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
-import { PART_LINES, natureBadge } from './planeparts.js';
+import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { LANDMARKS } from './landmarks.js';
-import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, WILD_ANIMALS, SKY_BIRDS } from './nature.js';
+import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene } from './nature.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const GRACE_MS = 1500;   // breather after a pop-up closes: the autopilot flies, then hands back
@@ -58,8 +58,7 @@ export class GameScene extends Phaser.Scene {
       'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'storm-flash', 'storm-flash-top', 'storm-flash-bottom', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
       this.load.image(k, `assets/${k}.png`);
     // Background wildlife: two frames each (legs / wings).
-    for (const a of ['cow', 'sheep', ...WILD_ANIMALS.map(a => a.id)]) for (let f = 0; f < 2; f++) this.load.image(`animal-${a}-${f}`, `assets/animal-${a}-${f}.png`);
-    for (const b of SKY_BIRDS) for (let f = 0; f < 2; f++) this.load.image(`sky-${b.id}-${f}`, `assets/sky-${b.id}-${f}.png`);
+    // Animals and birds: every species in src/wildlife.js (the loop below).
     // Every species the art session has drawn (src/wildlife.js, generated): new ones load themselves.
     for (const w of WILDLIFE) if (w.sprite) for (let f = 0; f < (w.frames || 2); f++) { const k = `${w.sprite}-${f}`; if (!this.textures.exists(k)) this.load.image(k, `assets/${k}.png`); }   // trees: 3 growth stages
     // Each region's ground strip and hills (woodland's are 'ground' and 'hills', loaded above).
@@ -74,7 +73,7 @@ export class GameScene extends Phaser.Scene {
     this.save = this.registry.get('save');
     this.ui = this.registry.get('ui');
     this.kit = loadout(this.save);
-    this.builtWith = JSON.stringify(this.save.levels);   // scenery depends on upgrades (e.g. meadow flowers)
+    this.builtWith = JSON.stringify([this.save.levels, this.save.habitat]);   // scenery depends on upgrades (e.g. meadow flowers)
     this.makeTextures();
 
     this.state = 'idle';             // idle -> takeoff -> playing -> landing | over
@@ -273,7 +272,7 @@ export class GameScene extends Phaser.Scene {
 
   startSchool() {
     // Rebuild unless this scene is fresh, built with these upgrades AND in LONDON (school starts there).
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify(this.save.levels) || this.startCity !== 0) { this.scene.restart({ go: true, mode: 'school' }); return; }
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat]) || this.startCity !== 0) { this.scene.restart({ go: true, mode: 'school' }); return; }
     this.school = new School(this, this.ui);
     this.nextAirport = { worldX: 1e9, name: cityAt(1).name, spawned: false };
     this.startFlight();
@@ -298,7 +297,7 @@ export class GameScene extends Phaser.Scene {
 
   startFlight() {
     // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify(this.save.levels)) { this.scene.restart({ go: true }); return; }
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat])) { this.scene.restart({ go: true }); return; }
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
@@ -629,7 +628,7 @@ export class GameScene extends Phaser.Scene {
     const lv = id => (this.save.levels || {})[id] || 0, add = (key, kind) => { const img = this.add.image(0, 0, key); this.planeParts.push({ img, kind }); return img; };
     this.planeParts = [];
     for (const id of Object.keys(PART_LINES)) if (lv(id)) add(`plane-${id}-${Math.min(lv(id), PART_LINES[id])}`, id === 'gear' ? 'gear' : 'part');
-    const badge = natureBadge(this.save.levels);
+    const badge = natureBadge(natureLevels(this.save));
     if (badge) add(`plane-nature-${badge}`, 'part');
     add('plane-lights', 'lights');
     add('plane-shimmer-0', 'shimmer').setAlpha(0.8);
@@ -659,6 +658,19 @@ export class GameScene extends Phaser.Scene {
 
   // Background life from the Biodiversity meter (see wildlifeScene in nature.js). Purely for looks:
   // nothing here can be hit. Filled across the screen at the start so the first view shows it too.
+  // A species shown on screen counts as FOUND (the Wild Area collection, src/wild.js). Only in a
+  // real flight, once it is well on screen; the first time: a pop-up.
+  seen(sprite) {
+    if (this.school || this.state !== 'playing') return;
+    const w = WILDLIFE.find(x => x.sprite === sprite);
+    if (!w) return;
+    this.save.found = this.save.found || {};
+    if (this.save.found[w.id]) return;
+    this.save.found[w.id] = Date.now();
+    this.foundThisFlight = (this.foundThisFlight || 0) + 1;
+    this.time.delayedCall(1500, () => this.popup(WIDTH / 2, SKY_H - 60, `NEW ANIMAL: ${w.name.toUpperCase()}!`, '#ffe15a', 14));
+  }
+
   buildWildlife() {
     this.wildlife = wildlifeScene(this.save);
     this.life = [];
@@ -681,20 +693,23 @@ export class GameScene extends Phaser.Scene {
       const t = this.add.image(atX, SKY_H + 1, `tree-${pick(W.treeKinds)}-2`).setOrigin(0.5, 1).setScale(Phaser.Math.FloatBetween(0.9, 1.1));
       this.farTreeLayer.add(t); this.life.push({ img: t, k: 1 });
     }
-    const animal = kind => {
+    // `sprite`: texture prefix from src/wildlife.js ('animal-otter', 'sky-heron' for a standing bird).
+    const animal = sprite => {
       if (!clearOfRunway(atX)) return;
-      const left = Math.random() < 0.5;
-      const img = this.add.image(atX, SKY_H + 4, `animal-${kind}-0`).setOrigin(0.5, 1).setFlipX(left);
+      const left = Math.random() < 0.5, standing = sprite.startsWith('sky-');
+      const img = this.add.image(atX, SKY_H + 4, `${sprite}-0`).setOrigin(0.5, 1).setFlipX(left);
       this.wildLayer.add(img);
-      this.life.push({ img, k: 1, kind: `animal-${kind}`, walk: (left ? -1 : 1) * Phaser.Math.FloatBetween(0, 3), t: Math.random() });
+      this.life.push({ img, k: 1, kind: sprite, walk: standing ? 0 : (left ? -1 : 1) * Phaser.Math.FloatBetween(0, 3), t: Math.random() });
+      this.seen(sprite);
     };
-    if (due('farm', W.farmPerScreen)) animal(pick(['cow', 'sheep']));
+    if (due('farm', W.farmPerScreen)) animal(pick(['animal-cow', 'animal-sheep']));
     if (due('wild', W.wildPerScreen)) animal(pick(W.wildKinds));
     if (due('bird', W.birdsPerScreen)) {
       const b = pick(W.skyKinds);
-      const img = this.add.image(atX, Phaser.Math.Between(70, SKY_H - 70), `sky-${b}-0`).setOrigin(0.5).setAlpha(0.7);
+      const img = this.add.image(atX, Phaser.Math.Between(70, SKY_H - 70), `${b}-0`).setOrigin(0.5).setAlpha(0.85);
       this.storkLayer.add(img);
-      this.life.push({ img, k: 0.35, kind: `sky-${b}`, walk: Phaser.Math.FloatBetween(4, 10), t: Math.random(), bob: Math.random() * 6, y0: img.y });
+      this.life.push({ img, k: 0.35, kind: b, walk: Phaser.Math.FloatBetween(4, 10), t: Math.random(), bob: Math.random() * 6, y0: img.y });
+      this.seen(b);
     }
     const dt = this.game.loop.delta / 1000 || 0.016;
     for (const l of this.life) {

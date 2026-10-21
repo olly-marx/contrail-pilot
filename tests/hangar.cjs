@@ -31,16 +31,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
   // 2. The bar along the bottom: from EVERY screen, one tap reaches EVERY other; exactly one
   // screen is open; the right tab is lit; nothing is left open underneath (e.g. a pop-up).
-  const SCREENS = { fly: 'title', hangar: 'hangar', nature: 'hangar', pilot: 'pilot', boards: 'boards' };
-  const state = () => p.evaluate(() => ({ open: ['title', 'results', 'hangar', 'pilot', 'boards', 'how', 'about', 'info', 'scoreInfo'].filter(id => !document.getElementById(id).hidden),
-    lit: [...document.querySelectorAll('#tabbar .tab.on')].map(t => t.dataset.go), bar: !document.getElementById('tabbar').hidden, natureTab: document.querySelector('#hTabs .on')?.dataset.tab }));
+  const SCREENS = { fly: 'title', hangar: 'hangar', nature: 'nature', pilot: 'pilot', boards: 'boards' };   // NATURE is its own screen since 2026-10-21
+  const state = () => p.evaluate(() => ({ open: ['title', 'results', 'hangar', 'nature', 'pilot', 'boards', 'how', 'about', 'info', 'scoreInfo', 'wInfo'].filter(id => !document.getElementById(id).hidden),
+    lit: [...document.querySelectorAll('#tabbar .tab.on')].map(t => t.dataset.go), bar: !document.getElementById('tabbar').hidden }));
   for (const from of Object.keys(SCREENS)) for (const to of Object.keys(SCREENS)) {
     await p.click(`[data-go=${from}]`); await p.waitForTimeout(80);
     await p.evaluate(() => { document.getElementById('about').hidden = false; });   // a pop-up left open
     await p.evaluate(to => document.querySelector(`[data-go=${to}]`).click(), to); await p.waitForTimeout(80);   // (a real pop-up covers the bar; moving must still close it)
     const st = await state();
     check(st.bar && st.open.length === 1 && st.open[0] === SCREENS[to] && st.lit.join() === to, `${from} -> ${to}: ${JSON.stringify(st)}`);
-    if (to === 'nature' || to === 'hangar') check(st.natureTab === (to === 'nature' ? 'nature' : 'plane'), `${from} -> ${to}: hangar should open on the ${to} tab, got ${st.natureTab}`);
   }
   const box = await p.locator('#tabbar').boundingBox();
   check(box && box.y + box.height >= 840 && box.height >= 48, `the bar should sit at the bottom, big enough to tap: ${JSON.stringify(box)}`);
