@@ -43,19 +43,30 @@ const KEY = 'contrailPilot.v2';
   s = await get(p);
   check(s.habitat.woodland.includes('deadwood') && s.seeds === 80 && s.crystals === 9, `dead wood bought for 20 + 1: ${JSON.stringify(s.habitat)} ${s.seeds}/${s.crystals}`);
   check(/DONE/.test(await p.textContent('[data-pline="deadwood"]')), 'a bought project says DONE');
-  await p.click('[data-pinfo="beavers"]'); await p.waitForTimeout(200);
+  // A finished tier folds to one line (with 'show'); here tier 1 is not finished, so margins is listed.
+  await p.click('[data-pinfo="margins"]'); await p.waitForTimeout(200);
   const info = await p.evaluate(() => ({ text: document.getElementById('wInfoBody').textContent, links: [...document.querySelectorAll('#wInfoBody a')].map(a => a.href) }));
-  check(/Beaver dams/.test(info.text) && /Otter/.test(info.text) && info.links.length >= 2 && info.links.every(u => u.startsWith('https://')), `the beavers page: chain, who it helps, source links: ${JSON.stringify(info)}`);
+  check(/Flower strips/.test(info.text) && /Brown hare/.test(info.text) && info.links.length >= 2 && info.links.every(u => u.startsWith('https://')), `the field margins page: chain, who it helps, source links: ${JSON.stringify(info)}`);
   await p.click('#wInfoClose');
 
   // 4. Who can appear: robin needs Hedgerows; otter needs Beavers + Rewet the land + Biodiversity 65.
   const can = await p.evaluate(async () => { const n = await import('./src/nature.js'), save = game.registry.get('save');
     const r = { robin: n.canAppear(save, 'robin'), otter: n.canAppear(save, 'otter'), sky: n.wildlifeScene(save).skyKinds };
-    const rich = { ...save, habitat: { woodland: ['beavers', 'rewet'] }, planted: { oak: 40, birch: 40, rowan: 40, orchard: 40 } };
-    r.otterRich = n.canAppear(rich, 'otter'); r.otterNoRewet = n.canAppear({ ...rich, habitat: { woodland: ['beavers'] } }, 'otter');
+    const all = ['deadwood', 'meadow', 'margins', 'hedgerow', 'pond', 'woodland', 'voles', 'beavers', 'rewet', 'storks', 'martens'];
+    const rich = { ...save, habitat: { woodland: all }, planted: { oak: 40, birch: 40, rowan: 40, orchard: 40, spruce: 40 } };
+    r.otterRich = n.canAppear(rich, 'otter'); r.otterNoRewet = n.canAppear({ ...rich, habitat: { woodland: all.filter(x => x !== 'rewet') } }, 'otter');
     return r; });
   check(can.robin && !can.otter && can.sky.includes('sky-robin'), `with hedgerows: robin yes, otter no: ${JSON.stringify(can)}`);
   check(can.otterRich && !can.otterNoRewet, `otter needs beavers AND rewetting (and a rich land): ${JSON.stringify(can)}`);
+
+  // 4b. Rarity (2026-10-22): rare and very rare animals only far into a flight, and less often.
+  const rar = await p.evaluate(async () => { const n = await import('./src/nature.js'), save = game.registry.get('save');
+    const rich = { ...save, habitat: { woodland: ['deadwood', 'meadow', 'margins', 'hedgerow', 'pond', 'woodland', 'voles', 'beavers', 'rewet', 'storks', 'martens'] }, planted: { oak: 40, birch: 40, rowan: 40, orchard: 40, spruce: 40 } };
+    const W = n.wildlifeScene(rich), count = (km, k) => { const c = {}; for (let i = 0; i < 3000; i++) { const x = W.pickWild(km); c[x] = (c[x] || 0) + 1; } return c; };
+    return { early: count(500), far: count(20000), bio: n.biodiversity(rich), lone: n.biodiversity({ planted: { oak: 40, birch: 40, rowan: 40, orchard: 40, spruce: 40 } }) }; });
+  check(!rar.early['animal-otter'] && !rar.early['animal-squirrel'] && !rar.early['animal-deer'] && rar.early['animal-rabbit'] > 0, `early in a flight: no rare animals: ${JSON.stringify(rar.early)}`);
+  check(rar.far['animal-otter'] > 0 && rar.far['animal-otter'] < rar.far['animal-rabbit'] / 5, `far in a flight: rare ones appear, but much less often than common: ${JSON.stringify(rar.far)}`);
+  check(rar.bio === 100 && rar.lone >= 35 && rar.lone <= 45, `the meter: everything = 100; trees alone ~40: ${rar.bio}, ${rar.lone}`);
 
   // 5. Found: only in a real flight, once. Then the collection counts it and shows its page with a source.
   await p.evaluate(() => game.scene.getScene('game').seen('sky-robin'));   // on the menu: not a flight

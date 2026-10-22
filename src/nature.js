@@ -1,5 +1,5 @@
 import { cz } from './config.js';
-import { UK_PROJECTS, UK_SPECIES } from './habitats.js';
+import { UK_PROJECTS, UK_SPECIES, RARITY } from './habitats.js';
 import { WILDLIFE } from './wildlife.js';
 // Nature: tree species, rewilding projects and the Biodiversity meter (barren land to rainforest).
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
@@ -27,12 +27,12 @@ export const SPECIES = {
 // drawn in GameScene (meadow flowers, hedges, ponds, beaver dams, storks).
 export const PROJECTS = UK_PROJECTS;
 
-export const STAGES = [
+export const STAGES = [   // meter names (100 = everything: see biodiversity())
   { at: 0, name: 'Barren land' },
-  { at: 8, name: 'Grassland' },
-  { at: 20, name: 'Young woodland' },
-  { at: 40, name: 'Forest' },
-  { at: 65, name: 'Rainforest!' },
+  { at: 5, name: 'Grassland' },
+  { at: 15, name: 'Young woodland' },
+  { at: 35, name: 'Forest' },
+  { at: 70, name: 'Wild and thriving!' },
 ];
 
 export const NATURE_FACTS = [
@@ -49,17 +49,22 @@ function speciesPoints(id, n) {
   return SPECIES[id].native ? Math.min(18, 6 * Math.sqrt(n)) : Math.min(6, 2 * Math.sqrt(n));
 }
 
+// The meter: 100 = everything (all 5 kinds of tree well planted AND every habitat project). Trees
+// alone reach ~40, projects ~60. (Recalibrated 2026-10-22: the raw points reached 192 against a
+// cap of 100, so a moderately advanced player filled it and the rare animals came too easily.)
+const TREES_MAX = 4 * 18 + 6;   // speciesPoints at their caps: 4 native kinds + spruce
+const RAW_MAX = () => TREES_MAX + PROJECTS.reduce((a, p) => a + p.bio, 0);
 export function biodiversity(save) {
   let b = 0;
   for (const [id, n] of Object.entries(save.planted || {})) b += speciesPoints(id, n);
   for (const p of projectsDone(save)) b += p.bio;
-  return Math.min(100, Math.round(b));
+  return Math.min(100, Math.round(b * 100 / RAW_MAX()));
 }
 
-// What one more tree of this kind adds (shown as a popup when it is planted).
+// What one more tree of this kind adds to the meter (shown as a popup when it is planted).
 export function plantGain(save, id) {
   const n = (save.planted || {})[id] || 0;
-  return speciesPoints(id, n + 1) - speciesPoints(id, n);
+  return (speciesPoints(id, n + 1) - speciesPoints(id, n)) * 100 / RAW_MAX();
 }
 
 export function stage(bio) { return [...STAGES].reverse().find(s => bio >= s.at); }
@@ -81,18 +86,24 @@ export const canAppear = (save, id) => { const c = UK_SPECIES[id], done = projec
 export function wildlifeScene(save) {
   const bio = biodiversity(save);
   const planted = Object.keys(save.planted || {}).filter(k => SPECIES[k] && save.planted[k] > 0);
-  const treeKinds = bio < 8 ? ['spruce'] : [...new Set(['spruce', ...planted])];
+  const treeKinds = bio < 4 ? ['spruce'] : [...new Set(['spruce', ...planted])];
   const here = ukSpecies().filter(w => canAppear(save, w.id) && !['cow', 'sheep'].includes(w.id));
-  const wild = here.filter(w => w.kind === 'animal' || w.pose === 'standing').map(w => w.sprite);   // walk or stand on the ground
-  const sky = here.filter(w => w.kind === 'bird' && w.pose !== 'standing').map(w => w.sprite);
+  const pool = list => list.map(w => ({ sprite: w.sprite, ...RARITY[UK_SPECIES[w.id].rarity || 'common'] }));
+  const wild = pool(here.filter(w => w.kind === 'animal' || w.pose === 'standing'));   // walk or stand on the ground
+  const sky = pool(here.filter(w => w.kind === 'bird' && w.pose !== 'standing'));
+  // Pick one by rarity weight, from those that can be seen this far into the flight (null if none).
+  const pick = list => km => { const ok = list.filter(x => km >= x.from), t = ok.reduce((a, x) => a + x.weight, 0);
+    let r = Math.random() * t; for (const x of ok) if ((r -= x.weight) < 0) return x.sprite; return null; };
   return {
     bio,
-    treesPerScreen: 2 + bio / 8,                  // 2 lonely spruce up to ~14 trees
+    treesPerScreen: 2 + bio / 6,                  // 2 lonely spruce up to ~18 trees
     treeKinds,
     farmPerScreen: 1.5,                           // cows and sheep: always a few, never many
-    wildPerScreen: wild.length ? 1 + bio / 20 : 0,
-    wildKinds: wild,                              // texture prefixes, e.g. 'animal-otter', 'sky-heron'
-    skyKinds: sky,
-    birdsPerScreen: sky.length ? 0.4 + bio / 25 : 0,    birdsPerScreen: bio < 8 ? 0 : bio / 25,      // none at first, up to 4
+    wildPerScreen: wild.length ? 0.6 + bio / 18 : 0,   // the meter decides HOW MANY animals...
+    birdsPerScreen: sky.length ? 0.3 + bio / 25 : 0,
+    pickWild: pick(wild),                         // ...and rarity + distance WHICH ones (texture prefix, e.g. 'animal-otter')
+    pickSky: pick(sky),
+    wildKinds: wild.map(x => x.sprite),           // everything that can appear here at all
+    skyKinds: sky.map(x => x.sprite),
   };
 }

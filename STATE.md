@@ -170,6 +170,13 @@ onboarding" below, in any order, each its own tested commit:
    golden seeds, ...) and an advanced autopilot with safe hand-back (see the chat of 2026-10-21:
    only "recoverable" lines, tap to take over, no switching on in a bad spot; open: does
    autopilot time earn crystals / count for boards?).
+6b. 2026-10-22 (the user: meter full with few upgrades; NATURE screen confusing): biodiversity()
+   now scales so 100 = EVERYTHING (raw 78 trees + 114 projects = 192; trees alone ~40). The user's
+   rebuilt save went 100 -> 68. UK projects in 3 TIERS (habitats.js TIERS: 1 open, 2 at 12, 3 at 30;
+   finished tiers fold to one line; the next locked tier is one card). Animals have RARITY (common /
+   uncommon / rare / very rare: weight 10 / 4 / 1.5 / 0.5, earliest 0 / 1,500 / 4,000 / 8,000 km into a
+   flight); wildlifeScene().pickWild(km)/pickSky(km); the meter decides how many. this.result.foundIds
+   (animals found this flight) for the art session's results section.
 6. WILD AREA, UK: BUILT 2026-10-21 (src/wild.js NATURE screen, src/habitats.js data; tests/wild.cjs).
    11 UK projects (deadwood, meadow, margins+bee banks [NOT beehives: honeybees compete with wild
    bees, Bumblebee Conservation Trust], hedgerow, pond, woodland, voles, beavers, rewet, storks,
@@ -388,6 +395,10 @@ Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (gold
 `lesson-crystals` (ice crystal icon), `lesson-turbulence`, `lesson-birds`, `lesson-nofly`.
 
 ## Known flaky tests
+
+- 2026-10-22 local 4-shard run: lanes.cjs ("plenty of storms" saw 13 gaps) and flight.cjs (overheat
+  check timed out) each failed once under load and passed on retry. Both still count fixed TIME
+  windows: next candidates for waiting on the game.
 
 - CI REWORKED 2026-10-22 (the user: 12+ min and failing most of the time): 4 shards in parallel
   (tools/test.sh --shard k/4, balanced by per-test time), every test runs, a failure is retried once

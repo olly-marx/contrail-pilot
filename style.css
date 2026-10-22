@@ -450,6 +450,11 @@ h2.sub { margin-top: -4px; }
 .badge2 img { width: 48px; height: 48px; image-rendering: pixelated; }
 #hBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
 .badge2 b { font-size: 7px; color: inherit; }
+/* NATURE tiers and rarity (src/wild.js, 2026-10-22) */
+.w-tier { margin: 8px 0 2px; font-weight: bold; color: #1e7a3c; }
+.line.project.locked { opacity: .75; background: #ece8dc; }
+.w-rarity { font-size: 6px; opacity: .8; }
+.w-card.r-rare .w-rarity { color: #2a6fb0; } .w-card.r-legendary .w-rarity { color: #a0329a; font-weight: bold; }
 
 /* ---------- Wild Area 2D field (src/wild.js Field) ---------- */
 .wscene.wfield-box { aspect-ratio: 288 / 170; background: #6ec6e8; }

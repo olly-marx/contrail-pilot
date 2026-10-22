@@ -34,13 +34,14 @@ const KEY = 'contrailPilot.v2';
   const kinds = await scene(() => { const s = game.scene.getScene('game'); const out = []; for (let i = 0; i < 3; i++) { out.push(s.treeKind()); s.speciesIdx++; } s.speciesIdx = 0; return out; });
   check(JSON.stringify(kinds) === '["spruce","birch","oak"]', `parcels should rotate spruce, birch, oak; got ${kinds}`);
 
-  // 3. Rewilding waits for the meter: meadow needs Biodiversity 3.
+  // 3. Projects come in tiers (2026-10-22): Tier 1 is open from the start; Tier 2 is one locked card
+  // saying the meter level that opens it; Tier 3 is not shown yet.
   await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: {} }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabNature');   // habitat projects live on the NATURE screen
-  check(await p.$('[data-project="meadow"]') === null, 'the meadow should wait before any tree is planted');
-  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { spruce: 1 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
-  await p.click('#tabNature');
-  check((await p.textContent('[data-pline="meadow"]')).includes('needs Biodiversity 3'), 'meadow should wait for Biodiversity 3');
+  const tiers = await p.evaluate(() => ({ t1: !!document.querySelector('[data-project="meadow"]') && !!document.querySelector('[data-project="hedgerow"]'),
+    t2: !document.querySelector('[data-pline="pond"]') && /Biodiversity 12/.test(document.querySelector('[data-tier-locked="2"]')?.textContent || ''),
+    t3: !document.querySelector('[data-tier-locked="3"]') && !document.querySelector('[data-pline="beavers"]') }));
+  check(tiers.t1 && tiers.t2 && tiers.t3, `tier 1 open, tier 2 a locked card at Biodiversity 12, tier 3 hidden: ${JSON.stringify(tiers)}`);
   await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { birch: 2 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabNature');
   const before = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
@@ -48,7 +49,7 @@ const KEY = 'contrailPilot.v2';
   const save = await getSave();
   const after = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
   check(save.habitat.woodland.join() === 'meadow' && save.seeds === 170 && save.crystals === 3, `meadow should cost 30 seeds + 2 crystals and be bought, got ${JSON.stringify(save.habitat)} seeds ${save.seeds} crystals ${save.crystals}`);
-  check(after - before === 8, `meadow should add 8 Biodiversity, added ${after - before}`);
+  check(Math.abs((after - before) - 8 * 100 / 192) <= 1, `meadow should add ~4 Biodiversity (8 of 192 points: 100 = everything), added ${after - before}`);
 
   // 4. The meadow shows up in the world as flowers in the grass.
   await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(800);

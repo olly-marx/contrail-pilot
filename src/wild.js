@@ -8,7 +8,7 @@ import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf } from './upgrades.js';
 import { biodiversity, projectsDone, PROJECTS, canAppear, ukSpecies } from './nature.js';
-import { UK_SPECIES } from './habitats.js';
+import { UK_SPECIES, TIERS, RARITY } from './habitats.js';
 import { REGIONS } from './wildlife.js';
 import { meterHTML } from './ui.js';
 
@@ -60,21 +60,36 @@ export class WildScreen {
   found(id) { return !!(this.save.found || {})[id]; }
 
   renderProjects() {
+    // In tiers (the user, 2026-10-22: all 11 at once was confusing): open tiers show their projects;
+    // the next locked tier is one card saying what opens it; later tiers stay hidden.
     const s = this.save, done = this.done(), bio = biodiversity(s);
-    $('wProjects').innerHTML = PROJECTS.map(p => {
-      const have = done.includes(p.id), waiting = bio < p.needs, ok = !have && !waiting && s.seeds >= p.cost && (s.crystals || 0) >= p.crystals;
+    const card = p => {
+      const have = done.includes(p.id), ok = !have && s.seeds >= p.cost && (s.crystals || 0) >= p.crystals;
       const btn = have ? '<span class="w-done">DONE</span>'
-        : waiting ? `<span class="small">needs Biodiversity ${p.needs}</span>`
         : `<button class="btn ${ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${cost(p)}</button>`;
       return `<div class="line project ${have ? 'maxed' : ''}" data-pline="${p.id}">
         <div><div class="name"><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="">${esc(p.name)}</div><div class="small">${esc(p.short)}</div>
         <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div></div>
         <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
         <div class="next">${btn}</div></div>`;
-    }).join('');
+    };
+    const open = TIERS.filter(t => bio >= t.needs), next = TIERS.find(t => bio < t.needs);
+    $('wProjects').innerHTML = open.map(t => {
+      const ps = PROJECTS.filter(p => p.tier === t.tier), n = ps.filter(p => done.includes(p.id)).length;
+      const finished = n === ps.length, shown = !finished || (this.openTiers || []).includes(t.tier);   // a finished tier folds to one line
+      return `<p class="w-tier">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? '&#10003; ' : ''}${n} / ${ps.length} done</span>`
+        + (finished ? ` <button class="btn tiny" type="button" data-tier-toggle="${t.tier}">${shown ? 'hide' : 'show'}</button>` : '') + '</p>'
+        + (shown ? ps.map(card).join('') : '');
+    }).join('') + (next ? `<div class="line project locked" data-tier-locked="${next.tier}"><div><div class="name">Tier ${next.tier}: ${esc(next.name)}</div>
+        <div class="small">Reach Biodiversity <b>${next.needs}</b> to unlock ${PROJECTS.filter(p => p.tier === next.tier).length} more projects. Plant trees and finish the projects above!</div></div></div>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = () => this.buy(b.dataset.project));
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
+    $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
+      const t = Number(b.dataset.tierToggle), o = this.openTiers || [];
+      this.openTiers = o.includes(t) ? o.filter(x => x !== t) : [...o, t]; this.renderProjects();
+    });
   }
+
 
   buy(id) {
     const s = this.save, p = PROJECTS.find(x => x.id === id);
@@ -104,7 +119,8 @@ export class WildScreen {
     $('wFoundHead').textContent = `Wildlife found: ${n} / ${all.length}`;
     $('wFound').innerHTML = all.map(w => {
       const got = this.found(w.id), pic = w.portrait ? `${w.portrait}-0.png` : `assets/${w.sprite}-0.png`;
-      return `<button class="w-card ${got ? 'got' : ''}" type="button" data-species="${w.id}"><img src="${esc(pic)}" alt=""><span>${got ? esc(w.name) : '???'}</span></button>`;
+      const r = UK_SPECIES[w.id].rarity || 'common';
+      return `<button class="w-card ${got ? 'got' : ''} r-${r}" type="button" data-species="${w.id}"><img src="${esc(pic)}" alt=""><span>${got ? esc(w.name) : '???'}</span><small class="w-rarity">${RARITY[r].name}</small></button>`;
     }).join('');
     $('wFound').querySelectorAll('[data-species]').forEach(b => b.onclick = () => this.speciesInfo(b.dataset.species));
   }
@@ -112,14 +128,15 @@ export class WildScreen {
   speciesInfo(id) {
     const w = ukSpecies().find(x => x.id === id), c = UK_SPECIES[id], got = this.found(id);
     const names = c.needs.map(n => PROJECTS.find(p => p.id === n).name);
-    const hint = canAppear(this.save, id) ? 'It can live here now! Look out for it on your flights.'
+    const rr = RARITY[c.rarity || 'common'], far = rr.from ? ` ${rr.name} animals only show up ${rr.from.toLocaleString('en-GB')} km or more into a flight.` : '';
+    const hint = canAppear(this.save, id) ? `It can live here now! Look out for it on your flights.${far}`
       : `To bring it here: ${names.length ? names.map(esc).join(' + ') : 'a healthier land'}${c.bio ? `, and Biodiversity ${c.bio}` : ''}.`;
     const pic = w.portrait ? `${w.portrait}-0.png` : `assets/${w.sprite}-0.png`;
     $('wInfoBody').innerHTML = got
-      ? `<p class="eyebrow">Found!</p><h2>${esc(w.name)}</h2><img class="w-portrait" src="${esc(pic)}" alt="">
+      ? `<p class="eyebrow">Found! ${RARITY[c.rarity || 'common'].name}</p><h2>${esc(w.name)}</h2><img class="w-portrait" src="${esc(pic)}" alt="">
         <div><p class="label">Why it lives here</p><p>${esc(c.why)}</p></div>
         ${c.fact ? `<div class="fact"><p class="label">Did you know?</p><p>${esc(c.fact)}</p></div>` : ''}${links(c.src)}`
-      : `<p class="eyebrow">Not found yet</p><h2>???</h2><img class="w-portrait w-shadow" src="${esc(pic)}" alt=""><p>${hint}</p>`;
+      : `<p class="eyebrow">Not found yet: ${rr.name}</p><h2>???</h2><img class="w-portrait w-shadow" src="${esc(pic)}" alt=""><p>${hint}</p>`;
     $('wInfo').hidden = false;
   }
 }

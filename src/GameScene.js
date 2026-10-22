@@ -672,6 +672,7 @@ export class GameScene extends Phaser.Scene {
     if (this.save.found[w.id]) return;
     this.save.found[w.id] = Date.now();
     this.foundThisFlight = (this.foundThisFlight || 0) + 1;
+    (this.foundIds = this.foundIds || []).push(w.id);   // for the results screen (art session: 'NEW ANIMALS')
     this.time.delayedCall(1500, () => this.popup(WIDTH / 2, SKY_H - 60, `NEW ANIMAL: ${w.name.toUpperCase()}!`, '#ffe15a', 14));
   }
 
@@ -707,9 +708,9 @@ export class GameScene extends Phaser.Scene {
       this.seen(sprite);
     };
     if (due('farm', W.farmPerScreen)) animal(pick(['animal-cow', 'animal-sheep']));
-    if (due('wild', W.wildPerScreen)) animal(pick(W.wildKinds));
-    if (due('bird', W.birdsPerScreen)) {
-      const b = pick(W.skyKinds);
+    if (due('wild', W.wildPerScreen)) { const k = W.pickWild(this.distancePx); if (k) animal(k); }   // rarer ones only far into a flight
+    const b = due('bird', W.birdsPerScreen) && W.pickSky(this.distancePx);   // null: no bird this far in
+    if (b) {
       // Scenery birds fly LOW, just over the hills, small and faded: background life, never mistaken
       // for a bird-strike flock (2026-10-22). Half size = their original small sprite size.
       const img = this.add.image(atX, Phaser.Math.Between(SKY_H - 62, SKY_H - 34), `${b}-0`).setOrigin(0.5).setScale(0.5).setAlpha(0.6);
@@ -1785,7 +1786,7 @@ export class GameScene extends Phaser.Scene {
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
-      rewards,
+      rewards, foundIds: [...(this.foundIds || [])],
       mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);
