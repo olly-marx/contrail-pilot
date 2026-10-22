@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-22-seafix",
+    "level": "minor",
+    "notes": [
+      "Fixed: the game froze when you flew out over the sea.",
+      "If anything ever goes wrong, the game now shows what happened and a RESTART button, instead of freezing."
+    ]
+  },
+  {
     "id": "2026-10-22-regions",
     "level": "major",
     "notes": [

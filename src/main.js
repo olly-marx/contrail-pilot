@@ -9,8 +9,13 @@ import { flush, syncUp, syncDown, watchSave, ensureCode } from './online.js';
 import { Tour } from './tour.js';
 import { WildScreen } from './wild.js';
 import { Updates } from './updates.js';
+import { catchCrashes } from './crash.js';
 
 const save = loadSave();
+// Crash catcher (src/crash.js): an error shows a card with what broke and where, instead of a silent freeze.
+const crash = catchCrashes(() => { const s = window.game && game.scene.getScene('game'); if (!s) return 'menu';
+  return `state ${s.state} | ${Math.round(s.distancePx || 0)} km | next ${s.nextAirport && s.nextAirport.name} | region ${s.regionNow} | ${s.isDay ? 'day' : 'night'} | frozen ${!!s.frozen}`; },
+  () => writeSave(save));
 // Ask the browser to keep this site's storage (where supported), so tidy-ups don't clear the save.
 try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { /* not supported */ }
 const moved = migrateHabitat(save);   // old 'rewild' levels -> UK habitat projects (before the re-value: projects are kept as they are)
@@ -70,3 +75,4 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) syncU
 // written before any reload.
 window.cpUpdates = new Updates(() => { const s = game.scene.getScene('game'); return !!s && ['takeoff', 'playing', 'landing'].includes(s.state); },
   () => writeSave(save));
+crash.watchCanvas(game.canvas);
