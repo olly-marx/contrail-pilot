@@ -63,6 +63,7 @@ export function biodiversity(save, region = 'woodland') {
     for (const p of projectsDone(save)) b += p.bio;
     return Math.min(100, Math.round(b * 100 / RAW_MAX()));
   }
+  if (!REGION_DATA[region]) return 0;   // the sea and the ice (src/geo.js) have no projects
   const all = REGION_DATA[region].projects;
   for (const p of projectsDone(save, region)) b += p.bio;
   return Math.min(100, Math.round(b * 100 / all.reduce((a, p) => a + p.bio, 0)));
@@ -80,7 +81,7 @@ export function stage(bio) { return [...STAGES].reverse().find(s => bio >= s.at)
 
 // Projects done in the UK (save.habitat.woodland; before 2026-10-21 the 'rewild' line, see migrateHabitat).
 // Other regions: save.habitat[region] (2026-10-22).
-export const projectsDone = (save, region = 'woodland') =>
+export const projectsDone = (save, region = 'woodland') => !REGION_DATA[region] ? [] :   // the sea and the ice: none
   REGION_DATA[region].projects.filter(p => ((save.habitat || {})[region] || []).includes(p.id));
 export const hasProject = (save, id, region = 'woodland') => projectsDone(save, region).some(p => p.id === id);
 // Healthy land soaks up a little CO2 on every flight: only the land below you (the user, 2026-10-22).
@@ -100,7 +101,7 @@ export function regionSpecies(region) {
   });
 }
 export const canAppear = (save, id, region = 'woodland') => {
-  const c = REGION_DATA[region].species[id], done = projectsDone(save, region).map(p => p.id);
+  const c = REGION_DATA[region] && REGION_DATA[region].species[id], done = projectsDone(save, region).map(p => p.id);
   return !!c && c.needs.every(n => done.includes(n)) && biodiversity(save, region) >= c.bio; };
 
 // Background wildlife you can see but not hit, rebuilt each flight from the habitat (above).
