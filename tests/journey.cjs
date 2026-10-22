@@ -60,7 +60,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.waitForTimeout(1200);
 
   // 6. "Reach ROME" is done by landing further east (ATHENS), not by landing short of it.
-  const reachRome = n => p.evaluate(async ([landedAt, lap]) => { const { MISSIONS } = await import('./src/missions.js'); const m = MISSIONS.find(x => x.id === 'reach-rome'); return m.check({ landed: true, landedAt, lap }); }, n);
+  const reachRome = n => p.evaluate(async ([landedAt, lap]) => { const { reach } = await import('./src/missions.js'); return reach('ROME').check({ landed: true, landedAt, lap }); }, n);
   check(await reachRome(['ATHENS', false]) && await reachRome(['ROME', false]) && !(await reachRome(['BERLIN', false])) && await reachRome(['LONDON', true]), 'Reach ROME: ROME/ATHENS/lap yes, BERLIN no');
 
   // 7. Flight school always starts in LONDON, even mid-journey.

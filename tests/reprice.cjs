@@ -41,7 +41,8 @@ const KEY = 'contrailPilot.v2';
   check((s.levels.fuel || 0) < 4 && s.fuel !== 'hydrogen', `hydrogen (1,800 now) is gone and the fuel is one it still owns: fuel ${s.levels.fuel}, ${s.fuel}`);
   const cheapest = LINES.flatMap(l => (s.levels[l.id] || 0) < all[l.id] && (!l.requires || (s.levels[l.requires.line] || 0) >= l.requires.level) ? [l.costs[s.levels[l.id] || 0]] : []);
   check(cheapest.every(([c, cr]) => c > s.seeds || cr > s.crystals), `nothing it had is still affordable from the bank: bank ${s.seeds}/${s.crystals}`);
-  check(s.mission === 12 && s.laps === 1 && s.bestDistance === 17000 && s.badges.includes('roundTheWorld') && s.flights === 60, 'missions, laps, records, badges stay');
+  // Old mission 12 of 19 = 10 of the 13 new lessons learnt (2026-10-22 rework); old Zero Carbon badge -> zerocarbon.
+  check(s.mission === 10 && s.missionsDone.length === 10 && s.laps === 1 && s.bestDistance === 17000 && s.badges.includes('zerocarbon') && s.flights === 60, `missions, laps, records, badges stay: ${JSON.stringify({ m: s.mission, b: s.badges })}`);
   const msg = await p.textContent('#repriced');
   check(await p.isVisible('#repriced') && /New hangar prices/.test(msg) && new RegExp(`${worth[0]} seeds`).test(msg) && /Cleaner Fuel/.test(msg), `the message shows, with the worth and what to save up for: ${msg}`);
   check(await p.evaluate(() => document.getElementById('tour').hidden), 'no tour on top of the message');

@@ -1,10 +1,11 @@
 import { FEATURES, km } from './config.js';
 import { ROUTE, cityAt, legKm } from './route.js';
-import { missionReward, activeChallenges } from './rewards.js';
+import { missionReward, claim, unclaimedCount } from './rewards.js';
+import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
-import { LINES, BADGES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById } from './upgrades.js';
+import { LINES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
-import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, MISSIONS } from './missions.js';
+import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
@@ -91,20 +92,41 @@ export class UI {
     const s = this.save, m = currentMission(s), el = $('tMission');
     if (!s.tutorialDone) { el.hidden = true; return; }
     el.hidden = false;
-    if (!m) { el.innerHTML = `<div class="mis-head">ALL MISSIONS DONE!</div><p>You are a real Contrail Pilot. Now fly as far as you can!</p>`; return; }
-    const n = (s.mission || 0) + 1, lock = missionBlocked(s, m);
-    el.innerHTML = `<div class="mis-head"><span class="mis-no">MISSION ${n}/${MISSIONS.length}</span>${prize(missionReward(n - 1))}</div>
+    if (!m) { el.innerHTML = `<div class="mis-head">ALL MISSIONS DONE!</div><p>You are a real Contrail Pilot. Now go for the badges!</p>`; return; }
+    const i = missionIndexOf(m), lock = missionBlocked(s, m);
+    el.innerHTML = `<div class="mis-head"><span class="mis-no">MISSION ${i + 1}/${MISSIONS.length}</span>${prize(missionReward(i))}</div>
       <div class="mis-body"><i class="mi ${m.icon}"></i><div><b>${m.title}</b><p>${m.sub}</p>
       ${lock ? `<p class="mis-need">Needs: <b>${m.needs.text}</b></p>` : m.tip ? `<p class="mis-tip">${m.tip}</p>` : ''}</div></div>`;
   }
 
-  // Three challenges at a time, each with its prize; a done one is replaced after the flight.
-  renderChallenges() {
-    const s = this.save, el = $('tChallenges');
-    el.hidden = !s.tutorialDone;
-    if (el.hidden) return;
-    el.innerHTML = '<p class="label">Challenges</p>' + activeChallenges(s).map(c => `<div class="chal"><span>${c.text}</span>${prize(c)}</div>`).join('');
-    writeSave(s);   // the chosen three are kept
+  // Every seed and crystal counter on screen, after a CLAIM; a quick +N pops up too.
+  renderBank(paid) {
+    const s = this.save;
+    for (const [a, b] of [['tTrees', 'tCrystals'], ['hTrees', 'hCrystals'], ['wSeeds', 'wCrystals']]) {
+      if ($(a)) $(a).textContent = s.seeds;
+      if ($(b)) $(b).textContent = s.crystals || 0;
+    }
+    if (paid && (paid.seeds || paid.crystals)) sfx.coin();
+  }
+
+  // Prizes waiting to be claimed: each with a CLAIM button, plus CLAIM ALL. Missions and badges
+  // never pay themselves; the player taps to collect (src/rewards.js).
+  renderPrizes(el = $('tChallenges'), after = () => {}) {
+    const s = this.save, list = s.unclaimed || [];
+    el.hidden = !s.tutorialDone || !list.length;
+    if (el.hidden) { el.innerHTML = ''; return; }
+    const pic = u => (u.kind === 'badge' ? `<img class="prize-medal" src="${medal(u.id, u.tier)}" alt="">` : '<i class="mi mi-seed"></i>');
+    el.innerHTML = `<p class="label">Prizes to claim</p>` + list.map(u => `<div class="claim-row"><span>${pic(u)}${u.label}</span>${prize(u)}<button class="btn claim" data-key="${u.key}" type="button">CLAIM</button></div>`).join('')
+      + (list.length > 1 ? '<button class="btn claim all" data-key="" type="button">CLAIM ALL</button>' : '');
+    el.querySelectorAll('.claim').forEach(btn => btn.onclick = () => {
+      const paid = claim(s, btn.dataset.key || null);
+      writeSave(s);
+      sfx.buy();
+      btn.closest('.claim-row, .claim-panel, p, div')?.classList.add('claimed');
+      this.renderPrizes(el, after);
+      this.renderBank(paid);
+      after();
+    });
   }
 
   // The journey strip on the FLY screen: where you are, the next city, a dot per city round the loop.
@@ -146,7 +168,7 @@ export class UI {
     const any = Object.values(this.save.planted || {}).some(n => n > 0);
     $('tMeter').innerHTML = any ? meterHTML(this.save) : '';
     this.renderMission();
-    this.renderChallenges();
+    this.renderPrizes();
     this.renderJourney();
     this.showOnly('title');
     if (this.showRepriced()) return;
@@ -214,12 +236,12 @@ export class UI {
     $('rFree').hidden = !this.save.freeUpgrade;
     $('rSkip').hidden = false;
     $('tabHangar').classList.toggle('glow', this.hasNew());   // something to spend: the bar's HANGAR glows
-    const nb = r.newBadges.map(id => BADGES.find(x => x.id === id)?.name).filter(Boolean);
-    const rw = r.rewards || [];
+    const rw = (r.rewards || []).filter(u => (this.save.unclaimed || []).some(x => x.key === u.key));
     $('rRewards').hidden = !rw.length;
-    $('rRewards').innerHTML = rw.map(x => `<div class="rw ${x.kind}"><span>${{ mission: 'MISSION', challenge: 'CHALLENGE', city: '', lap: '' }[x.kind]} ${x.label}</span>${prize(x)}</div>`).join('');
+    if (rw.length) this.renderPrizes($('rRewards'));
+    const nb = (r.rewards || []).filter(u => u.kind === 'badge');
     $('rBadges').hidden = !nb.length;
-    $('rBadges').innerHTML = nb.length ? `NEW BADGE: <b>${nb.join(', ')}</b>` : '';
+    $('rBadges').innerHTML = nb.map(u => `<span class="new-badge"><img src="${medal(u.id, u.tier)}" alt="">NEW BADGE: <b>${u.label}</b></span>`).join('');
     $('rFact').textContent = FACTS[Math.floor(Math.random() * FACTS.length)];
     this.showOnly('results');
 
@@ -335,8 +357,20 @@ export class UI {
     this.renderPlaneModel();
     $('hUpgrades').querySelectorAll('[data-info]').forEach(btn => btn.onclick = () => this.showInfo(btn.dataset.info));
 
-    $('hBadges').innerHTML = BADGES.map(b =>
-      `<div class="badge ${s.badges.includes(b.id) ? 'got' : ''}"><b>${b.name}</b>${b.desc}</div>`).join('');
+    $('hBadges').innerHTML = this.badgeGridHTML();
+  }
+
+  // Every badge, by theme: medal (or locked / ??? for secrets), name, what it needs, next tier.
+  badgeGridHTML() {
+    const s = this.save;
+    return Object.entries(THEMES).map(([th, name]) => `<p class="label">${name}</p><div class="badge-grid">` + BADGES.filter(b => b.theme === th).map(b => {
+      const t = tierOf(s, b.id), pr = progressOf(s, b), hidden = b.secret && !t;
+      const img = t ? medal(b.id, t) : hidden ? 'assets/ui/badge-secret.png' : 'assets/ui/badge-locked.png';
+      const say = x => x.charAt(0).toUpperCase() + x.slice(1);   // one-tier badges: just what to do, no "1 ..."
+      const next = pr.goal === null ? 'Done!' : b.tiers.length === 1 ? `${say(b.unit)}.`
+        : `${tierName(b, t + 1)}: ${pr.goal.toLocaleString()} ${b.unit}${pr.value !== null ? ` (${pr.value.toLocaleString()} so far)` : ''}`;
+      return `<div class="badge2 ${t ? 'got' : ''}"><img src="${img}" alt=""><b>${hidden ? '???' : b.name}</b><span>${hidden ? 'A secret badge. Keep flying!' : next}</span></div>`;
+    }).join('') + '</div>').join('');
   }
 
   // One upgrade line's card (hangar and NATURE screen): name, level pips, (i), next level + BUY.
@@ -423,7 +457,6 @@ export class UI {
     s.sparkle = true;   // the plane sparkles on its next take-off (GameScene.syncPlaneParts)
     this.sparkleModel = true;
     if (next.fuel) s.fuel = next.fuel;              // switch to the new fuel straight away
-    if (next.fuel === 'hydrogen' && !s.badges.includes('zeroCarbon')) s.badges.push('zeroCarbon');
     writeSave(s);
     sfx.buy();
     this.refresh();

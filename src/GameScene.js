@@ -8,10 +8,10 @@ import { Hud } from './Hud.js';
 import { loadout } from './upgrades.js';
 import { sendFlight } from './online.js';
 import { ROUTE, cityAt, legKm } from './route.js';
-import { payRewards } from './rewards.js';
+import { addPrizes } from './rewards.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
-import { current as currentMission, MISSIONS } from './missions.js';
+import { current as currentMission, complete as completeMission, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { LANDMARKS } from './landmarks.js';
@@ -197,7 +197,9 @@ export class GameScene extends Phaser.Scene {
 
     const font = { fontFamily: FONT, fontSize: '16px', color: COLOURS.text, stroke: '#000', strokeThickness: 4 };
     this.distText = this.add.text(WIDTH / 2, 8, '', font).setOrigin(0.5, 0);
-    this.missionText = this.add.text(WIDTH / 2, 46, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a' }).setOrigin(0.5, 0);
+    // Mission line: wraps inside the two HUD bars (about 25 characters a line) and never spills off screen.
+    this.missionText = this.add.text(WIDTH / 2, 46, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a', align: 'center',
+      wordWrap: { width: 200, useAdvancedWrap: true }, maxLines: 2, lineSpacing: 2 }).setOrigin(0.5, 0);
     this.nextText = this.add.text(WIDTH / 2, 58, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
     this.hintText = this.add.text(4, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, lineSpacing: 4 }).setOrigin(0, 0);
     this.parcelText = this.add.text(4, HEIGHT - 11, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0);
@@ -602,7 +604,8 @@ export class GameScene extends Phaser.Scene {
   // Only NIGHTS get harder (more and bigger icy air): day shade, and saving up cooling, stay as they are.
   lateRamp() { return this.isDay ? 1 : 1 + CLIMATE.latePer10k * Math.max(0, this.distancePx - CLIMATE.lateFrom) / 10000; }
 
-  multiplier() { return 1 + this.kit.perSkip * this.airportsSkipped; }   // Bigger Hold: grows faster
+  // Bigger Hold: grows faster. Rounded to 1 decimal so 1 + 0.6 * n never shows as 3.4000000000000004.
+  multiplier() { return Math.round((1 + this.kit.perSkip * this.airportsSkipped) * 10) / 10; }
 
   hitbox() { return { x: this.plane.x, y: this.plane.y, w: PLANE.w, h: PLANE.h }; }
 
@@ -1742,17 +1745,8 @@ export class GameScene extends Phaser.Scene {
     const gained = landed ? earned.reduce((a, e) => a + e.n, 0) : 0;
     if (!landed && this.cargo) this.popup(this.plane.x + 25, this.plane.y - 14, `-${this.cargo} seeds lost!`, '#ff6a5a', 16);
 
-    const newBadges = [];
-    const award = (id, cond) => { if (cond && !this.save.badges.includes(id)) { this.save.badges.push(id); newBadges.push(id); } };
-    award('firstLanding', landed);
-    award('longHaul', landed && this.airportsSkipped >= 2);
-    award('sunShield', this.sunBlocked >= 30);
-    award('nightOwl', this.nightOwl);
-    award('coolPlanet', landed && heat < 0);
-    award('forester', this.planted >= 3);
-    award('treeHunter', landed && this.cargo >= 15);
-
     if (landed) this.save.landings = (this.save.landings || 0) + 1;
+    if (landed && heat < 0 && !this.school) this.save.coolLandings = (this.save.coolLandings || 0) + 1;   // Cool Planet badge
     const crash = landed ? null : crashKind(reason);
     if (crash && !this.school) { this.save.crashes = this.save.crashes || {}; this.save.crashes[crash] = (this.save.crashes[crash] || 0) + 1; }
     // Mission: done or not, and move on to the next one.
@@ -1763,9 +1757,9 @@ export class GameScene extends Phaser.Scene {
     const partial = { landed, landedAt: this.landedAt, lap, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
       crash, crashes: this.save.crashes || {}, distance: m, kinds: this.speciesPlanted.size, bumped: this.bumped, goldens: this.goldens,
       onRunway: this.parcelOnRunway, forestFull: this.forestFullSaid, projects: projectsDone(this.save).map(p => p.id) };
-    const missionDone = !!(mission && mission.check(partial));
-    const missionIndex = missionDone ? (this.save.mission || 0) : null;
-    if (missionDone) this.save.mission = (this.save.mission || 0) + 1;
+    const missionDone = !!(mission && mission.check(partial, this.save));
+    const missionIndex = missionDone ? missionIndexOf(mission) : null;
+    if (missionDone) completeMission(this.save, mission);
     const nextMission = this.school ? null : currentMission(this.save);
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
     if (landed && !this.school) { this.save.city = reached % ROUTE.length; if (lap) this.save.laps = (this.save.laps || 0) + 1; }
@@ -1775,10 +1769,10 @@ export class GameScene extends Phaser.Scene {
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
-    // Missions, challenges, new cities and laps pay seeds + crystals (src/rewards.js).
-    if (lap && !this.save.badges.includes('roundTheWorld')) { this.save.badges.push('roundTheWorld'); newBadges.push('roundTheWorld'); }
-    const rewards = this.school ? [] : payRewards(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, dodges: this.dodgesTotal,
-      kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionIndex, mission && mission.title);
+    // Missions and badges are prizes to CLAIM, not paid now (src/rewards.js, src/badges.js).
+    const rewards = this.school ? [] : addPrizes(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, dodges: this.dodgesTotal,
+      kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionDone ? mission : null, missionIndex);
+    const newBadges = rewards.filter(p => p.kind === 'badge').map(p => p.id);
     writeSave(this.save);
 
     this.result = {
@@ -1787,7 +1781,7 @@ export class GameScene extends Phaser.Scene {
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       rewards,
-      mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
+      mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);
     else sendFlight({   // to the online boards, if this device has a pilot name; queued when offline

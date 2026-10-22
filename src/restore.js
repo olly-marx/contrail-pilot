@@ -9,6 +9,7 @@ import { LINES, nextLevel, unlocked, level } from './upgrades.js';
 import { PROJECTS, biodiversity } from './nature.js';
 import { MISSIONS } from './missions.js';
 import { missionReward, LAP, NEW_CITY } from './rewards.js';
+import { earnBadges } from './badges.js';
 import { ROUTE } from './route.js';
 
 export const skySeeds = km => { const d = km / 1000; return Math.round(0.42 * d + 0.847 * d * d); };
@@ -31,7 +32,7 @@ export function rebuildSave(flights, keep = {}) {
     flights: flights.length, landings: landed.length, mission: missions, laps,
     bestDistance: landed.reduce((a, f) => Math.max(a, f.distance_m), 0),
     city: 0, visited: ROUTE.slice(0, cities + 1).map(c => c.name),
-    badges: [...new Set([...(keep.badges || []), ...(landed.length ? ['firstLanding'] : []), ...(laps ? ['roundTheWorld'] : [])])],
+    missionsDone: MISSIONS.slice(0, missions).map(m => m.id), unclaimed: [],
     tours: [...new Set([...(keep.tours || []), 'name', 'hangar'])],
   };
   // Spend: the cheapest upgrade level or habitat project on offer, until nothing is affordable.
@@ -47,6 +48,9 @@ export function rebuildSave(flights, keep = {}) {
     if (o.kind === 'line') { save.levels[o.id] = level(save, o.id) + 1; if (o.fuel) save.fuel = o.fuel; }
     else save.habitat.woodland.push(o.id);
   }
-  if ((save.levels.fuel || 0) >= 4) save.badges.push('zeroCarbon');
+  // Badges from the rebuilt history (landings, cities, trees, hydrogen...), already paid: the
+  // seeds above already include what the flights earned. (2026-10-22: badges are src/badges.js.)
+  save.badgeTiers = {};
+  earnBadges(save, { landed: false, distance: 0, cargo: -1 });
   return { save, worth };
 }

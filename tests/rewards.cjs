@@ -1,6 +1,6 @@
-// Rewards (src/rewards.js): missions pay seeds + crystals, 3 challenges at a time pay and are
-// replaced, a first landing in a new city pays, and a lap of the world pays big + a badge.
-// Checks the exact amounts banked, and that challenges you can't do yet are never offered.
+// Rewards (src/rewards.js, 2026-10-22): mission and badge prizes are never paid automatically.
+// They wait in save.unclaimed (and survive a reload) until the player taps CLAIM on the results or
+// the FLY screen. Checks the exact amounts banked.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/rewards.cjs
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
@@ -24,70 +24,47 @@ const URL = process.env.URL || 'http://localhost:8000/';
     s.finish({ landed }); return s.result; }, [landed, k, extra]);
 
   await p.goto(URL);
-  // 1. The FLY screen: mission 1's prize, and 3 challenges with prizes.
-  await setSave({ ...base, mission: 0 }); await reload();
+  const MOST = ['land', 'seeds-5', 'shade-10', 'clean-night', 'pass-1', 'plant-tree', 'crystals-5', 'go-clean', 'reach-cairo', 'turbulence', 'kinds-3', 'rewild'];
+  // 1. The FLY screen: mission 1's prize on its card; no prizes panel while nothing waits.
+  await setSave({ ...base, missionsDone: [], badgeTiers: {} }); await reload();
   check(/\+15/.test(await p.textContent('#tMission')), `mission 1 card should show its prize (+15): "${await p.textContent('#tMission')}"`);
-  const chals = await p.$$eval('#tChallenges .chal', els => els.map(e => e.textContent));
-  check(chals.length === 3 && chals.every(t => /\+\d+/.test(t)), `3 challenges with prizes: ${JSON.stringify(chals)}`);
+  check(await p.$eval('#tChallenges', e => e.hidden), 'no prizes panel when nothing is waiting');
 
-  // 2. Land in PARIS: mission 1 (+15 seeds +1) and new city PARIS (+15 +1). Challenges set to
-  // ones this flight can't do, so only those two pay.
-  await setSave({ ...base, mission: 0, challenges: ['seeds-15', 'far-4000', 'night-owl'] }); await reload();
+  // 2. Land in PARIS: mission 1's prize (+15 +1) WAITS. Nothing paid until CLAIM on the results.
   await fly(); let r = await end(true);
   let s = await save();
-  check(s.seeds === 100 + 15 + 15 && s.crystals === 10 + 1 + 1, `PARIS: seeds 130 / crystals 12, got ${s.seeds} / ${s.crystals}; rewards ${JSON.stringify(r.rewards)}`);
-  check(r.rewards.map(x => x.kind).join() === 'mission,city', `PARIS rewards should be mission + city: ${JSON.stringify(r.rewards)}`);
+  check(s.seeds === 100 && s.crystals === 10, `nothing paid on landing: ${s.seeds} / ${s.crystals}`);
+  check(r.rewards.map(x => x.key).join() === 'mission:land' && s.unclaimed.length === 1, `prize waiting: ${JSON.stringify(r.rewards)}`);
   await p.waitForTimeout(1200); await p.mouse.click(195, 400); await p.waitForTimeout(600);
-  check(/MISSION/.test(await p.textContent('#rRewards')) && /New city: PARIS/.test(await p.textContent('#rRewards')), `results should list the rewards: "${await p.textContent('#rRewards')}"`);
-  // ...and landing in PARIS again pays no city bonus.
-  await setSave({ ...s, city: 0, mission: 5 }); await reload(); await fly(); r = await end(true);
-  check(!r.rewards.some(x => x.kind === 'city'), `PARIS a second time: no new-city bonus: ${JSON.stringify(r.rewards)}`);
-  await p.waitForTimeout(1200);
-
-  // 3. A challenge: "Fly past an airport, then land" pays +30 +1 and is replaced by another.
-  await setSave({ ...base, mission: 5, visited: ['LONDON', 'PARIS', 'BERLIN'], challenges: ['pass-1', 'seeds-15', 'far-4000'] }); await reload();
-  await fly(); r = await end(true, 1);
+  const btn = await p.$('#rRewards .btn.claim');
+  check(!!btn && /CLAIM/.test(await p.textContent('#rRewards')), `results show a CLAIM button: "${await p.textContent('#rRewards')}"`);
+  if (btn) await btn.click();
   s = await save();
-  check(r.rewards.some(x => x.kind === 'challenge' && x.seeds === 30) && s.seeds === 130 && s.crystals === 11, `pass-1 should pay +30 +1: seeds ${s.seeds}, crystals ${s.crystals}, ${JSON.stringify(r.rewards)}`);
-  check(s.challenges.length === 3 && !s.challenges.includes('pass-1') && s.challenges.includes('seeds-15'), `the done challenge is replaced, the others stay: ${s.challenges}`);
-  await p.waitForTimeout(1200);
+  check(s.seeds === 115 && s.crystals === 11 && s.unclaimed.length === 0, `CLAIM pays exactly +15 +1: ${s.seeds} / ${s.crystals}, left ${JSON.stringify(s.unclaimed)}`);
 
-  // 4. A lap: from REYKJAVIK, landing in LONDON pays +300 +25 and the Round the World badge.
-  // (Mission 5 is "Make 10 shade", which a lap doesn't complete.)
-  await setSave({ ...base, city: 15, mission: 4, challenges: ['seeds-15', 'far-4000', 'night-owl'] }); await reload();
+  // 3. Prizes from earlier wait on the FLY screen; CLAIM ALL pays them all exactly; they survive a reload.
+  const two = [{ key: 'badge:frequent:1', kind: 'badge', id: 'frequent', tier: 1, label: 'Frequent Flyer (Bronze)', seeds: 30, crystals: 2 },
+    { key: 'mission:seeds-5', kind: 'mission', id: 'seeds-5', label: 'Land with 5 seeds', seeds: 35, crystals: 3 }];
+  await setSave({ ...base, missionsDone: ['land'], badgeTiers: { frequent: 1 }, unclaimed: two }); await reload();
+  check(!(await p.$eval('#tChallenges', e => e.hidden)) && (await p.$$('#tChallenges .claim-row')).length === 2, 'the FLY screen lists the 2 waiting prizes');
+  await reload();
+  check((await save()).unclaimed.length === 2, 'waiting prizes survive a reload');
+  await p.click('#tChallenges .btn.claim.all');
+  s = await save();
+  check(s.seeds === 165 && s.crystals === 15 && s.unclaimed.length === 0, `CLAIM ALL pays +65 +5: ${s.seeds} / ${s.crystals}`);
+
+  // 4. A lap from REYKJAVIK completes "Fly round the world": its prize waits; no automatic lap bonus.
+  await setSave({ ...base, city: 15, missionsDone: MOST, badgeTiers: {} }); await reload();
   await fly(); r = await end(true);
   s = await save();
-  check(s.seeds === 400 && s.crystals === 35 && s.badges.includes('roundTheWorld') && r.rewards.map(x => x.kind).join() === 'lap', `lap: seeds 400 / crystals 35 + badge, got ${s.seeds} / ${s.crystals}, ${s.badges}, ${JSON.stringify(r.rewards)}`);
+  check(r.mission && r.mission.done && r.rewards.some(x => x.key === 'mission:world') && s.seeds === 100, `lap: world mission waits, nothing paid: ${s.seeds}, ${JSON.stringify(r.rewards)}`);
   await p.waitForTimeout(1200);
 
-  // 4b. A lap also completes a "Reach CITY" mission (you went past it): mission 4 is Reach BERLIN.
-  await setSave({ ...base, city: 15, mission: 3, challenges: ['seeds-15', 'far-4000', 'night-owl'] }); await reload();
-  await fly(); r = await end(true);
-  check(r.mission && r.mission.done && r.rewards.some(x => x.kind === 'mission'), `a lap should complete Reach BERLIN: ${JSON.stringify(r.mission)}`);
-  await p.waitForTimeout(1200);
-
-  // 5. A crash pays no new city and no lap.
-  await setSave({ ...base, city: 15, mission: 5, challenges: ['seeds-15', 'far-4000', 'night-owl'] }); await reload();
+  // 5. A crash pays nothing; its only prize is the secret Oops! badge, waiting.
+  await setSave({ ...base, city: 15, missionsDone: MOST, badgeTiers: {} }); await reload();
   await fly(); r = await end(false);
-  check(r.rewards.length === 0 && (await save()).seeds === 100, `a crash should pay nothing here: ${JSON.stringify(r.rewards)}`);
-
-  // 5b. A challenge just done never comes straight back (it did ~1 in 14 times; failed CI 9e1a8b8).
-  const back = await p.evaluate(async () => { const { payRewards } = await import('./src/rewards.js'); let n = 0;
-    for (let i = 0; i < 300; i++) { const s = { seeds: 0, crystals: 0, levels: {}, challenges: ['pass-1', 'seeds-15', 'far-4000'], visited: ['LONDON', 'PARIS'] };
-      payRewards(s, { landed: true, landedAt: 'PARIS', airportsSkipped: 1, cargo: 0, distance: 100 }, null, null); if (s.challenges.includes('pass-1')) n++; } return n; });
-  check(back === 0, `a challenge just done came straight back ${back} times in 300`);
-
-  // 6. Never offered before you can do it (no tree challenges without Tree Planting), and only
-  // from your stage or the one below (stages by upgrade levels owned: 0, 5, 15, 30, 45).
-  const offered = await p.evaluate(async () => { const { fillChallenges, CHALLENGES } = await import('./src/rewards.js'); const out = {};
-    for (const [name, levels] of [['new', {}], ['stage3', { fuel: 3, engine: 3, radar: 2, cabin: 4, magnet: 2, gear: 2 }], ['stage5', { fuel: 4, engine: 5, cabin: 4, trees: 4, species: 4, rewild: 6, radar: 4, magnet: 3, airframe: 3, wings: 2, gear: 2, hold: 3, soil: 3 }]]) {
-      const seen = new Set(); for (let i = 0; i < 300; i++) { const s = { levels, challenges: [] }; fillChallenges(s).forEach(c => seen.add(c.id)); }
-      out[name] = [...seen].map(id => CHALLENGES.find(c => c.id === id)); }
-    return out; });
-  const ids = cs => cs.map(c => c.id).join(',');
-  check(offered.new.every(c => c.stage === 1) && !ids(offered.new).includes('plant-2') && offered.new.length >= 6, `a new pilot gets only stage-1 challenges, no tree ones: ${ids(offered.new)}`);
-  check(offered.stage3.every(c => c.stage === 2 || c.stage === 3) && offered.stage3.some(c => c.stage === 3) && !ids(offered.stage3).includes('kinds-2'), `16 levels (stage 3): stage 2-3 challenges only, no tree ones: ${ids(offered.stage3)}`);
-  check(offered.stage5.every(c => c.stage >= 4) && ids(offered.stage5).includes('kinds-5'), `47 levels (stage 5): stage 4-5 challenges, incl. all 5 kinds: ${ids(offered.stage5)}`);
+  s = await save();
+  check(s.seeds === 100 && r.rewards.map(x => x.key).join() === 'badge:oops:1', `a crash pays nothing, Oops! waits: ${s.seeds}, ${JSON.stringify(r.rewards)}`);
 
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
   await b.close();

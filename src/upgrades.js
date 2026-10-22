@@ -231,17 +231,7 @@ export const FUELS = {
 };
 
 
-export const BADGES = [
-  { id: 'firstLanding', name: 'First Landing', desc: 'Land at an airport.' },
-  { id: 'longHaul', name: 'Long Haul', desc: 'Fly past 2 airports, then land.' },
-  { id: 'treeHunter', name: 'Seed Hunter', desc: 'Land with 15 seeds on board.' },
-  { id: 'sunShield', name: 'Sun Shield', desc: 'Make lots of shade (-30) in one flight.' },
-  { id: 'nightOwl', name: 'Night Owl', desc: 'Fly a whole night without trapping heat.' },
-  { id: 'coolPlanet', name: 'Cool Planet', desc: 'Land with the planet cooler than at take off.' },
-  { id: 'forester', name: 'Forester', desc: 'Plant 3 trees in one flight.' },
-  { id: 'zeroCarbon', name: 'Zero Carbon Pilot', desc: 'Get the hydrogen engine.' },
-  { id: 'roundTheWorld', name: 'Round the World', desc: 'Fly all the way round the world, back to LONDON.' },
-];
+// Badges moved to src/badges.js on 2026-10-22 (tiered achievements with medals and claimable prizes).
 
 // The hangar has two tabs: the plane (and contrail research) first, nature second.
 export const tabOf = line => (['Trees', 'Nature'].includes(line.group) ? 'nature' : 'plane');

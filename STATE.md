@@ -79,6 +79,32 @@ Flight School is now 7 short steps (hold, tap, storm, seeds, day icy air, night 
 and ends on the How to play page (`#how`: one-line goal + 5 pictures), which GOT IT! closes to
 the results; the page is also on the title screen.
 
+## Progress: missions, badges, prizes (reworked 2026-10-22, art session; supersedes the notes below)
+
+Three systems, each with one job. Code: `src/missions.js`, `src/badges.js`, `src/rewards.js`; test `tests/badges.cjs`.
+- **Missions = the lessons.** 13, in order, one idea each, most with a lesson picture: land at an
+  airport, land with 5 seeds, make 10 shade, a night with no contrail, fly past an airport then land,
+  plant a tree, 5 ice crystals, make your plane cleaner, reach CAIRO (or beyond), turbulence, 3 kinds of
+  tree, a habitat project, round the world. No mission names a city that can end up behind you
+  (Lola flew past PARIS on her first flight and the old "Land in PARIS" stranded her). Done missions
+  are `save.missionsDone` (ids); `save.mission` is now the COUNT done (pilot.js, restore.js read it).
+- **Badges = achievements.** 22 (`src/badges.js`), 12 tiered bronze/silver/gold, 7 secret ("???" until
+  earned: Oops!, Bird Strike, Told Off, Meltdown, Close Call, Lucky 7, Seed Dodger). Each measures one
+  number from the flight or the history; `save.badgeTiers` id -> tier; `save.badges` = ids earned
+  (kept for restore.js). Medals `assets/ui/badge-<id>-<tier>.png` (tools/art/make_badges.py). Butterfingers
+  (parcel on a runway) was dropped: possible in code, but nothing in play leads you there.
+- **Prizes are claimed, never auto-paid.** Missions and badge tiers go into `save.unclaimed`; CLAIM /
+  CLAIM ALL on the results screen and the FLY screen (`#tChallenges` is now "Prizes to claim").
+- **Gone:** challenges and stages (`stageOf`), the +15/+1 new-city and +300/+25 lap prizes (cities feed
+  Globetrotter; "Round the World in One Flight" is a badge). `missionReward`, `NEW_CITY`, `LAP` stay
+  exported for restore.js. Old saves convert once on load (`migrateMissions`, `migrateBadges`), unpaid.
+- Economy (from the tables, not measured in play): all badge prizes ~7,700 seeds over a whole game,
+  vs ~4,000-8,000 from the old challenges + city prizes. Watch it.
+- Also fixed: the HUD mission line wraps inside the bars (2 lines max); the landing multiplier is
+  rounded to 1 decimal (1 + 0.7 x 3 showed 3.0999999999999996).
+
+SUPERSEDED 2026-10-22 (see the Progress section above; the mission list, `save.mission` as an index, and
+"Mission 1 requires landing at the FIRST airport" below are no longer true. Kept as history):
 Missions (2026-10-18, `src/missions.js`, `save.mission` index): the game's spine, 10 in order:
 Land in PARIS; land with 5 seeds; a night with no contrail; reach AMSTERDAM; make 10 shade;
 reach ROME (CO2 makes this need fuel/engines: `co2ToHeat` 1.5 = kerosene overheats ~6.5 km);
@@ -118,7 +144,8 @@ onboarding" below, in any order, each its own tested commit:
 1. DONE 2026-10-21 (fb3c048): trees for long runs. See "Trees for long runs" below.
 2. Re-price every upgrade per stage (income per flight at each stage; flights of saving per level;
    no useless or dominant level). Show the user the table before changing prices.
-3. DONE 2026-10-21: tiered missions/challenges. Stages by upgrade levels owned (0/5/15/30/45:
+3. DONE 2026-10-21, SUPERSEDED 2026-10-22 (challenges and stages removed; crash missions became secret
+   badges; see Progress above): tiered missions/challenges. Stages by upgrade levels owned (0/5/15/30/45:
    Learner, Cleaner plane, Long haul, Nature builder, Round the world; `stageOf` in rewards.js).
    9 new missions after the first 10 (19 now): turbulence, 10,000 km, "Crash into birds for the
    first time" and "Get told off by air traffic control" (done by a crash, or at once if it already
@@ -190,7 +217,7 @@ Asked by the user, in this order of their message (nothing started yet; explain 
    boards / results / about are separate pop-ups with their own back buttons; design one clear
    navigation model).
 STATUS 2026-10-20: all five built and pushed. 1 rewards (`src/rewards.js`: mission prizes, 3 of 16
-challenges, +15/+1 new city, +300/+25 lap + Round the World badge); 2 upgrade trees (16 lines,
+challenges, +15/+1 new city, +300/+25 lap + Round the World badge; SUPERSEDED 2026-10-22, see Progress); 2 upgrade trees (16 lines,
 53 levels; `tree` + `requires` branches; new: Lighter Plane, Long Wings, Landing Gear, Bigger Hold,
 Crystal Lens, Weather Forecast, Tree Nursery); 3 journey (`src/route.js`, 16 cities, legs real km
 clamped 1000-3000, a lap 32,060 km (sum of legKm; "31,520" was written here until 2026-10-21 and was always wrong); flights start at `save.city`); 4 lap bonus; 5 the bottom bar

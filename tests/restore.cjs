@@ -45,7 +45,9 @@ const UID = '11111111-2222-3333-4444-555555555555', OLD = 'dddddddd-0000-0000-00
   const s = await p.evaluate(() => ({ save: JSON.parse(localStorage.getItem('contrailPilot.v2')), pilot: JSON.parse(localStorage.getItem('contrailPilot.pilot')) }));
   const lv = Object.values(s.save.levels || {}).reduce((a, n) => a + n, 0);
   check(s.save.bestDistance === 18000 && s.save.mission === 2 && s.save.laps === 1 && s.save.landings === 2 && s.save.flights === 3, `history copied exactly: ${JSON.stringify({ b: s.save.bestDistance, m: s.save.mission, l: s.save.laps, la: s.save.landings, f: s.save.flights })}`);
-  check(lv >= 5 && s.save.planted.oak === 2 && s.save.badges.includes('roundTheWorld'), `upgrades bought from the rebuilt seeds, trees and badges: ${lv} levels ${JSON.stringify(s.save.levels)} ${JSON.stringify(s.save.planted)}`);
+  check(lv >= 5 && s.save.planted.oak === 2, `upgrades bought from the rebuilt seeds and trees: ${lv} levels ${JSON.stringify(s.save.levels)} ${JSON.stringify(s.save.planted)}`);
+  // Badges come back from the history as already earned: nothing to claim (the rebuilt seeds already paid for them).
+  check(s.save.badgeTiers && s.save.badges.length >= 1 && s.save.badges.every(id => s.save.badgeTiers[id] > 0) && (s.save.unclaimed || []).length === 0, `badges rebuilt, none to claim twice: ${JSON.stringify({ b: s.save.badges, u: s.save.unclaimed })}`);
   check(s.pilot && s.pilot.first === 'Olly' && s.pilot.word === 'Swift' && s.pilot.tag === 74, `this device is now Olly the Swift 74: ${JSON.stringify(s.pilot)}`);
   check(s.save.muted === true && s.save.found && s.save.found.cow, 'settings and found animals are kept');
   check(calls.some(c => c[0] === 'claim' && c[1].code === 'olly-code'), 'the claim was sent with the code');
