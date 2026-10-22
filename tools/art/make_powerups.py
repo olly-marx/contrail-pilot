@@ -2,12 +2,15 @@
 
   power-saf   a green SAF fuel can with a leaf: cleaner fuel for a while
   power-auto  a blue autopilot badge with a white plane: the plane flies itself for a while
+  meter-tree-0..3  the forest meter's slots: bare soil, seedling, young tree, grown tree (trees.py oak)
 
 Run from the repo root:  python3 tools/art/make_powerups.py
 """
 from pathlib import Path
 
 from PIL import Image
+
+from trees import WOODLAND, render_tree
 
 A = Path(__file__).resolve().parents[2] / 'assets'
 INK = (26, 26, 34, 255)
@@ -70,7 +73,13 @@ def main():
     draw(SAF, {'G': '#43a047', 'L': '#8dffb0', 'g': '#2c7a31', 'h': '#5a5a64', 's': '#5a5a64',
                'w': '#f4f1e8', 'l': '#c9e58f'}).save(A / 'power-saf.png')
     draw(AUTO, {'B': '#2a7fd0', 'L': '#8ac8ff', 'b': '#1a5aa0', 'w': '#ffffff', 'y': '#ffe15a'}).save(A / 'power-auto.png')
-    print('drew power-saf, power-auto')
+    soil = Image.new('RGBA', (9, 3), (0, 0, 0, 0))
+    for x in range(1, 8):
+        soil.putpixel((x, 1), hexc('#8a5a30')); soil.putpixel((x, 2), hexc('#5f3d20'))
+    soil.save(A / 'meter-tree-0.png')
+    for st in range(3):
+        render_tree(WOODLAND['oak'], st, 0.75 if st else 1.2).save(A / f'meter-tree-{st + 1}.png')
+    print('drew power-saf, power-auto, meter-tree-0..3')
 
 
 if __name__ == '__main__':

@@ -55,7 +55,7 @@ export class GameScene extends Phaser.Scene {
     for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
     for (const c in LANDMARKS) this.load.image(LANDMARKS[c].key, `assets/${LANDMARKS[c].key}.png`);   // art session: one per city
     // Sprites: drawn by tools/art/make_sprites.py.
-    for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'power-saf', 'power-auto', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
+    for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'power-saf', 'power-auto', 'meter-tree-0', 'meter-tree-1', 'meter-tree-2', 'meter-tree-3', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
       'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'storm-flash', 'storm-flash-top', 'storm-flash-bottom', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
       this.load.image(k, `assets/${k}.png`);
     // Background wildlife: two frames each (legs / wings).
@@ -203,6 +203,13 @@ export class GameScene extends Phaser.Scene {
     this.missionText = this.add.text(WIDTH / 2, 46, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a', align: 'center',
       wordWrap: { width: 200, useAdvancedWrap: true }, maxLines: 2, lineSpacing: 2 }).setOrigin(0.5, 0);
     this.dialGfx = this.add.graphics().setDepth(5);   // day / night dial (drawDayDial)
+    // Forest meter (bottom right): 10 little trees that grow as your forest soaks up CO2 this flight.
+    // Measured against the biggest forest (FOREST.store, all kinds planted); slots past what your
+    // kinds can hold are dimmed, so planting early, and more kinds, both show.
+    // Between the bottom-left text (which names it) and the DROP button.
+    this.meterTrees = this.kit && this.kit.tree ? Array.from({ length: 10 }, (_, i) =>
+      this.add.image(130 + i * 9, HEIGHT - 2, 'meter-tree-0').setOrigin(0.5, 1).setDepth(5)) : [];
+    this.forestFull = false;
     this.nextText = this.add.text(WIDTH / 2, 58, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
     this.hintText = this.add.text(4, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, lineSpacing: 4 }).setOrigin(0, 0);
     this.parcelText = this.add.text(4, HEIGHT - 11, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0);
@@ -305,7 +312,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat])) { this.scene.restart({ go: true }); return; }
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
-    this.safUntil = 0; this.autoUntil = 0; this.ownKit = null; this.nextPowerAt = POWERUPS.from;   // pick-ups
+    this.safUntil = 0; this.autoUntil = 0; this.ownKit = null; this.nextPowerAt = POWERUPS.from; this.safOffered = false;   // pick-ups
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.setState('takeoff');
     this.rollSpeed = 0;
@@ -351,24 +358,46 @@ export class GameScene extends Phaser.Scene {
 
   // Where the autopilot steers (plane top y): the middle of the next storm gap ahead, else a safe
   // height; nudged above or below a flock of birds near that line.
-  autopilotTarget(avoidIce = false) {
+  autopilotTarget() {
     const ahead = this.storms.filter(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < WIDTH)
       .sort((a, b) => a.rects[0].x - b.rects[0].x)[0];
     let y = ahead ? (ahead.rects[0].height + ahead.rects[1].y) / 2 - PLANE.h / 2 : this.plane.y;
     for (const f of this.birds) {
       if (f.x > this.plane.x - 20 && f.x < this.plane.x + 220 && Math.abs(f.y - y) < 50) y = f.y > y ? f.y - 60 : f.y + 60;
     }
-    if (avoidIce) {   // the autopilot pick-up also keeps out of icy air: over or under it, inside the storm gap
-      const lo = ahead ? ahead.rects[0].height + 4 : 40, hi = ahead ? ahead.rects[1].y - PLANE.h - 4 : SKY_H - 60;
-      for (const i of this.issrs) {
-        if (i.x + i.width < this.plane.x || i.x > this.plane.x + 200) continue;
-        if (y + PLANE.h > i.y - 6 && y < i.y + i.height + 6) {
-          const over = i.y - PLANE.h - 8, under = i.y + i.height + 8;
-          y = over >= lo && (y - over < under - y || under > hi) ? over : under <= hi ? under : y;
-        }
-      }
-    }
     return Phaser.Math.Clamp(y, 40, SKY_H - 60);
+  }
+
+  // The autopilot PICK-UP's pilot: tries every height and flies the path that is best a little way
+  // ahead. Storms and birds are off limits; icy air is sought by day (a shading contrail) but only if
+  // the contrail will fade before dark, and avoided otherwise (it would trap heat). It uses the same
+  // icy-air shape test that makes real contrails (inIssrShape), so it knows exactly where they form.
+  wantContrails() {
+    if (!this.isDay) return false;
+    const { daySeconds: D, nightSeconds: N } = DAYNIGHT;
+    const toDark = D - this.clock % (D + N);
+    return toDark > this.kit.contrailLife / 1000 + 1;
+  }
+
+  autopilotPlan() {
+    const H = PLANE.h, W = PLANE.w, want = this.wantContrails();
+    const ahead = [0, 12, 24, 40, 60, 85, 115, 150];
+    let best = this.plane.y, bestCost = Infinity;
+    for (let y = 34; y <= SKY_H - 80; y += 3) {
+      let cost = Math.abs(y - this.plane.y) * 0.15;
+      ahead.forEach((d, k) => {
+        const w = 1 / (1 + k * 0.35);                                       // nearer matters more
+        const box = { x: this.plane.x + d, y, w: W, h: H };
+        for (const st of this.storms) for (const r of st.rects) {
+          if (box.x < r.x + r.width + 4 && box.x + W > r.x - 4 && y < r.y + r.height + 6 && y + H > r.y - 6) cost += 1000 * w;
+        }
+        const pad = { x: box.x - 8, y: y - 10, w: W + 16, h: H + 20 };          // every bird's picture, with room to spare
+        for (const f of this.birds) for (const bd of f.birds) if (overlaps(pad, { x: bd.img.x, y: bd.img.y, w: bd.img.width, h: bd.img.height })) cost += 1000 * w;
+        for (const i of this.issrs) if (this.inIssrShape(i, box)) cost += (want ? -40 : 600) * w;
+      });
+      if (cost < bestCost) { bestCost = cost; best = y; }
+    }
+    return best;
   }
 
   // A tip that waits for a calm moment: flying, nothing to hit on screen. Checks every 0.5 s.
@@ -417,6 +446,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   applyFlap() {
+    if (this.onAutopilot() && this.gameTime < this.autoFrom + POWERUPS.autoLockMs) return;   // the tap that grabbed it must not cancel it
     this.graceUntil = 0;   // flying again ends the breather
     if (this.onAutopilot()) { this.autoUntil = 0; this.popup(this.plane.x + 20, this.plane.y - 10, 'You have control!', '#ffe15a'); }   // ...and the autopilot pick-up
     this.plane.vy = PLANE.flapVelocity;
@@ -474,11 +504,14 @@ export class GameScene extends Phaser.Scene {
         if (!this.school) this.explainWhenClear('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!', 'lesson-bars');
       }
     } else if (this.state === 'playing' && (this.inGrace() || this.onAutopilot())) {
-      const target = this.autopilotTarget(this.onAutopilot());
-      this.plane.vy = Phaser.Math.Clamp((target - this.plane.y) * 4, -180, 180);
+      const auto = this.onAutopilot();
+      const target = auto ? this.autopilotPlan() : this.autopilotTarget();
+      const lim = auto ? POWERUPS.autoClimb : 180;
+      this.plane.vy = Phaser.Math.Clamp((target - this.plane.y) * (auto ? 10 : 4), -lim, lim);
       this.plane.y += this.plane.vy * dt;
       this.planeSprite.setAlpha(1);
-      this.autoText.setText(this.onAutopilot() ? `AUTOPILOT ${Math.ceil((this.autoUntil - this.gameTime) / 1000)} - TAP to take control` : 'AUTOPILOT - tap to fly!');
+      const left = Math.ceil((this.autoUntil - this.gameTime) / 1000), locked = this.gameTime < (this.autoFrom || 0) + POWERUPS.autoLockMs;
+      this.autoText.setText(this.onAutopilot() ? (locked ? `AUTOPILOT ${left}` : `AUTOPILOT ${left} - TAP to take control`) : 'AUTOPILOT - tap to fly!');
       this.autoText.setPosition(Math.max(this.autoText.width / 2 + 4, this.plane.x + PLANE.w / 2), Math.max(10, this.plane.y - 14)).setVisible(true);
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
@@ -571,6 +604,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.updateTokens(dt, box);
     this.updatePowers();
+    this.updateForestMeter();
     this.updateHazards(dt, box);
     this.updateParcels(dt);
     this.drawAim();
@@ -595,7 +629,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'playing') return;
 
     if (this.school) { this.school.forgive(box); this.updateTexts(inIssr); return; }
-    if (this.inGrace()) { this.updateTexts(inIssr); return; }   // the breather: nothing can crash you
+    if (this.inGrace() || this.onAutopilot()) { this.updateTexts(inIssr); return; }   // the breather and the autopilot pick-up: nothing can crash you
     if (this.heat >= CLIMATE.dangerLine * 0.75 && !this.warnedHot) {
       this.warnedHot = true;
       if (this.explain('x-hot', 'The Earth is getting <b>too hot</b>! If the red bar on the right reaches the top, your flight is over.<br>Land soon, make <b>shade</b> in the daytime, or stay out of icy air at night.', 'lesson-hot')) return;
@@ -638,7 +672,8 @@ export class GameScene extends Phaser.Scene {
     const cy = this.plane.y - PLANE.spriteOffY + PLANE.spriteH / 2;
     this.planeSprite.setPosition(Math.round(cx), Math.round(cy));
     const flying = this.state === 'playing' || this.state === 'over';
-    const tilt = flying ? Phaser.Math.Clamp(this.plane.vy / 600, -PLANE.maxTilt, PLANE.maxTilt) : 0;
+    const steep = this.onAutopilot && this.onAutopilot();   // the autopilot pick-up banks hard
+    const tilt = flying ? Phaser.Math.Clamp(this.plane.vy / (steep ? 520 : 600), steep ? -0.9 : -PLANE.maxTilt, steep ? 0.9 : PLANE.maxTilt) : 0;
     this.planeSprite.setRotation(this.state === 'takeoff' && this.airborne ? -0.15 : tilt);
     this.syncPlaneParts();
   }
@@ -855,6 +890,16 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar.setAlpha(0.55 - 0.35 * n);
   }
 
+  updateForestMeter() {
+    if (!this.meterTrees.length) return;
+    const fill = this.forestStored / FOREST.store * 10, cap = this.forestStore() / FOREST.store * 10;
+    this.meterTrees.forEach((im, i) => {
+      const k = Phaser.Math.Clamp(fill - i, 0, 1);
+      im.setTexture(`meter-tree-${k <= 0.02 ? 0 : k < 0.34 ? 1 : k < 0.67 ? 2 : 3}`).setAlpha(i < Math.ceil(cap - 0.001) ? 1 : 0.3);
+    });
+    this.forestFull = this.trees.length > 0 && this.forestStored >= this.forestStore();   // named in parcelText
+  }
+
   // Day / night dial under the distance: one whole cycle as a strip (day, sunset, night, sunrise)
   // with a marker for now, so you can see night coming.
   drawDayDial(t) {
@@ -1007,7 +1052,7 @@ export class GameScene extends Phaser.Scene {
     const gain = plantGain(this.save, kind);
     this.save.planted[kind] = (this.save.planted[kind] || 0) + 1;
     this.popup(cx, SKY_H - 24, `${SPECIES[kind].name.toUpperCase()} PLANTED!`, '#8dffb0', 8);
-    this.time.delayedCall(450, () => this.popup(cx, SKY_H - 36, `+${gain.toFixed(1)} biodiversity${first ? ' (new kind!)' : ''}`, first ? '#ffe15a' : '#b8f5c8'));
+    if (first) this.time.delayedCall(450, () => this.popup(cx, SKY_H - 36, 'BIODIVERSITY UP! (new kind)', '#ffe15a'));   // the same kind again adds almost nothing: say nothing
     sfx.plant();
     buzz(30);
     // Tree school, steps 2 and 3 (step 1 is the first soil patch): what a tree does for the
@@ -1064,7 +1109,7 @@ export class GameScene extends Phaser.Scene {
     if (this.school) return;   // flight school places everything itself
     if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Get low as you reach the grey runway: the plane lands itself. Or fly on for more seeds!', 'good', 3.5);
 
-    if (this.kit.tree && this.distancePx >= this.nextPlotAt) {
+    if (this.kit.tree && this.parcels > 0 && this.distancePx >= this.nextPlotAt) {   // no parcels left: no more soil
       const x = WIDTH + 10;
       const onRunway = this.runways.some(r => x + this.kit.plotW > r.strip.x - 10 && x < r.strip.x + AIRPORT.runwayLen + 10)
         || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
@@ -1103,8 +1148,14 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.distancePx >= (this.nextPowerAt ??= POWERUPS.from)) {
       this.nextPowerAt += POWERUPS.every;
-      const r = Math.random(), safHelps = !['saf100', 'hydrogen'].includes(this.kit.fuelId);
-      if (!this.school && safHelps && r < POWERUPS.safChance) this.addPower('saf');
+      const r = Math.random(), safHelps = !['saf100', 'hydrogen'].includes((this.ownKit || this.kit).fuelId);
+      const pathY = () => Phaser.Math.Clamp(this.plane.y + Phaser.Math.Between(-50, 50), 60, SKY_H - 90);
+      const firstSaf = !this.safOffered && this.distancePx >= POWERUPS.safFirstAt;
+      if (!this.school && safHelps && (firstSaf || r < POWERUPS.safChance)) {
+        this.safOffered = true;
+        this.addPower('saf', WIDTH + 10, pathY());
+        this.ui.tipOnce('safAhead', 'SAF ahead!', 'Grab the green fuel can: cleaner fuel for a while.', 'good', 3);
+      }
       else if (!this.school && r > 1 - POWERUPS.autoChance) this.addPower('auto');
     }
   }
@@ -1128,7 +1179,7 @@ export class GameScene extends Phaser.Scene {
       this.popup(tx, ty - 8, 'SAF! Cleaner fuel', '#8dffb0');
       this.ui.tipOnce('powerSaf', 'SAF: cleaner fuel!', 'Less CO2, and less soot, so your contrails are thinner and fade sooner. They still happen!', 'good', 4);
     } else {
-      this.autoUntil = this.gameTime + P.autoSeconds * 1000;
+      this.autoUntil = this.gameTime + P.autoSeconds * 1000; this.autoFrom = this.gameTime;
       this.popup(tx, ty - 8, 'AUTOPILOT!', '#ffe15a');
     }
     this.burst(tx, ty, power === 'saf' ? 0x8dffb0 : 0x8ac8ff, 8);
@@ -1799,7 +1850,7 @@ export class GameScene extends Phaser.Scene {
     else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');
     else this.hintText.setText('');
 
-    const forest = this.trees.length ? `FOREST x${this.trees.length}` : '';
+    const forest = this.forestFull ? 'FOREST FULL!' : this.trees.length ? `FOREST x${this.trees.length}` : '';
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
     this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.parcels && soilSoon ? `drop on soil! ${forest}` : forest) : '');
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen;

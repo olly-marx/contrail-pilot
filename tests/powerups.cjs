@@ -38,26 +38,56 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(saf.during.on && saf.during.co2 < saf.before.co2 * 0.8 && saf.during.life < saf.before.life, `SAF: less CO2, shorter-lived contrails: ${JSON.stringify(saf)}`);
   check(!saf.after.on && saf.after.co2 === saf.before.co2 && saf.after.life === saf.before.life, `SAF runs out back to your own fuel: ${JSON.stringify(saf)}`);
 
-  // Autopilot: keeps out of icy air (the breather's autopilot does not need to).
-  const ice = await p.evaluate(() => { const s = game.scene.getScene('game');
-    s.issrs.push({ x: s.plane.x + 20, y: s.plane.y - 30, width: 200, height: 80, fake: true });
-    const inIce = y => y + 12 > s.plane.y - 30 && y < s.plane.y + 50;
-    const r = { avoid: inIce(s.autopilotTarget(true)), plain: inIce(s.autopilotTarget(false)) };
-    s.issrs = s.issrs.filter(i => !i.fake);
+  // Autopilot pick-up's planner (autopilotPlan): real icy air (addIssrAt) level with the plane.
+  // By day with time to spare it flies INTO it (a shading contrail); at night, or so late in the day
+  // that the contrail would last into the dark, it keeps out. Birds in the way: it goes round.
+  const plan = await p.evaluate(() => { const s = game.scene.getScene('game'); const { daySeconds: D } = { daySeconds: 15 };
+    s.plane.y = 200; s.issrs.forEach(i => { i.x = -999; });
+    s.addIssrAt(s.plane.x + 10, 180, 220, 60); const ice = s.issrs[s.issrs.length - 1];
+    const inIce = y => s.inIssrShape(ice, { x: s.plane.x + 40, y, w: 50, h: 12 });
+    const at = clock => { s.clock = clock; s.updateDayNight(0); return inIce(s.autopilotPlan()); };
+    const r = { day: at(2), lateDay: at(12), night: at(20) };
+    ice.x = -999;
+    s.addFlock(s.plane.x + 60, s.plane.y + 6); const f = s.birds[s.birds.length - 1];
+    const y = s.autopilotPlan();
+    r.bird = f.birds.some(b => y < b.img.y + b.img.height + 4 && y + 12 > b.img.y - 4);
+    s.birds = s.birds.filter(x => x !== f); f.birds.forEach(b => b.img.destroy());
+    s.clock = 2; s.updateDayNight(0);
     return r; });
-  check(!ice.avoid && ice.plain, `autopilot pick-up steers out of icy air: ${JSON.stringify(ice)}`);
-  // Grab one: it flies (no falling), the label says how to take control, a tap takes it back.
+  check(plan.day && !plan.lateDay && !plan.night, `autopilot seeks icy air only by day with time for the contrail to fade before dark: ${JSON.stringify(plan)}`);
+  check(!plan.bird, `autopilot goes round birds: ${JSON.stringify(plan)}`);
+  // Grab one: it flies, ignores the grabbing tap, says how to take control, can't crash, then a tap takes it back.
   const auto = await p.evaluate(async () => { const s = game.scene.getScene('game');
     s.graceUntil = 0; s.plane.y = 200; s.plane.vy = 0;
     s.addPower('auto', s.plane.x + 10, s.plane.y + 6);
-    await new Promise(r => setTimeout(r, 1200));
+    await new Promise(r => setTimeout(r, 300));
+    s.flap();
+    const lockedOn = s.onAutopilot(), lockLabel = s.autoText.text;
+    await new Promise(r => setTimeout(r, 1500));
     const on = s.onAutopilot(), label = s.autoText.visible ? s.autoText.text : '', y = s.plane.y;
+    // A storm right on the plane: it must not crash while on autopilot.
+    s.storms.push({ rects: [{ x: s.plane.x - 5, y: 0, width: 70, height: 600 }, { x: s.plane.x - 5, y: 700, width: 70, height: 1 }], parts: [], fake: true });
+    await new Promise(r => setTimeout(r, 300));
+    const alive = s.state === 'playing';
+    s.storms = s.storms.filter(st => !st.fake);
     s.flap();
     const off = !s.onAutopilot();
-    return { on, label, y, off }; });
-  check(auto.on && auto.y > 120 && auto.y < 330, `autopilot flies the plane level, not falling: ${JSON.stringify(auto)}`);
-  check(/TAP to take control/.test(auto.label), `autopilot says how to take control: ${JSON.stringify(auto)}`);
+    return { lockedOn, lockLabel, on, label, y, alive, off }; });
+  check(auto.lockedOn && !/TAP/.test(auto.lockLabel), `the tap right after grabbing it does not cancel it: ${JSON.stringify(auto)}`);
+  check(auto.on && auto.y > 30 && auto.y < 400, `autopilot flies the plane: ${JSON.stringify(auto)}`);
+  check(/TAP to take control/.test(auto.label), `autopilot says how to take control once it can be: ${JSON.stringify(auto)}`);
+  check(auto.alive, `nothing can crash you on autopilot: ${JSON.stringify(auto)}`);
   check(auto.off, `a tap takes control back: ${JSON.stringify(auto)}`);
+  // The first SAF can always comes, early and in your path.
+  const first = await p.evaluate(async () => { const s = game.scene.getScene('game');
+    s.tokens.filter(t => t.power).forEach(t => t.img.destroy()); s.tokens = s.tokens.filter(t => !t.power);
+    s.safOffered = false; s.distancePx = Math.max(s.distancePx, 1600); s.nextPowerAt = s.distancePx; s.nextAirport.worldX = s.distancePx + 50000;
+    const keep = Math.random; Math.random = () => 0.5;   // a roll that would give nothing
+    await new Promise(r => setTimeout(r, 300));
+    Math.random = keep;
+    const can = s.tokens.find(t => t.power === 'saf');
+    return { got: !!can, dy: can ? Math.round(can.baseY - s.plane.y) : null }; });
+  check(first.got && Math.abs(first.dy) < 120, `the first SAF can comes early, near your path: ${JSON.stringify(first)}`);
 
   // Day/night: twilight long enough to see, and the warning comes while it is still light.
   const tw = await p.evaluate(() => { const s = game.scene.getScene('game');
@@ -67,7 +97,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     return { start, dark }; });
   check(tw.start !== null && tw.dark - tw.start >= 5, `sunset lasts at least 5 s before night: ${JSON.stringify(tw)}`);
 
-  console.log({ saf, ice, auto, tw, fails, errs });
+  console.log({ saf, plan, auto, first, tw, fails, errs });
   await b.close();
   if (fails.length || errs.length) { console.log('FAIL'); process.exit(1); }
   console.log('PASS');

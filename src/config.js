@@ -111,10 +111,13 @@ export const TOKENS = {
 export const POWERUPS = {
   every: 700,          // px between chances to place one
   from: 900,           // m before the first can appear
-  safChance: 0.22,
-  autoChance: 0.1,
+  safChance: 0.35,
+  autoChance: 0.06,    // rarer (user, 2026-10-22)
+  safFirstAt: 1500,    // m: the first SAF can always comes early, in your path
   safSeconds: 12,
   autoSeconds: 8,
+  autoLockMs: 1500,    // taps are ignored this long after grabbing it (you are usually mid-tap)
+  autoClimb: 480,      // px/s the autopilot may climb or dive (a tap gives 260)
 };
 
 // Hazards that join the storms as the flight gets longer (distances in m = px).
@@ -132,7 +135,7 @@ export const PARCEL = {
   terminal: 160,       // px/s falling under the parachute
   dragTime: 3.0,       // s; how quickly the parcel loses the plane's forward speed
   plotW: 48,           // soil plot width on the ground (the Soil upgrade line widens it)
-  plotEvery: [260, 420],  // px between soil plots
+  plotEvery: [180, 600],  // px between soil plots (was 260-420: too even, user 2026-10-22)
   firstAt: 1000,       // m: soil plots start 1 km in
 };
 
