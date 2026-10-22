@@ -143,8 +143,8 @@ export class WildScreen {
 
 // ---------- the Wild Area field (art session, 2026-10-22) ----------
 // A 288 x 170 field (assets/ui/field-<region>.png, horizon at y=60) drawn in game pixels inside a
-// box scaled to the screen. Features and trees are at 2x (their art is 1x); animals and birds at
-// 1x (their sprites are already 1.5x as fine), so a fox is about as wide as a tree. Things lower
+// box scaled to the screen. Features are at 2x (their art is 1x); trees (2 px/unit) and animals
+// (1.5 px/unit) at 1x, so a fox is about as wide as a tree. Things lower
 // down the field are nearer, so they are drawn in front. Animals walk to a spot, pause, pick
 // another, and face the way they go; flying birds cross the sky and come round again.
 const FW = 288, FH = 170, HORIZON = 60, GROUND = [HORIZON + 8, FH - 2];
@@ -179,7 +179,7 @@ class Field {
     for (let i = 0; i < nTrees; i++) {
       const kind = kinds[Math.floor((i + 0.5) / nTrees * kinds.length)];
       const [x, y] = TREE_SPOTS[i];
-      put(`assets/tree-${kind}-2.png`, x - 11, y, 2, 'tree');
+      put(`assets/tree-${kind}-2.png`, x, y, 1, 'tree').style.transform = 'translate(-50%, -100%)';   // 1x (drawn at 2 px/unit), centred on x
     }
     // Animals: start at random spots; birds that fly take the sky.
     this.critters = found.map((w, i) => {

@@ -272,84 +272,7 @@ def crate():
 
 
 # ---------- trees ----------
-
-SPECIES = {
-    #           leaf light, leaf,     leaf dark, outline,   trunk,     trunk dark
-    'spruce':  ('#4f9a52', '#2e7d32', '#1f5e25', '#174a1d', '#6e4424', '#4f2f18'),
-    'birch':   ('#c9e58f', '#9ccc65', '#6f9f3d', '#557a2e', '#f2f2ee', '#3a3a3a'),
-    'oak':     ('#7cc77f', '#4caf50', '#2f8034', '#22602a', '#7a4a24', '#57341a'),
-    'rowan':   ('#6cbf6f', '#43a047', '#2c7a31', '#215d26', '#80532d', '#5a3a1f'),
-    'orchard': ('#93d394', '#66bb6a', '#3f8f44', '#2f6e34', '#8a5a30', '#5f3d20'),
-}
-SIZES = [(3, 4), (7, 9), (11, 14)]
-
-
-def tree(kind, stage):
-    w, h = SIZES[stage]
-    s = Sprite(w, h)
-    ll, l, d, o, t, td = (hexc(v) for v in SPECIES[kind])
-    cx = (w - 1) / 2
-    if stage == 0:  # seedling: a stem and two leaves
-        s.px(1, 3, t if kind != 'birch' else td)
-        s.px(1, 2, d)
-        s.px(0, 1, l); s.px(2, 1, ll); s.px(1, 0, ll)
-        s.save(f'tree-{kind}-0')
-        return
-    trunk_h = 2 if stage == 1 else 4
-    tw = 1 if stage == 1 else 2
-    tx = int(cx) if stage == 1 else int(cx)
-    for y in range(h - trunk_h, h):
-        for x in range(tx, tx + tw):
-            s.px(x, y, t)
-        if kind == 'birch' and y % 2 == 0:
-            s.px(tx + (y // 2) % tw, y, td)          # birch bark marks
-        elif tw == 2:
-            s.px(tx + 1, y, td)                      # shadow side of the trunk
-    crown_h = h - trunk_h
-    cells = []
-    if kind == 'spruce':
-        # Stacked tiers, each wider than the one above.
-        for y in range(crown_h + (1 if stage == 2 else 0)):
-            tier = y % 3
-            frac = (y + 1) / crown_h
-            half = max(0, round(frac * (w / 2 - 0.5)) - (1 if tier == 0 and y > 0 else 0))
-            for x in range(round(cx - half), round(cx + half) + 1):
-                cells.append((x, y))
-    else:
-        # Round crown: overlapping blobs give each species its outline.
-        r = crown_h / 2
-        blobs = {'oak': [(cx, r, r * 1.05), (cx - r * 0.5, r * 1.2, r * 0.7), (cx + r * 0.5, r * 1.2, r * 0.7)],
-                 'birch': [(cx, r * 0.95, r * 0.8), (cx, r * 1.3, r * 0.7)],
-                 'rowan': [(cx, r, r * 0.95), (cx - r * 0.4, r * 0.7, r * 0.6)],
-                 'orchard': [(cx, r * 1.05, r * 1.0), (cx - r * 0.6, r * 1.2, r * 0.6), (cx + r * 0.6, r * 1.2, r * 0.6)]}[kind]
-        for y in range(crown_h + 1):
-            for x in range(w):
-                if any((x - bx) ** 2 + ((y - by) * 1.1) ** 2 <= br * br for bx, by, br in blobs):
-                    cells.append((x, y))
-    cset = set(cells)
-    for x, y in cells:
-        u, v = (x - cx) / max(1, w / 2), (y - crown_h / 2) / max(1, crown_h / 2)
-        lit = -0.6 * u - 0.8 * v
-        if kind == 'spruce':
-            lit = -0.9 * u - (0.6 if y % 3 == 2 else -0.2)
-        if lit > 0.45:
-            c = ll
-        elif lit > -0.35 or (lit > -0.55 and (x + y) % 2 == 0):
-            c = l
-        else:
-            c = d
-        # Outline on the shadowed, sky-facing edge only, so trees stay soft.
-        edge = any((x + dx, y + dy) not in cset for dx, dy in ((1, 0), (0, 1), (-1, 0), (0, -1)))
-        if edge and lit < -0.2 and stage == 2:
-            c = o
-        s.px(x, y, c)
-    if kind == 'orchard' and stage == 2:
-        for fx, fy in [(2, 4), (7, 3), (4, 7), (8, 7)]:
-            s.px(fx, fy, hexc('#e53935')); s.px(fx, fy - 1, hexc('#ff8a80'))
-    if kind == 'rowan':
-        for fx, fy in ([(1, 3), (w - 2, 4), (int(cx), 1)] if stage == 2 else [(1, 2), (w - 2, 3)]):
-            s.px(fx, fy, hexc('#ff5722'))
-    s.save(f'tree-{kind}-{stage}')
+# Trees are drawn by make_wildlife.py with tools/art/trees.py (shapes.py), 2026-10-22.
 
 
 # ---------- animals ----------
@@ -692,9 +615,6 @@ if __name__ == '__main__':
     ui_icons()
     chute()
     crate()
-    for kind in SPECIES:
-        for st in range(3):
-            tree(kind, st)
     birds()
     stork()
     puff()

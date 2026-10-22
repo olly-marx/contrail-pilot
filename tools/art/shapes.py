@@ -137,6 +137,12 @@ def rasterise(parts, palette, scale, outline=True, eye=None, highlight=True, pad
                         c = shade(base, 0.72)
                     if not three and k <= -0.2:
                         c = shade(base, 0.8)
+                    tones = palette.get(p.role + '!tones')       # optional (lit, dark) colours, e.g. tree leaves
+                    if tones:
+                        if k > (0.55 if three else 0.5):
+                            c = hexc(tones[0])
+                        elif k <= (-0.55 if three else -0.2):
+                            c = hexc(tones[1])
                     px[i, j] = c
                     break
     if eye:                                              # eye: a dark dot, white highlight when big
