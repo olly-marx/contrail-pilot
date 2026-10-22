@@ -3,6 +3,7 @@
 // missing; every screen has a big BACK at the top that returns to the title.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/hangar.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -14,7 +15,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(c => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], landings: 9, seeds: 1250, crystals: c, levels: { radar: 3 } })); }, crystals);
-    await p.goto(URL); await p.waitForTimeout(900);
+    await p.goto(URL); await ready(p); await p.waitForTimeout(900);
     return p;
   };
   const radarRow = p => p.evaluate(() => [...document.querySelectorAll('#hUpgrades .line')].find(e => e.textContent.includes('Icy Air Radar')).textContent.replace(/\s+/g, ' '));
@@ -44,7 +45,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const box = await p.locator('#tabbar').boundingBox();
   check(box && box.y + box.height >= 840 && box.height >= 48, `the bar should sit at the bottom, big enough to tap: ${JSON.stringify(box)}`);
   // No bar while flying; back after the flight.
-  await p.click('[data-go=fly]'); await p.click('#goBtn'); await p.waitForTimeout(400);
+  await p.click('[data-go=fly]'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(400);
   check(!(await state()).bar, 'no bar while flying');
   await p.close();
 
@@ -62,7 +63,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], landings: 9, priceVersion: 2, seeds: 2000, crystals: 200,
     levels: { engine: 2, gear: 1, trees: 2, soil: 1, species: 2 } })); });
-  await p.goto(URL); await p.waitForTimeout(900); await p.click('#tabHangar'); await p.waitForTimeout(300);
+  await p.goto(URL); await ready(p); await p.waitForTimeout(900); await p.click('#tabHangar'); await p.waitForTimeout(300);
   const model = () => p.evaluate(() => ({ parts: [...document.querySelectorAll('#hPlane img.hp-part:not(.hp-sparkle)')].map(i => i.getAttribute('src').replace(/^assets\/|\.png$/g, '')),
     preview: document.querySelector('#hPlane .hp-preview')?.getAttribute('src') || null, zoomed: document.getElementById('hPlane').classList.contains('zoomed'),
     t: document.querySelector('#hPlane .hp-stage').style.transform, sparkle: !document.querySelector('#hPlane .hp-sparkle').hidden }));

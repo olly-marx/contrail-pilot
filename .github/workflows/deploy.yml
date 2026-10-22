@@ -17,9 +17,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # 4 machines side by side (2026-10-22: one machine took 12-15 min). tools/test.sh runs every test
+  # in its shard, retries a failure once (passing on retry = a FLAKY warning, not a failure) and
+  # prints one summary. fail-fast off: every shard reports, so one run shows everything wrong.
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,14 +36,10 @@ jobs:
         run: npm i --no-save playwright-core@1
       - name: Serve the game
         run: python3 -m http.server 8000 >/dev/null 2>&1 &
-      - name: Run tests
+      - name: Run tests (shard ${{ matrix.shard }} of 4)
         env:
           CHROME: /usr/bin/google-chrome
-        run: |
-          for t in tests/*.cjs; do
-            echo "== $t"
-            node "$t"
-          done
+        run: tools/test.sh --shard ${{ matrix.shard }}/4
 
   deploy:
     needs: test

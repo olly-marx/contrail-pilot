@@ -3,6 +3,7 @@
 // Checks the exact amounts banked, and that challenges you can't do yet are never offered.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/rewards.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -15,7 +16,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 5, freeGiven: true, seeds: 100, crystals: 10 };
   const setSave = s => p.evaluate(s => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify(s)); }, s);
   const save = () => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
-  const reload = async () => { await p.reload(); await p.waitForTimeout(800); };
+  const reload = async () => { await p.reload(); await ready(p); await p.waitForTimeout(800); };
   const fly = async () => { await p.click('#goBtn'); for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100); };
   // Land at the next airport (k airports passed first) with no seeds on board, or crash.
   const end = (landed, k = 0, extra = {}) => p.evaluate(([landed, k, extra]) => { const s = game.scene.getScene('game');

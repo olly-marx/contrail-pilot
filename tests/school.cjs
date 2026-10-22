@@ -2,6 +2,7 @@
 // by doing what the captain says, the flight ends with a landing, and school is marked done.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/school.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -9,7 +10,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: process.env.SHOTS ? 2 : 1 });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const fails = [];
-  await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(700);
+  await p.goto(URL); await p.evaluate(() => localStorage.clear()); await p.reload(); await ready(p); await p.waitForTimeout(700);
 
   const label = await p.textContent('#goBtn');
   if (label.trim() !== 'START') fails.push('first-time button should say START, got ' + label);

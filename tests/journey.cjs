@@ -3,6 +3,7 @@
 // were; landing in LONDON from REYKJAVIK is a lap; "Reach CITY" also counts landing further on.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/journey.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -24,7 +25,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const end = (landed, k = 0) => p.evaluate(([landed, k]) => { const s = game.scene.getScene('game');
     s.landedAt = landed ? s.airportAhead(k).name : null; s.airportIndex = k; s.airportsSkipped = k;
     s.finish({ landed }); return s.result; }, [landed, k]);
-  const reload = async () => { await p.reload(); await p.waitForTimeout(800); };
+  const reload = async () => { await p.reload(); await ready(p); await p.waitForTimeout(800); };
 
   await p.goto(URL); await setSave(base); await reload();
   // 1. A new journey: LONDON, PARIS next at 1000 km (real 347, stretched to the 1000 km minimum).

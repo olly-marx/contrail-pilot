@@ -4,6 +4,7 @@
 // Without that limit a careful pilot with a forest flew for ever (measured 2026-10-21).
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/forest.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -15,7 +16,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 9,
     levels: { trees: 4, species: 4 }, habitat: { woodland: ['deadwood', 'meadow', 'margins', 'hedgerow', 'pond', 'woodland', 'voles', 'beavers', 'rewet', 'storks', 'martens'] }, planted: { oak: 9, birch: 9, rowan: 9, spruce: 9, orchard: 9 } })); });
-  await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn');
   for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
   const r = await p.evaluate(async () => {
     const { FOREST } = await import('./src/config.js');
@@ -32,11 +33,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
     kinds(5); s.distancePx = 25000;
     for (const k of ['spruce', 'birch', 'oak', 'rowan', 'orchard', 'oak']) s.trees.push({ sprite: { active: false, setTexture() {}, setScale() {} }, kind: k, plantedAt: s.elapsed - 60, stage: 2 });
     let t = game.loop.now || performance.now();
-    const step = n => { for (let i = 0; i < n; i++) { t += 16.67; s.heat = 0; if (s.plane.y > 220 && s.plane.vy > -40) s.applyFlap(); game.step(t, 16.67); } };
-    step(60); out.rateEarly = s.breakdown.trees;   // ~1 s of cooling at full strength
-    step(60 * 200);   // 200 s
+    // 50 ms frames (the game's own largest step): a third of the frames for the same game time (CI speed).
+    const step = n => { for (let i = 0; i < n; i++) { t += 50; s.heat = 0; if (s.plane.y > 220 && s.plane.vy > -40) s.applyFlap(); game.step(t, 50); } };
+    step(20); out.rateEarly = s.breakdown.trees;   // ~1 s of cooling at full strength
+    step(20 * 130);   // 130 s: the forest (80) and land (30) are both full well before
     out.forestStored = s.forestStored; out.landStored = s.landStored; out.said = s.forestFullSaid;
-    const before = s.breakdown.trees; step(600); out.after = s.breakdown.trees - before;
+    const before = s.breakdown.trees; step(200); out.after = s.breakdown.trees - before;
     out.state = s.state;
     return out;
   });

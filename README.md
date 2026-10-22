@@ -57,6 +57,10 @@ Art is placeholder blocks at 288×512, scaled up with no smoothing for the pixel
 
 Every push to `main` runs all the checks in headless Chrome on GitHub Actions
 (`.github/workflows/deploy.yml`) and only publishes to GitHub Pages if they all pass.
+The tests run on 4 machines at once (`tools/test.sh --shard k/4`, balanced by each test's time):
+every test runs, a failure is retried once (passing on the retry shows as a FLAKY warning and
+does not block), a test failing twice blocks the deploy. Locally: `NODE_PATH=... tools/test.sh`
+(all), or name test files.
 
 ## Checks
 

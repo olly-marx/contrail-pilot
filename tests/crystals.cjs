@@ -3,6 +3,7 @@
 // none; rewilding needs crystals as well as seeds; the hangar splits PLANE and NATURE tabs.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/crystals.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 
@@ -15,7 +16,7 @@ const KEY = 'contrailPilot.v2';
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     p.on('pageerror', e => errs.push(String(e)));
     await p.addInitScript(([k, s]) => { if (!sessionStorage.getItem('seeded')) { localStorage.clear(); localStorage.setItem(k, JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); } }, [KEY, save]);
-    await p.goto(URL); await p.waitForTimeout(700);
+    await p.goto(URL); await ready(p); await p.waitForTimeout(700);
     return p;
   }
   const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'] };
@@ -29,7 +30,7 @@ const KEY = 'contrailPilot.v2';
   // 2-4. Fly past icy air: night dodge = +1; day dodge = 0; night contrail = 0. Crystals kept on a crash.
   async function pass({ night, through, dive = false }) {
     const p = await page({ ...base, crystals: 0 });
-    await p.click('#goBtn'); await p.waitForTimeout(2300);
+    await p.click('#goBtn'); await started(p); await p.waitForTimeout(2300);
     const r = await p.evaluate(({ night, through, dive }) => new Promise(res => { const s = game.scene.getScene('game');
       s.storms.forEach(st => st.parts.forEach(q => q.destroy())); s.storms = []; s.nextStormAt = 1e9; s.nextIssrAt = 1e9; s.nextTurbAt = 1e9;
       s.issrs.forEach(i => { i.maskGfx.destroy(); i.destroy(); }); s.issrs = [];

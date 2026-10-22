@@ -4,6 +4,7 @@
 // (3) a deep hit always counts; (4) birds count from one pixel.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/collisions.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -13,7 +14,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'] })); });
-  await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn'); await p.waitForTimeout(2300);
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn'); await started(p); await p.waitForTimeout(2300);
   await p.evaluate(() => game.scene.getScene('game').scene.pause());
 
   const r = await p.evaluate(() => { const s = game.scene.getScene('game');

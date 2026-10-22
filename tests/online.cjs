@@ -4,6 +4,7 @@
 // a flight (never flight school, never before a name), the offline outbox (max 5), and the board.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/online.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const UID = '11111111-2222-3333-4444-555555555555';
 
@@ -40,7 +41,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
   });
 
   await p.addInitScript(() => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 5, bestDistance: 3000, mission: 3 })); } });
-  await p.goto(URL); await p.waitForTimeout(800);
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800);
   const fly = async (landed = true) => {   // a short flight, ended by the game's own finish()
     await p.click('#goBtn');
     for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);

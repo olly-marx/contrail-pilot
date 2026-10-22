@@ -3,6 +3,7 @@
 // pressing it must not start the take-off roll. Esc does the same. A real lift-off counts a flight.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/runway-back.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -15,11 +16,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const shown = () => p.evaluate(() => !document.getElementById('runwayBack').hidden && document.getElementById('runwayBack').offsetWidth > 0);
   const title = () => p.evaluate(() => !document.getElementById('title').hidden);
   await p.addInitScript(() => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], landings: 5, flights: 3 })); } });
-  await p.goto(URL); await p.waitForTimeout(800);
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800);
 
   // 1. Not on the title screen.
   check(!(await shown()), 'MENU button should not show on the title screen');
-  await p.click('#goBtn'); await p.waitForTimeout(400);
+  await p.click('#goBtn'); await started(p); await p.waitForTimeout(400);
   check(await shown(), 'MENU button should show while parked on the runway');
   await p.screenshot({ path: '/tmp/runway-back.png' });
 
@@ -39,13 +40,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(!(await shown()), 'MENU button should hide on the title screen');
 
   // 3. Esc does the same.
-  await p.click('#goBtn'); await p.waitForTimeout(400);
+  await p.click('#goBtn'); await started(p); await p.waitForTimeout(400);
   await p.keyboard.press('Escape'); await p.waitForTimeout(500);
   s = await st();
   check(await title() && s.state === 'idle', `Esc should go back to the title: ${JSON.stringify(s)}`);
 
   // 4. Hidden while rolling; Esc then does nothing.
-  await p.click('#goBtn'); await p.waitForTimeout(400);
+  await p.click('#goBtn'); await started(p); await p.waitForTimeout(400);
   await p.mouse.move(195, 400); await p.mouse.down(); await p.waitForTimeout(400);
   check(!(await shown()), 'MENU button should hide while rolling');
   await p.keyboard.press('Escape'); await p.waitForTimeout(100);

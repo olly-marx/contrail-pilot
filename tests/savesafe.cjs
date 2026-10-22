@@ -3,6 +3,7 @@
 // never silently overwritten. (A browser wiping ALL the site's storage still wipes both copies.)
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/savesafe.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 
@@ -17,7 +18,7 @@ const KEY = 'contrailPilot.v2';
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(([k, m, bk]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear();
       if (m !== null) localStorage.setItem(k, m); if (bk !== null) localStorage.setItem(k + '.backup', bk); } }, [KEY, main, backup]);
-    await p.goto(URL); await p.waitForTimeout(1000);
+    await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
     return p;
   };
   const state = p => p.evaluate(k => ({ seeds: game.registry.get('save').seeds, best: game.registry.get('save').bestDistance,

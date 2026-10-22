@@ -3,6 +3,7 @@
 // planted trees cool.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/progression.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 
@@ -25,10 +26,11 @@ const KEY = 'contrailPilot.v2';
   const grab = n => scene(n => { const s = game.scene.getScene('game'); for (let i = 0; i < n; i++) s.addToken(s.plane.x + 20 + i * 3, s.plane.y - 2, false); }, n);
 
   // 1. Grab trees, then crash: nothing is banked.
-  await p.goto(URL); await setSave({ ...base, seeds: 5 }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#goBtn'); await p.waitForTimeout(2300);
+  await p.goto(URL); await setSave({ ...base, seeds: 5 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await p.click('#goBtn');
+  await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 15000 });   // (fixed waits failed under load)
   await noStorms(); await hold(); await grab(3);
-  for (let i = 0; i < 8; i++) { await hold(); await p.waitForTimeout(60); }
+  for (let i = 0; i < 80 && await scene(() => game.scene.getScene('game').cargo) < 3; i++) { await hold(); await p.waitForTimeout(60); }
   const carried = await scene(() => game.scene.getScene('game').cargo);
   check(carried === 3, `should carry 3 trees after grabbing 3, got ${carried}`);
   await p.waitForTimeout(3500);   // no taps: falls and crashes
@@ -56,13 +58,13 @@ const KEY = 'contrailPilot.v2';
   check((await getSave()).seeds === 11, `bank should be 5 + 6 = 11, got ${(await getSave()).seeds}`);
 
   // 3. Hangar: lines unlock as you progress. A new player sees Fuel as locked.
-  await setSave({ ...base, seeds: 50 }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seeds: 50 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabHangar');
   check(await p.$('[data-buy="fuel"]') === null, 'fuel should be locked before 3 landings');
   check((await p.textContent('#hUpgrades')).includes('Unlocks after 3 landings'), 'locked lines should say how to unlock them');
   check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
   // Levelled lines, prices, info pop-up.
-  await setSave({ ...base, seeds: 60, crystals: 3, landings: 3 }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seeds: 60, crystals: 3, landings: 3 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabHangar');
   await p.click('[data-buy="radar"]');     // 15 seeds + 1 crystal (prices from 2026-10-21)
   await p.click('[data-buy="fuel"]');      // 30 seeds + 2 crystals
@@ -79,15 +81,15 @@ const KEY = 'contrailPilot.v2';
   await p.click('#iClose');
 
   // 4. The flight uses the upgrades: SAF 25% = 0.9 CO2 (raised 2026-10-21 for balance); radar reveals icy air from 100 px.
-  await p.click('#tabFly'); await p.click('#goBtn'); await p.waitForTimeout(2400);
+  await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
   const kit = await scene(() => { const s = game.scene.getScene('game'); return { co2: s.co2Rate, reveal: s.kit.revealPx }; });
   check(Math.abs(kit.co2 - 0.9) < 1e-9, `SAF 25% cruise CO2 should be 0.9, got ${kit.co2}`);
   check(kit.reveal === 100, `radar 1 should reveal at 100, got ${kit.reveal}`);
 
   // 5. Planting: a parcel dropped so it lands on a soil plot plants a tree that cools; one that
   //    lands on bare ground is missed.
-  await setSave({ ...base, levels: { trees: 1 } }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#goBtn'); await p.waitForTimeout(2400);
+  await setSave({ ...base, levels: { trees: 1 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
   await noStorms(); await hold();
   check(await scene(() => game.scene.getScene('game').dropShown), 'DROP button should show while carrying parcels');
   // Miss: no plots anywhere.

@@ -2,6 +2,7 @@
 // each per device, then stop (the sky and the sound still change). Counted across reloads.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/banners.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -28,12 +29,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   }, n);
   const startFlight = async () => { await p.click('#goBtn'); for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100); };
 
-  await p.goto(URL); await p.waitForTimeout(800); await startFlight();
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800); await startFlight();
   const first = await cycles(2);
   check(first.filter(t => /Night/.test(t)).length === 2 && first.filter(t => /Sunrise/.test(t)).length === 2, `first 2 cycles should show both banners twice: ${first}`);
   // Saved across a reload (a new flight on another day).
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.finish({ landed: true }); });
-  await p.waitForTimeout(1500); await p.reload(); await p.waitForTimeout(800); await startFlight();
+  await p.waitForTimeout(1500); await p.reload(); await ready(p); await p.waitForTimeout(800); await startFlight();
   const later = await cycles(3);
   check(later.filter(t => /Night/.test(t)).length === 1 && later.filter(t => /Sunrise/.test(t)).length === 1, `after 3 of each, banners should stop: next 3 cycles showed ${JSON.stringify(later)}`);
 

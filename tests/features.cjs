@@ -3,6 +3,7 @@
 // ?citizenzoo on the URL it all comes back.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/features.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -14,7 +15,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     const errs = []; p.on('pageerror', e => errs.push(String(e)));
     await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, tours: ['*'], muted: true, landings: 5, planted: { spruce: 2, birch: 2 } })); });
-    await p.goto(URL + query); await p.waitForTimeout(700);
+    await p.goto(URL + query); await ready(p); await p.waitForTimeout(700);
     // Everything a player can read: visible page text, every info pop-up, and every fact list.
     const seen = [];
     const visibleText = () => p.evaluate(() => document.body.innerText);

@@ -3,6 +3,7 @@
 // crystals per dodge, dodges per night, tree growth, landing window, take-off CO2).
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/upgrades.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -14,7 +15,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 9, freeGiven: true, mission: 99 };
   const setSave = s => p.evaluate(s => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify(s)); }, s);
-  const reload = async () => { await p.reload(); await p.waitForTimeout(800); };
+  const reload = async () => { await p.reload(); await ready(p); await p.waitForTimeout(800); };
   await p.goto(URL);
 
   // 1. Branches: Long Wings needs Lighter Plane 1, which needs Better Engines 1.

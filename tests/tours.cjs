@@ -5,6 +5,7 @@
 // Only the pointed-at button works (a tap elsewhere is swallowed); seenTips ['*'] saves never see one.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/tours.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const UID = '11111111-2222-3333-4444-555555555555';
 const KEY = 'contrailPilot.v2';
@@ -44,7 +45,7 @@ const KEY = 'contrailPilot.v2';
     });
 
     await p.addInitScript(([k, v, pl]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); if (pl) localStorage.setItem('contrailPilot.pilot', JSON.stringify(pl)); } }, [KEY, save, pilot]);
-    await p.goto(URL); await p.waitForTimeout(1200);
+    await p.goto(URL); await ready(p); await p.waitForTimeout(1200);
     p.net = net;
     return p;
   };
@@ -78,7 +79,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('#tabFly'); await p.waitForTimeout(800);
   if (process.env.DEBUG) console.log(await tourHidden(p), (await save(p)).tours, await p.evaluate(() => [document.getElementById('hangar').hidden, document.getElementById('title').hidden, document.querySelector('#tour .tbubble p').textContent]));
   check(await tourHidden(p) && ((await save(p)).tours || []).includes('name'), 'the name tour ends and is remembered');
-  await p.reload(); await p.waitForTimeout(1200);
+  await p.reload(); await ready(p); await p.waitForTimeout(1200);
   check(await tourHidden(p), 'and does not come back');
   await p.close();
 
@@ -106,7 +107,7 @@ const KEY = 'contrailPilot.v2';
   check(await on(p, '#iClose'), 'then OK on the info'); await p.click('#iClose');
   check(await on(p, '#tabNature'), 'then NATURE'); await p.click('#tabNature');
   check(await on(p, '#wProjects'), 'then the habitat projects'); await p.click('#tour .tbubble .btn');
-  check(await on(p, '#tabFly'), 'then FLY'); await p.click('#tabFly'); await p.click('#goBtn'); await p.waitForTimeout(1500);
+  check(await on(p, '#tabFly'), 'then FLY'); await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(1500);
   if (process.env.DEBUG) console.log(await tourHidden(p), (await save(p)).tours, await p.evaluate(() => [document.getElementById('hangar').hidden, document.getElementById('title').hidden, document.querySelector('#tour .tbubble p').textContent]));
   check(await tourHidden(p) && ((await save(p)).tours || []).includes('hangar') && await p.evaluate(() => document.getElementById('hangar').hidden && document.getElementById('title').hidden), 'the hangar tour ends with a take-off and is remembered');
   await p.close();

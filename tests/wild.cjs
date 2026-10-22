@@ -5,6 +5,7 @@
 // flight counts as FOUND (once, with a pop-up), and the collection shows found vs silhouettes.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/wild.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 
@@ -17,7 +18,7 @@ const KEY = 'contrailPilot.v2';
     p.on('pageerror', e => errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(([k, v]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); } }, [KEY, save]);
-    await p.goto(URL); await p.waitForTimeout(1000);
+    await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
     return p;
   };
   const get = p => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);

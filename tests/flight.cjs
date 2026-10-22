@@ -2,10 +2,11 @@
 // overheat ends the run, ground away from a runway is still a crash.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/flight.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 async function fly(p, { landAt }) {
-  await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn');
+  await p.goto(URL); await ready(p); await p.waitForTimeout(600); await p.click('#goBtn');
   // TAKE OFF restarts the scene; wait until it is built (CI failed twice reading nextAirport too early).
   await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.nextAirport && s.state !== 'idle'; }, null, { timeout: 15000 });
   // Hazards have their own test; keep this flight about takeoff, day/night and landing.
@@ -51,7 +52,7 @@ async function fly(p, { landAt }) {
 
   // Radiation, deterministically: lay a line of contrails, force day or night, count hits.
   for (const [label, elapsed, key] of [['night', 16, 'heatTrapped'], ['day', 1, 'sunBlocked']]) {
-    await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(2200);
+    await p.goto(URL); await ready(p); await p.waitForTimeout(600); await p.click('#goBtn'); await started(p); await p.waitForTimeout(2200);
     const before = await p.evaluate((elapsed) => { const s = game.scene.getScene('game');
       s.clock = elapsed;
       s.heat = 0; s.sunBlocked = 0; s.heatTrapped = 0; s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = [];
@@ -70,7 +71,7 @@ async function fly(p, { landAt }) {
   }
 
   // Overheat: force heat to the line mid-flight.
-  await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(2600);
+  await p.goto(URL); await ready(p); await p.waitForTimeout(600); await p.click('#goBtn'); await started(p); await p.waitForTimeout(2600);
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.heat = 100; });   // past the take-off breather
   await p.waitForTimeout(200);
   const oh = await p.evaluate(() => game.scene.getScene('game').result);
@@ -78,7 +79,7 @@ async function fly(p, { landAt }) {
   if (!oh || oh.landed) fails.push('overheat did not end the run');
 
   // Ground away from a runway is a crash.
-  await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(6000);
+  await p.goto(URL); await ready(p); await p.waitForTimeout(600); await p.click('#goBtn'); await started(p); await p.waitForTimeout(6000);
   const cr = await p.evaluate(() => game.scene.getScene('game').result);
   console.log('no-tap:', JSON.stringify(cr));
   if (!cr || cr.landed) fails.push('ground away from runway did not crash');

@@ -4,6 +4,7 @@
 // stopped moving ("they follow the plane") and a burst of new ones appeared.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/ponds.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -14,7 +15,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const check = (c, m) => { if (!c) fails.push(m); };
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 9, levels: { rewild: 9 }, planted: { oak: 9, birch: 9, rowan: 9, spruce: 9, orchard: 9 } })); });
-  await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn');
   for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
   // Plant a small forest so the "from your forest" cooling fires often, and fly on.
   await p.evaluate(() => { const s = game.scene.getScene('game');

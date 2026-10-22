@@ -4,6 +4,7 @@
 // Saves already on the new prices, saves with nothing bought, and no save at all are left alone.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/reprice.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 
@@ -16,7 +17,7 @@ const KEY = 'contrailPilot.v2';
     p.on('pageerror', e => errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(([k, v]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); if (v) localStorage.setItem(k, JSON.stringify(v)); } }, [KEY, save]);
-    await p.goto(URL); await p.waitForTimeout(1200);
+    await p.goto(URL); await ready(p); await p.waitForTimeout(1200);
     return p;
   };
   const get = p => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
@@ -48,7 +49,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('#rpOk'); await p.waitForTimeout(400);
   check(!(await p.isVisible('#repriced')), 'OK closes it');
   const kept = JSON.stringify((await get(p)).levels);
-  await p.reload(); await p.waitForTimeout(1200);
+  await p.reload(); await ready(p); await p.waitForTimeout(1200);
   check(!(await p.isVisible('#repriced')) && JSON.stringify((await get(p)).levels) === kept, 'once only: no message and no second re-value after a reload');
   await p.close();
 

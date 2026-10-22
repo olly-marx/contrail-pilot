@@ -3,6 +3,7 @@
 // planting pauses the game to explain the meter.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/nature.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 
@@ -16,7 +17,7 @@ const KEY = 'contrailPilot.v2';
   const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
   const scene = (fn, a) => p.evaluate(fn, a);
   const base = { tutorialDone: true, tours: ['*'], autoTakeoff: true, muted: true, landings: 3 };
-  await p.goto(URL); await p.waitForTimeout(500);
+  await p.goto(URL); await ready(p); await p.waitForTimeout(500);
 
   // 1. Variety beats quantity: 9 spruce < 3 different native trees.
   const bio = await p.evaluate(async () => {
@@ -28,19 +29,19 @@ const KEY = 'contrailPilot.v2';
   check(bio.firstOak > 3 * bio.tenthOak, `first oak (${bio.firstOak}) should add much more than the tenth (${bio.tenthOak})`);
 
   // 2. Parcels rotate through owned species: spruce, birch, oak.
-  await setSave({ ...base, seenTips: ['*'], levels: { trees: 2, species: 2 } }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#goBtn'); await p.waitForTimeout(2400);
+  await setSave({ ...base, seenTips: ['*'], levels: { trees: 2, species: 2 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
   const kinds = await scene(() => { const s = game.scene.getScene('game'); const out = []; for (let i = 0; i < 3; i++) { out.push(s.treeKind()); s.speciesIdx++; } s.speciesIdx = 0; return out; });
   check(JSON.stringify(kinds) === '["spruce","birch","oak"]', `parcels should rotate spruce, birch, oak; got ${kinds}`);
 
   // 3. Rewilding waits for the meter: meadow needs Biodiversity 3.
-  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: {} }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: {} }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabNature');   // habitat projects live on the NATURE screen
   check(await p.$('[data-project="meadow"]') === null, 'the meadow should wait before any tree is planted');
-  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { spruce: 1 } }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { spruce: 1 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabNature');
   check((await p.textContent('[data-pline="meadow"]')).includes('needs Biodiversity 3'), 'meadow should wait for Biodiversity 3');
-  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { birch: 2 } }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, seenTips: ['*'], seeds: 200, crystals: 5, planted: { birch: 2 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabNature');
   const before = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
   await p.click('[data-project="meadow"]');
@@ -50,13 +51,13 @@ const KEY = 'contrailPilot.v2';
   check(after - before === 8, `meadow should add 8 Biodiversity, added ${after - before}`);
 
   // 4. The meadow shows up in the world as flowers in the grass.
-  await p.click('#tabFly'); await p.click('#goBtn'); await p.waitForTimeout(800);
+  await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(800);
   check(await scene(() => !!game.scene.getScene('game').flowers), 'meadow flowers should appear on the ground');
 
   // 5. Tree school: the first planted tree pauses to explain what trees do for the climate (CO2,
   // and that a cleaner plane + contrails matter more), then, once calm, the Biodiversity meter.
-  await setSave({ ...base, seenTips: ['x-bars', 'x-plots', 'tree-1'], levels: { trees: 1 } }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#goBtn'); await p.waitForTimeout(2400);
+  await setSave({ ...base, seenTips: ['x-bars', 'x-plots', 'tree-1'], levels: { trees: 1 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
   await scene(() => { const s = game.scene.getScene('game'); s.storms = []; s.nextStormAt = 1e9; s.plane.y = 200; s.plane.vy = 0; s.addPlot(100); s.parcelLanded(110, 'spruce'); });
   const ex = await scene(() => { const s = game.scene.getScene('game'); return { explaining: s.explaining, frozen: s.frozen, text: document.getElementById('coachText').textContent }; });
   check(ex.explaining && ex.frozen && /CO2/.test(ex.text) && /cleaner plane/.test(ex.text), `first planting should pause and explain trees and CO2: ${JSON.stringify(ex)}`);

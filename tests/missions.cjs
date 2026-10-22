@@ -3,6 +3,7 @@
 // "Passed X. Next: Y" sign; a mission that needs an upgrade says so.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/missions.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 
@@ -17,18 +18,22 @@ const KEY = 'contrailPilot.v2';
   const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
   const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'] };
   const hold = () => scene(() => { const s = game.scene.getScene('game'); s.plane.y = 200; s.plane.vy = 0; s.heat = 0; });
+  // Until the plane is really flying (fixed 2.3 s waits failed under load).
+  const flying = () => p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 15000 });
   const calm = () => scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(q => q.destroy())); s.storms = []; s.nextStormAt = 1e9; });
 
   // 1. Title card: mission 1 of N.
-  await p.goto(URL); await setSave(base); await p.reload(); await p.waitForTimeout(600);
+  await p.goto(URL); await setSave(base); await p.reload(); await ready(p); await p.waitForTimeout(600);
   const card = await p.textContent('#tMission');
   check(/MISSION 1\//.test(card) && /Land in PARIS/.test(card), `title should show mission 1 Land in PARIS: ${card}`);
 
   // 2. Crash before PARIS: mission not done, stays at 0.
-  await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
+  await p.click('#goBtn'); await flying(); await calm();
   const line = await scene(() => game.scene.getScene('game').missionText.text);
   check(/PARIS: [\d,]+ km/.test(line), `the mission line should show PARIS distance, got "${line}"`);
-  await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.plane.y = 600; }); await p.waitForTimeout(2500);
+  await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.plane.y = 600; });
+  // Wait for the crash and the results text, not a fixed time (it failed under load).
+  await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.result && document.getElementById('rMission').textContent.trim(); }, null, { timeout: 15000 }).catch(() => {});
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && r.mission && !r.mission.done, `a crash should not complete the mission: ${JSON.stringify(r && r.mission)}`);
   check((await getSave()).mission === 0, 'mission index should stay 0 after a crash');
@@ -50,8 +55,8 @@ const KEY = 'contrailPilot.v2';
   check(/MISSION DONE/.test(rm) && /Land with 5 seeds/.test(rm), `results should say MISSION DONE and name the next: ${rm}`);
 
   // 3b. Landing at BERLIN (past PARIS) does not count as Land in PARIS.
-  await setSave({ ...base, mission: 0 }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
+  await setSave({ ...base, mission: 0 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await flying(); await calm();
   await scene(() => { const s = game.scene.getScene('game'); s.airportIndex = 1; s.airportsSkipped = 1; s.heat = 0; s.nextAirport = { ...s.airportAhead(1), worldX: s.distancePx + 250 }; });   // BERLIN, just ahead
   for (let i = 0; i < 150; i++) {
     const st = await scene(() => { const s = game.scene.getScene('game'); s.heat = 0; const toA = s.nextAirport.worldX - s.distancePx; if (toA > -20) { s.plane.y = 300; s.plane.vy = 0; } return s.state; });
@@ -62,18 +67,18 @@ const KEY = 'contrailPilot.v2';
   check(r && r.landed && r.mission && !r.mission.done && /You landed in [A-Z]+\. PARIS is the FIRST airport/.test(r.mission.fail), `landing past PARIS should not complete Land in PARIS: ${JSON.stringify(r && r.mission)}`);
 
   // 4. Passing an airport shows where the next one is (from LONDON: PARIS, then BERLIN).
-  await setSave({ ...base, mission: 0, city: 0 }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
+  await setSave({ ...base, mission: 0, city: 0 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await flying(); await calm();
   await scene(() => { const s = game.scene.getScene('game'); s.distancePx = s.nextAirport.worldX + 230; });
   for (let i = 0; i < 6; i++) { await hold(); await p.waitForTimeout(60); }
   const sign = await scene(() => game.scene.getScene('game').nextText.text);
   check(/Passed PARIS\. Next: BERLIN/.test(sign), `after passing PARIS the sign should name BERLIN, got "${sign}"`);
 
   // 5. A mission needing an upgrade says so on the card.
-  await setSave({ ...base, mission: 6 }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, mission: 6 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   const c7 = await p.textContent('#tMission');
   check(/Plant a tree/.test(c7) && /Needs:/.test(c7) && /Tree parcels/.test(c7), `mission 7 should say it needs Tree parcels: ${c7}`);
-  await setSave({ ...base, mission: 6, levels: { trees: 1 } }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, mission: 6, levels: { trees: 1 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   check(!/Needs:/.test(await p.textContent('#tMission')), 'with Tree parcels owned the card should not say Needs');
   // 6. The later missions: needing several upgrades; funny "crash" missions done by a crash, and
   // straight away if it already happened on an earlier flight.
@@ -89,8 +94,8 @@ const KEY = 'contrailPilot.v2';
   check(String(later.lap) === 'true,false', `non-stop lap needs the whole 32,060 km: ${later.lap}`);
   // 6b. In a real flight: a bird crash completes the bird mission and the results say OUCH.
   const birdIdx = await p.evaluate(async () => (await import('./src/missions.js')).MISSIONS.findIndex(m => m.id === 'oops-birds'));
-  await setSave({ ...base, mission: birdIdx, landings: 9 }); await p.reload(); await p.waitForTimeout(600);
-  await p.click('#goBtn'); await p.waitForTimeout(2300);
+  await setSave({ ...base, mission: birdIdx, landings: 9 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await p.click('#goBtn'); await flying();
   await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.finish({ reason: 'Bird strike!\nYou hit a bird.' }); });
   await p.waitForTimeout(3500);
   const sv = await getSave();
@@ -98,7 +103,7 @@ const KEY = 'contrailPilot.v2';
   check(/OUCH/.test(await p.textContent('#rMission')), `results should say OUCH: ${await p.textContent('#rMission')}`);
   await p.screenshot({ path: '/tmp/mission-birds.png' });
   // 7. All done.
-  await setSave({ ...base, mission: later.n }); await p.reload(); await p.waitForTimeout(600);
+  await setSave({ ...base, mission: later.n }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   check(/ALL MISSIONS DONE/.test(await p.textContent('#tMission')), 'after the last mission the card should say all done');
 
   check(errs.length === 0, `page errors: ${errs}`);

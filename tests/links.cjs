@@ -2,6 +2,7 @@
 // soon" in a demo), and the title's About page opens with the AEIS, Brahmal and Citizen Zoo links.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/links.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -11,7 +12,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, tours: ['*'], muted: true })); });
-  await p.goto(URL); await p.waitForTimeout(700);
+  await p.goto(URL); await ready(p); await p.waitForTimeout(700);
 
   const r = await p.evaluate(async () => {
     const { LINKS } = await import('./src/links.js'); const { LINES } = await import('./src/upgrades.js');

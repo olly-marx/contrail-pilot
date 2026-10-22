@@ -3,6 +3,7 @@
 // vapour on hydrogen; Greener Cabin lowers CO2.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/wildlife.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 const BARE = { planted: { spruce: 2 }, levels: { trees: 1 } };
@@ -17,7 +18,8 @@ const WILD = { planted: { spruce: 3, birch: 4, oak: 4, rowan: 4, orchard: 4 }, l
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     p.on('pageerror', e => errs.push(String(e)));
     await p.addInitScript(([k, s]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 5, ...s })); }, [KEY, save]);
-    await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+    await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn');
+    await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.life && s.state !== 'idle'; }, null, { timeout: 15000 });   // the scene restarts on TAKE OFF
     // Collect what appears over a few seconds: animals are random (cows/sheep ~1.5 a screen, none on
     // the runway), so one snapshot right after take-off sometimes has none yet (failed CI once).
     const seen = new Set();

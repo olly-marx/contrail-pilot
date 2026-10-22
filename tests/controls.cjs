@@ -2,6 +2,7 @@
 // slows down, never fails), mid-run tips close only with their OK button, icy air is lumpy (not a box), and a dropped parcel lands on the ground spot under the aim X from any height.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/controls.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -12,7 +13,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const check = (c, m) => { if (!c) fails.push(m); };
   const scene = (fn, a) => p.evaluate(fn, a);
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], landings: 5, levels: { trees: 4 } })); });
-  await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn');
 
   // 1. Waiting and tapping do not take off.
   for (let i = 0; i < 6; i++) { await p.mouse.click(195, 300); await p.waitForTimeout(300); }
@@ -61,7 +62,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(flare.co2 > 1.2, `the flare should burn extra CO2 (rate ${flare.co2})`);
   // (b2) Already over the runway and still fairly high: it must touch down before the far end.
   const freshFlight = async () => {
-    await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+    await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn');
     await p.mouse.move(195, 400); await p.mouse.down();
     for (let i = 0; i < 40 && await scene(() => game.scene.getScene('game').state) === 'takeoff'; i++) await p.waitForTimeout(100);
     await p.mouse.up();
@@ -81,7 +82,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     s.addStormPairAt(s.plane.x + 120, 200, 110);
     setTimeout(() => res({ flaring: s.flaring, vy: Math.round(s.plane.vy) }), 100); }));
   check(!blocked.flaring && blocked.vy > 150, `with a storm before the runway there should be no flare (flaring ${blocked.flaring}, vy ${blocked.vy})`);
-  await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn');
   await p.mouse.move(195, 400); await p.mouse.down();
   for (let i = 0; i < 40 && await scene(() => game.scene.getScene('game').state) === 'takeoff'; i++) await p.waitForTimeout(100);
   await p.mouse.up(); await p.mouse.click(195, 300);

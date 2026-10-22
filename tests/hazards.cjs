@@ -2,6 +2,7 @@
 // delays taps; touching a no-fly zone or a bird ends the flight with the right reason.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/hazards.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -15,9 +16,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // Birds come on a 55% roll each chance; with bad luck none came in the window this test watches
   // (it failed ~1 run in 6, and blocked deploys). Here every chance brings birds: the test is about
   // what birds do, not how lucky the roll is.
-  const start = async () => { await p.goto(URL); await p.waitForTimeout(600);
+  const start = async () => { await p.goto(URL); await ready(p); await p.waitForTimeout(600);
     await p.evaluate(async () => { (await import('./src/config.js')).HAZARDS.birds.chance = 1; });
-    await p.click('#goBtn'); await p.waitForTimeout(2300); };
+    await p.click('#goBtn'); await started(p); await p.waitForTimeout(2300); };
   // A new hazard pauses the game to explain it; tap the captain's bubble to carry on.
   let sawPause = false;
   const dismiss = async () => {

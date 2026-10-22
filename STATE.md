@@ -362,6 +362,13 @@ Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (gold
 
 ## Known flaky tests
 
+- CI REWORKED 2026-10-22 (the user: 12+ min and failing most of the time): 4 shards in parallel
+  (tools/test.sh --shard k/4, balanced by per-test time), every test runs, a failure is retried once
+  (pass on retry = FLAKY warning, not a block; twice = blocks). All tests now wait for the game
+  (tests/lib/ready.js ready/started) instead of fixed sleeps: 380+ PNGs made fixed waits race the
+  loader. forest.cjs 189 s -> ~30 s (50 ms frames). Locally: tools/test.sh (same runner). 8 of the 15
+  runs before this failed, nearly all timing.
+
 - `tests/flight.cjs` failed ONCE in a full run on 2026-10-22 (reason not captured: the run's output was
   cut), then passed 3 reruns. Watch it.
 

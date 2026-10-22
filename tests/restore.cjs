@@ -4,6 +4,7 @@
 // settings, and takes the code out of the address bar. A used link says so.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/restore.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const UID = '11111111-2222-3333-4444-555555555555', OLD = 'dddddddd-0000-0000-0000-000000000004';
 
@@ -12,7 +13,7 @@ const UID = '11111111-2222-3333-4444-555555555555', OLD = 'dddddddd-0000-0000-00
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
   const errs = [], fails = [], calls = [], dialogs = [];
   let claimed = false;
-  p.on('pageerror', e => errs.push(String(e)));
+  p.on('pageerror', e => errs.push(String(e) + (process.env.STACK ? ' @ ' + e.stack : '')));
   p.on('dialog', d => { dialogs.push(d.message()); d.accept(); });
   const check = (c, m) => { if (!c) fails.push(m); };
   const flights = [
@@ -36,10 +37,10 @@ const UID = '11111111-2222-3333-4444-555555555555', OLD = 'dddddddd-0000-0000-00
   await p.addInitScript(() => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear();
     localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], priceVersion: 2, found: { cow: 1 } })); } });
   // A link that does not work (used / unknown) says so and changes nothing.
-  await p.goto(URL + '?restore=old-code'); await p.waitForTimeout(2000);
+  await p.goto(URL + '?restore=old-code'); await ready(p); await p.waitForTimeout(2000);
   check(dialogs.some(d => /already been used/.test(d)) && !(await p.evaluate(() => location.search.includes('restore'))), `a used link says so and leaves the address bar: ${dialogs}`);
   // Olly's link: asks first, then restores.
-  await p.goto(URL + '?restore=olly-code'); await p.waitForTimeout(3500);
+  await p.goto(URL + '?restore=olly-code'); await ready(p); await p.waitForTimeout(3500);
   check(dialogs.some(d => /Restore Olly the Swift #74\? \(3 flights, best 18,000 km\)/.test(d)), `asks whose pilot first: ${dialogs}`);
   const s = await p.evaluate(() => ({ save: JSON.parse(localStorage.getItem('contrailPilot.v2')), pilot: JSON.parse(localStorage.getItem('contrailPilot.pilot')) }));
   const lv = Object.values(s.save.levels || {}).reduce((a, n) => a + n, 0);
@@ -49,7 +50,7 @@ const UID = '11111111-2222-3333-4444-555555555555', OLD = 'dddddddd-0000-0000-00
   check(s.save.muted === true && s.save.found && s.save.found.cow, 'settings and found animals are kept');
   check(calls.some(c => c[0] === 'claim' && c[1].code === 'olly-code'), 'the claim was sent with the code');
   check(!(await p.evaluate(() => location.search.includes('restore'))), 'the code is gone from the address bar');
-  await p.goto(URL + '?restore=olly-code'); await p.waitForTimeout(2000);
+  await p.goto(URL + '?restore=olly-code'); await ready(p); await p.waitForTimeout(2000);
   check(dialogs.filter(d => /already been used/.test(d)).length === 2, `the same link a second time: used: ${dialogs}`);
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
   await b.close();

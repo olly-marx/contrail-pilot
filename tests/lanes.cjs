@@ -3,6 +3,7 @@
 // stretch with birds and icy air turned up to always spawn, checking every frame.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/lanes.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
@@ -13,7 +14,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const check = (c, m) => { if (!c) fails.push(m); };
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 9 })); });
-  await p.goto(URL); await p.waitForTimeout(800); await p.click('#goBtn');
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn');
   for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
   // Jump to just before birds start, crank spawns up, and watch.
   await p.evaluate(async () => {
