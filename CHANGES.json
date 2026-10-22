@@ -1,5 +1,13 @@
 [
   {
+    "id": "2026-10-22-regions",
+    "level": "major",
+    "notes": [
+      "The land below you now changes as you fly round the world: woodland, Mediterranean, desert and more.",
+      "Animals on the ground and in the air change with the land too."
+    ]
+  },
+  {
     "id": "2026-10-22-updates",
     "level": "minor",
     "notes": [
