@@ -1,5 +1,7 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
-import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard } from './online.js';
+import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, claimablePilots, claimPilot } from './online.js';
+import { rebuildSave } from './restore.js';
+import { writeSave } from './save.js';
 import { MISSIONS } from './missions.js';
 import { km } from './config.js';
 
@@ -53,6 +55,37 @@ export class PilotScreens {
     $('bPeriods').innerHTML = PERIODS.map(p => `<button class="btn" type="button" data-period="${p.id}">${p.name}</button>`).join('');
     $('bPeriods').querySelectorAll('[data-period]').forEach(b => b.onclick = () => { this.period = b.dataset.period; this.renderBoard(); });
     this.renderButton();
+    this.setupRestore();
+  }
+
+  // TEMPORARY (2026-10-22): bring back progress a browser wiped. Password from the game makers;
+  // pick your old pilot; this device takes it over and the save is rebuilt from its flights.
+  setupRestore() {
+    $('rsOpen').onclick = () => { $('rsBox').hidden = !$('rsBox').hidden; };
+    $('rsList').onclick = async () => {
+      $('rsMsg').textContent = 'Looking...'; $('rsPilots').innerHTML = '';
+      const pw = $('rsPw').value.trim(), r = await claimablePilots(pw);
+      if (!r.ok) { $('rsMsg').textContent = r.why === 'password' ? 'That password is not right.' : 'No internet right now. Try again soon!'; return; }
+      $('rsMsg').textContent = r.rows.length ? 'Which one is you? Tap your pilot.' : 'No pilots to restore.';
+      $('rsPilots').innerHTML = r.rows.map(p => `<button class="btn" type="button" data-claim="${p.id}">${esc(p.name)} #${esc(p.tag)}<br><small>${p.flights} flights, best ${km(p.best)}</small></button>`).join('');
+      $('rsPilots').querySelectorAll('[data-claim]').forEach(b => b.onclick = () => this.claim(pw, r.rows.find(p => p.id === b.dataset.claim)));
+    };
+  }
+
+  async claim(pw, p) {
+    if (!confirm(`Is ${p.name} #${p.tag} really you? Your progress on this device will be replaced by ${p.name}'s rebuilt progress.`)) return;
+    $('rsMsg').textContent = 'Restoring...';
+    const [first, , ...rest] = p.name.split(' '), word = rest.join(' ');
+    const r = await claimPilot(pw, p.id, { first, word, tag: p.tag });
+    if (!r.ok) { $('rsMsg').textContent = r.why === 'claimed' ? 'Someone has already restored that pilot.' : r.why === 'password' ? 'That password is not right.' : 'No internet right now. Try again soon!'; return; }
+    const keep = { muted: this.save.muted, seenTips: this.save.seenTips, found: this.save.found, shownLines: this.save.shownLines };
+    const { save } = rebuildSave(r.flights, keep);
+    for (const k of Object.keys(this.save)) delete this.save[k];
+    Object.assign(this.save, save);
+    writeSave(this.save);
+    $('rsBox').hidden = true;
+    alert(`Welcome back, ${p.name}! Best flight ${km(save.bestDistance)}, ${save.mission} missions, ${Object.values(save.levels).reduce((a, n) => a + n, 0)} upgrade levels and ${save.seeds} seeds rebuilt from your flights.`);
+    location.reload();
   }
 
   renderButton() {

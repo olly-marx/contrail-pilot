@@ -11,4 +11,5 @@ docker exec -i cp-pg psql -q -U postgres -v ON_ERROR_STOP=1 < tests/stub.sql
 for m in migrations/*.sql; do docker exec -i cp-pg psql -q -U postgres -v ON_ERROR_STOP=1 < "$m"; done
 docker exec -i cp-pg psql -q -t -U postgres < tests/names.sql
 docker exec -i cp-pg psql -q -U postgres < tests/rls.sql 2>&1
+docker exec -i cp-pg psql -q -U postgres < tests/claim.sql 2>&1
 docker rm -f cp-pg >/dev/null

@@ -1,6 +1,10 @@
 // Progress lives only on this device (localStorage). No accounts, nothing sent anywhere.
 // v2: upgrade lines with levels, tree cargo economy, tutorial flag. v1 saves are not carried over.
 const KEY = 'contrailPilot.v2';
+// A second copy, written with every save (2026-10-22: a phone lost a save). If the main copy is
+// missing or cannot be read, the game loads this one. An unreadable save is kept aside under
+// UNREADABLE, never overwritten. (A browser that wipes ALL of a site's storage wipes both.)
+const BACKUP = KEY + '.backup', UNREADABLE = KEY + '.unreadable';
 
 const DEFAULTS = {
   seeds: 0,            // main money: grabbed in the sky, kept only if you land safely (was 'trees')
@@ -26,11 +30,19 @@ const DEFAULTS = {
   priceVersion: 2,     // saves from before the 2026-10-21 price change are re-valued once (src/reprice.js)
 };
 
+function readRaw(key) {
+  try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return undefined; }   // undefined: there but unreadable
+}
+
 export function loadSave() {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return structuredClone(DEFAULTS);
-    const saved = JSON.parse(raw), s = { ...DEFAULTS, ...saved };
+    let saved = readRaw(KEY);
+    if (saved === undefined) {   // unreadable: keep it aside, never write over it unseen
+      try { if (!localStorage.getItem(UNREADABLE)) localStorage.setItem(UNREADABLE, localStorage.getItem(KEY)); } catch (e) {}
+    }
+    if (!saved || typeof saved !== 'object') saved = readRaw(BACKUP);
+    if (!saved || typeof saved !== 'object') return structuredClone(DEFAULTS);
+    const s = { ...DEFAULTS, ...saved };
     if (!('priceVersion' in saved)) s.priceVersion = 1;   // from before the price change: re-valued once (src/reprice.js)
     if ('trees' in s) { s.seeds = (s.seeds || 0) + s.trees; delete s.trees; }   // money was called 'trees' before 2026-10-16
     return s;
@@ -40,10 +52,10 @@ export function loadSave() {
 }
 
 export function writeSave(save) {
-  try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) { /* private mode: play on without saving */ }
+  try { const raw = JSON.stringify(save); localStorage.setItem(KEY, raw); localStorage.setItem(BACKUP, raw); } catch (e) { /* private mode: play on without saving */ }
 }
 
 export function resetSave() {
-  try { localStorage.removeItem(KEY); } catch (e) {}
+  try { localStorage.removeItem(KEY); localStorage.removeItem(BACKUP); } catch (e) {}
   return structuredClone(DEFAULTS);
 }

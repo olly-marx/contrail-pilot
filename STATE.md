@@ -362,6 +362,9 @@ Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (gold
 
 ## Known flaky tests
 
+- `tests/flight.cjs` failed ONCE in a full run on 2026-10-22 (reason not captured: the run's output was
+  cut), then passed 3 reruns. Watch it.
+
 - `tests/wildlife.cjs` failed once in CI (f036b7d, 2026-10-20): "bare land should still have a few
   cows/sheep" — one snapshot right after take-off; animals are random. Fixed the same day: it now
   collects what appears over ~4 s.
@@ -369,6 +372,25 @@ Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (gold
   commit): the teleporting autopilot's flight ends (`state "over"` near 46 km) after birds missed
   their 55% spawn roll at 10 km. Rerun before blaming a change. `tests/school.cjs` crashed once in
   ~5 runs.
+
+## Lost saves and the TEMPORARY restore button (2026-10-22)
+
+The user's phone lost ALL the game's browser storage (save + pilot name + anonymous login): a browser
+wipe, not our code (nothing in the game touches the name/login keys). Stevo likely too (a second
+anonymous login 21 Oct 23:01 became "Stevo the Bumblebee"). Built, with the user's OK:
+- Migration 20261022090000_claim_pilot.sql (LIVE): players.claimed_at; claimable_pilots(pw) and
+  claim_pilot(pw, old): a device takes over an unclaimed old pilot (flights move, old row deleted:
+  claim once). ONE shared password; only its SHA-256 is stored, in restore_secret (no grants), set
+  by hand via the CLI, NOT in the repo. The password was given to the user in chat on 2026-10-22.
+  (A first version without a password was blocked as a security weakening.)
+- Game: PILOT -> "lost your progress? restore it" (FEATURES.restore in config.js); src/restore.js
+  rebuilds the save from the flights (exact: best, landings, missions, laps, trees; estimated: seeds
+  0.42d+0.85d^2 per landed flight, d in 1000 km, plus prizes) and spends it cheapest-first.
+  Stevo: claiming "Explorer" from his Bumblebee phone merges both (the user: keep Explorer, or he chooses).
+- Saves are written twice (save.js BACKUP), unreadable ones kept aside, navigator.storage.persist().
+- REMOVE the button once friends are restored: FEATURES.restore = false (or delete the UI), and a
+  migration dropping claim_pilot/claimable_pilots/restore_secret.
+- NOT built: an automatic cloud backup of each pilot's save (would protect against future wipes).
 
 ## Supabase (online names + leaderboards)
 

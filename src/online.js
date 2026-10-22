@@ -90,4 +90,24 @@ export async function leaderboard(board, period) {
   } catch (e) { return null; }
 }
 
+// TEMPORARY restore (2026-10-22, migration 20261022090000_claim_pilot.sql): list old pilots, and
+// claim one for this device (its flights and name move here). Both need the shared password.
+// Return { ok, rows | flights, why: 'password' | 'claimed' | 'offline' }.
+export async function claimablePilots(pw) {
+  try {
+    await session();
+    const { data, error } = await db().rpc('claimable_pilots', { pw });
+    return error ? { ok: false, why: /password/.test(error.message) ? 'password' : 'offline' } : { ok: true, rows: data };
+  } catch (e) { return { ok: false, why: 'offline' }; }
+}
+export async function claimPilot(pw, old, name) {
+  try {
+    await session();
+    const { data, error } = await db().rpc('claim_pilot', { pw, old });
+    if (error) return { ok: false, why: /password/.test(error.message) ? 'password' : /claimed/.test(error.message) ? 'claimed' : 'offline' };
+    write(PILOT_KEY, name);   // this device is now that pilot
+    return { ok: true, flights: data };
+  } catch (e) { return { ok: false, why: 'offline' }; }
+}
+
 if (typeof window !== 'undefined') window.addEventListener('online', () => flush());

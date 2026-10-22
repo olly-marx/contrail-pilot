@@ -10,6 +10,8 @@ import { Tour } from './tour.js';
 import { WildScreen } from './wild.js';
 
 const save = loadSave();
+// Ask the browser to keep this site's storage (where supported), so tidy-ups don't clear the save.
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { /* not supported */ }
 const moved = migrateHabitat(save);   // old 'rewild' levels -> UK habitat projects (before the re-value: projects are kept as they are)
 if (repriceSave(save) || moved) writeSave(save);   // once, for saves from before the new prices
 
