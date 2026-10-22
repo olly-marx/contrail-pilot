@@ -167,6 +167,24 @@ functions once he's done. lanes.cjs/flight.cjs still count fixed time windows (f
 Not started: "Biodiversity King" board + boards revamp (DB change), upgrades tied to new variables,
 the advanced autopilot (see items 5 below).
 
+### Progress on A (2026-10-22, game session)
+- Research for the 9 regions is done in 2 passes, plus pass 3 running. Files are OUTSIDE the repo in `~/contrail-research/<region>.md` (pass 1),
+  `.v2.md` (independent re-check) and `.v3.md` (pass 3: closes every Wikipedia-only/PARTIAL/game-logic gap, adds org + learn_url
+  + donate_url per project). 99 projects, 176 species (85 drawn, 91 to draw). Dropped: morpho, pangolin, mink row.
+- The user's answers (2026-10-22): (1) one species may belong to SEVERAL regions (flamingo, ostrich, lappetvulture, redpanda,
+  swallow, heron); (2) drawn ids reused for a different species get NEW drawings + new ids (eagle vs Spanish imperial eagle,
+  turtle vs hawksbill; wall lizard / griffon unused; meerkat moves desert -> savanna); (3) LEAVE OUT the mink; (4) camel shown
+  as herded camels: OK; (5) keep off-route projects (Chad, Yellowstone, Washington, Namibia, KAZA): routing will grow; (6) the art
+  session is busy: start a NEW art session for the 91 region sprites; (7) EVERY claim needs a source, else fact-check it away.
+- NEW GOAL (the user, 2026-10-22): grow the game into a big global knowledge base of interesting climate research and cool
+  non-profit projects, with links people can follow to donate. Keep the existing rule: the game takes no payments; outbound
+  links go behind the grown-up gate (hold 2 s, as for Citizen Zoo). Not designed yet.
+- Art session shipped 8ca186c (2026-10-22): longer sunset/sunrise (DAYNIGHT.blendSeconds 3 -> 6) with a day dial; SAF and
+  autopilot pick-ups in flight (POWERUPS in src/config.js; autopilot shows "TAP to take control"); contrail-cooling wording;
+  tests/powerups.cjs ([powerups]=20 in tools/test.sh). 35 browser tests now.
+- Push ownership (the art session, 2026-10-22): the user's brief lets the ART session push its own work after a full
+  tools/test.sh and CI to deploy success. (Working arrangement below updated to match.)
+
 ## Previous NEXT TASK (handed off 2026-10-21): the four to-do items. DONE; kept for the record
 
 Live and clean at 27b143d (CI green). Do all four items from "## TO DO: balance, progression and
@@ -413,8 +431,9 @@ Leaderboard + light profiles + a menu from the runway:
 A second Claude session ("Contrail game artwork") works in this same tree, drawing PNGs with
 `tools/art/make_sprites.py` and `tools/art/make_background.py` into `assets/`, and editing
 `src/GameScene.js` (preload, makeTextures, runway/plot code) and `src/Hud.js`.
-Agreed split: it commits only its own files/hunks as small art commits; this (game) session owns
-pushing to main. NEVER `git add -A` here: stage your own paths only (`git apply --cached` for
+Agreed split: it commits only its own files/hunks as small art commits; pushing to main: either session, each
+after a full tools/test.sh (failures counted) and CI watched to deploy success (the user's brief to the art session, 2026-10-22;
+before that the game session owned pushing). NEVER `git add -A` here: stage your own paths only (`git apply --cached` for
 hunks). Uncommitted art files in `git status` belong to that session; leave them.
 Gotcha that broke the live site once: `makeTextures()` returns early if a guard texture exists;
 when a texture moves to a PNG the guard must be a code-only key, or better a per-key
