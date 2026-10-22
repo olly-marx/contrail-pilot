@@ -462,3 +462,9 @@ h2.sub { margin-top: -4px; }
 .wfield .wf { position: absolute; image-rendering: pixelated; transform-origin: 0 100%; }
 .wfield .wf.critter { transform-origin: 50% 100%; }
 .wscene.wfield-box .w-empty { z-index: 999; }
+
+/* ---------- results: NEW ANIMALS discovered (src/ui.js showResults) ---------- */
+.animals-new { background: #eaf6ea; padding: 6px; text-align: center; }
+.animals-new .na-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 4px 0; }
+.animals-new .na { display: grid; justify-items: center; gap: 2px; font-size: 7px; background: #fff; padding: 4px 6px; }
+.animals-new .na img { height: 36px; image-rendering: pixelated; }

@@ -1,6 +1,7 @@
 // Wild Area field (src/wild.js Field, 2026-10-22): a habitat feature for every project done (and
 // none for projects not done), trees for what you planted, every animal found wandering about (it
-// moves, faces the way it goes, and never asks for a missing picture).
+// moves, faces the way it goes, and never asks for a missing picture). And the results screen's
+// NEW ANIMALS list: shown when landed OR crashed, and only animals new on THIS flight.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/wildfield.cjs
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
@@ -34,6 +35,20 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(after.filter(([pos], i) => pos !== before[i]).length >= 3, `animals wander: ${JSON.stringify([before, after])}`);
   check(after.every(([, src]) => /-[01]\.png$/.test(src)), `every animal shows a real frame: ${after.map(a => a[1])}`);
   check(missing.length === 0, `no missing pictures: ${missing}`);
+  // NEW ANIMALS on the results: flight 1 finds an otter and crashes; flight 2 finds a heron and lands.
+  const flight = async (k, landed) => { await p.click('#tabFly'); await p.waitForTimeout(300); await p.click('#goBtn');
+    await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.nextAirport && s.state !== 'idle'; }, null, { timeout: 15000 }).catch(() => {});
+    await p.evaluate(([k, landed]) => { const s = game.scene.getScene('game'); s.state = 'playing'; s.seen(k); s.graceUntil = 0;
+      if (landed) { s.landedAt = s.airportAhead(0).name; s.finish({ landed: true }); } else s.finish({ reason: 'Storm!\nYou flew into a storm.' }); }, [k, landed]);
+    await p.waitForFunction(() => document.getElementById('rAnimals') && !document.getElementById('results').hidden, null, { timeout: 10000 }).catch(() => {});
+    await p.waitForTimeout(600);
+    return p.evaluate(() => { const e = document.getElementById('rAnimals'); return e && !e.hidden ? e.textContent : ''; }); };
+  const one = await flight('animal-otter', false);
+  check(/Otter/.test(one), `a crash still lists the new animal: "${one}"`);
+  await p.evaluate(() => game.registry.get('ui').showTitle());
+  const two = await flight('sky-heron', true);
+  check(/Grey heron/.test(two) && !/Otter/.test(two), `flight 2 lists only ITS new animal (heron), not the otter again: "${two}"`);
+
   console.log({ fails, errs });
   await b.close();
   if (fails.length || errs.length) { console.log('FAIL'); process.exit(1); }

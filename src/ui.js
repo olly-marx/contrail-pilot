@@ -2,6 +2,7 @@ import { FEATURES, km } from './config.js';
 import { ROUTE, cityAt, legKm } from './route.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
+import { WILDLIFE } from './wildlife.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
@@ -196,6 +197,9 @@ export class UI {
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
   async showResults(r) {
+    // NEW ANIMALS this flight (landed or crashed): made once, next to the new badges, before the
+    // reveal below collects its steps.
+    if (!$('rAnimals')) $('rBadges').insertAdjacentHTML('afterend', '<div id="rAnimals" class="step animals-new" hidden></div>');
 
     const steps = [...document.querySelectorAll('#results .step')];
     steps.forEach(el => el.classList.remove('in'));
@@ -239,6 +243,10 @@ export class UI {
     const rw = (r.rewards || []).filter(u => (this.save.unclaimed || []).some(x => x.key === u.key));
     $('rRewards').hidden = !rw.length;
     if (rw.length) this.renderPrizes($('rRewards'));
+    const na = (r.foundIds || []).map(id => WILDLIFE.find(w => w.id === id)).filter(Boolean);
+    $('rAnimals').hidden = !na.length;
+    $('rAnimals').innerHTML = na.length ? `<p class="label">New animal${na.length > 1 ? 's' : ''} discovered!</p><div class="na-list">${na.map(w =>
+      `<span class="na"><img src="${w.portrait}-0.png" alt=""><b>${w.name}</b></span>`).join('')}</div><p class="small">See them in your Wild Area (NATURE).</p>` : '';
     const nb = (r.rewards || []).filter(u => u.kind === 'badge');
     $('rBadges').hidden = !nb.length;
     $('rBadges').innerHTML = nb.map(u => `<span class="new-badge"><img src="${medal(u.id, u.tier)}" alt="">NEW BADGE: <b>${u.label}</b></span>`).join('');
