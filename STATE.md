@@ -401,7 +401,16 @@ anonymous login 21 Oct 23:01 became "Stevo the Bumblebee").
 - Saves are written twice (save.js BACKUP), unreadable ones kept aside, navigator.storage.persist().
 - REMOVE when everyone is restored: checkRestoreLink + restorePreview/restoreClaim, and a migration
   dropping restore_links / restore_preview / restore_claim.
-- NOT built: an automatic cloud backup of each pilot's save (would protect against future wipes).
+- NEXT (asked 2026-10-22, the user may take it to another chat): ONLINE SAVE. Back up each named
+  pilot's save to the database; play the same pilot on several devices (phone + laptop); get it
+  back after a browser wipe. The user is unsure about a password login. Recommended (not agreed):
+  a "pilot code" per pilot (e.g. 3 words from NAME_WORDS + a number, shown on PILOT with "write this
+  down / take a photo"), stored hashed; on a new device: PILOT -> "I already have a pilot" -> name +
+  code -> the device takes the pilot over (reuse restore_claim's logic) and downloads the save.
+  Save: a jsonb column/table per player, uploaded a few seconds after each flight and on leaving the
+  hangar; on load, the newer of local vs online wins (by an updatedAt stamp), never silently
+  overwriting more progress with less. Needs a migration (the user's OK before db push). Two devices
+  played at once: last write wins per field? keep it simple: newest whole save wins.
 
 ## Supabase (online names + leaderboards)
 
