@@ -186,6 +186,177 @@ def storks(p):                                      # a stork nest on a chimney 
     p.img.alpha_composite(im.crop((0, 0, im.width, min(im.height, 10))), (12 - im.width // 2, 0))
 
 
+# ---------- 1b. the 2D field (Wild Area, 2026-10-22): sky + hills + a deep ground you look across ----------
+# 288x170. Horizon at y=60; the ground below gets lighter towards the back (distance), with a few
+# darker grass tufts, so animals can wander up and down it as well as left and right.
+
+FIELD_H, HORIZON = 170, 60
+
+
+def field(region):
+    top, bot = (hexc(c) for c in SKY[region])
+    im = Image.new('RGBA', (288, FIELD_H))
+    for y in range(HORIZON):
+        t = min(3, y * 4 // HORIZON) / 3
+        c = tuple(round(top[i] + (bot[i] - top[i]) * t) for i in range(3)) + (255,)
+        for x in range(288):
+            im.putpixel((x, y), c)
+    clouds = Image.open(A / 'clouds.png').convert('RGBA')
+    clouds.putalpha(clouds.getchannel('A').point(lambda a: int(a * 0.7)))
+    im.alpha_composite(clouds, (0, 0))
+    hills = 'hills' if region == 'woodland' else f'hills-{region}'
+    ground = 'ground' if region == 'woodland' else f'ground-{region}'
+    h = Image.open(A / f'{hills}.png').convert('RGBA')
+    im.alpha_composite(h, (0, HORIZON - h.height + 4))
+    g = Image.open(A / f'{ground}.png').convert('RGBA')
+    base = g.getpixel((10, 6))[:3]                  # the strip's own grass colour, so regions match their flights
+    rim = g.getpixel((10, 0))[:3]
+    import random
+    rnd = random.Random('field-' + region)
+    for y in range(HORIZON, FIELD_H):
+        d = (y - HORIZON) / (FIELD_H - HORIZON)     # 0 at the horizon (far) .. 1 at the front (near)
+        k = 1.12 - 0.22 * d                          # far = lighter (haze), near = darker
+        band = round(d * 5) % 2                      # gentle stripes, like mown grass, wider nearer
+        c = tuple(max(0, min(255, round(v * (k - 0.03 * band)))) for v in base) + (255,)
+        for x in range(288):
+            im.putpixel((x, y), c)
+    for x in range(288):
+        im.putpixel((x, HORIZON), rim + (255,))
+    for _ in range(260):                             # grass tufts, bigger nearer
+        y = rnd.randrange(HORIZON + 2, FIELD_H)
+        x = rnd.randrange(288)
+        d = (y - HORIZON) / (FIELD_H - HORIZON)
+        dark = tuple(round(v * 0.78) for v in base) + (255,)
+        im.putpixel((x, y), dark)
+        if d > 0.4:
+            im.putpixel((x, y - 1), dark)
+        if d > 0.75:
+            im.putpixel((x + 1, y - 1), dark)
+    save(im, f'field-{region}')
+
+
+# ---------- 1c. habitat features that appear in the field once a project is done ----------
+# Drawn at 1x; the field shows them at the same scale as its trees. Base on the bottom row.
+
+def feat(name, w, h, draw):
+    p = Pic(w, h)
+    draw(p)
+    save(p.img, f'wild-{name}')
+
+
+def f_deadwood(p):                                   # a mossy log pile with a beetle
+    for k, (x0, y0, L) in enumerate(((0, 6, 14), (3, 3, 12), (6, 0, 8))):
+        for x in range(x0, x0 + L):
+            p.px(x, y0 + 1, hexc('#8a5a32')); p.px(x, y0 + 2, hexc('#6e4424'))
+            p.px(x, y0, hexc('#6aaa3a') if (x + k) % 3 == 0 else hexc('#a87444'))
+        p.px(x0, y0 + 1, hexc('#c89a60')); p.px(x0, y0 + 2, hexc('#c89a60'))
+    p.px(9, 2, hexc('#1b1b2f'))
+
+
+def f_meadow(p):                                     # a patch of wildflowers in long grass
+    import random
+    rnd = random.Random('meadow')
+    for x in range(30):
+        for y in range(6 - (x * 7) % 3, 8):
+            p.px(x, y, hexc('#4e9a38') if (x + y) % 2 else hexc('#5aac40'))
+    for _ in range(16):
+        x, y = rnd.randrange(1, 29), rnd.randrange(0, 5)
+        p.px(x, y, hexc(rnd.choice(['#ffeb3b', '#e040fb', '#ff7043', '#ffffff', '#7fb0ff'])))
+        p.px(x, y + 1, hexc('#3e8a30'))
+
+
+def f_margins(p):                                    # a sunny bee bank, with bees
+    for y in range(4, 10):
+        for x in range(9 - y, 11 + y):
+            if 0 <= x < 22:
+                p.px(x, y, hexc('#c8a070') if (x + y) % 4 else hexc('#a08050'))
+    for x in (6, 11, 15):
+        p.px(x, 7, hexc('#5a3a20'))
+    for x, y in ((5, 1), (14, 0), (18, 3)):
+        p.px(x, y, hexc('#ffc23d')); p.px(x + 1, y, hexc('#1b1b2f'))
+
+
+def f_hedgerow(p):                                   # a hedge along the back of the field (tiles)
+    for x in range(48):
+        h = 7 + (x * 7) % 3 + (1 if (x // 6) % 2 else 0)
+        for y in range(11 - h, 11):
+            p.px(x, y, hexc('#2e6b2e') if (x + y) % 3 else hexc('#4a8a3a'))
+    for x, y in ((6, 4), (19, 3), (33, 5), (42, 4)):
+        p.px(x, y, hexc('#ffffff')); p.px(x + 1, y + 1, hexc('#e02020'))
+
+
+def f_pond(p):                                       # a pond with reeds and a lily pad
+    for y in range(4, 12):
+        w = round(17 * (1 - ((y - 8) / 4.5) ** 2) ** 0.5)
+        for x in range(18 - w, 18 + w):
+            p.px(x, y, hexc('#8fd3ff') if y < 6 else hexc('#3d8fd1') if (x + y) % 5 else hexc('#5aa8e0'))
+    for y in range(4, 12):
+        for x in (18 - round(17 * (1 - ((y - 8) / 4.5) ** 2) ** 0.5), 17 + round(17 * (1 - ((y - 8) / 4.5) ** 2) ** 0.5)):
+            p.px(x, y, hexc('#6a8a3a'))
+    for x in (3, 5, 31):
+        for y in range(0, 7):
+            p.px(x, y, hexc('#6a8a3a'))
+        p.rect(x, 0, 1, 2, hexc('#7a4a24'))
+    p.rect(20, 8, 3, 1, hexc('#4caf50')); p.px(21, 7, hexc('#ff9ad0'))
+
+
+def f_woodland(p):                                   # a small copse
+    for k, (name, x) in enumerate((('tree-oak-2', 0), ('tree-birch-2', 9), ('tree-rowan-2', 18), ('tree-oak-1', 28))):
+        t = Image.open(A / f'{name}.png').convert('RGBA')
+        p.img.alpha_composite(t, (x, 16 - t.height))
+
+
+def f_voles(p):                                      # a stream running down the field, with a vole burrow
+    for y in range(40):
+        cx = 10 + round(4 * __import__('math').sin(y / 6))
+        w = 3 + y // 12
+        for x in range(cx - w, cx + w):
+            p.px(x, y, hexc('#5aa8e0') if (x + y) % 6 else hexc('#8fd3ff'))
+        p.px(cx - w - 1, y, hexc('#7a6a40')); p.px(cx + w, y, hexc('#7a6a40'))
+    p.rect(1, 28, 3, 2, hexc('#3a2a20'))             # burrow in the bank
+
+
+def f_beavers(p):                                    # a beaver dam of sticks across the stream
+    for k, (x, y) in enumerate(((0, 4), (3, 3), (6, 4), (9, 3), (12, 4), (15, 3))):
+        p.rect(x, y, 4, 2, hexc('#6d4c2f') if k % 2 else hexc('#8a6a44'))
+    for x in range(1, 18, 3):
+        p.px(x, 2, hexc('#5a3a20')); p.px(x + 1, 6, hexc('#5a3a20'))
+    for x in range(0, 19):
+        p.px(x, 7, hexc('#3d8fd1'))
+
+
+def f_rewet(p):                                      # marsh: puddles between reeds
+    for x in range(36):
+        for y in range(6, 12):
+            if ((x // 5 + y) % 3 == 0) and 0 < x < 35:
+                p.px(x, y, hexc('#5aa0d8'))
+    for x in (3, 8, 12, 19, 24, 30):
+        for y in range(0, 9):
+            p.px(x, y, hexc('#7a9a3a'))
+        p.rect(x, 0, 1, 2, hexc('#6a4a2a'))
+
+
+def f_storks(p):                                     # a nest on a tall pole (the stork itself walks the field)
+    p.rect(9, 6, 2, 28, hexc('#8a6a44')); p.rect(9, 6, 1, 28, hexc('#a88a64'))
+    for x in range(2, 18):
+        p.px(x, 5, hexc('#8a6a44')); p.px(x, 4, hexc('#a08050') if x % 2 else hexc('#6d4c2f'))
+    for x in range(4, 16, 2):
+        p.px(x, 3, hexc('#6d4c2f'))
+
+
+def f_martens(p):                                    # a pine marten nest box on a tree
+    t = Image.open(A / 'tree-spruce-2.png').convert('RGBA')
+    t = t.resize((t.width * 2, t.height * 2), Image.NEAREST)
+    p.img.alpha_composite(t, (0, 30 - t.height))
+    p.rect(9, 14, 6, 6, hexc('#8a5a32')); p.rect(9, 14, 6, 1, hexc('#5a3a20')); p.rect(11, 16, 2, 2, hexc('#1b1b2f'))
+
+
+FEATURES = {'deadwood': (16, 10, f_deadwood), 'meadow': (30, 8, f_meadow), 'margins': (22, 10, f_margins),
+            'hedgerow': (48, 11, f_hedgerow), 'pond': (36, 12, f_pond), 'woodland': (40, 16, f_woodland),
+            'voles': (24, 40, f_voles), 'beavers': (19, 8, f_beavers), 'rewet': (36, 12, f_rewet),
+            'storks': (20, 34, f_storks), 'martens': (24, 30, f_martens)}
+
+
 # ---------- 3. card frame (CSS border-image, slice 4) ----------
 
 def card_frame(name, edge, lit, dark, inner):
@@ -212,6 +383,9 @@ if __name__ == '__main__':
     card_frame('card-frame-locked', '#2b2b33', '#8a8a96', '#5a5a66', '#c9c4b4')
     for r in REGIONS:
         backdrop(r)
+        field(r)
+    for name, (w, h, fn) in FEATURES.items():
+        feat(name, w, h, fn)
     for name, fn in (('deadwood', deadwood), ('meadow', meadow), ('margins', margins), ('hedgerow', hedgerow),
                      ('pond', pond), ('woodland', woodland), ('voles', creature('animal-watervole')),
                      ('beavers', beavers), ('rewet', rewet), ('storks', storks),

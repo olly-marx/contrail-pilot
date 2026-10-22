@@ -450,3 +450,10 @@ h2.sub { margin-top: -4px; }
 .badge2 img { width: 48px; height: 48px; image-rendering: pixelated; }
 #hBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
 .badge2 b { font-size: 7px; color: inherit; }
+
+/* ---------- Wild Area 2D field (src/wild.js Field) ---------- */
+.wscene.wfield-box { aspect-ratio: 288 / 170; background: #6ec6e8; }
+.wfield { position: absolute; left: 0; top: 0; width: 288px; height: 170px; transform-origin: 0 0; background-size: 288px 170px; image-rendering: pixelated; }
+.wfield .wf { position: absolute; image-rendering: pixelated; transform-origin: 0 100%; }
+.wfield .wf.critter { transform-origin: 50% 100%; }
+.wscene.wfield-box .w-empty { z-index: 999; }
