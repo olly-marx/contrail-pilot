@@ -180,9 +180,18 @@ the advanced autopilot (see items 5 below).
   org/learn_url/donate_url (donate only on the org's own domain). Also dropped (the user): slendergazelle, hawksbill (no project
   link). Added: rainforest otterwatch (FZS Peru), tapirwork (IPE LTCI); monsoon rhinosanctuary. Rare/legendary species must keep
   a sourced `needs` link. Weak spots are listed at the end of each .v3.md.
-- PROPOSED, waiting on the user: region below the plane = REAL GEOGRAPHY (position along the real great circle of the leg, by
-  fraction of the game leg, looked up in a declared ~10-degree world grid of region ids + ocean + ice); ocean as a terrain;
-  CO2 soak only from the region below; tabs open when a region is first flown over. Rollout: 1 data/saves/meters/tabs,
+- STEP 1 DONE + LIVE 2026-10-22 (4bf1af9, CI green, 38/38 tests): src/habitat/<region>.js (9 regions, generated from the
+  .v3 research); habitats.js REGION_DATA/REGION_NAMES/RARITY_BIO, prices from tier+band (PRICE/BIO tables there);
+  nature.js biodiversity(save, region), worldBiodiversity, projectsDone/canAppear/natureCooling(…, region), regionSpecies(region);
+  wild.js region tabs (open once you have LANDED in a region city: discovered(); savanna/rainforest say "soon"), org + links
+  behind a hold-2s gate, '?' for undrawn animals; badges.js rewilder counts every region. Tests: tests/habitatdata.cjs (data
+  rules, 5 planted defects caught), tests/regions.cjs (3 planted defects caught). In flight nothing changed yet (still UK only).
+  Rare/legendary animals with no sourced project link were lowered to uncommon (chameleon, mouflon, pelican, greatgreyowl).
+- ART-BRIEF-REGIONS.md (generated from the data): 91 animals, 101 project icons, 9 field backdrops, savanna/rainforest/ocean
+  terrain. The user will start a NEW art session for it.
+- DECIDED (the user, 2026-10-22): region below the plane = REAL GEOGRAPHY (position along the real great circle of the leg, by
+  fraction of the game leg, looked up in a declared ~10-degree world grid of region ids + ocean + ice); ocean as its own terrain but SHORTER than real (squeezed);
+  CO2 soak only from the region below (yes); tabs open when a region is first flown over. Rollout: 1 data/saves/meters/tabs,
   2 region-below in flight, 3 global routing (B).
 - NEW GOAL (the user, 2026-10-22): grow the game into a big global knowledge base of interesting climate research and cool
   non-profit projects, with links people can follow to donate. Keep the existing rule: the game takes no payments; outbound
