@@ -8,6 +8,7 @@ import { PilotScreens } from './pilot.js';
 import { flush, syncUp, syncDown, watchSave, ensureCode } from './online.js';
 import { Tour } from './tour.js';
 import { WildScreen } from './wild.js';
+import { Updates } from './updates.js';
 
 const save = loadSave();
 // Ask the browser to keep this site's storage (where supported), so tidy-ups don't clear the save.
@@ -64,3 +65,8 @@ watchSave(save);
 ensureCode();   // named pilots from before codes get one (shown on PILOT)
 setInterval(() => syncUp(save), 30000);
 document.addEventListener('visibilitychange', () => { if (document.hidden) syncUp(save); });   // leaving the page
+
+// Updates (src/updates.js): a banner when a new version is out, never during a flight; the save is
+// written before any reload.
+window.cpUpdates = new Updates(() => { const s = game.scene.getScene('game'); return !!s && ['takeoff', 'playing', 'landing'].includes(s.state); },
+  () => writeSave(save));

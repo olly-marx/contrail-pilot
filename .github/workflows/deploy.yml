@@ -60,6 +60,17 @@ jobs:
           sed -i -E "s#(from '\./[A-Za-z]+\.js)'#\1?v=$V'#g" _site/src/*.js
           sed -i -E "s#(src|href)=\"(src/main\.js|style\.css|vendor/[a-z.]+\.js)\"#\1=\"\2?v=$V\"#g" _site/index.html
           grep -q "src/main.js?v=$V" _site/index.html   # fail the deploy if the stamp didn't take
+          # version.json: what's live, read by src/updates.js to offer the update. CHANGES.json must be
+          # valid (a list of {id, level: minor|major, notes: [...]}) or the deploy stops here.
+          python3 - "$V" <<'PY'
+          import json, sys
+          ch = json.load(open('CHANGES.json'))
+          assert isinstance(ch, list) and ch, 'CHANGES.json: a non-empty list'
+          for c in ch:
+              assert c.get('id') and c.get('level') in ('minor', 'major') and isinstance(c.get('notes'), list) and c['notes'], f'CHANGES.json entry: {c}'
+          json.dump({'commit': sys.argv[1], 'changes': ch[:20]}, open('_site/version.json', 'w'))
+          PY
+          grep -q "\"commit\": \"$V\"" _site/version.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

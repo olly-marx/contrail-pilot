@@ -1,0 +1,20 @@
+[
+  {
+    "id": "2026-10-22-updates",
+    "level": "minor",
+    "notes": [
+      "The game now tells you when a new version is ready. Tap UPDATE on the menu: your progress is kept."
+    ]
+  },
+  {
+    "id": "2026-10-22-autopilot",
+    "level": "major",
+    "notes": [
+      "AUTOPILOT badges fly your plane perfectly for 8 seconds: nothing can crash you!",
+      "Grab the green SAF can for cleaner fuel: less CO2 and thinner contrails.",
+      "A forest meter at the bottom grows as your trees soak up CO2. Plant early!",
+      "Sunset and sunrise are slower, and a little dial under the distance shows when night is coming.",
+      "No more soil patches once your parcels are gone."
+    ]
+  }
+]
