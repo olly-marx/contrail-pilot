@@ -1893,9 +1893,9 @@ export class GameScene extends Phaser.Scene {
     else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');
     else this.hintText.setText('');
 
-    const forest = this.forestFull ? 'FOREST FULL!' : this.trees.length ? `FOREST x${this.trees.length}` : '';
+    const forest = 'FOREST FULL!';   // one short line (the meter shows the rest; longer text ran into it): FULL beats the soil hint
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
-    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.parcels && soilSoon ? `drop on soil! ${forest}` : forest) : '');
+    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? 'drop on soil!' : '') : '');
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen;
     this.setDropVisible(showDrop);
     if (showDrop) this.dropLabel.setText(`DROP x${this.parcels}\n${SPECIES[this.treeKind()].name.toUpperCase()}`);
