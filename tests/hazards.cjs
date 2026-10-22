@@ -12,7 +12,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
   const scene = (fn, a) => p.evaluate(fn, a);
-  const start = async () => { await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn'); await p.waitForTimeout(2300); };
+  // Birds come on a 55% roll each chance; with bad luck none came in the window this test watches
+  // (it failed ~1 run in 6, and blocked deploys). Here every chance brings birds: the test is about
+  // what birds do, not how lucky the roll is.
+  const start = async () => { await p.goto(URL); await p.waitForTimeout(600);
+    await p.evaluate(async () => { (await import('./src/config.js')).HAZARDS.birds.chance = 1; });
+    await p.click('#goBtn'); await p.waitForTimeout(2300); };
   // A new hazard pauses the game to explain it; tap the captain's bubble to carry on.
   let sawPause = false;
   const dismiss = async () => {

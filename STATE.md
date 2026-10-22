@@ -368,7 +368,9 @@ Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (gold
 - `tests/wildlife.cjs` failed once in CI (f036b7d, 2026-10-20): "bare land should still have a few
   cows/sheep" — one snapshot right after take-off; animals are random. Fixed the same day: it now
   collects what appears over ~4 s.
-- `tests/hazards.cjs` fails ~1 in 6 runs ON c1bf7d1 TOO (measured 2026-10-19: 6/16 on the clean
+- FIXED 2026-10-22: hazards.cjs now sets HAZARDS.birds.chance = 1 (the bird roll was the flake; it
+  blocked deploys twice); flight.cjs waits for the scene after TAKE OFF (read nextAirport too early in CI).
+  Old note: `tests/hazards.cjs` fails ~1 in 6 runs ON c1bf7d1 TOO (measured 2026-10-19: 6/16 on the clean
   commit): the teleporting autopilot's flight ends (`state "over"` near 46 km) after birds missed
   their 55% spawn roll at 10 km. Rerun before blaming a change. `tests/school.cjs` crashed once in
   ~5 runs.
