@@ -36,9 +36,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(after.every(([, src]) => /-[01]\.png$/.test(src)), `every animal shows a real frame: ${after.map(a => a[1])}`);
   check(missing.length === 0, `no missing pictures: ${missing}`);
   // NEW ANIMALS on the results: flight 1 finds an otter and crashes; flight 2 finds a heron and lands.
-  const flight = async (k, landed) => { await p.click('#tabFly'); await p.waitForTimeout(300); await p.click('#goBtn');
-    await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.nextAirport && s.state !== 'idle'; }, null, { timeout: 15000 }).catch(() => {});
-    await p.evaluate(([k, landed]) => { const s = game.scene.getScene('game'); s.state = 'playing'; s.seen(k); s.graceUntil = 0;
+  const flight = async (k, landed) => {   // to the title by code: after a landing the runway's MENU button covers the FLY tab
+    await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(300); await p.click('#goBtn');
+    // Wait for the NEW flight: 'over' (left from the last one) is not idle either, so wait for a flying state.
+    await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.nextAirport && ['takeoff', 'playing'].includes(s.state); }, null, { timeout: 15000 }).catch(() => {});
+    // No natural animals during these flights (they would be found too, at random): as wild.cjs does.
+    await p.evaluate(([k, landed]) => { const s = game.scene.getScene('game'); s.wildlife = { ...s.wildlife, wildPerScreen: 0, birdsPerScreen: 0, farmPerScreen: 0 };
+      delete s.save.found[k.replace(/^(animal|sky)-/, '')];   // this animal is NEW now, even if one wandered on earlier
+      s.state = 'playing'; s.seen(k); s.graceUntil = 0;
       if (landed) { s.landedAt = s.airportAhead(0).name; s.finish({ landed: true }); } else s.finish({ reason: 'Storm!\nYou flew into a storm.' }); }, [k, landed]);
     await p.waitForFunction(() => document.getElementById('rAnimals') && !document.getElementById('results').hidden, null, { timeout: 10000 }).catch(() => {});
     await p.waitForTimeout(600);
@@ -47,7 +52,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(/Otter/.test(one), `a crash still lists the new animal: "${one}"`);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const two = await flight('sky-heron', true);
-  check(/Grey heron/.test(two) && !/Otter/.test(two), `flight 2 lists only ITS new animal (heron), not the otter again: "${two}"`);
+  check(/Grey heron/.test(two) && !/Otter/.test(two), `flight 2 lists its new heron and NOT flight 1's otter (another wandering animal may appear too): "${two}"`);
 
   console.log({ fails, errs });
   await b.close();
