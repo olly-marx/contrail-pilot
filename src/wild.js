@@ -22,9 +22,10 @@ const links = src => (src || []).length
 // Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
 const FIELD_ART = ['woodland'];
 
-// Been there: the UK always; other regions once you have landed in one of their cities.
+// Been there: the UK always; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {
   if (region === 'woodland') return true;
+  if ((save.discovered || {})[region]) return true;   // flown over (GameScene.setRegion)
   const cities = (REGIONS[region] || {}).cities || [];
   return cities.some(c => (save.visited || []).includes(c));
 }

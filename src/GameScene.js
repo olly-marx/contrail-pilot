@@ -16,6 +16,8 @@ import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { LANDMARKS } from './landmarks.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene } from './nature.js';
+import { regionBelow } from './geo.js';
+import { REGION_DATA, REGION_NAMES } from './habitats.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const GRACE_MS = 1500;   // breather after a pop-up closes: the autopilot flies, then hands back
@@ -155,6 +157,7 @@ export class GameScene extends Phaser.Scene {
     this.stars = Array.from({ length: 45 }, () => ({ x: Phaser.Math.Between(0, WIDTH), y: Phaser.Math.Between(0, SKY_H - 120), tw: Math.random() * 6 }));
     this.cloudsFar = this.add.tileSprite(0, 60, WIDTH, 40, 'clouds').setOrigin(0).setAlpha(0.55);
     this.hills = this.add.tileSprite(0, SKY_H - 46, WIDTH, 46, 'hills').setOrigin(0);
+    this.hills2 = this.add.tileSprite(0, SKY_H - 46, WIDTH, 46, 'hills').setOrigin(0).setAlpha(0);   // the next region's hills, fading in
     this.landmarks = [];               // each city's landmark (Big Ben ...), behind its runway in the skyline
     this.landmarkLayer = this.add.layer();
     this.city = this.add.tileSprite(0, SKY_H - 30, WIDTH, 30, 'city').setOrigin(0);
@@ -178,10 +181,12 @@ export class GameScene extends Phaser.Scene {
     this.buildPlaneParts();
 
     this.ground = this.add.tileSprite(0, SKY_H, WIDTH, GROUND_H, 'ground').setOrigin(0);
+    this.ground2 = this.add.tileSprite(0, SKY_H, WIDTH, GROUND_H, 'ground').setOrigin(0).setAlpha(0);
     this.groundFx = this.add.graphics();   // contrail shadows (day) and trapped-heat glow (night)
     this.flowers = hasProject(this.save, 'meadow') ? this.add.tileSprite(0, SKY_H + 6, WIDTH, 4, 'flowers').setOrigin(0) : null;
     this.decorLayer = this.add.layer();
     this.wildLayer = this.add.layer();     // cows, sheep and wild animals
+    this.regionNow = null; this.setRegion(this.regionHere(), true);   // what is below the plane (src/geo.js)
     this.buildWildlife();
     this.plotLayer = this.add.layer();
     this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
@@ -567,7 +572,7 @@ export class GameScene extends Phaser.Scene {
       this.treeFeedback += cool;
     }
     const landFull = this.landStored >= FOREST.landStore * projectsDone(this.save).length / PROJECTS.length;
-    const land = landFull ? 0 : natureCooling(this.save) * dt;   // rewilded land soaks up a little CO2, until it is full
+    const land = landFull ? 0 : natureCooling(this.save, this.regionNow) * dt;   // rewilded land soaks up a little CO2, until it is full
     this.landStored += land;
     this.heat -= land; this.breakdown.trees += land;
     if (this.treeFeedback >= 1) {
@@ -717,7 +722,7 @@ export class GameScene extends Phaser.Scene {
   // real flight, once it is well on screen; the first time: a pop-up.
   seen(sprite) {
     if (this.school || this.state !== 'playing') return;
-    const w = WILDLIFE.find(x => x.sprite === sprite);
+    const w = (this.wildlife && this.wildlife.who && this.wildlife.who[sprite]) || WILDLIFE.find(x => x.sprite === sprite);   // who it is HERE
     if (!w) return;
     this.save.found = this.save.found || {};
     if (this.save.found[w.id]) return;
@@ -727,8 +732,44 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1500, () => this.popup(WIDTH / 2, SKY_H - 60, `NEW ANIMAL: ${w.name.toUpperCase()}!`, '#ffe15a', 14));
   }
 
+  // ---------- the region below (the user, 2026-10-22: real geography decides it; src/geo.js) ----------
+  // The leg from the airport behind to the one ahead; how far along it the plane is, as a fraction.
+  regionHere() {
+    if (this.school || !this.nextAirport || this.nextAirport.worldX > 1e8) return 'woodland';
+    const i = this.startCity + this.airportIndex, len = legKm(i), from = this.nextAirport.worldX - len;
+    return regionBelow(cityAt(i), cityAt(i + 1), (this.distancePx - from) / len);
+  }
+
+  // A new region below: its ground and hills fade in, its animals take over, and the first time a
+  // region is ever flown over it is DISCOVERED (its NATURE tab opens).
+  setRegion(r, instant = false) {
+    if (r === this.regionNow) return;
+    this.regionNow = r;
+    const terrain = REGIONS[r];   // the sea, the ice, savanna and rainforest have no strips yet: keep the last land's
+    // (A tileSprite's texture.key is an internal copy, so the strip keys shown are kept in this.terrain.)
+    if (terrain && instant) { this.ground.setTexture(terrain.ground); this.hills.setTexture(terrain.hills); this.terrain = { ...terrain }; }
+    else if (terrain && (!this.terrain || this.terrain.ground !== terrain.ground)) {
+      if (this.terrainTween) this.terrainTween.complete();
+      this.ground2.setTexture(terrain.ground).setAlpha(0); this.hills2.setTexture(terrain.hills).setAlpha(0);
+      this.fading = { ...terrain };
+      this.terrainTween = this.tweens.add({ targets: [this.ground2, this.hills2], alpha: 1, duration: 1500, onComplete: () => {
+        this.ground.setTexture(this.fading.ground); this.hills.setTexture(this.fading.hills); this.terrain = this.fading;
+        this.ground2.setAlpha(0); this.hills2.setAlpha(0); this.terrainTween = null; this.fading = null; } });
+    }
+    if (this.flowers) this.flowers.setVisible(r === 'woodland');
+    if (this.hedge) this.hedge.setVisible(r === 'woodland');
+    if (this.life) this.wildlife = wildlifeScene(this.save, r);   // (at the start, buildWildlife makes it)
+    // Discovered only by really flying into it: not when the scene is built (that would change the save on
+    // every page load, and a reopened device would then keep its own save over a newer online one).
+    if (instant || this.school || this.state !== 'playing' || r === 'woodland' || !REGION_DATA[r]) return;
+    this.save.discovered = this.save.discovered || {};
+    if (this.save.discovered[r]) return;
+    this.save.discovered[r] = Date.now();
+    this.popup(WIDTH / 2, SKY_H - 80, `YOU DISCOVERED: ${REGION_NAMES[r].toUpperCase()}!`, '#8dffb0', 12);
+  }
+
   buildWildlife() {
-    this.wildlife = wildlifeScene(this.save);
+    this.wildlife = wildlifeScene(this.save, this.regionNow || 'woodland');
     this.life = [];
     this.lifeNext = { tree: 0, farm: 0, wild: 0, bird: 0 };
     for (let x = 0; x < WIDTH + 10; x += 4) this.updateWildlife(4, x);
@@ -810,14 +851,16 @@ export class GameScene extends Phaser.Scene {
 
   updateScenery(dx) {
     this.cloudsFar.tilePositionX += dx * 0.15;
-    this.hills.tilePositionX += dx * 0.3;
+    this.hills.tilePositionX += dx * 0.3; this.hills2.tilePositionX = this.hills.tilePositionX;
     this.city.tilePositionX += dx * 0.55;
     this.landmarks = this.landmarks.filter(l => { l.x -= dx * 0.55; if (l.x + l.width < -10) { l.destroy(); return false; } return true; });
-    this.ground.tilePositionX += dx;
+    this.ground.tilePositionX += dx; this.ground2.tilePositionX = this.ground.tilePositionX;
+    if (dx > 0) this.setRegion(this.regionHere());
     if (this.hedge) this.hedge.tilePositionX += dx;
     if (this.flowers) this.flowers.tilePositionX += dx;
     // Ponds (with a beaver dam once beavers are back) and storks gliding far away.
-    if (this.distancePx >= this.nextDecorAt && hasProject(this.save, 'pond') && dx > 0) {
+    const uk = this.regionNow === 'woodland';   // UK projects show over the UK only
+    if (this.distancePx >= this.nextDecorAt && uk && hasProject(this.save, 'pond') && dx > 0) {
       const x = WIDTH + 10;
       if (!this.runways.some(r => r.strip.x < x + 40 && r.strip.x + AIRPORT.runwayLen > x - 10)) {
         const parts = [this.add.image(x, SKY_H + 12, 'pond').setOrigin(0)];
@@ -829,7 +872,7 @@ export class GameScene extends Phaser.Scene {
     }
     for (const d of this.decor) d.x -= dx;
     this.decor = this.decor.filter(d => { if (d.x < -40) { d.destroy(); return false; } return true; });
-    if (hasProject(this.save, 'storks') && dx > 0 && Math.random() < 0.002 && this.storks.length < 2) {
+    if (uk && hasProject(this.save, 'storks') && dx > 0 && Math.random() < 0.002 && this.storks.length < 2) {
       const st = this.add.image(WIDTH + 10, Phaser.Math.Between(80, 160), 'stork').setOrigin(0).setAlpha(0.8);
       this.storkLayer.add(st);
       this.storks.push(st);
@@ -883,10 +926,10 @@ export class GameScene extends Phaser.Scene {
     }
     this.drawDayDial(p / (D + N));
     const tint = lerpColour(lerpColour(0xffffff, 0x4a5a80, n), 0xff7a5a, (this.heatLevel ? this.heatLevel() : 0) * 0.7);
-    this.hills.setTint(tint);
+    this.hills.setTint(tint); this.hills2.setTint(tint);
     this.city.setTint(tint);
     for (const l of this.landmarks) l.setTint(tint);
-    this.ground.setTint(tint);
+    this.ground.setTint(tint); this.ground2.setTint(tint);
     this.cloudsFar.setAlpha(0.55 - 0.35 * n);
   }
 

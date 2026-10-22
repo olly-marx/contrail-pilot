@@ -106,12 +106,17 @@ export const canAppear = (save, id, region = 'woodland') => {
 // Background wildlife you can see but not hit, rebuilt each flight from the habitat (above).
 // A bare field is sad on purpose: a few cows and sheep, a few spruce all the same, empty sky.
 // As projects bring life back: more trees (of the kinds you have planted), wild animals, birds.
-export function wildlifeScene(save) {
-  const bio = biodiversity(save);
+export function wildlifeScene(save, region = 'woodland') {
+  // The sea and the ice (src/geo.js): no trees, no land animals; seabirds once they are drawn.
+  if (region === 'ocean' || region === 'ice') return { bio: 0, treesPerScreen: 0, treeKinds: [], farmPerScreen: 0, wildPerScreen: 0,
+    birdsPerScreen: 0, pickWild: () => null, pickSky: () => null, wildKinds: [], skyKinds: [], who: {}, region };
+  const uk = region === 'woodland', bio = biodiversity(save, region);
   const planted = Object.keys(save.planted || {}).filter(k => SPECIES[k] && save.planted[k] > 0);
-  const treeKinds = bio < 4 ? ['spruce'] : [...new Set(['spruce', ...planted])];
-  const here = ukSpecies().filter(w => canAppear(save, w.id) && !['cow', 'sheep'].includes(w.id));
-  const pool = list => list.map(w => ({ sprite: w.sprite, ...RARITY[UK_SPECIES[w.id].rarity || 'common'] }));
+  // Trees: the UK grows the kinds you have planted; elsewhere that region's own trees (src/wildlife.js).
+  const local = WILDLIFE.filter(w => w.kind === 'tree' && w.region === region && w.sprite).map(w => w.sprite.replace(/^tree-/, ''));
+  const treeKinds = uk ? (bio < 4 ? ['spruce'] : [...new Set(['spruce', ...planted])]) : local;
+  const here = regionSpecies(region).filter(w => w.sprite && canAppear(save, w.id, region) && !['cow', 'sheep'].includes(w.id));
+  const pool = list => list.map(w => ({ sprite: w.sprite, ...RARITY[w.c.rarity || 'common'] }));
   const wild = pool(here.filter(w => w.kind === 'animal' || w.pose === 'standing'));   // walk or stand on the ground
   const sky = pool(here.filter(w => w.kind === 'bird' && w.pose !== 'standing'));
   // Pick one by rarity weight, from those that can be seen this far into the flight (null if none).
@@ -119,14 +124,17 @@ export function wildlifeScene(save) {
     let r = Math.random() * t; for (const x of ok) if ((r -= x.weight) < 0) return x.sprite; return null; };
   return {
     bio,
-    treesPerScreen: 2 + bio / 6,                  // 2 lonely spruce up to ~18 trees
+    region,
+    treesPerScreen: treeKinds.length ? 2 + bio / 6 : 0,   // 2 lonely spruce up to ~18 trees
     treeKinds,
-    farmPerScreen: 1.5,                           // cows and sheep: always a few, never many
+    farmPerScreen: uk ? 1.5 : 0,                  // cows and sheep (UK): always a few, never many
     wildPerScreen: wild.length ? 0.6 + bio / 18 : 0,   // the meter decides HOW MANY animals...
     birdsPerScreen: sky.length ? 0.3 + bio / 25 : 0,
     pickWild: pick(wild),                         // ...and rarity + distance WHICH ones (texture prefix, e.g. 'animal-otter')
     pickSky: pick(sky),
     wildKinds: wild.map(x => x.sprite),           // everything that can appear here at all
     skyKinds: sky.map(x => x.sprite),
+    // Which animal a drawing is HERE (one drawing can stand for another species: the Marsican bear uses the brown bear's).
+    who: Object.fromEntries(here.map(w => [w.sprite, { id: w.id, name: w.name }])),
   };
 }
