@@ -195,6 +195,16 @@ the advanced autopilot (see items 5 below).
   broke onlinesave sync), UK decor over the UK only. Sea/ice/savanna/rainforest keep the last land's strips until art
   exists (add REGIONS entries). Australia = desert, Patagonia = plains, NZ = woodland for now (part B to decide).
   Tests: tests/geo.cjs, tests/flightregion.cjs.
+- HOTFIX 6606db1 (2026-10-22): ef68aeb froze flights over the SEA on saves with a UK project (iPhone reports from the
+  user and Lola): natureCooling(save,'ocean') threw every frame (REGION_DATA has no 'ocean'). nature.js now treats regions
+  with no data as empty; tests/flightregion.cjs flies over the sea WITH UK projects (fails on the old code). Lesson: test
+  saves with no projects skip the land-cooling path (landFull is true at 0 projects).
+- PART B (routing), APPROVED 2026-10-22 by the user: ~100 cities (src/cities.js, 104 now; BRIDGES over oceans), network
+  (src/network.js: NEAR nearest links + bridges; legGameKm balanced 1800-2600 game km; choices() = 3 most spread
+  neighbours; onward()/pathAhead() keep going the same way). FLY screen: 3 big buttons + a small globe. Laps REPLACED by
+  "times round the Earth" (total landed km / 40,075) + a "World tour" mission (discover all 10 regions); old laps carry over.
+  save.city -> city NAME (migrate). TO FIX while building: NEAR 4 -> 5 (Nairobi offers NORTH twice); stop the path ahead at a
+  sharp turn. NOT wired into the game yet (uncommitted WIP: cities.js, network.js, geo.js boxes for Scandinavia/Iran/Philippines).
 - ART-BRIEF-REGIONS.md (generated from the data): 91 animals, 101 project icons, 9 field backdrops, savanna/rainforest/ocean
   terrain. The user will start a NEW art session for it.
 - DECIDED (the user, 2026-10-22): region below the plane = REAL GEOGRAPHY (position along the real great circle of the leg, by
