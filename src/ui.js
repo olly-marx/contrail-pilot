@@ -34,8 +34,8 @@ const $ = id => document.getElementById(id);
 const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;
 
 // The Biodiversity meter as HTML: a bar plus the stage name.
-export function meterHTML(save) {
-  const b = biodiversity(save), st = stage(b);
+export function meterHTML(save, b = biodiversity(save)) {   // b: a region's meter (NATURE tabs)
+  const st = stage(b);
   return `<div class="meter"><span class="mlabel">Biodiversity</span><span class="mtrack"><span class="mfill" style="width:${b}%"></span>${STAGES.slice(1).map(x => `<i style="left:${x.at}%"></i>`).join('')}</span><b>${st.name}</b></div>`;
 }
 const sign = v => (v > 0 ? '+' : v < 0 ? '-' : '') + Math.abs(v);

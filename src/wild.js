@@ -3,12 +3,13 @@
 // people really do for nature, each with a knock-on chain and sources), the tree upgrades, and
 // the collection of animals: found ones with their portrait and fact, the rest as silhouettes
 // that say what they need. Animals are never bought: they appear on flights (GameScene.seen).
-// UK first; the other regions are listed as coming soon.
+// Every region since 2026-10-22: a region's tab opens once you have been there (landed in one of
+// its cities; flying over it will count once the flight knows what is below the plane).
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf } from './upgrades.js';
-import { biodiversity, projectsDone, PROJECTS, canAppear, ukSpecies } from './nature.js';
-import { UK_SPECIES, TIERS, RARITY } from './habitats.js';
+import { biodiversity, projectsDone, canAppear, regionSpecies } from './nature.js';
+import { TIERS, RARITY, REGION_NAMES, REGION_DATA } from './habitats.js';
 import { REGIONS } from './wildlife.js';
 import { meterHTML } from './ui.js';
 
@@ -18,8 +19,15 @@ const cost = p => `${p.cost}<i class="seedicon"></i>${p.crystals ? ` ${p.crystal
 const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';
-// Regions still to come (not on the route yet: the user asked for them anyway).
-const MORE = { savanna: 'African savanna', rainforest: 'South American rainforest' };
+// Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
+const FIELD_ART = ['woodland'];
+
+// Been there: the UK always; other regions once you have landed in one of their cities.
+export function discovered(save, region) {
+  if (region === 'woodland') return true;
+  const cities = (REGIONS[region] || {}).cities || [];
+  return cities.some(c => (save.visited || []).includes(c));
+}
 
 export class WildScreen {
   constructor(ui) {
@@ -29,18 +37,33 @@ export class WildScreen {
     $('wInfoClose').onclick = () => { $('wInfo').hidden = true; };
   }
 
-  done() { return projectsDone(this.save).map(p => p.id); }
+  get projects() { return REGION_DATA[this.region].projects; }
+  get species() { return REGION_DATA[this.region].species; }
+  animals() { return regionSpecies(this.region); }
+  done() { return projectsDone(this.save, this.region).map(p => p.id); }
+  bio() { return biodiversity(this.save, this.region); }
 
   render() {
     const s = this.save;
+    if (!discovered(s, this.region)) this.region = 'woodland';
     $('wSeeds').textContent = s.seeds; $('wCrystals').textContent = s.crystals || 0;
-    const regions = [...Object.entries(REGIONS).map(([id, r]) => [id, r.name]), ...Object.entries(MORE)];
-    $('wRegions').innerHTML = regions.map(([id, name]) => `<button class="btn ${id === this.region ? 'on' : ''}" type="button" data-region="${id}" ${id === 'woodland' ? '' : 'disabled'} title="${id === 'woodland' ? '' : 'Coming soon'}">${esc(id === 'woodland' ? 'UK' : name)}${id === 'woodland' ? '' : ' <small>soon</small>'}</button>`).join('');
-    $('wMeter').innerHTML = meterHTML(s);
+    $('wRegions').innerHTML = Object.entries(REGION_NAMES).map(([id, name]) => {
+      const open = discovered(s, id), far = !REGIONS[id];
+      return `<button class="btn ${id === this.region ? 'on' : ''}" type="button" data-region="${id}" ${open ? '' : 'disabled'}
+        title="${open ? '' : far ? 'No airport here yet' : 'Fly there to discover it'}">${esc(name)}${open ? '' : ` <small>${far ? 'soon' : 'fly there'}</small>`}</button>`;
+    }).join('');
+    $('wRegions').querySelectorAll('[data-region]:not([disabled])').forEach(b => b.onclick = () => {
+      if (b.dataset.region === this.region) return;
+      sfx.flap(); this.region = b.dataset.region; this.openTiers = []; this.render();
+    });
+    $('wMeter').innerHTML = meterHTML(s, this.bio());
     this.renderScene();
     this.renderProjects();
-    // Trees: the tree upgrade lines (planting parcels, soil, kinds of tree, the nursery).
-    $('wTrees').innerHTML = LINES.filter(l => tabOf(l) === 'nature').map(l => this.ui.lineCardHTML(l)).join('');
+    // Trees: the tree upgrade lines (planting parcels, soil, kinds of tree, the nursery). UK trees only.
+    const uk = this.region === 'woodland';
+    $('wTrees').hidden = !uk;
+    if ($('wTrees').previousElementSibling) $('wTrees').previousElementSibling.hidden = !uk;
+    $('wTrees').innerHTML = uk ? LINES.filter(l => tabOf(l) === 'nature').map(l => this.ui.lineCardHTML(l)).join('') : '';
     $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => this.ui.buy(b.dataset.buy));
     $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = () => this.ui.showInfo(b.dataset.info));
     this.renderFound();
@@ -50,9 +73,14 @@ export class WildScreen {
   // the trees you have planted, and the animals you have found wandering about (see Field below).
   renderScene() {
     const s = this.save, done = this.done();
-    const found = ukSpecies().filter(w => this.found(w.id));
-    const planted = Object.entries(s.planted || {}).filter(([, n]) => n > 0);
     if (this.field) this.field.stop();
+    this.field = null;
+    if (!FIELD_ART.includes(this.region)) {
+      $('wScene').innerHTML = `<p class="w-empty">${esc(REGION_NAMES[this.region])}: a picture of this land is being drawn.</p>`;
+      return;
+    }
+    const found = this.animals().filter(w => w.sprite && this.found(w.id));
+    const planted = Object.entries(s.planted || {}).filter(([, n]) => n > 0);
     this.field = new Field($('wScene'), this.region, done, planted, found);
     if (!found.length && !done.length) $('wScene').insertAdjacentHTML('beforeend', '<p class="w-empty">Bare land. Start a habitat project, and plant trees on your flights!</p>');
   }
@@ -62,26 +90,27 @@ export class WildScreen {
   renderProjects() {
     // In tiers (the user, 2026-10-22: all 11 at once was confusing): open tiers show their projects;
     // the next locked tier is one card saying what opens it; later tiers stay hidden.
-    const s = this.save, done = this.done(), bio = biodiversity(s);
+    const s = this.save, done = this.done(), bio = this.bio(), P = this.projects;
     const card = p => {
       const have = done.includes(p.id), ok = !have && s.seeds >= p.cost && (s.crystals || 0) >= p.crystals;
       const btn = have ? '<span class="w-done">DONE</span>'
         : `<button class="btn ${ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${cost(p)}</button>`;
       return `<div class="line project ${have ? 'maxed' : ''}" data-pline="${p.id}">
-        <div><div class="name"><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="">${esc(p.name)}</div><div class="small">${esc(p.short)}</div>
+        <div><div class="name"><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="" onerror="this.style.visibility='hidden'">${esc(p.name)}</div><div class="small">${esc(p.short)}</div>
         <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div></div>
         <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
         <div class="next">${btn}</div></div>`;
     };
+    const how = this.region === 'woodland' ? 'Plant trees and finish the projects above!' : 'Finish the projects above!';
     const open = TIERS.filter(t => bio >= t.needs), next = TIERS.find(t => bio < t.needs);
     $('wProjects').innerHTML = open.map(t => {
-      const ps = PROJECTS.filter(p => p.tier === t.tier), n = ps.filter(p => done.includes(p.id)).length;
+      const ps = P.filter(p => p.tier === t.tier), n = ps.filter(p => done.includes(p.id)).length;
       const finished = n === ps.length, shown = !finished || (this.openTiers || []).includes(t.tier);   // a finished tier folds to one line
       return `<p class="w-tier">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? '&#10003; ' : ''}${n} / ${ps.length} done</span>`
         + (finished ? ` <button class="btn tiny" type="button" data-tier-toggle="${t.tier}">${shown ? 'hide' : 'show'}</button>` : '') + '</p>'
         + (shown ? ps.map(card).join('') : '');
     }).join('') + (next ? `<div class="line project locked" data-tier-locked="${next.tier}"><div><div class="name">Tier ${next.tier}: ${esc(next.name)}</div>
-        <div class="small">Reach Biodiversity <b>${next.needs}</b> to unlock ${PROJECTS.filter(p => p.tier === next.tier).length} more projects. Plant trees and finish the projects above!</div></div></div>` : '');
+        <div class="small">Reach Biodiversity <b>${next.needs}</b> to unlock ${P.filter(p => p.tier === next.tier).length} more projects. ${how}</div></div></div>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = () => this.buy(b.dataset.project));
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
     $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
@@ -90,55 +119,86 @@ export class WildScreen {
     });
   }
 
-
   buy(id) {
-    const s = this.save, p = PROJECTS.find(x => x.id === id);
-    if (!p || this.done().includes(id) || biodiversity(s) < p.needs || s.seeds < p.cost || (s.crystals || 0) < p.crystals) { sfx.nope(); return; }
+    const s = this.save, r = this.region, p = this.projects.find(x => x.id === id);
+    if (!p || this.done().includes(id) || this.bio() < p.needs || s.seeds < p.cost || (s.crystals || 0) < p.crystals) { sfx.nope(); return; }
     s.seeds -= p.cost; s.crystals -= p.crystals;
-    s.habitat = s.habitat || {}; s.habitat.woodland = [...(s.habitat.woodland || []), id];
+    s.habitat = s.habitat || {}; s.habitat[r] = [...(s.habitat[r] || []), id];
     writeSave(s); sfx.buy();
     this.render();
-    // Who might come now?
-    const now = ukSpecies().filter(w => canAppear(s, w.id) && !this.found(w.id) && UK_SPECIES[w.id].needs.includes(id));
+    // Who might come now? (only animals that are drawn can turn up in flight)
+    const now = this.animals().filter(w => w.sprite && canAppear(s, w.id, r) && !this.found(w.id) && w.c.needs.includes(id));
     if (now.length) this.ui.toast(`${p.name}: done!`, `Look out on your flights for: ${now.map(w => w.name).join(', ')}!`, 'good', 4);
   }
 
   projectInfo(id) {
-    const p = PROJECTS.find(x => x.id === id);
-    const helps = ukSpecies().filter(w => UK_SPECIES[w.id].needs.includes(id)).map(w => w.name);
+    const p = this.projects.find(x => x.id === id);
+    const helps = this.animals().filter(w => w.c.needs.includes(id)).map(w => w.name);
     $('wInfoBody').innerHTML = `<p class="eyebrow">Habitat project</p><h2>${esc(p.name)}</h2><p>${esc(p.short)}</p>
       <div><p class="label">What happens next?</p><p class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</p></div>
       <div class="fact"><p class="label">Did you know?</p><p>${esc(p.fact)}</p></div>
-      ${helps.length ? `<p><b>Helps bring back:</b> ${helps.map(esc).join(', ')}</p>` : ''}${links(p.src)}`;
+      ${helps.length ? `<p><b>Helps bring back:</b> ${helps.map(esc).join(', ')}</p>` : ''}${links(p.src)}${p.org ? orgHTML(p.org) : ''}`;
     $('wInfo').hidden = false;
+    if (p.org) gate($('wInfoBody'));
   }
 
-  // The collection: every UK animal. Found: portrait + name. Not yet: a silhouette and a hint.
+  // The collection: every animal of this region. Found: portrait + name. Not yet: a silhouette and a hint.
   renderFound() {
-    const all = ukSpecies(), n = all.filter(w => this.found(w.id)).length;
+    const all = this.animals(), n = all.filter(w => this.found(w.id)).length;
     $('wFoundHead').textContent = `Wildlife found: ${n} / ${all.length}`;
     $('wFound').innerHTML = all.map(w => {
-      const got = this.found(w.id), pic = w.portrait ? `${w.portrait}-0.png` : `assets/${w.sprite}-0.png`;
-      const r = UK_SPECIES[w.id].rarity || 'common';
-      return `<button class="w-card ${got ? 'got' : ''} r-${r}" type="button" data-species="${w.id}"><img src="${esc(pic)}" alt=""><span>${got ? esc(w.name) : '???'}</span><small class="w-rarity">${RARITY[r].name}</small></button>`;
+      const got = this.found(w.id), r = w.c.rarity || 'common';
+      return `<button class="w-card ${got ? 'got' : ''} r-${r}" type="button" data-species="${w.id}">${picHTML(w)}<span>${got ? esc(w.name) : '???'}</span><small class="w-rarity">${RARITY[r].name}</small></button>`;
     }).join('');
     $('wFound').querySelectorAll('[data-species]').forEach(b => b.onclick = () => this.speciesInfo(b.dataset.species));
   }
 
   speciesInfo(id) {
-    const w = ukSpecies().find(x => x.id === id), c = UK_SPECIES[id], got = this.found(id);
-    const names = c.needs.map(n => PROJECTS.find(p => p.id === n).name);
+    const w = this.animals().find(x => x.id === id), c = w.c, got = this.found(id);
+    const names = c.needs.map(n => this.projects.find(p => p.id === n).name);
     const rr = RARITY[c.rarity || 'common'], far = rr.from ? ` ${rr.name} animals only show up ${rr.from.toLocaleString('en-GB')} km or more into a flight.` : '';
-    const hint = canAppear(this.save, id) ? `It can live here now! Look out for it on your flights.${far}`
+    const hint = !w.sprite ? 'Our artists are still drawing this animal. Soon you can find it on your flights!'
+      : canAppear(this.save, id, this.region) ? `It can live here now! Look out for it on your flights.${far}`
       : `To bring it here: ${names.length ? names.map(esc).join(' + ') : 'a healthier land'}${c.bio ? `, and Biodiversity ${c.bio}` : ''}.`;
-    const pic = w.portrait ? `${w.portrait}-0.png` : `assets/${w.sprite}-0.png`;
     $('wInfoBody').innerHTML = got
-      ? `<p class="eyebrow">Found! ${RARITY[c.rarity || 'common'].name}</p><h2>${esc(w.name)}</h2><img class="w-portrait" src="${esc(pic)}" alt="">
+      ? `<p class="eyebrow">Found! ${rr.name}</p><h2>${esc(w.name)}</h2>${picHTML(w, 'w-portrait')}
         <div><p class="label">Why it lives here</p><p>${esc(c.why)}</p></div>
         ${c.fact ? `<div class="fact"><p class="label">Did you know?</p><p>${esc(c.fact)}</p></div>` : ''}${links(c.src)}`
-      : `<p class="eyebrow">Not found yet: ${rr.name}</p><h2>???</h2><img class="w-portrait w-shadow" src="${esc(pic)}" alt=""><p>${hint}</p>`;
+      : `<p class="eyebrow">Not found yet: ${rr.name}</p><h2>???</h2>${picHTML(w, 'w-portrait w-shadow')}<p>${hint}</p>`;
     $('wInfo').hidden = false;
   }
+}
+
+// An animal's picture: its portrait, its sprite, or (not drawn yet) a question mark.
+function picHTML(w, cls = '') {
+  const pic = w.portrait ? `${w.portrait}-0.png` : w.sprite ? `assets/${w.sprite}-0.png` : '';
+  return pic ? `<img class="${cls}" src="${esc(pic)}" alt="">` : `<span class="w-nopic ${cls}">?</span>`;
+}
+
+// Who runs a project, and links to them (the user's goal, 2026-10-22: a knowledge base of real
+// projects people can support). The game takes no payments: the links sit behind the grown-up gate.
+function orgHTML(o) {
+  return `<div class="w-org"><p class="label">Who does this?</p><p><b>${esc(o.name)}</b></p>
+    <button class="btn green gate w-gate" type="button"><span class="gate-fill"></span><span class="gate-label">ASK A GROWN-UP</span></button>
+    <div class="links w-orglinks" hidden><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">Help them (donate) &gt;</a>` : ''}</div>
+    <p class="small w-gatemsg">Grown-ups: press and HOLD the button for 2 seconds.</p></div>`;
+}
+// Hold 2 s to show the links (as the Citizen Zoo gate in ui.js; links hide again after 10 s).
+function gate(root) {
+  const btn = root.querySelector('.w-gate'), box = root.querySelector('.w-orglinks'), msg = root.querySelector('.w-gatemsg');
+  if (!btn) return;
+  let timer = null, back = null;
+  const cancel = () => { clearTimeout(timer); timer = null; btn.classList.remove('holding'); };
+  const reset = () => { clearTimeout(back); box.hidden = true; btn.hidden = false; msg.hidden = false; };
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    btn.setPointerCapture?.(e.pointerId);
+    btn.classList.add('holding');
+    timer = setTimeout(() => { cancel(); btn.hidden = true; msg.hidden = true; box.hidden = false; back = setTimeout(reset, 10000); }, 2000);
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => btn.addEventListener(ev, cancel));
+  btn.addEventListener('contextmenu', e => e.preventDefault());
+  box.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setTimeout(reset, 500)));
 }
 
 // ---------- the Wild Area field (art session, 2026-10-22) ----------

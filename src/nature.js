@@ -1,5 +1,5 @@
 import { cz } from './config.js';
-import { UK_PROJECTS, UK_SPECIES, RARITY } from './habitats.js';
+import { UK_PROJECTS, UK_SPECIES, RARITY, REGION_DATA } from './habitats.js';
 import { WILDLIFE } from './wildlife.js';
 // Nature: tree species, rewilding projects and the Biodiversity meter (barren land to rainforest).
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
@@ -54,12 +54,21 @@ function speciesPoints(id, n) {
 // cap of 100, so a moderately advanced player filled it and the rare animals came too easily.)
 const TREES_MAX = 4 * 18 + 6;   // speciesPoints at their caps: 4 native kinds + spruce
 const RAW_MAX = () => TREES_MAX + PROJECTS.reduce((a, p) => a + p.bio, 0);
-export function biodiversity(save) {
+// One meter per region (2026-10-22). The UK counts trees too (the trees you plant are UK trees);
+// every other region is its projects only: 100 = all of that region's projects done.
+export function biodiversity(save, region = 'woodland') {
   let b = 0;
-  for (const [id, n] of Object.entries(save.planted || {})) b += speciesPoints(id, n);
-  for (const p of projectsDone(save)) b += p.bio;
-  return Math.min(100, Math.round(b * 100 / RAW_MAX()));
+  if (region === 'woodland') {
+    for (const [id, n] of Object.entries(save.planted || {})) b += speciesPoints(id, n);
+    for (const p of projectsDone(save)) b += p.bio;
+    return Math.min(100, Math.round(b * 100 / RAW_MAX()));
+  }
+  const all = REGION_DATA[region].projects;
+  for (const p of projectsDone(save, region)) b += p.bio;
+  return Math.min(100, Math.round(b * 100 / all.reduce((a, p) => a + p.bio, 0)));
 }
+// The whole world: the average of every region's meter (for a world board later).
+export const worldBiodiversity = save => Math.round(Object.keys(REGION_DATA).reduce((a, r) => a + biodiversity(save, r), 0) / Object.keys(REGION_DATA).length);
 
 // What one more tree of this kind adds to the meter (shown as a popup when it is planted).
 export function plantGain(save, id) {
@@ -70,15 +79,29 @@ export function plantGain(save, id) {
 export function stage(bio) { return [...STAGES].reverse().find(s => bio >= s.at); }
 
 // Projects done in the UK (save.habitat.woodland; before 2026-10-21 the 'rewild' line, see migrateHabitat).
-export const projectsDone = save => PROJECTS.filter(p => ((save.habitat || {}).woodland || []).includes(p.id));
-export const hasProject = (save, id) => projectsDone(save).some(p => p.id === id);
-// Healthy land soaks up a little CO2 on every flight.
-export const natureCooling = save => 0.04 * projectsDone(save).length;
+// Other regions: save.habitat[region] (2026-10-22).
+export const projectsDone = (save, region = 'woodland') =>
+  REGION_DATA[region].projects.filter(p => ((save.habitat || {})[region] || []).includes(p.id));
+export const hasProject = (save, id, region = 'woodland') => projectsDone(save, region).some(p => p.id === id);
+// Healthy land soaks up a little CO2 on every flight: only the land below you (the user, 2026-10-22).
+export const natureCooling = (save, region = 'woodland') => 0.04 * projectsDone(save, region).length;
 
 // UK species that can appear now: their projects done and the meter high enough (UK_SPECIES).
 export const ukSpecies = () => WILDLIFE.filter(w => w.region === 'woodland' && w.sprite && UK_SPECIES[w.id]);
-export const canAppear = (save, id) => { const c = UK_SPECIES[id], done = projectsDone(save).map(p => p.id);
-  return !!c && c.needs.every(n => done.includes(n)) && biodiversity(save) >= c.bio; };
+// Every animal of a region, drawn or not: { id, name, kind, sprite, portrait, ... } plus its entry in
+// the region's data as `c`. An animal can live in several regions (the user, 2026-10-22); a species may
+// borrow another's drawing (`sprite`). Not drawn yet: no sprite, so it cannot appear in flight.
+const drawn = Object.fromEntries(WILDLIFE.map(w => [w.id, w]));
+export function regionSpecies(region) {
+  if (region === 'woodland') return ukSpecies().map(w => ({ ...w, c: UK_SPECIES[w.id] }));
+  return Object.entries(REGION_DATA[region].species).map(([id, c]) => {
+    const art = c.sprite ? WILDLIFE.find(w => w.sprite === c.sprite) : drawn[id];
+    return { id, name: c.name, kind: c.kind, pose: art && art.pose, sprite: art && art.sprite, portrait: art && art.portrait, c };
+  });
+}
+export const canAppear = (save, id, region = 'woodland') => {
+  const c = REGION_DATA[region].species[id], done = projectsDone(save, region).map(p => p.id);
+  return !!c && c.needs.every(n => done.includes(n)) && biodiversity(save, region) >= c.bio; };
 
 // Background wildlife you can see but not hit, rebuilt each flight from the habitat (above).
 // A bare field is sad on purpose: a few cows and sheep, a few spruce all the same, empty sky.

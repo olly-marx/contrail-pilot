@@ -150,3 +150,40 @@ export function migrateHabitat(save) {
   }
   return false;
 }
+
+// ---------- every region (2026-10-22, the user's design: each region gets what the UK has) ----------
+// The research for each region lives in src/habitat/<region>.js (3 passes, every claim sourced; the
+// organisation running each project, with links). Prices and meter points are set HERE from each
+// project's tier and cost band, so all regions balance the same way (UK prices: 20 to 1,800 seeds).
+import * as mediterranean from './habitat/mediterranean.js';
+import * as desert from './habitat/desert.js';
+import * as monsoon from './habitat/monsoon.js';
+import * as eastasia from './habitat/eastasia.js';
+import * as boreal from './habitat/boreal.js';
+import * as plains from './habitat/plains.js';
+import * as tundra from './habitat/tundra.js';
+import * as savanna from './habitat/savanna.js';
+import * as rainforest from './habitat/rainforest.js';
+
+// Region tabs, in route order, then the two with no route city yet (the user wanted them anyway).
+export const REGION_NAMES = {
+  woodland: 'UK', mediterranean: 'Mediterranean', desert: 'Desert', monsoon: 'Monsoon & rainforest',
+  eastasia: 'East Asia', boreal: 'Boreal & mountains', plains: 'Plains & forest', tundra: 'Iceland',
+  savanna: 'African savanna', rainforest: 'Amazon & Atlantic Forest',
+};
+// Seeds by tier and cost band, in the UK's range. Crystals: 1 per 8 seeds, as in the hangar.
+const PRICE = { 1: { cheap: 20, mid: 60, big: 140 }, 2: { cheap: 170, mid: 300, big: 450 }, 3: { cheap: 550, mid: 900, big: 1300 } };
+const BIO = { 1: 6, 2: 10, 3: 14 };   // meter points per project (the meter is out of the region's total)
+// The meter level each rarity needs before it can appear (as in the UK: rare 30, very rare 50+).
+export const RARITY_BIO = { common: 0, uncommon: 15, rare: 30, legendary: 50 };
+const priced = p => ({ ...p, cost: PRICE[p.tier][p.band], crystals: Math.round(PRICE[p.tier][p.band] / 8),
+  bio: BIO[p.tier], needs: TIERS.find(t => t.tier === p.tier).needs });
+const leveled = S => Object.fromEntries(Object.entries(S).map(([id, s]) => [id, { bio: RARITY_BIO[s.rarity], ...s }]));
+const region = m => ({ projects: m.PROJECTS.map(priced), species: leveled(m.SPECIES) });
+
+// REGION_DATA[region] = { projects, species }: the UK keeps its hand-set prices and needs.
+export const REGION_DATA = {
+  woodland: { projects: UK_PROJECTS, species: UK_SPECIES },
+  mediterranean: region(mediterranean), desert: region(desert), monsoon: region(monsoon), eastasia: region(eastasia),
+  boreal: region(boreal), plains: region(plains), tundra: region(tundra), savanna: region(savanna), rainforest: region(rainforest),
+};

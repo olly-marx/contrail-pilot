@@ -7,7 +7,7 @@ import { LAP_KM } from './route.js';
 
 const sum = o => Object.values(o || {}).reduce((a, n) => a + n, 0);
 const found = save => Object.keys(save.found || {}).length;   // Wild Area species found: save.found is id -> time (GameScene.seen)
-const projects = save => ((save.habitat || {}).woodland || []).length;
+const projects = save => Object.values(save.habitat || {}).reduce((a, l) => a + (l || []).length, 0);   // every region (2026-10-22)
 
 // Prizes grow with the tier. Roughly what the old challenges paid, so the hangar stays affordable.
 const T3 = (a, b, c) => [{ goal: a, seeds: 30, crystals: 2 }, { goal: b, seeds: 120, crystals: 6 }, { goal: c, seeds: 400, crystals: 15 }];

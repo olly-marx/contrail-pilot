@@ -468,3 +468,8 @@ h2.sub { margin-top: -4px; }
 .animals-new .na-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 4px 0; }
 .animals-new .na { display: grid; justify-items: center; gap: 2px; font-size: 7px; background: #fff; padding: 4px 6px; }
 .animals-new .na img { height: 36px; image-rendering: pixelated; }
+/* Animals not drawn yet (regions, 2026-10-22), and who runs a habitat project. */
+.w-nopic { display: flex; align-items: center; justify-content: center; height: 40px; width: 40px; font-size: 20px; color: #8a8576; background: #d8d3c4; }
+.w-nopic.w-portrait { height: 96px; width: 96px; font-size: 40px; }
+.w-org { margin-top: 8px; padding-top: 6px; border-top: 2px dashed #c9c2ae; }
+.w-org .links a { display: block; }
