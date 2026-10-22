@@ -199,12 +199,18 @@ the advanced autopilot (see items 5 below).
   user and Lola): natureCooling(save,'ocean') threw every frame (REGION_DATA has no 'ocean'). nature.js now treats regions
   with no data as empty; tests/flightregion.cjs flies over the sea WITH UK projects (fails on the old code). Lesson: test
   saves with no projects skip the land-cooling path (landFull is true at 0 projects).
-- PART B (routing), APPROVED 2026-10-22 by the user: ~100 cities (src/cities.js, 104 now; BRIDGES over oceans), network
-  (src/network.js: NEAR nearest links + bridges; legGameKm balanced 1800-2600 game km; choices() = 3 most spread
-  neighbours; onward()/pathAhead() keep going the same way). FLY screen: 3 big buttons + a small globe. Laps REPLACED by
-  "times round the Earth" (total landed km / 40,075) + a "World tour" mission (discover all 10 regions); old laps carry over.
-  save.city -> city NAME (migrate). TO FIX while building: NEAR 4 -> 5 (Nairobi offers NORTH twice); stop the path ahead at a
-  sharp turn. NOT wired into the game yet (uncommitted WIP: cities.js, network.js, geo.js boxes for Scandinavia/Iran/Philippines).
+- PART B (routing) DONE + LIVE 2026-10-22 (c9d5a12, CI green, 43/43): src/cities.js (104 airports, BRIDGES), src/network.js
+  (NEAR 5 within 2600 km + bridges; legGameKm 1800-2600; choices() 3 most-spread; headingWord), src/route.js (tourPath:
+  unseen first, least turn + Warnsdorff, BFS to nearest unseen when stuck; flightPath(save); save.city = NAME, save.heading,
+  save.flownKm; migrateCity; EARTH_KM 40075; LAP_KM 32060 kept for the non-stop badge; OLD_LOOP for old saves/restore).
+  GameScene: this.path, legKm(k), startCity always 0; startFlight rebuilds when the chosen way changed (not in school).
+  FLY: 3 way buttons + src/globe.js (orthographic pixel globe, LAND boxes as dots, gold path); globe 96 px under 760 px tall,
+  none under 600. Laps -> 'times round the Earth'. Missions 'reach-cairo' = reach a new land (r.newRegion), 'world' = World
+  tour (tourLeft(save) empty). Tests: journey.cjs rewritten; geo.cjs checks world-tour quality (median <=110%, worst <=120%).
+- REGIONAL TREES DONE + LIVE (same commit): src/habitat/trees.js REGION_TREES (5 slots per region, sourced; 26 new to draw);
+  nature.js UK_SLOTS/localTree; save.plantedIn[region][id]; slot 0 scores as plantation even when native; regional meter =
+  trees + projects (raw scaled like the UK); GameScene plants localTree, t.art picture (UK slot's until drawn), no soil
+  over sea/ice. Weak tree sources noted by the researcher: tundra willow (bee line), Iceland juniper, oil palm (The Conversation).
 - ART-BRIEF-REGIONS.md (generated from the data): 91 animals, 101 project icons, 9 field backdrops, savanna/rainforest/ocean
   terrain. The user will start a NEW art session for it.
 - DECIDED (the user, 2026-10-22): region below the plane = REAL GEOGRAPHY (position along the real great circle of the leg, by
