@@ -5,7 +5,7 @@ import { repriceSave } from './reprice.js';
 import { migrateHabitat } from './habitats.js';
 import { UI } from './ui.js';
 import { PilotScreens } from './pilot.js';
-import { flush } from './online.js';
+import { flush, syncUp, syncDown, watchSave, ensureCode } from './online.js';
 import { Tour } from './tour.js';
 import { WildScreen } from './wild.js';
 
@@ -51,3 +51,16 @@ ui.wild = new WildScreen(ui);   // the NATURE screen (src/wild.js)
 ui.tour = new Tour(ui);   // "tap here" tutorials (src/tour.js)
 ui.tour.maybe('title');
 flush();   // flights saved while offline last time
+// Online save (named pilots): take a newer online copy on opening; then upload changes every 30 s.
+syncDown(save).then(online => {
+  if (!online) return;
+  const keep = { muted: save.muted };
+  for (const k of Object.keys(save)) delete save[k];
+  Object.assign(save, online, keep);
+  writeSave(save);
+  location.reload();   // rebuild everything from the newer save
+});
+watchSave(save);
+ensureCode();   // named pilots from before codes get one (shown on PILOT)
+setInterval(() => syncUp(save), 30000);
+document.addEventListener('visibilitychange', () => { if (document.hidden) syncUp(save); });   // leaving the page

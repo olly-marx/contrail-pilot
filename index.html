@@ -187,6 +187,24 @@
         <button id="pSave" class="btn go" type="button">SAVE MY NAME</button>
       </div>
       <button id="pChange" class="btn tiny" type="button" hidden>change my name</button>
+      <!-- Online save (2026-10-22): your pilot code brings your pilot back on any device. -->
+      <div id="pCodeBox" class="pilot-code" hidden>
+        <p class="label">Your pilot code</p>
+        <p id="pCode" class="code"></p>
+        <p class="small">Write this down or take a photo! On another phone or computer, tap "I already have a pilot" and type it in to get your pilot and progress back.</p>
+        <button id="pNewCode" class="btn tiny" type="button">get a new code</button>
+      </div>
+      <button id="pHave" class="btn tiny" type="button">I already have a pilot</button>
+      <div id="pLogin" hidden>
+        <p class="label">Your pilot name</p>
+        <input id="lFirst" class="name-input" maxlength="12" autocomplete="off" placeholder="first name">
+        <select id="lWord" class="name-input"></select>
+        <input id="lTag" class="name-input" inputmode="numeric" maxlength="2" placeholder="number">
+        <p class="label">Your pilot code</p>
+        <input id="lCode" class="name-input" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="e.g. Otter Comet Robin Hare 42">
+        <p id="lMsg" class="small msg"></p>
+        <button id="lGo" class="btn go" type="button">BRING BACK MY PILOT</button>
+      </div>
       <div id="pStats" class="pilot-stats"></div>
     </div>
   </section>

@@ -401,16 +401,16 @@ anonymous login 21 Oct 23:01 became "Stevo the Bumblebee").
 - Saves are written twice (save.js BACKUP), unreadable ones kept aside, navigator.storage.persist().
 - REMOVE when everyone is restored: checkRestoreLink + restorePreview/restoreClaim, and a migration
   dropping restore_links / restore_preview / restore_claim.
-- NEXT (asked 2026-10-22, the user may take it to another chat): ONLINE SAVE. Back up each named
-  pilot's save to the database; play the same pilot on several devices (phone + laptop); get it
-  back after a browser wipe. The user is unsure about a password login. Recommended (not agreed):
-  a "pilot code" per pilot (e.g. 3 words from NAME_WORDS + a number, shown on PILOT with "write this
-  down / take a photo"), stored hashed; on a new device: PILOT -> "I already have a pilot" -> name +
-  code -> the device takes the pilot over (reuse restore_claim's logic) and downloads the save.
-  Save: a jsonb column/table per player, uploaded a few seconds after each flight and on leaving the
-  hangar; on load, the newer of local vs online wins (by an updatedAt stamp), never silently
-  overwriting more progress with less. Needs a migration (the user's OK before db push). Two devices
-  played at once: last write wins per field? keep it simple: newest whole save wins.
+- DONE 2026-10-22 (the user OK'd it): ONLINE SAVE, migration 20261022150000_online_save.sql (LIVE).
+  devices(device -> pilot) + my_player(): a pilot can have several devices; flights / rename /
+  is_me follow the pilot. Pilot code = 4 NAME_WORDS + a number (made in the game, SHA-256 only in
+  pilot_codes); pilot_login(first, word, tag, code) joins a device (merging any pilot it had);
+  10 wrong codes per pilot per hour, then refused (it RETURNS why instead of raising: raising rolled
+  back the counted attempt, i.e. unlimited guessing: caught by supabase/tests/online_save.sql).
+  put_save keeps a save only if newer (game stamp); get_save. Game (online.js): syncUp every 30 s,
+  4 s after each flight and on leaving the page; syncDown on opening (newer online wins unless this
+  device has unsent changes; a device that never synced keeps whichever save has more progress).
+  PILOT shows "Your pilot code" + "I already have a pilot". Tests: onlinesave.cjs, online_save.sql.
 
 ## Supabase (online names + leaderboards)
 

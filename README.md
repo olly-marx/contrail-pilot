@@ -99,6 +99,7 @@ node tests/reprice.cjs            # old saves re-valued once at full value at th
 node tests/wild.cjs               # wild area: rewild -> projects, buying, sources on everything, who can appear, found in flight, collection
 node tests/restore.cjs            # TEMPORARY restore button vs a fake Supabase: password, claim, save rebuilt with upgrades
 node tests/savesafe.cjs           # saves written twice; a missing/unreadable save loads the backup; unreadable kept aside
+node tests/onlinesave.cjs         # online save vs a fake Supabase: upload, pilot code, "I already have a pilot", newer wins, first contact keeps more progress
 node tests/tours.cjs              # "tap here" tutorials: name + boards, hangar tour, new unlocks; taps elsewhere are swallowed
 node tests/forest.cjs             # trees on long flights: old-wood boost (all 5 kinds = full), a forest fills up and stops cooling
 ```

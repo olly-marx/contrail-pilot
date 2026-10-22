@@ -1,5 +1,5 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
-import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, restorePreview, restoreClaim } from './online.js';
+import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, restorePreview, restoreClaim, getCode, ensureCode, pilotLogin } from './online.js';
 import { rebuildSave } from './restore.js';
 import { writeSave } from './save.js';
 import { MISSIONS } from './missions.js';
@@ -55,6 +55,43 @@ export class PilotScreens {
     $('bPeriods').innerHTML = PERIODS.map(p => `<button class="btn" type="button" data-period="${p.id}">${p.name}</button>`).join('');
     $('bPeriods').querySelectorAll('[data-period]').forEach(b => b.onclick = () => { this.period = b.dataset.period; this.renderBoard(); });
     this.renderButton();
+    this.setupCode();
+  }
+
+  // ---------- pilot code + "I already have a pilot" (online save, 2026-10-22) ----------
+  setupCode() {
+    $('lWord').innerHTML = '<option value="">word</option>' + NAME_WORDS.map(w => `<option>${w}</option>`).join('');
+    $('pHave').onclick = () => { $('pLogin').hidden = !$('pLogin').hidden; };
+    $('pNewCode').onclick = async () => {
+      if (!confirm('Get a new pilot code? Your old code will stop working.')) return;
+      $('pCode').textContent = '...'; await ensureCode(true); this.renderCode();
+    };
+    $('lGo').onclick = () => this.login();
+  }
+
+  async renderCode() {
+    const has = !!getPilot();
+    $('pCodeBox').hidden = !has;
+    if (!has) return;
+    $('pCode').textContent = getCode() || '...';
+    if (!getCode()) { await ensureCode(); $('pCode').textContent = getCode() || 'No internet: your code will appear here.'; }
+  }
+
+  async login() {
+    const p = { first: $('lFirst').value.trim(), word: $('lWord').value, tag: Number($('lTag').value) };
+    p.first = p.first ? p.first[0].toUpperCase() + p.first.slice(1).toLowerCase() : '';
+    if (!firstNameShapeOk(p.first) || !p.word || !(p.tag >= 10 && p.tag <= 99) || $('lCode').value.trim().length < 8) { $('lMsg').textContent = 'Fill in your name, word, number and code.'; return; }
+    $('lMsg').textContent = 'Looking for your pilot...';
+    const r = await pilotLogin(p, $('lCode').value);
+    if (!r.ok) { $('lMsg').textContent = { 'no such pilot': 'No pilot with that name and number.', 'wrong code': 'That code is not right. Check your photo!', 'too many tries': 'Too many tries. Wait an hour and try again.' }[r.why] || 'No internet right now. Try again soon!'; return; }
+    if (r.save) {
+      const keep = { muted: this.save.muted };
+      for (const k of Object.keys(this.save)) delete this.save[k];
+      Object.assign(this.save, r.save, keep);
+      writeSave(this.save);
+    }
+    alert(`Welcome back, ${pilotName(p)}!${r.save ? ' Your progress is here.' : ''}`);
+    location.reload();
   }
 
   // TEMPORARY (2026-10-22): a personal restore link (?restore=<code>, sent by the game makers)
@@ -90,6 +127,7 @@ export class PilotScreens {
   showPilot() {
     this.edit(!getPilot());
     this.renderStats();
+    this.renderCode();
   }
 
   edit(on) {
