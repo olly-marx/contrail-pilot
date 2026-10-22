@@ -1,11 +1,11 @@
 import {
   km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
   TAKEOFF, AIRPORT, CRYSTALS, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL, HAZARDS,
-  FOREST,
+  FOREST, POWERUPS,
 } from './config.js';
 import { School } from './school.js';
 import { Hud } from './Hud.js';
-import { loadout } from './upgrades.js';
+import { loadout, FUELS } from './upgrades.js';
 import { sendFlight } from './online.js';
 import { ROUTE, cityAt, legKm } from './route.js';
 import { addPrizes } from './rewards.js';
@@ -55,7 +55,7 @@ export class GameScene extends Phaser.Scene {
     for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
     for (const c in LANDMARKS) this.load.image(LANDMARKS[c].key, `assets/${LANDMARKS[c].key}.png`);   // art session: one per city
     // Sprites: drawn by tools/art/make_sprites.py.
-    for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
+    for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'power-saf', 'power-auto', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
       'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'storm-flash', 'storm-flash-top', 'storm-flash-bottom', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
       this.load.image(k, `assets/${k}.png`);
     // Background wildlife: two frames each (legs / wings).
@@ -202,6 +202,7 @@ export class GameScene extends Phaser.Scene {
     // Mission line: wraps inside the two HUD bars (about 25 characters a line) and never spills off screen.
     this.missionText = this.add.text(WIDTH / 2, 46, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a', align: 'center',
       wordWrap: { width: 200, useAdvancedWrap: true }, maxLines: 2, lineSpacing: 2 }).setOrigin(0.5, 0);
+    this.dialGfx = this.add.graphics().setDepth(5);   // day / night dial (drawDayDial)
     this.nextText = this.add.text(WIDTH / 2, 58, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
     this.hintText = this.add.text(4, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, lineSpacing: 4 }).setOrigin(0, 0);
     this.parcelText = this.add.text(4, HEIGHT - 11, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0);
@@ -304,6 +305,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat])) { this.scene.restart({ go: true }); return; }
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
+    this.safUntil = 0; this.autoUntil = 0; this.ownKit = null; this.nextPowerAt = POWERUPS.from;   // pick-ups
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.setState('takeoff');
     this.rollSpeed = 0;
@@ -349,12 +351,22 @@ export class GameScene extends Phaser.Scene {
 
   // Where the autopilot steers (plane top y): the middle of the next storm gap ahead, else a safe
   // height; nudged above or below a flock of birds near that line.
-  autopilotTarget() {
+  autopilotTarget(avoidIce = false) {
     const ahead = this.storms.filter(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < WIDTH)
       .sort((a, b) => a.rects[0].x - b.rects[0].x)[0];
     let y = ahead ? (ahead.rects[0].height + ahead.rects[1].y) / 2 - PLANE.h / 2 : this.plane.y;
     for (const f of this.birds) {
       if (f.x > this.plane.x - 20 && f.x < this.plane.x + 220 && Math.abs(f.y - y) < 50) y = f.y > y ? f.y - 60 : f.y + 60;
+    }
+    if (avoidIce) {   // the autopilot pick-up also keeps out of icy air: over or under it, inside the storm gap
+      const lo = ahead ? ahead.rects[0].height + 4 : 40, hi = ahead ? ahead.rects[1].y - PLANE.h - 4 : SKY_H - 60;
+      for (const i of this.issrs) {
+        if (i.x + i.width < this.plane.x || i.x > this.plane.x + 200) continue;
+        if (y + PLANE.h > i.y - 6 && y < i.y + i.height + 6) {
+          const over = i.y - PLANE.h - 8, under = i.y + i.height + 8;
+          y = over >= lo && (y - over < under - y || under > hi) ? over : under <= hi ? under : y;
+        }
+      }
     }
     return Phaser.Math.Clamp(y, 40, SKY_H - 60);
   }
@@ -406,6 +418,7 @@ export class GameScene extends Phaser.Scene {
 
   applyFlap() {
     this.graceUntil = 0;   // flying again ends the breather
+    if (this.onAutopilot()) { this.autoUntil = 0; this.popup(this.plane.x + 20, this.plane.y - 10, 'You have control!', '#ffe15a'); }   // ...and the autopilot pick-up
     this.plane.vy = PLANE.flapVelocity;
     this.flaps = (this.flaps || 0) + 1;
     sfx.flap();
@@ -460,11 +473,12 @@ export class GameScene extends Phaser.Scene {
         if (!this.school) { this.popup(WIDTH / 2, SKY_H / 2, 'Now TAP to fly!', '#ffe15a', 16); this.startGrace(); }
         if (!this.school) this.explainWhenClear('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!', 'lesson-bars');
       }
-    } else if (this.state === 'playing' && this.inGrace()) {
-      const target = this.autopilotTarget();
+    } else if (this.state === 'playing' && (this.inGrace() || this.onAutopilot())) {
+      const target = this.autopilotTarget(this.onAutopilot());
       this.plane.vy = Phaser.Math.Clamp((target - this.plane.y) * 4, -180, 180);
       this.plane.y += this.plane.vy * dt;
       this.planeSprite.setAlpha(1);
+      this.autoText.setText(this.onAutopilot() ? `AUTOPILOT ${Math.ceil((this.autoUntil - this.gameTime) / 1000)} - TAP to take control` : 'AUTOPILOT - tap to fly!');
       this.autoText.setPosition(Math.max(this.autoText.width / 2 + 4, this.plane.x + PLANE.w / 2), Math.max(10, this.plane.y - 14)).setVisible(true);
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
@@ -556,6 +570,7 @@ export class GameScene extends Phaser.Scene {
       i.tilePositionY += dt * 4;
     }
     this.updateTokens(dt, box);
+    this.updatePowers();
     this.updateHazards(dt, box);
     this.updateParcels(dt);
     this.drawAim();
@@ -807,21 +822,53 @@ export class GameScene extends Phaser.Scene {
     const p = this.clock % (D + N);
     const isDay = p < D;
     const f = isDay ? p / D : (p - D) / N;
-    const x = Math.round(30 + f * (WIDTH - 60)), y = Math.round(70 - Math.sin(f * Math.PI) * 30);
-    if (isDay) {
-      g.fillStyle(COLOURS.sun, 0.35).fillRect(x - 9, y - 7, 18, 14).fillRect(x - 7, y - 9, 14, 18);
-      g.fillStyle(COLOURS.sun).fillRect(x - 6, y - 5, 12, 10).fillRect(x - 5, y - 6, 10, 12);
-    } else {
-      g.fillStyle(0xf4f1e8, 0.25).fillRect(x - 8, y - 6, 16, 12).fillRect(x - 6, y - 8, 12, 16);
-      g.fillStyle(0xf4f1e8).fillRect(x - 5, y - 4, 10, 8).fillRect(x - 4, y - 5, 8, 10);
-      g.fillStyle(0xc9c4b4).fillRect(x - 2, y - 2, 2, 2).fillRect(x + 2, y + 1, 2, 2).fillRect(x - 3, y + 2, 1, 1);  // craters
+    const { toOther } = this.dayNightPhase();
+    // Sunset / sunrise: a glow in bands up from the horizon, strongest mid-twilight, so the change
+    // can be seen coming (2026-10-22: with a 3 s blend players could not tell day from night).
+    const glow = Math.sin(Math.min(1, toOther) * Math.PI);
+    if (glow > 0) {
+      const bands = 8, top = SKY_H * 0.35, bh = (SKY_H - top) / bands;
+      for (let i = 0; i < bands; i++) {
+        const k = (i + 1) / bands;                                  // 0 high .. 1 at the horizon
+        g.fillStyle(lerpColour(DAYNIGHT.glowHigh, DAYNIGHT.glowLow, k), glow * 0.55 * k).fillRect(0, Math.round(top + i * bh), WIDTH, Math.ceil(bh));
+      }
     }
+    // The sun sinks and turns orange at dusk (and rises at dawn's end); the moon fades at dawn.
+    const sink = isDay ? toOther * 60 : 0;
+    const x = Math.round(30 + f * (WIDTH - 60)), y = Math.round(70 - Math.sin(f * Math.PI) * 30 + sink);
+    if (isDay) {
+      const sun = lerpColour(COLOURS.sun, DAYNIGHT.sunSet, toOther);
+      g.fillStyle(sun, 0.35).fillRect(x - 9, y - 7, 18, 14).fillRect(x - 7, y - 9, 14, 18);
+      g.fillStyle(sun).fillRect(x - 6, y - 5, 12, 10).fillRect(x - 5, y - 6, 10, 12);
+    } else {
+      const m = 1 - toOther;
+      g.fillStyle(0xf4f1e8, 0.25 * m).fillRect(x - 8, y - 6, 16, 12).fillRect(x - 6, y - 8, 12, 16);
+      g.fillStyle(0xf4f1e8, m).fillRect(x - 5, y - 4, 10, 8).fillRect(x - 4, y - 5, 8, 10);
+      g.fillStyle(0xc9c4b4, m).fillRect(x - 2, y - 2, 2, 2).fillRect(x + 2, y + 1, 2, 2).fillRect(x - 3, y + 2, 1, 1);  // craters
+    }
+    this.drawDayDial(p / (D + N));
     const tint = lerpColour(lerpColour(0xffffff, 0x4a5a80, n), 0xff7a5a, (this.heatLevel ? this.heatLevel() : 0) * 0.7);
     this.hills.setTint(tint);
     this.city.setTint(tint);
     for (const l of this.landmarks) l.setTint(tint);
     this.ground.setTint(tint);
     this.cloudsFar.setAlpha(0.55 - 0.35 * n);
+  }
+
+  // Day / night dial under the distance: one whole cycle as a strip (day, sunset, night, sunrise)
+  // with a marker for now, so you can see night coming.
+  drawDayDial(t) {
+    const g = this.dialGfx;
+    if (!g) return;
+    g.clear();
+    const { daySeconds: D, nightSeconds: N, blendSeconds: B } = DAYNIGHT, T = D + N;
+    const w = 60, h = 5, x0 = Math.round(WIDTH / 2 - w / 2), y0 = 36;
+    const seg = (a, b, c) => g.fillStyle(c).fillRect(x0 + Math.round(a / T * w), y0, Math.round((b - a) / T * w), h);
+    g.fillStyle(0x000000, 0.6).fillRect(x0 - 1, y0 - 1, w + 2, h + 2);
+    seg(0, D - B, COLOURS.sun); seg(D - B, D, DAYNIGHT.glowLow); seg(D, T - B, 0x3a4680); seg(T - B, T, DAYNIGHT.glowHigh);
+    const mx = x0 + Math.round(t * w);
+    g.fillStyle(0xffffff).fillRect(mx - 1, y0 - 3, 2, h + 6);
+    g.fillStyle(0x000000).fillRect(mx - 2, y0 - 3, 1, h + 6).fillRect(mx + 1, y0 - 3, 1, h + 6);
   }
 
   // ---------- airports ----------
@@ -1054,7 +1101,46 @@ export class GameScene extends Phaser.Scene {
       if (Math.random() < chance) this.addToken();
       this.nextTokenAt += TOKENS.spawnEvery;
     }
+    if (this.distancePx >= (this.nextPowerAt ??= POWERUPS.from)) {
+      this.nextPowerAt += POWERUPS.every;
+      const r = Math.random(), safHelps = !['saf100', 'hydrogen'].includes(this.kit.fuelId);
+      if (!this.school && safHelps && r < POWERUPS.safChance) this.addPower('saf');
+      else if (!this.school && r > 1 - POWERUPS.autoChance) this.addPower('auto');
+    }
   }
+
+  // A pick-up (POWERUPS): rides with the seeds, so it is collected in updateTokens.
+  addPower(power, x = WIDTH + 10, y = Phaser.Math.Between(60, SKY_H - 90)) {
+    const img = this.add.image(x, y, `power-${power}`).setOrigin(0);
+    this.fxLayer.add(img);
+    this.tokens.push({ img, baseY: y, phase: Math.random() * 6, value: 0, power });
+  }
+
+  usePower(power, tx, ty) {
+    const P = POWERUPS;
+    if (power === 'saf') {
+      // Swap to All-SAF numbers for a while, then back to your own fuel (this.ownKit).
+      if (!this.ownKit) this.ownKit = this.kit;
+      const own = this.ownKit, saf = FUELS.saf100, f = saf.co2 / FUELS[own.fuelId].co2;
+      this.kit = { ...own, co2Cruise: own.co2Cruise * f, co2Takeoff: own.co2Takeoff * f, smoke: own.smoke * f,
+        vapour: saf.water, contrailEvery: saf.contrailEvery, contrailLife: saf.contrailLife };
+      this.safUntil = this.gameTime + P.safSeconds * 1000;
+      this.popup(tx, ty - 8, 'SAF! Cleaner fuel', '#8dffb0');
+      this.ui.tipOnce('powerSaf', 'SAF: cleaner fuel!', 'Less CO2, and less soot, so your contrails are thinner and fade sooner. They still happen!', 'good', 4);
+    } else {
+      this.autoUntil = this.gameTime + P.autoSeconds * 1000;
+      this.popup(tx, ty - 8, 'AUTOPILOT!', '#ffe15a');
+    }
+    this.burst(tx, ty, power === 'saf' ? 0x8dffb0 : 0x8ac8ff, 8);
+    sfx.coin();
+  }
+
+  // Timed pick-ups running out.
+  updatePowers() {
+    if (this.safUntil && this.gameTime >= this.safUntil) { this.safUntil = 0; this.kit = this.ownKit; this.ownKit = null; this.popup(this.plane.x + 20, this.plane.y - 10, 'SAF used up', '#c8c8c8'); }
+    if (this.autoUntil && this.gameTime >= this.autoUntil) { this.autoUntil = 0; this.popup(this.plane.x + 20, this.plane.y - 10, 'You have control!', '#ffe15a'); }
+  }
+  onAutopilot() { return this.autoUntil && this.gameTime < this.autoUntil; }
 
   addFlock(x = WIDTH + 20, y = null) {
     const B = HAZARDS.birds, n = Phaser.Math.Between(B.flock[0], B.flock[1]);
@@ -1255,6 +1341,11 @@ export class GameScene extends Phaser.Scene {
         t.baseY += Math.sin(a) * TOKENS.magnetPull * dt;
       }
       t.img.y = Math.round(t.baseY + Math.sin(t.phase) * TOKENS.bob);
+      if (d <= this.kit.pickup - 6 && this.state === 'playing' && t.power) {
+        this.usePower(t.power, tx, ty);
+        t.img.destroy();
+        return false;
+      }
       if (d <= this.kit.pickup - 6 && this.state === 'playing') {
         this.cargo += t.value;
         if (t.value > 1) this.goldens++;
@@ -1438,7 +1529,7 @@ export class GameScene extends Phaser.Scene {
   enterIssr() {
     sfx.issr();
     this.popup(this.plane.x + 25, this.plane.y - 12, 'CONTRAIL!', '#ffffff');
-    if (this.isDay) this.ui.tipOnce('issrDay', 'You made a contrail!', 'This icy air turns exhaust into a cloud. In sunshine it shades the Earth: COOLER.', 'good', 4);
+    if (this.isDay) this.ui.tipOnce('issrDay', 'You made a contrail!', 'This icy air turns exhaust into a cloud. In sunshine it can shade the Earth a little: cooler.', 'good', 4);
     else this.ui.tipOnce('issrNight', 'Contrail at night!', 'No sunlight to block, so it only traps heat: HOTTER. Climb or dive out!', 'bad', 4);
   }
 
@@ -1516,7 +1607,7 @@ export class GameScene extends Phaser.Scene {
       // The banner only for the first few of each: after that the sky and the sound say it.
       const banner = k => { const seen = this.save.dayNightSeen || (this.save.dayNightSeen = {}); seen[k] = (seen[k] || 0) + 1; return seen[k] <= DAYNIGHT.bannerTimes; };
       if (half === 'dusk') { sfx.dusk(); if (banner('dusk')) this.ui.toast('Night is coming!', 'At night contrails TRAP heat. Avoid the icy air!', 'bad', 3); }
-      if (half === 'dawn') { sfx.dawn(); if (banner('dawn')) this.ui.toast('Sunrise!', 'In sunshine contrails BLOCK sunlight. Find the icy air!', 'good', 3); }
+      if (half === 'dawn') { sfx.dawn(); if (banner('dawn')) this.ui.toast('Sunrise!', 'In sunshine a contrail can shade the Earth a little. Night ones trap heat.', 'good', 3); }
       // Night Owl: a whole night flown without trapping any heat.
       if (half === 'night') this.nightDodges = 0;
       if (half === 'night' && this.state === 'playing') this.night = { started: true, trappedAtStart: this.heatTrapped };

@@ -18,7 +18,7 @@ if [ $# -gt 0 ]; then tests=("$@"); else tests=(tests/*.cjs); fi
 declare -A secs=([forest]=60 [school]=67 [lanes]=65 [flight]=49 [missions]=39 [crystals]=38 [progression]=33
   [hazards]=32 [ponds]=29 [rewards]=28 [controls]=27 [online]=25 [tours]=22 [issr-reveal]=21 [features]=20
   [journey]=17 [nature]=15 [hangar]=14 [banners]=14 [gate]=11 [wild]=9 [upgrades]=9 [restore]=9 [reprice]=9
-  [collisions]=7 [savesafe]=6 [runway-back]=6 [textures]=2 [links]=2 [wildlife]=20 [treeart]=2)
+  [collisions]=7 [savesafe]=6 [runway-back]=6 [textures]=2 [links]=2 [wildlife]=20 [treeart]=2 [powerups]=20)
 
 if [ -n "$shard" ]; then
   k=${shard%/*}; n=${shard#*/}

@@ -104,6 +104,19 @@ export const TOKENS = {
   magnetPull: 140,     // px/s, how fast a magnet pulls trees in
 };
 
+// Pick-ups (2026-10-22). SAF: cleaner fuel for a while: All-SAF numbers (less CO2; less soot, so
+// fewer, bigger ice crystals and thinner, shorter-lived contrails). Only offered if it would help
+// (not on All SAF or hydrogen). AUTOPILOT: just for fun, the plane flies itself round storms, birds
+// and icy air; it can still crash, and your first tap takes control back.
+export const POWERUPS = {
+  every: 700,          // px between chances to place one
+  from: 900,           // m before the first can appear
+  safChance: 0.22,
+  autoChance: 0.1,
+  safSeconds: 12,
+  autoSeconds: 8,
+};
+
 // Hazards that join the storms as the flight gets longer (distances in m = px).
 export const HAZARDS = {
   stormForgive: 5,   // plane pixels that may brush a storm cloud before it counts as a crash (no-fly and birds: 0)
@@ -158,8 +171,11 @@ export const DAYNIGHT = {
   bannerTimes: 3,     // the 'Night is coming!' / 'Sunrise!' banner shows this many times per device, then only the sky + sound
   daySeconds: 15,
   nightSeconds: 15,
-  blendSeconds: 3,     // dusk / dawn colour blend at the end of each half
+  blendSeconds: 6,     // dusk / dawn: sunset and sunrise at the end of each half (was 3: players missed the change)
   skyNight: 0x1b2140,
+  glowLow: 0xff8a3d,   // sunset / sunrise glow near the horizon...
+  glowHigh: 0xff6a9a,  // ...fading to pink higher up
+  sunSet: 0xff7a3a,    // the sun turns orange as it sets
 };
 
 export const RADIATION = {

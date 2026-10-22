@@ -39,7 +39,7 @@ export class School {
       { say: 'Seeds ahead! Grab them.',
         setup: () => { const y = Phaser.Math.Clamp(s.plane.y, 80, SKY_H - 100); [0, 40, 80].forEach(dx => s.addToken(ahead() + dx, y, false)); },
         done: () => s.tokens.length === 0 },
-      lesson('lesson-day', 'Some air up here is <b>icy</b>. Fly through it and your plane leaves a cloud line: a <b>contrail</b>.<br>In <b>sunshine</b>, the contrail makes <b>shade</b>. Shade <span class="cool">cools</span> the Earth.'),
+      lesson('lesson-day', 'Some air up here is <b>icy</b>. Fly through it and your plane leaves a cloud line: a <b>contrail</b>.<br>In <b>sunshine</b>, the contrail can make <b>shade</b>. Shade <span class="cool">cools</span> the Earth a little.'),
       { say: 'Icy air ahead! <b>Fly INTO it</b>.',
         setup: () => { this.issr = this.bigIssr(); },
         // Missed it? Put more icy air right in front of the plane, so this step can always be done.
@@ -58,7 +58,7 @@ export class School {
           s.time.delayedCall(2800, () => { if (this.i >= 0) this.dusk.push(stormAt(Phaser.Math.Between(150, SKY_H - 150))); });
         },
         done: () => !s.isDay && s.nightAmount() > 0.95 && this.dusk.length === 2 && this.dusk.every(st => st.rects[0].x + STORMS.width < s.plane.x) },
-      lesson('lesson-night', 'Now it is <b>night</b>. There is no sun to block. A contrail is like a <b>lid on a pot</b>: heat cannot get out. The Earth gets <span class="warm">HOTTER</span>.<br>So at night, fly <b>above or below</b> icy air.'),
+      lesson('lesson-night', 'Now it is <b>night</b>. There is no sun to block. A contrail is like a <b>lid on a pot</b>: heat cannot get out. The Earth gets <span class="warm">HOTTER</span>.<br>So at night, fly <b>above or below</b> icy air.<br>In real life, contrails <b>warm</b> the Earth more than they cool it, so dodging these matters most.'),
       { say: 'Night! Icy air ahead: fly <b>above or below</b> it.',
         setup: () => {
           s.issrs.forEach(i => { i.maskGfx.destroy(); i.destroy(); }); s.issrs = [];   // clear the day's icy air first

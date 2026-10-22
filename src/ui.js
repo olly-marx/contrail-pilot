@@ -21,6 +21,8 @@ export const FACTS_BASE = [
   'Only a few flights make most of the warming contrails. Changing their height could help a lot!',
   'Icy air is often thin. Flying a little higher or lower can be enough to miss it.',
   'SAF can be made from old cooking oil, like the oil used to fry chips!',
+  'SAF makes less soot. Less soot means fewer ice bits, so its contrails are thinner and fade sooner.',
+  'Some daytime contrails can cool the Earth a little. Night contrails always warm it.',
   'Hydrogen planes make no CO2, but they make lots of water. So they can still make contrails.',
   'Taking off burns lots of fuel. That is why short flights make the most CO2 for each km.',
   'Trees take CO2 out of the air, but it takes many years. Not making CO2 works faster.',
