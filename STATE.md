@@ -187,6 +187,14 @@ the advanced autopilot (see items 5 below).
   behind a hold-2s gate, '?' for undrawn animals; badges.js rewilder counts every region. Tests: tests/habitatdata.cjs (data
   rules, 5 planted defects caught), tests/regions.cjs (3 planted defects caught). In flight nothing changed yet (still UK only).
   Rare/legendary animals with no sourced project link were lowered to uncommon (chameleon, mouflon, pelican, greatgreyowl).
+- STEP 2 DONE + LIVE 2026-10-22 (ef68aeb, CI green, 41/41): src/geo.js (LAND boxes, first match wins, else 'ocean';
+  along() great circle; legStrip() runs per leg with the sea squeezed to OCEAN_SHARE 0.35 and slivers < 4% merged;
+  regionBelow()). GameScene: regionHere()/setRegion(): ground/hills crossfade via ground2/hills2 (1.5 s, same tint),
+  wildlifeScene(save, region) (regional trees from WILDLIFE kind 'tree'; no cows/sheep outside the UK; .who maps a sprite
+  to the species HERE), natureCooling(save, regionNow), save.discovered[region] (in flight only: doing it at scene build
+  broke onlinesave sync), UK decor over the UK only. Sea/ice/savanna/rainforest keep the last land's strips until art
+  exists (add REGIONS entries). Australia = desert, Patagonia = plains, NZ = woodland for now (part B to decide).
+  Tests: tests/geo.cjs, tests/flightregion.cjs.
 - ART-BRIEF-REGIONS.md (generated from the data): 91 animals, 101 project icons, 9 field backdrops, savanna/rainforest/ocean
   terrain. The user will start a NEW art session for it.
 - DECIDED (the user, 2026-10-22): region below the plane = REAL GEOGRAPHY (position along the real great circle of the leg, by
