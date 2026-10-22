@@ -37,6 +37,7 @@ function lerpColour(a, b, t) {
 // How a flight ended, for the online Oops boards (from the crash message shown to the player).
 const LANDMARK_SCALE = 2;   // the user: bigger landmarks (whole numbers keep the pixels crisp)
 
+const FLOCK_HALF = 2;   // a flock fills the box of an old 5-bird V: 26 px across, 36 px down
 const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
   : /too hot/.test(reason) ? 'overheat' : 'ground';
 
@@ -709,7 +710,9 @@ export class GameScene extends Phaser.Scene {
     if (due('wild', W.wildPerScreen)) animal(pick(W.wildKinds));
     if (due('bird', W.birdsPerScreen)) {
       const b = pick(W.skyKinds);
-      const img = this.add.image(atX, Phaser.Math.Between(70, SKY_H - 70), `${b}-0`).setOrigin(0.5).setAlpha(0.85);
+      // Scenery birds fly LOW, just over the hills, small and faded: background life, never mistaken
+      // for a bird-strike flock (2026-10-22). Half size = their original small sprite size.
+      const img = this.add.image(atX, Phaser.Math.Between(SKY_H - 62, SKY_H - 34), `${b}-0`).setOrigin(0.5).setScale(0.5).setAlpha(0.6);
       this.storkLayer.add(img);
       this.life.push({ img, k: 0.35, kind: b, walk: Phaser.Math.FloatBetween(4, 10), t: Math.random(), bob: Math.random() * 6, y0: img.y });
       this.seen(b);
@@ -1054,25 +1057,27 @@ export class GameScene extends Phaser.Scene {
   addFlock(x = WIDTH + 20, y = null) {
     const B = HAZARDS.birds, n = Phaser.Math.Between(B.flock[0], B.flock[1]);
     if (y === null) {   // never a flock in a storm gap just as the plane goes through it (10 tries, else skip)
-      for (let k = 0; k < 10 && y === null; k++) { const t = Phaser.Math.Between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, n)) y = t; }
+      for (let k = 0; k < 10 && y === null; k++) { const t = Phaser.Math.Between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t; }
       if (y === null) return;
     }
-    const birds = [];
-    for (let i = 0; i < n; i++) {
-      // A loose V shape.
-      const ox = Math.abs(i - (n - 1) / 2) * 13, oy = (i - (n - 1) / 2) * 9;
+    // A dense arrowhead of many small birds (2026-10-22: the user wanted flocks more obvious), packed
+    // into the same box a 5-bird V used (FLOCK_HALF), so gap safety and difficulty barely change.
+    const birds = [], W = FLOCK_HALF * 13, H = FLOCK_HALF * 9;
+    for (let tries = 0; birds.length < n && tries < 400; tries++) {
+      const oy = Phaser.Math.Between(-H, H), ox = Math.min(W, Math.round(Math.abs(oy) * 1.2 + Phaser.Math.Between(0, 9)));
+      if (birds.some(q => Math.abs(q.ox - ox) < 6 && Math.abs(q.oy - oy) < 5)) continue;   // a clear gap round each bird
       const img = this.add.image(x + ox, y + oy, 'bird-0').setOrigin(0).setFlipX(true);   // facing the plane
       this.birdLayer.add(img);
       birds.push({ img, ox, oy });
     }
-    this.birds.push({ birds, x, y, phase: Math.random() * 6 });
+    this.birds.push({ birds, x, y, half: FLOCK_HALF, phase: Math.random() * 6 });
     this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds is flying at you! Fly over or under them. Hitting a bird ends your flight.');
   }
 
   // A flock at (x, y) flies at speed + extraSpeed; each storm on screen at speed. When the plane
   // reaches a storm, would the flock be near the plane and inside that storm's gap?
-  flockBlocksGap(x, y, n) {
-    const B = HAZARDS.birds, v = Math.max(1, this.speed), half = (n - 1) / 2;
+  flockBlocksGap(x, y, half) {   // half: the flock's size in old V steps (13 px across, 9 px down)
+    const B = HAZARDS.birds, v = Math.max(1, this.speed);
     const top = y - half * 9 - 4 - B.wobble, bottom = y + half * 9 + 16 + B.wobble;   // the V's height, bird size and bobbing
     return this.storms.some(st => {
       const r = st.rects[0], t = (r.x - this.plane.x) / v;
@@ -1086,7 +1091,7 @@ export class GameScene extends Phaser.Scene {
     if (this.school) return;
     if (!this.explain(`hazard-${id}`, `<b>${title}</b><br>${body}`, `lesson-${id.toLowerCase()}`)) {
       if (!this.hazardSeen) this.hazardSeen = {};
-      if (!this.hazardSeen[id]) { this.hazardSeen[id] = true; this.popup(WIDTH / 2, 70, `${{ noFly: 'No-fly zone', turbulence: 'Turbulence', birds: 'Birds' }[id]} ahead!`, '#ff8080'); }
+      if (!this.hazardSeen[id]) { this.hazardSeen[id] = true; this.popup(WIDTH / 2, 84, `${{ noFly: 'No-fly zone', turbulence: 'Turbulence', birds: 'Birds' }[id]} ahead!`, '#ff8080'); }   // y 84: below the 2-line mission text
     }
   }
 
@@ -1125,7 +1130,7 @@ export class GameScene extends Phaser.Scene {
       f.x -= B.extraSpeed * dt;
       // Birds steer out of a storm gap the plane is about to fly through (a flock there would
       // leave no way past). The spawn check usually prevents it; this catches the rest.
-      const n = f.birds.length, half = (n - 1) / 2, top = f.y - half * 9 - 4 - B.wobble, bottom = f.y + half * 9 + 16 + B.wobble;
+      const half = f.half ?? (f.birds.length - 1) / 2, top = f.y - half * 9 - 4 - B.wobble, bottom = f.y + half * 9 + 16 + B.wobble;
       for (const st of this.storms) {
         const r = st.rects[0], gTop = r.height, gBot = st.rects[1].y;
         if (r.x + r.width < this.plane.x - 10 || r.x > this.plane.x + 200) continue;     // only gaps the plane is reaching

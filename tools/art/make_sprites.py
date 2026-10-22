@@ -355,21 +355,21 @@ def tree(kind, stage):
 # ---------- animals ----------
 
 def birds():
-    c = {'#': hexc('#2b2b3f'), 'w': hexc('#4a4a66'), 'o': hexc('#ffffff'), '>': hexc('#ffa000')}
-    up = ['w.......w',
-          '#w.....w#',
-          '.#w...w#.',
-          '..##w##o>',
-          '...###...',
-          '.........']
-    down = ['.........',
-            '.........',
-            '.........',
-            '..##w##o>',
-            '.##...##.',
-            '#w.....w#']
+    # Hazard birds: small, dark and CHUNKY (2 px wings), so a flock of 11-15 reads at once as
+    # "danger, fly round". 8x5, facing right (GameScene flips them to face the plane). Pixels = hitbox.
+    c = {'#': hexc('#1b1b2f'), 'o': hexc('#ffffff')}
+    up = ['#.....#.',
+          '##...##.',
+          '.##.##..',
+          '..####o#',
+          '........']
+    down = ['........',
+            '..####o#',
+            '.##.##..',
+            '##...##.',
+            '#.....#.']
     for i, rows in enumerate((up, down)):
-        s = Sprite(9, 6)
+        s = Sprite(8, 5)
         s.grid(rows, c)
         s.save(f'bird-{i}')
 
