@@ -38,4 +38,4 @@ export function claim(save, key = null) {
   return paid;
 }
 export const unclaimedCount = save => (save.unclaimed || []).length;
-export const CITY_COUNT = ROUTE.length;
+export const CITY_COUNT = ROUTE.length;   // every airport in the world network (src/cities.js)

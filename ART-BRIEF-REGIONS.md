@@ -178,3 +178,24 @@ Field backdrop: assets/ui/field-rainforest.png (288 x 170, horizon at y=60, like
   then the very rare and rare animals in other regions, then icons, then backdrops.
 
 TOTAL: 91 animals, 101 project icons, 9 field backdrops.
+
+## Trees for each region (2026-10-22; src/habitat/trees.js)
+
+Each region has 5 tree slots matching the UK (basic, then 4 natives). Draw as the UK trees: tree-<id>-0/1/2 (3 growth
+stages) + a portrait, and a WILDLIFE entry with kind 'tree' and the region. Until drawn, the UK tree of the same slot stands in.
+
+- mediterranean: `aleppopine` Aleppo pine (slot 0), `corkoak` Cork oak (slot 2), `strawberrytree` Strawberry tree (slot 3)
+- desert: `mesquite` Mesquite (slot 0), `ghaf` Ghaf (slot 2), `sidr` Sidr (Christ's thorn jujube) (slot 3)
+- monsoon: `oilpalm` Oil palm (slot 0), `jamun` Jamun (Java plum) (slot 3), `mango` Mango (slot 4)
+- eastasia: `chinesefir` Chinese fir (slot 0), `persimmon` Persimmon (kaki) (slot 4)
+- boreal: `aspen` Aspen (slot 2), `saskatoon` Saskatoon berry (slot 4)
+- plains: `loblolly` Loblolly pine (slot 0), `cottonwood` Eastern cottonwood (slot 1), `dogwood` Flowering dogwood (slot 3)
+- tundra: `lodgepole` Lodgepole pine (slot 0), `willow` Tea-leaved willow (slot 2), `juniper` Juniper (slot 4)
+- savanna: `eucalyptus` Eucalyptus (slot 0), `baobab` Baobab (slot 2), `fig` Sycamore fig (slot 3), `marula` Marula (slot 4)
+- rainforest: `eucalyptus` Eucalyptus (slot 0), `cecropia` Cecropia (slot 1), `kapok` Kapok (slot 2), `jucara` Juçara palm (slot 3), `brazilnut` Brazil nut (slot 4)
+
+## City landmarks (2026-10-22; src/cities.js)
+
+The world network has 104 airports; 88 have no landmark yet (src/landmarks.js, one per city, behind the runway):
+
+AMSTERDAM, EDINBURGH, DUBLIN, VIENNA, WARSAW, KYIV, MOSCOW, MADRID, LISBON, BARCELONA, ISTANBUL, TUNIS, CASABLANCA, RIYADH, DOHA, MUSCAT, TEHRAN, KARACHI, TASHKENT, TAMANRASSET, KHARTOUM, MUMBAI, KOLKATA, CHENNAI, KATHMANDU, DHAKA, COLOMBO, HANOI, KUALA LUMPUR, SINGAPORE, JAKARTA, MANILA, SHANGHAI, HONG KONG, SEOUL, CHENGDU, OSAKA, TAIPEI, SAPPORO, ULAANBAATAR, SEATTLE, CALGARY, FAIRBANKS, YELLOWKNIFE, IQALUIT, OSLO, STOCKHOLM, HELSINKI, DENVER, DALLAS, ATLANTA, LOS ANGELES, MIAMI, TORONTO, WINNIPEG, MEXICO CITY, BUENOS AIRES, SANTIAGO, AKUREYRI, NAIROBI, ADDIS ABABA, DAR ES SALAAM, JOHANNESBURG, CAPE TOWN, WINDHOEK, MAPUTO, LUANDA, KINSHASA, LAGOS, ACCRA, NIAMEY, ANTANANARIVO, MANAUS, BELEM, SAO PAULO, RIO, BRASILIA, LIMA, QUITO, BOGOTA, CARACAS, PANAMA, SYDNEY, PERTH, DARWIN, AUCKLAND, HONOLULU, NADI

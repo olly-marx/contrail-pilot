@@ -30,8 +30,8 @@ const KEY = 'contrailPilot.v2';
 
   // 2. Crash before PARIS: mission not done, stays at 0.
   await p.click('#goBtn'); await flying(); await calm();
-  const line = await scene(() => game.scene.getScene('game').missionText.text);
-  check(/PARIS: [\d,]+ km/.test(line), `the mission line should show the next airport's distance, got "${line}"`);
+  const line = await scene(() => game.scene.getScene('game').missionText.text), first = await scene(() => game.scene.getScene('game').path[1]);
+  check(new RegExp(`${first}: [\\d,]+ km`).test(line), `the mission line should show the next airport (${first}) and its distance, got "${line}"`);
   await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.plane.y = 600; });
   // Wait for the crash and the results text, not a fixed time (it failed under load).
   await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.result && document.getElementById('rMission').textContent.trim(); }, null, { timeout: 15000 }).catch(() => {});
@@ -68,13 +68,13 @@ const KEY = 'contrailPilot.v2';
   r = await scene(() => game.scene.getScene('game').result);
   check(r && r.landed && r.mission && r.mission.done, `landing past PARIS must still complete mission 1: ${JSON.stringify(r && r.mission)}`);
 
-  // 4. Passing an airport shows where the next one is (from LONDON: PARIS, then BERLIN).
+  // 4. Passing an airport shows where the next one is (the next two on this flight's path).
   await setSave({ ...base, mission: 0, city: 0 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#goBtn'); await flying(); await calm();
   await scene(() => { const s = game.scene.getScene('game'); s.distancePx = s.nextAirport.worldX + 230; });
   for (let i = 0; i < 6; i++) { await hold(); await p.waitForTimeout(60); }
-  const sign = await scene(() => game.scene.getScene('game').nextText.text);
-  check(/Passed PARIS\. Next: BERLIN/.test(sign), `after passing PARIS the sign should name BERLIN, got "${sign}"`);
+  const sign = await scene(() => game.scene.getScene('game').nextText.text), two = await scene(() => game.scene.getScene('game').path.slice(1, 3));
+  check(sign.includes(`Passed ${two[0]}. Next: ${two[1]}`), `after passing ${two[0]} the sign should name ${two[1]}, got "${sign}"`);
 
   // 5. A mission needing an upgrade says so on the card.
   const first5 = ['land', 'seeds-5', 'shade-10', 'clean-night', 'pass-1'];
@@ -83,14 +83,15 @@ const KEY = 'contrailPilot.v2';
   check(/MISSION 6\//.test(c7) && /Plant a tree/.test(c7) && /Needs:/.test(c7) && /Tree parcels/.test(c7), `mission 6 should say it needs Tree parcels: ${c7}`);
   await setSave({ ...base, missionsDone: first5, levels: { trees: 1 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   check(!/Needs:/.test(await p.textContent('#tMission')), 'with Tree parcels owned the card should not say Needs');
-  // 6. The later missions: the wildlife one needs a habitat project; round the world needs a lap.
+  // 6. The later missions: the wildlife one needs a habitat project; the World tour needs every land discovered.
   const later = await p.evaluate(async () => { const M = await import('./src/missions.js'); const m = id => M.MISSIONS.find(x => x.id === id);
     return { n: M.MISSIONS.length, ids: M.MISSIONS.map(x => x.id),
       rewild: [M.blocked({ habitat: { woodland: [] } }, m('rewild')), M.blocked({ habitat: { woodland: ['pond'] } }, m('rewild'))],
-      world: [m('world').check({ landed: true, lap: true }), m('world').check({ landed: true, landedAt: 'REYKJAVIK', lap: false })] }; });
+      world: [m('world').check({ landed: true }, { discovered: { mediterranean: 1, desert: 1, monsoon: 1, eastasia: 1, boreal: 1, plains: 1, tundra: 1, savanna: 1, rainforest: 1 } }),
+        m('world').check({ landed: true, lap: true }, { discovered: { desert: 1 } })] }; });
   check(later.n === 13, `13 lesson missions: ${later.ids}`);
   check(String(later.rewild) === 'true,false', `Bring wildlife back needs a habitat project: ${later.rewild}`);
-  check(String(later.world) === 'true,false', `Fly round the world needs a lap: ${later.world}`);
+  check(String(later.world) === 'true,false', `the World tour needs every land discovered (a lap is not enough): ${later.world}`);
   // 6b. In a real flight: a bird crash is counted and earns the secret Bird Strike badge to claim.
   await setSave({ ...base, missionsDone: first5, landings: 9 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#goBtn'); await flying();

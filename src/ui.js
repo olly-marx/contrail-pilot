@@ -1,5 +1,8 @@
 import { FEATURES, km } from './config.js';
-import { ROUTE, cityAt, legKm } from './route.js';
+import { flightPath, choices, city, EARTH_KM } from './route.js';
+import { headingWord } from './network.js';
+import { drawGlobe } from './globe.js';
+import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
 import { WILDLIFE } from './wildlife.js';
@@ -132,13 +135,24 @@ export class UI {
     });
   }
 
-  // The journey strip on the FLY screen: where you are, the next city, a dot per city round the loop.
+  // The journey on the FLY screen (2026-10-22): where you are, three ways to go (the next city each
+  // way, and its land), a globe with the way ahead, and how many times round the Earth you have flown.
   renderJourney() {
-    const s = this.save, at = s.tutorialDone ? (s.city || 0) : 0, next = cityAt(at + 1);
-    const dots = ROUTE.map((c, i) => `<i class="jdot ${i === at ? 'here' : i < at ? 'done' : ''}" title="${c.name}"></i>`).join('');
-    $('tJourney').innerHTML = `<p>You are in <b>${cityAt(at).name}</b>. Next: <b>${next.name}</b> (${km(legKm(at))})</p>
-      <div class="jdots">${dots}<i class="jdot home" title="LONDON"></i></div>
-      <p class="small">${s.laps ? `Laps of the world: <b>${s.laps}</b>` : 'Fly east all the way round the world, back to LONDON!'}</p>`;
+    const s = this.save, first = !s.tutorialDone;
+    const path = flightPath(first ? { city: 'LONDON' } : s, 5), here = city(path[0]);
+    const opts = first ? [] : choices(path[0]);
+    const land = n => REGION_NAMES[city(n).region] || 'the sea';
+    const trips = (s.flownKm || 0) / EARTH_KM;
+    $('tJourney').innerHTML = `<p>You are in <b>${here.name}</b>.${first ? ` Your first flight: towards <b>${path[1]}</b>.` : ' Which way?'}</p>
+      ${opts.length ? `<div class="jways">${opts.map(o => `<button class="btn jway ${o.name === path[1] ? 'on' : ''}" type="button" data-way="${o.name}">
+        <b>${headingWord(o.deg)}</b><span>to ${o.name}</span><small>${land(o.name)}</small></button>`).join('')}</div>` : ''}
+      <canvas id="jGlobe" class="jglobe" width="160" height="160"></canvas>
+      <p class="small">On the way: ${path.slice(1).join(' &gt; ')}</p>
+      <p class="small">Times round the Earth: <b>${trips.toFixed(1)}</b> (${km(Math.round(s.flownKm || 0))})</p>`;
+    drawGlobe($('jGlobe'), here, path.map(city));
+    $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => {
+      sfx.flap(); this.save.heading = b.dataset.way; writeSave(this.save); this.renderJourney();
+    });
   }
 
   // ---------- navigation ----------

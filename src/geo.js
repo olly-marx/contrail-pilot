@@ -22,12 +22,14 @@ export const LAND = [
   ['mediterranean', 34.8, 35.7, 23.5, 26.3],   // Crete
   ['mediterranean', 36.3, 42, 19.5, 36],   // Greece, Turkey's coast
   ['mediterranean', 30, 37.5, -10, 11.5],  // north-west Africa's coast (Morocco, Algeria, Tunisia)
+  ['boreal', 58, 72, 5, 32],               // Norway, Sweden, Finland
   ['woodland', 43, 60, -5, 40],            // the rest of Europe
   ['boreal', 55, 72, 5, 180],              // Scandinavia and Siberia's forests
   ['boreal', 60, 72, -180, -168],          // Chukotka
   // Africa and Arabia.
   ['desert', 15, 31.5, -17, 34],           // Sahara, Egypt (to the Mediterranean shore)
   ['desert', 12, 32, 34, 60],              // Sinai, Arabia
+  ['desert', 25, 40, 44, 60],              // Iran
   ['desert', 24, 40, 60, 70],              // Iran, Afghanistan, Pakistan
   ['desert', 36, 50, 50, 100],             // Central Asian deserts, Gobi
   ['savanna', -35, 15, -17, 52],           // the rest of Africa
@@ -35,6 +37,7 @@ export const LAND = [
   ['monsoon', 7, 30, 68, 82],              // India
   ['monsoon', 20, 30, 82, 97],             // north-east India, Bangladesh
   ['monsoon', 7, 28, 92, 110],             // Myanmar, Thailand, Indochina
+  ['monsoon', 5, 19, 117, 127],            // the Philippines
   ['eastasia', 18, 55, 100, 135],          // China, Korea
   ['woodland', 40, 55, 40, 50],            // the plains north of the Caucasus
   // The Americas.
@@ -53,6 +56,12 @@ export const LAND = [
 ];
 
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+// Great-circle distance in km (haversine).
+export function realKm(a, b) {
+  const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
 const wrap = lon => ((lon + 540) % 360) - 180;
 
 // The region at a latitude/longitude (one of the REGION_DATA ids, 'ocean' or 'ice').

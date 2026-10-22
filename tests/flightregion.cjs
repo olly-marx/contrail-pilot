@@ -15,9 +15,9 @@ const KEY = 'contrailPilot.v2';
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
   p.on('pageerror', e => errs.push(String(e)));
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
-  // In ATHENS (route index 4): the leg to CAIRO is Mediterranean, then sea, then desert.
+  // In ATHENS, heading for CAIRO: the leg is Mediterranean, then sea, then desert.
   const save = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'], landings: 9, priceVersion: 2, seeds: 50,
-    city: 4, visited: ['LONDON', 'PARIS', 'BERLIN', 'ROME', 'ATHENS'], habitat: { woodland: ['meadow', 'hedgerow', 'pond'], desert: ['reserve'] } };
+    city: 'ATHENS', heading: 'CAIRO', visited: ['LONDON', 'PARIS', 'BERLIN', 'ROME', 'ATHENS'], habitat: { woodland: ['meadow', 'hedgerow', 'pond'], desert: ['reserve'] } };
   await p.addInitScript(([k, v]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); } }, [KEY, save]);
   await p.goto(URL); await ready(p); await p.waitForTimeout(500);
   await p.click('#goBtn'); await started(p);
@@ -50,6 +50,20 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(1900);
   const after = await p.evaluate(() => { const s = game.scene.getScene('game'); return { ground: s.terrain.ground, hills: s.terrain.hills, a: s.ground2.alpha }; });
   check(after.ground === 'ground-desert' && after.hills === 'hills-desert' && after.a === 0, `after the fade the desert strips stay: ${JSON.stringify(after)}`);
+
+  // 2b. Trees planted over the desert are the desert's trees for that slot (the user, 2026-10-22): the
+  // basic slot (spruce in the UK) plants the desert's basic tree, slot 1 (birch) its slot-1 tree; they count
+  // in save.plantedIn.desert, not in the UK's save.planted; an undrawn tree borrows the UK picture.
+  const plant = await p.evaluate(async () => { const s = game.scene.getScene('game'), { REGION_TREES } = await import('./src/habitat/trees.js');
+    const ukBefore = JSON.stringify(s.save.planted || {});
+    s.kit.tree = { parcels: 6, species: ['spruce', 'birch'] };
+    const go = kind => { const x = 120; s.addPlot(x); s.parcelLanded(x + 2, kind); return s.trees[s.trees.length - 1]; };
+    const t0 = go('spruce'), t1 = go('birch'), d = REGION_TREES.desert;
+    return { basic: d.find(t => t.slot === 0).id, one: d.find(t => t.slot === 1).id, art0: t0.art, art1: t1.art, kinds: [t0.kind, t1.kind],
+      inDesert: (s.save.plantedIn || {}).desert || {}, ukSame: JSON.stringify(s.save.planted || {}) === ukBefore,
+      drawn0: s.textures.exists(`tree-${d.find(t => t.slot === 0).id}-0`), drawn1: s.textures.exists(`tree-${d.find(t => t.slot === 1).id}-0`) }; });
+  check(plant.inDesert[plant.basic] === 1 && plant.inDesert[plant.one] === 1 && plant.ukSame, `desert trees counted in the desert: ${JSON.stringify(plant)}`);
+  check(plant.art0 === (plant.drawn0 ? plant.basic : 'spruce') && plant.art1 === (plant.drawn1 ? plant.one : 'birch') && plant.kinds.join() === 'spruce,birch', `pictures: the desert's if drawn, else the UK slot's: ${JSON.stringify(plant)}`);
 
   // 3. At night the fading strip gets the same tint as the ground (or it would glow).
   const tint = await p.evaluate(() => { const s = game.scene.getScene('game');

@@ -53,15 +53,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
   s = await save();
   check(s.seeds === 165 && s.crystals === 15 && s.unclaimed.length === 0, `CLAIM ALL pays +65 +5: ${s.seeds} / ${s.crystals}`);
 
-  // 4. A lap from REYKJAVIK completes "Fly round the world": its prize waits; no automatic lap bonus.
-  await setSave({ ...base, city: 15, missionsDone: MOST, badgeTiers: {} }); await reload();
+  // 4. With every land discovered, a flight completes the World tour ('world'): its prize waits; no automatic bonus.
+  const ALL = { mediterranean: 1, desert: 1, monsoon: 1, eastasia: 1, boreal: 1, plains: 1, tundra: 1, savanna: 1, rainforest: 1 };
+  await setSave({ ...base, city: 'REYKJAVIK', discovered: ALL, missionsDone: MOST, badgeTiers: {} }); await reload();
   await fly(); r = await end(true);
   s = await save();
-  check(r.mission && r.mission.done && r.rewards.some(x => x.key === 'mission:world') && s.seeds === 100, `lap: world mission waits, nothing paid: ${s.seeds}, ${JSON.stringify(r.rewards)}`);
+  check(r.mission && r.mission.done && r.rewards.some(x => x.key === 'mission:world') && s.seeds === 100, `world tour: its prize waits, nothing paid: ${s.seeds}, ${JSON.stringify(r.rewards)}`);
   await p.waitForTimeout(1200);
 
   // 5. A crash pays nothing; its only prize is the secret Oops! badge, waiting.
-  await setSave({ ...base, city: 15, missionsDone: MOST, badgeTiers: {} }); await reload();
+  await setSave({ ...base, city: 'REYKJAVIK', missionsDone: MOST, badgeTiers: {} }); await reload();
   await fly(); r = await end(false);
   s = await save();
   check(s.seeds === 100 && r.rewards.map(x => x.key).join() === 'badge:oops:1', `a crash pays nothing, Oops! waits: ${s.seeds}, ${JSON.stringify(r.rewards)}`);

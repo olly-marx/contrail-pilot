@@ -1,42 +1,72 @@
-// The journey: a loop of real cities eastwards round the world, from LONDON back to LONDON.
-// Each flight takes off from the city you last landed in (save.city) and the airports ahead are
-// the next cities on the loop. Leg lengths are the real great-circle distances between the
-// airports, stretched to at least LEG_MIN (London-Paris is only 347 km) and capped at LEG_MAX
-// (ocean crossings), so every leg stays playable. Getting back to LONDON completes a lap.
-export const LEG_MIN = 1000;   // shorter and a plane that is never tapped drifts down onto the runway by itself
-export const LEG_MAX = 3000;
+// The journey (the user, 2026-10-22: ~100 cities, any direction). You take off from the city you last
+// landed in (save.city, a NAME) and choose one of three directions (save.heading: the first city that
+// way; network.js choices()). The flight's whole path then follows the WORLD TOUR rule: keep going
+// roughly the same way, to cities not yet seen on this flight, the hard-to-reach ones first, so a
+// long enough flight would see every city before repeating one (tourPath). Legs are balanced game
+// lengths, not real ones (network.js legGameKm: 1,800-2,600 game km).
+import { CITIES } from './cities.js';
+import { LINKS, city, bearing, choices, legGameKm } from './network.js';
+import { realKm } from './geo.js';
+export { realKm };
 
-export const ROUTE = [
-  { name: 'LONDON', lat: 51.47, lon: -0.45 },
-  { name: 'PARIS', lat: 49.01, lon: 2.55 },
-  { name: 'BERLIN', lat: 52.36, lon: 13.50 },
-  { name: 'ROME', lat: 41.80, lon: 12.25 },
-  { name: 'ATHENS', lat: 37.94, lon: 23.94 },
-  { name: 'CAIRO', lat: 30.12, lon: 31.41 },
-  { name: 'DUBAI', lat: 25.25, lon: 55.36 },
-  { name: 'DELHI', lat: 28.56, lon: 77.10 },
-  { name: 'BANGKOK', lat: 13.69, lon: 100.75 },
-  { name: 'BEIJING', lat: 40.08, lon: 116.58 },
-  { name: 'TOKYO', lat: 35.55, lon: 139.78 },
-  { name: 'ANCHORAGE', lat: 61.17, lon: -150.00 },
-  { name: 'VANCOUVER', lat: 49.19, lon: -123.18 },
-  { name: 'CHICAGO', lat: 41.97, lon: -87.90 },
-  { name: 'NEW YORK', lat: 40.64, lon: -73.78 },
-  { name: 'REYKJAVIK', lat: 63.99, lon: -22.60 },
-];
+export const ROUTE = CITIES;   // every airport (name, lat, lon, region)
+export const cityIndex = name => CITIES.findIndex(c => c.name === name);
+// The first flights and flight school: LONDON towards PARIS (the old first leg).
+export const HOME = 'LONDON', FIRST_HOP = 'PARIS';
+// One trip round the Earth (its real size): "times round the Earth" counts flownKm against it.
+export const EARTH_KM = 40075;
+// The old 16-city loop was 32,060 game km: the non-stop badge (badges.js) keeps that distance.
+export const LAP_KM = 32060;
 
-const rad = d => d * Math.PI / 180;
-// Great-circle distance in km (haversine).
-export function realKm(a, b) {
-  const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
-  return 2 * 6371 * Math.asin(Math.sqrt(h));
+const gap = (x, y) => { const d = Math.abs(x - y) % 360; return d > 180 ? 360 - d : d; };
+const turn = (p, c, n) => gap(bearing(city(c), city(n)), (bearing(city(c), city(p)) + 180) % 360);
+// The first step on the shortest (fewest airports) way from c to the nearest city not in `seen`.
+function toward(c, seen) {
+  const prev = { [c]: null }, q = [c];
+  while (q.length) {
+    const x = q.shift();
+    if (!seen.has(x)) { let s = x; while (prev[s] !== c) s = prev[s]; return s; }
+    for (const n of LINKS[x]) if (!(n in prev)) { prev[n] = x; q.push(n); }
+  }
+  return LINKS[c][0];
 }
-export const cityAt = i => ROUTE[((i % ROUTE.length) + ROUTE.length) % ROUTE.length];
-export const cityIndex = name => ROUTE.findIndex(c => c.name === name);
-// Game length (km) of the leg from city i to city i + 1, rounded to 10 km.
-export const legKm = i => Math.round(Math.min(LEG_MAX, Math.max(LEG_MIN, realKm(cityAt(i), cityAt(i + 1)))) / 10) * 10;
-// A whole lap of the world, in game km (32,060).
-export const LAP_KM = ROUTE.reduce((a, _, i) => a + legKm(i), 0);
-// How many stops from city `from` to city `to`, going forwards round the loop (0 = same city).
-export const stopsBetween = (from, to) => ((to - from) % ROUTE.length + ROUTE.length) % ROUTE.length;
+// The path of a flight from `start` whose first hop is `first`: `count` cities after the start.
+// Next city: among neighbours not yet seen this flight, the one that turns least, counting a city with
+// few unseen neighbours as better (it would be hard to come back for: Warnsdorff's rule). Measured
+// 2026-10-22: every city seen in a median of 108 legs (104 cities), against 127 for "turn least" alone.
+// Once the whole world has been seen, the tour starts again.
+export function tourPath(start, first, count = 60) {
+  const path = [start, first];
+  let seen = new Set(path);
+  while (path.length < count + 1) {
+    if (seen.size >= CITIES.length) seen = new Set([path[path.length - 1]]);
+    const p = path[path.length - 2], c = path[path.length - 1], fresh = LINKS[c].filter(n => !seen.has(n));
+    const next = fresh.length
+      ? fresh.map(n => ({ n, s: turn(p, c, n) / 45 + 2 * LINKS[n].filter(m => !seen.has(m)).length })).sort((a, b) => a.s - b.s)[0].n
+      : toward(c, seen);
+    path.push(next); seen.add(next);
+  }
+  return path;
+}
+// The flight from a save: where you are and the direction you chose (a valid one, or the first offered).
+export function flightPath(save, count = 60) {
+  const name = typeof save.city === 'number' ? OLD_LOOP[save.city] : save.city;   // (a save not migrated yet)
+  const here = city(name) ? name : HOME;
+  const opts = choices(here).map(o => o.name);
+  const first = here === HOME && !save.tutorialDone ? FIRST_HOP : opts.includes(save.heading) ? save.heading : opts[0];
+  return tourPath(here, first, count);
+}
+// Game km of the leg from city a to city b (names).
+export const legBetween = (a, b) => legGameKm(realKm(city(a), city(b)));
+export { city, choices };
+
+// Saves from before 2026-10-22: save.city was an index into the old 16-city loop.
+export const OLD_LOOP = ['LONDON', 'PARIS', 'BERLIN', 'ROME', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BANGKOK', 'BEIJING', 'TOKYO',
+  'ANCHORAGE', 'VANCOUVER', 'CHICAGO', 'NEW YORK', 'REYKJAVIK'];
+export function migrateCity(save) {
+  let changed = false;
+  if (typeof save.city === 'number') { save.city = OLD_LOOP[save.city] || HOME; changed = true; }
+  if (!save.city) { save.city = HOME; changed = true; }
+  if (!save.flownKm && save.laps) { save.flownKm = save.laps * LAP_KM; changed = true; }   // (0 comes from the defaults)
+  return changed;
+}

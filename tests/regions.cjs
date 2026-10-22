@@ -35,7 +35,6 @@ const KEY = 'contrailPilot.v2';
   await p.click('#tabNature'); await p.waitForTimeout(300);
   const med = await tab(p, 'mediterranean'), des = await tab(p, 'desert'), sav = await tab(p, 'savanna');
   check(!med.off && des.off && /fly there/.test(des.text) && sav.off && /soon/.test(sav.text), `tabs: ${JSON.stringify({ med, des, sav })}`);
-  const ukMeter = await p.textContent('#wMeter');
   await p.click('[data-region="mediterranean"]'); await p.waitForTimeout(300);
 
   // 3. Its own projects (not the UK's), its own meter, and buying puts it in save.habitat.mediterranean.
@@ -49,7 +48,8 @@ const KEY = 'contrailPilot.v2';
   const meters = await p.evaluate(async () => { const n = await import('./src/nature.js'), sv = game.registry.get('save');
     return { uk: n.biodiversity(sv), med: n.biodiversity(sv, 'mediterranean'), des: n.biodiversity(sv, 'desert') }; });
   check(meters.med > 0 && meters.des === 0 && meters.uk === (await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(game.registry.get('save')))), `one meter per region: ${JSON.stringify(meters)}`);
-  check((await p.textContent('#wMeter')) !== ukMeter || meters.med === meters.uk, 'the meter shown is the region\'s own');
+  const fill = await p.evaluate(() => document.querySelector('#wMeter .mfill').style.width);
+  check(fill === `${meters.med}%`, `the meter shown is the region's own: ${fill} vs ${meters.med}%`);
   check(!(await p.isVisible('#wTrees')), 'tree upgrades are a UK thing: hidden in other regions');
 
   // 4. Who runs it: the name shows; the links only after a grown-up holds the button for 2 s.

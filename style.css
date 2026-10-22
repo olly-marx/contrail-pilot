@@ -473,3 +473,12 @@ h2.sub { margin-top: -4px; }
 .w-nopic.w-portrait { height: 96px; width: 96px; font-size: 40px; }
 .w-org { margin-top: 8px; padding-top: 6px; border-top: 2px dashed #c9c2ae; }
 .w-org .links a { display: block; }
+/* the journey: three ways to go and a globe (2026-10-22) */
+.jways { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.jway { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; font-size: 8px; line-height: 1.2; }
+.jway b { font-size: 9px; } .jway small { font-size: 7px; opacity: .75; }
+.jway.on { background: var(--gold); }
+.jglobe { width: 160px; height: 160px; margin: 0 auto; image-rendering: pixelated; }
+/* Short phones: a smaller globe, so TAKE OFF stays on screen (2026-10-22). */
+@media (max-height: 760px) { .jglobe { width: 96px; height: 96px; } .journey { gap: 2px; } .jway { padding: 3px 2px; } }
+@media (max-height: 600px) { .jglobe { display: none; } }

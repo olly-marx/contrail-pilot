@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-10-22-world",
+    "level": "major",
+    "notes": [
+      "Fly anywhere! Over 100 airports round the world. Before each flight, choose one of three ways to go: the globe shows where it leads.",
+      "Africa's savanna and the Amazon rainforest are now on the map. Fly over a new land to discover it: its NATURE tab opens.",
+      "Trees you drop are that land's own trees: olives, baobabs, kapok and more (some pictures are still being drawn).",
+      "Instead of laps, see how many times round the Earth you have flown. New mission: the World tour!"
+    ]
+  },
+  {
     "id": "2026-10-22-seafix",
     "level": "minor",
     "notes": [

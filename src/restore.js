@@ -10,7 +10,7 @@ import { PROJECTS, biodiversity } from './nature.js';
 import { MISSIONS } from './missions.js';
 import { missionReward, LAP, NEW_CITY } from './rewards.js';
 import { earnBadges } from './badges.js';
-import { ROUTE } from './route.js';
+import { OLD_LOOP } from './route.js';
 
 export const skySeeds = km => { const d = km / 1000; return Math.round(0.42 * d + 0.847 * d * d); };
 const CHALLENGE = { seeds: 26, crystals: 2 };   // average challenge prize per landed flight (income campaigns)
@@ -19,7 +19,7 @@ export function rebuildSave(flights, keep = {}) {
   const landed = flights.filter(f => f.landed);
   const missions = Math.min(MISSIONS.length, flights.filter(f => f.mission_done).length);
   const laps = landed.filter(f => f.lap).length;
-  const cities = Math.min(ROUTE.length - 1, landed.length);
+  const cities = Math.min(OLD_LOOP.length - 1, landed.length);   // (histories are from the old 16-city loop)
   const planted = {};
   for (const f of flights) for (const k of f.species || []) planted[k] = (planted[k] || 0) + 1;
   let seeds = landed.reduce((a, f) => a + skySeeds(f.distance_m) + CHALLENGE.seeds, 0) + laps * LAP.seeds + cities * NEW_CITY.seeds;
@@ -31,7 +31,7 @@ export function rebuildSave(flights, keep = {}) {
     tutorialDone: true, freeGiven: landed.length > 0, freeUpgrade: false,
     flights: flights.length, landings: landed.length, mission: missions, laps,
     bestDistance: landed.reduce((a, f) => Math.max(a, f.distance_m), 0),
-    city: 0, visited: ROUTE.slice(0, cities + 1).map(c => c.name),
+    city: 'LONDON', visited: OLD_LOOP.slice(0, cities + 1), flownKm: flights.reduce((a, f) => a + (f.distance_m || 0), 0),
     missionsDone: MISSIONS.slice(0, missions).map(m => m.id), unclaimed: [],
     tours: [...new Set([...(keep.tours || []), 'name', 'hangar'])],
   };

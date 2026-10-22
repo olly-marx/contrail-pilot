@@ -63,6 +63,17 @@ const srcOk = (r, id, src) => {
     const used = new Set(Object.values(S || {}).flatMap(s => s.needs || []));
     console.log(`${r}: ${P.length} projects, ${Object.keys(S || {}).length} animals, ${P.filter(p => !used.has(p.id)).length} projects bring no animal`);
   }
+  // Trees (src/habitat/trees.js): every region, slots 0-4 once each, every fact sourced (not Wikipedia alone).
+  const { REGION_TREES } = await import(path.resolve(__dirname, '../src/habitat/trees.js'));
+  for (const r of REGIONS) {
+    const t = REGION_TREES[r] || [];
+    if (JSON.stringify(t.map(x => x.slot).sort()) !== '[0,1,2,3,4]') errs.push(`${r}: trees must fill slots 0-4 once each: ${t.map(x => x.slot)}`);
+    for (const x of t) {
+      if (!/^[a-z]+$/.test(x.id || '')) bad(r, x.id, 'bad tree id');
+      for (const k of ['name', 'short', 'fact']) kidText(r, x.id, k, x[k]);
+      srcOk(r, x.id, x.src);
+    }
+  }
   if (errs.length) { console.log(errs.join('\n')); console.log(`FAIL: ${errs.length} problems`); process.exit(1); }
   console.log('habitatdata: all regions pass');
 })();

@@ -1,4 +1,4 @@
-// Every leg, every stretch (the art session's idea after the sea freeze, 2026-10-22): with projects
+// Every airway of the world network, every stretch (the art session's idea after the sea freeze, 2026-10-22): with projects
 // done in EVERY region (so the land-cooling code runs), put the plane in the middle of each run of
 // each leg's strip (src/geo.js: land, sea, ice) and let the real game loop run a moment. The flight
 // must keep going, with no page errors, and the region below must be the one the strip says.
@@ -25,19 +25,24 @@ const KEY = 'contrailPilot.v2';
   for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
 
   const runs = await p.evaluate(async () => {
-    const { ROUTE, cityAt, legKm } = await import('./src/route.js'), g = await import('./src/geo.js'), s = game.scene.getScene('game');
+    const N = await import('./src/network.js'), g = await import('./src/geo.js'), s = game.scene.getScene('game');
     const out = [];
-    for (let i = 0; i < ROUTE.length; i++) for (const run of g.legStrip(cityAt(i), cityAt(i + 1))) {
-      // Put the plane mid-run on leg i (as if it had taken off from city i).
-      s.startCity = i; s.airportIndex = 0; s.nextAirport = { worldX: legKm(i), name: cityAt(i + 1).name, spawned: true };
-      s.distancePx = legKm(i) * (run.from + run.to) / 2; s.updateScenery(1);
-      const t0 = s.gameTime; await new Promise(r => setTimeout(r, 250));
-      out.push({ leg: `${cityAt(i).name}>${cityAt(i + 1).name}`, want: run.region, got: s.regionNow, ran: s.gameTime - t0, state: s.state });
+    // Every KIND of land, sea and ice (the freeze was about a kind with no data), on up to 4 airways each:
+    // all 471 stretches took ~40 s of flying and slowed the tests running beside it (2026-10-22).
+    const per = {}, todo = [];
+    for (const [an, list] of Object.entries(N.LINKS)) for (const bn of list) if (an < bn) for (const run of g.legStrip(N.city(an), N.city(bn)))
+      if ((per[run.region] = (per[run.region] || 0) + 1) <= 4) todo.push([an, bn, run]);
+    for (const [an, bn, run] of todo) {
+      // Put the plane mid-run on the airway an > bn (as if this flight's path were just those two).
+      s.path = [an, bn]; s.airportIndex = 0; s.nextAirport = { worldX: s.legKm(0), name: bn, spawned: true };
+      s.distancePx = s.legKm(0) * (run.from + run.to) / 2; s.updateScenery(1);
+      const t0 = s.gameTime; await new Promise(r => setTimeout(r, 80));
+      out.push({ leg: `${an}>${bn}`, want: run.region, got: s.regionNow, ran: s.gameTime - t0, state: s.state });
     }
     return out; });
   for (const r of runs) {
     check(r.got === r.want, `${r.leg}: over ${r.want} the game thinks ${r.got}`);
-    check(r.ran > 50, `${r.leg}: the game froze over ${r.want} (${Math.round(r.ran)} ms of game time in 250 ms)`);   // (the flight may END while we jump about: that is fine; FREEZING is not)
+    check(r.ran > 15, `${r.leg}: the game froze over ${r.want} (${Math.round(r.ran)} ms of game time in 80 ms)`);   // (the flight may END while we jump about: that is fine; FREEZING is not)
   }
   const kinds = [...new Set(runs.map(r => r.want))];
   check(kinds.includes('ocean') && kinds.includes('ice'), `the route must cross sea and ice for this test to mean anything: ${kinds}`);

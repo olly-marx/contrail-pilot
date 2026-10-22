@@ -22,10 +22,11 @@ async function fly(p, { landAt }) {
       const next = s.storms.find(st => st.rects[0].x + 44 > s.plane.x);
       const target = landing ? 999 : next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : approach ? s.groundedY() - 60 : 200;
       return { tap: s.state === 'playing' && s.plane.y > target && s.plane.vy > -50,
-        state: s.state, co2: s.co2Rate, isDay: s.isDay, heat: s.heat, result: s.result || null }; }, landAt);
+        state: s.state, co2: s.co2Rate, isDay: s.isDay, heat: s.heat, result: s.result || null, second: s.path && s.path[2] }; }, landAt);
     log.states.add(r.state); log.maxCo2 = Math.max(log.maxCo2, r.co2);
     if (r.isDay === false) log.sawNight = true;
     if (i % 40 === 0) log.heatSamples.push(Math.round(r.heat));
+    log.second = r.second;
     if (r.state === 'over') { log.result = r.result; break; }
     if (r.tap) await p.mouse.click(195, 400);
     await p.waitForTimeout(40);
@@ -46,7 +47,7 @@ async function fly(p, { landAt }) {
   console.log('land-at-2nd:', JSON.stringify(a));
   if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT });
   if (!a.result || !a.result.landed) fails.push('did not land');
-  else if (a.result.landedAt !== 'BERLIN') fails.push('landed at wrong airport ' + a.result.landedAt);
+  else if (a.result.landedAt !== a.second) fails.push(`landed at wrong airport ${a.result.landedAt}, want the 2nd on the path, ${a.second}`);   // (the path depends on the chosen way: src/route.js)
   if (!a.states.includes('takeoff') || !a.states.includes('landing')) fails.push('missing takeoff/landing state');
   if (!a.sawNight) fails.push('never reached night');
 

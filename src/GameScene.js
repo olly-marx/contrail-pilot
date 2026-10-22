@@ -7,7 +7,7 @@ import { School } from './school.js';
 import { Hud } from './Hud.js';
 import { loadout, FUELS } from './upgrades.js';
 import { sendFlight } from './online.js';
-import { ROUTE, cityAt, legKm } from './route.js';
+import { flightPath, legBetween, city, HOME, EARTH_KM } from './route.js';
 import { addPrizes } from './rewards.js';
 import { writeSave } from './save.js';
 import { sfx, buzz } from './sound.js';
@@ -15,7 +15,7 @@ import { current as currentMission, complete as completeMission, indexOf as miss
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { LANDMARKS } from './landmarks.js';
-import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene } from './nature.js';
+import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, localTree } from './nature.js';
 import { regionBelow } from './geo.js';
 import { REGION_DATA, REGION_NAMES } from './habitats.js';
 
@@ -144,10 +144,12 @@ export class GameScene extends Phaser.Scene {
     this.nightOwl = false;
     this.warnedHot = false;
 
-    // The journey (src/route.js): take off from the city you last landed in; flight school always
-    // starts in LONDON. airportIndex = airports passed so far this flight.
-    this.startCity = this.autostart === 'school' || !this.save.tutorialDone ? 0 : (this.save.city || 0);
-    this.homeName = cityAt(this.startCity).name;
+    // The journey (src/route.js): take off from the city you last landed in, the way you chose; the
+    // flight's path then follows the world-tour rule. Flight school and the first flights: LONDON towards
+    // PARIS. this.path[0] is home; airportIndex = airports passed so far this flight (startCity is 0).
+    this.path = flightPath(this.autostart === 'school' || !this.save.tutorialDone ? { city: HOME } : this.save);
+    this.startCity = 0;
+    this.homeName = this.path[0];
     this.airportIndex = 0;
     this.airportsSkipped = 0;
     this.nextAirport = this.airportAhead(0);
@@ -289,9 +291,9 @@ export class GameScene extends Phaser.Scene {
 
   startSchool() {
     // Rebuild unless this scene is fresh, built with these upgrades AND in LONDON (school starts there).
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat]) || this.startCity !== 0) { this.scene.restart({ go: true, mode: 'school' }); return; }
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat]) || this.path[0] !== HOME || this.path[1] !== flightPath({ city: HOME })[1]) { this.scene.restart({ go: true, mode: 'school' }); return; }
     this.school = new School(this, this.ui);
-    this.nextAirport = { worldX: 1e9, name: cityAt(1).name, spawned: false };
+    this.nextAirport = { worldX: 1e9, name: this.path[1], spawned: false };
     this.startFlight();
     this.school.begin();
   }
@@ -305,7 +307,7 @@ export class GameScene extends Phaser.Scene {
     this.ui.hideCoach();
     this.save.tutorialDone = true;
     writeSave(this.save);
-    this.nextAirport = { worldX: this.distancePx + legKm(this.startCity), name: cityAt(this.startCity + 1).name, spawned: false };
+    this.nextAirport = { worldX: this.distancePx + this.legKm(0), name: this.path[1], spawned: false };
     this.nextStormAt = this.distancePx + WIDTH + 100;
     this.nextIssrAt = this.distancePx + 100;
     this.nextTokenAt = this.distancePx + 100;
@@ -314,7 +316,10 @@ export class GameScene extends Phaser.Scene {
 
   startFlight() {
     // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat])) { this.scene.restart({ go: true }); return; }
+    // Also if a new direction was chosen on the FLY screen since (the path is built with the scene).
+    const pathNow = this.school ? this.path : flightPath(this.save.tutorialDone ? this.save : { city: HOME });   // (school: LONDON, set by startSchool)
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat])
+      || pathNow[0] !== this.path[0] || pathNow[1] !== this.path[1]) { this.scene.restart({ go: true }); return; }
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
     this.safUntil = 0; this.autoUntil = 0; this.ownKit = null; this.nextPowerAt = POWERUPS.from; this.safOffered = false;   // pick-ups
@@ -563,7 +568,7 @@ export class GameScene extends Phaser.Scene {
     for (const t of this.trees) {
       const age = this.elapsed - t.plantedAt;
       const g = this.kit.grow, stage = age < 4 * g ? 0 : age < 9 * g ? 1 : 2;   // Tree Nursery: grows faster
-      if (stage !== t.stage) { t.stage = stage; if (t.sprite.active) t.sprite.setTexture(`tree-${t.kind}-${stage}`); }
+      if (stage !== t.stage) { t.stage = stage; if (t.sprite.active) t.sprite.setTexture(`tree-${t.art || t.kind}-${stage}`); }
       const cool = forestFull ? 0 : SPECIES[t.kind].coolPerStage[stage] * FOREST.early * (stage === 2 ? 1 + oldWood : 1) * dt;
       this.forestStored += cool;
       if (stage === 2 && t.sprite.active) t.sprite.setScale(1 + 0.15 * oldWood);   // old trees keep getting bigger
@@ -736,8 +741,8 @@ export class GameScene extends Phaser.Scene {
   // The leg from the airport behind to the one ahead; how far along it the plane is, as a fraction.
   regionHere() {
     if (this.school || !this.nextAirport || this.nextAirport.worldX > 1e8) return 'woodland';
-    const i = this.startCity + this.airportIndex, len = legKm(i), from = this.nextAirport.worldX - len;
-    return regionBelow(cityAt(i), cityAt(i + 1), (this.distancePx - from) / len);
+    const i = this.airportIndex, len = this.legKm(i), from = this.nextAirport.worldX - len;
+    return regionBelow(city(this.path[i]), city(this.path[i + 1]), (this.distancePx - from) / len);
   }
 
   // A new region below: its ground and hills fade in, its animals take over, and the first time a
@@ -987,8 +992,10 @@ export class GameScene extends Phaser.Scene {
 
   // The k-th airport ahead of the start city (0 = the next one), at worldX `from` + that leg.
   airportAhead(k, from = 0) {
-    return { worldX: from + legKm(this.startCity + k), name: cityAt(this.startCity + k + 1).name, spawned: false };
+    return { worldX: from + this.legKm(k), name: this.path[k + 1], spawned: false };
   }
+  // Game km of leg k of this flight's path (balanced, src/network.js).
+  legKm(k) { return legBetween(this.path[k], this.path[k + 1]); }
 
   inStormClearZone(worldX) {
     const a = this.nextAirport.worldX;
@@ -1081,20 +1088,23 @@ export class GameScene extends Phaser.Scene {
     }
     plot.used = true;
     const cx = plot.x + this.kit.plotW / 2;
-    const sprite = this.add.image(cx, SKY_H + 1, `tree-${kind}-0`).setOrigin(0.5, 1).setScale(0.2);
+    // The tree for this slot in the land below (the user, 2026-10-22); its picture if drawn, else the UK one.
+    const here = localTree(kind, this.regionNow || 'woodland'), art = this.textures.exists(`tree-${here.id}-0`) ? here.id : kind;
+    const sprite = this.add.image(cx, SKY_H + 1, `tree-${art}-0`).setOrigin(0.5, 1).setScale(0.2);
     this.treeLayer.add(sprite);
     this.tweens.add({ targets: sprite, scale: 1, duration: 300, ease: 'Back.easeOut' });
     plot.parts.push(sprite);
-    this.trees.push({ sprite, kind, plantedAt: this.elapsed, stage: 0 });
+    this.trees.push({ sprite, kind, art, plantedAt: this.elapsed, stage: 0 });   // kind: growth and cooling (UK slot)
     this.planted++;
     this.speciesPlanted.add(kind);
     this.burst(cx, SKY_H - 2, 0x8dffb0, 12);
     this.burst(cx, SKY_H - 2, 0xffe15a, 6);
     // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
-    const first = !(this.save.planted[kind] > 0);
-    const gain = plantGain(this.save, kind);
-    this.save.planted[kind] = (this.save.planted[kind] || 0) + 1;
-    this.popup(cx, SKY_H - 24, `${SPECIES[kind].name.toUpperCase()} PLANTED!`, '#8dffb0', 8);
+    // Counted where it grows: UK trees in save.planted, other regions' in save.plantedIn[region].
+    const book = here.uk ? this.save.planted : ((this.save.plantedIn = this.save.plantedIn || {})[this.regionNow] = (this.save.plantedIn[this.regionNow] || {}));
+    const first = !(book[here.id] > 0);
+    book[here.id] = (book[here.id] || 0) + 1;
+    this.popup(cx, SKY_H - 24, `${here.name.toUpperCase()} PLANTED!`, '#8dffb0', 8);
     if (first) this.time.delayedCall(450, () => this.popup(cx, SKY_H - 36, 'BIODIVERSITY UP! (new kind)', '#ffe15a'));   // the same kind again adds almost nothing: say nothing
     sfx.plant();
     buzz(30);
@@ -1102,7 +1112,7 @@ export class GameScene extends Phaser.Scene {
     // climate, then Biodiversity. A new native kind's fact waits until both are done.
     const taught = this.explain('tree-2', '<b>TREE SCHOOL</b><br>Your tree takes <b>CO2</b> out of the air as it grows. Bigger trees take a bit more.<br>But trees are slow! A <b>cleaner plane</b> and <b>smart contrails</b> help the Earth much more.', 'lesson-tree-co2');
     if (taught) this.explainWhenClear('tree-3', '<b>TREE SCHOOL</b><br>Your <b>Biodiversity</b> meter shows how full of life your land is.<br><b>Different kinds</b> of trees bring much more wildlife than lots of the same kind. Fill it up!', 'lesson-biodiversity');
-    else if (first && SPECIES[kind].native) this.explain(`x-species-${kind}`, `<b>${SPECIES[kind].name}!</b> ${SPECIES[kind].fact}<br>New kinds of tree fill your <b>Biodiversity</b> meter the most.`);
+    else if (first && here.native) this.explain(`x-species-${here.id}`, `<b>${here.name}!</b> ${here.fact}<br>New kinds of tree fill your <b>Biodiversity</b> meter the most.`);
   }
 
   addPlot(x) {
@@ -1144,7 +1154,7 @@ export class GameScene extends Phaser.Scene {
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
       this.airportIndex++;
       this.airportsSkipped++;
-      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${km(legKm(this.startCity + this.airportIndex))} ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`, 'lesson-bonus');
+      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${km(this.legKm(this.airportIndex))} ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`, 'lesson-bonus');
       this.nextAirport = this.airportAhead(this.airportIndex, na.worldX);
       this.missedSign = { text: `Passed ${na.name}. Next: ${this.nextAirport.name}`, until: this.gameTime + 4000 };
     }
@@ -1156,7 +1166,7 @@ export class GameScene extends Phaser.Scene {
       const x = WIDTH + 10;
       const onRunway = this.runways.some(r => x + this.kit.plotW > r.strip.x - 10 && x < r.strip.x + AIRPORT.runwayLen + 10)
         || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
-      if (!onRunway) this.addPlot(x);
+      if (!onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x);   // no soil over the sea or the ice
       this.nextPlotAt += Phaser.Math.Between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
     }
     if (this.school) return;   // flight school places everything itself
@@ -1898,7 +1908,7 @@ export class GameScene extends Phaser.Scene {
     this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? 'drop on soil!' : '') : '');
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen;
     this.setDropVisible(showDrop);
-    if (showDrop) this.dropLabel.setText(`DROP x${this.parcels}\n${SPECIES[this.treeKind()].name.toUpperCase()}`);
+    if (showDrop) this.dropLabel.setText(`DROP x${this.parcels}\n${localTree(this.treeKind(), this.regionNow || 'woodland').name.toUpperCase()}`);
     this.cargoText.setText(`${this.cargo}`);
     this.crysText.setText(`${this.crystals}`);
     this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');
@@ -1943,10 +1953,14 @@ export class GameScene extends Phaser.Scene {
     if (crash && !this.school) { this.save.crashes = this.save.crashes || {}; this.save.crashes[crash] = (this.save.crashes[crash] || 0) + 1; }
     // Mission: done or not, and move on to the next one.
     // The journey: landing moves you to that city; reaching LONDON again (or passing it) is a lap.
-    const reached = this.startCity + this.airportIndex + 1;   // index along the loop, past ROUTE.length after LONDON
-    const lap = landed && !this.school && reached >= ROUTE.length;
+    // Times round the Earth (flownKm / EARTH_KM, the real size of the Earth): `lap` = one more this flight.
+    const flownBefore = this.save.flownKm || 0, flown = this.school ? flownBefore : flownBefore + m;
+    const lap = !this.school && Math.floor(flown / EARTH_KM) > Math.floor(flownBefore / EARTH_KM);
+    // A new part of the world: landing in a region you had never landed in before.
+    const landReg = landed && city(this.landedAt) ? city(this.landedAt).region : null;
+    const newRegion = !!landReg && !this.school && !(this.save.visited || []).some(n => city(n) && city(n).region === landReg);
     const mission = this.school ? null : currentMission(this.save);
-    const partial = { landed, landedAt: this.landedAt, lap, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
+    const partial = { landed, landedAt: this.landedAt, lap, newRegion, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
       crash, crashes: this.save.crashes || {}, distance: m, kinds: this.speciesPlanted.size, bumped: this.bumped, goldens: this.goldens,
       onRunway: this.parcelOnRunway, forestFull: this.forestFullSaid, projects: projectsDone(this.save).map(p => p.id) };
     const missionDone = !!(mission && mission.check(partial, this.save));
@@ -1954,7 +1968,8 @@ export class GameScene extends Phaser.Scene {
     if (missionDone) completeMission(this.save, mission);
     const nextMission = this.school ? null : currentMission(this.save);
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
-    if (landed && !this.school) { this.save.city = reached % ROUTE.length; if (lap) this.save.laps = (this.save.laps || 0) + 1; }
+    if (!this.school) this.save.flownKm = flown;
+    if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; }   // choose a new direction from here
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
     this.save.seeds += gained;

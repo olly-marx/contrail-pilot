@@ -3,24 +3,12 @@
 // missions. `check(r, save)` looks at the flight result; `progress(s)` is the live HUD line (kept
 // SHORT: about 25 characters a line, two lines at most); `needs` says what to buy first.
 // Done missions are save.missionsDone (ids); save.mission is how many are done (pilot.js, restore.js).
-// No mission names a city that could end up BEHIND you: you fly on from wherever you land.
+// No mission names one city: you can fly any way from wherever you land (2026-10-22), so it might never come.
 import { km } from './config.js';
-import { cityIndex, stopsBetween } from './route.js';
+import { REGION_NAMES } from './habitats.js';
 
-// Reach a city on the journey: done when you land there or anywhere further along the loop,
-// including back at LONDON (a lap), so a player who is already past it is never stuck.
-export const reach = (name, extra = {}) => {
-  const at = cityIndex(name);
-  const stops = s => stopsBetween(s.startCity + s.airportIndex, at);   // 1 = it is the next airport
-  return {
-    id: `reach-${name.toLowerCase().replace(' ', '')}`, icon: 'mi-airports',
-    title: `Reach ${name}`, sub: `Fly east and land in ${name}, or anywhere past it. You always fly on from where you land.`,
-    check: r => r.landed && (r.lap || cityIndex(r.landedAt) >= at),
-    progress: s => (s.state === 'landing' || s.state === 'over' ? '' : `${name}: ${stops(s) <= 1 ? 'next stop!' : `${stops(s)} stops away`}`),
-    fail: r => (r.landed ? `You landed in ${r.landedAt}. Keep flying east to ${name}!` : `Land safely to move on towards ${name}.`),
-    ...extra,
-  };
-};
+// The world tour (2026-10-22): every region but the UK discovered from the air (GameScene.setRegion).
+export const tourLeft = save => Object.keys(REGION_NAMES).filter(r => r !== 'woodland' && !((save || {}).discovered || {})[r]);
 
 export const MISSIONS = [
   { id: 'land', icon: 'mi-land', lesson: 'lesson-land', title: 'Land at an airport', sub: 'Get low as you reach the grey runway. The plane lands itself!',
@@ -49,7 +37,11 @@ export const MISSIONS = [
     check: (r, save) => r.landed && (((save.levels || {}).fuel || 0) + ((save.levels || {}).engine || 0)) >= 1,
     progress: s => ((((s.save.levels || {}).fuel || 0) + ((s.save.levels || {}).engine || 0)) >= 1 ? 'Cleaner plane! Now land' : 'Buy a cleaner plane first'),
     fail: (r, save) => ((((save.levels || {}).fuel || 0) + ((save.levels || {}).engine || 0)) >= 1 ? 'Land safely to finish it.' : 'Buy Cleaner Fuel or Better Engines in the hangar.') },
-  reach('CAIRO', { tip: 'A long way. Normal fuel overheats the Earth first: make your plane cleaner.' }),
+  // (id kept from 'Reach CAIRO' before 2026-10-22, so it stays done for those who did it.)
+  { id: 'reach-cairo', icon: 'mi-airports', title: 'Reach a new part of the world', sub: 'Choose a direction and land somewhere with new land and new animals.',
+    tip: 'A long way. Normal fuel overheats the Earth first: make your plane cleaner.',
+    check: r => r.landed && r.newRegion, progress: s => (s.state === 'landing' || s.state === 'over' ? '' : 'Land in a new land!'),
+    fail: r => (r.landed ? `${r.landedAt} is not new land. Try another direction!` : 'Land safely to reach new land.') },
   { id: 'turbulence', icon: 'mi-airports', lesson: 'lesson-turbulence', title: 'Bump through turbulence', sub: 'Turbulence starts 4,000 km into a flight. Fly into the wavy air!',
     check: r => r.bumped, progress: s => (s.bumped ? 'Bumpy! Land or fly on' : s.distancePx < 4000 ? `Turbulence in ${km(4000 - s.distancePx)}` : 'Find the wavy air!'),
     fail: r => (r.distance < 4000 ? 'Turbulence starts 4,000 km into a flight.' : 'Fly INTO the wavy air.') },
@@ -58,8 +50,11 @@ export const MISSIONS = [
   { id: 'rewild', icon: 'mi-tree', title: 'Bring wildlife back', sub: 'Do a habitat project in your Wild Area (NATURE), then fly.',
     needs: { anyProject: true, text: 'A habitat project (NATURE)' },
     check: r => (r.projects || []).length >= 1, progress: () => 'Wildlife is coming back!', fail: () => 'Do a habitat project in NATURE.' },
-  reach('LONDON', { id: 'world', icon: 'mi-globe', title: 'Fly round the world', sub: 'Keep flying east, flight after flight, all the way back to LONDON.',
-    check: r => r.landed && r.lap, tip: 'Only the cleanest plane, and a forest of every kind, gets you all the way round.' }),
+  // (id kept from 'Fly round the world' before 2026-10-22.)
+  { id: 'world', icon: 'mi-globe', title: 'World tour', sub: 'Fly over every part of the world: deserts, rainforests, ice and more. Each one you fly over opens in NATURE.',
+    tip: 'Only the cleanest plane, and a forest of every kind, gets you all the way round.',
+    check: (r, save) => tourLeft(save).length === 0, progress: s => `Lands to discover: ${tourLeft(s.save).length}`,
+    fail: (r, save) => `Still to discover: ${tourLeft(save).map(x => REGION_NAMES[x]).join(', ')}.` },
 ];
 
 const doneSet = save => new Set(save.missionsDone || []);
@@ -74,7 +69,7 @@ export function complete(save, m) {
 // { project }, or { anyProject }.
 export const blocked = (save, m) => {
   if (!m || !m.needs) return false;
-  const n = m.needs, proj = (save.habitat || {}).woodland || [];
+  const n = m.needs, proj = Object.values(save.habitat || {}).flat();   // a project in any region
   if (n.anyProject) return proj.length === 0;
   if (n.project) return !proj.includes(n.project);
   return (n.lines || [[n.line, n.level || 1]]).some(([l, lv]) => !(((save.levels || {})[l] || 0) >= lv));
