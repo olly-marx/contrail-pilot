@@ -87,6 +87,14 @@ const KEY = 'contrailPilot.v2';
   await p.click('[data-species="robin"]'); await p.waitForTimeout(200);
   check(/Robin/.test(await p.textContent('#wInfoBody')) && (await p.$$('#wInfoBody a')).length >= 1, 'the robin page names it and links its source');
   await p.click('#wInfoClose');
+  // A second flight lists only ITS animals (foundIds carried over between flights: art session, 2026-10-22).
+  await p.evaluate(() => game.registry.get('ui').go('fly')); await p.click('#goBtn'); await started(p);
+  for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
+  const second = await p.evaluate(() => { const s = game.scene.getScene('game'); s.wildlife = { ...s.wildlife, wildPerScreen: 0, birdsPerScreen: 0, farmPerScreen: 0 };
+    s.seen('sky-swallow'); s.finish({ landed: true }); return { ids: s.result && s.result.foundIds, n: s.foundThisFlight }; });
+  await p.waitForTimeout(1500);
+  check(JSON.stringify(second.ids) === '["swallow"]' && second.n === 1, `the second flight lists only its own new animal: ${JSON.stringify(second)}`);
+  await p.evaluate(() => game.registry.get('ui').go('nature')); await p.waitForTimeout(300);
   await p.click('[data-species="otter"]'); await p.waitForTimeout(200);
   check(/Beavers return \+ Rewet the land/.test(await p.textContent('#wInfoBody')), `an unfound animal says what brings it: ${await p.textContent('#wInfoBody')}`);
   await p.screenshot({ path: '/tmp/wild-test.png' });

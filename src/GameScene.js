@@ -133,6 +133,7 @@ export class GameScene extends Phaser.Scene {
     this.landStored = 0;               // ...and rewilded land
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
     this.goldens = 0;                  // golden seeds grabbed
+    this.foundIds = []; this.foundThisFlight = 0;   // animals found THIS flight (the scene object is reused between flights)
     this.bumped = false;               // shaken by turbulence
     this.parcelOnRunway = false;       // a parcel landed on a runway (oops!)
     this.speciesPlanted = new Set();   // kinds of tree planted this flight (for the online boards)
