@@ -6,6 +6,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
 async function fly(p, { landAt }) {
   await p.goto(URL); await p.waitForTimeout(600); await p.click('#goBtn');
+  // TAKE OFF restarts the scene; wait until it is built (CI failed twice reading nextAirport too early).
+  await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.nextAirport && s.state !== 'idle'; }, null, { timeout: 15000 });
   // Hazards have their own test; keep this flight about takeoff, day/night and landing.
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.nextTurbAt = s.nextBirdsAt = 1e9; });
   const log = { states: new Set(), maxCo2: 0, sawNight: false, heatSamples: [] };
