@@ -176,6 +176,14 @@ the advanced autopilot (see items 5 below).
   turtle vs hawksbill; wall lizard / griffon unused; meerkat moves desert -> savanna); (3) LEAVE OUT the mink; (4) camel shown
   as herded camels: OK; (5) keep off-route projects (Chad, Yellowstone, Washington, Namibia, KAZA): routing will grow; (6) the art
   session is busy: start a NEW art session for the 91 region sprites; (7) EVERY claim needs a source, else fact-check it away.
+- Pass 3 DONE for all 9 (2026-10-22): every claim has a fetched non-Wikipedia source or was reworded/dropped; every project has
+  org/learn_url/donate_url (donate only on the org's own domain). Also dropped (the user): slendergazelle, hawksbill (no project
+  link). Added: rainforest otterwatch (FZS Peru), tapirwork (IPE LTCI); monsoon rhinosanctuary. Rare/legendary species must keep
+  a sourced `needs` link. Weak spots are listed at the end of each .v3.md.
+- PROPOSED, waiting on the user: region below the plane = REAL GEOGRAPHY (position along the real great circle of the leg, by
+  fraction of the game leg, looked up in a declared ~10-degree world grid of region ids + ocean + ice); ocean as a terrain;
+  CO2 soak only from the region below; tabs open when a region is first flown over. Rollout: 1 data/saves/meters/tabs,
+  2 region-below in flight, 3 global routing (B).
 - NEW GOAL (the user, 2026-10-22): grow the game into a big global knowledge base of interesting climate research and cool
   non-profit projects, with links people can follow to donate. Keep the existing rule: the game takes no payments; outbound
   links go behind the grown-up gate (hold 2 s, as for Citizen Zoo). Not designed yet.
