@@ -61,7 +61,11 @@ const KEY = 'contrailPilot.v2';
   check(!((await get(p)).found || {}).robin, 'seeing an animal outside a flight does not count');
   await p.click('#tabFly'); await p.click('#goBtn');
   for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
-  const found = await p.evaluate(() => { const s = game.scene.getScene('game'); s.seen('sky-robin'); s.seen('sky-robin'); return { n: s.foundThisFlight, at: s.save.found.robin }; });
+  // No natural animals during this check (on a slow machine one wandered on and was found too), and
+  // start from an empty collection: only the robin we show should count, once.
+  const found = await p.evaluate(() => { const s = game.scene.getScene('game');
+    s.wildlife = { ...s.wildlife, wildPerScreen: 0, birdsPerScreen: 0, farmPerScreen: 0 }; s.save.found = {}; s.foundThisFlight = 0;
+    s.seen('sky-robin'); s.seen('sky-robin'); return { n: s.foundThisFlight, at: s.save.found.robin }; });
   check(found.n === 1 && found.at > 0, `the robin is found once: ${JSON.stringify(found)}`);
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.finish({ landed: true }); });
   await p.waitForTimeout(2500);
