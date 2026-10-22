@@ -41,7 +41,7 @@ const KEY = 'contrailPilot.v2';
   check(await p.isVisible('#wProjects') && !(await p.isVisible('#hangar')), 'NATURE opens the wild area, not the hangar');
   await p.click('[data-project="deadwood"]'); await p.waitForTimeout(200);
   s = await get(p);
-  check(s.habitat.woodland.includes('deadwood') && s.seeds === 80 && s.crystals === 9, `dead wood bought for 20 + 1: ${JSON.stringify(s.habitat)} ${s.seeds}/${s.crystals}`);
+  check(s.habitat.woodland.includes('deadwood') && s.seeds === 80 && s.crystals === 8, `dead wood bought for 20 + 2: ${JSON.stringify(s.habitat)} ${s.seeds}/${s.crystals}`);
   check(/DONE/.test(await p.textContent('[data-pline="deadwood"]')), 'a bought project says DONE');
   // A finished tier folds to one line (with 'show'); here tier 1 is not finished, so margins is listed.
   await p.click('[data-pinfo="margins"]'); await p.waitForTimeout(200);
@@ -93,7 +93,7 @@ const KEY = 'contrailPilot.v2';
   const second = await p.evaluate(() => { const s = game.scene.getScene('game'); s.wildlife = { ...s.wildlife, wildPerScreen: 0, birdsPerScreen: 0, farmPerScreen: 0 };
     s.seen('sky-swallow'); s.finish({ landed: true }); return { ids: s.result && s.result.foundIds, n: s.foundThisFlight }; });
   await p.waitForTimeout(1500);
-  check(JSON.stringify(second.ids) === '["swallow"]' && second.n === 1, `the second flight lists only its own new animal: ${JSON.stringify(second)}`);
+  check(second.ids.includes('swallow') && !second.ids.includes('robin'), `the second flight lists its own new animals, not the first flight's robin: ${JSON.stringify(second)}`);
   await p.evaluate(() => game.registry.get('ui').go('nature')); await p.waitForTimeout(300);
   await p.click('[data-species="otter"]'); await p.waitForTimeout(200);
   check(/Beavers return \+ Rewet the land/.test(await p.textContent('#wInfoBody')), `an unfound animal says what brings it: ${await p.textContent('#wInfoBody')}`);

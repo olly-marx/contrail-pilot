@@ -198,6 +198,12 @@ onboarding" below, in any order, each its own tested commit:
      RAINFOREST too, even with no route city over them yet.
    - Leaderboard: one total "Biodiversity King" board; the user wants a wider boards revamp later.
    - Research first, with sources, shown to the user before code.
+2c. 2026-10-22 (evidence from the user's real save: 487 crystals vs 403 seeds): crystal prices now
+   1 per 8 seeds (were 1 per 18). Measured: real flights earn ~3.7 crystals each (4.1 even on a
+   crash), the restore model ~6.6/flight incl. prizes vs ~39 seeds: about 1:6, so 1:18 prices made
+   crystals never matter. Hangar now 17,485 seeds + 2,185 crystals (47 levels) + 11 UK projects.
+   The user's save: found animals reset (16 of 17 were found in ~20 s on the old full meter, before
+   rarity); visited needed no fix (they flew a real lap since).
 2. DONE 2026-10-21: new prices (user OK'd the ~20,000-seed table: 20,125 seeds, 1,119 crystals at
    ~1 per 18 seeds; crystal income NOT measured against this). Old saves re-valued ONCE at full value
    (user's choice, no bonus) by `src/reprice.js`: bank + old prices of owned levels, rebuilt at new

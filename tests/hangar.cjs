@@ -21,7 +21,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const radarRow = p => p.evaluate(() => [...document.querySelectorAll('#hUpgrades .line')].find(e => e.textContent.includes('Icy Air Radar')).textContent.replace(/\s+/g, ' '));
 
   // 1. Buy the last radar level.
-  let p = await open(67);   // the last radar level: 1,200 seeds + 67 crystals (2026-10-21 prices)
+  let p = await open(150);   // the last radar level: 1,200 seeds + 150 crystals (crystals 1 per 8 seeds, 2026-10-22)
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   await p.click('[data-buy=radar]'); await p.waitForTimeout(400);
   const s = JSON.parse(await p.evaluate(() => localStorage.getItem('contrailPilot.v2')));
@@ -50,7 +50,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.close();
 
   // 3. Short of crystals: the button is grey and says what is missing.
-  p = await open(60);
+  p = await open(143);   // 7 short of the 150 crystals
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   check(await p.isDisabled('[data-buy=radar]'), 'short of crystals: BUY should be grey');
   check(/need 7 more/.test(await radarRow(p)), `short of crystals: should say "need 7 more": "${await radarRow(p)}"`);

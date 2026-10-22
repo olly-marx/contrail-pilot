@@ -65,9 +65,9 @@ const KEY = 'contrailPilot.v2';
   p = await page({ ...base, seeds: 500, crystals: 0, landings: 3, planted: { birch: 3, oak: 3 } });
   // (Habitat projects on the NATURE screen since 2026-10-21: the meadow's button is grey without crystals.)
   const buy = await p.evaluate(() => { const ui = game.registry.get('ui'), s = ui.save; ui.go('nature');
-    const without = !document.querySelector('[data-project="meadow"]').disabled; s.crystals = 2; ui.wild.render();
+    const without = !document.querySelector('[data-project="meadow"]').disabled; s.crystals = 4; ui.wild.render();
     const withC = !document.querySelector('[data-project="meadow"]').disabled; return { without, withC }; });
-  check(!buy.without && buy.withC, `the meadow should need 2 crystals as well as seeds: ${JSON.stringify(buy)}`);
+  check(!buy.without && buy.withC, `the meadow should need 4 crystals as well as seeds: ${JSON.stringify(buy)}`);
 
   // 6. The hangar is the plane; trees and habitat projects are on the NATURE screen (the user, 2026-10-21).
   const tabs = await p.evaluate(() => { const ui = game.registry.get('ui'); ui.showHangar();
