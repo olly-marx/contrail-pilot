@@ -19,7 +19,10 @@ const drawn = [...src.matchAll(/\bgen\('([\w-]+)'/g)].map(m => m[1]);
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true })); });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
-  await p.goto(URL); await p.waitForTimeout(800);
+  await p.goto(URL);
+  // Wait for the loader and makeTextures() to finish (380+ PNGs since 2026-10-21: in CI 0.8 s was not
+  // enough and everything still loading counted as missing). 'puff' is drawn in code after loading.
+  await p.waitForFunction(() => { const s = window.game && game.scene.getScene('game'); return s && s.sys.isActive() && s.textures.exists('puff') && !s.load.isLoading(); }, null, { timeout: 60000 }).catch(() => {});
   const want = [...new Set([...pngs, ...drawn])];
   const missing = await p.evaluate(keys => { const s = game.scene.getScene('game'); return keys.filter(k => !s.textures.exists(k)); }, want);
   console.log({ checked: want.length, drawnInCode: drawn.length, missing, errs });
