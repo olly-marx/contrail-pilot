@@ -373,23 +373,25 @@ Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (gold
   their 55% spawn roll at 10 km. Rerun before blaming a change. `tests/school.cjs` crashed once in
   ~5 runs.
 
-## Lost saves and the TEMPORARY restore button (2026-10-22)
+## Lost saves and TEMPORARY personal restore links (2026-10-22)
 
 The user's phone lost ALL the game's browser storage (save + pilot name + anonymous login): a browser
 wipe, not our code (nothing in the game touches the name/login keys). Stevo likely too (a second
-anonymous login 21 Oct 23:01 became "Stevo the Bumblebee"). Built, with the user's OK:
-- Migration 20261022090000_claim_pilot.sql (LIVE): players.claimed_at; claimable_pilots(pw) and
-  claim_pilot(pw, old): a device takes over an unclaimed old pilot (flights move, old row deleted:
-  claim once). ONE shared password; only its SHA-256 is stored, in restore_secret (no grants), set
-  by hand via the CLI, NOT in the repo. The password was given to the user in chat on 2026-10-22.
-  (A first version without a password was blocked as a security weakening.)
-- Game: PILOT -> "lost your progress? restore it" (FEATURES.restore in config.js); src/restore.js
-  rebuilds the save from the flights (exact: best, landings, missions, laps, trees; estimated: seeds
-  0.42d+0.85d^2 per landed flight, d in 1000 km, plus prizes) and spends it cheapest-first.
-  Stevo: claiming "Explorer" from his Bumblebee phone merges both (the user: keep Explorer, or he chooses).
+anonymous login 21 Oct 23:01 became "Stevo the Bumblebee").
+- LIVE: migration 20261022120000_restore_links.sql (replaced the shared-password version
+  20261022090000, whose functions/table it drops; that one replaced a no-password version that was
+  blocked as a security weakening). restore_links(hash, player_id): one long random code per old
+  pilot, only its SHA-256 stored, inserted by hand via the CLI, never in the repo. restore_preview(code),
+  restore_claim(code): the opening device takes over that pilot (flights + name), once.
+- Codes made 2026-10-22 for Olly the Swift 74, Stevo the Explorer 27, Ducrust the Robin 99, Jono the
+  Rocket 93; the links were given to the user in chat (not stored anywhere else).
+- Game: ?restore=<code> (src/pilot.js checkRestoreLink): code removed from the address bar at once,
+  "Restore X?" confirm, claim, src/restore.js rebuilds the save (exact: best, landings, missions, laps,
+  trees; estimated: seeds 0.42d+0.85d^2 per landed flight, d in 1000 km, plus prizes; spent
+  cheapest-first on upgrades + habitat projects). Stevo: his link opened on the Bumblebee phone merges both.
 - Saves are written twice (save.js BACKUP), unreadable ones kept aside, navigator.storage.persist().
-- REMOVE the button once friends are restored: FEATURES.restore = false (or delete the UI), and a
-  migration dropping claim_pilot/claimable_pilots/restore_secret.
+- REMOVE when everyone is restored: checkRestoreLink + restorePreview/restoreClaim, and a migration
+  dropping restore_links / restore_preview / restore_claim.
 - NOT built: an automatic cloud backup of each pilot's save (would protect against future wipes).
 
 ## Supabase (online names + leaderboards)

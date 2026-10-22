@@ -46,6 +46,7 @@ window.game = game;   // exposed for debugging and automated tests
 
 ui.showTitle();
 ui.pilot = new PilotScreens(save);
+ui.pilot.checkRestoreLink();   // TEMPORARY: ?restore=<code> personal links (2026-10-22)
 ui.wild = new WildScreen(ui);   // the NATURE screen (src/wild.js)
 ui.tour = new Tour(ui);   // "tap here" tutorials (src/tour.js)
 ui.tour.maybe('title');

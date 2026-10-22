@@ -90,21 +90,22 @@ export async function leaderboard(board, period) {
   } catch (e) { return null; }
 }
 
-// TEMPORARY restore (2026-10-22, migration 20261022090000_claim_pilot.sql): list old pilots, and
-// claim one for this device (its flights and name move here). Both need the shared password.
-// Return { ok, rows | flights, why: 'password' | 'claimed' | 'offline' }.
-export async function claimablePilots(pw) {
+// TEMPORARY personal restore links (2026-10-22, migration 20261022120000_restore_links.sql):
+// ?restore=<code> previews whose pilot it is, then claims it for this device (its flights and name
+// move here). Return { ok, pilot | flights, why: 'used' | 'offline' }.
+export async function restorePreview(code) {
   try {
     await session();
-    const { data, error } = await db().rpc('claimable_pilots', { pw });
-    return error ? { ok: false, why: /password/.test(error.message) ? 'password' : 'offline' } : { ok: true, rows: data };
+    const { data, error } = await db().rpc('restore_preview', { code });
+    if (error) return { ok: false, why: 'offline' };
+    return data && data.length ? { ok: true, pilot: data[0] } : { ok: false, why: 'used' };
   } catch (e) { return { ok: false, why: 'offline' }; }
 }
-export async function claimPilot(pw, old, name) {
+export async function restoreClaim(code, name) {
   try {
     await session();
-    const { data, error } = await db().rpc('claim_pilot', { pw, old });
-    if (error) return { ok: false, why: /password/.test(error.message) ? 'password' : /claimed/.test(error.message) ? 'claimed' : 'offline' };
+    const { data, error } = await db().rpc('restore_claim', { code });
+    if (error) return { ok: false, why: /used/.test(error.message) ? 'used' : 'offline' };
     write(PILOT_KEY, name);   // this device is now that pilot
     return { ok: true, flights: data };
   } catch (e) { return { ok: false, why: 'offline' }; }

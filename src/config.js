@@ -5,7 +5,6 @@
 // set true to bring it all back. Adding ?citizenzoo to the URL also turns it on (for demos).
 export const FEATURES = {
   citizenZoo: false || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('citizenzoo')),
-  restore: true,   // TEMPORARY (2026-10-22): PILOT screen's 'restore your progress' (src/pilot.js); set false once friends are restored
 };
 // Text that only appears with the Citizen Zoo feature on (else `off`).
 export const cz = (on, off = '') => (FEATURES.citizenZoo ? on : off);
