@@ -220,8 +220,13 @@ the advanced autopilot (see items 5 below).
 - STORM CLOUDS (the user, 2026-10-23, reference picture; 'looks like stone, the gradient is what matters'): tools/art/make_storm.py
   repaints the 6 storm PNGs soft/pale inside the SAME alpha outline (asserted: collisions unchanged); GameScene.addStormPairAt tints
   each column top-to-base with STORM_TINT (white/pale grey -> slate). make_sprites.py calls make_storm.main() (art session).
-- PIXEL ART MCP (asked 2026-10-23): PixelLab MCP (generative; needs the user's paid API token, added by the user with
-  `claude mcp add`) or Aseprite MCP servers (editing; need Aseprite). Suggested trial: salmon, loggerhead, fish owl vs our style.
+- PIXELLAB MCP (added by the user 2026-10-23): LOCAL scope for /home/ojm, so it is NOT in sessions that were already running;
+  drive it headless: `cd ~ && claude -p "<task>" --allowedTools "mcp__pixellab__create_image_pixen,mcp__pixellab__get_image,..."`
+  (works). Trial (6 generations, 1 each; /tmp/pixellab/compare.png): PIXEN 64x64 clearly best (salmon, loggerhead, fish owl
+  instantly readable; ours were a sausage, a log, a hawk); pixflux + our palette flatter. Account on a FREE TRIAL: 2 generations
+  left; one job at a time. ~1p/generation on paid plans (third-party reviews, unverified). The user's plan: keep our generator
+  for the small in-flight/wild-area sprites (lightweight); PixelLab for a future TAP-AN-ANIMAL detailed close-up (~240-300
+  generations) and for the art session's plane redesign (older planes, non-silly upgrade parts). Waiting on: a paid plan.
 - PACING DATA for the plane design (read-only query, 2026-10-23; 525 flights, 9 players, mostly the user/Lola/testers): flights
   per active day median 29 (p75 47); landed 20.4%; sky seeds per landed flight median 20 (flights 1-20), 25 (21-50), 81 (51+).
   The flights table stores no seeds and no duration.
