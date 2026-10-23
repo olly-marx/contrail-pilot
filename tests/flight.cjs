@@ -5,15 +5,16 @@ const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
-async function fly(p, { landAt }) {
+async function fly(p, { landAt, keepCool = false }) {
   await p.goto(URL); await ready(p); await p.waitForTimeout(600); await p.click('#goBtn');
   // TAKE OFF restarts the scene; wait until it is built (CI failed twice reading nextAirport too early).
   await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.nextAirport && s.state !== 'idle'; }, null, { timeout: 15000 });
   // Hazards have their own test; keep this flight about takeoff, day/night and landing.
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.nextTurbAt = s.nextBirdsAt = 1e9; });
   const log = { states: new Set(), maxCo2: 0, sawNight: false, heatSamples: [] };
-  for (let i = 0; i < 1200; i++) {
-    const r = await p.evaluate((landAt) => { const s = game.scene.getScene('game');
+  for (let i = 0; i < 2400; i++) {   // (0.9.1: the 2nd airport is 5,200+ km away)
+    const r = await p.evaluate(([landAt, keepCool]) => { const s = game.scene.getScene('game');
+      if (keepCool && s.heat > 60) s.heat = 60;   // (see the land-at-2nd note below)
       const toA = s.nextAirport.worldX - s.distancePx;
       // Land the way the game teaches: within 300 m of the runway get LOW, then stop tapping near it
       // and let the flare do the rest.
@@ -22,7 +23,7 @@ async function fly(p, { landAt }) {
       const next = s.storms.find(st => st.rects[0].x + 44 > s.plane.x);
       const target = landing ? 999 : next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : approach ? s.groundedY() - 60 : 200;
       return { tap: s.state === 'playing' && s.plane.y > target && s.plane.vy > -50,
-        state: s.state, co2: s.co2Rate, isDay: s.isDay, heat: s.heat, result: s.result || null, second: s.path && s.path[2] }; }, landAt);
+        state: s.state, co2: s.co2Rate, isDay: s.isDay, heat: s.heat, result: s.result || null, second: s.path && s.path[2] }; }, [landAt, keepCool]);
     log.states.add(r.state); log.maxCo2 = Math.max(log.maxCo2, r.co2);
     if (r.isDay === false) log.sawNight = true;
     if (i % 40 === 0) log.heatSamples.push(Math.round(r.heat));
@@ -43,7 +44,10 @@ async function fly(p, { landAt }) {
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const fails = [];
 
-  const a = await fly(p, { landAt: 1 });
+  // Passing an airport and landing at the next one: since 0.9.1 legs are 2,600-3,400 km, so the 2nd airport is
+  // 5,200+ km away, past where a plane with no upgrades overheats (~5,000 km). This check is about the landing
+  // mechanics, not heat, so the heat is held down for it (keepCool); the heat checks below use real physics.
+  const a = await fly(p, { landAt: 1, keepCool: true });
   console.log('land-at-2nd:', JSON.stringify(a));
   if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT });
   if (!a.result || !a.result.landed) fails.push('did not land');
