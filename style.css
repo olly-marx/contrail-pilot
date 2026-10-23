@@ -177,7 +177,6 @@ p { margin: 0; }
 .coach-ok { margin-top: 8px; font: inherit; font-size: 9px; padding: 8px 12px; background: var(--cool); color: var(--ink); border: 0; cursor: pointer;
   box-shadow: 0 -2px 0 0 var(--ink), 0 2px 0 0 var(--ink), -2px 0 0 0 var(--ink), 2px 0 0 0 var(--ink); }
 .coach-ok:disabled { opacity: .4; cursor: default; }
-.runback { position: fixed; bottom: 12px; left: 12px; z-index: 26; }
 .skip { position: fixed; bottom: 8px; right: 8px; z-index: 26; background: rgba(255,255,255,.8) !important; }
 
 /* ---------- simpler screens ---------- */

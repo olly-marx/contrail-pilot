@@ -42,7 +42,7 @@ const KEY = 'contrailPilot.v2';
   check(await p.isVisible('#rLost'), 'results should say the trees were lost');
 
   // 2. Grab 4, skip one airport, land: 4 x 1.5 = 6 trees banked.
-  await p.click('#againBtn'); await p.waitForTimeout(2300);
+  await p.click('#againBtn'); await p.click('#goBtn'); await p.waitForTimeout(2300);
   await noStorms(); await hold(); await grab(4);
   for (let i = 0; i < 8; i++) { await hold(); await p.waitForTimeout(60); }
   await scene(() => { const s = game.scene.getScene('game'); s.airportsSkipped = 1; s.heat = 20; s.distancePx = s.nextAirport.worldX - 250; });

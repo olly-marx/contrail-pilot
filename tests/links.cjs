@@ -25,6 +25,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
   await p.click('#aboutBtn'); await p.waitForTimeout(200);
   check(await p.isVisible('#about'), 'about us should open the About page');
+  const shown = await p.textContent('#aboutVersion'), want = require('fs').readFileSync(require('path').join(__dirname, '../src/version.js'), 'utf8').match(/VERSION = '([^']+)'/)[1];
+  check(shown.includes('v' + want), `About should show the game's version v${want}, got ${JSON.stringify(shown)}`);
   const hrefs = await p.$$eval('#about a', as => as.map(a => a.href));
   for (const want of ['imperial.ac.uk/aerospace-environmental-impacts', 'imperial.ac.uk/brahmal-institute'])   // Citizen Zoo: see features.cjs
     check(hrefs.some(h => h.includes(want)), `About page should link to ${want}`);

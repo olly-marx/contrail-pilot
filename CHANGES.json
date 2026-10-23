@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-23-fixes",
+    "version": "0.9.1",
+    "date": "2026-10-23",
+    "level": "minor",
+    "notes": [
+      "FLY ON now shows the map, so you choose which way to fly next.",
+      "Sunsets and sunrises are quicker. The sun sets behind the hills as the moon comes up.",
+      "Contrails switch from cooling to warming halfway through sunset, and back at sunrise.",
+      "Trips between cities are longer, with more storms to dodge."
+    ]
+  },
+  {
     "id": "2026-10-22-world",
     "level": "major",
     "notes": [

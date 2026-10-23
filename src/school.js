@@ -53,11 +53,15 @@ export class School {
       { say: 'The sun is setting... <b>Keep flying</b> through the storms!',
         setup: () => {
           s.hud.highlight(false);
-          this.holdClock = false; s.clock = DAYNIGHT.daySeconds - DAYNIGHT.blendSeconds - 3;   // dusk in ~3 s, dark ~3 s later
+          this.holdClock = false; this.darkT = 0; s.clock = DAYNIGHT.daySeconds - DAYNIGHT.blendSeconds - 5;   // dusk in ~5 s, dark ~4 s later (2026-10-23: was -3 with a 6 s dusk: the same 9 s to the dark)
           this.dusk = [stormAt(Phaser.Math.Clamp(s.plane.y + 6, 120, SKY_H - 120))];
           s.time.delayedCall(2800, () => { if (this.i >= 0) this.dusk.push(stormAt(Phaser.Math.Between(150, SKY_H - 150))); });
         },
-        done: () => !s.isDay && s.nightAmount() > 0.95 && this.dusk.length === 2 && this.dusk.every(st => st.rects[0].x + STORMS.width < s.plane.x) },
+        // Stay in the dark for a moment before the lesson card (2026-10-23): it used to end in the very frame the sky went dark.
+        done: () => {
+          if (s.isDay || s.nightAmount() <= 0.95 || this.dusk.length < 2 || !this.dusk.every(st => st.rects[0].x + STORMS.width < s.plane.x)) { this.darkT = 0; return false; }
+          this.darkT = (this.darkT || 0) + 1 / 60; return this.darkT > 0.6;
+        } },
       lesson('lesson-night', 'Now it is <b>night</b>. There is no sun to block. A contrail is like a <b>lid on a pot</b>: heat cannot get out. The Earth gets <span class="warm">HOTTER</span>.<br>So at night, fly <b>above or below</b> icy air.<br>In real life, contrails <b>warm</b> the Earth more than they cool it, so dodging these matters most.'),
       { say: 'Night! Icy air ahead: fly <b>above or below</b> it.',
         setup: () => {

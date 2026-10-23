@@ -174,7 +174,8 @@ export const DAYNIGHT = {
   bannerTimes: 3,     // the 'Night is coming!' / 'Sunrise!' banner shows this many times per device, then only the sky + sound
   daySeconds: 15,
   nightSeconds: 15,
-  blendSeconds: 6,     // dusk / dawn: sunset and sunrise at the end of each half (was 3: players missed the change)
+  blendSeconds: 4,     // dusk / dawn: sunset and sunrise at the end of each half (3, then 6 on 2026-10-22; 4 on 2026-10-23: 6 felt too long)
+  neutralFrac: 0.2,    // the middle fifth of dusk / dawn: contrails neither cool nor warm. Cooling fades out before it, warming fades in after (dawn: the other way round)
   skyNight: 0x1b2140,
   glowLow: 0xff8a3d,   // sunset / sunrise glow near the horizon...
   glowHigh: 0xff6a9a,  // ...fading to pink higher up

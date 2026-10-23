@@ -1,12 +1,13 @@
 // The world network (the user, 2026-10-22): ~100 airports, any direction. Each city links to its
 // nearest neighbours (up to NEAR, within NEAR_KM) plus the declared ocean BRIDGES (src/cities.js).
 // Leg lengths in the game are BALANCED, not real (the user: no very short legs, no endless ones):
-// every leg is LEG_LO to LEG_HI game km (about 14-20 s of flying), longer real hops a bit longer.
+// every leg is LEG_LO to LEG_HI game km (about 20-30 s of flying), longer real hops a bit longer.
 import { CITIES, BRIDGES } from './cities.js';
 import { realKm } from './geo.js';
 
 export const NEAR = 5, NEAR_KM = 2600;   // (4 left Nairobi with two NORTH buttons)
-export const LEG_LO = 1800, LEG_HI = 2600, REAL_LO = 800, REAL_HI = 5000;
+// 2026-10-23: 1,800-2,600 became 2,600-3,400 (US legs felt like one obstacle apart; measured 5-6 storm pairs per short leg then, 9-13 now).
+export const LEG_LO = 2600, LEG_HI = 3400, REAL_LO = 800, REAL_HI = 5000;
 export const legGameKm = real => Math.round((LEG_LO + (LEG_HI - LEG_LO) * Math.min(1, Math.max(0, (real - REAL_LO) / (REAL_HI - REAL_LO)))) / 10) * 10;
 
 export const city = name => CITIES.find(c => c.name === name);

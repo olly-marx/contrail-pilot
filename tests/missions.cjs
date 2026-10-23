@@ -41,7 +41,7 @@ const KEY = 'contrailPilot.v2';
   check(/Not this time/.test(await p.textContent('#rMission')), 'results should say Not this time');
 
   // 3. Land at PARIS: mission done, index 1, results say MISSION DONE and the next one.
-  await p.click('#againBtn'); await p.waitForTimeout(2300); await calm();
+  await p.click('#againBtn'); await p.click('#goBtn'); await p.waitForTimeout(2300); await calm();
   await scene(() => { const s = game.scene.getScene('game'); s.heat = 0; s.distancePx = s.nextAirport.worldX - 250; });
   for (let i = 0; i < 150; i++) {
     const st = await scene(() => { const s = game.scene.getScene('game'); s.heat = 0; const toA = s.nextAirport.worldX - s.distancePx; if (toA > -20) { s.plane.y = 300; s.plane.vy = 0; } return s.state; });

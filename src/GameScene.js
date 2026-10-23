@@ -337,10 +337,9 @@ export class GameScene extends Phaser.Scene {
     this.bioStart = biodiversity(this.save);   // flights is counted at lift-off: going back to the menu from the runway is not a flight
   }
 
-  // The MENU button / Esc while parked on the runway: back to the title, nothing lost, no flight counted.
+  // Esc while parked on the runway: back to the title, nothing lost, no flight counted.
   backToMenu() {
     if (this.state !== 'takeoff' || this.airborne || this.rollSpeed >= 5 || this.school) return;   // parked only: never mid-roll
-    this.ui.setRunwayBack(false);
     this.scene.restart();
     this.ui.showTitle();
   }
@@ -390,9 +389,9 @@ export class GameScene extends Phaser.Scene {
   // icy-air shape test that makes real contrails (inIssrShape), so it knows exactly where they form.
   wantContrails() {
     if (!this.isDay) return false;
-    const { daySeconds: D, nightSeconds: N } = DAYNIGHT;
-    const toDark = D - this.clock % (D + N);
-    return toDark > this.kit.contrailLife / 1000 + 1;
+    const { daySeconds: D, nightSeconds: N, blendSeconds: B } = DAYNIGHT;
+    const toWarm = D - B / 2 - this.clock % (D + N);   // contrails start to warm halfway through dusk
+    return toWarm > this.kit.contrailLife / 1000 + 1;
   }
 
   autopilotPlan() {
@@ -556,7 +555,6 @@ export class GameScene extends Phaser.Scene {
 
     // CO2: high during takeoff and the landing roll, steady while cruising.
     const parked = this.state === 'takeoff' && !this.airborne && this.rollSpeed < 5;   // engines idle: waiting for the HOLD
-    this.ui.setRunwayBack(parked && !this.school && !this.frozen);
     this.co2Rate = parked ? 0 : (this.state === 'playing') ? this.kit.co2Cruise * (this.flaring ? AIRPORT.flareCo2 : 1) : this.kit.co2Takeoff;
     this.totalCo2 += this.co2Rate * dt;
     const co2Heat = this.co2Rate * CLIMATE.co2ToHeat * dt;
@@ -945,18 +943,31 @@ export class GameScene extends Phaser.Scene {
         g.fillStyle(lerpColour(DAYNIGHT.glowHigh, DAYNIGHT.glowLow, k), glow * 0.55 * k).fillRect(0, Math.round(top + i * bh), WIDTH, Math.ceil(bh));
       }
     }
-    // The sun sinks and turns orange at dusk (and rises at dawn's end); the moon fades at dawn.
-    const sink = isDay ? toOther * 60 : 0;
-    const x = Math.round(30 + f * (WIDTH - 60)), y = Math.round(70 - Math.sin(f * Math.PI) * 30 + sink);
-    if (isDay) {
-      const sun = lerpColour(COLOURS.sun, DAYNIGHT.sunSet, toOther);
+    // The sun and moon swap places in the twilight (2026-10-23: the sun used to stop high in the sky
+    // and the moon popped in): at dusk the sun sinks behind the hills as the moon rises where it
+    // will start its arc; at dawn the moon sets as the sun rises. The twilight ends with the new body
+    // at the start of its arc, so nothing jumps.
+    const DROP = SKY_H - 46 + 12 - 70;                        // from the top of the arc to behind the hills
+    const ease = k => k * k * (3 - 2 * k);
+    const arc = fr => ({ x: Math.round(30 + fr * (WIDTH - 60)), y: 70 - Math.sin(fr * Math.PI) * 30 });
+    const drawSun = (pt, drop, orange) => {
+      const sun = lerpColour(COLOURS.sun, DAYNIGHT.sunSet, orange), x = pt.x, y = Math.round(pt.y + drop);
       g.fillStyle(sun, 0.35).fillRect(x - 9, y - 7, 18, 14).fillRect(x - 7, y - 9, 14, 18);
       g.fillStyle(sun).fillRect(x - 6, y - 5, 12, 10).fillRect(x - 5, y - 6, 10, 12);
+    };
+    const drawMoon = (pt, drop) => {
+      const x = pt.x, y = Math.round(pt.y + drop);
+      g.fillStyle(0xf4f1e8, 0.25).fillRect(x - 8, y - 6, 16, 12).fillRect(x - 6, y - 8, 12, 16);
+      g.fillStyle(0xf4f1e8).fillRect(x - 5, y - 4, 10, 8).fillRect(x - 4, y - 5, 8, 10);
+      g.fillStyle(0xc9c4b4).fillRect(x - 2, y - 2, 2, 2).fillRect(x + 2, y + 1, 2, 2).fillRect(x - 3, y + 2, 1, 1);  // craters
+    };
+    const gone = ease(toOther) * DROP, rising = (1 - ease(toOther)) * DROP;
+    if (isDay) {
+      drawSun(arc(f), gone, toOther);
+      if (toOther > 0) drawMoon(arc(0), rising);
     } else {
-      const m = 1 - toOther;
-      g.fillStyle(0xf4f1e8, 0.25 * m).fillRect(x - 8, y - 6, 16, 12).fillRect(x - 6, y - 8, 12, 16);
-      g.fillStyle(0xf4f1e8, m).fillRect(x - 5, y - 4, 10, 8).fillRect(x - 4, y - 5, 8, 10);
-      g.fillStyle(0xc9c4b4, m).fillRect(x - 2, y - 2, 2, 2).fillRect(x + 2, y + 1, 2, 2).fillRect(x - 3, y + 2, 1, 1);  // craters
+      drawMoon(arc(f), gone);
+      if (toOther > 0) drawSun(arc(0), rising, 1 - toOther);
     }
     this.drawDayDial(p / (D + N));
     const tint = lerpColour(lerpColour(0xffffff, 0x4a5a80, n), 0xff7a5a, (this.heatLevel ? this.heatLevel() : 0) * 0.7);
@@ -1561,7 +1572,7 @@ export class GameScene extends Phaser.Scene {
   // succession. Purely for looks: bolts are not in the collision check.
   updateLightning(time) {
     for (const st of this.storms) {
-      if (st.noFly) continue;
+      if (st.noFly || !st.parts.length) continue;   // (a storm with no pictures cannot flash: tests/powerups.cjs's fake one crashed here ~1 run in 5)
       if (!st.flash && Math.random() < 0.002 && st.rects[0].x < WIDTH) this.flashStorm(st, time);
       if (st.flash) {
         const t = time - st.flash.t0, on = t < 90 || (t > 150 && t < 230);   // flicker: on, off, on
@@ -1734,16 +1745,26 @@ export class GameScene extends Phaser.Scene {
     return { isDay: false, toOther: Math.max(0, (q - (N - B)) / B) };
   }
 
+  // What a contrail does right now (2026-10-23): the switch between cooling and warming happens HALFWAY
+  // through dusk / dawn, with a short neutral stretch in the middle. cool: sunshine side; strength 0..1.
+  radiationMode() {
+    const { isDay, toOther: u } = this.dayNightPhase(), lo = 0.5 - DAYNIGHT.neutralFrac / 2, hi = 0.5 + DAYNIGHT.neutralFrac / 2;
+    const first = u < lo ? 1 - u / lo : u > hi ? (u - hi) / lo : 0;   // fading out of the old mode / into the new one
+    if (u <= 0) return { cool: isDay, strength: 1 };
+    return { cool: u < 0.5 ? isDay : !isDay, strength: first };
+  }
+
   updateDayNight(time) {
-    const { isDay, toOther } = this.dayNightPhase();
-    const from = isDay ? COLOURS.skyDay : DAYNIGHT.skyNight;
-    const to = isDay ? DAYNIGHT.skyNight : COLOURS.skyDay;
+    const { isDay: skyDay, toOther } = this.dayNightPhase();
+    const isDay = this.radiationMode().cool;   // this.isDay = "contrails cool now" (the sky below is drawn from the clock alone)
+    const from = skyDay ? COLOURS.skyDay : DAYNIGHT.skyNight;
+    const to = skyDay ? DAYNIGHT.skyNight : COLOURS.skyDay;
     this.cameras.main.setBackgroundColor(lerpColour(from, to, toOther));
     this.isDay = isDay;
     this.drawSky(time);
 
     // Teach the switch the moment it starts.
-    const half = isDay ? (toOther > 0 ? 'dusk' : 'day') : (toOther > 0 ? 'dawn' : 'night');
+    const half = skyDay ? (toOther > 0 ? 'dusk' : 'day') : (toOther > 0 ? 'dawn' : 'night');
     if (half !== this.lastHalf) {
       // The banner only for the first few of each: after that the sky and the sound say it.
       const banner = k => { const seen = this.save.dayNightSeen || (this.save.dayNightSeen = {}); seen[k] = (seen[k] || 0) + 1; return seen[k] <= DAYNIGHT.bannerTimes; };
@@ -1767,12 +1788,10 @@ export class GameScene extends Phaser.Scene {
   updateRays(dt, time, scoring) {
     const g = this.rayGfx, ground = this.groundFx;
     g.clear(); ground.clear();
-    const { isDay, toOther } = this.dayNightPhase();
-    const strength = 1 - toOther;            // fade out through dusk / dawn
-    if (strength <= 0) return;
-
+    const { cool: isDay, strength } = this.radiationMode();   // fades out, is neutral at the halfway point, fades in the other way
     for (const c of this.blockers) if (c.active) c.setFillStyle(COLOURS.contrail);
     this.blockers = [];
+    if (strength <= 0) return;
 
     const S = CONTRAIL.size;
     let blocked = 0;

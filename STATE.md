@@ -125,7 +125,7 @@ out or behind a storm you fall freely. Signs say "get LOW to land". Tests: free 
 flare lands, over-runway flare lands before the end, no flare with a storm in the way. Breather after "Now TAP to fly!"; the first tip (`explainWhenClear()`) waits for a clear
 sky. School: the night step clears the day's icy air first and gives pass/fail feedback; (2026-10-19)
 the day contrail step ends only 1.2 s after you leave the icy air (it froze 0.44 s after the first
-contrail square before), then a dusk leg fades to night over ~6 s while you fly two storms (18
+contrail square before), then a dusk leg fades to night over ~4 s (was ~6 s until 2026-10-23) while you fly two storms (18
 steps now). Tips school teaches (`School.TAUGHT`) are marked seen on finish or skip, so the first
 real flight doesn't repeat them; the contrail step's words are honest about the bar (CO2 keeps it red) and the bubble
 sits high so the ground shows. Mission 1 requires landing at the FIRST airport. Results use the
@@ -240,7 +240,7 @@ the advanced autopilot (see items 5 below).
 - NEW GOAL (the user, 2026-10-22): grow the game into a big global knowledge base of interesting climate research and cool
   non-profit projects, with links people can follow to donate. Keep the existing rule: the game takes no payments; outbound
   links go behind the grown-up gate (hold 2 s, as for Citizen Zoo). Not designed yet.
-- Art session shipped 8ca186c (2026-10-22): longer sunset/sunrise (DAYNIGHT.blendSeconds 3 -> 6) with a day dial; SAF and
+- Art session shipped 8ca186c (2026-10-22): longer sunset/sunrise (DAYNIGHT.blendSeconds 3 -> 6; **amended 2026-10-23: now 4**, contrails flip cooling/warming HALFWAY through dusk/dawn with a neutral 20% middle: GameScene.radiationMode(), tests/twilight.cjs; sun and moon swap in the twilight) with a day dial; SAF and
   autopilot pick-ups in flight (POWERUPS in src/config.js; autopilot shows "TAP to take control"); contrail-cooling wording;
   tests/powerups.cjs ([powerups]=20 in tools/test.sh). 35 browser tests now.
 - Push ownership (the art session, 2026-10-22): the user's brief lets the ART session push its own work after a full
@@ -444,7 +444,8 @@ Added 2026-10-21:
 
 Leaderboard + light profiles + a menu from the runway:
 1. DONE 2026-10-19: `#runwayBack` "◀ MENU" button (and Esc) while parked on the runway ->
-   `GameScene.backToMenu()` -> title, no crash. `save.flights` now counts at LIFT-OFF, not on
+   `GameScene.backToMenu()` -> title, no crash. **Amended 2026-10-23: the on-screen MENU button was REMOVED (FLY ON now opens
+   the FLY screen, where the way is chosen); Esc still goes back. Do not cite the button against current code.** `save.flights` now counts at LIFT-OFF, not on
    TAKE OFF. Test: `tests/runway-back.cjs`.
    Decided with the user: names = typed first name (letters only, <=12, word-filtered) + builder
    word + number, e.g. "Ollie the Puffin 27". Ultimate Flyer = transparent weighted sum (ⓘ button)

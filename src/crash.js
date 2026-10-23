@@ -4,6 +4,8 @@
 // to free memory) now shows a card with what broke and where the plane was, and a RESTART button
 // that writes the save first. A screenshot of the card is enough to find the bug.
 
+import { VERSION } from './version.js';
+
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 // where(): a short line about the game's state (distance, region, leg), for the card.
@@ -24,7 +26,7 @@ export function catchCrashes(where, beforeReload) {
       <pre style="white-space:pre-wrap;word-break:break-word;font:9px/1.4 monospace;background:#f0ead2;padding:6px;margin:0 0 8px;max-height:40vh;overflow:auto">${esc(title)}
 ${esc(detail)}
 ${esc(at)}
-version ${esc(v)} | ${esc(navigator.userAgent)}</pre>
+version ${esc(VERSION)} (${esc(v)}) | ${esc(navigator.userAgent)}</pre>
       <button type="button" style="font:10px Pixel,monospace;background:#4caf50;color:#fff;border:3px solid #1a1a22;padding:6px 10px">RESTART</button></div>`;
     c.querySelector('button').onclick = () => { try { beforeReload(); } catch (e) { /* reload anyway */ } location.reload(); };
     document.body.appendChild(c);

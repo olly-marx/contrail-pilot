@@ -1,4 +1,5 @@
 import { FEATURES, km } from './config.js';
+import { VERSION } from './version.js';
 import { flightPath, choices, city, EARTH_KM } from './route.js';
 import { headingWord } from './network.js';
 import { drawGlobe } from './globe.js';
@@ -51,14 +52,14 @@ export class UI {
     this.toastTimer = null;
 
     $('goBtn').onclick = () => this.start();
-    $('againBtn').onclick = () => this.start();
+    $('againBtn').onclick = () => this.showTitle();   // FLY ON: the FLY screen first, to choose the way (2026-10-23)
     $('schoolBtn').onclick = () => this.startSchool();
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
     $('hGoBtn').onclick = () => this.start();
     $('hGoTop').onclick = () => this.start();
     $('howBtn').onclick = () => { $('how').hidden = false; };
     $('howClose').onclick = () => { $('how').hidden = true; };
-    $('aboutBtn').onclick = () => { $('about').hidden = false; };
+    $('aboutBtn').onclick = () => { $('aboutVersion').textContent = `Contrail Pilot v${VERSION}`; $('about').hidden = false; };
     $('aboutClose').onclick = () => { $('about').hidden = true; };
     // Tap anywhere on the results while it is revealing to skip to the end.
     $('results').addEventListener('pointerdown', () => { this.skipReveal = true; }, true);
@@ -575,6 +576,5 @@ export class UI {
     $('coach').classList.toggle('high', !school);   // explanations sit high, so the ground stays visible
     $('skipSchool').hidden = !school;
   }
-  setRunwayBack(on) { const b = $('runwayBack'); if (b.hidden === on) b.hidden = !on; }   // only touch the DOM on a change
   hideCoach() { $('coach').hidden = true; $('coachDim').hidden = true; $('skipSchool').hidden = true; this.coachButton = false; }
 }

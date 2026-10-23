@@ -95,7 +95,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     let start = null, dark = null;
     for (let t = 0; t < 30; t += 0.1) { const h = half(t); if (start === null && h.isDay && h.toOther > 0) start = t; if (dark === null && !h.isDay) dark = t; }
     return { start, dark }; });
-  check(tw.start !== null && tw.dark - tw.start >= 5, `sunset lasts at least 5 s before night: ${JSON.stringify(tw)}`);
+  check(tw.start !== null && tw.dark - tw.start >= 3.5, `sunset lasts at least 3.5 s before night (was 5 with the 6 s dusk; the user shortened it to 4 s on 2026-10-23): ${JSON.stringify(tw)}`);
 
   console.log({ saf, plan, auto, first, tw, fails, errs });
   await b.close();

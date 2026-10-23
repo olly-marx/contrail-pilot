@@ -106,7 +106,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   if (!(await p.isVisible('#results'))) fails.push('results not shown after school');
   if ((await p.textContent('#rTitle')).toLowerCase().indexOf('school') < 0) fails.push('results do not say flight school');
   // Second visit: the button says TAKE OFF and starts a normal flight.
-  await p.click('#againBtn'); await p.waitForTimeout(500);
+  await p.evaluate(() => { game.registry.get('save').tours = ['*']; });   // FLY ON now passes the menu, where the first-time tour would show
+  await p.click('#againBtn'); await p.click('#goBtn'); await p.waitForTimeout(500);
   if (await p.evaluate(() => !!game.scene.getScene('game').school)) fails.push('second flight went to school again');
   if (errs.length) fails.push('page errors');
   console.log(fails.length ? 'FAIL: ' + fails.join('; ') : 'PASS');
