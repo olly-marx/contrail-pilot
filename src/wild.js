@@ -11,6 +11,8 @@ import { LINES, tabOf } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies } from './nature.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA } from './habitats.js';
 import { CITIES } from './cities.js';
+import { FEATURES } from './config.js';
+import { PIXELLAB } from './pixellab.js';
 import { meterHTML } from './ui.js';
 
 const $ = id => document.getElementById(id);
@@ -169,9 +171,13 @@ export class WildScreen {
   }
 }
 
+// Where an animal's in-flight frames are: the PixelLab preview set if it is on and has this one.
+const artDir = sprite => (FEATURES.pixelArt && PIXELLAB.has(sprite) ? 'assets/pixellab' : 'assets');
+
 // An animal's picture: its portrait, its sprite, or (not drawn yet) a question mark.
 function picHTML(w, cls = '') {
-  const pic = w.portrait ? `${w.portrait}-0.png` : w.sprite ? `assets/${w.sprite}-0.png` : '';
+  const pic = FEATURES.pixelArt && PIXELLAB.has(w.sprite) ? `assets/pixellab/ui/portrait-${w.sprite}-0.png`   // the PixelLab preview
+    : w.portrait ? `${w.portrait}-0.png` : w.sprite ? `assets/${w.sprite}-0.png` : '';
   return pic ? `<img class="${cls}" src="${esc(pic)}" alt="">` : `<span class="w-nopic ${cls}">?</span>`;
 }
 
@@ -244,7 +250,7 @@ class Field {
     // Animals: start at random spots; birds that fly take the sky.
     this.critters = found.map((w, i) => {
       const fly = w.kind === 'bird' && w.pose !== 'standing';
-      const c = { w, fly, img: put(`assets/${w.sprite}-0.png`, 0, 0, 1, 'critter'), frame: 0, t: Math.random(), pause: Math.random() * 2,
+      const c = { w, fly, img: put(`${artDir(w.sprite)}/${w.sprite}-0.png`, 0, 0, 1, 'critter'), frame: 0, t: Math.random(), pause: Math.random() * 2,
         x: 20 + Math.random() * (FW - 40), y: fly ? 14 + Math.random() * 30 : GROUND[0] + Math.random() * (GROUND[1] - GROUND[0]),
         speed: fly ? 22 + Math.random() * 10 : 6 + Math.random() * 6, dir: Math.random() < 0.5 ? -1 : 1 };
       if (!fly) this.pick(c);
@@ -284,7 +290,7 @@ class Field {
     }
     c.t += dt;
     const frame = moving ? Math.floor(c.t / (c.fly ? 0.18 : 0.25)) % 2 : 0;   // 0 when standing still (not `false`)
-    if (frame !== c.frame) { c.frame = frame; c.img.src = `assets/${c.w.sprite}-${frame}.png`; }
+    if (frame !== c.frame) { c.frame = frame; c.img.src = `${artDir(c.w.sprite)}/${c.w.sprite}-${frame}.png`; }
     const im = c.img;
     im.style.left = `${Math.round(c.x - im.naturalWidth / 2)}px`;
     im.style.top = `${Math.round(c.y)}px`;

@@ -1,7 +1,7 @@
 import {
   km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
   TAKEOFF, AIRPORT, CRYSTALS, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL, HAZARDS,
-  FOREST, POWERUPS,
+  FOREST, POWERUPS, FEATURES,
 } from './config.js';
 import { School } from './school.js';
 import { Hud } from './Hud.js';
@@ -14,6 +14,7 @@ import { sfx, buzz } from './sound.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
+import { PIXELLAB } from './pixellab.js';
 import { LANDMARKS } from './landmarks.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, localTree, regionSpecies } from './nature.js';
 import { regionBelow } from './geo.js';
@@ -195,6 +196,7 @@ export class GameScene extends Phaser.Scene {
     this.wildLayer = this.add.layer();     // cows, sheep and wild animals
     this.regionNow = null; this.setRegion(this.regionHere(), true);   // what is below the plane (src/geo.js)
     this.loadPathArt();
+    if (FEATURES.pixelArt) this.previewReadout();
     this.buildWildlife();
     this.plotLayer = this.add.layer();
     this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
@@ -741,12 +743,24 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1500, () => this.popup(WIDTH / 2, SKY_H - 60, `NEW ANIMAL: ${w.name.toUpperCase()}!`, '#ffe15a', 14));
   }
 
+  // PixelLab preview only (?pixelart=on): load time and frames per second, top right, to see if the art costs anything.
+  previewReadout() {
+    const el = document.getElementById('previewHud') || Object.assign(document.body.appendChild(document.createElement('div')),
+      { id: 'previewHud' });
+    el.style.cssText = 'position:fixed;top:2px;right:2px;z-index:50;font:9px monospace;background:rgba(0,0,0,.55);color:#8dffb0;padding:2px 4px;pointer-events:none';
+    const loaded = Math.round(performance.now());
+    if (this.previewTimer) this.previewTimer.remove();
+    this.previewTimer = this.time.addEvent({ delay: 500, loop: true, callback: () => {
+      el.textContent = `PIXEL ART PREVIEW  load ${(loaded / 1000).toFixed(1)} s  ${Math.round(this.game.loop.actualFps)} fps`; } });
+  }
+
   // Queue the drawings (animals, birds, trees) of these lands; returns how many were queued.
   queueArt(regions) {
     let n = 0;
     for (const w of WILDLIFE) if (w.sprite && regions.includes(w.region)) for (let f = 0; f < (w.frames || 2); f++) {
       const k = `${w.sprite}-${f}`;
-      if (!this.textures.exists(k)) { this.load.image(k, `assets/${k}.png`); n++; }
+      const dir = FEATURES.pixelArt && PIXELLAB.has(w.sprite) ? 'assets/pixellab' : 'assets';   // the PixelLab preview (config.js)
+      if (!this.textures.exists(k)) { this.load.image(k, `${dir}/${k}.png`); n++; }
     }
     return n;
   }
