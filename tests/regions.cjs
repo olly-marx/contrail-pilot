@@ -1,5 +1,5 @@
 // NATURE in every region (2026-10-22, the user's design): a region's tab opens once you have been
-// there (landed in one of its cities); savanna and rainforest wait for an airport. Each region has its
+// there (landed in one of its cities, or flown over it). Each region has its
 // own projects, meter and animals, bought into save.habitat[region]; animals not drawn yet show a "?";
 // who runs a project is shown, with links behind the grown-up gate (hold 2 s).
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/regions.cjs
@@ -30,13 +30,16 @@ const KEY = 'contrailPilot.v2';
   check(!(await tab(p, 'woodland')).off && (await tab(p, 'mediterranean')).off, `only the UK is open before travelling: ${JSON.stringify(await tab(p, 'mediterranean'))}`);
   await p.close();
 
-  // 2. Been to Rome: the Mediterranean opens; the desert says "fly there"; the savanna says "soon".
+  // 2. Been to Rome: the Mediterranean opens; the desert and the savanna say "fly there".
   p = await open({ ...base, seeds: 500, crystals: 50, visited: ['LONDON', 'PARIS', 'BERLIN', 'ROME'], habitat: { woodland: ['deadwood'] } });
   await p.click('#tabNature'); await p.waitForTimeout(300);
   const med = await tab(p, 'mediterranean'), des = await tab(p, 'desert'), sav = await tab(p, 'savanna');
-  check(!med.off && des.off && /fly there/.test(des.text) && sav.off && /soon/.test(sav.text), `tabs: ${JSON.stringify({ med, des, sav })}`);
+  check(!med.off && des.off && /fly there/.test(des.text) && sav.off && /fly there/.test(sav.text), `tabs: ${JSON.stringify({ med, des, sav })}`);
   await p.click('[data-region="mediterranean"]'); await p.waitForTimeout(300);
 
+  // 2b. Any airport of a region opens it (src/cities.js), not only the old 16-city loop: NAIROBI opens the savanna.
+  const nb = await p.evaluate(async () => { const w = await import('./src/wild.js'); return [w.discovered({ visited: ['NAIROBI'] }, 'savanna'), w.discovered({ visited: ['NAIROBI'] }, 'rainforest')]; });
+  check(String(nb) === 'true,false', `landing in NAIROBI opens the savanna, not the rainforest: ${nb}`);
   // 3. Its own projects (not the UK's), its own meter, and buying puts it in save.habitat.mediterranean.
   const list = await p.evaluate(() => [...document.querySelectorAll('[data-pline]')].map(e => e.dataset.pline));
   check(list.includes('olives') && !list.includes('deadwood'), `Mediterranean projects listed, not the UK's: ${list}`);
@@ -66,7 +69,8 @@ const KEY = 'contrailPilot.v2';
 
   // 5. Animals not drawn yet: a "?" card, and their page says they are being drawn.
   const undrawn = await p.evaluate(async () => { const n = await import('./src/nature.js'); return n.regionSpecies('mediterranean').filter(w => !w.sprite).map(w => w.id); });
-  check(undrawn.length > 0, 'some Mediterranean animals are not drawn yet (test needs one)');
+  // (Since 2026-10-23 every animal is drawn: then every card must show its picture, none a '?'.)
+  if (!undrawn.length) check(!(await p.$('#wFound .w-nopic')) && (await p.$$('#wFound .w-card img')).length > 0, 'every drawn animal shows its picture');
   if (undrawn.length) {
     check(!!(await p.$(`[data-species="${undrawn[0]}"] .w-nopic`)), `${undrawn[0]}: a "?" picture`);
     await p.click(`[data-species="${undrawn[0]}"]`); await p.waitForTimeout(200);

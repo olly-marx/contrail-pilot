@@ -24,6 +24,9 @@ const drawn = [...src.matchAll(/\bgen\('([\w-]+)'/g)].map(m => m[1]);
   // enough and everything still loading counted as missing). 'puff' is drawn in code after loading.
   await p.waitForFunction(() => { const s = window.game && game.scene.getScene('game'); return s && s.sys.isActive() && s.textures.exists('puff') && !s.load.isLoading(); }, null, { timeout: 60000 }).catch(() => {});
   const want = [...new Set([...pngs, ...drawn])];
+  // Region animals and trees load on demand (2026-10-23): ask for every land's, then wait for the loader.
+  await p.evaluate(async () => { const s = game.scene.getScene('game'), { WILDLIFE } = await import('./src/wildlife.js');
+    if (s.queueArt([...new Set(WILDLIFE.map(w => w.region))])) await new Promise(res => { s.load.once('complete', res); s.load.start(); }); });
   const missing = await p.evaluate(keys => { const s = game.scene.getScene('game'); return keys.filter(k => !s.textures.exists(k)); }, want);
   console.log({ checked: want.length, drawnInCode: drawn.length, missing, errs });
   await b.close();

@@ -15,7 +15,7 @@ import { current as currentMission, complete as completeMission, indexOf as miss
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { LANDMARKS } from './landmarks.js';
-import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, localTree } from './nature.js';
+import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, localTree, regionSpecies } from './nature.js';
 import { regionBelow } from './geo.js';
 import { REGION_DATA, REGION_NAMES } from './habitats.js';
 
@@ -43,6 +43,8 @@ const FLOCK_HALF = 2;   // a flock fills the box of an old 5-bird V: 26 px acros
 const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
   : /too hot/.test(reason) ? 'overheat' : 'ground';
 
+const STORM_TINT = { top: 0xffffff, hung: 0xd7dbe4, base: 0x464e66 };
+
 export class GameScene extends Phaser.Scene {
   constructor() { super('game'); }
 
@@ -63,7 +65,10 @@ export class GameScene extends Phaser.Scene {
     // Background wildlife: two frames each (legs / wings).
     // Animals and birds: every species in src/wildlife.js (the loop below).
     // Every species the art session has drawn (src/wildlife.js, generated): new ones load themselves.
-    for (const w of WILDLIFE) if (w.sprite) for (let f = 0; f < (w.frames || 2); f++) { const k = `${w.sprite}-${f}`; if (!this.textures.exists(k)) this.load.image(k, `assets/${k}.png`); }   // trees: 3 growth stages
+    // Animals and trees: only the UK's and those of the land you are in now (2026-10-23: all 240 species
+    // added ~260 requests at start-up); the rest load in the background for the lands this flight crosses.
+    const sv = this.registry.get('save') || {}, home = city(typeof sv.city === 'string' ? sv.city : HOME);
+    this.queueArt(['woodland', home ? home.region : 'woodland']);
     // Each region's ground strip and hills (woodland's are 'ground' and 'hills', loaded above).
     for (const r in REGIONS) for (const k of [REGIONS[r].ground, REGIONS[r].hills]) if (k && !['ground', 'hills'].includes(k)) this.load.image(k, `assets/${k}.png`);
     this.load.image('puff', 'assets/puff.png');
@@ -189,6 +194,7 @@ export class GameScene extends Phaser.Scene {
     this.decorLayer = this.add.layer();
     this.wildLayer = this.add.layer();     // cows, sheep and wild animals
     this.regionNow = null; this.setRegion(this.regionHere(), true);   // what is below the plane (src/geo.js)
+    this.loadPathArt();
     this.buildWildlife();
     this.plotLayer = this.add.layer();
     this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
@@ -737,6 +743,26 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1500, () => this.popup(WIDTH / 2, SKY_H - 60, `NEW ANIMAL: ${w.name.toUpperCase()}!`, '#ffe15a', 14));
   }
 
+  // Queue the drawings (animals, birds, trees) of these lands; returns how many were queued.
+  queueArt(regions) {
+    let n = 0;
+    for (const w of WILDLIFE) if (w.sprite && regions.includes(w.region)) for (let f = 0; f < (w.frames || 2); f++) {
+      const k = `${w.sprite}-${f}`;
+      if (!this.textures.exists(k)) { this.load.image(k, `assets/${k}.png`); n++; }
+    }
+    return n;
+  }
+  // After the scene is built: fetch, in the background, the drawings for every land on this flight's path
+  // (a species also drawn for another land is in WILDLIFE once, under its own region, so check both).
+  loadPathArt() {
+    const lands = [...new Set(this.path.map(n => (city(n) || {}).region).filter(Boolean))];
+    const extra = [...new Set(lands.flatMap(r => regionSpecies(r).map(w => (WILDLIFE.find(x => x.sprite === w.sprite) || {}).region).filter(Boolean)))];
+    if (this.queueArt([...lands, ...extra])) {
+      this.load.once('complete', () => { if (this.regionNow) this.wildlife = wildlifeScene(this.save, this.regionNow); });
+      this.load.start();
+    }
+  }
+
   // ---------- the region below (the user, 2026-10-22: real geography decides it; src/geo.js) ----------
   // The leg from the airport behind to the one ahead; how far along it the plane is, as a fraction.
   regionHere() {
@@ -792,8 +818,11 @@ export class GameScene extends Phaser.Scene {
       return true;
     };
     if (due('tree', W.treesPerScreen)) {
-      const t = this.add.image(atX, SKY_H + 1, `tree-${pick(W.treeKinds)}-2`).setOrigin(0.5, 1).setScale(Phaser.Math.FloatBetween(0.9, 1.1));
-      this.farTreeLayer.add(t); this.life.push({ img: t, k: 1 });
+      const tk = pick(W.treeKinds);
+      if (this.textures.exists(`tree-${tk}-2`)) {   // (a land's trees may still be loading)
+        const t = this.add.image(atX, SKY_H + 1, `tree-${tk}-2`).setOrigin(0.5, 1).setScale(Phaser.Math.FloatBetween(0.9, 1.1));
+        this.farTreeLayer.add(t); this.life.push({ img: t, k: 1 });
+      }
     }
     // `sprite`: texture prefix from src/wildlife.js ('animal-otter', 'sky-heron' for a standing bird).
     const animal = sprite => {
@@ -805,9 +834,9 @@ export class GameScene extends Phaser.Scene {
       this.seen(sprite);
     };
     if (due('farm', W.farmPerScreen)) animal(pick(['animal-cow', 'animal-sheep']));
-    if (due('wild', W.wildPerScreen)) { const k = W.pickWild(this.distancePx); if (k) animal(k); }   // rarer ones only far into a flight
+    if (due('wild', W.wildPerScreen)) { const k = W.pickWild(this.distancePx); if (k && this.textures.exists(`${k}-0`)) animal(k); }   // (still loading: not yet)   // rarer ones only far into a flight
     const b = due('bird', W.birdsPerScreen) && W.pickSky(this.distancePx);   // null: no bird this far in
-    if (b) {
+    if (b && this.textures.exists(`${b}-0`)) {
       // Scenery birds fly LOW, just over the hills, small and faded: background life, never mistaken
       // for a bird-strike flock (2026-10-22). Half size = their original small sprite size.
       const img = this.add.image(atX, Phaser.Math.Between(SKY_H - 62, SKY_H - 34), `${b}-0`).setOrigin(0.5).setScale(0.5).setAlpha(0.6);
@@ -1503,6 +1532,8 @@ export class GameScene extends Phaser.Scene {
     this.newHazard('noFly', 'NEW HAZARD: NO-FLY ZONE', 'Red stripes mean planes are not allowed there, like near airports or big events. Squeeze through the gap: touching it ends your flight!');
   }
 
+  // Storm cloud tints, top to base: a column rising from the ground has a bright, sunlit crown; one hanging from
+  // the sky starts pale grey; both darken to the slate base (as the reference picture, 2026-10-23).
   addStormPairAt(x, gapY, gap) {
     const topH = gapY - gap / 2, botY = gapY + gap / 2;
     // Collision boxes are plain rectangles; the drawn cloud is a tiled body plus a rounded cap.
@@ -1514,6 +1545,12 @@ export class GameScene extends Phaser.Scene {
       this.add.tileSprite(x, botY + 10, STORMS.width, Math.max(1, SKY_H - botY - 10), 'storm-body').setOrigin(0),
       this.add.image(x, botY, 'storm-top').setOrigin(0),
     ];
+    // A storm cloud is light at the top and dark at the base (the user, 2026-10-23): each column gets a
+    // tint gradient over its full height (the texture itself is soft and pale; tools/art/make_storm.py).
+    const grad = (y0, y1) => y => lerpColour(y0 === 0 ? STORM_TINT.hung : STORM_TINT.top, STORM_TINT.base, Math.min(1, Math.max(0, (y - y0) / Math.max(1, y1 - y0))));
+    const g1 = grad(0, topH), g2 = grad(botY, SKY_H);
+    const shadeY = (im, g) => { const a = g(im.y), b = g(im.y + im.height); im.setTint(a, a, b, b); };
+    shadeY(parts[0], g1); shadeY(parts[1], g1); shadeY(parts[3], g2); shadeY(parts[2], g2);
     this.stormLayer.add(parts);
     this.storms.push({ rects: [top, bottom], parts, flashUntil: 0 });
     this.stormCount++;

@@ -23,6 +23,12 @@ const KEY = 'contrailPilot.v2';
   await p.click('#goBtn'); await started(p);
   for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
 
+  // 0. Drawings load by land (2026-10-23): the lands on this flight's path (Mediterranean, desert...) are
+  // fetched in the background; a land far off the path (the Amazon) is not loaded at all.
+  await p.waitForFunction(() => game.scene.getScene('game').textures.exists('animal-camel-0'), null, { timeout: 20000 }).catch(() => {});
+  const art = await p.evaluate(() => { const s = game.scene.getScene('game'); return { camel: s.textures.exists('animal-camel-0'), capybara: s.textures.exists('animal-capybara-0'), onPath: s.path.slice(0, 6) }; });
+  check(art.camel && (!art.capybara || art.onPath.some(n => ['MANAUS', 'BELEM', 'BOGOTA', 'LIMA'].includes(n))), `art by land: ${JSON.stringify(art)}`);
+
   // 1. Taking off from Athens: the Mediterranean is below; its strips; no UK meadow flowers or hedge.
   const start = await p.evaluate(() => { const s = game.scene.getScene('game');
     return { r: s.regionNow, ground: s.terrain && s.terrain.ground, flowers: s.flowers && s.flowers.visible, hedge: s.hedge && s.hedge.visible, wild: s.wildlife.region }; });

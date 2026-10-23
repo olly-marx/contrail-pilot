@@ -16,7 +16,7 @@ const KEY = 'contrailPilot.v2';
   p.on('pageerror', e => errs.push(String(e)));
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   await p.addInitScript(k => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear();
-    localStorage.setItem(k, JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'], landings: 9, priceVersion: 2, seeds: 50 })); } }, KEY);
+    localStorage.setItem(k, JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'], landings: 9, priceVersion: 2, seeds: 50, city: 'HONOLULU' }));   /* an ocean island: the path crosses the sea (the 2026-10-23 art-loading crash) */ } }, KEY);
   await p.goto(URL); await ready(p);
   // Every region: its first two projects done (the UK's too), so every region's cooling and animals are live.
   await p.evaluate(async () => { const h = await import('./src/habitats.js'), s = game.registry.get('save');

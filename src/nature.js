@@ -122,6 +122,7 @@ export const ukSpecies = () => WILDLIFE.filter(w => w.region === 'woodland' && w
 // borrow another's drawing (`sprite`). Not drawn yet: no sprite, so it cannot appear in flight.
 const drawn = Object.fromEntries(WILDLIFE.map(w => [w.id, w]));
 export function regionSpecies(region) {
+  if (!REGION_DATA[region]) return [];   // the sea and the ice have no animals of their own yet
   if (region === 'woodland') return ukSpecies().map(w => ({ ...w, c: UK_SPECIES[w.id] }));
   return Object.entries(REGION_DATA[region].species).map(([id, c]) => {
     const art = c.sprite ? WILDLIFE.find(w => w.sprite === c.sprite) : drawn[id];

@@ -4,13 +4,13 @@
 // the collection of animals: found ones with their portrait and fact, the rest as silhouettes
 // that say what they need. Animals are never bought: they appear on flights (GameScene.seen).
 // Every region since 2026-10-22: a region's tab opens once you have been there (landed in one of
-// its cities; flying over it will count once the flight knows what is below the plane).
+// its cities, or flown over it).
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies } from './nature.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA } from './habitats.js';
-import { REGIONS } from './wildlife.js';
+import { CITIES } from './cities.js';
 import { meterHTML } from './ui.js';
 
 const $ = id => document.getElementById(id);
@@ -26,8 +26,7 @@ const FIELD_ART = ['woodland'];
 export function discovered(save, region) {
   if (region === 'woodland') return true;
   if ((save.discovered || {})[region]) return true;   // flown over (GameScene.setRegion)
-  const cities = (REGIONS[region] || {}).cities || [];
-  return cities.some(c => (save.visited || []).includes(c));
+  return (save.visited || []).some(n => (CITIES.find(c => c.name === n) || {}).region === region);   // src/cities.js
 }
 
 export class WildScreen {
@@ -49,9 +48,9 @@ export class WildScreen {
     if (!discovered(s, this.region)) this.region = 'woodland';
     $('wSeeds').textContent = s.seeds; $('wCrystals').textContent = s.crystals || 0;
     $('wRegions').innerHTML = Object.entries(REGION_NAMES).map(([id, name]) => {
-      const open = discovered(s, id), far = !REGIONS[id];
+      const open = discovered(s, id);
       return `<button class="btn ${id === this.region ? 'on' : ''}" type="button" data-region="${id}" ${open ? '' : 'disabled'}
-        title="${open ? '' : far ? 'No airport here yet' : 'Fly there to discover it'}">${esc(name)}${open ? '' : ` <small>${far ? 'soon' : 'fly there'}</small>`}</button>`;
+        title="${open ? '' : 'Fly there to discover it'}">${esc(name)}${open ? '' : ' <small>fly there</small>'}</button>`;
     }).join('');
     $('wRegions').querySelectorAll('[data-region]:not([disabled])').forEach(b => b.onclick = () => {
       if (b.dataset.region === this.region) return;
