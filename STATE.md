@@ -220,6 +220,14 @@ the advanced autopilot (see items 5 below).
 - STORM CLOUDS (the user, 2026-10-23, reference picture; 'looks like stone, the gradient is what matters'): tools/art/make_storm.py
   repaints the 6 storm PNGs soft/pale inside the SAME alpha outline (asserted: collisions unchanged); GameScene.addStormPairAt tints
   each column top-to-base with STORM_TINT (white/pale grey -> slate). make_sprites.py calls make_storm.main() (art session).
+- PIXELLAB PREVIEW LIVE 2026-10-23 (8827fb5): FEATURES.pixelArt = sticky per-device switch (?pixelart=on / ?pixelart=off,
+  localStorage contrailPilot.preview.pixelart); species in src/pixellab.js load from assets/pixellab/ (flight, wild field, NATURE
+  cards) + a 'PIXEL ART PREVIEW load/fps' readout. First set: the 23 UK animals (sources + provenance: tools/art/pixellab/uk/;
+  tools/art/install_pixellab.py installs; small animals halved 2x). Style the user chose: in flight = flat 2D side-on pixflux 32 px,
+  reduce_colors 10, 2 frames via animate_image (a0, a2); cards = pixen 64 px 'realistic field-guide ... not chibi, plain empty
+  transparent background, no ground, no text'. UK set cost ~80c incl. 5 redos (deer red/spotted, hedgehog text, heron like a duck,
+  pine marten like a red panda, badger smudge). The user: keep it preview-only until ALL animals are done; generate the rest in
+  the background; the plane upgrades ship first with hand-drawn art. The user has a PixelLab subscription now.
 - PIXELLAB MCP (added by the user 2026-10-23): LOCAL scope for /home/ojm, so it is NOT in sessions that were already running;
   drive it headless: `cd ~ && claude -p "<task>" --allowedTools "mcp__pixellab__create_image_pixen,mcp__pixellab__get_image,..."`
   (works). Trial (6 generations, 1 each; /tmp/pixellab/compare.png): PIXEN 64x64 clearly best (salmon, loggerhead, fish owl
