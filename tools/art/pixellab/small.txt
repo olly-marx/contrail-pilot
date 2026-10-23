@@ -1,0 +1,22 @@
+# Animals drawn on the 32 px canvas that should be HALVED in the game (exact 2x), so they stay small next to a cow.
+# Declared by hand (2026-10-23): roughly anything smaller than a fox. One id per line; '#' starts a comment.
+# UK
+rabbit hedgehog robin swallow squirrel kingfisher woodpecker watervole dormouse frog
+# Mediterranean
+tortoise hoopoe beeeater ocellatedlizard chameleon porcupine
+# Desert
+fennec jerboa sandcat viper meerkat houbara
+# Monsoon
+parakeet sunbird cobra
+# East Asia
+firefly amamirabbit mandarinduck pheasantgreen tanuki
+# Boreal
+dipper nutcracker snowhare marmot raven
+# Plains
+chickadee monarch swift warbler oyster teal cardinal bluejay hummingbird prairiedog skunk turtle raccoon
+# Iceland
+goldenplover redshank snowbunting ptarmigan tern puffin harlequin
+# Savanna
+# (none: the savanna animals are big)
+# Rainforest
+poisonfrog squirrelmonkey ghlt glt agouti skimmer

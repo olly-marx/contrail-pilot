@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / 'tools' / 'art' / 'pixellab'
 OUT = ROOT / 'assets' / 'pixellab'
 # Small animals: halved so they stay small next to a cow (they were made on the same 32 px canvas).
-SMALL = {'rabbit', 'hedgehog', 'robin', 'swallow', 'squirrel', 'kingfisher', 'woodpecker', 'watervole', 'dormouse', 'frog'}
+SMALL = {w for line in (SRC / 'small.txt').read_text().splitlines() for w in line.split('#')[0].split()}   # declared, not guessed
 
 
 def sprite_keys():
