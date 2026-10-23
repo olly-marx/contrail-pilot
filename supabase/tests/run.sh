@@ -13,4 +13,5 @@ docker exec -i cp-pg psql -q -t -U postgres < tests/names.sql
 docker exec -i cp-pg psql -q -U postgres < tests/rls.sql 2>&1
 docker exec -i cp-pg psql -q -U postgres < tests/claim.sql 2>&1
 docker exec -i cp-pg psql -q -U postgres < tests/online_save.sql 2>&1
+docker exec -i cp-pg psql -q -U postgres < tests/send_flights.sql 2>&1
 docker rm -f cp-pg >/dev/null

@@ -1,7 +1,8 @@
 // Online pilot names + leaderboards, against a FAKE Supabase (Playwright intercepts the network),
 // so it needs no internet and never touches the real project. Checks what the game sends and how
 // it copes with the answers: the name form, rude-name and no-internet messages, flights sent after
-// a flight (never flight school, never before a name), the offline outbox (max 5), and the board.
+// a flight (never flight school, kept but not sent before a name), the offline outbox (100, sent in one call), and the board.
+// (tests/offline.cjs covers the rest of offline play: the banner, retries, an old database, a bad flight.)
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/online.cjs
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
@@ -16,7 +17,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
   const check = (c, m) => { if (!c) fails.push(m); };
 
   // ---- the fake Supabase ----
-  const net = { up: true, rudeName: false, players: null, flights: [], signups: 0 };
+  const net = { up: true, rudeName: false, players: null, flights: [], signups: 0, batches: 0 };
   const json = (route, status, body) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', async route => {
     const r = route.request(), u = new globalThis.URL(r.url()), m = r.method();
@@ -33,6 +34,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
       if (m === 'POST') { net.players = body; return route.fulfill({ status: 201, body: '' }); }
     }
     if (u.pathname === '/rest/v1/flights' && m === 'POST') { net.flights.push(r.postDataJSON()); return route.fulfill({ status: 201, body: '' }); }
+    if (u.pathname === '/rest/v1/rpc/send_flights') { const { batch } = r.postDataJSON(); net.batches++; net.flights.push(...batch); return json(route, 200, batch.length); }   // the database's batch upload (0.9.2)
     if (u.pathname === '/rest/v1/rpc/leaderboard') {
       const { board, period } = r.postDataJSON();
       return json(route, 200, [{ place: 1, name: `Zara the Owl ${board}/${period}`, tag: 12, score: 900, is_me: false }, { place: 2, name: 'Ollie the Puffin', tag: 27, score: 585, is_me: true }]);
@@ -53,9 +55,12 @@ const UID = '11111111-2222-3333-4444-555555555555';
   // 1. Title buttons.
   check(await p.isVisible('#tabPilot') && await p.isVisible('#tabBoards'), 'PILOT and BOARDS tabs should be on the title');
 
-  // 2. A flight before having a name is not sent, and no account is made.
+  // 2. A flight before having a name is not sent, and no account is made. It is KEPT (0.9.2) and goes up once there is a name
+  //    (tests/offline.cjs scenario 4 checks that); here it is cleared so the counts below stay about one flight at a time.
   await fly();
   check(net.flights.length === 0 && net.signups === 0, `nothing should be sent before a name: ${net.flights.length} flights, ${net.signups} sign-ups`);
+  check(await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.outbox')).length) === 1, 'the flight before a name should wait on the device');
+  await p.evaluate(() => localStorage.removeItem('contrailPilot.outbox'));
 
   // 3. The name form: letters only, SAVE off until name + word.
   await p.click('#tabPilot');
@@ -105,15 +110,15 @@ const UID = '11111111-2222-3333-4444-555555555555';
   await p.waitForTimeout(500);
   check(net.flights.length === 1, `a flight-school flight must not be sent (${net.flights.length})`);
 
-  // 9. Offline: flights wait (max 5), then go when the wifi is back.
-  net.up = false;
+  // 9. Offline: flights wait (all of them: up to 100), then go in ONE call when the wifi is back.
+  net.up = false; const batches0 = net.batches;
   for (let i = 0; i < 7; i++) await p.evaluate(() => import('./src/online.js').then(o => o.sendFlight({ landed: false, distance_m: 10 })));
   await p.waitForTimeout(500);
   const waiting = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.outbox')).length);
-  check(waiting === 5, `7 offline flights should keep the last 5, got ${waiting}`);
+  check(waiting === 7, `7 offline flights should all wait, got ${waiting}`);
   net.up = true;
   await p.evaluate(() => window.dispatchEvent(new Event('online'))); await p.waitForTimeout(1500);
-  check(net.flights.length === 6, `the 5 waiting flights should be sent when back online (sent ${net.flights.length - 1})`);
+  check(net.flights.length === 8 && net.batches - batches0 === 1, `the 7 waiting flights should be sent in one call when back online (sent ${net.flights.length - 1} in ${net.batches - batches0} calls)`);
   check(await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.outbox')).length) === 0, 'outbox should be empty after sending');
 
   // 10. Leaderboard: rows shown, mine highlighted, tabs ask the right board.

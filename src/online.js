@@ -6,7 +6,7 @@ const SUPABASE_URL = 'https://mkucbsjzbipjaiqzrlkj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Oa3FSfnjmRu2xL_RmiKOqA_j3tEfgMd';
 const PILOT_KEY = 'contrailPilot.pilot';     // { first, word, tag } once saved online
 const OUTBOX_KEY = 'contrailPilot.outbox';   // flights not sent yet
-const OUTBOX_MAX = 5;                        // the database takes at most 5 flights a minute
+const OUTBOX_MAX = 100;                      // flights kept for sending: also the most one send_flights call takes (it was 5 until 0.10.0: a long offline stretch lost flights)
 const CODE_KEY = 'contrailPilot.code';       // this pilot's code (shown on PILOT; brings the pilot back on any device)
 const SYNC_KEY = 'contrailPilot.synced';     // { json, stamp } of the save last uploaded / downloaded
 
@@ -59,33 +59,77 @@ export async function savePilot(p) {
   }
 }
 
-// A finished flight. Only sent once the device has a pilot name; flights before that stay local.
+// A finished flight. It always goes in the outbox (even before this device has a pilot name: it is sent
+// once there is one) and is sent now, or when the connection is back. Offline play keeps up to OUTBOX_MAX.
 export function sendFlight(f) {
-  if (!getPilot()) return;
   const box = read(OUTBOX_KEY, []);
   box.push(f);
   write(OUTBOX_KEY, box.slice(-OUTBOX_MAX));
   flush();
-  if (saveRef) setTimeout(() => syncUp(saveRef), 4000);   // the online save, soon after each flight
+  if (saveRef && getPilot()) setTimeout(() => syncUp(saveRef), 4000);   // the online save, soon after each flight
 }
 let saveRef = null;
 export const watchSave = save => { saveRef = save; };   // main.js: the save to keep online
 
-let flushing = false;
+// Anyone can listen to the catching-up after a lost connection (src/uploadbanner.js does):
+// { type: 'start', flights, save } | { type: 'done', flights } | { type: 'stalled' }.
+const listeners = [];
+export const onUpload = fn => { listeners.push(fn); };
+const say = ev => listeners.forEach(fn => { try { fn(ev); } catch (e) { /* a listener must never stop the upload */ } });
+
+// What a failed send means. A bad flight (data / constraint error, Postgres classes 22 and 23) will never
+// be accepted: drop it. Everything else (no network, server down, a rate or daily limit) is worth trying again.
+const permanent = e => /^(22|23)/.test(String((e && e.code) || ''));
+const noBatch = e => e && (e.code === 'PGRST202' || e.code === '42883' || /send_flights/.test(String(e.message || '')) && /find|exist/.test(String(e.message || '')));
+const rateLimited = e => e && /too many flights/.test(String(e.message || ''));
+
+let flushing = false, retryTimer = null, recovering = false;
+// Send the outbox: whole batches through send_flights (one call, however many flights); if the database
+// has no such function yet, one by one (5 a minute). Returns { sent, stalled }.
 export async function flush() {
-  if (flushing || !getPilot()) return;
+  if (flushing || !getPilot() || !outboxSize()) return { sent: 0, stalled: false };
   flushing = true;
+  let sent = 0, stalled = false, wait = 15000;
+  const drop = n => write(OUTBOX_KEY, read(OUTBOX_KEY, []).slice(n));   // new flights are added at the END while we wait
   try {
     await session();
-    for (let box = read(OUTBOX_KEY, []); box.length; box = read(OUTBOX_KEY, [])) {
+    for (let box = read(OUTBOX_KEY, []), single = false; box.length; box = read(OUTBOX_KEY, [])) {
+      if (!single) {
+        const batch = box.slice(0, OUTBOX_MAX);
+        const { error } = await db().rpc('send_flights', { batch });
+        if (!error) { drop(batch.length); sent += batch.length; continue; }
+        if (!(noBatch(error) || permanent(error))) { stalled = true; if (rateLimited(error)) wait = 10 * 60 * 1000; break; }
+        single = true;   // an old database, or one bad flight in the batch: find out flight by flight
+      }
       const { error } = await db().from('flights').insert(box[0]);
-      if (error) break;   // offline or too fast: try again later
-      write(OUTBOX_KEY, read(OUTBOX_KEY, []).slice(1));
+      if (!error) { drop(1); sent++; continue; }
+      if (permanent(error)) { drop(1); continue; }   // never acceptable: stop it blocking the rest
+      stalled = true; if (rateLimited(error)) wait = 65000;   // 5 a minute: the next minute
+      break;
     }
-  } catch (e) { /* offline: the outbox waits */ }
+  } catch (e) { stalled = true; }   // offline: the outbox waits
   flushing = false;
+  if (stalled) {
+    recovering = true;
+    if (!retryTimer && typeof navigator !== 'undefined' && navigator.onLine !== false) retryTimer = setTimeout(() => { retryTimer = null; catchUp(); }, wait);
+  } else recovering = false;
+  return { sent, stalled };
 }
 export const outboxSize = () => read(OUTBOX_KEY, []).length;
+
+// The connection came back (or a retry fired): send everything that waited, the flights and then the save, and tell
+// listeners, but only when this really is catching up (something failed or went offline before), not after every flight.
+export async function catchUp(atStartup = false) {
+  const flights = getPilot() ? outboxSize() : 0;
+  const save = !!(saveRef && getPilot() && read(SYNC_KEY, {}).json !== JSON.stringify(saveRef));
+  const show = recovering ? (flights > 0 || save) : atStartup && flights > 0;   // opening the game with flights left from offline play counts too
+  if (show) say({ type: 'start', flights, save });
+  const r = await flush();
+  let kept = true;
+  if (!r.stalled && save && saveRef) kept = (await syncUp(saveRef)) || read(SYNC_KEY, {}).json === JSON.stringify(saveRef);
+  if (show) say(r.stalled || !kept ? { type: 'stalled' } : { type: 'done', flights: r.sent });
+  return r;
+}
 
 // Top 50 for one board: board = ultimate | longest | total | nature | cooler | cleaner | missions,
 // period = today | week | month | all. Returns null when it can't be reached.
@@ -190,4 +234,7 @@ export async function pilotLogin(p, code) {
   } catch (e) { return { ok: false, why: 'offline' }; }
 }
 
-if (typeof window !== 'undefined') window.addEventListener('online', () => flush());
+if (typeof window !== 'undefined') {
+  window.addEventListener('offline', () => { recovering = true; });
+  window.addEventListener('online', () => { recovering = true; catchUp(); });
+}

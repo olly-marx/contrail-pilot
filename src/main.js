@@ -5,7 +5,8 @@ import { repriceSave } from './reprice.js';
 import { migrateHabitat } from './habitats.js';
 import { UI } from './ui.js';
 import { PilotScreens } from './pilot.js';
-import { flush, syncUp, syncDown, watchSave, ensureCode } from './online.js';
+import { catchUp, onUpload, syncUp, syncDown, watchSave, ensureCode } from './online.js';
+import { UploadBanner } from './uploadbanner.js';
 import { Tour } from './tour.js';
 import { WildScreen } from './wild.js';
 import { Updates } from './updates.js';
@@ -52,7 +53,9 @@ ui.pilot.checkRestoreLink();   // TEMPORARY: ?restore=<code> personal links (202
 ui.wild = new WildScreen(ui);   // the NATURE screen (src/wild.js)
 ui.tour = new Tour(ui);   // "tap here" tutorials (src/tour.js)
 ui.tour.maybe('title');
-flush();   // flights saved while offline last time
+const uploadBanner = new UploadBanner(() => { const s = game.scene.getScene('game'); return !!s && ['takeoff', 'playing', 'landing'].includes(s.state); });
+onUpload(ev => uploadBanner.handle(ev));   // "Back online! Uploading..." (never mid-flight)
+catchUp(true);   // flights saved while offline last time
 // Online save (named pilots): take a newer online copy on opening; then upload changes every 30 s.
 syncDown(save).then(online => {
   if (!online) return;

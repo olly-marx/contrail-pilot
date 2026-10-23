@@ -84,6 +84,7 @@ node tests/missions.cjs           # mission card, completion on landing, not on 
 node tests/features.cjs           # Citizen Zoo switch: off = no trace of it anywhere; ?citizenzoo = all back
 node tests/gate.cjs               # grown-up gate: hold 2 s (mouse + touch) reveals a real Citizen Zoo link
 node tests/links.cjs              # every Learn more link has a real https URL; About page links and credit
+node tests/offline.cjs            # offline play: flights wait (100), one-call upload on reconnect, the Back online banner, retries
 node tests/release.cjs            # the release gate: version.js + CHANGES.json agree (RELEASING.md)
 node tests/runway-back.cjs        # Esc while parked on the runway: back to title, no flight counted
 node tests/upgrades.cjs           # upgrade trees: branches open after their parent; every new line changes the flight

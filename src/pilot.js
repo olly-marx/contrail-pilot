@@ -1,5 +1,5 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
-import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, restorePreview, restoreClaim, getCode, ensureCode, pilotLogin } from './online.js';
+import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, restorePreview, restoreClaim, getCode, ensureCode, pilotLogin, outboxSize } from './online.js';
 import { rebuildSave } from './restore.js';
 import { writeSave } from './save.js';
 import { MISSIONS } from './missions.js';
@@ -193,7 +193,11 @@ export class PilotScreens {
     $('bList').innerHTML = '';
     const rows = await leaderboard(board.id, period);
     if (this.board !== board.id || this.period !== period) return;   // tapped another tab meanwhile
-    if (!rows) { $('bMsg').textContent = 'No internet right now. Try again soon!'; return; }
+    if (!rows) {
+      const n = outboxSize();   // flights waiting on this device (offline play)
+      $('bMsg').textContent = 'No internet right now. Try again soon!' + (n ? ` Your ${n === 1 ? 'flight is' : n + ' flights are'} saved on this device and will upload when you are back online.` : '');
+      return;
+    }
     $('bMsg').textContent = rows.length ? '' : board.oops ? 'Nobody yet. Phew!' : 'Nobody yet. Land a flight to be first!';
     $('bList').innerHTML = rows.map(r => `<li class="${r.is_me ? 'me' : ''} p${Math.min(r.place, 4)}"><span class="place">${place(Number(r.place))}</span>`
       + `<span class="who"><b>${esc(r.name)}</b><small>#${esc(r.tag)}${r.is_me ? ' (you)' : ''}</small></span><span class="score">${board.fmt(Number(r.score))}</span></li>`).join('');
