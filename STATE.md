@@ -137,7 +137,7 @@ hangar's real-tree gate, the About section), drops `citizenzoo` Learn more links
 picks Citizen-Zoo-free versions of the facts. `?citizenzoo` in the URL turns it on (demos).
 Possible future collaboration; nothing was removed.
 
-## Plane eras 1-3 (plane build session, 0.10.0, 2026-10-23)
+## Plane eras 1-3 (plane build session, 0.10.0, 2026-10-23) -- NOT LIVE YET: waiting for the user's OK to release
 Built from research/PLANE-ERAS-1-3.md: src/eras.js (save.flightSeconds; era n = 30 x n^1.5 min),
 src/fleet.js (planes, systems, gadgets, fleetKit, the one-time reset migrateFleet: plane-side only, +300
 seeds), src/hangar.js (fleet hangar), src/welcome.js (era cards). Mechanics: contrail margin
