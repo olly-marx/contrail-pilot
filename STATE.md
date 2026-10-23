@@ -211,6 +211,21 @@ the advanced autopilot (see items 5 below).
   nature.js UK_SLOTS/localTree; save.plantedIn[region][id]; slot 0 scores as plantation even when native; regional meter =
   trees + projects (raw scaled like the UK); GameScene plants localTree, t.art picture (UK slot's until drawn), no soil
   over sea/ice. Weak tree sources noted by the researcher: tundra willow (bee line), Iceland juniper, oil palm (The Conversation).
+- ART DONE + LIVE 2026-10-23 (1f84ec4, CI green, 43/43): 91 region animals + 27 regional trees as dials in tools/art/species.py
+  (make_wildlife.py: 472 new PNGs, old ones byte-identical). Weak where templates are missing (fish, sea turtle, shell, insects,
+  scimitar/ibex/hooked horns, gharial snout, owl face, baobab trunk, giraffe neck patches, rhino lips, moon-bear chest V): the
+  art session adds templates after the plane design. Region art loads ON DEMAND (GameScene.queueArt/loadPathArt): UK + home land
+  at start, the path's lands in the background; spawns skip unloaded textures (start-up 2.1 s -> 2.8 s if all loaded at once).
+  regionSpecies() guarded for sea/ice (crashed on Honolulu paths; tests/everyleg starts in HONOLULU).
+- STORM CLOUDS (the user, 2026-10-23, reference picture; 'looks like stone, the gradient is what matters'): tools/art/make_storm.py
+  repaints the 6 storm PNGs soft/pale inside the SAME alpha outline (asserted: collisions unchanged); GameScene.addStormPairAt tints
+  each column top-to-base with STORM_TINT (white/pale grey -> slate). make_sprites.py calls make_storm.main() (art session).
+- PIXEL ART MCP (asked 2026-10-23): PixelLab MCP (generative; needs the user's paid API token, added by the user with
+  `claude mcp add`) or Aseprite MCP servers (editing; need Aseprite). Suggested trial: salmon, loggerhead, fish owl vs our style.
+- PACING DATA for the plane design (read-only query, 2026-10-23; 525 flights, 9 players, mostly the user/Lola/testers): flights
+  per active day median 29 (p75 47); landed 20.4%; sky seeds per landed flight median 20 (flights 1-20), 25 (21-50), 81 (51+).
+  The flights table stores no seeds and no duration.
+- NATURE tabs open from ANY airport of a region (src/cities.js) or flying over it (save.discovered).
 - ART-BRIEF-REGIONS.md (generated from the data): 91 animals, 101 project icons, 9 field backdrops, savanna/rainforest/ocean
   terrain. The user will start a NEW art session for it.
 - DECIDED (the user, 2026-10-22): region below the plane = REAL GEOGRAPHY (position along the real great circle of the leg, by
