@@ -1,4 +1,4 @@
-# My Plane: design for approval (draft 2, 2026-10-23, art session)
+# My Plane: design (draft 3, FINAL for approval, 2026-10-23, art session)
 
 Built from `plane-generations.md`, `plane-atc.md`, `plane-weather.md`, `plane-future.md` and the fact-check
 `plane-verification.md`. Nothing here is built yet. Numbers marked **(est.)** are game estimates, not
@@ -12,12 +12,12 @@ measurements; the game will never present them as facts.
 5. Branch 3: Air traffic control (a slightly kinder sky)
 6. Branch 4: Future planes (one chosen path)
 7. Era gadgets (magnet, hold, landing, sensors, cabin)
-8. Unlocking: eras are earned by flying, not just bought
+8. Unlocking: eras are earned by flying time; seeing your progress
 9. Money: seeds, crystals and keeping seeds flowing
 10. The reset (option a) and what is kept
 11. Art
 12. Build order
-13. Open questions
+13. Status (decided, and what is still open)
 
 ## 1. Rules this design keeps
 - **The controls never change.** Every plane taps, climbs and falls exactly the same. Collisions keep using
@@ -124,11 +124,31 @@ future). They map onto today's dials, so the code already supports them:
   laser humidity sensor (WVSS-II, REAL), lidar, AI.
 - **Cabin** (NEW: passengers and fares, see 9).
 
-## 8. Unlocking: eras are earned by flying
-Players keep their seeds (section 10), so money alone must not skip eras. Each era opens when you reach a
-flying milestone **and** pay for it, e.g. 1970s: 5 landings and 5,000 km flown in total; 1990s: 20 landings,
-10 cities; ... (exact milestones set from real play data, see 9). Within an era, generations and gadgets are
-bought with seeds (and crystals for the science branches).
+## 8. Unlocking: eras are earned by FLYING TIME (decided 2026-10-23)
+- Eras open by **real minutes of flying**: a new counter `save.flightSeconds` adds the seconds actually flown,
+  take-off to landing OR CRASH (crashes count fully), not paused tips or menus. It starts at 0 for everyone
+  at the reset (the flight log never stored duration).
+- Era n takes **30 x n^1.5 minutes** (just above linear; user's choice):
+
+| Era reached | This era | Total flying | Keen (~45 min/day) | Casual (~15 min/day) |
+|---|---|---|---|---|
+| 1950s -> 1970s | 30 min | 30 min | day 1 | day 2 |
+| 1970s -> 1990s | 85 min | 1.9 h | day 3 | ~day 8 |
+| 1990s -> 2010s | 156 min | 4.5 h | day 6 | ~day 18 |
+| 2010s -> 2030s | 240 min | 8.5 h | day 12 | ~day 34 |
+| 2030s (future path) -> far future | 335 min | 14.1 h | day 19 | ~day 56 |
+| far future complete | 441 min | 21.5 h | day 29 | ~day 86 |
+(days = playing days; keen/casual rates from the flight log, section 9.)
+- Prices are set so a typical player can also afford each era's first jet and gadgets when its time is
+  reached: time and money line up instead of one blocking the other.
+
+### Seeing your progress (user: players must be able to monitor it)
+- **Results screen, after every flight (landed or crashed):** "+1.4 min flown" and an era bar that fills,
+  e.g. "To the 1970s: 18 / 30 min"; a celebration when an era opens.
+- **FLY screen:** a small era badge (e.g. "1950s") with the same bar under it.
+- **Hangar:** the era timeline across the top (1950s ... far future), done eras lit, the next one with its bar
+  and what it unlocks ("Next: the 747 jumbo, radar control, an electromagnet").
+- **Not in flight:** nothing extra on the flying screen (keeps it clean).
 
 ## 9. Money
 Measured so far (STATE.md): an average flight earns about 39 seeds and 4-7 crystals; 17% of real flights land;
@@ -139,8 +159,7 @@ badges pay ~7,700 seeds once. Seeds are scarce; crystals pile up.
 3. **Flight jobs**: three rotating contracts (e.g. "a whole night with no warming contrails"), replaced when done.
 4. **Nature dividend**: each finished habitat project adds a little to every landing.
 5. **First landing in each city**: ~104 cities since routing.
-Prices: set so each era takes roughly 1-2 weeks of normal play. Before setting numbers I will measure real
-seeds per flight by stage from the online flights table (and the user's and Lola's saves).
+Prices: set from the measured income below so each era's first jet and gadgets are affordable when its flying time is reached (section 8).
 
 ### Measured play (2026-10-23, read-only aggregate of public.flights by the game session)
 525 flights, 9 players (mostly the user, Lola and testers in the first 3 days: NOT festival behaviour).
@@ -150,21 +169,31 @@ landed only), excluding mission, badge and city prizes. Duration is not stored: 
 - Active days per player: median 1, p75 3. Flights per active day: median 29, p75 47. Landed: 20.4%.
 - Sky seeds per flight (mean): flights 1-20: 8.7; 21-50: 10.2; 51+: 19.0. Per LANDED flight (median): 20, 25, 81.
 - Top two players: A 51 flights/day, ~25.6 sky seeds per flight; B 42/day, ~15.2.
-Pace options (assuming ~30 seeds per flight once the new sources are in, ~+50%):
-short = 60 flights an era (~1 h flying); MEDIUM = 120 flights (~2 h; keen ~3 days, casual ~1 month; ~12 h for
-all 6 eras; suggested); long = 200 flights (~3.5 h). Existing players keep their seeds, so the flying
-milestones (section 8) set their pace.
+Pace: DECIDED as flying time, 30 x n^1.5 minutes per era (section 8); the earlier short/medium/long options are superseded.
 
 ## 10. The reset (user's choice, option a)
 On the update: plane-side levels reset to the 1950s; seeds, crystals, nature (habitat projects, trees, found
 animals, regions), badges, missions and all records (longest flight, total km `flownKm`, cities) are kept.
 A one-time "Welcome to the 1950s" card explains it. The update is marked **major** in CHANGES.json.
 
-## 11. Art
-Each jet and future plane drawn with shapes.py (as the trees and animals), at the same on-screen size and
-inside the same collision footprint; parts (engines, wings, winglets) as overlays that change by
-generation. A large detailed version in the hangar card (HTML, so it can be sharp). Era gadgets get small
-icons. Fact cards get the plane's portrait.
+## 11. Art (decided with the user, 2026-10-23, after PixelLab trials)
+- **In flight: the size never changes (62x27), and the ORIGINAL plane is the benchmark.** The user loves its
+  hard, clear, deliberate pixels (retro, not blurry). Blur comes from averaging: any shrink that blends pixels
+  is rejected. The tilt stays as it is (collisions use the base 'plane' mask with the tilt; unchanged).
+- **Recipe that works (trial 2026-10-23):** PixelLab pixflux drawing NATIVELY at 64x28, init image = the
+  original plane, colour image = the original (forced palette), outline 'single color black outline', medium
+  shading, init_image_strength ~200-300. Result: crisp, same palette and outline, a little more detail. Known
+  flaw: the cockpit window comes out as "a couple of dots"; fix by hand or a 1-credit edit.
+- **Hangar: a detailed version extrapolated from the SAME pixels** (bigger canvas, same livery and shape), so
+  it is clearly the same plane. This is where detail lives (like the animals' field-guide cards; the user
+  rejected cute/chibi cards).
+- **Upgrade looks: no "abomination".** The old overlays stacked parts that poked out everywhere. New rule:
+  each generation is ONE coherent plane; upgrades within it change only a few integrated things: livery colours,
+  nose shape, winglets, engine nacelles, gear doors. Each look is drawn as a whole-plane variant from that
+  generation's base (in flight and in the hangar), never as parts bolted on top.
+- Provenance: every generated PNG keeps a note (tool, prompt, init image, strength, seed, date).
+Trial images: /tmp/planes/ (not kept in the repo). **LOCKED recipe: research/PLANE-ART-RECIPE.md** (tools/art/plane_art.py);
+first portrait: assets/ui/plane-hangar-jumbo.png (the 747, 400x176).
 
 ## 12. Build order
 1. Measure income (DB + saves); fix the numbers in this doc.
@@ -176,9 +205,10 @@ icons. Fact cards get the plane's portrait.
 7. Future planes; flight jobs; nature dividend; city prizes.
 Each step: tests with planted defects, full 2-shard run, CHANGES.json note.
 
-## 13. Open questions for the user
-Answered in draft 2: ATC = kinder sky, not a cleared band; fake forecast patches OK and should vanish in a fun
-way; future planes = one chosen path.
-Still open:
-(Answered: the future path is switchable for a big price.)
-1. Pace: short / MEDIUM (suggested) / long, see "Measured play" in section 9 (replaces the vague "1-2 weeks per era"; data received 2026-10-23).
+## 13. Status
+Decided (user, 2026-10-22/23): four branches, generations replace; era gadgets; ATC = kinder sky; fake forecast
+patches vanish in a fun way; weather + ATC next-gap hint; one future path, switchable for a big price; reset
+plane upgrades only; eras by flying time, 30 x n^1.5 min, crashes count; progress shown on results, FLY and
+hangar screens; controls never change. Region art goes to a separate (third) session.
+Open: PixelLab for plane art (2 free trial credits left; a paid plan needed for the rest, roughly 30-60
+generations): waiting for the user's OK before spending anything.
