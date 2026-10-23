@@ -1,6 +1,6 @@
 # Art brief: the region animals, project icons and scenes (game session, 2026-10-22)
 
-For a NEW art session (the user, 2026-10-22). Source of truth: src/habitat/<region>.js (names, facts) and src/habitats.js.
+For a NEW art session (the user, 2026-10-22; confirmed 2026-10-23: a THIRD chat does the region art below). Source of truth: src/habitat/<region>.js (names, facts) and src/habitats.js.
 This list is generated from the data; regenerate rather than hand-edit. Match the existing style (tools/art/make_sprites.py):
 each animal needs a 2-frame flight sprite (animal-<id> walking on the ground, or sky-<id> flying) AND a portrait
 (assets/ui/portrait-animal-<id>-0.png or portrait-sky-<id>-0.png), then an entry in src/wildlife.js WILDLIFE with
@@ -199,3 +199,32 @@ stages) + a portrait, and a WILDLIFE entry with kind 'tree' and the region. Unti
 The world network has 104 airports; 88 have no landmark yet (src/landmarks.js, one per city, behind the runway):
 
 AMSTERDAM, EDINBURGH, DUBLIN, VIENNA, WARSAW, KYIV, MOSCOW, MADRID, LISBON, BARCELONA, ISTANBUL, TUNIS, CASABLANCA, RIYADH, DOHA, MUSCAT, TEHRAN, KARACHI, TASHKENT, TAMANRASSET, KHARTOUM, MUMBAI, KOLKATA, CHENNAI, KATHMANDU, DHAKA, COLOMBO, HANOI, KUALA LUMPUR, SINGAPORE, JAKARTA, MANILA, SHANGHAI, HONG KONG, SEOUL, CHENGDU, OSAKA, TAIPEI, SAPPORO, ULAANBAATAR, SEATTLE, CALGARY, FAIRBANKS, YELLOWKNIFE, IQALUIT, OSLO, STOCKHOLM, HELSINKI, DENVER, DALLAS, ATLANTA, LOS ANGELES, MIAMI, TORONTO, WINNIPEG, MEXICO CITY, BUENOS AIRES, SANTIAGO, AKUREYRI, NAIROBI, ADDIS ABABA, DAR ES SALAAM, JOHANNESBURG, CAPE TOWN, WINDHOEK, MAPUTO, LUANDA, KINSHASA, LAGOS, ACCRA, NIAMEY, ANTANANARIVO, MANAUS, BELEM, SAO PAULO, RIO, BRASILIA, LIMA, QUITO, BOGOTA, CARACAS, PANAMA, SYDNEY, PERTH, DARWIN, AUCKLAND, HONOLULU, NADI
+
+## Status and handover notes (2026-10-23, game session)
+
+DONE already (do not redo): all 91 region animals and 27 regional trees are drawn by the dial generator
+(tools/art/species.py -> make_wildlife.py) and live in the game. The lists above were the to-do at the time.
+
+STILL TO DO for the third chat:
+- Field backdrops: assets/ui/field-<region>.png for the 9 regions (make_wildarea.py; wild.js FIELD_ART lists which exist:
+  add each region id there when its backdrop lands).
+- Project icons: assets/ui/proj-<id>.png for the 101 region projects (ids in src/habitat/<region>.js).
+- City landmarks: the 88 cities listed above (make_landmarks.py, src/landmarks.js).
+- Ground/hills strips for OCEAN, SAVANNA and RAINFOREST (make_regions.py; then add those ids to REGIONS in species.py so
+  src/wildlife.js REGIONS has them; GameScene.setRegion uses REGIONS[r].ground/.hills and keeps the last land's strips
+  when an entry is missing). Seabirds for over the ocean would be welcome.
+- Missing animal TEMPLATES (shapes.py), where the dial versions are weak: fish (cohosalmon, atlanticsalmon, pirarucu),
+  sea turtle (loggerhead, riverturtle), shell (oyster), insects (firefly, monarch), scimitar/ibex/hooked horns (scimitaroryx,
+  ibex, chamois), long thin snout (gharial), owl face (fishowl), bottle trunk tree (baobab), neck patches (giraffe), lips
+  (blackrhino, whiterhino), V chest mark (moonbear).
+  HOLD THIS ONE: the game session is trialling PixelLab (MCP) for animal art: flat 2D pixflux sprites (~32 px, ~10 colours)
+  in flight and pixen 64 px cards for a collection screen. If the user adopts it, those animals will come from PixelLab and the
+  templates are not needed. Ask the game session first.
+
+Rules learnt the hard way:
+- Storm clouds: tools/art/make_storm.py repaints storm-*.png INSIDE the existing alpha outline (collisions use that alpha);
+  make_sprites.py calls make_storm.main() at the end. Never repaint the storms another way without keeping the outline.
+- Generators are deterministic: after any run, existing PNGs you did not mean to change must be byte-identical (git status).
+- Region art loads on demand (GameScene.queueArt): a new species is fetched when a flight path crosses its region.
+- PixelLab is registered for sessions started in /home/ojm only (local scope); drive it with a headless `claude -p` call
+  (see STATE.md). Keep a provenance line (prompt, tool, date) next to every generated PNG. Ask the user before spending credits.
