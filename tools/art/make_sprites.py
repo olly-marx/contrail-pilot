@@ -622,3 +622,7 @@ if __name__ == '__main__':
     bolt('bolt-1', 14, 58, [(7, 0), (10, 11), (4, 19), (9, 23), (5, 37), (10, 42), (6, 57)])
     bolt('bolt-2', 20, 36, [(9, 0), (6, 9), (13, 14), (8, 25), (11, 35)], forks=[[(13, 14), (17, 21), (15, 29)]])
     storm_flash()
+    # The storm PNGs drawn above are only outlines for make_storm.py (game session, 2026-10-23), which
+    # repaints them as soft clouds keeping the alpha exactly; without this a make_sprites run undid them.
+    import make_storm
+    make_storm.main()
