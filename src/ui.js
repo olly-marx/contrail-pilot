@@ -7,6 +7,7 @@ import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
 import { WILDLIFE } from './wildlife.js';
+import { animalPortrait } from './animalart.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
@@ -283,7 +284,7 @@ export class UI {
     const na = (r.foundIds || []).map(id => WILDLIFE.find(w => w.id === id)).filter(Boolean);
     $('rAnimals').hidden = !na.length;
     $('rAnimals').innerHTML = na.length ? `<p class="label">New animal${na.length > 1 ? 's' : ''} discovered!</p><div class="na-list">${na.map(w =>
-      `<span class="na"><img src="${w.portrait}-0.png" alt=""><b>${w.name}</b></span>`).join('')}</div><p class="small">See them in your Wild Area (NATURE).</p>` : '';
+      `<span class="na"><img src="${animalPortrait(w)}" alt=""><b>${w.name}</b></span>`).join('')}</div><p class="small">See them in your Wild Area (NATURE).</p>` : '';
     // Flying time and era progress (src/eras.js): after every real flight, landed or crashed.
     $('rEra').hidden = !!r.school;
     $('rEra').innerHTML = r.school ? '' : `<p class="era-gain">+${(r.flyMinutes || 0).toFixed(1)} min flown</p>${eraBarHTML(this.save)}`

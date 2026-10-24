@@ -50,6 +50,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     return p.evaluate(() => { const e = document.getElementById('rAnimals'); return e && !e.hidden ? e.textContent : ''; }); };
   const one = await flight('animal-otter', false);
   check(/Otter/.test(one), `a crash still lists the new animal: "${one}"`);
+  // ...with its PixelLab picture, as on the NATURE cards (the user, 2026-10-24: the list showed the old pictures).
+  const pics = await p.$$eval('#rAnimals img', els => els.map(e => e.getAttribute('src')));
+  check(pics.includes('assets/pixellab/ui/portrait-animal-otter-0.png'), `the new animal list shows the PixelLab otter: ${pics}`);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const two = await flight('sky-heron', true);
   check(/Grey heron/.test(two) && !/Otter/.test(two), `flight 2 lists its new heron and NOT flight 1's otter (another wandering animal may appear too): "${two}"`);

@@ -11,8 +11,7 @@ import { LINES, tabOf } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies } from './nature.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA } from './habitats.js';
 import { CITIES } from './cities.js';
-import { FEATURES } from './config.js';
-import { PIXELLAB } from './pixellab.js';
+import { animalDir, animalPortrait } from './animalart.js';
 import { meterHTML } from './ui.js';
 
 const $ = id => document.getElementById(id);
@@ -22,7 +21,7 @@ const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';
 // Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
-const FIELD_ART = ['woodland'];
+const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest'];   // PixelLab backdrops, 2026-10-24
 
 // Been there: the UK always; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {
@@ -172,12 +171,11 @@ export class WildScreen {
 }
 
 // Where an animal's in-flight frames are: the PixelLab preview set if it is on and has this one.
-const artDir = sprite => (FEATURES.pixelArt && PIXELLAB.has(sprite) ? 'assets/pixellab' : 'assets');
+const artDir = animalDir;   // (src/animalart.js)
 
 // An animal's picture: its portrait, its sprite, or (not drawn yet) a question mark.
 function picHTML(w, cls = '') {
-  const pic = FEATURES.pixelArt && PIXELLAB.has(w.sprite) ? `assets/pixellab/ui/portrait-${w.sprite}-0.png`   // the PixelLab preview
-    : w.portrait ? `${w.portrait}-0.png` : w.sprite ? `assets/${w.sprite}-0.png` : '';
+  const pic = animalPortrait(w);   // (src/animalart.js)
   return pic ? `<img class="${cls}" src="${esc(pic)}" alt="">` : `<span class="w-nopic ${cls}">?</span>`;
 }
 

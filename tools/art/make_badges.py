@@ -1,8 +1,9 @@
 """Badge medals for the achievements screen (HTML-only): assets/ui/badge-<id>-<tier>.png.
 
 Run from the repo root:  python3 tools/art/make_badges.py [out_dir]
-32x32: a ribbon on top, a round medal whose rim shows the tier (1 bronze, 2 silver, 3 gold; a
-badge with a single tier is gold), and a picture in the middle built from the game's own sprites.
+64x64 (2026-10-24; drawn at 32 and doubled): a ribbon on top, a round medal whose rim shows the tier (1 bronze, 2 silver, 3 gold; a
+badge with a single tier is gold), and a PixelLab picture in the middle
+(tools/art/pixellab/badges/bi-<id>.png; badges without one keep the old sprite-built picture).
 Also badge-locked.png (not earned yet) and badge-secret.png (a secret badge nobody has found).
 """
 import math
@@ -278,11 +279,36 @@ def secret():
     return medal('secret', 2, q)
 
 
+# ---------- 64x64 medals with PixelLab pictures (the user, 2026-10-24) ----------
+# The same medal drawn twice as big; its centre turns pale sky blue (white planes stand out) and the PixelLab
+# picture (tools/art/pixellab/badges/bi-<id>.png, 32x32) sits in it at full size, clipped to the disc.
+SKY_IN = hexc('#d6ecf8')
+PL = ROOT / 'tools/art/pixellab/badges'
+
+
+def big(img32, picture=None):
+    im = img32.resize((64, 64), Image.NEAREST); px = im.load(); inner = hexc(INNER)[:3]
+    disc = [(x, y) for y in range(64) for x in range(64) if px[x, y][:3] == inner and px[x, y][3]]
+    for x, y in disc: px[x, y] = SKY_IN
+    if picture is not None:
+        pic = Image.open(picture).convert('RGBA'); pic = pic.crop(pic.getbbox())
+        k = min(1.0, 34 / max(pic.size))
+        if k < 1: pic = pic.resize((max(1, round(pic.width * k)), max(1, round(pic.height * k))), Image.NEAREST)
+        ox, oy = 32 - pic.width // 2, 39 - pic.height // 2; inside = set(disc); pp = pic.load()
+        for y in range(pic.height):
+            for x in range(pic.width):
+                if pp[x, y][3] > 40 and (ox + x, oy + y) in inside: px[ox + x, oy + y] = pp[x, y][:3] + (255,)
+    return im
+
+
 if __name__ == '__main__':
     OUT.mkdir(parents=True, exist_ok=True)
+    blank = lambda q, cx, cy: None
     for bid, (theme, tiers, icon) in BADGES.items():
         for t in range(1, tiers + 1):
-            medal(theme, t if tiers > 1 else 3, icon).save(OUT / f'badge-{bid}-{t}.png')
-    locked().save(OUT / 'badge-locked.png')
-    secret().save(OUT / 'badge-secret.png')
+            pic = PL / f'bi-{bid}.png'
+            img = big(medal(theme, t if tiers > 1 else 3, blank), pic) if pic.exists() else big(medal(theme, t if tiers > 1 else 3, icon))
+            img.save(OUT / f'badge-{bid}-{t}.png')
+    big(locked()).save(OUT / 'badge-locked.png')
+    big(secret()).save(OUT / 'badge-secret.png')
     print('wrote', sum(t for _, t, _ in BADGES.values()) + 2, 'badge images')

@@ -17,7 +17,7 @@ import { sfx, buzz } from './sound.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
-import { PIXELLAB } from './pixellab.js';
+import { animalDir } from './animalart.js';
 import { LANDMARKS } from './landmarks.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, localTree, regionSpecies } from './nature.js';
 import { regionBelow } from './geo.js';
@@ -780,7 +780,7 @@ export class GameScene extends Phaser.Scene {
     let n = 0;
     for (const w of WILDLIFE) if (w.sprite && regions.includes(w.region)) for (let f = 0; f < (w.frames || 2); f++) {
       const k = `${w.sprite}-${f}`;
-      const dir = FEATURES.pixelArt && PIXELLAB.has(w.sprite) ? 'assets/pixellab' : 'assets';   // the PixelLab preview (config.js)
+      const dir = animalDir(w.sprite);   // PixelLab art when it has one (src/animalart.js)
       if (!this.textures.exists(k)) { this.load.image(k, `${dir}/${k}.png`); n++; }
     }
     return n;

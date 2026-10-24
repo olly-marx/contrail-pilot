@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-24-fields",
+    "version": "0.10.8",
+    "date": "2026-10-24",
+    "level": "minor",
+    "notes": [
+      "Every wild area has its own field now! Each land on the NATURE screen has its own view, from desert mesas and Mount Kilimanjaro to snowy northern lakes and the rainforest.",
+      "Shiny new badges: every medal has a brand new picture, and they are bigger too.",
+      "All 48 kinds of tree have new pictures, from baobabs to cherry blossom, in the sky and on their NATURE cards.",
+      "Fixed: the new animals you find on a flight now show their new pictures on the results screen too."
+    ]
+  },
+  {
     "id": "2026-10-24-terrain",
     "version": "0.10.7",
     "date": "2026-10-24",

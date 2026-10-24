@@ -23,7 +23,9 @@ for (const t of trees) {
   const [s0, s1, s2] = st.map(size), p = size(`${t.portrait}-0.png`);
   check(s0[0] * s0[1] < s1[0] * s1[1] && s1[0] * s1[1] < s2[0] * s2[1], `${t.id}: stages grow ${JSON.stringify([s0, s1, s2])}`);
   check(s2[1] >= 14 && s2[0] * s2[1] >= 300, `${t.id}: grown tree drawn at the new size ${s2}`);
-  check(p[0] >= s2[0] * 2 && p[1] >= s2[1] * 2, `${t.id}: portrait ${p} finer than sprite ${s2}`);
+  // (Since the PixelLab trees, 2026-10-24, the card is its own detailed picture, not the sprite scaled 2.5x, so
+  // "finer" is: each side at least 1.5x and the area at least 3x the grown sprite's. A copied sprite still fails.)
+  check(p[0] >= s2[0] * 1.5 && p[1] >= s2[1] * 1.5 && p[0] * p[1] >= 3 * s2[0] * s2[1], `${t.id}: portrait ${p} finer than sprite ${s2}`);
 }
 if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
 console.log(`PASS treeart: ${trees.length} trees, 3 stages + portrait each`);

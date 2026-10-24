@@ -40,9 +40,11 @@ def main(preview=None):
             print('drew', key(sp), frames[0].size)
     for t in TREES:                    # 3 growth stages in flight; the portrait is the grown tree
         art = t['art'] if isinstance(t['art'], dict) else WOODLAND[t['id']]
-        for st in range(3):
+        pixellab = (A.parent / 'tools/art/pixellab/trees' / f"ts-{t['id']}.png").exists()   # 2026-10-24: install_trees.py owns these
+        for st in range(1 if pixellab else 3):   # (the sapling, stage 0, is still drawn here)
             render_tree(art, st, TREE_SMALL).save(A / f"tree-{t['id']}-{st}.png")
-        render_tree(art, 2, TREE_PORTRAIT).save(A / 'ui' / f"portrait-tree-{t['id']}-0.png")
+        if not pixellab:
+            render_tree(art, 2, TREE_PORTRAIT).save(A / 'ui' / f"portrait-tree-{t['id']}-0.png")
         print('drew tree', t['id'], render_tree(art, 2, TREE_SMALL).size)
     regions = {r: dict(v, ground='ground' if r == 'woodland' else f'ground-{r}', hills='hills' if r == 'woodland' else f'hills-{r}')
                for r, v in {**REGIONS, **TERRAIN_ONLY}.items()}

@@ -31,7 +31,8 @@ def save(im, name):
 
 SKY = {'woodland': ('#6ec6e8', '#a8dff2'), 'mediterranean': ('#5ab8ee', '#a8dcf8'), 'desert': ('#7ac8ea', '#f0e4c0'),
        'monsoon': ('#7ab8d8', '#c8e4ec'), 'eastasia': ('#8ac0dc', '#e0ecf0'), 'boreal': ('#6aa8d8', '#d0e4f4'),
-       'plains': ('#62b8ea', '#d8ecf4'), 'tundra': ('#8aaed0', '#dce8f0')}
+       'plains': ('#62b8ea', '#d8ecf4'), 'tundra': ('#8aaed0', '#dce8f0'),
+       'savanna': ('#6cbce8', '#f2e2b8'), 'rainforest': ('#78bcd8', '#d4eae4')}
 
 
 def backdrop(region):
@@ -206,8 +207,13 @@ def field(region):
     im.alpha_composite(clouds, (0, 0))
     hills = 'hills' if region == 'woodland' else f'hills-{region}'
     ground = 'ground' if region == 'woodland' else f'ground-{region}'
-    h = Image.open(A / f'{hills}.png').convert('RGBA')
-    im.alpha_composite(h, (0, HORIZON - h.height + 4))
+    back = ROOT / 'tools/art/pixellab/fields' / f'back-{region}.png'
+    if back.exists():   # PixelLab backdrop (the user, 2026-10-24): the region's distant landscape, its base on the horizon
+        h = Image.open(back).convert('RGBA'); h = h.crop((0, 0, 288, h.getbbox()[3]))
+        im.alpha_composite(h, (0, HORIZON + 2 - h.height))
+    else:
+        h = Image.open(A / f'{hills}.png').convert('RGBA')
+        im.alpha_composite(h, (0, HORIZON - h.height + 4))
     g = Image.open(A / f'{ground}.png').convert('RGBA')
     base = g.getpixel((10, 6))[:3]                  # the strip's own grass colour, so regions match their flights
     rim = g.getpixel((10, 0))[:3]
