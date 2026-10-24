@@ -51,6 +51,11 @@ wants in research/PLANE-ART-TODO.md; the game session ("Contrails game prototype
 ## Progress (2026-10-23, art session)
 - In-flight 747 bold variants APPROVED by the user ("alright, good for now"): tools/art/planes/upgrades/
   plane-747-*.png from tools/art/make_upgrades.py. To be REDONE with PixelLab later (added to the art list).
-- Hangar 747 parts, first set (awaiting approval): nextgen (silver nacelles) and glass (gloss-black nose cap) by
-  PixelLab inpaint-v3 over a pasted sketch (tools/art/hangar_parts.py, REST); business gold band by local recolour;
+- Hangar 747 parts (all APPROVED by the user 2026-10-24, with Comet, twin and stickers): nextgen (silver nacelles) and glass (gloss-black nose cap) by
+  PixelLab inpaint-v3 over a pasted sketch (tools/art/hangar_parts.py, REST; MEASURED 2026-10-24: one inpaint-v3 call = 10 generations); business gold band by local recolour;
   hangar-747-full.png = all three. 3 inpaint calls used ~30 generations.
+- 2026-10-24: Comet + twin plane-line art done (in flight by make_upgrades.py; hangar by hangar_parts.py, PixelLab only
+  for SHAPE changes, colour changes are free local recolours). Twin marks silver/black (gold ~ 1990s amber).
+  Bold gadget stickers for 5 gadgets x 3 eras: tools/art/planes/upgrades/sticker-*.png, placement STICKER_AT in
+  make_upgrades.py. Twin upgrades with NO look in the spec: FADEC, low-emission combustor, fly-by-wire, seat-back
+  screens, XL bins. PixelLab left 2026-10-24: ~1,061.
