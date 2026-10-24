@@ -43,9 +43,10 @@ const $ = id => document.getElementById(id);
 const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;
 
 // The Biodiversity meter as HTML: a bar plus the stage name.
-export function meterHTML(save, b = biodiversity(save)) {   // b: a region's meter (NATURE tabs)
+// region: whose meter it is (each land has its own, 0.11.1: the bar used to say only "Biodiversity").
+export function meterHTML(save, b = biodiversity(save), region = 'woodland') {   // b: a region's meter (NATURE tabs)
   const st = stage(b);
-  return `<div class="meter"><span class="mlabel">Biodiversity</span><span class="mtrack"><span class="mfill" style="width:${b}%"></span>${STAGES.slice(1).map(x => `<i style="left:${x.at}%"></i>`).join('')}</span><b>${st.name}</b></div>`;
+  return `<div class="meter"><span class="mlabel">${REGION_NAMES[region] || 'Biodiversity'}</span><span class="mtrack"><span class="mfill" style="width:${b}%"></span>${STAGES.slice(1).map(x => `<i style="left:${x.at}%"></i>`).join('')}</span><b>${st.name}</b></div>`;
 }
 const sign = v => (v > 0 ? '+' : v < 0 ? '-' : '') + Math.abs(v);
 
@@ -189,8 +190,10 @@ export class UI {
     $('tBest').textContent = km(this.save.bestDistance);
     $('goBtn').textContent = this.save.tutorialDone ? 'TAKE OFF' : 'START';
     $('tNew').hidden = !this.hasNew();
-    const any = Object.values(this.save.planted || {}).some(n => n > 0);
-    $('tMeter').innerHTML = any ? meterHTML(this.save) : '';
+    // The meter of the land you take off from (each land has its own).
+    const startRegion = (city(this.save.city) || {}).region || 'woodland', startBio = biodiversity(this.save, startRegion);
+    const any = Object.values(this.save.planted || {}).some(n => n > 0) || startBio > 0;
+    $('tMeter').innerHTML = any && REGION_NAMES[startRegion] ? meterHTML(this.save, startBio, startRegion) : '';
     this.renderMission();
     this.renderPrizes();
     $('tEra').innerHTML = this.save.tutorialDone ? eraBarHTML(this.save) : '';   // era progress (src/eras.js)
@@ -270,7 +273,9 @@ export class UI {
     $('rFareRow').hidden = true;
     $('rNatureRow').hidden = true;
     $('rCrysRow').hidden = true; $('rCrysRow').classList.remove('stamp');
-    $('rNature').textContent = `+${r.natureGain}`;
+    // One row per land whose biodiversity rose (each land has its own meter).
+    const gains = r.natureGains || (r.natureGain > 0 ? [{ name: REGION_NAMES.woodland, gain: r.natureGain }] : []);
+    $('rNatureRow').innerHTML = gains.map(g => `<div class="nrow"><span>${g.name}</span><b>+${g.gain}</b></div>`).join('');
     $('rTotalRow').classList.remove('zero', 'stamp');
     $('rGain').textContent = '';
     for (const id of ['barCo2', 'barNight', 'barSun', 'barTrees']) $(id).style.width = '0';
@@ -313,7 +318,7 @@ export class UI {
     if (r.earned.some(e => e.label.startsWith('Cool'))) { await wait(250); $('rCoolRow').hidden = false; $('rCoolRow').classList.add('stamp'); sfx.coin(); }
     const fare = r.earned.find(e => e.label === 'Passenger fares');
     if (fare) { await wait(250); $('rFareRow').hidden = false; $('rFare').textContent = `+${fare.n}`; $('rFareRow').classList.add('stamp'); sfx.coin(); }
-    if (r.natureGain > 0) { await wait(250); $('rNatureRow').hidden = false; $('rNatureRow').classList.add('stamp'); sfx.plant(); }
+    if (gains.length) { await wait(250); $('rNatureRow').hidden = false; $('rNatureRow').classList.add('stamp'); sfx.plant(); }
     await wait(300);
     const total = r.earned.reduce((a, e) => a + e.n, 0);
     if (r.landed) {
@@ -576,7 +581,8 @@ export class UI {
     $('coachText').innerHTML = text;
     const img = $('coachPic');
     img.hidden = !pic;
-    if (pic) { img.onerror = () => { img.hidden = true; }; img.src = `assets/ui/${pic}.png`; }   // no drawing yet: words only
+    // pic: a lesson picture key (assets/ui/<key>.png), or a full path (a tree's portrait: src/animalart.js).
+    if (pic) { img.onerror = () => { img.hidden = true; }; img.src = pic.includes('/') ? pic : `assets/ui/${pic}.png`; }   // no drawing yet: words only
     $('coachDim').hidden = !(pic && waiting);           // a lesson: the game is frozen and dimmed behind it
     $('coach').classList.toggle('lesson', !!(pic && waiting));
     const ok = $('coachOk');

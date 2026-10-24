@@ -58,7 +58,7 @@ jobs:
           # so without this a phone could run a new index.html with OLD scripts (new buttons, dead).
           V=${GITHUB_SHA::7}
           sed -i -E "s#(from '\./[A-Za-z]+\.js)'#\1?v=$V'#g" _site/src/*.js
-          sed -i -E "s#(src|href)=\"(src/main\.js|style\.css|vendor/[a-z.]+\.js)\"#\1=\"\2?v=$V\"#g" _site/index.html
+          sed -i -E "s#(src|href)=\"(src/main\.js|src/newplayer\.js|style\.css|vendor/[a-z.]+\.js)\"#\1=\"\2?v=$V\"#g" _site/index.html
           grep -q "src/main.js?v=$V" _site/index.html   # fail the deploy if the stamp didn't take
           # version.json: what's live, read by src/updates.js to offer the update. tools/check-release.py stops
           # the deploy unless src/version.js (semver) and the top entry of CHANGES.json agree (RELEASING.md).

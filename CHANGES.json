@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-24-biomes",
+    "version": "0.11.1",
+    "date": "2026-10-24",
+    "level": "major",
+    "notes": [
+      "Every land has its own biodiversity. Fly into a land to see its name and meter; the results show each land your trees helped.",
+      "Lands now have biome names, like Temperate woodland and African savanna. NATURE says where each land's projects come from and how to bring it back to life.",
+      "Rewilding brings MUCH more life: a fully rewilded land is packed with trees and animals.",
+      "Planting a new kind of tree shows a picture of it."
+    ]
+  },
+  {
     "id": "2026-10-24-globe-swipe",
     "version": "0.11.0",
     "date": "2026-10-24",

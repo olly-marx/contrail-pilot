@@ -17,7 +17,7 @@ import { sfx, buzz } from './sound.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
-import { animalDir } from './animalart.js';
+import { animalDir, animalPortrait } from './animalart.js';
 import { LANDMARKS } from './landmarks.js';
 import { SPECIES, biodiversity, plantGain, hasProject, natureCooling, projectsDone, PROJECTS, wildlifeScene, localTree, regionSpecies } from './nature.js';
 import { regionBelow } from './geo.js';
@@ -349,6 +349,8 @@ export class GameScene extends Phaser.Scene {
     this.airborne = false;
     this.flySeconds = 0;   // real flying time this flight, for the eras (src/eras.js)
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
+    this.regionBanner(this.regionNow);   // which land you take off from, and its meter
+    this.bioStartAll = Object.fromEntries(Object.keys(REGION_NAMES).map(r => [r, biodiversity(this.save, r)]));   // every land's meter, for the results
     this.bioStart = biodiversity(this.save);   // flights is counted at lift-off: going back to the menu from the runway is not a flight
   }
 
@@ -820,6 +822,7 @@ export class GameScene extends Phaser.Scene {
         this.ground.setTexture(this.fading.ground); this.hills.setTexture(this.fading.hills); this.terrain = this.fading;
         this.ground2.setAlpha(0); this.hills2.setAlpha(0); this.terrainTween = null; this.fading = null; } });
     }
+    this.regionBanner(r);
     if (this.flowers) this.flowers.setVisible(r === 'woodland');
     if (this.hedge) this.hedge.setVisible(r === 'woodland');
     if (this.life) this.wildlife = wildlifeScene(this.save, r);   // (at the start, buildWildlife makes it)
@@ -830,6 +833,24 @@ export class GameScene extends Phaser.Scene {
     if (this.save.discovered[r]) return;
     this.save.discovered[r] = Date.now();
     this.popup(WIDTH / 2, SKY_H - 80, `YOU DISCOVERED: ${REGION_NAMES[r].toUpperCase()}!`, '#8dffb0', 12);
+  }
+
+  // Entering a land (0.11.1: each land has its own biodiversity, and players could not tell): its name
+  // and meter for 2.5 s at the top of the sky. Over a bare land, once per device, how to bring it to life.
+  regionBanner(r) {
+    if (this.school || !REGION_NAMES[r]) return;
+    const bio = biodiversity(this.save, r);
+    if (this.banner) this.banner.destroy();
+    const W = 200, x = WIDTH / 2, y = 84;   // under the distance and next-airport lines
+    const bg = this.add.rectangle(0, 0, W, 26, 0x1b2838, 0.82).setStrokeStyle(1, 0xffe15a);
+    const name = this.add.text(0, -6, `${REGION_NAMES[r].toUpperCase()}: BIODIVERSITY ${bio}`, { fontFamily: FONT, fontSize: '8px', color: '#ffe15a' }).setOrigin(0.5);
+    const track = this.add.rectangle(-W / 2 + 8, 6, W - 16, 4, 0x2b4a6f).setOrigin(0, 0.5);
+    const fill = this.add.rectangle(-W / 2 + 8, 6, Math.max(1, (W - 16) * bio / 100), 4, 0x8dffb0).setOrigin(0, 0.5);
+    this.banner = this.add.container(x, y, [bg, name, track, fill]).setDepth(60).setAlpha(0);
+    this.banner.regionId = r; this.banner.bio = bio;
+    this.tweens.add({ targets: this.banner, alpha: 1, duration: 250, yoyo: true, hold: 2500, onComplete: () => { if (this.banner) { this.banner.destroy(); this.banner = null; } } });
+    if (bio === 0 && this.state === 'playing') this.ui.tipOnce('bareLand', `${REGION_NAMES[r]}: bare land`,
+      'Each land has its own <b>biodiversity</b> (the bar at the top). Plant this land\'s trees as you fly over it, and finish its projects in NATURE: more trees and animals will appear below you.', 'good', 5);
   }
 
   buildWildlife() {
@@ -1198,7 +1219,8 @@ export class GameScene extends Phaser.Scene {
     // climate, then Biodiversity. A new native kind's fact waits until both are done.
     const taught = this.explain('tree-2', '<b>TREE SCHOOL</b><br>Your tree takes <b>CO2</b> out of the air as it grows. Bigger trees take a bit more.<br>But trees are slow! A <b>cleaner plane</b> and <b>smart contrails</b> help the Earth much more.', 'lesson-tree-co2');
     if (taught) this.explainWhenClear('tree-3', '<b>TREE SCHOOL</b><br>Your <b>Biodiversity</b> meter shows how full of life your land is.<br><b>Different kinds</b> of trees bring much more wildlife than lots of the same kind. Fill it up!', 'lesson-biodiversity');
-    else if (first && here.native) this.explain(`x-species-${here.id}`, `<b>${here.name}!</b> ${here.fact}<br>New kinds of tree fill your <b>Biodiversity</b> meter the most.`);
+    else if (first && here.native) this.explain(`x-species-${here.id}`, `<b>${here.name}!</b> ${here.fact}<br>New kinds of tree fill your <b>Biodiversity</b> meter the most.`,
+      animalPortrait(WILDLIFE.find(w => w.kind === 'tree' && w.id === here.id) || {}) || null);   // the tree's picture, as on its NATURE card (user, 0.11.1)
   }
 
   addPlot(x) {
@@ -2153,6 +2175,8 @@ export class GameScene extends Phaser.Scene {
     if (missionDone) completeMission(this.save, mission);
     const nextMission = this.school ? null : currentMission(this.save);
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
+    // Each land whose meter rose this flight (0.11.1: the results used to show the UK's only).
+    const natureGains = this.school ? [] : Object.keys(REGION_NAMES).map(r => ({ region: r, name: REGION_NAMES[r], gain: biodiversity(this.save, r) - ((this.bioStartAll || {})[r] || 0) })).filter(g => g.gain > 0);
     if (!this.school) this.save.flownKm = flown;
     const eraBefore = eraProgress(this.save).index;
     if (!this.school) this.save.flightSeconds = (this.save.flightSeconds || 0) + (this.flySeconds || 0);   // crashes count too
@@ -2178,7 +2202,7 @@ export class GameScene extends Phaser.Scene {
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])],
-      mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
+      mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, natureGains, bio: biodiversity(this.save),
     };
     if (this.school) this.school.finished(this.result);
     else sendFlight({   // to the online boards, if this device has a pilot name; queued when offline

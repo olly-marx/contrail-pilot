@@ -554,3 +554,8 @@ h2.sub { margin-top: -4px; }
 .fpcap span { color: #ffe15a; font-size: 8px; }
 .fplane { cursor: pointer; }
 .ftabhelp { text-align: center; margin: 0 0 6px; }
+/* Results: one biodiversity row per land (0.11.1). */
+#rNatureRow { display: block; }
+#rNatureRow[hidden] { display: none; }
+#rNatureRow .nrow { display: flex; justify-content: space-between; }
+.w-how { margin: 4px 0 0; text-align: left; }

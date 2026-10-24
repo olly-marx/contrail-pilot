@@ -155,11 +155,13 @@ export function wildlifeScene(save, region = 'woodland') {
   return {
     bio,
     region,
-    treesPerScreen: treeKinds.length ? 2 + bio / 6 : 0,   // 2 lonely spruce up to ~18 trees
+    // Bare until you rewild, then a LOT of life (user, 0.11.1; was 2 + bio/6, 0.6 + bio/18, 0.3 + bio/25).
+    // Measured at 4x CPU throttle: ~40 vs ~60 things on screen, both a median 16.7 ms frame.
+    treesPerScreen: treeKinds.length ? 2 + bio * 0.28 : 0,   // 2 lonely trees up to ~30
     treeKinds,
     farmPerScreen: uk ? 1.5 : 0,                  // cows and sheep (UK): always a few, never many
-    wildPerScreen: wild.length ? 0.6 + bio / 18 : 0,   // the meter decides HOW MANY animals...
-    birdsPerScreen: sky.length ? 0.3 + bio / 25 : 0,
+    wildPerScreen: wild.length ? 0.6 + bio * 0.114 : 0,   // the meter decides HOW MANY animals (up to ~12)...
+    birdsPerScreen: sky.length ? 0.3 + bio * 0.057 : 0,   // up to ~6
     pickWild: pick(wild),                         // ...and rarity + distance WHICH ones (texture prefix, e.g. 'animal-otter')
     pickSky: pick(sky),
     wildKinds: wild.map(x => x.sprite),           // everything that can appear here at all

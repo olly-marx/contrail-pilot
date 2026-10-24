@@ -166,10 +166,18 @@ import * as savanna from './habitat/savanna.js';
 import * as rainforest from './habitat/rainforest.js';
 
 // Region tabs, in route order, then the two with no route city yet (the user wanted them anyway).
+// Biome names (user, 2026-10-24: "UK" is where the projects come from, not a climate; New Zealand must
+// not say "UK"). Internal ids never change: saves and tests key on them.
 export const REGION_NAMES = {
-  woodland: 'UK', mediterranean: 'Mediterranean', desert: 'Desert', monsoon: 'Monsoon & rainforest',
-  eastasia: 'East Asia', boreal: 'Boreal & mountains', plains: 'Plains & forest', tundra: 'Iceland',
-  savanna: 'African savanna', rainforest: 'Amazon & Atlantic Forest',
+  woodland: 'Temperate woodland', mediterranean: 'Mediterranean scrub', desert: 'Desert', monsoon: 'Monsoon forest',
+  eastasia: 'Temperate mountain forest', boreal: 'Boreal forest', plains: 'Plains & forest', tundra: 'Tundra',
+  savanna: 'African savanna', rainforest: 'Tropical rainforest',
+};
+// Where each region's habitat projects were researched (src/habitat/*.js; place names counted 2026-10-24).
+export const REGION_SOURCE = {
+  woodland: 'the UK', mediterranean: 'Spain, Italy and Greece', desert: 'the UAE and the Sahara\'s edge', monsoon: 'India and Nepal',
+  eastasia: 'Japan, China and Korea', boreal: 'Canada and Alaska', plains: 'the USA', tundra: 'Iceland',
+  savanna: 'Kenya and southern Africa', rainforest: 'Brazil\'s Amazon and Atlantic Forest',
 };
 // Seeds by tier and cost band, in the UK's range. Crystals: 1 per 8 seeds, as in the hangar.
 const PRICE = { 1: { cheap: 20, mid: 60, big: 140 }, 2: { cheap: 170, mid: 300, big: 450 }, 3: { cheap: 550, mid: 900, big: 1300 } };

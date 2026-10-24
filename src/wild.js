@@ -9,7 +9,7 @@ import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies } from './nature.js';
-import { TIERS, RARITY, REGION_NAMES, REGION_DATA } from './habitats.js';
+import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
 import { CITIES } from './cities.js';
 import { animalDir, animalPortrait } from './animalart.js';
 import { meterHTML } from './ui.js';
@@ -61,7 +61,12 @@ export class WildScreen {
     // Swipe sideways to change region (0.11.0): the next / previous region tab that is open (src/swipe.js).
     const goRegion = d => { const open = [...$('wRegions').querySelectorAll('[data-region]:not([disabled])')], i = open.findIndex(b => b.dataset.region === this.region) + d; if (i >= 0 && i < open.length) open[i].click(); };
     onSwipe($('nature'), { next: () => goRegion(1), prev: () => goRegion(-1) });
-    $('wMeter').innerHTML = meterHTML(s, this.bio());
+    // Whose meter, where its projects come from, and how to raise it (0.11.1: the system was unclear).
+    $('wMeter').innerHTML = meterHTML(s, this.bio(), this.region);
+    // Below the pinned picture + meter (bug-fix chat pins them in .wpin), so this scrolls with the list.
+    let more = $('wMeterMore');
+    if (!more) { more = document.createElement('p'); more.id = 'wMeterMore'; more.className = 'small w-how'; ($('wMeter').closest('.wpin') || $('wMeter')).after(more); }
+    more.innerHTML = `Projects from ${esc(REGION_SOURCE[this.region])}. <b>Raise it:</b> plant this land's trees as you fly over it, and finish its projects. More life appears below you.`;
     this.renderScene();
     this.renderProjects();
     // Trees: the tree upgrade lines (planting parcels, soil, kinds of tree, the nursery). UK trees only.
