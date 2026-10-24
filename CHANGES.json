@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-24-skylines",
+    "version": "0.10.6",
+    "date": "2026-10-24",
+    "level": "minor",
+    "notes": [
+      "Every city now has its own skyline! Spot Big Ben, the Eiffel Tower, the pyramids, Mount Fuji and more behind the runway when you land."
+    ]
+  },
+  {
     "id": "2026-10-24-storms",
     "version": "0.10.5",
     "date": "2026-10-24",

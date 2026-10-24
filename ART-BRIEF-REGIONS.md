@@ -196,7 +196,9 @@ stages) + a portrait, and a WILDLIFE entry with kind 'tree' and the region. Unti
 
 ## City landmarks (2026-10-22; src/cities.js)
 
-The world network has 104 airports; 88 have no landmark yet (src/landmarks.js, one per city, behind the runway):
+DONE 2026-10-24: all 104 cities have a PixelLab skyline of combined landmarks (tools/art/install_skylines.py from
+tools/art/pixellab/skylines/, list skyline_cities.tsv; gate tests/landmarks.cjs). The list below is HISTORY (it was the
+88 missing, 2026-10-22):
 
 AMSTERDAM, EDINBURGH, DUBLIN, VIENNA, WARSAW, KYIV, MOSCOW, MADRID, LISBON, BARCELONA, ISTANBUL, TUNIS, CASABLANCA, RIYADH, DOHA, MUSCAT, TEHRAN, KARACHI, TASHKENT, TAMANRASSET, KHARTOUM, MUMBAI, KOLKATA, CHENNAI, KATHMANDU, DHAKA, COLOMBO, HANOI, KUALA LUMPUR, SINGAPORE, JAKARTA, MANILA, SHANGHAI, HONG KONG, SEOUL, CHENGDU, OSAKA, TAIPEI, SAPPORO, ULAANBAATAR, SEATTLE, CALGARY, FAIRBANKS, YELLOWKNIFE, IQALUIT, OSLO, STOCKHOLM, HELSINKI, DENVER, DALLAS, ATLANTA, LOS ANGELES, MIAMI, TORONTO, WINNIPEG, MEXICO CITY, BUENOS AIRES, SANTIAGO, AKUREYRI, NAIROBI, ADDIS ABABA, DAR ES SALAAM, JOHANNESBURG, CAPE TOWN, WINDHOEK, MAPUTO, LUANDA, KINSHASA, LAGOS, ACCRA, NIAMEY, ANTANANARIVO, MANAUS, BELEM, SAO PAULO, RIO, BRASILIA, LIMA, QUITO, BOGOTA, CARACAS, PANAMA, SYDNEY, PERTH, DARWIN, AUCKLAND, HONOLULU, NADI
 
@@ -209,7 +211,7 @@ STILL TO DO for the third chat:
 - Field backdrops: assets/ui/field-<region>.png for the 9 regions (make_wildarea.py; wild.js FIELD_ART lists which exist:
   add each region id there when its backdrop lands).
 - Project icons: assets/ui/proj-<id>.png for the 101 region projects (ids in src/habitat/<region>.js).
-- City landmarks: the 88 cities listed above (make_landmarks.py, src/landmarks.js).
+- City landmarks: DONE 2026-10-24 (all 104, PixelLab skylines; make_landmarks.py removed).
 - Ground/hills strips for OCEAN, SAVANNA and RAINFOREST (make_regions.py; then add those ids to REGIONS in species.py so
   src/wildlife.js REGIONS has them; GameScene.setRegion uses REGIONS[r].ground/.hills and keeps the last land's strips
   when an entry is missing). Seabirds for over the ocean would be welcome.

@@ -42,6 +42,7 @@ function lerpColour(a, b, t) {
 
 // How a flight ended, for the online Oops boards (from the crash message shown to the player).
 const LANDMARK_SCALE = 2;   // the user: bigger landmarks (whole numbers keep the pixels crisp)
+const LANDMARK_HAZE = 0.82, LANDMARK_BACK = 6;   // skylines: a little see-through, base 6 px up behind the city row
 
 const FLOCK_HALF = 2;   // a flock fills the box of an old 5-bird V: 26 px across, 36 px down
 const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
@@ -1058,7 +1059,9 @@ export class GameScene extends Phaser.Scene {
     const lm = LANDMARKS[name];
     if (lm && this.textures.exists(lm.key)) {
       const d = x + AIRPORT.runwayLen / 2 - WIDTH / 2;
-      const img = this.add.image(WIDTH / 2 + 24 + 0.55 * d, SKY_H, lm.key).setOrigin(0.5, 1).setScale(LANDMARK_SCALE);
+      // PixelLab skylines (the user, 2026-10-24): big, a little hazy and set back behind the city row, so they
+      // read as far away, not as something in the way.
+      const img = this.add.image(WIDTH / 2 + 24 + 0.55 * d, SKY_H - LANDMARK_BACK, lm.key).setOrigin(0.5, 1).setScale(LANDMARK_SCALE).setAlpha(LANDMARK_HAZE);
       this.landmarkLayer.add(img); this.landmarks.push(img);
     }
   }
