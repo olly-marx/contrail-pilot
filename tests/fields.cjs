@@ -27,8 +27,7 @@ const WITH = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'bor
     if (WITH.includes(r)) check(new RegExp(`field-${r}\\.png`).test(s.bg) && ok && !s.note, `${r}: shows its 288x170 field: ${JSON.stringify(s)} loaded=${ok}`);
     else check(s.note && !s.bg, `${r}: no field yet, says it is being drawn: ${JSON.stringify(s)}`);
   }
-  // (Only field pictures here: the region project icons proj-<id>.png are not drawn yet, 2026-10-24, a separate job.)
-  check(!missing.some(f => /^field-/.test(f)), `missing field pictures: ${missing.filter(f => /^field-/.test(f))}`);
+  check(missing.length === 0, `missing files: ${missing}`);   // (every project icon is drawn since the PixelLab projects)
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }

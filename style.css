@@ -436,7 +436,7 @@ h2.sub { margin-top: -4px; }
 .w-portrait { display: block; margin: 0 auto; height: 96px; max-width: 100%; object-fit: contain; image-rendering: pixelated; }
 .w-portrait.w-shadow { filter: brightness(0) opacity(.35); }
 .w-card.got { border-image: url('assets/ui/card-frame.png') 4 / 8px stretch; background: #fffbe8; }
-.w-icon { width: 24px; height: 24px; vertical-align: middle; margin-right: 4px; image-rendering: pixelated; }
+.w-icon { width: 32px; height: 32px; vertical-align: middle; margin-right: 4px; image-rendering: pixelated; }
 
 /* ---------- prizes to CLAIM and badge medals (src/rewards.js, src/badges.js) ---------- */
 .claim-row { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: center; font-size: 7px; text-align: left;

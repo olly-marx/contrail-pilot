@@ -90,8 +90,11 @@ export class WildScreen {
       return;
     }
     const found = this.animals().filter(w => w.sprite && this.found(w.id));
-    const planted = Object.entries(s.planted || {}).filter(([, n]) => n > 0);
-    this.field = new Field($('wScene'), this.region, done, planted, found);
+    // Only trees that suit this land (the user, 2026-10-24): the UK shows its own plantings; another region shows
+    // what parcels planted THERE (save.plantedIn[region], that region's trees: src/nature.js localTree).
+    const mine = this.region === 'woodland' ? s.planted : (s.plantedIn || {})[this.region];
+    const planted = Object.entries(mine || {}).filter(([, n]) => n > 0);
+    this.field = new Field($('wScene'), this.region, done, planted, found, this.projects.map(p => p.id));
     if (!found.length && !done.length) $('wScene').insertAdjacentHTML('beforeend', '<p class="w-empty">Bare land. Start a habitat project, and plant trees on your flights!</p>');
   }
 
@@ -223,13 +226,16 @@ function gate(root) {
 const FW = 288, FH = 170, HORIZON = 60, GROUND = [HORIZON + 8, FH - 2];
 // Where each project's feature goes: [x, y] of its bottom-left corner, in field pixels (at 2x).
 const SLOTS = { hedgerow: [[0, 72], [96, 72], [192, 72]], woodland: [[4, 98]], martens: [[96, 124]], storks: [[150, 108]],
-  deadwood: [[60, 118]], margins: [[206, 96]], pond: [[118, 150]], voles: [[236, 170]], beavers: [[242, 142]],
+  deadwood: [[60, 118]], margins: [[206, 96]], pond: [[118, 150]], voles: [[236, 170]], beavers: [[214, 142]],
   rewet: [[2, 168]], meadow: [[176, 132], [40, 146]] };
 // Planted trees: up to 12, in spots clear of the features, by how many of each kind you planted.
+// Regions' projects (PixelLab features, 2026-10-24): the n-th project of the region (in its PROJECTS order) goes in
+// the n-th spot, bottom-left corner, 1x art up to 64 x 32; spread round the field and clear of TREE_SPOTS.
+const REGION_SPOTS = [[2, 98], [100, 92], [212, 96], [30, 136], [128, 128], [216, 140], [64, 162], [160, 156], [232, 170], [2, 170], [112, 170], [180, 112], [252, 118]];   // 13: rainforest has the most projects
 const TREE_SPOTS = [[200, 84], [176, 90], [266, 88], [126, 92], [100, 96], [84, 132], [226, 120], [190, 160], [24, 124], [150, 166], [270, 156], [56, 164]];
 
 class Field {
-  constructor(el, region, done, planted, found) {
+  constructor(el, region, done, planted, found, order = []) {
     this.el = el;
     el.innerHTML = '';
     el.classList.add('wfield-box');
@@ -245,7 +251,11 @@ class Field {
       f.appendChild(img);
       return img;
     };
-    for (const id of done) for (const [x, y] of SLOTS[id] || []) put(`assets/ui/wild-${id}.png`, x, y, 2, 'feat');
+    // Features are PixelLab art at 1x (2026-10-24; the hand-drawn ones were 1x art shown at 2x).
+    for (const id of done) {
+      const spots = region === 'woodland' ? SLOTS[id] || [] : [REGION_SPOTS[order.indexOf(id)]].filter(Boolean);
+      for (const [x, y] of spots) put(`assets/ui/wild-${id}.png`, x, y, 1, 'feat');
+    }
     const total = planted.reduce((a, [, n]) => a + n, 0);
     const kinds = planted.flatMap(([id, n]) => Array(n).fill(id));
     const nTrees = Math.min(TREE_SPOTS.length, Math.ceil(total / 2));

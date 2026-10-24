@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-24-projects",
+    "version": "0.11.2",
+    "date": "2026-10-24",
+    "level": "minor",
+    "notes": [
+      "Every nature project has a new picture, and when you finish one it appears in that land's wild area: beaver lodges, coral reefs, stork nests, fish ladders and more.",
+      "Each wild area now only grows the trees you planted in that land, like acacias in the desert and oaks in the UK.",
+      "The tawny owl now flies side-on like the other birds."
+    ]
+  },
+  {
     "id": "2026-10-24-biomes",
     "version": "0.11.1",
     "date": "2026-10-24",
