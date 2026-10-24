@@ -201,7 +201,7 @@ export class GameScene extends Phaser.Scene {
     this.wildLayer = this.add.layer();     // cows, sheep and wild animals
     this.regionNow = null; this.setRegion(this.regionHere(), true);   // what is below the plane (src/geo.js)
     this.loadPathArt();
-    if (FEATURES.pixelArt) this.previewReadout();
+    if (FEATURES.pixelReadout) this.previewReadout();
     this.buildWildlife();
     this.plotLayer = this.add.layer();
     this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
@@ -758,7 +758,7 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1500, () => this.popup(WIDTH / 2, SKY_H - 60, `NEW ANIMAL: ${w.name.toUpperCase()}!`, '#ffe15a', 14));
   }
 
-  // PixelLab preview only (?pixelart=on): load time and frames per second, top right, to see if the art costs anything.
+  // Only on a device that opened ?pixelart=on: load time and frames per second, top right, to see if the art costs anything.
   previewReadout() {
     const el = document.getElementById('previewHud') || Object.assign(document.body.appendChild(document.createElement('div')),
       { id: 'previewHud' });

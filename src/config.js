@@ -3,19 +3,23 @@
 // Feature switches. citizenZoo: the Citizen Zoo partnership (the hangar's "plant a real tree"
 // grown-up link, the About-page section, Learn more links, and facts naming them). Off for now;
 // set true to bring it all back. Adding ?citizenzoo to the URL also turns it on (for demos).
-// A preview switch for one device: open the game with ?<name>=on to turn it on, ?<name>=off to turn it off;
-// it is remembered on that device (localStorage) until switched off. Everyone else never sees it.
-function previewSwitch(name) {
+// A switch one device can flip: open the game with ?<name>=on or ?<name>=off; it is remembered on that device
+// (localStorage: '1' on, '0' off). Devices that never chose get `def`. previewChosen(name) is true only on a
+// device that opened ?<name>=on (used for the PixelLab load/fps readout).
+function previewSwitch(name, def = false) {
   try {
     const v = new URLSearchParams(location.search).get(name), key = `contrailPilot.preview.${name}`;
     if (v === 'on') localStorage.setItem(key, '1');
-    if (v === 'off') localStorage.removeItem(key);
-    return localStorage.getItem(key) === '1';
-  } catch (e) { return false; }
+    if (v === 'off') localStorage.setItem(key, '0');
+    const got = localStorage.getItem(key);
+    return got === null ? def : got === '1';
+  } catch (e) { return def; }
 }
+const previewChosen = name => { try { return localStorage.getItem(`contrailPilot.preview.${name}`) === '1'; } catch (e) { return false; } };
 export const FEATURES = {
   citizenZoo: false || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('citizenzoo')),
-  pixelArt: previewSwitch('pixelart'),   // the PixelLab animals, a preview on one device only (the user, 2026-10-23)
+  pixelArt: previewSwitch('pixelart', true),   // the PixelLab animals, on for everyone (the user, 2026-10-24); ?pixelart=off opts out
+  pixelReadout: previewChosen('pixelart'),   // load/fps readout, only after ?pixelart=on
 };
 // Text that only appears with the Citizen Zoo feature on (else `off`).
 export const cz = (on, off = '') => (FEATURES.citizenZoo ? on : off);

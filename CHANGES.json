@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-24-pixelart",
+    "version": "0.10.1",
+    "date": "2026-10-24",
+    "level": "minor",
+    "notes": [
+      "New pictures for every animal! All 189 wild animals and birds have fresh pixel art, in the sky and on their NATURE cards."
+    ]
+  },
+  {
     "id": "2026-10-23-eras",
     "version": "0.10.0",
     "date": "2026-10-23",
