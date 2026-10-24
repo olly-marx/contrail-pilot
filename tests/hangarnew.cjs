@@ -28,11 +28,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
   // 2. The big picture: the plane you fly; tapping the Comet's card previews the Comet.
   await p.click('#tabHangar'); await p.waitForTimeout(300);
-  let pv = await p.evaluate(() => ({ src: document.querySelector('#hFleet .fpreview img').getAttribute('src'), cap: document.querySelector('#hFleet .fpcap').textContent }));
-  check(/plane-hangar-jumbo/.test(pv.src) && /747 jumbo/.test(pv.cap) && /FLYING/.test(pv.cap), `preview shows the plane you fly: ${JSON.stringify(pv)}`);
+  let pv = await p.evaluate(() => ({ src: document.querySelector('#hFleet .fpreview img').dataset.plane, cap: document.querySelector('#hFleet .fpcap').textContent }));
+  check(pv.src === 'jumbo' && /747 jumbo/.test(pv.cap) && /FLYING/.test(pv.cap), `preview shows the plane you fly: ${JSON.stringify(pv)}`);
   await p.click('.fplane[data-pview="comet"] b'); await p.waitForTimeout(200);
-  pv = await p.evaluate(() => ({ src: document.querySelector('#hFleet .fpreview img').getAttribute('src'), cap: document.querySelector('#hFleet .fpcap').textContent }));
-  check(/plane-hangar-comet/.test(pv.src) && /IN YOUR FLEET/.test(pv.cap), `tapping the Comet card previews it: ${JSON.stringify(pv)}`);
+  pv = await p.evaluate(() => ({ src: document.querySelector('#hFleet .fpreview img').dataset.plane, cap: document.querySelector('#hFleet .fpcap').textContent }));
+  check(pv.src === 'comet' && /IN YOUR FLEET/.test(pv.cap), `tapping the Comet card previews it: ${JSON.stringify(pv)}`);
   const plane = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).fleet.plane);
   check(plane === 'jumbo', `previewing does not change the plane you fly: ${plane}`);
 

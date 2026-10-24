@@ -228,3 +228,60 @@ export function effectText(fx) {
   if (fx.autoSecs) out.push(`autopilot ${fx.autoSecs} s, found ${Math.round(fx.autoChance * 100)}% of the time`);
   return out.join(', ');
 }
+
+// ---------- looks: which art shows each bought level (art session, tools/art/planes/upgrades/) ----------
+// Per plane line, one entry per level: the part's art name, or null for levels with no look in the spec.
+// Files: in flight assets/upgrades/plane-<art>-<part>.png (62x27), hangar assets/ui/upgrades/hangar-<art>-<part>.png
+// (400x176). Each is the WHOLE plane with only that part changed, so parts are layered by changed pixels
+// (src/planelook.js). Engines and Cabin: only the newest level with a look shows; Wings & body: all of them.
+export const LOOKS = {
+  comet: { art: 'comet', engines: ['intakes', 'reversers'], body: ['pinion', 'oval'], cabin: ['tourist', 'galley'] },
+  jumbo: { art: '747', engines: ['jt9d', 'hushkit', 'nextgen'], body: ['upperdeck', 'winglet', 'glass'], cabin: [null, null, 'business'] },
+  twin: { art: 'twin', engines: [null, 'giantfan', null, 'blades'], body: ['tail', 'winglet', null, 'riblets'], cabin: [null, null, 'premium', 'glow'] },
+};
+export const NO_FLIGHT_LOOK = { '747': ['winglet'], twin: ['winglet'] };   // hangar only (too subtle in flight)
+// Gadget stickers on the plane (decoration, never collision): art name, and where its top-left sits on the
+// 62x27 plane, by era of the level bought (tools/art/make_upgrades.py STICKER_AT).
+export const STICKERS = {
+  magnet: { art: 'magnet', at: [[3, 5], [4, 5], [3, 4]] },
+  hold: { art: 'hold', at: [[42, 18], [40, 19], [36, 18]] },
+  gear: { art: 'gear', at: [[40, 21], [42, 22], [38, 21]], ground: true },   // gear: shown only when it is down
+  sensors: { art: 'sensor', at: [[56, 12], [57, 11], [50, 15]] },
+  autopilot: { art: 'auto', at: [[30, 7], [46, 3], [30, 8]] },
+};
+const ERA_IDS = ['1950s', '1970s', '1990s'];
+
+// The parts showing on a plane: [{ line, part }], given its levels ({ engines: 2, ... }).
+export function lookParts(planeId, levels = {}) {
+  const L = LOOKS[planeId]; if (!L) return [];
+  const out = [];
+  for (const line of ['engines', 'body', 'cabin']) {
+    const got = L[line].slice(0, levels[line] || 0).filter(Boolean);
+    for (const part of line === 'body' ? got : got.slice(-1)) out.push({ line, part });
+  }
+  return out;
+}
+// Art file names for a plane's look: { base, parts } for 'flight' or 'hangar'.
+export function lookFiles(planeId, levels, where = 'flight') {
+  const L = LOOKS[planeId], p = planeById(planeId);
+  const parts = lookParts(planeId, levels).map(x => x.part).filter(part => where === 'hangar' || !(NO_FLIGHT_LOOK[L.art] || []).includes(part));
+  return where === 'flight'
+    ? { base: p.sprite, parts: parts.map(part => `plane-${L.art}-${part}`) }
+    : { base: p.portrait, parts: parts.map(part => `assets/ui/upgrades/hangar-${L.art}-${part}.png`) };
+}
+// Hangar gadget overlays for a plane (transparent 400x176, art session): one per gadget bought.
+export const hangarGadgets = (save, planeId) => { const g = fleetOf(save).gadgets, art = LOOKS[planeId].art;
+  return Object.entries(STICKERS).filter(([id]) => g[id]).map(([, s]) => `assets/ui/upgrades/gadget-${art}-${s.art}.png`); };
+// Stickers for the gadgets bought: [{ key, x, y, ground }].
+export function stickers(save) {
+  const g = fleetOf(save).gadgets;
+  return Object.entries(STICKERS).filter(([id]) => g[id]).map(([id, s]) => {
+    const era = Math.min(2, levelEra(g[id])); return { key: `sticker-${s.art}-${ERA_IDS[era]}`, x: s.at[era][0], y: s.at[era][1], ground: !!s.ground };
+  });
+}
+// All in-flight upgrade art keys (GameScene preloads them from assets/upgrades/).
+export const UPGRADE_ART = [
+  ...Object.values(LOOKS).flatMap(L => ['engines', 'body', 'cabin'].flatMap(line => L[line].filter(Boolean).filter(part => !(NO_FLIGHT_LOOK[L.art] || []).includes(part)).map(part => `plane-${L.art}-${part}`))),
+  ...Object.values(STICKERS).flatMap(s => ERA_IDS.map(e => `sticker-${s.art}-${e}`)),
+  ...[1, 2, 3, 4, 5, 6].map(n => `tower-${n}`), ...ERA_IDS.map(e => `station-${e}`),
+];

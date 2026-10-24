@@ -6,6 +6,8 @@
 // Data and rules: src/fleet.js. Rendered into #hFleet by UI.renderHangar (src/ui.js).
 import { ERAS, eraProgress } from './eras.js';
 import { LINE_INFO, levelCard } from './fleetfacts.js';
+import { composedURL } from './planelook.js';
+import { lookFiles, hangarGadgets } from './fleet.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
 
 const $ = id => document.getElementById(id);
@@ -29,6 +31,9 @@ export class FleetHangar {
     el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.flap(); this.render(); });
     el.querySelectorAll('[data-finfo]').forEach(b => b.onclick = () => { const [kind, id] = b.dataset.finfo.split(':'); this.showInfo(s, kind, id); });
     el.querySelectorAll('[data-fly]').forEach(b => b.onclick = e => { e.stopPropagation(); if (choosePlane(s, b.dataset.fly)) { this.preview = b.dataset.fly; this.ui.persist(); this.ui.sfx.coin(); this.render(); } });
+    // The big picture with the plane's bought parts layered on (src/planelook.js); drawn when ready.
+    const pv = el.querySelector('.fpreview img'), f = fleetOf(s), pid = pv && pv.dataset.plane;
+    if (pid && f.planes[pid]) { const files = lookFiles(pid, f.planes[pid], 'hangar'); composedURL(files.base, files.parts, hangarGadgets(s, pid)).then(u => { if (pv.isConnected) pv.src = u; }).catch(() => {}); }
     el.querySelectorAll('[data-pview]').forEach(c => c.onclick = () => { this.preview = c.dataset.pview; this.ui.sfx.flap(); this.render(); });
     el.querySelectorAll('[data-fbuy]').forEach(b => b.onclick = () => {
       const [kind, id] = b.dataset.fbuy.split(':'), free = !!s.freeUpgrade;
@@ -44,7 +49,7 @@ export class FleetHangar {
   previewHTML(s) {
     const f = fleetOf(s), id = this.preview && planeById(this.preview) ? this.preview : f.plane, pl = planeById(id), owned = !!f.planes[id];
     const tag = f.plane === id ? 'FLYING' : owned ? 'IN YOUR FLEET' : `OPENS IN ${ERAS[pl.era].id.toUpperCase()}`;
-    return `<div class="fpreview ${owned ? '' : 'locked'}"><img src="${pl.portrait}" alt="${pl.name}"><div class="fpcap"><b>${pl.name}</b><span>${tag}</span></div></div>`;
+    return `<div class="fpreview ${owned ? '' : 'locked'}"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}"><div class="fpcap"><b>${pl.name}</b><span>${tag}</span></div></div>`;
   }
 
   // 1950s ... far future: done eras lit, this one marked, the bar to the next and what it brings.

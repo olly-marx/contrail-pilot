@@ -17,17 +17,9 @@ assets/tower.png. Recipe: research/PLANE-ART-RECIPE.md.
 
 More rows (gadget stickers, towers by era, system icons) are added as each stage uses them.
 
-## Gadget looks (in flight; decoration only, never collision)
-Placeholders: the OLD upgrade overlays, one per era tier (tier = ceil(level / 2)), drawn by
-GameScene.buildPlaneParts. Each needs a real per-era look (PLANE-ERAS-1-3.md section 5):
-
-| Gadget | Placeholder now | Wanted: 1950s / 1970s / 1990s |
-|---|---|---|
-| Magnet | plane-magnet-1..3 | red horseshoe / copper coil / silver disc |
-| Cargo hold | plane-hold-1..3 | mail sacks at the hold door / belly fairing / bigger fairing |
-| Landing gear | plane-gear-1..2 (shown on the ground) | two-wheel legs / four-wheel bogies / six-wheel bogies |
-| Sensors | plane-radar-1..3 | nose thermometer probe / radar nose cone / side humidity probe |
-| Autopilot | (nothing yet) | antenna on top / two antennas / satellite dome |
-
-## Era welcome cards (stage 3c, PixelLab, prompts to be approved by the user)
-Not made yet.
+## Upgrade looks (WIRED in 0.10.4, plane build session)
+Approved art from the art session (tools/art/planes/upgrades/), copied to assets/upgrades/ (in flight, stickers,
+towers, stations) and assets/ui/upgrades/ (hangar). Mapping: src/fleet.js LOOKS / STICKERS; layering:
+src/planelook.js. Still wanted: looks for FADEC, low-emission combustor, fly-by-wire, seat-back screens, XL bins,
+upper-deck lounge, wide-body economy (no look in the spec); bolder in-flight hush-kit and winglets; the
+in-flight 747 variants are to be REDONE with PixelLab (art session note).

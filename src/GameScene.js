@@ -11,7 +11,8 @@ import { flightPath, legBetween, city, HOME, EARTH_KM } from './route.js';
 import { addPrizes } from './rewards.js';
 import { writeSave } from './save.js';
 import { eraProgress } from './eras.js';
-import { syncFleet, CONTRAIL_MARGIN, FORECAST, GAP_HINT, FARES } from './fleet.js';
+import { syncFleet, CONTRAIL_MARGIN, FORECAST, GAP_HINT, FARES, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra } from './fleet.js';
+import { composeOnto } from './planelook.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
@@ -56,6 +57,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('plane-comet', 'assets/plane-comet.png');   // eras (src/fleet.js): looks only
     this.load.image('plane-twin', 'assets/plane-twin.png');
     this.load.image('plane-747', 'assets/plane-747.png');   // the 1970s paint (era colour ladder)
+    for (const k of UPGRADE_ART) this.load.image(k, `assets/upgrades/${k}.png`);   // upgrade looks, stickers, towers (src/fleet.js)
     for (const [id, n] of Object.entries(PART_LINES)) for (let i = 1; i <= n; i++) this.load.image(`plane-${id}-${i}`, `assets/plane-${id}-${i}.png`);
     for (let i = 1; i <= 4; i++) this.load.image(`plane-nature-${i}`, `assets/plane-nature-${i}.png`);
     this.load.image('plane-lights', 'assets/plane-lights.png');
@@ -191,7 +193,7 @@ export class GameScene extends Phaser.Scene {
     this.exhaustLayer = this.add.layer();
     this.puffs = [];
     this.nextPuff = 0;
-    this.planeSprite = this.add.image(0, 0, this.kit.sprite || 'plane');   // the plane flown; collisions stay on alphaMask('plane')
+    this.planeSprite = this.add.image(0, 0, this.planeLookKey());   // the plane flown, as upgraded; collisions stay on alphaMask('plane')
     this.buildPlaneParts();
 
     this.ground = this.add.tileSprite(0, SKY_H, WIDTH, GROUND_H, 'ground').setOrigin(0);
@@ -708,12 +710,11 @@ export class GameScene extends Phaser.Scene {
   buildPlaneParts() {
     const add = (key, kind) => { const img = this.add.image(0, 0, key); this.planeParts.push({ img, kind }); return img; };
     this.planeParts = [];
-    // Gadgets show on the plane, one look per era (fleet.js). PLACEHOLDER: the old upgrade overlays
-    // stand in until the art session draws era gadgets (research/PLANE-ART-TODO.md).
-    const g = (this.save.fleet || {}).gadgets || {};
-    for (const [id, key] of [['hold', 'hold'], ['magnet', 'magnet'], ['sensors', 'radar'], ['gear', 'gear']]) if (g[id]) {
-      const tier = Math.min(Math.ceil(g[id] / 2), PART_LINES[key]);
-      add(`plane-${key}-${tier}`, id === 'gear' ? 'gear' : 'part');
+    // Gadget stickers, one look per era (fleet.js STICKERS, art session). Origin at the plane's centre so
+    // they turn with it: the sticker's top-left sits at (x, y) on the 62x27 plane.
+    for (const st of stickers(this.save)) {
+      const t = this.textures.get(st.key).getSourceImage(), img = add(st.key, st.ground ? 'gear' : 'part');
+      img.setOrigin((PLANE.spriteW / 2 - st.x) / t.width, (PLANE.spriteH / 2 - st.y) / t.height);
     }
     const badge = natureBadge(natureLevels(this.save));
     if (badge) add(`plane-nature-${badge}`, 'part');
@@ -1041,7 +1042,10 @@ export class GameScene extends Phaser.Scene {
     const strip = this.add.tileSprite(x, SKY_H, AIRPORT.runwayLen, 6, 'runway').setOrigin(0);   // centre dash every 20 px
     const parts = [strip];
     // Control tower at the far end.
-    parts.push(this.add.image(x + AIRPORT.runwayLen - 17, SKY_H, 'tower').setOrigin(0, 1));
+    // The tower shows your Air traffic control level; a weather station your Forecasting era (art session).
+    const sys = fleetOf(this.save).systems, atc = sys.atc || 0, fc = sys.forecast || 0;
+    parts.push(this.add.image(x + AIRPORT.runwayLen - 17, SKY_H, atc ? `tower-${Math.min(6, atc)}` : 'tower').setOrigin(0, 1));
+    if (fc) parts.push(this.add.image(x + AIRPORT.runwayLen - 36, SKY_H, `station-${['1950s', '1970s', '1990s'][Math.min(2, levelEra(fc))]}`).setOrigin(0, 1));
     parts.push(this.add.text(x + AIRPORT.runwayLen / 2, SKY_H + 8, name,
       { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 0));
     this.runwayLayer.add(parts);
@@ -1938,6 +1942,18 @@ export class GameScene extends Phaser.Scene {
       }
       this.feedback = { amount: 0, timer: 0 };
     }
+  }
+
+  // The plane's picture with its bought parts layered on (src/planelook.js): a canvas texture made once
+  // per scene. No parts: the plane's own sprite.
+  planeLookKey() {
+    const f = fleetOf(this.save), files = lookFiles(f.plane, f.planes[f.plane] || {}, 'flight');
+    if (!files.parts.length || !files.parts.every(k => this.textures.exists(k))) return files.base;
+    if (this.textures.exists('plane-look')) this.textures.remove('plane-look');
+    const base = this.textures.get(files.base).getSourceImage(), tex = this.textures.createCanvas('plane-look', base.width, base.height);
+    composeOnto(tex.getContext(), base, files.parts.map(k => this.textures.get(k).getSourceImage()));
+    tex.refresh();
+    return 'plane-look';
   }
 
   // ---------- heat feedback: the player should feel that warming is bad ----------

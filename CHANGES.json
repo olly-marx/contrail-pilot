@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-24-looks",
+    "version": "0.10.4",
+    "date": "2026-10-24",
+    "level": "major",
+    "notes": [
+      "Your upgrades now show! New engines, gold stripes, glass cockpits and more appear on your plane, in flight and in the hangar.",
+      "Gadgets are fitted to your plane: magnets, sensors, antennas and cargo, a new look each era.",
+      "Airports show your systems: the control tower grows with air traffic control, and a weather station appears with forecasting."
+    ]
+  },
+  {
     "id": "2026-10-24-tuning",
     "version": "0.10.3",
     "date": "2026-10-24",
