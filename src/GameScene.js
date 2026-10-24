@@ -809,7 +809,7 @@ export class GameScene extends Phaser.Scene {
   setRegion(r, instant = false) {
     if (r === this.regionNow) return;
     this.regionNow = r;
-    const terrain = REGIONS[r];   // the sea, the ice, savanna and rainforest have no strips yet: keep the last land's
+    const terrain = REGIONS[r];   // every region has strips since 0.10.7 (ocean and ice too: tools/art/make_regions.py); a missing one keeps the last land's
     // (A tileSprite's texture.key is an internal copy, so the strip keys shown are kept in this.terrain.)
     if (terrain && instant) { this.ground.setTexture(terrain.ground); this.hills.setTexture(terrain.hills); this.terrain = { ...terrain }; }
     else if (terrain && (!this.terrain || this.terrain.ground !== terrain.ground)) {
@@ -1130,6 +1130,12 @@ export class GameScene extends Phaser.Scene {
   dropParcel() {
     if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
     if (this.parcels <= 0) { sfx.nope(); return; }
+    // Over the open sea and the ice nothing can be planted (user, 2026-10-24): keep the parcel.
+    if (['ocean', 'ice'].includes(this.regionNow)) {
+      sfx.nope();
+      if (!this.saidNoSoil) { this.saidNoSoil = true; this.popup(this.plane.x + 20, this.plane.y - 12, this.regionNow === 'ocean' ? 'No land to plant on!' : 'Nothing grows on the ice!', '#cfe6ff'); }
+      return;
+    }
     this.parcels--;
     const crate = this.add.image(0, 0, 'crate');
     const chute = this.add.image(0, -8, 'chute').setVisible(false);
@@ -2082,7 +2088,7 @@ export class GameScene extends Phaser.Scene {
     const forest = 'FOREST FULL!';   // one short line (the meter shows the rest; longer text ran into it): FULL beats the soil hint
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
     this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? 'drop on soil!' : '') : '');
-    const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen;
+    const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow);   // nothing to plant on (0.10.7)
     this.setDropVisible(showDrop);
     if (showDrop) this.dropLabel.setText(`DROP x${this.parcels}\n${localTree(this.treeKind(), this.regionNow || 'woodland').name.toUpperCase()}`);
     this.cargoText.setText(`${this.cargo}`);

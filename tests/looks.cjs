@@ -25,7 +25,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.addInitScript(f => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'],
       flights: 30, landings: 9, seeds: 400, crystals: 60, flightSeconds: 1500, priceVersion: 2, levels: {}, fleet: f })); }, fleet);
     await p.goto(URL); await ready(p); await p.waitForTimeout(400);
-    await p.click('#tabHangar'); await p.waitForTimeout(1000);
+    await p.click('#tabHangar');
+    // The composed picture is drawn when its images have loaded: wait for it (up to 6 s; plain if nothing is bought).
+    await p.waitForFunction(() => /^data:/.test(document.querySelector('#hFleet .fpreview img').getAttribute('src')), null, { timeout: 6000 }).catch(() => {});
     const hangarSrc = await p.evaluate(() => document.querySelector('#hFleet .fpreview img').getAttribute('src').slice(0, 30));
     await p.click('#tabFly'); await p.click('#goBtn');
     await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 });

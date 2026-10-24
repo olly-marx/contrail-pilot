@@ -17,7 +17,11 @@ REGIONS = {
     'boreal':        {'name': 'Boreal & mountains', 'cities': ['ANCHORAGE', 'VANCOUVER']},
     'plains':        {'name': 'Plains & eastern forest', 'cities': ['CHICAGO', 'NEW YORK']},
     'tundra':        {'name': 'Volcanic tundra', 'cities': ['REYKJAVIK']},
+    'savanna':       {'name': 'African savanna', 'cities': ['NAIROBI']},          # strips added 2026-10-24 (make_regions.py)
+    'rainforest':    {'name': 'Amazon rainforest', 'cities': ['MANAUS']},
 }
+# Regions with ground strips but no wildlife or NATURE tab: the open sea and the ice (src/geo.js).
+TERRAIN_ONLY = {'ocean': {'name': 'Open sea', 'cities': []}, 'ice': {'name': 'Ice', 'cities': []}}
 
 # kind: 'animal' (walks on the ground: animal-<id>-0/1), 'bird' (flies: sky-<id>-0/1)
 # art: generator dials (see creatures.py), 'hand' (already hand-drawn in make_sprites.py), or None (to do)

@@ -15,7 +15,7 @@ from creatures import frames_same_size   # noqa: E402
 from shapes import render   # noqa: E402
 
 SMALL, PORTRAIT = 1.5, 4      # px per unit: in-flight sprite, collection-screen portrait
-from species import REGIONS, SPECIES, TREES   # noqa: E402
+from species import REGIONS, SPECIES, TERRAIN_ONLY, TREES   # noqa: E402
 from trees import WOODLAND, TREE_SMALL, TREE_PORTRAIT, render_tree   # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,7 +45,7 @@ def main(preview=None):
         render_tree(art, 2, TREE_PORTRAIT).save(A / 'ui' / f"portrait-tree-{t['id']}-0.png")
         print('drew tree', t['id'], render_tree(art, 2, TREE_SMALL).size)
     regions = {r: dict(v, ground='ground' if r == 'woodland' else f'ground-{r}', hills='hills' if r == 'woodland' else f'hills-{r}')
-               for r, v in REGIONS.items()}
+               for r, v in {**REGIONS, **TERRAIN_ONLY}.items()}
     rows = []
     for sp in SPECIES:
         has = sp['art'] is not None

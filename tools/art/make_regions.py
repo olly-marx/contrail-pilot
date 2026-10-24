@@ -24,6 +24,11 @@ GROUND = {
     'boreal':        dict(top=('#6a9a5a', '#4e7e44', '#3a6634', '#2c5228', '#203e1e'), soil=('#5a4a3a', '#463a2e', '#6e5c48', '#8a7a68'), snow=True),
     'plains':        dict(top=('#e8d070', '#d4b850', '#bca040', '#9e8432', '#806a28'), soil=('#6a4a30', '#543a26', '#80603e', '#a08868'), tufts='#9e8432'),
     'tundra':        dict(top=('#a8b890', '#8aa070', '#6e8458', '#566a44', '#3e4e32'), soil=('#3a3a40', '#2a2a30', '#50505a', '#7a7a86'), snow=True),
+    # Added 2026-10-24 (plane build session): the four regions flown over without strips until 0.10.6.
+    'savanna':       dict(top=('#f0d488', '#e0bc60', '#c8a048', '#a8843a', '#86682c'), soil=('#b0562e', '#8e4424', '#c8703e', '#e0a070'), tufts='#a8843a'),
+    'rainforest':    dict(top=('#4aa83e', '#36902e', '#267a24', '#1c621c', '#144c16'), soil=('#7a3a24', '#5e2c1c', '#94503a', '#b07858'), tufts='#144c16'),
+    'ocean':         dict(water=('#bfe6f4', '#7cc4e4', '#3e98cc', '#2a7cb4', '#1c5e94')),   # all water: nothing grows, nothing is planted
+    'ice':           dict(top=('#ffffff', '#eef6fc', '#d8e8f4', '#bcd4e8', '#9cbcd8'), soil=('#a8cce4', '#8cb4d4', '#c4e0f0', '#ffffff'), cracks=True),
 }
 
 # Hills: a profile kind plus back and front colours (each: base, rim) and an optional detail.
@@ -35,11 +40,35 @@ HILLS = {
     'boreal':        dict(kind='peaks', back=('#c0ccd8', '#ffffff'), front=('#5a8070', '#76987e'), detail='firs'),
     'plains':        dict(kind='low', back=('#d8d8a0', '#e8e8b8'), front=('#c4b870', '#d8cc88')),
     'tundra':        dict(kind='peaks', back=('#8a8a96', '#ffffff'), front=('#5a5a66', '#787884'), detail='lava'),
+    'savanna':       dict(kind='low', back=('#e8d8a8', '#f4e8c4'), front=('#d4b878', '#e4cc90'), detail='acacia'),
+    'rainforest':    dict(kind='canopy', back=('#7ab878', '#98cc94'), front=('#2e8a3a', '#46a250'), detail='mist'),
+    'ocean':         dict(kind='swell', back=('#a8d8ec', '#d4eef8'), front=('#7cc4e4', '#bfe6f4')),
+    'ice':           dict(kind='peaks', back=('#cfe2f0', '#ffffff'), front=('#e8f2fa', '#ffffff')),
 }
+
+
+def water(region):
+    """The sea: bands from light (top) to deep, with wave crests that move along the band. Periods divide 288."""
+    foam, light, mid, deep, deeper = (hexc(c) for c in GROUND[region]['water'])
+    s = Strip(48)
+    for x in range(W):
+        for y in range(48):
+            c = light if y < 6 else mid if y < 18 else deep if y < 34 else deeper
+            s.px(x, y, c)
+        s.px(x, 0, foam)
+    for y, per, off, c in ((3, 24, 0, foam), (9, 36, 7, light), (15, 48, 19, light), (24, 72, 11, mid), (31, 32, 3, mid), (41, 96, 40, deep)):
+        for x in range(W):
+            t = (x + off) % per
+            if t < per // 4:
+                s.px(x, y, c)
+                if t in (1, 2): s.px(x, y - 1, c)
+    s.save(f'ground-{region}.png')
 
 
 def ground(region):
     g = GROUND[region]
+    if 'water' in g:
+        return water(region)
     rim, lit, base, dark, edge = (hexc(c) for c in g['top'])
     soil, soil_d, soil_l, pebble = (hexc(c) for c in g['soil'])
     s = Strip(48)
@@ -71,6 +100,11 @@ def ground(region):
                 s.px(x, 0, hexc('#ffffff')); s.px(x, 1, hexc('#e8f0f8'))
                 if x0 + 2 < x < x0 + w - 2:
                     s.px(x, 2, hexc('#e8f0f8'))
+    if g.get('cracks'):                                                # ice: long blue cracks in the floe
+        for _ in range(14):
+            x, y = rnd.randrange(W), rnd.randrange(3, top_h - 2)
+            for k in range(rnd.randrange(5, 14)):
+                s.px(x + k, y + (k // 4) % 2, hexc('#9cbcd8'))
     for _ in range(40):
         x, y = rnd.randrange(W), rnd.randrange(top_h + 4, 46)
         for dx in range(rnd.choice([1, 2, 2, 3])):
@@ -91,6 +125,8 @@ def profile(kind, x, layer):
         crest = 0.7
         h = t / crest if t < crest else (1 - t) / (1 - crest)
         return round((20 if layer == 0 else 12) + (14 if layer == 0 else 10) * h ** 1.3)
+    if kind == 'swell':                    # the open sea: long low swells
+        return round((8 if layer == 0 else 4) + (3 if layer == 0 else 2) * (1 + math.sin(2 * math.pi * (x + layer * 20) / (96 if layer == 0 else 72))))
     if kind == 'canopy':                   # lumpy tree-top line
         bumps = 8 * abs(math.sin(math.pi * x / 18 + layer)) + 3 * abs(math.sin(math.pi * x / 7.2))
         return round((22 if layer == 0 else 14) + bumps * (1 if layer == 0 else 0.8))
@@ -150,6 +186,14 @@ def hills(region):
                 if c[3]:
                     m = (228, 236, 228)
                     s.px(x, y, tuple(round(c[i] + (m[i] - c[i]) * a / 255) for i in range(3)) + (255,))
+    if h.get('detail') == 'acacia':                                     # flat-topped acacia silhouettes on the plain
+        for _ in range(10):
+            x = rnd.randrange(W)
+            top = H - profile('low', x, 1)
+            for k in range(1, 5):
+                s.px(x, top - k, hexc('#6a5a3a'))
+            for dx in range(-4, 5):
+                s.px(x + dx, top - 5, hexc('#7a8a4a')); s.px(x + dx // 2, top - 6, hexc('#8a9a5a'))
     if h.get('detail') == 'lava':                                       # a faint glow on one peak
         for x in range(140, 146):
             s.px(x, H - profile('peaks', x, 1) - 1, hexc('#ff8a50'))

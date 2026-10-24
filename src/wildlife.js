@@ -73,6 +73,34 @@ export const REGIONS = {
     ],
     "ground": "ground-tundra",
     "hills": "hills-tundra"
+  },
+  "savanna": {
+    "name": "African savanna",
+    "cities": [
+      "NAIROBI"
+    ],
+    "ground": "ground-savanna",
+    "hills": "hills-savanna"
+  },
+  "rainforest": {
+    "name": "Amazon rainforest",
+    "cities": [
+      "MANAUS"
+    ],
+    "ground": "ground-rainforest",
+    "hills": "hills-rainforest"
+  },
+  "ocean": {
+    "name": "Open sea",
+    "cities": [],
+    "ground": "ground-ocean",
+    "hills": "hills-ocean"
+  },
+  "ice": {
+    "name": "Ice",
+    "cities": [],
+    "ground": "ground-ice",
+    "hills": "hills-ice"
   }
 };
 

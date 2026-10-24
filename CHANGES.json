@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-10-24-terrain",
+    "version": "0.10.7",
+    "date": "2026-10-24",
+    "level": "minor",
+    "notes": [
+      "The savanna, the Amazon rainforest, the open sea and the ice now have their own landscape below your plane.",
+      "Over the sea and the ice there is nothing to plant on, so the DROP button waits until you are over land again."
+    ]
+  },
+  {
     "id": "2026-10-24-skylines",
     "version": "0.10.6",
     "date": "2026-10-24",
