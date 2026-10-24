@@ -29,10 +29,11 @@ export class Hud {
     scene.add.rectangle(hx - 2, this.zeroY, BAR_W + 4, 1, 0xffffff).setOrigin(0);
     scene.add.rectangle(hx - 3, BAR_TOP, BAR_W + 6, 2, COLOURS.warm).setOrigin(0);
 
-    // Planet face above the heating bar: one sprite per mood (tools/art/make_sprites.py).
-    this.faceX = hx + BAR_W / 2;
-    this.faceY = BAR_TOP - 14;
-    this.face = scene.add.image(this.faceX, this.faceY, 'face-ok');
+    // Planet face above the heating bar: PixelLab, two frames per mood so the sweat runs down
+    // (tools/art/pixellab_faces.py + face_sweat.py). 32 px wide: kept 1 px inside the right edge of the screen.
+    this.faceX = Math.min(hx + BAR_W / 2, WIDTH - 17);
+    this.faceY = BAR_TOP - 18;
+    this.face = scene.add.image(this.faceX, this.faceY, 'face-ok-0');
     // A blinking frame around the Earth bar, for the flight-school lesson about overheating.
     this.frame = scene.add.rectangle(hx - 6, BAR_TOP - 30, BAR_W + 12, BAR_H + 36).setOrigin(0).setStrokeStyle(2, 0xffe15a).setVisible(false).setDepth(5);
     this.frameTween = scene.tweens.add({ targets: this.frame, alpha: 0.2, duration: 300, yoyo: true, repeat: -1, paused: true });
@@ -57,13 +58,13 @@ export class Hud {
       this.heatFill.setPosition(this.hx, this.zeroY + 1).setSize(BAR_W, y - this.zeroY).setFillStyle(COLOURS.cool);
     }
     // A hot Earth trembles.
-    const shake = heat > 75 ? Math.round(Math.sin(time / 35)) : 0;
+    const shake = heat > 0.75 * CLIMATE.dangerLine ? Math.round(Math.sin(time / 35)) : 0;
     this.face.x = this.faceX + shake;
-    this.drawFace(heat);
+    this.drawFace(heat, time);
   }
 
-  drawFace(heat) {
-    const mood = heat < 0 ? 'happy' : heat < 50 ? 'ok' : heat < 80 ? 'hot' : 'melting';
-    this.face.setTexture(`face-${mood}`);
+  drawFace(heat, time = 0) {
+    const pc = heat * 100 / CLIMATE.dangerLine, mood = heat < 0 ? 'happy' : pc < 50 ? 'ok' : pc < 80 ? 'hot' : 'melting';
+    this.face.setTexture(`face-${mood}-${Math.floor(time / 350) % 2}`);   // two frames: the sweat runs down
   }
 }

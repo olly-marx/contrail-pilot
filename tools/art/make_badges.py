@@ -139,7 +139,7 @@ def icon_nightowl(p, cx, cy):
 
 
 def icon_coolplanet(p, cx, cy):
-    paste(p, A / 'face-happy.png', cx, cy, 13, 13)
+    paste(p, A / 'face-happy-0.png', cx, cy, 13, 13)
 
 
 def icon_zerocarbon(p, cx, cy):
@@ -178,7 +178,7 @@ def icon_globetrotter(p, cx, cy):
 
 
 def icon_worldflight(p, cx, cy):
-    paste(p, A / 'face-ok.png', cx, cy + 1, 11, 11)
+    paste(p, A / 'face-ok-0.png', cx, cy + 1, 11, 11)
     for a in range(0, 360, 20):                                     # an orbit right round it
         x = cx + round(6.5 * math.cos(math.radians(a))); y = cy + 1 + round(3 * math.sin(math.radians(a)))
         if not (a > 30 and a < 150):

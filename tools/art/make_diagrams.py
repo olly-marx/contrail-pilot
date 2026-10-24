@@ -268,7 +268,7 @@ def lesson_land():
 
 def lesson_heat():
     p = Pic(120, 64, C['sky'])
-    big = Image.open(A / 'face-melting.png').convert('RGBA').resize((38, 38), Image.NEAREST)
+    big = Image.open(A / 'face-melting-0.png').convert('RGBA').resize((38, 38), Image.NEAREST)
     p.img.alpha_composite(big, (24, 10))
     bar(p, 74, 6, 50, C['warm'], 1.0)
     p.rect(71, 5, 12, 2, C['warm'])                        # over the danger line
@@ -355,7 +355,7 @@ def lesson_bars():
     puff_cloud(p, 33, 2, 1)
     bar(p, 86, 8, 48, C['warm'], 0.45)                                   # Earth bar, right
     p.rect(83, 8 + 48 - 22, 10, 1, C['white'])                            # its zero line
-    scaled(p, 'face-ok', 79, 0, 1)
+    scaled(p, 'face-ok-0', 79, 0, 1)
     plane(p, 50, 30)
     p.save('lesson-bars')
 
@@ -364,7 +364,7 @@ def lesson_hot():
     p = Pic(120, 64, C['sky'])
     bar(p, 58, 8, 50, C['warm'], 1.0)
     p.rect(55, 7, 12, 2, C['warm'])
-    scaled(p, 'face-hot', 22, 14, 2)
+    scaled(p, 'face-hot-0', 22, 14, 2)
     for x, y in ((74, 20), (80, 30), (76, 42)):                           # heat waves
         p.line(x, y, x + 3, y - 3, C['heat']); p.line(x + 3, y - 3, x + 6, y, C['heat'])
     p.save('lesson-hot')
@@ -589,7 +589,7 @@ def mi_crystal(p):
 
 
 def mi_globe(p):
-    globe = Image.open(A / 'face-happy.png').convert('RGBA')
+    globe = Image.open(A / 'face-happy-0.png').convert('RGBA')
     # A plain globe: the happy Earth without its face (eyes, mouth, cheeks painted back as sea).
     px = globe.load()
     for x, y in [(6, 8), (7, 8), (6, 9), (7, 9), (11, 8), (12, 8), (11, 9), (12, 9),

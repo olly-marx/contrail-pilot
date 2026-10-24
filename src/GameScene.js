@@ -66,7 +66,8 @@ export class GameScene extends Phaser.Scene {
     for (const c in LANDMARKS) this.load.image(LANDMARKS[c].key, `assets/${LANDMARKS[c].key}.png`);   // art session: one per city
     // Sprites: drawn by tools/art/make_sprites.py.
     for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'power-saf', 'power-auto', 'meter-tree-0', 'meter-tree-1', 'meter-tree-2', 'meter-tree-3', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
-      'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'storm-flash', 'storm-flash-top', 'storm-flash-bottom', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly', 'face-happy', 'face-ok', 'face-hot', 'face-melting'])
+      'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'storm-flash', 'storm-flash-top', 'storm-flash-bottom', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly',
+      ...['happy', 'ok', 'hot', 'melting'].flatMap(m => [`face-${m}-0`, `face-${m}-1`])])   // the planet faces, 2 frames (Hud.js)
       this.load.image(k, `assets/${k}.png`);
     // Background wildlife: two frames each (legs / wings).
     // Animals and birds: every species in src/wildlife.js (the loop below).

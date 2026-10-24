@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-24-faces",
+    "version": "0.10.2",
+    "date": "2026-10-24",
+    "level": "minor",
+    "notes": [
+      "The Earth above your heat bar has a new face. As it gets hotter it turns red, starts to sweat, and if it gets too hot, it cries. Keep it cool and keep it smiling!"
+    ]
+  },
+  {
     "id": "2026-10-24-pixelart",
     "version": "0.10.1",
     "date": "2026-10-24",
