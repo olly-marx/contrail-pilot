@@ -481,3 +481,62 @@ h2.sub { margin-top: -4px; }
 /* Short phones: a smaller globe, so TAKE OFF stays on screen (2026-10-22). */
 @media (max-height: 760px) { .jglobe { width: 96px; height: 96px; } .journey { gap: 2px; } .jway { padding: 3px 2px; } }
 @media (max-height: 600px) { .jglobe { display: none; } }
+
+/* Era progress (src/eras.js): FLY screen and results. */
+.era { font-size: 8px; text-align: center; }
+.era-row { display: flex; align-items: center; gap: 6px; justify-content: center; }
+.era-badge { background: #2b4a6f; color: #ffe15a; padding: 2px 5px; border-radius: 3px; font-weight: bold; white-space: nowrap; }
+.era-track { flex: 0 1 140px; height: 8px; background: #1b2838; border: 1px solid #5c7da3; border-radius: 3px; overflow: hidden; }
+.era-fill { display: block; height: 100%; background: #7fd0ff; }
+.era-label { margin: 3px 0 0; }
+.era-gain { margin: 0 0 3px; color: #9fe0ff; }
+.era-open { margin: 4px 0 0; color: #ffe15a; font-weight: bold; }
+
+/* The fleet hangar (src/hangar.js). */
+.ftimeline { display: flex; justify-content: space-between; gap: 2px; font-size: 7px; margin: 4px 0; }
+.fera { padding: 2px 3px; border-radius: 3px; background: #1b2838; color: #6d7f95; }
+.fera.done { background: #2b4a6f; color: #cfe6ff; }
+.fera.now { background: #ffe15a; color: #1b2838; font-weight: bold; }
+.ftabs { display: flex; gap: 4px; justify-content: center; margin: 8px 0; }
+.ftab.on { background: #ffe15a; color: #1b2838; }
+.fplanes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.fplane { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; border: 2px solid #2b4a6f; border-radius: 4px; font-size: 8px; text-align: center; }
+.fplane img { width: 100%; image-rendering: pixelated; }
+.fplane.flying { border-color: #ffe15a; }
+.fplane.locked img { filter: brightness(0); opacity: 0.35; }
+.fbadge { color: #ffe15a; font-weight: bold; }
+.est { color: #ffb36b; font-size: 7px; }
+.soon { color: #9fb3c8; font-size: 7px; }
+.blocked { color: #9fb3c8; }
+.fplane .btn { font-size: 8px; padding: 3px 6px; }
+
+/* Era welcome card (src/welcome.js). */
+.era-card { z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; overflow-x: hidden; overflow-y: auto; padding-top: min(52vw, 230px); background: #10182a; }
+.era-card .ec-sky { position: absolute; left: 0; right: 0; top: 0; height: min(56.25vw, 250px); background-size: cover; background-position: center top; background-repeat: no-repeat; image-rendering: pixelated; }
+.era-card[data-era="1950s"] { background: linear-gradient(#f3e3c0, #c9774a); }
+.era-card[data-era="1970s"] { background: linear-gradient(#ffb347, #8a3b12); }
+.era-card[data-era="1990s"] { background: linear-gradient(#ffd86b, #b8860b); }
+.ec-body { position: relative; max-width: 340px; margin: 0 12px 16px; padding: 14px; text-align: center; background: rgba(16, 24, 42, 0.82); border: 3px solid #ffe15a; border-radius: 6px; color: #fff; font-size: 9px; }
+.ec-kicker { color: #ffe15a; letter-spacing: 2px; margin: 0; opacity: 0; }
+.ec-title { margin: 6px 0; font-size: 16px; line-height: 1.4; color: #fff; opacity: 0; }
+.ec-title span { color: #ffe15a; font-size: 26px; }
+.ec-runway { position: relative; height: 70px; border-bottom: 3px dashed #ffe15a; overflow: hidden; }
+.ec-plane { position: absolute; bottom: 2px; left: -60%; width: 186px; image-rendering: pixelated; }
+.ec-tag, .ec-note, .ec-list, #ecOk { opacity: 0; }
+.ec-note { color: #cfe6ff; }
+.ec-list { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: 8px 0; }
+.ec-new { background: #2b4a6f; padding: 2px 5px; border-radius: 3px; }
+.ec-new.big { background: #ffe15a; color: #1b2838; }
+.ec-confetti i { position: absolute; top: -10px; width: 6px; height: 6px; opacity: 0; }
+.era-card.go .ec-kicker { animation: ec-in 0.3s 0.1s forwards; }
+.era-card.go .ec-title { animation: ec-stamp 0.5s 0.35s cubic-bezier(.2, 1.6, .5, 1) forwards; }
+.era-card.go .ec-plane { animation: ec-taxi 2.2s 0.8s ease-out forwards; }
+.era-card.go .ec-tag { animation: ec-in 0.4s 1.6s forwards; }
+.era-card.go .ec-note, .era-card.go .ec-list { animation: ec-in 0.4s 2.1s forwards; }
+.era-card.go #ecOk { animation: ec-in 0.4s 2.6s forwards; }
+.era-card.go .ec-confetti i { animation: ec-fall 2.6s 0.4s linear infinite; }
+@keyframes ec-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes ec-stamp { from { opacity: 0; transform: scale(3); } to { opacity: 1; transform: scale(1); } }
+@keyframes ec-taxi { to { left: calc(50% - 93px); } }
+@keyframes ec-fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0.9; transform: translateY(110vh) rotate(720deg); } }
+.srcok { color: #3f9a5a; font-size: 7px; }

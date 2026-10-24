@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-10-23-eras",
+    "version": "0.10.0",
+    "date": "2026-10-23",
+    "level": "major",
+    "notes": [
+      "Plane ERAS! Start in the 1950s with the Comet, the first jet airliner. Fly to open the 1970s (747 jumbo) and the 1990s (a big twin). Your plane upgrades start again, with 300 seeds to get going. Seeds, crystals, nature, badges and records are all kept.",
+      "A new hangar: choose which plane to fly, and upgrade its engines, wings and cabin. New systems (forecasting, air traffic control, fuel and operations) and gadgets help every flight.",
+      "Efficient planes make contrails more easily, right up to the edge of icy air. Old hot jets only make them deep inside. That is real science!",
+      "Weather forecasts show icy air sooner, but sometimes they are wrong: a fake patch puffs away when you get close. Air traffic control makes the sky a little kinder.",
+      "Passengers pay fares when you land. A fuller plane makes less CO2 per passenger.",
+      "Trips between cities are shorter again, with storms closer together and bumpy air sooner, so the sky stays busy."
+    ]
+  },
+  {
     "id": "2026-10-23-offline",
     "version": "0.9.2",
     "date": "2026-10-23",

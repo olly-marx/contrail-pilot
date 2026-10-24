@@ -16,7 +16,7 @@ const KEY = 'contrailPilot.v2';
   const setSave = v => p.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [KEY, v]);
   const getSave = () => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
   const scene = (fn, a) => p.evaluate(fn, a);
-  const base = { tutorialDone: true, tours: ['*'], autoTakeoff: true, muted: true, landings: 3 };
+  const base = { tutorialDone: true, tours: ['*'], autoTakeoff: true, muted: true, landings: 3 , fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // fleet: a save from after the eras reset (src/fleet.js)
   await p.goto(URL); await ready(p); await p.waitForTimeout(500);
 
   // 1. Variety beats quantity: 9 spruce < 3 different native trees.

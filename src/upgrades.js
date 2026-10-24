@@ -1,5 +1,6 @@
 import { CLIMATE, CONTRAIL, ISSR, PARCEL, CARGO, CRYSTALS, cz } from './config.js';
 import { SPECIES, biodiversity } from './nature.js';
+import { RETIRED_LINES, fleetKit } from './fleet.js';
 
 // Each upgrade line has levels bought in order. Costs are in seeds (+ ice crystals).
 // `tree`: which upgrade tree it sits in (Plane / Fuel / Science / Nature). `requires`: a branch
@@ -235,6 +236,9 @@ export const FUELS = {
 
 // The hangar has two tabs: the plane (and contrail research) first, nature second.
 export const tabOf = line => (['Trees', 'Nature'].includes(line.group) ? 'nature' : 'plane');
+// The old plane lines, retired by the eras reset (2026-10-23): kept in LINES for old saves and
+// restore.js history, never shown or bought. The plane side is src/fleet.js now.
+export const retired = line => RETIRED_LINES.includes(line.id);
 
 export const level = (save, lineId) => save.levels[lineId] || 0;
 export const lineById = id => LINES.find(l => l.id === id);
@@ -242,6 +246,7 @@ export const nextLevel = (save, line) => line.levels[level(save, line.id)] || nu
 
 // Lines appear as you progress, so the hangar isn't overwhelming at the start.
 export function unlocked(save, line) {
+  if (retired(line)) return false;
   if (!branchOpen(save, line)) return false;
   const u = line.unlock;
   if (!u) return true;
@@ -286,33 +291,22 @@ export function loadout(save) {
   const choices = fuelChoices(save);
   const fuelId = choices.includes(save.fuel) ? save.fuel : choices[choices.length - 1];
   const fuel = FUELS[fuelId];
-  const eng = level(save, 'engine') ? lineById('engine').levels[level(save, 'engine') - 1].co2 : 1;
-  const cabin = level(save, 'cabin') ? lineById('cabin').levels[level(save, 'cabin') - 1].co2 : 1;
-  const radar = level(save, 'radar') ? lineById('radar').levels[level(save, 'radar') - 1] : null;
   const trees = level(save, 'trees') ? lineById('trees').levels[level(save, 'trees') - 1] : null;
   const soil = level(save, 'soil') ? lineById('soil').levels[level(save, 'soil') - 1] : null;
-  const magnet = level(save, 'magnet') ? lineById('magnet').levels[level(save, 'magnet') - 1] : null;
   const at = (id, key, none) => level(save, id) ? lineById(id).levels[level(save, id) - 1][key] : none;   // the bought level's value
-  const airframe = at('airframe', 'takeoff', 1);
-  const wings = at('wings', 'co2', 1);   // Long Wings: less CO2. (Upgrades never change the controls: players learn them.)
+  const fk = fleetKit(save);   // the plane side: the plane flown, its levels, systems and gadgets (src/fleet.js)
   return {
+    ...fk,
     fuelId,
-    co2Cruise: CLIMATE.co2Cruise * fuel.co2 * eng * cabin * wings,
-    co2Takeoff: CLIMATE.co2Takeoff * fuel.co2 * eng * cabin * wings * airframe,
+    co2Cruise: CLIMATE.co2Cruise * fuel.co2 * fk.co2,
+    co2Takeoff: CLIMATE.co2Takeoff * fuel.co2 * fk.co2 * fk.takeoff,
     // Exhaust plume: grey puffs as dark as the CO2, white wisps as thick as the water vapour.
-    smoke: fuel.co2 * eng * cabin * wings,
+    smoke: fuel.co2 * fk.co2,
     vapour: fuel.water,
     contrailEvery: fuel.contrailEvery,
     contrailLife: fuel.contrailLife,
-    revealPx: radar ? radar.reveal : ISSR.revealPx,
-    hiddenAlpha: radar ? radar.hidden : ISSR.hiddenAlpha,
     tree: trees ? { parcels: trees.parcels, species: speciesOwned(save) } : null,
-    pickup: magnet ? magnet.pickup : 12,
     plotW: soil ? soil.plotW : PARCEL.plotW,
-    flare: at('gear', 'flare', 1),                // x the landing window (AIRPORT.flareFrom / flareHeight)
-    perSkip: at('hold', 'perSkip', CARGO.multiplierPerSkip),
-    dodgeCrystals: at('lens', 'dodge', CRYSTALS.dodge),
-    dodgesPerNight: at('forecast', 'dodgesPerNight', CRYSTALS.dodgesPerNight),
     grow: at('nursery', 'grow', 1),               // x the time a tree takes to grow
   };
 }

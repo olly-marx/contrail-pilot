@@ -13,7 +13,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
-  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 5, freeGiven: true, seeds: 100, crystals: 10 };
+  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 5, freeGiven: true, seeds: 100, crystals: 10 , fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // fleet: a save from after the eras reset (src/fleet.js)
   const setSave = s => p.evaluate(s => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify(s)); }, s);
   const save = () => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
   const reload = async () => { await p.reload(); await ready(p); await p.waitForTimeout(800); };

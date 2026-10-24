@@ -49,7 +49,7 @@ const KEY = 'contrailPilot.v2';
     p.net = net;
     return p;
   };
-  const fresh = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: [], flights: 0, landings: 0 };
+  const fresh = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: [], flights: 0, landings: 0, priceVersion: 2, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // fleet: a save from after the eras reset
   const on = async (p, sel) => { for (let i = 0; i < 30; i++) { const r = await p.evaluate(sel => { const t = document.getElementById('tour'); const ring = t && t.querySelector('.tring').getBoundingClientRect();
       const el = [...document.querySelectorAll(sel)].find(e => e.offsetParent !== null); if (!t || t.hidden || !el) return false; const e = el.getBoundingClientRect();
       return Math.abs(ring.left + 4 - e.left) < 8 && Math.abs(ring.top + 4 - e.top) < 8; }, sel); if (r) return true; await p.waitForTimeout(150); } return false; };
@@ -100,11 +100,12 @@ const KEY = 'contrailPilot.v2';
   check(await on(p, '#tabHangar'), 'hangar tour: HANGAR first');
   await p.click('#tabHangar');
   check(await on(p, '.treebank'), 'then the seeds and crystals'); await p.click('#tour .tbubble .btn');
-  check(await on(p, '#hUpgrades') && /any FREE/.test(await bubble(p)), 'then the list, to pick any FREE upgrade');
-  await p.click('#hUpgrades .btn.free >> nth=1');   // not the first one: the choice is yours
-  check(Object.values((await save(p)).levels).reduce((a, n) => a + n, 0) === 1, 'the free upgrade was bought');
-  check(await on(p, '#hUpgrades .infobtn'), 'then an (i)'); await p.click('#hUpgrades .infobtn');
-  check(await on(p, '#iClose'), 'then OK on the info'); await p.click('#iClose');
+  check(await on(p, '#hFleet .ftimeline') && /eras/.test(await bubble(p)), 'then the era timeline'); await p.click('#tour .tbubble .btn');
+  check(await on(p, '#hFleet .ftabs'), 'then the plane / systems / gadgets tabs'); await p.click('#tour .tbubble .btn');
+  check(await on(p, '#hFleet') && /any FREE/.test(await bubble(p)), 'then the list, to pick any FREE upgrade');
+  await p.click('#hFleet .btn.free >> nth=1');   // not the first one: the choice is yours
+  const fl = (await save(p)).fleet, nbought = Object.values(fl.planes.comet).concat(Object.values(fl.systems), Object.values(fl.gadgets)).reduce((a, n) => a + n, 0);
+  check(nbought === 1 && !(await save(p)).freeUpgrade, `the free upgrade was bought: ${JSON.stringify(fl)}`);
   check(await on(p, '#tabNature'), 'then NATURE'); await p.click('#tabNature');
   check(await on(p, '#wProjects'), 'then the habitat projects'); await p.click('#tour .tbubble .btn');
   check(await on(p, '#tabFly'), 'then FLY'); await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(1500);
@@ -113,18 +114,19 @@ const KEY = 'contrailPilot.v2';
   await p.close();
 
   if (process.env.DEBUG) console.log('4.', fails);
-  // 4. Something new unlocks: pointed at it once.
-  const shown = ['radar', 'cabin', 'trees', 'magnet'];
-  p = await page({ ...fresh, tours: ['name', 'hangar'], flights: 4, landings: 3, shownLines: shown }, { first: 'Zoe', word: 'Otter', tag: 12 });
-  check(await on(p, '#tabHangar') && /NEW/.test(await bubble(p)), `a new line: pointed at HANGAR: "${await bubble(p)}"`);
-  await p.click('#tabHangar');
+  // 4. Something new unlocks: pointed at it once. (Since the eras, 2026-10-23, the lines that unlock
+  // like this are the nature ones: the first tree planted opens Soil Patches and Tree Species.)
+  const shown = ['trees'];
+  p = await page({ ...fresh, tours: ['name', 'hangar'], flights: 4, landings: 3, shownLines: shown, levels: { trees: 1 }, planted: { spruce: 1 } }, { first: 'Zoe', word: 'Otter', tag: 12 });
+  check(await on(p, '#tabNature') && /NEW/.test(await bubble(p)), `a new line: pointed at NATURE: "${await bubble(p)}"`);
+  await p.click('#tabNature');
   let first = ''; for (let i = 0; i < 30 && !/NEW:/.test(first); i++) { await p.waitForTimeout(150); first = await bubble(p); }
   await p.waitForTimeout(400);   // the card scrolls into view
-  check(/NEW: Cleaner Fuel, Better Engines and Landing Gear/.test(first), `...then at the new lines, all named at once: "${first}"`);
+  check(/NEW: Soil Patches and Tree Species/.test(first), `...then at the new lines, all named at once: "${first}"`);
   const id = await p.evaluate(() => { const r = document.querySelector('#tour .tring').getBoundingClientRect(); const e = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find(x => x.dataset && x.dataset.info); return e && e.dataset.info; });
   await p.click(`[data-info="${id}"]`); await p.click('#iClose'); await p.waitForTimeout(400);
   const sl = (await save(p)).shownLines;
-  check(id === 'fuel' && ['fuel', 'engine', 'gear'].every(x => sl.includes(x)), `all three are remembered as shown: ${id} ${sl}`);
+  check(id === 'soil' && ['soil', 'species'].every(x => sl.includes(x)), `both are remembered as shown: ${id} ${sl}`);
   await p.waitForTimeout(800);
   check(await tourHidden(p), 'and no second walk-through follows');
   await p.close();

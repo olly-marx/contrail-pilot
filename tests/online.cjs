@@ -102,7 +102,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
   await fly(true);
   const f = net.flights[0] || {};
   check(net.flights.length === 1, `one flight should be sent, got ${net.flights.length}`);
-  check(f.landed === true && f.distance_m === 2500 && f.shade === 7 && f.heat_trapped === 2 && f.night_dodges === 1 && f.plane_co2 === 1 && f.species.join() === 'oak' && 'mission_done' in f && 'crystals' in f,
+  check(f.landed === true && f.distance_m === 2500 && f.shade === 7 && f.heat_trapped === 2 && f.night_dodges === 1 && f.plane_co2 === 1.1 && f.species.join() === 'oak' && 'mission_done' in f && 'crystals' in f,
     `flight fields: ${JSON.stringify(f)}`);
 
   // 8. Flight school is never sent.

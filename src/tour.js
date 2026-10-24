@@ -69,9 +69,9 @@ export class Tour {
     return [
       { target: '#tabHangar', text: 'Let\'s look round your <b>hangar</b>. Tap <b>HANGAR</b>.', tap: true },
       { target: '.treebank', text: 'These are your <b>seeds</b> and <b>ice crystals</b>. Spend them on upgrades.', ok: true },
-      { skipIf: () => !free(), area: '#hUpgrades', target: '#hUpgrades .btn.free', text: 'You got a <b>FREE upgrade</b>! Tap any <b>FREE!</b> button to choose one.', tap: true },
-      { target: '#hUpgrades .infobtn', text: 'Tap <b>i</b> to find out what an upgrade does.', tap: true },
-      { target: '#iClose', text: 'Every upgrade is real science! Tap <b>OK</b>.', tap: true },
+      { target: '#hFleet .ftimeline', text: 'New <b>eras</b> open as you fly: new planes, systems and gadgets from real history!', ok: true },
+      { target: '#hFleet .ftabs', text: 'Your <b>plane</b>, the <b>systems</b> that help every flight, and <b>gadgets</b>.', ok: true },
+      { skipIf: () => !free(), area: '#hFleet', target: '#hFleet .btn.free', text: 'You got a <b>FREE upgrade</b>! Tap any <b>FREE!</b> button to choose one.', tap: true },
       { target: '#tabNature', text: 'Trees and wild places are in <b>NATURE</b>. Tap it!', tap: true },
       { target: '#wProjects', text: 'Help nature here, and wild animals will come back. Spot them on your flights!', ok: true },
       { target: '#tabFly', text: 'Ready? Tap <b>FLY</b>!', tap: true },

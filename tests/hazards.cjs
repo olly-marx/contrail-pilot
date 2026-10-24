@@ -27,19 +27,19 @@ const URL = process.env.URL || 'http://localhost:8000/';
   };
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; s.heat = 0; }, y);
 
-  // 1. Early in a flight: no hazards. Count what spawns over the first ~3800 m.
+  // 1. Early in a flight: no hazards. Count what spawns over the first ~1800 m (turbulence from 2,000 m since 0.10.0).
   await start();
   for (let i = 0; i < 40; i++) {
-    await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.rects.forEach(r => { r.x = -999; })); s.plane.y = 200; s.plane.vy = 0; s.heat = 0; s.distancePx = Math.min(s.distancePx + 95, 3800); });
+    await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.rects.forEach(r => { r.x = -999; })); s.plane.y = 200; s.plane.vy = 0; s.heat = 0; s.distancePx = Math.min(s.distancePx + 95, 1800); });
     await dismiss();
     await p.waitForTimeout(30);
   }
   // Each hazard records a first-seen tip the moment it spawns, so check for any of those.
   let c = await scene(() => { const s = game.scene.getScene('game'); return { d: s.distancePx, seen: JSON.parse(localStorage.getItem('contrailPilot.v2')).seenTips.filter(t => t.startsWith('hazard-')) }; });
-  check(c.d > 3500, `test should have flown past 3500 m, got ${c.d}`);
+  check(c.d > 1500, `test should have flown past 1500 m, got ${c.d}`);
   check(c.seen.length === 0, `hazards appeared before their distance: ${JSON.stringify(c)}`);
 
-  // 1b. No no-fly zone before 8 km (turbulence may appear from 4 km).
+  // 1b. No no-fly zone before 8 km (turbulence may appear from 2 km).
   await start();
   for (let i = 0; i < 60; i++) {
     await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.rects.forEach(r => { if (!st.noFly) r.y = -9999; })); s.plane.y = 200; s.plane.vy = 0; s.heat = 0; s.distancePx = Math.min(s.distancePx + 120, 7600); });
@@ -61,7 +61,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   }
   let c2 = await scene(() => { const s = game.scene.getScene('game'); return { turbsSeen: s.nextTurbAt > 2500, birdsSeen: s.nextBirdsAt > 6000, noFly: s.storms.some(x => x.noFly), state: s.state }; });
   const spawned = await scene(() => { const s = game.scene.getScene('game'); return { t: s.turbs.length + (s.hazardSeen?.turbulence ? 1 : 0), seen: JSON.parse(localStorage.getItem('contrailPilot.v2')).seenTips }; });
-  check(spawned.seen.includes('hazard-turbulence'), 'turbulence never appeared after 4000 m');
+  check(spawned.seen.includes('hazard-turbulence'), 'turbulence never appeared after 2000 m');
   check(sawPause, 'a new hazard should pause the game to explain it');
   check(spawned.seen.includes('hazard-noFly'), 'no-fly zone never appeared after 8000 m');
   check(spawned.seen.includes('hazard-birds'), 'birds never appeared after 10000 m');

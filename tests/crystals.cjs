@@ -71,9 +71,9 @@ const KEY = 'contrailPilot.v2';
 
   // 6. The hangar is the plane; trees and habitat projects are on the NATURE screen (the user, 2026-10-21).
   const tabs = await p.evaluate(() => { const ui = game.registry.get('ui'); ui.showHangar();
-    const plane = document.getElementById('hUpgrades').textContent; ui.go('nature');
+    const plane = document.getElementById('hFleet').textContent; ui.go('nature');
     return { plane, nature: document.getElementById('nature').textContent }; });
-  check(!/Tree Planting|meadow/i.test(tabs.plane) && /Engines|Radar/.test(tabs.plane), 'the hangar should show plane lines, not trees or habitats');
+  check(!/Tree Planting|meadow/i.test(tabs.plane) && /Engines|Magnet/.test(tabs.plane), 'the hangar should show the fleet (planes, systems, gadgets), not trees or habitats');
   check(/Wildflower meadow/.test(tabs.nature) && /Tree Planting/.test(tabs.nature) && !/Engines/.test(tabs.nature), 'NATURE should show habitats and trees, not engines');
   await p.close();
 

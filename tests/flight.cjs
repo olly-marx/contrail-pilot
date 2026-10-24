@@ -12,7 +12,7 @@ async function fly(p, { landAt, keepCool = false }) {
   // Hazards have their own test; keep this flight about takeoff, day/night and landing.
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.nextTurbAt = s.nextBirdsAt = 1e9; });
   const log = { states: new Set(), maxCo2: 0, sawNight: false, heatSamples: [] };
-  for (let i = 0; i < 2400; i++) {   // (0.9.1: the 2nd airport is 5,200+ km away)
+  for (let i = 0; i < 2400; i++) {
     const r = await p.evaluate(([landAt, keepCool]) => { const s = game.scene.getScene('game');
       if (keepCool && s.heat > 60) s.heat = 60;   // (see the land-at-2nd note below)
       const toA = s.nextAirport.worldX - s.distancePx;
@@ -44,10 +44,9 @@ async function fly(p, { landAt, keepCool = false }) {
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const fails = [];
 
-  // Passing an airport and landing at the next one: since 0.9.1 legs are 2,600-3,400 km, so the 2nd airport is
-  // 5,200+ km away, past where a plane with no upgrades overheats (~5,000 km). This check is about the landing
-  // mechanics, not heat, so the heat is held down for it (keepCool); the heat checks below use real physics.
-  const a = await fly(p, { landAt: 1, keepCool: true });
+  // Passing an airport and landing at the next one, with real heat (0.10.0: legs are 1,800-2,600 km again, so
+  // the 2nd airport is within an un-upgraded Comet's heat range; 0.9.1's longer legs needed keepCool here).
+  const a = await fly(p, { landAt: 1, keepCool: false });
   console.log('land-at-2nd:', JSON.stringify(a));
   if (process.env.SHOT) await p.screenshot({ path: process.env.SHOT });
   if (!a.result || !a.result.landed) fails.push('did not land');

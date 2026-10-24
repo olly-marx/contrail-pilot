@@ -22,7 +22,7 @@ const KEY = 'contrailPilot.v2';
   };
   const get = p => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
   const tab = (p, r) => p.evaluate(r => { const e = document.querySelector(`[data-region="${r}"]`); return e && { off: e.disabled, text: e.textContent.trim() }; }, r);
-  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'], landings: 9, priceVersion: 2 };
+  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'], landings: 9, priceVersion: 2, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // a save from after the eras reset (src/fleet.js)
 
   // 1. Never been anywhere but London: only the UK tab opens.
   let p = await open({ ...base, seeds: 500, crystals: 50, visited: ['LONDON'] });

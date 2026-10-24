@@ -22,7 +22,7 @@ const KEY = 'contrailPilot.v2';
     return p;
   };
   const get = p => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
-  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 9, priceVersion: 2 };
+  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 9, priceVersion: 2 , fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // fleet: a save from after the eras reset (src/fleet.js)
 
   // 1. Old rewilding (2 levels) became the same two projects.
   let p = await open({ ...base, seeds: 100, crystals: 10, levels: { rewild: 2, trees: 1 }, planted: { birch: 2 } });

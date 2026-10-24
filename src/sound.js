@@ -64,5 +64,6 @@ export const sfx = {
   buy: () => [659, 784, 988, 1319].forEach((f, i) => tone({ freq: f, dur: 0.09, vol: 0.05, delay: i * 0.06 })),
   nope: () => tone({ freq: 180, dur: 0.15, vol: 0.05 }),
   dusk: () => [784, 659, 523].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.05, delay: i * 0.15 })),
+  fanfare: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone({ freq: f, dur: i === 6 ? 0.5 : 0.16, type: 'triangle', vol: 0.06, delay: i * 0.13 })),   // a new era (src/welcome.js)
   dawn: () => [523, 659, 784].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.05, delay: i * 0.15 })),
 };

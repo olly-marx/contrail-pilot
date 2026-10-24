@@ -3,6 +3,7 @@
 import { migrateMissions } from './missions.js';
 import { migrateBadges } from './badges.js';
 import { migrateCity } from './route.js';
+import { newFleet, migrateFleet, syncFleet } from './fleet.js';
 
 const KEY = 'contrailPilot.v2';
 // A second copy, written with every save (2026-10-22: a phone lost a save). If the main copy is
@@ -27,6 +28,7 @@ const DEFAULTS = {
   planted: {},         // species id -> trees planted, all flights (drives the Biodiversity meter)
   city: 'LONDON',      // the journey: the city you are in (src/route.js); flights start there. (An index before 2026-10-22.)
   heading: null,       // the first city of the direction chosen before take-off (one of route.js choices)
+  flightSeconds: 0,    // real seconds flown, take-off to landing or crash (src/eras.js: eras open by flying time)
   flownKm: 0,          // every km flown (not flight school): "times round the Earth" = flownKm / EARTH_KM
   laps: 0,             // laps of the old 16-city loop (before 2026-10-22); kept, and counted into flownKm once
   visited: ['LONDON'], // cities landed in (a first landing in a new city pays a bonus)
@@ -35,6 +37,7 @@ const DEFAULTS = {
   coolLandings: 0,     // landings with the Earth cooler than at take-off (Cool Planet badge)
   // missionsDone and badgeTiers are NOT defaults: a save without them is converted from the old
   // mission list and badges once (missions.js migrateMissions, badges.js migrateBadges).
+  fleet: null,         // the plane side since the eras (src/fleet.js): planes owned, systems, gadgets. Set below.
   muted: false,
   priceVersion: 2,     // saves from before the 2026-10-21 price change are re-valued once (src/reprice.js)
 };
@@ -50,7 +53,7 @@ export function loadSave() {
       try { if (!localStorage.getItem(UNREADABLE)) localStorage.setItem(UNREADABLE, localStorage.getItem(KEY)); } catch (e) {}
     }
     if (!saved || typeof saved !== 'object') saved = readRaw(BACKUP);
-    if (!saved || typeof saved !== 'object') return structuredClone(DEFAULTS);
+    if (!saved || typeof saved !== 'object') return { ...structuredClone(DEFAULTS), fleet: newFleet() };
     const s = { ...DEFAULTS, ...saved };
     if (!('priceVersion' in saved)) s.priceVersion = 1;   // from before the price change: re-valued once (src/reprice.js)
     if ('trees' in s) { s.seeds = (s.seeds || 0) + s.trees; delete s.trees; }   // money was called 'trees' before 2026-10-16
@@ -58,9 +61,11 @@ export function loadSave() {
     migrateBadges(s);
     migrateCity(s);       // 2026-10-22: the city became a name in a world network of ~100
     delete s.challenges;
+    if (!saved.fleet) migrateFleet(s);   // 2026-10-23: the eras reset (plane side only)
+    syncFleet(s);
     return s;
   } catch (e) {
-    return structuredClone(DEFAULTS);
+    return { ...structuredClone(DEFAULTS), fleet: newFleet() };
   }
 }
 
@@ -70,5 +75,5 @@ export function writeSave(save) {
 
 export function resetSave() {
   try { localStorage.removeItem(KEY); localStorage.removeItem(BACKUP); } catch (e) {}
-  return structuredClone(DEFAULTS);
+  return { ...structuredClone(DEFAULTS), fleet: newFleet() };
 }

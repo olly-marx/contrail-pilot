@@ -47,11 +47,11 @@ const KEY = 'contrailPilot.v2';
     return p;
   };
   const kim = { first: 'Kim', word: 'Comet', tag: 42 };
-  const base = { tutorialDone: true, muted: true, seenTips: ['*'], priceVersion: 2 };
+  const base = { tutorialDone: true, muted: true, seenTips: ['*'], priceVersion: 2, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // a save from after the eras reset (src/fleet.js)
   const save = p => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
 
   // 1. The phone: named pilot, progress; it uploads, and shows a pilot code.
-  const phone = await device({ save: { ...base, seeds: 500, landings: 7, mission: 4, levels: { cabin: 2 } }, pilot: kim }, 'phone-1');
+  const phone = await device({ save: { ...base, seeds: 500, landings: 7, mission: 4, levels: { trees: 2 } }, pilot: kim }, 'phone-1');
   await p_sync(phone);
   check(db.save && db.save.seeds === 500 && db.stamp > 0, `the phone's save is uploaded: ${JSON.stringify(db.save && db.save.seeds)}`);
   await phone.click('#tabPilot'); await phone.waitForTimeout(1200);
@@ -67,7 +67,7 @@ const KEY = 'contrailPilot.v2';
   check(/not right/.test(await laptop.textContent('#lMsg')) && db.tries === 1, `a wrong code is refused: ${await laptop.textContent('#lMsg')}`);
   await laptop.fill('#lCode', code); await laptop.click('#lGo'); await laptop.waitForTimeout(3000); await ready(laptop);
   let ls = await save(laptop);
-  check(ls.seeds === 500 && ls.mission === 4 && ls.levels.cabin === 2, `the right code brings the progress: ${JSON.stringify({ seeds: ls.seeds, m: ls.mission })}`);
+  check(ls.seeds === 500 && ls.mission === 4 && ls.levels.trees === 2, `the right code brings the progress: ${JSON.stringify({ seeds: ls.seeds, m: ls.mission })}`);
   check((await laptop.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.pilot')))).first === 'Kim', 'and the pilot name');
 
   // 3. The laptop plays on (seeds 800) and uploads; the phone, opened again, takes the newer save.
@@ -84,7 +84,7 @@ const KEY = 'contrailPilot.v2';
   check((await save(phone)).seeds === 900 && db.save.seeds === 900, `unsent changes are kept and uploaded: phone ${(await save(phone)).seeds}, online ${db.save.seeds}`);
 
   // 5. First contact: a device that never synced but has MORE progress keeps its own.
-  const old = await device({ save: { ...base, seeds: 50, landings: 40, mission: 15, levels: { cabin: 4, radar: 3, fuel: 3 } }, pilot: kim }, 'tablet-1');
+  const old = await device({ save: { ...base, seeds: 50, landings: 40, mission: 15, levels: { trees: 4, soil: 3, species: 3 } }, pilot: kim }, 'tablet-1');
   await old.waitForTimeout(1500);
   check((await save(old)).landings === 40 && db.save.landings === 40, `a never-synced device with more progress keeps it (and uploads it): ${(await save(old)).landings}, online ${db.save.landings}`);
 

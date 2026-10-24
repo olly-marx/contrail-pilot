@@ -1,5 +1,5 @@
 // Progression check: trees are only banked on landing (with the long-flight multiplier),
-// the hangar sells levelled upgrades with info pop-ups, upgrades change the flight, and
+// the hangar sells the fleet's levels (src/fleet.js), upgrades change the flight, and
 // planted trees cool.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/progression.cjs
 const { chromium } = require('playwright-core');
@@ -20,7 +20,7 @@ const KEY = 'contrailPilot.v2';
   // '*' = skip the captain's explanations. Missions all done, every city visited and challenges this
   // test can't finish: so only the flight's own seeds are banked (rewards are tested in rewards.cjs).
   const ALL = ['LONDON', 'PARIS', 'BERLIN', 'ROME', 'ATHENS', 'CAIRO', 'DUBAI', 'DELHI', 'BANGKOK', 'BEIJING', 'TOKYO', 'ANCHORAGE', 'VANCOUVER', 'CHICAGO', 'NEW YORK', 'REYKJAVIK'];
-  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], mission: 99, visited: ALL, challenges: ['far-4000', 'night-owl', 'dodge-3'] };
+  const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], mission: 99, visited: ALL, challenges: ['far-4000', 'night-owl', 'dodge-3'] , fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // fleet: a save from after the eras reset
   const noStorms = () => scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.parts.forEach(r => r.destroy())); s.storms = []; s.nextStormAt = 1e9; s.tokens.forEach(t => t.img.destroy()); s.tokens = []; s.nextTokenAt = 1e9; });
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; }, y);
   const grab = n => scene(n => { const s = game.scene.getScene('game'); for (let i = 0; i < n; i++) s.addToken(s.plane.x + 20 + i * 3, s.plane.y - 2, false); }, n);
@@ -57,35 +57,26 @@ const KEY = 'contrailPilot.v2';
   check(r && r.gained === 6, `4 trees x1.5 should bank 6, got ${r && r.gained}`);
   check((await getSave()).seeds === 11, `bank should be 5 + 6 = 11, got ${(await getSave()).seeds}`);
 
-  // 3. Hangar: lines unlock as you progress. A new player sees Fuel as locked.
-  await setSave({ ...base, seeds: 50 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
-  await p.click('#tabHangar');
-  check(await p.$('[data-buy="fuel"]') === null, 'fuel should be locked before 3 landings');
-  check((await p.textContent('#hUpgrades')).includes('Unlocks after 3 landings'), 'locked lines should say how to unlock them');
-  check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
-  // Levelled lines, prices, info pop-up.
-  // (crystals cost 1 per 8 seeds since 2026-10-22)
+  // 3. Hangar (the fleet since the eras, 2026-10-23): systems and gadgets with prices; the next
+  // era's levels are blocked. Tree species stay locked before planting a tree.
   await setSave({ ...base, seeds: 60, crystals: 6, landings: 3 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabHangar');
-  await p.click('[data-buy="radar"]');     // 15 seeds + 2 crystals
-  await p.click('[data-buy="fuel"]');      // 30 seeds + 4 crystals
+  check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
+  await p.click('[data-ftab=systems]');
+  await p.click('[data-fbuy="system:forecast"]');   // 30 x 0.78 = 25 seeds + 3 crystals
+  await p.click('[data-ftab=gadgets]');
+  await p.click('[data-fbuy="gadget:magnet"]');     // 25 seeds + 3 crystals
   const save = await getSave();
-  check(save.seeds === 15 && save.crystals === 0, `60 - 15 - 30 should leave 15 seeds and 6 - 2 - 4 = 0 crystals, got ${save.seeds}, ${save.crystals}`);
-  check(save.levels.radar === 1 && save.levels.fuel === 1, 'levels not saved');
-  check(save.fuel === 'saf25', `new fuel should be equipped, got ${save.fuel}`);
-  check(await p.isDisabled('[data-buy="engine"]'), 'engine (30 seeds + 4 crystals) should be unaffordable with 15 seeds and no crystals');
-  check(/^40\D+5$/.test((await p.textContent('[data-buy="radar"]')).trim()), 'radar level 2 should cost 40 seeds + 5 crystals');
-  await p.click('[data-info="fuel"]');
-  check(await p.isVisible('#info'), 'info pop-up did not open');
-  check((await p.textContent('#iWhat')).length > 20, 'info pop-up has no text');
-  check((await p.$$('#iLinks a, #iLinks span')).length > 0, 'info pop-up has no links');
-  await p.click('#iClose');
+  check(save.seeds === 10 && save.crystals === 0, `60 - 25 - 25 should leave 10 seeds and 6 - 3 - 3 = 0 crystals, got ${save.seeds}, ${save.crystals}`);
+  check(save.fleet.systems.forecast === 1 && save.fleet.gadgets.magnet === 1, `levels not saved: ${JSON.stringify(save.fleet)}`);
+  check(await p.isDisabled('[data-fbuy="gadget:hold"]'), 'Cargo hold (25 seeds + 3 crystals) should be unaffordable with 10 seeds and no crystals');
+  check(/^55\D+7$/.test((await p.textContent('[data-fbuy="gadget:magnet"]')).trim()), 'magnet level 2 should cost 55 seeds + 7 crystals');
 
-  // 4. The flight uses the upgrades: SAF 25% = 0.9 CO2 (raised 2026-10-21 for balance); radar reveals icy air from 100 px.
+  // 4. The flight uses them: the Comet's CO2 is x1.1; Forecasting 1 reveals icy air from 60 px; magnet 1 grabs from 16 px.
   await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
-  const kit = await scene(() => { const s = game.scene.getScene('game'); return { co2: s.co2Rate, reveal: s.kit.revealPx }; });
-  check(Math.abs(kit.co2 - 0.9) < 1e-9, `SAF 25% cruise CO2 should be 0.9, got ${kit.co2}`);
-  check(kit.reveal === 100, `radar 1 should reveal at 100, got ${kit.reveal}`);
+  const kit = await scene(() => { const s = game.scene.getScene('game'); return { co2: s.co2Rate, reveal: s.kit.revealPx, pickup: s.kit.pickup }; });
+  check(Math.abs(kit.co2 - 1.1) < 1e-9, `the Comet's cruise CO2 should be 1.1, got ${kit.co2}`);
+  check(kit.reveal === 60 && kit.pickup === 16, `forecasting 1 reveals at 60, magnet 1 grabs at 16: ${JSON.stringify(kit)}`);
 
   // 5. Planting: a parcel dropped so it lands on a soil plot plants a tree that cools; one that
   //    lands on bare ground is missed.

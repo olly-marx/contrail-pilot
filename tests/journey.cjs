@@ -41,7 +41,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click(`[data-way="${w[1].to}"]`); await p.waitForTimeout(200);
   check((await save()).heading === w[1].to, `the chosen way is saved: ${(await save()).heading}`);
   let f = await fly();
-  check(f.home === 'LONDON' && f.next === w[1].to && f.at >= 2600 && f.at <= 3400, `the flight goes the chosen way: ${JSON.stringify(f)}`);
+  check(f.home === 'LONDON' && f.next === w[1].to && f.at >= 1800 && f.at <= 2600, `the flight goes the chosen way: ${JSON.stringify(f)}`);
   const long = await p.evaluate(() => game.scene.getScene('game').path.slice(0, 60));
   // The world-tour rule: new cities first; a few repeats only where every neighbour has been seen (measured: a median of 5 in 104).
   check(long.length - new Set(long).size <= 4, `few cities twice in one flight (60 airports): ${long.length - new Set(long).size} repeats: ${long.join('>')}`);

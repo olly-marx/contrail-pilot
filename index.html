@@ -19,6 +19,7 @@
       <h1>CONTRAIL<br>PILOT</h1>
       <p class="lead">Fly far. Dodge icy air at night. Keep the Earth cool!</p>
       <div class="stats"><span><i class="seedicon"></i> <b id="tTrees">0</b></span><span><i class="crysicon"></i> <b id="tCrystals">0</b></span><span>Best <b id="tBest">0 km</b></span></div>
+      <div id="tEra" class="era"></div>
       <div id="tJourney" class="journey"></div>
       <div id="tMeter"></div>
       <div id="tMission" class="mission-card" hidden></div>
@@ -115,6 +116,7 @@
         <div class="tally-row"><span>Seeds grabbed</span><b id="rGrab">0</b></div>
         <div class="tally-row mult" id="rMultRow" hidden><span>Long flight</span><b id="rMult">x1</b></div>
         <div class="tally-row cool" id="rCoolRow" hidden><span>Cool Earth</span><b>+3</b></div>
+        <div class="tally-row" id="rFareRow" hidden><span>Passenger fares</span><b id="rFare">+0</b></div>
         <div class="tally-row nature" id="rNatureRow" hidden><span>Biodiversity</span><b id="rNature">+0</b></div>
         <div class="tally-total" id="rTotalRow"><i class="seedicon"></i><b id="rGain">+0</b></div>
         <p class="lost-msg" id="rLost" hidden>Flight over! Seeds lost.<br>Land to keep them!</p>
@@ -131,6 +133,7 @@
         </div>
       </div>
 
+      <div id="rEra" class="step era" hidden></div>
       <div id="rRewards" class="step rewards" hidden></div>
       <div id="rBadges" class="step badges-new" hidden></div>
       <div id="rFree" class="step freeup" hidden>Your first upgrade is <b>FREE!</b></div>
@@ -157,6 +160,7 @@
       </div>
       <p class="small" id="hHint">Spend your seeds and ice crystals. Tap <b>i</b> to learn more.</p>
       <div id="hFuel" class="fuel"></div>
+      <div id="hFleet" class="upgrades fleet"></div>
       <div id="hUpgrades" class="upgrades"></div>
       <h3>Badges</h3>
       <div id="hBadges" class="badges"></div>

@@ -55,7 +55,7 @@ export const STORMS = {
   startGap: 150,
   minGap: 115,
   gapShrinkPerPair: 1,   // only counts pairs after WORLD.warmup
-  spacing: 260,      // px between storm pairs
+  spacing: 230,      // px between storm pairs (260 until 0.10.0: with the shorter legs back, a busier sky per km)
   clearLane: 24,     // every storm gap keeps a lane this much taller than the plane free of icy air and birds
   marginTop: 40,     // gap centre never closer than this to the top/ground
 };
@@ -135,7 +135,8 @@ export const POWERUPS = {
 export const HAZARDS = {
   stormForgive: 5,   // plane pixels that may brush a storm cloud before it counts as a crash (no-fly and birds: 0)
   // A patch of bumpy air (like an ISSR) you can fly over or under.
-  turbulence: { from: 4000, every: 650, chance: 0.5, minW: 140, maxW: 220, minH: 90, maxH: 150, delay: [30, 120], bump: 60, bumpEvery: [0.3, 0.6] },
+  turbulence: { from: 2000,   // (4,000 until 0.10.0: now even the first leg can have bumpy air)
+                every: 650, chance: 0.5, minW: 140, maxW: 220, minH: 90, maxH: 150, delay: [30, 120], bump: 60, bumpEvery: [0.3, 0.6] },
   noFly:      { from: 8000, chance: 0.45, width: 30, gapLess: 28, minGap: 82 },
   birds:      { from: 10000, every: 700, chance: 0.55, flock: [11, 15], extraSpeed: 45, wobble: 22 },   // many small birds (2026-10-22)
 };

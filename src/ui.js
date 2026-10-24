@@ -13,6 +13,10 @@ import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js'
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
+import { eraBarHTML } from './eras.js';
+import { FleetHangar, fleetHasNew } from './hangar.js';
+import { showEraWelcome } from './welcome.js';
+import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
 
@@ -46,6 +50,7 @@ const sign = v => (v > 0 ? '+' : v < 0 ? '-' : '') + Math.abs(v);
 
 export class UI {
   constructor(save, { onStart, onSchool }) {
+    this.fleet = new FleetHangar(this); this.sfx = sfx;   // the plane side's hangar (src/hangar.js)
     this.save = save;
     this.onStart = onStart;
     this.onSchool = onSchool;
@@ -187,10 +192,20 @@ export class UI {
     $('tMeter').innerHTML = any ? meterHTML(this.save) : '';
     this.renderMission();
     this.renderPrizes();
+    $('tEra').innerHTML = this.save.tutorialDone ? eraBarHTML(this.save) : '';   // era progress (src/eras.js)
     this.renderJourney();
     this.showOnly('title');
     if (this.showRepriced()) return;
+    if (this.showResetWelcome()) return;
     if (this.tour) this.tour.maybe('title');
+  }
+
+  // Once, after the eras reset (src/fleet.js migrateFleet): "Welcome to the 1950s" and the gift.
+  showResetWelcome() {
+    const w = this.save.eraWelcome;
+    if (!w || w.shown || (this.save.seenTips || []).includes('*')) return false;   // '*': automated tests' saves
+    showEraWelcome(0, { reset: true, bonus: w.bonus }).then(() => { w.shown = true; writeSave(this.save); this.showTitle(); });
+    return true;
   }
 
   // Once, after an old save was re-valued at the new prices (src/reprice.js).
@@ -209,7 +224,7 @@ export class UI {
 
   // ---------- results ----------
   // Something to spend in the hangar? Drives the NEW! tags and the glowing button.
-  hasNew() { return !!this.save.freeUpgrade || LINES.some(l => canBuy(this.save, l)); }   // canBuy checks unlocks
+  hasNew() { return !!this.save.freeUpgrade || LINES.some(l => canBuy(this.save, l)) || fleetHasNew(this.save); }   // canBuy checks unlocks
 
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
@@ -247,6 +262,7 @@ export class UI {
     $('rDist').textContent = km(0);
     $('rGrab').textContent = '0';
     $('rMultRow').hidden = true; $('rCoolRow').hidden = true; $('rLost').hidden = true;
+    $('rFareRow').hidden = true;
     $('rNatureRow').hidden = true;
     $('rCrysRow').hidden = true; $('rCrysRow').classList.remove('stamp');
     $('rNature').textContent = `+${r.natureGain}`;
@@ -264,6 +280,11 @@ export class UI {
     $('rAnimals').hidden = !na.length;
     $('rAnimals').innerHTML = na.length ? `<p class="label">New animal${na.length > 1 ? 's' : ''} discovered!</p><div class="na-list">${na.map(w =>
       `<span class="na"><img src="${w.portrait}-0.png" alt=""><b>${w.name}</b></span>`).join('')}</div><p class="small">See them in your Wild Area (NATURE).</p>` : '';
+    // Flying time and era progress (src/eras.js): after every real flight, landed or crashed.
+    $('rEra').hidden = !!r.school;
+    $('rEra').innerHTML = r.school ? '' : `<p class="era-gain">+${(r.flyMinutes || 0).toFixed(1)} min flown</p>${eraBarHTML(this.save)}`
+      + (r.eraOpened ? `<p class="era-open">NEW ERA! Welcome to ${r.eraOpened}!</p>` : '')
+      + (r.newPlane ? `<p class="era-open">A new plane joins your fleet: the <b>${r.newPlane}</b>!</p>` : '');
     const nb = (r.rewards || []).filter(u => u.kind === 'badge');
     $('rBadges').hidden = !nb.length;
     $('rBadges').innerHTML = nb.map(u => `<span class="new-badge"><img src="${medal(u.id, u.tier)}" alt="">NEW BADGE: <b>${u.label}</b></span>`).join('');
@@ -285,6 +306,8 @@ export class UI {
     const mult = r.earned.find(e => e.label.startsWith('Long'));
     if (mult) { await wait(250); $('rMultRow').hidden = false; $('rMult').textContent = `x${r.mult}`; $('rMultRow').classList.add('stamp'); sfx.coin(); }
     if (r.earned.some(e => e.label.startsWith('Cool'))) { await wait(250); $('rCoolRow').hidden = false; $('rCoolRow').classList.add('stamp'); sfx.coin(); }
+    const fare = r.earned.find(e => e.label === 'Passenger fares');
+    if (fare) { await wait(250); $('rFareRow').hidden = false; $('rFare').textContent = `+${fare.n}`; $('rFareRow').classList.add('stamp'); sfx.coin(); }
     if (r.natureGain > 0) { await wait(250); $('rNatureRow').hidden = false; $('rNatureRow').classList.add('stamp'); sfx.plant(); }
     await wait(300);
     const total = r.earned.reduce((a, e) => a + e.n, 0);
@@ -316,6 +339,11 @@ export class UI {
     await wait(200);
     for (const el of rest) { if (!el.hidden) show(el); }
     $('rSkip').hidden = true;
+    if (r.eraOpened) {   // a new era: the big welcome, then the hangar to see what it brings
+      await wait(600);
+      await showEraWelcome(ERAS.findIndex(e => e.name === r.eraOpened));
+      return this.showHangar();
+    }
     if (this.tour && !r.school) this.tour.maybe('results');
   }
 
@@ -333,6 +361,8 @@ export class UI {
   }
 
   // ---------- hangar ----------
+  persist() { writeSave(this.save); }
+
   showHangar() {
     this.renderHangar();
     this.showOnly('hangar');
@@ -342,7 +372,7 @@ export class UI {
     const s = this.save;
     $('hTrees').textContent = s.seeds; $('hCrystals').textContent = s.crystals || 0;
     const free = !!s.freeUpgrade;
-    $('hHint').innerHTML = free ? '<b>Pick ONE upgrade for FREE!</b> Tap <b>i</b> to learn what it does.' : 'Spend your seeds and ice crystals. Tap <b>i</b> to learn more.';
+    $('hHint').innerHTML = free ? '<b>Pick ONE upgrade for FREE!</b>' : 'Spend your seeds and ice crystals. New eras open as you fly.';
 
     const choices = fuelChoices(s);
     const current = choices.includes(s.fuel) ? s.fuel : choices[choices.length - 1];
@@ -353,34 +383,11 @@ export class UI {
       s.fuel = btn.dataset.fuel; writeSave(s); sfx.coin(); this.renderHangar();
     });
 
-    // The hangar is the plane (fuel, engines, cabin, icy-air research). Trees, soil and habitat
-    // projects are on the NATURE screen (src/wild.js, the user 2026-10-21).
-    // Upgrade trees: a heading per tree, then each line followed by its branches (indented).
-    const TREES = ['Plane', 'Fuel', 'Science'];
-    const ordered = [];
-    const addWithBranches = (line, depth) => { ordered.push({ line, depth }); LINES.filter(l => l.requires && l.requires.line === line.id).forEach(l => addWithBranches(l, depth + 1)); };
-    for (const t of TREES) {
-      ordered.push({ head: t });
-      LINES.filter(l => l.tree === t && !(l.requires && lineById(l.requires.line).tree === t)).forEach(l => addWithBranches(l, 0));
-    }
-    $('hUpgrades').innerHTML = ordered.map(({ line, depth, head: tree }) => {
-      if (tree) return `<h3 class="tree-head">${tree.toUpperCase()}</h3>`;
-      return this.lineCardHTML(line, depth);
-    }).join('');
-    $('hUpgrades').querySelectorAll('[data-buy]').forEach(btn => btn.onclick = () => this.buy(btn.dataset.buy));
-    // Tap a card (not its buttons): the model zooms to that part and shows its next level.
-    $('hUpgrades').querySelectorAll('.line[data-line]').forEach(el => el.onclick = e => {
-      if (e.target.closest('button')) return;
-      this.hFocus = this.hFocus === el.dataset.line ? null : el.dataset.line;
-      this.hHide = false;
-      sfx.flap(); this.renderHangar();
-    });
-    // Zoomed in: tap the model (or HIDE / SHOW) to compare the plane with and without the part.
-    $('hPlane').onclick = () => { if (this.hFocus) { this.hHide = !this.hHide; sfx.flap(); this.renderPlaneModel(); } };
-    $('hpToggle').onclick = () => { this.hHide = !this.hHide; sfx.flap(); this.renderPlaneModel(); };
-    $('hpMore').onclick = () => this.hFocus && this.showInfo(this.hFocus);
-    this.renderPlaneModel();
-    $('hUpgrades').querySelectorAll('[data-info]').forEach(btn => btn.onclick = () => this.showInfo(btn.dataset.info));
+    // Since the eras (2026-10-23) the hangar is the fleet: planes, systems, gadgets (src/hangar.js).
+    // The old plane lines are retired (upgrades.js); trees and habitat are on NATURE (src/wild.js).
+    document.querySelector('#hangar .hp-dock').hidden = true;
+    $('hUpgrades').innerHTML = '';
+    this.fleet.render();
 
     $('hBadges').innerHTML = this.badgeGridHTML();
   }

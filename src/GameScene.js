@@ -10,6 +10,8 @@ import { sendFlight } from './online.js';
 import { flightPath, legBetween, city, HOME, EARTH_KM } from './route.js';
 import { addPrizes } from './rewards.js';
 import { writeSave } from './save.js';
+import { eraProgress } from './eras.js';
+import { syncFleet, CONTRAIL_MARGIN, FORECAST, GAP_HINT, FARES } from './fleet.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
@@ -50,7 +52,10 @@ export class GameScene extends Phaser.Scene {
   constructor() { super('game'); }
 
   preload() {
-    this.load.image('plane', 'assets/plane.png');
+    this.load.image('plane', 'assets/plane.png');   // the 747; also the collision mask for EVERY plane
+    this.load.image('plane-comet', 'assets/plane-comet.png');   // eras (src/fleet.js): looks only
+    this.load.image('plane-twin', 'assets/plane-twin.png');
+    this.load.image('plane-747', 'assets/plane-747.png');   // the 1970s paint (era colour ladder)
     for (const [id, n] of Object.entries(PART_LINES)) for (let i = 1; i <= n; i++) this.load.image(`plane-${id}-${i}`, `assets/plane-${id}-${i}.png`);
     for (let i = 1; i <= 4; i++) this.load.image(`plane-nature-${i}`, `assets/plane-nature-${i}.png`);
     this.load.image('plane-lights', 'assets/plane-lights.png');
@@ -82,7 +87,7 @@ export class GameScene extends Phaser.Scene {
     this.save = this.registry.get('save');
     this.ui = this.registry.get('ui');
     this.kit = loadout(this.save);
-    this.builtWith = JSON.stringify([this.save.levels, this.save.habitat]);   // scenery depends on upgrades (e.g. meadow flowers)
+    this.builtWith = JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]);   // scenery depends on upgrades (e.g. meadow flowers)
     this.makeTextures();
 
     this.state = 'idle';             // idle -> takeoff -> playing -> landing | over
@@ -185,7 +190,7 @@ export class GameScene extends Phaser.Scene {
     this.exhaustLayer = this.add.layer();
     this.puffs = [];
     this.nextPuff = 0;
-    this.planeSprite = this.add.image(0, 0, 'plane');
+    this.planeSprite = this.add.image(0, 0, this.kit.sprite || 'plane');   // the plane flown; collisions stay on alphaMask('plane')
     this.buildPlaneParts();
 
     this.ground = this.add.tileSprite(0, SKY_H, WIDTH, GROUND_H, 'ground').setOrigin(0);
@@ -299,7 +304,7 @@ export class GameScene extends Phaser.Scene {
 
   startSchool() {
     // Rebuild unless this scene is fresh, built with these upgrades AND in LONDON (school starts there).
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat]) || this.path[0] !== HOME || this.path[1] !== flightPath({ city: HOME })[1]) { this.scene.restart({ go: true, mode: 'school' }); return; }
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]) || this.path[0] !== HOME || this.path[1] !== flightPath({ city: HOME })[1]) { this.scene.restart({ go: true, mode: 'school' }); return; }
     this.school = new School(this, this.ui);
     this.nextAirport = { worldX: 1e9, name: this.path[1], spawned: false };
     this.startFlight();
@@ -326,7 +331,7 @@ export class GameScene extends Phaser.Scene {
     // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
     // Also if a new direction was chosen on the FLY screen since (the path is built with the scene).
     const pathNow = this.school ? this.path : flightPath(this.save.tutorialDone ? this.save : { city: HOME });   // (school: LONDON, set by startSchool)
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat])
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])
       || pathNow[0] !== this.path[0] || pathNow[1] !== this.path[1]) { this.scene.restart({ go: true }); return; }
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
@@ -335,6 +340,7 @@ export class GameScene extends Phaser.Scene {
     this.setState('takeoff');
     this.rollSpeed = 0;
     this.airborne = false;
+    this.flySeconds = 0;   // real flying time this flight, for the eras (src/eras.js)
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
     this.bioStart = biodiversity(this.save);   // flights is counted at lift-off: going back to the menu from the runway is not a flight
   }
@@ -488,6 +494,7 @@ export class GameScene extends Phaser.Scene {
 
     this.elapsed += dt;
     this.stateTime += dt;
+    if (this.airborne && !this.school) this.flySeconds += dt;   // not while frozen (tips) or paused: update stops then
 
     // Speed: ramps up while flying, rolls to a stop after touchdown.
     if (this.state === 'landing') {
@@ -604,14 +611,15 @@ export class GameScene extends Phaser.Scene {
     for (const i of this.issrs) {
       const inside = this.inIssrShape(i, box);
       if (inside) { inIssr = true; i.entered = true; }
-      i.setAlpha(this.issrAlpha(i, box, inside));
+      if (!i.popped) i.setAlpha(this.issrAlpha(i, box, inside));
+      if (i.fake && !i.popped && this.nearPx(i, box) < FORECAST.popPx) this.popFake(i);
       // In your path: level with the plane while it was coming up ahead, so you had to climb or dive.
       const ahead = i.x - (box.x + box.w), cy = box.y + box.h / 2;
       if (ahead > 0 && ahead < 120 && cy >= i.y && cy <= i.y + i.height) i.inPath = true;
       // Dodged: icy air that was in your path at night, passed without making a contrail.
       if (!i.scored && i.x + i.width < box.x) {
         i.scored = true;
-        if (i.inPath && !i.entered && !this.isDay && this.state === 'playing' && !this.school && this.nightDodges < this.kit.dodgesPerNight) {   // Weather Forecast: more per night
+        if (!i.fake && i.inPath && !i.entered && !this.isDay && this.state === 'playing' && !this.school && this.nightDodges < this.kit.dodgesPerNight) {   // Weather Forecast: more per night
           this.nightDodges++; this.dodgesTotal++;
           this.earnCrystals(this.kit.dodgeCrystals, 'dodged icy air!');   // Crystal Lens: more per dodge
         }
@@ -632,6 +640,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.updateContrails(dt, time);
     this.updateRays(dt, time, true);
+    this.drawGapHint();
 
     this.hud.setCo2(this.co2Rate);
     this.hud.setHeat(this.heat, time);
@@ -696,9 +705,15 @@ export class GameScene extends Phaser.Scene {
 
   // One image per owned upgrade part, plus the nature badge, lights, engine shimmer and sparkles.
   buildPlaneParts() {
-    const lv = id => (this.save.levels || {})[id] || 0, add = (key, kind) => { const img = this.add.image(0, 0, key); this.planeParts.push({ img, kind }); return img; };
+    const add = (key, kind) => { const img = this.add.image(0, 0, key); this.planeParts.push({ img, kind }); return img; };
     this.planeParts = [];
-    for (const id of Object.keys(PART_LINES)) if (lv(id)) add(`plane-${id}-${Math.min(lv(id), PART_LINES[id])}`, id === 'gear' ? 'gear' : 'part');
+    // Gadgets show on the plane, one look per era (fleet.js). PLACEHOLDER: the old upgrade overlays
+    // stand in until the art session draws era gadgets (research/PLANE-ART-TODO.md).
+    const g = (this.save.fleet || {}).gadgets || {};
+    for (const [id, key] of [['hold', 'hold'], ['magnet', 'magnet'], ['sensors', 'radar'], ['gear', 'gear']]) if (g[id]) {
+      const tier = Math.min(Math.ceil(g[id] / 2), PART_LINES[key]);
+      add(`plane-${key}-${tier}`, id === 'gear' ? 'gear' : 'part');
+    }
     const badge = natureBadge(natureLevels(this.save));
     if (badge) add(`plane-nature-${badge}`, 'part');
     add('plane-lights', 'lights');
@@ -1225,18 +1240,25 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.school) return;   // flight school places everything itself
 
-    if (this.distancePx >= this.nextStormAt - WIDTH) {
-      const worldX = this.distancePx + (WIDTH + 10 - PLANE.x);
-      if (!this.inStormClearZone(worldX)) this.addStormPair();
+    // The next-gap hint (eras): with all three systems, storm columns are made `lead` px further
+    // ahead (off screen) and their gap glows at the right edge before they scroll in. lead 0 = today.
+    const lead = Math.round(GAP_HINT.lead[this.kit.hintLevel] * this.speed);
+    if (this.distancePx >= this.nextStormAt - WIDTH - lead) {
+      const worldX = this.distancePx + (WIDTH + 10 + lead - PLANE.x);
+      if (!this.inStormClearZone(worldX)) this.addStormPair(WIDTH + 10 + lead);
       this.nextStormAt += STORMS.spacing;
     }
     if (this.distancePx >= this.nextIssrAt) {
-      if (Math.random() < Math.min(1, ISSR.spawnChance * this.lateRamp())) this.addIssr();   // more icy air on long flights
+      // Forecasting (eras): good forecasts route you round a few night patches (nightPatches < 1).
+      const routed = !this.isDay && Math.random() > this.kit.nightPatches;
+      if (!routed && Math.random() < Math.min(1, ISSR.spawnChance * this.lateRamp())) this.addIssr();   // more icy air on long flights
+      // A forecast also shows icy air that isn't there: false patches, `fakes` of all shown.
+      if (this.kit.fakes && !this.school && Math.random() < Math.min(1, ISSR.spawnChance * this.lateRamp()) * this.kit.fakes / (1 - this.kit.fakes)) this.addIssr({ fake: true });
       this.nextIssrAt += ISSR.spawnEvery;
     }
     const T = HAZARDS.turbulence;
     if (this.distancePx >= this.nextTurbAt) {
-      if (Math.random() < T.chance) {
+      if (Math.random() < T.chance * this.kit.gapTurb) {   // ATC radar: calmer skies
         const h = Phaser.Math.Between(T.minH, T.maxH);
         this.turbs.push({ x: WIDTH + 10, w: Phaser.Math.Between(T.minW, T.maxW), y: Phaser.Math.Between(30, SKY_H - 60 - h), h });
         this.newHazard('turbulence', 'NEW HAZARD: TURBULENCE', 'Wavy lines = bumpy air! Inside it your plane gets pushed about and your taps work a little late. Fly over or under it!');
@@ -1245,7 +1267,7 @@ export class GameScene extends Phaser.Scene {
     }
     const B = HAZARDS.birds;
     if (this.distancePx >= this.nextBirdsAt) {
-      if (Math.random() < B.chance) this.addFlock();
+      if (Math.random() < B.chance * this.kit.gapBirds) this.addFlock();   // ATC bird advisories: fewer flocks
       this.nextBirdsAt += B.every;
     }
     if (this.distancePx >= this.nextTokenAt) {
@@ -1263,7 +1285,7 @@ export class GameScene extends Phaser.Scene {
         this.addPower('saf', WIDTH + 10, pathY());
         this.ui.tipOnce('safAhead', 'SAF ahead!', 'Grab the green fuel can: cleaner fuel for a while.', 'good', 3);
       }
-      else if (!this.school && r > 1 - POWERUPS.autoChance) this.addPower('auto');
+      else if (!this.school && r > 1 - this.kit.autoChance) this.addPower('auto');
     }
   }
 
@@ -1286,7 +1308,7 @@ export class GameScene extends Phaser.Scene {
       this.popup(tx, ty - 8, 'SAF! Cleaner fuel', '#8dffb0');
       this.ui.tipOnce('powerSaf', 'SAF: cleaner fuel!', 'Less CO2, and less soot, so your contrails are thinner and fade sooner. They still happen!', 'good', 4);
     } else {
-      this.autoUntil = this.gameTime + P.autoSeconds * 1000; this.autoFrom = this.gameTime;
+      this.autoUntil = this.gameTime + this.kit.autoSecs * 1000; this.autoFrom = this.gameTime;
       this.popup(tx, ty - 8, 'AUTOPILOT!', '#ffe15a');
     }
     this.burst(tx, ty, power === 'saf' ? 0x8dffb0 : 0x8ac8ff, 8);
@@ -1520,15 +1542,16 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  addStormPair() {
+  addStormPair(x = WIDTH + 10) {
     if (this.distancePx < WORLD.warmup) this.warmStorms = this.stormCount;   // gaps only narrow after the warm-up
     let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * (this.stormCount - (this.warmStorms || 0)));
     const nf = HAZARDS.noFly;
     const noFly = this.distancePx >= nf.from && Math.random() < nf.chance;
     if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess);
+    gap = Math.round(gap * this.kit.gaps);   // air traffic control (eras): better spacing, gaps up to ~3% wider
     const lo = STORMS.marginTop + gap / 2;
     const hi = SKY_H - STORMS.marginTop - gap / 2;
-    const w = noFly ? nf.width : STORMS.width, x = WIDTH + 10;
+    const w = noFly ? nf.width : STORMS.width;
     // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time).
     let gapY = null;
     for (let k = 0; k < 20 && gapY === null; k++) { const t = Phaser.Math.Between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2)) gapY = t; }
@@ -1611,7 +1634,8 @@ export class GameScene extends Phaser.Scene {
   }
 
 
-  addIssr() {
+  // fake: a forecast's false patch (looks real, makes no contrail, puffs away when you get close).
+  addIssr({ fake = false } = {}) {
     const grow = Math.sqrt(this.lateRamp());   // long flights: bigger patches (area grows with the ramp)
     const w = Math.round(Phaser.Math.Between(ISSR.minW, ISSR.maxW) * grow);
     const h = Math.min(SKY_H - 40, Math.round(Phaser.Math.Between(ISSR.minH, ISSR.maxH) * grow)), x = WIDTH + 10;
@@ -1620,7 +1644,12 @@ export class GameScene extends Phaser.Scene {
       const y = Phaser.Math.Between(10, SKY_H - h - 10);
       const blocks = this.storms.some(st => { const r = st.rects[0]; return r.x < x + w && r.x + r.width > x
         && !this.laneClear(r.x, r.width, r.height, st.rects[1].y, [...this.issrs, { x, y, width: w, height: h }]); });   // with the icy air already there
-      if (!blocks) { this.addIssrAt(x, y, w, h); return; }
+      if (!blocks) {
+        const r = this.addIssrAt(x, y, w, h);
+        if (fake) r.fake = true;
+        else if (this.kit.late && Math.random() < this.kit.late) r.late = true;   // the forecast missed it: seen only up close
+        return;
+      }
     }
   }
 
@@ -1667,16 +1696,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   // Is any point along the plane's middle line inside the cloud's ellipses? (x, y, w, h: its box)
-  inCloud(blobs, x, y, w, h, box) {
-    if (!overlaps(box, { x, y, w, h })) return false;
+  // `grow`: each blob's radii x this (1 = the drawn shape). Used for the contrail margin below.
+  inCloud(blobs, x, y, w, h, box, grow = 1) {
+    const pad = Math.max(0, grow - 1) * Math.max(w, h) / 2;
+    if (!overlaps(box, { x: x - pad, y: y - pad, w: w + 2 * pad, h: h + 2 * pad })) return false;
     const py = box.y + box.h / 2 - y;
     for (let px = box.x; px <= box.x + box.w; px += 5) {
       const lx = px - x;
-      if (blobs.some(b => ((lx - b.cx) / b.rx) ** 2 + ((py - b.cy) / b.ry) ** 2 <= 1)) return true;
+      if (blobs.some(b => ((lx - b.cx) / (b.rx * grow)) ** 2 + ((py - b.cy) / (b.ry * grow)) ** 2 <= 1)) return true;
     }
     return false;
   }
-  inIssrShape(i, box) { return this.inCloud(i.blobs, i.x, i.y, i.width, i.height, box); }
+  // The contrail margin (eras, PLANE-DESIGN.md section 3): a hot-exhaust 1950s jet makes contrails only
+  // deep inside icy air; efficient jets make them right up to (and a little past) its edge. The drawn
+  // patch does not change. Everything about "being in icy air" uses this: contrails, heat, dodges, the autopilot.
+  inIssrShape(i, box) { return !i.fake && this.inCloud(i.blobs, i.x, i.y, i.width, i.height, box, CONTRAIL_MARGIN[this.kit.margin] || 1); }
 
   issrAlpha(i, box, inside) {
     if (inside) return ISSR.insideAlpha;
@@ -1685,11 +1719,44 @@ export class GameScene extends Phaser.Scene {
     const gapX = Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width));
     const gapY = Math.max(0, i.y - (box.y + box.h), box.y - (i.y + i.height));
     const d = Math.max(gapX, gapY);
-    const reveal = this.kit.revealPx, hidden = this.kit.hiddenAlpha;
+    const reveal = i.late ? ISSR.revealPx : this.kit.revealPx, hidden = this.kit.hiddenAlpha;   // a missed patch: only seen up close
     if (d >= reveal) return hidden;
     // Three-step fade keeps the pixel-art look instead of a smooth gradient.
     const step = Math.min(3, Math.floor((1 - d / reveal) * 4));
     return hidden + (ISSR.revealAlpha - hidden) * (step / 3);
+  }
+
+  // The next-gap hint: a faint gate at the right edge, at the height of a storm gap still off screen.
+  drawGapHint() {
+    const lv = this.kit.hintLevel;
+    if (!lv || this.school) return;
+    const g = this.gapHintGfx || (this.gapHintGfx = this.add.graphics().setDepth(50));
+    g.clear();
+    for (const st of this.storms) {
+      const x = st.rects[0].x;
+      if (x < WIDTH) continue;   // on screen: no hint needed
+      const top = st.rects[0].height, bot = st.rects[1].y, a = GAP_HINT.alpha[lv] * (0.75 + 0.25 * Math.sin(this.gameTime / 120));
+      g.fillStyle(0xffe15a, a);
+      g.fillRect(WIDTH - 4, top, 4, 3); g.fillRect(WIDTH - 4, bot - 3, 4, 3); g.fillRect(WIDTH - 2, top, 2, bot - top);
+      if (!this.hintTipped) { this.hintTipped = true; this.ui.tipOnce('gapHint', 'Teamwork!', 'Your forecasters, controllers and dispatchers are working together: the glow on the right shows where the next gap is.', 'good', 4); }
+    }
+  }
+
+  // Gap from the plane's box to a patch's box, px (0 = touching or overlapping).
+  nearPx(i, box) {
+    return Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width), i.y - (box.y + box.h), box.y - (i.y + i.height));
+  }
+
+  // A false patch, close up: it puffs into sparkles with "Forecast wrong!" (user, draft 2) and is gone.
+  popFake(i) {
+    i.popped = true;
+    const cx = i.x + i.width / 2, cy = i.y + i.height / 2;
+    this.popup(cx, cy - 6, 'Forecast wrong!', '#cfe6ff', 8);
+    for (let k = 0; k < 8; k++) {
+      const sp = this.add.image(cx + Phaser.Math.Between(-i.width / 3, i.width / 3), cy + Phaser.Math.Between(-i.height / 3, i.height / 3), `plane-sparkle-${k % 4}`);
+      this.tweens.add({ targets: sp, y: sp.y - 12, alpha: 0, duration: 600 + k * 40, onComplete: () => sp.destroy() });
+    }
+    this.tweens.add({ targets: i, alpha: 0, duration: 300, onComplete: () => { i.x = -1e4; } });   // swept away by the normal clean-up
   }
 
   enterIssr() {
@@ -1961,7 +2028,7 @@ export class GameScene extends Phaser.Scene {
     const toAirport = Math.round(this.nextAirport.worldX - this.distancePx);
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
     else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
-    else if (toAirport < 300) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);
+    else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);   // ATC (eras): the call comes sooner
     else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${km(toAirport)}`);
     else if (this.missedSign && this.gameTime < this.missedSign.until) this.nextText.setText(`${this.missedSign.text} ${km(toAirport)}`);
     else this.nextText.setText('');
@@ -2014,6 +2081,9 @@ export class GameScene extends Phaser.Scene {
     earned.push({ label: `Seeds grabbed in the sky`, n: this.cargo, lost: !landed });
     if (mult > 1 && this.cargo) earned.push({ label: `Long flight bonus x${mult}`, n: Math.round(this.cargo * (mult - 1)), lost: !landed });
     if (heat < 0) earned.push({ label: 'Cooler Earth bonus', n: CARGO.coolBonus, lost: !landed });
+    // Fares (eras): a landed flight pays per 1,000 km, by plane, x the Cabin upgrades (src/fleet.js FARES).
+    const fares = landed && !this.school ? Math.round((FARES[this.kit.plane] || 0) * m / 1e6 * this.kit.fares) : 0;
+    if (fares) earned.push({ label: 'Passenger fares', n: fares, lost: false });
     const gained = landed ? earned.reduce((a, e) => a + e.n, 0) : 0;
     if (!landed && this.cargo) this.popup(this.plane.x + 25, this.plane.y - 14, `-${this.cargo} seeds lost!`, '#ff6a5a', 16);
 
@@ -2039,6 +2109,10 @@ export class GameScene extends Phaser.Scene {
     const nextMission = this.school ? null : currentMission(this.save);
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
     if (!this.school) this.save.flownKm = flown;
+    const eraBefore = eraProgress(this.save).index;
+    if (!this.school) this.save.flightSeconds = (this.save.flightSeconds || 0) + (this.flySeconds || 0);   // crashes count too
+    const eraOpened = !this.school && eraProgress(this.save).index > eraBefore ? eraProgress(this.save).era.name : null;
+    const newPlane = eraOpened ? syncFleet(this.save, { fly: true }) : null;   // a new era's plane joins the fleet
     if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; }   // choose a new direction from here
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
@@ -2057,6 +2131,7 @@ export class GameScene extends Phaser.Scene {
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
+      flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])],
       mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, bio: biodiversity(this.save),
     };

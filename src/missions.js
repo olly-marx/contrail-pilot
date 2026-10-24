@@ -4,7 +4,7 @@
 // SHORT: about 25 characters a line, two lines at most); `needs` says what to buy first.
 // Done missions are save.missionsDone (ids); save.mission is how many are done (pilot.js, restore.js).
 // No mission names one city: you can fly any way from wherever you land (2026-10-22), so it might never come.
-import { km } from './config.js';
+import { km, HAZARDS } from './config.js';
 import { REGION_NAMES } from './habitats.js';
 
 // The world tour (2026-10-22): every region but the UK discovered from the air (GameScene.setRegion).
@@ -42,9 +42,9 @@ export const MISSIONS = [
     tip: 'A long way. Normal fuel overheats the Earth first: make your plane cleaner.',
     check: r => r.landed && r.newRegion, progress: s => (s.state === 'landing' || s.state === 'over' ? '' : 'Land in a new land!'),
     fail: r => (r.landed ? `${r.landedAt} is not new land. Try another direction!` : 'Land safely to reach new land.') },
-  { id: 'turbulence', icon: 'mi-airports', lesson: 'lesson-turbulence', title: 'Bump through turbulence', sub: 'Turbulence starts 4,000 km into a flight. Fly into the wavy air!',
-    check: r => r.bumped, progress: s => (s.bumped ? 'Bumpy! Land or fly on' : s.distancePx < 4000 ? `Turbulence in ${km(4000 - s.distancePx)}` : 'Find the wavy air!'),
-    fail: r => (r.distance < 4000 ? 'Turbulence starts 4,000 km into a flight.' : 'Fly INTO the wavy air.') },
+  { id: 'turbulence', icon: 'mi-airports', lesson: 'lesson-turbulence', title: 'Bump through turbulence', sub: `Turbulence starts ${km(HAZARDS.turbulence.from)} into a flight. Fly into the wavy air!`,
+    check: r => r.bumped, progress: s => (s.bumped ? 'Bumpy! Land or fly on' : s.distancePx < HAZARDS.turbulence.from ? `Turbulence in ${km(HAZARDS.turbulence.from - s.distancePx)}` : 'Find the wavy air!'),
+    fail: r => (r.distance < HAZARDS.turbulence.from ? `Turbulence starts ${km(HAZARDS.turbulence.from)} into a flight.` : 'Fly INTO the wavy air.') },
   { id: 'kinds-3', icon: 'mi-tree', lesson: 'lesson-biodiversity', title: 'Plant 3 kinds of tree in one flight', sub: 'Your parcels take turns through your kinds of tree.', needs: { line: 'species', level: 2, text: 'Oak (NATURE)' },
     check: r => r.kinds >= 3, progress: s => `Kinds planted: ${s.speciesPlanted.size}/3`, fail: r => `You planted ${r.kinds} kind${r.kinds === 1 ? '' : 's'}. Hit more soil!` },
   { id: 'rewild', icon: 'mi-tree', title: 'Bring wildlife back', sub: 'Do a habitat project in your Wild Area (NATURE), then fly.',

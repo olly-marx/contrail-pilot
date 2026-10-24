@@ -143,3 +143,7 @@ on. Final prices after the build chat simulates income. Crystals = seeds / 8.
   a LIVERY you choose, earned from milestones and badges.
 - Hangar portrait: shows every upgrade clearly, as whole-plane variants.
 - Systems show at the airports (tower, weather station, fuel depot), not on the plane.
+- ERA PAINT (approved 2026-10-23, research/PLANE-ART-RECIPE.md): each era has a factory paint using the whole
+  hue range (rust, orange, amber, green, teal, iridescent). So upgrade colour changes must be chosen with care
+  (user): never borrow another era's accent; prefer metallic/neutral accents (gold, silver, black) for upgrade
+  marks such as the business-class stripe. To be designed with the upgrade art.

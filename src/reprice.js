@@ -1,3 +1,5 @@
+// RETIRED 2026-10-23: the eras reset (src/fleet.js migrateFleet) sets priceVersion 2 on every old
+// save before this runs, so it no longer changes anything. Kept until the next cleanup; tests/reprice.cjs removed.
 // One-time re-value of saves from before the 2026-10-21 price change (the user: prices were far
 // too cheap; a full hangar went from 3,415 to ~20,000 seeds). What you earned is kept at full value:
 // seeds in the bank + what you paid for each level at the OLD prices (crystals the same). Then the

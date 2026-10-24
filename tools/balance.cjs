@@ -21,6 +21,12 @@ const PLANES = {
   saf: { levels: { fuel: 3, engine: 3, cabin: 4, ...ALL_NATURE }, fuel: 'saf100' },
   hydrogen: { levels: { fuel: 4, engine: 3, cabin: 4, ...ALL_NATURE }, fuel: 'hydrogen' },
   hydrogenMax: { levels: { fuel: 4, engine: 5, cabin: 4, airframe: 3, ...ALL_NATURE }, fuel: 'hydrogen' },
+  // Eras (2026-10-23): every save now needs a fleet (src/fleet.js), or it gets the reset (Comet).
+  oldJumbo: { levels: {}, fuel: 'kerosene', priceVersion: 2, fleet: { plane: 'jumbo', planes: { jumbo: {} }, systems: {}, gadgets: {} } },   // = the game before the eras
+  comet: { levels: {}, fuel: 'kerosene', priceVersion: 2, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } },
+  cometFull: { levels: {}, fuel: 'kerosene', priceVersion: 2, flightSeconds: 0, fleet: { plane: 'comet', planes: { comet: { engines: 2, body: 2, cabin: 2 } }, systems: { forecast: 2, atc: 2, ops: 2 }, gadgets: { magnet: 2, hold: 2, gear: 2, sensors: 2, autopilot: 2 } } },
+  jumboFull: { levels: {}, fuel: 'kerosene', priceVersion: 2, fleet: { plane: 'jumbo', planes: { jumbo: { engines: 3, body: 3, cabin: 3 } }, systems: { forecast: 4, atc: 4, ops: 4 }, gadgets: { magnet: 4, hold: 4, gear: 4, sensors: 4, autopilot: 4 } } },
+  twinFull: { levels: {}, fuel: 'kerosene', priceVersion: 2, fleet: { plane: 'twin', planes: { twin: { engines: 4, body: 4, cabin: 4 } }, systems: { forecast: 6, atc: 6, ops: 6 }, gadgets: { magnet: 6, hold: 6, gear: 6, sensors: 6, autopilot: 6 } } },
   hydrogenMax4: { levels: { fuel: 4, engine: 5, cabin: 4, airframe: 3, ...ALL_NATURE, species: 3 }, fuel: 'hydrogen' },   // trees of 4 kinds, not 5
 };
 
