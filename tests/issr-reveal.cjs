@@ -1,16 +1,17 @@
 // ISSR visibility check: hidden until within revealPx, clearly visible once inside.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/issr-reveal.cjs
 const { chromium } = require('playwright-core');
+const { ready, started } = require('./lib/ready.js');
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const p = await b.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
   // Fresh progress for every load (so upgrades don't change the physics), flight school already done.
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'] })); });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
-  await p.goto(process.env.URL || 'http://localhost:8000/'); await p.waitForTimeout(800); await p.click('#goBtn');
+  await p.goto(process.env.URL || 'http://localhost:8000/'); await ready(p); await p.click('#goBtn'); await started(p);   // (it used to sleep 800 ms and click: a slow start threw 'undefined tutorialDone')
   // Always put one ISSR across the plane's path after take-off, so the "visible from inside" check
   // doesn't depend on a random ISSR happening to cross the autopilot's route.
-  await p.waitForTimeout(2300);
+  await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 60000 });   // flying, not taking off
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.addIssrAt(300, s.plane.y - 60, 320, 140); });
   let farVisible = 0, nearVisible = 0, insideSeen = 0, maxC = 0, shot = false;
   for (let i = 0; i < 300; i++) {

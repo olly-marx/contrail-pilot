@@ -7,6 +7,7 @@
 import { ERAS, eraProgress } from './eras.js';
 import { LINE_INFO, levelCard } from './fleetfacts.js';
 import { composedURL } from './planelook.js';
+import { onSwipe } from './swipe.js';
 import { lookFiles, hangarGadgets } from './fleet.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
 
@@ -29,6 +30,9 @@ export class FleetHangar {
       + `<p class="small ftabhelp">${{ plane: 'Choose your plane, and upgrade the one you fly.', systems: 'Systems help every flight, whichever plane you fly.', gadgets: 'Gadgets are fitted to every plane in your fleet.' }[this.tab]}</p>`
       + (this.tab === 'plane' ? this.planeHTML(s) : this.groupHTML(s, this.tab === 'systems' ? SYSTEMS : GADGETS, this.tab === 'systems' ? 'system' : 'gadget'));
     el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.flap(); this.render(); });
+    // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS (src/swipe.js).
+    const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.flap(); this.render(); };
+    onSwipe(el, { next: () => goTab(1), prev: () => goTab(-1) });
     el.querySelectorAll('[data-finfo]').forEach(b => b.onclick = () => { const [kind, id] = b.dataset.finfo.split(':'); this.showInfo(s, kind, id); });
     el.querySelectorAll('[data-fly]').forEach(b => b.onclick = e => { e.stopPropagation(); if (choosePlane(s, b.dataset.fly)) { this.preview = b.dataset.fly; this.ui.persist(); this.ui.sfx.coin(); this.render(); } });
     // The big picture with the plane's bought parts layered on (src/planelook.js); drawn when ready.

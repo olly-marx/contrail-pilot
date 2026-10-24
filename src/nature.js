@@ -46,7 +46,7 @@ export const NATURE_FACTS = [
 
 // Points from one species, given how many have been planted: grows slowly with repeats.
 function speciesPoints(id, n) {
-  if (!n) return 0;
+  if (!n || !SPECIES[id]) return 0;   // a kind this list does not know (a regional tree, an old or odd save) scores nothing, never crashes
   return SPECIES[id].native ? Math.min(18, 6 * Math.sqrt(n)) : Math.min(6, 2 * Math.sqrt(n));
 }
 

@@ -412,6 +412,12 @@ h2.sub { margin-top: -4px; }
 .hp-dock { position: sticky; top: -12px; z-index: 5; background: var(--paper); padding: 4px 0 2px; margin: 0 -16px; box-shadow: 0 3px 0 rgba(0,0,0,.12); }
 
 /* NATURE screen (src/wild.js) */
+/* NATURE (0.11.0, the user: "the wild area stays at the top of the screen always"): the region tabs and the wild-area picture are pinned
+   while the lists scroll under them. The panel is a flex column here (a grid item cannot stick beyond its own row; same 12px gap). On
+   phones under 760px tall the picture is narrower (70%): about 190px pinned in all, so a 600px phone still has about 340px of list. */
+#nature .panel { display: flex; flex-direction: column; }
+.wpin { position: sticky; top: -12px; z-index: 6;   /* -12px: the overlay's own padding, so nothing scrolls past ABOVE the pinned block */ display: grid; gap: 6px; padding: 8px 0; background: var(--paper); box-shadow: 0 4px 0 -1px rgba(27, 27, 47, .25); }
+@media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }
 .wregions { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
 .wregions .btn { flex: 0 0 auto; }
 .wregions .btn { font-size: 8px; padding: 4px 6px; }

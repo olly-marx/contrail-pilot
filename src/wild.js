@@ -13,6 +13,7 @@ import { TIERS, RARITY, REGION_NAMES, REGION_DATA } from './habitats.js';
 import { CITIES } from './cities.js';
 import { animalDir, animalPortrait } from './animalart.js';
 import { meterHTML } from './ui.js';
+import { onSwipe } from './swipe.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -57,6 +58,9 @@ export class WildScreen {
       if (b.dataset.region === this.region) return;
       sfx.flap(); this.region = b.dataset.region; this.openTiers = []; this.render();
     });
+    // Swipe sideways to change region (0.11.0): the next / previous region tab that is open (src/swipe.js).
+    const goRegion = d => { const open = [...$('wRegions').querySelectorAll('[data-region]:not([disabled])')], i = open.findIndex(b => b.dataset.region === this.region) + d; if (i >= 0 && i < open.length) open[i].click(); };
+    onSwipe($('nature'), { next: () => goRegion(1), prev: () => goRegion(-1) });
     $('wMeter').innerHTML = meterHTML(s, this.bio());
     this.renderScene();
     this.renderProjects();

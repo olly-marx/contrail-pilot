@@ -156,10 +156,10 @@ export class UI {
       <canvas id="jGlobe" class="jglobe" width="160" height="160"></canvas>
       <p class="small">On the way: ${path.slice(1).join(' &gt; ')}</p>
       <p class="small">Times round the Earth: <b>${trips.toFixed(1)}</b> (${km(Math.round(s.flownKm || 0))})</p>`;
-    drawGlobe($('jGlobe'), here, path.map(city));
-    $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => {
-      sfx.flap(); this.save.heading = b.dataset.way; writeSave(this.save); this.renderJourney();
-    });
+    // The way buttons and a tap on a way's dot on the globe do the same thing (the globe also turns when dragged: src/globe.js).
+    const pick = name => { sfx.flap(); this.save.heading = name; writeSave(this.save); this.renderJourney(); };
+    drawGlobe($('jGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: pick });
+    $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => pick(b.dataset.way));
   }
 
   // ---------- navigation ----------

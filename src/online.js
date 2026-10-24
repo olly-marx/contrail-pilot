@@ -22,6 +22,9 @@ export const randomTag = () => 10 + Math.floor(Math.random() * 90);
 const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } };
 export const getPilot = () => read(PILOT_KEY, null);
+// Online is OFF by design (src/newplayer.js, the plane build's test mode, sets window.__CP_NO_ONLINE = true before any module runs):
+// nothing is queued, sent, retried or announced, and no network is touched.
+const noOnline = () => typeof window !== 'undefined' && window.__CP_NO_ONLINE === true;
 
 let client = null;
 function db() {
@@ -42,6 +45,7 @@ async function session() {
 // Save (or change) this device's pilot name. Needs the internet: the word filter lives in the
 // database. Returns { ok: true } or { ok: false, why: 'rude' | 'offline' }.
 export async function savePilot(p) {
+  if (noOnline()) return { ok: false, why: 'offline' };
   try {
     const s = await session(), c = db();
     const row = { first_name: p.first, word: p.word, tag: p.tag };
@@ -62,6 +66,7 @@ export async function savePilot(p) {
 // A finished flight. It always goes in the outbox (even before this device has a pilot name: it is sent
 // once there is one) and is sent now, or when the connection is back. Offline play keeps up to OUTBOX_MAX.
 export function sendFlight(f) {
+  if (noOnline()) return;
   const box = read(OUTBOX_KEY, []);
   box.push(f);
   write(OUTBOX_KEY, box.slice(-OUTBOX_MAX));
@@ -87,6 +92,7 @@ let flushing = false, retryTimer = null, recovering = false;
 // Send the outbox: whole batches through send_flights (one call, however many flights); if the database
 // has no such function yet, one by one (5 a minute). Returns { sent, stalled }.
 export async function flush() {
+  if (noOnline()) return { sent: 0, stalled: false };
   if (flushing || !getPilot() || !outboxSize()) return { sent: 0, stalled: false };
   flushing = true;
   let sent = 0, stalled = false, wait = 15000;
@@ -134,6 +140,7 @@ export async function catchUp(atStartup = false) {
 // Top 50 for one board: board = ultimate | longest | total | nature | cooler | cleaner | missions,
 // period = today | week | month | all. Returns null when it can't be reached.
 export async function leaderboard(board, period) {
+  if (noOnline()) return null;
   try {
     const c = db();   // no sign-in needed to look; a signed-in pilot also gets is_me on their own row
     if (!c) return null;
@@ -146,6 +153,7 @@ export async function leaderboard(board, period) {
 // ?restore=<code> previews whose pilot it is, then claims it for this device (its flights and name
 // move here). Return { ok, pilot | flights, why: 'used' | 'offline' }.
 export async function restorePreview(code) {
+  if (noOnline()) return { ok: false, why: 'offline' };
   try {
     await session();
     const { data, error } = await db().rpc('restore_preview', { code });
@@ -154,6 +162,7 @@ export async function restorePreview(code) {
   } catch (e) { return { ok: false, why: 'offline' }; }
 }
 export async function restoreClaim(code, name) {
+  if (noOnline()) return { ok: false, why: 'offline' };
   try {
     await session();
     const { data, error } = await db().rpc('restore_claim', { code });
@@ -170,6 +179,7 @@ export async function restoreClaim(code, name) {
 export const getCode = () => read(CODE_KEY, null);
 export const makeCode = () => [0, 1, 2, 3].map(() => NAME_WORDS[Math.floor(Math.random() * NAME_WORDS.length)]).join(' ') + ' ' + randomTag();
 export async function ensureCode(fresh = false) {
+  if (noOnline()) return getCode();
   if (!getPilot() || (getCode() && !fresh)) return getCode();
   try {
     await session();
@@ -183,6 +193,7 @@ export async function ensureCode(fresh = false) {
 
 // Upload the save if it changed since the last upload. Returns true if the server kept it.
 export async function syncUp(save) {
+  if (noOnline()) return false;
   if (!getPilot()) return false;
   const json = JSON.stringify(save), last = read(SYNC_KEY, {});
   if (last.json === json) return false;
@@ -201,6 +212,7 @@ const progress = s => (s.landings || 0) + (s.mission || 0) * 3 + (s.flights || 0
 // On opening the game: the online save, if it is newer than this device's and this device has no
 // unsent changes; else this device's changes go up. Returns the save to use instead, or null.
 export async function syncDown(save) {
+  if (noOnline()) return null;
   if (!getPilot()) return null;
   const last = read(SYNC_KEY, {}), unsent = last.json !== JSON.stringify(save);
   try {
@@ -221,6 +233,7 @@ export async function syncDown(save) {
 
 // "I already have a pilot": join this device to it. { ok, save | why: 'no such pilot' | 'too many tries' | 'wrong code' | 'offline' }
 export async function pilotLogin(p, code) {
+  if (noOnline()) return { ok: false, why: 'offline' };
   try {
     await session();
     const { data, error } = await db().rpc('pilot_login', { first: p.first, word: p.word, tag: p.tag, code: code.trim() });
@@ -234,7 +247,7 @@ export async function pilotLogin(p, code) {
   } catch (e) { return { ok: false, why: 'offline' }; }
 }
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && !noOnline()) {
   window.addEventListener('offline', () => { recovering = true; });
   window.addEventListener('online', () => { recovering = true; catchUp(); });
 }

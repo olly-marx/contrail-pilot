@@ -5,15 +5,22 @@
 // its script address (the deploy stamps every import with ?v=<commit>). Every few minutes, and when
 // you come back to the tab, it fetches version.json. If the commit differs, an update is waiting:
 //   - never during a flight: only when no flight is running (menu, hangar, results);
-//   - a banner "New version ready! UPDATE" (and the newest note); UPDATE reloads (the save is kept);
-//   - ignored for over a day, it updates by itself, but only on an IDLE menu: the title showing and
-//     nothing open on top (no info card, coach bubble or toast; the grown-up gate is in the hangar);
+//   - on an IDLE menu (the title showing and nothing open on top: no info card, coach bubble, tour or toast)
+//     it updates BY ITSELF (0.11.0, the user: "update on the menu"): a short "Updating..." note, then the save is
+//     written and the page reloads, a second or two after the check finds a newer version;
+//   - a loop guard: each target version is auto-tried once with a plain reload and, if the page comes back still
+//     old (a browser that serves the old page from its cache), once more through a fresh address (?u=<commit>,
+//     removed at once); after that it stays quiet, and only the banner remains;
+//   - anywhere else (a card open, the hangar): a banner "New version ready! UPDATE" (and the newest note);
+//     UPDATE reloads (the save is kept);
+//   - ignored for over a day, it updates by itself on an idle menu even after both tries failed;
 //   - the save is written just before any reload, so a purchase in the last second is kept;
 //   - after an update that has a 'major' change you haven't seen, a one-time "What's new" card.
 // Local copies (no ?v stamp) don't check, so development is never interrupted.
 
 const KEY = 'contrailPilot.updates';
-const CHECK_MS = 3 * 60 * 1000;
+const CHECK_MS = 60 * 1000;          // (3 minutes until 0.11.0)
+const AUTO_WAIT_MS = 1500;           // "Updating..." shows this long before the reload, so a tap in that moment cancels it
 const AUTO_AFTER_MS = 24 * 3600 * 1000;
 
 const ownCommit = () => window.__CP_VERSION || new URL(import.meta.url).searchParams.get('v');
@@ -26,6 +33,9 @@ const CSS = `
   background: #fffbe8; border: 3px solid #1a1a22; box-shadow: 0 4px 0 #1a1a22; padding: 8px 10px; font: 10px/1.5 Pixel, monospace; color: #1a1a22;
   display: flex; gap: 8px; align-items: center; }
 #upBanner p { margin: 0; flex: 1; }
+#upAuto { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 60; max-width: 340px; width: calc(100% - 24px);
+  background: #fffbe8; border: 3px solid #1a1a22; box-shadow: 0 4px 0 #1a1a22; padding: 8px 10px; font: 10px/1.5 Pixel, monospace; color: #1a1a22; }
+#upAuto p { margin: 0; }
 #upBanner button, #upCard button { font: 10px Pixel, monospace; background: #4caf50; color: #fff; border: 3px solid #1a1a22; padding: 6px 8px; cursor: pointer; }
 #upBanner .later { background: #9a9aa4; }
 #upCard { position: fixed; inset: 0; z-index: 61; background: rgba(10, 12, 30, 0.6); display: flex; align-items: center; justify-content: center; }
@@ -37,7 +47,7 @@ const CSS = `
 
 // The title screen showing, and nothing open on top of it.
 const shown = id => { const e = document.getElementById(id); return !!e && !e.hidden; };
-export const idleMenu = () => shown('title') && !shown('toast') && !shown('coach') && !document.getElementById('upCard')
+export const idleMenu = () => shown('title') && !shown('toast') && !shown('coach') && !shown('tour') && !shown('repriced') && !document.getElementById('upCard')
   && ![...document.querySelectorAll('.overlay.top')].some(e => !e.hidden);
 
 export class Updates {
@@ -48,6 +58,9 @@ export class Updates {
     this.beforeReload = beforeReload;
     this.own = ownCommit();
     this.pending = null;
+    try {   // the forced-fresh address (?u=<commit>) is tidied away at once; every OTHER parameter stays (?newplayer=1...)
+      const a = new URL(location.href); if (a.searchParams.has('u')) { a.searchParams.delete('u'); history.replaceState(null, '', a.pathname + a.search + a.hash); }
+    } catch (e) { /* no history to tidy */ }
     if (!this.own) return;                       // a local copy: no checks
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.check(true);
@@ -83,14 +96,27 @@ export class Updates {
       const unseen = (v.changes || []).slice(0, Math.max(0, ids.indexOf(s.seen) < 0 ? ids.length : ids.indexOf(s.seen)));
       if (unseen.some(c => c.level === 'major')) this.showCard(unseen);
     }
-    s.seen = ids[0]; delete s.waitingFor; delete s.waitingSince; store(s);
+    s.seen = ids[0]; delete s.waitingFor; delete s.waitingSince; delete s.autoTried; delete s.freshTried; store(s);
   }
 
   maybeShow() {
     const banner = document.getElementById('upBanner');
-    if (!this.pending || this.inFlight()) { if (banner) banner.remove(); return; }
-    const s = load();
+    if (!this.pending || this.inFlight()) { if (banner) banner.remove(); this.cancelAuto(); return; }
+    const s = load(), c = this.pending.commit;
     if (s.waitingSince && Date.now() - s.waitingSince > AUTO_AFTER_MS && idleMenu()) { this.update(); return; }   // ignored a day: update now, on an idle menu
+    // On an idle menu, update by itself, each way once per target version (the loop guard).
+    const way = s.autoTried !== c ? 'plain' : s.freshTried !== c ? 'fresh' : null;
+    if (way && idleMenu()) {
+      if (!this.autoAt) { this.autoAt = Date.now() + AUTO_WAIT_MS; this.showAuto(); return; }
+      if (Date.now() >= this.autoAt) {
+        const t = load(); this.cancelAuto();
+        if (way === 'plain') t.autoTried = c; else t.freshTried = c;
+        store(t);   // remembered BEFORE the reload: a page that comes back old must not try the same way again
+        this.update(way === 'fresh' ? c : null);
+      }
+      return;
+    }
+    this.cancelAuto();
     if (banner || this.snoozed) return;
     const note = ((this.pending.changes || [])[0] || {}).notes;
     const b = document.createElement('div');
@@ -101,12 +127,23 @@ export class Updates {
     document.body.appendChild(b);
   }
 
-  update() {
+  // fresh: a commit -> load the page again through a new address (?u=<commit>), which no cache has seen.
+  update(fresh = null) {
     if (this.inFlight()) return;
     try { this.beforeReload && this.beforeReload(); } catch (e) { /* reload anyway: the save was written as you played */ }
     this.reloading = true;
-    (window.__CP_RELOAD || (() => location.reload()))();
+    if (fresh) { const a = new URL(location.href); a.searchParams.set('u', fresh); (window.__CP_FRESH || (u => location.replace(u)))(a.pathname + a.search + a.hash); }   // other parameters kept
+    else (window.__CP_RELOAD || (() => location.reload()))();
   }
+
+  showAuto() {
+    if (document.getElementById('upAuto')) return;
+    const b = document.createElement('div');
+    b.id = 'upAuto';
+    b.innerHTML = '<p><b>Updating...</b><br>Getting the newest version!</p>';
+    document.body.appendChild(b);
+  }
+  cancelAuto() { this.autoAt = 0; const b = document.getElementById('upAuto'); if (b) b.remove(); }
 
   showCard(changes) {
     const c = document.createElement('div');

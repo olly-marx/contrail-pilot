@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-24-globe-swipe",
+    "version": "0.11.0",
+    "date": "2026-10-24",
+    "level": "major",
+    "notes": [
+      "A real world globe! It turns so your whole trip is in view. Drag it round, or tap a light square to choose that way.",
+      "Swipe sideways to move between the tabs in NATURE and in the HANGAR. In NATURE the picture and the biodiversity bar now stay at the top while you scroll.",
+      "The game now updates itself when you are on the menu, so you always have the newest version.",
+      "Fixed: NATURE no longer gets stuck with an unusual save."
+    ]
+  },
+  {
     "id": "2026-10-24-fields",
     "version": "0.10.8",
     "date": "2026-10-24",

@@ -14,12 +14,13 @@ const flight = i => ({ landed: true, distance_m: 1000 + i, shade: 0, heat_trappe
   const check = (c, m) => { if (!c) fails.push(m); };
 
   // One scenario = a fresh browser context + a stand-in server whose behaviour the scenario sets.
-  async function scenario(name, { pilot = true, server = {} } = {}, body) {
+  async function scenario(name, { pilot = true, server = {}, noOnline = false } = {}, body) {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
     const p = await ctx.newPage();
     const errs = []; p.on('pageerror', e => errs.push(String(e)));
-    const got = { flights: [], batchCalls: 0, singles: 0, saves: 0, up: true, times: [], opts: { batchDelay: 0, failBatches: 0, noBatch: false, ...server } };
+    const got = { flights: [], batchCalls: 0, singles: 0, saves: 0, requests: 0, up: true, times: [], opts: { batchDelay: 0, failBatches: 0, noBatch: false, ...server } };
     await ctx.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', async r => {
+      got.requests++;
       if (!got.up) return r.abort('internetdisconnected');   // a dead network: no answer at all
       const u = r.request().url(), m = r.request().method(), h = { 'access-control-allow-origin': '*' };
       const json = (o, s = 200) => r.fulfill({ status: s, contentType: 'application/json', headers: h, body: JSON.stringify(o) });
@@ -44,9 +45,9 @@ const flight = i => ({ landed: true, distance_m: 1000 + i, shade: 0, heat_trappe
       if (/rpc\/put_save/.test(u)) { got.saves++; return json(true); }
       return json([]);
     });
-    await p.addInitScript(([withPilot]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear();
+    await p.addInitScript(([withPilot, off]) => { if (off) window.__CP_NO_ONLINE = true; if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear();
       localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], tours: ['*'], landings: 9 }));
-      if (withPilot) localStorage.setItem('contrailPilot.pilot', JSON.stringify({ first: 'Test', word: 'Puffin', tag: 11 })); } }, [pilot]);
+      if (withPilot) localStorage.setItem('contrailPilot.pilot', JSON.stringify({ first: 'Test', word: 'Puffin', tag: 11 })); } }, [pilot, noOnline]);
     await p.goto(URL); await ready(p);
     const ctl = {
       p, got, errs,
@@ -144,6 +145,17 @@ const flight = i => ({ landed: true, distance_m: 1000 + i, shade: 0, heat_trappe
     await c.up();
     check(await c.waitFor(async () => c.got.saves > before, 6000), `8: the changed save should go up on reconnect (${c.got.saves} vs ${before})`);
     check(await c.p.evaluate(async () => (await import('./src/online.js')).outboxSize()) === 0 && c.got.flights.length === 0, '8: no flights were involved');
+  });
+
+  // 9. Online OFF by design (the plane build's test mode sets window.__CP_NO_ONLINE before any module runs): nothing is queued, sent,
+  //    retried or announced, and the network is never touched, even with a pilot name and the connection going and coming back.
+  await scenario('9 online off by design', { noOnline: true }, async c => {
+    await c.down(); check(await c.send(6) === 0, '9: flights are not queued when online is off by design');
+    await c.up(); await c.p.waitForTimeout(3000);
+    check(await c.banner() === null, '9: no "Back online" banner');
+    check(c.got.requests === 0, `9: no request ever leaves the page (${c.got.requests} did)`);
+    check(await c.p.evaluate(async () => (await (await import('./src/online.js')).leaderboard('ultimate', 'all'))) === null, '9: the boards say "not reachable" without asking');
+    check(c.got.requests === 0, `9: ...and still no request (${c.got.requests})`);
   });
 
   await b.close();

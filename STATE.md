@@ -14,6 +14,20 @@ for Oliver's Imperial contrail research group. Phaser 3, static site, no build s
   https://claude.ai/code/artifact/f83412c6-0386-4b2c-9bb0-e1ff46b3b8fa
 - `README.md` has the file map and how to run the checks.
 
+## 0.11.0 (bug-fix chat, 2026-10-24): self-update, globe, swipe, pinned NATURE
+- **Self-update** (src/updates.js): on an IDLE menu (title showing, nothing open) a newer version reloads the page by itself after a 1.5 s
+  "Updating..." note (a tap or card cancels it); each target version is tried once by plain reload and once by a forced `?u=<commit>` load that
+  keeps other query parameters, then only the banner remains (loop guard in the 'contrailPilot.updates' entry); never in flight; check every
+  60 s. After a flight the results screen is not idle: FLY ON to the menu, then it goes. Tests: updates.cjs, cache.cjs (real HTTP cache, Pages-like
+  ETag server: Playwright switches the HTTP cache OFF whenever page.route is used, so cache.cjs blocks Supabase in DNS instead).
+- **Swipe** (src/swipe.js): `touch-action: pan-y pinch-zoom` on the swiped element is REQUIRED (without it Chrome cancels the pointer on the first
+  sideways move); NATURE (wild.js, whole screen incl. the picture) and HANGAR (hangar.js) call onSwipe. Test: swipe.cjs with real CDP touch input.
+- **NATURE pinned**: `.wpin` (index.html wrapper, style.css) keeps the region tabs, the wild-area picture and the biodiversity bar at the top
+  while the lists scroll; `#nature .panel` is a flex column because a grid item cannot stick beyond its own row; sticky `top: -12px` = the
+  overlay's own padding. Phones under 760 px tall get a 70%-wide picture: on a 600 px phone the pinned part ends 203 px from the top, 337 px of list left.
+- **Offline play / online off by design** (src/online.js): window.__CP_NO_ONLINE = true (set by the plane build's newplayer.js) makes sendFlight,
+  flush, syncUp, syncDown, leaderboard, restore*, pilotLogin and the online listeners no-ops.
+
 ## What is built (as of commit 792672e; much more since: see the NEXT TASK / Phase 1b sections and git log)
 
 Flight with takeoff, airports every 1500 m (glide onto a runway to land or fly on), storms,
@@ -172,8 +186,9 @@ B. GLOBAL ROUTING (Phase 2 note below): today src/route.js is ONE fixed eastward
    and LANDMARKS (16 cities, art) depend on it. The user wants more cities incl. the southern
    hemisphere and choosing directions (globe-trotting), so laps need redefining. Design it, explain,
    pause for the user's OK before building.
-Loose ends: Stevo's restore link is unused (see "Lost saves"); remove the restore-link code + DB
-functions once he's done. lanes.cjs/flight.cjs still count fixed time windows (flaky under load).
+Loose ends: **amended 2026-10-24:** Stevo's and Olly's restore links are USED (measured on the live DB); Ducrust (103 flights) and Jono (7)
+are still UNCLAIMED and the user says they were sent their links, so KEEP the restore-link code + DB functions until both claim.
+lanes.cjs/flight.cjs were rewritten to wait on game state (0.11.0): see "Known flaky tests". (Do not cite the old "still count fixed time windows" line.)
 Not started: "Biodiversity King" board + boards revamp (DB change), upgrades tied to new variables,
 the advanced autopilot (see items 5 below).
 
@@ -214,8 +229,10 @@ the advanced autopilot (see items 5 below).
   unseen first, least turn + Warnsdorff, BFS to nearest unseen when stuck; flightPath(save); save.city = NAME, save.heading,
   save.flownKm; migrateCity; EARTH_KM 40075; LAP_KM 32060 kept for the non-stop badge; OLD_LOOP for old saves/restore).
   GameScene: this.path, legKm(k), startCity always 0; startFlight rebuilds when the chosen way changed (not in school).
-  FLY: 3 way buttons + src/globe.js (orthographic pixel globe, LAND boxes as dots, gold path); globe 96 px under 760 px tall,
-  none under 600. Laps -> 'times round the Earth'. Missions 'reach-cairo' = reach a new land (r.newRegion), 'world' = World
+  FLY: 3 way buttons + src/globe.js (**amended 0.11.0: a real Natural Earth land mask (src/landmask.js, tools/art/make_landmask.py), drawn per
+  pixel, north up, centred and zoomed (max 1.35x) on the route ahead, every city a dot nudged onto land, drag to spin, tap an alternative way's
+  light square to choose it**; the old "LAND boxes as dots" is gone); globe 96 px under 760 px tall,
+  none under 600 (a 84 px globe fits at 600 but pushes TAKE OFF to a sliver: left hidden, the user has not decided). Laps -> 'times round the Earth'. Missions 'reach-cairo' = reach a new land (r.newRegion), 'world' = World
   tour (tourLeft(save) empty). Tests: journey.cjs rewritten; geo.cjs checks world-tour quality (median <=110%, worst <=120%).
 - REGIONAL TREES DONE + LIVE (same commit): src/habitat/trees.js REGION_TREES (5 slots per region, sourced; 26 new to draw);
   nature.js UK_SLOTS/localTree; save.plantedIn[region][id]; slot 0 scores as plantation even when native; regional meter =
@@ -544,6 +561,13 @@ Earth bar), `lesson-bonus` (plane passing an airport, x1.5), `lesson-gold` (gold
 `lesson-crystals` (ice crystal icon), `lesson-turbulence`, `lesson-birds`, `lesson-nofly`.
 
 ## Known flaky tests
+
+- **2026-10-24 (0.11.0, bug-fix chat):** lanes.cjs and flight.cjs now wait on game state (tests/lanes.cjs runs until 30 gaps / 12 flocks / 22
+  patches, flight.cjs waits for 'playing' / a result with the right REASON). The CI failures were NOT reproduced: old and new both pass with the
+  page's CPU slowed 4x/8x/12x (tests/lib/throttle.js, THROTTLE=n) and with 32 busy loops on 16 cores (old lanes: 28 gaps idle, 25 loaded, pass
+  mark 20; CI once saw 13). Planting game defects found two weaknesses, both fixed: flight.cjs accepted any end of run as 'overheat'
+  (now needs the 'too hot' reason), and lanes.cjs could not see addIssr's guard against icy air filling a storm gap already ahead (now a direct
+  200-try check). Do not treat the old fixed-window flakes below as still open without a new failure log.
 
 - 2026-10-22 local 4-shard run: lanes.cjs ("plenty of storms" saw 13 gaps) and flight.cjs (overheat
   check timed out) each failed once under load and passed on retry. Both still count fixed TIME
