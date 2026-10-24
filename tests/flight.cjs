@@ -76,7 +76,7 @@ async function fly(p, { landAt, keepCool = false }) {
 
   // Overheat: force heat to the line mid-flight.
   await p.goto(URL); await ready(p); await p.waitForTimeout(600); await p.click('#goBtn'); await started(p); await p.waitForTimeout(2600);
-  await p.evaluate(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.heat = 100; });   // past the take-off breather
+  await p.evaluate(async () => { const { CLIMATE } = await import('/src/config.js'); const s = game.scene.getScene('game'); s.graceUntil = 0; s.heat = CLIMATE.dangerLine; });   // past the take-off breather (the danger line)
   await p.waitForTimeout(200);
   const oh = await p.evaluate(() => game.scene.getScene('game').result);
   console.log('overheat:', JSON.stringify(oh));

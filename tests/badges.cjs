@@ -40,7 +40,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       birdstrike: [[{ landed: false }, { crashes: { bird: 1 } }], [{ landed: false }, { crashes: { storm: 1 } }]],
       toldoff: [[{ landed: false }, { crashes: { nofly: 1 } }], [{ landed: false }, { crashes: { bird: 1 } }]],
       meltdown: [[{ landed: false }, { crashes: { overheat: 1 } }], [{ landed: false }, { crashes: { ground: 1 } }]],
-      closecall: [[{ heat: 91 }], [{ heat: 90 }]], lucky7: [[{ cargo: 7 }], [{ cargo: 8 }]],
+      closecall: [[{ heat: 149 }], [{ heat: 148 }]], lucky7: [[{ cargo: 7 }], [{ cargo: 8 }]],
       seeddodger: [[{ cargo: 0, distance: 2000 }], [{ cargo: 0, distance: 1999 }]],
     };
     const res = { missing: BADGES.filter(x => !cases[x.id]).map(x => x.id), wrong: [] };

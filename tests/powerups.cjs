@@ -16,7 +16,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'],
-    tours: ['name', 'hangar', 'nature', 'wild'], freeGiven: true, priceVersion: 2, missionsDone: [], badgeTiers: {} })); });
+    tours: ['name', 'hangar', 'nature', 'wild'], freeGiven: true, priceVersion: 2, missionsDone: [], badgeTiers: {},
+    flightSeconds: 4 * 3600, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: { autopilot: 1 } } })); });   // 0.10.2: SAF cans from the 2010s, autopilot pick-ups with the gadget
   await p.goto(URL); await ready(p); await p.waitForTimeout(400);
   await p.click('#goBtn');
   await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.state === 'playing'; }, null, { timeout: 20000 });

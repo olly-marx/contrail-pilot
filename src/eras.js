@@ -1,7 +1,7 @@
 // Eras of the plane side (research/PLANE-DESIGN.md section 8, PLANE-ERAS-1-3.md). An era opens by
 // REAL flying time: save.flightSeconds, the seconds actually flown (take-off to landing or crash;
 // crashes count; flight school, paused tips and menus don't). Era n (n = 1 for the 1970s) needs
-// 30 x n^1.5 more minutes than the one before: 30, 85, 156, 240, 335 min.
+// 20 x n^1.5 more minutes than the one before: 20, 57, 104, 160, 224 min.
 export const ERAS = [
   { id: '1950s', name: 'the 1950s' },
   { id: '1970s', name: 'the 1970s' },
@@ -11,7 +11,8 @@ export const ERAS = [
   { id: 'future', name: 'the far future' },
 ];
 
-export const eraMinutes = n => 30 * Math.pow(n, 1.5);   // minutes spent in era n-1 to open era n
+export const ERA_BASE_MIN = 20;   // 30 until 0.10.3 (user: 30 min of the Comet was 'a nightmare')
+export const eraMinutes = n => ERA_BASE_MIN * Math.pow(n, 1.5);   // minutes spent in era n-1 to open era n
 // Total flying minutes at which era i (0 = 1950s) opens.
 export const eraOpensAt = i => { let t = 0; for (let n = 1; n <= i; n++) t += eraMinutes(n); return t; };
 

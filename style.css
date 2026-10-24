@@ -37,7 +37,7 @@ canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
   /* chunky pixel border */
   box-shadow: 0 -4px 0 0 var(--ink), 0 4px 0 0 var(--ink), -4px 0 0 0 var(--ink), 4px 0 0 0 var(--ink),
               0 8px 0 0 rgba(0,0,0,.35);
-  display: grid; gap: 12px; font-size: 9px; line-height: 1.6;
+  display: grid; gap: 12px; font-size: 9px; line-height: 1.9;   /* 1.6 until 0.10.2: the flat pixel font needs more space between lines */
 }
 .panel.wide { width: min(460px, 100%); }
 h1 { font-size: 24px; line-height: 1.2; margin: 0; text-align: center; color: var(--night); text-shadow: 3px 3px 0 var(--sky); }
@@ -46,7 +46,7 @@ h3 { font-size: 10px; margin: 4px 0 0; color: var(--muted); }
 p { margin: 0; }
 .lead { text-align: center; font-size: 9px; }
 .eyebrow, .label { font-size: 7px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 0; }
-.small { font-size: 7px; color: var(--muted); }
+.small { font-size: 8px; line-height: 1.8; color: var(--muted); }   /* 7px until 0.10.2: hard to read */
 .cool { color: var(--cool); }
 .warm { color: var(--warm); }
 
@@ -164,7 +164,7 @@ p { margin: 0; }
 .coach {
   position: fixed; left: 50%; bottom: 15%; transform: translateX(-50%); z-index: 25;
   width: min(320px, calc(100% - 24px)); box-sizing: border-box; padding: 10px; display: grid; grid-template-columns: 40px 1fr; gap: 10px;
-  background: var(--paper); font-size: 9px; line-height: 1.6;
+  background: var(--paper); font-size: 9px; line-height: 1.9;
   box-shadow: 0 -3px 0 0 var(--ink), 0 3px 0 0 var(--ink), -3px 0 0 0 var(--ink), 3px 0 0 0 var(--ink), 0 6px 0 0 rgba(0,0,0,.3);
   pointer-events: none;
 }
@@ -516,7 +516,7 @@ h2.sub { margin-top: -4px; }
 .era-card[data-era="1950s"] { background: linear-gradient(#f3e3c0, #c9774a); }
 .era-card[data-era="1970s"] { background: linear-gradient(#ffb347, #8a3b12); }
 .era-card[data-era="1990s"] { background: linear-gradient(#ffd86b, #b8860b); }
-.ec-body { position: relative; max-width: 340px; margin: 0 12px 16px; padding: 14px; text-align: center; background: rgba(16, 24, 42, 0.82); border: 3px solid #ffe15a; border-radius: 6px; color: #fff; font-size: 9px; }
+.ec-body { position: relative; max-width: 340px; margin: 0 12px 16px; padding: 14px; text-align: center; background: rgba(16, 24, 42, 0.88); border: 3px solid #ffe15a; border-radius: 6px; color: #fff; font-size: 11px; line-height: 1.9; }
 .ec-kicker { color: #ffe15a; letter-spacing: 2px; margin: 0; opacity: 0; }
 .ec-title { margin: 6px 0; font-size: 16px; line-height: 1.4; color: #fff; opacity: 0; }
 .ec-title span { color: #ffe15a; font-size: 26px; }
@@ -525,7 +525,7 @@ h2.sub { margin-top: -4px; }
 .ec-tag, .ec-note, .ec-list, #ecOk { opacity: 0; }
 .ec-note { color: #cfe6ff; }
 .ec-list { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; margin: 8px 0; }
-.ec-new { background: #2b4a6f; padding: 2px 5px; border-radius: 3px; }
+.ec-new { background: #2b4a6f; padding: 4px 7px; border-radius: 3px; font-size: 10px; }
 .ec-new.big { background: #ffe15a; color: #1b2838; }
 .ec-confetti i { position: absolute; top: -10px; width: 6px; height: 6px; opacity: 0; }
 .era-card.go .ec-kicker { animation: ec-in 0.3s 0.1s forwards; }
@@ -540,3 +540,11 @@ h2.sub { margin-top: -4px; }
 @keyframes ec-taxi { to { left: calc(50% - 93px); } }
 @keyframes ec-fall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0.9; transform: translateY(110vh) rotate(720deg); } }
 .srcok { color: #3f9a5a; font-size: 7px; }
+/* The big plane picture at the top of the hangar (0.10.2). */
+.fpreview { position: relative; margin: 4px 0 6px; border: 2px solid #2b4a6f; border-radius: 4px; background: linear-gradient(#dfe9f3, #f6f1e6); overflow: hidden; }
+.fpreview img { display: block; width: 100%; image-rendering: pixelated; }
+.fpreview.locked img { filter: brightness(0); opacity: 0.35; }
+.fpcap { display: flex; justify-content: space-between; align-items: center; padding: 3px 6px; background: #1b2838; color: #fff; font-size: 9px; }
+.fpcap span { color: #ffe15a; font-size: 8px; }
+.fplane { cursor: pointer; }
+.ftabhelp { text-align: center; margin: 0 0 6px; }

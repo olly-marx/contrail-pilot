@@ -32,7 +32,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   await p.click('[data-finfo="plane:jumbo.engines"]'); await p.waitForTimeout(200);
   const t = await p.evaluate(() => document.getElementById('info').hidden ? '' : document.getElementById('info').textContent.replace(/\s+/g, ' '));
-  check(/Engines: 747 jumbo/.test(t) && /JT9D/.test(t) && /22 January 1970/.test(t) && /REAL Pratt/.test(t) && /GAME GUESS/.test(t) && !/\[\d+\]/.test(t), `the 747 engines card: "${t.slice(0, 400)}"`);
+  check(/Engines: 747 jumbo/.test(t) && /JT9D/.test(t) && /22 January 1970/.test(t) && !/REAL|GAME GUESS|\[\d+\]/.test(t), `the 747 engines card: "${t.slice(0, 400)}"`);
   await p.click('#iClose');
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
   await p.click('[data-finfo="gadget:gear"]'); await p.waitForTimeout(200);

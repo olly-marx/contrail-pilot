@@ -16,17 +16,17 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.addInitScript(() => { if (sessionStorage.i) return; sessionStorage.i = 1; localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({
     tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['name', 'hangar', 'nature', 'wild'], freeGiven: true, priceVersion: 2,
     seeds: 640, crystals: 85, flights: 41, landings: 9, bestDistance: 6100000, flownKm: 52000, city: 'PARIS', visited: ['LONDON', 'PARIS'],
-    levels: { engine: 2, magnet: 1, radar: 1, trees: 1 }, planted: { spruce: 12 }, flightSeconds: 30 * 60 - 2 })); });
+    levels: { engine: 2, magnet: 1, radar: 1, trees: 1 }, planted: { spruce: 12 }, flightSeconds: 20 * 60 - 2 })); });
   await p.goto(URL); await ready(p); await p.waitForTimeout(400);
 
   // The maths, at the boundaries.
   const m = await p.evaluate(async () => { const e = await import('/src/eras.js');
-    return [0, 1799, 1800, 6891, 6892, 1e9].map(s => e.eraProgress({ flightSeconds: s }).index).concat([Math.round(e.eraOpensAt(2)), Math.round(e.eraOpensAt(5))]); });
-  check(JSON.stringify(m) === JSON.stringify([0, 0, 1, 1, 2, 5, 115, 846]), `era boundaries 0/29:59/30:00/1:54:51/1:54:52/forever, and totals 115 & 846 min: ${m}`);
+    return [0, 1199, 1200, 4594, 4595, 1e9].map(s => e.eraProgress({ flightSeconds: s }).index).concat([Math.round(e.eraOpensAt(2)), Math.round(e.eraOpensAt(5))]); });
+  check(JSON.stringify(m) === JSON.stringify([0, 0, 1, 1, 2, 5, 77, 564]), `era boundaries 0/19:59/20:00/1:16:34/1:16:35/forever, and totals 77 & 564 min: ${m}`);
 
   // FLY screen: the badge and the bar.
   const fly = await p.evaluate(() => document.getElementById('tEra').textContent.replace(/\s+/g, ' '));
-  check(/1950s/.test(fly) && /To the 1970s: 29 \/ 30 min/.test(fly), `FLY screen era bar: "${fly}"`);
+  check(/1950s/.test(fly) && /To the 1970s: 19 \/ 20 min/.test(fly), `FLY screen era bar: "${fly}"`);
 
   // A real flight: the counter grows while flying...
   await p.click('#goBtn');
@@ -46,12 +46,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const before = await p.evaluate(() => game.scene.getScene('game').flySeconds);
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.finish({ reason: 'Bird strike!\nYou hit a bird.' }); });
   const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).flightSeconds);
-  check(Math.abs(saved - (30 * 60 - 2 + before)) < 0.5, `a crash adds its flying time to the save: ${saved} vs ${30 * 60 - 2 + before}`);
+  check(Math.abs(saved - (20 * 60 - 2 + before)) < 0.5, `a crash adds its flying time to the save: ${saved} vs ${20 * 60 - 2 + before}`);
   await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 });
   await p.click('#results');   // skip the reveal
   await p.waitForTimeout(1500);
   const r = await p.evaluate(() => { const e = document.getElementById('rEra'); return { hidden: e.hidden, t: e.textContent.replace(/\s+/g, ' ') }; });
-  check(!r.hidden && /\+0\.\d min flown/.test(r.t) && /1970s/.test(r.t) && /To the 1990s: \d \/ 85 min/.test(r.t) && /NEW ERA! Welcome to the 1970s!/.test(r.t) && /A new plane joins your fleet: the 747 jumbo!/.test(r.t), `results show time, bar and the new era: ${JSON.stringify(r)}`);
+  check(!r.hidden && /\+0\.\d min flown/.test(r.t) && /1970s/.test(r.t) && /To the 1990s: \d \/ 57 min/.test(r.t) && /NEW ERA! Welcome to the 1970s!/.test(r.t) && /A new plane joins your fleet: the 747 jumbo!/.test(r.t), `results show time, bar and the new era: ${JSON.stringify(r)}`);
 
   console.log({ fails });
   await b.close();

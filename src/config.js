@@ -221,7 +221,7 @@ export const CLIMATE = {
   dayWaterPower: 0,         // day shade x (fuel water)^this: ...and more shade by day, so good flying pays
   lateFrom: 3000,           // km into a flight where the long-haul ramp starts...
   latePer10k: 2.0,          // ...then +this x icy air AT NIGHT (how often and how big) per 10,000 km: dodging matters more and more
-  dangerLine: 100,
+  dangerLine: 165,     // 100 until 0.10.3 (user: the Comet overheated too soon; balance bot: a fully upgraded 1950s Comet now flies ~9,100-11,800 km)
   barMin: -50,
   gaugeMax: 3.0,
 };

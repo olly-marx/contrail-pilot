@@ -37,7 +37,7 @@ export const CONTRAIL_MARGIN = { deep: 0.75, inside: 1, edge: 1.12 };
 export const PLANES = [
   { id: 'comet', era: 0, name: 'Comet 4', co2: 1.1, margin: 'deep', sprite: 'plane-comet', portrait: 'assets/ui/plane-hangar-comet.png',
     lines: {
-      engines: [L(0, 40, 'Rolls-Royce Avon turbojets, tuned', { co2: 0.95 }), L(0, 90, 'Thrust reversers', { flare: 1.15 }, V)],
+      engines: [L(0, 40, 'Rolls-Royce Avon turbojets, tuned', { co2: 0.9 }), L(0, 90, 'Thrust reversers', { flare: 1.15 }, V)],
       body: [L(0, 40, 'Pinion fuel tanks', { perSkip: 0.05 }, V), L(0, 90, 'Oval windows and thicker skin', { flare: 1.1 })],
       cabin: [L(0, 30, 'Tourist class', { fares: 1.1 }, V), L(0, 70, 'Jet-age galley', { fares: 1.2 })],
     } },
@@ -75,9 +75,9 @@ export const SYSTEMS = [
     S(4, 'RVSM: more flight levels (North Atlantic, 1997)', { gaps: 1.03, gapTurb: 0.85, airportEarly: true }),
     S(5, 'Bird-strike advisories', { gaps: 1.03, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75 }, V)] },
   { id: 'ops', name: 'Fuel & operations', levels: [
-    S(0, 'Standard kerosene jet fuel (Jet A, 1959)', { co2: 0.98 }), S(1, 'Best cruise speed', { co2: 0.96 }, V),
-    S(2, 'Oil-crisis savings: lighter loads (1973)', { co2: 0.96, takeoff: 0.92 }, V), S(3, 'Taxi on fewer engines', { co2: 0.96, takeoff: 0.86 }, V),
-    S(4, 'Cost-index flight planning', { co2: 0.94, takeoff: 0.86 }, V), S(5, 'Weight-saving programme', { co2: 0.92, takeoff: 0.82 })] },
+    S(0, 'Standard kerosene jet fuel (Jet A, 1959)', { co2: 0.96 }), S(1, 'Best cruise speed', { co2: 0.92 }, V),
+    S(2, 'Oil-crisis savings: lighter loads (1973)', { co2: 0.92, takeoff: 0.92 }, V), S(3, 'Taxi on fewer engines', { co2: 0.92, takeoff: 0.86 }, V),
+    S(4, 'Cost-index flight planning', { co2: 0.9, takeoff: 0.86 }, V), S(5, 'Weight-saving programme', { co2: 0.88, takeoff: 0.82 })] },   // (0.10.2: CO2 doubled for L1-2, kept rising after)
 ];
 export const GADGETS = [
   { id: 'magnet', name: 'Magnet', levels: [S(0, 'Horseshoe magnet', { pickup: 16 }), S(1, 'Bigger horseshoe', { pickup: 19 }),
@@ -146,7 +146,9 @@ export function fleetKit(save) {
     perSkip: (gad('hold').perSkip || CARGO.multiplierPerSkip) + add('perSkip'),
     flare: (gad('gear').flare || 1) * mul('flare'),
     dodgeCrystals: sen.dodge || CRYSTALS.dodge, dodgesPerNight: sen.perNight || CRYSTALS.dodgesPerNight,
-    autoSecs: ap.autoSecs || POWERUPS.autoSeconds, autoChance: ap.autoChance || POWERUPS.autoChance,
+    // Autopilot pick-ups only once the Autopilot gadget is bought (0.10.2: they used to come for everyone).
+    autoSecs: ap.autoSecs || POWERUPS.autoSeconds, autoChance: ap.autoChance || 0,
+    safCans: eraProgress(save).index >= 3,   // SAF began in 2009: free SAF cans only from the 2010s era
   };
 }
 

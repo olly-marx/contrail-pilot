@@ -1281,12 +1281,13 @@ export class GameScene extends Phaser.Scene {
       const r = Math.random(), safHelps = !['saf100', 'hydrogen'].includes((this.ownKit || this.kit).fuelId);
       const pathY = () => Phaser.Math.Clamp(this.plane.y + Phaser.Math.Between(-50, 50), 60, SKY_H - 90);
       const firstSaf = !this.safOffered && this.distancePx >= POWERUPS.safFirstAt;
-      if (!this.school && safHelps && (firstSaf || r < POWERUPS.safChance)) {
+      // 0.10.2: no SAF cans before SAF exists in your era (it returns in the 2010s, PLANE-DESIGN.md section 3).
+      if (!this.school && this.kit.safCans && safHelps && (firstSaf || r < POWERUPS.safChance)) {
         this.safOffered = true;
         this.addPower('saf', WIDTH + 10, pathY());
         this.ui.tipOnce('safAhead', 'SAF ahead!', 'Grab the green fuel can: cleaner fuel for a while.', 'good', 3);
       }
-      else if (!this.school && r > 1 - this.kit.autoChance) this.addPower('auto');
+      else if (!this.school && this.kit.autoChance && r > 1 - this.kit.autoChance) this.addPower('auto');   // 0.10.2: only once the Autopilot gadget is bought
     }
   }
 
@@ -1940,14 +1941,15 @@ export class GameScene extends Phaser.Scene {
   }
 
   // ---------- heat feedback: the player should feel that warming is bad ----------
-  heatLevel() { return Phaser.Math.Clamp((this.heat - 30) / 70, 0, 1); }
+  heatLevel() { return Phaser.Math.Clamp((this.heatPct() - 30) / 70, 0, 1); }
+  heatPct() { return this.heat * 100 / CLIMATE.dangerLine; }   // heat as % of the danger line (thresholds below are %)
 
   drawHeatFx(time) {
     const g = this.heatFx, lvl = this.heatLevel();
     g.clear();
     if (lvl > 0) {
       // Red creeping in from the edges, in pixel steps; past 75 it beats like a heart.
-      const beat = this.heat > 75 ? 0.5 + 0.5 * Math.max(0, Math.sin(time / 140)) ** 8 : 0;
+      const beat = this.heatPct() > 75 ? 0.5 + 0.5 * Math.max(0, Math.sin(time / 140)) ** 8 : 0;
       const depth = Math.round(10 + 30 * lvl + 10 * beat);
       for (let i = 0; i < 4; i++) {
         const d = Math.round(depth * (1 - i / 4)), a = (0.08 + 0.18 * lvl + 0.15 * beat) * (i + 1) / 4;
@@ -1956,14 +1958,14 @@ export class GameScene extends Phaser.Scene {
       }
     }
     for (const t of [50, 75, 90]) {
-      if (this.heat >= t && !this.heatWarned[t]) {
+      if (this.heatPct() >= t && !this.heatWarned[t]) {
         this.heatWarned[t] = true;
         buzz(t === 90 ? [80, 60, 80, 60, 160] : t === 75 ? [80, 60, 80] : 60);
         if (t >= 75) this.popup(WIDTH - 50, 70, t === 90 ? 'DANGER!' : 'TOO HOT!', '#ff5a5a', 16);
       }
       if (this.heat < t - 10) this.heatWarned[t] = false;   // re-arm after cooling down
     }
-    if (this.heat > 75 && time > this.nextBeat && this.state === 'playing') {
+    if (this.heatPct() > 75 && time > this.nextBeat && this.state === 'playing') {
       this.nextBeat = time + Phaser.Math.Linear(900, 450, (this.heat - 75) / 25);
       sfx.heartbeat();
     }

@@ -1,7 +1,7 @@
 // "Welcome to the <era>!" (eras build, stage 3c, 2026-10-23): a full-screen celebration when an era
 // opens (after the flight that opened it) and once at the eras reset ("Welcome to the 1950s", with
 // the starting gift). Era picture: assets/ui/era-<id>.png (PixelLab; a painted gradient if missing).
-import { ERAS } from './eras.js';
+import { ERAS, eraMinutes } from './eras.js';
 import { PLANES, SYSTEMS, GADGETS, levelEra, START_BONUS } from './fleet.js';
 import { sfx } from './sound.js';
 
@@ -15,7 +15,8 @@ const TAGLINE = {
 // What an era brings: its plane, and the system and gadget levels that open in it.
 export function eraUnlocks(i) {
   const planes = PLANES.filter(p => p.era === i).map(p => p.name);
-  const levels = [...SYSTEMS, ...GADGETS].flatMap(g => g.levels.filter((_, k) => levelEra(k + 1) === i).slice(0, 1).map(l => l.name));
+  // Just a taste (0.10.2: the full list was too much text): the first new level of three lines.
+  const levels = [...SYSTEMS, ...GADGETS].flatMap(g => g.levels.filter((_, k) => levelEra(k + 1) === i).slice(0, 1).map(l => l.name)).slice(0, 3);
   return { planes, levels };
 }
 
@@ -33,10 +34,9 @@ export function showEraWelcome(i, { reset = false, bonus = START_BONUS } = {}) {
       <h2 class="ec-title">Welcome to<br> <span>${era.id === 'future' ? 'the far future' : `the ${era.id}`}</span></h2>
       ${plane ? `<div class="ec-runway"><img class="ec-plane" src="assets/${plane.sprite}.png" alt=""></div>` : ''}
       <p class="ec-tag">${TAGLINE[era.id] || ''}</p>
-      ${reset ? `<p class="ec-note">Planes now have <b>eras</b>! Your plane upgrades are back at the start, and you fly the <b>Comet</b>, the first jet airliner.
-        You keep all your seeds, crystals, nature, badges and records. Here are <b>${bonus} seeds</b> to get going!</p>
-        <p class="ec-note">Fly to open new eras: <b>30 minutes</b> of flying opens the 1970s.</p>` : ''}
-      <div class="ec-list">${planes.map(n => `<span class="ec-new big">NEW PLANE: <b>${n}</b></span>`).join('')}${levels.map(n => `<span class="ec-new">${n}</span>`).join('')}</div>
+      ${reset ? `<p class="ec-note">Planes now have <b>eras</b>! You fly the <b>Comet</b>, the first jet airliner. Your plane upgrades start again; everything else is kept.</p>
+        <p class="ec-note"><b>+${bonus} seeds</b> to get going. <b>${Math.round(eraMinutes(1))} minutes</b> of flying opens the 1970s.</p>` : ''}
+      <div class="ec-list">${planes.map(n => `<span class="ec-new big">NEW PLANE: <b>${n}</b></span>`).join('')}${levels.map(n => `<span class="ec-new">${n}</span>`).join('')}${levels.length ? '<span class="ec-new">and more in the hangar!</span>' : ''}</div>
       <button id="ecOk" class="btn go big" type="button">${reset ? "LET'S FLY!" : 'TO THE HANGAR!'}</button>
     </div>`;
   el.hidden = false;

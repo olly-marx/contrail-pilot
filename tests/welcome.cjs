@@ -45,7 +45,7 @@ const OLD = { tutorialDone: true, muted: true, seenTips: ['issr'], tours: ['name
   // The 1970s card: the 747 is new.
   const t70 = await p.evaluate(async () => { const { showEraWelcome } = await import('/src/welcome.js'); showEraWelcome(1); await new Promise(r => setTimeout(r, 300));
     return document.getElementById('eraCard').textContent.replace(/\s+/g, ' '); });
-  check(/NEW ERA!/.test(t70) && /Welcome to the 1970s/.test(t70) && /NEW PLANE: 747 jumbo/.test(t70) && /Electromagnet/.test(t70), `1970s card: "${t70.slice(0, 300)}"`);
+  check(/NEW ERA!/.test(t70) && /Welcome to the 1970s/.test(t70) && /NEW PLANE: 747 jumbo/.test(t70) && /Global forecast model/.test(t70) && /and more in the hangar/.test(t70), `1970s card: "${t70.slice(0, 300)}"`);
   check(p.errs.length === 0, `page errors: ${p.errs.join(' | ')}`);
   await p.close();
 

@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-10-24-tuning",
+    "version": "0.10.3",
+    "date": "2026-10-24",
+    "level": "major",
+    "notes": [
+      "Fly further: the Earth can take more heat before a flight is grounded, and the 1950s upgrades save more fuel.",
+      "New eras open sooner: 20 minutes of flying opens the 1970s.",
+      "The hangar shows a big picture of your plane. Tap a plane to see it. NEW! only lights up when something new is ready.",
+      "No SAF cans until SAF is invented (the 2010s), and the autopilot pick-up comes once you buy the Autopilot gadget.",
+      "Easier to read: more space between lines, bigger small text, and shorter era cards."
+    ]
+  },
+  {
     "id": "2026-10-24-faces",
     "version": "0.10.2",
     "date": "2026-10-24",

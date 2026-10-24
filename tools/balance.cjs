@@ -13,7 +13,8 @@ const { chromium } = require('playwright-core');
 const URL = process.env.URL || 'http://localhost:8000/';
 const MAX = Number(process.env.MAX || 100000);   // km
 const PLANT = !!Number(process.env.PLANT || 0);
-const FOREST = JSON.parse(process.env.FOREST || '{}');   // try other forest numbers, e.g. FOREST='{"boost":2}'
+const FOREST = JSON.parse(process.env.FOREST || '{}');
+const CLIM = JSON.parse(process.env.CLIMATE || '{}');   // try other heat numbers, e.g. CLIMATE='{"dangerLine":150}'   // try other forest numbers, e.g. FOREST='{"boost":2}'
 
 const ALL_NATURE = { trees: 4, species: 4, rewild: 9 };
 const PLANES = {
@@ -40,9 +41,9 @@ async function run(b, plane, pilot, seed = 1) {
   // Seed Phaser's RND the moment the library loads (it would otherwise seed from the clock).
   await p.addInitScript(() => { let P; Object.defineProperty(window, 'Phaser', { configurable: true, get: () => P, set: v => { P = v; v.Math.RND.sow(['balance']); } }); });
   await p.goto(URL); await p.waitForFunction(() => window.game && game.scene.getScene('game') && game.registry.get('ui'), null, { timeout: 60000 }); await p.waitForTimeout(900);
-  const r = await p.evaluate(async ([pilot, MAX, PLANT, FOREST]) => {
-    const { DAYNIGHT, FOREST: F } = await import('./src/config.js');
-    Object.assign(F, FOREST);
+  const r = await p.evaluate(async ([pilot, MAX, PLANT, FOREST, CLIM]) => {
+    const { DAYNIGHT, FOREST: F, CLIMATE: C } = await import('./src/config.js');
+    Object.assign(F, FOREST); Object.assign(C, CLIM);
     // Pause the real-time loop, re-seed both random sources, and rebuild the scene from scratch, so
     // nothing the title screen did in real time (it animates wildlife) changes the flight.
     game.loop.sleep(); window.__reseed(); Phaser.Math.RND.sow(['balance']);
@@ -89,7 +90,7 @@ async function run(b, plane, pilot, seed = 1) {
     const B = s.breakdown;
     return { km: Math.round(s.distancePx), overheated: s.state === 'over', heat: Math.round(s.heat), low: Math.round(low),
       co2: Math.round(B.co2), night: Math.round(B.night), sun: Math.round(B.sun), trees: Math.round(B.trees), planted: s.trees.map(t => t.kind).join(' '), drops, nightIn: +(nightIn / Math.max(1, nightFrames)).toFixed(3), marks: marks.filter((_, i) => i % 5 === 0) };
-  }, [pilot, MAX, PLANT, FOREST]);
+  }, [pilot, MAX, PLANT, FOREST, CLIM]);
   await p.close();
   return r;
 }

@@ -32,7 +32,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     { none: fl('comet', { comet: {} }), twin: fl('twin', { twin: {} }), twinTake: fl('twin', { twin: { body: 1 } }, { ops: 6 }),
       gad: fl('comet', { comet: {} }, {}, { magnet: 6, hold: 6, gear: 6, sensors: 6, autopilot: 6 }), sys: fl('jumbo', { jumbo: { engines: 3 } }, { forecast: 6 }) });
   check(Math.abs(kit.twin.co2Cruise / kit.none.co2Cruise - 0.8 / 1.1) < 1e-6, `the twin makes x0.8 CO2 vs the Comet's x1.1: ${kit.none.co2Cruise} -> ${kit.twin.co2Cruise}`);
-  check(Math.abs(kit.twinTake.co2Takeoff / kit.twin.co2Takeoff - 0.92 * 0.82 * 0.92) < 1e-6, `composite tail x0.92 and weight-saving x0.92 cruise, x0.82 take-off: ${kit.twin.co2Takeoff} -> ${kit.twinTake.co2Takeoff}`);
+  check(Math.abs(kit.twinTake.co2Takeoff / kit.twin.co2Takeoff - 0.92 * 0.82 * 0.88) < 1e-6, `composite tail x0.92 and weight-saving x0.88 cruise, x0.82 take-off: ${kit.twin.co2Takeoff} -> ${kit.twinTake.co2Takeoff}`);
   check(kit.gad.pickup === 34 && kit.gad.perSkip === 0.8 && kit.gad.flare === 1.6 && kit.gad.dodgeCrystals === 3 && kit.gad.dodgesPerNight === 8 && kit.gad.autoSecs === 13 && kit.gad.autoChance === 0.09,
     `gadgets at level 6: ${JSON.stringify([kit.gad.pickup, kit.gad.perSkip, kit.gad.flare, kit.gad.dodgeCrystals, kit.gad.dodgesPerNight, kit.gad.autoSecs, kit.gad.autoChance])}`);
   check(kit.none.perSkip === 0.5 && kit.none.pickup === 12 && kit.none.dodgeCrystals === 1 && kit.none.dodgesPerNight === 3, 'nothing bought: today\'s values');

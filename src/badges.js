@@ -4,6 +4,7 @@
 // until earned. Every tier earned goes into save.unclaimed and pays only when the player taps CLAIM
 // (src/rewards.js). Art: assets/ui/badge-<id>-<tier>.png (tools/art/make_badges.py).
 import { LAP_KM } from './route.js';
+import { CLIMATE } from './config.js';
 
 const sum = o => Object.values(o || {}).reduce((a, n) => a + n, 0);
 const found = save => Object.keys(save.found || {}).length;   // Wild Area species found: save.found is id -> time (GameScene.seen)
@@ -59,7 +60,7 @@ export const BADGES = [
   { id: 'meltdown', name: 'Meltdown', theme: 'secret', secret: true, tiers: SECRET, unit: 'let the Earth overheat',
     measure: (r, s) => (((s.crashes || {}).overheat || 0) > 0 ? 1 : 0) },
   { id: 'closecall', name: 'Close Call', theme: 'secret', secret: true, tiers: SECRET, unit: 'land with the Earth bar over 90%',
-    measure: r => (r.landed && r.heat > 90 ? 1 : 0) },
+    measure: r => (r.landed && r.heat > 0.9 * CLIMATE.dangerLine ? 1 : 0) },   // 90% of the bar (the line moved to 165 in 0.10.3)
   { id: 'lucky7', name: 'Lucky 7', theme: 'secret', secret: true, tiers: SECRET, unit: 'land with exactly 7 seeds',
     measure: r => (r.landed && r.cargo === 7 ? 1 : 0) },
   { id: 'seeddodger', name: 'Seed Dodger', theme: 'secret', secret: true, tiers: SECRET, unit: 'fly 2,000 km and land with no seeds at all',

@@ -1,4 +1,4 @@
-import { FEATURES, km } from './config.js';
+import { FEATURES, km, CLIMATE } from './config.js';
 import { VERSION } from './version.js';
 import { flightPath, choices, city, EARTH_KM } from './route.js';
 import { headingWord } from './network.js';
@@ -14,7 +14,7 @@ import { current as currentMission, blocked as missionBlocked, allDone as missio
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
 import { eraBarHTML } from './eras.js';
-import { FleetHangar, fleetHasNew } from './hangar.js';
+import { FleetHangar, fleetBuyable } from './hangar.js';
 import { showEraWelcome } from './welcome.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
@@ -167,7 +167,7 @@ export class UI {
   go(tab) {
     if (tab === 'fly') return this.showTitle();
     if (tab === 'hangar') return this.showHangar();
-    if (tab === 'nature') { this.showOnly('nature'); return this.wild && this.wild.render(); }
+    if (tab === 'nature') { this.markShopSeen(); this.showOnly('nature'); return this.wild && this.wild.render(); }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
     if (tab === 'boards') { this.showOnly('boards'); return this.pilot && this.pilot.showBoards(); }
   }
@@ -224,7 +224,11 @@ export class UI {
 
   // ---------- results ----------
   // Something to spend in the hangar? Drives the NEW! tags and the glowing button.
-  hasNew() { return !!this.save.freeUpgrade || LINES.some(l => canBuy(this.save, l)) || fleetHasNew(this.save); }   // canBuy checks unlocks
+  // Something NEW to spend on: a free upgrade, or something that has become affordable or opened since
+  // the hangar / NATURE was last looked at (0.10.2: it used to glow whenever ANYTHING was affordable).
+  buyableKeys() { return [...LINES.filter(l => canBuy(this.save, l)).map(l => `line:${l.id}:${level(this.save, l.id) + 1}`), ...fleetBuyable(this.save)]; }
+  hasNew() { const seen = this.save.shopSeen || []; return !!this.save.freeUpgrade || this.buyableKeys().some(k => !seen.includes(k)); }
+  markShopSeen() { this.save.shopSeen = [...new Set([...(this.save.shopSeen || []), ...this.buyableKeys()])]; writeSave(this.save); }   // canBuy checks unlocks
 
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
@@ -349,7 +353,7 @@ export class UI {
 
   // Small pixel Earth for the results, matching the in-game face.
   drawEarthFace(el, heat) {
-    const mood = heat < 0 ? 0 : heat < 50 ? 1 : heat < 80 ? 2 : 3;
+    const pc = heat * 100 / CLIMATE.dangerLine, mood = heat < 0 ? 0 : pc < 50 ? 1 : pc < 80 ? 2 : 3;   // % of the danger line
     const body = ['3fa8e0', '5fb860', 'e8a33c', 'e0483c'][mood];
     const mouth = ["<rect x='6' y='11' width='1' height='1'/><rect x='7' y='12' width='4' height='1'/><rect x='11' y='11' width='1' height='1'/>",
       "<rect x='7' y='12' width='4' height='1'/>",
@@ -386,6 +390,7 @@ export class UI {
     // Since the eras (2026-10-23) the hangar is the fleet: planes, systems, gadgets (src/hangar.js).
     // The old plane lines are retired (upgrades.js); trees and habitat are on NATURE (src/wild.js).
     document.querySelector('#hangar .hp-dock').hidden = true;
+    this.markShopSeen();   // looking at the hangar: what is affordable now is no longer NEW
     $('hUpgrades').innerHTML = '';
     this.fleet.render();
 
