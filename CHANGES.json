@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-24-storms",
+    "version": "0.10.5",
+    "date": "2026-10-24",
+    "level": "minor",
+    "notes": [
+      "New thunderclouds! Storms are now giant towering clouds that crackle with little flashes of lightning inside. Fly through the gap between them!"
+    ]
+  },
+  {
     "id": "2026-10-24-looks",
     "version": "0.10.4",
     "date": "2026-10-24",

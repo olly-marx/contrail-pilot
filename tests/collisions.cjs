@@ -30,7 +30,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
       const n = s.stormPixelsHit(st, 1000);
       if (old && n === 0) out.boxOnly++;
       if (n >= 1 && n <= forgive) { out.nicks++; if (s.hitsStorm(st)) out.nickStormHits++; if (s.hitsStorm({ ...st, noFly: true })) out.nickNoFlyHits++; }
-      if (dy <= -10 && dx > -40 && dx < 0) { out.deep++; if (!s.hitsStorm(st)) out.deepMissed++; }
+      // (16 px, not 10, since the PixelLab storm towers, 2026-10-24: their crowns are rounded, so a box corner 10 px down is sky.)
+      if (dy <= -16 && dx > -40 && dx < 0) { out.deep++; if (!s.hitsStorm(st)) out.deepMissed++; }
     }
     // Bird: one placed right on the fuselage hits; one just clear of the nose doesn't.
     s.birds = []; s.addFlock(-999, -999); const f = s.birds[0]; f.birds = [f.birds[0]];
@@ -42,7 +43,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
     s.planePixels = () => [probe];
     const findPx = (key, solid) => { const m = s.alphaMask(key); for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (m.at(x, y) === solid) return [x, y]; };
     s.addStormPairAt(100, 200, 120); const st = s.storms.pop(); st.parts.forEach(q => q.destroy());
-    const botY = st.rects[1].y, [ex, ey] = findPx('storm-top', false), [fx, fy] = findPx('storm-top', true);
+    // The crown of the bottom column's tower (PixelLab storms, 2026-10-24): an empty and a solid pixel inside the column.
+    const q = st.pics.find(p => p.key.includes('rise') && p.y === st.rects[1].y), cm = s.alphaMask(q.key);
+    const crown = solid => { for (let y = 0; y < 30; y++) for (let lx = 0; lx < 44; lx++) { const px = lx - q.dx;
+      if (px >= 0 && px < cm.w && cm.at(q.flip ? cm.w - 1 - px : px, y) === solid) return [lx, y]; } };
+    const [ex, ey] = crown(false), [fx, fy] = crown(true), botY = st.rects[1].y;
     probe = [100 + ex + 0.5, botY + ey + 0.5]; const capEmpty = s.stormPixelsHit(st, 1);
     probe = [100 + fx + 0.5, botY + fy + 0.5]; const capSolid = s.stormPixelsHit(st, 1);
     const bm = s.alphaMask(bimg.texture.key), [bx0, by0] = findPx(bimg.texture.key, false), [bx1, by1] = findPx(bimg.texture.key, true);

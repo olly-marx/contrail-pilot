@@ -168,12 +168,10 @@ def lesson_tap():
 def lesson_storm():
     p = Pic(120, 64, C['sky'])
     gap_top, gap_bot = 22, 42
-    for x in (52,):
-        for y in range(0, gap_top - 10, 48):
-            p.sprite('storm-body', x, y, crop=(0, 0, 44, min(48, gap_top - 10 - y)))
-        p.sprite('storm-bottom', x, gap_top - 10)
-        p.sprite('storm-top', x, gap_bot)
-        p.sprite('storm-body', x, gap_bot + 10, crop=(0, 0, 44, 64 - gap_bot - 10))
+    for x in (52,):   # the PixelLab storm towers (tools/art/pixellab_storm.py), centred on the 44 px column
+        hang = Image.open(A / 'storm-hang-c.png').convert('RGBA'); rise = Image.open(A / 'storm-rise-c.png').convert('RGBA')
+        p.img.alpha_composite(hang.crop((0, hang.height - gap_top, hang.width, hang.height)), (x + 22 - hang.width // 2, 0))
+        p.img.alpha_composite(rise.crop((0, 0, rise.width, 64 - gap_bot)), (x + 22 - rise.width // 2, gap_bot))
     p.line(4, 34, 48, 32, C['white'], dash=2)           # the safe route through the gap
     p.line(98, 32, 116, 30, C['white'], dash=2)
     plane(p, 66, 29)

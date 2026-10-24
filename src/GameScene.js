@@ -47,7 +47,10 @@ const FLOCK_HALF = 2;   // a flock fills the box of an old 5-bird V: 26 px acros
 const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
   : /too hot/.test(reason) ? 'overheat' : 'ground';
 
-const STORM_TINT = { top: 0xffffff, hung: 0xd7dbe4, base: 0x464e66 };
+// PixelLab thunderclouds (the user, 2026-10-24): every storm column is a whole storm tower picture
+// (tools/art/pixellab_storm.py): crown up below the gap, hanging (flipped, darker) above it.
+const STORM_ART = ['c', 'd'];
+const STORM_OVERLAP = 40;   // a tall column stacks another tower behind, overlapping this much
 
 export class GameScene extends Phaser.Scene {
   constructor() { super('game'); }
@@ -67,8 +70,8 @@ export class GameScene extends Phaser.Scene {
     for (const k of ['clouds', 'hills', 'city', 'ground']) this.load.image(k, `assets/${k}.png`);
     for (const c in LANDMARKS) this.load.image(LANDMARKS[c].key, `assets/${LANDMARKS[c].key}.png`);   // art session: one per city
     // Sprites: drawn by tools/art/make_sprites.py.
-    for (const k of ['storm-body', 'storm-top', 'storm-bottom', 'token', 'token-gold', 'power-saf', 'power-auto', 'meter-tree-0', 'meter-tree-1', 'meter-tree-2', 'meter-tree-3', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
-      'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'storm-flash', 'storm-flash-top', 'storm-flash-bottom', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly',
+    for (const k of [...STORM_ART.flatMap(v => [`storm-rise-${v}`, `storm-hang-${v}`, `storm-rise-${v}-flash`, `storm-hang-${v}-flash`]), 'storm-spark-0', 'storm-spark-1', 'storm-spark-2', 'token', 'token-gold', 'power-saf', 'power-auto', 'meter-tree-0', 'meter-tree-1', 'meter-tree-2', 'meter-tree-3', 'chute', 'crate', 'bird-0', 'bird-1', 'stork',
+      'plot-left', 'plot-mid', 'plot-right', 'turb', 'crystal', 'bolt-0', 'bolt-1', 'bolt-2', 'plot-sign', 'plot-arrow', 'runway', 'tower', 'issr-tile', 'nofly',
       ...['happy', 'ok', 'hot', 'melting'].flatMap(m => [`face-${m}-0`, `face-${m}-1`])])   // the planet faces, 2 frames (Hud.js)
       this.load.image(k, `assets/${k}.png`);
     // Background wildlife: two frames each (legs / wings).
@@ -1470,20 +1473,23 @@ export class GameScene extends Phaser.Scene {
   }
 
   // How many plane pixels touch the storm's (or no-fly zone's) drawn pixels. Stops counting at `enough`.
+  // A storm's solid pixels are its drawn cloud pixels INSIDE the column (STORMS.width): fluff puffing
+  // out beyond the column never crashes you, and empty sky never does (the user, 2026-10-24).
   stormPixelsHit(st, enough) {
     const r0 = st.rects[0], r1 = st.rects[1], W = r0.width;
     const sp = this.planeSprite;
     if (sp.x + 40 < r0.x || sp.x - 40 > r0.x + W) return 0;   // not level with it
     const topH = r0.height, botY = r1.y;
-    const cap = this.alphaMask('storm-top'), capB = this.alphaMask('storm-bottom'), body = this.alphaMask('storm-body');
     let n = 0;
     for (const [x, y] of this.planePixels()) {
       const lx = x - r0.x;
       if (lx < 0 || lx >= W) continue;
-      let solid;
+      let solid = false;
       if (st.noFly) solid = y < topH || y >= botY;   // a no-fly zone is a solid block
-      else if (y < topH) solid = y >= topH - 10 ? capB.at(lx, y - (topH - 10)) : body.at(lx, y % body.h);
-      else if (y >= botY) solid = y < botY + 10 ? cap.at(lx, y - botY) : body.at(lx, (y - botY - 10) % body.h);
+      else for (const q of st.pics) {
+        const m = this.alphaMask(q.key), px = Math.floor(lx - q.dx), py = Math.floor(y - q.y);   // whole pixels BEFORE mirroring
+        if (px >= 0 && py >= 0 && px < m.w && py < m.h && m.at(q.flip ? m.w - 1 - px : px, py)) { solid = true; break; }
+      }
       if (solid && ++n >= enough) return n;
     }
     return n;
@@ -1587,56 +1593,67 @@ export class GameScene extends Phaser.Scene {
   }
 
   // Storm cloud tints, top to base: a column rising from the ground has a bright, sunlit crown; one hanging from
-  // the sky starts pale grey; both darken to the slate base (as the reference picture, 2026-10-23).
+  // A storm pair: PixelLab storm towers. The bottom column's crown touches the gap edge from below, the top
+  // column's hanging base from above, so every gap's narrowest point is exactly `gap`. A column taller
+  // than one picture stacks another behind it. st.pics: { key, dx (from the column's left), y, flip }.
   addStormPairAt(x, gapY, gap) {
     const topH = gapY - gap / 2, botY = gapY + gap / 2;
-    // Collision boxes are plain rectangles; the drawn cloud is a tiled body plus a rounded cap.
     const top = { x, y: 0, width: STORMS.width, height: topH };
     const bottom = { x, y: botY, width: STORMS.width, height: SKY_H - botY };
-    const parts = [
-      this.add.tileSprite(x, 0, STORMS.width, Math.max(1, topH - 10), 'storm-body').setOrigin(0),
-      this.add.image(x, topH - 10, 'storm-bottom').setOrigin(0),
-      this.add.tileSprite(x, botY + 10, STORMS.width, Math.max(1, SKY_H - botY - 10), 'storm-body').setOrigin(0),
-      this.add.image(x, botY, 'storm-top').setOrigin(0),
-    ];
-    // A storm cloud is light at the top and dark at the base (the user, 2026-10-23): each column gets a
-    // tint gradient over its full height (the texture itself is soft and pale; tools/art/make_storm.py).
-    const grad = (y0, y1) => y => lerpColour(y0 === 0 ? STORM_TINT.hung : STORM_TINT.top, STORM_TINT.base, Math.min(1, Math.max(0, (y - y0) / Math.max(1, y1 - y0))));
-    const g1 = grad(0, topH), g2 = grad(botY, SKY_H);
-    const shadeY = (im, g) => { const a = g(im.y), b = g(im.y + im.height); im.setTint(a, a, b, b); };
-    shadeY(parts[0], g1); shadeY(parts[1], g1); shadeY(parts[3], g2); shadeY(parts[2], g2);
+    const pics = [], pick = () => STORM_ART[Phaser.Math.Between(0, STORM_ART.length - 1)];
+    const place = (key, y) => { const t = this.textures.get(key).getSourceImage();
+      pics.push({ key, y: Math.round(y), dx: Math.round(STORMS.width / 2 - t.width / 2), flip: Math.random() < 0.5, h: t.height }); };
+    for (let y = topH; y > 0;) { const k = `storm-hang-${pick()}`; const h = this.textures.get(k).getSourceImage().height; place(k, y - h); y -= h - STORM_OVERLAP; }
+    for (let y = botY; y < SKY_H;) { const k = `storm-rise-${pick()}`; place(k, y); y += this.textures.get(k).getSourceImage().height - STORM_OVERLAP; }
+    // Drawn farthest first: the picture at the gap edge is in front.
+    const order = [...pics.filter(q => q.key.includes('hang')).reverse(), ...pics.filter(q => q.key.includes('rise')).reverse()];
+    const parts = order.map(q => { const im = this.add.image(x + q.dx, q.y, q.key).setOrigin(0).setFlipX(q.flip);
+      im.cropH = Math.min(q.h, SKY_H - q.y);   // never below the ground line
+      return im.setCrop(0, 0, im.width, im.cropH); });
     this.stormLayer.add(parts);
-    this.storms.push({ rects: [top, bottom], parts, flashUntil: 0 });
+    this.storms.push({ rects: [top, bottom], parts, pics: order, flashUntil: 0, nextSpark: 0 });
     this.stormCount++;
   }
 
-  // Now and then a storm flickers with lightning: the cloud lights up (flash overlays drawn
-  // pixel-identical to the storm) and a bolt hangs from the top column's cap, twice in quick
-  // succession. Purely for looks: bolts are not in the collision check.
+  // Now and then a storm flickers with lightning: the cloud lights up (the same pictures, lit) and a bolt
+  // hangs from the top column, twice in quick succession. Between, tiny bolts flicker INSIDE the clouds
+  // (the user, 2026-10-24: "aggressive thunder clouds"). Purely for looks: not in the collision check.
   updateLightning(time) {
     for (const st of this.storms) {
-      if (st.noFly || !st.parts.length) continue;   // (a storm with no pictures cannot flash: tests/powerups.cjs's fake one crashed here ~1 run in 5)
+      if (st.noFly || !st.parts.length || !st.pics) continue;   // (a storm with no pictures cannot flash: tests/powerups.cjs's fake one crashed here ~1 run in 5)
       if (!st.flash && Math.random() < 0.002 && st.rects[0].x < WIDTH) this.flashStorm(st, time);
       if (st.flash) {
         const t = time - st.flash.t0, on = t < 90 || (t > 150 && t < 230);   // flicker: on, off, on
         st.flash.fx.forEach(o => o.setVisible(on));
         if (t >= 230) { st.flash.fx.forEach(o => o.destroy()); st.parts = st.parts.filter(o => !st.flash.fx.includes(o)); st.flash = null; }
       }
+      if (time > st.nextSpark && st.rects[0].x < WIDTH) this.sparkStorm(st, time);
+    }
+  }
+
+  // A tiny bolt for a moment at a random spot inside the cloud (on a drawn pixel, inside the column).
+  sparkStorm(st, time) {
+    st.nextSpark = time + Phaser.Math.Between(300, 1400);
+    const q = st.pics[Phaser.Math.Between(0, st.pics.length - 1)], m = this.alphaMask(q.key), x0 = st.rects[0].x;
+    for (let k = 0; k < 12; k++) {
+      const px = Phaser.Math.Between(4, STORMS.width - 5) - q.dx, py = Phaser.Math.Between(6, m.h - 6), y = q.y + py;
+      if (y < 4 || y > SKY_H - 4 || (y > st.rects[0].height - 4 && y < st.rects[1].y + 4)) continue;
+      if (!m.at(q.flip ? m.w - 1 - px : px, py)) continue;
+      const s = this.add.image(x0 + q.dx + px, y, `storm-spark-${Phaser.Math.Between(0, 2)}`).setFlipX(Math.random() < 0.5);
+      this.stormLayer.add(s); st.parts.push(s);
+      this.time.delayedCall(Phaser.Math.Between(60, 140), () => { s.destroy(); st.parts = st.parts.filter(o => o !== s); });
+      return;
     }
   }
 
   flashStorm(st, time) {
-        const [bodyT, capT, bodyB, capB] = st.parts, x = st.rects[0].x, topH = st.rects[0].height;
-        const fx = [
-          this.add.tileSprite(bodyT.x, bodyT.y, bodyT.width, bodyT.height, 'storm-flash').setOrigin(0),
-          this.add.image(capT.x, capT.y, 'storm-flash-bottom').setOrigin(0),
-          this.add.tileSprite(bodyB.x, bodyB.y, bodyB.width, bodyB.height, 'storm-flash').setOrigin(0),
-          this.add.image(capB.x, capB.y, 'storm-flash-top').setOrigin(0),
-          this.add.image(x + 22 + Phaser.Math.Between(-8, 8), topH - 2, `bolt-${Phaser.Math.Between(0, 2)}`).setOrigin(0.5, 0),
-        ];
-        this.stormLayer.add(fx);
-        st.parts.push(...fx);   // scroll with the storm
-        st.flash = { fx, t0: time };
+    const x = st.rects[0].x, topH = st.rects[0].height;
+    const fx = st.parts.filter(o => st.pics.some(q => q.key === o.texture.key)).map(o =>
+      this.add.image(o.x, o.y, `${o.texture.key}-flash`).setOrigin(0).setFlipX(o.flipX).setCrop(0, 0, o.width, o.cropH));
+    fx.push(this.add.image(x + 22 + Phaser.Math.Between(-8, 8), topH - 2, `bolt-${Phaser.Math.Between(0, 2)}`).setOrigin(0.5, 0));
+    this.stormLayer.add(fx);
+    st.parts.push(...fx);   // scroll with the storm
+    st.flash = { fx, t0: time };
   }
 
 
@@ -1783,7 +1800,7 @@ export class GameScene extends Phaser.Scene {
   scroll(dx) {
     for (const s of this.storms) { for (const p of s.parts) p.x -= dx; for (const r of s.rects) r.x -= dx; }
     this.storms = this.storms.filter(s => {
-      if (s.rects[0].x + STORMS.width < -5) { s.parts.forEach(p => p.destroy()); return false; }
+      if (s.rects[0].x + STORMS.width < -16) { s.parts.forEach(p => p.destroy()); return false; }   // (the cloud puffs out past the column)
       return true;
     });
     for (const i of this.issrs) { i.x -= dx; i.maskGfx.x = i.x; i.maskGfx.y = i.y; }

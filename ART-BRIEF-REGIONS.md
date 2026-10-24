@@ -222,8 +222,10 @@ STILL TO DO for the third chat:
   templates are not needed. Ask the game session first.
 
 Rules learnt the hard way:
-- Storm clouds: tools/art/make_storm.py repaints storm-*.png INSIDE the existing alpha outline (collisions use that alpha);
-  make_sprites.py calls make_storm.main() at the end. Never repaint the storms another way without keeping the outline.
+- Storm clouds (2026-10-24): PixelLab storm towers, tools/art/pixellab_storm.py -> storm-rise/hang-<v>(-flash).png +
+  storm-spark-*.png. The crash shape is the drawn tower pixels INSIDE the 44 px column, and every gap's narrowest point
+  is exactly the gap asked for (tests/stormart.cjs). (Before: make_storm.py repainted storm-body/top/bottom inside a
+  fixed outline; that file and those PNGs are gone.)
 - Generators are deterministic: after any run, existing PNGs you did not mean to change must be byte-identical (git status).
 - Region art loads on demand (GameScene.queueArt): a new species is fetched when a flight path crosses its region.
 - PixelLab is registered for sessions started in /home/ojm only (local scope); drive it with a headless `claude -p` call

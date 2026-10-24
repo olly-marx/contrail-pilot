@@ -1,0 +1,4 @@
+# More storm towers in the rise-c style (the user liked it, 2026-10-24).
+rise-d|pixen|64|256|0|a tall dramatic storm cloud tower, rounded billowing puffs stacked up, sunlit white crown at the top, darker grey base, fills the whole height, plain background, no ground, no text
+rise-e|pixen|64|256|0|a tall angry thunderstorm cloud tower, big rounded billowing puffs stacked up, bright white sunlit crown at the top, dark slate grey lower down, fills the whole height, plain background, no ground, no text
+rise-f|pixen|64|256|0|a tall towering cumulus storm cloud, lumpy rounded billows stacked up, white sunlit top, blue grey shadowed base, fills the whole height, plain background, no ground, no text
