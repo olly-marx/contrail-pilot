@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-25-sim-engine-2",
+    "version": "0.11.7",
+    "date": "2026-10-25",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: the game's flying rules now also run as a super-fast test flight, so we can check that every plane is fair."
+    ]
+  },
+  {
     "id": "2026-10-25-engines",
     "version": "0.11.6",
     "date": "2026-10-25",
