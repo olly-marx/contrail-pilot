@@ -13,6 +13,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
 const SEEDS = (process.env.SEEDS || '1,2,3').split(',').map(Number);
 const PILOTS = (process.env.PILOTS || 'straight,careful,smart').split(',');
 const STEPS = Number(process.env.STEPS || 6000);
+const EVERY = Number(process.env.EVERY || 100);   // keep every EVERY-th step's full line (1 = all, for finding a difference)
 const SAVES = {
   none: {},
   jumboFull: { fuel: 'kerosene', priceVersion: 2, fleet: { plane: 'jumbo', planes: { jumbo: { engines: 3, body: 3, cabin: 3 } }, systems: { forecast: 4, atc: 4, ops: 4 }, gadgets: { magnet: 4, hold: 4, gear: 4, sensors: 4, autopilot: 4 } } },
@@ -26,7 +27,7 @@ async function fly(b, pilot, seed) {
     landings: 30, mission: 99, planted: { oak: 5, birch: 5, rowan: 5, spruce: 5, orchard: 5 }, ...cfg, simSeed: seed })); }, [SAVES[PLANE], seed]);
   await p.goto(URL);
   await p.waitForFunction(() => window.game && game.scene.getScene('game') && game.registry.get('ui'), null, { timeout: 60000 });
-  const out = await p.evaluate(async ([pilot, STEPS]) => {
+  const out = await p.evaluate(async ([pilot, STEPS, EVERY]) => {
     const { pilotTarget } = await import('/src/sim/pilots.js');
     game.loop.sleep(); game.scene.render = () => {};
     let t = game.loop.now || performance.now();
@@ -55,10 +56,10 @@ async function fly(b, pilot, seed) {
         s.tokens.map(k => `${r6(k.img ? k.img.x : k.x)},${r6(k.img ? k.img.y : k.y)}`).join(';'),
         s.birds.map(f => `${r6(f.x)},${r6(f.y)}`).join(';'), s.turbs.length].join('|');
       chain.push(hash(line));
-      if (i % 100 === 0) samples.push(line);
+      if (i % EVERY === 0) samples.push(line);
     }
     return { steps: chain.length, km: Math.round(s.distancePx), heat: r6(s.heat), chain, samples };
-  }, [pilot, STEPS]);
+  }, [pilot, STEPS, EVERY]);
   await p.close();
   return out;
 }
@@ -74,7 +75,7 @@ async function fly(b, pilot, seed) {
     const n = traces[k]; if (!n) { bad.push(`${k}: not flown`); continue; }
     const i = g.chain.findIndex((x, j) => x !== n.chain[j]);
     if (i >= 0 || g.steps !== n.steps) {
-      const at = i >= 0 ? i : Math.min(g.steps, n.steps), si = Math.floor(at / 100);
+      const at = i >= 0 ? i : Math.min(g.steps, n.steps), si = Math.floor(at / EVERY);
       bad.push(`${k}: first differs at step ${at} (golden ${g.steps} steps, now ${n.steps})\n    nearest golden sample: ${(g.samples[si] || '').slice(0, 300)}\n    nearest now sample:    ${(n.samples[si] || '').slice(0, 300)}`);
     }
   }
