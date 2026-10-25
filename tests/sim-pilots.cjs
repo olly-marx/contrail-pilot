@@ -6,7 +6,7 @@
 const SKY_H = 512 - 48;
 const DAYNIGHT_KEYS = ['daySeconds', 'nightSeconds', 'blendSeconds'];
 
-// --- frozen copy of tools/balance.cjs at 2ed5663 (s = the scene) ---
+// --- frozen copy of tools/balance.cjs as of 2026-10-25, with the plane build's uncommitted careful pilot (s = the scene) ---
 function oldTarget(s, pilot, DAYNIGHT) {
   const goodDay = () => { const c = s.clock % (DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds);
     return c < DAYNIGHT.daySeconds - DAYNIGHT.blendSeconds - s.kit.contrailLife / 1000; };
