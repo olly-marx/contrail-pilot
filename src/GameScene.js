@@ -602,10 +602,10 @@ export class GameScene extends Phaser.Scene {
     for (const t of this.trees) {
       const age = this.elapsed - t.plantedAt;
       const g = this.kit.grow, stage = age < 4 * g ? 0 : age < 9 * g ? 1 : 2;   // Tree Nursery: grows faster
-      if (stage !== t.stage) { t.stage = stage; if (t.sprite.active) t.sprite.setTexture(`tree-${t.art || t.kind}-${stage}`); }
+      if (stage !== t.stage) { t.stage = stage; if (t.view && t.view.active) t.view.setTexture(`tree-${t.art || t.kind}-${stage}`); }
       const cool = forestFull ? 0 : SPECIES[t.kind].coolPerStage[stage] * FOREST.early * (stage === 2 ? 1 + oldWood : 1) * dt;
       this.forestStored += cool;
-      if (stage === 2 && t.sprite.active) t.sprite.setScale(1 + 0.15 * oldWood);   // old trees keep getting bigger
+      if (stage === 2 && t.view && t.view.active) t.view.setScale(1 + 0.15 * oldWood);   // old trees keep getting bigger
       this.heat -= cool;
       this.breakdown.trees += cool;
       this.treeFeedback += cool;
@@ -1163,9 +1163,10 @@ export class GameScene extends Phaser.Scene {
     this.parcels--;
     const crate = this.add.image(0, 0, 'crate');
     const chute = this.add.image(0, -8, 'chute').setVisible(false);
-    const box = this.add.container(this.plane.x + PLANE.w / 2, this.plane.y + PLANE.h, [chute, crate]);
-    this.fxLayer.add(box);
-    this.parcelsFalling.push({ box, chute, t: 0, vy: 0, kind: this.treeKind() });
+    const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: this.treeKind() };   // a record; the crate is .view
+    p.view = this.add.container(p.x, p.y, [chute, crate]); p.chute = chute;
+    this.fxLayer.add(p.view);
+    this.parcelsFalling.push(p);
     this.speciesIdx++;
     sfx.flap();
     this.ui.tipOnce('firstDrop', 'Parcel away!', 'It floats down AND forwards. Drop it before the brown soil to plant a tree!', 'good', 3.5);
@@ -1175,13 +1176,13 @@ export class GameScene extends Phaser.Scene {
     this.parcelsFalling = this.parcelsFalling.filter(p => {
       p.t += dt;
       p.vy = p.t < PARCEL.chuteAfter ? p.vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, p.vy + PARCEL.gravity * dt);
+      p.x += -this.speed * (1 - Math.exp(-p.t / PARCEL.dragTime)) * dt;
+      p.y += p.vy * dt;
       if (p.t >= PARCEL.chuteAfter) p.chute.setVisible(true);
-      p.box.x += -this.speed * (1 - Math.exp(-p.t / PARCEL.dragTime)) * dt;
-      p.box.y += p.vy * dt;
-      p.box.rotation = Math.sin(p.t * 6) * 0.15;   // swing under the parachute
-      if (p.box.y < SKY_H) return true;
-      this.parcelLanded(p.box.x, p.kind);
-      p.box.destroy();
+      p.view.setPosition(p.x, p.y).setRotation(Math.sin(p.t * 6) * 0.15);   // swing under the parachute
+      if (p.y < SKY_H) return true;
+      this.parcelLanded(p.x, p.kind);
+      p.view.destroy();
       return false;
     });
   }
@@ -1204,7 +1205,7 @@ export class GameScene extends Phaser.Scene {
     this.treeLayer.add(sprite);
     this.tweens.add({ targets: sprite, scale: 1, duration: 300, ease: 'Back.easeOut' });
     plot.parts.push(sprite);
-    this.trees.push({ sprite, kind, art, plantedAt: this.elapsed, stage: 0 });   // kind: growth and cooling (UK slot)
+    this.trees.push({ kind, art, plantedAt: this.elapsed, stage: 0, view: sprite });   // kind: growth and cooling (UK slot)
     this.planted++;
     this.speciesPlanted.add(kind);
     this.burst(cx, SKY_H - 2, 0x8dffb0, 12);
