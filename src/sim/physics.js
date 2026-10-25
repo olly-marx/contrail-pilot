@@ -1,8 +1,9 @@
 // The flight's rules with no drawing (sim engine landing 3, 2026-10-25): moved out of GameScene so the game
 // and the engine run the same code. `f` is the flight: the GameScene today, the engine's world later.
 // Each function reads only the fields it names. Nothing here draws, plays a sound or uses Phaser.
-import { WIDTH, HEIGHT, GROUND_H, PLANE, STORMS, ISSR, CONTRAIL, DAYNIGHT, RADIATION, CLIMATE, AIRPORT, FOREST } from '../config.js';
+import { WIDTH, HEIGHT, GROUND_H, PLANE, STORMS, ISSR, CONTRAIL, DAYNIGHT, RADIATION, CLIMATE, AIRPORT, FOREST, HAZARDS } from '../config.js';
 import { CONTRAIL_MARGIN } from '../fleet.js';
+import { mask } from './masks-load.js';
 
 export const SKY_H = HEIGHT - GROUND_H;
 
@@ -162,4 +163,59 @@ export function fadePopped(f, i) {
   const k = Math.min(1, (f.gameTime - i.popAt) / POP_MS);
   i.alpha = i.popAlpha * (1 - k);
   if (k >= 1) i.x = -1e4;
+}
+
+// ---------- the plane's drawn pose and pixel collisions (f.pose: { x, y, rotation }, whole pixels) ----------
+
+// Where the plane's picture is centred and how it is tilted. The pixel hit tests use this, not the hitbox.
+// f.plane, f.state, f.airborne, f.autoUntil, f.gameTime.
+export function planePose(f) {
+  const x = Math.round(f.plane.x - PLANE.spriteOffX + PLANE.spriteW / 2);
+  const y = Math.round(f.plane.y - PLANE.spriteOffY + PLANE.spriteH / 2);
+  const flying = f.state === 'playing' || f.state === 'over';
+  const steep = f.autoUntil && f.gameTime < f.autoUntil;   // the autopilot pick-up banks hard
+  const lim = steep ? 0.9 : PLANE.maxTilt;
+  const tilt = flying ? Math.max(-lim, Math.min(lim, f.plane.vy / (steep ? 520 : 600))) : 0;
+  return { x, y, rotation: f.state === 'takeoff' && f.airborne ? -0.15 : tilt };
+}
+
+// World positions of the plane's solid pixels, turned with its tilt. Once per game time (cached on f).
+export function planePixels(f) {
+  if (f.planePtsAt === f.gameTime && f.planePts) return f.planePts;
+  const m = mask('plane'), p = f.pose;
+  if (!f.planeOffsets) {
+    f.planeOffsets = [];
+    for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (m.at(x, y)) f.planeOffsets.push([x + 0.5 - m.w / 2, y + 0.5 - m.h / 2]);
+  }
+  const c = Math.cos(p.rotation), s = Math.sin(p.rotation);
+  f.planePts = f.planeOffsets.map(([ox, oy]) => [p.x + ox * c - oy * s, p.y + ox * s + oy * c]);
+  f.planePtsAt = f.gameTime;
+  return f.planePts;
+}
+
+// How many plane pixels touch the storm's (or no-fly zone's) solid pixels, counting up to `enough`. A storm's
+// solid pixels are its cloud pictures' pixels INSIDE the column: fluff outside never crashes you.
+// pts(): the plane's pixels (only asked for when the plane is level with the storm).
+export function stormPixelsHit(f, st, enough, pts) {
+  const r0 = st.rects[0], r1 = st.rects[1], W = r0.width;
+  if (f.pose.x + 40 < r0.x || f.pose.x - 40 > r0.x + W) return 0;   // not level with it
+  const topH = r0.height, botY = r1.y;
+  let n = 0;
+  for (const [x, y] of pts()) {
+    const lx = x - r0.x;
+    if (lx < 0 || lx >= W) continue;
+    let solid = false;
+    if (st.noFly) solid = y < topH || y >= botY;   // a no-fly zone is a solid block
+    else for (const q of st.pics) {
+      const m = mask(q.key), px = Math.floor(lx - q.dx), py = Math.floor(y - q.y);   // whole pixels BEFORE mirroring
+      if (px >= 0 && py >= 0 && px < m.w && py < m.h && m.at(q.flip ? m.w - 1 - px : px, py)) { solid = true; break; }
+    }
+    if (solid && ++n >= enough) return n;
+  }
+  return n;
+}
+// Storms forgive a nick of up to HAZARDS.stormForgive pixels; no-fly zones forgive nothing.
+export function hitsStorm(f, st, pts) {
+  const forgive = st.noFly ? 0 : HAZARDS.stormForgive;
+  return stormPixelsHit(f, st, forgive + 1, pts) > forgive;
 }

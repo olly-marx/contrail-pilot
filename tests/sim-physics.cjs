@@ -8,6 +8,8 @@ const PLANT = process.env.PLANT || '';
   const P = await import('../src/sim/physics.js');
   const { DAYNIGHT, CLIMATE, FOREST, STORMS, AIRPORT, PLANE, ISSR, CONTRAIL, RADIATION, WIDTH } = await import('../src/config.js');
   const { CONTRAIL_MARGIN } = await import('../src/fleet.js');
+  const { mask } = await import('../src/sim/masks-load.js');
+  const { HAZARDS } = await import('../src/config.js');
   const Clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));   // = Phaser.Math.Clamp
   const nudge = (name, v) => PLANT === name ? v + 1e-9 + (typeof v === 'boolean' ? 1 : 0) : v;
 
@@ -39,6 +41,22 @@ const PLANT = process.env.PLANT || '';
         hits.push(hit ? hit.id : -1); if (hit) blocked++; }
       const rate = (isDay ? CLIMATE.sunBlockedPerCol * this.kit.vapour ** CLIMATE.dayWaterPower : CLIMATE.heatTrappedPerCol * this.kit.vapour ** CLIMATE.nightWaterPower) * blocked * strength;
       return { hits, rate }; },
+    // landing 5a: drawPlane's pose and the storm pixel hit, as at 2ed5663 (sp = the sprite; alphaMask = the baked masks)
+    pose() { const cx = this.plane.x - PLANE.spriteOffX + PLANE.spriteW / 2, cy = this.plane.y - PLANE.spriteOffY + PLANE.spriteH / 2;
+      const flying = this.state === 'playing' || this.state === 'over', steep = this.autoUntil && this.gameTime < this.autoUntil;
+      const tilt = flying ? Clamp(this.plane.vy / (steep ? 520 : 600), steep ? -0.9 : -PLANE.maxTilt, steep ? 0.9 : PLANE.maxTilt) : 0;
+      return { x: Math.round(cx), y: Math.round(cy), rotation: this.state === 'takeoff' && this.airborne ? -0.15 : tilt }; },
+    planePixels(sp) { const m = mask('plane'), offs = []; for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (m.at(x, y)) offs.push([x + 0.5 - m.w / 2, y + 0.5 - m.h / 2]);
+      const c = Math.cos(sp.rotation), s = Math.sin(sp.rotation); return offs.map(([ox, oy]) => [sp.x + ox * c - oy * s, sp.y + ox * s + oy * c]); },
+    stormPixelsHit(sp, st, enough) { const r0 = st.rects[0], r1 = st.rects[1], W = r0.width; if (sp.x + 40 < r0.x || sp.x - 40 > r0.x + W) return 0;
+      const topH = r0.height, botY = r1.y; let n = 0;
+      for (const [x, y] of old.planePixels(sp)) { const lx = x - r0.x; if (lx < 0 || lx >= W) continue; let solid = false;
+        if (st.noFly) solid = y < topH || y >= botY;
+        else for (const q of st.pics) { const m = mask(q.key), px = Math.floor(lx - q.dx), py = Math.floor(y - q.y);
+          if (px >= 0 && py >= 0 && px < m.w && py < m.h && m.at(q.flip ? m.w - 1 - px : px, py)) { solid = true; break; } }
+        if (solid && ++n >= enough) return n; }
+      return n; },
+    hitsStorm(sp, st) { const forgive = st.noFly ? 0 : HAZARDS.stormForgive; return old.stormPixelsHit(sp, st, forgive + 1) > forgive; },
   };
   // --- end of frozen copy ---
   const newRays = (f, isDay, strength) => { const cols = P.rayColumns(f.contrails, isDay); const blocked = cols.filter(c => c.hit).length;
@@ -68,6 +86,17 @@ const PLANT = process.env.PLANT || '';
     same('inIssrShape', old.inIssrShape.call(f, i, box), P.inIssrShape(f, i, box));
     const ins = r() < 0.2; same('issrAlpha', old.issrAlpha.call(f, i, box, ins), P.issrAlpha(f, i, box, ins));
     const day = r() < 0.5, str = r(); same('rays', old.rays.call(f, day, str), newRays(f, day, str));
+    // 5a: a plane near a storm column (pictures stacked from the gap outwards, as addStormPairAt does)
+    f.plane = { x: 60, y: between(0, 440), vy: between(-400, 500) }; f.state = ['playing', 'over', 'takeoff', 'landing'][Math.floor(r() * 4)];
+    f.airborne = r() < 0.5; f.gameTime = between(0, 1e5); f.autoUntil = r() < 0.3 ? f.gameTime + between(-500, 500) : 0;
+    const pose = old.pose.call(f); same('planePose', pose, P.planePose(f));
+    f.pose = { ...pose, x: pose.x + Math.floor(r() * 3) - 1 }; f.planePtsAt = null;   // the turbulence jitter
+    const sx = f.pose.x + between(-80, 60), top = between(30, 300), gap = between(60, 160), bot = top + gap, pics = [];
+    for (let y = top; y > 0;) { const k = `storm-hang-${r() < 0.5 ? 'c' : 'd'}`, m = mask(k); pics.push({ key: k, y: Math.round(y - m.h), dx: Math.round(26 - m.w / 2), flip: r() < 0.5 }); y -= m.h - 6; }
+    for (let y = bot; y < 464;) { const k = `storm-rise-${r() < 0.5 ? 'c' : 'd'}`, m = mask(k); pics.push({ key: k, y: Math.round(y), dx: Math.round(26 - m.w / 2), flip: r() < 0.5 }); y += m.h - 6; }
+    const st = { noFly: r() < 0.2, pics, rects: [{ x: sx, y: 0, width: 52, height: top }, { x: sx, y: bot, width: 52, height: 464 - bot }] };
+    same('hitsStorm', old.hitsStorm(f.pose, st), P.hitsStorm(f, st, () => P.planePixels(f)));
+    same('stormPixelsHit', old.stormPixelsHit(f.pose, st, 50), P.stormPixelsHit(f, st, 50, () => P.planePixels(f)));
   }
   const fails = Object.entries(differ).map(([k, n]) => `${k}: ${n} of ${counts[k]} made-up flights differ from the old GameScene code`);
   if (!counts.rays) fails.push('no comparisons ran');

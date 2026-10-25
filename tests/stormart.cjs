@@ -34,7 +34,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     for (let k = 0; k < 24; k++) {
       const gap = 110 + (k % 4) * 10, gapY = 120 + (k * 37) % 240, x = 100;
       s.addStormPairAt(x, gapY, gap); const st = s.storms[s.storms.length - 1]; out.storms++;
-      s.planeSprite.x = x + 22;   // level with it (stormPixelsHit skips storms far from the plane)
+      s.pose.x = x + 22;   // level with it (stormPixelsHit skips storms far from the plane)
       for (let y = 0; y < SKY; y += 3) for (let lx = -12; lx < W + 12; lx += 2) {
         const d = drawn(st, x + lx, y), h = hit(st, x + lx, y);
         if (lx >= 0 && lx < W) { out.inside++; if (d !== h && out.insideWrong.length < 5) out.insideWrong.push([lx, y, d, h]); }

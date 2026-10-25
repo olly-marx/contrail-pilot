@@ -714,14 +714,9 @@ export class GameScene extends Phaser.Scene {
   spriteBottom() { return this.plane.y - PLANE.spriteOffY + PLANE.spriteH; }
 
   drawPlane() {
-    // Sprite is centred on its image; place it so the hitbox sits at spriteOff inside it.
-    const cx = this.plane.x - PLANE.spriteOffX + PLANE.spriteW / 2;
-    const cy = this.plane.y - PLANE.spriteOffY + PLANE.spriteH / 2;
-    this.planeSprite.setPosition(Math.round(cx), Math.round(cy));
-    const flying = this.state === 'playing' || this.state === 'over';
-    const steep = this.onAutopilot && this.onAutopilot();   // the autopilot pick-up banks hard
-    const tilt = flying ? Phaser.Math.Clamp(this.plane.vy / (steep ? 520 : 600), steep ? -0.9 : -PLANE.maxTilt, steep ? 0.9 : PLANE.maxTilt) : 0;
-    this.planeSprite.setRotation(this.state === 'takeoff' && this.airborne ? -0.15 : tilt);
+    // The picture's centre and tilt (P.planePose): the pixel hit tests use this.pose; the sprite shows it.
+    this.pose = P.planePose(this);
+    this.planeSprite.setPosition(this.pose.x, this.pose.y).setRotation(this.pose.rotation);
     this.syncPlaneParts();
   }
 
@@ -1436,7 +1431,7 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.shake(80, 0.004);
       }
       const j = this.between(-1, 1);
-      this.planeSprite.x += j;
+      this.pose.x += j; this.planeSprite.x += j;
       for (const o of this.planeParts) o.img.x += j;
     }
 
@@ -1497,47 +1492,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   // World positions of the plane's drawn pixels, turned with the plane's tilt. Once per frame.
-  planePixels() {
-    if (this.planePtsAt === this.gameTime && this.planePts) return this.planePts;
-    const m = this.alphaMask('plane'), sp = this.planeSprite;
-    if (!this.planeOffsets) {
-      this.planeOffsets = [];
-      for (let y = 0; y < m.h; y++) for (let x = 0; x < m.w; x++) if (m.at(x, y)) this.planeOffsets.push([x + 0.5 - m.w / 2, y + 0.5 - m.h / 2]);
-    }
-    const c = Math.cos(sp.rotation), s = Math.sin(sp.rotation);
-    this.planePts = this.planeOffsets.map(([ox, oy]) => [sp.x + ox * c - oy * s, sp.y + ox * s + oy * c]);
-    this.planePtsAt = this.gameTime;
-    return this.planePts;
-  }
+  planePixels() { return P.planePixels(this); }   // tests may stub this
+
 
   // Storms forgive a nick of up to HAZARDS.stormForgive pixels; no-fly zones forgive nothing.
-  hitsStorm(st) {
-    const forgive = st.noFly ? 0 : HAZARDS.stormForgive;
-    return this.stormPixelsHit(st, forgive + 1) > forgive;
-  }
+  hitsStorm(st) { return P.hitsStorm(this, st, () => this.planePixels()); }
+
 
   // How many plane pixels touch the storm's (or no-fly zone's) drawn pixels. Stops counting at `enough`.
   // A storm's solid pixels are its drawn cloud pixels INSIDE the column (STORMS.width): fluff puffing
   // out beyond the column never crashes you, and empty sky never does (the user, 2026-10-24).
-  stormPixelsHit(st, enough) {
-    const r0 = st.rects[0], r1 = st.rects[1], W = r0.width;
-    const sp = this.planeSprite;
-    if (sp.x + 40 < r0.x || sp.x - 40 > r0.x + W) return 0;   // not level with it
-    const topH = r0.height, botY = r1.y;
-    let n = 0;
-    for (const [x, y] of this.planePixels()) {
-      const lx = x - r0.x;
-      if (lx < 0 || lx >= W) continue;
-      let solid = false;
-      if (st.noFly) solid = y < topH || y >= botY;   // a no-fly zone is a solid block
-      else for (const q of st.pics) {
-        const m = this.alphaMask(q.key), px = Math.floor(lx - q.dx), py = Math.floor(y - q.y);   // whole pixels BEFORE mirroring
-        if (px >= 0 && py >= 0 && px < m.w && py < m.h && m.at(q.flip ? m.w - 1 - px : px, py)) { solid = true; break; }
-      }
-      if (solid && ++n >= enough) return n;
-    }
-    return n;
-  }
+  stormPixelsHit(st, enough) { return P.stormPixelsHit(this, st, enough, () => this.planePixels()); }
+
 
   // A floating tree. Often placed in a storm gap or inside icy air, so grabbing it is a choice.
   addToken(x = WIDTH + 10, y = null, golden = null) {
