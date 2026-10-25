@@ -832,7 +832,7 @@ export class GameScene extends Phaser.Scene {
     this.save.discovered = this.save.discovered || {};
     if (this.save.discovered[r]) return;
     this.save.discovered[r] = Date.now();
-    this.popup(WIDTH / 2, SKY_H - 80, `YOU DISCOVERED: ${REGION_NAMES[r].toUpperCase()}!`, '#8dffb0', 12);
+    this.popup(WIDTH / 2, SKY_H - 80, `YOU DISCOVERED:\n${REGION_NAMES[r].toUpperCase()}!`, '#8dffb0', 12);
   }
 
   // Entering a land (0.11.1: each land has its own biodiversity, and players could not tell): its name
@@ -841,12 +841,13 @@ export class GameScene extends Phaser.Scene {
     if (this.school || !REGION_NAMES[r]) return;
     const bio = biodiversity(this.save, r);
     if (this.banner) this.banner.destroy();
-    const W = 200, x = WIDTH / 2, y = 84;   // under the distance and next-airport lines
-    const bg = this.add.rectangle(0, 0, W, 26, 0x1b2838, 0.82).setStrokeStyle(1, 0xffe15a);
-    const name = this.add.text(0, -6, `${REGION_NAMES[r].toUpperCase()}: BIODIVERSITY ${bio}`, { fontFamily: FONT, fontSize: '8px', color: '#ffe15a' }).setOrigin(0.5);
-    const track = this.add.rectangle(-W / 2 + 8, 6, W - 16, 4, 0x2b4a6f).setOrigin(0, 0.5);
-    const fill = this.add.rectangle(-W / 2 + 8, 6, Math.max(1, (W - 16) * bio / 100), 4, 0x8dffb0).setOrigin(0, 0.5);
-    this.banner = this.add.container(x, y, [bg, name, track, fill]).setDepth(60).setAlpha(0);
+    const W = 220, x = WIDTH / 2, y = 90;   // under the distance and next-airport lines
+    const bg = this.add.rectangle(0, 0, W, 38, 0x1b2838, 0.82).setStrokeStyle(1, 0xffe15a);
+    const name = this.fitText(this.add.text(0, -12, REGION_NAMES[r].toUpperCase(), { fontFamily: FONT, fontSize: '8px', color: '#ffe15a' }).setOrigin(0.5), W - 12);
+    const sub = this.add.text(0, 0, `BIODIVERSITY ${bio}`, { fontFamily: FONT, fontSize: '7px', color: '#ffe15a' }).setOrigin(0.5);
+    const track = this.add.rectangle(-W / 2 + 8, 12, W - 16, 4, 0x2b4a6f).setOrigin(0, 0.5);
+    const fill = this.add.rectangle(-W / 2 + 8, 12, Math.max(1, (W - 16) * bio / 100), 4, 0x8dffb0).setOrigin(0, 0.5);
+    this.banner = this.add.container(x, y, [bg, name, sub, track, fill]).setDepth(60).setAlpha(0);
     this.banner.regionId = r; this.banner.bio = bio;
     this.tweens.add({ targets: this.banner, alpha: 1, duration: 250, yoyo: true, hold: 2500, onComplete: () => { if (this.banner) { this.banner.destroy(); this.banner = null; } } });
     if (bio === 0 && this.state === 'playing') this.ui.tipOnce('bareLand', `${REGION_NAMES[r]}: bare land`,
@@ -2059,7 +2060,8 @@ export class GameScene extends Phaser.Scene {
 
   popup(x, y, text, colour = '#ffffff', size = 8) {
     const t = this.add.text(Math.round(x), Math.round(y), text,
-      { fontFamily: FONT, fontSize: `${size}px`, color: colour, stroke: '#000', strokeThickness: 3 }).setOrigin(0.5);
+      { fontFamily: FONT, fontSize: `${size}px`, color: colour, stroke: '#000', strokeThickness: 3, align: 'center' }).setOrigin(0.5);
+    for (let fs = size; t.width > WIDTH - 16 && fs > 6;) t.setFontSize(--fs);   // 0.11.3: a long line (a biome name) shrinks to fit the screen
     // Keep popups on screen.
     t.x = Phaser.Math.Clamp(t.x, Math.min(t.width / 2 + 24, WIDTH / 2), WIDTH - Math.min(t.width / 2 + 24, WIDTH / 2));   // clear of the side bars
     this.fxLayer.add(t);
@@ -2089,6 +2091,13 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- text and the end of a flight ----------
 
+  // Shrink a one-line Phaser text until it fits `maxW` px (0.11.3: long airport and biome names ran off the screen).
+  fitText(t, maxW, base = 8, min = 5) {
+    let fs = base; t.setFontSize(fs);
+    while (t.width > maxW && fs > min) t.setFontSize(--fs);
+    return t;
+  }
+
   updateTexts(inIssr) {
     this.distText.setText(km(this.distancePx / WORLD.pxPerMetre));
 
@@ -2099,6 +2108,7 @@ export class GameScene extends Phaser.Scene {
     else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${km(toAirport)}`);
     else if (this.missedSign && this.gameTime < this.missedSign.until) this.nextText.setText(`${this.missedSign.text} ${km(toAirport)}`);
     else this.nextText.setText('');
+    this.fitText(this.nextText, WIDTH - 12);
     // The mission line: what this flight is for.
     const mis = this.school ? null : currentMission(this.save);
     this.missionText.setText(mis && this.state !== 'over' ? mis.progress(this) : '');
@@ -2112,7 +2122,7 @@ export class GameScene extends Phaser.Scene {
     this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? 'drop on soil!' : '') : '');
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow);   // nothing to plant on (0.10.7)
     this.setDropVisible(showDrop);
-    if (showDrop) this.dropLabel.setText(`DROP x${this.parcels}\n${localTree(this.treeKind(), this.regionNow || 'woodland').name.toUpperCase()}`);
+    if (showDrop) this.fitText(this.dropLabel.setText(`SEND A\nSEED x${this.parcels}`), this.dropBox.w - 8, 7);   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
     this.cargoText.setText(`${this.cargo}`);
     this.crysText.setText(`${this.crystals}`);
     this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');

@@ -109,6 +109,11 @@ export function legStrip(a, b) {
   for (let i = runs.length - 1; i > 0; i--) if (runs[i].region === runs[i - 1].region) { runs[i - 1].to = runs[i].to; runs.splice(i, 1); }
   if (runs.length > 1 && runs[0].to < MIN_RUN) { runs[1].from = 0; runs.shift(); }
   runs[runs.length - 1].to = 1;
+  // The runway is never on the sea (0.11.3): a coastal airport's own land (Lisbon is 20 km from the coast) is a short run that the
+  // merging above gives to the sea, so put it back: the first and last MIN_RUN of a leg show the land under the airport.
+  const home = regionAt(a.lat, a.lon), dest = regionAt(b.lat, b.lon);
+  if (home !== 'ocean' && runs[0].region !== home) { for (const r of runs) r.from = Math.max(r.from, MIN_RUN); while (runs.length > 1 && runs[0].to <= MIN_RUN) runs.shift(); runs[0].from = MIN_RUN; runs.unshift({ region: home, from: 0, to: MIN_RUN }); }
+  if (dest !== 'ocean' && runs[runs.length - 1].region !== dest) { for (const r of runs) r.to = Math.min(r.to, 1 - MIN_RUN); while (runs.length > 1 && runs[runs.length - 1].from >= 1 - MIN_RUN) runs.pop(); runs[runs.length - 1].to = 1 - MIN_RUN; runs.push({ region: dest, from: 1 - MIN_RUN, to: 1 }); }
   cache.set(key, runs);
   return runs;
 }

@@ -6,6 +6,11 @@
 // No mission names one city: you can fly any way from wherever you land (2026-10-22), so it might never come.
 import { km, HAZARDS } from './config.js';
 import { REGION_NAMES } from './habitats.js';
+import { fleetOf } from './fleet.js';
+
+// A cleaner plane = an engines upgrade bought on any plane you own (the old fuel / engine lines were retired at the
+// eras reset, so the mission must read the fleet, 0.11.3).
+export const cleanerPlane = save => Object.values(fleetOf(save).planes).some(p => (p.engines || 0) >= 1);
 
 // The world tour (2026-10-22): every region but the UK discovered from the air (GameScene.setRegion).
 export const tourLeft = save => Object.keys(REGION_NAMES).filter(r => r !== 'woodland' && !((save || {}).discovered || {})[r]);
@@ -33,10 +38,10 @@ export const MISSIONS = [
   { id: 'crystals-5', icon: 'mi-crystal', lesson: 'lesson-crystals', title: 'Earn 5 ice crystals in one flight', sub: 'Dodge icy air at night. Radar shows it from further away.',
     check: r => r.crystals >= 5, progress: s => `Ice crystals: ${s.crystals}/5`,
     fail: r => `You earned ${r.crystals}. Dodge icy air at night.` },
-  { id: 'go-clean', icon: 'mi-shade', lesson: 'lesson-bars', title: 'Make your plane cleaner', sub: 'CO2 heats the Earth. Buy Cleaner Fuel or Better Engines in the hangar, then land a flight.',
-    check: (r, save) => r.landed && (((save.levels || {}).fuel || 0) + ((save.levels || {}).engine || 0)) >= 1,
-    progress: s => ((((s.save.levels || {}).fuel || 0) + ((s.save.levels || {}).engine || 0)) >= 1 ? 'Cleaner plane! Now land' : 'Buy a cleaner plane first'),
-    fail: (r, save) => ((((save.levels || {}).fuel || 0) + ((save.levels || {}).engine || 0)) >= 1 ? 'Land safely to finish it.' : 'Buy Cleaner Fuel or Better Engines in the hangar.') },
+  { id: 'go-clean', icon: 'mi-shade', lesson: 'lesson-bars', title: 'Make your plane cleaner', sub: 'CO2 heats the Earth. Buy better Engines for your plane in the hangar, then land a flight.',
+    check: (r, save) => r.landed && cleanerPlane(save),
+    progress: s => (cleanerPlane(s.save) ? 'Cleaner plane! Now land' : 'Buy better Engines first'),
+    fail: (r, save) => (cleanerPlane(save) ? 'Land safely to finish it.' : 'Buy better Engines in the hangar.') },
   // (id kept from 'Reach CAIRO' before 2026-10-22, so it stays done for those who did it.)
   { id: 'reach-cairo', icon: 'mi-airports', title: 'Reach a new part of the world', sub: 'Choose a direction and land somewhere with new land and new animals.',
     tip: 'A long way. Normal fuel overheats the Earth first: make your plane cleaner.',

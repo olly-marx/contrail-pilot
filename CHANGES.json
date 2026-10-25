@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-25-fixes",
+    "version": "0.11.3",
+    "date": "2026-10-25",
+    "level": "minor",
+    "notes": [
+      "Mission 8, Make your plane cleaner, can be finished again: buy better engines for your plane in the hangar, then land.",
+      "Long city names and land names now fit on the screen, and the tree button says SEND A SEED.",
+      "Lisbon's runway is now on land, not out at sea."
+    ]
+  },
+  {
     "id": "2026-10-24-projects",
     "version": "0.11.2",
     "date": "2026-10-24",

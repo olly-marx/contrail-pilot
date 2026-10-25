@@ -14,6 +14,15 @@ const path = require('path');
     ['Manaus', -3.1, -60, 'rainforest'], ['Sao Paulo', -23.5, -46.6, 'rainforest'], ['Madrid', 40.4, -3.7, 'mediterranean'],
     ['Moscow', 55.7, 37.6, 'woodland'], ['Riyadh', 24.7, 46.7, 'desert'], ['Seoul', 37.5, 127, 'eastasia'], ['Denver', 39.7, -105, 'plains']];
   for (const [n, la, lo, want] of places) check(g.regionAt(la, lo) === want, `${n} should be ${want}, is ${g.regionAt(la, lo)}`);
+  // 2b. No runway on the sea (user, 0.11.3: "some cities are shown over sea"). Every airway's first and last stretch shows
+  // the land under its airport. The only exceptions are the two island airports DECLARED here (region 'ocean' in cities.js).
+  const ISLANDS = ['HONOLULU', 'NADI'];
+  for (const c of CITIES) check((c.region === 'ocean') === ISLANDS.includes(c.name), `${c.name}: region '${c.region}' but the declared island list says ${ISLANDS.includes(c.name)}`);
+  for (const [an, list] of Object.entries((await import(path.resolve(__dirname, '../src/network.js'))).LINKS)) for (const bn of list) {
+    const NN = await import(path.resolve(__dirname, '../src/network.js')), a = NN.city(an), b = NN.city(bn), s = g.legStrip(a, b);
+    if (!ISLANDS.includes(an)) check(s[0].region !== 'ocean', `${an}>${bn}: the take-off airport ${an} is over the sea`);
+    if (!ISLANDS.includes(bn)) check(s[s.length - 1].region !== 'ocean', `${an}>${bn}: the landing airport ${bn} is over the sea`);
+  }
   // 3. Every airway's strip covers 0..1 with no gaps and no slivers.
   for (const [an, list] of Object.entries(N.LINKS)) for (const bn of list) {
     const a = N.city(an), b = N.city(bn), s = g.legStrip(a, b);

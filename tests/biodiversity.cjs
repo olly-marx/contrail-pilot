@@ -53,7 +53,7 @@ const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoo
   await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 });
   const r = await p.evaluate(async all => { const s = game.scene.getScene('game'); s.graceUntil = 1e12;
     s.regionHere = () => 'rainforest'; s.setRegion('rainforest');
-    const banner = s.banner ? { region: s.banner.regionId, text: s.banner.list[1].text } : null;
+    const banner = s.banner ? { region: s.banner.regionId, text: s.banner.list[1].text + ': ' + s.banner.list[2].text } : null;
     s.save.habitat.savanna = all.slice(0, 4);   // two more savanna projects during the flight
     s.finish({ landed: true }); return { banner, gains: s.result.natureGains }; }, all);
   check(r.banner && r.banner.region === 'rainforest' && r.banner.text.startsWith('TROPICAL RAINFOREST: BIODIVERSITY'), `entering the rainforest shows its banner: ${JSON.stringify(r.banner)}`);
