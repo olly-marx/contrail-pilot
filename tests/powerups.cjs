@@ -83,9 +83,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const first = await p.evaluate(async () => { const s = game.scene.getScene('game');
     s.tokens.filter(t => t.power).forEach(t => t.img.destroy()); s.tokens = s.tokens.filter(t => !t.power);
     s.safOffered = false; s.distancePx = Math.max(s.distancePx, 1600); s.nextPowerAt = s.distancePx; s.nextAirport.worldX = s.distancePx + 50000;
-    const keep = Math.random; Math.random = () => 0.5;   // a roll that would give nothing
+    const keep = s.rng; s.rng = () => 0.5;   // a roll that would give nothing
     await new Promise(r => setTimeout(r, 300));
-    Math.random = keep;
+    s.rng = keep;
     const can = s.tokens.find(t => t.power === 'saf');
     return { got: !!can, dy: can ? Math.round(can.baseY - s.plane.y) : null }; });
   check(first.got && Math.abs(first.dy) < 120, `the first SAF can comes early, near your path: ${JSON.stringify(first)}`);

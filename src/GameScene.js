@@ -4,6 +4,7 @@ import {
   FOREST, POWERUPS, FEATURES,
 } from './config.js';
 import { School } from './school.js';
+import { makeRng } from './sim/rng.js';
 import { Hud } from './Hud.js';
 import { loadout, FUELS } from './upgrades.js';
 import { sendFlight } from './online.js';
@@ -94,6 +95,7 @@ export class GameScene extends Phaser.Scene {
     this.save = this.registry.get('save');
     this.ui = this.registry.get('ui');
     this.kit = loadout(this.save);
+    this.rng = makeRng(this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0);   // physics random numbers (src/sim/rng.js); decoration keeps Math.random
     this.builtWith = JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]);   // scenery depends on upgrades (e.g. meadow flowers)
     this.makeTextures();
 
@@ -309,6 +311,14 @@ export class GameScene extends Phaser.Scene {
 
   setState(s) { this.state = s; this.stateTime = 0; }
 
+  // Physics random numbers (sim engine, 2026-10-25): everything that changes what can happen in a flight
+  // (spawns, gaps, cloud shapes, turbulence, contrail puffs) draws from this.rng, so a seed (save.simSeed,
+  // tests and probes only) gives the same sky with or without drawing. Looks keep Math.random.
+  // Same formulas as Phaser.Math.Between / FloatBetween.
+  rand() { return this.rng(); }
+  between(a, b) { return Math.floor(this.rng() * (b - a + 1) + a); }
+  floatBetween(a, b) { return this.rng() * (b - a) + a; }
+
   startSchool() {
     // Rebuild unless this scene is fresh, built with these upgrades AND in LONDON (school starts there).
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]) || this.path[0] !== HOME || this.path[1] !== flightPath({ city: HOME })[1]) { this.scene.restart({ go: true, mode: 'school' }); return; }
@@ -342,6 +352,7 @@ export class GameScene extends Phaser.Scene {
       || pathNow[0] !== this.path[0] || pathNow[1] !== this.path[1]) { this.scene.restart({ go: true }); return; }
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
+    this.rng = makeRng(this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0);   // physics random numbers, one stream per flight (src/sim/rng.js)
     this.safUntil = 0; this.autoUntil = 0; this.ownKit = null; this.nextPowerAt = POWERUPS.from; this.safOffered = false;   // pick-ups
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.setState('takeoff');
@@ -471,7 +482,7 @@ export class GameScene extends Phaser.Scene {
     if (this.inTurb) {
       // Turbulence: the tap works, but a little late.
       const [a, b] = HAZARDS.turbulence.delay;
-      this.time.delayedCall(Phaser.Math.Between(a, b), () => { if (this.state === 'playing') this.applyFlap(); });
+      this.time.delayedCall(this.between(a, b), () => { if (this.state === 'playing') this.applyFlap(); });
       return;
     }
     this.applyFlap();
@@ -1276,7 +1287,7 @@ export class GameScene extends Phaser.Scene {
       const onRunway = this.runways.some(r => x + this.kit.plotW > r.strip.x - 10 && x < r.strip.x + AIRPORT.runwayLen + 10)
         || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
       if (!onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x);   // no soil over the sea or the ice
-      this.nextPlotAt += Phaser.Math.Between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
+      this.nextPlotAt += this.between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
     }
     if (this.school) return;   // flight school places everything itself
 
@@ -1290,35 +1301,35 @@ export class GameScene extends Phaser.Scene {
     }
     if (this.distancePx >= this.nextIssrAt) {
       // Forecasting (eras): good forecasts route you round a few night patches (nightPatches < 1).
-      const routed = !this.isDay && Math.random() > this.kit.nightPatches;
-      if (!routed && Math.random() < Math.min(1, ISSR.spawnChance * this.lateRamp())) this.addIssr();   // more icy air on long flights
+      const routed = !this.isDay && this.rand() > this.kit.nightPatches;
+      if (!routed && this.rand() < Math.min(1, ISSR.spawnChance * this.lateRamp())) this.addIssr();   // more icy air on long flights
       // A forecast also shows icy air that isn't there: false patches, `fakes` of all shown.
-      if (this.kit.fakes && !this.school && Math.random() < Math.min(1, ISSR.spawnChance * this.lateRamp()) * this.kit.fakes / (1 - this.kit.fakes)) this.addIssr({ fake: true });
+      if (this.kit.fakes && !this.school && this.rand() < Math.min(1, ISSR.spawnChance * this.lateRamp()) * this.kit.fakes / (1 - this.kit.fakes)) this.addIssr({ fake: true });
       this.nextIssrAt += ISSR.spawnEvery;
     }
     const T = HAZARDS.turbulence;
     if (this.distancePx >= this.nextTurbAt) {
-      if (Math.random() < T.chance * this.kit.gapTurb) {   // ATC radar: calmer skies
-        const h = Phaser.Math.Between(T.minH, T.maxH);
-        this.turbs.push({ x: WIDTH + 10, w: Phaser.Math.Between(T.minW, T.maxW), y: Phaser.Math.Between(30, SKY_H - 60 - h), h });
+      if (this.rand() < T.chance * this.kit.gapTurb) {   // ATC radar: calmer skies
+        const h = this.between(T.minH, T.maxH);
+        this.turbs.push({ x: WIDTH + 10, w: this.between(T.minW, T.maxW), y: this.between(30, SKY_H - 60 - h), h });
         this.newHazard('turbulence', 'NEW HAZARD: TURBULENCE', 'Wavy lines = bumpy air! Inside it your plane gets pushed about and your taps work a little late. Fly over or under it!');
       }
       this.nextTurbAt += T.every;
     }
     const B = HAZARDS.birds;
     if (this.distancePx >= this.nextBirdsAt) {
-      if (Math.random() < B.chance * this.kit.gapBirds) this.addFlock();   // ATC bird advisories: fewer flocks
+      if (this.rand() < B.chance * this.kit.gapBirds) this.addFlock();   // ATC bird advisories: fewer flocks
       this.nextBirdsAt += B.every;
     }
     if (this.distancePx >= this.nextTokenAt) {
       const chance = Math.min(TOKENS.maxChance, TOKENS.chance + TOKENS.chancePerKm * this.distancePx / 1000);
-      if (Math.random() < chance) this.addToken();
+      if (this.rand() < chance) this.addToken();
       this.nextTokenAt += TOKENS.spawnEvery;
     }
     if (this.distancePx >= (this.nextPowerAt ??= POWERUPS.from)) {
       this.nextPowerAt += POWERUPS.every;
-      const r = Math.random(), safHelps = !['saf100', 'hydrogen'].includes((this.ownKit || this.kit).fuelId);
-      const pathY = () => Phaser.Math.Clamp(this.plane.y + Phaser.Math.Between(-50, 50), 60, SKY_H - 90);
+      const r = this.rand(), safHelps = !['saf100', 'hydrogen'].includes((this.ownKit || this.kit).fuelId);
+      const pathY = () => Phaser.Math.Clamp(this.plane.y + this.between(-50, 50), 60, SKY_H - 90);
       const firstSaf = !this.safOffered && this.distancePx >= POWERUPS.safFirstAt;
       // 0.10.2: no SAF cans before SAF exists in your era (it returns in the 2010s, PLANE-DESIGN.md section 3).
       if (!this.school && this.kit.safCans && safHelps && (firstSaf || r < POWERUPS.safChance)) {
@@ -1331,10 +1342,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   // A pick-up (POWERUPS): rides with the seeds, so it is collected in updateTokens.
-  addPower(power, x = WIDTH + 10, y = Phaser.Math.Between(60, SKY_H - 90)) {
+  addPower(power, x = WIDTH + 10, y = this.between(60, SKY_H - 90)) {
     const img = this.add.image(x, y, `power-${power}`).setOrigin(0);
     this.fxLayer.add(img);
-    this.tokens.push({ img, baseY: y, phase: Math.random() * 6, value: 0, power });
+    this.tokens.push({ img, baseY: y, phase: this.rand() * 6, value: 0, power });
   }
 
   usePower(power, tx, ty) {
@@ -1364,22 +1375,22 @@ export class GameScene extends Phaser.Scene {
   onAutopilot() { return this.autoUntil && this.gameTime < this.autoUntil; }
 
   addFlock(x = WIDTH + 20, y = null) {
-    const B = HAZARDS.birds, n = Phaser.Math.Between(B.flock[0], B.flock[1]);
+    const B = HAZARDS.birds, n = this.between(B.flock[0], B.flock[1]);
     if (y === null) {   // never a flock in a storm gap just as the plane goes through it (10 tries, else skip)
-      for (let k = 0; k < 10 && y === null; k++) { const t = Phaser.Math.Between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t; }
+      for (let k = 0; k < 10 && y === null; k++) { const t = this.between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t; }
       if (y === null) return;
     }
     // A dense arrowhead of many small birds (2026-10-22: the user wanted flocks more obvious), packed
     // into the same box a 5-bird V used (FLOCK_HALF), so gap safety and difficulty barely change.
     const birds = [], W = FLOCK_HALF * 13, H = FLOCK_HALF * 9;
     for (let tries = 0; birds.length < n && tries < 400; tries++) {
-      const oy = Phaser.Math.Between(-H, H), ox = Math.min(W, Math.round(Math.abs(oy) * 1.2 + Phaser.Math.Between(0, 9)));
+      const oy = this.between(-H, H), ox = Math.min(W, Math.round(Math.abs(oy) * 1.2 + this.between(0, 9)));
       if (birds.some(q => Math.abs(q.ox - ox) < 6 && Math.abs(q.oy - oy) < 5)) continue;   // a clear gap round each bird
       const img = this.add.image(x + ox, y + oy, 'bird-0').setOrigin(0).setFlipX(true);   // facing the plane
       this.birdLayer.add(img);
       birds.push({ img, ox, oy });
     }
-    this.birds.push({ birds, x, y, half: FLOCK_HALF, phase: Math.random() * 6 });
+    this.birds.push({ birds, x, y, half: FLOCK_HALF, phase: this.rand() * 6 });
     this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds is flying at you! Fly over or under them. Hitting a bird ends your flight.');
   }
 
@@ -1423,12 +1434,12 @@ export class GameScene extends Phaser.Scene {
       this.bumpIn -= dt;
       if (this.bumpIn <= 0) {
         const T = HAZARDS.turbulence;
-        this.plane.vy += Phaser.Math.Between(-T.bump, T.bump);
+        this.plane.vy += this.between(-T.bump, T.bump);
         this.bumped = true;
-        this.bumpIn = Phaser.Math.FloatBetween(T.bumpEvery[0], T.bumpEvery[1]);
+        this.bumpIn = this.floatBetween(T.bumpEvery[0], T.bumpEvery[1]);
         this.cameras.main.shake(80, 0.004);
       }
-      const j = Phaser.Math.Between(-1, 1);
+      const j = this.between(-1, 1);
       this.planeSprite.x += j;
       for (const o of this.planeParts) o.img.x += j;
     }
@@ -1535,19 +1546,19 @@ export class GameScene extends Phaser.Scene {
       if (storm && storm.rects[0].x > WIDTH - 80 && !storm.hasToken) {
         storm.hasToken = true;
         const gapTop = storm.rects[0].height, gapBot = storm.rects[1].y;
-        y = Phaser.Math.Between(gapTop + 12, gapBot - 26);
+        y = this.between(gapTop + 12, gapBot - 26);
         x = storm.rects[0].x + STORMS.width / 2 - 7;
-      } else if (issr && Math.random() < 0.4) {
-        y = Phaser.Math.Between(issr.y + 4, issr.y + issr.height - 18);
+      } else if (issr && this.rand() < 0.4) {
+        y = this.between(issr.y + 4, issr.y + issr.height - 18);
       } else {
-        y = Phaser.Math.Between(50, SKY_H - 70);
+        y = this.between(50, SKY_H - 70);
       }
     }
-    if (golden === null) golden = this.distancePx > TOKENS.goldenAfter && Math.random() < TOKENS.goldenChance;
+    if (golden === null) golden = this.distancePx > TOKENS.goldenAfter && this.rand() < TOKENS.goldenChance;
     if (golden) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN seed</b>! It is worth <b>3 seeds</b>. They only appear on long flights.', 'lesson-gold'));
     const img = this.add.image(x, y, golden ? 'token-gold' : 'token').setOrigin(0);
     this.fxLayer.add(img);
-    this.tokens.push({ img, baseY: y, phase: Math.random() * 6, value: golden ? 3 : 1 });
+    this.tokens.push({ img, baseY: y, phase: this.rand() * 6, value: golden ? 3 : 1 });
   }
 
   updateTokens(dt, box) {
@@ -1590,7 +1601,7 @@ export class GameScene extends Phaser.Scene {
     if (this.distancePx < WORLD.warmup) this.warmStorms = this.stormCount;   // gaps only narrow after the warm-up
     let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * (this.stormCount - (this.warmStorms || 0)));
     const nf = HAZARDS.noFly;
-    const noFly = this.distancePx >= nf.from && Math.random() < nf.chance;
+    const noFly = this.distancePx >= nf.from && this.rand() < nf.chance;
     if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess);
     gap = Math.round(gap * this.kit.gaps);   // air traffic control (eras): better spacing, gaps up to ~3% wider
     const lo = STORMS.marginTop + gap / 2;
@@ -1598,7 +1609,7 @@ export class GameScene extends Phaser.Scene {
     const w = noFly ? nf.width : STORMS.width;
     // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time).
     let gapY = null;
-    for (let k = 0; k < 20 && gapY === null; k++) { const t = Phaser.Math.Between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2)) gapY = t; }
+    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2)) gapY = t; }
     if (gapY === null) return;
     if (noFly) this.addNoFlyAt(x, gapY, gap);
     else this.addStormPairAt(x, gapY, gap);
@@ -1632,9 +1643,9 @@ export class GameScene extends Phaser.Scene {
     const topH = gapY - gap / 2, botY = gapY + gap / 2;
     const top = { x, y: 0, width: STORMS.width, height: topH };
     const bottom = { x, y: botY, width: STORMS.width, height: SKY_H - botY };
-    const pics = [], pick = () => STORM_ART[Phaser.Math.Between(0, STORM_ART.length - 1)];
+    const pics = [], pick = () => STORM_ART[this.between(0, STORM_ART.length - 1)];
     const place = (key, y) => { const t = this.textures.get(key).getSourceImage();
-      pics.push({ key, y: Math.round(y), dx: Math.round(STORMS.width / 2 - t.width / 2), flip: Math.random() < 0.5, h: t.height }); };
+      pics.push({ key, y: Math.round(y), dx: Math.round(STORMS.width / 2 - t.width / 2), flip: this.rand() < 0.5, h: t.height }); };
     for (let y = topH; y > 0;) { const k = `storm-hang-${pick()}`; const h = this.textures.get(k).getSourceImage().height; place(k, y - h); y -= h - STORM_OVERLAP; }
     for (let y = botY; y < SKY_H;) { const k = `storm-rise-${pick()}`; place(k, y); y += this.textures.get(k).getSourceImage().height - STORM_OVERLAP; }
     // Drawn farthest first: the picture at the gap edge is in front.
@@ -1692,17 +1703,17 @@ export class GameScene extends Phaser.Scene {
   // fake: a forecast's false patch (looks real, makes no contrail, puffs away when you get close).
   addIssr({ fake = false } = {}) {
     const grow = Math.sqrt(this.lateRamp());   // long flights: bigger patches (area grows with the ramp)
-    const w = Math.round(Phaser.Math.Between(ISSR.minW, ISSR.maxW) * grow);
-    const h = Math.min(SKY_H - 40, Math.round(Phaser.Math.Between(ISSR.minH, ISSR.maxH) * grow)), x = WIDTH + 10;
+    const w = Math.round(this.between(ISSR.minW, ISSR.maxW) * grow);
+    const h = Math.min(SKY_H - 40, Math.round(this.between(ISSR.minH, ISSR.maxH) * grow)), x = WIDTH + 10;
     // Never fill a storm gap: there is always a way through without a contrail (10 tries, else skip).
     for (let k = 0; k < 10; k++) {
-      const y = Phaser.Math.Between(10, SKY_H - h - 10);
+      const y = this.between(10, SKY_H - h - 10);
       const blocks = this.storms.some(st => { const r = st.rects[0]; return r.x < x + w && r.x + r.width > x
         && !this.laneClear(r.x, r.width, r.height, st.rects[1].y, [...this.issrs, { x, y, width: w, height: h }]); });   // with the icy air already there
       if (!blocks) {
         const r = this.addIssrAt(x, y, w, h);
         if (fake) r.fake = true;
-        else if (this.kit.late && Math.random() < this.kit.late) r.late = true;   // the forecast missed it: seen only up close
+        else if (this.kit.late && this.rand() < this.kit.late) r.late = true;   // the forecast missed it: seen only up close
         return;
       }
     }
@@ -1737,10 +1748,10 @@ export class GameScene extends Phaser.Scene {
     const n = Phaser.Math.Clamp(Math.round(w / 70), 3, 5);
     r.blobs = [];
     for (let k = 0; k < n; k++) {
-      const rx = Math.min(w / 2, (w / n) * Phaser.Math.FloatBetween(0.75, 1.0));
-      const cx = Phaser.Math.Clamp((k + 0.5) * w / n + Phaser.Math.Between(-6, 6), rx, w - rx);
-      const ry = h * Phaser.Math.FloatBetween(0.32, 0.5);
-      const cy = Phaser.Math.Clamp(h / 2 + Phaser.Math.FloatBetween(-0.15, 0.15) * h, ry, h - ry);
+      const rx = Math.min(w / 2, (w / n) * this.floatBetween(0.75, 1.0));
+      const cx = Phaser.Math.Clamp((k + 0.5) * w / n + this.between(-6, 6), rx, w - rx);
+      const ry = h * this.floatBetween(0.32, 0.5);
+      const cy = Phaser.Math.Clamp(h / 2 + this.floatBetween(-0.15, 0.15) * h, ry, h - ry);
       r.blobs.push({ cx, cy, rx, ry });
     }
     const m = this.make.graphics({ x: r.x, y: r.y }, false);
@@ -1823,7 +1834,7 @@ export class GameScene extends Phaser.Scene {
 
   addContrail(time) {
     const s = CONTRAIL.size;
-    const r = this.add.rectangle(this.plane.x - PLANE.spriteOffX, this.plane.y + PLANE.h / 2 - s / 2 + Phaser.Math.Between(-1, 1), s, s, COLOURS.contrail).setOrigin(0);
+    const r = this.add.rectangle(this.plane.x - PLANE.spriteOffX, this.plane.y + PLANE.h / 2 - s / 2 + this.between(-1, 1), s, s, COLOURS.contrail).setOrigin(0);
     r.born = time;
     this.contrailLayer.add(r);
     this.contrails.push(r);

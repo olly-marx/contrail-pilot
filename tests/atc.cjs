@@ -19,16 +19,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.click('#goBtn');
     await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 });
     const r = await p.evaluate(() => {
-      const s = game.scene.getScene('game'), rnd = Math.random; s.graceUntil = 1e12;
+      const s = game.scene.getScene('game'), rnd = s.rng; s.graceUntil = 1e12;
       // Storm gap: same pair count, capture the gap handed to the drawing.
       let gap = null; s.addStormPairAt = (x, y, g) => { gap = g; }; s.addNoFlyAt = (x, y, g) => { gap = g; };
-      s.stormCount = 0; s.warmStorms = 0; Math.random = () => 0.99; s.issrs.forEach(i => { i.x = -1e4; }); s.addStormPair();
+      s.stormCount = 0; s.warmStorms = 0; s.rng = () => 0.99; s.issrs.forEach(i => { i.x = -1e4; }); s.addStormPair();
       // Turbulence and birds: the spawn roll at a fixed 0.45 (turbulence chance 0.5) and 0.5 (birds 0.55).
-      const t0 = s.turbs.length; Math.random = () => 0.45; s.nextTurbAt = s.distancePx; s.nextBirdsAt = 1e12; s.nextStormAt = 1e12; s.nextIssrAt = 1e12; s.nextTokenAt = 1e12; s.nextPowerAt = 1e12; s.spawn();
+      const t0 = s.turbs.length; s.rng = () => 0.45; s.nextTurbAt = s.distancePx; s.nextBirdsAt = 1e12; s.nextStormAt = 1e12; s.nextIssrAt = 1e12; s.nextTokenAt = 1e12; s.nextPowerAt = 1e12; s.spawn();
       const turb = s.turbs.length - t0;
-      const b0 = s.birds.length; Math.random = () => 0.5; s.nextBirdsAt = s.distancePx; s.nextTurbAt = 1e12; s.spawn();
+      const b0 = s.birds.length; s.rng = () => 0.5; s.nextBirdsAt = s.distancePx; s.nextTurbAt = 1e12; s.spawn();
       const birds = s.birds.length - b0;
-      Math.random = rnd;
+      s.rng = rnd;
       // The landing call at 400 m from the runway.
       s.nextAirport.worldX = s.distancePx + 400; s.updateTexts(false);
       return { gap, turb, birds, call: s.nextText.text, kit: [s.kit.gaps, s.kit.gapTurb, s.kit.gapBirds, s.kit.airportEarly] };
