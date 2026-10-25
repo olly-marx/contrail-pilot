@@ -112,3 +112,26 @@ export function issrAlpha(f, i, box, inside) {
 export function nearPx(i, box) {
   return Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width), i.y - (box.y + box.h), box.y - (i.y + i.height));
 }
+
+// ---------- contrails (records { x, y, born }; the game hangs its square on .view) ----------
+
+// A new puff behind the plane, +-1 px (physics random stream: it decides which light column it blocks).
+// f.plane, f.between.
+export function makeContrail(f, time) {
+  const s = CONTRAIL.size;
+  return { x: f.plane.x - PLANE.spriteOffX, y: f.plane.y + PLANE.h / 2 - s / 2 + f.between(-1, 1), born: time };
+}
+
+// Drift and age the puffs: f.contrails keeps the live ones; returns the ones that just went (to un-draw).
+// f.kit.contrailLife.
+export function ageContrails(f, dt, time) {
+  const life = f.kit.contrailLife, gone = [];
+  f.contrails = f.contrails.filter(c => {
+    if (time - c.born > life || c.x < -10) { gone.push(c); return false; }
+    c.x -= CONTRAIL.drift * dt;
+    return true;
+  });
+  return gone;
+}
+// Fades in three steps so it stays pixel-art crisp.
+export function contrailAlpha(f, c, time) { return [0.95, 0.65, 0.35][Math.floor(((time - c.born) / f.kit.contrailLife) * 3)]; }

@@ -93,7 +93,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p2.click('#goBtn'); await p2.waitForTimeout(300); await p2.click('#howClose'); await p2.waitForTimeout(300); await p2.mouse.move(195, 400); await p2.mouse.down(); await p2.waitForTimeout(2500); await p2.mouse.up();
   const stuck = await p2.evaluate(() => new Promise(res => { const s = game.scene.getScene('game'), sc = s.school;
     sc.i = 8; sc.next(); s.frozen = false; const first = sc.issr;   // step 9: day icy air
-    const iv = setInterval(() => { s.plane.y = sc.issr === first ? 420 - 60 : s.plane.y; s.plane.vy = 0; s.contrails.forEach(c => c.destroy()); s.contrails = []; }, 16);
+    const iv = setInterval(() => { s.plane.y = sc.issr === first ? 420 - 60 : s.plane.y; s.plane.vy = 0; s.contrails.forEach(c => c.view.destroy()); s.contrails = []; }, 16);
     setTimeout(() => { clearInterval(iv); res({ step: sc.i, newIssr: sc.issr !== first, text: document.getElementById("coachText").textContent }); }, 9000); }));   // a 300 px patch takes ~6 s to pass
   if (!(stuck.step === 9 && stuck.newIssr && /Missed it/.test(stuck.text))) fails.push(`missing the icy air should bring more, not get stuck: ${JSON.stringify(stuck)}`);
   await p2.close();

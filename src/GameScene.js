@@ -1806,12 +1806,12 @@ export class GameScene extends Phaser.Scene {
     else this.ui.tipOnce('issrNight', 'Contrail at night!', 'No sunlight to block, so it only traps heat: HOTTER. Climb or dive out!', 'bad', 4);
   }
 
+  // Contrails are records (src/sim/physics.js); the square drawn for each is its .view.
   addContrail(time) {
-    const s = CONTRAIL.size;
-    const r = this.add.rectangle(this.plane.x - PLANE.spriteOffX, this.plane.y + PLANE.h / 2 - s / 2 + this.between(-1, 1), s, s, COLOURS.contrail).setOrigin(0);
-    r.born = time;
-    this.contrailLayer.add(r);
-    this.contrails.push(r);
+    const c = P.makeContrail(this, time), s = CONTRAIL.size;
+    c.view = this.add.rectangle(c.x, c.y, s, s, COLOURS.contrail).setOrigin(0);
+    this.contrailLayer.add(c.view);
+    this.contrails.push(c);
   }
 
   scroll(dx) {
@@ -1844,16 +1844,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   updateContrails(dt, time) {
-    const life = this.kit.contrailLife;
-    this.contrails = this.contrails.filter(c => {
-      const age = time - c.born;
-      if (age > life || c.x < -10) { c.destroy(); return false; }
-      c.x -= CONTRAIL.drift * dt;
-      // Fade in three steps so it stays pixel-art crisp instead of a smooth gradient.
-      const step = Math.floor((age / life) * 3);
-      c.setAlpha([0.95, 0.65, 0.35][step]);
-      return true;
-    });
+    for (const c of P.ageContrails(this, dt, time)) c.view.destroy();
+    for (const c of this.contrails) c.view.setPosition(c.x, c.y).setAlpha(P.contrailAlpha(this, c, time));
   }
 
   // ---------- day, night and radiation ----------
@@ -1901,7 +1893,7 @@ export class GameScene extends Phaser.Scene {
     const g = this.rayGfx, ground = this.groundFx;
     g.clear(); ground.clear();
     const { cool: isDay, strength } = this.radiationMode();   // fades out, is neutral at the halfway point, fades in the other way
-    for (const c of this.blockers) if (c.active) c.setFillStyle(COLOURS.contrail);
+    for (const c of this.blockers) if (c.view.active) c.view.setFillStyle(COLOURS.contrail);
     this.blockers = [];
     if (strength <= 0) return;
 
@@ -1937,7 +1929,7 @@ export class GameScene extends Phaser.Scene {
       }
       if (hit) {
         blocked++;
-        hit.setFillStyle(isDay ? COLOURS.cool : COLOURS.warm);
+        hit.view.setFillStyle(isDay ? COLOURS.cool : COLOURS.warm);
         this.blockers.push(hit);
       }
     }

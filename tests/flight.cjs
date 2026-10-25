@@ -74,7 +74,7 @@ async function fly(p, { landAt, keepCool = false }) {
     const f0 = await p.evaluate(() => game.loop.frame);
     for (let i = 0; i < 400; i++) {
       await p.evaluate(() => { const s = game.scene.getScene('game'); s.plane.y = 100; s.plane.vy = 0;
-        if (s.contrails.length < 72) for (let x = 0; x < 288; x += 4) { const r = s.add.rectangle(x, 200, 4, 4, 0xffffff).setOrigin(0); r.born = s.time.now; s.contrailLayer.add(r); s.contrails.push(r); } });
+        if (s.contrails.length < 72) for (let x = 0; x < 288; x += 4) { const r = s.add.rectangle(x, 200, 4, 4, 0xffffff).setOrigin(0); s.contrailLayer.add(r); s.contrails.push({ x, y: 200, born: s.time.now, view: r }); } });
       await p.waitForTimeout(150);
       if (await p.evaluate(([key, f0]) => game.scene.getScene('game')[key] > 0 && game.loop.frame - f0 >= 90, [key, f0])) break;
     }
