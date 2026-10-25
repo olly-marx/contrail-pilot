@@ -1,0 +1,114 @@
+// The flight's rules with no drawing (sim engine landing 3, 2026-10-25): moved out of GameScene so the game
+// and the engine run the same code. `f` is the flight: the GameScene today, the engine's world later.
+// Each function reads only the fields it names. Nothing here draws, plays a sound or uses Phaser.
+import { WIDTH, HEIGHT, GROUND_H, PLANE, STORMS, ISSR, CONTRAIL, DAYNIGHT, RADIATION, CLIMATE, AIRPORT, FOREST } from '../config.js';
+import { CONTRAIL_MARGIN } from '../fleet.js';
+
+export const SKY_H = HEIGHT - GROUND_H;
+
+export function overlaps(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// ---------- day, night and radiation (f.clock, seconds) ----------
+
+export function dayNightPhase(f) {
+  const { daySeconds: D, nightSeconds: N, blendSeconds: B } = DAYNIGHT;
+  const p = f.clock % (D + N);
+  if (p < D) return { isDay: true, toOther: Math.max(0, (p - (D - B)) / B) };
+  const q = p - D;
+  return { isDay: false, toOther: Math.max(0, (q - (N - B)) / B) };
+}
+
+// What a contrail does right now (2026-10-23): the switch between cooling and warming happens HALFWAY
+// through dusk / dawn, with a short neutral stretch in the middle. cool: sunshine side; strength 0..1.
+export function radiationMode(f) {
+  const { isDay, toOther: u } = dayNightPhase(f), lo = 0.5 - DAYNIGHT.neutralFrac / 2, hi = 0.5 + DAYNIGHT.neutralFrac / 2;
+  const first = u < lo ? 1 - u / lo : u > hi ? (u - hi) / lo : 0;   // fading out of the old mode / into the new one
+  if (u <= 0) return { cool: isDay, strength: 1 };
+  return { cool: u < 0.5 ? isDay : !isDay, strength: first };
+}
+
+// Light (day) and heat (night) are fixed columns. Per column, the contrail square that blocks it: sun comes
+// down, so the highest contrail blocks it; heat comes up, so the lowest one does. [{ x, hit }] (hit: null or a contrail).
+export function rayColumns(contrails, isDay) {
+  const S = CONTRAIL.size, out = [];
+  for (let x = RADIATION.margin; x < WIDTH - RADIATION.margin; x += RADIATION.spacing) {
+    let hit = null;
+    for (const c of contrails) {
+      if (x < c.x || x >= c.x + S) continue;
+      if (!hit || (isDay ? c.y < hit.y : c.y > hit.y)) hit = c;
+    }
+    out.push({ x, hit });
+  }
+  return out;
+}
+
+// Heat per second from `blocked` columns (negative = cooling). f.kit.vapour.
+export function rayRate(f, isDay, strength, blocked) {
+  return (isDay ? CLIMATE.sunBlockedPerCol * f.kit.vapour ** CLIMATE.dayWaterPower : CLIMATE.heatTrappedPerCol * f.kit.vapour ** CLIMATE.nightWaterPower) * blocked * strength;
+}
+
+// 1 until CLIMATE.lateFrom km into a flight, then grows by latePer10k every 10,000 km. Only NIGHTS get harder.
+// f.isDay, f.distancePx.
+export function lateRamp(f) { return f.isDay ? 1 : 1 + CLIMATE.latePer10k * Math.max(0, f.distancePx - CLIMATE.lateFrom) / 10000; }
+
+// ---------- forest (f.distancePx, f.speciesPlanted) ----------
+
+export function oldWood(f) {
+  const ramp = Math.max(0, Math.min(1, (f.distancePx - FOREST.from) / FOREST.span));
+  return ramp * FOREST.boost * Math.pow(Math.min(1, f.speciesPlanted.size / FOREST.kinds), FOREST.power);
+}
+// A forest can only soak up so much CO2 in one flight (more with more kinds); then it is full.
+export function forestStore(f) { return Math.max(FOREST.storeMin, FOREST.store * Math.pow(Math.min(1, f.speciesPlanted.size / FOREST.kinds), FOREST.storePower)); }
+
+// ---------- storms and airports ----------
+
+export function inStormClearZone(f, worldX) {
+  const a = f.nextAirport.worldX;
+  return worldX + STORMS.width > a - AIRPORT.stormClearBefore && worldX < a + AIRPORT.runwayLen + AIRPORT.stormClearAfter;
+}
+
+// Is there a plane-sized lane free of icy air between gTop and gBot, at x..x+w?
+export function laneClear(issrs, x, w, gTop, gBot) {
+  const lane = PLANE.h + STORMS.clearLane;
+  const blocked = issrs.filter(i => i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop)
+    .map(i => [Math.max(gTop, i.y), Math.min(gBot, i.y + i.height)]).sort((a, b) => a[0] - b[0]);
+  let free = gTop;
+  for (const [t, btm] of blocked) { if (t - free >= lane) return true; free = Math.max(free, btm); }
+  return gBot - free >= lane;
+}
+
+// ---------- icy air (ISSR) ----------
+
+// Is any point along the plane's middle line inside the cloud's ellipses? (x, y, w, h: its box)
+// `grow`: each blob's radii x this (1 = the drawn shape). Used for the contrail margin.
+export function inCloud(blobs, x, y, w, h, box, grow = 1) {
+  const pad = Math.max(0, grow - 1) * Math.max(w, h) / 2;
+  if (!overlaps(box, { x: x - pad, y: y - pad, w: w + 2 * pad, h: h + 2 * pad })) return false;
+  const py = box.y + box.h / 2 - y;
+  for (let px = box.x; px <= box.x + box.w; px += 5) {
+    const lx = px - x;
+    if (blobs.some(b => ((lx - b.cx) / (b.rx * grow)) ** 2 + ((py - b.cy) / (b.ry * grow)) ** 2 <= 1)) return true;
+  }
+  return false;
+}
+// The contrail margin (eras, PLANE-DESIGN.md section 3): everything about "being in icy air" uses this. f.kit.margin.
+export function inIssrShape(f, i, box) { return !i.fake && inCloud(i.blobs, i.x, i.y, i.width, i.height, box, CONTRAIL_MARGIN[f.kit.margin] || 1); }
+
+// How visible a patch is: hidden until the plane is within reveal range, then a three-step fade. f.kit.
+export function issrAlpha(f, i, box, inside) {
+  if (inside) return ISSR.insideAlpha;
+  if (i.entered) return ISSR.revealAlpha;   // once found, it stays found
+  const gapX = Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width));
+  const gapY = Math.max(0, i.y - (box.y + box.h), box.y - (i.y + i.height));
+  const d = Math.max(gapX, gapY);
+  const reveal = i.late ? ISSR.revealPx : f.kit.revealPx, hidden = f.kit.hiddenAlpha;   // a missed patch: only seen up close
+  if (d >= reveal) return hidden;
+  const step = Math.min(3, Math.floor((1 - d / reveal) * 4));
+  return hidden + (ISSR.revealAlpha - hidden) * (step / 3);
+}
+
+export function nearPx(i, box) {
+  return Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width), i.y - (box.y + box.h), box.y - (i.y + i.height));
+}

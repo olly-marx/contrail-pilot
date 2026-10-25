@@ -5,6 +5,7 @@ import {
 } from './config.js';
 import { School } from './school.js';
 import { makeRng } from './sim/rng.js';
+import * as P from './sim/physics.js';   // the flight's rules, shared with the sim engine
 import { mask } from './sim/masks-load.js';
 import { MASK_DATA } from './sim/masks.js';
 import { Hud } from './Hud.js';
@@ -30,9 +31,7 @@ const SKY_H = HEIGHT - GROUND_H;
 const GRACE_MS = 1500;   // breather after a pop-up closes: the autopilot flies, then hands back
 const FONT = 'Pixel, monospace';
 
-function overlaps(a, b) {
-  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-}
+const overlaps = P.overlaps;
 
 function lerpColour(a, b, t) {
   const ca = Phaser.Display.Color.IntegerToColor(a), cb = Phaser.Display.Color.IntegerToColor(b);
@@ -700,7 +699,7 @@ export class GameScene extends Phaser.Scene {
 
   // 1 until CLIMATE.lateFrom km into a flight, then grows by latePer10k every 10,000 km.
   // Only NIGHTS get harder (more and bigger icy air): day shade, and saving up cooling, stay as they are.
-  lateRamp() { return this.isDay ? 1 : 1 + CLIMATE.latePer10k * Math.max(0, this.distancePx - CLIMATE.lateFrom) / 10000; }
+  lateRamp() { return P.lateRamp(this); }
 
   // Bigger Hold: grows faster. Rounded to 1 decimal so 1 + 0.6 * n never shows as 3.4000000000000004.
   multiplier() { return Math.round((1 + this.kit.perSkip * this.airportsSkipped) * 10) / 10; }
@@ -1112,10 +1111,7 @@ export class GameScene extends Phaser.Scene {
   // Game km of leg k of this flight's path (balanced, src/network.js).
   legKm(k) { return legBetween(this.path[k], this.path[k + 1]); }
 
-  inStormClearZone(worldX) {
-    const a = this.nextAirport.worldX;
-    return worldX + STORMS.width > a - AIRPORT.stormClearBefore && worldX < a + AIRPORT.runwayLen + AIRPORT.stormClearAfter;
-  }
+  inStormClearZone(worldX) { return P.inStormClearZone(this, worldX); }
 
   land(rw) {
     this.landedAt = rw.name;
@@ -1133,12 +1129,9 @@ export class GameScene extends Phaser.Scene {
 
   // Old-wood boost for grown trees: 0 before FOREST.from km, rising to FOREST.boost, scaled by
   // how many kinds of tree were planted this flight (all 5 = the full boost).
-  oldWood() {
-    const ramp = Phaser.Math.Clamp((this.distancePx - FOREST.from) / FOREST.span, 0, 1);
-    return ramp * FOREST.boost * Math.pow(Math.min(1, this.speciesPlanted.size / FOREST.kinds), FOREST.power);
-  }
+  oldWood() { return P.oldWood(this); }
   // A forest can only soak up so much CO2 in one flight (more with more kinds); then it is full.
-  forestStore() { return Math.max(FOREST.storeMin, FOREST.store * Math.pow(Math.min(1, this.speciesPlanted.size / FOREST.kinds), FOREST.storePower)); }
+  forestStore() { return P.forestStore(this); }
 
   // Parcels take turns through the kinds of tree you own, so variety comes naturally.
   treeKind() {
@@ -1728,14 +1721,8 @@ export class GameScene extends Phaser.Scene {
 
   // Is there still a clear lane (plane height + margin) through the gap gTop..gBot of a storm
   // column at x..x+w, past the icy air in `issrs` that overlaps the column?
-  laneClear(x, w, gTop, gBot, issrs = this.issrs) {
-    const lane = PLANE.h + STORMS.clearLane;
-    const blocked = issrs.filter(i => i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop)
-      .map(i => [Math.max(gTop, i.y), Math.min(gBot, i.y + i.height)]).sort((a, b) => a[0] - b[0]);
-    let free = gTop;
-    for (const [t, btm] of blocked) { if (t - free >= lane) return true; free = Math.max(free, btm); }
-    return gBot - free >= lane;
-  }
+  laneClear(x, w, gTop, gBot, issrs = this.issrs) { return P.laneClear(issrs, x, w, gTop, gBot); }
+
 
   // An ISSR is a lumpy patch, not a box: 3-5 overlapping ellipses inside its bounding box. Every
   // ellipse crosses the box's middle line, so the patch is one piece and flying through the
@@ -1770,34 +1757,15 @@ export class GameScene extends Phaser.Scene {
 
   // Is any point along the plane's middle line inside the cloud's ellipses? (x, y, w, h: its box)
   // `grow`: each blob's radii x this (1 = the drawn shape). Used for the contrail margin below.
-  inCloud(blobs, x, y, w, h, box, grow = 1) {
-    const pad = Math.max(0, grow - 1) * Math.max(w, h) / 2;
-    if (!overlaps(box, { x: x - pad, y: y - pad, w: w + 2 * pad, h: h + 2 * pad })) return false;
-    const py = box.y + box.h / 2 - y;
-    for (let px = box.x; px <= box.x + box.w; px += 5) {
-      const lx = px - x;
-      if (blobs.some(b => ((lx - b.cx) / (b.rx * grow)) ** 2 + ((py - b.cy) / (b.ry * grow)) ** 2 <= 1)) return true;
-    }
-    return false;
-  }
+  inCloud(blobs, x, y, w, h, box, grow = 1) { return P.inCloud(blobs, x, y, w, h, box, grow); }
+
   // The contrail margin (eras, PLANE-DESIGN.md section 3): a hot-exhaust 1950s jet makes contrails only
   // deep inside icy air; efficient jets make them right up to (and a little past) its edge. The drawn
   // patch does not change. Everything about "being in icy air" uses this: contrails, heat, dodges, the autopilot.
-  inIssrShape(i, box) { return !i.fake && this.inCloud(i.blobs, i.x, i.y, i.width, i.height, box, CONTRAIL_MARGIN[this.kit.margin] || 1); }
+  inIssrShape(i, box) { return P.inIssrShape(this, i, box); }
 
-  issrAlpha(i, box, inside) {
-    if (inside) return ISSR.insideAlpha;
-    if (i.entered) return ISSR.revealAlpha;   // once found, it stays found
-    // Distance from the plane to the ISSR's nearest edge, horizontally and vertically.
-    const gapX = Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width));
-    const gapY = Math.max(0, i.y - (box.y + box.h), box.y - (i.y + i.height));
-    const d = Math.max(gapX, gapY);
-    const reveal = i.late ? ISSR.revealPx : this.kit.revealPx, hidden = this.kit.hiddenAlpha;   // a missed patch: only seen up close
-    if (d >= reveal) return hidden;
-    // Three-step fade keeps the pixel-art look instead of a smooth gradient.
-    const step = Math.min(3, Math.floor((1 - d / reveal) * 4));
-    return hidden + (ISSR.revealAlpha - hidden) * (step / 3);
-  }
+  issrAlpha(i, box, inside) { return P.issrAlpha(this, i, box, inside); }
+
 
   // The next-gap hint: a faint gate at the right edge, at the height of a storm gap still off screen.
   drawGapHint() {
@@ -1816,9 +1784,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   // Gap from the plane's box to a patch's box, px (0 = touching or overlapping).
-  nearPx(i, box) {
-    return Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width), i.y - (box.y + box.h), box.y - (i.y + i.height));
-  }
+  nearPx(i, box) { return P.nearPx(i, box); }
+
 
   // A false patch, close up: it puffs into sparkles with "Forecast wrong!" (user, draft 2) and is gone.
   popFake(i) {
@@ -1891,22 +1858,13 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- day, night and radiation ----------
 
-  dayNightPhase() {
-    const { daySeconds: D, nightSeconds: N, blendSeconds: B } = DAYNIGHT;
-    const p = this.clock % (D + N);
-    if (p < D) return { isDay: true, toOther: Math.max(0, (p - (D - B)) / B) };
-    const q = p - D;
-    return { isDay: false, toOther: Math.max(0, (q - (N - B)) / B) };
-  }
+  dayNightPhase() { return P.dayNightPhase(this); }
+
 
   // What a contrail does right now (2026-10-23): the switch between cooling and warming happens HALFWAY
   // through dusk / dawn, with a short neutral stretch in the middle. cool: sunshine side; strength 0..1.
-  radiationMode() {
-    const { isDay, toOther: u } = this.dayNightPhase(), lo = 0.5 - DAYNIGHT.neutralFrac / 2, hi = 0.5 + DAYNIGHT.neutralFrac / 2;
-    const first = u < lo ? 1 - u / lo : u > hi ? (u - hi) / lo : 0;   // fading out of the old mode / into the new one
-    if (u <= 0) return { cool: isDay, strength: 1 };
-    return { cool: u < 0.5 ? isDay : !isDay, strength: first };
-  }
+  radiationMode() { return P.radiationMode(this); }
+
 
   updateDayNight(time) {
     const { isDay: skyDay, toOther } = this.dayNightPhase();
@@ -1949,14 +1907,7 @@ export class GameScene extends Phaser.Scene {
 
     const S = CONTRAIL.size;
     let blocked = 0;
-    for (let x = RADIATION.margin; x < WIDTH - RADIATION.margin; x += RADIATION.spacing) {
-      // Sun comes down, so the highest contrail in the column blocks it; heat comes up,
-      // so the lowest one does.
-      let hit = null;
-      for (const c of this.contrails) {
-        if (x < c.x || x >= c.x + S) continue;
-        if (!hit || (isDay ? c.y < hit.y : c.y > hit.y)) hit = c;
-      }
+    for (const { x, hit } of P.rayColumns(this.contrails, isDay)) {   // per light/heat column, the contrail blocking it
       const colour = isDay ? COLOURS.sun : COLOURS.heat;
       const a = (isDay ? RADIATION.dayAlpha : RADIATION.beamAlpha) * strength;
 
@@ -1992,7 +1943,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (!scoring) return;
-    const rate = (isDay ? CLIMATE.sunBlockedPerCol * this.kit.vapour ** CLIMATE.dayWaterPower : CLIMATE.heatTrappedPerCol * this.kit.vapour ** CLIMATE.nightWaterPower) * blocked * strength;
+    const rate = P.rayRate(this, isDay, strength, blocked);
     this.heat += rate * dt;
     if (isDay) { this.sunBlocked += -rate * dt; this.breakdown.sun += -rate * dt; }
     else { this.heatTrapped += rate * dt; this.breakdown.night += rate * dt; }
