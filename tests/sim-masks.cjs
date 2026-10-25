@@ -1,5 +1,5 @@
-// Sim engine landing 2 (2026-10-25): the baked collision masks (src/sim/masks.js) must be pixel-for-pixel
-// what GameScene.alphaMask() reads from the textures through a canvas, for every picture a crash is checked
+// Sim engine landing 2 (2026-10-25): the baked collision masks (src/sim/masks.js), which GameScene.alphaMask() now uses, must be pixel-for-pixel
+// what GameScene.canvasMask() reads from the textures through a canvas, for every picture a crash is checked
 // against (the plane, birds, storm clouds). Also checks the check: one flipped pixel must fail.
 // Run: python3 -m http.server 8000 & node tests/sim-masks.cjs
 const { chromium } = require('playwright-core');
@@ -15,7 +15,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const r = await p.evaluate(async () => {
     const { mask, MASK_KEYS } = await import('/src/sim/masks-load.js');
     const s = game.scene.getScene('game'), out = [];
-    const diff = (key, flip) => { const a = s.alphaMask(key), m = mask(key); if (a.w !== m.w || a.h !== m.h) return `${key}: size ${a.w}x${a.h} vs baked ${m.w}x${m.h}`;
+    const diff = (key, flip) => { const a = s.canvasMask(key), m = mask(key); if (a.w !== m.w || a.h !== m.h) return `${key}: size ${a.w}x${a.h} vs baked ${m.w}x${m.h}`;
       let n = 0; for (let y = 0; y < a.h; y++) for (let x = 0; x < a.w; x++) if (a.at(x, y) !== (flip && x === flip[0] && y === flip[1] ? !m.at(x, y) : m.at(x, y))) n++;
       return n ? `${key}: ${n} pixels differ` : null; };
     for (const k of MASK_KEYS) { const d = diff(k); if (d) out.push(d); }

@@ -5,6 +5,8 @@ import {
 } from './config.js';
 import { School } from './school.js';
 import { makeRng } from './sim/rng.js';
+import { mask } from './sim/masks-load.js';
+import { MASK_DATA } from './sim/masks.js';
 import { Hud } from './Hud.js';
 import { loadout, FUELS } from './upgrades.js';
 import { sendFlight } from './online.js';
@@ -1483,7 +1485,12 @@ export class GameScene extends Phaser.Scene {
   // ---------- pixel collisions ----------
 
   // Which pixels of a texture are drawn (alpha > 40). Cached per texture key.
-  alphaMask(key) {
+  // Collision masks are baked from the PNGs (src/sim/masks.js, tools/sim/bake-masks.py, 2026-10-25), so the
+  // sim engine checks hits on exactly the same pixels without a canvas. A picture not baked falls back to
+  // reading its canvas; tests/sim-masks.cjs checks baked == canvas for every baked one.
+  alphaMask(key) { return MASK_DATA[key] ? mask(key) : this.canvasMask(key); }
+
+  canvasMask(key) {
     this.masks = this.masks || {};
     if (this.masks[key]) return this.masks[key];
     const img = this.textures.get(key).getSourceImage(), w = img.width, h = img.height;

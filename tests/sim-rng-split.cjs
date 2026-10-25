@@ -1,7 +1,7 @@
 // Sim engine landing 1 (2026-10-25): physics draws its random numbers from its own seeded stream (this.rng,
 // seeded by save.simSeed), decoration keeps Math.random. Check: the same simSeed flown with Math.random
 // scrambled (a different sequence each run) gives the SAME flight: storms, icy air, hazards, distance,
-// heat, step for step. Then plant a leak (a decoration function drawing from the physics stream) and
+// heat, storm pictures and their flips (the pixel outline a crash is checked on), step for step. Then plant a leak (a decoration function drawing from the physics stream) and
 // check the flights now differ, so the check can fail.
 // Run: python3 -m http.server 8000 & node tests/sim-rng-split.cjs
 const { chromium } = require('playwright-core');
@@ -32,7 +32,7 @@ async function fly(b, mathSeed, leak) {
       if (s.state === 'playing' && s.plane.y > 200 && s.plane.vy > -40) s.applyFlap();   // the straight pilot
       t += 16.67; game.step(t, 16.67);
       if (i % 50 === 0) out.push([Math.round(s.distancePx), +s.plane.y.toFixed(3), +s.heat.toFixed(4),
-        s.storms.map(st => Math.round(st.rects[0].height)).join('/'), s.issrs.map(q => `${Math.round(q.y)}:${q.width}`).join('/'),
+        s.storms.map(st => Math.round(st.rects[0].height)).join('/'), s.storms.map(st => (st.pics || []).map(q => q.key.slice(6) + (q.flip ? 'f' : '')).join(',')).join('/'), s.issrs.map(q => `${Math.round(q.y)}:${q.width}`).join('/'),
         s.turbs.length, s.birds.length, s.tokens.length, s.contrails.length].join(' '));
     }
     return out;
