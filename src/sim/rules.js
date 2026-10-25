@@ -1,12 +1,13 @@
 // The flight's rules as methods (sim engine landing 5f, 2026-10-25), moved verbatim from GameScene. GameScene
 // mixes them in (Object.assign(GameScene.prototype, RULES)) and the sim engine's world does the same, so both run
 // exactly this code. `this` is the flight. No Phaser here: drawing and sound go through hooks the world leaves empty.
-import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS } from '../config.js';
-import { GAP_HINT } from '../fleet.js';
+import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST } from '../config.js';
+import { GAP_HINT, FORECAST } from '../fleet.js';
+import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree } from '../nature.js';
 import { REGION_DATA } from '../habitats.js';
 import { flightPath, legBetween, HOME, city } from '../route.js';
 import { regionBelow } from '../geo.js';
-import { loadout } from '../upgrades.js';
+import { loadout, FUELS } from '../upgrades.js';
 import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
 import * as P from './physics.js';
@@ -14,6 +15,7 @@ import { mask } from './masks-load.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));   // = Phaser.Math.Clamp
+const GRACE_MS = 1500;   // breather after a pop-up closes: the autopilot flies, then hands back
 const FLOCK_HALF = 2;   // a flock fills the box of an old 5-bird V: 26 px across, 36 px down
 // PixelLab thunderclouds (the user, 2026-10-24): every storm column is a whole storm tower picture
 // (tools/art/pixellab_storm.py): crown up below the gap, hanging (flipped, darker) above it.
@@ -22,6 +24,18 @@ export const STORM_ART = ['c', 'd'];
 const STORM_OVERLAP = 40;   // a tall column stacks another tower behind, overlapping this much
 
 export const RULES = {
+  // Onto the runway (moved from GameScene.startFlight): the kit as bought now, a fresh random stream, take-off.
+  takeOff() {
+    // Upgrades may have been bought in the hangar since this scene was built.
+    this.kit = loadout(this.save);
+    this.rng = makeRng(this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0);   // physics random numbers, one stream per flight (src/sim/rng.js)
+    this.safUntil = 0; this.autoUntil = 0; this.ownKit = null; this.nextPowerAt = POWERUPS.from; this.safOffered = false;   // pick-ups
+    this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
+    this.setState('takeoff');
+    this.rollSpeed = 0;
+    this.airborne = false;
+    this.flySeconds = 0;   // real flying time this flight, for the eras (src/eras.js)
+  },
   // The flight's state, before take-off (moved from GameScene.create, sim engine 5f). this.save and
   // this.autostart are set by the caller.
   initFlight() {
@@ -102,6 +116,7 @@ export const RULES = {
     this.airportsSkipped = 0;
     this.nextAirport = this.airportAhead(0);
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
+    this.pose = P.planePose(this);
   },
   inGrace() { return this.graceUntil && this.gameTime < this.graceUntil; },
   onAutopilot() { return this.autoUntil && this.gameTime < this.autoUntil; },
@@ -465,4 +480,469 @@ export const RULES = {
   between(a, b) { return Math.floor(this.rng() * (b - a + 1) + a); },
   floatBetween(a, b) { return this.rng() * (b - a) + a; },
   setState(s) { this.state = s; this.stateTime = 0; },
+
+  // One frame of the flight (moved from GameScene.update, sim engine 5f). dt: seconds, already clamped.
+  // Changes only the flight's data: what is seen and heard goes through hooks (show*, popup, sound...), and the
+  // game draws the frame afterwards (GameScene.syncViews). Returns { dx, inIssr, over } for the drawing.
+  step(dt) {
+    this.runTimers(dt * 1000);   // the engine's delayed taps (in the game, Phaser's timers run these)
+    this.gameTime += dt * 1000;
+    const time = this.gameTime;   // contrail ages etc. stop while frozen
+    if (this.state === 'over') {
+      this.updateContrails(dt, time);
+      this.scoreRays(dt, false);
+      return { dx: 0, inIssr: false, over: true };
+    }
+    if (!this.school || !this.school.holdClock) this.clock += dt;
+
+    this.elapsed += dt;
+    this.stateTime += dt;
+    if (this.airborne && !this.school) this.flySeconds += dt;   // not while frozen (tips) or paused: update stops then
+
+    // Speed: ramps up while flying, rolls to a stop after touchdown.
+    if (this.state === 'landing') {
+      this.speed = Math.max(0, this.landingSpeed * (1 - this.stateTime / AIRPORT.rollSeconds));
+    } else if (this.state === 'takeoff') {
+      // Holding speeds the plane up along the runway; letting go slows it down again.
+      const held = this.holding || this.save.autoTakeoff || this.airborne;   // autoTakeoff: tests only
+      this.rollSpeed = held ? Math.min(TAKEOFF.liftSpeed, this.rollSpeed + TAKEOFF.rollAccel * dt) : Math.max(0, this.rollSpeed - TAKEOFF.rollBrake * dt);
+      this.speed = this.rollSpeed;
+      this.elapsed = 0;   // the speed ramp starts at lift-off
+    } else {
+      if (this.distancePx < WORLD.warmup) this.warmTime = this.elapsed;   // speed-up starts after the warm-up leg
+      this.speed = this.school ? WORLD.startSpeed : Math.min(WORLD.maxSpeed, WORLD.startSpeed + WORLD.speedGain * (this.elapsed - (this.warmTime || 0)));
+    }
+    const dx = this.speed * dt;
+    this.distancePx += dx;
+
+    // Plane
+    if (this.state === 'takeoff') {
+      if (!this.airborne && this.rollSpeed >= TAKEOFF.liftSpeed) {
+        this.airborne = true; this.stateTime = 0;
+        if (!this.school) this.onLiftOff();
+      }
+      this.plane.vy = this.airborne ? TAKEOFF.climbVelocity : 0;
+      this.plane.y += this.plane.vy * dt;
+      if (this.airborne && this.stateTime >= TAKEOFF.seconds) {
+        this.setState('playing'); this.plane.vy = 0;
+        if (!this.school) { this.popup(WIDTH / 2, SKY_H / 2, 'Now TAP to fly!', '#ffe15a', 16); this.startGrace(); }
+        if (!this.school) this.explainWhenClear('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!', 'lesson-bars');
+      }
+    } else if (this.state === 'playing' && (this.inGrace() || this.onAutopilot())) {
+      const auto = this.onAutopilot();
+      const target = auto ? this.autopilotPlan() : this.autopilotTarget();
+      const lim = auto ? POWERUPS.autoClimb : 180;
+      this.plane.vy = clamp((target - this.plane.y) * (auto ? 10 : 4), -lim, lim);
+      this.plane.y += this.plane.vy * dt;
+    } else if (this.state === 'playing') {
+      this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
+      // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
+      // between you and it, the plane levels out and floats down onto the runway. With a storm in
+      // the way you fall normally, so you can dive through its gap. Flaring burns extra CO2.
+      this.flaring = false;
+      const toStart = this.nextAirport.worldX - this.distancePx;          // runway start, ahead of the plane's x
+      const drop = SKY_H - this.spriteBottom();
+      const clearPath = !this.storms.some(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < this.plane.x + Math.max(0, toStart) + PLANE.w);
+      const room = toStart + AIRPORT.runwayLen - PLANE.w - 10;          // runway left before the far end
+      if (this.plane.vy > 0 && drop < AIRPORT.flareHeight * this.kit.flare && toStart < AIRPORT.flareFrom * this.kit.flare && room > 0 && clearPath) {   // Landing Gear: wider window
+        const v = Math.max(1, this.speed);
+        // Before the runway: sink just slowly enough to reach it. Over it: gently, but fast
+        // enough to touch down before the far end.
+        const cap = toStart > 0 ? Math.max(15, drop / ((toStart + 20) / v)) : Math.max(AIRPORT.flareVy, drop / (room / v));
+        this.plane.vy = Math.min(this.plane.vy, cap);
+        this.flaring = true;
+      }
+      this.plane.y += this.plane.vy * dt;
+      if (this.plane.y < 0) { this.plane.y = 0; this.plane.vy = 0; }
+    }
+    this.pose = P.planePose(this);   // the picture's centre and tilt: the pixel hit tests use it
+
+    // CO2: high during takeoff and the landing roll, steady while cruising.
+    const parked = this.state === 'takeoff' && !this.airborne && this.rollSpeed < 5;   // engines idle: waiting for the HOLD
+    this.co2Rate = parked ? 0 : (this.state === 'playing') ? this.kit.co2Cruise * (this.flaring ? AIRPORT.flareCo2 : 1) : this.kit.co2Takeoff;
+    this.totalCo2 += this.co2Rate * dt;
+    const co2Heat = this.co2Rate * CLIMATE.co2ToHeat * dt;
+    this.heat += co2Heat;
+    this.breakdown.co2 += co2Heat;
+
+    // Trees keep cooling for the rest of the flight, more as they grow; on long flights a mixed
+    // forest grows into old wood (FOREST in config.js).
+    const oldWood = this.oldWood(), forestFull = this.trees.length > 0 && this.forestStored >= this.forestStore();
+    if (forestFull && !this.forestFullSaid) {
+      this.forestFullSaid = true;
+      this.popup(WIDTH / 2, SKY_H - 24, 'Your forest is full of carbon!', '#ffe15a', 10);
+      this.ui.tipOnce('forestFull', 'Forest full!', 'A forest can only soak up so much CO2 in one flight. Plant ALL 5 kinds of tree to make it hold much more!', 'good', 4.5);
+    }
+    for (const t of this.trees) {
+      const age = this.elapsed - t.plantedAt;
+      const g = this.kit.grow, stage = age < 4 * g ? 0 : age < 9 * g ? 1 : 2;   // Tree Nursery: grows faster
+      t.stage = stage;
+      const cool = forestFull ? 0 : SPECIES[t.kind].coolPerStage[stage] * FOREST.early * (stage === 2 ? 1 + oldWood : 1) * dt;
+      this.forestStored += cool;
+      this.heat -= cool;
+      this.breakdown.trees += cool;
+      this.treeFeedback += cool;
+    }
+    const landFull = this.landStored >= FOREST.landStore * projectsDone(this.save).length / PROJECTS.length;
+    const land = landFull ? 0 : natureCooling(this.save, this.regionNow) * dt;   // rewilded land soaks up a little CO2, until it is full
+    this.landStored += land;
+    this.heat -= land; this.breakdown.trees += land;
+    if (this.treeFeedback >= 1) {
+      this.popup(WIDTH / 2, SKY_H - 12, `-${this.treeFeedback.toFixed(1)} from your forest`, '#8dffb0');
+      this.coolSparkle();
+      this.treeFeedback = 0;
+    }
+
+    this.spawn();
+    this.scroll(dx);
+    if (dx > 0) this.setRegion(this.regionHere());   // the land below (the game also fades its ground in)
+    this.updateDayNight(time);
+
+    const box = this.hitbox();
+    let inIssr = false;
+    for (const i of this.issrs) {
+      const inside = this.inIssrShape(i, box);
+      if (inside) { inIssr = true; i.entered = true; }
+      if (i.popped) P.fadePopped(this, i); else i.alpha = this.issrAlpha(i, box, inside);
+      if (i.fake && !i.popped && this.nearPx(i, box) < FORECAST.popPx) this.popFake(i);
+      // In your path: level with the plane while it was coming up ahead, so you had to climb or dive.
+      const ahead = i.x - (box.x + box.w), cy = box.y + box.h / 2;
+      if (ahead > 0 && ahead < 120 && cy >= i.y && cy <= i.y + i.height) i.inPath = true;
+      // Dodged: icy air that was in your path at night, passed without making a contrail.
+      if (!i.scored && i.x + i.width < box.x) {
+        i.scored = true;
+        if (!i.fake && i.inPath && !i.entered && !this.isDay && this.state === 'playing' && !this.school && this.nightDodges < this.kit.dodgesPerNight) {   // Weather Forecast: more per night
+          this.nightDodges++; this.dodgesTotal++;
+          this.earnCrystals(this.kit.dodgeCrystals, 'dodged icy air!');   // Crystal Lens: more per dodge
+        }
+      }
+    }
+    this.updateTokens(dt, box);
+    this.updatePowers();
+    this.updateHazards(dt, box);
+    this.updateParcels(dt);
+    if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
+    this.wasInIssr = inIssr;
+    if (inIssr && this.state !== 'landing' && time - this.lastContrail > this.kit.contrailEvery) {
+      this.lastContrail = time;
+      this.addContrail(time);
+    }
+    this.updateContrails(dt, time);
+    this.scoreRays(dt, true);
+
+    const out = { dx, inIssr };
+    if (this.state === 'landing') {
+      if (this.stateTime >= AIRPORT.rollSeconds) this.finish({ landed: true });
+      return out;
+    }
+    if (this.state !== 'playing') return out;
+
+    if (this.school) { this.school.forgive(box); return out; }
+    if (this.inGrace() || this.onAutopilot()) return out;   // the breather and the autopilot pick-up: nothing can crash you
+    if (this.heat >= CLIMATE.dangerLine * 0.75 && !this.warnedHot) {
+      this.warnedHot = true;
+      if (this.explain('x-hot', 'The Earth is getting <b>too hot</b>! If the red bar on the right reaches the top, your flight is over.<br>Land soon, make <b>shade</b> in the daytime, or stay out of icy air at night.', 'lesson-hot')) return out;
+      this.ui.toast('Planet overheating!', this.isDay ? 'Make contrails in the sunshine, or land soon!' : 'Stay out of icy air at night, or land soon!', 'bad', 3);
+    }
+    if (this.heat >= CLIMATE.dangerLine) { this.finish({ reason: 'The planet got too hot!\nFlight grounded.', sound: 'overheat' }); return out; }
+    if (this.spriteBottom() >= SKY_H) {
+      const rw = this.runwayUnder(box);
+      if (rw) this.land(rw);
+      else this.finish({ reason: 'You hit the ground!' });
+      return out;
+    }
+    // Pixel-accurate: the plane's drawn pixels against the hazard's drawn pixels. Storms forgive a
+    // nick (a few pixels); no-fly zones and birds forgive nothing.
+    for (const s of this.storms) {
+      if (this.hitsStorm(s)) {
+        this.finish({ reason: s.noFly ? 'Restricted airspace!\nFlight stopped.' : 'Storm!\nYou flew into a storm.' });
+        return out;
+      }
+    }
+    if (this.hitBird(box)) this.finish({ reason: 'Bird strike!\nYou hit a bird.' });
+    return out;
+  },
+
+  // The flight ends: landed, or why not. The game then shows the results (GameScene.onFinish).
+  finish({ landed = false, reason = '', sound = 'crash' }) {
+    this.setState('over');
+    this.co2Rate = 0;
+    this.landed = landed; this.endReason = reason;
+    this.onFinish({ landed, reason, sound });
+  },
+
+  updateTokens(dt, box) {
+    const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
+    this.tokens = this.tokens.filter(t => {
+      t.phase += dt * 4;
+      const tx = t.x + 7, ty = t.y + 7;
+      // Distance from the token's centre to the plane's hitbox.
+      const dxB = Math.max(box.x - tx, 0, tx - (box.x + box.w)), dyB = Math.max(box.y - ty, 0, ty - (box.y + box.h));
+      const d = Math.hypot(dxB, dyB);
+      if (this.kit.pickup > 12 && d < this.kit.pickup * 2.5) {
+        // Magnet: pull towards the plane.
+        const a = Math.atan2(cy - ty, cx - tx);
+        t.x += Math.cos(a) * TOKENS.magnetPull * dt;
+        t.baseY += Math.sin(a) * TOKENS.magnetPull * dt;
+      }
+      t.y = Math.round(t.baseY + Math.sin(t.phase) * TOKENS.bob);
+      if (d <= this.kit.pickup - 6 && this.state === 'playing' && t.power) {
+        this.usePower(t.power, tx, ty);
+        this.unshow(t);
+        return false;
+      }
+      if (d <= this.kit.pickup - 6 && this.state === 'playing') {
+        this.cargo += t.value;
+        if (t.value > 1) this.goldens++;
+        this.onSeed(t, tx, ty);
+        this.unshow(t);
+        return false;
+      }
+      if (t.x < -20) { this.unshow(t); return false; }
+      return true;
+    });
+  },
+
+  usePower(power, tx, ty) {
+    if (power === 'saf') {
+      // Swap to All-SAF numbers for a while, then back to your own fuel (this.ownKit).
+      if (!this.ownKit) this.ownKit = this.kit;
+      const own = this.ownKit, saf = FUELS.saf100, f = saf.co2 / FUELS[own.fuelId].co2;
+      this.kit = { ...own, co2Cruise: own.co2Cruise * f, co2Takeoff: own.co2Takeoff * f, smoke: own.smoke * f,
+        vapour: saf.water, contrailEvery: saf.contrailEvery, contrailLife: saf.contrailLife };
+      this.safUntil = this.gameTime + POWERUPS.safSeconds * 1000;
+    } else {
+      this.autoUntil = this.gameTime + this.kit.autoSecs * 1000; this.autoFrom = this.gameTime;
+    }
+    this.onPower(power, tx, ty);
+  },
+
+  // Timed pick-ups running out.
+  updatePowers() {
+    if (this.safUntil && this.gameTime >= this.safUntil) { this.safUntil = 0; this.kit = this.ownKit; this.ownKit = null; this.popup(this.plane.x + 20, this.plane.y - 10, 'SAF used up', '#c8c8c8'); }
+    if (this.autoUntil && this.gameTime >= this.autoUntil) { this.autoUntil = 0; this.popup(this.plane.x + 20, this.plane.y - 10, 'You have control!', '#ffe15a'); }
+  },
+
+  updateHazards(dt, box) {
+    // Turbulence: wavy lines; inside it, taps lag and the plane gets bumped.
+    this.inTurb = false;
+    for (const z of this.turbs) {
+      if (!z.blobs) z.blobs = P.cloudBlobs(this, z.w, z.h);   // its shape: made on its first frame (physics random stream)
+      if (this.inCloud(z.blobs, z.x, z.y, z.w, z.h, box)) this.inTurb = true;
+    }
+    this.turbs = this.turbs.filter(z => { if (z.x + z.w > -10) return true; this.unshow(z); return false; });
+    if (this.inTurb && this.state === 'playing') {
+      this.bumpIn -= dt;
+      if (this.bumpIn <= 0) {
+        const T = HAZARDS.turbulence;
+        this.plane.vy += this.between(-T.bump, T.bump);
+        this.bumped = true;
+        this.bumpIn = this.floatBetween(T.bumpEvery[0], T.bumpEvery[1]);
+        this.shake(80, 0.004);
+      }
+      this.pose.x += this.between(-1, 1);   // the plane judders: its picture, and so its pixel hits, move 1 px
+    }
+
+    // Birds fly towards you, bobbing up and down; hitting one ends the flight.
+    const B = HAZARDS.birds;
+    for (const f of this.birds) {
+      f.x -= B.extraSpeed * dt;
+      // Birds steer out of a storm gap the plane is about to fly through (a flock there would
+      // leave no way past). The spawn check usually prevents it; this catches the rest.
+      const half = f.half ?? (f.birds.length - 1) / 2, top = f.y - half * 9 - 4 - B.wobble, bottom = f.y + half * 9 + 16 + B.wobble;
+      for (const st of this.storms) {
+        const r = st.rects[0], gTop = r.height, gBot = st.rects[1].y;
+        if (r.x + r.width < this.plane.x - 10 || r.x > this.plane.x + 200) continue;     // only gaps the plane is reaching
+        if (f.x > r.x + r.width + 40 || f.x + half * 26 + 16 < this.plane.x - 40) continue;   // flock not near that column
+        if (top < gBot && bottom > gTop) f.y += (f.y - (gTop + gBot) / 2 < 0 ? -1 : 1) * 160 * dt;
+      }
+      f.phase += dt * 2;
+      const fy = f.y + Math.sin(f.phase) * B.wobble;
+      const frame = Math.floor(this.gameTime / 120) % 2;
+      for (const b of f.birds) { b.x = Math.round(f.x + b.ox); b.y = Math.round(fy + b.oy); b.key = `bird-${frame}`; }
+    }
+    this.birds = this.birds.filter(f => { if (f.x < -60) { this.unshow(f); return false; } return true; });
+  },
+
+  // Ice crystals: the contrail currency, for smart flying (dodging icy air at night, clean nights).
+  // Daytime contrails earn none: in real life they are not always cooling.
+  earnCrystals(n, why) {
+    this.crystals += n;
+    this.onCrystals(n, why);
+  },
+
+  land(rw) {
+    this.landedAt = rw.name;
+    this.landingSpeed = this.speed;
+    this.plane.y = this.groundedY();
+    this.plane.vy = 0;
+    this.setState('landing');
+    this.pose = P.planePose(this);
+    this.onLand();
+  },
+
+  applyFlap() {
+    if (this.onAutopilot() && this.gameTime < this.autoFrom + POWERUPS.autoLockMs) return;   // the tap that grabbed it must not cancel it
+    this.graceUntil = 0;   // flying again ends the breather
+    if (this.onAutopilot()) { this.autoUntil = 0; this.popup(this.plane.x + 20, this.plane.y - 10, 'You have control!', '#ffe15a'); }   // ...and the autopilot pick-up
+    this.plane.vy = PLANE.flapVelocity;
+    this.flaps = (this.flaps || 0) + 1;
+    this.sound('flap');
+  },
+
+  flap() {
+    if (this.state !== 'playing') return;
+    if (this.inTurb) {
+      // Turbulence: the tap works, but a little late.
+      const [a, b] = HAZARDS.turbulence.delay;
+      this.later(this.between(a, b), () => { if (this.state === 'playing') this.applyFlap(); });
+      return;
+    }
+    this.applyFlap();
+  },
+
+  // A breather after a pop-up closes: for a moment the AUTOPILOT flies (towards the next storm
+  // gap, round birds) and nothing can crash you, so a tap you were about to make isn't too late.
+  // Your first tap ends it and you fly as normal. (It used to just hover, which felt stuck.)
+  startGrace() {
+    if (this.state !== 'playing') return;
+    this.graceUntil = this.gameTime + GRACE_MS;
+    this.plane.vy = 0;
+  },
+
+  // A false patch, close up: it puffs into sparkles with "Forecast wrong!" (user, draft 2) and is gone.
+  popFake(i) {
+    P.popIssr(this, i);   // fades out by game time (src/sim/physics.js)
+    this.onPopFake(i);
+  },
+
+  updateContrails(dt, time) {
+    for (const c of P.ageContrails(this, dt, time)) this.unshow(c);
+  },
+
+  // Everything ahead moves left by dx; what has gone off screen is dropped.
+  scroll(dx) {
+    for (const s of this.storms) for (const r of s.rects) r.x -= dx;
+    this.storms = this.storms.filter(s => {
+      if (s.rects[0].x + STORMS.width < -16) { this.unshow(s); return false; }   // (the cloud puffs out past the column)
+      return true;
+    });
+    for (const i of this.issrs) i.x -= dx;
+    this.issrs = this.issrs.filter(i => {
+      if (i.x + i.width < -5) { this.unshow(i); return false; }
+      return true;
+    });
+    for (const c of this.contrails) c.x -= dx;
+    for (const rw of this.runways) rw.x -= dx;
+    this.runways = this.runways.filter(rw => {
+      if (rw.x + AIRPORT.runwayLen < -5) { this.unshow(rw); return false; }
+      return true;
+    });
+    for (const t of this.tokens) t.x -= dx;
+    for (const z of this.turbs) z.x -= dx;
+    for (const f of this.birds) f.x -= dx;
+    for (const pl of this.plots) pl.x -= dx;
+    this.plots = this.plots.filter(pl => { if (pl.x + this.kit.plotW < -30) { this.unshow(pl); return false; } return true; });
+  },
+
+  // Day and night: this.isDay = "contrails cool now". The sky is drawn from the clock alone (GameScene.drawSkyNow).
+  updateDayNight(time) {
+    const { isDay: skyDay, toOther } = this.dayNightPhase();
+    this.isDay = this.radiationMode().cool;
+    // Teach the switch the moment it starts.
+    const half = skyDay ? (toOther > 0 ? 'dusk' : 'day') : (toOther > 0 ? 'dawn' : 'night');
+    if (half !== this.lastHalf) {
+      this.onDayHalf(half);
+      // Night Owl: a whole night flown without trapping any heat.
+      if (half === 'night') this.nightDodges = 0;
+      if (half === 'night' && this.state === 'playing') this.night = { started: true, trappedAtStart: this.heatTrapped };
+      if (half === 'dawn' && this.night.started && this.heatTrapped - this.night.trappedAtStart < 0.5) {
+        this.nightOwl = true;
+        this.popup(WIDTH / 2, 60, 'NIGHT OWL!', '#ffe15a', 16);
+        this.earnCrystals(CRYSTALS.cleanNight, 'clean night!');
+      }
+      if (half === 'dawn') this.night.started = false;
+      this.lastHalf = half;
+    }
+  },
+
+  // Light (day) and heat (night) are fixed columns. Each frame we find, per column, the contrail
+  // square that blocks it (this.rays, which the game draws) and score the block.
+  scoreRays(dt, scoring) {
+    const { cool: isDay, strength } = this.radiationMode();   // fades out, is neutral at the halfway point, fades in the other way
+    this.rays = { isDay, strength, cols: strength > 0 ? P.rayColumns(this.contrails, isDay) : [] };
+    if (strength <= 0 || !scoring) return;
+    const blocked = this.rays.cols.filter(c => c.hit).length;
+    const rate = P.rayRate(this, isDay, strength, blocked);
+    this.heat += rate * dt;
+    if (isDay) { this.sunBlocked += -rate * dt; this.breakdown.sun += -rate * dt; }
+    else { this.heatTrapped += rate * dt; this.breakdown.night += rate * dt; }
+
+    // Every so often, show what the contrails just did as a floating number.
+    this.feedback.amount += rate * dt;
+    this.feedback.timer += dt;
+    if (this.feedback.timer >= 0.8) {
+      const amt = this.feedback.amount;
+      if (Math.abs(amt) >= 0.3) {
+        const cooling = amt < 0;
+        this.popup(this.plane.x + 6, this.plane.y - 10, `${cooling ? '-' : '+'}${Math.abs(amt).toFixed(1)} ${cooling ? 'cooler' : 'hotter'}`, cooling ? '#7fd3ff' : '#ff6a5a');
+        if (cooling) { this.sound('cool'); this.coolSparkle(); } else { this.sound('warm'); this.buzz(25); }
+      }
+      this.feedback = { amount: 0, timer: 0 };
+    }
+  },
+
+  updateParcels(dt) {
+    this.parcelsFalling = this.parcelsFalling.filter(p => {
+      p.t += dt;
+      p.vy = p.t < PARCEL.chuteAfter ? p.vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, p.vy + PARCEL.gravity * dt);
+      p.x += -this.speed * (1 - Math.exp(-p.t / PARCEL.dragTime)) * dt;
+      p.y += p.vy * dt;
+      if (p.y < SKY_H) return true;
+      this.parcelLanded(p.x, p.kind);
+      this.unshow(p);
+      return false;
+    });
+  },
+
+  parcelLanded(x, kind) {
+    const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
+    if (!plot) {
+      const onRunway = this.runways.some(r => x >= r.x && x <= r.x + AIRPORT.runwayLen);
+      if (onRunway) this.parcelOnRunway = true;   // a funny challenge
+      this.onParcelMissed(x, onRunway);
+      return;
+    }
+    plot.used = true;
+    // The tree for this slot in the land below (the user, 2026-10-22).
+    const here = localTree(kind, this.regionNow || 'woodland');
+    const tree = { kind, plantedAt: this.elapsed, stage: 0 };   // kind: growth and cooling (UK slot)
+    this.trees.push(tree);
+    this.planted++;
+    this.speciesPlanted.add(kind);
+    // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
+    // Counted where it grows: UK trees in save.planted, other regions' in save.plantedIn[region].
+    const book = here.uk ? this.save.planted : ((this.save.plantedIn = this.save.plantedIn || {})[this.regionNow] = (this.save.plantedIn[this.regionNow] || {}));
+    const first = !(book[here.id] > 0);
+    book[here.id] = (book[here.id] || 0) + 1;
+    this.showTree(tree, plot, here, first);
+  },
+
+  dropParcel() {
+    if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
+    if (this.parcels <= 0) { this.sound('nope'); return; }
+    // Over the open sea and the ice nothing can be planted (user, 2026-10-24): keep the parcel.
+    if (['ocean', 'ice'].includes(this.regionNow)) {
+      this.sound('nope');
+      if (!this.saidNoSoil) { this.saidNoSoil = true; this.popup(this.plane.x + 20, this.plane.y - 12, this.regionNow === 'ocean' ? 'No land to plant on!' : 'Nothing grows on the ice!', '#cfe6ff'); }
+      return;
+    }
+    this.parcels--;
+    const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: this.treeKind() };   // a record; the crate is .view
+    this.parcelsFalling.push(p);
+    this.showParcel(p);
+    this.speciesIdx++;
+    this.sound('flap');
+    this.ui.tipOnce('firstDrop', 'Parcel away!', 'It floats down AND forwards. Drop it before the brown soil to plant a tree!', 'good', 3.5);
+  },
 };

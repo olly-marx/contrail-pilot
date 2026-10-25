@@ -9,10 +9,23 @@ const nothing = () => {};
 // What the game draws or says, which the engine skips. Each is a GameScene method of the same name.
 export const VIEW_HOOKS = {
   showStorm: nothing, showNoFly: nothing, showRunway: nothing, showPlot: nothing, showIssr: nothing,
-  showContrail: nothing, showToken: nothing, showFlock: nothing,
-  popup: nothing, burst: nothing, explainWhenClear: nothing,
+  showContrail: nothing, showToken: nothing, showFlock: nothing, showParcel: nothing, unshow: nothing,
+  popup: nothing, burst: nothing, explainWhenClear: nothing, coolSparkle: nothing, enterIssr: nothing,
+  sound: nothing, buzz: nothing, shake: nothing,
+  onLiftOff: nothing, onSeed: nothing, onPower: nothing, onCrystals: nothing, onLand: nothing, onPopFake: nothing,
+  onDayHalf: nothing, onParcelMissed: nothing, onFinish: nothing,
+  showTree(tree) { tree.art = tree.kind; },
   explain() { return false; },   // a lesson pop-up would pause the game: the engine has none
   setRegion(r) { this.regionNow = r; },   // the game also fades the ground to the new land
+  // Delayed actions (a tap in turbulence works a little late), timed like Phaser's: each frame's time is
+  // added first, and an action runs once its delay has passed.
+  later(ms, fn) { (this.timers ||= []).push({ left: ms, fn }); },
+  runTimers(ms) {
+    if (!this.timers || !this.timers.length) return;
+    const due = [];
+    this.timers = this.timers.filter(t => { t.left -= ms; if (t.left <= 0) { due.push(t.fn); return false; } return true; });
+    for (const fn of due) fn();
+  },
 };
 
 export function createWorld(save, seed) {
@@ -22,5 +35,6 @@ export function createWorld(save, seed) {
   w.ui = { tipOnce: nothing, toast: nothing };
   w.initFlight();
   w.regionNow = null; w.setRegion(w.regionHere());
+  w.takeOff();   // as the game's startFlight
   return w;
 }
