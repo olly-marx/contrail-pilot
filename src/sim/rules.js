@@ -787,7 +787,7 @@ export const RULES = {
     if (this.onAutopilot()) { this.autoUntil = 0; this.popup(this.plane.x + 20, this.plane.y - 10, 'You have control!', '#ffe15a'); }   // ...and the autopilot pick-up
     this.plane.vy = PLANE.flapVelocity;
     this.flaps = (this.flaps || 0) + 1;
-    this.sound('flap');
+    this.playSound('flap');
   },
 
   flap() {
@@ -886,7 +886,7 @@ export const RULES = {
       if (Math.abs(amt) >= 0.3) {
         const cooling = amt < 0;
         this.popup(this.plane.x + 6, this.plane.y - 10, `${cooling ? '-' : '+'}${Math.abs(amt).toFixed(1)} ${cooling ? 'cooler' : 'hotter'}`, cooling ? '#7fd3ff' : '#ff6a5a');
-        if (cooling) { this.sound('cool'); this.coolSparkle(); } else { this.sound('warm'); this.buzz(25); }
+        if (cooling) { this.playSound('cool'); this.coolSparkle(); } else { this.playSound('warm'); this.buzz(25); }
       }
       this.feedback = { amount: 0, timer: 0 };
     }
@@ -930,10 +930,10 @@ export const RULES = {
 
   dropParcel() {
     if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
-    if (this.parcels <= 0) { this.sound('nope'); return; }
+    if (this.parcels <= 0) { this.playSound('nope'); return; }
     // Over the open sea and the ice nothing can be planted (user, 2026-10-24): keep the parcel.
     if (['ocean', 'ice'].includes(this.regionNow)) {
-      this.sound('nope');
+      this.playSound('nope');
       if (!this.saidNoSoil) { this.saidNoSoil = true; this.popup(this.plane.x + 20, this.plane.y - 12, this.regionNow === 'ocean' ? 'No land to plant on!' : 'Nothing grows on the ice!', '#cfe6ff'); }
       return;
     }
@@ -942,7 +942,7 @@ export const RULES = {
     this.parcelsFalling.push(p);
     this.showParcel(p);
     this.speciesIdx++;
-    this.sound('flap');
+    this.playSound('flap');
     this.ui.tipOnce('firstDrop', 'Parcel away!', 'It floats down AND forwards. Drop it before the brown soil to plant a tree!', 'good', 3.5);
   },
 };

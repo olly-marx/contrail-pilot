@@ -11,7 +11,7 @@ export const VIEW_HOOKS = {
   showStorm: nothing, showNoFly: nothing, showRunway: nothing, showPlot: nothing, showIssr: nothing,
   showContrail: nothing, showToken: nothing, showFlock: nothing, showParcel: nothing, unshow: nothing,
   popup: nothing, burst: nothing, explainWhenClear: nothing, coolSparkle: nothing, enterIssr: nothing,
-  sound: nothing, buzz: nothing, shake: nothing,
+  playSound: nothing, buzz: nothing, shake: nothing,
   onLiftOff: nothing, onSeed: nothing, onPower: nothing, onCrystals: nothing, onLand: nothing, onPopFake: nothing,
   onDayHalf: nothing, onParcelMissed: nothing, onFinish: nothing,
   showTree(tree) { tree.art = tree.kind; },

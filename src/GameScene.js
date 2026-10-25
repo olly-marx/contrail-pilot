@@ -1080,7 +1080,7 @@ export class GameScene extends Phaser.Scene {
     if (r.view) { if (r.view.maskGfx) r.view.maskGfx.destroy(); r.view.destroy(); }
     if (r.birds) r.birds.forEach(b => b.view && b.view.destroy());
   }
-  sound(name) { sfx[name](); }
+  playSound(name) { sfx[name](); }
   buzz(ms) { buzz(ms); }
   shake(ms, amount) { this.cameras.main.shake(ms, amount); }
   later(ms, fn) { this.time.delayedCall(ms, fn); }
