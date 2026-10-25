@@ -47,7 +47,7 @@ const firstDiff = (a, b) => { for (let i = 0; i < Math.max(a.length, b.length); 
   const fails = [];
   const a = await fly(b, 1, false), c = await fly(b, 777, false), leaked = await fly(b, 777, true);
   await b.close();
-  const busy = a.length > 10 && /\d/.test(a[a.length - 1].split(' ')[3] || '') && a.some(l => l.split(' ')[4]);
+  const busy = a.length > 10 && /\d/.test(a[a.length - 1].split(' ')[3] || '') && a.some(l => l.split(' ')[5]);
   if (!busy) fails.push(`the flight never had storms and icy air to compare: ${a[a.length - 1]}`);
   const d = firstDiff(a, c); if (d) fails.push(`same simSeed, different decoration: flights differ at ${d}`);
   if (!firstDiff(a, leaked)) fails.push('planted leak (decoration drawing from the physics stream) was NOT caught');
