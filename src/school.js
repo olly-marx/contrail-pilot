@@ -65,7 +65,7 @@ export class School {
       lesson('lesson-night', 'Now it is <b>night</b>. There is no sun to block. A contrail is like a <b>lid on a pot</b>: heat cannot get out. The Earth gets <span class="warm">HOTTER</span>.<br>So at night, fly <b>above or below</b> icy air.<br>In real life, contrails <b>warm</b> the Earth more than they cool it, so dodging these matters most.'),
       { say: 'Night! Icy air ahead: fly <b>above or below</b> it.',
         setup: () => {
-          s.issrs.forEach(i => { i.maskGfx.destroy(); i.destroy(); }); s.issrs = [];   // clear the day's icy air first
+          s.issrs.forEach(i => { i.view.maskGfx.destroy(); i.view.destroy(); }); s.issrs = [];   // clear the day's icy air first
           this.holdClock = true;   // stay night for the dodge
           this.night = s.heatTrapped;
           this.issr = s.addIssrAt(ahead() + 40, Phaser.Math.Clamp(s.plane.y - 30, 70, SKY_H - 160), 220, 70);

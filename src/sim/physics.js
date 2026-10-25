@@ -135,3 +135,31 @@ export function ageContrails(f, dt, time) {
 }
 // Fades in three steps so it stays pixel-art crisp.
 export function contrailAlpha(f, c, time) { return [0.95, 0.65, 0.35][Math.floor(((time - c.born) / f.kit.contrailLife) * 3)]; }
+
+// ---------- icy air records { x, y, width, height, blobs, alpha, fake, late, entered, popped, ... } ----------
+
+// A lumpy patch: 3-5 overlapping ellipses inside its box, each crossing the middle line, so flying through
+// the middle always makes a contrail. Draws from the physics stream in a fixed order. f.kit, f.between, f.floatBetween.
+export function makeIssr(f, x, y, w, h) { return { x, y, width: w, height: h, blobs: cloudBlobs(f, w, h), alpha: f.kit.hiddenAlpha }; }
+// The ellipses of a cloud w x h (icy air, turbulence), in its own box.
+export function cloudBlobs(f, w, h) {
+  const n = Math.max(3, Math.min(5, Math.round(w / 70))), blobs = [];
+  for (let k = 0; k < n; k++) {
+    const rx = Math.min(w / 2, (w / n) * f.floatBetween(0.75, 1.0));
+    const cx = Math.max(rx, Math.min(w - rx, (k + 0.5) * w / n + f.between(-6, 6)));
+    const ry = h * f.floatBetween(0.32, 0.5);
+    const cy = Math.max(ry, Math.min(h - ry, h / 2 + f.floatBetween(-0.15, 0.15) * h));
+    blobs.push({ cx, cy, rx, ry });
+  }
+  return blobs;
+}
+
+// A false forecast patch, popped when the plane comes near (FORECAST.popPx): fades out over popMs of game
+// time, then is moved off screen to be cleared away. f.gameTime.
+export const POP_MS = 300;
+export function popIssr(f, i) { i.popped = true; i.popAt = f.gameTime; i.popAlpha = i.alpha; }
+export function fadePopped(f, i) {
+  const k = Math.min(1, (f.gameTime - i.popAt) / POP_MS);
+  i.alpha = i.popAlpha * (1 - k);
+  if (k >= 1) i.x = -1e4;
+}

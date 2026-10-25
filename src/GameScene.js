@@ -632,7 +632,7 @@ export class GameScene extends Phaser.Scene {
     for (const i of this.issrs) {
       const inside = this.inIssrShape(i, box);
       if (inside) { inIssr = true; i.entered = true; }
-      if (!i.popped) i.setAlpha(this.issrAlpha(i, box, inside));
+      if (i.popped) P.fadePopped(this, i); else i.alpha = this.issrAlpha(i, box, inside);
       if (i.fake && !i.popped && this.nearPx(i, box) < FORECAST.popPx) this.popFake(i);
       // In your path: level with the plane while it was coming up ahead, so you had to climb or dive.
       const ahead = i.x - (box.x + box.w), cy = box.y + box.h / 2;
@@ -645,7 +645,8 @@ export class GameScene extends Phaser.Scene {
           this.earnCrystals(this.kit.dodgeCrystals, 'dodged icy air!');   // Crystal Lens: more per dodge
         }
       }
-      i.tilePositionY += dt * 4;
+      i.view.tilePositionY += dt * 4;
+      i.view.setPosition(i.x, i.y).setAlpha(i.alpha); i.view.maskGfx.setPosition(i.x, i.y);
     }
     this.updateTokens(dt, box);
     this.updatePowers();
@@ -1723,37 +1724,33 @@ export class GameScene extends Phaser.Scene {
   // column at x..x+w, past the icy air in `issrs` that overlaps the column?
   laneClear(x, w, gTop, gBot, issrs = this.issrs) { return P.laneClear(issrs, x, w, gTop, gBot); }
 
-
   // An ISSR is a lumpy patch, not a box: 3-5 overlapping ellipses inside its bounding box. Every
   // ellipse crosses the box's middle line, so the patch is one piece and flying through the
   // middle always makes a contrail. The texture is masked to the ellipses.
+  // Icy air is a record (src/sim/physics.js); the patch drawn for it is its .view (a tile sprite masked to the blobs).
   addIssrAt(x, y, w, h) {
-    const r = this.add.tileSprite(x, y, w, h, 'issr-tile').setOrigin(0).setAlpha(this.kit.hiddenAlpha);
-    r.tilePositionX = Phaser.Math.Between(0, 31); r.tilePositionY = Phaser.Math.Between(0, 31);
-    this.cloudShape(r, w, h);
-    this.issrLayer.add(r);
+    const tx = Phaser.Math.Between(0, 31), ty = Phaser.Math.Between(0, 31);   // looks: the texture's offset
+    const r = P.makeIssr(this, x, y, w, h);
+    const v = r.view = this.add.tileSprite(x, y, w, h, 'issr-tile').setOrigin(0).setAlpha(r.alpha);
+    v.tilePositionX = tx; v.tilePositionY = ty;
+    this.maskToBlobs(v, r.blobs);
+    this.issrLayer.add(v);
     this.issrs.push(r);
     return r;
   }
 
-  // Cloud shape for icy air and turbulence: 3-5 overlapping ellipses inside a w x h box, all
-  // crossing the middle line, used as the sprite's mask. Keep maskGfx at the sprite's x, y.
-  cloudShape(r, w, h) {
-    const n = Phaser.Math.Clamp(Math.round(w / 70), 3, 5);
-    r.blobs = [];
-    for (let k = 0; k < n; k++) {
-      const rx = Math.min(w / 2, (w / n) * this.floatBetween(0.75, 1.0));
-      const cx = Phaser.Math.Clamp((k + 0.5) * w / n + this.between(-6, 6), rx, w - rx);
-      const ry = h * this.floatBetween(0.32, 0.5);
-      const cy = Phaser.Math.Clamp(h / 2 + this.floatBetween(-0.15, 0.15) * h, ry, h - ry);
-      r.blobs.push({ cx, cy, rx, ry });
-    }
-    const m = this.make.graphics({ x: r.x, y: r.y }, false);
+  // A cloud's ellipses (P.cloudBlobs, physics random stream) on a sprite r (turbulence), used as its mask.
+  cloudShape(r, w, h) { r.blobs = P.cloudBlobs(this, w, h); this.maskToBlobs(r, r.blobs); }
+  // Masks sprite v to the ellipses. Keep v.maskGfx at the sprite's x, y.
+  maskToBlobs(v, blobs) {
+    const m = v.maskGfx = this.make.graphics({ x: v.x, y: v.y }, false);
     m.fillStyle(0xffffff);
-    for (const b of r.blobs) m.fillEllipse(b.cx, b.cy, b.rx * 2, b.ry * 2, 24);
-    r.maskGfx = m;
-    r.setMask(m.createGeometryMask());
+    for (const b of blobs) m.fillEllipse(b.cx, b.cy, b.rx * 2, b.ry * 2, 24);
+    v.setMask(m.createGeometryMask());
   }
+
+
+
 
   // Is any point along the plane's middle line inside the cloud's ellipses? (x, y, w, h: its box)
   // `grow`: each blob's radii x this (1 = the drawn shape). Used for the contrail margin below.
@@ -1789,14 +1786,13 @@ export class GameScene extends Phaser.Scene {
 
   // A false patch, close up: it puffs into sparkles with "Forecast wrong!" (user, draft 2) and is gone.
   popFake(i) {
-    i.popped = true;
+    P.popIssr(this, i);   // fades out by game time (src/sim/physics.js)
     const cx = i.x + i.width / 2, cy = i.y + i.height / 2;
     this.popup(cx, cy - 6, 'Forecast wrong!', '#cfe6ff', 8);
     for (let k = 0; k < 8; k++) {
       const sp = this.add.image(cx + Phaser.Math.Between(-i.width / 3, i.width / 3), cy + Phaser.Math.Between(-i.height / 3, i.height / 3), `plane-sparkle-${k % 4}`);
       this.tweens.add({ targets: sp, y: sp.y - 12, alpha: 0, duration: 600 + k * 40, onComplete: () => sp.destroy() });
     }
-    this.tweens.add({ targets: i, alpha: 0, duration: 300, onComplete: () => { i.x = -1e4; } });   // swept away by the normal clean-up
   }
 
   enterIssr() {
@@ -1820,9 +1816,9 @@ export class GameScene extends Phaser.Scene {
       if (s.rects[0].x + STORMS.width < -16) { s.parts.forEach(p => p.destroy()); return false; }   // (the cloud puffs out past the column)
       return true;
     });
-    for (const i of this.issrs) { i.x -= dx; i.maskGfx.x = i.x; i.maskGfx.y = i.y; }
+    for (const i of this.issrs) i.x -= dx;
     this.issrs = this.issrs.filter(i => {
-      if (i.x + i.width < -5) { i.maskGfx.destroy(); i.destroy(); return false; }
+      if (i.x + i.width < -5) { i.view.maskGfx.destroy(); i.view.destroy(); return false; }
       return true;
     });
     for (const c of this.contrails) c.x -= dx;

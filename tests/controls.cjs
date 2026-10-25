@@ -123,7 +123,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const shape = await scene(() => { const s = game.scene.getScene('game');
     const i = s.addIssrAt(100, 100, 240, 100), hb = (x, y) => ({ x, y: y - 6, w: 4, h: 12 });
     const r = { corner: s.inIssrShape(i, hb(101, 102)), middle: s.inIssrShape(i, hb(220, 150)) };
-    s.issrs = s.issrs.filter(z => z !== i); i.maskGfx.destroy(); i.destroy(); return r; });
+    s.issrs = s.issrs.filter(z => z !== i); i.view.maskGfx.destroy(); i.view.destroy(); return r; });
   check(!shape.corner, 'the corner of an icy-air box should be outside its lumpy shape');
   check(shape.middle, 'the middle of an icy-air patch should be inside it');
   check(errs.length === 0, `page errors: ${errs}`);

@@ -33,7 +33,7 @@ const KEY = 'contrailPilot.v2';
     await p.click('#goBtn'); await started(p); await p.waitForTimeout(2300);
     const r = await p.evaluate(({ night, through, dive }) => new Promise(res => { const s = game.scene.getScene('game');
       s.storms.forEach(st => st.parts.forEach(q => q.destroy())); s.storms = []; s.nextStormAt = 1e9; s.nextIssrAt = 1e9; s.nextTurbAt = 1e9;
-      s.issrs.forEach(i => { i.maskGfx.destroy(); i.destroy(); }); s.issrs = [];
+      s.issrs.forEach(i => { i.view.maskGfx.destroy(); i.view.destroy(); }); s.issrs = [];
       s.clock = night ? 15 + 4 : 2; s.heat = 0;
       const y = 250, h = 60;
       // through: flies the middle. dive: icy air level with the plane, which dives under it at the
