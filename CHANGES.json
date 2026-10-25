@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-10-25-sim-engine",
+    "version": "0.11.5",
+    "date": "2026-10-25",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: the game's flying rules can now be tested super fast, so we can make every plane fair and fun.",
+      "A wrong forecast patch of icy air now fades away the same way every time."
+    ]
+  },
+  {
     "id": "2026-10-25-treelayouts",
     "version": "0.11.4",
     "date": "2026-10-25",
