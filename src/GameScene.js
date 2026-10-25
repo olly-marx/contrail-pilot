@@ -1024,7 +1024,14 @@ export class GameScene extends Phaser.Scene {
   // ---------- airports ----------
 
   addRunway(worldX, name) {
-    const x = PLANE.x + worldX - this.distancePx;
+    const rw = { x: PLANE.x + worldX - this.distancePx, worldX, name, parts: [] };   // x: the runway's start on screen (the record; its pictures follow it)
+    this.runways.push(rw);
+    this.showRunway(rw);
+  }
+
+  // The runway's pictures: strip, tower, weather station, name, and the city's landmark in the skyline.
+  showRunway(rw) {
+    const { x, name } = rw;
     const strip = this.add.tileSprite(x, SKY_H, AIRPORT.runwayLen, 6, 'runway').setOrigin(0);   // centre dash every 20 px
     const parts = [strip];
     // Control tower at the far end.
@@ -1035,7 +1042,7 @@ export class GameScene extends Phaser.Scene {
     parts.push(this.add.text(x + AIRPORT.runwayLen / 2, SKY_H + 8, name,
       { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 0));
     this.runwayLayer.add(parts);
-    this.runways.push({ x, worldX, name, parts, strip });   // x: the runway's start on screen (the record; strip and parts follow it)
+    rw.parts = parts; rw.strip = strip;
     // The city's landmark, in the skyline (it scrolls at 0.55 x the ground): start it where it will
     // stand just behind the runway's middle as the runway passes the middle of the screen.
     const lm = LANDMARKS[name];
@@ -1151,6 +1158,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   addPlot(x) {
+    const pl = { x, parts: [], used: false };
+    this.plots.push(pl);
+    this.showPlot(pl);
+  }
+
+  showPlot(pl) {
+    const x = pl.x;
     const W = this.kit.plotW;
     // A raised mound of dark soil with furrows, a little sign, and a marker that bobs above it.
     // Built from tileable pieces so any width works (W = 8 + 8n): sunlit left slope, soil, shaded right.
@@ -1161,7 +1175,7 @@ export class GameScene extends Phaser.Scene {
     const marker = this.add.image(x + W / 2, SKY_H - 18, 'plot-arrow').setOrigin(0.5);
     parts.push(marker);
     this.plotLayer.add(parts);
-    this.plots.push({ x, parts, marker, used: false });
+    pl.parts = parts; pl.marker = marker;
     if (this.parcels > 0) this.time.delayedCall(900, () => this.explain('tree-1', '<b>TREE SCHOOL</b><br><b>Brown soil</b> = a place to plant a tree!<br>Press <b>DROP</b> a little <b>before</b> you reach it: parcels float down AND forwards. The X shows where it will land.', 'lesson-plot'));
   }
 
@@ -1258,9 +1272,9 @@ export class GameScene extends Phaser.Scene {
 
   // A pick-up (POWERUPS): rides with the seeds, so it is collected in updateTokens.
   addPower(power, x = WIDTH + 10, y = this.between(60, SKY_H - 90)) {
-    const img = this.add.image(x, y, `power-${power}`).setOrigin(0);
-    this.fxLayer.add(img);
-    this.tokens.push({ x, y, baseY: y, phase: this.rand() * 6, value: 0, power, view: img });
+    const t = { x, y, baseY: y, phase: this.rand() * 6, value: 0, power };
+    this.tokens.push(t);
+    this.showToken(t);
   }
 
   usePower(power, tx, ty) {
@@ -1300,13 +1314,16 @@ export class GameScene extends Phaser.Scene {
     for (let tries = 0; birds.length < n && tries < 400; tries++) {
       const oy = this.between(-H, H), ox = Math.min(W, Math.round(Math.abs(oy) * 1.2 + this.between(0, 9)));
       if (birds.some(q => Math.abs(q.ox - ox) < 6 && Math.abs(q.oy - oy) < 5)) continue;   // a clear gap round each bird
-      const b = { ox, oy, x: x + ox, y: y + oy, key: 'bird-0', flip: true };   // a record, facing the plane; its image is .view
-      b.view = this.add.image(b.x, b.y, b.key).setOrigin(0).setFlipX(b.flip);
-      this.birdLayer.add(b.view);
-      birds.push(b);
+      birds.push({ ox, oy, x: x + ox, y: y + oy, key: 'bird-0', flip: true });   // a record, facing the plane; its image is .view
     }
-    this.birds.push({ birds, x, y, half: FLOCK_HALF, phase: this.rand() * 6 });
+    const f = { birds, x, y, half: FLOCK_HALF, phase: this.rand() * 6 };
+    this.birds.push(f);
+    this.showFlock(f);
     this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds is flying at you! Fly over or under them. Hitting a bird ends your flight.');
+  }
+
+  showFlock(f) {
+    for (const b of f.birds) { b.view = this.add.image(b.x, b.y, b.key).setOrigin(0).setFlipX(b.flip); this.birdLayer.add(b.view); }
   }
 
 
@@ -1428,10 +1445,16 @@ export class GameScene extends Phaser.Scene {
       }
     }
     if (golden === null) golden = this.distancePx > TOKENS.goldenAfter && this.rand() < TOKENS.goldenChance;
-    if (golden) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN seed</b>! It is worth <b>3 seeds</b>. They only appear on long flights.', 'lesson-gold'));
-    const img = this.add.image(x, y, golden ? 'token-gold' : 'token').setOrigin(0);
-    this.fxLayer.add(img);
-    this.tokens.push({ x, y, baseY: y, phase: this.rand() * 6, value: golden ? 3 : 1, view: img });   // a record; img is its .view
+    const t = { x, y, baseY: y, phase: this.rand() * 6, value: golden ? 3 : 1 };   // a record; its picture is .view
+    this.tokens.push(t);
+    this.showToken(t);
+  }
+
+  // A seed's (or pick-up's) picture. A golden seed is explained the first time.
+  showToken(t) {
+    t.view = this.add.image(t.x, t.y, t.power ? `power-${t.power}` : t.value > 1 ? 'token-gold' : 'token').setOrigin(0);
+    this.fxLayer.add(t.view);
+    if (t.value > 1) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN seed</b>! It is worth <b>3 seeds</b>. They only appear on long flights.', 'lesson-gold'));
   }
 
   updateTokens(dt, box) {
@@ -1494,18 +1517,10 @@ export class GameScene extends Phaser.Scene {
     const W = HAZARDS.noFly.width, topH = gapY - gap / 2, botY = gapY + gap / 2;
     const top = { x, y: 0, width: W, height: topH };
     const bottom = { x, y: botY, width: W, height: SKY_H - botY };
-    const style = { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#d02a2a', strokeThickness: 3 };
-    const parts = [
-      this.add.tileSprite(x, 0, W, topH, 'nofly').setOrigin(0),
-      this.add.tileSprite(x, botY, W, SKY_H - botY, 'nofly').setOrigin(0),
-      this.add.rectangle(x, topH - 2, W, 2, 0x8a1010).setOrigin(0),
-      this.add.rectangle(x, botY, W, 2, 0x8a1010).setOrigin(0),
-      this.add.text(x + W / 2, topH - 12, 'NO', style).setOrigin(0.5),
-      this.add.text(x + W / 2, botY + 12, 'FLY', style).setOrigin(0.5),
-    ];
-    this.stormLayer.add(parts);
-    this.storms.push({ rects: [top, bottom], parts, flashUntil: 0, noFly: true });
+    const st = { rects: [top, bottom], parts: [], flashUntil: 0, noFly: true };
+    this.storms.push(st);
     this.stormCount++;
+    this.showNoFly(st);
     this.newHazard('noFly', 'NEW HAZARD: NO-FLY ZONE', 'Red stripes mean planes are not allowed there, like near airports or big events. Squeeze through the gap: touching it ends your flight!');
   }
 
@@ -1513,23 +1528,45 @@ export class GameScene extends Phaser.Scene {
   // A storm pair: PixelLab storm towers. The bottom column's crown touches the gap edge from below, the top
   // column's hanging base from above, so every gap's narrowest point is exactly `gap`. A column taller
   // than one picture stacks another behind it. st.pics: { key, dx (from the column's left), y, flip }.
+  // A no-fly zone's pictures: red-striped blocks with edges and NO / FLY.
+  showNoFly(st) {
+    const [top, bottom] = st.rects, x = top.x, W = top.width, topH = top.height, botY = bottom.y;
+    const style = { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#d02a2a', strokeThickness: 3 };
+    st.parts = [
+      this.add.tileSprite(x, 0, W, topH, 'nofly').setOrigin(0),
+      this.add.tileSprite(x, botY, W, SKY_H - botY, 'nofly').setOrigin(0),
+      this.add.rectangle(x, topH - 2, W, 2, 0x8a1010).setOrigin(0),
+      this.add.rectangle(x, botY, W, 2, 0x8a1010).setOrigin(0),
+      this.add.text(x + W / 2, topH - 12, 'NO', style).setOrigin(0.5),
+      this.add.text(x + W / 2, botY + 12, 'FLY', style).setOrigin(0.5),
+    ];
+    this.stormLayer.add(st.parts);
+  }
+
+  // A storm's pictures (st.pics, farthest first), cropped at the ground line.
+  showStorm(st) {
+    const x = st.rects[0].x;
+    st.parts = st.pics.map(q => { const im = this.add.image(x + q.dx, q.y, q.key).setOrigin(0).setFlipX(q.flip);
+      im.cropH = Math.min(q.h, SKY_H - q.y);   // never below the ground line
+      return im.setCrop(0, 0, im.width, im.cropH); });
+    this.stormLayer.add(st.parts);
+  }
+
   addStormPairAt(x, gapY, gap) {
     const topH = gapY - gap / 2, botY = gapY + gap / 2;
     const top = { x, y: 0, width: STORMS.width, height: topH };
     const bottom = { x, y: botY, width: STORMS.width, height: SKY_H - botY };
     const pics = [], pick = () => STORM_ART[this.between(0, STORM_ART.length - 1)];
-    const place = (key, y) => { const t = this.textures.get(key).getSourceImage();
-      pics.push({ key, y: Math.round(y), dx: Math.round(STORMS.width / 2 - t.width / 2), flip: this.rand() < 0.5, h: t.height }); };
-    for (let y = topH; y > 0;) { const k = `storm-hang-${pick()}`; const h = this.textures.get(k).getSourceImage().height; place(k, y - h); y -= h - STORM_OVERLAP; }
-    for (let y = botY; y < SKY_H;) { const k = `storm-rise-${pick()}`; place(k, y); y += this.textures.get(k).getSourceImage().height - STORM_OVERLAP; }
+    const place = (key, y) => { const t = mask(key);   // the picture's size (the baked mask is the picture's size)
+      pics.push({ key, y: Math.round(y), dx: Math.round(STORMS.width / 2 - t.w / 2), flip: this.rand() < 0.5, h: t.h }); };
+    for (let y = topH; y > 0;) { const k = `storm-hang-${pick()}`; const h = mask(k).h; place(k, y - h); y -= h - STORM_OVERLAP; }
+    for (let y = botY; y < SKY_H;) { const k = `storm-rise-${pick()}`; place(k, y); y += mask(k).h - STORM_OVERLAP; }
     // Drawn farthest first: the picture at the gap edge is in front.
     const order = [...pics.filter(q => q.key.includes('hang')).reverse(), ...pics.filter(q => q.key.includes('rise')).reverse()];
-    const parts = order.map(q => { const im = this.add.image(x + q.dx, q.y, q.key).setOrigin(0).setFlipX(q.flip);
-      im.cropH = Math.min(q.h, SKY_H - q.y);   // never below the ground line
-      return im.setCrop(0, 0, im.width, im.cropH); });
-    this.stormLayer.add(parts);
-    this.storms.push({ rects: [top, bottom], parts, pics: order, flashUntil: 0, nextSpark: 0 });
+    const st = { rects: [top, bottom], parts: [], pics: order, flashUntil: 0, nextSpark: 0 };
+    this.storms.push(st);
     this.stormCount++;
+    this.showStorm(st);
   }
 
   // Now and then a storm flickers with lightning: the cloud lights up (the same pictures, lit) and a bolt
@@ -1602,14 +1639,17 @@ export class GameScene extends Phaser.Scene {
   // middle always makes a contrail. The texture is masked to the ellipses.
   // Icy air is a record (src/sim/physics.js); the patch drawn for it is its .view (a tile sprite masked to the blobs).
   addIssrAt(x, y, w, h) {
-    const tx = Phaser.Math.Between(0, 31), ty = Phaser.Math.Between(0, 31);   // looks: the texture's offset
     const r = P.makeIssr(this, x, y, w, h);
-    const v = r.view = this.add.tileSprite(x, y, w, h, 'issr-tile').setOrigin(0).setAlpha(r.alpha);
-    v.tilePositionX = tx; v.tilePositionY = ty;
+    this.issrs.push(r);
+    this.showIssr(r);
+    return r;
+  }
+
+  showIssr(r) {
+    const v = r.view = this.add.tileSprite(r.x, r.y, r.width, r.height, 'issr-tile').setOrigin(0).setAlpha(r.alpha);
+    v.tilePositionX = Phaser.Math.Between(0, 31); v.tilePositionY = Phaser.Math.Between(0, 31);   // looks: the texture's offset
     this.maskToBlobs(v, r.blobs);
     this.issrLayer.add(v);
-    this.issrs.push(r);
-    return r;
   }
 
   // Masks sprite v to the ellipses. Keep v.maskGfx at the sprite's x, y.
@@ -1675,10 +1715,15 @@ export class GameScene extends Phaser.Scene {
 
   // Contrails are records (src/sim/physics.js); the square drawn for each is its .view.
   addContrail(time) {
-    const c = P.makeContrail(this, time), s = CONTRAIL.size;
+    const c = P.makeContrail(this, time);
+    this.contrails.push(c);
+    this.showContrail(c);
+  }
+
+  showContrail(c) {
+    const s = CONTRAIL.size;
     c.view = this.add.rectangle(c.x, c.y, s, s, COLOURS.contrail).setOrigin(0);
     this.contrailLayer.add(c.view);
-    this.contrails.push(c);
   }
 
   scroll(dx) {
