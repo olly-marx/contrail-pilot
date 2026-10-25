@@ -46,6 +46,22 @@ function readRaw(key) {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return undefined; }   // undefined: there but unreadable
 }
 
+// A stored save made whole: defaults filled in and old saves brought up to date. Pure (no storage), so the
+// sim engine (src/sim/world.js) prepares a save exactly as the game does. A missing save: a new player.
+export function prepareSave(saved) {
+  if (!saved || typeof saved !== 'object') return { ...structuredClone(DEFAULTS), fleet: newFleet() };
+  const s = { ...DEFAULTS, ...saved };
+  if (!('priceVersion' in saved)) s.priceVersion = 1;   // from before the price change: re-valued once (src/reprice.js)
+  if ('trees' in s) { s.seeds = (s.seeds || 0) + s.trees; delete s.trees; }   // money was called 'trees' before 2026-10-16
+  migrateMissions(s);   // 2026-10-22: missions became lessons, badges became tiered achievements
+  migrateBadges(s);
+  migrateCity(s);       // 2026-10-22: the city became a name in a world network of ~100
+  delete s.challenges;
+  if (!saved.fleet) migrateFleet(s);   // 2026-10-23: the eras reset (plane side only)
+  syncFleet(s);
+  return s;
+}
+
 export function loadSave() {
   try {
     let saved = readRaw(KEY);
@@ -53,17 +69,7 @@ export function loadSave() {
       try { if (!localStorage.getItem(UNREADABLE)) localStorage.setItem(UNREADABLE, localStorage.getItem(KEY)); } catch (e) {}
     }
     if (!saved || typeof saved !== 'object') saved = readRaw(BACKUP);
-    if (!saved || typeof saved !== 'object') return { ...structuredClone(DEFAULTS), fleet: newFleet() };
-    const s = { ...DEFAULTS, ...saved };
-    if (!('priceVersion' in saved)) s.priceVersion = 1;   // from before the price change: re-valued once (src/reprice.js)
-    if ('trees' in s) { s.seeds = (s.seeds || 0) + s.trees; delete s.trees; }   // money was called 'trees' before 2026-10-16
-    migrateMissions(s);   // 2026-10-22: missions became lessons, badges became tiered achievements
-    migrateBadges(s);
-    migrateCity(s);       // 2026-10-22: the city became a name in a world network of ~100
-    delete s.challenges;
-    if (!saved.fleet) migrateFleet(s);   // 2026-10-23: the eras reset (plane side only)
-    syncFleet(s);
-    return s;
+    return prepareSave(saved);
   } catch (e) {
     return { ...structuredClone(DEFAULTS), fleet: newFleet() };
   }
