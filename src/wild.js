@@ -233,6 +233,34 @@ const SLOTS = { hedgerow: [[0, 72], [96, 72], [192, 72]], woodland: [[4, 98]], m
 // the n-th spot, bottom-left corner, 1x art up to 64 x 32; spread round the field and clear of TREE_SPOTS.
 const REGION_SPOTS = [[2, 98], [100, 92], [212, 96], [30, 136], [128, 128], [216, 140], [64, 162], [160, 156], [232, 170], [2, 170], [112, 170], [180, 112], [252, 118]];   // 13: rainforest has the most projects
 const TREE_SPOTS = [[200, 84], [176, 90], [266, 88], [126, 92], [100, 96], [84, 132], [226, 120], [190, 160], [24, 124], [150, 166], [270, 156], [56, 164]];
+// Each other land gets its OWN tree layout (the user, 2026-10-25: "all of the wild areas have the same trees in the
+// same arrangement"): spots from a grid on the ground, shuffled by a generator seeded with the land's name (same land,
+// same order every visit): 12 spots at least 26 px apart, chosen once; a tree whose base would stand on a feature BUILT
+// there (`feats`: bottom-left corners) moves to the next free spot in that order, and the others stay put. (All 13 spots together cover nearly the whole field, so trees avoid only built ones; a new
+// feature moves just the trees standing on it.) The UK keeps TREE_SPOTS (placed clear of its SLOTS by hand).
+const FEAT_W = 64, FEAT_H = 32;
+const orders = {};
+function treeSpots(region, feats = []) {
+  if (region === 'woodland') return TREE_SPOTS;
+  let h = 2166136261; for (const c of region) h = Math.imul(h ^ c.charCodeAt(0), 16777619);   // FNV-1a seed
+  const rnd = () => { h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
+  // A tree may stand behind a feature (lower down is drawn in front), but its base never stands ON one (4 px margin).
+  const clear = (x, y) => feats.every(([fx, fy]) => x < fx - 4 || x > fx + FEAT_W + 4 || y < fy - FEAT_H - 4 || y > fy + 4);
+  let grid = orders[region];
+  if (!grid) {
+    grid = [];
+    for (let y = GROUND[0] + 16; y <= FH - 4; y += 12) for (let x = 18; x <= FW - 18; x += 16) grid.push([x, y]);
+    for (let i = grid.length - 1; i > 0; i--) { const k = Math.floor(rnd() * (i + 1)); [grid[i], grid[k]] = [grid[k], grid[i]]; }
+    orders[region] = grid;
+  }
+  const apart = (p, list) => list.every(q => q === p || Math.hypot(p[0] - q[0], p[1] - q[1]) >= 26);
+  const base = [];   // the land's own 12 spots, chosen once with nothing built
+  for (const p of grid) if (base.length < TREE_SPOTS.length && apart(p, base)) base.push(p);
+  // Only trees standing on a built feature move, to the next free spot in the land's order; the others stay put.
+  const out = base.filter(p => clear(p[0], p[1]));
+  for (const p of grid) if (out.length < base.length && !out.includes(p) && clear(p[0], p[1]) && apart(p, out)) out.push(p);
+  return out;
+}
 
 class Field {
   constructor(el, region, done, planted, found, order = []) {
@@ -258,10 +286,11 @@ class Field {
     }
     const total = planted.reduce((a, [, n]) => a + n, 0);
     const kinds = planted.flatMap(([id, n]) => Array(n).fill(id));
-    const nTrees = Math.min(TREE_SPOTS.length, Math.ceil(total / 2));
+    const spots = treeSpots(region, done.map(id => REGION_SPOTS[order.indexOf(id)]).filter(Boolean));
+    const nTrees = Math.min(spots.length, Math.ceil(total / 2));
     for (let i = 0; i < nTrees; i++) {
       const kind = kinds[Math.floor((i + 0.5) / nTrees * kinds.length)];
-      const [x, y] = TREE_SPOTS[i];
+      const [x, y] = spots[i];
       put(`assets/tree-${kind}-2.png`, x, y, 1, 'tree').style.transform = 'translate(-50%, -100%)';   // 1x (drawn at 2 px/unit), centred on x
     }
     // Animals: start at random spots; birds that fly take the sky.

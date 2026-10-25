@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-25-treelayouts",
+    "version": "0.11.4",
+    "date": "2026-10-25",
+    "level": "minor",
+    "notes": [
+      "Every wild area now has its own tree layout, and trees no longer stand on top of your nature projects."
+    ]
+  },
+  {
     "id": "2026-10-25-fixes",
     "version": "0.11.3",
     "date": "2026-10-25",
