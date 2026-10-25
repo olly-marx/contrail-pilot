@@ -219,3 +219,22 @@ export function hitsStorm(f, st, pts) {
   const forgive = st.noFly ? 0 : HAZARDS.stormForgive;
   return stormPixelsHit(f, st, forgive + 1, pts) > forgive;
 }
+
+// ---------- birds: flocks { x, y, half, phase, birds: [{ ox, oy, x, y, key, flip }] } ----------
+
+// A bird's picture box (its mask's size).
+export function birdBox(b) { const m = mask(b.key); return { x: b.x, y: b.y, w: m.w, h: m.h }; }
+
+// Does any plane pixel land on a bird's solid pixel? pts(): the plane's pixels.
+export function hitBird(f, box, pts) {
+  for (const fl of f.birds) for (const b of fl.birds) {
+    const m = mask(b.key);
+    if (!overlaps(box, { x: b.x - 12, y: b.y - 16, w: m.w + 24, h: m.h + 32 })) continue;   // far away: skip
+    for (const [x, y] of pts()) {
+      let lx = x - b.x; const ly = y - b.y;
+      if (b.flip) lx = m.w - 1 - lx;
+      if (m.at(lx, ly)) return true;
+    }
+  }
+  return false;
+}

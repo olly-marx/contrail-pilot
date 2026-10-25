@@ -54,7 +54,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await start();
   const allSeen = () => p.evaluate(() => { const t = JSON.parse(localStorage.getItem('contrailPilot.v2')).seenTips; return ['hazard-turbulence', 'hazard-noFly', 'hazard-birds'].every(h => t.includes(h)); });
   for (let i = 0; i < 600 && !(i % 20 === 0 && await allSeen()); i++) {
-    await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.rects.forEach(r => { r.y = -9999; })); s.birds.forEach(f => f.birds.forEach(b => b.img.y = -999)); s.birds.forEach(f => { f.y = -999; });
+    await scene(() => { const s = game.scene.getScene('game'); s.storms.forEach(st => st.rects.forEach(r => { r.y = -9999; })); s.birds.forEach(f => f.birds.forEach(b => b.y = -999)); s.birds.forEach(f => { f.y = -999; });
       s.plane.y = 200; s.plane.vy = 0; s.heat = 0; s.distancePx = Math.max(s.distancePx, 10000) + 60; });
     await dismiss();
     await p.waitForTimeout(30);

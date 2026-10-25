@@ -60,7 +60,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
         // The moment the plane is inside this storm column: any bird in the gap right there?
         if (r.x < s.plane.x + PLANE.w && r.x + r.width > s.plane.x && !passed.has(st)) {
           passed.add(st); L.gapsSeen++;
-          const inGap = s.birds.some(f => f.birds.some(bd => bd.img.x < s.plane.x + PLANE.w + 20 && bd.img.x + 12 > s.plane.x - 10 && bd.img.y < gBot && bd.img.y + 10 > gTop));
+          const inGap = s.birds.some(f => f.birds.some(bd => bd.x < s.plane.x + PLANE.w + 20 && bd.x + 12 > s.plane.x - 10 && bd.y < gBot && bd.y + 10 > gTop));
           if (inGap) L.birdBlocked.push({ d: Math.round(s.distancePx), gTop, gBot });
         }
       }

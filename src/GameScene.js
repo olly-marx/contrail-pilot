@@ -113,7 +113,7 @@ export class GameScene extends Phaser.Scene {
     this.trees = [];                 // planted trees: keep cooling after they scroll away
     this.plots = [];                 // soil plots on the ground to aim parcels at
     this.turbs = [];                 // turbulence zones {x, w}
-    this.birds = [];                 // flocks {birds: [{img, ox, oy}], x, y, phase}
+    this.birds = [];                 // flocks {birds: [{ox, oy, x, y, key, flip, view}], x, y, phase}
     this.nextTurbAt = HAZARDS.turbulence.from;
     this.nextBirdsAt = HAZARDS.birds.from;
     this.inTurb = false;
@@ -436,7 +436,7 @@ export class GameScene extends Phaser.Scene {
           if (box.x < r.x + r.width + 4 && box.x + W > r.x - 4 && y < r.y + r.height + 6 && y + H > r.y - 6) cost += 1000 * w;
         }
         const pad = { x: box.x - 8, y: y - 10, w: W + 16, h: H + 20 };          // every bird's picture, with room to spare
-        for (const f of this.birds) for (const bd of f.birds) if (overlaps(pad, { x: bd.img.x, y: bd.img.y, w: bd.img.width, h: bd.img.height })) cost += 1000 * w;
+        for (const f of this.birds) for (const bd of f.birds) if (overlaps(pad, P.birdBox(bd))) cost += 1000 * w;
         for (const i of this.issrs) if (this.inIssrShape(i, box)) cost += (want ? -40 : 600) * w;
       });
       if (cost < bestCost) { bestCost = cost; best = y; }
@@ -1377,9 +1377,10 @@ export class GameScene extends Phaser.Scene {
     for (let tries = 0; birds.length < n && tries < 400; tries++) {
       const oy = this.between(-H, H), ox = Math.min(W, Math.round(Math.abs(oy) * 1.2 + this.between(0, 9)));
       if (birds.some(q => Math.abs(q.ox - ox) < 6 && Math.abs(q.oy - oy) < 5)) continue;   // a clear gap round each bird
-      const img = this.add.image(x + ox, y + oy, 'bird-0').setOrigin(0).setFlipX(true);   // facing the plane
-      this.birdLayer.add(img);
-      birds.push({ img, ox, oy });
+      const b = { ox, oy, x: x + ox, y: y + oy, key: 'bird-0', flip: true };   // a record, facing the plane; its image is .view
+      b.view = this.add.image(b.x, b.y, b.key).setOrigin(0).setFlipX(b.flip);
+      this.birdLayer.add(b.view);
+      birds.push(b);
     }
     this.birds.push({ birds, x, y, half: FLOCK_HALF, phase: this.rand() * 6 });
     this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds is flying at you! Fly over or under them. Hitting a bird ends your flight.');
@@ -1452,24 +1453,17 @@ export class GameScene extends Phaser.Scene {
       const fy = f.y + Math.sin(f.phase) * B.wobble;
       const frame = Math.floor(this.gameTime / 120) % 2;
       const night = this.nightAmount() > 0.5;   // dark birds vanish on a night sky: draw them pale
-      for (const b of f.birds) { b.img.setPosition(Math.round(f.x + b.ox), Math.round(fy + b.oy)); b.img.setTexture(`bird-${frame}`); if (night) b.img.setTintFill(0xd8def0); else b.img.clearTint(); }
-    }
-    this.birds = this.birds.filter(f => { if (f.x < -60) { f.birds.forEach(b => b.img.destroy()); return false; } return true; });
-  }
-
-  hitBird(box) {
-    const pts = this.planePixels();
-    for (const f of this.birds) for (const b of f.birds) {
-      const m = this.alphaMask(b.img.texture.key);
-      if (!overlaps(box, { x: b.img.x - 12, y: b.img.y - 16, w: m.w + 24, h: m.h + 32 })) continue;   // far away: skip
-      for (const [x, y] of pts) {
-        let lx = x - b.img.x; const ly = y - b.img.y;
-        if (b.img.flipX) lx = m.w - 1 - lx;
-        if (m.at(lx, ly)) return true;
+      for (const b of f.birds) {
+        b.x = Math.round(f.x + b.ox); b.y = Math.round(fy + b.oy); b.key = `bird-${frame}`;
+        b.view.setPosition(b.x, b.y).setTexture(b.key);
+        if (night) b.view.setTintFill(0xd8def0); else b.view.clearTint();
       }
     }
-    return false;
+    this.birds = this.birds.filter(f => { if (f.x < -60) { f.birds.forEach(b => b.view.destroy()); return false; } return true; });
   }
+
+  hitBird(box) { return P.hitBird(this, box, () => this.planePixels()); }
+
 
   // ---------- pixel collisions ----------
 

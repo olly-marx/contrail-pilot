@@ -56,6 +56,11 @@ const PLANT = process.env.PLANT || '';
           if (px >= 0 && py >= 0 && px < m.w && py < m.h && m.at(q.flip ? m.w - 1 - px : px, py)) { solid = true; break; } }
         if (solid && ++n >= enough) return n; }
       return n; },
+    hitBird(sp, birds, box) { const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y; const pts = old.planePixels(sp);
+      for (const f of birds) for (const b of f.birds) { const m = mask(b.img.texture.key);
+        if (!overlaps(box, { x: b.img.x - 12, y: b.img.y - 16, w: m.w + 24, h: m.h + 32 })) continue;
+        for (const [x, y] of pts) { let lx = x - b.img.x; const ly = y - b.img.y; if (b.img.flipX) lx = m.w - 1 - lx; if (m.at(lx, ly)) return true; } }
+      return false; },
     hitsStorm(sp, st) { const forgive = st.noFly ? 0 : HAZARDS.stormForgive; return old.stormPixelsHit(sp, st, forgive + 1) > forgive; },
   };
   // --- end of frozen copy ---
@@ -96,6 +101,10 @@ const PLANT = process.env.PLANT || '';
     for (let y = bot; y < 464;) { const k = `storm-rise-${r() < 0.5 ? 'c' : 'd'}`, m = mask(k); pics.push({ key: k, y: Math.round(y), dx: Math.round(26 - m.w / 2), flip: r() < 0.5 }); y += m.h - 6; }
     const st = { noFly: r() < 0.2, pics, rects: [{ x: sx, y: 0, width: 52, height: top }, { x: sx, y: bot, width: 52, height: 464 - bot }] };
     same('hitsStorm', old.hitsStorm(f.pose, st), P.hitsStorm(f, st, () => P.planePixels(f)));
+    // 5b: a flock near the plane; old birds are sprites { img: { x, y, flipX, texture.key } }, new are records
+    const flock = Array.from({ length: 1 + Math.floor(r() * 6) }, () => ({ x: Math.round(f.pose.x + between(-45, 40)), y: Math.round(f.pose.y + between(-25, 25)), key: `bird-${r() < 0.5 ? 0 : 1}`, flip: r() < 0.7 }));
+    const pbox = { x: f.plane.x, y: f.plane.y, w: PLANE.w, h: PLANE.h };
+    same('hitBird', old.hitBird(f.pose, [{ birds: flock.map(b => ({ img: { x: b.x, y: b.y, flipX: b.flip, texture: { key: b.key } } })) }], pbox), P.hitBird({ ...f, birds: [{ birds: flock }] }, pbox, () => P.planePixels(f)));
     same('stormPixelsHit', old.stormPixelsHit(f.pose, st, 50), P.stormPixelsHit(f, st, 50, () => P.planePixels(f)));
   }
   const fails = Object.entries(differ).map(([k, n]) => `${k}: ${n} of ${counts[k]} made-up flights differ from the old GameScene code`);

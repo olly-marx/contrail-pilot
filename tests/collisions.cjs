@@ -35,9 +35,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     }
     // Bird: one placed right on the fuselage hits; one just clear of the nose doesn't.
     s.birds = []; s.addFlock(-999, -999); const f = s.birds[0]; f.birds = [f.birds[0]];
-    const bimg = f.birds[0].img;
-    bimg.setPosition(s.planeSprite.x - 4, s.planeSprite.y); const birdOn = s.hitBird(box);
-    bimg.setPosition(s.planeSprite.x + 40, s.planeSprite.y - 20); const birdOff = s.hitBird(box);
+    const bimg = f.birds[0];   // a record (x, y, key, flip)
+    bimg.x = s.planeSprite.x - 4; bimg.y = s.planeSprite.y; const birdOn = s.hitBird(box);
+    bimg.x = s.planeSprite.x + 40; bimg.y = s.planeSprite.y - 20; const birdOff = s.hitBird(box);
     // Probes: a single "plane pixel" on a known empty and a known solid pixel of each sprite.
     const realPts = s.planePixels.bind(s); let probe = null;
     s.planePixels = () => [probe];
@@ -50,8 +50,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const [ex, ey] = crown(false), [fx, fy] = crown(true), botY = st.rects[1].y;
     probe = [100 + ex + 0.5, botY + ey + 0.5]; const capEmpty = s.stormPixelsHit(st, 1);
     probe = [100 + fx + 0.5, botY + fy + 0.5]; const capSolid = s.stormPixelsHit(st, 1);
-    const bm = s.alphaMask(bimg.texture.key), [bx0, by0] = findPx(bimg.texture.key, false), [bx1, by1] = findPx(bimg.texture.key, true);
-    bimg.setPosition(150, 150); f.birds[0].img.setFlipX(false);
+    const bm = s.alphaMask(bimg.key), [bx0, by0] = findPx(bimg.key, false), [bx1, by1] = findPx(bimg.key, true);
+    bimg.x = 150; bimg.y = 150; bimg.flip = false;
     probe = [150 + bx0 + 0.5, 150 + by0 + 0.5]; const birdEmpty = s.hitBird({ x: 140, y: 140, w: 30, h: 30 });
     probe = [150 + bx1 + 0.5, 150 + by1 + 0.5]; const birdSolid = s.hitBird({ x: 140, y: 140, w: 30, h: 30 });
     s.planePixels = realPts; s.birds = [];
