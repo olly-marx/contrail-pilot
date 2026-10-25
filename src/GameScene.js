@@ -1341,7 +1341,7 @@ export class GameScene extends Phaser.Scene {
   addPower(power, x = WIDTH + 10, y = this.between(60, SKY_H - 90)) {
     const img = this.add.image(x, y, `power-${power}`).setOrigin(0);
     this.fxLayer.add(img);
-    this.tokens.push({ img, baseY: y, phase: this.rand() * 6, value: 0, power });
+    this.tokens.push({ x, y, baseY: y, phase: this.rand() * 6, value: 0, power, view: img });
   }
 
   usePower(power, tx, ty) {
@@ -1559,27 +1559,27 @@ export class GameScene extends Phaser.Scene {
     if (golden) this.time.delayedCall(700, () => this.explain('x-gold', 'A <b>GOLDEN seed</b>! It is worth <b>3 seeds</b>. They only appear on long flights.', 'lesson-gold'));
     const img = this.add.image(x, y, golden ? 'token-gold' : 'token').setOrigin(0);
     this.fxLayer.add(img);
-    this.tokens.push({ img, baseY: y, phase: this.rand() * 6, value: golden ? 3 : 1 });
+    this.tokens.push({ x, y, baseY: y, phase: this.rand() * 6, value: golden ? 3 : 1, view: img });   // a record; img is its .view
   }
 
   updateTokens(dt, box) {
     const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
     this.tokens = this.tokens.filter(t => {
       t.phase += dt * 4;
-      const tx = t.img.x + 7, ty = t.img.y + 7;
+      const tx = t.x + 7, ty = t.y + 7;
       // Distance from the token's centre to the plane's hitbox.
       const dxB = Math.max(box.x - tx, 0, tx - (box.x + box.w)), dyB = Math.max(box.y - ty, 0, ty - (box.y + box.h));
       const d = Math.hypot(dxB, dyB);
       if (this.kit.pickup > 12 && d < this.kit.pickup * 2.5) {
         // Magnet: pull towards the plane.
         const a = Math.atan2(cy - ty, cx - tx);
-        t.img.x += Math.cos(a) * TOKENS.magnetPull * dt;
+        t.x += Math.cos(a) * TOKENS.magnetPull * dt;
         t.baseY += Math.sin(a) * TOKENS.magnetPull * dt;
       }
-      t.img.y = Math.round(t.baseY + Math.sin(t.phase) * TOKENS.bob);
+      t.y = Math.round(t.baseY + Math.sin(t.phase) * TOKENS.bob);
       if (d <= this.kit.pickup - 6 && this.state === 'playing' && t.power) {
         this.usePower(t.power, tx, ty);
-        t.img.destroy();
+        t.view.destroy();
         return false;
       }
       if (d <= this.kit.pickup - 6 && this.state === 'playing') {
@@ -1590,12 +1590,13 @@ export class GameScene extends Phaser.Scene {
         sfx.coin();
         this.tweens.add({ targets: this.cargoIcon, scale: 1.4, duration: 80, yoyo: true });
         if (this.cargo === t.value) this.ui.tipOnce('firstToken', 'You grabbed a seed!', 'It is on board now (top left). Land safely to keep it!', 'good', 3.5);
-        t.img.destroy();
+        t.view.destroy();
         return false;
       }
-      if (t.img.x < -20) { t.img.destroy(); return false; }
+      if (t.x < -20) { t.view.destroy(); return false; }
       return true;
     });
+    for (const t of this.tokens) t.view.setPosition(t.x, t.y);
   }
 
   addStormPair(x = WIDTH + 10) {
@@ -1828,7 +1829,7 @@ export class GameScene extends Phaser.Scene {
       return true;
     });
 
-    for (const t of this.tokens) t.img.x -= dx;
+    for (const t of this.tokens) t.x -= dx;
     for (const z of this.turbs) z.x -= dx;
     for (const f of this.birds) f.x -= dx;
     const bob = Math.round(Math.sin(this.gameTime / 180) * 2);

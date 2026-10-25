@@ -81,7 +81,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(auto.off, `a tap takes control back: ${JSON.stringify(auto)}`);
   // The first SAF can always comes, early and in your path.
   const first = await p.evaluate(async () => { const s = game.scene.getScene('game');
-    s.tokens.filter(t => t.power).forEach(t => t.img.destroy()); s.tokens = s.tokens.filter(t => !t.power);
+    s.tokens.filter(t => t.power).forEach(t => t.view.destroy()); s.tokens = s.tokens.filter(t => !t.power);
     s.safOffered = false; s.distancePx = Math.max(s.distancePx, 1600); s.nextPowerAt = s.distancePx; s.nextAirport.worldX = s.distancePx + 50000;
     const keep = s.rng; s.rng = () => 0.5;   // a roll that would give nothing
     await new Promise(r => setTimeout(r, 300));
