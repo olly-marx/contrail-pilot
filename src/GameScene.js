@@ -112,7 +112,7 @@ export class GameScene extends Phaser.Scene {
     this.runways = [];
     this.trees = [];                 // planted trees: keep cooling after they scroll away
     this.plots = [];                 // soil plots on the ground to aim parcels at
-    this.turbs = [];                 // turbulence zones {x, w}
+    this.turbs = [];                 // turbulence zones {x, y, w, h, blobs, view}
     this.birds = [];                 // flocks {birds: [{ox, oy, x, y, key, flip, view}], x, y, phase}
     this.nextTurbAt = HAZARDS.turbulence.from;
     this.nextBirdsAt = HAZARDS.birds.from;
@@ -1415,13 +1415,14 @@ export class GameScene extends Phaser.Scene {
     this.inTurb = false;
     for (const z of this.turbs) {
       // Tileable gusts (assets/turb.png): drift sideways and churn slowly up and down.
-      if (!z.img) { z.img = this.turbLayer.add(this.add.tileSprite(z.x, z.y, z.w, z.h, 'turb').setOrigin(0)); this.cloudShape(z.img, z.w, z.h); }
-      z.img.setPosition(Math.round(z.x), z.y); z.img.maskGfx.setPosition(z.img.x, z.img.y);
-      z.img.tilePositionX += 20 * dt;
-      z.img.tilePositionY = Math.round(Math.sin(this.gameTime / 700));
-      if (this.inCloud(z.img.blobs, z.x, z.y, z.w, z.h, box)) this.inTurb = true;
+      if (!z.blobs) z.blobs = P.cloudBlobs(this, z.w, z.h);   // its shape: made on its first frame (physics random stream)
+      if (!z.view) { z.view = this.turbLayer.add(this.add.tileSprite(z.x, z.y, z.w, z.h, 'turb').setOrigin(0)); this.maskToBlobs(z.view, z.blobs); }
+      z.view.setPosition(Math.round(z.x), z.y); z.view.maskGfx.setPosition(z.view.x, z.view.y);
+      z.view.tilePositionX += 20 * dt;
+      z.view.tilePositionY = Math.round(Math.sin(this.gameTime / 700));
+      if (this.inCloud(z.blobs, z.x, z.y, z.w, z.h, box)) this.inTurb = true;
     }
-    this.turbs = this.turbs.filter(z => { if (z.x + z.w > -10) return true; if (z.img) { z.img.maskGfx.destroy(); z.img.destroy(); } return false; });
+    this.turbs = this.turbs.filter(z => { if (z.x + z.w > -10) return true; if (z.view) { z.view.maskGfx.destroy(); z.view.destroy(); } return false; });
     if (this.inTurb && this.state === 'playing') {
       this.bumpIn -= dt;
       if (this.bumpIn <= 0) {
@@ -1700,8 +1701,6 @@ export class GameScene extends Phaser.Scene {
     return r;
   }
 
-  // A cloud's ellipses (P.cloudBlobs, physics random stream) on a sprite r (turbulence), used as its mask.
-  cloudShape(r, w, h) { r.blobs = P.cloudBlobs(this, w, h); this.maskToBlobs(r, r.blobs); }
   // Masks sprite v to the ellipses. Keep v.maskGfx at the sprite's x, y.
   maskToBlobs(v, blobs) {
     const m = v.maskGfx = this.make.graphics({ x: v.x, y: v.y }, false);
