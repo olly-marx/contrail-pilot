@@ -1,6 +1,6 @@
 // Prizes. Missions (src/missions.js) and badge tiers (src/badges.js) are never paid automatically:
 // a finished one goes into save.unclaimed, and pays only when the player taps CLAIM (claim()).
-// The seeds you carry home are not a prize: GameScene.finish() banks those straight away.
+// The seeds you carry home are not a prize: GameScene.onFinish() banks those straight away.
 // Kid wording; numbers tuned against hangar prices (a level costs 5-70 seeds and 1-5 crystals).
 import { ROUTE } from './route.js';
 import { earnBadges } from './badges.js';

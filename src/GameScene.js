@@ -1297,9 +1297,8 @@ export class GameScene extends Phaser.Scene {
     this.multText.x = this.crysText.x + this.crysText.width + 6; this.multText.y = this.crysText.y;   // row 2, clear of the distance
   }
 
-  finish({ landed = false, reason = '', sound = 'crash' }) {
-    this.setState('over');
-    this.co2Rate = 0;
+  // The flight has ended (rules.finish set the state): the crash or landing, the save, and the results.
+  onFinish({ landed = false, reason = '', sound = 'crash' }) {
     this.hud.setCo2(0);
     this.ui.hideToast();
     this.hintText.setText('');

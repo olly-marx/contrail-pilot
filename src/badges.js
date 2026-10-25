@@ -17,7 +17,7 @@ const SECRET = ONE(1, 50, 3);
 
 export const THEMES = { flying: 'Flying', climate: 'Climate', seeds: 'Seeds', nature: 'Nature', explorer: 'Explorer', secret: 'Secret' };
 
-// measure(r, save) -> a number; r is the flight result from GameScene.finish(), save is AFTER this
+// measure(r, save) -> a number; r is the flight result from GameScene.onFinish(), save is AFTER this
 // flight has been counted (landings, trees planted, cities visited...).
 export const BADGES = [
   { id: 'longhaul', name: 'Long Haul', theme: 'flying', tiers: T3(2000, 8000, 20000), unit: 'km in one flight, then land',
