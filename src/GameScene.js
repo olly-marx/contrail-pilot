@@ -872,7 +872,7 @@ export class GameScene extends Phaser.Scene {
   updateWildlife(dx, atX = WIDTH + 12) {
     const W = this.wildlife, pick = a => a[Math.floor(Math.random() * a.length)];
     const gap = perScreen => WIDTH / perScreen * Phaser.Math.FloatBetween(0.5, 1.5);
-    const clearOfRunway = x => !this.runways || !this.runways.some(r => r.strip.x < x + 20 && r.strip.x + AIRPORT.runwayLen > x - 20);
+    const clearOfRunway = x => !this.runways || !this.runways.some(r => r.x < x + 20 && r.x + AIRPORT.runwayLen > x - 20);
     const due = (k, perScreen) => {
       if (!perScreen) return false;
       this.lifeNext[k] -= dx;
@@ -959,7 +959,7 @@ export class GameScene extends Phaser.Scene {
     const uk = this.regionNow === 'woodland';   // UK projects show over the UK only
     if (this.distancePx >= this.nextDecorAt && uk && hasProject(this.save, 'pond') && dx > 0) {
       const x = WIDTH + 10;
-      if (!this.runways.some(r => r.strip.x < x + 40 && r.strip.x + AIRPORT.runwayLen > x - 10)) {
+      if (!this.runways.some(r => r.x < x + 40 && r.x + AIRPORT.runwayLen > x - 10)) {
         const parts = [this.add.image(x, SKY_H + 12, 'pond').setOrigin(0)];
         if (hasProject(this.save, 'beavers')) parts.push(this.add.image(x + 20, SKY_H + 10, 'dam').setOrigin(0));
         this.decorLayer.add(parts);
@@ -1083,7 +1083,7 @@ export class GameScene extends Phaser.Scene {
     parts.push(this.add.text(x + AIRPORT.runwayLen / 2, SKY_H + 8, name,
       { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 0));
     this.runwayLayer.add(parts);
-    this.runways.push({ worldX, name, parts, strip });
+    this.runways.push({ x, worldX, name, parts, strip });   // x: the runway's start on screen (the record; strip and parts follow it)
     // The city's landmark, in the skyline (it scrolls at 0.55 x the ground): start it where it will
     // stand just behind the runway's middle as the runway passes the middle of the screen.
     const lm = LANDMARKS[name];
@@ -1097,7 +1097,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   runwayUnder(box) {
-    return this.runways.find(r => r.strip.x <= box.x && box.x + box.w <= r.strip.x + AIRPORT.runwayLen && r.name !== this.homeName);
+    return this.runways.find(r => r.x <= box.x && box.x + box.w <= r.x + AIRPORT.runwayLen && r.name !== this.homeName);
   }
 
   // The k-th airport ahead of the start city (0 = the next one), at worldX `from` + that leg.
@@ -1190,7 +1190,7 @@ export class GameScene extends Phaser.Scene {
     const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
     if (!plot) {
       this.burst(x, SKY_H, 0xc8a165, 6);
-      const onRunway = this.runways.some(r => x >= r.strip.x && x <= r.strip.x + AIRPORT.runwayLen);
+      const onRunway = this.runways.some(r => x >= r.x && x <= r.x + AIRPORT.runwayLen);
       if (onRunway) this.parcelOnRunway = true;   // a funny challenge
       this.popup(x, SKY_H - 14, onRunway ? 'on the runway!' : 'missed!', '#ff8080');
       sfx.nope();
@@ -1275,7 +1275,7 @@ export class GameScene extends Phaser.Scene {
 
     if (this.kit.tree && this.parcels > 0 && this.distancePx >= this.nextPlotAt) {   // no parcels left: no more soil
       const x = WIDTH + 10;
-      const onRunway = this.runways.some(r => x + this.kit.plotW > r.strip.x - 10 && x < r.strip.x + AIRPORT.runwayLen + 10)
+      const onRunway = this.runways.some(r => x + this.kit.plotW > r.x - 10 && x < r.x + AIRPORT.runwayLen + 10)
         || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
       if (!onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x);   // no soil over the sea or the ice
       this.nextPlotAt += this.between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
@@ -1782,9 +1782,9 @@ export class GameScene extends Phaser.Scene {
       return true;
     });
     for (const c of this.contrails) c.x -= dx;
-    for (const rw of this.runways) for (const p of rw.parts) p.x -= dx;
+    for (const rw of this.runways) { rw.x -= dx; for (const p of rw.parts) p.x -= dx; }
     this.runways = this.runways.filter(rw => {
-      if (rw.strip.x + AIRPORT.runwayLen < -5) { rw.parts.forEach(p => p.destroy()); return false; }
+      if (rw.x + AIRPORT.runwayLen < -5) { rw.parts.forEach(p => p.destroy()); return false; }
       return true;
     });
 
