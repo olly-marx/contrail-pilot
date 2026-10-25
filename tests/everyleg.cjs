@@ -35,7 +35,7 @@ const KEY = 'contrailPilot.v2';
     for (const [an, bn, run] of todo) {
       // Put the plane mid-run on the airway an > bn (as if this flight's path were just those two).
       s.path = [an, bn]; s.airportIndex = 0; s.nextAirport = { worldX: s.legKm(0), name: bn, spawned: true };
-      s.distancePx = s.legKm(0) * (run.from + run.to) / 2; s.updateScenery(1);
+      s.distancePx = s.legKm(0) * (run.from + run.to) / 2; s.updateRegion(1); s.updateScenery(1);
       const t0 = s.gameTime; await new Promise(r => setTimeout(r, 80));
       out.push({ leg: `${an}>${bn}`, want: run.region, got: s.regionNow, ran: s.gameTime - t0, state: s.state });
     }

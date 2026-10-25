@@ -38,7 +38,7 @@ const KEY = 'contrailPilot.v2';
   // 1b. Over the SEA with UK projects done (the iPhone freeze, 2026-10-22: natureCooling threw every frame
   // there, because the sea has no projects; a save with none skipped that code, so tests missed it).
   const sea = await p.evaluate(async () => { const s = game.scene.getScene('game');
-    s.distancePx = s.nextAirport.worldX * 0.5; s.updateScenery(1);
+    s.distancePx = s.nextAirport.worldX * 0.5; s.updateRegion(1); s.updateScenery(1);
     const t0 = s.gameTime; await new Promise(r => setTimeout(r, 1500));
     return { r: s.regionNow, ran: s.gameTime - t0, state: s.state }; });
   check(sea.r === 'ocean' && sea.ran > 500 && sea.state === 'playing' && errs.length === 0, `the flight keeps running over the sea: ${JSON.stringify(sea)} ${errs.join(' | ')}`);
@@ -46,7 +46,7 @@ const KEY = 'contrailPilot.v2';
   // 2. 85% of the way to Cairo: the desert. Its ground fades in, its animals and cooling take over, it is discovered.
   const mid = await p.evaluate(async () => { const s = game.scene.getScene('game'), n = await import('./src/nature.js');
     s.distancePx = s.nextAirport.worldX - 0.15 * (s.nextAirport.worldX - 0);   // the first leg starts at 0
-    s.updateScenery(1);
+    s.updateRegion(1); s.updateScenery(1);
     return { r: s.regionNow, fading: s.fading && s.fading.ground, wild: s.wildlife.region, kinds: s.wildlife.wildKinds,
       cool: n.natureCooling(s.save, s.regionNow), coolUk: n.natureCooling(s.save), disc: !!(s.save.discovered || {}).desert }; });
   check(mid.r === 'desert' && mid.fading === 'ground-desert', `near Cairo the desert is below and fading in: ${JSON.stringify(mid)}`);

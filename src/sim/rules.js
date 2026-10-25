@@ -595,7 +595,7 @@ export const RULES = {
 
     this.spawn();
     this.scroll(dx);
-    if (dx > 0) this.setRegion(this.regionHere());   // the land below (the game also fades its ground in)
+    this.updateRegion(dx);
     this.updateDayNight(time);
 
     const box = this.hitbox();
@@ -662,6 +662,9 @@ export const RULES = {
     if (this.hitBird(box)) this.finish({ reason: 'Bird strike!\nYou hit a bird.' });
     return out;
   },
+
+  // The land below, once the flight has moved (the game also fades its ground in, and may discover the land).
+  updateRegion(dx) { if (dx > 0) this.setRegion(this.regionHere()); },
 
   // The flight ends: landed, or why not. The game then shows the results (GameScene.onFinish).
   finish({ landed = false, reason = '', sound = 'crash' }) {
