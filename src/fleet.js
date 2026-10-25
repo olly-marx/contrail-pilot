@@ -127,7 +127,13 @@ export function fleetKit(save) {
   const sys = id => at(SYSTEMS, f.systems, id), gad = id => at(GADGETS, f.gadgets, id);
   // Engines and Cabin levels are successive versions: only the latest counts (x0.93, then x0.88...).
   // Wings & body levels are different things fitted together: they all count.
-  const bought = Object.keys(PLANE_LINES).flatMap(line => { const got = p.lines[line].slice(0, mine[line] || 0); return line === 'body' ? got : got.slice(-1); });
+  // (Each effect comes from the newest level that HAS it: the Comet's Engines 2, thrust reversers, has no CO2
+  // effect, so Engines 1's x0.9 still counts. Until 0.11.6 the newest level replaced everything, so buying
+  // reversers lost the CO2 saving: found by the capability study, Comet MID out-flew FULL.)
+  const newestEach = got => { const seen = new Set(); return got.slice().reverse().map(lv => {
+    const keep = Object.fromEntries(Object.entries(lv).filter(([k]) => !seen.has(k) && ['co2', 'takeoff', 'flare', 'fares', 'perSkip'].includes(k)));
+    Object.keys(keep).forEach(k => seen.add(k)); return keep; }); };
+  const bought = Object.keys(PLANE_LINES).flatMap(line => { const got = p.lines[line].slice(0, mine[line] || 0); return line === 'body' ? got : newestEach(got); });
   const mul = key => bought.reduce((a, lv) => a * (lv[key] || 1), 1);
   const add = key => bought.reduce((a, lv) => a + (lv[key] || 0), 0);
   const ops = sys('ops'), fc = sys('forecast'), atc = sys('atc'), sen = gad('sensors'), ap = gad('autopilot');

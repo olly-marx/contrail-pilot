@@ -2,6 +2,7 @@
 // faster than real time (~3,600 km per second), with crashes switched off so only heat ends it.
 // Two pilots:
 //   straight: holds the middle of the sky and ignores icy air.
+//   careful:  the smart pilot, blind to icy air that is not yet revealed (closer to a careful human).
 //   smart:    near-perfect contrail choices: out of icy air at night, into it by day, always
 //             inside the next storm gap. It sees ALL icy air (even unrevealed), so it is a bit
 //             better than a real player.
@@ -14,7 +15,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
 const MAX = Number(process.env.MAX || 100000);   // km
 const PLANT = !!Number(process.env.PLANT || 0);
 const FOREST = JSON.parse(process.env.FOREST || '{}');
-const CLIM = JSON.parse(process.env.CLIMATE || '{}');   // try other heat numbers, e.g. CLIMATE='{"dangerLine":150}'   // try other forest numbers, e.g. FOREST='{"boost":2}'
+const CLIM = JSON.parse(process.env.CLIMATE || '{}');
+const ISS = JSON.parse(process.env.ISSR || '{}');
+// MARGIN='{"inside":0.95,"edge":1.05}': contrail margins (src/fleet.js CONTRAIL_MARGIN).
+// NIGHTRAMP='{"from":0.93,"to":2.5,"km":8000}': the night contrail weight grows linearly with km into the flight, then holds.
+const MARGIN = JSON.parse(process.env.MARGIN || '{}'), RAMP = JSON.parse(process.env.NIGHTRAMP || 'null');   // try other icy-air numbers, e.g. ISSR='{"spawnChance":0.5}'   // try other heat numbers, e.g. CLIMATE='{"dangerLine":150}'   // try other forest numbers, e.g. FOREST='{"boost":2}'
 
 const ALL_NATURE = { trees: 4, species: 4, rewild: 9 };
 const PLANES = {
@@ -31,22 +36,44 @@ const PLANES = {
   hydrogenMax4: { levels: { fuel: 4, engine: 5, cabin: 4, airframe: 3, ...ALL_NATURE, species: 3 }, fuel: 'hydrogen' },   // trees of 4 kinds, not 5
 };
 
+// Generated cases for the capability table (research/BALANCE-CAPABILITY.md): '<plane>-<base|mid|full>-<N0|N3|N5>',
+// e.g. 'jumbo-full-N3'. Upgrades: plane lines at 0 / 1 / max; systems and gadgets at 0 / the era's first level /
+// the era's last level. Nature: N0 nothing; N3 trees 2 + 3 kinds + 2 UK projects; N5 trees 4 + 5 kinds + 5 projects.
+const ERA = { comet: 0, jumbo: 1, twin: 2 }, LINES = { comet: 2, jumbo: 3, twin: 4 };
+const SYS = ['forecast', 'atc', 'ops'], GAD = ['magnet', 'hold', 'gear', 'sensors', 'autopilot'];
+const NATURE = {
+  N0: { levels: {}, planted: {}, habitat: {} },
+  N3: { levels: { trees: 2, species: 2 }, planted: { spruce: 4, birch: 4, oak: 4 }, habitat: { woodland: ['deadwood', 'meadow'] } },
+  N5: { levels: { trees: 4, species: 4 }, planted: { spruce: 5, birch: 5, oak: 5, rowan: 5, orchard: 5 }, habitat: { woodland: ['deadwood', 'meadow', 'margins', 'hedgerow', 'pond'] } },
+};
+function caseConfig(name) {
+  const [plane, up, nat] = name.split('-'); if (!(plane in ERA) || !NATURE[nat]) return null;
+  const e = ERA[plane], pl = up === 'base' ? 0 : up === 'mid' ? 1 : LINES[plane], sg = up === 'base' ? 0 : up === 'mid' ? 2 * e + 1 : 2 * e + 2;
+  const lv = Object.fromEntries;
+  return { ...NATURE[nat], fuel: 'kerosene', priceVersion: 2, flightSeconds: 0,
+    fleet: { plane, planes: { [plane]: { engines: pl, body: pl, cabin: pl } }, systems: lv(SYS.map(k => [k, sg])), gadgets: lv(GAD.map(k => [k, sg])) } };
+}
+
 async function run(b, plane, pilot, seed = 1) {
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   // Repeatable skies: the same seed gives the same storms, icy air and birds (Math.random + Phaser's RND).
   await p.addInitScript(seed => { let a = seed >>> 0; window.__reseed = () => { a = seed >>> 0; }; Math.random = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }, seed);
   await p.addInitScript(cfg => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 30, mission: 99,
-    planted: { oak: 5, birch: 5, rowan: 5, spruce: 5, orchard: 5 }, ...cfg })); }, PLANES[plane]);
+    planted: { oak: 5, birch: 5, rowan: 5, spruce: 5, orchard: 5 }, ...cfg })); }, PLANES[plane] || caseConfig(plane));
   // Seed Phaser's RND the moment the library loads (it would otherwise seed from the clock).
   await p.addInitScript(() => { let P; Object.defineProperty(window, 'Phaser', { configurable: true, get: () => P, set: v => { P = v; v.Math.RND.sow(['balance']); } }); });
   await p.goto(URL); await p.waitForFunction(() => window.game && game.scene.getScene('game') && game.registry.get('ui'), null, { timeout: 60000 }); await p.waitForTimeout(900);
-  const r = await p.evaluate(async ([pilot, MAX, PLANT, FOREST, CLIM]) => {
-    const { DAYNIGHT, FOREST: F, CLIMATE: C } = await import('./src/config.js');
-    Object.assign(F, FOREST); Object.assign(C, CLIM);
+  const r = await p.evaluate(async ([pilot, MAX, PLANT, FOREST, CLIM, NORENDER, PROBE, STEPX, ISS, NOFAKES, MARGIN, RAMP]) => {
+    const { DAYNIGHT, FOREST: F, CLIMATE: C, ISSR: I } = await import('./src/config.js');
+    Object.assign(F, FOREST); Object.assign(C, CLIM); Object.assign(I, ISS);
+    Object.assign((await import('./src/fleet.js')).CONTRAIL_MARGIN, MARGIN);
     // Pause the real-time loop, re-seed both random sources, and rebuild the scene from scratch, so
     // nothing the title screen did in real time (it animates wildlife) changes the flight.
     game.loop.sleep(); window.__reseed(); Phaser.Math.RND.sow(['balance']);
+    // NORENDER=1: step the game without drawing it (physics, collisions and the RNG are the same; only the
+    // picture is skipped). Checked identical km against drawing runs (research/BALANCE-CAPABILITY.md).
+    if (NORENDER) game.scene.render = () => {};
     let t0 = game.loop.now || performance.now();
     game.scene.getScene('game').scene.restart({ go: true });
     const s = game.scene.getScene('game'), SKY_H = 512 - 48;
@@ -59,6 +86,11 @@ async function run(b, plane, pilot, seed = 1) {
     game.registry.get('ui').showOnly(null);
     for (let i = 0; i < 2000 && s.state !== 'playing'; i++) { t0 += 16.67; game.step(t0, 16.67); }   // take-off, stepped
     s.hitsStorm = () => false; s.hitBird = () => false; s.explain = () => false; s.nextAirport.worldX = 1e12;
+    // PROBE=1: skip what only draws (animals, exhaust puffs, sky, aim, heat glow, texts, pop-ups, plane parts,
+    // the HUD bars). Heat, contrails, icy air, storms and the pilot's choices are untouched; checked identical km.
+    if (NOFAKES) s.kit.fakes = 0;   // NOFAKES=1: forecasting shows no false icy-air patches (to test their effect)
+    if (PROBE) { for (const k of ['updateWildlife', 'updateExhaust', 'drawSky', 'drawAim', 'drawHeatFx', 'updateTexts', 'popup', 'burst', 'syncPlaneParts']) s[k] = () => {};
+      s.hud.setCo2 = s.hud.setHeat = () => {}; }
     const box = (i, y) => i.x < s.plane.x + 180 && i.x + i.width > s.plane.x - 10 && i.y < y + 14 && i.y + i.height > y - 2;
     const target = () => {
       if (pilot === 'straight') return 200;
@@ -67,7 +99,10 @@ async function run(b, plane, pilot, seed = 1) {
       let best = (lo + hi) / 2, bestScore = -1e9;
       // Room from the nearest icy air ahead at height y (0 = inside it). The plane bobs ~40 px
       // per tap, so at night it wants lots of room; by day it wants to be deep inside.
-      const ahead = s.issrs.filter(i => i.x < s.plane.x + 220 && i.x + i.width > s.plane.x - 10);
+      // careful: the smart pilot, but it only sees icy air that is ON SCREEN as you would (revealed: alpha above
+      // the hidden level), so it is caught by patches it could not see coming; smart sees all of it.
+      const seen = i => pilot !== 'careful' || i.alpha > (s.kit.hiddenAlpha || 0) + 0.01;
+      const ahead = s.issrs.filter(i => seen(i) && i.x < s.plane.x + 220 && i.x + i.width > s.plane.x - 10);
       const room = y => ahead.reduce((m, i) => Math.min(m, Math.max(0, i.y - (y + 14), y - 2 - (i.y + i.height))), 999);
       const depth = y => ahead.reduce((m, i) => Math.max(m, Math.min(y - 2 - i.y, i.y + i.height - (y + 14))), -999);
       for (let y = lo; y <= hi; y += 4) {
@@ -76,21 +111,23 @@ async function run(b, plane, pilot, seed = 1) {
       }
       return best;
     };
+    const DT = 16.67 * STEPX, wall0 = performance.now();   // STEPX: a bigger step, only if it changes km by < 1-2%
     const drops = []; let t = t0, steps = 0, peak = -1e9, low = 1e9, nightFrames = 0, nightIn = 0, nightGap = 0;
     const marks = [];
     while (s.state === 'playing' && s.distancePx < MAX && steps < 3e6) {
-      t += 16.67; steps++;
+      t += DT; steps++;
+      if (RAMP) C.heatTrappedPerCol = RAMP.from + (RAMP.to - RAMP.from) * Math.min(1, s.distancePx / RAMP.km);
       if (s.plane.y > target() && s.plane.vy > -40) s.applyFlap();
       if (PLANT && s.parcels > 0) { const x = s.predictLanding(), pl = s.plots.find(pl => !pl.used && !pl.aimed && x >= pl.x + 4 && x <= pl.x + s.kit.plotW - 4); if (pl) { pl.aimed = true; s.dropParcel(); drops.push([Math.round(s.distancePx), s.trees.length]); } }
-      game.step(t, 16.67);
+      game.step(t, DT);
       peak = Math.max(peak, s.heat); low = Math.min(low, s.heat);
       if (!s.isDay) { nightFrames++; if (s.issrs.some(i => s.inIssrShape(i, s.hitbox()))) nightIn++; if (s.storms.some(t => t.rects[0].x < s.plane.x + 60 && t.rects[0].x + t.rects[0].width > s.plane.x)) nightGap++; }
       if (steps % 2000 === 0) marks.push([Math.round(s.distancePx), Math.round(s.heat)]);
     }
     const B = s.breakdown;
-    return { km: Math.round(s.distancePx), overheated: s.state === 'over', heat: Math.round(s.heat), low: Math.round(low),
+    return { msPerStep: +((performance.now() - wall0) / Math.max(1, steps)).toFixed(2), km: Math.round(s.distancePx), overheated: s.state === 'over', heat: Math.round(s.heat), low: Math.round(low),
       co2: Math.round(B.co2), night: Math.round(B.night), sun: Math.round(B.sun), trees: Math.round(B.trees), planted: s.trees.map(t => t.kind).join(' '), drops, nightIn: +(nightIn / Math.max(1, nightFrames)).toFixed(3), marks: marks.filter((_, i) => i % 5 === 0) };
-  }, [pilot, MAX, PLANT, FOREST, CLIM]);
+  }, [pilot, MAX, PLANT, FOREST, CLIM, !!Number(process.env.NORENDER || 0), !!Number(process.env.PROBE || 0), Number(process.env.STEPX || 1), ISS, !!Number(process.env.NOFAKES || 0), MARGIN, RAMP]);
   await p.close();
   return r;
 }
@@ -103,7 +140,7 @@ async function run(b, plane, pilot, seed = 1) {
   for (const plane of planes) for (const pilot of pilots) {
     const rs = []; for (const seed of seeds) rs.push(await run(b, plane, pilot, seed));
     const kms = rs.map(r => r.overheated ? r.km : Infinity).sort((x, y) => x - y), median = kms[Math.floor(kms.length / 2)];
-    debug.push(rs.map(r => r.drops)); rows.push({ plane, pilot, median, runs: rs.map(r => ({ km: r.km, overheated: r.overheated, nightIn: r.nightIn })) });
+    debug.push(rs.map(r => r.drops)); rows.push({ plane, pilot, median, runs: rs.map(r => ({ km: r.km, overheated: r.overheated, nightIn: r.nightIn, msPerStep: r.msPerStep })) });
     console.log(`${plane.padEnd(12)} ${pilot.padEnd(9)} median ${median === Infinity ? `> ${MAX}` : median} km   runs: ${rs.map(r => `${r.overheated ? '' : '>'}${r.km} (${Math.round(r.nightIn * 100)}% icy at night${PLANT ? `, trees ${r.planted.split(' ').filter(Boolean).length} cooled ${r.trees}` : ''})`).join(', ')}`);
   }
   await b.close();

@@ -36,6 +36,10 @@
   check(near(k.co2, 1.0 * 0.88 * 0.96), `747 CO2 = engines 2 (x0.88, replaces x0.93) x ops 1 (x0.96): ${k.co2}`);
   check(k.pickup === 19 && near(k.perSkip, 0.6) && near(k.flare, 1.2) && k.revealPx === 100, `gadgets and systems apply: ${JSON.stringify(k)}`);
   check(k.hintLevel === 0, 'no next-gap hint without all three systems');
+  // Engines: each effect from the newest level that has it (0.11.4): Comet Engines 2 (reversers, flare only)
+  // keeps Engines 1's CO2 x0.9.
+  const c2 = F.fleetKit({ fleet: { plane: 'comet', planes: { comet: { engines: 2 } }, systems: {}, gadgets: {} } });
+  check(near(c2.co2, 1.1 * 0.9) && near(c2.flare, 1.15), `Comet engines 2 keeps the x0.9 CO2 and adds the flare: ${c2.co2} ${c2.flare}`);
 
   // The tree lines are not in the fleet (nature.js reads them from upgrades.js).
   const ids = [...F.SYSTEMS, ...F.GADGETS].map(g => g.id);
