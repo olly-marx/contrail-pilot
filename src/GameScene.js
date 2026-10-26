@@ -150,6 +150,8 @@ export class GameScene extends Phaser.Scene {
     // Between the bottom-left text (which names it) and the DROP button.
     this.meterTrees = this.kit && this.kit.tree ? Array.from({ length: 10 }, (_, i) =>
       this.add.image(130 + i * 9, HEIGHT - 2, 'meter-tree-0').setOrigin(0.5, 1).setDepth(5)) : [];
+    // "kinds 3/5": cooling, the old-wood boost and the forest store all grow with the kinds planted THIS flight.
+    this.kindsText = this.meterTrees.length ? this.add.text(126, HEIGHT - 22, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0).setDepth(5) : null;
     this.forestFull = false;
     this.nextText = this.add.text(WIDTH / 2, 58, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
     this.hintText = this.add.text(4, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, lineSpacing: 4 }).setOrigin(0, 0);
@@ -663,6 +665,7 @@ export class GameScene extends Phaser.Scene {
       im.setTexture(`meter-tree-${k <= 0.02 ? 0 : k < 0.34 ? 1 : k < 0.67 ? 2 : 3}`).setAlpha(i < Math.ceil(cap - 0.001) ? 1 : 0.3);
     });
     this.forestFull = this.trees.length > 0 && this.forestStored >= this.forestStore();   // named in parcelText
+    if (this.kindsText) this.kindsText.setText(`kinds ${Math.min(this.speciesPlanted.size, FOREST.kinds)}/${FOREST.kinds}`);
   }
 
   // Day / night dial under the distance: one whole cycle as a strip (day, sunset, night, sunrise)
@@ -1314,7 +1317,7 @@ export class GameScene extends Phaser.Scene {
     if (this.school) this.school.finished(this.result);
     else sendFlight({   // to the online boards, if this device has a pilot name; queued when offline
       landed, distance_m: m, shade: Math.max(0, -this.sunBlocked), heat_trapped: this.heatTrapped, night_dodges: this.dodgesTotal,
-      crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesPlanted], mission_done: missionDone,
+      crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesTags], mission_done: missionDone,
       lap, crash,
     });
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());

@@ -14,6 +14,7 @@ import { CITIES } from './cities.js';
 import { animalDir, animalPortrait } from './animalart.js';
 import { meterHTML } from './ui.js';
 import { onSwipe } from './swipe.js';
+import { landTrees, countText } from './landtrees.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -69,10 +70,24 @@ export class WildScreen {
     more.innerHTML = `Projects from ${esc(REGION_SOURCE[this.region])}. <b>Raise it:</b> plant this land's trees as you fly over it, and finish its projects. More life appears below you.`;
     this.renderScene();
     this.renderProjects();
-    // Trees: the tree upgrade lines (planting parcels, soil, kinds of tree, the nursery). UK trees only.
+    // This land's 5 trees (research/PROPOSAL-TREES.md): open ones in colour with their count toward the cap
+    // ("Oak 4/9"), shut ones as silhouettes with the one thing that opens them (src/landtrees.js).
+    let row = $('wLandTrees');
+    if (!row) { row = document.createElement('div'); row.id = 'wLandTrees'; row.className = 'w-landtrees'; $('wTrees').before(row); }
+    const trees = landTrees(s, this.region);
+    // A tree that opened since you last looked: one small card, once (save.treesSeen[land] = slots already shown).
+    const seen = ((s.treesSeen = s.treesSeen || {})[this.region] = s.treesSeen[this.region] || [0]);
+    const fresh = trees.filter(t => t.open && !seen.includes(t.slot));
+    if (fresh.length) {
+      fresh.forEach(t => seen.push(t.slot)); writeSave(s);
+      this.ui.toast(`New tree: ${fresh.map(t => t.name).join(', ')}!`, fresh[0].fact || 'Plant it as you fly over this land.', 'good', 5);
+    }
+    row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">
+      <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
+    // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the UK tab.
     const uk = this.region === 'woodland';
     $('wTrees').hidden = !uk;
-    if ($('wTrees').previousElementSibling) $('wTrees').previousElementSibling.hidden = !uk;
+    if (row.previousElementSibling) row.previousElementSibling.hidden = !trees.length;   // the 'Trees' heading
     $('wTrees').innerHTML = uk ? LINES.filter(l => tabOf(l) === 'nature').map(l => this.ui.lineCardHTML(l)).join('') : '';
     $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => this.ui.buy(b.dataset.buy));
     $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = () => this.ui.showInfo(b.dataset.info));

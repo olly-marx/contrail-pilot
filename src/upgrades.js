@@ -98,21 +98,6 @@ export const LINES = [
     },
   },
   {
-    id: 'species', name: 'Tree Species', group: 'Nature', tree: 'Nature', unlock: { planted: 1 },
-    levels: [
-      { cost: 30, crystals: 4, name: 'Birch', short: 'A new native tree. Big boost for nature!', species: 'birch' },
-      { cost: 150, crystals: 19, name: 'Oak', short: 'Home to over 2,000 kinds of wildlife.', species: 'oak' },
-      { cost: 210, crystals: 26, name: 'Rowan', short: 'Berries for the birds.', species: 'rowan' },
-      { cost: 550, crystals: 69, name: 'Fruit trees', short: 'Food for people, bees and birds.', species: 'orchard' },
-    ],
-    info: {
-      what: 'You start with spruce. It grows fast but few animals live in it. Native trees are trees that have always grown here.',
-      why: 'Every NEW kind of tree you plant fills your Biodiversity meter much more than planting the same kind again.',
-      fact: 'A wood with many kinds of trees is home to many more animals than rows of just one kind.',
-      links: ['citizenzoo', 'project'],
-    },
-  },
-  {
     id: 'magnet', name: 'Seed Magnet', group: 'Plane', tree: 'Plane',
     levels: [
       { cost: 20, crystals: 2, name: 'Seed magnet', short: 'Grab seeds from further away.', pickup: 22 },
@@ -274,11 +259,6 @@ export function canBuy(save, line) {
   return !!next && unlocked(save, line) && !needsMoreNature(save, line) && save.seeds >= next.cost && (save.crystals || 0) >= (next.crystals || 0);
 }
 
-// Tree kinds you can plant: spruce, plus each native species unlocked.
-export function speciesOwned(save) {
-  return ['spruce', ...lineById('species').levels.slice(0, level(save, 'species')).map(l => l.species)];
-}
-
 // Fuels the player may pick: normal, their best SAF, and hydrogen once bought.
 export function fuelChoices(save) {
   const owned = lineById('fuel').levels.slice(0, level(save, 'fuel')).map(l => l.fuel);
@@ -305,7 +285,7 @@ export function loadout(save) {
     vapour: fuel.water,
     contrailEvery: fuel.contrailEvery,
     contrailLife: fuel.contrailLife,
-    tree: trees ? { parcels: trees.parcels, species: speciesOwned(save) } : null,
+    tree: trees ? { parcels: trees.parcels } : null,   // which trees: each land's own (src/landtrees.js treesOpen)
     plotW: soil ? soil.plotW : PARCEL.plotW,
     grow: at('nursery', 'grow', 1),               // x the time a tree takes to grow
   };

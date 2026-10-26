@@ -1,4 +1,4 @@
-import { FEATURES, km, CLIMATE } from './config.js';
+import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
 import { flightPath, choices, city, EARTH_KM } from './route.js';
 import { headingWord } from './network.js';
@@ -280,7 +280,10 @@ export class UI {
     $('rCrysRow').hidden = true; $('rCrysRow').classList.remove('stamp');
     // One row per land whose biodiversity rose (each land has its own meter).
     const gains = r.natureGains || (r.natureGain > 0 ? [{ name: REGION_NAMES.woodland, gain: r.natureGain }] : []);
-    $('rNatureRow').innerHTML = gains.map(g => `<div class="nrow"><span>${g.name}</span><b>+${g.gain}</b></div>`).join('');
+    // Kinds of tree this flight and the forest bonus they give long flights (PROPOSAL-TREES.md: the boost made visible).
+    const kinds = r.kinds || 0, bonus = Math.pow(Math.min(1, kinds / FOREST.kinds), FOREST.power);
+    $('rNatureRow').innerHTML = gains.map(g => `<div class="nrow"><span>${g.name}</span><b>+${g.gain}</b></div>`).join('') +
+      (kinds ? `<div class="nrow"><span>${kinds} kind${kinds === 1 ? '' : 's'} of tree today: forest bonus</span><b>x${bonus.toFixed(2)}</b></div>` : '');
     $('rTotalRow').classList.remove('zero', 'stamp');
     $('rGain').textContent = '';
     for (const id of ['barCo2', 'barNight', 'barSun', 'barTrees']) $(id).style.width = '0';
@@ -323,7 +326,7 @@ export class UI {
     if (r.earned.some(e => e.label.startsWith('Cool'))) { await wait(250); $('rCoolRow').hidden = false; $('rCoolRow').classList.add('stamp'); sfx.coin(); }
     const fare = r.earned.find(e => e.label === 'Passenger fares');
     if (fare) { await wait(250); $('rFareRow').hidden = false; $('rFare').textContent = `+${fare.n}`; $('rFareRow').classList.add('stamp'); sfx.coin(); }
-    if (gains.length) { await wait(250); $('rNatureRow').hidden = false; $('rNatureRow').classList.add('stamp'); sfx.plant(); }
+    if (gains.length || kinds) { await wait(250); $('rNatureRow').hidden = false; $('rNatureRow').classList.add('stamp'); sfx.plant(); }
     await wait(300);
     const total = r.earned.reduce((a, e) => a + e.n, 0);
     if (r.landed) {

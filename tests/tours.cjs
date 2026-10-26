@@ -122,11 +122,11 @@ const KEY = 'contrailPilot.v2';
   await p.click('#tabNature');
   let first = ''; for (let i = 0; i < 30 && !/NEW:/.test(first); i++) { await p.waitForTimeout(150); first = await bubble(p); }
   await p.waitForTimeout(400);   // the card scrolls into view
-  check(/NEW: Soil Patches and Tree Species/.test(first), `...then at the new lines, all named at once: "${first}"`);
+  check(/NEW: Soil Patches/.test(first), `...then at the new line (Tree Species went in the tree rework): "${first}"`);
   const id = await p.evaluate(() => { const r = document.querySelector('#tour .tring').getBoundingClientRect(); const e = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find(x => x.dataset && x.dataset.info); return e && e.dataset.info; });
   await p.click(`[data-info="${id}"]`); await p.click('#iClose'); await p.waitForTimeout(400);
   const sl = (await save(p)).shownLines;
-  check(id === 'soil' && ['soil', 'species'].every(x => sl.includes(x)), `both are remembered as shown: ${id} ${sl}`);
+  check(id === 'soil' && sl.includes('soil'), `it is remembered as shown: ${id} ${sl}`);
   await p.waitForTimeout(800);
   check(await tourHidden(p), 'and no second walk-through follows');
   await p.close();
