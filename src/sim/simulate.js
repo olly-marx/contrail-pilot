@@ -43,7 +43,10 @@ const now = () => (typeof performance !== 'undefined' ? performance.now() : Date
 
 export function simulate(save, { overrides, ...opts } = {}) { return withOverrides(overrides, () => fly(save, opts)); }
 
-function fly(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false, dtMs = 16.67, onStep } = {}) {
+function fly(save, opts) { const g = flight(save, opts); let r; while (!(r = g.next()).done); return r.value; }
+
+// A flight that can pause: yields after every step (the caller decides when to stop for now), returns the result.
+function* flight(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false, dtMs = 16.67, onStep } = {}) {
   const t0 = now();
   const w = createWorld({ autoTakeoff: true, ...save }, seed);
   const dt = Math.min(dtMs, 50) / 1000;   // as GameScene.update clamps it
@@ -58,6 +61,7 @@ function fly(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false,
     if (w.plane.y > pilotTarget(w, pilot) && w.plane.vy > -40) w.applyFlap();
     w.step(dt); steps++;
     if (steps % 2000 === 0) marks.push([Math.round(w.distancePx), Math.round(w.heat)]);
+    yield;
   }
   const end = w.state === 'playing' ? 'maxKm' : /hot/.test(w.endReason) ? 'overheat' : 'crash';
   const B = w.breakdown, r = v => Math.round(v * 10) / 10;
@@ -72,4 +76,35 @@ export function capability(save, { pilots = ['straight', 'careful', 'smart'], se
     out[pilot] = { median: runs[Math.floor(runs.length / 2)], min: runs[0], max: runs[runs.length - 1], runs };
   }
   return out;
+}
+
+// The same as capability(), a little at a time, for the game (the hangar's "your plane can reach ~N km"):
+// a whole estimate is seconds of work on a phone, so the game calls run(ms) once a frame (or in a Web Worker)
+// and shows the answer when done. Overrides are not allowed here: this is the game's real plane.
+//   const est = capabilityLater(save, { pilots: ['careful'], seeds: [1, 2, 3] });
+//   each frame: const r = est.run(4); if (r) show(r.careful.median);   // null until finished
+export function capabilityLater(save, { pilots = ['careful'], seeds = [1, 2, 3], ...opts } = {}) {
+  const jobs = pilots.flatMap(pilot => seeds.map(seed => ({ pilot, seed })));
+  const kms = Object.fromEntries(pilots.map(p => [p, []]));
+  let k = 0, g = null, result = null;
+  return {
+    done: () => !!result,
+    progress: () => (result ? 1 : k / jobs.length),
+    run(ms) {
+      if (result) return result;
+      const until = now() + ms;
+      while (k < jobs.length) {
+        if (!g) g = flight(save, { ...opts, ...jobs[k] });
+        let r;
+        do { r = g.next(); } while (!r.done && now() < until);
+        if (!r.done) return null;
+        kms[jobs[k].pilot].push(r.value.km); g = null; k++;
+        if (now() >= until) break;
+      }
+      if (k < jobs.length) return null;
+      result = Object.fromEntries(pilots.map(p => { const runs = kms[p].sort((a, b) => a - b);
+        return [p, { median: runs[Math.floor(runs.length / 2)], min: runs[0], max: runs[runs.length - 1], runs }]; }));
+      return result;
+    },
+  };
 }
