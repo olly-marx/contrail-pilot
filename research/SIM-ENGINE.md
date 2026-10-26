@@ -143,6 +143,13 @@ It fails if the plane's draws are routed back into the physics stream, or if the
 **For new code:** never draw from `this.rng` a number of times that depends on what the player does. Use
 `this.planeBetween` / `this.planeFloatBetween` for anything the plane causes.
 
+**Moving where storms spawn changes the sky, even with no new draws** (game chat, measured 2026-10-26 for a
+gap-marker lead that was later dropped). `addIssr`'s 10 placement tries test overlap against `this.storms`, and
+`addToken` reads the newest storm's x, so a different spawn x changes how many draws they make. On seed 1 the gaps
+differed from the 3rd pair on. Over 12 skies the gap sizes and the no-fly share matched, so it is the same KIND of sky,
+not the same sky. So a spawn-x change can't promise "the same gap sequence, only further ahead": gate it on the
+distributions (and sim-equiv / sim-paired with it off), not on matching skies.
+
 ## What it does not model
 
 - **Anything only seen or heard:** pictures, sounds, pop-ups, toasts, the HUD.
