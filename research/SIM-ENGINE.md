@@ -99,6 +99,19 @@ Budget:
 - **Within 200 ms** you could afford about 1-2 flights on a phone, which is too few skies for a fair median.
 - **Measure this on a real phone before relying on it.**
 
+## How the pilots drive the game
+
+Every pilot plays the game only as a player can:
+- **taps:** `w.applyFlap()`, the same flap a finger makes (vy = `PLANE.flapVelocity`, then `PLANE.gravity`), on the
+  frames it chooses;
+- **the tree button:** `w.dropParcel()`, only in the progression player.
+
+Nothing moves the plane directly. On top of that, the TEST HARNESS changes some outcomes, never the flying:
+- `crashes: false` (default) sets `hitsStorm`, `hitBird` to never-hit and `spriteBottom` to never-grounded;
+- the airport is moved out of reach (`nextAirport.worldX = 1e12`), except in the progression simulator, which lands;
+- lesson pop-ups never pause the game (`explain` returns false);
+- a crossing flight sets its gateway's distance (`nextAirport.worldX = crossing length`).
+
 ## What it does not model
 
 - **Anything only seen or heard:** pictures, sounds, pop-ups, toasts, the HUD.
