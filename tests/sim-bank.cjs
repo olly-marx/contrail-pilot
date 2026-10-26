@@ -8,7 +8,7 @@ const { chromium } = require('playwright-core');
 const URL = process.env.URL || 'http://localhost:8000/';
 const DT_MS = 16.67;
 // Save fields only the game's VIEW changes during a flight (animals seen, banners and tips shown): not banking.
-const VIEW_ONLY = ['found', 'foundAt', 'dayNightSeen', 'seenTips', 'tours', 'discovered'];
+const VIEW_ONLY = ['found', 'foundAt', 'dayNightSeen', 'seenTips', 'tours', 'discovered', 'shownLines'];   // shownLines: the hangar's 'new line' marks
 // Result fields that come from the view: the animals seen this flight.
 const RESULT_VIEW_ONLY = ['foundIds'];
 
@@ -16,7 +16,8 @@ const SAVE = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*
   fuel: 'kerosene', priceVersion: 2, fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } };
 const CASES = [{ seed: 1, steps: 2400, landed: true }, { seed: 2, steps: 1800, landed: false, reason: 'Storm!\nYou flew into a storm.' }, { seed: 3, steps: 3600, landed: true }];
 
-const strip = (o, keys) => Object.fromEntries(Object.entries(o).filter(([k]) => !keys.includes(k)));
+// (An empty habitat {} that the menu adds is the same as none; a non-empty one is compared.)
+const strip = (o, keys) => Object.fromEntries(Object.entries(o).filter(([k, v]) => !keys.includes(k) && !(k === 'habitat' && v && !Object.keys(v).length)));
 const diff = (a, b, path = '') => {
   if (JSON.stringify(a) === JSON.stringify(b)) return [];
   if (a && b && typeof a === 'object' && typeof b === 'object') return [...new Set([...Object.keys(a), ...Object.keys(b)])].flatMap(k => diff(a[k], b[k], `${path}.${k}`));

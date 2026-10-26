@@ -30,7 +30,9 @@ onSeed: nothing, onPower: nothing, onCrystals: nothing, onLand: nothing, onPopFa
 
 export function createWorld(save, seed) {
   const w = Object.assign(Object.create(null), RULES, VIEW_HOOKS);
-  w.save = prepareSave(structuredClone({ ...save, simSeed: seed >>> 0 }));   // as the game loads it
+  // As the game loads it, then copied: prepareSave fills in defaults by reference ({ ...DEFAULTS, ...saved }), so
+  // without the copy every world would share (and change) the same default arrays (visited, unclaimed...).
+  w.save = structuredClone(prepareSave(structuredClone({ ...save, simSeed: seed >>> 0 })));
   w.autostart = 'normal';
   w.ui = { tipOnce: nothing, toast: nothing };
   w.initFlight();
