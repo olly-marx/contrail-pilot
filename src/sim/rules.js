@@ -542,25 +542,7 @@ export const RULES = {
       this.plane.vy = clamp((target - this.plane.y) * (auto ? 10 : 4), -lim, lim);
       this.plane.y += this.plane.vy * dt;
     } else if (this.state === 'playing') {
-      this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
-      // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
-      // between you and it, the plane levels out and floats down onto the runway. With a storm in
-      // the way you fall normally, so you can dive through its gap. Flaring burns extra CO2.
-      this.flaring = false;
-      const toStart = this.nextAirport.worldX - this.distancePx;          // runway start, ahead of the plane's x
-      const drop = SKY_H - this.spriteBottom();
-      const clearPath = !this.storms.some(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < this.plane.x + Math.max(0, toStart) + PLANE.w);
-      const room = toStart + AIRPORT.runwayLen - PLANE.w - 10;          // runway left before the far end
-      if (this.plane.vy > 0 && drop < AIRPORT.flareHeight * this.kit.flare && toStart < AIRPORT.flareFrom * this.kit.flare && room > 0 && clearPath) {   // Landing Gear: wider window
-        const v = Math.max(1, this.speed);
-        // Before the runway: sink just slowly enough to reach it. Over it: gently, but fast
-        // enough to touch down before the far end.
-        const cap = toStart > 0 ? Math.max(15, drop / ((toStart + 20) / v)) : Math.max(AIRPORT.flareVy, drop / (room / v));
-        this.plane.vy = Math.min(this.plane.vy, cap);
-        this.flaring = true;
-      }
-      this.plane.y += this.plane.vy * dt;
-      if (this.plane.y < 0) { this.plane.y = 0; this.plane.vy = 0; }
+      this.freeFall(dt);
     }
     this.pose = P.planePose(this);   // the picture's centre and tilt: the pixel hit tests use it
 
@@ -746,6 +728,30 @@ export const RULES = {
     };
     this.bank = { m, missionDone, lap, crash, gained };
     return this.bank;
+  },
+
+  // The plane in free flight for one frame: gravity, the landing flare, the ceiling. Moved out of step() so the
+  // perfect-tapper study (tools/sim/tapper.mjs) moves its plane with exactly this code.
+  freeFall(dt) {
+    this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
+    // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
+    // between you and it, the plane levels out and floats down onto the runway. With a storm in
+    // the way you fall normally, so you can dive through its gap. Flaring burns extra CO2.
+    this.flaring = false;
+    const toStart = this.nextAirport.worldX - this.distancePx;          // runway start, ahead of the plane's x
+    const drop = SKY_H - this.spriteBottom();
+    const clearPath = !this.storms.some(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < this.plane.x + Math.max(0, toStart) + PLANE.w);
+    const room = toStart + AIRPORT.runwayLen - PLANE.w - 10;          // runway left before the far end
+    if (this.plane.vy > 0 && drop < AIRPORT.flareHeight * this.kit.flare && toStart < AIRPORT.flareFrom * this.kit.flare && room > 0 && clearPath) {   // Landing Gear: wider window
+      const v = Math.max(1, this.speed);
+      // Before the runway: sink just slowly enough to reach it. Over it: gently, but fast
+      // enough to touch down before the far end.
+      const cap = toStart > 0 ? Math.max(15, drop / ((toStart + 20) / v)) : Math.max(AIRPORT.flareVy, drop / (room / v));
+      this.plane.vy = Math.min(this.plane.vy, cap);
+      this.flaring = true;
+    }
+    this.plane.y += this.plane.vy * dt;
+    if (this.plane.y < 0) { this.plane.y = 0; this.plane.vy = 0; }
   },
 
   // The flight ends: landed, or why not. The game then shows the results (GameScene.onFinish).
