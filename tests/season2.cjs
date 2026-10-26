@@ -52,6 +52,19 @@ const KEY = 'contrailPilot.v2';
     return { out: path.filter(c => !a.AREAS.weurope.cities.includes(c)), line: (document.getElementById('jAreas') || {}).textContent || '' }; });
   check(conf.out.length === 0, `season 2 flight leaves Western Europe: ${conf.out.slice(0, 3)}`);
   check(/Western Europe/.test(conf.line) && /Locked/.test(conf.line), `the FLY screen lists your area and the locked ones: '${conf.line}'`);
+  // 2c. M2: a new season 2 player chooses a start area, then a city; flying is then confined to that area.
+  await p.goto(URL + '?season2=reset'); await ready(p);
+  await p.evaluate(() => game.registry.get('ui').start());
+  const shown = await p.waitForSelector('#startChoice [data-area="africa"]', { timeout: 5000 }).then(() => true).catch(() => false);
+  check(shown, 'season 2: a new player is asked where to start');
+  const starters = await p.$$eval('#startChoice [data-area]', bs => bs.map(b => b.dataset.area));
+  check(starters.length === 6 && !starters.includes('oceania'), `six starter areas offered: ${starters}`);
+  if (shown) { await p.click('#startChoice [data-area="africa"]'); await p.click('#startChoice [data-city="LAGOS"]'); }
+  await p.waitForTimeout(300);
+  const st = await p.evaluate(async () => { const s = game.registry.get('save'), r = await import('/src/route.js'), a = await import('/src/areas.js');
+    const path = r.flightPath({ ...s, tutorialDone: true }, 40);
+    return { areas: s.areas, city: s.city, gone: !document.getElementById('startChoice'), out: path.filter(c => !a.AREAS.africa.cities.includes(c)) }; });
+  check(JSON.stringify(st.areas) === '["africa"]' && st.city === 'LAGOS' && st.gone && st.out.length === 0, `start in Lagos, Africa, and stay there: ${JSON.stringify(st)}`);
   // 3. Reset: from zero again.
   await p.goto(URL + '?season2=reset'); await ready(p);
   g = await state();

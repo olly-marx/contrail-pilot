@@ -3,6 +3,7 @@ import { VERSION } from './version.js';
 import { flightPath, choices, city, EARTH_KM } from './route.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
+import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
 // Season 2: which areas you fly in, and which are still locked (dim dots on the globe; crossings open them).
 const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS).filter(k => !open.includes(k));
   return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
@@ -91,6 +92,9 @@ export class UI {
 
   // First play goes through flight school.
   start() {
+    if (FEATURES.season2 && needsStartChoice(this.save)) {   // season 2: choose your start area and city first (src/startchoice.js)
+      return chooseStart().then(c => { applyStart(this.save, c); writeSave(this.save); this.renderJourney(); this.start(); });
+    }
     if (!this.save.tutorialDone) return this.startSchool();
     unlockAudio();
     this.showOnly(null);

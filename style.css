@@ -566,3 +566,6 @@ h2.sub { margin-top: -4px; }
 .w-tree img.w-shadow { filter: brightness(0) opacity(.35); }
 .w-tree.full figcaption { color: #8fd18f; }
 .w-tree.shut small { opacity: .75; }
+/* Season 2 start choice (src/startchoice.js): the area and city buttons wrap in a grid. */
+.s2areas, .s2cities { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#startChoice .panel { max-height: 90vh; overflow-y: auto; }
