@@ -24,6 +24,7 @@ import { pilotTarget } from './pilots.js';
 import { makePlayer } from './player.js';
 import * as CONFIG from '../config.js';
 import * as FLEET from '../fleet.js';
+export const NO_DROP = { on: false };   // tests/sim-trees.cjs: the player never drops a parcel (the old way): must FAIL
 
 // Try other numbers for one call: { CLIMATE: { heatTrappedPerCol: 0.3 }, ISSR: { spawnChance: 0.5 }, CONTRAIL_MARGIN: [...] }.
 // Any table exported by src/config.js or src/fleet.js. The rules read these live, at every use, so a change made
@@ -63,13 +64,17 @@ function* flight(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = fa
   while (w.state === 'playing' && w.distancePx < maxKm && steps < 3e6) {
     if (onStep) onStep(w);   // e.g. a heat number that ramps with w.distancePx
     if (player ? player.wantsFlap(w) : w.plane.y > pilotTarget(w, pilot) && w.plane.vy > -40) w.applyFlap();
+    // The player drops tree parcels as progression.js does (2026-10-26: without it a single flight never planted, so a
+    // save that owns trees still got 0 cooling from them). NO_DROP: the old way (tests/sim-trees.cjs plants it).
+    if (player && w.parcels > 0 && !NO_DROP.on) { const x = w.predictLanding(), pl = w.plots.find(p => !p.used && !p.aimed && x >= p.x + 4 && x <= p.x + w.kit.plotW - 4); if (pl) { pl.aimed = true; w.dropParcel(); } }
     w.step(dt); steps++;
     if (steps % 2000 === 0) marks.push([Math.round(w.distancePx), Math.round(w.heat)]);
     yield;
   }
+  const planted = w.planted || 0;
   const end = w.state === 'playing' ? 'maxKm' : /hot/.test(w.endReason) ? 'overheat' : 'crash';
   const B = w.breakdown, r = v => Math.round(v * 10) / 10;
-  return { km: Math.round(w.distancePx), end, reason: w.endReason || '', heat: r(w.heat), steps, marks,
+  return { km: Math.round(w.distancePx), end, reason: w.endReason || '', heat: r(w.heat), planted, steps, marks,
     breakdown: { co2: r(B.co2), night: r(B.night), sun: r(B.sun), trees: r(B.trees) }, ms: Math.round(now() - t0) };
 }
 
