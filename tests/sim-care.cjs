@@ -3,12 +3,14 @@
 // were flown by the code before the knob (identical, checked when it was added; re-flown 2026-10-26 on the skies of the
 // plane's own random stream, again identical to the pre-knob code). c = 0.5 must differ from both on
 // some sky (the knob does something in between). Comet, crashes on, s = 0.8 and 1, seeds 1-6. Plain Node.
+// 0.12.0: re-flown DELIBERATELY for the new storms (STORMS startGap 200, gapShrinkPerPair 2): the pre-knob player (src/sim/player.js
+// at 7841754^, careful false/true) flown on today's world gives these exact numbers, so care 0 / 1 are still the pre-knob players.
 // plan: 'classic' throughout: the golden numbers were flown before threat-first planning (2026-10-26).
 // PLANT=care weakens the contrail term (x 0.5): must FAIL.
 // Run: node tests/sim-care.cjs
 const GOLD = {
-  care0: [8208.301, 6825.451, 7054.934, 8898.912, 4525.783, 8685.141, 10506.004, 6827.421, 9073.616, 9868.113, 4529.348, 6827.421],
-  care1: [1606.42, 6827.421, 8668.275, 3657.27, 4525.783, 2275.044, 10506.004, 6827.421, 9415.298, 10103.627, 9523.544, 6829.39],
+  care0: [10530.619, 9586.502, 8218.673, 8204.153, 10519.428, 9135.647, 10976.856, 9780.52, 8082.072, 9022.377, 10800.35, 10904.331],
+  care1: [9595.196, 9817.717, 6401.681, 8206.227, 10050.65, 1122.944, 10358.701, 9896.634, 8941.428, 10703.444, 10945.107, 10879.436],
 };
 (async () => {
   const { createWorld } = await import('../src/sim/world.js');

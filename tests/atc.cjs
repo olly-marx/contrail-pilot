@@ -38,7 +38,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     return r;
   };
   const none = await fly(0), full = await fly(6);
-  check(none.gap === 150 && full.gap === Math.round(150 * 1.03), `storm gap 150 -> 155 with ATC 6: ${none.gap} -> ${full.gap}`);
+  check(none.gap === 200 && full.gap === Math.round(200 * 1.03), `storm gap 200 -> 206 with ATC 6: ${none.gap} -> ${full.gap}`);
   check(none.turb === 1 && full.turb === 0, `at a roll of 0.45, bumpy air spawns without ATC (chance 0.5) but not with it (0.425): ${none.turb}, ${full.turb}`);
   check(none.birds === 1 && full.birds === 0, `at a roll of 0.5, a flock spawns without ATC (0.55) but not with bird advisories (0.41): ${none.birds}, ${full.birds}`);
   check(!/get LOW/.test(none.call) && /get LOW to land/.test(full.call), `400 m out: the landing call only with ATC: "${none.call}" / "${full.call}"`);

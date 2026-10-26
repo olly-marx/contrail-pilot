@@ -11,7 +11,7 @@ import { MASK_DATA } from './sim/masks.js';
 import { Hud } from './Hud.js';
 import { sendFlight } from './online.js';
 import { flightPath, city, HOME } from './route.js';
-import { crossingPath, completeCrossing, recordAreaBest } from './crossings.js';
+import { crossingPath, completeCrossing } from './crossings.js';
 import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
 import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra } from './fleet.js';
@@ -1331,7 +1331,6 @@ export class GameScene extends Phaser.Scene {
       crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesTags], mission_done: missionDone,
       lap, crash,
     });
-    if (landed && !this.school && !this.crossing) { recordAreaBest(this.save, this.homeName, this.result.distance); writeSave(this.save); }   // the offer gate's stand-in (src/crossings.js)
     if (this.crossing) {   // season 2: landing the crossing (at the gateway or beyond) opens the area; either way it is over
       if (landed) completeCrossing(this.save, this.crossing);
       this.result.crossing = { id: this.crossing.id, landed, opens: this.crossing.opens, to: this.crossing.to };

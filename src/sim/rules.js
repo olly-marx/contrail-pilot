@@ -10,7 +10,7 @@ import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
 import { REGION_DATA, REGION_NAMES } from '../habitats.js';
 import { flightPath, legBetween, HOME, city, EARTH_KM } from '../route.js';
-import { crossingPath } from '../crossings.js';   // season 2 crossings (redesign)
+import { crossingPath, recordAreaBest } from '../crossings.js';   // season 2 crossings (redesign)
 import { regionBelow } from '../geo.js';
 import { loadout, FUELS } from '../upgrades.js';
 import { makeRng } from './rng.js';
@@ -734,6 +734,7 @@ export const RULES = {
     if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; }   // choose a new direction from here
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
+    if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save
     this.save.seeds += gained;
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
     // The first safe landing earns one free upgrade, to show what the hangar is for.
