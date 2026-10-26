@@ -28,8 +28,9 @@ const KEY = 'contrailPilot.v2';
   check(bio.mixed > bio.mono, `3 different native trees (${bio.mixed}) should beat 9 spruce (${bio.mono})`);
   check(bio.firstOak > 3 * bio.tenthOak, `first oak (${bio.firstOak}) should add much more than the tenth (${bio.tenthOak})`);
 
-  // 2. Parcels rotate through owned species: spruce, birch, oak.
-  await setSave({ ...base, seenTips: ['*'], levels: { trees: 2, species: 2 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  // 2. Parcels rotate through the trees open in the land below (src/landtrees.js): a project + biodiversity 21 in
+  // the UK opens spruce, birch, oak (the tree rework: kinds are no longer bought).
+  await setSave({ ...base, seenTips: ['*'], levels: { trees: 2 }, habitat: { woodland: ['deadwood'] }, planted: { birch: 9, oak: 9 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
   const kinds = await scene(() => { const s = game.scene.getScene('game'); const out = []; for (let i = 0; i < 3; i++) { out.push(s.treeKind()); s.speciesIdx++; } s.speciesIdx = 0; return out; });
   check(JSON.stringify(kinds) === '["spruce","birch","oak"]', `parcels should rotate spruce, birch, oak; got ${kinds}`);
