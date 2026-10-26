@@ -1,0 +1,20 @@
+# Lives on the `redesign` branch ONLY (a push-triggered workflow runs the copy in the pushed branch).
+# A push to `redesign` asks the normal deploy (deploy.yml, ref main) to run again: it builds the live game from main
+# as always and adds the preview from this branch under /preview/. The deploy must run on main because the
+# `github-pages` environment only accepts deployments from main (and gh-pages); a deploy started from here would be refused.
+name: Refresh the preview
+on:
+  push:
+    branches: [redesign]
+permissions:
+  actions: write
+  contents: read
+jobs:
+  poke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: gh workflow run deploy.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}

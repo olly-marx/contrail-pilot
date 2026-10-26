@@ -11,6 +11,10 @@ const KEY = 'contrailPilot.v2';
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
+  // The /preview/ build's contracts (tools/build-preview.sh on main, bug-fix chat): it refuses to build without them.
+  const fs = require('fs'), path = require('path'), root = path.resolve(__dirname, '..');
+  check(fs.readFileSync(path.join(root, 'index.html'), 'utf8').includes('<script src="src/season2.js"></script>'), 'index.html must keep the exact <script src="src/season2.js"></script> tag');
+  check(fs.readFileSync(path.join(root, 'src/season2.js'), 'utf8').includes('SEASON2_FORCE'), 'src/season2.js must mention SEASON2_FORCE');
   const p = await (await b.newContext({ viewport: { width: 390, height: 844 } })).newPage();
   const online = []; p.on('request', r => { if (/supabase\.co/.test(r.url())) online.push(r.url()); });
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
@@ -41,6 +45,13 @@ const KEY = 'contrailPilot.v2';
   await p.evaluate(async () => { const o = await import('/src/online.js'); try { (o.sendFlight || (() => {}))({ landed: true, distance_m: 1000 }); } catch (e) {} });
   await p.waitForTimeout(1000);
   check(online.length === 0, `season 2 never reaches the online server: ${online.slice(0, 3)}`);
+  // 2b. M1: flying is confined to the unlocked area (Western Europe by default); the FLY screen lists the locked areas.
+  const conf = await p.evaluate(async () => { const r = await import('/src/route.js'), a = await import('/src/areas.js');
+    const s = game.registry.get('save'); s.tutorialDone = true; s.city = 'AMSTERDAM';
+    const path = r.flightPath(s, 40); game.registry.get('ui').renderJourney && game.registry.get('ui').renderJourney();
+    return { out: path.filter(c => !a.AREAS.weurope.cities.includes(c)), line: (document.getElementById('jAreas') || {}).textContent || '' }; });
+  check(conf.out.length === 0, `season 2 flight leaves Western Europe: ${conf.out.slice(0, 3)}`);
+  check(/Western Europe/.test(conf.line) && /Locked/.test(conf.line), `the FLY screen lists your area and the locked ones: '${conf.line}'`);
   // 3. Reset: from zero again.
   await p.goto(URL + '?season2=reset'); await ready(p);
   g = await state();
@@ -49,6 +60,22 @@ const KEY = 'contrailPilot.v2';
   await p.goto(URL + '?season2=off'); await ready(p);
   g = await state();
   check(!g.on && !g.tag && g.seeds === 777 && g.flights === 50, `?season2=off: the real game is back: ${JSON.stringify(g)}`);
+  const live = await p.evaluate(async () => ({ n: Object.keys((await import('/src/network.js')).LINKS).length, line: !!document.getElementById('jAreas') }));
+  check(live.n === 104 && !live.line, `switch off: the whole world network, no area line: ${JSON.stringify(live)}`);
+  // 5. The /preview/ build: window.SEASON2_FORCE (injected by the deploy) = always on, ?season2=off ignored, no exit
+  // link, and the mode flag is NEVER written to the real storage (it is per origin: it would leak into the live game).
+  const fctx = await b.newContext({ viewport: { width: 390, height: 844 } });
+  await fctx.addInitScript(() => { window.SEASON2_FORCE = true; });
+  await fctx.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
+  const fp = await fctx.newPage(); fp.on('pageerror', e => errs.push(String(e)));
+  const fstate = () => fp.evaluate(async () => { const f = document.createElement('iframe'); document.body.appendChild(f); const flag = f.contentWindow.localStorage.getItem('contrailPilot.season2Mode'); f.remove();
+    const t = document.getElementById('s2Tag'); return { on: (await import('/src/config.js')).FEATURES.season2, flag, exit: !!(t && /exit/.test(t.textContent)), tag: !!t }; });
+  for (const q of ['', '?season2=off', '?season2=reset', '?season2=1']) {
+    await fp.goto(URL + q); await ready(fp);
+    const f = await fstate();
+    check(f.on && f.tag && !f.exit && f.flag === null, `forced preview${q}: on, no exit link, flag never written: ${JSON.stringify(f)}`);
+  }
+  await fctx.close();
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
   console.log({ fails });
   await b.close();

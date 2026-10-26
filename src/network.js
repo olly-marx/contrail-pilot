@@ -2,7 +2,7 @@
 // nearest neighbours (up to NEAR, within NEAR_KM) plus the declared ocean BRIDGES (src/cities.js).
 // Leg lengths in the game are BALANCED, not real (the user: no very short legs, no endless ones):
 // every leg is LEG_LO to LEG_HI game km (about 20 s of flying), longer real hops a bit longer.
-import { CITIES, BRIDGES } from './cities.js';
+import { CITIES, BRIDGES, S2_BRIDGES, SEASON2_ON } from './cities.js';
 import { realKm } from './geo.js';
 
 export const NEAR = 5, NEAR_KM = 2600;   // (4 left Nairobi with two NORTH buttons)
@@ -21,15 +21,29 @@ export function bearing(a, b) {
   return (deg(Math.atan2(y, x)) + 360) % 360;
 }
 
-// LINKS[name] = sorted list of neighbour names.
-export const LINKS = (() => {
-  const L = Object.fromEntries(CITIES.map(c => [c.name, new Set()]));
+// The links among a set of cities: each joins its NEAR nearest (within NEAR_KM) in the set, plus the BRIDGES
+// whose two ends are both in it. LINKS[name] = sorted list of neighbour names.
+export function linksAmong(cities, bridges = BRIDGES) {
+  const L = Object.fromEntries(cities.map(c => [c.name, new Set()]));
   const link = (a, b) => { L[a].add(b); L[b].add(a); };
-  for (const c of CITIES) CITIES.filter(o => o !== c).map(o => [o, realKm(c, o)]).filter(([, d]) => d <= NEAR_KM)
+  for (const c of cities) cities.filter(o => o !== c).map(o => [o, realKm(c, o)]).filter(([, d]) => d <= NEAR_KM)
     .sort((x, y) => x[1] - y[1]).slice(0, NEAR).forEach(([o]) => link(c.name, o.name));
-  for (const [a, b] of BRIDGES) link(a, b);
+  for (const [a, b] of bridges) if (a in L && b in L) link(a, b);
   return Object.fromEntries(Object.entries(L).map(([k, v]) => [k, [...v].sort()]));
-})();
+}
+// The live network. A live binding: season 2 (src/areas.js) swaps it for the unlocked areas' network (useAreas).
+export const WORLD_LINKS = linksAmong(CITIES, SEASON2_ON ? [...BRIDGES, ...S2_BRIDGES] : BRIDGES);
+export let LINKS = WORLD_LINKS;
+// Season 2: confine flying to these city names (null = the whole world). The same rule as the world network, built
+// among these cities only (research/AREA-BALANCE.md measured it that way). Cached per set.
+const areaNets = new Map();
+export function useCities(names) {
+  if (!names) { LINKS = WORLD_LINKS; return LINKS; }
+  const key = [...names].sort().join('|');
+  if (!areaNets.has(key)) areaNets.set(key, linksAmong(CITIES.filter(c => names.includes(c.name)), [...BRIDGES, ...S2_BRIDGES]));
+  LINKS = areaNets.get(key);
+  return LINKS;
+}
 
 // The heading words a child sees on the three buttons.
 const WORDS = ['NORTH', 'NORTH-EAST', 'EAST', 'SOUTH-EAST', 'SOUTH', 'SOUTH-WEST', 'WEST', 'NORTH-WEST'];

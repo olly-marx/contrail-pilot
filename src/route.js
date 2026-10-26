@@ -5,7 +5,9 @@
 // long enough flight would see every city before repeating one (tourPath). Legs are balanced game
 // lengths, not real ones (network.js legGameKm: 1,800-2,600 game km).
 import { CITIES } from './cities.js';
-import { LINKS, city, bearing, choices, legGameKm } from './network.js';
+import { LINKS, city, bearing, choices, legGameKm, useCities } from './network.js';
+import { SEASON2_ON } from './cities.js';
+import { AREAS, unlockedAreas, citiesOf } from './areas.js';
 import { realKm } from './geo.js';
 export { realKm };
 
@@ -39,7 +41,7 @@ export function tourPath(start, first, count = 60) {
   const path = [start, first];
   let seen = new Set(path);
   while (path.length < count + 1) {
-    if (seen.size >= CITIES.length) seen = new Set([path[path.length - 1]]);
+    if (seen.size >= Object.keys(LINKS).length) seen = new Set([path[path.length - 1]]);
     const p = path[path.length - 2], c = path[path.length - 1], fresh = LINKS[c].filter(n => !seen.has(n));
     const next = fresh.length
       ? fresh.map(n => ({ n, s: turn(p, c, n) / 45 + 2 * LINKS[n].filter(m => !seen.has(m)).length })).sort((a, b) => a.s - b.s)[0].n
@@ -50,8 +52,9 @@ export function tourPath(start, first, count = 60) {
 }
 // The flight from a save: where you are and the direction you chose (a valid one, or the first offered).
 export function flightPath(save, count = 60) {
+  if (SEASON2_ON) useCities(citiesOf(unlockedAreas(save)));   // season 2: fly only inside your unlocked areas
   const name = typeof save.city === 'number' ? OLD_LOOP[save.city] : save.city;   // (a save not migrated yet)
-  const here = city(name) ? name : HOME;
+  const here = city(name) && LINKS[name] ? name : SEASON2_ON ? AREAS[unlockedAreas(save)[0]].start : HOME;
   const opts = choices(here).map(o => o.name);
   const first = here === HOME && !save.tutorialDone ? FIRST_HOP : opts.includes(save.heading) ? save.heading : opts[0];
   return tourPath(here, first, count);

@@ -5,6 +5,7 @@
 import { LAND_W, LAND_H, LAND_RLE, ISLANDS } from './landmask.js';
 import { regionAt, along } from './geo.js';
 import { CITIES } from './cities.js';
+import { LINKS } from './network.js';
 
 export const SIZE = 128;   // the canvas is SIZE x SIZE pixels (the page scales it, never smooths it)
 const LAND = { woodland: [94, 154, 74], mediterranean: [154, 168, 90], desert: [217, 181, 106], monsoon: [63, 138, 82], eastasia: [111, 163, 106],
@@ -138,6 +139,8 @@ export function paint(canvas, f, path, quality = 2, ways = []) {
       const xx = q[0] + ox, yy = q[1] + oy, d = ox * ox + oy * oy;
       if (xx >= 0 && yy >= 0 && xx < S && yy < S && landAt[yy * S + xx] && d < best) { best = d; dx = xx; dy = yy; on = true; }
     }
+    // Season 2: an airport outside your unlocked areas is a dim dot (locked; src/areas.js). LINKS is the whole world otherwise.
+    g.fillStyle = k.name in LINKS ? 'rgba(255,255,255,0.9)' : 'rgba(40,40,60,0.75)';
     g.fillRect(dx, dy, 1, 1); dots.push({ name: k.name, x: dx, y: dy, onLand: on });
   }
   // The way ahead: gold, drawn in whole pixels (no smoothing), a square at each airport.

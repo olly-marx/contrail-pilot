@@ -2,7 +2,7 @@
 // direction). Coordinates are the airports'. Each city's region comes from src/geo.js (tests/geo.cjs
 // checks it matches `region` here). The network joins each city to its nearest neighbours, plus the
 // declared BRIDGES over the oceans (src/route.js).
-export const CITIES = [
+const BASE_CITIES = [
   // UK and Europe (woodland)
   { name: 'LONDON', lat: 51.47, lon: -0.45, region: 'woodland' },
   { name: 'PARIS', lat: 49.01, lon: 2.55, region: 'woodland' },
@@ -122,6 +122,30 @@ export const CITIES = [
 ];
 
 // Ocean crossings (the nearest-neighbour links never make these): declared, both ways.
+// SEASON 2 (the redesign, research/AREA-BALANCE.md): 14 new airports, in the game ONLY with ?season2=1 (src/season2.js),
+// so the live network is unchanged. Regions are what src/geo.js says, except two the coarse land mask gets wrong
+// (Hobart reads as sea, Nuuk as ice): declared here. The new biomes (patagonia, australia, newzealand) and skylines
+// are later work (art budget); until then these use today's regions.
+export const S2_CITIES = [
+  { name: 'PUNTA ARENAS', lat: -53.00, lon: -70.85, region: 'plains' },
+  { name: 'PUERTO MADRYN', lat: -42.76, lon: -65.10, region: 'plains' },
+  { name: 'BALMACEDA', lat: -45.92, lon: -71.69, region: 'plains' },
+  { name: 'MELBOURNE', lat: -37.67, lon: 144.84, region: 'desert' },
+  { name: 'BRISBANE', lat: -27.38, lon: 153.12, region: 'desert' },
+  { name: 'CAIRNS', lat: -16.88, lon: 145.75, region: 'desert' },
+  { name: 'HOBART', lat: -42.84, lon: 147.51, region: 'woodland' },   // geo.js: ocean (mask too coarse)
+  { name: 'ADELAIDE', lat: -34.95, lon: 138.53, region: 'desert' },
+  { name: 'WELLINGTON', lat: -41.33, lon: 174.81, region: 'woodland' },
+  { name: 'CHRISTCHURCH', lat: -43.49, lon: 172.53, region: 'woodland' },
+  { name: 'DUNEDIN', lat: -45.93, lon: 170.20, region: 'woodland' },
+  { name: 'TROMSO', lat: 69.68, lon: 18.92, region: 'boreal' },
+  { name: 'ROVANIEMI', lat: 66.56, lon: 25.83, region: 'boreal' },
+  { name: 'NUUK', lat: 64.19, lon: -51.68, region: 'tundra' },   // geo.js: ice
+];
+export const SEASON2_ON = typeof window !== 'undefined' && window.SEASON2 === true;
+export const CITIES = SEASON2_ON ? [...BASE_CITIES, ...S2_CITIES] : BASE_CITIES;
+// Season 2 only: the Silk Road (3,028 km, over the 2,600 km link limit; research/STORY-ANY-START.md).
+export const S2_BRIDGES = [['TASHKENT', 'ULAANBAATAR']];
 export const BRIDGES = [
   ['LONDON', 'REYKJAVIK'], ['REYKJAVIK', 'NEW YORK'], ['REYKJAVIK', 'IQALUIT'], ['LISBON', 'NEW YORK'],
   ['TOKYO', 'ANCHORAGE'], ['SAPPORO', 'ANCHORAGE'], ['LOS ANGELES', 'HONOLULU'], ['HONOLULU', 'NADI'], ['HONOLULU', 'TOKYO'],

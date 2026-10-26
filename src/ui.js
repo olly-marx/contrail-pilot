@@ -2,6 +2,10 @@ import { FEATURES, km, CLIMATE } from './config.js';
 import { VERSION } from './version.js';
 import { flightPath, choices, city, EARTH_KM } from './route.js';
 import { headingWord } from './network.js';
+import { AREAS, unlockedAreas } from './areas.js';
+// Season 2: which areas you fly in, and which are still locked (dim dots on the globe; crossings open them).
+const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS).filter(k => !open.includes(k));
+  return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
@@ -156,6 +160,7 @@ export class UI {
         <b>${headingWord(o.deg)}</b><span>to ${o.name}</span><small>${land(o.name)}</small></button>`).join('')}</div>` : ''}
       <canvas id="jGlobe" class="jglobe" width="160" height="160"></canvas>
       <p class="small">On the way: ${path.slice(1).join(' &gt; ')}</p>
+      ${FEATURES.season2 ? areaLine(s) : ''}
       <p class="small">Times round the Earth: <b>${trips.toFixed(1)}</b> (${km(Math.round(s.flownKm || 0))})</p>`;
     // The way buttons and a tap on a way's dot on the globe do the same thing (the globe also turns when dragged: src/globe.js).
     const pick = name => { sfx.flap(); this.save.heading = name; writeSave(this.save); this.renderJourney(); };
