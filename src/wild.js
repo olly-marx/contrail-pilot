@@ -15,6 +15,7 @@ import { animalDir, animalPortrait } from './animalart.js';
 import { meterHTML } from './ui.js';
 import { onSwipe } from './swipe.js';
 import { landTrees, countText } from './landtrees.js';
+import { nextHere } from './nexthere.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -67,6 +68,15 @@ export class WildScreen {
     // Below the pinned picture + meter (bug-fix chat pins them in .wpin), so this scrolls with the list.
     let more = $('wMeterMore');
     if (!more) { more = document.createElement('p'); more.id = 'wMeterMore'; more.className = 'small w-how'; ($('wMeter').closest('.wpin') || $('wMeter')).after(more); }
+    // "Next here" (src/nexthere.js): the next tree, the next project tier and an animal to look out for.
+    let nx = $('wNext');
+    if (!nx) { nx = document.createElement('div'); nx.id = 'wNext'; nx.className = 'w-next'; more.after(nx); }
+    const n = nextHere(s, this.region), bar = (h, k) => `<span class="w-nbar"><i style="width:${Math.round(100 * Math.min(1, h / k))}%"></i></span> ${Math.min(h, k)}/${k}`;
+    nx.innerHTML = '<p class="label">Next here</p>' + [
+      n.tree && `<div class="w-nrow"><b>${esc(n.tree.name)}</b>: ${esc(n.tree.rule.toLowerCase())} ${bar(n.tree.have, n.tree.need)}</div>`,
+      n.tier && `<div class="w-nrow"><b>Tier ${n.tier.tier} projects</b>: biodiversity ${bar(n.tier.have, n.tier.need)}</div>`,
+      n.animal && `<div class="w-nrow"><b>${esc(n.animal.name)}</b>: ${n.animal.ready ? 'out there now, look out on your flights!' : 'not back yet: see the projects below'}</div>`,
+    ].filter(Boolean).join('') || '<div class="w-nrow">Everything here is open. Wonderful!</div>';
     more.innerHTML = `Projects from ${esc(REGION_SOURCE[this.region])}. <b>Raise it:</b> plant this land's trees as you fly over it, and finish its projects. More life appears below you.`;
     this.renderScene();
     this.renderProjects();
