@@ -105,7 +105,9 @@ export function issrAlpha(f, i, box, inside) {
   const gapY = Math.max(0, i.y - (box.y + box.h), box.y - (i.y + i.height));
   const d = Math.max(gapX, gapY);
   // ISSR.revealBoost (a variant, off unless set): icy air shows from this many times further away.
-  const reveal = (i.late ? ISSR.revealPx : f.kit.revealPx) * (ISSR.revealBoost || 1), hidden = f.kit.hiddenAlpha;   // a missed patch: only seen up close
+  // (ISSR.revealNightOnly: the boost only while contrails warm, i.e. at night.)
+  const boost = ISSR.revealBoost && !(ISSR.revealNightOnly && f.isDay) ? ISSR.revealBoost : 1;
+  const reveal = (i.late ? ISSR.revealPx : f.kit.revealPx) * boost, hidden = f.kit.hiddenAlpha;   // a missed patch: only seen up close
   if (d >= reveal) return hidden;
   const step = Math.min(3, Math.floor((1 - d / reveal) * 4));
   return hidden + (ISSR.revealAlpha - hidden) * (step / 3);
