@@ -573,3 +573,8 @@ h2.sub { margin-top: -4px; }
 .w-web { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-top: 3px; }
 .w-webpic img, .w-webpic .w-nopic { width: 20px; height: 20px; image-rendering: pixelated; display: block; }
 .w-webpic img.w-shadow { filter: brightness(0) opacity(.35); }
+/* NATURE: "Next here" card (src/wild.js, src/nexthere.js) */
+.w-next { border: 1px solid rgba(255,255,255,.18); border-radius: 4px; padding: 4px 6px; margin: 4px 0 8px; font-size: 7px; line-height: 1.6; }
+.w-next .label { margin: 0 0 2px; opacity: .8; }
+.w-nbar { display: inline-block; width: 40px; height: 5px; background: rgba(255,255,255,.15); vertical-align: middle; }
+.w-nbar i { display: block; height: 100%; background: #8fd18f; }
