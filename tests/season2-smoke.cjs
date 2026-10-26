@@ -8,7 +8,7 @@
 //      area's flight does not count, 4,550 km + biodiversity 30 offered; a crossing flight starts (Stockholm 6,500 km on)
 //   E  every area open and the last era: the MORE TO COME card
 // Planted defects, each must FAIL the check named (revert with git checkout after):
-//   B  sed -i 's/(SEASON2_ON ? save : { city: HOME })/{ city: HOME }/' src/route.js        -> "B <area>: flight school starts in ..."
+//   B  sed -i 's/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/' src/route.js        -> "B <area>: flight school starts in ..."
 //   C  sed -i "s/if (tab === 'nature')/if (tab === 'natur')/" src/ui.js                    -> "C: NATURE opens"
 //   D  sed -i 's/distanceShare: 0.7/distanceShare: 0/; s/biodiversity: 30, /biodiversity: 0, /' src/season.js -> "D: 4,549 km ..."
 //   D  sed -i 's/maxEra: 2/maxEra: 9/' src/season.js ... (offer-gate.cjs covers it); crossing start: break crossingPath in src/crossings.js
@@ -19,6 +19,7 @@ const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const STARTERS = ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia'];
 
+setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minutes (a hang is a failure)'); process.exit(1); }, 240000).unref();
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], errs = [], check = (c, m) => { if (!c) fails.push(m); };
@@ -52,14 +53,15 @@ const STARTERS = ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia']
     p = await fresh();
     await p.evaluate(() => { game.registry.get('ui').start(); });
     await p.waitForSelector(`#startChoice [data-area="${k}"]`, { timeout: 5000 }).catch(() => {});
-    await p.click(`#startChoice [data-area="${k}"]`).catch(() => {});
+    await p.click(`#startChoice [data-area="${k}"]`, { timeout: 5000 }).catch(() => {});
     const home = await p.$eval('#startChoice [data-city]', e => e.dataset.city).catch(() => null);   // the area's own default city, listed first
-    await p.click('#startChoice [data-city]').catch(() => {});
+    await p.click('#startChoice [data-city]', { timeout: 5000 }).catch(() => {});
     await p.waitForSelector('#howClose', { state: 'visible', timeout: 5000 }).catch(() => {});
-    await p.click('#howClose').catch(() => {});
+    await p.click('#howClose', { timeout: 5000 }).catch(() => {});
     await started(p);
     const f = await p.evaluate(async k => { const g = game.scene.getScene('game'), A = (await import('/src/areas.js')).AREAS[k];
-      return { school: !!g.school, path: g.path.slice(0, 6), next: g.nextAirport && g.nextAirport.name, state: g.state, start: A.start, inArea: g.path.slice(0, 6).every(n => A.cities.includes(n)), areas: game.registry.get('save').areas }; }, k);
+      const path = (g.path || []).slice(0, 6);
+      return { school: !!g.school, path, next: g.nextAirport && g.nextAirport.name, state: g.state, start: A.start, inArea: path.length > 1 && path.every(n => A.cities.includes(n)), areas: game.registry.get('save').areas }; }, k);
     check(home && home === f.start && f.path[0] === f.start, `B ${k}: flight school starts in ${f.start}, not London: ${JSON.stringify(f)}`);
     check(f.school && f.inArea && f.next === f.path[1] && JSON.stringify(f.areas) === JSON.stringify([k]), `B ${k}: school flies over its own area to the next airport: ${JSON.stringify(f)}`);
     await p.waitForTimeout(1200);
