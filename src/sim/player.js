@@ -58,6 +58,9 @@ export function makePlayer({ skill = 0.7, careful = true, seed = 1, land = null 
   // Where it wants to be: in the safe band; careful pilots then pick by icy air (seen only once revealed).
   const target = w => {
     const [lo, hi] = safeBand(w);
+    // A seed or pick-up coming up inside the safe band: go for it (both kinds of player do).
+    const seed = w.tokens.filter(k => k.x > w.plane.x && k.x < w.plane.x + 160 && k.y - 2 >= lo && k.y - 2 <= hi).sort((a, b) => a.x - b.x)[0];
+    if (seed) return seed.y - 2;
     if (!careful || hi - lo < 4) return (lo + hi) / 2;
     const ahead = w.issrs.filter(i => i.alpha > (w.kit.hiddenAlpha || 0) + 0.01 && i.x < w.plane.x + 220 && i.x + i.width > w.plane.x - 10);
     if (!ahead.length) return (lo + hi) / 2;
