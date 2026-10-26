@@ -2,8 +2,11 @@
 //
 // 1. RECORD a sky. One reference flight (crashes off, airports out of reach, turbulence off because its kicks
 //    depend on the plane) records, frame by frame, every storm / no-fly zone and every bird exactly as the
-//    collision tests see them. Storms, no-fly zones and birds do not depend on where the plane is, so this IS
-//    the sky for every possible tap sequence.
+//    collision tests see them. CORRECTION (measured 2026-10-26): the sky is NOT the same for every tap sequence.
+//    Each contrail puff draws its +-1 px wobble from the physics random stream, so a path that makes a different
+//    number of contrails shifts every later spawn (seed 1: the first 3 storm gaps match, then they part). So
+//    results here describe real, typical skies, but each path would meet a different future after its first
+//    contrails. Turbulence (off here) does the same.
 // 2. SEARCH. A plane is only taps: a tap sets vy = PLANE.flapVelocity, then the game's own free flight
 //    (RULES.freeFall: gravity, the ceiling) moves it, and the game's own pixel tests (P.hitsStorm, P.hitBird)
 //    and the ground decide a crash. Frame by frame we keep EVERY state (y, vy, frames until it may tap again)
