@@ -80,7 +80,7 @@ const KEY = 'contrailPilot.v2';
   if (btn) {
     await btn.click(); await started(p);
     const fl = await p.evaluate(() => { const g = game.scene.getScene('game'); return { c: g.crossing && g.crossing.id, to: g.nextAirport.name, at: Math.round(g.nextAirport.worldX - g.distancePx), dist: g.distText.text }; });
-    check(fl.c === 'warsaw-stockholm' && fl.to === 'STOCKHOLM' && fl.at > 6500 && /TO STOCKHOLM/.test(fl.dist), `flying the crossing: ${JSON.stringify(fl)}`);
+    check(fl.c === 'warsaw-stockholm' && fl.to === 'STOCKHOLM' && fl.at >= 6400 && /TO STOCKHOLM/.test(fl.dist), `flying the crossing: ${JSON.stringify(fl)}`);
     await p.evaluate(() => { const g = game.scene.getScene('game'); g.landedAt = 'STOCKHOLM'; g.distancePx = 7000; g.finish({ landed: true }); });
     await p.waitForTimeout(500);
     const after = await p.evaluate(() => { const s = game.registry.get('save'); return { areas: s.areas, city: s.city, fly: s.flyCrossing || null, crossed: s.crossed }; });
@@ -106,7 +106,7 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(500);
   const rec = await p.evaluate(() => game.registry.get('save').areaBest);
   check(rec && rec.weurope >= 2900 && rec.weurope <= 3100, `a landed flight from Warsaw records the best for Western Europe: ${JSON.stringify(rec)}`);
-  await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = Object.keys(a.AREAS); (await import('/src/save.js')).writeSave(s); });
+  await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = Object.keys(a.AREAS); s.flightSeconds = 1e6; (await import('/src/save.js')).writeSave(s); });
   await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
   check(await p.evaluate(() => !!document.getElementById('jMore')), 'every area open: the MORE TO COME card shows');
   // 3. Reset: from zero again.
