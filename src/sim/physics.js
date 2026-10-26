@@ -71,9 +71,11 @@ export function inStormClearZone(f, worldX) {
 }
 
 // Is there a plane-sized lane free of icy air between gTop and gBot, at x..x+w?
-export function laneClear(issrs, x, w, gTop, gBot) {
-  const lane = PLANE.h + STORMS.clearLane;
-  const blocked = issrs.filter(i => i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop)
+// lane: how tall the free lane must be (default: the plane + STORMS.clearLane; the ISSR.laneExtra variant asks more).
+export function laneClear(issrs, x, w, gTop, gBot, lane = PLANE.h + STORMS.clearLane) {
+  // Fake (forecast) patches never count: they make no contrails, and one pops only when the plane comes near, so
+  // counting it would let how you fly change where later storms and icy air go (2026-10-26).
+  const blocked = issrs.filter(i => !i.fake && i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop)
     .map(i => [Math.max(gTop, i.y), Math.min(gBot, i.y + i.height)]).sort((a, b) => a[0] - b[0]);
   let free = gTop;
   for (const [t, btm] of blocked) { if (t - free >= lane) return true; free = Math.max(free, btm); }
@@ -104,7 +106,10 @@ export function issrAlpha(f, i, box, inside) {
   const gapX = Math.max(0, i.x - (box.x + box.w), box.x - (i.x + i.width));
   const gapY = Math.max(0, i.y - (box.y + box.h), box.y - (i.y + i.height));
   const d = Math.max(gapX, gapY);
-  const reveal = i.late ? ISSR.revealPx : f.kit.revealPx, hidden = f.kit.hiddenAlpha;   // a missed patch: only seen up close
+  // ISSR.revealBoost (a variant, off unless set): icy air shows from this many times further away.
+  // (ISSR.revealNightOnly: the boost only while contrails warm, i.e. at night.)
+  const boost = ISSR.revealBoost && !(ISSR.revealNightOnly && f.isDay) ? ISSR.revealBoost : 1;
+  const reveal = (i.late ? ISSR.revealPx : f.kit.revealPx) * boost, hidden = f.kit.hiddenAlpha;   // a missed patch: only seen up close
   if (d >= reveal) return hidden;
   const step = Math.min(3, Math.floor((1 - d / reveal) * 4));
   return hidden + (ISSR.revealAlpha - hidden) * (step / 3);
@@ -116,11 +121,11 @@ export function nearPx(i, box) {
 
 // ---------- contrails (records { x, y, born }; the game hangs its square on .view) ----------
 
-// A new puff behind the plane, +-1 px (physics random stream: it decides which light column it blocks).
-// f.plane, f.between.
+// A new puff behind the plane, +-1 px (it decides which light column it blocks). From the PLANE's random stream
+// (f.planeBetween), so how many contrails you make never changes what spawns. f.plane.
 export function makeContrail(f, time) {
   const s = CONTRAIL.size;
-  return { x: f.plane.x - PLANE.spriteOffX, y: f.plane.y + PLANE.h / 2 - s / 2 + f.between(-1, 1), born: time };
+  return { x: f.plane.x - PLANE.spriteOffX, y: f.plane.y + PLANE.h / 2 - s / 2 + f.planeBetween(-1, 1), born: time };
 }
 
 // Drift and age the puffs: f.contrails keeps the live ones; returns the ones that just went (to un-draw).

@@ -35,7 +35,9 @@ export const RULES = {
   takeOff() {
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
-    this.rng = makeRng(this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0);   // physics random numbers, one stream per flight (src/sim/rng.js)
+    const seed = this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0;
+    this.rng = makeRng(seed);   // physics random numbers, one stream per flight (src/sim/rng.js): what SPAWNS
+    this.rngPlane = makeRng((seed ^ 0x9E3779B9) >>> 0);   // the plane's own random numbers (see planeBetween)
     this.safUntil = 0; this.autoUntil = 0; this.ownKit = null; this.nextPowerAt = POWERUPS.from; this.safOffered = false;   // pick-ups
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.setState('takeoff');
@@ -49,7 +51,9 @@ export const RULES = {
   // this.autostart are set by the caller.
   initFlight() {
     this.kit = loadout(this.save);
-    this.rng = makeRng(this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0);   // physics random numbers (src/sim/rng.js); decoration keeps Math.random
+    const seed = this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0;
+    this.rng = makeRng(seed);   // physics random numbers (src/sim/rng.js): what spawns; decoration keeps Math.random
+    this.rngPlane = makeRng((seed ^ 0x9E3779B9) >>> 0);   // the plane's own random numbers (see planeBetween)
     this.state = 'idle';             // idle -> takeoff -> playing -> landing | over
     this.speed = WORLD.startSpeed;
     this.distancePx = 0;
@@ -245,11 +249,14 @@ export const RULES = {
     if (this.school) return;   // flight school places everything itself
     if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Get low as you reach the grey runway: the plane lands itself. Or fly on for more seeds!', 'good', 3.5);
 
-    if (this.kit.tree && this.parcels > 0 && this.distancePx >= this.nextPlotAt) {   // no parcels left: no more soil
+    // Soil plots come on schedule whether or not you have parcels left (no parcels: no soil is shown), so dropping
+    // parcels never shifts the physics random stream, and so never changes the sky (2026-10-26; it used to stop the
+    // schedule, measured: seed 1 flew a different sky after the last parcel).
+    if (this.kit.tree && this.distancePx >= this.nextPlotAt) {
       const x = WIDTH + 10;
       const onRunway = this.runways.some(r => x + this.kit.plotW > r.x - 10 && x < r.x + AIRPORT.runwayLen + 10)
         || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
-      if (!onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x);   // no soil over the sea or the ice
+      if (this.parcels > 0 && !onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x);   // no parcels, the sea or the ice: no soil
       this.nextPlotAt += this.between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
     }
     if (this.school) return;   // flight school places everything itself
@@ -313,9 +320,10 @@ export const RULES = {
     const lo = STORMS.marginTop + gap / 2;
     const hi = SKY_H - STORMS.marginTop - gap / 2;
     const w = noFly ? nf.width : STORMS.width;
-    // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time).
+    // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time);
+    // with the ISSR.laneExtra variant, a lane that much taller.
     let gapY = null;
-    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2)) gapY = t; }
+    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2, this.issrs, ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined)) gapY = t; }
     if (gapY === null) return;
     if (noFly) this.addNoFlyAt(x, gapY, gap);
     else this.addStormPairAt(x, gapY, gap);
@@ -360,13 +368,18 @@ export const RULES = {
   // fake: a forecast's false patch (looks real, makes no contrail, puffs away when you get close).
   addIssr({ fake = false } = {}) {
     const grow = Math.sqrt(this.lateRamp());   // long flights: bigger patches (area grows with the ramp)
-    const w = Math.round(this.between(ISSR.minW, ISSR.maxW) * grow);
-    const h = Math.min(SKY_H - 40, Math.round(this.between(ISSR.minH, ISSR.maxH) * grow)), x = WIDTH + 10;
+    let w = Math.round(this.between(ISSR.minW, ISSR.maxW) * grow);
+    let h = Math.min(SKY_H - 40, Math.round(this.between(ISSR.minH, ISSR.maxH) * grow)), x = WIDTH + 10;
+    // Spawn-rule variants (2026-10-26, for the steering-cost study; all OFF unless set, so today's sky is unchanged):
+    // ISSR.thinK: thin layers, thinK x as tall and 1/thinK x as wide (the same area), like real ice-supersaturated
+    // layers a few hundred metres deep.
+    if (ISSR.thinK) { w = Math.round(w / ISSR.thinK); h = Math.max(16, Math.round(h * ISSR.thinK)); }
     // Never fill a storm gap: there is always a way through without a contrail (10 tries, else skip).
     for (let k = 0; k < 10; k++) {
       const y = this.between(10, SKY_H - h - 10);
       const blocks = this.storms.some(st => { const r = st.rects[0]; return r.x < x + w && r.x + r.width > x
-        && !this.laneClear(r.x, r.width, r.height, st.rects[1].y, [...this.issrs, { x, y, width: w, height: h }]); });   // with the icy air already there
+        && !this.laneClear(r.x, r.width, r.height, st.rects[1].y, [...this.issrs, { x, y, width: w, height: h }], ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined); });   // with the icy air already there
+      // (ISSR.laneExtra, a variant: the clear lane through every storm gap is laneExtra px taller than today's.)
       if (!blocks) {
         const r = this.addIssrAt(x, y, w, h);
         if (fake) r.fake = true;
@@ -455,7 +468,7 @@ export const RULES = {
   forestStore() { return P.forestStore(this); },
   // Is there still a clear lane (plane height + margin) through the gap gTop..gBot of a storm
   // column at x..x+w, past the icy air in `issrs` that overlaps the column?
-  laneClear(x, w, gTop, gBot, issrs = this.issrs) { return P.laneClear(issrs, x, w, gTop, gBot); },
+  laneClear(x, w, gTop, gBot, issrs = this.issrs, lane) { return P.laneClear(issrs, x, w, gTop, gBot, lane); },
   // Is any point along the plane's middle line inside the cloud's ellipses? (x, y, w, h: its box)
   // `grow`: each blob's radii x this (1 = the drawn shape). Used for the contrail margin below.
   inCloud(blobs, x, y, w, h, box, grow = 1) { return P.inCloud(blobs, x, y, w, h, box, grow); },
@@ -493,6 +506,11 @@ export const RULES = {
   // tests and probes only) gives the same sky with or without drawing. Looks keep Math.random.
   // Same formulas as Phaser.Math.Between / FloatBetween.
   rand() { return this.rng(); },
+  // The PLANE's random numbers (2026-10-26): draws that happen only because of how you fly (the contrail puff's
+  // +-1 px wobble, turbulence kicks and judder, a tap's delay in turbulence) come from their own stream, so they
+  // never shift what spawns: the same seed is the same storms, icy air and birds whoever flies it.
+  planeBetween(a, b) { return Math.floor(this.rngPlane() * (b - a + 1) + a); },
+  planeFloatBetween(a, b) { return this.rngPlane() * (b - a) + a; },
   between(a, b) { return Math.floor(this.rng() * (b - a + 1) + a); },
   floatBetween(a, b) { return this.rng() * (b - a) + a; },
   setState(s) { this.state = s; this.stateTime = 0; },
@@ -551,25 +569,7 @@ export const RULES = {
       this.plane.vy = clamp((target - this.plane.y) * (auto ? 10 : 4), -lim, lim);
       this.plane.y += this.plane.vy * dt;
     } else if (this.state === 'playing') {
-      this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
-      // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
-      // between you and it, the plane levels out and floats down onto the runway. With a storm in
-      // the way you fall normally, so you can dive through its gap. Flaring burns extra CO2.
-      this.flaring = false;
-      const toStart = this.nextAirport.worldX - this.distancePx;          // runway start, ahead of the plane's x
-      const drop = SKY_H - this.spriteBottom();
-      const clearPath = !this.storms.some(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < this.plane.x + Math.max(0, toStart) + PLANE.w);
-      const room = toStart + AIRPORT.runwayLen - PLANE.w - 10;          // runway left before the far end
-      if (this.plane.vy > 0 && drop < AIRPORT.flareHeight * this.kit.flare && toStart < AIRPORT.flareFrom * this.kit.flare && room > 0 && clearPath) {   // Landing Gear: wider window
-        const v = Math.max(1, this.speed);
-        // Before the runway: sink just slowly enough to reach it. Over it: gently, but fast
-        // enough to touch down before the far end.
-        const cap = toStart > 0 ? Math.max(15, drop / ((toStart + 20) / v)) : Math.max(AIRPORT.flareVy, drop / (room / v));
-        this.plane.vy = Math.min(this.plane.vy, cap);
-        this.flaring = true;
-      }
-      this.plane.y += this.plane.vy * dt;
-      if (this.plane.y < 0) { this.plane.y = 0; this.plane.vy = 0; }
+      this.freeFall(dt);
     }
     this.pose = P.planePose(this);   // the picture's centre and tilt: the pixel hit tests use it
 
@@ -757,6 +757,30 @@ export const RULES = {
     return this.bank;
   },
 
+  // The plane in free flight for one frame: gravity, the landing flare, the ceiling. Moved out of step() so the
+  // perfect-tapper study (tools/sim/tapper.mjs) moves its plane with exactly this code.
+  freeFall(dt) {
+    this.plane.vy = Math.min(PLANE.maxFall, this.plane.vy + PLANE.gravity * dt);
+    // Landing flare: when you are low and falling, the runway is within reach, and NO storm is
+    // between you and it, the plane levels out and floats down onto the runway. With a storm in
+    // the way you fall normally, so you can dive through its gap. Flaring burns extra CO2.
+    this.flaring = false;
+    const toStart = this.nextAirport.worldX - this.distancePx;          // runway start, ahead of the plane's x
+    const drop = SKY_H - this.spriteBottom();
+    const clearPath = !this.storms.some(st => st.rects[0].x + st.rects[0].width > this.plane.x - 4 && st.rects[0].x < this.plane.x + Math.max(0, toStart) + PLANE.w);
+    const room = toStart + AIRPORT.runwayLen - PLANE.w - 10;          // runway left before the far end
+    if (this.plane.vy > 0 && drop < AIRPORT.flareHeight * this.kit.flare && toStart < AIRPORT.flareFrom * this.kit.flare && room > 0 && clearPath) {   // Landing Gear: wider window
+      const v = Math.max(1, this.speed);
+      // Before the runway: sink just slowly enough to reach it. Over it: gently, but fast
+      // enough to touch down before the far end.
+      const cap = toStart > 0 ? Math.max(15, drop / ((toStart + 20) / v)) : Math.max(AIRPORT.flareVy, drop / (room / v));
+      this.plane.vy = Math.min(this.plane.vy, cap);
+      this.flaring = true;
+    }
+    this.plane.y += this.plane.vy * dt;
+    if (this.plane.y < 0) { this.plane.y = 0; this.plane.vy = 0; }
+  },
+
   // The flight ends: landed, or why not. The game then shows the results (GameScene.onFinish).
   finish({ landed = false, reason = '', sound = 'crash' }) {
     this.setState('over');
@@ -830,12 +854,12 @@ export const RULES = {
       this.bumpIn -= dt;
       if (this.bumpIn <= 0) {
         const T = HAZARDS.turbulence;
-        this.plane.vy += this.between(-T.bump, T.bump);
+        this.plane.vy += this.planeBetween(-T.bump, T.bump);
         this.bumped = true;
-        this.bumpIn = this.floatBetween(T.bumpEvery[0], T.bumpEvery[1]);
+        this.bumpIn = this.planeFloatBetween(T.bumpEvery[0], T.bumpEvery[1]);
         this.shake(80, 0.004);
       }
-      this.pose.x += this.between(-1, 1);   // the plane judders: its picture, and so its pixel hits, move 1 px
+      this.pose.x += this.planeBetween(-1, 1);   // the plane judders: its picture, and so its pixel hits, move 1 px
     }
 
     // Birds fly towards you, bobbing up and down; hitting one ends the flight.
@@ -890,7 +914,7 @@ export const RULES = {
     if (this.inTurb) {
       // Turbulence: the tap works, but a little late.
       const [a, b] = HAZARDS.turbulence.delay;
-      this.later(this.between(a, b), () => { if (this.state === 'playing') this.applyFlap(); });
+      this.later(this.planeBetween(a, b), () => { if (this.state === 'playing') this.applyFlap(); });
       return;
     }
     this.applyFlap();

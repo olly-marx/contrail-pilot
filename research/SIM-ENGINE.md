@@ -99,6 +99,50 @@ Budget:
 - **Within 200 ms** you could afford about 1-2 flights on a phone, which is too few skies for a fair median.
 - **Measure this on a real phone before relying on it.**
 
+## How the pilots drive the game
+
+Every pilot plays the game only as a player can:
+- **taps:** `w.applyFlap()`, the same flap a finger makes (vy = `PLANE.flapVelocity`, then `PLANE.gravity`), on the
+  frames it chooses;
+- **the tree button:** `w.dropParcel()`, only in the progression player.
+
+Nothing moves the plane directly. On top of that, the TEST HARNESS changes some outcomes, never the flying:
+- `crashes: false` (default) sets `hitsStorm`, `hitBird` to never-hit and `spriteBottom` to never-grounded;
+- the airport is moved out of reach (`nextAirport.worldX = 1e12`), except in the progression simulator, which lands;
+- lesson pop-ups never pause the game (`explain` returns false);
+- a crossing flight sets its gateway's distance (`nextAirport.worldX = crossing length`).
+
+## The same seed is the same sky (since 0.11.9)
+
+What spawns (storms, no-fly zones, icy air, turbulence zones, birds, seeds, pick-ups, soil plots) draws ONLY from the
+physics stream (`this.rng`, seeded by `save.simSeed`), in the same order whatever the player does. Draws that happen
+only because of how you fly use the plane's own stream (`this.rngPlane`, seeded from the same seed):
+- each contrail puff's ±1 px wobble (`P.makeContrail`);
+- turbulence kicks, their timing, and the 1 px judder (`updateHazards`);
+- the delay on a tap made inside turbulence (`flap`).
+
+**Measured before 0.11.9:** a plane that made more contrails shifted every later spawn. On seed 1 the first 3 storm
+gaps matched and then parted. Two more hidden cases were found by audit and fixed:
+- **Soil plots:** they were only scheduled while you had parcels left, so dropping your last parcel shifted the
+  stream. Now they come on schedule and are simply not shown without parcels.
+- **Fake forecast patches:** they counted in the storm-lane check, and they pop only when the plane comes near. Now
+  the lane check ignores fakes, which make no contrails.
+
+**Audited and plane-independent:**
+- SAF and autopilot pick-ups: offered by your OWN fuel and gadgets, not by what you collected.
+- A pick-up's height follows the plane (`pathY`), but that changes a value, not the number of draws.
+- Seeds, crystals, bird flocks and their steering (the plane's x never changes).
+- Turbulence zones' shapes (made on their first frame).
+
+**Gate:** `tests/sim-paired.cjs`. Very different pilots must meet identical spawns for 15,000 km:
+- a Comet hugging y = 120 against one hugging y = 300;
+- a 747 with forecasts, one pilot dropping every parcel and one none.
+
+It fails if the plane's draws are routed back into the physics stream, or if the old plot schedule is planted.
+
+**For new code:** never draw from `this.rng` a number of times that depends on what the player does. Use
+`this.planeBetween` / `this.planeFloatBetween` for anything the plane causes.
+
 ## What it does not model
 
 - **Anything only seen or heard:** pictures, sounds, pop-ups, toasts, the HUD.
