@@ -119,11 +119,11 @@ export function nearPx(i, box) {
 
 // ---------- contrails (records { x, y, born }; the game hangs its square on .view) ----------
 
-// A new puff behind the plane, +-1 px (physics random stream: it decides which light column it blocks).
-// f.plane, f.between.
+// A new puff behind the plane, +-1 px (it decides which light column it blocks). From the PLANE's random stream
+// (f.planeBetween), so how many contrails you make never changes what spawns. f.plane.
 export function makeContrail(f, time) {
   const s = CONTRAIL.size;
-  return { x: f.plane.x - PLANE.spriteOffX, y: f.plane.y + PLANE.h / 2 - s / 2 + f.between(-1, 1), born: time };
+  return { x: f.plane.x - PLANE.spriteOffX, y: f.plane.y + PLANE.h / 2 - s / 2 + f.planeBetween(-1, 1), born: time };
 }
 
 // Drift and age the puffs: f.contrails keeps the live ones; returns the ones that just went (to un-draw).

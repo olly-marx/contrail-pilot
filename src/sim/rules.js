@@ -33,7 +33,9 @@ export const RULES = {
   takeOff() {
     // Upgrades may have been bought in the hangar since this scene was built.
     this.kit = loadout(this.save);
-    this.rng = makeRng(this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0);   // physics random numbers, one stream per flight (src/sim/rng.js)
+    const seed = this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0;
+    this.rng = makeRng(seed);   // physics random numbers, one stream per flight (src/sim/rng.js): what SPAWNS
+    this.rngPlane = makeRng((seed ^ 0x9E3779B9) >>> 0);   // the plane's own random numbers (see planeBetween)
     this.safUntil = 0; this.autoUntil = 0; this.ownKit = null; this.nextPowerAt = POWERUPS.from; this.safOffered = false;   // pick-ups
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.setState('takeoff');
@@ -47,7 +49,9 @@ export const RULES = {
   // this.autostart are set by the caller.
   initFlight() {
     this.kit = loadout(this.save);
-    this.rng = makeRng(this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0);   // physics random numbers (src/sim/rng.js); decoration keeps Math.random
+    const seed = this.save.simSeed ?? (Math.random() * 2 ** 32) >>> 0;
+    this.rng = makeRng(seed);   // physics random numbers (src/sim/rng.js): what spawns; decoration keeps Math.random
+    this.rngPlane = makeRng((seed ^ 0x9E3779B9) >>> 0);   // the plane's own random numbers (see planeBetween)
     this.state = 'idle';             // idle -> takeoff -> playing -> landing | over
     this.speed = WORLD.startSpeed;
     this.distancePx = 0;
@@ -490,6 +494,11 @@ export const RULES = {
   // tests and probes only) gives the same sky with or without drawing. Looks keep Math.random.
   // Same formulas as Phaser.Math.Between / FloatBetween.
   rand() { return this.rng(); },
+  // The PLANE's random numbers (2026-10-26): draws that happen only because of how you fly (the contrail puff's
+  // +-1 px wobble, turbulence kicks and judder, a tap's delay in turbulence) come from their own stream, so they
+  // never shift what spawns: the same seed is the same storms, icy air and birds whoever flies it.
+  planeBetween(a, b) { return Math.floor(this.rngPlane() * (b - a + 1) + a); },
+  planeFloatBetween(a, b) { return this.rngPlane() * (b - a) + a; },
   between(a, b) { return Math.floor(this.rng() * (b - a + 1) + a); },
   floatBetween(a, b) { return this.rng() * (b - a) + a; },
   setState(s) { this.state = s; this.stateTime = 0; },
@@ -833,12 +842,12 @@ export const RULES = {
       this.bumpIn -= dt;
       if (this.bumpIn <= 0) {
         const T = HAZARDS.turbulence;
-        this.plane.vy += this.between(-T.bump, T.bump);
+        this.plane.vy += this.planeBetween(-T.bump, T.bump);
         this.bumped = true;
-        this.bumpIn = this.floatBetween(T.bumpEvery[0], T.bumpEvery[1]);
+        this.bumpIn = this.planeFloatBetween(T.bumpEvery[0], T.bumpEvery[1]);
         this.shake(80, 0.004);
       }
-      this.pose.x += this.between(-1, 1);   // the plane judders: its picture, and so its pixel hits, move 1 px
+      this.pose.x += this.planeBetween(-1, 1);   // the plane judders: its picture, and so its pixel hits, move 1 px
     }
 
     // Birds fly towards you, bobbing up and down; hitting one ends the flight.
@@ -893,7 +902,7 @@ export const RULES = {
     if (this.inTurb) {
       // Turbulence: the tap works, but a little late.
       const [a, b] = HAZARDS.turbulence.delay;
-      this.later(this.between(a, b), () => { if (this.state === 'playing') this.applyFlap(); });
+      this.later(this.planeBetween(a, b), () => { if (this.state === 'playing') this.applyFlap(); });
       return;
     }
     this.applyFlap();

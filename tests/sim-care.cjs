@@ -1,13 +1,14 @@
 // The player's second knob, contrail care c (src/sim/player.js, 2026-10-26). c = 0 must fly exactly as the
 // barrier-only (careless) player did before the knob, and c = 1 exactly as the careful one: the golden distances below
-// were flown by the code before the knob (identical, checked when it was added). c = 0.5 must differ from both on
+// were flown by the code before the knob (identical, checked when it was added; re-flown 2026-10-26 on the skies of the
+// plane's own random stream, again identical to the pre-knob code). c = 0.5 must differ from both on
 // some sky (the knob does something in between). Comet, crashes on, s = 0.8 and 1, seeds 1-6. Plain Node.
 // plan: 'classic' throughout: the golden numbers were flown before threat-first planning (2026-10-26).
 // PLANT=care weakens the contrail term (x 0.5): must FAIL.
 // Run: node tests/sim-care.cjs
 const GOLD = {
-  care0: [8932.92, 8204.153, 8437.363, 8710.458, 8204.153, 2455.844, 10280.856, 9122.802, 9881.273, 9813.339, 9760.845, 8969.096],
-  care1: [8721.013, 2282.932, 8243.58, 9584.329, 8896.788, 8243.58, 9909.806, 7974.917, 8542.094, 9903.219, 9262.246, 9584.329],
+  care0: [8208.301, 6825.451, 7054.934, 8898.912, 4525.783, 8685.141, 10506.004, 6827.421, 9073.616, 9868.113, 4529.348, 6827.421],
+  care1: [1606.42, 6827.421, 8668.275, 3657.27, 4525.783, 2275.044, 10506.004, 6827.421, 9415.298, 10103.627, 9523.544, 6829.39],
 };
 (async () => {
   const { createWorld } = await import('../src/sim/world.js');

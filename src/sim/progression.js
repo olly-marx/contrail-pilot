@@ -29,7 +29,7 @@ const DT = 16.67 / 1000;
 export const LEARNING = n => 0.75 + 0.15 * (1 - Math.exp(-n / 30));
 
 // One flight from `save` (a stored save). Returns the world after it ended (its save is the banked save).
-export function flyOne(save, { seed, skill, careful, maxSkip, crossing = 0, maxSteps = 400000 }) {
+export function flyOne(save, { seed, skill, careful, budget = 0.5, maxSkip, crossing = 0, maxSteps = 400000 }) {
   const w = createWorld(save, seed);
   w.save.autoTakeoff = true;
   for (let i = 0; i < 3000 && w.state !== 'playing'; i++) w.step(DT);
@@ -39,7 +39,7 @@ export function flyOne(save, { seed, skill, careful, maxSkip, crossing = 0, maxS
   // next leg would overheat the Earth, or once it has passed maxSkip airports.
   const land = () => crossing ? true : w.airportsSkipped >= maxSkip
     || w.heat + (w.heat / Math.max(1, w.distancePx)) * w.legKm(w.airportIndex + 1) >= CLIMATE.dangerLine * 0.9;
-  const pilot = makePlayer({ skill, careful, seed, land });
+  const pilot = makePlayer({ skill, careful, budget, seed, land });   // threat-first planning (the default); careful choices within the inner half of the safe band
   for (let i = 0; i < maxSteps && (w.state === 'playing' || w.state === 'landing'); i++) {
     if (w.state === 'playing') {
       if (pilot.wantsFlap(w)) w.applyFlap();
