@@ -73,7 +73,9 @@ export function inStormClearZone(f, worldX) {
 // Is there a plane-sized lane free of icy air between gTop and gBot, at x..x+w?
 // lane: how tall the free lane must be (default: the plane + STORMS.clearLane; the ISSR.laneExtra variant asks more).
 export function laneClear(issrs, x, w, gTop, gBot, lane = PLANE.h + STORMS.clearLane) {
-  const blocked = issrs.filter(i => i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop)
+  // Fake (forecast) patches never count: they make no contrails, and one pops only when the plane comes near, so
+  // counting it would let how you fly change where later storms and icy air go (2026-10-26).
+  const blocked = issrs.filter(i => !i.fake && i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop)
     .map(i => [Math.max(gTop, i.y), Math.min(gBot, i.y + i.height)]).sort((a, b) => a[0] - b[0]);
   let free = gTop;
   for (const [t, btm] of blocked) { if (t - free >= lane) return true; free = Math.max(free, btm); }

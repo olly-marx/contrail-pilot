@@ -240,11 +240,14 @@ export const RULES = {
     if (this.school) return;   // flight school places everything itself
     if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Get low as you reach the grey runway: the plane lands itself. Or fly on for more seeds!', 'good', 3.5);
 
-    if (this.kit.tree && this.parcels > 0 && this.distancePx >= this.nextPlotAt) {   // no parcels left: no more soil
+    // Soil plots come on schedule whether or not you have parcels left (no parcels: no soil is shown), so dropping
+    // parcels never shifts the physics random stream, and so never changes the sky (2026-10-26; it used to stop the
+    // schedule, measured: seed 1 flew a different sky after the last parcel).
+    if (this.kit.tree && this.distancePx >= this.nextPlotAt) {
       const x = WIDTH + 10;
       const onRunway = this.runways.some(r => x + this.kit.plotW > r.x - 10 && x < r.x + AIRPORT.runwayLen + 10)
         || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
-      if (!onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x);   // no soil over the sea or the ice
+      if (this.parcels > 0 && !onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x);   // no parcels, the sea or the ice: no soil
       this.nextPlotAt += this.between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
     }
     if (this.school) return;   // flight school places everything itself
