@@ -15,6 +15,7 @@ import { animalDir, animalPortrait } from './animalart.js';
 import { meterHTML } from './ui.js';
 import { onSwipe } from './swipe.js';
 import { landTrees, countText } from './landtrees.js';
+import { broughtBack } from './weboflife.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -125,7 +126,7 @@ export class WildScreen {
         : `<button class="btn ${ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${cost(p)}</button>`;
       return `<div class="line project ${have ? 'maxed' : ''}" data-pline="${p.id}">
         <div><div class="name"><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="" onerror="this.style.visibility='hidden'">${esc(p.name)}</div><div class="small">${esc(p.short)}</div>
-        <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div></div>
+        <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div>${this.webHTML(p)}</div>
         <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
         <div class="next">${btn}</div></div>`;
     };
@@ -145,6 +146,19 @@ export class WildScreen {
       const t = Number(b.dataset.tierToggle), o = this.openTiers || [];
       this.openTiers = o.includes(t) ? o.filter(x => x !== t) : [...o, t]; this.renderProjects();
     });
+  }
+
+  // Web of life (MASTER-PLAN Part G): the animals this project helps bring back. Found ones show their picture; the
+  // rest are silhouettes, with the other projects they still need ("also needs: Hedgerows"). Data: each animal's
+  // `needs` list in src/habitats.js REGION_DATA (the same rule canAppear uses).
+  webHTML(p) {
+    const names = Object.fromEntries(this.projects.map(x => [x.id, x.name])), who = broughtBack(this.save, this.region, p.id);
+    if (!who.length) return '';
+    return `<div class="w-web"><span class="small">Brings back:</span>${who.map(a => {
+      const more = a.more.map(n => names[n]).filter(Boolean);
+      const tip = a.found ? a.name : `${a.name}?${more.length ? ` Also needs: ${more.join(', ')}` : ''}${a.bio ? ` (biodiversity ${a.bio})` : ''}`;
+      return `<span class="w-webpic" title="${esc(tip)}">${picHTML(a.w, a.found ? '' : 'w-shadow')}</span>`;
+    }).join('')}</div>`;
   }
 
   buy(id) {
