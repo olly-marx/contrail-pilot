@@ -45,6 +45,7 @@ shipped mode itself, so a change to it must keep them green:
   never written), the `s2:` save prefix, the start-area choice, area confinement, the crossing card and flight, the offer gate in
   the browser (4,549 km not offered, another area's flight does not count, 4,550 km + biodiversity 30 offered), a landed flight
   records `areaBest`, the MORE TO COME card.
+- `tests/season2-smoke.cjs` (browser, NOT classic): fresh start, the six starter areas, one school flight start per area (from your own city, not London > Paris), the tabs, the offer card + a crossing flight start, MORE TO COME. Planted defects are listed in its header.
 - `tests/offer-gate.cjs` (Node): the gate cannot offer early (`PLANT=nogate` must fail), `SEASON.maxEra`, `recordAreaBest`.
 - `tests/sim-crossing.cjs`, `tests/areas.cjs` (Node): crossing flights in the engine, areas do not leak.
 - `tests/sim-equiv.cjs` (Node): the engine flies the game's recorded flights; the golden is the CLASSIC world with the 0.12.0

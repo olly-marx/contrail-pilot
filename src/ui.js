@@ -1,6 +1,6 @@
 import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
-import { flightPath, choices, city, EARTH_KM, linksFor } from './route.js';
+import { flightPath, choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
@@ -170,7 +170,7 @@ export class UI {
   // way, and its land), a globe with the way ahead, and how many times round the Earth you have flown.
   renderJourney() {
     const s = this.save, first = !s.tutorialDone;
-    const path = flightPath(first ? { city: 'LONDON' } : s, 5), here = city(path[0]);
+    const path = flightPath(first ? schoolSave(s) : s, 5), here = city(path[0]);
     const opts = first ? [] : choices(path[0], linksFor(s));
     const land = n => REGION_NAMES[city(n).region] || 'the sea';
     const trips = (s.flownKm || 0) / EARTH_KM;

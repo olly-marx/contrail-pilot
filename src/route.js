@@ -15,6 +15,9 @@ export const ROUTE = CITIES;   // every airport (name, lat, lon, region)
 export const cityIndex = name => CITIES.findIndex(c => c.name === name);
 // The first flights and flight school: LONDON towards PARIS (the old first leg).
 export const HOME = 'LONDON', FIRST_HOP = 'PARIS';
+// What flight school and the first flights are flown FROM: classic = LONDON (towards PARIS); season 2 = the player's own save
+// (the city and area chosen in src/startchoice.js, so a start in Africa is taught over Africa, not London > Paris).
+export const schoolSave = save => (SEASON2_ON ? save : { city: HOME });
 // One trip round the Earth (its real size): "times round the Earth" counts flownKm against it.
 export const EARTH_KM = 40075;
 // The old 16-city loop was 32,060 game km: the non-stop badge (badges.js) keeps that distance.

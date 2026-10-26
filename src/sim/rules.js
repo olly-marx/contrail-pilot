@@ -9,7 +9,7 @@ import { current as currentMission, complete as completeMission, indexOf as miss
 import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
 import { REGION_DATA, REGION_NAMES } from '../habitats.js';
-import { flightPath, legBetween, HOME, city, EARTH_KM } from '../route.js';
+import { flightPath, legBetween, HOME, city, EARTH_KM, schoolSave } from '../route.js';
 import { crossingPath, recordAreaBest } from '../crossings.js';   // season 2 crossings (redesign)
 import { regionBelow } from '../geo.js';
 import { loadout, FUELS } from '../upgrades.js';
@@ -127,7 +127,7 @@ export const RULES = {
     // in one leg of crossing.km, then on through that area. Read from the save only (pure: the Node engine flies it too).
     this.crossing = this.autostart !== 'school' && this.save.tutorialDone && this.save.flyCrossing || null;   // (never before school is done)
     this.path = this.crossing ? crossingPath(this.crossing)
-      : flightPath(this.autostart === 'school' || !this.save.tutorialDone ? { city: HOME } : this.save);
+      : flightPath(this.autostart === 'school' || !this.save.tutorialDone ? schoolSave(this.save) : this.save);
     this.startCity = 0;
     this.homeName = this.path[0];
     this.airportIndex = 0;
