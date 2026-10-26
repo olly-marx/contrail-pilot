@@ -51,6 +51,7 @@
   w.plots.push({ x: 1000, used: false }, { x: 2000, used: false });
   w.parcelLanded(1001, 'spruce', 'savanna'); w.parcelLanded(2001, 'spruce', 'mediterranean');
   check(w.speciesPlanted.size === 2, `slot 0 in two lands = 2 kinds for the forest (${[...w.speciesPlanted]})`);
+  check(JSON.stringify([...w.speciesTags]) === '["savanna:eucalyptus","mediterranean:aleppopine"]', `boards get each tree with its land: ${[...w.speciesTags]}`);
   check((w.save.plantedIn.savanna || {}).eucalyptus === 1 && (w.save.plantedIn.mediterranean || {}).aleppopine === 1, 'each counted in the land it was dropped over');
 
   // 4. The hangar.

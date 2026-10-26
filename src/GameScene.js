@@ -1317,7 +1317,7 @@ export class GameScene extends Phaser.Scene {
     if (this.school) this.school.finished(this.result);
     else sendFlight({   // to the online boards, if this device has a pilot name; queued when offline
       landed, distance_m: m, shade: Math.max(0, -this.sunBlocked), heat_trapped: this.heatTrapped, night_dodges: this.dodgesTotal,
-      crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesPlanted], mission_done: missionDone,
+      crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesTags], mission_done: missionDone,
       lap, crash,
     });
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());
