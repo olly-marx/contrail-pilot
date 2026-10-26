@@ -8,7 +8,7 @@
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf } from './upgrades.js';
-import { biodiversity, projectsDone, canAppear, regionSpecies } from './nature.js';
+import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject } from './nature.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
 import { CITIES } from './cities.js';
 import { animalDir, animalPortrait } from './animalart.js';
@@ -134,9 +134,7 @@ export class WildScreen {
 
   buy(id) {
     const s = this.save, r = this.region, p = this.projects.find(x => x.id === id);
-    if (!p || this.done().includes(id) || this.bio() < p.needs || s.seeds < p.cost || (s.crystals || 0) < p.crystals) { sfx.nope(); return; }
-    s.seeds -= p.cost; s.crystals -= p.crystals;
-    s.habitat = s.habitat || {}; s.habitat[r] = [...(s.habitat[r] || []), id];
+    if (!fundProject(s, r, id)) { sfx.nope(); return; }   // src/nature.js: the same rule the sim engine's player uses
     writeSave(s); sfx.buy();
     this.render();
     // Who might come now? (only animals that are drawn can turn up in flight)

@@ -310,3 +310,17 @@ export function loadout(save) {
     grow: at('nursery', 'grow', 1),               // x the time a tree takes to grow
   };
 }
+
+// Buy the next level of an upgrade line (moved from ui.buy, 2026-10-26, so the sim engine's player buys exactly as
+// the game). The first-landing free upgrade pays for a level-0 line. Returns true if bought.
+export function buyLevel(save, id) {
+  const line = LINES.find(l => l.id === id), next = line && nextLevel(save, line);
+  if (!next) return false;
+  const isFree = save.freeUpgrade && level(save, id) === 0;
+  if (!isFree && !canBuy(save, line)) return false;
+  if (isFree) save.freeUpgrade = false; else { save.seeds -= next.cost; save.crystals = (save.crystals || 0) - (next.crystals || 0); }
+  save.levels[id] = level(save, id) + 1;
+  save.sparkle = true;   // the plane sparkles on its next take-off (GameScene.syncPlaneParts)
+  if (next.fuel) save.fuel = next.fuel;              // switch to the new fuel straight away
+  return true;
+}

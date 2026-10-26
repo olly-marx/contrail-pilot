@@ -9,7 +9,7 @@ import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js
 import { WILDLIFE } from './wildlife.js';
 import { animalPortrait } from './animalart.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
-import { LINES, FUELS, level, nextLevel, canBuy, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById } from './upgrades.js';
+import { LINES, FUELS, level, nextLevel, canBuy, buyLevel, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
@@ -492,14 +492,9 @@ export class UI {
   }
 
   buy(id) {
-    const s = this.save, line = LINES.find(l => l.id === id), next = nextLevel(s, line);
-    const isFree = s.freeUpgrade && level(s, id) === 0;
-    if (!isFree && !canBuy(s, line)) { sfx.nope(); return; }
-    if (isFree) s.freeUpgrade = false; else { s.seeds -= next.cost; s.crystals = (s.crystals || 0) - (next.crystals || 0); }
-    s.levels[id] = level(s, id) + 1;
-    s.sparkle = true;   // the plane sparkles on its next take-off (GameScene.syncPlaneParts)
+    const s = this.save;
+    if (!buyLevel(s, id)) { sfx.nope(); return; }   // src/upgrades.js: the same rule the sim engine's player uses
     this.sparkleModel = true;
-    if (next.fuel) s.fuel = next.fuel;              // switch to the new fuel straight away
     writeSave(s);
     sfx.buy();
     this.refresh();

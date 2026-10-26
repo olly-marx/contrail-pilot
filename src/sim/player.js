@@ -2,7 +2,10 @@
 // simulator). The test pilots in pilots.js aim with the 12 px hitbox and fall past their target, so they hit the
 // first storm (measured: 20/20 skies at ~400 km); they stay as they are for the crashes-off balance studies.
 //
-//   const p = makePlayer({ skill, careful, seed });   p.wantsFlap(w) -> true when it taps this frame
+//   const p = makePlayer({ skill, careful, seed, land });   p.wantsFlap(w) -> true when it taps this frame
+//   land(w) -> true: it wants to land at the next airport. From 700 px out it holds low (still clearing storms);
+//   once no storm is left between it and the runway and the flare can reach it, it stops tapping and lets the
+//   game's landing flare put it down.
 //
 // It plans with the drawn picture's box (what a crash is tested on), with room for its own bob, and aims for the
 // safe band of the next storm gap. Inside that band it makes its contrail choice: careful = the careful pilot's
@@ -13,7 +16,7 @@
 //   aim noise:      its target is off by up to +-30 px (x (1 - s)), redrawn every half second;
 //   missed taps:    up to 30% of the frames it wants to tap, it does not (x (1 - s)).
 // s = 1 is a never-wrong player (it can still be caught by a gap too tight for the bob); s = 0 is very sloppy.
-import { PLANE, HEIGHT, GROUND_H, DAYNIGHT } from '../config.js';
+import { PLANE, HEIGHT, GROUND_H, DAYNIGHT, AIRPORT } from '../config.js';
 import { makeRng } from './rng.js';
 
 const SKY_H = HEIGHT - GROUND_H;
@@ -27,7 +30,7 @@ const TILT = Math.ceil(PLANE.spriteW / 2 * Math.sin(PLANE.maxTilt) / 2);
 const MARGIN = 6;   // px kept clear of the cloud's edge
 const FALL = 8;     // the fall past the target before a tap takes hold (one frame at the 400 px/s top speed is ~7 px)
 
-export function makePlayer({ skill = 0.7, careful = true, seed = 1 } = {}) {
+export function makePlayer({ skill = 0.7, careful = true, seed = 1, land = null } = {}) {
   const s = Math.max(0, Math.min(1, skill)), rnd = makeRng((seed * 2654435761) >>> 0 ^ 0x5eed);
   const delayFrames = Math.round(0.25 * (1 - s) * 60), noisePx = 30 * (1 - s), missRate = 0.3 * (1 - s);
   const past = [];   // the plane's y and vy over the last frames: what it "sees" with its reaction delay
@@ -69,14 +72,25 @@ export function makePlayer({ skill = 0.7, careful = true, seed = 1 } = {}) {
     return best;
   };
 
+  // Coming in to land: 'low' (hold low), 'glide' (leave it to the flare), or null (not yet).
+  const approach = w => {
+    const toStart = w.nextAirport.worldX - w.distancePx;
+    if (toStart > 700 || toStart < -AIRPORT.runwayLen) return null;
+    const clear = !w.storms.some(st => st.rects[0].x + st.rects[0].width > w.plane.x - 4 && st.rects[0].x < w.plane.x + Math.max(0, toStart) + PLANE.w);
+    return clear && toStart < AIRPORT.flareFrom * w.kit.flare ? 'glide' : 'low';
+  };
+
   return {
     skill: s, _band: w => safeBand(w), _target: w => target(w),   // (for debugging)
     wantsFlap(w) {
+      const landing = land && land(w) ? approach(w) : null;
+      if (landing === 'glide') return false;
       past.push([w.plane.y, w.plane.vy]);
       if (past.length > delayFrames + 1) past.shift();
       const [y, vy] = past[0];   // what it sees: the plane delayFrames ago
       if (w.gameTime - noiseAt > 500) { noiseAt = w.gameTime; noise = (rnd() * 2 - 1) * noisePx; }
-      const want = y > target(w) + noise && vy > -40;   // tap at the low point of the bob (a look-ahead here lifted the whole bob too high)
+      const aim = landing === 'low' ? Math.max(target(w), Math.min(safeBand(w)[1], SKY_H - 95)) : target(w);
+      const want = y > aim + noise && vy > -40;   // tap at the low point of the bob (a look-ahead here lifted the whole bob too high)
       return want && rnd() >= missRate;
     },
   };

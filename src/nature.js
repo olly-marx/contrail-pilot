@@ -170,3 +170,13 @@ export function wildlifeScene(save, region = 'woodland') {
     who: Object.fromEntries(here.map(w => [w.sprite, { id: w.id, name: w.name }])),
   };
 }
+
+// Fund a habitat project in a region (moved from the NATURE screen, src/wild.js, 2026-10-26, so the sim engine's
+// player funds exactly as the game): open (the land's biodiversity reaches its tier), not done, affordable.
+export function fundProject(save, region, id) {
+  const p = REGION_DATA[region].projects.find(x => x.id === id);
+  if (!p || projectsDone(save, region).some(d => d.id === id) || biodiversity(save, region) < p.needs || save.seeds < p.cost || (save.crystals || 0) < p.crystals) return false;
+  save.seeds -= p.cost; save.crystals -= p.crystals;
+  save.habitat = save.habitat || {}; save.habitat[region] = [...(save.habitat[region] || []), id];
+  return true;
+}
