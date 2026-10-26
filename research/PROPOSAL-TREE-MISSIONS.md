@@ -40,6 +40,5 @@ flight"**. MASTER-PLAN Part H already lists this template among the area mission
 - Native 4 opens on the mission, not on biodiversity 40 (plant: the old placeholder → fails).
 - A crashed flight doesn't complete it (plant: drop the landed check → fails).
 
-## Open for the user
-- Keep "3 kinds in one flight" for every land, or scale it with era (3 in era 1-2, 4 later)? Suggest 3 everywhere:
-  simple, and the 4th tree is the prize.
+## Decided
+- **3 kinds in one flight, in every land and every era** (coordinator, 2026-10-26: the default, no need to ask the user).
