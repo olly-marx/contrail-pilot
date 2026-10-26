@@ -304,9 +304,10 @@ export const RULES = {
     const lo = STORMS.marginTop + gap / 2;
     const hi = SKY_H - STORMS.marginTop - gap / 2;
     const w = noFly ? nf.width : STORMS.width;
-    // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time).
+    // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time);
+    // with the ISSR.laneExtra variant, a lane that much taller.
     let gapY = null;
-    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2)) gapY = t; }
+    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2, this.issrs, ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined)) gapY = t; }
     if (gapY === null) return;
     if (noFly) this.addNoFlyAt(x, gapY, gap);
     else this.addStormPairAt(x, gapY, gap);
@@ -351,13 +352,18 @@ export const RULES = {
   // fake: a forecast's false patch (looks real, makes no contrail, puffs away when you get close).
   addIssr({ fake = false } = {}) {
     const grow = Math.sqrt(this.lateRamp());   // long flights: bigger patches (area grows with the ramp)
-    const w = Math.round(this.between(ISSR.minW, ISSR.maxW) * grow);
-    const h = Math.min(SKY_H - 40, Math.round(this.between(ISSR.minH, ISSR.maxH) * grow)), x = WIDTH + 10;
+    let w = Math.round(this.between(ISSR.minW, ISSR.maxW) * grow);
+    let h = Math.min(SKY_H - 40, Math.round(this.between(ISSR.minH, ISSR.maxH) * grow)), x = WIDTH + 10;
+    // Spawn-rule variants (2026-10-26, for the steering-cost study; all OFF unless set, so today's sky is unchanged):
+    // ISSR.thinK: thin layers, thinK x as tall and 1/thinK x as wide (the same area), like real ice-supersaturated
+    // layers a few hundred metres deep.
+    if (ISSR.thinK) { w = Math.round(w / ISSR.thinK); h = Math.max(16, Math.round(h * ISSR.thinK)); }
     // Never fill a storm gap: there is always a way through without a contrail (10 tries, else skip).
     for (let k = 0; k < 10; k++) {
       const y = this.between(10, SKY_H - h - 10);
       const blocks = this.storms.some(st => { const r = st.rects[0]; return r.x < x + w && r.x + r.width > x
-        && !this.laneClear(r.x, r.width, r.height, st.rects[1].y, [...this.issrs, { x, y, width: w, height: h }]); });   // with the icy air already there
+        && !this.laneClear(r.x, r.width, r.height, st.rects[1].y, [...this.issrs, { x, y, width: w, height: h }], ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined); });   // with the icy air already there
+      // (ISSR.laneExtra, a variant: the clear lane through every storm gap is laneExtra px taller than today's.)
       if (!blocks) {
         const r = this.addIssrAt(x, y, w, h);
         if (fake) r.fake = true;
@@ -446,7 +452,7 @@ export const RULES = {
   forestStore() { return P.forestStore(this); },
   // Is there still a clear lane (plane height + margin) through the gap gTop..gBot of a storm
   // column at x..x+w, past the icy air in `issrs` that overlaps the column?
-  laneClear(x, w, gTop, gBot, issrs = this.issrs) { return P.laneClear(issrs, x, w, gTop, gBot); },
+  laneClear(x, w, gTop, gBot, issrs = this.issrs, lane) { return P.laneClear(issrs, x, w, gTop, gBot, lane); },
   // Is any point along the plane's middle line inside the cloud's ellipses? (x, y, w, h: its box)
   // `grow`: each blob's radii x this (1 = the drawn shape). Used for the contrail margin below.
   inCloud(blobs, x, y, w, h, box, grow = 1) { return P.inCloud(blobs, x, y, w, h, box, grow); },
