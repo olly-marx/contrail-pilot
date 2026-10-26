@@ -1,18 +1,18 @@
 // The perfect tapper must be able to say "impossible" (sim engine, 2026-10-26). A gate that cannot fail is not a
-// gate: take a real recorded sky (Comet, seed 1, the first 600 km), check the search finds no impossible moment in
+// gate: take a real recorded sky (Comet, seed 1, the first 900 km), check the search finds no impossible moment in
 // it, then narrow ONE storm's gap to 30 px in every frame (the 27 px picture plus its tilt cannot pass) and check
 // the search names that storm as impossible under every tap model; and the gap-to-gap pass must find trap exits in
 // a planted top-then-bottom storm pair. Plain Node.
 // Run: node tests/sim-tapper.cjs
 (async () => {
   const T = await import('../tools/sim/tapper.mjs');
-  const sky = T.recordSky({ fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } }, 1, 600);
+  const sky = T.recordSky({ fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } }, 1, 900);   // 900 km: long enough for the second storm to reach the plane
   const fails = [];
   const clean = T.classify({ start: null, frames: sky.frames });
-  if (clean.length) fails.push(`the real sky should have no hard moment in its first 600 km, got ${clean.length}: ${clean.map(c => c.category + ' ' + c.obstacle).join(', ')}`);
+  if (clean.length) fails.push(`the real sky should have no hard moment in its first 900 km, got ${clean.length}: ${clean.map(c => c.category + ' ' + c.obstacle).join(', ')}`);
   // Plant: the first storm the plane meets gets a 30 px gap (same middle), in every frame it appears.
   const target = sky.frames.flatMap(f => f.storms).find(st => !st.noFly);
-  if (!target) fails.push('no storm in the first 600 km to plant in');
+  if (!target) fails.push('no storm in the first 900 km to plant in');
   else {
     const planted = { start: null, frames: sky.frames.map(f => ({ ...f, storms: f.storms.map(st => {
       if (st.id !== target.id) return st;
@@ -37,7 +37,7 @@
     if (!rows.length) fails.push('the planted storm pair was not analysed');
     else if (!(rows[0].traps[3] > 0)) fails.push(`no trap exits found in the planted top-then-bottom pair: ${JSON.stringify(rows[0])}`);
     else if (!(rows[0].traps[3] < rows[0].exits)) fails.push(`every exit is a trap in the planted pair, so it says nothing about exit height: ${JSON.stringify(rows[0])}`);
-  } else fails.push('fewer than 2 storms in the first 600 km');
+  } else fails.push('fewer than 2 storms in the first 900 km');
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS: no hard moment in a real 600 km sky; a planted 30 px gap is found and rated impossible; a planted top-then-bottom storm pair shows trap exits (some, not all)');
+  console.log('PASS: no hard moment in a real 900 km sky; a planted 30 px gap is found and rated impossible; a planted top-then-bottom storm pair shows trap exits (some, not all)');
 })();
