@@ -54,7 +54,7 @@ const KEY = 'contrailPilot.v2';
   check(/Western Europe/.test(conf.line) && /Locked/.test(conf.line), `the FLY screen lists your area and the locked ones: '${conf.line}'`);
   // 2c. M2: a new season 2 player chooses a start area, then a city; flying is then confined to that area.
   await p.goto(URL + '?season2=reset'); await ready(p);
-  await p.evaluate(() => game.registry.get('ui').start());
+  await p.evaluate(() => { game.registry.get('ui').start(); });   // (not awaited: it waits for the player's choice)
   const shown = await p.waitForSelector('#startChoice [data-area="africa"]', { timeout: 5000 }).then(() => true).catch(() => false);
   check(shown, 'season 2: a new player is asked where to start');
   const starters = await p.$$eval('#startChoice [data-area]', bs => bs.map(b => b.dataset.area));
