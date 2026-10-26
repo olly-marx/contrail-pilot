@@ -75,6 +75,13 @@ export class WildScreen {
     let row = $('wLandTrees');
     if (!row) { row = document.createElement('div'); row.id = 'wLandTrees'; row.className = 'w-landtrees'; $('wTrees').before(row); }
     const trees = landTrees(s, this.region);
+    // A tree that opened since you last looked: one small card, once (save.treesSeen[land] = slots already shown).
+    const seen = ((s.treesSeen = s.treesSeen || {})[this.region] = s.treesSeen[this.region] || [0]);
+    const fresh = trees.filter(t => t.open && !seen.includes(t.slot));
+    if (fresh.length) {
+      fresh.forEach(t => seen.push(t.slot)); writeSave(s);
+      this.ui.toast(`New tree: ${fresh.map(t => t.name).join(', ')}!`, fresh[0].fact || 'Plant it as you fly over this land.', 'good', 5);
+    }
     row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
     // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the UK tab.
