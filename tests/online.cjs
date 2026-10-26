@@ -47,7 +47,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
   const fly = async (landed = true) => {   // a short flight, ended by the game's own finish()
     await p.click('#goBtn');
     for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
-    await p.evaluate(l => { const s = game.scene.getScene('game'); s.distancePx = 2500; s.sunBlocked = -7; s.heatTrapped = 2; s.dodgesTotal = 1; s.speciesPlanted.add('oak'); s.finish({ landed: l }); }, landed);
+    await p.evaluate(l => { const s = game.scene.getScene('game'); s.distancePx = 2500; s.sunBlocked = -7; s.heatTrapped = 2; s.dodgesTotal = 1; s.speciesPlanted.add('oak'); s.speciesTags.add('oak'); s.speciesTags.add('savanna:baobab'); s.finish({ landed: l }); }, landed);
     await p.waitForTimeout(2500);
     await p.evaluate(() => game.registry.get('ui').showTitle());
   };
@@ -102,7 +102,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
   await fly(true);
   const f = net.flights[0] || {};
   check(net.flights.length === 1, `one flight should be sent, got ${net.flights.length}`);
-  check(f.landed === true && f.distance_m === 2500 && f.shade === 7 && f.heat_trapped === 2 && f.night_dodges === 1 && f.plane_co2 === 1.1 && f.species.join() === 'oak' && 'mission_done' in f && 'crystals' in f,
+  check(f.landed === true && f.distance_m === 2500 && f.shade === 7 && f.heat_trapped === 2 && f.night_dodges === 1 && f.plane_co2 === 1.1 && f.species.join() === 'oak,savanna:baobab' && 'mission_done' in f && 'crystals' in f,
     `flight fields: ${JSON.stringify(f)}`);
 
   // 8. Flight school is never sent.
