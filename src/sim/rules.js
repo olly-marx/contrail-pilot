@@ -741,7 +741,7 @@ export const RULES = {
     this.result = {
       landed, landedAt: this.landedAt, from: this.homeName, lap, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
-      breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
+      breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted, kinds: this.speciesPlanted.size,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])],
