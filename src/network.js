@@ -31,18 +31,16 @@ export function linksAmong(cities, bridges = BRIDGES) {
   for (const [a, b] of bridges) if (a in L && b in L) link(a, b);
   return Object.fromEntries(Object.entries(L).map(([k, v]) => [k, [...v].sort()]));
 }
-// The live network. A live binding: season 2 (src/areas.js) swaps it for the unlocked areas' network (useAreas).
-export const WORLD_LINKS = linksAmong(CITIES, SEASON2_ON ? [...BRIDGES, ...S2_BRIDGES] : BRIDGES);
-export let LINKS = WORLD_LINKS;
-// Season 2: confine flying to these city names (null = the whole world). The same rule as the world network, built
-// among these cities only (research/AREA-BALANCE.md measured it that way). Cached per set.
+// The whole world's network (the live game).
+export const LINKS = linksAmong(CITIES, SEASON2_ON ? [...BRIDGES, ...S2_BRIDGES] : BRIDGES);
+// Season 2: the network among just these city names (your unlocked areas), the same rule built among them only
+// (research/AREA-BALANCE.md measured it that way). Pure and cached per set; passed around as data, never swapped
+// into a global (the Node engine flies many saves in one process: sim chat's condition).
 const areaNets = new Map();
-export function useCities(names) {
-  if (!names) { LINKS = WORLD_LINKS; return LINKS; }
+export function linksOf(names) {
   const key = [...names].sort().join('|');
   if (!areaNets.has(key)) areaNets.set(key, linksAmong(CITIES.filter(c => names.includes(c.name)), [...BRIDGES, ...S2_BRIDGES]));
-  LINKS = areaNets.get(key);
-  return LINKS;
+  return areaNets.get(key);
 }
 
 // The heading words a child sees on the three buttons.
@@ -52,8 +50,8 @@ const gap = (x, y) => { const d = Math.abs(x - y) % 360; return d > 180 ? 360 - 
 
 // The three choices before take-off: the neighbours pointing in the most different directions
 // (the three whose closest pair is furthest apart); fewer if the city has fewer links.
-export function choices(name) {
-  const here = city(name), opts = LINKS[name].map(n => ({ name: n, deg: bearing(here, city(n)) }));
+export function choices(name, L = LINKS) {
+  const here = city(name), opts = L[name].map(n => ({ name: n, deg: bearing(here, city(n)) }));
   if (opts.length <= 3) return opts.sort((a, b) => a.deg - b.deg);
   let best = null, score = -1;
   for (let i = 0; i < opts.length; i++) for (let j = i + 1; j < opts.length; j++) for (let k = j + 1; k < opts.length; k++) {
@@ -65,9 +63,9 @@ export function choices(name) {
 
 // Past an airport you keep going the same way: the next one is the neighbour that turns least
 // (never straight back).
-export function onward(prev, cur) {
+export function onward(prev, cur, L = LINKS) {
   const p = city(prev), c = city(cur), heading = (bearing(c, p) + 180) % 360;
-  return LINKS[cur].filter(n => n !== prev).map(n => ({ n, t: gap(bearing(c, city(n)), heading) })).sort((a, b) => a.t - b.t)[0].n;
+  return L[cur].filter(n => n !== prev).map(n => ({ n, t: gap(bearing(c, city(n)), heading) })).sort((a, b) => a.t - b.t)[0].n;
 }
 // The chain of airports ahead after choosing `first` from `from` (for the globe and the flight).
 export function pathAhead(from, first, count = 6) {

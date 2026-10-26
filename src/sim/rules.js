@@ -10,6 +10,7 @@ import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
 import { REGION_DATA, REGION_NAMES } from '../habitats.js';
 import { flightPath, legBetween, HOME, city, EARTH_KM } from '../route.js';
+import { crossingPath } from '../crossings.js';   // season 2 crossings (redesign)
 import { regionBelow } from '../geo.js';
 import { loadout, FUELS } from '../upgrades.js';
 import { makeRng } from './rng.js';
@@ -118,7 +119,11 @@ export const RULES = {
     // The journey (src/route.js): take off from the city you last landed in, the way you chose; the
     // flight's path then follows the world-tour rule. Flight school and the first flights: LONDON towards
     // PARIS. this.path[0] is home; airportIndex = airports passed so far this flight (startCity is 0).
-    this.path = flightPath(this.autostart === 'school' || !this.save.tutorialDone ? { city: HOME } : this.save);
+    // Season 2 (src/crossings.js, redesign only): a CROSSING mission flies from its departure to the next area's gateway
+    // in one leg of crossing.km, then on through that area. Read from the save only (pure: the Node engine flies it too).
+    this.crossing = this.save.flyCrossing || null;
+    this.path = this.crossing ? crossingPath(this.crossing)
+      : flightPath(this.autostart === 'school' || !this.save.tutorialDone ? { city: HOME } : this.save);
     this.startCity = 0;
     this.homeName = this.path[0];
     this.airportIndex = 0;
@@ -185,7 +190,7 @@ export const RULES = {
     return { worldX: from + this.legKm(k), name: this.path[k + 1], spawned: false };
   },
   // Game km of leg k of this flight's path (balanced, src/network.js).
-  legKm(k) { return legBetween(this.path[k], this.path[k + 1]); },
+  legKm(k) { return this.crossing && k === 0 ? this.crossing.km : legBetween(this.path[k], this.path[k + 1]); },
   // Parcels take turns through the kinds of tree you own, so variety comes naturally.
   // Each land's own open trees (src/landtrees.js), taken in turn so a flight mixes kinds. The UK slot kind is
   // returned: growth and cooling use its SPECIES row; localTree() names the land's own tree.

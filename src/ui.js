@@ -1,6 +1,6 @@
 import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
-import { flightPath, choices, city, EARTH_KM } from './route.js';
+import { flightPath, choices, city, EARTH_KM, linksFor } from './route.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
@@ -156,7 +156,7 @@ export class UI {
   renderJourney() {
     const s = this.save, first = !s.tutorialDone;
     const path = flightPath(first ? { city: 'LONDON' } : s, 5), here = city(path[0]);
-    const opts = first ? [] : choices(path[0]);
+    const opts = first ? [] : choices(path[0], linksFor(s));
     const land = n => REGION_NAMES[city(n).region] || 'the sea';
     const trips = (s.flownKm || 0) / EARTH_KM;
     $('tJourney').innerHTML = `<p>You are in <b>${here.name}</b>.${first ? ` Your first flight: towards <b>${path[1]}</b>.` : ' Which way?'}</p>
@@ -168,7 +168,7 @@ export class UI {
       <p class="small">Times round the Earth: <b>${trips.toFixed(1)}</b> (${km(Math.round(s.flownKm || 0))})</p>`;
     // The way buttons and a tap on a way's dot on the globe do the same thing (the globe also turns when dragged: src/globe.js).
     const pick = name => { sfx.flap(); this.save.heading = name; writeSave(this.save); this.renderJourney(); };
-    drawGlobe($('jGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: pick });
+    drawGlobe($('jGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: pick, lit: FEATURES.season2 ? linksFor(s) : null });
     $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => pick(b.dataset.way));
   }
 

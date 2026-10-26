@@ -5,7 +5,6 @@
 import { LAND_W, LAND_H, LAND_RLE, ISLANDS } from './landmask.js';
 import { regionAt, along } from './geo.js';
 import { CITIES } from './cities.js';
-import { LINKS } from './network.js';
 
 export const SIZE = 128;   // the canvas is SIZE x SIZE pixels (the page scales it, never smooths it)
 const LAND = { woodland: [94, 154, 74], mediterranean: [154, 168, 90], desert: [217, 181, 106], monsoon: [63, 138, 82], eastasia: [111, 163, 106],
@@ -86,7 +85,7 @@ export function project(f, lat, lon) {
 // ---------- drawing ----------
 // Draw the globe seen through frame `f`. `path` = city objects ahead (here first). `quality` 1 = one sample per pixel (while
 // dragging), 2 = five (still): the edges of small islands and coasts come out cleaner.
-export function paint(canvas, f, path, quality = 2, ways = []) {
+export function paint(canvas, f, path, quality = 2, ways = [], lit = null) {
   const g = canvas.getContext('2d'), S = canvas.width, R = S / 2 - 1, c0 = S / 2, Z = f.zoom || 1;
   const img = g.createImageData(S, S), px = img.data, landAt = new Uint8Array(S * S), rgb = new Uint8Array(S * S * 3), inDisc = new Uint8Array(S * S);
   const off = quality > 1 ? [[0, 0], [0.3, 0.3], [-0.3, 0.3], [0.3, -0.3], [-0.3, -0.3]] : [[0, 0]];
@@ -139,8 +138,8 @@ export function paint(canvas, f, path, quality = 2, ways = []) {
       const xx = q[0] + ox, yy = q[1] + oy, d = ox * ox + oy * oy;
       if (xx >= 0 && yy >= 0 && xx < S && yy < S && landAt[yy * S + xx] && d < best) { best = d; dx = xx; dy = yy; on = true; }
     }
-    // Season 2: an airport outside your unlocked areas is a dim dot (locked; src/areas.js). LINKS is the whole world otherwise.
-    g.fillStyle = k.name in LINKS ? 'rgba(255,255,255,0.9)' : 'rgba(40,40,60,0.75)';
+    // Season 2: an airport outside your unlocked areas (`lit`: their network, src/route.js linksFor) is a dim dot.
+    g.fillStyle = !lit || k.name in lit ? 'rgba(255,255,255,0.9)' : 'rgba(40,40,60,0.75)';
     g.fillRect(dx, dy, 1, 1); dots.push({ name: k.name, x: dx, y: dy, onLand: on });
   }
   // The way ahead: gold, drawn in whole pixels (no smoothing), a square at each airport.
@@ -166,14 +165,14 @@ function getIslands() { return islands || (islands = ISLANDS); }
 // never a drag; anything that moved further is a drag and never picks. The picture is redrawn only when it changes: at one
 // sample a pixel while it moves, five once it settles. Returns { frame(), destroy() }.
 export const TAP_PX = 6, TAP_MS = 400;
-export function attachGlobe(canvas, path, { ways = [], onPick = null } = {}) {
+export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null } = {}) {
   let f = frameRoute(path.length ? path : [CITIES[0]]);
   canvas.width = canvas.height = SIZE;
   canvas.style.touchAction = 'none';   // this canvas only: the page still scrolls everywhere else
   canvas.style.cursor = 'grab';
   let down = null, wantQuality = 1, coast = null, raf = 0, alive = true;
   // One redraw a frame at most, however many events came in; the best quality asked for since the last one.
-  const redraw = q => { wantQuality = Math.max(wantQuality, q); if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (!alive) return; paint(canvas, f, path, wantQuality, ways); wantQuality = 1; }); };
+  const redraw = q => { wantQuality = Math.max(wantQuality, q); if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (!alive) return; paint(canvas, f, path, wantQuality, ways, lit); wantQuality = 1; }); };
   const scale = () => canvas.width / (canvas.getBoundingClientRect().width || canvas.width);   // canvas pixels per screen pixel
   const R = () => canvas.width / 2 - 1;
   const hit = (ev) => {   // the way dot under the finger, if any (within 8 canvas pixels)
@@ -210,7 +209,7 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null } = {}) {
   const onCancel = ev => { if (down && ev.pointerId === down.id) { down = null; canvas.style.cursor = 'grab'; redraw(2); } };
   canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onCancel);
-  paint(canvas, f, path, 2, ways);
+  paint(canvas, f, path, 2, ways, lit);
   return { frame: () => f, destroy() { alive = false; if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
 }
 

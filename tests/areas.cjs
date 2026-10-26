@@ -25,13 +25,14 @@ const src = f => path.resolve(__dirname, '../src', f);
     check(CITIES.every(c => all.includes(c.name) || OCEAN_STONES.includes(c.name)), 'a city is in no area');
     const confined = (keys, label) => {
       const mine = keys.flatMap(k => AREAS[k].cities);
-      route.flightPath({ areas: keys, city: AREAS[keys[0]].start, tutorialDone: true }, 1);
-      const L = net.LINKS;
+      const L = route.linksFor({ areas: keys });
+      const fp = route.flightPath({ areas: keys, city: AREAS[keys[0]].start, tutorialDone: true }, 40).filter(x => !mine.includes(x));
+      check(!fp.length, `${label}: flightPath leaves the area (${fp[0]})`);
       check(Object.keys(L).length === mine.length, `${label}: network has ${Object.keys(L).length} cities, want ${mine.length}`);
       for (const c of mine) {
         check(names.has(c), `${label}: no airport ${c}`);
         check((L[c] || []).length >= 2, `${label}: ${c} is a dead end`);
-        for (const o of route.choices(c)) { const p = route.tourPath(c, o.name, 30); const out = p.filter(x => !mine.includes(x));
+        for (const o of route.choices(c, L)) { const p = route.tourPath(c, o.name, 30, L); const out = p.filter(x => !mine.includes(x));
           check(!out.length, `${label}: ${c} via ${o.name} leaves the area (${out[0]})`); }
       }
     };
