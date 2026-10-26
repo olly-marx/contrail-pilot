@@ -4,6 +4,7 @@
 // Day/night: a long twilight, and the 'Night is coming!' warning well before it is dark.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/powerups.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

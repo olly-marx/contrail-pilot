@@ -6,6 +6,7 @@
 // test, and the reload is caught (window.__CP_RELOAD) so the page stays put.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/updates.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

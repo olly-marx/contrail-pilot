@@ -5,8 +5,9 @@
 import { SEASON } from './season.js';
 import { AREAS, OCEAN_STONES, areaOf, unlockedAreas } from './areas.js';
 import { eraProgress } from './eras.js';
-import { linksOf, choices } from './network.js';
+import { linksOf, choices, city } from './network.js';
 import { tourPath } from './route.js';
+import { biodiversity } from './nature.js';
 
 export const CROSSINGS = [
   { id: 'warsaw-stockholm', a: 'WARSAW', b: 'STOCKHOLM', era: 0, kind: 'frontier' },
@@ -42,7 +43,7 @@ export function available(save) {
   const allOthers = Object.keys(AREAS).every(k => open.has(k));
   const out = [];
   for (const c of CROSSINGS) {
-    if (c.era > era) continue;
+    if (c.era > era || c.era > SEASON.maxEra) continue;   // (maxEra: 0.12.0 ends after the 1990s crossings)
     const [sa, sb] = sides(c);
     if (c.kind === 'boss') { if (allOthers && !(save.crossed || []).includes(c.id)) out.push({ ...c, from: c.a, to: c.b, km: crossingKm(c) }); continue; }
     if (open.has(sa) && !open.has(sb)) out.push({ ...c, from: c.a, to: c.b, opens: sb, km: crossingKm(c) });
@@ -51,13 +52,31 @@ export function available(save) {
   return out;
 }
 
-// Why a crossing is or is not OFFERED (MASTER-PLAN B4): the three conditions and the rule from src/season.js.
-// `ctx` gives the measured parts the game knows: capabilityKm (plane + nature), bio (this area's biodiversity),
-// missionsDone (this area's contrail missions). Until those systems exist (M4/M6) the caller passes what it has.
+// The placeholder at the end of this release: you have reached the last era it covers and nothing is left to fly.
+export const moreToCome = save => eraProgress(save).index >= SEASON.maxEra && available(save).length === 0;
+
+// Season 2 stand-ins for the offer gate (user, 2026-10-26): the best LANDED ordinary flight from each area, kept on the
+// save (areaBest[area], game km) by recordAreaBest from GameScene.onFinish; and the area's biodiversity = the meter of the
+// land its start city is in.
+export function recordAreaBest(save, from, m) {
+  const k = areaOf(from);
+  if (!k || !(m > 0)) return;
+  save.areaBest = save.areaBest || {};
+  if (m > (save.areaBest[k] || 0)) save.areaBest[k] = Math.round(m);
+}
+export function offerCtx(save, c) {
+  const k = areaOf(c.from), home = k && city(AREAS[k].start);
+  return { capabilityKm: (save.areaBest || {})[k] || 0, bio: home ? biodiversity(save, home.region) : 0 };   // missionsDone: not asked yet (M6)
+}
+
+// Why a crossing is or is not OFFERED (MASTER-PLAN B4): the conditions and the rule from src/season.js.
+// `ctx` gives the measured parts the game knows: capabilityKm (here: best flight from the area), bio (the area's
+// biodiversity) and, once the area missions exist (M6), missionsDone. A condition whose ctx value is undefined is not asked.
 export function offerCheck(c, ctx) {
-  const need = { capability: ctx.capabilityKm >= c.km, nature: ctx.bio >= SEASON.offer.biodiversity, contrails: !!ctx.missionsDone };
-  const met = Object.values(need).filter(Boolean).length;
-  return { need, offered: SEASON.offer.rule === '2of3' ? met >= 2 : met === 3 };
+  const need = { capability: ctx.capabilityKm >= SEASON.offer.distanceShare * c.km, nature: ctx.bio >= SEASON.offer.biodiversity };
+  if (ctx.missionsDone !== undefined) need.contrails = !!ctx.missionsDone;
+  const met = Object.values(need).filter(Boolean).length, n = Object.keys(need).length;
+  return { need, offered: SEASON.offer.rule === '2of3' && n === 3 ? met >= 2 : met === n };
 }
 
 // Landing a crossing: the area on the far side opens (and the ocean stepping stones count as 'ocean').

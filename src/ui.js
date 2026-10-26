@@ -4,7 +4,8 @@ import { flightPath, choices, city, EARTH_KM, linksFor } from './route.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
-import { available as crossingsNow, offerCheck } from './crossings.js';
+import { available as crossingsNow, offerCheck, offerCtx, moreToCome } from './crossings.js';
+import { SEASON } from './season.js';
 // Season 2 debug (?s2unlock=1, preview only): every available crossing can be flown, skipping the offer gates (M3 tryout).
 const S2_UNLOCK = typeof location !== 'undefined' && new URLSearchParams(location.search).get('s2unlock') === '1';
 // Season 2: the crossings you can see from your areas, each with what it still needs (MASTER-PLAN B4).
@@ -12,9 +13,9 @@ const S2_UNLOCK = typeof location !== 'undefined' && new URLSearchParams(locatio
 const crossingsHTML = s => {
   if (!s.tutorialDone) return '';
   const list = crossingsNow(s);
-  if (!list.length) return '';
-  return `<div id="jCross">${list.map(c => { const o = offerCheck(c, { capabilityKm: 0, bio: 0, missionsDone: false }), go = o.offered || S2_UNLOCK;
-    const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: 'a plane + nature that can reach it', nature: 'biodiversity 30 here', contrails: "this area's contrail missions" })[k]);
+  if (!list.length) return moreToCome(s) ? '<div id="jCross"><p class="small" id="jMore"><b>MORE TO COME!</b><br>You have flown every crossing there is for now. Faster planes and the far oceans are on their way.</p></div>' : '';
+  return `<div id="jCross">${list.map(c => { const ctx = offerCtx(s, c), o = offerCheck(c, ctx), go = o.offered || S2_UNLOCK;
+    const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: `a landed flight of ${km(Math.round(SEASON.offer.distanceShare * c.km))} from here (best so far ${km(ctx.capabilityKm)})`, nature: `biodiversity ${SEASON.offer.biodiversity} here (now ${ctx.bio})`, contrails: "this area's contrail missions" })[k]);
     return `<p class="small"><b>CROSSING: ${c.from} &gt; ${c.to}</b>, ${km(c.km)} non-stop${c.opens ? ` (opens ${AREAS[c.opens].name})` : ''}<br>
       ${go ? `<button class="btn go" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : `Needs: ${needs.join(', ')}`}</p>`; }).join('')}</div>`;
 };

@@ -2,6 +2,7 @@
 // slows down, never fails), mid-run tips close only with their OK button, icy air is lumpy (not a box), and a dropped parcel lands on the ground spot under the aim X from any height.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/controls.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready, started } = require('./lib/ready.js');
 const { throttle } = require('./lib/throttle.js');
 const URL = process.env.URL || 'http://localhost:8000/';

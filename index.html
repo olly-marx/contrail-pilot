@@ -283,7 +283,8 @@
   <button id="skipSchool" class="btn tiny skip" type="button" hidden>skip flight school</button>
 
   <script src="src/newplayer.js"></script>   <!-- ?newplayer=1: a separate test player (src/newplayer.js) -->
-  <script src="src/season2.js"></script>   <!-- ?season2=1: the redesign preview, its own save (src/season2.js) -->
+  <script>if (window.SEASON2_FORCE !== false) window.SEASON2_FORCE = true;</script>   <!-- 0.12.0: season 2 is the game. Only a test (tests/lib/classic.js) sets it to false first -->
+  <script src="src/season2.js"></script>   <!-- the redesign, its own save under s2: (src/season2.js) -->
   <script src="vendor/phaser.min.js"></script>
   <script src="vendor/supabase.min.js"></script>
   <script type="module" src="src/main.js"></script>

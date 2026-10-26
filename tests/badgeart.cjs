@@ -2,6 +2,7 @@
 // 64x64 pictures that load, and the badge list shows them at 64 px (whole pixels, not stretched 1.5x).
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/badgeart.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

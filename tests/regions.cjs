@@ -4,6 +4,7 @@
 // who runs a project is shown, with links behind the grown-up gate (hold 2 s).
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/regions.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';

@@ -5,6 +5,7 @@
 // flight counts as FOUND (once, with a pop-up), and the collection shows found vs silhouettes.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/wild.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';

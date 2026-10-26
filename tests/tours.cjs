@@ -5,6 +5,7 @@
 // Only the pointed-at button works (a tap elsewhere is swallowed); seenTips ['*'] saves never see one.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/tours.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const UID = '11111111-2222-3333-4444-555555555555';

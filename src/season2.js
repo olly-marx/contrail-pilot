@@ -1,12 +1,12 @@
-// SEASON 2 PREVIEW (the redesign, coordinator plan 2026-10-26): areas, crossings, the start choice, chapter 1.
+// SEASON 2 (the redesign, ON FOR EVERYONE since 0.12.0 via index.html; coordinator plan 2026-10-26): areas, crossings, the start choice, chapter 1.
 // Built behind this switch so the live game is untouched until the restart release. A plain script (not a
 // module) loaded BEFORE everything else, like src/newplayer.js:
 //   ?season2=1      turn it on (remembered on this device until ?season2=off)
 //   ?season2=reset  wipe the season 2 player only, and start again from zero (stays on)
 //   ?season2=off    back to your real game, exactly as you left it
-// The /preview/ build (bug-fix chat's deploy) injects window.SEASON2_FORCE = true before this script: season 2 is
+// index.html sets window.SEASON2_FORCE = true before this script (only a test sets it false first, tests/lib/classic.js): season 2 is
 // then always on, ?season2=off is ignored, and the mode flag is NEVER written (localStorage is per origin, not per
-// path: a written flag would boot the LIVE game into season 2 for anyone who had opened /preview/). 'reset' still
+// path). The old game's save is never touched: it stays under its own keys. 'reset' still
 // wipes the s2: keys only; there is no 'exit' link.
 // While on: every localStorage key the game uses is stored under a separate 's2:' prefix, nothing goes to the
 // online server, and window.SEASON2 is true (src/config.js FEATURES.season2).

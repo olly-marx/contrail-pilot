@@ -10,6 +10,7 @@
 //   5. a drag stays smooth with the CPU slowed 4x (a phone): at least 30 frames a second.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/globe.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

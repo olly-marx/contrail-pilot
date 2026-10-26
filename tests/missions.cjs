@@ -4,6 +4,7 @@
 // Next: Y" sign; a mission that needs an upgrade says so; a bird crash earns the secret badge.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/missions.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';

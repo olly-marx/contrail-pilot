@@ -7,6 +7,7 @@
 //   tabs and the picture stay pinned at the top while the lists scroll, leaving room for two rows on a 600 px phone.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/swipe.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

@@ -3,6 +3,7 @@
 // ?newplayer=reset wipes only the test player, ?newplayer=off brings the real game back untouched.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/newplayer.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';

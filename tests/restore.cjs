@@ -4,6 +4,7 @@
 // settings, and takes the code out of the address bar. A used link says so.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/restore.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const UID = '11111111-2222-3333-4444-555555555555', OLD = 'dddddddd-0000-0000-0000-000000000004';

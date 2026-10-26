@@ -2,6 +2,7 @@
 // autopilot pick-ups until the Autopilot gadget is bought. Checked at the spawn roll the game uses.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/pickupgates.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

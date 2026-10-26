@@ -3,6 +3,7 @@
 // the FLY screen. Checks the exact amounts banked.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/rewards.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

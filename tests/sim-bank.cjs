@@ -5,6 +5,7 @@
 // before banking) must be caught.
 // Run: python3 -m http.server 8000 & node tests/sim-bank.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const DT_MS = 16.67;
 // Save fields only the game's VIEW changes during a flight (animals seen, banners and tips shown): not banking.

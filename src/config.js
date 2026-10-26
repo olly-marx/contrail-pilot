@@ -57,9 +57,9 @@ export const WORLD = {
 
 export const STORMS = {
   width: 44,
-  startGap: 150,
+  startGap: 200,      // 150 until 0.12.0 (season 2 rescale "B": gentle first storms, same squeeze by ~10k km)
   minGap: 115,
-  gapShrinkPerPair: 1,   // only counts pairs after WORLD.warmup
+  gapShrinkPerPair: 2,   // (1 until 0.12.0) only counts pairs after WORLD.warmup
   spacing: 230,      // px between storm pairs (260 until 0.10.0: with the shorter legs back, a busier sky per km)
   clearLane: 24,     // every storm gap keeps a lane this much taller than the plane free of icy air and birds
   marginTop: 40,     // gap centre never closer than this to the top/ground

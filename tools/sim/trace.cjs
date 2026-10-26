@@ -63,6 +63,7 @@ async function flyEngine(pilot, seed) {
     for (const pilot of PILOTS) for (const seed of SEEDS) traces[`${PLANE}/${pilot}/${seed}`] = await flyEngine(pilot, seed);
   } else {
     const { chromium } = require('playwright-core');
+    require('../../tests/lib/classic.js');   // since 0.12.0 the game boots into season 2; the golden is the classic world (tests/lib/classic.js)
     const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
     for (const pilot of PILOTS) for (const seed of SEEDS) traces[`${PLANE}/${pilot}/${seed}`] = await flyGame(b, pilot, seed);
     await b.close();

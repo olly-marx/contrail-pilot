@@ -4,6 +4,7 @@
 // meter; the results list each land whose meter rose; and rewilding brings a lot more life (steeper curve).
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/biodiversity.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoon forest', 'Temperate mountain forest', 'Boreal forest', 'Plains & forest', 'Tundra', 'African savanna', 'Tropical rainforest'];

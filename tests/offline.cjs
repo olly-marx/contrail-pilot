@@ -4,6 +4,7 @@
 // applies the database's rules (supabase/migrations): single inserts 5 a minute, send_flights whole batches.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/offline.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const flight = i => ({ landed: true, distance_m: 1000 + i, shade: 0, heat_trapped: 0, night_dodges: 0, crystals: 0, plane_co2: 1, species: [], mission_done: false, lap: false, crash: null });

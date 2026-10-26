@@ -3,6 +3,7 @@
 // not the "being drawn" note; a region without a field still shows the note.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/fields.cjs
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const WITH = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest'], WITHOUT = [];   // every region since 0.10.8
