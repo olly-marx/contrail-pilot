@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-10-27-nature-hints",
+    "version": "0.12.1",
+    "date": "2026-10-27",
+    "level": "minor",
+    "notes": [
+      "Easier to see where to fly! A clear gate shows the next gap between storms, with an arrow pointing the way. No-fly zones are striped red and white.",
+      "NATURE tells you what to do next in each land: the next tree to plant, the next level, and an animal to look out for.",
+      "Nature projects now show the animals they bring back.",
+      "Flight school starts in your own city, not London.",
+      "Behind the scenes: smarter test pilots, and more checks that season 2 works."
+    ]
+  },
+  {
     "id": "2026-10-27-season-2",
     "version": "0.12.0",
     "date": "2026-10-27",
