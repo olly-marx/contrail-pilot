@@ -15,6 +15,8 @@
     check(t ? n1.tier && n1.tier.need === t.needs && n1.tier.have === bio : !n1.tier, `${land}: next tier at ${t && t.needs} (${JSON.stringify(n1.tier)})`);
     // animals
     const all = { habitat: { [land]: REGION_DATA[land].projects.map(p => p.id) }, found: {} };
+    const bAll = N.biodiversity(all, land), tAll = TIERS.find(x => bAll < x.needs), nAll = X.nextHere(all, land).tier;
+    check(tAll ? nAll && nAll.need === tAll.needs : !nAll, `${land} every project (biodiversity ${bAll}): next tier ${tAll && tAll.needs}, got ${JSON.stringify(nAll)}`);
     for (let i = 0; i < 300; i++) {
       const a = X.nextHere(all, land).animal; if (!a) break;
       check(!['cow', 'sheep'].includes(a.id), `${land}: a farm animal suggested`);
