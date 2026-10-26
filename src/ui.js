@@ -4,6 +4,20 @@ import { flightPath, choices, city, EARTH_KM, linksFor } from './route.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
+import { available as crossingsNow, offerCheck } from './crossings.js';
+// Season 2 debug (?s2unlock=1, preview only): every available crossing can be flown, skipping the offer gates (M3 tryout).
+const S2_UNLOCK = typeof location !== 'undefined' && new URLSearchParams(location.search).get('s2unlock') === '1';
+// Season 2: the crossings you can see from your areas, each with what it still needs (MASTER-PLAN B4).
+// The capability estimate, this area's biodiversity and its contrail missions arrive in M4/M6; until then 0 / false.
+const crossingsHTML = s => {
+  if (!s.tutorialDone) return '';
+  const list = crossingsNow(s);
+  if (!list.length) return '';
+  return `<div id="jCross">${list.map(c => { const o = offerCheck(c, { capabilityKm: 0, bio: 0, missionsDone: false }), go = o.offered || S2_UNLOCK;
+    const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: 'a plane + nature that can reach it', nature: 'biodiversity 30 here', contrails: "this area's contrail missions" })[k]);
+    return `<p class="small"><b>CROSSING: ${c.from} &gt; ${c.to}</b>, ${km(c.km)} non-stop${c.opens ? ` (opens ${AREAS[c.opens].name})` : ''}<br>
+      ${go ? `<button class="btn go" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : `Needs: ${needs.join(', ')}`}</p>`; }).join('')}</div>`;
+};
 // Season 2: which areas you fly in, and which are still locked (dim dots on the globe; crossings open them).
 const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS).filter(k => !open.includes(k));
   return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
@@ -164,10 +178,13 @@ export class UI {
         <b>${headingWord(o.deg)}</b><span>to ${o.name}</span><small>${land(o.name)}</small></button>`).join('')}</div>` : ''}
       <canvas id="jGlobe" class="jglobe" width="160" height="160"></canvas>
       <p class="small">On the way: ${path.slice(1).join(' &gt; ')}</p>
-      ${FEATURES.season2 ? areaLine(s) : ''}
+      ${FEATURES.season2 ? areaLine(s) + crossingsHTML(s) : ''}
       <p class="small">Times round the Earth: <b>${trips.toFixed(1)}</b> (${km(Math.round(s.flownKm || 0))})</p>`;
     // The way buttons and a tap on a way's dot on the globe do the same thing (the globe also turns when dragged: src/globe.js).
     const pick = name => { sfx.flap(); this.save.heading = name; writeSave(this.save); this.renderJourney(); };
+    // Season 2: fly a crossing (the flight's rules read save.flyCrossing; GameScene clears it when the flight ends).
+    document.querySelectorAll('#jCross [data-cross]').forEach(b => b.onclick = () => {
+      sfx.flap(); s.flyCrossing = crossingsNow(s).find(c => c.id === b.dataset.cross); writeSave(s); this.start(); });
     drawGlobe($('jGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: pick, lit: FEATURES.season2 ? linksFor(s) : null });
     $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => pick(b.dataset.way));
   }
@@ -246,6 +263,9 @@ export class UI {
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
   async showResults(r) {
+    // Season 2: a crossing flown (src/crossings.js): the big news first.
+    if (r.crossing) this.toast(r.crossing.landed ? (r.crossing.opens ? `NEW AREA: ${AREAS[r.crossing.opens].name.toUpperCase()}!` : 'YOU MADE IT!') : 'Crossing not made',
+      r.crossing.landed ? 'Your crossing is done. Fly on from here!' : 'Improve your plane, your nature and your contrail skill, and try again.', r.crossing.landed ? 'good' : '', 6);
     // NEW ANIMALS this flight (landed or crashed): made once, next to the new badges, before the
     // reveal below collects its steps.
     if (!$('rAnimals')) $('rBadges').insertAdjacentHTML('afterend', '<div id="rAnimals" class="step animals-new" hidden></div>');

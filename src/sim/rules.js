@@ -121,7 +121,7 @@ export const RULES = {
     // PARIS. this.path[0] is home; airportIndex = airports passed so far this flight (startCity is 0).
     // Season 2 (src/crossings.js, redesign only): a CROSSING mission flies from its departure to the next area's gateway
     // in one leg of crossing.km, then on through that area. Read from the save only (pure: the Node engine flies it too).
-    this.crossing = this.save.flyCrossing || null;
+    this.crossing = this.autostart !== 'school' && this.save.tutorialDone && this.save.flyCrossing || null;   // (never before school is done)
     this.path = this.crossing ? crossingPath(this.crossing)
       : flightPath(this.autostart === 'school' || !this.save.tutorialDone ? { city: HOME } : this.save);
     this.startCity = 0;

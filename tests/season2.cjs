@@ -3,7 +3,7 @@
 // player under 's2:' keys, offline; it survives a reload; ?season2=reset wipes only it; ?season2=off is back.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/season2.cjs
 const { chromium } = require('playwright-core');
-const { ready } = require('./lib/ready.js');
+const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 
@@ -65,6 +65,27 @@ const KEY = 'contrailPilot.v2';
     const path = r.flightPath({ ...s, tutorialDone: true }, 40);
     return { areas: s.areas, city: s.city, gone: !document.getElementById('startChoice'), out: path.filter(c => !a.AREAS.africa.cities.includes(c)) }; });
   check(JSON.stringify(st.areas) === '["africa"]' && st.city === 'LAGOS' && st.gone && st.out.length === 0, `start in Lagos, Africa, and stay there: ${JSON.stringify(st)}`);
+  // 2d. M3: the crossing. Without the gates met it only says what it needs; with ?s2unlock=1 (preview debug) it can be
+  // flown: one leg of 7,000 km to Stockholm with a progress bar; landing it opens the Nordic area.
+  await p.evaluate(async () => { const s = game.registry.get('save'); Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', tutorialDone: true, seenTips: ['*'], tours: ['*'] });
+    (await import('/src/save.js')).writeSave(s); });
+  await p.goto(URL); await ready(p);
+  await p.evaluate(() => game.registry.get('ui').showTitle());
+  const card = await p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || '');
+  check(/WARSAW &gt; STOCKHOLM/.test(card) && /Needs:/.test(card) && !/data-cross/.test(card), `the crossing shows what it needs: ${card.slice(0, 160)}`);
+  await p.goto(URL + '?s2unlock=1'); await ready(p);
+  await p.evaluate(() => game.registry.get('ui').showTitle());
+  const btn = await p.$('#jCross [data-cross="warsaw-stockholm"]');
+  check(!!btn, 'with ?s2unlock=1 the crossing can be flown');
+  if (btn) {
+    await btn.click(); await started(p);
+    const fl = await p.evaluate(() => { const g = game.scene.getScene('game'); return { c: g.crossing && g.crossing.id, to: g.nextAirport.name, at: Math.round(g.nextAirport.worldX - g.distancePx), dist: g.distText.text }; });
+    check(fl.c === 'warsaw-stockholm' && fl.to === 'STOCKHOLM' && fl.at > 6500 && /TO STOCKHOLM/.test(fl.dist), `flying the crossing: ${JSON.stringify(fl)}`);
+    await p.evaluate(() => { const g = game.scene.getScene('game'); g.landedAt = 'STOCKHOLM'; g.distancePx = 7000; g.finish({ landed: true }); });
+    await p.waitForTimeout(500);
+    const after = await p.evaluate(() => { const s = game.registry.get('save'); return { areas: s.areas, city: s.city, fly: s.flyCrossing || null, crossed: s.crossed }; });
+    check(after.areas.includes('nordic') && !after.fly && (after.crossed || []).includes('warsaw-stockholm'), `landing the crossing opens the Nordic area: ${JSON.stringify(after)}`);
+  }
   // 3. Reset: from zero again.
   await p.goto(URL + '?season2=reset'); await ready(p);
   g = await state();

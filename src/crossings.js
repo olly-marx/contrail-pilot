@@ -65,8 +65,7 @@ export function completeCrossing(save, c) {
   save.crossed = [...new Set([...(save.crossed || []), c.id])];
   const [sa, sb] = sides(c), open = new Set(save.areas || []);
   for (const s of [sa, sb]) open.add(s);
-  save.areas = [...open];
-  save.city = c.to || c.b;
+  save.areas = [...open];   // (the rules already moved save.city to where you landed)
 }
 
 // The path of a crossing flight: departure, the gateway, then on through the area it opens (the world-tour rule), so

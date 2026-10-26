@@ -11,6 +11,8 @@ import { MASK_DATA } from './sim/masks.js';
 import { Hud } from './Hud.js';
 import { sendFlight } from './online.js';
 import { flightPath, city, HOME } from './route.js';
+import { crossingPath, completeCrossing } from './crossings.js';
+import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
 import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra } from './fleet.js';
 import { composeOnto } from './planelook.js';
@@ -140,6 +142,7 @@ export class GameScene extends Phaser.Scene {
 
     const font = { fontFamily: FONT, fontSize: '16px', color: COLOURS.text, stroke: '#000', strokeThickness: 4 };
     this.distText = this.add.text(WIDTH / 2, 8, '', font).setOrigin(0.5, 0);
+    this.crossGfx = this.add.graphics().setDepth(5);   // season 2: a crossing's progress bar, in place of the distance (drawCrossingBar)
     // Mission line: wraps inside the two HUD bars (about 25 characters a line) and never spills off screen.
     this.missionText = this.add.text(WIDTH / 2, 46, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a', align: 'center',
       wordWrap: { width: 200, useAdvancedWrap: true }, maxLines: 2, lineSpacing: 2 }).setOrigin(0.5, 0);
@@ -253,7 +256,7 @@ export class GameScene extends Phaser.Scene {
   startFlight() {
     // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
     // Also if a new direction was chosen on the FLY screen since (the path is built with the scene).
-    const pathNow = this.school ? this.path : flightPath(this.save.tutorialDone ? this.save : { city: HOME });   // (school: LONDON, set by startSchool)
+    const pathNow = this.school ? this.path : this.save.flyCrossing ? crossingPath(this.save.flyCrossing) : flightPath(this.save.tutorialDone ? this.save : { city: HOME });   // (school: LONDON, set by startSchool)
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])
       || pathNow[0] !== this.path[0] || pathNow[1] !== this.path[1]) { this.scene.restart({ go: true }); return; }
     this.takeOff();   // the flight's rules (src/sim/rules.js): kit, random stream, onto the runway
@@ -1264,7 +1267,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   updateTexts(inIssr) {
-    this.distText.setText(km(this.distancePx / WORLD.pxPerMetre));
+    if (this.crossing) this.drawCrossingBar();
+    else this.distText.setText(km(this.distancePx / WORLD.pxPerMetre));
 
     const toAirport = Math.round(this.nextAirport.worldX - this.distancePx);
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
@@ -1294,6 +1298,13 @@ export class GameScene extends Phaser.Scene {
     this.multText.x = this.crysText.x + this.crysText.width + 6; this.multText.y = this.crysText.y;   // row 2, clear of the distance
   }
 
+  // Season 2 crossing (src/crossings.js; MASTER-PLAN B3): a boss-level progress bar to the gateway, no distance meter.
+  drawCrossingBar() {
+    const c = this.crossing, f = Math.max(0, Math.min(1, this.distancePx / c.km)), w = 150, x = (WIDTH - w) / 2, y = 22;
+    this.distText.setFontSize(8).setText(`TO ${c.to}`);
+    this.crossGfx.clear().fillStyle(0x1b1b2f, 0.85).fillRect(x - 2, y - 2, w + 4, 10).fillStyle(0xffd34d, 1).fillRect(x, y, Math.round(w * f), 6);
+  }
+
   // The flight has ended (rules.finish set the state): the crash or landing, the save, and the results.
   // The flight has ended and the rules have banked it (bankFlight: this.result, this.bank): the crash or
   // landing effects, the online boards, and the results screen.
@@ -1320,6 +1331,12 @@ export class GameScene extends Phaser.Scene {
       crystals: this.crystals, plane_co2: this.kit.co2Cruise, species: [...this.speciesTags], mission_done: missionDone,
       lap, crash,
     });
+    if (this.crossing) {   // season 2: landing the crossing (at the gateway or beyond) opens the area; either way it is over
+      if (landed) completeCrossing(this.save, this.crossing);
+      this.result.crossing = { id: this.crossing.id, landed, opens: this.crossing.opens, to: this.crossing.to };
+      delete this.save.flyCrossing;
+      writeSave(this.save);
+    }
     if (gained) this.time.delayedCall(landed ? 600 : 0, () => sfx.coin());
     this.time.delayedCall(landed ? 900 : 1100, () => this.ui.showResults(this.result));
   }

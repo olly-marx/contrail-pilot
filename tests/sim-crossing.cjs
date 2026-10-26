@@ -5,6 +5,7 @@
 (async () => {
   globalThis.window = { SEASON2: true };   // the redesign's switch (src/season2.js), as the game sets it
   const { simulate } = await import('../src/sim/simulate.js');
+  const { createWorld } = await import('../src/sim/world.js');
   const X = await import('../src/crossings.js');
   const { AREAS } = await import('../src/areas.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
@@ -20,6 +21,12 @@
   check(a.path.slice(1).every(n => AREAS.nordic.cities.includes(n)), `then on through the Nordic area: ${a.path.slice(1, 6)}`);
   check(JSON.stringify(a) === JSON.stringify(b), 'pure: the same save flies the same path after an ordinary flight in between');
   check(plain.path.every(n => AREAS.weurope.cities.includes(n)) && plain.leg0 < 3000, `an ordinary flight stays home with ordinary legs: ${plain.path.slice(0, 3)} ${plain.leg0}`);
+  // "The first place you can land is B, crossing.km away" (sim chat): on the world itself, before simulate() moves airports.
+  const w = createWorld({ ...base, flyCrossing: c }, 3);
+  check(w.nextAirport.name === 'STOCKHOLM' && w.nextAirport.worldX === X.crossingKm(c), `first airport Stockholm at ${X.crossingKm(c)}: ${w.nextAirport.name} ${w.nextAirport.worldX}`);
+  // Never before flight school is done (sim chat's edge case): such a save flies an ordinary flight.
+  const early = createWorld({ ...base, tutorialDone: false, flyCrossing: c }, 3);
+  check(!early.crossing && early.path[1] !== 'STOCKHOLM', `no crossing before the tutorial: ${early.path.slice(0, 2)}`);
   console.log({ fails });
   if (fails.length) { console.log('FAIL'); process.exit(1); }
   console.log('PASS sim-crossing');
