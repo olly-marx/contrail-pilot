@@ -2,7 +2,8 @@
 // simulator). The test pilots in pilots.js aim with the 12 px hitbox and fall past their target, so they hit the
 // first storm (measured: 20/20 skies at ~400 km); they stay as they are for the crashes-off balance studies.
 //
-//   const p = makePlayer({ skill, careful, seed, land });   p.wantsFlap(w) -> true when it taps this frame
+//   const p = makePlayer({ skill, care, seed, land });   p.wantsFlap(w) -> true when it taps this frame
+//   care c (0..1): contrail care, the second knob (2026-10-26). careful: true/false is the same as care 1/0.
 //   land(w) -> true: it wants to land at the next airport. From 700 px out it holds low (still clearing storms);
 //   once no storm is left between it and the runway and the flare can reach it, it stops tapping and lets the
 //   game's landing flare put it down.
@@ -25,12 +26,15 @@ const TOP = PLANE.spriteOffY, BOT = PLANE.spriteH - PLANE.spriteOffY;   // the p
 // ~37 px (flapVelocity^2 / 2 gravity) above that before it falls again. So the whole bob, target-BOB .. target,
 // must clear the gap, and the picture tilts by up to PLANE.maxTilt, which moves its ends ~TILT px up or down.
 let BOB = Math.ceil(PLANE.flapVelocity ** 2 / (2 * PLANE.gravity));
+let CARE_W = 1;
+export function __plantCareHalf() { CARE_W = 0.5; }   // tests/sim-care.cjs plants a weakened contrail term: must FAIL
 export function __plantNoBob() { BOB = 0; }   // tests/sim-player.cjs plants the old bug: the gate must fail
 const TILT = Math.ceil(PLANE.spriteW / 2 * Math.sin(PLANE.maxTilt) / 2);
 const MARGIN = 6;   // px kept clear of the cloud's edge
 const FALL = 8;     // the fall past the target before a tap takes hold (one frame at the 400 px/s top speed is ~7 px)
 
-export function makePlayer({ skill = 0.7, careful = true, seed = 1, land = null } = {}) {
+export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0, seed = 1, land = null } = {}) {
+  const c = Math.max(0, Math.min(1, care));
   const s = Math.max(0, Math.min(1, skill)), rnd = makeRng((seed * 2654435761) >>> 0 ^ 0x5eed);
   const delayFrames = Math.round(0.25 * (1 - s) * 60), noisePx = 30 * (1 - s), missRate = 0.3 * (1 - s);
   const past = [];   // the plane's y and vy over the last frames: what it "sees" with its reaction delay
@@ -55,21 +59,27 @@ export function makePlayer({ skill = 0.7, careful = true, seed = 1, land = null 
   const goodDay = w => { const c = w.clock % (DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds);
     return c < DAYNIGHT.daySeconds - DAYNIGHT.blendSeconds - w.kit.contrailLife / 1000; };
 
-  // Where it wants to be: in the safe band; careful pilots then pick by icy air (seen only once revealed).
+  // Where it wants to be: in the safe band, picking by contrail care c (icy air counts only once revealed).
+  // Each height y in the band scores  c x contrail(y)  -  (1 - c) x |y - band middle|  -  0.05 x |y - plane|,
+  // where contrail(y) is how deep y is in icy air by day (up to 40 px) or how far from it at night (up to 60 px).
+  // c = 0: barrier-only, the band's middle (exactly). c = 1: contrail-first, today's careful choice (exactly).
+  // In between it gives up some safety margin for contrail benefit.
   const target = w => {
     const [lo, hi] = safeBand(w);
     // A seed or pick-up coming up inside the safe band: go for it (both kinds of player do).
     const seed = w.tokens.filter(k => k.x > w.plane.x && k.x < w.plane.x + 160 && k.y - 2 >= lo && k.y - 2 <= hi).sort((a, b) => a.x - b.x)[0];
     if (seed) return seed.y - 2;
-    if (!careful || hi - lo < 4) return (lo + hi) / 2;
+    if (c === 0 || hi - lo < 4) return (lo + hi) / 2;
     const ahead = w.issrs.filter(i => i.alpha > (w.kit.hiddenAlpha || 0) + 0.01 && i.x < w.plane.x + 220 && i.x + i.width > w.plane.x - 10);
     if (!ahead.length) return (lo + hi) / 2;
     const room = y => ahead.reduce((m, i) => Math.min(m, Math.max(0, i.y - (y + 14), y - 2 - (i.y + i.height))), 999);
     const depth = y => ahead.reduce((m, i) => Math.max(m, Math.min(y - 2 - i.y, i.y + i.height - (y + 14))), -999);
     const day = goodDay(w);
     let best = (lo + hi) / 2, bestScore = -1e9;
+    const mid = (lo + hi) / 2;
     for (let y = lo; y <= hi; y += 4) {
-      const score = (day ? Math.min(depth(y), 40) : Math.min(room(y), 60)) - Math.abs(y - w.plane.y) * 0.05;
+      const contrail = CARE_W * (day ? Math.min(depth(y), 40) : Math.min(room(y), 60));
+      const score = (c === 1 ? contrail : c * contrail - (1 - c) * Math.abs(y - mid)) - Math.abs(y - w.plane.y) * 0.05;
       if (score > bestScore) { bestScore = score; best = y; }
     }
     return best;
@@ -84,7 +94,7 @@ export function makePlayer({ skill = 0.7, careful = true, seed = 1, land = null 
   };
 
   return {
-    skill: s, _band: w => safeBand(w), _target: w => target(w),   // (for debugging)
+    skill: s, care: c, _band: w => safeBand(w), _target: w => target(w),   // (for debugging)
     wantsFlap(w) {
       const landing = land && land(w) ? approach(w) : null;
       if (landing === 'glide') return false;
