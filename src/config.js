@@ -20,6 +20,7 @@ export const FEATURES = {
   citizenZoo: false || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('citizenzoo')),
   pixelArt: previewSwitch('pixelart', true),   // the PixelLab animals, on for everyone (the user, 2026-10-24); ?pixelart=off opts out
   pixelReadout: previewChosen('pixelart'),   // load/fps readout, only after ?pixelart=on
+  season2: typeof window !== 'undefined' && window.SEASON2 === true,   // the redesign preview (src/season2.js, ?season2=1)
 };
 // Text that only appears with the Citizen Zoo feature on (else `off`).
 export const cz = (on, off = '') => (FEATURES.citizenZoo ? on : off);
