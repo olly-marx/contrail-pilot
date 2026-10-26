@@ -23,8 +23,8 @@ const PLANT = process.env.PLANT || '';
     oldWood() { const ramp = Clamp((this.distancePx - FOREST.from) / FOREST.span, 0, 1); return ramp * FOREST.boost * Math.pow(Math.min(1, this.speciesPlanted.size / FOREST.kinds), FOREST.power); },
     forestStore() { return Math.max(FOREST.storeMin, FOREST.store * Math.pow(Math.min(1, this.speciesPlanted.size / FOREST.kinds), FOREST.storePower)); },
     inStormClearZone(worldX) { const a = this.nextAirport.worldX; return worldX + STORMS.width > a - AIRPORT.stormClearBefore && worldX < a + AIRPORT.runwayLen + AIRPORT.stormClearAfter; },
-    laneClear(x, w, gTop, gBot, issrs) { const lane = PLANE.h + STORMS.clearLane;
-      const blocked = issrs.filter(i => i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop).map(i => [Math.max(gTop, i.y), Math.min(gBot, i.y + i.height)]).sort((a, b) => a[0] - b[0]);
+    laneClear(x, w, gTop, gBot, issrs) {   /* 2026-10-26 deliberate new rule: fake (forecast) patches never count, so how you fly cannot move later storms */ const lane = PLANE.h + STORMS.clearLane;
+      const blocked = issrs.filter(i => !i.fake && i.x < x + w && i.x + i.width > x && i.y < gBot && i.y + i.height > gTop).map(i => [Math.max(gTop, i.y), Math.min(gBot, i.y + i.height)]).sort((a, b) => a[0] - b[0]);
       let free = gTop; for (const [t, btm] of blocked) { if (t - free >= lane) return true; free = Math.max(free, btm); } return gBot - free >= lane; },
     inCloud(blobs, x, y, w, h, box, grow = 1) { const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
       const pad = Math.max(0, grow - 1) * Math.max(w, h) / 2; if (!overlaps(box, { x: x - pad, y: y - pad, w: w + 2 * pad, h: h + 2 * pad })) return false;

@@ -1,5 +1,13 @@
 # Progression simulator: first results (sim engine chat, 2026-10-26)
 
+> **SUPERSEDED in part (2026-10-26):** every player number below was measured with the CLASSIC player, which
+> planned only for the nearest gap and climbed slowly. MEASURED against the user's expert experience it was wrong:
+> even at s = 1 it crashed on storms (4 of 30 skies before 8,000 km), where an expert never does. The new default
+> (`plan: 'threat'`, threat-first) has 0 storm crashes before 8,000 km at s >= 0.9; its skill scale is different
+> (at s = 0.8 it does WORSE than the classic one). Do not cite the skill table, calibration or timeline below
+> against the current player; do not assume the opposite either. The method and findings 1 (test pilots cannot fly
+> gaps) and the nature-gate/crystals findings are being re-run with the new player and will replace these numbers.
+
 Checks research/MASTER-PLAN.md Parts B, C and I against the game's own rules. Code: `src/sim/player.js`,
 `src/sim/progression.js`, `tools/sim/progression.mjs`, `tools/sim/calibrate.mjs`, `tools/sim/skill-grid.mjs`.
 Everything here is MEASURED by those tools unless marked otherwise. Node only, about 0.1 s per flight.
@@ -60,10 +68,13 @@ asked). It is thin: 8 players on flight 1, 4 on flights 11-20, 3 past flight 20.
 
 | band | real median / p90 / landed | best fits (score) |
 |---|---|---|
-| 1-5 | 3,166 / 5,620 / 16% | careful s=0.72 skip 2 (0.10); careless s=0.70 (0.15) |
-| 6-10 | 1,950 / 6,355 / 22% | careful s=0.75 skip 2 (0.60); careless s=0.65 (0.74) |
-| 11-20 | 3,333 / 7,477 / 24% | careless s=0.70 (0.42); careful s=0.75 skip 3 (0.43) |
+| 1-5 | 3,166 / 5,620 / 16% | careless s=0.70 (0.24) |
+| 6-10 | 1,950 / 6,355 / 22% | careful s=0.72 skip 2 (0.40); careful s=0.72 skip 3 (0.61) |
+| 11-20 | 3,333 / 7,477 / 24% | careless s=0.70 (0.38) |
 | 21-50 | 3,980 / 9,856 / 21% | careless s=0.70 (0.68): POOR, see below |
+
+(Re-run 2026-10-26 after the shared-defaults fix, 12be91f. The first run had careful s=0.72 best for flights 1-5
+(0.10) and careful s=0.75 for 6-10 (0.60): those scores were measured with the leak and are not to be cited.)
 
 **What it says:**
 - **The early real flights fit at s ≈ 0.70-0.75.** Careful and careless fit about equally well. The data cannot tell
@@ -95,9 +106,12 @@ non-stop flight to a gateway.
 
 | player | era 1 (747) | era 2 (twin) | bank at flight 50 / 150 | home biodiversity at 150 | crossings |
 |---|---|---|---|---|---|
-| calibrated careless s=0.70 | flight 34-37, 20 min | flight 126-146, 77 min | 340-600 / 40-770 seeds | 17-22 | none |
-| calibrated careful s=0.72 | flight 42-48, 21 min | not by flight 150 (61-72 min flown) | 50-200 / 6-53 seeds | 22-24 | none |
-| learning careful, s 0.72→0.88 | flight 27-29, 20 min | flight 81-84, 77 min | 380-1,130 / 3,100-4,600 seeds | 31-36 | tier 1 at flights 127-142 (2.2-2.5 h); tiers 2-4 within 5-20 more flights |
+| calibrated careless s=0.70 | flight 34-37, 20 min | flight 116-133, 77 min | 150-530 / 240-540 seeds | 15-22 | none |
+| calibrated careful s=0.72 | flight 39-43, 20 min | not by flight 150 (64-71 min flown) | 10-110 / 20-57 seeds | 22-24 | none |
+| learning careful, s 0.72→0.88 | flight 27-29, 20-21 min | flight 80-84, 77 min | 610-860 / 2,900-3,800 seeds | 27-36 | none in 1 of 3 skies (home biodiversity 27); in the other two, tier 1 at flights 126 and 135 (2.2-2.3 h), then tiers 2-3 within 5-10 flights |
+
+(Re-run after the shared-defaults fix, 12be91f. The first run, measured with the leak, had tier 1 in all 3 skies at
+flights 127-142 and higher banks: those numbers are superseded. The conclusions below hold for both runs.)
 
 **What it says:**
 - **The era clock works as designed.** Eras open at 20 and 77 minutes of flying for every kind of player. Players who
@@ -105,8 +119,9 @@ non-stop flight to a gateway.
 - **The nature gate, not the plane, decides when a crossing is offered.**
   - The never-crash capability estimate is 16-24k for all players by flight 150, far above every tier. So "capability
     ≥ tier" is never what holds them back.
-  - The home land's biodiversity reaches 30 only for the learning careful player, and only after about 130 flights.
-- **Once nature passes 30, the crossings fall like dominoes.** Tiers 1 to 4 within 5-20 flights, because the plane has
+  - The home land's biodiversity reaches 30 only for the learning careful player, and only after about 125-135
+    flights (in 1 of 3 skies it was still 27 at flight 150).
+- **Once nature passes 30, the crossings fall like dominoes.** Tiers 1 to 3 within 5-10 flights, because the plane has
   been ready for a long time.
 - **Against MASTER-PLAN Part C,** which expects tier 1 around flights 25-50 and tier 3 around 70-120:
   - **real-like players** (s ≈ 0.70) never get there in 150 flights;

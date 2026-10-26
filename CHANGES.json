@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-26-same-sky",
+    "version": "0.11.9",
+    "date": "2026-10-26",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: every test flight on the same sky now meets the same storms, icy air and birds, however it flies, so we can compare ways of flying fairly.",
+      "Soil plots now turn up on schedule whether or not you drop parcels.",
+      "Forecast-only icy air (the patches that pop when you get close) no longer decides where later storms can go."
+    ]
+  },
+  {
     "id": "2026-10-26-sim-engine-3",
     "version": "0.11.8",
     "date": "2026-10-26",

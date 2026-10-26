@@ -12,7 +12,8 @@ const realBand = names => { const b = real.filter(x => names.includes(x.flights)
   return { median: med[Math.floor(med.length / 2)], p90: Math.max(...b.map(x => x.p90)), landed: b.reduce((a, x) => a + x.landed, 0) / b.length }; };
 const q = (xs, f) => { const s = [...xs].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.floor(s.length * f))]; };
 const out = [];
-for (const careful of [true, false]) for (const s of [0.65, 0.7, 0.72, 0.75, 0.78, 0.8, 0.85]) for (const maxSkip of [1, 2, 3]) {
+const SKILLS = (process.env.SKILLS || '0.8,0.82,0.84,0.86,0.88,0.9,0.95').split(',').map(Number);
+for (const careful of [true, false]) for (const s of SKILLS) for (const maxSkip of (careful ? [1, 2, 3] : [0])) {
   const rows = [];
   for (let p = 1; p <= PLAYERS; p++) rows.push(...progression({ careful, skill: () => s, flights: FLIGHTS, seed: p, maxSkip, every: 25, capSeeds: [1] }).rows);
   const res = BANDS.map(([a, b, names]) => { const r = rows.filter(x => x.flight >= a && x.flight <= b), km = r.map(x => x.km), want = realBand(names);
