@@ -21,7 +21,7 @@ export const FEATURES = {
   pixelArt: previewSwitch('pixelart', true),   // the PixelLab animals, on for everyone (the user, 2026-10-24); ?pixelart=off opts out
   pixelReadout: previewChosen('pixelart'),   // load/fps readout, only after ?pixelart=on
   season2: typeof window !== 'undefined' && window.SEASON2 === true,   // the redesign preview (src/season2.js, ?season2=1)
-  gapMarkers: previewSwitch('gapmarkers'),   // clearer next-gap hint (systems only, day-readable; src/gapmarkers.js); ?gapmarkers=on
+  gapMarkers: previewSwitch('gapmarkers', true),   // clearer next-gap hint, ON for everyone (the user, 2026-10-26; systems only, day-readable; src/gapmarkers.js); ?gapmarkers=off opts out
 };
 // Text that only appears with the Citizen Zoo feature on (else `off`).
 export const cz = (on, off = '') => (FEATURES.citizenZoo ? on : off);

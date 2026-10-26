@@ -1,10 +1,15 @@
-// Clearer next-gap hint (research/PROPOSAL-GAP-MARKERS.md; behind ?gapmarkers=on until checked). The user, 2026-10-26:
+// Clearer next-gap hint (research/PROPOSAL-GAP-MARKERS.md; ON by default since 2026-10-26 (the user asked for clearer markers); ?gapmarkers=off is the escape hatch). The user, 2026-10-26:
 // NO base gates, the hint stays a reward of the three systems (fleet.js hintLevel / GAP_HINT, as today), but it must
 // read in DAYTIME: a gate with a dark outline, no-fly zones in red and white stripes, and an arrow at the plane's
 // height pointing to the gap (blinking for a big jump). It shows only as far ahead as the systems already spawn
 // columns (GAP_HINT.lead), so the sky and its timing are unchanged.
 // Pure functions (no Phaser, no random): tests/gapmarkers.cjs calls them.
 import { WIDTH, PLANE } from './config.js';
+
+// The gate's right edge: clear of the heat meter on the right (src/Hud.js: bar at WIDTH - 6 - 8, its tick marks
+// reach 3 px further left), so the two never overlap (seen in the 2026-10-26 screenshots).
+export const METER_LEFT = WIDTH - 6 - 8 - 3;
+export const GATE_RIGHT = METER_LEFT - 2;
 
 export const MARK = {
   jumpBlink: 120,   // px between the plane and the gap's middle: the arrow blinks
