@@ -14,6 +14,7 @@ import { flightPath, city, HOME, schoolSave } from './route.js';
 import { crossingPath, completeCrossing } from './crossings.js';
 import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
+import { gateFor, MARK, GATE_RIGHT } from './gapmarkers.js';
 import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra } from './fleet.js';
 import { composeOnto } from './planelook.js';
 import { sfx, buzz } from './sound.js';
@@ -911,6 +912,7 @@ export class GameScene extends Phaser.Scene {
   drawGapHint() {
     const lv = this.kit.hintLevel;
     if (!lv || this.school) return;
+    if (FEATURES.gapMarkers) return this.drawGapGates(GAP_HINT.lead[lv]);
     const g = this.gapHintGfx || (this.gapHintGfx = this.add.graphics().setDepth(50));
     g.clear();
     for (const st of this.storms) {
@@ -925,6 +927,35 @@ export class GameScene extends Phaser.Scene {
 
 
 
+
+  // Clearer next-gap hint (on by default, ?gapmarkers=off to opt out; research/PROPOSAL-GAP-MARKERS.md): still only with the three systems and
+  // as far ahead as they spawn columns, but readable in daylight: a gate with a dark outline, no-fly zones in red and
+  // white stripes, and an arrow at the plane's height pointing to the nearest gap. Which gate and when: src/gapmarkers.js.
+  drawGapGates(lead) {
+    const g = this.gapHintGfx || (this.gapHintGfx = this.add.graphics().setDepth(50));
+    g.clear();
+    const pulse = 0.8 + 0.2 * Math.sin(this.gameTime / 120), R = GATE_RIGHT, x = R - 8, edge = MARK.outline;   // left of the heat meter
+    let first = null;
+    for (const st of this.storms) {
+      const m = gateFor(st, this.plane.y, this.speed, lead);
+      if (!m) continue;
+      const a = (0.6 + 0.4 * m.near) * pulse, col = m.kind === 'nofly' ? 0xff4040 : 0xffd23a;
+      g.fillStyle(col, 0.18 * a); g.fillRect(x + 1, m.top, 7, m.bot - m.top);   // the opening, faintly
+      g.fillStyle(edge, 0.85 * a);   // dark outline first: it is what reads against a bright day sky
+      g.fillRect(x, m.top - 13, 8, 15); g.fillRect(x, m.bot - 2, 8, 15); g.fillRect(R - 4, m.top, 4, m.bot - m.top);
+      if (m.kind === 'nofly') {   // striped edges, like the zone itself
+        for (let y = 0; y < 12; y += 4) { g.fillStyle(y % 8 ? 0xffffff : col, a); g.fillRect(x + 1, m.top - 12 + y, 6, 4); g.fillRect(x + 1, m.bot - 1 + y, 6, 4); }
+      } else { g.fillStyle(col, a); g.fillRect(x + 1, m.top - 12, 6, 12); g.fillRect(x + 1, m.bot - 1, 6, 12); }
+      g.fillStyle(col, a); g.fillRect(R - 3, m.top, 2, m.bot - m.top);
+      if (!first || m.ahead < first.ahead) first = m;
+    }
+    if (first && first.arrow && (!first.blink || Math.floor(this.gameTime / 180) % 2 === 0)) {   // the nearest gate only
+      const y = this.plane.y + PLANE.h / 2, ax = GATE_RIGHT - 20, d = first.arrow * 8;
+      g.fillStyle(edge, 0.9); g.fillTriangle(ax - 7, y - first.arrow, ax + 7, y - first.arrow, ax, y + d + first.arrow * 2);
+      g.fillStyle(first.kind === 'nofly' ? 0xff4040 : 0xffd23a, 1); g.fillTriangle(ax - 5, y, ax + 5, y, ax, y + d);
+    }
+    if (first && !this.hintTipped) { this.hintTipped = true; this.ui.tipOnce('gapHint', 'Teamwork!', 'Your forecasters, controllers and dispatchers are working together: the gate on the right shows where the next gap is. Red stripes: a no-fly zone.', 'good', 4); }
+  }
 
   enterIssr() {
     sfx.issr();
