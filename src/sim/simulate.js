@@ -4,7 +4,8 @@
 //
 //   simulate(save, { pilot, seed, maxKm, crashes, dtMs }) -> { km, end, heat, steps, marks, breakdown, ms }
 //     save:    a stored save (as in localStorage; it is prepared as the game prepares it and never changed)
-//     pilot:   'straight' | 'careful' | 'smart' (src/sim/pilots.js)
+//     pilot:   'straight' | 'careful' | 'smart' (src/sim/pilots.js: never-crash studies only, they cannot fly gaps)
+//              | 'player' (src/sim/player.js: flies gaps; skill 0..1, careful true/false): use it with crashes: true
 //     crashes: false (default) = only the heat ends the flight, as the balance probe; true = storms, birds and
 //              the ground end it too (the pilots do not try to land: airports are moved out of reach)
 //     maxKm:   stop here if nothing else ended it (default 100,000)
@@ -19,6 +20,7 @@
 //     later, the in-game estimate ("your plane + nature can reach ~6,200 km").
 import { createWorld } from './world.js';
 import { pilotTarget } from './pilots.js';
+import { makePlayer } from './player.js';
 import * as CONFIG from '../config.js';
 import * as FLEET from '../fleet.js';
 
@@ -46,7 +48,7 @@ export function simulate(save, { overrides, ...opts } = {}) { return withOverrid
 function fly(save, opts) { const g = flight(save, opts); let r; while (!(r = g.next()).done); return r.value; }
 
 // A flight that can pause: yields after every step (the caller decides when to stop for now), returns the result.
-function* flight(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false, dtMs = 16.67, onStep } = {}) {
+function* flight(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false, dtMs = 16.67, onStep, skill = 0.7, careful = true } = {}) {
   const t0 = now();
   const w = createWorld({ autoTakeoff: true, ...save }, seed);
   const dt = Math.min(dtMs, 50) / 1000;   // as GameScene.update clamps it
@@ -54,11 +56,12 @@ function* flight(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = fa
   w.explain = () => false;
   w.nextAirport.worldX = 1e12;   // the test pilots never land
   if (!crashes) { w.hitsStorm = () => false; w.hitBird = () => false; w.spriteBottom = () => -1; }
+  const player = pilot === 'player' ? makePlayer({ skill, careful, seed }) : null;   // flies storm gaps (src/sim/player.js)
   const marks = [];
   let steps = 0;
   while (w.state === 'playing' && w.distancePx < maxKm && steps < 3e6) {
     if (onStep) onStep(w);   // e.g. a heat number that ramps with w.distancePx
-    if (w.plane.y > pilotTarget(w, pilot) && w.plane.vy > -40) w.applyFlap();
+    if (player ? player.wantsFlap(w) : w.plane.y > pilotTarget(w, pilot) && w.plane.vy > -40) w.applyFlap();
     w.step(dt); steps++;
     if (steps % 2000 === 0) marks.push([Math.round(w.distancePx), Math.round(w.heat)]);
     yield;
