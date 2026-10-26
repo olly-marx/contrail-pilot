@@ -41,7 +41,10 @@ capability(save, { pilots: ['straight', 'careful', 'smart'], seeds: [1, 2, 3, 4,
   (stars, animals, sparks) uses `Math.random` and never touches it.
 - `km`: distance as the game shows it (1 px scrolled = 1 km).
 - `crashes: false` (default): only the heat ends a flight, as in the balance probe. `true`: storms, birds and the
-  ground count too.
+  ground count too. **But the three test pilots cannot fly storm gaps.** MEASURED 2026-10-26: with crashes on, all
+  three hit the first storm at about 400 km in 20/20 skies. They aim within the gap using the 12 px hitbox, not the
+  27 px picture that crashes, and fall past their target. So every crashes-off number is a never-crash upper bound,
+  and `crashes: true` with these pilots measures nothing useful. A gap-flying pilot is proposed (PROGRESSION-SIM).
 - `maxKm` (default 100,000): stop there if nothing else ended the flight. `end` is then `'maxKm'`.
 
 ### Trying other numbers (heat tuning)
