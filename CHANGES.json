@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-26-sim-engine-3",
+    "version": "0.11.8",
+    "date": "2026-10-26",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: test pilots that fly through storm gaps like real players, so we can check how long each part of the game takes."
+    ]
+  },
+  {
     "id": "2026-10-25-sim-engine-2",
     "version": "0.11.7",
     "date": "2026-10-25",
