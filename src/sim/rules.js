@@ -109,7 +109,7 @@ export const RULES = {
     this.bumped = false;               // shaken by turbulence
     this.parcelOnRunway = false;       // a parcel landed on a runway (oops!)
     this.speciesPlanted = new Set();   // kinds of tree planted this flight: local ids (forest boost, missions)
-    this.speciesTags = new Set();      // the same with their land, 'land:id' (UK: bare id), for the boards and restore links
+    this.speciesTags = new Set();      // the same with their land, 'land:id' (UK: bare id), for the boards (the Nature board counts land-tagged kinds, the user 2026-10-26)
     this.lastHalf = 'day';
     this.night = { started: false, trappedAtStart: 0 };
     this.nightOwl = false;
@@ -1010,7 +1010,7 @@ export const RULES = {
     this.trees.push(tree);
     this.planted++;
     this.speciesPlanted.add(here.id);   // kinds = SPECIES (local ids), not UK slots (PROPOSAL-TREES.md §4)
-    this.speciesTags.add(here.uk ? here.id : `${region}:${here.id}`);   // ids repeat across lands (oak, acacia...): restore needs the land
+    this.speciesTags.add(here.uk ? here.id : `${region}:${here.id}`);   // ids repeat across lands (oak, acacia...): each land's counts on its own
     // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
     // Counted where it grows: UK trees in save.planted, other regions' in save.plantedIn[region].
     const book = here.uk ? this.save.planted : ((this.save.plantedIn = this.save.plantedIn || {})[region] = (this.save.plantedIn[region] || {}));
