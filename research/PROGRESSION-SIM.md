@@ -1,5 +1,13 @@
 # Progression simulator: first results (sim engine chat, 2026-10-26)
 
+> **SUPERSEDED in part (2026-10-26):** every player number below was measured with the CLASSIC player, which
+> planned only for the nearest gap and climbed slowly. MEASURED against the user's expert experience it was wrong:
+> even at s = 1 it crashed on storms (4 of 30 skies before 8,000 km), where an expert never does. The new default
+> (`plan: 'threat'`, threat-first) has 0 storm crashes before 8,000 km at s >= 0.9; its skill scale is different
+> (at s = 0.8 it does WORSE than the classic one). Do not cite the skill table, calibration or timeline below
+> against the current player; do not assume the opposite either. The method and findings 1 (test pilots cannot fly
+> gaps) and the nature-gate/crystals findings are being re-run with the new player and will replace these numbers.
+
 Checks research/MASTER-PLAN.md Parts B, C and I against the game's own rules. Code: `src/sim/player.js`,
 `src/sim/progression.js`, `tools/sim/progression.mjs`, `tools/sim/calibrate.mjs`, `tools/sim/skill-grid.mjs`.
 Everything here is MEASURED by those tools unless marked otherwise. Node only, about 0.1 s per flight.
