@@ -41,8 +41,43 @@ jobs:
           CHROME: /usr/bin/google-chrome
         run: tools/test.sh --shard ${{ matrix.shard }}/4
 
+  # The PREVIEW of the redesign (branch `redesign`, served at /preview/; tools/build-preview.sh). STRICTLY non-blocking:
+  # continue-on-error, `deploy` below does not need it to succeed, and any failure here only costs the preview.
+  # A failure is NOT silent: the last step turns it into a warning annotation on the run.
+  preview-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - id: has
+        name: Is there a redesign branch?
+        run: |
+          if git ls-remote --exit-code --heads origin redesign >/dev/null 2>&1; then echo "exists=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice title=Preview::no redesign branch on origin: no preview this time"; echo "exists=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.has.outputs.exists == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: redesign
+          path: redesign
+      - if: steps.has.outputs.exists == 'true'
+        name: Build the preview
+        run: tools/build-preview.sh redesign preview-out "$(git -C redesign rev-parse --short=7 HEAD)"
+      - if: steps.has.outputs.exists == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview
+          path: preview-out
+          if-no-files-found: error
+      - if: failure()
+        run: echo "::warning title=Preview::the preview build FAILED, so /preview/ is missing or stale. The live game is unaffected."
+
   deploy:
-    needs: test
+    needs: [test, preview-bundle]
+    # preview-bundle may fail or be skipped without stopping the live game; only the tests gate it
+    if: ${{ !cancelled() && needs.test.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -64,6 +99,15 @@ jobs:
           # the deploy unless src/version.js (semver) and the top entry of CHANGES.json agree (RELEASING.md).
           python3 tools/check-release.py --write _site/version.json "$V"
           grep -q "\"commit\": \"$V\"" _site/version.json
+      # Optional: the preview built above. Nothing below may fail the deploy.
+      - id: pv
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: preview
+          path: _site/preview
+      - if: steps.pv.outcome != 'success'
+        run: echo "::warning title=Preview::no preview in this deploy (/preview/ will not exist or will be removed). The live game is unaffected."
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

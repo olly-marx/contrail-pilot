@@ -3,11 +3,13 @@
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/controls.cjs
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
+const { throttle } = require('./lib/throttle.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+  await throttle(p);   // THROTTLE=n slows this page's CPU n times (rehearses a busy machine); unset = full speed
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
@@ -32,7 +34,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 2. Holding speeds up; letting go before lift-off slows down without failing.
   await p.mouse.move(195, 400); await p.mouse.down(); await p.waitForTimeout(300); await p.mouse.up();
   const r1 = await scene(() => game.scene.getScene('game').rollSpeed);
-  await p.waitForTimeout(500);
+  // wait for the roll to SLOW (a few game frames), not a fixed 500 ms: a busy machine can draw no frame at all in that time (roll stayed 90 -> 90)
+  await p.waitForFunction(r1 => { const s = game.scene.getScene('game'); return s.rollSpeed < r1 || s.state !== 'takeoff'; }, r1, { timeout: 15000 }).catch(() => {});
   const r2 = await scene(() => { const s = game.scene.getScene('game'); return { roll: s.rollSpeed, state: s.state }; });
   check(r1 > 10, `holding should speed the plane up (roll ${r1})`);
   check(r2.roll < r1 && r2.state === 'takeoff', `letting go should slow down, not fail: ${r1} -> ${JSON.stringify(r2)}`);
@@ -113,8 +116,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // storm right on the plane doesn't end the flight, the label shows, and a tap hands back control.
   const gr = await scene(() => new Promise(res => { const s = game.scene.getScene('game'); const y0 = s.plane.y, f = s.finish; let crashed = false;
     s.finish = () => { crashed = true; }; s.addStormPairAt(s.plane.x + 40, s.plane.y - 100, 60);   // gap middle 100 px above the plane
-    setTimeout(() => { const r = { grace: s.inGrace(), climbed: Math.round(y0 - s.plane.y), crashed, label: s.autoText.visible };
-      s.storms.pop().parts.forEach(q => q.destroy()); s.applyFlap(); r.afterTap = s.inGrace(); s.finish = f; res(r); }, 700); }));
+    // 700 ms of GAME time (not wall time: a loaded machine draws fewer frames, each at most 50 ms of game, so a wall-clock wait climbed less)
+    const g0 = s.gameTime, wall0 = Date.now(), timer = setInterval(() => { if (s.gameTime - g0 < 700 && Date.now() - wall0 < 15000) return; clearInterval(timer);
+      const r = { grace: s.inGrace(), climbed: Math.round(y0 - s.plane.y), crashed, label: s.autoText.visible };
+      s.storms.pop().parts.forEach(q => q.destroy()); s.applyFlap(); r.afterTap = s.inGrace(); s.finish = f; res(r); }, 10); }));
   check(gr.grace && !gr.crashed, `after a tip the plane should be safe for a moment: ${JSON.stringify(gr)}`);
   check(gr.climbed > 40, `the autopilot should steer up towards the storm gap, not hover: ${JSON.stringify(gr)}`);
   check(gr.label, 'the AUTOPILOT label should show during the breather');
