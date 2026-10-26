@@ -2,6 +2,9 @@
 // The never-crash careful pilot plants on every soil patch it can hit (as tools/balance.cjs PLANT=1).
 // A route is forced (w.regionHere): one biome, or two biomes alternating every LEG km (a starter area).
 // Run: node tools/sim/forest-species.mjs   (game chat, 2026-10-26; measurement only, changes no rule)
+// NOTE (2026-10-26): written BEFORE the tree rework, which removed levels.species: on this branch the "slots" rows
+// no longer vary what is planted (parcels follow src/landtrees.js treesOpen). Kept as the record of the measurement;
+// to rerun, check out 28841f6.
 import { simulate } from '../../src/sim/simulate.js';
 import { localTree } from '../../src/nature.js';
 const SEEDS = Number(process.env.SEEDS || 5), LEG = Number(process.env.LEG || 3000), PILOT = process.env.PILOT || 'smart';
