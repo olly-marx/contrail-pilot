@@ -141,10 +141,11 @@ export function wildlifeScene(save, region = 'woodland') {
   if (region === 'ocean' || region === 'ice') return { bio: 0, treesPerScreen: 0, treeKinds: [], farmPerScreen: 0, wildPerScreen: 0,
     birdsPerScreen: 0, pickWild: () => null, pickSky: () => null, wildKinds: [], skyKinds: [], who: {}, region };
   const uk = region === 'woodland', bio = biodiversity(save, region);
-  const planted = Object.keys(save.planted || {}).filter(k => SPECIES[k] && save.planted[k] > 0);
-  // Trees: the UK grows the kinds you have planted; elsewhere that region's own trees (src/wildlife.js).
-  const local = WILDLIFE.filter(w => w.kind === 'tree' && w.region === region && w.sprite).map(w => w.sprite.replace(/^tree-/, ''));
-  const treeKinds = uk ? (bio < 4 ? ['spruce'] : [...new Set(['spruce', ...planted])]) : local;
+  // Trees (research/PROPOSAL-TREES.md rule a): in every land you see the trees YOU planted there, plus a few of
+  // its plantation tree (slot 0) from the start. Texture key = the land's tree id (src/wildlife.js 'tree-<id>').
+  const book = plantedHere(save, region), base = localTree(UK_SLOTS[0], region).id;
+  const treeKinds = [...new Set([base, ...Object.keys(book).filter(id => book[id] > 0)])]
+    .filter(id => WILDLIFE.some(w => w.kind === 'tree' && w.sprite === `tree-${id}`));
   const here = regionSpecies(region).filter(w => w.sprite && canAppear(save, w.id, region) && !['cow', 'sheep'].includes(w.id));
   const pool = list => list.map(w => ({ sprite: w.sprite, ...RARITY[w.c.rarity || 'common'] }));
   const wild = pool(here.filter(w => w.kind === 'animal' || w.pose === 'standing'));   // walk or stand on the ground

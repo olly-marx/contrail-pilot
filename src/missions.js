@@ -7,6 +7,8 @@
 import { km, HAZARDS } from './config.js';
 import { REGION_NAMES } from './habitats.js';
 import { fleetOf } from './fleet.js';
+import { treesOpen } from './landtrees.js';
+const LANDS = Object.keys(REGION_NAMES);
 
 // A cleaner plane = an engines upgrade bought on any plane you own (the old fuel / engine lines were retired at the
 // eras reset, so the mission must read the fleet, 0.11.3).
@@ -50,7 +52,7 @@ export const MISSIONS = [
   { id: 'turbulence', icon: 'mi-airports', lesson: 'lesson-turbulence', title: 'Bump through turbulence', sub: `Turbulence starts ${km(HAZARDS.turbulence.from)} into a flight. Fly into the wavy air!`,
     check: r => r.bumped, progress: s => (s.bumped ? 'Bumpy! Land or fly on' : s.distancePx < HAZARDS.turbulence.from ? `Turbulence in ${km(HAZARDS.turbulence.from - s.distancePx)}` : 'Find the wavy air!'),
     fail: r => (r.distance < HAZARDS.turbulence.from ? `Turbulence starts ${km(HAZARDS.turbulence.from)} into a flight.` : 'Fly INTO the wavy air.') },
-  { id: 'kinds-3', icon: 'mi-tree', lesson: 'lesson-biodiversity', title: 'Plant 3 kinds of tree in one flight', sub: 'Your parcels take turns through your kinds of tree.', needs: { line: 'species', level: 2, text: 'Oak (NATURE)' },
+  { id: 'kinds-3', icon: 'mi-tree', lesson: 'lesson-biodiversity', title: 'Plant 3 kinds of tree in one flight', sub: 'Your parcels take turns through your kinds of tree.', needs: { treesOpen: 3, text: '3 trees open in a land (NATURE)' },
     check: r => r.kinds >= 3, progress: s => `Kinds planted: ${s.speciesPlanted.size}/3`, fail: r => `You planted ${r.kinds} kind${r.kinds === 1 ? '' : 's'}. Hit more soil!` },
   { id: 'rewild', icon: 'mi-tree', title: 'Bring wildlife back', sub: 'Do a habitat project in your Wild Area (NATURE), then fly.',
     needs: { anyProject: true, text: 'A habitat project (NATURE)' },
@@ -71,11 +73,12 @@ export function complete(save, m) {
   save.mission = save.missionsDone.filter(id => MISSIONS.some(x => x.id === id)).length;
 }
 // Can this mission be done with what the player owns? `needs`: { line, level }, several { lines },
-// { project }, or { anyProject }.
+// { project }, { anyProject }, or { treesOpen: n } (n trees open in some land: src/landtrees.js).
 export const blocked = (save, m) => {
   if (!m || !m.needs) return false;
   const n = m.needs, proj = Object.values(save.habitat || {}).flat();   // a project in any region
   if (n.anyProject) return proj.length === 0;
+  if (n.treesOpen) return !LANDS.some(l => treesOpen(save, l).length >= n.treesOpen);
   if (n.project) return !proj.includes(n.project);
   return (n.lines || [[n.line, n.level || 1]]).some(([l, lv]) => !(((save.levels || {})[l] || 0) >= lv));
 };

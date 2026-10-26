@@ -4,6 +4,7 @@
 import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO } from '../config.js';
 import { GAP_HINT, FORECAST, FARES, syncFleet } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
+import { treesOpen, slotKind } from '../landtrees.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
 import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
@@ -185,9 +186,11 @@ export const RULES = {
   // Game km of leg k of this flight's path (balanced, src/network.js).
   legKm(k) { return legBetween(this.path[k], this.path[k + 1]); },
   // Parcels take turns through the kinds of tree you own, so variety comes naturally.
+  // Each land's own open trees (src/landtrees.js), taken in turn so a flight mixes kinds. The UK slot kind is
+  // returned: growth and cooling use its SPECIES row; localTree() names the land's own tree.
   treeKind() {
-    const list = this.kit.tree ? this.kit.tree.species : ['spruce'];
-    return list[this.speciesIdx % list.length];
+    const open = treesOpen(this.save, this.regionNow || 'woodland');
+    return slotKind(open.length ? open[this.speciesIdx % open.length] : 0);
   },
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
   // drop them before you reach a soil plot. This works out which bit of ground (in today's screen
@@ -985,13 +988,13 @@ export const RULES = {
       p.x += -this.speed * (1 - Math.exp(-p.t / PARCEL.dragTime)) * dt;
       p.y += p.vy * dt;
       if (p.y < SKY_H) return true;
-      this.parcelLanded(p.x, p.kind);
+      this.parcelLanded(p.x, p.kind, p.region);
       this.unshow(p);
       return false;
     });
   },
 
-  parcelLanded(x, kind) {
+  parcelLanded(x, kind, region = this.regionNow || 'woodland') {
     const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
     if (!plot) {
       const onRunway = this.runways.some(r => x >= r.x && x <= r.x + AIRPORT.runwayLen);
@@ -1001,14 +1004,14 @@ export const RULES = {
     }
     plot.used = true;
     // The tree for this slot in the land below (the user, 2026-10-22).
-    const here = localTree(kind, this.regionNow || 'woodland');
+    const here = localTree(kind, region);   // the land it was dropped over
     const tree = { kind, plantedAt: this.elapsed, stage: 0 };   // kind: growth and cooling (UK slot)
     this.trees.push(tree);
     this.planted++;
-    this.speciesPlanted.add(kind);
+    this.speciesPlanted.add(here.id);   // kinds = SPECIES (local ids), not UK slots (PROPOSAL-TREES.md §4)
     // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
     // Counted where it grows: UK trees in save.planted, other regions' in save.plantedIn[region].
-    const book = here.uk ? this.save.planted : ((this.save.plantedIn = this.save.plantedIn || {})[this.regionNow] = (this.save.plantedIn[this.regionNow] || {}));
+    const book = here.uk ? this.save.planted : ((this.save.plantedIn = this.save.plantedIn || {})[region] = (this.save.plantedIn[region] || {}));
     const first = !(book[here.id] > 0);
     book[here.id] = (book[here.id] || 0) + 1;
     this.showTree(tree, plot, here, first);
@@ -1024,7 +1027,7 @@ export const RULES = {
       return;
     }
     this.parcels--;
-    const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: this.treeKind() };   // a record; the crate is .view
+    const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: this.treeKind(), region: this.regionNow || 'woodland' };   // a record; the crate is .view
     this.parcelsFalling.push(p);
     this.showParcel(p);
     this.speciesIdx++;
