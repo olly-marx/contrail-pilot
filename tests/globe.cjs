@@ -116,23 +116,32 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const mid = window.__paints - n0; ev('pointerup', r.left + 120, r.top + 87); return mid;
   });
   check(burst >= 1 && burst <= 2, `40 pointer moves in one task should be 1-2 redraws, got ${burst}`);
-  await p.waitForTimeout(1500);
-  const settled = await paints(); await p.waitForTimeout(1200);
+    // wait for the globe to SETTLE (the coast ends with one sharper redraw; under load it takes more frames), then it must stay still
+  let settled = await paints(); for (let i = 0, quiet = 0; i < 40 && quiet < 4; i++) { await p.waitForTimeout(250); const now = await paints(); quiet = now === settled ? quiet + 1 : 0; settled = now; }
+  await p.waitForTimeout(1200);
   check(await paints() === settled, 'once settled, nothing redraws again');
 
-  // 5. smooth at 4x slower: scripted 1.5 s drag, count frames
+  // 5. smooth at 4x slower: scripted 1.5 s drag, count frames. The threshold is relative to a BASELINE taken in the same breath, with the same
+  // throttle, loop and load but the pointer moves going to an element with no globe on it (0.11.7: an absolute 30 fps failed once at 28.2 when
+  // another shard shared the machine). On an idle machine the baseline is ~60 so the bar stays 30; under load it falls with the machine, and a
+  // slow globe (planted: 40 ms of work in every paint) is still caught because it is measured against what the machine can do right now.
   const cdp = await p.context().newCDPSession(p); await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-  const fps = await p.evaluate(async () => {
-    const cv = document.getElementById('tg'), r = cv.getBoundingClientRect(); let frames = 0, run = true; const t0 = performance.now();
+  const dragFps = target => p.evaluate(async id => {
+    const cv = document.getElementById(id), r = cv.getBoundingClientRect(); let frames = 0, run = true; const t0 = performance.now();
     const tick = () => { frames++; if (run) requestAnimationFrame(tick); }; requestAnimationFrame(tick);
     const ev = (t, x, y) => cv.dispatchEvent(new PointerEvent(t, { pointerId: 7, pointerType: 'touch', clientX: x, clientY: y, bubbles: true, isPrimary: true }));
     ev('pointerdown', r.left + 80, r.top + 80);
     for (let i = 0; i < 90; i++) { ev('pointermove', r.left + 80 + Math.sin(i / 8) * 50, r.top + 80 + Math.cos(i / 11) * 30); await new Promise(res => setTimeout(res, 16)); }
     ev('pointerup', r.left + 80, r.top + 80); run = false; return frames / ((performance.now() - t0) / 1000);
-  });
+  }, target);
+  await p.evaluate(() => { const d = document.createElement('div'); d.id = 'nogl'; d.style.cssText = 'position:fixed;left:100px;top:200px;width:160px;height:160px;z-index:1'; document.body.appendChild(d); });
+  // best of 3 tries: a dip from other work on the machine passes on a later try; a globe that is slow EVERY time does not
+  let baseFps = 0, fps = 0;
+  for (let k = 0; k < 3; k++) { baseFps = await dragFps('nogl'); fps = await dragFps('tg'); if (fps >= Math.min(30, 0.8 * baseFps)) break; }
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
-  check(fps >= 30, `a drag at 4x slower CPU should hold 30 frames a second, got ${fps.toFixed(1)}`);
-  console.log('frames a second at 4x slower CPU while dragging:', fps.toFixed(1));
+  await p.evaluate(() => document.getElementById('nogl').remove());
+  check(fps >= Math.min(30, 0.8 * baseFps), `a drag at 4x slower CPU should hold 30 frames a second (or 80% of what this machine does right now without a globe: ${baseFps.toFixed(1)}), got ${fps.toFixed(1)}`);
+  console.log('frames a second at 4x slower CPU while dragging:', fps.toFixed(1), '(baseline without a globe:', baseFps.toFixed(1) + ')');
 
   // 6. The real FLY screen: the globe is live, a tap on another way's dot picks that way (like its button), a drag does not.
   await p.evaluate(() => { document.getElementById('tg').remove(); game.registry.get('ui').showTitle(); }); await p.waitForTimeout(600);

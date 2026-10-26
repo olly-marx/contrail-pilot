@@ -102,12 +102,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
   p = await page({ seen: 'c3' });
   await p.click('#goBtn');
   await p.waitForFunction(() => ['takeoff', 'playing'].includes(game.scene.getScene('game').state), null, { timeout: 20000 });
+  // The flight is PAUSED (loop asleep) so it is still a flight however long the checks take: an unflown plane crashes by itself in a few
+  // seconds of game time, and a loaded or a fast machine then decided whether the asked-for update below met a flight or a results screen.
+  await p.evaluate(() => game.loop.sleep());
   server = NEWER; await p.evaluate(() => window.cpUpdates.check());
   await p.waitForTimeout(4000);
+  check(await p.evaluate(() => ['takeoff', 'playing', 'landing'].includes(game.scene.getScene('game').state)), '4: the paused flight is still a flight');
   check(!(await banner(p)) && !(await p.evaluate(() => !!document.getElementById('upAuto'))), 'no banner and no "Updating..." during a flight');
   const flying = await p.evaluate(() => { window.cpUpdates.update(); window.cpUpdates.update('bbb'); return [window.__reloads, window.__fresh.length]; });
   check(flying[0] === 0 && flying[1] === 0, `no reload during a flight, even if asked: ${JSON.stringify(flying)}`);
-  await p.evaluate(() => { const s = game.scene.getScene('game'); s.finish({ reason: 'test' }); });
+  await p.evaluate(() => { game.loop.wake(); const s = game.scene.getScene('game'); s.finish({ reason: 'test' }); });
   check(await waitFor(p, () => !document.getElementById('results').hidden, 8000), 'the results show after the flight');
   await p.waitForTimeout(1500);
   check(await reloads(p) === 0, 'still no reload on the results screen (it is not the idle menu)');
