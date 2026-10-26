@@ -3,8 +3,10 @@
 // with perfect taps, and flies the gaps with no skill error (crashes ON).
 //
 // 1. Record a reference sky (as tools/sim/tapper.mjs: storms, no-fly zones, birds; turbulence off), plus every icy-
-//    air patch and the day/night state, per frame. None of these depend on the plane (except a fake forecast patch
-//    popping when the plane comes near, which can shift later spawns: checked every frame below).
+//    air patch and the day/night state, per frame. KNOWN BROKEN (measured 2026-10-26): these DO depend on the plane,
+//    since every contrail puff draws its wobble from the physics random stream, so the real flight stops following
+//    the recorded sky after its first contrails (it crashed at 845 km on seed 1 although every plan was verified).
+//    Needs the contrail wobble on its own stream (proposed) before its numbers mean anything.
 // 2. Plan in rolling stretches: search every tap sequence over the next HORIZON frames (the tapper's search: the
 //    game's freeFall and pixel tests), keeping per merged state the best contrail score so far, where each frame
 //    inside icy air (the game's inIssrShape) costs +1 at night and earns -1 in a good day window (the pilots'
