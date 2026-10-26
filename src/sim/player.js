@@ -20,10 +20,11 @@
 //   aim noise:      its target is off by up to +-30 px (x (1 - s)), redrawn every half second;
 //   missed taps:    up to 30% of the frames it wants to tap, it does not (x (1 - s)).
 // s = 1 is a never-wrong player (it can still be caught by a gap too tight for the bob); s = 0 is very sloppy.
-import { PLANE, HEIGHT, GROUND_H, DAYNIGHT, AIRPORT, WIDTH } from '../config.js';
+import { PLANE, HEIGHT, GROUND_H, DAYNIGHT, AIRPORT, WIDTH, HAZARDS } from '../config.js';
 import { makeRng } from './rng.js';
 
 const SKY_H = HEIGHT - GROUND_H;
+const HAZ_FORGIVE = 2, BIRD_EXTRA = HAZARDS.birds.extraSpeed, BIRD_WOBBLE = HAZARDS.birds.wobble;
 const TOP = PLANE.spriteOffY, BOT = PLANE.spriteH - PLANE.spriteOffY;   // the picture above / below the hitbox top
 // Its target is the LOW point of its bob: it taps when the plane falls past the target, and a tap lifts the plane
 // ~37 px (flapVelocity^2 / 2 gravity) above that before it falls again. So the whole bob, target-BOB .. target,
@@ -32,17 +33,91 @@ let BOB = Math.ceil(PLANE.flapVelocity ** 2 / (2 * PLANE.gravity));
 let CARE_W = 1;
 export function __plantCareHalf() { CARE_W = 0.5; }   // tests/sim-care.cjs plants a weakened contrail term: must FAIL
 export function __plantNoBob() { BOB = 0; }   // tests/sim-player.cjs plants the old bug: the gate must fail
+let OLD_HAZARDS = false;
+export function __plantOldHazards() { OLD_HAZARDS = true; }   // the pre-2026-10-26-fix play (band only round birds, old flock box, old climb): tests/sim-hazards.cjs plants it (must FAIL); tests/sim-care.cjs flies it (its golden predates the fixes)
 const TILT = Math.ceil(PLANE.spriteW / 2 * Math.sin(PLANE.maxTilt) / 2);
 const MARGIN = 6;   // px kept clear of the cloud's edge
 const FALL = 8;     // the fall past the target before a tap takes hold (one frame at the 400 px/s top speed is ~7 px)
+// Far below its aim it taps again once the climb slows to climbVy (px/s). -180 until 2026-10-26; at s=1 that left it
+// short on back-to-back gaps (80 skies: no-fly deaths per zone 5.2% at -180 vs 3.3% at -215). Hammering that fast is
+// an expert's: it ramps in only above s = 0.9, so the fitted levels (0.75 / 0.8 / 0.9) fly exactly as before.
+const climbVyAt = s => OLD_HAZARDS ? -180 : -180 - 35 * Math.max(0, (s - 0.9) / 0.1);   // the planted old play climbs as before too
+// No-fly zones and birds (2026-10-26): at s=1 the band below lost ~2% of no-fly zones and ~22% of flocks (the user flies
+// 24,000 km; this player stalled at ~15k). No-fly gaps (down to 82 px) are tighter than the band's bob + tilt + margins,
+// and a flock often sits between one gap's height and the next, where "keep above or below it" fights "get to the next
+// gap". A real player plans the taps instead. So when a no-fly zone or a flock is within the look-ahead, it tries tap
+// patterns ("wait k frames, then tap every p frames"), moves its own picture (column by column, tilted) through the
+// predicted storms, blocks and birds for LOOK frames, and taps now only if the best pattern starts now.
+const LOOK = 60, DT = 1 / 60, PERIODS = [8, 12, 16, 20, 26, 34, Infinity], AIM_W = 0.1, NEAR = 25;   // frames: it takes over once a flock is this close (25 beat 40 for no-fly; birds the same)
+const KS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 18, 22, 27, 33, 40];   // first-tap delays (frames) it tries
+// Birds (2026-10-26): the flock's box as the game's own flockBlocksGap sees it (V size, bird size and bobbing),
+// looked for further ahead because a flock closes faster than the scenery.
+const FLOCK = { up: 44, down: 56, wide: 68, ahead: 340 };
 
 export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0, budget = 1, plan = 'threat', seed = 1, land = null } = {}) {
   const threat = plan !== 'classic';
   const c = Math.max(0, Math.min(1, care));
   const s = Math.max(0, Math.min(1, skill)), rnd = makeRng((seed * 2654435761) >>> 0 ^ 0x5eed);
   const delayFrames = Math.round(0.25 * (1 - s) * 60), noisePx = 30 * (1 - s), missRate = 0.3 * (1 - s);
+  const climbVy = climbVyAt(s);
   const past = [];   // the plane's y and vy over the last frames: what it "sees" with its reaction delay
-  let noise = 0, noiseAt = -1;
+  let noise = 0, noiseAt = -1, cols = null, c0 = 0;
+
+  // The look-ahead planner (see LOOK): tap now true/false, or null (nothing close, or no pattern is clear: the band).
+  const planTap = (w, y0, vy0, aim) => {
+    if (OLD_HAZARDS || !w.planeOffsets) return null;
+    const sp = Math.max(1, w.speed), reach = w.plane.x + sp * DT * LOOK + 80, nose = w.plane.x - PLANE.spriteOffX + PLANE.spriteW;
+    // It takes over only once the hazard reaches the nose inside the look-ahead (before that the band lines it up).
+    // Birds only: for no-fly zones it measured worse than the band (2026-10-26, s=1 comet: per zone 2.3% band vs 2.8-10%
+    // planner, take-over 25-60 frames ahead, taps every 2-34 frames), so the band flies those.
+    const near = w.birds.some(f => f.x < nose + (sp + BIRD_EXTRA) * DT * NEAR && f.x + 40 > w.plane.x - 70);
+    if (!near) return null;
+    if (!cols) {   // each column of the plane's picture: [x offset, top, bottom] from its centre
+      const by = new Map();
+      for (const [ox, oy] of w.planeOffsets) { const e = by.get(ox) || [oy, oy]; by.set(ox, [Math.min(e[0], oy - 0.5), Math.max(e[1], oy + 0.5)]); }
+      cols = [...by].sort((a, b) => a[0] - b[0]).map(([ox, [t, b]]) => [ox, t, b]);
+      for (let i = 1; i < cols.length; i++) if (cols[i][0] !== cols[0][0] + i) throw new Error('player: plane picture has a gap column');
+      c0 = cols[0][0];
+    }
+    // Moving boxes [x0, x1, y0, y1, vx, birdPhase|null]: storm and no-fly blocks, and every bird (8x5, with its bob).
+    const boxes = [];
+    for (const t of w.storms) { const r0 = t.rects[0], r1 = t.rects[1];
+      if (r0.x > reach || r0.x + r0.width < w.plane.x - 70) continue;
+      const pad = t.noFly ? 0 : -HAZ_FORGIVE;   // a storm forgives a nick
+      boxes.push([r0.x, r0.x + r0.width, -999, r0.height + pad, sp, null], [r0.x, r0.x + r0.width, r1.y - pad, 9999, sp, null]); }
+    for (const f of w.birds) { if (f.x > reach || f.x + 40 < w.plane.x - 70) continue;
+      for (const bd of f.birds) boxes.push([bd.x - 1, bd.x + 9, bd.y - 2, bd.y + 7, sp + BIRD_EXTRA, f.phase]); }
+    const px = Math.round(w.plane.x - PLANE.spriteOffX + PLANE.spriteW / 2);
+    const run = (k, p) => {   // the least room (px) over the look-ahead, and where it ends up
+      let y = y0, vy = vy0, room = 99;
+      for (let f = 1; f <= LOOK; f++) {
+        const t = f - 1;
+        if (k >= 0 && t >= k && (t - k) % p === 0) vy = PLANE.flapVelocity;
+        vy = Math.min(PLANE.maxFall, vy + PLANE.gravity * DT); y += vy * DT;
+        const py = y - PLANE.spriteOffY + PLANE.spriteH / 2, sn = Math.sin(Math.max(-PLANE.maxTilt, Math.min(PLANE.maxTilt, vy / 600)));
+        room = Math.min(room, py - 2, SKY_H - 4 - py);
+        for (const [x0, x1, by0, by1, vx, ph] of boxes) {
+          const dx = vx * DT * f, l = x0 - dx - px, r = x1 - dx - px;
+          if (r < -31 || l > 31) continue;
+          const bob = ph === null ? 0 : BIRD_WOBBLE * (Math.sin(ph + 2 * DT * f) - Math.sin(ph));
+          for (let i = Math.max(0, Math.ceil(l - c0)), e = Math.min(cols.length, Math.ceil(r - c0)); i < e; i++) {   // the columns level with it
+            const [ox, ct, cb] = cols[i], top = py + ox * sn + ct, bot = py + ox * sn + cb;
+            room = Math.min(room, Math.max(by0 + bob - bot, top - (by1 + bob)));
+          }
+          if (room < -20) return [room, y];
+        }
+      }
+      return [room, y];
+    };
+    const score = ([room, y]) => Math.min(room, 14) - AIM_W * Math.abs(y - aim);
+    let now = -1e9, later = score(run(-1, 1));
+    for (const k of KS) for (const p of PERIODS) {
+      if (p === Infinity && k > 0) { later = Math.max(later, score(run(k, 1e9))); continue; }
+      const v = score(run(k, p === Infinity ? 1e9 : p));
+      if (k === 0) now = Math.max(now, v); else later = Math.max(later, v);
+    }
+    return now > later;   // even when nothing is fully clear: the least bad
+  };
 
   // The heights (hitbox top y) at which the whole picture clears the next gap's clouds, with room for the bob.
   const safeBand = w => {
@@ -66,9 +141,10 @@ export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0
         }
       }
     }
+    const F = OLD_HAZARDS ? { up: 30, down: 40, wide: 60, ahead: 220 } : FLOCK;
     for (const f of w.birds) {   // a flock near the plane's line: keep above or below it
-      if (f.x > w.plane.x + 220 || f.x + 60 < w.plane.x - 20) continue;
-      const fTop = f.y - 30, fBot = f.y + 40, mid = (lo + hi) / 2;
+      if (f.x > w.plane.x + F.ahead || f.x + F.wide < w.plane.x - 20) continue;
+      const fTop = f.y - F.up, fBot = f.y + F.down, mid = (lo + hi) / 2;
       if (fBot > lo && fTop < hi) { if (mid < f.y) hi = Math.min(hi, fTop - BOT - MARGIN); else lo = Math.max(lo, fBot + TOP + MARGIN); }
     }
     lo += noisePx; hi -= noisePx;   // a less precise player keeps further from the edges (by its own aim error)
@@ -129,7 +205,9 @@ export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0
       const aim = landing === 'low' ? Math.max(target(w), Math.min(safeBand(w)[1], SKY_H - 95)) : target(w);
       // Tap at the low point of the bob (a look-ahead here lifted the whole bob too high). 'threat': well below the
       // aim, tap fast to climb (a real player hammers taps) instead of waiting for each bob to end.
-      const want = y > aim + noise && (vy > -40 || (threat && y > aim + noise + 2 * BOB && vy > -180));
+      const planned = landing ? null : planTap(w, y, vy, aim + noise - BOB / 2);
+      if (planned !== null) return planned && rnd() >= missRate;
+      const want = y > aim + noise && (vy > -40 || (threat && y > aim + noise + 2 * BOB && vy > climbVy));
       return want && rnd() >= missRate;
     },
   };
