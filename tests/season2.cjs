@@ -86,6 +86,29 @@ const KEY = 'contrailPilot.v2';
     const after = await p.evaluate(() => { const s = game.registry.get('save'); return { areas: s.areas, city: s.city, fly: s.flyCrossing || null, crossed: s.crossed }; });
     check(after.areas.includes('nordic') && !after.fly && (after.crossed || []).includes('warsaw-stockholm'), `landing the crossing opens the Nordic area: ${JSON.stringify(after)}`);
   }
+  // 2e. 0.12.0: the offer gate in the shipped game. Best landed flight from the area >= 70% of 6,500 km (4,550) AND
+  // biodiversity 30 in the start city's land; a real landed flight records the area's best; MORE TO COME when all is flown.
+  const seed2e = best => p.evaluate(async best => { const s = game.registry.get('save'); const planted = {};
+    for (const id of ['spruce', 'birch', 'oak', 'beech', 'pine', 'ash', 'rowan', 'hazel', 'willow', 'alder']) planted[id] = 40;
+    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', crossed: [], planted, areaBest: best, flyCrossing: null });
+    (await import('/src/save.js')).writeSave(s); }, best);
+  const cardNow = async best => { await seed2e(best); await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
+    return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
+  let c2 = await cardNow({ weurope: 4549 });
+  check(/Needs:/.test(c2) && !/data-cross="warsaw-stockholm"/.test(c2), `4,549 km is not enough to be offered the 6,500 km crossing: ${c2.slice(0, 200)}`);
+  c2 = await cardNow({ nordic: 9999 });
+  check(!/data-cross="warsaw-stockholm"/.test(c2), 'a long flight from another area does not count');
+  c2 = await cardNow({ weurope: 4550 });
+  check(/data-cross="warsaw-stockholm"/.test(c2), `4,550 km (70%) + biodiversity 30: the crossing is offered: ${c2.slice(0, 200)}`);
+  await seed2e({}); await p.goto(URL); await ready(p);
+  await p.evaluate(() => game.registry.get('ui').showTitle()); await p.click('#goBtn'); await started(p);
+  await p.evaluate(() => { const g = game.scene.getScene('game'); g.landedAt = 'BERLIN'; g.distancePx = 3000; g.finish({ landed: true }); });
+  await p.waitForTimeout(500);
+  const rec = await p.evaluate(() => game.registry.get('save').areaBest);
+  check(rec && rec.weurope >= 2900 && rec.weurope <= 3100, `a landed flight from Warsaw records the best for Western Europe: ${JSON.stringify(rec)}`);
+  await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = Object.keys(a.AREAS); (await import('/src/save.js')).writeSave(s); });
+  await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
+  check(await p.evaluate(() => !!document.getElementById('jMore')), 'every area open: the MORE TO COME card shows');
   // 3. Reset: from zero again.
   await p.goto(URL + '?season2=reset'); await ready(p);
   g = await state();

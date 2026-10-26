@@ -35,3 +35,19 @@ Entries before 0.9.1 have no `version`: they predate this scheme.
 - Big upgrades (the plane eras) are built on a `feat/<name>` branch and merged when the whole thing works. If something
   must land half-built, hide it behind a switch in `FEATURES` (`src/config.js`). Rebase on `main` often.
 - Roll back by reverting the commit (a revert deploys like anything else) and releasing a new PATCH: never reuse a version.
+
+## Season 2 is the shipped game (0.12.0): what tests it
+
+`index.html` turns season 2 on for everyone. Almost the whole browser suite still runs the CLASSIC game: each test
+requires `tests/lib/classic.js`, which sets `window.SEASON2_FORCE = false` first (declared, not inferred). These cover the
+shipped mode itself, so a change to it must keep them green:
+- `tests/season2.cjs` (browser): the shipped default boots into season 2 (`SEASON2_FORCE` undefined -> on, no exit link, flag
+  never written), the `s2:` save prefix, the start-area choice, area confinement, the crossing card and flight, the offer gate in
+  the browser (4,549 km not offered, another area's flight does not count, 4,550 km + biodiversity 30 offered), a landed flight
+  records `areaBest`, the MORE TO COME card.
+- `tests/offer-gate.cjs` (Node): the gate cannot offer early (`PLANT=nogate` must fail), `SEASON.maxEra`, `recordAreaBest`.
+- `tests/sim-crossing.cjs`, `tests/areas.cjs` (Node): crossing flights in the engine, areas do not leak.
+- `tests/sim-equiv.cjs` (Node): the engine flies the game's recorded flights; the golden is the CLASSIC world with the 0.12.0
+  storms (STORMS startGap 200, gapShrinkPerPair 2), re-recorded on purpose with `tools/sim/trace.cjs` (which also runs classic).
+NOT covered in season 2 yet: the rest of the suite (hangar, missions, nature, flights...) exercises the classic wiring of the
+same code; the season-2-only parts are the files above. Add a test here when a season 2 feature is added.
