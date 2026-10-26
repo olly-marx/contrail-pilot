@@ -10,16 +10,40 @@
 //     maxKm:   stop here if nothing else ended it (default 100,000)
 //     km:      distance as the game shows it (1 px scrolled = 1 km); end: 'overheat' | 'crash' | 'maxKm'
 //     marks:   [km, heat] every 2,000 steps (the heat trace)
+//     overrides: other config numbers for this call (see withOverrides); onStep(w): called before every step
+//     dtMs:    keep 16.67 (the game's frame). Bigger steps are NOT the same flights: at 33 or 50 ms medians moved
+//              by up to 11% (measured 2026-10-26), so they are not a shortcut.
 //
 //   capability(save, { pilots, seeds, ... }) -> { [pilot]: { median, min, max, runs: [km...] } }
 //     How far this plane and nature can go, per pilot, over several skies (seeds). For balance studies and,
 //     later, the in-game estimate ("your plane + nature can reach ~6,200 km").
 import { createWorld } from './world.js';
 import { pilotTarget } from './pilots.js';
+import * as CONFIG from '../config.js';
+import * as FLEET from '../fleet.js';
+
+// Try other numbers for one call: { CLIMATE: { heatTrappedPerCol: 0.3 }, ISSR: { spawnChance: 0.5 }, CONTRAIL_MARGIN: [...] }.
+// Any table exported by src/config.js or src/fleet.js. The rules read these live, at every use, so a change made
+// in onStep(w) takes effect that very step. The kit (w.kit) is built once at take-off from the save and fleet.js:
+// to change a kit number mid-flight, change w.kit. Everything is put back afterwards.
+function withOverrides(overrides, fn) {
+  const saved = [];
+  for (const [name, values] of Object.entries(overrides || {})) {
+    const table = CONFIG[name] || FLEET[name];
+    if (!table || typeof table !== 'object') throw new Error(`simulate: no table ${name} in config.js or fleet.js`);
+    saved.push([table, Array.isArray(table) ? [...table] : { ...table }]);
+    Object.assign(table, values);
+  }
+  try { return fn(); } finally {
+    for (const [table, before] of saved) { if (Array.isArray(table)) table.splice(0, table.length, ...before); else { for (const k of Object.keys(table)) if (!(k in before)) delete table[k]; Object.assign(table, before); } }
+  }
+}
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-export function simulate(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false, dtMs = 16.67 } = {}) {
+export function simulate(save, { overrides, ...opts } = {}) { return withOverrides(overrides, () => fly(save, opts)); }
+
+function fly(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false, dtMs = 16.67, onStep } = {}) {
   const t0 = now();
   const w = createWorld({ autoTakeoff: true, ...save }, seed);
   const dt = Math.min(dtMs, 50) / 1000;   // as GameScene.update clamps it
@@ -30,6 +54,7 @@ export function simulate(save, { pilot = 'smart', seed = 1, maxKm = 100000, cras
   const marks = [];
   let steps = 0;
   while (w.state === 'playing' && w.distancePx < maxKm && steps < 3e6) {
+    if (onStep) onStep(w);   // e.g. a heat number that ramps with w.distancePx
     if (w.plane.y > pilotTarget(w, pilot) && w.plane.vy > -40) w.applyFlap();
     w.step(dt); steps++;
     if (steps % 2000 === 0) marks.push([Math.round(w.distancePx), Math.round(w.heat)]);
