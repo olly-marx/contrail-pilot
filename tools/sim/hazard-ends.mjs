@@ -9,7 +9,7 @@ const fleets = { comet: { plane: 'comet', planes: { comet: {} }, systems: {}, ga
   twinFull: { plane: 'twin', planes: { twin: { engines: 4, body: 4, cabin: 4 } }, systems: { forecast: 6, atc: 6, ops: 6 }, gadgets: { magnet: 6, hold: 6, gear: 6, sensors: 6, autopilot: 6 } } };
 const ovr = { ...(process.env.B === '1' ? { STORMS: { startGap: 200, gapShrinkPerPair: 2 } } : {}), ...(process.env.HEAT === '0' ? { CLIMATE: { dangerLine: Infinity } } : {}) };
 const ends = {}, km = [], met = { noFly: 0, flocks: 0 };
-for (let seed = 1; seed <= N; seed++) {
+for (let seed = +(process.env.SEED0 || 1); seed < +(process.env.SEED0 || 1) + N; seed++) {
   const seen = new Set();
   const r = simulate({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 30, mission: 99, simSeed: seed, fuel: 'kerosene', priceVersion: 2, fleet: fleets[process.env.PLANE || 'comet'] },
     { pilot: 'player', skill: s, careful: true, budget: 0.5, seed, crashes: true, maxKm, overrides: ovr,
@@ -18,4 +18,4 @@ for (let seed = 1; seed <= N; seed++) {
   const k = r.end === 'crash' ? (r.reason || '?').split('\n')[0] : r.end; ends[k] = (ends[k] || 0) + 1; km.push(r.km);
 }
 km.sort((a, b) => a - b);
-console.log(JSON.stringify({ plane: process.env.PLANE || 'comet', s, plant: process.env.PLANT || '', median: km[N >> 1], ends, met, perNoFly: +((ends['Restricted airspace!'] || 0) / Math.max(1, met.noFly)).toFixed(3), perFlock: +((ends['Bird strike!'] || 0) / Math.max(1, met.flocks)).toFixed(3) }));
+console.log(JSON.stringify({ plane: process.env.PLANE || 'comet', s, plant: process.env.PLANT || '', median: km[km.length >> 1], ends, met, perNoFly: +((ends['Restricted airspace!'] || 0) / Math.max(1, met.noFly)).toFixed(3), perFlock: +((ends['Bird strike!'] || 0) / Math.max(1, met.flocks)).toFixed(3) }));

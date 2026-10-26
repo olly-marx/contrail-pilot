@@ -38,6 +38,10 @@ export function __plantOldHazards() { OLD_HAZARDS = true; }   // tests/sim-hazar
 const TILT = Math.ceil(PLANE.spriteW / 2 * Math.sin(PLANE.maxTilt) / 2);
 const MARGIN = 6;   // px kept clear of the cloud's edge
 const FALL = 8;     // the fall past the target before a tap takes hold (one frame at the 400 px/s top speed is ~7 px)
+// Far below its aim it taps again once the climb slows to climbVy (px/s). -180 until 2026-10-26; at s=1 that left it
+// short on back-to-back gaps (80 skies: no-fly deaths per zone 5.2% at -180 vs 3.3% at -215). Hammering that fast is
+// an expert's: it ramps in only above s = 0.9, so the fitted levels (0.75 / 0.8 / 0.9) fly exactly as before.
+const climbVyAt = s => -180 - 35 * Math.max(0, (s - 0.9) / 0.1);
 // No-fly zones and birds (2026-10-26): at s=1 the band below lost ~2% of no-fly zones and ~22% of flocks (the user flies
 // 24,000 km; this player stalled at ~15k). No-fly gaps (down to 82 px) are tighter than the band's bob + tilt + margins,
 // and a flock often sits between one gap's height and the next, where "keep above or below it" fights "get to the next
@@ -55,6 +59,7 @@ export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0
   const c = Math.max(0, Math.min(1, care));
   const s = Math.max(0, Math.min(1, skill)), rnd = makeRng((seed * 2654435761) >>> 0 ^ 0x5eed);
   const delayFrames = Math.round(0.25 * (1 - s) * 60), noisePx = 30 * (1 - s), missRate = 0.3 * (1 - s);
+  const climbVy = climbVyAt(s);
   const past = [];   // the plane's y and vy over the last frames: what it "sees" with its reaction delay
   let noise = 0, noiseAt = -1, cols = null, c0 = 0;
 
@@ -202,7 +207,7 @@ export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0
       // aim, tap fast to climb (a real player hammers taps) instead of waiting for each bob to end.
       const planned = landing ? null : planTap(w, y, vy, aim + noise - BOB / 2);
       if (planned !== null) return planned && rnd() >= missRate;
-      const want = y > aim + noise && (vy > -40 || (threat && y > aim + noise + 2 * BOB && vy > -180));
+      const want = y > aim + noise && (vy > -40 || (threat && y > aim + noise + 2 * BOB && vy > climbVy));
       return want && rnd() >= missRate;
     },
   };
