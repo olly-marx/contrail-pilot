@@ -6,6 +6,8 @@
 // 0.12.0: re-flown DELIBERATELY for the new storms (STORMS startGap 200, gapShrinkPerPair 2): the pre-knob player (src/sim/player.js
 // at 7841754^, careful false/true) flown on today's world gives these exact numbers, so care 0 / 1 are still the pre-knob players.
 // plan: 'classic' throughout: the golden numbers were flown before threat-first planning (2026-10-26).
+// The bird planner and the faster s = 1 climb (2026-10-26) are switched off here (__plantOldHazards): they change some
+// s = 1 flights (4 of 24 differed by up to 50 km), and this test is about the care knob, not them.
 // PLANT=care weakens the contrail term (x 0.5): must FAIL.
 // Run: node tests/sim-care.cjs
 const GOLD = {
@@ -16,6 +18,7 @@ const GOLD = {
   const { createWorld } = await import('../src/sim/world.js');
   const P = await import('../src/sim/player.js');
   if (process.env.PLANT === 'care') P.__plantCareHalf();
+  P.__plantOldHazards();   // the golden predates the bird planner and the faster s=1 climb (2026-10-26): it tests the care knob on the player it was flown with
   const comet = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, landings: 30, mission: 99, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
   const fly = (opts, seed) => { const w = createWorld(comet, seed); for (let i = 0; i < 3000 && w.state !== 'playing'; i++) w.step(1 / 60); w.explain = () => false; w.nextAirport.worldX = 1e12;
     const p = P.makePlayer({ ...opts, plan: 'classic', seed }); for (let i = 0; i < 200000 && w.state === 'playing'; i++) { if (p.wantsFlap(w)) w.applyFlap(); w.step(16.67 / 1000); } return Math.round(w.distancePx * 1000) / 1000; };
