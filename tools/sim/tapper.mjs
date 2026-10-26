@@ -150,3 +150,67 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   }
   if (process.env.JSON) (await import('fs')).writeFileSync(process.env.JSON, JSON.stringify(all));
 }
+
+// ---------- the gap-to-gap pass: the user's case ("climb from the bottom to the top in time") ----------
+
+// From ONE state at frame t0, can the plane get past storm `id` (until its column is behind the plane)?
+export function canPass(sky, t0, state, id, minGap) {
+  let states = [{ ...state, cd: state.cd || 0 }];
+  for (let t = t0; t < sky.frames.length; t++) {
+    const fr = sky.frames[t], st = fr.storms.find(s => s.id === id);
+    if (!st || st.rects[0].x + st.rects[0].width < PLANE.x - 40) return true;   // past it
+    const next = new Map();
+    for (const s of states) for (const tap of s.cd === 0 ? [false, true] : [false]) {
+      const p = move(s, tap);
+      if (crashes(p, fr)) continue;
+      const cd = tap ? minGap - 1 : Math.max(0, s.cd - 1), key = `${Math.round(p.y)},${Math.round(p.vy)},${cd}`;
+      if (!next.has(key)) next.set(key, { y: p.y, vy: p.vy, cd });
+    }
+    if (!next.size) return false;
+    states = [...next.values()];
+  }
+  return true;
+}
+
+// The user's case. For each storm B after a storm A: the heights at which the plane can leave A (the full search,
+// any tap timing), and per tap model, from how many of them B is impossible even with perfect play from then on.
+// Such an exit is a TRAP: the only fix is to leave A at another height, so you must know about B before you reach
+// A. Reported: the share of trap exits; the warning that needs (B's arrival minus A's arrival, seconds); and how far
+// ahead B can be seen today (it appears at the right edge of the screen).
+export function gapToGap(sky, models = [3, 6, 9], every = 10) {
+  const out = [];
+  const ids = [...new Set(sky.frames.flatMap(f => f.storms.map(s => s.id)))];
+  const arrive = id => sky.frames.findIndex(f => { const s = f.storms.find(x => x.id === id); return s && s.rects[0].x <= PLANE.x + PLANE.w; });
+  for (let k = 1; k < ids.length; k++) {
+    const A = ids[k - 1], B = ids[k];
+    const tExit = sky.frames.findIndex(f => { const s = f.storms.find(x => x.id === A); return s && s.rects[0].x + s.rects[0].width < PLANE.x - 40; });
+    const tA = arrive(A), tB = arrive(B), tSeen = sky.frames.findIndex(f => f.storms.some(x => x.id === B));
+    if (tExit < 1 || tA < 0 || tB < 0) continue;
+    const reach = reachable(sky, tExit);
+    if (!reach.length) continue;
+    const starts = reach.filter((s, i) => i % every === 0 || i === reach.length - 1);
+    const fr = sky.frames[tExit], b = sky.frames[tB].storms.find(x => x.id === B);
+    const row = { A, B, km: Math.round(fr.km), speed: Math.round(fr.speed), noFly: !!(b && b.noFly), birds: sky.frames[tB].birds.length,
+      exits: starts.length, seenAhead: +((tB - tSeen) * DT).toFixed(2), needWarning: +((tB - tA) * DT).toFixed(2), traps: {} };
+    for (const m of models) row.traps[m] = starts.filter(s => !canPass(sky, tExit, s, B, m)).length;
+    out.push(row);
+  }
+  return out;
+}
+
+// All states reachable at frame t (any tap timing), from every safe height at frame 0: the search of search(), kept.
+function reachable(sky, tEnd) {
+  let states = [...safeStates(sky.frames[0]).values()];
+  for (let t = 0; t <= tEnd; t++) {
+    const fr = sky.frames[t], next = new Map();
+    for (const s of states) for (const tap of [false, true]) {
+      const p = move(s, tap);
+      if (crashes(p, fr)) continue;
+      const key = `${Math.round(p.y)},${Math.round(p.vy)}`;
+      if (!next.has(key)) next.set(key, { y: p.y, vy: p.vy, cd: 0 });
+    }
+    if (!next.size) return [];
+    states = [...next.values()];
+  }
+  return states.sort((a, b) => a.y - b.y || a.vy - b.vy);
+}
