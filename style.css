@@ -569,3 +569,7 @@ h2.sub { margin-top: -4px; }
 /* Season 2 start choice (src/startchoice.js): the area and city buttons wrap in a grid. */
 .s2areas, .s2cities { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 #startChoice .panel { max-height: 90vh; overflow-y: auto; }
+/* NATURE: web of life, the animals a project brings back (src/wild.js webHTML) */
+.w-web { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-top: 3px; }
+.w-webpic img, .w-webpic .w-nopic { width: 20px; height: 20px; image-rendering: pixelated; display: block; }
+.w-webpic img.w-shadow { filter: brightness(0) opacity(.35); }
