@@ -12,7 +12,7 @@ const ends = {}, km = [], met = { noFly: 0, flocks: 0 };
 for (let seed = +(process.env.SEED0 || 1); seed < +(process.env.SEED0 || 1) + N; seed++) {
   const seen = new Set();
   const r = simulate({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 30, mission: 99, simSeed: seed, fuel: 'kerosene', priceVersion: 2, fleet: fleets[process.env.PLANE || 'comet'] },
-    { pilot: 'player', skill: s, careful: true, budget: 0.5, seed, crashes: true, maxKm, overrides: ovr,
+    { pilot: 'player', skill: s, care: +(process.env.CARE ?? 1), budget: 0.5, seed, crashes: true, maxKm, overrides: ovr,
       onStep: w => { for (const st of w.storms) if (st.noFly && !seen.has(st) && st.rects[0].x < w.plane.x) { seen.add(st); met.noFly++; }
         for (const f of w.birds) if (!seen.has(f) && f.x < w.plane.x) { seen.add(f); met.flocks++; } } });
   const k = r.end === 'crash' ? (r.reason || '?').split('\n')[0] : r.end; ends[k] = (ends[k] || 0) + 1; km.push(r.km);
