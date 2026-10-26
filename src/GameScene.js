@@ -1,6 +1,6 @@
 import {
   km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
-  AIRPORT, CRYSTALS, DAYNIGHT, RADIATION, CLIMATE, TOKENS, CARGO, PARCEL, HAZARDS,
+  AIRPORT, CRYSTALS, DAYNIGHT, RADIATION, CLIMATE, TOKENS, PARCEL, HAZARDS,
   FOREST, POWERUPS, FEATURES,
 } from './config.js';
 import { School } from './school.js';
@@ -10,19 +10,17 @@ import { mask } from './sim/masks-load.js';
 import { MASK_DATA } from './sim/masks.js';
 import { Hud } from './Hud.js';
 import { sendFlight } from './online.js';
-import { flightPath, city, HOME, EARTH_KM } from './route.js';
-import { addPrizes } from './rewards.js';
+import { flightPath, city, HOME } from './route.js';
 import { writeSave } from './save.js';
-import { eraProgress } from './eras.js';
-import { syncFleet, CONTRAIL_MARGIN, GAP_HINT, FARES, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra } from './fleet.js';
+import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra } from './fleet.js';
 import { composeOnto } from './planelook.js';
 import { sfx, buzz } from './sound.js';
-import { current as currentMission, complete as completeMission, indexOf as missionIndexOf, MISSIONS } from './missions.js';
+import { current as currentMission, MISSIONS } from './missions.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { animalDir, animalPortrait } from './animalart.js';
 import { LANDMARKS } from './landmarks.js';
-import { SPECIES, biodiversity, plantGain, hasProject, projectsDone, wildlifeScene, regionSpecies } from './nature.js';
+import { SPECIES, biodiversity, plantGain, hasProject, wildlifeScene, regionSpecies } from './nature.js';
 import { REGION_DATA, REGION_NAMES } from './habitats.js';
 
 const SKY_H = HEIGHT - GROUND_H;
@@ -43,8 +41,6 @@ function lerpColour(a, b, t) {
 const LANDMARK_SCALE = 2;   // the user: bigger landmarks (whole numbers keep the pixels crisp)
 const LANDMARK_HAZE = 0.82, LANDMARK_BACK = 6;   // skylines: a little see-through, base 6 px up behind the city row
 
-const crashKind = reason => /Bird/.test(reason) ? 'bird' : /Restricted/.test(reason) ? 'nofly' : /Storm/.test(reason) ? 'storm'
-  : /too hot/.test(reason) ? 'overheat' : 'ground';
 
 
 export class GameScene extends Phaser.Scene {
@@ -261,8 +257,6 @@ export class GameScene extends Phaser.Scene {
     this.takeOff();   // the flight's rules (src/sim/rules.js): kit, random stream, onto the runway
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
     this.regionBanner(this.regionNow);   // which land you take off from, and its meter
-    this.bioStartAll = Object.fromEntries(Object.keys(REGION_NAMES).map(r => [r, biodiversity(this.save, r)]));   // every land's meter, for the results
-    this.bioStart = biodiversity(this.save);   // flights is counted at lift-off: going back to the menu from the runway is not a flight
   }
 
   // Esc while parked on the runway: back to the title, nothing lost, no flight counted.
@@ -1085,7 +1079,7 @@ export class GameScene extends Phaser.Scene {
   shake(ms, amount) { this.cameras.main.shake(ms, amount); }
   later(ms, fn) { this.time.delayedCall(ms, fn); }
   runTimers() {}   // Phaser runs the game's timers
-  onLiftOff() { this.save.flights++; writeSave(this.save); }
+  persist() { writeSave(this.save); }
   onSeed(t, tx, ty) {
     this.popup(tx, ty - 8, `+${t.value} seed${t.value > 1 ? 's' : ''}`, t.value > 1 ? '#ffe15a' : '#8dffb0');
     this.burst(tx, ty, 0x4caf50, 5);
@@ -1298,7 +1292,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   // The flight has ended (rules.finish set the state): the crash or landing, the save, and the results.
+  // The flight has ended and the rules have banked it (bankFlight: this.result, this.bank): the crash or
+  // landing effects, the online boards, and the results screen.
   onFinish({ landed = false, reason = '', sound = 'crash' }) {
+    const { m, missionDone, lap, crash, gained } = this.bank;
     this.hud.setCo2(0);
     this.ui.hideToast();
     this.hintText.setText('');
@@ -1314,73 +1311,6 @@ export class GameScene extends Phaser.Scene {
       sfx[sound]();
     }
 
-    const m = Math.floor(this.distancePx / WORLD.pxPerMetre);
-    const km = m / 1000;
-    const perKm = km > 0 ? (this.totalCo2 / km).toFixed(1) : '-';
-    const heat = Math.round(this.heat);
-
-    // Trees: only what you carry home. Longer flights multiply it; a cooler Earth adds a bonus.
-    const earned = [];
-    const mult = this.multiplier();
-    earned.push({ label: `Seeds grabbed in the sky`, n: this.cargo, lost: !landed });
-    if (mult > 1 && this.cargo) earned.push({ label: `Long flight bonus x${mult}`, n: Math.round(this.cargo * (mult - 1)), lost: !landed });
-    if (heat < 0) earned.push({ label: 'Cooler Earth bonus', n: CARGO.coolBonus, lost: !landed });
-    // Fares (eras): a landed flight pays per 1,000 km, by plane, x the Cabin upgrades (src/fleet.js FARES).
-    const fares = landed && !this.school ? Math.round((FARES[this.kit.plane] || 0) * m / 1e6 * this.kit.fares) : 0;
-    if (fares) earned.push({ label: 'Passenger fares', n: fares, lost: false });
-    const gained = landed ? earned.reduce((a, e) => a + e.n, 0) : 0;
-    if (!landed && this.cargo) this.popup(this.plane.x + 25, this.plane.y - 14, `-${this.cargo} seeds lost!`, '#ff6a5a', 16);
-
-    if (landed) this.save.landings = (this.save.landings || 0) + 1;
-    if (landed && heat < 0 && !this.school) this.save.coolLandings = (this.save.coolLandings || 0) + 1;   // Cool Planet badge
-    const crash = landed ? null : crashKind(reason);
-    if (crash && !this.school) { this.save.crashes = this.save.crashes || {}; this.save.crashes[crash] = (this.save.crashes[crash] || 0) + 1; }
-    // Mission: done or not, and move on to the next one.
-    // The journey: landing moves you to that city; reaching LONDON again (or passing it) is a lap.
-    // Times round the Earth (flownKm / EARTH_KM, the real size of the Earth): `lap` = one more this flight.
-    const flownBefore = this.save.flownKm || 0, flown = this.school ? flownBefore : flownBefore + m;
-    const lap = !this.school && Math.floor(flown / EARTH_KM) > Math.floor(flownBefore / EARTH_KM);
-    // A new part of the world: landing in a region you had never landed in before.
-    const landReg = landed && city(this.landedAt) ? city(this.landedAt).region : null;
-    const newRegion = !!landReg && !this.school && !(this.save.visited || []).some(n => city(n) && city(n).region === landReg);
-    const mission = this.school ? null : currentMission(this.save);
-    const partial = { landed, landedAt: this.landedAt, lap, newRegion, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
-      crash, crashes: this.save.crashes || {}, distance: m, kinds: this.speciesPlanted.size, bumped: this.bumped, goldens: this.goldens,
-      onRunway: this.parcelOnRunway, forestFull: this.forestFullSaid, projects: projectsDone(this.save).map(p => p.id) };
-    const missionDone = !!(mission && mission.check(partial, this.save));
-    const missionIndex = missionDone ? missionIndexOf(mission) : null;
-    if (missionDone) completeMission(this.save, mission);
-    const nextMission = this.school ? null : currentMission(this.save);
-    const natureGain = biodiversity(this.save) - (this.bioStart || 0);
-    // Each land whose meter rose this flight (0.11.1: the results used to show the UK's only).
-    const natureGains = this.school ? [] : Object.keys(REGION_NAMES).map(r => ({ region: r, name: REGION_NAMES[r], gain: biodiversity(this.save, r) - ((this.bioStartAll || {})[r] || 0) })).filter(g => g.gain > 0);
-    if (!this.school) this.save.flownKm = flown;
-    const eraBefore = eraProgress(this.save).index;
-    if (!this.school) this.save.flightSeconds = (this.save.flightSeconds || 0) + (this.flySeconds || 0);   // crashes count too
-    const eraOpened = !this.school && eraProgress(this.save).index > eraBefore ? eraProgress(this.save).era.name : null;
-    const newPlane = eraOpened ? syncFleet(this.save, { fly: true }) : null;   // a new era's plane joins the fleet
-    if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; }   // choose a new direction from here
-    const newRecord = landed && !this.school && m > this.save.bestDistance;
-    if (newRecord) this.save.bestDistance = m;
-    this.save.seeds += gained;
-    this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
-    // The first safe landing earns one free upgrade, to show what the hangar is for.
-    if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
-    // Missions and badges are prizes to CLAIM, not paid now (src/rewards.js, src/badges.js).
-    const rewards = this.school ? [] : addPrizes(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, dodges: this.dodgesTotal,
-      kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionDone ? mission : null, missionIndex);
-    const newBadges = rewards.filter(p => p.kind === 'badge').map(p => p.id);
-    writeSave(this.save);
-
-    this.result = {
-      landed, landedAt: this.landedAt, from: this.homeName, lap, reason, distance: m, heat, co2PerKm: Number(perKm),
-      sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
-      breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted,
-      cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
-      flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
-      rewards, foundIds: [...(this.foundIds || [])],
-      mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, natureGains, bio: biodiversity(this.save),
-    };
     if (this.school) this.school.finished(this.result);
     else sendFlight({   // to the online boards, if this device has a pilot name; queued when offline
       landed, distance_m: m, shade: Math.max(0, -this.sunBlocked), heat_trapped: this.heatTrapped, night_dodges: this.dodgesTotal,

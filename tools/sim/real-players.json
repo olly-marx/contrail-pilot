@@ -1,0 +1,14 @@
+{
+  "source": "Live read-only flights table pulled by the Coordinator on 2026-10-25, EXCLUDING the user (Olly the Swift 74), as the user asked. Game km. Thin: few players per band; treat medians as rough.",
+  "bands": [
+    { "flights": "1", "from": 1, "to": 1, "players": 8, "median": 2536, "p90": 3791, "landed": 0.13 },
+    { "flights": "2", "from": 2, "to": 2, "median": 2483, "p90": 4844, "landed": 0.00 },
+    { "flights": "3", "from": 3, "to": 3, "median": 5116, "p90": 5620, "landed": 0.00 },
+    { "flights": "4", "from": 4, "to": 4, "median": 3166, "p90": 3702, "landed": 0.33 },
+    { "flights": "5", "from": 5, "to": 5, "median": 4064, "p90": 5255, "landed": 0.33 },
+    { "flights": "6-10", "from": 6, "to": 10, "n": 23, "players": 6, "median": 1950, "p90": 6355, "landed": 0.22 },
+    { "flights": "11-20", "from": 11, "to": 20, "n": 38, "players": 4, "median": 3333, "p90": 7477, "landed": 0.24 },
+    { "flights": "21-50", "from": 21, "to": 50, "n": 90, "players": 3, "median": 3980, "p90": 9856, "landed": 0.21 },
+    { "flights": "51+", "from": 51, "to": 1e9, "n": 298, "players": 3, "median": 5594, "p90": 12644, "landed": 0.22 }
+  ]
+}
