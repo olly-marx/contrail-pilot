@@ -376,7 +376,7 @@ h2.sub { margin-top: -4px; }
 /* "Tap here" tutorials (src/tour.js): dark panels round a hole, a ring, a bouncing pointer, a bubble. */
 #tour { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
 #tour .tdim { position: fixed; background: rgba(10, 10, 30, 0.62); pointer-events: auto; }
-#tour .tring { position: fixed; border: 3px solid #ffe15a; border-radius: 6px; box-shadow: 0 0 0 3px #1b1b2f, 0 0 14px #ffe15a; animation: tourPulse 1s ease-in-out infinite; }
+#tour .tring { position: fixed; box-sizing: border-box; border: 3px solid #ffe15a; border-radius: 6px; box-shadow: 0 0 0 3px #1b1b2f, 0 0 14px #ffe15a; animation: tourPulse 1s ease-in-out infinite; }
 #tour .tfinger { position: fixed; width: 32px; height: 32px; animation: tourBob 0.7s ease-in-out infinite; }
 #tour .tfinger i { display: block; width: 32px; height: 32px; background: url('assets/ui/tour-finger.png') no-repeat; image-rendering: pixelated; }
 #tour .tfinger.up i { transform: scaleY(-1); }
