@@ -85,6 +85,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const met = await saveIn(p);
   check((met.missionsDone || []).includes('weurope:system'), `opening MISSIONS ticks an off-flight mission already met: ${JSON.stringify(met.missionsDone)}`);
   await p.close();
+  // 4c. The user's own save (live 0.15.0): a free part waiting from the school landing, no lesson done, the hangar
+  // hidden. On load the hangar must be revealed, NEXT must lead there and TAKE OFF must be locked (the fix unsticks them).
+  p = await open({ ...s2, freeUpgrade: true, freeGiven: true, missionsDone: [] });
+  const stuck = await p.evaluate(() => ({ tile: !!document.querySelector('#hubTiles [data-go="hangar"]'), next: document.getElementById('hubNext').innerText, locked: document.getElementById('goBtn').disabled }));
+  check(stuck.tile && /free upgrade/i.test(stuck.next) && stuck.locked, `an existing save with a free part waiting and no lesson done: hangar revealed, NEXT leads there, TAKE OFF locked: ${JSON.stringify(stuck)}`);
+  await p.close();
   // 5. The hangar tour starts on the hub (tours on).
   p = await open({ ...s2, seenTips: ['x-bars'], tours: [], shownLines: [], flights: 1 });   // a real new player: shownLines set on first load (else tour.js counts an old save's hangar tour as done)
   await p.waitForTimeout(1200);
