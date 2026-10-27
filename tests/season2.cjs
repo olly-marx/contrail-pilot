@@ -75,6 +75,8 @@ const KEY = 'contrailPilot.v2';
   check(/WARSAW &gt; STOCKHOLM/.test(card) && /Needs:/.test(card) && !/data-cross/.test(card), `the crossing shows what it needs: ${card.slice(0, 160)}`);
   await p.goto(URL + '?s2unlock=1'); await ready(p);
   await p.evaluate(() => game.registry.get('ui').showTitle());
+  // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
+  if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.click('#hubRoute');
   const btn = await p.$('#jCross [data-cross="warsaw-stockholm"]');
   check(!!btn, 'with ?s2unlock=1 the crossing can be flown');
   if (btn) {
