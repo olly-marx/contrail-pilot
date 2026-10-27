@@ -111,9 +111,7 @@ export class UI {
 
   // First play goes through flight school.
   start() {
-    if (FEATURES.season2 && needsStartChoice(this.save)) {   // season 2: choose your start area and city first (src/startchoice.js)
-      return chooseStart().then(c => { applyStart(this.save, c); writeSave(this.save); this.renderJourney(); this.start(); });
-    }
+    if (FEATURES.season2 && needsStartChoice(this.save)) return this.askStart().then(() => this.start());   // season 2: choose your start first
     if (!this.save.tutorialDone) return this.startSchool();
     unlockAudio();
     this.showOnly(null);
@@ -194,6 +192,11 @@ export class UI {
     $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => pick(b.dataset.way));
   }
 
+  // ONE start choice at a time (src/startchoice.js): the menu and START may both ask; they share the same screen.
+  askStart() {
+    return this.startAsked || (this.startAsked = chooseStart().then(c => { applyStart(this.save, c); writeSave(this.save); this.startAsked = null; this.renderJourney(); }));
+  }
+
   // ---------- the season 2 hub (S2 of research/PROPOSAL-HOME-MISSIONS.md; what shows: src/hub.js) ----------
   setupHub() {
     $('title').classList.add('hub');
@@ -269,10 +272,7 @@ export class UI {
 
   showTitle() {
     // Season 2: a save with no start area chooses it first, as a full screen (S3), before the hub ever shows.
-    if (FEATURES.season2 && needsStartChoice(this.save)) {
-      if (!this.choosingStart) { this.choosingStart = true; chooseStart().then(c => { this.choosingStart = false; applyStart(this.save, c); writeSave(this.save); this.showTitle(); }); }
-      return;
-    }
+    if (FEATURES.season2 && needsStartChoice(this.save)) { this.askStart().then(() => this.showTitle()); return; }
     $('tTrees').textContent = this.save.seeds;
     $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = km(this.save.bestDistance);

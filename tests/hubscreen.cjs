@@ -18,16 +18,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
     return p;
   };
   const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); if (!e || e.offsetParent === null) return null; const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; }, sel);
-  // 1. A new-ish pilot (one lesson done): hub, no tab bar, big globe, NEXT, TAKE OFF, the HANGAR tile.
-  let p = await open(['land']);
+  // 1. A new-ish pilot (lesson 1 done): hub, no tab bar, big globe, NEXT, TAKE OFF, the MISSIONS and HANGAR tiles.
+  let p = await open(['L1']);   // season 2 lessons (S3): L1 reveals MISSIONS and HANGAR
   const st = await p.evaluate(() => ({ hub: document.getElementById('title').classList.contains('hub'), bar: !document.getElementById('tabbar').hidden,
     next: document.getElementById('hubNext').innerText, tiles: [...document.querySelectorAll('#hubTiles [data-go]')].map(t => t.dataset.go) }));
   const globe = await box(p, '#hubGlobe'), go = await box(p, '#goBtn');
   check(st.hub && !st.bar, `season 2 shows the hub and no tab bar: ${JSON.stringify(st)}`);
   check(globe && globe.w >= 390 * 0.5 && globe.h >= 844 * 0.25, `the world is BIG: ${JSON.stringify(globe)}`);
-  check(/NEXT/.test(st.next) && /Land with 5 seeds/.test(st.next), `NEXT names the top mission: "${st.next}"`);
+  check(/NEXT/.test(st.next) && /icy air in daytime/.test(st.next), `NEXT names the next lesson (L2): "${st.next}"`);
   check(go && go.y + go.h <= 844, `TAKE OFF is on screen without scrolling: ${JSON.stringify(go)}`);
-  check(st.tiles.join() === 'hangar', `after lesson 1 only the HANGAR tile: ${st.tiles}`);
+  check(st.tiles.join() === 'missions,hangar', `after lesson 1: MISSIONS and HANGAR only: ${st.tiles}`);
   // 2. Spin: the globe turns.
   const f0 = await p.evaluate(() => JSON.stringify(document.getElementById('hubGlobe').__globe.frame()));
   await p.click('#hubSpinR'); await p.waitForTimeout(200);
