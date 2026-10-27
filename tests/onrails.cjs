@@ -39,7 +39,7 @@ const W = 390, H = 844;
     for (let i = 0; i < 60; i++) { a = await audit(); if (modal ? await p.$(modal) : a.up && expect.test(a.text)) break; await p.waitForTimeout(150); }
     await shot(name);
     check(modal || (a.up && expect.test(a.text)), `${name}: the rails step shows ("${a.text}")`);
-    check(a.reach.length === 1, `${name}: exactly ONE thing can be tapped (${a.reach.length}: ${a.reach.join(' / ')})`);
+    check(a.reach.length === 1, `${name}: exactly ONE thing can be tapped (${a.reach.length}: ${a.reach.join(' / ')}; ring ${JSON.stringify(a.ring)})`);
     check(a.ringIn && a.bubbleIn, `${name}: the target and the sentence are fully on screen (ring ${a.ringIn}, bubble ${a.bubbleIn})`);
     if (!modal && !a.up) return;   // (no bubble: already recorded as a failure above; nothing to tap)
     if (modal) await p.click(modal);
