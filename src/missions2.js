@@ -46,7 +46,10 @@ export const LESSONS = [
   { id: 'L5', title: 'Drop a tree on brown soil', reveals: [], prize: { seeds: 70, crystals: 2 }, flight: r => r.planted >= 1 },
 ];
 export const lessonsLeft = save => (stageOf(save) === 'teach' ? LESSONS.filter(l => !done(save).has(l.id)) : []);
-export const revealed = (save, tile) => stageOf(save) !== 'teach' || LESSONS.some(l => l.reveals.includes(tile) && done(save).has(l.id));
+// A free part waiting ALWAYS reveals the hangar (the user, 2026-10-27, twice: the school landing grants it, but lesson L1
+// - which used to be the only thing revealing the hangar - ignores school flights, and a crash on flight 1 leaves it undone).
+export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === 'hangar' && !!(save.freeUpgrade || save.freeGiven))   // once given, it stays (a crash on flight 1 hid it again: firsthour-real.cjs)
+  || LESSONS.some(l => l.reveals.includes(tile) && done(save).has(l.id));
 
 // ---------- the area ladder (templates; f = the fill for this area and stage) ----------
 // Prizes: seeds only (crystals stay a skill reward), ~700 per area in the teach stage, x the stage factor.
