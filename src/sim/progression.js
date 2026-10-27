@@ -121,10 +121,11 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
       const offered = tier < tiers.length && cap >= tiers[tier] && homeBio >= 30;
       crossing = offered ? tiers[tier] : 0;
     }
-    // chaseGate: when a crossing is blocked only by its distance (the best landed flight), aim to land beyond it.
+    // chaseGate: when a crossing's distance (the best landed flight) is short and its nature is met, aim to land beyond it
+    // (also while its missions are still open: they are done in parallel).
     let landFrom = 0;
     if (s2 && chaseGate && !c2) for (const c of available(save)) { const ctx = offerCtx(save, c), need = offerCheck(c, ctx).need;
-      if (!need.capability && need.nature && need.contrails !== false) landFrom = Math.max(landFrom, Math.ceil(SEASON.offer.distanceShare * c.km) + 50); }
+      if (!need.capability && need.nature) landFrom = Math.max(landFrom, Math.ceil(SEASON.offer.distanceShare * c.km) + 50); }
     const w = flyOne(save, { seed: seed * 100000 + n, skill: s, careful, crossing, useHint, landFrom, maxSkip: careful ? maxSkip : Math.floor(rnd() * 3) });
     save = w.save;
     const here = w.regionNow && REGION_DATA[w.regionNow] ? w.regionNow : 'woodland';
