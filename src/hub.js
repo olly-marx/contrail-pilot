@@ -24,6 +24,7 @@ export function hubView(save, { badges = {}, crossingReady = null } = {}) {
   const m = s2 ? M2.next(save) : currentMission(save), mid = m && (m.key || m.id);
   const next = crossingReady ? { title: `Crossing ready: ${crossingReady}`, crossing: true }
     : s2 && save.freeUpgrade && revealed(save, 'hangar') ? { title: FREE_NEXT, hangar: true }   // must-do: TAKE OFF is locked meanwhile
+    : s2 && mid === 'L5' && !((save.levels || {}).trees) ? { title: 'Buy tree parcels in NATURE first', id: mid, nature: true }   // the lesson needs parcels
     : m ? { title: m.title, id: mid } : null;
   const tiles = [['missions', 'MISSIONS'], ['hangar', 'HANGAR'], ['nature', 'NATURE']]
     .filter(([id]) => revealed(save, id)).map(([id, label]) => ({ id, label, badge: badges[id] || '' }));

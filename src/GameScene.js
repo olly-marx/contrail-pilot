@@ -1364,7 +1364,7 @@ export class GameScene extends Phaser.Scene {
   onFinish({ landed = false, reason = '', sound = 'crash' }) {
     const { m, missionDone, lap, crash, gained } = this.bank;
     this.hud.setCo2(0);
-    this.ui.hideToast();
+    this.ui.endToasts();   // a fresh toast finishes its 2 s (the user: one vanished at once)
     this.hintText.setText('');
     this.parcelText.setText('');
     this.setDropVisible(false);

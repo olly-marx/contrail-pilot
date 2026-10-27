@@ -61,7 +61,7 @@ export const FACTS_BASE = [
 ];
 
 export const FACTS = [...FACTS_BASE, ...NATURE_FACTS];
-const TOAST_MIN = 3;   // s a toast stays before another may take its place
+const TOAST_MIN = 3, TOAST_END_MIN = 2;   // s a toast stays before another may replace it / before a flight's end may close it
 const $ = id => document.getElementById(id);
 // A prize as icons: "+40 [seed] +3 [crystal]".
 const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;
@@ -217,7 +217,7 @@ export class UI {
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
     $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>` : '';
     const toHangar = v.next && v.next.hangar;   // a free upgrade LEADS into the hangar (the user, 2026-10-27)
-    $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : null;
+    $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : v.next && v.next.nature ? () => { sfx.flap(); this.go('nature'); } : null;
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
     $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;
     $('goBtn').textContent = toHangar ? 'PICK YOUR FREE PART FIRST' : s.tutorialDone ? 'TAKE OFF' : 'START';
@@ -683,6 +683,13 @@ export class UI {
   }
   toastNow() { const q = (this.toastQueue || []).shift(); if (q) { $('toast').hidden = true; this.toast(...q); } }
   hideToast() { clearTimeout(this.toastTimer); clearTimeout(this.toastNext); this.toastQueue = []; $('toast').hidden = true; }
+  // At the end of a flight: drop queued toasts; one up for under TOAST_END_MIN s finishes that much first (never cut at once).
+  endToasts() {
+    clearTimeout(this.toastNext); this.toastQueue = [];
+    const left = TOAST_END_MIN * 1000 - (Date.now() - (this.toastAt || 0));
+    if ($('toast').hidden || left <= 0) return this.hideToast();
+    clearTimeout(this.toastTimer); this.toastTimer = setTimeout(() => ($('toast').hidden = true), left);
+  }
 
   // Show a tip only the first time on this device.
   tipOnce(id, title, body, kind, secs) {

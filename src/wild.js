@@ -16,6 +16,7 @@ import { meterHTML } from './ui.js';
 import { onSwipe } from './swipe.js';
 import { landTrees, countText } from './landtrees.js';
 import { broughtBack } from './weboflife.js';
+import { isSeason2 } from './missions2.js';
 import { nextHere } from './nexthere.js';
 
 const $ = id => document.getElementById(id);
@@ -97,7 +98,9 @@ export class WildScreen {
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
     // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the UK tab.
     const uk = this.region === 'woodland';
-    $('wTrees').hidden = !uk;
+    // Season 2: the planting tools wait for lesson 5 (trees), one new thing at a time (research/FLOW-FIRST-HOUR.md).
+    const treesTime = !isSeason2(s) || (s.missionsDone || []).includes('L4');
+    $('wTrees').hidden = !uk || !treesTime;
     if (row.previousElementSibling) row.previousElementSibling.hidden = !trees.length;   // the 'Trees' heading
     $('wTrees').innerHTML = uk ? LINES.filter(l => tabOf(l) === 'nature').map(l => this.ui.lineCardHTML(l)).join('') : '';
     $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => this.ui.buy(b.dataset.buy));
