@@ -15,6 +15,9 @@ import { flightPath, legBetween, HOME, city, EARTH_KM, schoolSave } from '../rou
 import { crossingPath, recordAreaBest } from '../crossings.js';   // season 2 crossings (redesign)
 import { regionBelow } from '../geo.js';
 import { loadout, FUELS } from '../upgrades.js';
+// Planted defects for tests/sim-result-fields.cjs (each must FAIL it): scrape = every gap counts as clean; nofly = a
+// no-fly zone counts when the nose reaches it (a crash in it counts too); trees = treeIds left empty.
+export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false };
 import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
 import * as P from './physics.js';
@@ -113,6 +116,7 @@ export const RULES = {
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
     this.goldens = 0;                  // golden seeds grabbed
     this.foundIds = []; this.foundThisFlight = 0;   // animals found THIS flight (the scene object is reused between flights)
+    this.cleanGaps = 0; this.noFlyPassed = 0;   // storm gaps passed without a scrape, no-fly zones passed (missions; countPasses)
     this.bumped = false;               // shaken by turbulence
     this.parcelOnRunway = false;       // a parcel landed on a runway (oops!)
     this.speciesPlanted = new Set();   // kinds of tree planted this flight: local ids (forest boost, missions)
@@ -659,6 +663,7 @@ export const RULES = {
     if (this.state !== 'playing') return out;
 
     if (this.school) { this.school.forgive(box); return out; }
+    this.countPasses();   // before the breather/autopilot return: columns they fly past are marked, not counted
     if (this.inGrace() || this.onAutopilot()) return out;   // the breather and the autopilot pick-up: nothing can crash you
     if (this.heat >= CLIMATE.dangerLine * 0.75 && !this.warnedHot) {
       this.warnedHot = true;
@@ -682,6 +687,25 @@ export const RULES = {
     }
     if (this.hitBird(box)) this.finish({ reason: 'Bird strike!\nYou hit a bird.' });
     return out;
+  },
+
+  // Mission counters (PROPOSAL-HOME-MISSIONS, 2026-10-27). A column counts once its whole picture is past the plane's
+  // tail: a storm gap only if no storm pixel touched the plane while level with it (a forgiven nick is still a scrape),
+  // a no-fly zone always (it forgives nothing, so being past it means it was threaded). Columns the breather or the
+  // autopilot flew any part of do not count. No random draws: the counters never change the flight.
+  countPasses() {
+    const tail = this.plane.x - PLANE.spriteOffX, nose = tail + PLANE.spriteW, helped = this.inGrace() || this.onAutopilot();
+    for (const s of this.storms) {
+      const r = s.rects[0];
+      if (s.passed || r.x > nose) continue;
+      if (helped) s.helped = true;
+      if (FIELD_PLANTS.nofly && s.noFly && !s.helped && !s.early) { s.early = true; this.noFlyPassed++; }
+      if (!s.noFly && !s.scraped && !helped && !FIELD_PLANTS.scrape && this.stormPixelsHit(s, 1) > 0) s.scraped = true;
+      if (r.x + r.width < tail) {
+        s.passed = true;
+        if (!s.helped) { if (s.noFly) { if (!FIELD_PLANTS.nofly) this.noFlyPassed++; } else if (!s.scraped) this.cleanGaps++; }
+      }
+    }
   },
 
   // The land below, once the flight has moved (the game also fades its ground in, and may discover the land).
@@ -730,7 +754,9 @@ export const RULES = {
     if (missionDone) completeMission(this.save, mission);
     const nextMission = this.school || s2 ? null : currentMission(this.save);
     // (save.city is still the START city here: "here" missions count where the flight began.)
-    const s2Done = !this.school && s2 ? s2Flight(this.save, { ...partial, dodges: this.dodgesTotal }) : [];
+    // S4: the mission fields (src/sim/rules.js countPasses; the sim chat, 86a6a02) go in too, so area missions can read them.
+    const s2Done = !this.school && s2 ? s2Flight(this.save, { ...partial, dodges: this.dodgesTotal, treeIds: [...this.speciesTags],
+      cleanGaps: this.cleanGaps || 0, noFlyPassed: this.noFlyPassed || 0, foundIds: [...(this.foundIds || [])] }) : [];
     const s2Next = s2 && !this.school ? s2NextMission(this.save) : null;
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
     // Each land whose meter rose this flight (0.11.1: the results used to show the UK's only).
@@ -762,6 +788,9 @@ export const RULES = {
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])],
       missions2: s2 ? { done: s2Done.map(d => d.title), next: s2Next ? s2Next.title : null } : null,
+      // Mission fields (PROPOSAL-HOME-MISSIONS): trees planted this flight ('land:id', UK bare), clean storm gaps, no-fly
+      // zones passed. Animals found: foundIds above (the game's 'seen' hook fills it; [] in Node).
+      treeIds: FIELD_PLANTS.trees ? [] : [...this.speciesTags], cleanGaps: this.school ? 0 : this.cleanGaps, noFlyPassed: this.school ? 0 : this.noFlyPassed,
       mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, natureGains, bio: biodiversity(this.save),
     };
     this.bank = { m, missionDone, lap, crash, gained };
