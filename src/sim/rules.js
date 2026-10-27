@@ -3,7 +3,7 @@
 // exactly this code. `this` is the flight. No Phaser here: drawing and sound go through hooks the world leaves empty.
 import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO } from '../config.js';
 import { tip } from '../tips.js';
-import { GAP_HINT, FORECAST, FARES, syncFleet } from '../fleet.js';
+import { GAP_HINT, FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
@@ -17,6 +17,8 @@ import { regionBelow } from '../geo.js';
 import { loadout, FUELS } from '../upgrades.js';
 // Planted defects for tests/sim-result-fields.cjs (each must FAIL it): scrape = every gap counts as clean; nofly = a
 // no-fly zone counts when the nose reaches it (a crash in it counts too); trees = treeIds left empty.
+// Planted defects for tests/sim-twists.cjs (each must FAIL it): still = no twist ever moves; early = twists ignore `from`.
+export const TWIST_PLANTS = { still: false, early: false };
 export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false };
 import { recordFlight } from '../records.js';
 import { makeRng } from './rng.js';
@@ -301,7 +303,7 @@ export const RULES = {
     }
     const B = HAZARDS.birds;
     if (this.distancePx >= this.nextBirdsAt) {
-      if (this.rand() < B.chance * this.kit.gapBirds) this.addFlock();   // ATC bird advisories: fewer flocks
+      if (this.rand() < this.squeezed(B.chance, 'capBirds') * this.kit.gapBirds) this.addFlock();   // ATC bird advisories: fewer flocks
       this.nextBirdsAt += B.every;
     }
     if (this.distancePx >= this.nextTokenAt) {
@@ -327,7 +329,7 @@ export const RULES = {
     if (this.distancePx < WORLD.warmup) this.warmStorms = this.stormCount;   // gaps only narrow after the warm-up
     let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * (this.stormCount - (this.warmStorms || 0)));
     const nf = HAZARDS.noFly;
-    const noFly = this.distancePx >= nf.from && this.rand() < nf.chance;
+    const noFly = this.distancePx >= nf.from && this.rand() < this.squeezed(nf.chance, 'capNoFly');
     if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess);
     gap = Math.round(gap * this.kit.gaps);   // air traffic control (eras): better spacing, gaps up to ~3% wider
     const lo = STORMS.marginTop + gap / 2;
@@ -353,6 +355,10 @@ export const RULES = {
     // Drawn farthest first: the picture at the gap edge is in front.
     const order = [...pics.filter(q => q.key.includes('hang')).reverse(), ...pics.filter(q => q.key.includes('rise')).reverse()];
     const st = { rects: [top, bottom], parts: [], pics: order, flashUntil: 0, nextSpark: 0 };
+    if (this.twistOn(STORMS.pulse)) {   // era-6 twist: the gap breathes; its phase comes from where it spawned (no draw)
+      for (const q of order) q.y0 = q.y;
+      st.pulse = { top: topH, bot: botY, phase: (this.distancePx * 0.0137) % (2 * Math.PI) };
+    }
     this.storms.push(st);
     this.stormCount++;
     this.showStorm(st);
@@ -363,6 +369,10 @@ export const RULES = {
     const top = { x, y: 0, width: W, height: topH };
     const bottom = { x, y: botY, width: W, height: SKY_H - botY };
     const st = { rects: [top, bottom], parts: [], flashUntil: 0, noFly: true };
+    if (this.twistOn(HAZARDS.noFly.drift)) {   // era-4 twist: the gap drifts, first towards the side with more room
+      const m = STORMS.marginTop + gap / 2;
+      st.drift = { c: gapY, gap, lo: m, hi: SKY_H - m, v: HAZARDS.noFly.drift.pxs * (gapY < SKY_H / 2 ? 1 : -1) };
+    }
     this.storms.push(st);
     this.stormCount++;
     this.showNoFly(st);
@@ -459,6 +469,7 @@ export const RULES = {
       birds.push({ ox, oy, x: x + ox, y: y + oy, key: 'bird-0', flip: true });   // a record, facing the plane; its image is .view
     }
     const f = { birds, x, y, half: FLOCK_HALF, phase: this.rand() * 6 };
+    if (this.twistOn(HAZARDS.birds.turn)) f.turn = { dir: y < SKY_H / 2 ? 1 : -1, left: -1 };   // era-5 twist: it will change height once
     this.birds.push(f);
     this.showFlock(f);
     this.newHazard('birds');
@@ -652,6 +663,7 @@ export const RULES = {
     this.updateTokens(dt, box);
     this.updatePowers();
     this.updateHazards(dt, box);
+    this.updateTwists(dt);
     this.updateParcels(dt);
     if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
     this.wasInIssr = inIssr;
@@ -711,6 +723,34 @@ export const RULES = {
       if (r.x + r.width < tail) {
         s.passed = true;
         if (!s.helped) { if (s.noFly) { if (!FIELD_PLANTS.nofly) this.noFlyPassed++; } else if (!s.scraped) this.cleanGaps++; }
+      }
+    }
+  },
+
+  // ---------- era 4-6 twists (PROPOSAL-ERAS-4-6-SYSTEMS, 2026-10-27) ----------
+  // A twist is on when the flight's era (the plane's era; kit.era lets the sim stand in for planes not built yet) is at
+  // least its era AND the flight has reached its `from`. Eras 0-2 (Comet, jumbo, twin) never meet one. None draws a number.
+  flightEra() { if (this.kit.era !== undefined) return this.kit.era; const p = PLANES.find(q => q.id === this.kit.plane); return p ? p.era : 0; },
+  twistOn(cfg) { return !!cfg && this.flightEra() >= cfg.era && (TWIST_PLANTS.early || this.distancePx >= cfg.from); },
+  // A spawn chance under the long-haul squeeze: + add per `every` km past `from`, capped. (Moves a threshold only.)
+  squeezed(chance, cap) {
+    const Q = HAZARDS.squeeze;
+    if (!this.twistOn(Q)) return chance;
+    return Math.min(Q[cap], chance + Q.add * (1 + Math.floor((this.distancePx - Q.from) / Q.every)));
+  },
+  // Drifting no-fly gaps and pulsing storm gaps move every frame (their rects, and a storm's cloud pictures with them).
+  updateTwists(dt) {
+    if (TWIST_PLANTS.still) return;
+    for (const st of this.storms) {
+      if (st.drift) {
+        const d = st.drift; d.c += d.v * dt;
+        if (d.c < d.lo) { d.c = d.lo; d.v = -d.v; } else if (d.c > d.hi) { d.c = d.hi; d.v = -d.v; }
+        st.rects[0].height = d.c - d.gap / 2; st.rects[1].y = d.c + d.gap / 2; st.rects[1].height = SKY_H - st.rects[1].y;
+      }
+      if (st.pulse) {
+        const P = STORMS.pulse, p = st.pulse, off = P.amp * Math.sin(p.phase + 2 * Math.PI * (this.gameTime / 1000) / P.period);
+        st.rects[0].height = p.top + off; st.rects[1].y = p.bot - off; st.rects[1].height = SKY_H - st.rects[1].y;
+        for (const q of st.pics) q.y = Math.round(q.y0 + (q.key.includes('hang') ? off : -off));
       }
     }
   },
@@ -923,6 +963,11 @@ export const RULES = {
         if (r.x + r.width < this.plane.x - 10 || r.x > this.plane.x + 200) continue;     // only gaps the plane is reaching
         if (f.x > r.x + r.width + 40 || f.x + half * 26 + 16 < this.plane.x - 40) continue;   // flock not near that column
         if (top < gBot && bottom > gTop) f.y += (f.y - (gTop + gBot) / 2 < 0 ? -1 : 1) * 160 * dt;
+      }
+      if (f.turn) {   // era-5 twist: at `at` of the screen the flock slides dy px over `secs`, towards the side with more room
+        const T = B.turn;
+        if (f.turn.left < 0 && f.x < WIDTH * T.at) f.turn.left = T.secs;
+        if (f.turn.left > 0 && !TWIST_PLANTS.still) { const k = Math.min(dt, f.turn.left); f.y += f.turn.dir * T.dy * k / T.secs; f.turn.left -= k; if (f.turn.left <= 0) f.turn.left = 0; }
       }
       f.phase += dt * 2;
       const fy = f.y + Math.sin(f.phase) * B.wobble;
