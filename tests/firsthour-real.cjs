@@ -56,7 +56,7 @@ const W = 390, H = 844;
   await p.click('#goBtn'); await p.waitForTimeout(500); await shot('how-to');
   await p.click('#howClose'); await p.waitForTimeout(500);
   const finished = await playUntil(v => v.results, 300);
-  if (process.env.DBG) for (let i = 0; i < 8; i++) { console.log('DBG', JSON.stringify(await p.evaluate(() => { const s = game.scene.getScene('game'); return { t: Math.round(performance.now()), res: !document.getElementById('results').hidden, title: document.getElementById('rTitle').textContent, btn: document.getElementById('againBtn').textContent, state: s.state, school: !!s.school, km: Math.round(s.distancePx), done: game.registry.get('save').tutorialDone }; }))); await p.waitForTimeout(500); }
+  if (process.env.DBG) for (let i = 0; i < 3; i++) { console.log('DBG', JSON.stringify(await p.evaluate(() => { const s = game.scene.getScene('game'); return { t: Math.round(performance.now()), res: !document.getElementById('results').hidden, title: document.getElementById('rTitle').textContent, btn: document.getElementById('againBtn').textContent, state: s.state, school: !!s.school, km: Math.round(s.distancePx), done: game.registry.get('save').tutorialDone }; }))); await p.waitForTimeout(500); }
   check(finished, 'a player can fly the whole flight school to its landing with real taps');
   await p.waitForTimeout(3000);   // the card's reveal
   await shot('school-done');
@@ -64,6 +64,7 @@ const W = 390, H = 844;
     free: !document.getElementById('rFree').hidden, fact: !document.getElementById('rFact').hidden && document.getElementById('rFact').textContent }));
   check(card.shown && /school/i.test(card.title) && /OPEN THE HANGAR/.test(card.btn), `the school-done card leads to the HANGAR: ${JSON.stringify(card)}`);
   check(!card.fact, `no random fact on a card that leads somewhere: ${JSON.stringify(card.fact)}`);
+  if (!/OPEN THE HANGAR/.test(card.btn)) { await b.close(); console.log(`FAIL firsthour-real:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (the rest needs the lead)
   await p.click('#againBtn'); await p.waitForTimeout(1500);
   await shot('hangar');
   check(await p.evaluate(() => !document.getElementById('hangar').hidden && !!document.querySelector('#hFleet .freepick')), 'OPEN THE HANGAR opens it at the FREE part picker');
