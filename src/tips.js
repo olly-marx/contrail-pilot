@@ -76,6 +76,7 @@ export const TIPS = {
   'rail-project':      { say: 'Your first nature project is FREE. Pick it!' },
   'rail-project-done': { say: 'Projects bring animals back. Look out for them!' },
   'rail-nature-how':   { say: "Plant trees and fund projects to grow each land's nature." },
+  'rail-skip':         { say: 'Fly PAST this airport and land at the next one for a bonus!' },
   'rail-bonus':        { say: 'Bonus! Flying past airports makes each landing worth more.' },
   'rail-systems':      { say: 'New in the hangar: systems that help every flight!' },
   'rail-systems-tab':  { say: 'Tap SYSTEMS.' },

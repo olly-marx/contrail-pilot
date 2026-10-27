@@ -1338,6 +1338,11 @@ export class GameScene extends Phaser.Scene {
     else this.distText.setText(km(this.distancePx / WORLD.pxPerMetre));
 
     const toAirport = Math.round(this.nextAirport.worldX - this.distancePx);
+    // R12 (rails): the first flight after lesson 3, before the first airport: teach flying PAST it (the user, 2026-10-27).
+    if (isSeason2(this.save) && !this.school && this.state === 'playing' && toAirport > 150 && toAirport < 650) {
+      const md = this.save.missionsDone || [];
+      if (md.includes('L3') && !md.includes('L4')) this.explain('rail-skip', tip('rail-skip'));
+    }
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
     else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
     else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);   // ATC (eras): the call comes sooner
