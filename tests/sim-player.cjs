@@ -6,6 +6,9 @@
 //   s = 1: 0 storm crashes before 8,000 km in 30 skies.
 // Plain Node. PLANT=bob removes the bob from the safe band (must FAIL); PLANT=classic flies the old planning (must FAIL).
 // Run: node tests/sim-player.cjs
+// The skies are PINNED to the pre-0.12 storms (startGap 150, gapShrinkPerPair 1), where these thresholds were set: on the
+// live 0.12+ storms (wider gaps) PLANT=classic passed (found by the bug-fix chat, 2026-10-27). It tests the player.
+const PRE012 = { STORMS: { startGap: 150, gapShrinkPerPair: 1 } };
 (async () => {
   const { simulate } = await import('../src/sim/simulate.js');
   const P = await import('../src/sim/player.js');
@@ -13,7 +16,7 @@
   if (process.env.PLANT === 'bob') P.__plantNoBob();
   const plan = process.env.PLANT === 'classic' ? 'classic' : undefined;
   const N = process.env.GATE ? 5 : 20;   // GATE form (tools/gate.sh sets GATE=1): the first 5 skies; DEEP (no GATE) = the full 20 medians and 30 storm skies
-  const median = (skill, careful) => { const km = Array.from({ length: N }, (_, i) => simulate(comet, { pilot: 'player', skill, careful, plan, seed: i + 1, crashes: true }).km).sort((a, b) => a - b); return km[N >> 1]; };
+  const median = (skill, careful) => { const km = Array.from({ length: N }, (_, i) => simulate(comet, { pilot: 'player', skill, careful, plan, seed: i + 1, crashes: true, overrides: PRE012 }).km).sort((a, b) => a - b); return km[N >> 1]; };
   const fails = [], got = {};
   for (const careful of [true, false]) {
     const k = careful ? 'careful' : 'careless', m1 = median(1, careful), m75 = median(0.75, careful), m0 = median(0, careful);
@@ -24,7 +27,7 @@
   }
   let stormEarly = 0;
   const STORM = process.env.GATE ? N : 30;
-  for (let i = 1; i <= STORM; i++) { const r = simulate(comet, { pilot: 'player', skill: 1, care: 0, plan, seed: i, crashes: true, maxKm: 8000, overrides: { CLIMATE: { dangerLine: Infinity } } });
+  for (let i = 1; i <= STORM; i++) { const r = simulate(comet, { pilot: 'player', skill: 1, care: 0, plan, seed: i, crashes: true, maxKm: 8000, overrides: { ...PRE012, CLIMATE: { dangerLine: Infinity } } });
     if (r.end === 'crash' && /Storm/.test(r.reason)) stormEarly++; }
   if (stormEarly) fails.push(`s=1 crashed on a storm before 8,000 km in ${stormEarly} of ${STORM} skies (an expert never does)`);
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
