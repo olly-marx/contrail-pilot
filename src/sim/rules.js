@@ -371,7 +371,7 @@ export const RULES = {
     const st = { rects: [top, bottom], parts: [], flashUntil: 0, noFly: true };
     if (this.twistOn(HAZARDS.noFly.drift)) {   // era-4 twist: the gap drifts, first towards the side with more room
       const m = STORMS.marginTop + gap / 2;
-      st.drift = { c: gapY, gap, lo: m, hi: SKY_H - m, v: HAZARDS.noFly.drift.pxs * (gapY < SKY_H / 2 ? 1 : -1) };
+      st.drift = { c: gapY, gap, lo: m, hi: SKY_H - m, v: HAZARDS.noFly.drift.pxs * (gapY < SKY_H / 2 ? 1 : -1) * (HAZARDS.noFly.drift.away ? -1 : 1) };   // away: start towards LESS room (harder)
     }
     this.storms.push(st);
     this.stormCount++;
