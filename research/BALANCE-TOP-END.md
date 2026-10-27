@@ -83,11 +83,12 @@ reach bound ignores the bob and the tilt, so a pass is evidence, not proof. No g
 Rebase onto main after 0.12.0, then a full 2-shard `tools/test.sh`. Not run here: `tests/sim-bank`, `sim-masks` and
 `sim-rng-split` need the browser (playwright-core). The other 10 Node sim tests pass, `sim-equiv` byte-identical.
 
-> **Caveat (2026-10-27): these runs used the CLASSIC whole-world route network.** `SEASON2_ON` (src/cities.js) reads
-> `window.SEASON2`, which never exists in Node, so the progression sim never flew season 2's area-locked routes or its
-> S2 bridges. Route-driven numbers here (where crossings open, biodiversity, projects, the shop) are approximate until
-> re-run with season 2 on in Node. Crash and hazard rates do not depend on routes. Do not cite the route-driven numbers as
-> season-2 measurements; do not assume they are wrong either: they are unverified.
+> **Re-checked under season-2 routes (2026-10-27).** The first runs used the classic whole-world network (`SEASON2_ON`
+> was always false in Node; fixed in src/cities.js to read `globalThis.SEASON2`). Re-run on s4-tiers 2488b8b with season
+> 2 on (Western Europe start, area-locked routes, asserted): crossing 13,000 km gave the same P (s 0.9: 0.77 / 0.77; s 1.0:
+> 0.87 / 0.73); 18,000 km slightly higher (s 0.9: 0.07 / 0.27; s 1.0: 0.10 / 0.20; was 0 / 0.17 and 0 / 0.13), within the
+> ±0.08 noise. Longest empty shop run with S4's missions: s 0.75 7-14 (8-10 when it lands after 2 airports), s 0.8 5-9, s
+> 0.9 / 1.0 4-7. The conclusions below stand; the route-driven numbers are within noise of the season-2 ones.
 
 ## 6. Crossing lengths (user decisions, 2026-10-26)
 
