@@ -1,4 +1,4 @@
-// The season 2 hub on screen (S2 of research/PROPOSAL-HOME-MISSIONS.md): no tab bar, a BIG world you can spin, NEXT and
+// The season 2 hub on screen (S2 of research/PROPOSAL-HOME-MISSIONS.md): the bottom bar (back since Lola, 2026-10-27), a BIG world you can spin, NEXT and
 // TAKE OFF, tiles that open their screen with a HOME button back. Phone size.
 // Run: python3 -m http.server 8000 & node tests/hubscreen.cjs   (proved by planted defects)
 const { chromium } = require('playwright-core');
@@ -18,15 +18,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
     return p;
   };
   const box = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); if (!e || e.offsetParent === null) return null; const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; }, sel);
-  // 1. A new-ish pilot (lesson 1 done): hub, no tab bar, big globe, NEXT, TAKE OFF, the MISSIONS and HANGAR tiles.
+  // 1. A new-ish pilot (lesson 1 done): hub, the bottom bar, big globe, NEXT, TAKE OFF, the MISSIONS and HANGAR tiles.
   let p = await open(['L1']);   // season 2 lessons (S3): L1 reveals MISSIONS and HANGAR
   const st = await p.evaluate(() => ({ hub: document.getElementById('title').classList.contains('hub'), bar: !document.getElementById('tabbar').hidden,
     next: document.getElementById('hubNext').innerText, tiles: [...document.querySelectorAll('#hubTiles [data-go]')].map(t => t.dataset.go) }));
   const globe = await box(p, '#hubGlobe'), go = await box(p, '#goBtn');
-  check(st.hub && !st.bar, `season 2 shows the hub and no tab bar: ${JSON.stringify(st)}`);
+  check(st.hub && st.bar, `season 2 shows the hub with the bottom bar: ${JSON.stringify(st)}`);
+  const barTop = await p.evaluate(() => document.getElementById('tabbar').getBoundingClientRect().top);
   check(globe && globe.w >= 390 * 0.5 && globe.h >= 844 * 0.25, `the world is BIG: ${JSON.stringify(globe)}`);
   check(/NEXT/.test(st.next) && /icy air in daytime/.test(st.next), `NEXT names the next lesson (L2): "${st.next}"`);
-  check(go && go.y + go.h <= 844, `TAKE OFF is on screen without scrolling: ${JSON.stringify(go)}`);
+  check(go && go.y + go.h <= barTop, `TAKE OFF is on screen above the bottom bar, not under it: ${JSON.stringify({ go, barTop })}`);
   check(st.tiles.join() === 'missions,hangar', `after lesson 1: MISSIONS and HANGAR only: ${st.tiles}`);
   // 2. Spin: the globe turns.
   const f0 = await p.evaluate(() => JSON.stringify(document.getElementById('hubGlobe').__globe.frame()));
@@ -45,16 +46,19 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(nudged.want === nudged.got, `nudge turns by dx and stops the coast: want ${nudged.want.slice(0, 60)} got ${nudged.got.slice(0, 60)}`);
   // 3. A tile opens its screen; HOME comes back.
   await p.click('#hubTiles [data-go="hangar"]'); await p.waitForTimeout(400);
-  const inH = await p.evaluate(() => ({ hangar: !document.getElementById('hangar').hidden, back: !document.getElementById('hubBack').hidden, bar: !document.getElementById('tabbar').hidden }));
-  check(inH.hangar && inH.back && !inH.bar, `the HANGAR tile opens the hangar with a HOME button: ${JSON.stringify(inH)}`);
-  await p.click('#hubBack'); await p.waitForTimeout(300);
-  check(await p.evaluate(() => !document.getElementById('title').hidden && document.getElementById('hubBack').hidden), 'HOME goes back to the hub');
+  // The bottom bar is back on every menu screen (Lola, 2026-10-27), showing only what is revealed: after lesson 1,
+  // HOME, MISSIONS and HANGAR; not NATURE (lesson 2), PILOT or BOARDS (resting).
+  const inH = await p.evaluate(() => ({ hangar: !document.getElementById('hangar').hidden, bar: !document.getElementById('tabbar').hidden,
+    tabs: [...document.querySelectorAll('#tabbar [data-go]')].filter(b => !b.hidden).map(b => b.dataset.go) }));
+  check(inH.hangar && inH.bar && inH.tabs.join() === 'fly,missions,hangar', `the hangar shows the bottom bar with the revealed tabs only: ${JSON.stringify(inH)}`);
+  await p.click('#tabFly'); await p.waitForTimeout(300);
+  check(await p.evaluate(() => !document.getElementById('title').hidden && !document.getElementById('tabbar').hidden), 'HOME (on the bar) goes back to the hub, the bar stays');
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close();
   // 4. Brand new (no lesson done): no tiles at all.
   p = await open([]);
   check(await p.evaluate(() => document.querySelectorAll('#hubTiles [data-go]').length === 0), 'a brand-new pilot sees no tiles');
   await p.close(); await b.close();
-  console.log(fails.length ? `FAIL hubscreen:\n - ${fails.join('\n - ')}` : 'PASS hubscreen: hub, no tab bar, big spinnable world, NEXT, TAKE OFF on screen, tiles by reveal, HOME back');
+  console.log(fails.length ? `FAIL hubscreen:\n - ${fails.join('\n - ')}` : 'PASS hubscreen: hub + bottom bar (revealed tabs only), big spinnable world, NEXT, TAKE OFF on screen, tiles by reveal, HOME back');
   process.exit(fails.length ? 1 : 0);
 })();

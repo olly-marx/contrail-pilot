@@ -8,7 +8,7 @@
 import { tip } from './tips.js';
 import { FEATURES } from './config.js';
 // Tab-bar targets and what replaces them on the season 2 hub (the tiles; HOME goes back to the hub).
-const HUB_TARGETS = { '#tabHangar': '#hubTiles [data-go="hangar"]', '#tabNature': '#hubTiles [data-go="nature"]', '#tabFly': '#hubBack' };
+const HUB_TARGETS = { '#tabHangar': '#hubTiles [data-go="hangar"]', '#tabNature': '#hubTiles [data-go="nature"]' };   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf } from './upgrades.js';
 import { getPilot } from './online.js';
@@ -51,7 +51,7 @@ export class Tour {
     // Season 2: NATURE's first visit after its lesson (research/FLOW-FIRST-HOUR.md 2b): two bubbles.
     if (FEATURES.season2 && where === 'nature' && !this.done('nature')) return this.run('nature', [
       { target: '#wProjects', text: tip('tour-projects'), ok: true },
-      { target: '#hubBack', text: tip('tour-lookout'), tap: true }]);
+      { target: '#tabFly', text: tip('tour-lookout'), tap: true }]);
     if (where === 'title' && (this.done('name') || getPilot())) {
       // Several can open at once (3 at the 3rd landing): one walk-through for all of a hangar tab's.
       const fresh = LINES.filter(l => unlocked(this.save, l) && !this.save.shownLines.includes(l.id));
@@ -79,7 +79,7 @@ export class Tour {
     return [
       { skipIf: () => !$('hangar').hidden, target: '#hubTiles [data-go="hangar"]', text: tip('tour-hangar'), tap: true },   // already inside (OPEN THE HANGAR)
       { area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true, scroll: true },   // scrolled into view: the bubble was cut off at the top
-      { target: '#hubBack', text: tip('tour-home'), tap: true },
+      { target: '#tabFly', text: tip('tour-home'), tap: true },
     ];
   }
 

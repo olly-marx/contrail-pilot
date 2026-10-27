@@ -70,7 +70,7 @@ const W = 390, H = 844;
   check(await p.evaluate(() => !document.getElementById('hangar').hidden && !!document.querySelector('#hFleet .freepick')), 'OPEN THE HANGAR opens it at the FREE part picker');
   // Leave WITHOUT picking: TAKE OFF must be locked and NEXT must lead back.
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; game.registry.get('ui').tour.busy = false; } });   // (the guided tour's dim layer; the test leaves on purpose)
-  await p.click('#hubBack'); await p.waitForTimeout(500);
+  await p.click('#tabFly'); await p.waitForTimeout(500);
   const hub = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, next: document.getElementById('hubNext').innerText, tile: !!document.querySelector('#hubTiles [data-go="hangar"]') }));
   check(hub.locked && /free upgrade/i.test(hub.next) && hub.tile, `skipping the pick: TAKE OFF locked, NEXT leads to the hangar, the tile is there: ${JSON.stringify(hub)}`);
   await shot('hub-locked');
@@ -78,7 +78,7 @@ const W = 390, H = 844;
   await p.click('#hubTiles [data-go="hangar"]', { force: true }); await p.waitForTimeout(800);   // (it pulses: a finger does not wait for it to stand still)
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; game.registry.get('ui').tour.busy = false; } });
   const free = await p.$('#hFleet .freepick .btn.free'); if (free) { await free.click(); await p.waitForTimeout(500); }
-  await p.click('#hubBack'); await p.waitForTimeout(500);
+  await p.click('#tabFly'); await p.waitForTimeout(500);
   check(await p.evaluate(() => !document.getElementById('goBtn').disabled), 'after the pick TAKE OFF works');
   await p.click('#goBtn');
   const crashed = await playUntil(v => v.results, 90, false);   // no taps while playing: it falls and crashes
