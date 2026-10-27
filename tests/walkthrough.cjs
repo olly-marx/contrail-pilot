@@ -106,8 +106,15 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.evaluate(() => game.registry.get('ui').showTitle());
   await fly(4, { tag: '4', vals: { airportsSkipped: 1 } }); await shot('results-flight4'); await p.click('#againBtn'); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(400);
-  const n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
-  check(/tree parcels/i.test(n5), `lesson 5 first asks for tree parcels in NATURE: "${n5}"`);
+  // Lesson 5 needs parcels; with prizes unclaimed and no crystals, NEXT first says to claim them (audit fix 2), then parcels.
+  let n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
+  if (/Claim your prizes/i.test(n5)) {
+    await p.click('#hubNext'); await p.waitForTimeout(400);
+    const all = await p.$('#mPrizes .claim.all') || await p.$('#mPrizes .claim'); if (all) { await all.click(); await p.waitForTimeout(400); }
+    await p.click('#tabFly'); await p.waitForTimeout(400);
+    n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
+  }
+  check(/tree parcels/i.test(n5), `lesson 5 asks for tree parcels in NATURE (after claiming the prizes): "${n5}"`);
   await shot('hub-lesson5');
   // Flight 5 (lesson 5: drop a tree) ends the lessons and opens the area ladder (S4): the MISSIONS screen is now TIER 1 of 3, no star yet,
   // and the day's trio sits under "Today".
