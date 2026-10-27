@@ -1284,10 +1284,19 @@ export class GameScene extends Phaser.Scene {
     const t = this.add.text(Math.round(x), Math.round(y), text,
       { fontFamily: FONT, fontSize: `${size}px`, color: colour, stroke: '#000', strokeThickness: 3, align: 'center' }).setOrigin(0.5);
     for (let fs = size; t.width > WIDTH - 16 && fs > 6;) t.setFontSize(--fs);   // 0.11.3: a long line (a biome name) shrinks to fit the screen
+    // A pop-up at the top starts BELOW the HUD stack (mission line + next-airport line), allowing for its 1.1 s rise
+    // (vy -22 = ~24 px): the audit, 2026-10-27, after a player's overlapping HUD texts.
+    if (y < 110) { const hud = this.hudBottom(); t.y = Math.max(t.y, hud + t.height / 2 + 26); }
     // Keep popups on screen.
     t.x = Phaser.Math.Clamp(t.x, Math.min(t.width / 2 + 24, WIDTH / 2), WIDTH - Math.min(t.width / 2 + 24, WIDTH / 2));   // clear of the side bars
     this.fxLayer.add(t);
     this.popups.push({ t, life: 1.1, vy: -22 });
+  }
+
+  // The lowest pixel of the HUD's text stack at the top (the next-airport line under the mission line).
+  hudBottom() {
+    const live = [this.missionText, this.nextText].filter(t => t && t.visible && t.text);
+    return live.length ? Math.max(...live.map(t => t.y + t.height)) : 40;
   }
 
   updatePopups(dt) {
