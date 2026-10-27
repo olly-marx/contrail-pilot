@@ -25,6 +25,7 @@ import { claim } from '../rewards.js';
 import { city } from '../route.js';
 import { SEASON2_ON } from '../cities.js';
 import { SEASON } from '../season.js';
+import { AREAS, areaOf } from '../areas.js';
 import { available, offerCheck, offerCtx, completeCrossing } from '../crossings.js';
 import { onSave as missionsOnSave } from '../missions2.js';
 
@@ -105,8 +106,10 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
     // flight from its departure city, so that area's best flight, missions and projects build up (its gate counts only
     // its own area). Without it the player flies on from wherever it last landed.
     if (s2 && pursue && !save.flyCrossing) {
-      const front = available(save).sort((a, b) => b.era - a.era || a.km - b.km)[0];
-      if (front && city(front.from)) save.city = front.from;
+      // Switch only when the frontier is in ANOTHER area, and then to that area's own start city: the missions are filled
+      // from the start city, so hopping between cities would reset their progress (measured: crossing 1 at flight 49-163).
+      const front = available(save).sort((a, b) => b.era - a.era || a.km - b.km)[0], k = front && areaOf(front.from);
+      if (k && k !== areaOf(save.city) && AREAS[k]) save.city = AREAS[k].start;
     }
     if (s2) {
       c2 = available(save).find(c => { const ctx = offerCtx(save, c); if (PROG_PLANTS.nostars) delete ctx.missionsDone; return offerCheck(c, ctx).offered; }) || null;
