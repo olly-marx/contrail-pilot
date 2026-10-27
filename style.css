@@ -629,3 +629,4 @@ h2.sub { margin-top: -4px; }
 .next-pic { display: block; width: 100%; max-width: 240px; margin: 4px auto 0; image-rendering: pixelated; }
 .mrow.daily { background: #e6f4ff; }
 .freeup.tappable { cursor: pointer; text-decoration: underline; }
+.btn.claim.pulse { animation: hubpulse 0.9s ease-in-out infinite; }

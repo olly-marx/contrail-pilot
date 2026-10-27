@@ -16,9 +16,11 @@
   check(M.next(s).key === 'L1' && !M.revealed(s, 'hangar'), `a new pilot starts on lesson 1, hangar shut (${M.next(s).key})`);
   M.onFlight(s, landed());
   check(s.missionsDone.includes('L1') && M.revealed(s, 'hangar') && M.revealed(s, 'missions') && !M.revealed(s, 'nature'), `L1 done opens HANGAR + MISSIONS only: ${s.missionsDone}`);
-  M.onFlight(s, landed({ nightOwl: true }));
+  M.onFlight(s, landed({ dodges: 1 }));
   check(!s.missionsDone.includes('L3'), 'lessons go in order: L3 is not done before L2');
-  for (const r of [{ sunBlocked: 3 }, { nightOwl: true }, { airportsSkipped: 1 }, { planted: 1 }]) M.onFlight(s, landed(r));
+  const l3 = { ...s, missionsDone: [...s.missionsDone, 'L2'] }; M.onFlight(l3, landed({ nightOwl: true }));
+  check(!l3.missionsDone.includes('L3'), 'L3 is one night DODGE now: a clean night alone does not complete it (the whole night is a tier star)');
+  for (const r of [{ sunBlocked: 3 }, { dodges: 1 }, { airportsSkipped: 1 }, { planted: 1 }]) M.onFlight(s, landed(r));
   check(M.lessonsLeft(s).length === 0 && M.revealed(s, 'world'), `all 5 lessons done: ${s.missionsDone}`);
   // 2. Off-flight: funding a project completes "Fund a nature project here" at once.
   s.habitat = { woodland: ['deadwood'] };
@@ -59,6 +61,11 @@
   check(M.revealed(afterSchool, 'hangar') && H.hubView(afterSchool).next.hangar, `after the school landing (no lesson done) the hangar is revealed and NEXT leads there: ${JSON.stringify(H.hubView(afterSchool).next)}`);
   const picked = { ...afterSchool, freeUpgrade: false };   // the free part picked, flight 1 then crashed: L1 still undone
   check(M.revealed(picked, 'hangar'), 'once the free part was given the hangar stays revealed (a crash on flight 1 must not hide it)');
+  // 10c. Lesson 5 needs tree parcels; lesson prizes only pay once CLAIMED (the audit, 2026-10-27): with prizes waiting and
+  // too few seeds/crystals, NEXT says to claim them (not "buy parcels", which a child could not do).
+  const l5 = { ...base(), missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, unclaimed: [{ key: 'mission:L4', seeds: 70, crystals: 1 }] };
+  check(H.hubView(l5).next.claims && /Claim/.test(H.hubView(l5).next.title), `lesson 5, prizes unclaimed, parcels unaffordable: NEXT = claim (${JSON.stringify(H.hubView(l5).next)})`);
+  check(H.hubView({ ...l5, unclaimed: [], seeds: 100, crystals: 5 }).next.nature, 'with the money in the bank: NEXT = buy parcels in NATURE');
   // 10. A free upgrade leads into the hangar.
   const f = { ...base(), missionsDone: ['L1'], freeUpgrade: true };
   check(H.hubView(f).next.hangar && H.hubView(f).next.title === H.FREE_NEXT, `free upgrade: NEXT = "${H.FREE_NEXT}" (${JSON.stringify(H.hubView(f).next)})`);

@@ -25,7 +25,7 @@ const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS)
   return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
-import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible } from './missions2.js';
+import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
@@ -157,7 +157,8 @@ export class UI {
     el.hidden = !s.tutorialDone || !list.length;
     if (el.hidden) { el.innerHTML = ''; return; }
     const pic = u => (u.kind === 'badge' ? `<img class="prize-medal" src="${medal(u.id, u.tier)}" alt="">` : '<i class="mi mi-seed"></i>');
-    el.innerHTML = `<p class="label">Prizes to claim</p>` + list.map(u => `<div class="claim-row"><span>${pic(u)}${u.label}</span>${prize(u)}<button class="btn claim" data-key="${u.key}" type="button">CLAIM</button></div>`).join('')
+    const pulse = isSeason2(s) && lessonsLeft(s).length ? ' pulse' : '';   // during the lessons: CLAIM pulses (an unclaimed prize can stall lesson 5)
+    el.innerHTML = `<p class="label">Prizes to claim</p>` + list.map(u => `<div class="claim-row"><span>${pic(u)}${u.label}</span>${prize(u)}<button class="btn claim${pulse}" data-key="${u.key}" type="button">CLAIM</button></div>`).join('')
       + (list.length > 1 ? '<button class="btn claim all" data-key="" type="button">CLAIM ALL</button>' : '');
     el.querySelectorAll('.claim').forEach(btn => btn.onclick = () => {
       const paid = claim(s, btn.dataset.key || null);
@@ -220,7 +221,7 @@ export class UI {
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
     $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>${v.next.hangar ? '<img class="next-pic" src="assets/ui/lesson-hangar.png" alt="">' : ''}` : '';   // the free part: a picture of where to go
     const toHangar = v.next && v.next.hangar;   // a free upgrade LEADS into the hangar (the user, 2026-10-27)
-    $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : v.next && v.next.nature ? () => { sfx.flap(); this.go('nature'); } : null;
+    $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : v.next && v.next.nature ? () => { sfx.flap(); this.go('nature'); } : v.next && v.next.claims ? () => { sfx.flap(); this.go('missions'); } : null;
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
     $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;
     $('goBtn').textContent = toHangar ? 'PICK YOUR FREE PART FIRST' : s.tutorialDone ? 'TAKE OFF' : 'START';
