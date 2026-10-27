@@ -1,5 +1,6 @@
 // Flight school: a guided first flight. Each step says something; "tap" steps freeze the game
 // until the player taps, "do" steps let them fly until they have done the thing.
+import { tip } from './tips.js';
 import { WIDTH, HEIGHT, GROUND_H, PLANE, STORMS, DAYNIGHT, AIRPORT } from './config.js';
 import { writeSave } from './save.js';
 
@@ -27,30 +28,30 @@ export class School {
     // (`pic`, an assets/ui/lesson-*.png), then the player tries it with only that thing on screen.
     const lesson = (pic, say, setup) => ({ say, tap: true, pic, setup });
     return [
-      { say: 'Hi pilot! I am Captain Cumulus.<br><b>Press and HOLD</b> the screen to take off!', done: () => s.state === 'playing' },
-      lesson('lesson-tap', '<b>Tap</b> the screen and the plane goes <b>up</b>.<br>Stop tapping and it goes <b>down</b>.'),
-      { say: 'Tap now!', tap: true, flapOnTap: true },
-      { say: 'Keep tapping to stay in the sky!', done: () => this.t > 2.5 },
-      lesson('lesson-storm', '<b>Storm clouds</b> come in pairs. Fly through the <b>gap</b> between them.'),
-      { say: 'Storm ahead! Through the gap.',
+      { say: tip('school-hold'), done: () => s.state === 'playing' },
+      lesson('lesson-tap', tip('lesson-tap')),
+      { say: tip('school-tapnow'), tap: true, flapOnTap: true },
+      { say: tip('school-keep'), done: () => this.t > 2.5 },
+      lesson('lesson-storm', tip('lesson-storm')),
+      { say: tip('school-storm'),
         setup: () => { this.storm = stormAt(Phaser.Math.Clamp(s.plane.y + 6, 120, SKY_H - 120)); },
         done: () => this.storm.rects[0].x + STORMS.width < s.plane.x },
-      lesson('lesson-seed', '<b>Seeds</b> float in the sky. Fly into them to grab them.<br>You only <b>keep</b> them if you <b>land safely</b>. Crash, and they are gone.'),
-      { say: 'Seeds ahead! Grab them.',
+      lesson('lesson-seed', tip('lesson-seed')),
+      { say: tip('school-seeds'),
         setup: () => { const y = Phaser.Math.Clamp(s.plane.y, 80, SKY_H - 100); [0, 40, 80].forEach(dx => s.addToken(ahead() + dx, y, false)); },
         done: () => s.tokens.length === 0 },
-      lesson('lesson-day', 'Some air up here is <b>icy</b>. Fly through it and your plane leaves a cloud line: a <b>contrail</b>.<br>In <b>sunshine</b>, the contrail can make <b>shade</b>. Shade <span class="cool">cools</span> the Earth a little.'),
-      { say: 'Icy air ahead! <b>Fly INTO it</b>.',
+      lesson('lesson-day', tip('lesson-day')),
+      { say: tip('school-icy'),
         setup: () => { this.issr = this.bigIssr(); },
         // Missed it? Put more icy air right in front of the plane, so this step can always be done.
         retry: () => { if (s.contrails.length > 25) this.madeDay = true;
-          if (!this.madeDay && this.issr.x + this.issr.width < s.plane.x) { this.issr = this.bigIssr(); this.ui.coach('Missed it! That is OK. Here is more icy air: <b>fly INTO it</b>!', false); } },
+          if (!this.madeDay && this.issr.x + this.issr.width < s.plane.x) { this.issr = this.bigIssr(); this.ui.coach(tip('school-missed'), false); } },
         // Done once you are OUT the other side and have had a second to see the contrail behind you.
         // (Contrail squares scroll off screen fast, so remember that it was made.)
         done: () => { if (!this.madeDay || s.wasInIssr) { this.outT = 0; return false; } this.outT = (this.outT || 0) + 1 / 60; return this.outT > 1.2; } },
-      { say: 'You made a <b>contrail</b>! It is making <b>shade</b> on the ground below.<br>Shade pulls the Earth bar (right) <b>down</b>. Down = <span class="cool">cooler</span>.', tap: true, high: true,
+      { say: tip('school-shade'), tap: true, high: true,
         setup: () => s.hud.highlight(true) },
-      { say: 'The sun is setting... <b>Keep flying</b> through the storms!',
+      { say: tip('school-dusk'),
         setup: () => {
           s.hud.highlight(false);
           this.holdClock = false; this.darkT = 0; s.clock = DAYNIGHT.daySeconds - DAYNIGHT.blendSeconds - 5;   // dusk in ~5 s, dark ~4 s later (2026-10-23: was -3 with a 6 s dusk: the same 9 s to the dark)
@@ -62,8 +63,8 @@ export class School {
           if (s.isDay || s.nightAmount() <= 0.95 || this.dusk.length < 2 || !this.dusk.every(st => st.rects[0].x + STORMS.width < s.plane.x)) { this.darkT = 0; return false; }
           this.darkT = (this.darkT || 0) + 1 / 60; return this.darkT > 0.6;
         } },
-      lesson('lesson-night', 'Now it is <b>night</b>. There is no sun to block. A contrail is like a <b>lid on a pot</b>: heat cannot get out. The Earth gets <span class="warm">HOTTER</span>.<br>So at night, fly <b>above or below</b> icy air.<br>In real life, contrails <b>warm</b> the Earth more than they cool it, so dodging these matters most.'),
-      { say: 'Night! Icy air ahead: fly <b>above or below</b> it.',
+      lesson('lesson-night', tip('lesson-night')),
+      { say: tip('school-night'),
         setup: () => {
           s.issrs.forEach(i => { i.view.maskGfx.destroy(); i.view.destroy(); }); s.issrs = [];   // clear the day's icy air first
           this.holdClock = true;   // stay night for the dodge
@@ -73,11 +74,11 @@ export class School {
         },
         done: () => this.issr.x + this.issr.width < s.plane.x - 10 },
       { say: () => (s.heatTrapped - this.night > 0.5
-          ? 'Oops, a <b>night contrail</b>! See the <span class="warm">red</span>? That is heat trapped. Next time fly around it.'
-          : 'Great flying! <b>No night contrail.</b> The Earth says thank you!'), tap: true },
-      lesson('lesson-heat', 'Watch the <b>Earth bar</b>! CO2 and night contrails fill it <span class="warm">red</span>. If it reaches the <b>top</b>, the Earth is too hot: your flight <b>ends</b> and you lose your seeds.<br>Shade and trees bring it down.'),
-      lesson('lesson-land', 'Morning! An <b>airport</b> is coming. Fly <b>low</b> as you reach the grey runway. At the end, the plane <b>lands itself</b>.', () => { this.holdClock = true; s.clock = 2; }),
-      { say: 'Get <b>low</b> just before the runway!',
+          ? tip('school-oops')
+          : tip('school-great')), tap: true },
+      lesson('lesson-heat', tip('lesson-heat')),
+      lesson('lesson-land', tip('lesson-land'), () => { this.holdClock = true; s.clock = 2; }),
+      { say: tip('school-low'),
         setup: () => {
           this.holdClock = true; s.clock = 2;
           s.nextAirport = { worldX: s.distancePx + 520, name: s.path[1], spawned: false };   // flight school: LONDON to PARIS (season 2: your own first hop)

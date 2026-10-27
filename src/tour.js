@@ -5,6 +5,7 @@
 //   new:    whenever an upgrade line opens that you have not been shown: HANGAR, its card, (i).
 // Saves with seenTips ['*'] or tours ['*'] (automated tests) never see a tour. save.tours: tours done;
 // save.shownLines: upgrade lines already pointed out.
+import { tip } from './tips.js';
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf } from './upgrades.js';
 import { getPilot } from './online.js';
@@ -51,30 +52,30 @@ export class Tour {
   // ---------- the tours ----------
   nameSteps() {
     return [
-      { target: '#tabPilot', text: 'Welcome, pilot! First, choose your <b>pilot name</b>. Tap <b>PILOT</b>.', tap: true },
-      { target: '#pFirst', text: 'Type your <b>first name</b> here.', until: () => /^[A-Za-z]{2,12}$/.test($('pFirst').value), focus: true },
-      { target: '#pWords', text: 'Now pick a <b>word</b> to go with it.', until: () => !!(this.ui.pilot && this.ui.pilot.draft.word) },
-      { target: '#pSave', text: 'Tap <b>SAVE</b>!', tap: true },
-      { target: '#pName', text: 'Saving...', until: () => !!getPilot() || /internet|different/.test($('pMsg').textContent), wait: true },
-      { skipIf: () => !!getPilot() || !/different/.test($('pMsg').textContent), target: '#pEdit', text: 'Try a different name, please, then tap <b>SAVE</b>.', until: () => !!getPilot() || /internet/.test($('pMsg').textContent) },
-      { skipIf: () => !!getPilot(), target: '#pMsg', text: 'No internet right now. You can choose your name later in <b>PILOT</b>.', ok: true, end: true },
-      { target: '#tabBoards', text: 'Great name! Now tap <b>BOARDS</b>.', tap: true },
-      { target: '#bList', text: 'These are the <b>best pilots</b>. Land long flights to get on the board!', ok: true },
-      { target: '#tabFly', text: 'Ready? Tap <b>FLY</b>.', tap: true },
+      { target: '#tabPilot', text: tip('tour-hello'), tap: true },
+      { target: '#pFirst', text: tip('tour-first'), until: () => /^[A-Za-z]{2,12}$/.test($('pFirst').value), focus: true },
+      { target: '#pWords', text: tip('tour-word'), until: () => !!(this.ui.pilot && this.ui.pilot.draft.word) },
+      { target: '#pSave', text: tip('tour-save'), tap: true },
+      { target: '#pName', text: tip('tour-saving'), until: () => !!getPilot() || /internet|different/.test($('pMsg').textContent), wait: true },
+      { skipIf: () => !!getPilot() || !/different/.test($('pMsg').textContent), target: '#pEdit', text: tip('tour-retry'), until: () => !!getPilot() || /internet/.test($('pMsg').textContent) },
+      { skipIf: () => !!getPilot(), target: '#pMsg', text: tip('tour-offline'), ok: true, end: true },
+      { target: '#tabBoards', text: tip('tour-boards'), tap: true },
+      { target: '#bList', text: tip('tour-best'), ok: true },
+      { target: '#tabFly', text: tip('tour-fly'), tap: true },
     ];
   }
 
   hangarSteps() {
     const free = () => !!this.save.freeUpgrade;
     return [
-      { target: '#tabHangar', text: 'Let\'s look round your <b>hangar</b>. Tap <b>HANGAR</b>.', tap: true },
-      { target: '.treebank', text: 'These are your <b>seeds</b> and <b>ice crystals</b>. Spend them on upgrades.', ok: true },
-      { target: '#hFleet .ftimeline', text: 'New <b>eras</b> open as you fly: new planes, systems and gadgets from real history!', ok: true },
-      { target: '#hFleet .ftabs', text: 'Your <b>plane</b>, the <b>systems</b> that help every flight, and <b>gadgets</b>.', ok: true },
-      { skipIf: () => !free(), area: '#hFleet', target: '#hFleet .btn.free', text: 'You got a <b>FREE upgrade</b>! Tap any <b>FREE!</b> button to choose one.', tap: true },
-      { target: '#tabNature', text: 'Trees and wild places are in <b>NATURE</b>. Tap it!', tap: true },
-      { target: '#wProjects', text: 'Help nature here, and wild animals will come back. Spot them on your flights!', ok: true },
-      { target: '#tabFly', text: 'Ready? Tap <b>FLY</b>!', tap: true },
+      { target: '#tabHangar', text: tip('tour-hangar'), tap: true },
+      { target: '.treebank', text: tip('tour-bank'), ok: true },
+      { target: '#hFleet .ftimeline', text: tip('tour-eras'), ok: true },
+      { target: '#hFleet .ftabs', text: tip('tour-tabs'), ok: true },
+      { skipIf: () => !free(), area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true },
+      { target: '#tabNature', text: tip('tour-nature'), tap: true },
+      { target: '#wProjects', text: tip('tour-projects'), ok: true },
+      { target: '#tabFly', text: tip('tour-fly'), tap: true },
     ];
   }
 
@@ -82,9 +83,9 @@ export class Tour {
     const line = lines[0], tab = tabOf(line), card = `${tab === 'nature' ? '#wTrees' : '#hUpgrades'} [data-info="${line.id}"]`;
     const names = lines.map(l => `<b>${l.name}</b>`), list = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
     return [
-      { target: tab === 'nature' ? '#tabNature' : '#tabHangar', text: `Something <b>NEW</b> in the hangar! Tap <b>${tab === 'nature' ? 'NATURE' : 'HANGAR'}</b>.`, tap: true },
-      { target: card, text: `<b>NEW:</b> ${list}!<br>Tap <b>i</b> to find out what ${lines.length > 1 ? 'this one does' : 'it does'}.`, tap: true, scroll: true },
-      { target: '#iClose', text: 'Tap <b>OK</b> when you have read it.', tap: true, after: () => { this.save.shownLines.push(...lines.map(l => l.id)); writeSave(this.save); } },
+      { target: tab === 'nature' ? '#tabNature' : '#tabHangar', text: tip('tour-new', tab === 'nature' ? 'NATURE' : 'HANGAR'), tap: true },
+      { target: card, text: tip('tour-newline', list), tap: true, scroll: true },
+      { target: '#iClose', text: tip('tour-ok'), tap: true, after: () => { this.save.shownLines.push(...lines.map(l => l.id)); writeSave(this.save); } },
     ];
   }
 

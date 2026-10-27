@@ -2,6 +2,7 @@
 // mixes them in (Object.assign(GameScene.prototype, RULES)) and the sim engine's world does the same, so both run
 // exactly this code. `this` is the flight. No Phaser here: drawing and sound go through hooks the world leaves empty.
 import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO } from '../config.js';
+import { tip } from '../tips.js';
 import { GAP_HINT, FORECAST, FARES, syncFleet } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
@@ -241,13 +242,13 @@ export const RULES = {
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
       this.airportIndex++;
       this.airportsSkipped++;
-      this.explain('x-multiplier', `You flew past ${na.name}! That is fine: the next airport is ${km(this.legKm(this.airportIndex))} ahead.<br>Your <b>landing bonus</b> is now <b>x1.5</b> (top left). Each airport you pass makes it bigger. But crash, and you lose ALL your seeds!`, 'lesson-bonus');
+      this.explain('x-multiplier', tip('x-multiplier'), 'lesson-bonus');
       this.nextAirport = this.airportAhead(this.airportIndex, na.worldX);
       this.missedSign = { text: `Passed ${na.name}. Next: ${this.nextAirport.name}`, until: this.gameTime + 4000 };
     }
     const toAirport = this.nextAirport.worldX - this.distancePx;
     if (this.school) return;   // flight school places everything itself
-    if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', 'Airport ahead!', 'Get low as you reach the grey runway: the plane lands itself. Or fly on for more seeds!', 'good', 3.5);
+    if (toAirport < 400 && toAirport > 0 && !this.school) this.ui.tipOnce('airport', tip('airport'), '', 'good', 3.5);
 
     // Soil plots come on schedule whether or not you have parcels left (no parcels: no soil is shown), so dropping
     // parcels never shifts the physics random stream, and so never changes the sky (2026-10-26; it used to stop the
@@ -282,7 +283,7 @@ export const RULES = {
       if (this.rand() < T.chance * this.kit.gapTurb) {   // ATC radar: calmer skies
         const h = this.between(T.minH, T.maxH);
         this.turbs.push({ x: WIDTH + 10, w: this.between(T.minW, T.maxW), y: this.between(30, SKY_H - 60 - h), h });
-        this.newHazard('turbulence', 'NEW HAZARD: TURBULENCE', 'Wavy lines = bumpy air! Inside it your plane gets pushed about and your taps work a little late. Fly over or under it!');
+        this.newHazard('turbulence');
       }
       this.nextTurbAt += T.every;
     }
@@ -305,7 +306,7 @@ export const RULES = {
       if (!this.school && this.kit.safCans && safHelps && (firstSaf || r < POWERUPS.safChance)) {
         this.safOffered = true;
         this.addPower('saf', WIDTH + 10, pathY());
-        this.ui.tipOnce('safAhead', 'SAF ahead!', 'Grab the green fuel can: cleaner fuel for a while.', 'good', 3);
+        this.ui.tipOnce('safAhead', tip('safAhead'), '', 'good', 3);
       }
       else if (!this.school && this.kit.autoChance && r > 1 - this.kit.autoChance) this.addPower('auto');   // 0.10.2: only once the Autopilot gadget is bought
     }
@@ -353,7 +354,7 @@ export const RULES = {
     this.storms.push(st);
     this.stormCount++;
     this.showNoFly(st);
-    this.newHazard('noFly', 'NEW HAZARD: NO-FLY ZONE', 'Red stripes mean planes are not allowed there, like near airports or big events. Squeeze through the gap: touching it ends your flight!');
+    this.newHazard('noFly');
   },
   addRunway(worldX, name) {
     const rw = { x: PLANE.x + worldX - this.distancePx, worldX, name, parts: [] };   // x: the runway's start on screen (the record; its pictures follow it)
@@ -448,11 +449,11 @@ export const RULES = {
     const f = { birds, x, y, half: FLOCK_HALF, phase: this.rand() * 6 };
     this.birds.push(f);
     this.showFlock(f);
-    this.newHazard('birds', 'NEW HAZARD: BIRDS', 'A flock of birds is flying at you! Fly over or under them. Hitting a bird ends your flight.');
+    this.newHazard('birds');
   },
-  newHazard(id, title, body) {
+  newHazard(id) {
     if (this.school) return;
-    if (!this.explain(`hazard-${id}`, `<b>${title}</b><br>${body}`, `lesson-${id.toLowerCase()}`)) {
+    if (!this.explain(`hazard-${id}`, tip(`hazard-${id}`), `lesson-${id.toLowerCase()}`)) {
       if (!this.hazardSeen) this.hazardSeen = {};
       if (!this.hazardSeen[id]) { this.hazardSeen[id] = true; this.popup(WIDTH / 2, 84, `${{ noFly: 'No-fly zone', turbulence: 'Turbulence', birds: 'Birds' }[id]} ahead!`, '#ff8080'); }   // y 84: below the 2-line mission text
     }
@@ -560,7 +561,7 @@ export const RULES = {
       if (this.airborne && this.stateTime >= TAKEOFF.seconds) {
         this.setState('playing'); this.plane.vy = 0;
         if (!this.school) { this.popup(WIDTH / 2, SKY_H / 2, 'Now TAP to fly!', '#ffe15a', 16); this.startGrace(); }
-        if (!this.school) this.explainWhenClear('x-bars', 'Two bars to watch:<br><b>Left: CO2</b> your plane makes right now.<br><b>Right: the Earth</b>. Red = hotter, blue = cooler. Keep it low!', 'lesson-bars');
+        if (!this.school) this.explainWhenClear('x-bars', tip('x-bars'), 'lesson-bars');
       }
     } else if (this.state === 'playing' && (this.inGrace() || this.onAutopilot())) {
       const auto = this.onAutopilot();
@@ -587,7 +588,7 @@ export const RULES = {
     if (forestFull && !this.forestFullSaid) {
       this.forestFullSaid = true;
       this.popup(WIDTH / 2, SKY_H - 24, 'Your forest is full of carbon!', '#ffe15a', 10);
-      this.ui.tipOnce('forestFull', 'Forest full!', 'A forest can only soak up so much CO2 in one flight. Plant ALL 5 kinds of tree to make it hold much more!', 'good', 4.5);
+      this.ui.tipOnce('forestFull', tip('forestFull'), '', 'good', 4.5);
     }
     for (const t of this.trees) {
       const age = this.elapsed - t.plantedAt;
@@ -657,7 +658,7 @@ export const RULES = {
     if (this.inGrace() || this.onAutopilot()) return out;   // the breather and the autopilot pick-up: nothing can crash you
     if (this.heat >= CLIMATE.dangerLine * 0.75 && !this.warnedHot) {
       this.warnedHot = true;
-      if (this.explain('x-hot', 'The Earth is getting <b>too hot</b>! If the red bar on the right reaches the top, your flight is over.<br>Land soon, make <b>shade</b> in the daytime, or stay out of icy air at night.', 'lesson-hot')) return out;
+      if (this.explain('x-hot', tip('x-hot'), 'lesson-hot')) return out;
       this.ui.toast('Planet overheating!', this.isDay ? 'Make contrails in the sunshine, or land soon!' : 'Stay out of icy air at night, or land soon!', 'bad', 3);
     }
     if (this.heat >= CLIMATE.dangerLine) { this.finish({ reason: 'The planet got too hot!\nFlight grounded.', sound: 'overheat' }); return out; }
@@ -1064,6 +1065,6 @@ export const RULES = {
     this.showParcel(p);
     this.speciesIdx++;
     this.playSound('flap');
-    this.ui.tipOnce('firstDrop', 'Parcel away!', 'It floats down AND forwards. Drop it before the brown soil to plant a tree!', 'good', 3.5);
+    this.ui.tipOnce('firstDrop', tip('firstDrop'), '', 'good', 3.5);
   },
 };
