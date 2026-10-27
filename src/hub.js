@@ -6,6 +6,9 @@ import { current as currentMission, MISSIONS } from './missions.js';
 import { flightPath } from './route.js';
 import { wordCount } from './tips.js';
 import * as M2 from './missions2.js';
+import { lineById } from './upgrades.js';
+// The first Tree Planting level (lesson 5 needs it): affordable with the seeds and crystals in the bank?
+const canAffordParcels = save => { const l = lineById('trees').levels[0]; return (save.seeds || 0) >= l.cost && (save.crystals || 0) >= (l.crystals || 0); };
 
 export const HUB_WORDS = 25;
 // Which finished mission reveals each tile (PROPOSAL-12/HOME-MISSIONS reveal order: HANGAR after lesson 1, NATURE after
@@ -24,6 +27,7 @@ export function hubView(save, { badges = {}, crossingReady = null } = {}) {
   const m = s2 ? M2.next(save) : currentMission(save), mid = m && (m.key || m.id);
   const next = crossingReady ? { title: `Crossing ready: ${crossingReady}`, crossing: true }
     : s2 && save.freeUpgrade && revealed(save, 'hangar') ? { title: FREE_NEXT, hangar: true }   // must-do: TAKE OFF is locked meanwhile
+    : s2 && mid === 'L5' && !((save.levels || {}).trees) && !canAffordParcels(save) && (save.unclaimed || []).length ? { title: 'Claim your prizes first', id: mid, claims: true }   // can't buy parcels until the prizes are paid (the audit, 2026-10-27)
     : s2 && mid === 'L5' && !((save.levels || {}).trees) ? { title: 'Buy tree parcels in NATURE first', id: mid, nature: true }   // the lesson needs parcels
     : m ? { title: m.title, id: mid } : null;
   const tiles = [['missions', 'MISSIONS'], ['hangar', 'HANGAR'], ['nature', 'NATURE']]

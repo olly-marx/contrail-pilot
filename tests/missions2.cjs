@@ -61,6 +61,11 @@
   check(M.revealed(afterSchool, 'hangar') && H.hubView(afterSchool).next.hangar, `after the school landing (no lesson done) the hangar is revealed and NEXT leads there: ${JSON.stringify(H.hubView(afterSchool).next)}`);
   const picked = { ...afterSchool, freeUpgrade: false };   // the free part picked, flight 1 then crashed: L1 still undone
   check(M.revealed(picked, 'hangar'), 'once the free part was given the hangar stays revealed (a crash on flight 1 must not hide it)');
+  // 10c. Lesson 5 needs tree parcels; lesson prizes only pay once CLAIMED (the audit, 2026-10-27): with prizes waiting and
+  // too few seeds/crystals, NEXT says to claim them (not "buy parcels", which a child could not do).
+  const l5 = { ...base(), missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, unclaimed: [{ key: 'mission:L4', seeds: 70, crystals: 1 }] };
+  check(H.hubView(l5).next.claims && /Claim/.test(H.hubView(l5).next.title), `lesson 5, prizes unclaimed, parcels unaffordable: NEXT = claim (${JSON.stringify(H.hubView(l5).next)})`);
+  check(H.hubView({ ...l5, unclaimed: [], seeds: 100, crystals: 5 }).next.nature, 'with the money in the bank: NEXT = buy parcels in NATURE');
   // 10. A free upgrade leads into the hangar.
   const f = { ...base(), missionsDone: ['L1'], freeUpgrade: true };
   check(H.hubView(f).next.hangar && H.hubView(f).next.title === H.FREE_NEXT, `free upgrade: NEXT = "${H.FREE_NEXT}" (${JSON.stringify(H.hubView(f).next)})`);
