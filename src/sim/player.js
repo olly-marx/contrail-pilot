@@ -7,6 +7,8 @@
 //   budget (0..1, default 1): the share of the safe band (around its middle) the contrail choice may use.
 //   plan: 'threat' (default since 2026-10-26: plans for the next gap as soon as it is on screen, climbs fast) or
 //   'classic' (only the nearest gap within 200 px; slow climb: the earlier numbers).
+//   useHint (default false): it plans for gaps whose next-gap hint is showing beyond the screen edge (GAP_HINT.lead of the
+//   kit's hintLevel; a human sees the glow). false = only what is on screen (all numbers before 2026-10-27).
 //   land(w) -> true: it wants to land at the next airport. From 700 px out it holds low (still clearing storms);
 //   once no storm is left between it and the runway and the flare can reach it, it stops tapping and lets the
 //   game's landing flare put it down.
@@ -22,6 +24,9 @@
 // s = 1 is a never-wrong player (it can still be caught by a gap too tight for the bob); s = 0 is very sloppy.
 import { PLANE, HEIGHT, GROUND_H, DAYNIGHT, AIRPORT, WIDTH, HAZARDS } from '../config.js';
 import { makeRng } from './rng.js';
+import { GAP_HINT } from '../fleet.js';
+let HINT_BLIND = false;
+export function __plantHintBlind() { HINT_BLIND = true; }   // tests/sim-hint.cjs: useHint sees nothing past the edge, must FAIL
 
 const SKY_H = HEIGHT - GROUND_H;
 const HAZ_FORGIVE = 2, BIRD_EXTRA = HAZARDS.birds.extraSpeed, BIRD_WOBBLE = HAZARDS.birds.wobble;
@@ -54,7 +59,7 @@ const KS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 18, 22, 27, 33, 40];   // first-
 // looked for further ahead because a flock closes faster than the scenery.
 const FLOCK = { up: 44, down: 56, wide: 68, ahead: 340 };
 
-export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0, budget = 1, plan = 'threat', seed = 1, land = null } = {}) {
+export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0, budget = 1, plan = 'threat', seed = 1, land = null, useHint = false } = {}) {
   const threat = plan !== 'classic';
   const c = Math.max(0, Math.min(1, care));
   const s = Math.max(0, Math.min(1, skill)), rnd = makeRng((seed * 2654435761) >>> 0 ^ 0x5eed);
@@ -131,7 +136,10 @@ export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0
       // 'threat' (default, the user's feedback): plan for the NEXT gap as soon as it is on screen. While still in
       // the current gap, aim where the two safe bands overlap; if they do not, at the current band's edge nearest
       // the next one, so the climb or dive starts early.
-      const on = w.storms.filter(t => t.rects[0].x + t.rects[0].width > w.plane.x - 10 && t.rects[0].x < WIDTH).sort((a, b) => a.rects[0].x - b.rects[0].x);
+      // useHint (2026-10-27): it also plans for a gap whose hint already glows at the screen edge (the kit's GAP_HINT lead
+      // spawns columns that far off-screen). Off: only columns on screen, as before.
+      const lead = useHint && !HINT_BLIND ? GAP_HINT.lead[w.kit.hintLevel] || 0 : 0, seeTo = lead > 0 ? WIDTH + 10 + lead * w.speed : WIDTH;   // columns spawn at WIDTH + 10 + lead x speed
+      const on = w.storms.filter(t => t.rects[0].x + t.rects[0].width > w.plane.x - 10 && t.rects[0].x < seeTo).sort((a, b) => a.rects[0].x - b.rects[0].x);
       if (on.length) {
         [lo, hi] = gapBand(on[0]);
         if (on[1]) {

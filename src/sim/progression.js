@@ -23,23 +23,30 @@ import { REGION_DATA } from '../habitats.js';
 import { eraProgress } from '../eras.js';
 import { claim } from '../rewards.js';
 import { city } from '../route.js';
+import { SEASON2_ON } from '../cities.js';
+import { available, offerCheck, offerCtx, completeCrossing } from '../crossings.js';
+import { onSave as missionsOnSave } from '../missions2.js';
+
+// Test switches (tests/sim-progression-s2.cjs plants each; it must FAIL): nostars = offer crossings without the area's
+// missions; nocomplete = a landed crossing opens nothing.
+export const PROG_PLANTS = { nostars: false, nocomplete: false };
 
 const DT = 16.67 / 1000;
 // A player who learns: s rises from 0.75 towards 0.9 over ~30 flights. A parameter, NOT fitted yet (PROGRESSION-SIM.md).
 export const LEARNING = n => 0.75 + 0.15 * (1 - Math.exp(-n / 30));
 
 // One flight from `save` (a stored save). Returns the world after it ended (its save is the banked save).
-export function flyOne(save, { seed, skill, careful, budget = 0.5, maxSkip, crossing = 0, maxSteps = 400000 }) {
+export function flyOne(save, { seed, skill, careful, budget = 0.5, maxSkip, crossing = 0, maxSteps = 400000, useHint = false }) {
   const w = createWorld(save, seed);
   w.save.autoTakeoff = true;
   for (let i = 0; i < 3000 && w.state !== 'playing'; i++) w.step(DT);
   w.explain = () => false;
-  if (crossing) { w.nextAirport.worldX = crossing; w.nextAirport.name = w.path[1]; }   // one non-stop flight to the gateway
+  if (crossing && !w.crossing) { w.nextAirport.worldX = crossing; w.nextAirport.name = w.path[1]; }   // classic: one non-stop flight to the gateway (season 2: the rules fly save.flyCrossing's path)
   // Land here? A crossing: always at its gateway. Otherwise (as tools/income.cjs): when the heat so far per km x the
   // next leg would overheat the Earth, or once it has passed maxSkip airports.
   const land = () => crossing ? true : w.airportsSkipped >= maxSkip
     || w.heat + (w.heat / Math.max(1, w.distancePx)) * w.legKm(w.airportIndex + 1) >= CLIMATE.dangerLine * 0.9;
-  const pilot = makePlayer({ skill, careful, budget, seed, land });   // threat-first planning (the default); careful choices within the inner half of the safe band
+  const pilot = makePlayer({ skill, careful, budget, seed, land, useHint });   // threat-first planning (the default); careful choices within the inner half of the safe band
   for (let i = 0; i < maxSteps && (w.state === 'playing' || w.state === 'landing'); i++) {
     if (w.state === 'playing') {
       if (pilot.wantsFlap(w)) w.applyFlap();
@@ -79,32 +86,48 @@ export function shop(save, region) {
 }
 
 export function progression({ careful = true, skill = LEARNING, flights = 100, seed = 1, tiers = [7000, 9000, 11000, 14000, 17000],
-  every = 10, maxSkip = 3, capSeeds = [1, 2, 3], start = {} } = {}) {
+  every = 10, maxSkip = 3, capSeeds = [1, 2, 3], start = {}, beforeFlight = null, useHint = false } = {}) {
   let save = { tutorialDone: true, muted: true, seenTips: ['*'], landings: 0, ...start };
   const rnd = makeRng(seed * 7919 + 13), rows = [], events = [];
   let tier = 0, cap = null, eraWas = 0;
   for (let n = 1; n <= flights; n++) {
     const s = skill(n), region = null;
-    if (n === 1 || n % every === 0) cap = capability(save, { pilots: ['careful'], seeds: capSeeds }).careful.median;
-    // Offered (MASTER-PLAN B4, conditions 1 and 2; area missions are not modelled): the plane + nature can make it,
-    // and the land of the city you are in has biodiversity >= 30.
+    // Season 2 (SEASON2_ON and a save with areas, 2026-10-27): the GAME's own offer (crossings.js available + offerCheck
+    // (offerCtx): best landed flight from the area, its biodiversity, its starred missions), as the hub's NEXT button picks it
+    // (ui.js). Classic: the old capability rule over `tiers`.
+    const s2 = SEASON2_ON && Array.isArray(save.areas) && save.areas.length > 0;
+    if (beforeFlight) beforeFlight(save, n);
     const home = (city(save.city) || {}).region, homeBio = REGION_DATA[home] ? biodiversity(save, home) : biodiversity(save);
-    const offered = tier < tiers.length && cap >= tiers[tier] && homeBio >= 30;
-    const crossing = offered ? tiers[tier] : 0;
-    const w = flyOne(save, { seed: seed * 100000 + n, skill: s, careful, crossing, maxSkip: careful ? maxSkip : Math.floor(rnd() * 3) });
+    let c2 = null, crossing = 0;
+    if (s2) {
+      c2 = available(save).find(c => { const ctx = offerCtx(save, c); if (PROG_PLANTS.nostars) delete ctx.missionsDone; return offerCheck(c, ctx).offered; }) || null;
+      if (c2) { save.flyCrossing = c2; crossing = c2.km; }
+    } else {
+      if (n === 1 || n % every === 0) cap = capability(save, { pilots: ['careful'], seeds: capSeeds }).careful.median;
+      // Offered (MASTER-PLAN B4, conditions 1 and 2; area missions are not modelled): the plane + nature can make it,
+      // and the land of the city you are in has biodiversity >= 30.
+      const offered = tier < tiers.length && cap >= tiers[tier] && homeBio >= 30;
+      crossing = offered ? tiers[tier] : 0;
+    }
+    const w = flyOne(save, { seed: seed * 100000 + n, skill: s, careful, crossing, useHint, maxSkip: careful ? maxSkip : Math.floor(rnd() * 3) });
     save = w.save;
     const here = w.regionNow && REGION_DATA[w.regionNow] ? w.regionNow : 'woodland';
+    if (c2) {   // as GameScene.finish: a landed crossing opens the far side; the crossing is over either way
+      if (w.landed && !PROG_PLANTS.nocomplete) completeCrossing(save, c2);
+      delete save.flyCrossing;
+    }
     if (crossing) {
-      const made = w.landed && w.distancePx >= crossing - 50;
+      const made = c2 ? !!w.landed : w.landed && w.distancePx >= crossing - 50;
       events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `crossing ${crossing} km ${made ? 'MADE' : 'failed'}` });
-      if (made) tier++;
+      if (made && !c2) tier++;
     }
     const prizes = claim(save);   // a child taps CLAIM on every finished mission and badge
     const bought = shop(save, here);
+    if (s2) { const done = missionsOnSave(save); if (done.length) claim(save); }   // save-event missions (a purchase, a project), as the game checks after a buy
     const era = eraProgress(save).index;
     if (era > eraWas) { events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `era ${era} opens (${fleetOf(save).plane})` }); eraWas = era; }
     rows.push({ flight: n, skill: +s.toFixed(3), km: Math.round(w.distancePx), landed: !!w.landed, end: w.landed ? 'landed' : (w.endReason || '').split('\n')[0],
-      skipped: w.airportsSkipped, crossing: crossing || '', seeds: save.seeds, crystals: save.crystals || 0, minutes: +(save.flightSeconds / 60).toFixed(1),
+      skipped: w.airportsSkipped, crossing: crossing || '', crossingId: c2 ? c2.id : '', areas: s2 ? [...save.areas] : null, seeds: save.seeds, crystals: save.crystals || 0, minutes: +(save.flightSeconds / 60).toFixed(1),
       era, plane: fleetOf(save).plane, bio: biodiversity(save, here), region: here, homeBio, prizes: prizes.seeds, capability: cap, bought: bought.join(' ') });
   }
   return { rows, events, summary: summarise(rows, events) };

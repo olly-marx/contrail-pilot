@@ -50,7 +50,7 @@ export function simulate(save, { overrides, ...opts } = {}) { return withOverrid
 function fly(save, opts) { const g = flight(save, opts); let r; while (!(r = g.next()).done); return r.value; }
 
 // A flight that can pause: yields after every step (the caller decides when to stop for now), returns the result.
-function* flight(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false, dtMs = 16.67, onStep, skill = 0.7, careful = true, care, budget, plan } = {}) {
+function* flight(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = false, dtMs = 16.67, onStep, skill = 0.7, careful = true, care, budget, plan, useHint } = {}) {
   const t0 = now();
   const w = createWorld({ autoTakeoff: true, ...save }, seed);
   const dt = Math.min(dtMs, 50) / 1000;   // as GameScene.update clamps it
@@ -58,7 +58,7 @@ function* flight(save, { pilot = 'smart', seed = 1, maxKm = 100000, crashes = fa
   w.explain = () => false;
   w.nextAirport.worldX = 1e12;   // the test pilots never land
   if (!crashes) { w.hitsStorm = () => false; w.hitBird = () => false; w.spriteBottom = () => -1; }
-  const player = pilot === 'player' ? makePlayer({ skill, careful, care, budget, plan, seed }) : null;   // flies storm gaps (src/sim/player.js)
+  const player = pilot === 'player' ? makePlayer({ skill, careful, care, budget, plan, seed, useHint }) : null;   // flies storm gaps (src/sim/player.js)
   const marks = [];
   let steps = 0;
   while (w.state === 'playing' && w.distancePx < maxKm && steps < 3e6) {
