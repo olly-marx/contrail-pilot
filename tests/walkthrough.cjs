@@ -50,7 +50,10 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.goto(URL); await ready(p); await p.waitForTimeout(800);
   await shot('start-choice');
   await p.click('#startChoice [data-area="africa"]'); await p.click('#startChoice [data-city="JOHANNESBURG"]'); await p.waitForTimeout(500);
+  await p.waitForTimeout(800); await ready(p);
   await watch();
+  const home = await scene(() => { const s = game.scene.getScene('game'); return { first: s.path && s.path[0], region: s.regionNow }; });
+  check(home.first === 'JOHANNESBURG' && home.region === 'savanna', `the menu's backdrop is the chosen home, not London: ${JSON.stringify(home)}`);
   await shot('hub-before-school');
   // 0b-c. How to play (3 lines), flight school over the start land.
   await p.click('#goBtn'); await p.waitForTimeout(500);

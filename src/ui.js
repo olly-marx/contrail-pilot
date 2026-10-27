@@ -196,7 +196,10 @@ export class UI {
 
   // ONE start choice at a time (src/startchoice.js): the menu and START may both ask; they share the same screen.
   askStart() {
-    return this.startAsked || (this.startAsked = chooseStart().then(c => { applyStart(this.save, c); writeSave(this.save); this.startAsked = null; this.renderJourney(); }));
+    return this.startAsked || (this.startAsked = chooseStart().then(c => { applyStart(this.save, c); writeSave(this.save); this.startAsked = null; this.renderJourney();
+      // The menu's backdrop was built before the choice (it showed LONDON behind a Johannesburg start): rebuild it at the new home.
+      const g = typeof window !== 'undefined' && window.game && window.game.scene && window.game.scene.getScene('game');
+      if (g && g.sys && g.sys.isActive() && g.state === 'idle') g.scene.restart(); }));
   }
 
   // ---------- the season 2 hub (S2 of research/PROPOSAL-HOME-MISSIONS.md; what shows: src/hub.js) ----------
