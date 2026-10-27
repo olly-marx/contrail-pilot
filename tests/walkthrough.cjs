@@ -5,7 +5,7 @@
 //   - after flight 1 the results lead to the HANGAR (OPEN THE HANGAR), TAKE OFF stays locked until the free part is picked;
 //   - no wild animal is drawn before the NATURE lesson (lesson 2), and after lesson 2 the results lead to NATURE;
 //   - no tip bubble or toast is up for less than 2 s (one "vanished in a microsecond"), and none is left on the results;
-//   - lesson 5 asks for tree parcels first (soil and parcels wait for it).
+//   - lesson 5 asks for tree parcels first (soil and parcels wait for it); finishing it opens tier 1 of the area ladder and "Today" (S4).
 // Run: python3 -m http.server 8000 & SHOTS=/tmp/walk node tests/walkthrough.cjs   (proved by planted defects)
 const { chromium } = require('playwright-core');
 const fs = require('fs');
@@ -109,6 +109,16 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
   check(/tree parcels/i.test(n5), `lesson 5 first asks for tree parcels in NATURE: "${n5}"`);
   await shot('hub-lesson5');
+  // Flight 5 (lesson 5: drop a tree) ends the lessons and opens the area ladder (S4): the MISSIONS screen is now TIER 1 of 3, no star yet,
+  // and the day's trio sits under "Today".
+  await fly(4, { tag: '5', vals: { planted: 1 } }); await shot('results-flight5'); await p.click('#againBtn').catch(() => {}); await p.waitForTimeout(500);
+  await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
+  await p.click('#hubTiles [data-go="missions"]'); await p.waitForTimeout(500);
+  const t1 = await p.evaluate(() => ({ tier: document.getElementById('mTier').textContent, rows: [...document.querySelectorAll('#mList .mrow:not(.daily)')].length, stars: document.querySelectorAll('#mList .mrow.star').length,
+    today: [...document.querySelectorAll('#mList .label')].some(e => e.textContent === 'Today'), daily: document.querySelectorAll('#mList .mrow.daily').length, lessonLeft: /Drop a tree/.test(document.getElementById('mList').innerText) }));
+  check(t1.tier === 'Tier 1 of 3' && t1.rows >= 3 && t1.stars === 0 && !t1.lessonLeft, `after lesson 5 the MISSIONS screen opens tier 1 (no star yet, no lesson left): ${JSON.stringify(t1)}`);
+  check(t1.today && t1.daily >= 1, `after the lessons the day's trio shows under "Today": ${JSON.stringify(t1)}`);
+  await shot('missions-tier1');
   // Bubbles: none shorter than 2 s after flight school (a tap or a newer bubble used to wipe one at once).
   const bubbles = await p.evaluate(() => (window.__bubbles || []).filter(x => !x.school && x.end != null).map(x => ({ ...x, ms: Math.round(x.end - x.start) })));
   const short = bubbles.filter(x => x.ms < 2000);

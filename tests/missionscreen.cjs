@@ -52,6 +52,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#hubTiles [data-go="missions"]'); await p.waitForTimeout(400);
   const ms = await p.evaluate(() => ({ shown: !document.getElementById('missions').hidden, rows: document.querySelectorAll('#mList .mrow').length, stars: document.querySelectorAll('#mList .mrow.star').length, back: !document.getElementById('hubBack').hidden }));
   check(ms.shown && ms.rows >= 3 && ms.stars === 3 && ms.back, `the MISSIONS screen lists the open missions, 3 starred, with HOME: ${JSON.stringify(ms)}`);
+  // S4: the MISSIONS screen has a "Today" label and the day's trio under the tier list (the menu sets the trio from today's date), tinted
+  // apart from the area's rows; none of them starred (only the crossing trial is).
+  const today = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent), daily: document.querySelectorAll('#mList .mrow.daily').length,
+    dailyStars: document.querySelectorAll('#mList .mrow.daily.star').length, tier: document.getElementById('mTier').textContent,
+    order: (() => { const l = document.querySelector('#mList .label'), d = document.querySelector('#mList .mrow.daily'), a = document.querySelector('#mList .mrow:not(.daily)'); return !!(l && d && a && (a.compareDocumentPosition(l) & 4) && (l.compareDocumentPosition(d) & 4)); })() }));
+  check(today.label.includes('Today') && today.daily >= 1 && today.daily <= 3 && today.dailyStars === 0 && today.order, `the MISSIONS screen lists the day's trio under a "Today" label, after the area's rows, none starred: ${JSON.stringify(today)}`);
+  check(/^Tier \d of 3$/.test(today.tier), `the MISSIONS screen names the tier: ${today.tier}`);
   await p.click('#hubBack'); await p.waitForTimeout(300);
   await p.click('#hubTiles [data-go="nature"]'); await p.waitForTimeout(600);
   // Tap an animal to see it close up (the user, 2026-10-27): on a project card's "Brings back" row, and in the field picture.
