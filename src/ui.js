@@ -252,6 +252,7 @@ export class UI {
   }
   // The MISSIONS screen: what you can do now (the area's open tiers, starred = the crossing trial), and prizes to claim.
   showMissions() {
+    this.missionsAfterSave();   // an off-flight mission already met ticks now, not at the next purchase (sim chat's nit)
     const s = this.save, list = missionsVisible(s);
     const row = m => `<div class="mrow ${m.star ? 'star' : ''} ${m.daily ? 'daily' : ''}"><span>${m.star ? '&#9733; ' : ''}${m.title}</span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`;
     const daily = dailyVisible(s);
@@ -302,7 +303,7 @@ export class UI {
     this.renderPrizes();
     $('tEra').innerHTML = this.save.tutorialDone ? eraBarHTML(this.save) : '';   // era progress (src/eras.js)
     this.renderJourney();
-    if (FEATURES.season2 && isSeason2(this.save)) { setDaily(this.save, new Date().toISOString().slice(0, 10)); writeSave(this.save); }   // the daily trio: the date comes from here, not the rules
+    if (FEATURES.season2 && isSeason2(this.save)) { setDaily(this.save, new Date().toISOString().slice(0, 10)); writeSave(this.save); this.missionsAfterSave(); }   // + off-flight missions already met (e.g. on entering a new area)   // the daily trio: the date comes from here, not the rules
     if (FEATURES.season2) this.renderHub();
     this.showOnly('title');
     if (this.showRepriced()) return;

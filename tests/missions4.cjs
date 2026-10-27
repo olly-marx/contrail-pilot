@@ -59,6 +59,16 @@
   }
   check(!M.visible(fresh('spot', {})).some(m => m.key === 'weurope:spot'), 'spot is not offered while no animal can appear here');
   check(!!f.animal && !!f.treeTag && f.city !== f.cityB, `the fill names real things: ${JSON.stringify({ city: f.city, cityB: f.cityB, tree: f.treeTag, animal: f.animal })}`);
+  // Stage per AREA (the user, 2026-10-27): a fresh area reached after 3 crossings starts at 'challenge' (x2), not mastery
+  // (x3); the area becomes 'mastery' once its own gate is done; before any crossing, 'teach'.
+  const far = { ...save(), areas: ['weurope', 'nordic', 'mideast', 'africa'], city: 'JOHANNESBURG', missionsDone: [...lessons] };
+  check(M.stageOf(far, 'africa') === 'challenge' && M.fillFor(far, 'africa').k === 2, `a fresh area after 3 crossings starts at challenge (x2): ${M.stageOf(far, 'africa')} k=${M.fillFor(far, 'africa').k}`);
+  const bring = M.visible(far).find(m => m.key === 'africa:bring');
+  check(bring && /20/.test(bring.title), `its targets are challenge-sized: "${bring && bring.title}"`);
+  const ripe = { ...far, missionsDone: [...lessons, 'africa:night', 'africa:kinds3'] };
+  check(M.stageOf(ripe, 'africa') === 'mastery', 'that area becomes mastery once its own gate (2 stars) is done');
+  check(M.stageOf(save(), 'weurope') === 'teach' && M.stageOf({ ...save(), areas: ['weurope', 'nordic'] }, 'nordic') === 'challenge', 'teach before any crossing; a new area after one: challenge');
+
   // Daily trio.
   const d1 = save(); M.setDaily(d1, '2026-10-27'); const d2 = save(); M.setDaily(d2, '2026-10-27'); const d3 = save(); M.setDaily(d3, '2026-10-28');
   check(d1.daily.ids.length === 3 && new Set(d1.daily.ids).size === 3 && d1.daily.ids.join() === d2.daily.ids.join(), `the same 3 different daily missions for everyone on a date: ${d1.daily.ids}`);
