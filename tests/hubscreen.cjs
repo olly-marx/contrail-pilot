@@ -50,7 +50,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // HOME, MISSIONS and HANGAR; not NATURE (lesson 2), PILOT or BOARDS (resting).
   const inH = await p.evaluate(() => ({ hangar: !document.getElementById('hangar').hidden, bar: !document.getElementById('tabbar').hidden,
     tabs: [...document.querySelectorAll('#tabbar [data-go]')].filter(b => !b.hidden).map(b => b.dataset.go) }));
-  check(inH.hangar && inH.bar && inH.tabs.join() === 'fly,missions,hangar', `the hangar shows the bottom bar with the revealed tabs only: ${JSON.stringify(inH)}`);
+  check(inH.hangar && inH.bar && inH.tabs.join() === 'fly,missions,hangar,boards', `the hangar shows the bottom bar with the revealed tabs only (BOARDS appears after the 3rd landing: this save has 5; PILOT stays hidden): ${JSON.stringify(inH)}`);
   await p.click('#tabFly'); await p.waitForTimeout(300);
   check(await p.evaluate(() => !document.getElementById('title').hidden && !document.getElementById('tabbar').hidden), 'HOME (on the bar) goes back to the hub, the bar stays');
   check(!p.errs.length, `page errors: ${p.errs}`);

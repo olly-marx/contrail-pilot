@@ -95,9 +95,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const stuck = await p2.evaluate(() => new Promise(res => { const s = game.scene.getScene('game'), sc = s.school;
     sc.i = 8; sc.next(); s.frozen = false; const first = sc.issr;   // step 9: day icy air
     const iv = setInterval(() => { s.plane.y = sc.issr === first ? 420 - 60 : s.plane.y; s.plane.vy = 0; s.contrails.forEach(c => c.view.destroy()); s.contrails = []; }, 16);
-    // Wait for the GAME to bring the new patch (a 300 px patch takes ~6 s of game time to pass, but game time runs slower than the clock on a busy machine:
-    // a fixed 9 s wait failed once in the 0.15.4 run, 2026-10-27), with a 60 s cap so a stuck school still fails rather than hangs.
-    const t0 = performance.now(), poll = setInterval(() => { if (sc.issr !== first || performance.now() - t0 > 60000) { clearInterval(iv); clearInterval(poll); res({ step: sc.i, newIssr: sc.issr !== first, text: document.getElementById("coachText").textContent }); } }, 50); }));
+    // Wait for the GAME to bring the new patch. A 300 px patch takes ~6 s of GAME time to pass, but game time runs slower than the clock on a busy
+    // machine (a fixed 9 s wall wait flaked once in the 0.15.4 run; a 60 s wall cap failed twice at load 19 in the 0.15.6 run). So the limit is in
+    // game seconds (s.elapsed, 20 of them), with a long wall cap only so a frozen game still fails instead of hanging.
+    const t0 = performance.now(), e0 = s.elapsed, poll = setInterval(() => { if (sc.issr !== first || s.elapsed - e0 > 20 || performance.now() - t0 > 300000) { clearInterval(iv); clearInterval(poll); res({ step: sc.i, newIssr: sc.issr !== first, text: document.getElementById("coachText").textContent }); } }, 50); }));
   if (!(stuck.step === 9 && stuck.newIssr && /missed it/i.test(stuck.text))) fails.push(`missing the icy air should bring more, not get stuck: ${JSON.stringify(stuck)}`);
   await p2.close();
 

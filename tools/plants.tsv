@@ -55,3 +55,4 @@ records-screen	src/recordsui.js	s/PERIODS.map(p =>/PERIODS.slice(0, 1).map(p =>/
 records-screen	src/recordsui.js	s/\$('bInfo').hidden = true;/$('bInfo').hidden = false;/	"how points work" still offered
 records-screen	src/records.js	s/{ id: 'bird', name: 'BIRD MAGNET', oops: true,/{ id: 'bird', name: 'BIRD MAGNET',/	BIRD MAGNET is not an oops card
 records-screen	src/records.js	s/missions: period === 'ever' ? done : Math.max(0, done - r.week.missionsBase),/missions: done,/	MISSIONS this week = ever
+school	src/school.js	s/if (!this.madeDay \&\& this.issr.x + this.issr.width < s.plane.x) {/if (false) {/	school never brings more icy air
