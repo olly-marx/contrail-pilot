@@ -1,0 +1,36 @@
+# Tests in the release GATE (tools/gate.sh): plain Node, no browser. DECLARED, not inferred: add a test here when it is written (or ported) to run in Node.
+# tools/gate.sh --lint fails if a tests/*.cjs is in neither this file nor tests/BROWSER, or is in both, or a GATE test imports playwright.
+areas
+fleet
+gapmarkers
+geo
+habitatdata
+hub
+landtrees
+lessonart
+missionclean
+missions2
+missions4
+nexthere
+offer-gate
+release
+season2-node
+sim-care
+sim-crossing
+sim-equiv
+sim-flight
+sim-forest
+sim-hazards
+sim-issr-variants
+sim-lanes
+sim-paired
+sim-physics
+sim-pilots
+sim-player
+sim-result-fields
+sim-tapper
+sim-trees
+textbudget
+treeart
+weboflife
+wildlifelist
