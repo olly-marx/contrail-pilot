@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-27-hangar-after-school",
+    "version": "0.15.2",
+    "date": "2026-10-27",
+    "level": "minor",
+    "notes": [
+      "Fixed: after flight school you can now always reach the hangar to pick your free upgrade."
+    ]
+  },
+  {
     "id": "2026-10-27-new-area-stage",
     "version": "0.15.1",
     "date": "2026-10-27",
