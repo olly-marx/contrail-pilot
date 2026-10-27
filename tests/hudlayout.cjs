@@ -19,7 +19,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#goBtn'); await started(p);
   await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).catch(() => {});
   // Bring the next airport into the "Next: <city> <km>" range, then let the HUD redraw a few frames.
-  await p.evaluate(() => { const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.nextAirport.worldX = s.distancePx + 900; });
+  await p.evaluate(() => { const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.nextAirport.worldX = s.distancePx + 600; });   // (inside AIRPORT.signFrom 700: the 'Next: <city> <km>' line shows)
   await p.waitForTimeout(600);
   const r = await p.evaluate(() => {
     const s = game.scene.getScene('game'), names = ['missionText', 'nextText', 'cargoText', 'multText', 'hintText', 'parcelText', 'autoText', 'kindsText'];
