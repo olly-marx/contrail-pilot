@@ -32,14 +32,18 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 2. The free upgrade leads into the hangar.
   const s2 = { ...base, areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', missionsDone: ['L1'], freeUpgrade: true, freeGiven: true };
   p = await open(s2);
-  const lead = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, pulse: !!document.querySelector('#hubTiles [data-go="hangar"].pulse'), dim: document.getElementById('goBtn').classList.contains('secondary') }));
-  check(/Open the hangar: free upgrade/.test(lead.next) && lead.pulse && lead.dim, `a free upgrade: NEXT leads to the hangar, the tile pulses, TAKE OFF dims: ${JSON.stringify(lead)}`);
+  const lead = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, pulse: !!document.querySelector('#hubTiles [data-go="hangar"].pulse'), dim: document.getElementById('goBtn').classList.contains('locked') }));
+  check(/Open the hangar: free upgrade/.test(lead.next) && lead.pulse && lead.dim, `a free upgrade: NEXT leads to the hangar, the tile pulses, TAKE OFF is locked: ${JSON.stringify(lead)}`);
+  check(await p.evaluate(() => document.getElementById('goBtn').disabled), 'TAKE OFF is locked while the free part waits (checked on the hub)');
   await p.click('#hubNext'); await p.waitForTimeout(400);
   check(await p.evaluate(() => !document.getElementById('hangar').hidden), 'tapping NEXT opens the hangar');
-  await p.click('#hubBack'); await p.waitForTimeout(300);
-  await p.click('#hubLater'); await p.waitForTimeout(300);
-  const later = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, dim: document.getElementById('goBtn').classList.contains('secondary') }));
-  check(!/free upgrade/.test(later.next) && !later.dim, `"later": NEXT goes back to the mission, TAKE OFF is the button again: ${JSON.stringify(later)}`);
+  // Pick the free part (the user: a must-do, no "later"), then TAKE OFF unlocks.
+  const free = await p.$('#hFleet .btn.free');
+  check(!!free, 'the hangar shows FREE! buttons');
+  if (free) { await free.click(); await p.waitForTimeout(400); }
+  await p.click('#hubBack'); await p.waitForTimeout(400);
+  const after2 = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, locked: document.getElementById('goBtn').disabled, text: document.getElementById('goBtn').textContent }));
+  check(!/free upgrade/.test(after2.next) && !after2.locked && /TAKE OFF/.test(after2.text), `after picking the free part: NEXT is the lesson, TAKE OFF is unlocked: ${JSON.stringify(after2)}`);
   await p.close();
   // 3-4. The MISSIONS screen, and an off-flight mission.
   p = await open({ ...s2, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:dodge', 'weurope:skip2', 'weurope:rich', 'weurope:shade', 'weurope:plant', 'weurope:bring'] });

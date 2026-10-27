@@ -19,11 +19,11 @@ export const FREE_NEXT = 'Open the hangar: free upgrade!';   // the user: a free
 //   next:  { title } the top mission (or a crossing that is ready replaces it); null when all done
 //   route: [from, to] this flight's first hop
 //   tiles: [{ id, label, badge }] only the revealed ones, in a fixed order
-export function hubView(save, { badges = {}, crossingReady = null, freeLater = false } = {}) {
+export function hubView(save, { badges = {}, crossingReady = null } = {}) {
   const s2 = M2.isSeason2(save), path = flightPath(save, 2);
   const m = s2 ? M2.next(save) : currentMission(save), mid = m && (m.key || m.id);
   const next = crossingReady ? { title: `Crossing ready: ${crossingReady}`, crossing: true }
-    : s2 && save.freeUpgrade && !freeLater && revealed(save, 'hangar') ? { title: FREE_NEXT, hangar: true }
+    : s2 && save.freeUpgrade && revealed(save, 'hangar') ? { title: FREE_NEXT, hangar: true }   // must-do: TAKE OFF is locked meanwhile
     : m ? { title: m.title, id: mid } : null;
   const tiles = [['missions', 'MISSIONS'], ['hangar', 'HANGAR'], ['nature', 'NATURE']]
     .filter(([id]) => revealed(save, id)).map(([id, label]) => ({ id, label, badge: badges[id] || '' }));

@@ -76,6 +76,7 @@ export const TIPS = {
   'tour-projects':{ say: 'Help nature here, and wild animals will come back. Look out for them!' },
   'tour-new':     { say: tab => `Something <b>NEW</b>! Tap <b>${tab}</b>.` },
   'tour-newline': { say: list => `<b>NEW:</b> ${list}! Tap <b>i</b>.` },
+  'tour-lookout': { say: 'Look out for wild animals on your flights! Tap <b>HOME</b> to fly.' },
   'tour-home':    { say: 'All set! Tap <b>HOME</b>, then TAKE OFF.' },
   'tour-ok':      { say: 'Read it, then tap <b>OK</b>.' },
 };

@@ -42,12 +42,16 @@ export class Tour {
   // Called when the menu shows, and when the results have finished. Starts at most one tour.
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
-    if ($(where === 'title' ? 'title' : 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
+    if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
     if (FEATURES.season2 && !this.done('name')) this.markDone('name');   // season 2 plays offline: no pilot name yet
     if (where === 'title' && !this.done('name') && !getPilot()) return this.run('name', this.nameSteps());
     if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     // Season 2 (S3; the user: a free upgrade must LEAD you into the hangar): from the HUB, where the tile is, 3 bubbles.
-    if (where === 'title' && FEATURES.season2 && !this.done('hangar') && this.save.freeUpgrade && $('hubTiles').querySelector('[data-go="hangar"]')) return this.run('hangar', this.hubHangarSteps());
+    if (FEATURES.season2 && !this.done('hangar') && this.save.freeUpgrade && (where === 'hangar' || (where === 'title' && $('hubTiles').querySelector('[data-go="hangar"]')))) return this.run('hangar', this.hubHangarSteps());
+    // Season 2: NATURE's first visit after its lesson (research/FLOW-FIRST-HOUR.md 2b): two bubbles.
+    if (FEATURES.season2 && where === 'nature' && !this.done('nature')) return this.run('nature', [
+      { target: '#wProjects', text: tip('tour-projects'), ok: true },
+      { target: '#hubBack', text: tip('tour-lookout'), tap: true }]);
     if (where === 'title' && (this.done('name') || getPilot())) {
       // Several can open at once (3 at the 3rd landing): one walk-through for all of a hangar tab's.
       const fresh = LINES.filter(l => unlocked(this.save, l) && !this.save.shownLines.includes(l.id));
@@ -73,7 +77,7 @@ export class Tour {
 
   hubHangarSteps() {
     return [
-      { target: '#hubTiles [data-go="hangar"]', text: tip('tour-hangar'), tap: true },
+      { skipIf: () => !$('hangar').hidden, target: '#hubTiles [data-go="hangar"]', text: tip('tour-hangar'), tap: true },   // already inside (OPEN THE HANGAR)
       { area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true },
       { target: '#hubBack', text: tip('tour-home'), tap: true },
     ];

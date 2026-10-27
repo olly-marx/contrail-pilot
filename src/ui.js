@@ -24,7 +24,7 @@ const crossingsHTML = s => {
 const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS).filter(k => !open.includes(k));
   return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
-import { hubView } from './hub.js';
+import { hubView, revealed as hubRevealed } from './hub.js';
 import { isSeason2, onSave as missionsOnSave, visible as missionsVisible } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
@@ -83,7 +83,7 @@ export class UI {
     this.toastTimer = null;
 
     $('goBtn').onclick = () => this.start();
-    $('againBtn').onclick = () => this.showTitle();   // FLY ON: the FLY screen first, to choose the way (2026-10-23)
+    $('againBtn').onclick = () => { const to = this.resultsLead(); return to ? this.go(to) : this.showTitle(); };   // FLY ON, or where the lesson leads
     $('schoolBtn').onclick = () => this.startSchool();
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
     $('hGoBtn').onclick = () => this.start();
@@ -112,6 +112,7 @@ export class UI {
 
   // First play goes through flight school.
   start() {
+    if (FEATURES.season2 && this.save.freeUpgrade && hubRevealed(this.save, 'hangar') && this.save.tutorialDone) return this.go('hangar');   // locked: the free part first
     if (FEATURES.season2 && needsStartChoice(this.save)) return this.askStart().then(() => this.start());   // season 2: choose your start first
     if (!this.save.tutorialDone) return this.startSchool();
     unlockAudio();
@@ -210,16 +211,16 @@ export class UI {
   renderHub() {
     const s = this.save;
     const ready = s.tutorialDone ? crossingsNow(s).find(c => offerCheck(c, offerCtx(s, c)).offered || S2_UNLOCK) : null;
-    const v = hubView(s, { badges: { hangar: this.hasNew() ? (s.freeUpgrade ? 'FREE' : 'NEW') : '', missions: unclaimedCount(s) ? String(unclaimedCount(s)) : '' }, crossingReady: ready ? `${ready.from} to ${ready.to}` : null, freeLater: this.freeLater });
+    const v = hubView(s, { badges: { hangar: this.hasNew() ? (s.freeUpgrade ? 'FREE' : 'NEW') : '', missions: unclaimedCount(s) ? String(unclaimedCount(s)) : '' }, crossingReady: ready ? `${ready.from} to ${ready.to}` : null });
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
     $('hubNext').hidden = !v.next || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
     $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>` : '';
     const toHangar = v.next && v.next.hangar;   // a free upgrade LEADS into the hangar (the user, 2026-10-27)
     $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : null;
-    if (toHangar) $('hubNext').innerHTML += ' <button id="hubLater" class="btn tiny" type="button">later</button>';
-    if ($('hubLater')) $('hubLater').onclick = e => { e.stopPropagation(); sfx.flap(); this.freeLater = true; this.renderHub(); };
-    $('goBtn').classList.toggle('secondary', !!toHangar);
+    // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
+    $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;
+    $('goBtn').textContent = toHangar ? 'PICK YOUR FREE PART FIRST' : s.tutorialDone ? 'TAKE OFF' : 'START';
     $('hubRoute').innerHTML = `${v.route[0] || ''} &#9654; ${v.route[1] || ''}`;
     $('hubTiles').innerHTML = v.tiles
       .map(t => `<button class="btn hub-tile ${t.id === 'hangar' && toHangar ? 'pulse' : ''}" type="button" data-go="${t.id}">${t.label}${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</button>`).join('');
@@ -229,6 +230,15 @@ export class UI {
     const pick = name => { sfx.flap(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, lit: linksFor(s) });
     this.hubWords = v.words;
+  }
+
+  // Where the results lead (season 2): a free part waiting → the HANGAR; NATURE just opened and not yet seen → NATURE.
+  resultsLead() {
+    const s = this.save;
+    if (!FEATURES.season2 || !isSeason2(s) || !s.tutorialDone) return null;
+    if (s.freeUpgrade && hubRevealed(s, 'hangar')) return 'hangar';
+    if (hubRevealed(s, 'nature') && !(s.tours || []).includes('nature-lead')) return 'nature';
+    return null;
   }
 
   // Season 2 (S3): off-flight missions complete the moment the save changes (a purchase, a project): src/missions2.js.
@@ -254,7 +264,7 @@ export class UI {
     if (tab === 'fly') return this.showTitle();
     if (tab === 'hangar') return this.showHangar();
     if (tab === 'missions') return this.showMissions();
-    if (tab === 'nature') { this.markShopSeen(); this.showOnly('nature'); return this.wild && this.wild.render(); }
+    if (tab === 'nature') { this.markShopSeen(); if (this.tour) this.tour.markDone('nature-lead'); this.showOnly('nature'); this.wild && this.wild.render(); if (this.tour) this.tour.maybe('nature'); return; }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
     if (tab === 'boards') { this.showOnly('boards'); return this.pilot && this.pilot.showBoards(); }
   }
@@ -327,6 +337,8 @@ export class UI {
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
   async showResults(r) {
+    const lead = this.resultsLead();   // season 2: the one place the lesson leads next (research/FLOW-FIRST-HOUR.md)
+    $('againBtn').textContent = lead === 'hangar' ? 'OPEN THE HANGAR' : lead === 'nature' ? 'OPEN NATURE' : 'FLY ON';
     this.hideCoach();   // nothing left open from the flight (the user saw a stray OK at the top after landing, 0.13.0)
     // Season 2: a crossing flown (src/crossings.js): the big news first.
     if (r.crossing) this.toast(r.crossing.landed ? (r.crossing.opens ? `NEW AREA: ${AREAS[r.crossing.opens].name.toUpperCase()}!` : 'YOU MADE IT!') : 'Crossing not made',
@@ -478,6 +490,7 @@ export class UI {
   showHangar() {
     this.renderHangar();
     this.showOnly('hangar');
+    if (this.tour) this.tour.maybe('hangar');   // season 2: the free-part tour can start here (from OPEN THE HANGAR)
   }
 
   renderHangar() {

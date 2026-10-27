@@ -619,3 +619,4 @@ h2.sub { margin-top: -4px; }
 #startChoice.full { position: fixed; inset: 0; z-index: 40; background: #1a1a2e; display: flex; align-items: center; justify-content: center; }
 #startChoice.full .panel { width: min(94vw, 420px); }
 .pic-storm { background-image: url("assets/ui/lesson-storm.png"); background-size: cover; image-rendering: pixelated; }
+#goBtn.locked { opacity: .5; filter: grayscale(1); font-size: 70%; }

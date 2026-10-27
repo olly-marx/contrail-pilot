@@ -56,7 +56,7 @@
   // 10. A free upgrade leads into the hangar.
   const f = { ...base(), missionsDone: ['L1'], freeUpgrade: true };
   check(H.hubView(f).next.hangar && H.hubView(f).next.title === H.FREE_NEXT, `free upgrade: NEXT = "${H.FREE_NEXT}" (${JSON.stringify(H.hubView(f).next)})`);
-  check(!H.hubView(f, { freeLater: true }).next.hangar, '"later" lets you fly on');
+  check(!H.hubView({ ...f, freeUpgrade: false }).next.hangar && H.hubView({ ...f, freeUpgrade: false }).next.id === 'L2', 'once the free part is picked, NEXT goes back to the lesson (no "later": the user wants it a must-do)');
   console.log(fails.length ? `FAIL missions2:\n - ${fails.join('\n - ')}` : 'PASS missions2: lessons in order with reveals, off-flight on purchase, stages, tiers by 3, area-bound, crash = nothing, gate = 3 stars, 4th tree, seeds-only, free upgrade leads to the hangar');
   process.exit(fails.length ? 1 : 0);
 })();
