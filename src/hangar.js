@@ -60,9 +60,9 @@ export class FleetHangar {
     const want = rails ? [['plane', `${f.plane}.engines`, 'free-engines']] : [['plane', `${f.plane}.engines`, 'free-engines'], ['gadget', 'magnet', 'free-magnet'], ['gadget', 'gear', 'free-gear']];
     const picks = want.map(([kind, id, t]) => ({ b: open.find(x => x.kind === kind && x.id === id), t })).filter(x => x.b);
     if (!picks.length) return '';
-    return `<div class="freepick"><p class="label">${tip('free-head')}</p>${picks.map(({ b, t }) =>
+    return `<div class="freepick">${rails ? '' : `<p class="label">${tip('free-head')}</p>`}${picks.map(({ b, t }) =>
       `<div class="freerow"><span><b>${b.name}</b><br><small>${tip(t)}</small></span><button class="btn free" data-fbuy="${b.kind}:${b.id}" type="button">FREE!</button></div>`).join('')}
-      <p class="small">${tip('free-more')}</p></div>`;
+      ${rails ? '' : `<p class="small">${tip('free-more')}</p>`}</div>`;   // (on rails: one choice, the captain says what to do)
   }
 
   // R6 (the user, 2026-10-27: "tapping an upgrade did NOT show the plane looking cooler"): the plane, with the part just

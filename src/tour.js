@@ -155,7 +155,9 @@ export class Tour {
     this.target = null;
     if (id) this.markDone(id);
     this.busy = false;
-    setTimeout(() => this.maybe('title'), 300);   // e.g. a new line right after the name tour
+    // Then whatever screen is showing NOW may have its own step (a rails tap often opens the next screen while this tour
+    // is still finishing: the hangar's step was lost that way).
+    setTimeout(() => this.maybe(['title', 'results', 'hangar', 'nature'].find(id => !$(id).hidden) || 'title'), 300);
   }
 
   async step(st) {
