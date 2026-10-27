@@ -97,7 +97,11 @@ export function fillFor(save, a, startCity = save.city) {
 }
 const key = (a, t) => `${a}:${t.id}`;
 export const tierOpen = (save, a, tier) => tier === 1 || TEMPLATES.filter(t => t.tier === tier - 1 && done(save).has(key(a, t))).length >= 3;
-export const gateDone = (save, a) => STARS.every(id => done(save).has(`${a}:${id}`));
+// The crossing gate: ANY 2 of the 3 starred missions (the user, 2026-10-27: the sim found the night star blocked weaker
+// pilots; all 3 are still there to do). GATE_STARS is the number needed.
+export const GATE_STARS = 2;
+export const starsDone = (save, a) => STARS.filter(id => done(save).has(`${a}:${id}`)).length;
+export const gateDone = (save, a) => starsDone(save, a) >= GATE_STARS;
 
 // What the player sees: the next lesson while any are left, else the open tiers of the area they are in, undone first.
 // [{ key, title, tier, star, kind, prize: { seeds, crystals } }]
