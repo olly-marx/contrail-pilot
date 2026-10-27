@@ -637,3 +637,9 @@ h2.sub { margin-top: -4px; }
 .board-pick .btn.rec b { font-size: 7px; }
 .board-pick .btn.rec .val { font-size: 10px; }
 .board-pick .btn.rec .new { position: absolute; top: -5px; right: -2px; font-style: normal; font-size: 6px; background: #ffe15a; color: #333; padding: 1px 3px; border-radius: 3px; }
+/* Captain Contrail in the tour bubble (the user, 2026-10-27): it points at the target; the bubble stays on screen. */
+.tbubble { display: flex; gap: 6px; align-items: center; max-width: min(92vw, 380px); }
+.tcaptain { width: 64px; height: 64px; image-rendering: pixelated; flex: none; animation: capbob 1.2s ease-in-out infinite; }
+.tcaptain.left { transform: scaleX(-1); order: 2; }
+.tbody { flex: 1; }
+@keyframes capbob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }

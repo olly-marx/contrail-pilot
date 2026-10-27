@@ -26,7 +26,7 @@ export class Tour {
     el.hidden = true;
     // Four dark panels round a hole: they catch every tap that is not on the target.
     el.innerHTML = '<div class="tdim" data-d="t"></div><div class="tdim" data-d="b"></div><div class="tdim" data-d="l"></div><div class="tdim" data-d="r"></div>'
-      + '<div class="tring"></div><div class="tfinger"><i></i></div><div class="tbubble"><p></p><button class="btn go" type="button">OK</button></div>';
+      + '<div class="tring"></div><div class="tfinger" hidden><i></i></div><div class="tbubble"><img class="tcaptain" src="assets/ui/captain-point.png" alt=""><div class="tbody"><p></p><button class="btn go" type="button">OK</button></div></div>';   // Captain Contrail points (the user, 2026-10-27)
     document.body.appendChild(el);
     this.el = el;
     el.querySelectorAll('.tdim').forEach(d => d.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); this.nudge(); }));
@@ -135,7 +135,9 @@ export class Tour {
     if (!inDom()) return false;   // nothing to point at: never trap the player
     for (let i = 0; i < 40 && !(t = this.find(sel)); i++) await sleep(100);
     if (!t) return false;
-    if (st.scroll) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
+    // The target fully on screen first, always (the user's screenshot: the hangar opened half-way down, the target off-screen).
+    const vr = t.getBoundingClientRect();
+    if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
     this.target = t;
     this.el.querySelector('.tbubble p').innerHTML = st.text;
     const ok = this.el.querySelector('.tbubble .btn');
@@ -174,12 +176,18 @@ export class Tour {
     set(d('l'), { left: '0', top: `${y0}px`, width: `${x0}px`, height: `${y1 - y0}px` });
     set(d('r'), { left: `${x1}px`, top: `${y0}px`, width: `${W - x1}px`, height: `${y1 - y0}px` });
     set(this.el.querySelector('.tring'), { left: `${x0}px`, top: `${y0}px`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
-    // The bubble goes on whichever side has more room; the finger points from that side.
-    const below = r.top + r.height / 2 < H / 2, b = this.el.querySelector('.tbubble'), f = this.el.querySelector('.tfinger');
-    set(b, below ? { top: `${y1 + 46}px`, bottom: 'auto' } : { bottom: `${H - y0 + 46}px`, top: 'auto' });
-    // assets/ui/tour-finger.png (32 px, points down): the fingertip is at x 14, y 31. Below a target it is flipped to point up.
-    set(f, { left: `${Math.min(W - 34, Math.max(2, (x0 + x1) / 2 - 14))}px`, top: below ? `${y1 + 2}px` : `${y0 - 34}px` });
-    f.classList.toggle('up', below);
+    // The bubble (Captain Contrail + the sentence) goes on the side with more room, then is CLAMPED inside the screen and
+    // kept off the target (the user's screenshot, 2026-10-27: the bubble's text was cut off above the page).
+    const below = r.top + r.height / 2 < H / 2, b = this.el.querySelector('.tbubble');
+    set(b, { top: '0px', bottom: 'auto' });
+    const bh = b.getBoundingClientRect().height, gap = 10;
+    let top = below ? y1 + gap : y0 - gap - bh;
+    if (top < 4 || top + bh > H - 4) top = below ? y0 - gap - bh : y1 + gap;   // no room on that side: the other side
+    top = Math.max(4, Math.min(H - 4 - bh, top));
+    set(b, { top: `${top}px` });
+    // The captain points AT the target: mirrored when the target is to the left of the bubble's middle.
+    const cap = this.el.querySelector('.tcaptain'), br = b.getBoundingClientRect();
+    cap.classList.toggle('left', (x0 + x1) / 2 < br.left + br.width / 2);
   }
 
   nudge() { const b = this.el.querySelector('.tbubble'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
