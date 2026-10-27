@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-27-my-records",
+    "version": "0.15.6",
+    "date": "2026-10-27",
+    "level": "major",
+    "notes": [
+      "New: YOUR RECORDS! After your third landing the BOARDS tab appears. It has 4 good records (furthest flight, tree kinds, cool skies, missions) and 4 OOPS records (longest crash, shortest flight, bird magnet, most crashes), for this week and for ever.",
+      "Beat your own record and you see NEW RECORD! No confusing points: every record says in one line what it counts.",
+      "Ranking against other pilots comes back when online does."
+    ]
+  },
+  {
     "id": "2026-10-27-first-hour-audit",
     "version": "0.15.5",
     "date": "2026-10-27",
