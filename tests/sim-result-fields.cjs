@@ -20,7 +20,9 @@
   const fails = [], power = { scraped: 0, nofly: 0, nfCrash: 0, trees: 0 }, rows = [];
   // Skies 1-6 at s = 0.85; skies 2, 6 and 9 again at s = 0.8, where a forgiven nick is survived (scanned 2026-10-27:
   // s = 0.8 survived a scrape in skies 2, 6, 9, 15, 27, 28 of 40; s = 0.9 in none).
-  for (const [seed, skill] of [[1, 0.85], [2, 0.85], [3, 0.85], [4, 0.85], [5, 0.85], [6, 0.85], [2, 0.8], [6, 0.8], [9, 0.8]]) {
+  // GATE form (tools/gate.sh sets GATE=1): sky 6 at 0.85 (the no-fly crash) and the three s = 0.8 scrape skies; every power check below still has its case.
+  const CASES = process.env.GATE ? [[6, 0.85], [2, 0.8], [6, 0.8], [9, 0.8]] : [[1, 0.85], [2, 0.85], [3, 0.85], [4, 0.85], [5, 0.85], [6, 0.85], [2, 0.8], [6, 0.8], [9, 0.8]];
+  for (const [seed, skill] of CASES) {
     const save = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, landings: 30, mission: 99, levels: { trees: 2, soil: 1 }, planted: {},
       fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} }, simSeed: seed };
     const w = createWorld(save, seed);
@@ -62,5 +64,5 @@
   }
   if (!(power.scraped > 0 && power.nofly > 0 && power.nfCrash > 0 && power.trees > 0)) fails.push(`no power: ${JSON.stringify(power)} (want scraped gaps, no-fly passes, a no-fly crash and planted trees)`);
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ') + '\n  ' + rows.join('\n  ')); process.exit(1); }
-  console.log(`PASS: treeIds, cleanGaps and noFlyPassed match the frames in 9 flights (${JSON.stringify(power)})\n  ` + rows.join('\n  '));
+  console.log(`PASS: treeIds, cleanGaps and noFlyPassed match the frames in ${CASES.length} flights (${JSON.stringify(power)})\n  ` + rows.join('\n  '));
 })();

@@ -12,7 +12,8 @@
   const comet = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, landings: 30, mission: 99, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
   if (process.env.PLANT === 'bob') P.__plantNoBob();
   const plan = process.env.PLANT === 'classic' ? 'classic' : undefined;
-  const median = (skill, careful) => { const km = Array.from({ length: 20 }, (_, i) => simulate(comet, { pilot: 'player', skill, careful, plan, seed: i + 1, crashes: true }).km).sort((a, b) => a - b); return km[10]; };
+  const N = process.env.GATE ? 5 : 20;   // GATE form (tools/gate.sh sets GATE=1): the first 5 skies; DEEP (no GATE) = the full 20 medians and 30 storm skies
+  const median = (skill, careful) => { const km = Array.from({ length: N }, (_, i) => simulate(comet, { pilot: 'player', skill, careful, plan, seed: i + 1, crashes: true }).km).sort((a, b) => a - b); return km[N >> 1]; };
   const fails = [], got = {};
   for (const careful of [true, false]) {
     const k = careful ? 'careful' : 'careless', m1 = median(1, careful), m75 = median(0.75, careful), m0 = median(0, careful);
@@ -22,9 +23,10 @@
     if (!(m0 < m75 && m75 < m1)) fails.push(`${k}: skill must matter: s=0/0.75/1 medians ${m0}/${m75}/${m1}`);
   }
   let stormEarly = 0;
-  for (let i = 1; i <= 30; i++) { const r = simulate(comet, { pilot: 'player', skill: 1, care: 0, plan, seed: i, crashes: true, maxKm: 8000, overrides: { CLIMATE: { dangerLine: Infinity } } });
+  const STORM = process.env.GATE ? N : 30;
+  for (let i = 1; i <= STORM; i++) { const r = simulate(comet, { pilot: 'player', skill: 1, care: 0, plan, seed: i, crashes: true, maxKm: 8000, overrides: { CLIMATE: { dangerLine: Infinity } } });
     if (r.end === 'crash' && /Storm/.test(r.reason)) stormEarly++; }
-  if (stormEarly) fails.push(`s=1 crashed on a storm before 8,000 km in ${stormEarly} of 30 skies (an expert never does)`);
+  if (stormEarly) fails.push(`s=1 crashed on a storm before 8,000 km in ${stormEarly} of ${STORM} skies (an expert never does)`);
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log(`PASS: skill matters and a skilled player flies the gaps (median km at s=0/0.75/1: careful ${got.careful.join('/')}, careless ${got.careless.join('/')}); s=1 never crashes on a storm before 8,000 km (30 skies)`);
+  console.log(`PASS: skill matters and a skilled player flies the gaps (median km at s=0/0.75/1: careful ${got.careful.join('/')}, careless ${got.careless.join('/')}); s=1 never crashes on a storm before 8,000 km (${STORM} skies)`);
 })();

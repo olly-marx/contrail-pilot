@@ -1,5 +1,6 @@
-# Tests in the release GATE (tools/gate.sh): plain Node, no browser. DECLARED, not inferred: add a test here when it is written (or ported) to run in Node.
-# tools/gate.sh --lint fails if a tests/*.cjs is in neither this file nor tests/BROWSER, or is in both, or a GATE test imports playwright.
+# Tests in the release GATE (tools/gate.sh): plain Node, no browser, run with GATE=1 (a test with a heavy sweep runs its small form).
+# DECLARED, not inferred. A test with a small form must still FAIL on every one of its planted defects in that form (proved, see research/TEST-SPEED.md).
+# tools/gate.sh --lint: every tests/*.cjs must be in GATE or BROWSER (not both) or, with no gate form, in DEEP alone; a GATE test must not mention a browser.
 areas
 fleet
 gapmarkers
@@ -20,7 +21,6 @@ sim-crossing
 sim-equiv
 sim-flight
 sim-forest
-sim-hazards
 sim-issr-variants
 sim-lanes
 sim-paired
@@ -28,7 +28,6 @@ sim-physics
 sim-pilots
 sim-player
 sim-result-fields
-sim-tapper
 sim-trees
 textbudget
 treeart
