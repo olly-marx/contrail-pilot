@@ -1,6 +1,6 @@
 # Proposal: each land's mission that opens its 4th tree
 
-Status: PROPOSAL only (game chat, 2026-10-26; the coordinator approved it as a proposal). Not built: the missions
+Status: FOLDED INTO research/PROPOSAL-12-MISSIONS.md (2026-10-27): it is gate mission A3 there ("plant 3 kinds of <land> tree in one flight"). PROPOSAL only (game chat, 2026-10-26; the coordinator approved it as a proposal). Not built: the missions
 redesign (PROPOSAL-12-MISSIONS.md) and the area missions (MASTER-PLAN Part H) are waiting on the user. Today native 4
 opens at biodiversity 40 in that land, a placeholder marked TODO in `src/landtrees.js` (OPENS[4]).
 

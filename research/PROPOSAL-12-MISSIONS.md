@@ -1,135 +1,115 @@
-# Proposal 12: tiered missions and re-pricing
+# Proposal 12 (rewritten for season 2): the one missions design
 
-Written 2026-10-24 by the bug-fix chat. Research and proposal only: nothing built, nothing run (the CPU-heavy measurements are listed at the end and
-need a test turn). Numbers come from the code and from `research/PLANE-DESIGN.md` section 9; where I estimate, I say so.
-The first-flights table is **for the plane build to adjust**: it has no draft yet (it is measuring today's new-player timeline first) and told me its
-decided rules, which I used. It will not touch `missions.js`, `rewards.js` or `fleet.js` prices; any price change goes past it first.
+Rewritten 2026-10-27 by the bug-fix chat. Supersedes the 2026-10-24 version (it is in git history: `git show d1ca9d1:research/PROPOSAL-12-MISSIONS.md`).
+Folds in: `PROPOSAL-TREE-MISSIONS.md` (per-land tree missions), `PLANE-ONBOARDING-PLAN.md` (one new thing per flight), `MASTER-PLAN.md` Part H
+(area missions), `BALANCE-EARLY-SHOP.md` (sim chat, measured under 0.12.1). Built by the plane build in M4. Nothing here is built; every NUMBER below is
+a proposal that the progression sim must confirm (acceptance gates at the end), not a measurement.
 
-## Decisions for you (the user)
+## Decisions for the user (4, each with my recommendation)
 
-1. **Three kinds of goals, one screen?** I recommend: **Lessons** (the first flights: one new thing per flight, in order, as today), **Challenges** (from
-   then on, three offered per stage, pick one: replaces the planned "flight jobs"), and **Firsts** (a funny card the first time something happens, a small
-   prize). Badges stay as they are (long-term achievements). Or keep one chain of missions?
-2. **What is a "stage"?** I recommend: the first ~6 flights are the lessons; after that the stage is the **era** (1950s, 1970s, 1990s, future): it
-   already exists, shows on every screen and unlocks the new gadgets, so each stage's challenges can use the toys the player just got.
-3. **Funny crash "firsts": yes?** About 8 in 10 flights end in a crash today, so crashing is normal; a card with a joke the first time you hit a bird
-   would make it a good memory. Risk: children may crash on purpose. I suggest they pay only **1 ice crystal** (never seeds), once each, and never
-   count as a mission goal. Your call, and your taste on the jokes (drafts below).
-4. **How much should prizes pay?** Today the 13 missions pay **1,755 seeds and 169 crystals** in total, and badges about **7,700** once, against a
-   1950s price list of about **920** seeds and flying itself earning only about **9 to 19 seeds a flight**. So prizes, not flying, pay for the early
-   upgrades. I propose each stage's missions pay about **half** of that stage's price list, so they matter but flying still matters. Agree?
-5. **Price bands ("flights of saving"):** I propose every upgrade level costs between **1 and 12** flights of income at the typical income of the stage
-   it unlocks in (cheap 1 to 2, middle 3 to 6, big 8 to 12), and no level is worth more than twice, or less than half, the value per seed of its stage's
-   median. These are targets to measure against; you may want different ones.
-6. **What is "value" for a gadget or a system?** Distance before overheating is easy to measure for planes; for a magnet radius or a forecast it is not.
-   I suggest value = **extra seeds per flight** and **extra landings in ten flights**, measured with a bot. Needs the plane build's agreement.
-7. **Research from other Imperial groups** (your 2026-10-21 note: super-tiered upgrades that present other groups' research): still needs YOU to name
-   groups or projects; nothing here depends on it.
-8. **Measuring needs a test turn** (CPU-heavy, about an hour of machine time): see "What to measure".
+1. **Which missions gate a crossing, and all three or two of three?** Recommend: each area has THREE gate missions, "a clean night here", "make 10 shade
+   on a landed day flight here", "plant 3 kinds of this land's tree in one flight" (the last also opens that land's 4th tree), and the crossing
+   needs ALL of them (plus biodiversity 30 and the 70% landed flight, as today). Why all three is safe: the sim shows biodiversity 30 is what holds a
+   crossing back (flights 18-68), and these three missions are done on the way to it, so they add skill, not waiting.
+2. **How do beginners get enough seeds, if prizes are not simply doubled?** Recommend: FRONT-LOAD seeds-only prizes. The six lessons (onboarding) pay
+   330 seeds and each area's 8 missions pay ~800, all in the first ~25 flights, with crystals untouched. That is about the same seed total as the
+   measured "double the mission prizes" option, but it comes from more missions earlier, not a bigger number on the same ones, and experts (who are
+   crystal-limited) gain nothing. Agree with the principle? The numbers are for the sim to confirm.
+3. **One list per area, not one mission at a time?** Today a child sees one mission, in a fixed order, and a hard one (a clean night) can stall the
+   chain. Recommend: the six lessons stay in order (they teach); after that each area shows its 8 missions as a list, any order, the three gate
+   missions starred. A finished one still waits for CLAIM.
+4. **Onboarding reveal order in season 2** (the plane build's plan, adapted because PILOT and BOARDS are resting): HANGAR opens after lesson 1 (with one
+   free part), NATURE after lesson 2, the globe and route choice after lesson 4, the crossing card only when a crossing is first offered. Confirm?
 
-## What exists today
+Not needing a decision now: Firsts (funny cards, 1 crystal once) and Challenges (three offered, pick one) from the 2026-10-24 version are kept as LATER
+work for 0.13+; the draft jokes are in git history.
 
-- **13 sequential missions** (`src/missions.js`): land; land with 5 seeds; 10 shade; a night with no contrail; fly past an airport then land; plant a tree;
-  5 ice crystals; make your plane cleaner; reach a new part of the world; bump through turbulence; 3 kinds of tree in one flight; bring wildlife back;
-  the world tour. One at a time, in order (`save.mission`); a finished one waits in "claim" (`src/rewards.js`) and pays only when the child taps CLAIM.
-- **Prize rule today:** mission `i` pays `15 + 20i` seeds and `1 + 2i` crystals (the 13th: 255 seeds, 25 crystals). Nothing is tied to the era or the price list.
-- **Eras economy** (`src/fleet.js`): three planes (Comet, Jumbo, Twin), six levels of each system and gadget (for example the magnet: 25, 55, 65, 120, 165,
-  245 seeds), engines/body/cabin lines; `ERA_BUDGET` 600/1,500/3,500 seeds scaled so an era totals about 1.5 times its budget (the 1950s: about 920);
-  `START_BONUS` 300 seeds for returning players, 0 for new ones; eras open at 20 x n^1.5 minutes of flying (the plane build's number).
-- **Measured play** (525 flights, 9 players, mostly you, Lola and testers, so NOT how a festival child plays): 20% of flights land; sky seeds per flight
-  8.7 (flights 1 to 20), 10.2 (21 to 50), 19.0 (51+); per landed flight 20, 25, 81 (median).
-- **What the flight result already records** (so most missions need no new code): landed, landed-at, distance, cargo, crystals, sun shade, night
-  with no contrail, airports skipped, trees planted, bumped (turbulence), new region, and the crash reason (storm, bird, no-fly, ground, overheat).
-- **A stale tool, now fixed (2026-10-24, uncommitted in my worktree):** `tools/income.cjs` (plays a campaign and prices upgrades in "flights of saving") imported
-  `src/upgrades.js`, the RETIRED plane lines, and also several functions that no longer exist (`legKm`, `cityAt`), so it could not run at all. It is rewritten for
-  `src/fleet.js` (see "Re-pricing: the method"); a 2-flight sanity run works. `tools/balance.cjs` (how far a
-  plane flies before overheating) was updated for the eras planes and still measures km, not money.
+## 1. What a child sees
 
-## The income picture (my estimate from the numbers above, to be measured)
+1. **Chapter 1: six lessons** (onboarding; one new thing per flight; the plane build's reveal rules and breathers stay theirs). Each lesson is a mission
+   with a prize and, from lesson 1, a reveal.
+2. **Your area's list: 8 missions**, three starred (the gate). The same eight templates in every area, filled with that area's cities, biome and trees.
+3. **When the three starred missions, biodiversity 30 and the 70% flight are all done**, the crossing is offered (card on FLY). Landing it opens the
+   next area, and its own list of 8 missions appears. Old areas' lists stay.
 
-A player flies about 20 minutes before the 1970s open. Legs are now 2.6 to 3.4 km (20 to 30 s), so that is roughly 17 to 40 flights: about
-**150 to 350 seeds from flying**, against a 1950s price list of about **920**. The gap is filled by prizes: missions (1,755 in all), badges, the
-planned crystal exchange, fares and first-landing prizes. So **the order and size of the prizes decide when the next plane is affordable**: they are
-the main pricing lever, which is why missions and re-pricing are one proposal.
+## 2. Chapter 1: the lessons (replaces the first six of today's thirteen)
 
-## Proposal: stages and missions (draft, to tune)
-
-### Stage 0: the first flights (lessons) **for the plane build to adjust**
-
-Its rules (decided so far): one new thing per flight; after flight 1 the HANGAR opens, after 2 NATURE, after 3 the pilot name, after 4 the leaderboards;
-route choosing on the globe somewhere in between; hidden parts truly hidden; a new player starts in one biome with one goal, "Land at the next airport";
-early on, flying past the target gives a gentle "restricted airspace, try again" that keeps the seeds.
-
-| flight | new thing | lesson mission (reuses today's) | prize | opens after |
+| # | mission (today's id) | the one new thing | opens after it (season 2) | prize |
 |---|---|---|---|---|
-| 1 | landing | Land at the next airport (`land`) | 15 seeds, 1 crystal | the HANGAR (first part free) |
-| 2 | seeds | Land with 5 seeds (`seeds-5`) | 35 seeds, 3 crystals | NATURE |
-| 3 | trees | Plant a tree (`plant-tree`) | 55 seeds, 5 crystals | the pilot name |
-| 4 | day contrails | Make 10 shade in one flight (`shade-10`) | 75 seeds, 7 crystals | the leaderboards |
-| 5 | night | A night with no contrail (`clean-night`) | 95 seeds, 9 crystals | choosing your way on the globe |
-| 6 | the bonus | Fly past an airport, then land (`pass-1`) | 115 seeds, 11 crystals | stage 1 |
+| L1 | Land at an airport (`land`) | landing | HANGAR, one free part | 30 seeds, 1 crystal |
+| L2 | Land with 5 seeds (`seeds-5`) | seeds are kept only if you land | NATURE | 40 seeds, 1 crystal |
+| L3 | Make 10 shade in one flight (`shade-10`) | day contrails cool | (nothing: let it settle) | 50 seeds, 1 crystal |
+| L4 | A night with no contrail (`clean-night`) | night contrails warm | the globe: choose your way | 60 seeds, 1 crystal |
+| L5 | Fly past an airport, then land (`pass-1`) | the landing bonus (the early fence comes off) | (nothing) | 70 seeds, 1 crystal |
+| L6 | Plant a tree (`plant-tree`) | trees | (nothing) | 80 seeds, 1 crystal |
 
-The prize numbers are today's formula for a chain of six (seeds 15 + 20i); they sum to 390 seeds, so a child can buy a few 1950s parts by flight 6.
-**Open question for the plane build:** the order above moves `plant-tree` earlier (today it is 6th) so it matches "NATURE after flight 2".
+Total 330 seeds, 6 crystals. The cheapest 1950s parts cost about 25 seeds, so a beginner who completes a lesson every ~1.7 flights can buy something
+after almost every lesson. (Today's formula gave 15 + 20i seeds and 1 + 2i crystals per mission: the first six paid 390 seeds and 36 crystals; the
+this table pays fewer crystals on purpose, see section 5.) The later of today's thirteen (`crystals-5`, `go-clean`, `reach-cairo`, `turbulence`, `kinds-3`,
+`rewild`, `world`) become area missions or are retired as listed in section 3. `src/missions.js` lessons keep their `check`/`fail`/`progress` text.
 
-### Stages 1 to 4: challenges (three offered, pick one per flight) and firsts
+## 3. The area list: 8 templates (★ = gate)
 
-A challenge needs only fields the result already has unless marked **(new)**.
+Same wording in every area with `<area>` / `<biome>` / `<land>` filled in from `src/areas.js` and `REGION_NAMES`. Needs a landed flight unless marked.
 
-| stage | era | example challenges (about 8 per stage; the player sees 3) | uses |
+| # | template | check (from the flight result, `r`) | prize (1950s, seeds) |
 |---|---|---|---|
-| 1 "Learning the sky" | 1950s | Land with 8 seeds; Earn 5 ice crystals in one flight; Fly past 2 airports, then land; Plant 3 kinds of tree in one flight; Reach a new part of the world; Bump through turbulence; Make your plane cleaner (buy any part) | cargo, crystals, trees, region, bumped |
-| 2 "The jet age" | 1970s | Make 25 shade; Land at a city you have not visited; Two nights with no contrail in one flight; Fly 3 airports without a contrail at night; **(new)** Watch a fake forecast patch puff away; Land with a full cabin | forecast, ATC, fares |
-| 3 "Modern times" | 1990s | Dodge 5 icy patches at night (**new** counter); Land in 3 different lands in one flight; Bring a new animal to NATURE; Make 50 shade in a landed flight | sensors, forecast, nature |
-| 4 "The future" | future planes | Fly a whole lap (the world tour); Land with the Earth cooler than at take-off; fly with a fuel of the future | SAF, hydrogen, fiction planes |
+| A1 ★ | A clean night over `<biome>` | `r.nightOwl` and the flight started in this area | 80 |
+| A2 ★ | Make 10 shade on a day flight here | landed, `r.sunBlocked >= 10`, started here | 80 |
+| A3 ★ | Plant 3 kinds of `<land>` tree in one flight | landed, 3 distinct `land:id` tags of THIS land in one flight (NEW result field, see section 4) | 100 |
+| A4 | Land at 4 different cities of `<area>` | `save.visited` count inside the area | 60 |
+| A5 | Fund a project here and see its animal | a project of this land done (`r.projects`) | 80 |
+| A6 | Fly 4,000 km and land | landed, `r.distance >= 4000`, started here | 100 |
+| A7 | Fly past 2 airports, then land | landed, `r.airportsSkipped >= 2` | 100 |
+| A8 | Earn 5 ice crystals in one flight | `r.crystals >= 5` | 100 |
 
-**Firsts** (a funny card plus 1 crystal, once each; none gives seeds; none is a mission goal). Draft jokes, kid-safe, for your taste:
+About 700 seeds and 0 crystals per area in the 1950s. From the 1970s on the same eight are worth the era's price-list ratio (x2.4, x5.7: the
+price lists are 920, 2,235, 5,235 seeds), and A6's distance steps up with the crossing lengths (the gate's own 70% flight is the natural top). A forecast
+flight and "dodge 5 icy patches at night" replace A7/A8 from the 1990s when forecasts and sensors exist. Retired from today's list: `go-clean`
+(buying a part is not a skill), `reach-cairo` (the crossing is the new-part-of-the-world mission), `turbulence` (not area-specific; becomes a Firsts card
+later), `world` (the whole globe is the end of the story, not a mission), `kinds-3` (replaced by A3).
 
-| first time you... | trigger | draft card |
-|---|---|---|
-| hit a bird | crash reason bird | "Tweet! Birds 1, plane 0. They had the right of way." |
-| fly into a storm | crash reason storm | "You made friends with a storm. It was not friendly." |
-| enter reserved sky | crash reason no-fly | "Oops! That sky was reserved. Even planes need a ticket." |
-| land away from a runway | crash reason ground | "Great landing! Wrong place, though." |
-| overheat the Earth | crash reason overheat | "The Earth got a fever. Trees and shady contrails cool it down." |
-| bump through turbulence | `bumped` | "Wheee! That was the bumpy air." |
-| fly through the night | night began | "Stars out! Contrails keep the heat in at night: fly above or below." |
-| plant all 5 kinds in one flight | planted kinds | "A whole forest in one flight!" |
+## 4. What the builder (M4) needs
 
-### Prizes by stage (to decide, decision 4)
+- **Data:** `save.missionsDone` stays a list of ids; ids become `lesson:<id>` and `area:<areaKey>:<A1..A8>`. Migration: a season 2 save has none. The
+  classic 13 stay for classic saves (tests still run classic). `MISSIONS` in `src/missions.js` keeps the lessons; a new `AREA_MISSIONS(areaKey)` builds
+  the eight from the template table. The Pilot stat "Missions done n / N" counts the lessons plus all areas' missions.
+- **New result fields** (`src/sim/rules.js`, the sim chat approves rules.js changes): `r.area` (area of `r.from`, via `areaOf`) and `r.landKinds`
+  (distinct tree ids planted this flight, grouped by land, from `speciesTags`). Everything else A1-A8 need is already in the result (`nightOwl`,
+  `sunBlocked`, `airportsSkipped`, `crystals`, `projects`, `distance`, `landed`); `save.visited` gives A4.
+- **The gate's missing condition:** `offerCtx` passes `missionsDone = A1 && A2 && A3 of the crossing's from-area`. The hook is already in place
+  (`offerCheck` skips the condition while `ctx.missionsDone` is undefined: src/crossings.js).
+- **Land trees:** `src/landtrees.js` OPENS[4] becomes "A3 done in this land" (replaces the biodiversity-40 placeholder), as PROPOSAL-TREE-MISSIONS.md.
+- **Mission screen:** the NATURE/FLY mission card becomes the area list (starred rows); CLAIM works as today (`src/rewards.js`; `missionReward(i)` becomes
+  a lookup of the table above instead of `15 + 20i`).
+- **Tests with planted defects** (each plant must fail): a gate mission done in ANOTHER area does not offer the crossing; a crashed flight completes
+  nothing (drop the landed check -> fails); A3 counts only this land's trees (a mixed two-land flight must not complete it); the crossing is not offered
+  with two of the three done; OPENS[4] follows A3, not biodiversity; prizes are seeds-only for A1-A8 (a planted crystal prize fails); the smoke suite
+  (`tests/season2-smoke.cjs`) shows the list, the stars and the offer.
 
-Each stage's missions together pay about **half of that stage's price list**: roughly 450 seeds in the 1950s (list about 920), 1,100 in the 1970s (about
-2,250), 2,600 in the 1990s (about 5,250), and crystals at the present 1 crystal per 8 seeds, so a mission is "worth a flight or two of saving", not a
-whole plane. Today's formula (a single rising line up to 255 seeds) would pay the late missions far more than a whole 1950s part: it must change.
+## 5. Prize sizing against BALANCE-EARLY-SHOP.md, and what the sim must confirm
 
-## Re-pricing: the method (what to measure, in order)
+Facts from the sim (0.12.1, 4 seeds x 100 flights): beginners (s 0.75) have 72-78 empty flights of 100 and a longest empty run of 22-42, SEED-starved
+(20-70 seeds banked, crystals 50-90 because night dodging pays them regardless); experts (s 0.9-1.0) have runs of 4-8 and are CRYSTAL-limited (~7,500
+seeds banked, 0-22 crystals). Doubling mission seeds cut the beginners' longest run to 7-15 and did nothing for experts.
 
-1. **DONE: `tools/income.cjs` now prices the eras economy.** A new player (0 seeds, or `START=300` for a returning one) flies a campaign with the smart
-   pilot, taps CLAIM ALL after every flight, buys the cheapest open level through `buyFleet`, and prints per flight: seeds from flying, seeds from prizes,
-   minutes flown, era, what it bought; then per-era income and an `INCOME {...}` line. A 2-flight sanity run: flights earned 18 and 38 seeds from flying and
-   155 and 95 from prizes (so prizes dominate, as estimated), about a minute of play each, five 25-seed parts bought. Known limits: it does not chase
-   mission goals, so mission and badge prizes arrive only as it plays; crashes are off, so it is a little better than a real child.
-2. **DONE: the price ladder with its gates, `tools/price-ladder.mjs`** (pure data, a second to run). On today's data the **era-total gate passes**: the 1950s,
-   1970s and 1990s price lists total 920, 2,235 and 5,235 seeds = 1.53, 1.49, 1.50 times their budgets (the 1.5 the code comment promises); the
-   monotone and crystal gates pass. With the PLACEHOLDER income (flying only: 9, 10, 19 seeds a flight) 14 levels fall outside "1 to 12 flights of saving": the
-   top level of every system and gadget (245 seeds, 12.9 flights in the 1990s) and the last level of the Jumbo and Twin lines (13 to 16). Prizes add a lot of
-   income, so this is NOT yet a verdict: it needs the real income from step 3. `--selftest` proves the gates can fail: a good fixture passes and five planted
-   mispricings (a level 10x too dear, far too cheap, a later level cheaper than an earlier one, an era total too high, crystals out of step) each trip their
-   own gate; I also broke each gate in a scratch copy and the self-test failed every time.
-3. **Income by stage** from the probe, three bot skills (careless, average, careful) times 5 seeds (the way `balance.cjs` does it), 150 flights each, with and
-   without claiming prizes, then `INCOME='...' node tools/price-ladder.mjs`; plus the real data (the flights table) filtered to players with 20+ flights.
-4. **Value per level** (decision 6): planes by `balance.cjs` (km before overheating); gadgets and systems by the bot with and without the level
-   (extra seeds per flight, extra landings in ten flights). Not built yet: it needs the plane build's agreement on what a gadget's value is.
-5. **Add the value gates** (no level worth more than twice or less than half the median value per seed of its stage) to `tools/price-ladder.mjs`, validated the
-   same way (a planted level that gives nothing, a planted dominant level).
+The design does the same job without a bigger multiplier: 330 (lessons) + ~700 (one area's list) = ~1,030 seeds, mostly inside the first 25 flights,
+against +1,755 seeds if all 13 of today's missions were doubled (less the ones a beginner has not reached yet). Crystals: lessons give 1 each, area missions 0, so an expert's crystal pace does not
+move; the shop's crystal gate keeps rewarding night skill. Rough check for the beginner: flying earns 9-19 seeds a flight; the missions add ~40 a flight
+over the first 25; the cheapest levels are ~25 seeds, so a beginner can buy something every 1-2 flights while the starter list lasts.
 
-**Cost:** steps 1 and 2 are done and cost seconds. Steps 3 and 4 are CPU-heavy (the probe runs faster than real time but with a browser per bot): my guess is an hour
-of machine time in total, but I have not timed a long run (the 2-flight sanity run took 75 s of wall clock for about 3 s of CPU, mostly start-up waits), so the first
-real turn should begin with a 10-flight timing run. It needs a test turn.
+**Acceptance gates for the sim chat (progression sim with the lesson/area schedule instead of `15 + 20i`):**
+1. s = 0.75: longest empty run <= 10 flights (now 22-42) over 4 seeds x 100 flights, maxSkip 4.
+2. s = 0.9 / 1.0: empty share and crystal bank within 3 points / a few crystals of the 0.12.1 numbers (they must not speed up).
+3. Crossing 1 is not offered earlier than biodiversity 30 allows (the missions must not delay it either: flight of the gate trio <= flight of bio 30 at s 0.8).
+4. A seed-prize-only change moves nothing else: the first-crossing flight number is unchanged for s >= 0.9.
+If gate 1 fails, raise the lesson prizes first (cheapest to change), then A1-A3; do not touch crystal prices (BALANCE-EARLY-SHOP.md option A did not help).
 
-## Risks and what I did not do
+## 6. Risks
 
-- **The sample is not children.** The measured income comes mostly from you and testers; a festival child lands far less often. Prizes must not assume skill.
-- **Funny crash cards** may encourage crashing (decision 3); the 1-crystal, once-each rule limits it.
-- **Missions and onboarding must be built together** with the plane build (the first-flights table is theirs to change) and the hidden-parts rule.
-- **Nothing was run.** Every number above is from the code, from `PLANE-DESIGN.md` section 9, or my arithmetic (shown).
+- **Mission fatigue:** 6 + 8 per area is a lot to read; the list shows only the next 3 undone plus the starred ones (a builder choice, not a rule).
+- **Too many night/shade checks** depend on the sky giving a night or icy air; the lessons already do and children manage them. A1 is the hardest (a whole
+  clean night), which is why it is a gate and not the first lesson.
+- **Area attribution:** a flight counts for the area it STARTED in (`r.from`); a crossing flight starts in the old area and counts there.
+- **Numbers are a first draft**; the sim sets them. The shape (seeds front-loaded, crystals untouched, gate trio starred) is what the user decides.
+- Nothing was run or built for this rewrite; sources: the repo at `d1ca9d1`, `research/BALANCE-EARLY-SHOP.md`, `research/MASTER-PLAN.md`, `research/PLANE-ONBOARDING-PLAN.md`.
