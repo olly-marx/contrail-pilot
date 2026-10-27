@@ -24,6 +24,8 @@ const crossingsHTML = s => {
 const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS).filter(k => !open.includes(k));
   return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
+import { rollWeek } from './records.js';
+import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
 import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
@@ -273,7 +275,7 @@ export class UI {
     if (tab === 'missions') return this.showMissions();
     if (tab === 'nature') { this.markShopSeen(); if (this.tour) this.tour.markDone('nature-lead'); this.showOnly('nature'); this.wild && this.wild.render(); if (this.tour) this.tour.maybe('nature'); return; }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
-    if (tab === 'boards') { this.showOnly('boards'); return this.pilot && this.pilot.showBoards(); }
+    if (tab === 'boards') { this.showOnly('boards'); if (FEATURES.season2) return showRecords(this.save); return this.pilot && this.pilot.showBoards(); }   // season 2: MY RECORDS (src/records.js), online is off
   }
 
   showOnly(id) {
@@ -284,7 +286,7 @@ export class UI {
     $('tabbar').hidden = !id;
     $('hubBack').hidden = true;   // (the bar's HOME replaces the old floating button)
     if (FEATURES.season2) {
-      const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: false, boards: false };
+      const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: false, boards: hubRevealed(this.save, 'boards') };
       document.querySelectorAll('#tabbar [data-go]').forEach(b => { b.hidden = !show[b.dataset.go]; });
       $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';
     }
@@ -311,7 +313,7 @@ export class UI {
     this.renderPrizes();
     $('tEra').innerHTML = this.save.tutorialDone ? eraBarHTML(this.save) : '';   // era progress (src/eras.js)
     this.renderJourney();
-    if (FEATURES.season2 && isSeason2(this.save)) { setDaily(this.save, new Date().toISOString().slice(0, 10)); writeSave(this.save); this.missionsAfterSave(); }   // + off-flight missions already met (e.g. on entering a new area)   // the daily trio: the date comes from here, not the rules
+    if (FEATURES.season2 && isSeason2(this.save)) { const today = new Date().toISOString().slice(0, 10); setDaily(this.save, today); rollWeek(this.save, today); writeSave(this.save); this.missionsAfterSave(); }   // + off-flight missions already met (e.g. on entering a new area)   // the daily trio: the date comes from here, not the rules
     if (FEATURES.season2) this.renderHub();
     this.showOnly('title');
     if (this.showRepriced()) return;
