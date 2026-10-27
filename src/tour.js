@@ -127,8 +127,14 @@ export class Tour {
 
   async step(st) {
     let t = null;
-    for (let i = 0; i < 40 && !(t = this.find(st.area || st.target)); i++) await sleep(100);   // screens render as they open
-    if (!t) return false;   // nothing to point at: never trap the player
+    // Screens render as they open, so a target may appear a moment late: wait up to 300 ms for it to EXIST in the page.
+    // If it never exists, give up at once (the audit, 2026-10-27: the dim layer caught every tap for 4 s, which felt frozen
+    // on a phone); if it exists but is still hidden, wait up to 4 s for it to show, as before.
+    const sel = st.area || st.target, inDom = () => !!document.querySelector(FEATURES.season2 ? HUB_TARGETS[sel] || sel : sel);
+    for (let i = 0; i < 3 && !inDom(); i++) await sleep(100);
+    if (!inDom()) return false;   // nothing to point at: never trap the player
+    for (let i = 0; i < 40 && !(t = this.find(sel)); i++) await sleep(100);
+    if (!t) return false;
     if (st.scroll) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
     this.target = t;
     this.el.querySelector('.tbubble p').innerHTML = st.text;
