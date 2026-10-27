@@ -33,6 +33,10 @@ Many LOGIC tests also check a screen string; for those the logic moves to Node a
 
 Risk to watch: a Node test that passes because the engine is too forgiving (it must still FAIL on the plant); keep `sim-equiv`, `sim-bank`, `sim-rng-split` as the proof that the engine equals the game. Do NOT relax a threshold to make a migrated test fast.
 
+## Progress log
+- **2026-10-27 batch 2, test 1: `lanes` (CI 65 s, browser) -> `tests/sim-lanes.cjs` (0.6 s, Node, the sim engine).** Same two halves (icy air never fills a storm gap; flocks never sit in a gap as the plane passes) and the same pass marks. Plants (edit `src/sim/rules.js`; the header of the test lists the sed lines): the addIssr guard removed -> FAILS (196 of 200 direct tries, 349 steps in the long run); the addFlock guard removed -> FAILS ONLY after I added a direct bird check (the long run alone PASSED the planted defect: a flock almost never arrives in a gap by chance; the old browser test has the same blind spot, to be confirmed on the baseline turn). Old `lanes.cjs` is kept until the baseline turn runs it against both plants, then retired. Before/after: ~65 s -> 0.6 s.
+- **Correction to the plan:** batch 1 (DATA) is worth little in seconds (the CI table gives 2 s each) and several "DATA" tests are not: `textures.cjs` needs the real Phaser loader, and `links.cjs` mixes a data check (upgrade links, Node-able) with the About page (screen). Do the big LOGIC tests first (batch 2/3: flight 90, school 67, forest 60, missions 39, crystals 38, progression 33, hazards 32, ponds 29, rewards 28), then DATA.
+
 ## Per-test table (browser tests only; Node tests already run in ~0.1-25 s)
 CI s = the 2026-10-22 CI seconds where known (stale). Sleeps = fixed `waitForTimeout` calls. Hits = logic/screen/render greps (a crude signal, not the class).
 
