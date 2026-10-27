@@ -3,7 +3,7 @@
 // is pure (same save -> same path, twice, in one process, around an ordinary flight); an ordinary save is unchanged.
 // PLANT=km makes the first leg the ordinary one: must FAIL. Plain Node. Run: node tests/sim-crossing.cjs
 (async () => {
-  globalThis.window = { SEASON2: true };   // the redesign's switch (src/season2.js), as the game sets it
+  globalThis.SEASON2 = true; globalThis.window = { SEASON2: true };   // (cities.js reads globalThis.SEASON2 since S4; window is for config.js FEATURES)   // the redesign's switch (src/season2.js), as the game sets it
   const { simulate } = await import('../src/sim/simulate.js');
   const { createWorld } = await import('../src/sim/world.js');
   const X = await import('../src/crossings.js');

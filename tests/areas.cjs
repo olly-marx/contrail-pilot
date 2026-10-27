@@ -16,7 +16,7 @@ const src = f => path.resolve(__dirname, '../src', f);
     try { out = execFileSync(process.execPath, [__filename], { env: { ...process.env, AREAS_ON: '1' } }).toString(); } catch (e) { out = String(e.stdout); }
     check(/PASS/.test(out), `switch ON:\n${out}`);
   } else {
-    globalThis.window = { SEASON2: true };
+    globalThis.SEASON2 = true; globalThis.window = { SEASON2: true };   // (cities.js reads globalThis.SEASON2 since S4; window is for config.js FEATURES)
     const { AREAS, OCEAN_STONES } = await import(src('areas.js'));
     const { CITIES } = await import(src('cities.js'));
     const route = await import(src('route.js')), net = await import(src('network.js'));
