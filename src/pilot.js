@@ -1,5 +1,5 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
-import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, restorePreview, restoreClaim, getCode, ensureCode, pilotLogin, outboxSize } from './online.js';
+import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, restorePreview, restoreClaim, getCode, ensureCode, pilotLogin, outboxSize, onlineOff } from './online.js';
 import { rebuildSave } from './restore.js';
 import { writeSave } from './save.js';
 import { MISSIONS } from './missions.js';
@@ -16,7 +16,7 @@ export const BOARDS = [
   { id: 'ultimate', name: 'ULTIMATE FLYER', what: 'Points for everything you do well. Tap "how points work".', fmt: v => `${n(v)} points` },
   { id: 'longest', name: 'LONGEST', what: 'Your longest flight that LANDED.', fmt: v => km(v) },
   { id: 'total', name: 'FURTHEST', what: 'All your landed flights added up.', fmt: v => km(v) },
-  { id: 'laps', name: 'LAPS', what: 'Times round the world, back to LONDON.', fmt: v => `${n(v)} lap${v == 1 ? '' : 's'}` },
+  { id: 'laps', name: 'LAPS', what: 'Times round the Earth: every 40,075 km you fly is one.', fmt: v => `${n(v)} lap${v == 1 ? '' : 's'}` },
   { id: 'nature', name: 'TREE KINDS', what: 'Different kinds of tree planted on landed flights.', fmt: v => `${n(v)} kind${v == 1 ? '' : 's'}` },
   { id: 'cooler', name: 'COOL CONTRAILS', what: 'Shade made in the sun, minus heat trapped at night, plus icy air dodged.', fmt: v => `${n(v)} points` },
   { id: 'cleaner', name: 'CLEAN PLANE', what: 'How clean your plane is. Hydrogen gets 200.', fmt: v => `${n(v)} points` },
@@ -128,6 +128,10 @@ export class PilotScreens {
     this.edit(!getPilot());
     this.renderStats();
     this.renderCode();
+    // Season 2 is offline by design: no name form, no code, no login (they would only say 'No internet right now').
+    const off = onlineOff();
+    $('pOffNote').hidden = !off;
+    if (off) for (const id of ['pName', 'pEdit', 'pChange', 'pCodeBox', 'pHave', 'pLogin']) $(id).hidden = true;
   }
 
   edit(on) {
@@ -189,8 +193,9 @@ export class PilotScreens {
     $('bPeriods').querySelectorAll('[data-period]').forEach(b => b.classList.toggle('on', b.dataset.period === period));
     $('bWhat').textContent = board.what;
     $('bWhat').classList.toggle('oops', !!board.oops);
-    $('bMsg').textContent = 'Loading...';
     $('bList').innerHTML = '';
+    if (onlineOff()) { $('bMsg').textContent = 'The leaderboards are resting while season 2 starts. They come back later!'; return; }
+    $('bMsg').textContent = 'Loading...';
     const rows = await leaderboard(board.id, period);
     if (this.board !== board.id || this.period !== period) return;   // tapped another tab meanwhile
     if (!rows) {

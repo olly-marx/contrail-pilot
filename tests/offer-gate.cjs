@@ -41,6 +41,10 @@
   const done = { ...base, areas: Object.keys((await import('../src/areas.js')).AREAS), crossed: [] };
   check(X.available(done).length === 0 && X.moreToCome(done), 'all areas open: nothing to fly, "more to come" shows');
   check(!X.moreToCome(base), 'a save with crossings still to fly shows no placeholder');
+  // the empty FLY screen: nothing to fly now, but the next crossing opens in a later era (laterEra), told instead of silence
+  const early = { ...base, flightSeconds: 0, areas: ['weurope', 'nordic'], city: 'STOCKHOLM' };
+  check(X.available(early).length === 0 && X.laterEra(early) === 1, `1950s save with both era-0 crossings of its areas done: nothing now, the next opens in era 1: ${X.available(early).length} ${X.laterEra(early)}`);
+  check(X.laterEra(base) === null, 'a save already in the last era has no later crossing to announce');
   console.log({ fails });
   if (fails.length) { console.log('FAIL'); process.exit(1); }
   console.log('PASS offer-gate');

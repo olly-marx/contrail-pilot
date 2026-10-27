@@ -25,6 +25,7 @@ export const getPilot = () => read(PILOT_KEY, null);
 // Online is OFF by design (src/newplayer.js, the plane build's test mode, sets window.__CP_NO_ONLINE = true before any module runs):
 // nothing is queued, sent, retried or announced, and no network is touched.
 const noOnline = () => typeof window !== 'undefined' && window.__CP_NO_ONLINE === true;
+export const onlineOff = noOnline;   // the PILOT and BOARDS screens say so instead of 'No internet right now' (season 2 is offline by design)
 
 let client = null;
 function db() {

@@ -7,11 +7,15 @@
 //   D  the offer card with the gate met through a seeded save (areaBest + planted trees): 4,549 km not offered, another
 //      area's flight does not count, 4,550 km + biodiversity 30 offered; a crossing flight starts (Stockholm 6,500 km on)
 //   E  every area open and the last era: the MORE TO COME card
+//   F  nothing to fly yet in an early era: the card says when the next crossing opens, not silence
+//   (C also: PILOT and BOARDS say they are resting in season 2, no name form; Pilot LAPS text does not say London)
 // Planted defects, each must FAIL the check named (revert with git checkout after):
 //   B  sed -i 's/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/' src/route.js        -> "B <area>: flight school starts in ..."
 //   C  sed -i "s/if (tab === 'nature')/if (tab === 'natur')/" src/ui.js                    -> "C: NATURE opens"
 //   D  sed -i 's/distanceShare: 0.7/distanceShare: 0/; s/biodiversity: 30, /biodiversity: 0, /' src/season.js -> "D: 4,549 km ..."
 //   D  sed -i 's/maxEra: 2/maxEra: 9/' src/season.js ... (offer-gate.cjs covers it); crossing start: break crossingPath in src/crossings.js
+//   F  sed -i 's/if (best === null || c.era < best)/if (false)/' src/crossings.js  -> "F: nothing to fly yet"
+//   C  sed -i 's/const off = onlineOff();/const off = false;/' src/pilot.js -> "C: PILOT says"
 //   E  sed -i 's/export const moreToCome = save => /export const moreToCome = save => false \&\& /' src/crossings.js -> "E: ..."
 // Run: python3 -m http.server 8000 & node tests/season2-smoke.cjs
 const { chromium } = require('playwright-core');
@@ -80,6 +84,14 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
     check(t.shown && t.len > 20, `C: ${tab.toUpperCase()} opens with content: ${JSON.stringify(t)}`);
   }
   check(await p.evaluate(() => !!document.getElementById('jAreas')), 'C: the FLY screen shows "Your area"');
+  // season 2 is offline by design: PILOT and BOARDS say so, they do not offer a name form that can only fail
+  await p.evaluate(() => game.registry.get('ui').go('pilot')); await p.waitForTimeout(250);
+  const pil = await p.evaluate(() => { const v = id => { const e = document.getElementById(id); return !!e && !e.hidden; }; return { note: v('pOffNote'), edit: v('pEdit'), have: v('pHave'), code: v('pCodeBox'), stats: document.getElementById('pStats').innerText.length > 10 }; });
+  check(pil.note && !pil.edit && !pil.have && !pil.code && pil.stats, `C: PILOT says the pilot names are resting (no name form, no login) and still shows your stats: ${JSON.stringify(pil)}`);
+  await p.evaluate(() => game.registry.get('ui').go('boards')); await p.waitForTimeout(400);
+  const bm = await p.evaluate(() => document.getElementById('bMsg').textContent);
+  check(/resting while season 2/.test(bm) && !/No internet/.test(bm), `C: BOARDS says the leaderboards are resting, not 'No internet right now': ${bm}`);
+  check(await p.evaluate(() => !/BACK TO LONDON|back to LONDON/i.test(document.body.innerText) ), 'C: no screen talks about laps back to London');
   await p.context().close();
 
   // D. the offer card and a crossing flight
@@ -113,6 +125,14 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const more = await p.evaluate(() => ({ card: !!document.getElementById('jMore'), cross: !!document.querySelector('#jCross [data-cross]') }));
   check(more.card && !more.cross, `E: every area open, the last era: the MORE TO COME card, no crossing: ${JSON.stringify(more)}`);
+  await p.context().close();
+
+  // F. an empty FLY screen is not silent: the next crossing opens in a later era
+  p = await fresh();
+  await seed(p, { areas: ['weurope', 'nordic'], homeArea: 'weurope', city: 'STOCKHOLM', flightSeconds: 0 });
+  await p.evaluate(() => game.registry.get('ui').showTitle());
+  const later = await p.evaluate(() => ({ later: (document.getElementById('jLater') || {}).innerText || '', cross: !!document.querySelector('#jCross [data-cross]'), more: !!document.getElementById('jMore') }));
+  check(/NEXT CROSSING/.test(later.later) && /1970s/.test(later.later) && !later.cross && !later.more, `F: nothing to fly yet: the card says the next crossing opens in the 1970s: ${JSON.stringify(later)}`);
   await p.context().close();
 
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);

@@ -52,6 +52,18 @@ export function available(save) {
   return out;
 }
 
+// The era (index) in which the next crossing you could fly opens, when it is later than yours and this release has it; else null.
+export function laterEra(save) {
+  const open = new Set(unlockedAreas(save)), era = eraProgress(save).index;
+  if ((save.areas || []).includes('ocean')) open.add('ocean');
+  let best = null;
+  for (const c of CROSSINGS) {
+    if (c.kind === 'boss' || c.era <= era || c.era > SEASON.maxEra) continue;
+    const [sa, sb] = sides(c);
+    if (open.has(sa) !== open.has(sb) && (best === null || c.era < best)) best = c.era;
+  }
+  return best;
+}
 // The placeholder at the end of this release: you have reached the last era it covers and nothing is left to fly.
 export const moreToCome = save => eraProgress(save).index >= SEASON.maxEra && available(save).length === 0;
 
