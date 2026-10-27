@@ -91,7 +91,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   await p.evaluate(() => game.registry.get('ui').go('boards')); await p.waitForTimeout(400);
   const bm = await p.evaluate(() => document.getElementById('bMsg').textContent);
   check(/resting while season 2/.test(bm) && !/No internet/.test(bm), `C: BOARDS says the leaderboards are resting, not 'No internet right now': ${bm}`);
-  check(await p.evaluate(() => !/BACK TO LONDON|back to LONDON/i.test(document.body.innerText) ), 'C: no screen talks about laps back to London');
+  check(await p.evaluate(async () => !/back to LONDON/i.test(await (await fetch('/src/pilot.js')).text())), 'C: the Pilot LAPS text does not say "back to LONDON" (season 2 starts anywhere)');
   await p.context().close();
 
   // D. the offer card and a crossing flight
