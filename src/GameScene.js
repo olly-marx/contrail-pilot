@@ -294,6 +294,9 @@ export class GameScene extends Phaser.Scene {
     this.showTip(html, pic);
     return true;
   }
+  // Season 2: wild animals (and scenery birds) only once the NATURE lesson (L2) is done: one new thing at a time.
+  wildAllowed() { return !isSeason2(this.save) || s2Revealed(this.save, 'nature'); }
+
   showTip(html, pic) {
     this.explaining = true;   // a bubble is up (NOT frozen)
     this.tipAt = this.time.now;
@@ -535,7 +538,7 @@ export class GameScene extends Phaser.Scene {
     };
     if (due('farm', W.farmPerScreen)) animal(pick(['animal-cow', 'animal-sheep']));
     // Season 2: no wild animals before the NATURE lesson (L2), then the first one is explained (the user: one new thing at a time).
-    const wildOK = !isSeason2(this.save) || s2Revealed(this.save, 'nature');
+    const wildOK = this.wildAllowed();
     if (wildOK && due('wild', W.wildPerScreen)) { const k = W.pickWild(this.distancePx); if (k && this.textures.exists(`${k}-0`)) { animal(k); if (isSeason2(this.save)) this.explain('x-first-animal', tip('x-first-animal')); } }   // (still loading: not yet)   // rarer ones only far into a flight
     const b = wildOK && due('bird', W.birdsPerScreen) && W.pickSky(this.distancePx);   // null: no bird this far in (or before the NATURE lesson)
     if (b && this.textures.exists(`${b}-0`)) {

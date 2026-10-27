@@ -36,13 +36,13 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
     await p.click('#goBtn'); await started(p);
     await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).catch(() => {});
     await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.hitsStorm = () => false; s.hitBird = () => false; s.nextAirport.worldX = s.distancePx + 1e7; });
-    let animals = 0;
+    let animals = 0; set.allowed = await scene(() => game.scene.getScene('game').wildAllowed());
     for (let i = 0; i < seconds * 4; i++) { await p.waitForTimeout(250); await scene(() => { const s = game.scene.getScene('game'); s.heat = 0; if (s.plane.y > 300) s.applyFlap(); }); animals = Math.max(animals, await wild()); }
     await shot(`flight-${set.tag}`);
     await p.evaluate(set => { const s = game.scene.getScene('game'); Object.assign(s, { landedAt: s.path[1] }, set.vals || {}); s.finish({ landed: true }); }, set);   // (a real landing names its city)
     await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 15000 }).catch(() => {});
     await p.waitForTimeout(2500);   // the results reveal
-    return animals;
+    return { animals, allowed: set.allowed };
   };
   const resultsState = () => p.evaluate(() => ({ btn: document.getElementById('againBtn').textContent, coach: !document.getElementById('coach').hidden }));
 
@@ -66,8 +66,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   if (await p.evaluate(() => document.getElementById('results') && !document.getElementById('results').hidden)) await p.click('#againBtn');
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
   await shot('hub-flight1');
-  let animals = await fly(8, { tag: '1', vals: {} });
-  check(animals === 0, `flight 1: no wild animals before the NATURE lesson (${animals} drawn)`);
+  let f1 = await fly(8, { tag: '1', vals: {} });
+  check(f1.animals === 0 && f1.allowed === false, `flight 1: no wild animals before the NATURE lesson (${JSON.stringify(f1)})`);
   let rs = await resultsState();
   check(/OPEN THE HANGAR/.test(rs.btn) && !rs.coach, `after flight 1 the results lead to the HANGAR, nothing left open: ${JSON.stringify(rs)}`);
   await p.waitForFunction(() => /OPEN THE HANGAR/.test(document.getElementById('againBtn').textContent) && document.getElementById('againBtn').offsetParent !== null, null, { timeout: 8000 }).catch(() => {});
@@ -83,8 +83,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   check(!hub2.locked && hub2.tiles.includes('hangar'), `after the free part: TAKE OFF unlocked, the HANGAR tile is there: ${JSON.stringify(hub2)}`);
   await shot('hub-flight2');
   // Flight 2 (lesson 2: daytime icy air) -> NATURE.
-  animals = await fly(8, { tag: '2', vals: { sunBlocked: 3.5 } });
-  check(animals === 0, `flight 2: still no wild animals (the NATURE lesson ends this flight; ${animals} drawn)`);
+  const f2 = await fly(8, { tag: '2', vals: { sunBlocked: 3.5 } });
+  check(f2.animals === 0 && f2.allowed === false, `flight 2: still no wild animals (the NATURE lesson ends this flight): ${JSON.stringify(f2)}`);
   rs = await resultsState();
   check(/OPEN NATURE/.test(rs.btn) && !rs.coach, `after lesson 2 the results lead to NATURE: ${JSON.stringify(rs)}`);
   await shot('results-flight2');
@@ -94,7 +94,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t) t.hidden = true; game.registry.get('ui').tour.busy = false; });
   await p.click('#hubBack'); await p.waitForTimeout(500);
   // Flights 3-4 (night, skip one); then lesson 5 asks for parcels first.
-  await fly(6, { tag: '3', vals: { nightOwl: true } }); await shot('results-flight3'); await p.click('#againBtn'); await p.waitForTimeout(500);
+  const f3 = await fly(6, { tag: '3', vals: { nightOwl: true } });
+  check(f3.allowed === true, `flight 3: wild animals are allowed after the NATURE lesson: ${JSON.stringify(f3)}`); await shot('results-flight3'); await p.click('#againBtn'); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   await fly(4, { tag: '4', vals: { airportsSkipped: 1 } }); await shot('results-flight4'); await p.click('#againBtn'); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(400);
