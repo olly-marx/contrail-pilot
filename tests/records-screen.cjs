@@ -44,7 +44,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const nums = () => p.evaluate(() => Object.fromEntries([...document.querySelectorAll('#bBoards .btn.rec')].map(e => [e.dataset.board, e.querySelector('.val').textContent])));
   const wk = await nums();
   check(wk.longest === '2,500 km' && wk.bird === '1 strike' && wk.crashes === '1 crash' && wk.shortest === '400 km', `THIS WEEK numbers: ${JSON.stringify(wk)}`);
-  check(wk.kinds === '3 kinds' && wk.missions === '2 done', `KINDS (3 planted since the week began) and MISSIONS (2 done since): ${JSON.stringify(wk)}`);
+  check(wk.kinds === '2 kinds' && wk.missions === '2 done', `KINDS (2 kinds planted since the week began: oak, birch) and MISSIONS (2 done since): ${JSON.stringify(wk)}`);
   await p.click('#bPeriods [data-period="ever"]'); await p.waitForTimeout(200);
   const ev = await nums();
   check(ev.longest === '4,321 km' && ev.bird === '2 strikes' && ev.crashes === '5 crashes' && ev.shortest === '150 km' && ev.longestCrash === '900 km', `EVER numbers: ${JSON.stringify(ev)}`);
