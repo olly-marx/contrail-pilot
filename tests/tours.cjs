@@ -53,7 +53,7 @@ const KEY = 'contrailPilot.v2';
   const fresh = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: [], flights: 0, landings: 0, priceVersion: 2, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // fleet: a save from after the eras reset
   const on = async (p, sel) => { for (let i = 0; i < 30; i++) { const r = await p.evaluate(sel => { const t = document.getElementById('tour'); const ring = t && t.querySelector('.tring').getBoundingClientRect();
       const el = [...document.querySelectorAll(sel)].find(e => e.offsetParent !== null); if (!t || t.hidden || !el) return false; const e = el.getBoundingClientRect();
-      return Math.abs(ring.left + 4 - Math.max(4, e.left)) < 8 && Math.abs(ring.top + 4 - Math.max(4, e.top)) < 8;   // (a tall area scrolled into view: the ring is clamped to the screen) }, sel); if (r) return true; await p.waitForTimeout(150); } return false; };
+      return Math.abs(ring.left + 4 - Math.max(4, e.left)) < 8 && Math.abs(ring.top + 4 - Math.max(4, e.top)) < 8; /* (a tall area scrolled into view: the ring is clamped to the screen) */ }, sel); if (r) return true; await p.waitForTimeout(150); } return false; };
   const bubble = p => p.evaluate(() => document.querySelector('#tour .tbubble p').textContent);
   const tourHidden = p => p.evaluate(() => document.getElementById('tour').hidden);
   const save = p => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
