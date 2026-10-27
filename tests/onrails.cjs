@@ -105,6 +105,13 @@ const W = 390, H = 844;
   await step('R10-takeoff2', /animals/i, null);
   // R10-R11: flight 2, then NATURE and its free first project.
   await fly('flight 2', 240, { noTurb: true });
+  // A player can miss the daytime icy air: FLY ON and fly again (up to 3 more flights), as they would. NATURE must follow L2.
+  for (let i = 0; i < 3 && !(await p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).missionsDone || []).includes('L2'))); i++) {
+    await p.evaluate(() => { const t = document.getElementById('tour'); return t && !t.hidden; }) && await p.click('#tour .tbubble .btn:not([hidden])').catch(() => {});
+    await p.click('#againBtn'); await p.waitForTimeout(800);
+    if (await p.evaluate(() => !document.getElementById('title').hidden)) await p.click('#goBtn');
+    await fly(`flight 2 retry ${i + 1}`, 240, { noTurb: true });
+  }
   await step('R11a-nature', /NATURE/i, () => !document.getElementById('nature').hidden);
   await step('R11b-free-project', /FREE/i, () => (JSON.parse(localStorage.getItem('contrailPilot.v2')).habitat || {}) && JSON.parse(localStorage.getItem('contrailPilot.v2')).freeProjectGiven === true);
   await step('R11c-projects', /animals back/i, null);
