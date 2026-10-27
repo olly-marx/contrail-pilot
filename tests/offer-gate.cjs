@@ -9,7 +9,7 @@
   const { SEASON } = await import('../src/season.js');
   const { biodiversity } = await import('../src/nature.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  const base = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, landings: 30, mission: 99, flightSeconds: 1e6, areas: ['weurope'], city: 'WARSAW',
+  const base = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, landings: 30, mission: 99, flightSeconds: 1e6, areas: ['weurope'], city: 'WARSAW', missionsDone: ['weurope:night', 'weurope:shade10', 'weurope:kinds3'],   /* S3: the 3 starred missions are a condition too */
     fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
   if (process.env.PLANT === 'nogate') { SEASON.offer.distanceShare = 0; SEASON.offer.biodiversity = 0; }
   const c = X.available(base).find(x => x.id === 'warsaw-stockholm');
@@ -27,6 +27,7 @@
   check(!ok(green), 'biodiversity alone (no long flight) is not enough');
   check(!ok(fly(green, need - 1)), `a flight of ${need - 1} km (just under 70%) is not enough`);
   check(ok(fly(green, need)), `${need} km (70%) + biodiversity 30 offers it`);
+  check(!ok(fly({ ...green, missionsDone: ['weurope:night', 'weurope:shade10'] }, need)), 'S3: distance + biodiversity but only 2 of the 3 starred missions is not enough');
   check(!ok({ ...green, areaBest: { nordic: 99999 } }), 'a long flight from ANOTHER area does not count');
   // recordAreaBest keeps the best, per area, and ignores nothing-flights
   const r = fly(fly(base, 4000), 2500); check(r.areaBest.weurope === 4000, `areaBest keeps the longest: ${JSON.stringify(r.areaBest)}`);
