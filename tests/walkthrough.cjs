@@ -57,8 +57,12 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const how = await p.evaluate(() => document.querySelectorAll('#how .howto li').length);
   check(how === 3, `how to play shows 3 lines, not more (${how})`);
   await shot('how-to');
-  await p.click('#howClose'); await p.waitForTimeout(3000);
-  const school = await scene(() => { const s = game.scene.getScene('game'); return { school: !!s.school, region: s.regionNow }; });
+  await p.click('#howClose'); await p.waitForTimeout(1000);
+  // Hold to take off (the school's first step), then fly on a while: the old bug switched the land to UK woodland only
+  // once the plane was moving (the start screen still showed the route's land).
+  await p.mouse.move(195, 420); await p.mouse.down(); await p.waitForTimeout(2500); await p.mouse.up();
+  for (let i = 0; i < 40 && (await scene(() => game.scene.getScene('game').distancePx)) < 400; i++) { await p.mouse.click(195, 420); await p.waitForTimeout(250); }
+  const school = await scene(() => { const s = game.scene.getScene('game'); return { school: !!s.school, region: s.regionNow, km: Math.round(s.distancePx) }; });
   check(school.school && school.region === 'savanna', `flight school flies over the START land (savanna for Johannesburg): ${JSON.stringify(school)}`);
   await shot('school');
   await p.click('#skipSchool').catch(() => {}); await p.waitForTimeout(800);
