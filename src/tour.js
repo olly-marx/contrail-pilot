@@ -8,7 +8,7 @@
 import { tip } from './tips.js';
 import { FEATURES } from './config.js';
 // Tab-bar targets and what replaces them on the season 2 hub (the tiles; HOME goes back to the hub).
-const HUB_TARGETS = { '#tabHangar': '#hubTiles [data-go="hangar"]', '#tabNature': '#hubTiles [data-go="nature"]' };   // (HOME is the bar's #tabFly again)
+const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf } from './upgrades.js';
 import { getPilot } from './online.js';
@@ -46,17 +46,50 @@ export class Tour {
     if (FEATURES.season2 && !this.done('name')) this.markDone('name');   // season 2 plays offline: no pilot name yet
     if (where === 'title' && !this.done('name') && !getPilot()) return this.run('name', this.nameSteps());
     if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
-    // Season 2 (S3; the user: a free upgrade must LEAD you into the hangar): from the HUB, where the tile is, 3 bubbles.
-    if (FEATURES.season2 && !this.done('hangar') && this.save.freeUpgrade && (where === 'hangar' || (where === 'title' && $('hubTiles').querySelector('[data-go="hangar"]')))) return this.run('hangar', this.hubHangarSteps());
-    // Season 2: NATURE's first visit after its lesson (research/FLOW-FIRST-HOUR.md 2b): two bubbles.
-    if (FEATURES.season2 && where === 'nature' && !this.done('nature')) return this.run('nature', [
-      { target: '#wProjects', text: tip('tour-projects'), ok: true },
-      { target: '#tabFly', text: tip('tour-lookout'), tap: true }]);
+    // Season 2: the ON-RAILS onboarding (the user, 2026-10-27: "the ONLY thing they should be able to do is what you want
+    // them to do"). Each step: one lit target (the dim layer catches every other tap), scrolled into view, one sentence.
+    if (FEATURES.season2) { const r = this.railsFor(where); if (r) return this.run(r[0], r[1]); }
     if (where === 'title' && (this.done('name') || getPilot())) {
       // Several can open at once (3 at the 3rd landing): one walk-through for all of a hangar tab's.
       const fresh = LINES.filter(l => unlocked(this.save, l) && !this.save.shownLines.includes(l.id));
       if (fresh.length) return this.run(null, this.newSteps(fresh.filter(l => tabOf(l) === tabOf(fresh[0]))));
     }
+  }
+
+  // ---------- the rails (season 2; research/FLOW-FIRST-HOUR.md, the user-approved script R4-R13) ----------
+  // Which rails step is due on this screen, from what has really happened (lessons done, the free part, flights), each
+  // once (its tour id). Returns [id, steps] or null.
+  railsFor(where) {
+    const s = this.save, d = id => (s.missionsDone || []).includes(id), un = (s.unclaimed || []).length;
+    const hub = where === 'title', res = where === 'results';
+    // R4: the school-done card -> the hangar (the free part).
+    if (res && s.freeUpgrade && !this.done('r-school')) return ['r-school', [{ target: '#againBtn', text: tip('rail-school'), tap: true }]];
+    // R5: in the hangar, only the cleaner engines' FREE! (one target); R6's payoff comes from hangar.js after the buy.
+    if (where === 'hangar' && s.freeUpgrade && !this.done('r-free')) return ['r-free', [{ target: '#hFleet .freepick .btn.free', text: tip('rail-free'), tap: true }]];
+    // R7: the hub, only TAKE OFF.
+    if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];
+    // R9: after flight 1: the seeds are yours; claim the mission's prize; another flight, watch for wildlife.
+    if (res && d('L1') && !this.done('r-res1')) return ['r-res1', [
+      { target: '#rGrab', text: tip('rail-seeds'), ok: true },
+      ...(un ? [{ target: '#rRewards .claim', text: tip('rail-claim'), tap: true }] : []),
+      { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
+    if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
+    // R11: after flight 2: NATURE opens; its first project is FREE; how nature works.
+    if (res && d('L2') && !this.done('r-res2')) return ['r-res2', [{ target: '#againBtn', text: tip('rail-nature'), tap: true }]];
+    if (where === 'nature' && d('L2') && !this.done('r-nature')) return ['r-nature', [
+      { target: '#wProjects [data-project].free', text: tip('rail-project'), tap: true },
+      { target: '#wScene', text: tip('rail-project-done'), ok: true },
+      { target: '#wMeter', text: tip('rail-nature-how'), ok: true },
+      { target: '#tabFly', text: tip('tour-lookout'), tap: true }]];
+    // R12: a landing past an airport: the bonus payoff.
+    if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMultRow', text: tip('rail-bonus'), ok: true }]];
+    // R13: after flight 3: the hangar's SYSTEMS.
+    if (hub && d('L3') && !this.done('r-systems')) return ['r-systems', [
+      { target: '#tabHangar', text: tip('rail-systems'), tap: true },
+      { target: '#hFleet [data-ftab="systems"]', text: tip('rail-systems-tab'), tap: true },
+      { target: '#hFleet .line .next', text: tip('rail-systems-line'), ok: true }]];
+    // R14 (stub): the boards, once they are redone and back online (the bug-fix chat's proposal).
+    return null;
   }
 
   // ---------- the tours ----------

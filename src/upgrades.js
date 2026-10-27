@@ -277,6 +277,9 @@ export function loadout(save) {
   const fk = fleetKit(save);   // the plane side: the plane flown, its levels, systems and gadgets (src/fleet.js)
   return {
     ...fk,
+    // On rails (season 2, before lesson 2): no turbulence yet, one new thing at a time (the user, 2026-10-27: a "bumpy air"
+    // card met them in the icy-air lesson). Turbulence's chance is multiplied by this; its random draw still happens.
+    ...(Array.isArray(save.areas) && save.areas.length && !(save.missionsDone || []).includes('L2') ? { gapTurb: 0 } : {}),
     fuelId,
     co2Cruise: CLIMATE.co2Cruise * fuel.co2 * fk.co2,
     co2Takeoff: CLIMATE.co2Takeoff * fuel.co2 * fk.co2 * fk.takeoff,

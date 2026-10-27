@@ -133,10 +133,12 @@ export class WildScreen {
     // In tiers (the user, 2026-10-22: all 11 at once was confusing): open tiers show their projects;
     // the next locked tier is one card saying what opens it; later tiers stay hidden.
     const s = this.save, done = this.done(), bio = this.bio(), P = this.projects;
+    // R11b: season 2's first nature project is FREE (the user, 2026-10-27): the first tier-1 project, once lesson 2 is done.
+    const freeId = isSeason2(s) && (s.missionsDone || []).includes('L2') && !s.freeProjectGiven ? (P.find(p => p.tier === 1 && !done.includes(p.id)) || {}).id : null;
     const card = p => {
-      const have = done.includes(p.id), ok = !have && s.seeds >= p.cost && (s.crystals || 0) >= p.crystals;
+      const have = done.includes(p.id), free = p.id === freeId, ok = !have && (free || (s.seeds >= p.cost && (s.crystals || 0) >= p.crystals));
       const btn = have ? '<span class="w-done">DONE</span>'
-        : `<button class="btn ${ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${cost(p)}</button>`;
+        : `<button class="btn ${free ? 'free' : ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(p)}</button>`;
       return `<div class="line project ${have ? 'maxed' : ''}" data-pline="${p.id}">
         <div><div class="name"><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="" onerror="this.style.visibility='hidden'">${esc(p.name)}</div><div class="small">${esc(p.short)}</div>
         <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div>${this.webHTML(p)}</div>
@@ -177,7 +179,10 @@ export class WildScreen {
 
   buy(id) {
     const s = this.save, r = this.region, p = this.projects.find(x => x.id === id);
-    if (!fundProject(s, r, id)) { sfx.nope(); return; }   // src/nature.js: the same rule the sim engine's player uses
+    const freeOne = isSeason2(s) && (s.missionsDone || []).includes('L2') && !s.freeProjectGiven && p && p.tier === 1;
+    if (freeOne) { s.seeds += p.cost; s.crystals = (s.crystals || 0) + (p.crystals || 0); }   // the free one: paid for by the game
+    if (!fundProject(s, r, id)) { if (freeOne) { s.seeds -= p.cost; s.crystals -= p.crystals || 0; } sfx.nope(); return; }   // src/nature.js: the same rule the sim engine's player uses
+    if (freeOne) s.freeProjectGiven = true;
     this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
     writeSave(s); sfx.buy();
     this.render();

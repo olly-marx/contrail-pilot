@@ -643,3 +643,16 @@ h2.sub { margin-top: -4px; }
 .tcaptain.left { transform: scaleX(-1); order: 2; }
 .tbody { flex: 1; }
 @keyframes capbob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2px; } }
+/* R6 payoff: the plane zooms in wearing its new part (src/hangar.js payoff) */
+.payoff { position: fixed; inset: 0; z-index: 45; background: rgba(10,14,40,.6); display: flex; align-items: center; justify-content: center; }
+.payoff-card { background: #fffbe8; border: 3px solid #1b1b2f; padding: 12px; width: min(92vw, 380px); text-align: center; }
+.payoff-card img { width: 100%; image-rendering: pixelated; animation: payzoom 0.9s ease-out both; }
+.payoff-card p { font-size: 10px; margin: 8px 0; }
+@keyframes payzoom { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+/* In-flight teaching strip (tappable tips): small, never over the plane (top, or bottom when the plane is high) */
+.coach.tappable { top: 6px; bottom: auto; transform: translateX(-50%); max-height: 20vh; overflow: hidden; padding: 4px 6px; }
+.coach.tappable.strip-low { top: auto; bottom: 6px; }
+.coach.tappable .coach-pic { width: 64px; max-height: 40px; object-fit: contain; float: left; margin: 0 6px 0 0; }
+.coach.tappable .coach-face { width: 24px; height: 24px; background-size: 24px 24px; }
+/* One character: Captain Contrail replaces the old Captain Cumulus face everywhere (the user, 2026-10-27) */
+.coach-face { background-image: url("assets/ui/captain-stand.png") !important; background-size: contain !important; background-repeat: no-repeat; background-position: center top; background-color: #6ec6e8; }

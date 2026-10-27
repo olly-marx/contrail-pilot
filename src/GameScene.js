@@ -295,12 +295,14 @@ export class GameScene extends Phaser.Scene {
     return true;
   }
   // Season 2: wild animals (and scenery birds) only once the NATURE lesson (L2) is done: one new thing at a time.
-  wildAllowed() { return !isSeason2(this.save) || s2Revealed(this.save, 'nature'); }
+  wildAllowed() { return !isSeason2(this.save) || (this.save.missionsDone || []).includes('L1'); }   // from flight 2 (the user's rails, 2026-10-27)
 
   showTip(html, pic) {
     this.explaining = true;   // a bubble is up (NOT frozen)
     this.tipAt = this.time.now;
+    // A small strip, never over the plane: at the top, or at the bottom when the plane is high (the user, 2026-10-27).
     this.ui.coach(html, false, false, false, pic);
+    document.getElementById('coach').classList.toggle('strip-low', this.plane.y < HEIGHT * 0.4);
     const mine = this.tipSerial = (this.tipSerial || 0) + 1;
     this.time.delayedCall(TIP_MAX * 1000, () => { if (this.tipSerial === mine && this.explaining) this.closeTip(); });
   }
@@ -1046,7 +1048,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time, deltaMs) {
-    const dt = Math.min(deltaMs, 50) / 1000;   // clamp so a background tab doesn't teleport the plane
+    // (clamped so a background tab doesn't teleport the plane; HALF speed while a teaching strip shows, so a child can read it
+    // without crashing: the user, 2026-10-27)
+    const dt = Math.min(deltaMs, 50) / 1000 * (this.explaining && !this.school ? 0.5 : 1);
     this.updatePopups(dt);
     if (this.state === 'idle') { this.updateScenery(dt * 30); return; }
     if (this.school) this.school.update(dt);

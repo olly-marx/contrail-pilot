@@ -5,7 +5,7 @@
 // Words in a `say` may be a function of values (a city, a tree): the lint calls it with SAMPLE values.
 export const TIPS = {
   // ---- flight school (src/school.js) ----
-  'school-hold':   { say: 'Hi, I\'m Captain Cumulus! Press and HOLD the screen to take off.' },
+  'school-hold':   { say: 'Hi, I\'m Captain Contrail! Press and HOLD the screen to take off.' },
   'lesson-tap':    { say: 'Tap the screen to climb. Let go, and the plane gently falls.', more: 'Tap the screen and the plane goes up. Stop tapping and it goes down.' },
   'school-tapnow': { say: 'Give it a tap now!' },
   'school-keep':   { say: 'Keep tapping to stay up in the sky.' },
@@ -62,6 +62,24 @@ export const TIPS = {
   'free-magnet':  { say: 'A seed magnet: grab seeds from a little further away.' },
   'free-gear':    { say: 'Landing help: the runway is easier to hit when you land.' },
   'free-more':    { say: 'Or scroll down to see every part in the hangar.' },
+
+  // ---- the on-rails onboarding (src/tour.js railsFor; research/FLOW-FIRST-HOUR.md) ----
+  'rail-school':       { say: 'You landed! Your first upgrade is FREE. Open the hangar!' },
+  'rail-free':         { say: 'Cleaner engines: less CO2, a cooler Earth. Tap FREE!' },
+  'rail-payoff':       { say: 'Your plane is cleaner now!' },
+  'rail-takeoff':      { say: 'Take off! Land at the next airport.' },
+  'rail-seeds':        { say: "You landed with your seeds: they're yours to spend!" },
+  'rail-claim':        { say: 'You completed a mission! Claim the seeds for it.' },
+  'rail-wildlife':     { say: 'Another flight now: watch for wildlife on the ground!' },
+  'rail-takeoff2':     { say: 'Take off, and keep an eye out for animals!' },
+  'rail-nature':       { say: 'NATURE is open: help the animals come back!' },
+  'rail-project':      { say: 'Your first nature project is FREE. Pick it!' },
+  'rail-project-done': { say: 'Projects bring animals back. Look out for them!' },
+  'rail-nature-how':   { say: "Plant trees and fund projects to grow each land's nature." },
+  'rail-bonus':        { say: 'Bonus! Flying past airports makes each landing worth more.' },
+  'rail-systems':      { say: 'New in the hangar: systems that help every flight!' },
+  'rail-systems-tab':  { say: 'Tap SYSTEMS.' },
+  'rail-systems-line': { say: 'Forecasting shows icy air sooner. Buy it when you can!' },
 
   // ---- menu tours (src/tour.js) ----
   'tour-hello':   { say: 'Welcome, pilot! Tap <b>PILOT</b> to choose your pilot name.' },

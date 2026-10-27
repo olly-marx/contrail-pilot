@@ -47,6 +47,7 @@ export class FleetHangar {
       if (free) s.freeUpgrade = false;
       s.sparkle = true;
       this.ui.persist(); this.ui.sfx.buy(); this.ui.renderHangar();
+      if (free && s.areas) this.payoff();   // R6: the payoff - the plane zooms in, wearing its new part
     });
   }
 
@@ -55,12 +56,25 @@ export class FleetHangar {
   freePickHTML(s) {
     if (!s.freeUpgrade) return '';
     const f = fleetOf(s), open = nextBuys(s).filter(b => b.open && b.level === 1);
-    const want = [['plane', `${f.plane}.engines`, 'free-engines'], ['gadget', 'magnet', 'free-magnet'], ['gadget', 'gear', 'free-gear']];
+    const rails = !(s.tours || []).includes('r-free') && !!s.areas;   // on rails (season 2's first free part): ONE choice
+    const want = rails ? [['plane', `${f.plane}.engines`, 'free-engines']] : [['plane', `${f.plane}.engines`, 'free-engines'], ['gadget', 'magnet', 'free-magnet'], ['gadget', 'gear', 'free-gear']];
     const picks = want.map(([kind, id, t]) => ({ b: open.find(x => x.kind === kind && x.id === id), t })).filter(x => x.b);
     if (!picks.length) return '';
     return `<div class="freepick"><p class="label">${tip('free-head')}</p>${picks.map(({ b, t }) =>
       `<div class="freerow"><span><b>${b.name}</b><br><small>${tip(t)}</small></span><button class="btn free" data-fbuy="${b.kind}:${b.id}" type="button">FREE!</button></div>`).join('')}
       <p class="small">${tip('free-more')}</p></div>`;
+  }
+
+  // R6 (the user, 2026-10-27: "tapping an upgrade did NOT show the plane looking cooler"): the plane, with the part just
+  // fitted (src/planelook.js), zooms in over the hangar with one line and one OK.
+  payoff() {
+    const s = this.ui.save, f = fleetOf(s), id = f.plane, files = lookFiles(id, f.planes[id], 'hangar');
+    let el = $('payoff');
+    if (!el) { el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff'; document.body.appendChild(el); }
+    el.innerHTML = `<div class="payoff-card"><img alt=""><p>${tip('rail-payoff')}</p><button id="payOk" class="btn go big" type="button">OK</button></div>`;
+    el.hidden = false;
+    composedURL(files.base, files.parts, hangarGadgets(s, id)).then(u => { const img = el.querySelector('img'); if (img) img.src = u; }).catch(() => {});
+    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; this.ui.go('fly'); };   // then the hub: TAKE OFF (R7)
   }
 
   // The big picture at the top (400 x 176, the art session's hangar portrait): the plane you fly, or
