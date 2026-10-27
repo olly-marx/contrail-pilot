@@ -82,3 +82,28 @@ reach bound ignores the bob and the tilt, so a pass is evidence, not proof. No g
 
 Rebase onto main after 0.12.0, then a full 2-shard `tools/test.sh`. Not run here: `tests/sim-bank`, `sim-masks` and
 `sim-rng-split` need the browser (playwright-core). The other 10 Node sim tests pass, `sim-equiv` byte-identical.
+
+## 6. Crossing lengths (user decisions, 2026-10-26)
+
+**0.12.x: 6,500 / 13,000 / 18,000 km** (crossing 1 unchanged; 2 and 3 "very hard"). Basis: B storms, saves from a
+progression run per skill at flight 45 (jumbo) and 80 (twin for 0.9 and 1.0), 30 flights per length (±0.08):
+
+| Length | s 0.80 | s 0.90 | s 1.0 |
+|---|---|---|---|
+| 13,000 | 0.07 / 0.00 | 0.77 / 0.77 | 0.87 / 0.70 |
+| 18,000 | 0 / 0 | 0 (jumbo) / 0.17 (twin) | 0 (jumbo) / 0.13 (twin) |
+
+The progression saves have a modest forest by flight 80 (trees 2, soil 2, no species), so an expert needs a better
+forest for 18k, as intended. The user at full Nature was NOT measured as a gateway landing at 18k (open flights: 21k
+is reached 47% of the time at s = 1), so the user probably makes crossing 3 more often than 1 in 3. 20,000 would be
+closer to 1 in 3.
+
+**Crossings 4 / 5 / final: proposal (not for 0.12.x, which stops at crossing 3; extreme expert goals by design).**
+Targets for the user (s ~ 1.0, full Nature): crossing 4 about 1 in 5, crossing 5 rarely (~1 in 15), final a feat.
+Today's best plane (twinFull, B, full Nature, open flights, 40 skies) gives P(reach) 0.47 at 21k, 0.30 at 26k and 0.07
+at 30k. On today's kit that maps to about **4 = 27,000, 5 = 30,000, final = 32,000 km**. But crossings 4-6 are flown on
+era 4-6 planes that do not exist yet, and their kit (heat, gaps, birds, tanker) will raise every P. So fix the lengths
+by the TARGET P, re-measured once those planes are specified: pick the km where the user-level player (s 1.0, full
+Nature, the era's top plane) lands the gateway ~20% (4), ~7% (5) and ~2-3% (final). Placeholders today stay
+21,000 / 26,000 / 30,000 in season.js; with today's kit those would be ~1 in 2, ~1 in 3 and ~1 in 14 for the user:
+not extreme enough for 4 and 5.
