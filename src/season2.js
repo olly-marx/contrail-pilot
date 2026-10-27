@@ -20,7 +20,14 @@
     if (real.getItem(FLAG) !== '1') return;
   } catch (e) { return; }
   const mine = () => { const ks = []; for (let i = 0; i < real.length; i++) { const k = real.key(i); if (k && k.startsWith(P)) ks.push(k); } return ks; };
-  if (q === 'reset') mine().forEach(k => real.removeItem(k));
+  if (q === 'reset') {
+    // 0.15.3: in the SHIPPED game (FORCE) this URL does nothing to the save: a saved home-screen icon or bookmark that still carries
+    // ?season2=reset (made while the link existed) would wipe a player's progress on EVERY open. The preview mode (testers) still wipes, once.
+    if (!FORCE) mine().forEach(k => real.removeItem(k));
+    // The wipe happens once: the URL used to stay ?season2=reset, so every later reload, a reopened tab and the self-update reload wiped the
+    // new save again (a real player lost her progress twice). The parameter is stripped either way; other parameters are kept.
+    try { const u = new URL(location.href); u.searchParams.delete('season2'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* keep going */ }
+  }
   const store = {
     getItem: k => real.getItem(P + k),
     setItem: (k, v) => real.setItem(P + k, String(v)),
@@ -37,10 +44,11 @@
   const tag = () => {
     const d = document.createElement('div');
     d.id = 's2Tag';
-    d.innerHTML = FORCE ? 'SEASON 2 <a href="?season2=reset">reset</a>' : 'SEASON 2 <a href="?season2=reset">reset</a> <a href="?season2=off">exit</a>';
+    d.innerHTML = 'SEASON 2 <a href="?season2=reset">reset</a> <a href="?season2=off">exit</a>';   // (preview mode only: see below)
     d.style.cssText = 'position:fixed;right:4px;top:4px;z-index:99;background:#1f6f8b;color:#fff;font:8px Pixel,monospace;padding:3px 5px;border-radius:3px;pointer-events:auto';
     d.querySelectorAll('a').forEach(a => { a.style.color = '#ffe15a'; a.style.marginLeft = '4px'; });
     document.body.appendChild(d);
   };
-  if (document.body) tag(); else document.addEventListener('DOMContentLoaded', tag);
+  // 0.15.3: players never see this tag: its reset link (a 40x8 px tap, no question) wiped a real player's save, twice. It exists only in the preview mode (FORCE unset = tests/testers); ?season2=reset stays as a tester URL.
+  if (!FORCE) { if (document.body) tag(); else document.addEventListener('DOMContentLoaded', tag); }
 })();

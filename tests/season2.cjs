@@ -134,7 +134,7 @@ const KEY = 'contrailPilot.v2';
   for (const q of ['', '?season2=off', '?season2=reset', '?season2=1']) {
     await fp.goto(URL + q); await ready(fp);
     const f = await fstate();
-    check(f.on && f.tag && !f.exit && f.flag === null, `shipped default${q}: on, no exit link, flag never written: ${JSON.stringify(f)}`);
+    check(f.on && !f.tag && !f.exit && f.flag === null, `shipped default${q}: on, no SEASON 2 tag (so no reset or exit link), flag never written: ${JSON.stringify(f)}`);
   }
   await fctx.close();
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);

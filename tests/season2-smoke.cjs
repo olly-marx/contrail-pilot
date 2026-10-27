@@ -47,7 +47,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   // A. fresh start
   let p = await fresh();
   const a = await p.evaluate(async () => ({ on: (await import('/src/config.js')).FEATURES.season2, tag: !!document.getElementById('s2Tag'), areas: (game.registry.get('save').areas || []).length, tut: game.registry.get('save').tutorialDone }));
-  check(a.on && a.tag && a.areas === 0 && !a.tut, `A: a fresh device plays season 2, no area chosen yet: ${JSON.stringify(a)}`);
+  check(a.on && !a.tag && a.areas === 0 && !a.tut, `A: a fresh device plays season 2 (no SEASON 2 tag or reset link for players), no area chosen yet: ${JSON.stringify(a)}`);
   await p.evaluate(() => { game.registry.get('ui').start(); });
   await p.waitForSelector('#startChoice [data-area]', { timeout: 5000 }).catch(() => {});
   const offered = await p.$$eval('#startChoice [data-area]', bs => bs.map(x => x.dataset.area));
