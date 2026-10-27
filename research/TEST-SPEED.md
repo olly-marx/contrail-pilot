@@ -77,7 +77,7 @@ CI s = the 2026-10-22 CI seconds where known (stale). Sleeps = fixed `waitForTim
 | atc | LOGIC | - | 1 | 0/1/0 |
 | badgeart | DATA | - | 0 | 0/1/1 |
 | badges | LOGIC | - | 0 | 13/1/0 |
-| biodiversity | ? | - | 4 | 4/16/0 |
+| biodiversity | SCREEN | - | 4 | 4/16/0 |
 | cache | RENDER | - | 4 | 0/2/0 |
 | eras | LOGIC | - | 4 | 4/7/0 |
 | faces | RENDER | - | 0 | 0/0/0 |
