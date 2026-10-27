@@ -7,7 +7,7 @@ import { GAP_HINT, FORECAST, FARES, syncFleet } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
-import { isSeason2, onFlight as s2Flight, next as s2NextMission } from '../missions2.js';
+import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as s2LessonsLeft } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
 import { REGION_DATA, REGION_NAMES } from '../habitats.js';
@@ -99,6 +99,7 @@ export const RULES = {
     this.school = null;
     this.nextStormAt = WIDTH + 200;  // first storm arrives after the climb-out
     this.nextIssrAt = 300;
+    this.l2Patch = null;             // season 2, lesson L2 pending: one daytime icy patch is guaranteed (decided at the first ISSR check)
     this.stormCount = 0;
     this.lastContrail = 0;
     this.wasInIssr = false;
@@ -277,6 +278,11 @@ export const RULES = {
       this.nextStormAt += STORMS.spacing;
     }
     if (this.distancePx >= this.nextIssrAt) {
+      // The on-rails onboarding (2026-10-27): with lesson L2 pending ("fly through icy air in daytime"), the FIRST check
+      // places one wide mid-sky patch at fixed geometry (no rand() for placement), met in daylight (~5-11 s after take-off).
+      // makeIssr's cloud shape draws from the physics stream, so this one flight's later spawns shift (L2-pending flights only).
+      if (this.l2Patch == null) this.l2Patch = !this.school && isSeason2(this.save) && (s2LessonsLeft(this.save)[0] || {}).id === 'L2';
+      if (this.l2Patch) { this.l2Patch = false; const h = 100; this.addIssrAt(WIDTH + 10, SKY_H / 2 - h / 2, Math.max(450, 3.5 * this.speed + PLANE.w), h); }
       // Forecasting (eras): good forecasts route you round a few night patches (nightPatches < 1).
       const routed = !this.isDay && this.rand() > this.kit.nightPatches;
       if (!routed && this.rand() < Math.min(1, ISSR.spawnChance * this.lateRamp())) this.addIssr();   // more icy air on long flights

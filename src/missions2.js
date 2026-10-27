@@ -137,12 +137,16 @@ function finish(save, list) {
 export function onFlight(save, r) {
   if (!r || r.school) return [];
   const firsts = FIRSTS.filter(x => !done(save).has(`first:${x.id}`) && x.when(r)).map(x => ({ key: `first:${x.id}`, title: x.title, prize: { seeds: 0, crystals: 1 } }));
-  if (!r.landed) return finish(save, firsts);
+  // The rails never stall (Coordinator, 2026-10-27): lesson L2 missed on 2 flights (landed or not) -> it counts as taught, NATURE opens.
+  const l2 = (lessonsLeft(save)[0] || {}).id === 'L2', L2 = LESSONS.find(l => l.id === 'L2');
+  const taught = got => { if (!l2 || got.some(m => m.key === 'L2')) return got; save.l2Misses = (save.l2Misses || 0) + 1;
+    return save.l2Misses >= 2 ? [...got, { key: 'L2', title: L2.title, tier: 0, star: false, kind: 'flight', prize: L2.prize, def: L2, taught: true }] : got; };
+  if (!r.landed) return finish(save, taught(firsts));
   const startCity = save.city;
   const due = visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true));
   const daily = dailyVisible(save).filter(d => d.def.flight(r, save, d.fill) === true);
   save.prevLanded = r.landedAt;   // for "land at A, then B" (read on the NEXT flight)
-  return finish(save, [...firsts, ...due, ...daily]);
+  return finish(save, taught([...firsts, ...due, ...daily]));
 }
 
 // ---------- Firsts: one-off funny cards (1 crystal), never in the list; they pop on the results ----------
