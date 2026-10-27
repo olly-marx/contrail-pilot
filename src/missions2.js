@@ -9,7 +9,8 @@
 // Pure: no DOM, no random. The game (src/sim/rules.js at banking, the shop after a purchase) and the sim call it.
 // Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes go to save.unclaimed (src/rewards.js).
 import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
-import { projectsDone, biodiversity } from './nature.js';
+import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
+import { landTrees } from './landtrees.js';
 import { REGION_DATA, REGION_NAMES, TIERS } from './habitats.js';
 import { city } from './route.js';
 import { fleetOf } from './fleet.js';
@@ -44,25 +45,36 @@ export const revealed = (save, tile) => stageOf(save) !== 'teach' || LESSONS.som
 // ---------- the area ladder (templates; f = the fill for this area and stage) ----------
 // Prizes: seeds only (crystals stay a skill reward), ~700 per area in the teach stage, x the stage factor.
 export const TEMPLATES = [
-  // tier 1: try it
-  { id: 'land-city', tier: 1, prize: 30, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landed && r.landedAt === f.city },
+  // tier 1: try it (one mechanic each)
+  { id: 'land-city', tier: 1, prize: 30, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landedAt === f.city },
   { id: 'shade', tier: 1, prize: 30, title: f => `Shade the Earth ${5 * f.k} times here`, flight: (r, s, f) => f.here && r.sunBlocked >= 5 * f.k },
-  { id: 'plant', tier: 1, prize: 30, title: f => `Plant ${2 * f.k} trees in one flight`, flight: (r, s, f) => r.planted >= 2 * f.k },
-  { id: 'bring', tier: 1, prize: 30, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.landed && r.cargo >= 10 * f.k },
+  { id: 'plant-tree', tier: 1, prize: 30, title: f => `Plant a ${f.treeName} in ${f.landName}`, flight: (r, s, f) => (r.treeIds || []).includes(f.treeTag) },
+  { id: 'clean-gaps', tier: 1, prize: 30, title: f => `Fly ${3 * f.k} storm gaps without a scrape`, flight: (r, s, f) => (r.cleanGaps || 0) >= 3 * f.k },
+  { id: 'bring', tier: 1, prize: 30, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 10 * f.k },
   { id: 'project', tier: 1, prize: 30, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
   // tier 2: combine it
+  { id: 'chain', tier: 2, prize: 50, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
   { id: 'dodge', tier: 2, prize: 50, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
-  { id: 'skip2', tier: 2, prize: 50, title: f => `Skip ${1 + f.k} airports, then land`, flight: (r, s, f) => r.landed && r.airportsSkipped >= 1 + f.k },
+  { id: 'rescue', tier: 2, prize: 50, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
+  { id: 'spot', tier: 2, prize: 50, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
+  { id: 'hazard', tier: 2, prize: 50, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
   { id: 'system', tier: 2, prize: 50, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
-  { id: 'rich', tier: 2, prize: 50, title: f => `Land with ${20 * f.k} seeds`, flight: (r, s, f) => r.landed && r.cargo >= 20 * f.k },
-  { id: 'bumpy', tier: 2, prize: 50, title: () => 'Ride out turbulence and land', flight: (r, s, f) => r.landed && (r.bumped || 0) >= 1 },
-  // tier 3: the crossing trial (star = the gate, PROPOSAL-12's trio)
+  // tier 3: the crossing trial (star = the gate)
   { id: 'night', tier: 3, star: true, prize: 60, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
-  { id: 'shade10', tier: 3, star: true, prize: 60, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.landed && r.sunBlocked >= 10 * f.k },
-  { id: 'kinds3', tier: 3, star: true, prize: 60, title: f => `Plant 3 kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && r.kinds >= 3 },   // S4: per-land, from r.treeIds
-  { id: 'golden', tier: 3, prize: 40, title: () => 'Find a golden seed and land', flight: (r, s, f) => r.landed && (r.goldens || 0) >= 1 },
+  { id: 'shade10', tier: 3, star: true, prize: 60, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
+  { id: 'kinds3', tier: 3, star: true, prize: 60, title: f => `Plant 3 kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= 3 },
+  { id: 'route', tier: 3, prize: 40, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
+  { id: 'golden', tier: 3, prize: 40, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
   { id: 'tier', tier: 3, prize: 40, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
 ];
+// The hazard each stage meets (turbulence from 2,000 km; no-fly zones from 8,000 km; long clean runs for masters).
+const HAZARD = {
+  teach: { title: 'Ride out the turbulence and land', check: r => (r.bumped || 0) >= 1 },
+  challenge: { title: 'Thread 2 no-fly zones and land', check: r => (r.noFlyPassed || 0) >= 2 },
+  mastery: { title: 'Fly 10 storm gaps in a row without a scrape', check: r => (r.cleanGaps || 0) >= 10 },
+};
+// Distinct trees of ONE land planted this flight, from r.treeIds ('land:id'; the UK's are bare ids).
+const kindsOf = (r, land) => new Set((r.treeIds || []).filter(t => (land === 'woodland' ? !t.includes(':') : t.startsWith(`${land}:`)))).size;
 export const STARS = TEMPLATES.filter(t => t.star).map(t => t.id);
 
 function tierFinished(save, land) {
@@ -75,7 +87,13 @@ export function fillFor(save, a, startCity = save.city) {
   const k = HARDER[stageOf(save)], land = landOf(save, a), cities = (AREAS[a] && AREAS[a].cities) || [];
   const city = cities.find(c => c !== (save.homeCity || AREAS[a].start) && !(save.visited || []).includes(c)) || cities[1] || cities[0];
   const landName = (REGION_NAMES[land] || 'this land').replace(/^Temperate /, '');
-  return { area: a, land, landName, city, k, here: areaOf(startCity) === a };
+  const others = cities.filter(c => c !== city);
+  const trees = landTrees(save, land), open = trees.filter(t => t.open), tree = open[open.length - 1] || trees[0];
+  const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
+  const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));
+  const animal = wild.find(w => canAppear(save, w.id, land)) || null;
+  return { area: a, land, landName, city, cityB: others[0] || city, cityC: others[others.length - 1] || city, k, stage: stageOf(save),
+    here: areaOf(startCity) === a, treeName: tree ? tree.name : 'tree', treeTag, animal: animal && animal.id, animalName: animal ? animal.name : 'wild animal' };
 }
 const key = (a, t) => `${a}:${t.id}`;
 export const tierOpen = (save, a, tier) => tier === 1 || TEMPLATES.filter(t => t.tier === tier - 1 && done(save).has(key(a, t))).length >= 3;
@@ -87,7 +105,7 @@ export function visible(save, startCity = save.city) {
   const left = lessonsLeft(save);
   if (left.length) { const l = left[0]; return [{ key: l.id, title: l.title, tier: 0, star: false, kind: 'flight', prize: l.prize, def: l }]; }
   const a = areaOf(startCity) || area(save), f = fillFor(save, a, startCity);
-  return TEMPLATES.filter(t => tierOpen(save, a, t.tier) && !done(save).has(key(a, t))).map(t => ({
+  return TEMPLATES.filter(t => tierOpen(save, a, t.tier) && !done(save).has(key(a, t)) && (!t.ready || t.ready(f))).map(t => ({
     key: key(a, t), title: t.title(f), tier: t.tier, star: !!t.star, kind: t.kind || 'flight',
     prize: { seeds: t.prize * f.k, crystals: 0 }, def: t, fill: f }));
 }
@@ -99,13 +117,54 @@ function finish(save, list) {
   for (const m of list) if (!save.unclaimed.some(u => u.key === `mission:${m.key}`)) save.unclaimed.push({ key: `mission:${m.key}`, kind: 'mission', id: m.key, label: m.title, ...m.prize });
   return list;
 }
-// After a flight is banked (r = the flight result; save.city is still the START city). A crash completes nothing.
+// After a flight is banked (r = the flight result; save.city is still the START city). Firsts can come from any flight
+// (a crash too: "Birds 1, plane 0"); missions and the daily trio need a landing (PROPOSAL-12).
 export function onFlight(save, r) {
-  if (!r || r.school || !r.landed) return [];   // a crash completes nothing (PROPOSAL-12): every flight mission needs a landing
+  if (!r || r.school) return [];
+  const firsts = FIRSTS.filter(x => !done(save).has(`first:${x.id}`) && x.when(r)).map(x => ({ key: `first:${x.id}`, title: x.title, prize: { seeds: 0, crystals: 1 } }));
+  if (!r.landed) return finish(save, firsts);
   const startCity = save.city;
   const due = visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true));
-  return finish(save, due);
+  const daily = dailyVisible(save).filter(d => d.def.flight(r, save, d.fill) === true);
+  save.prevLanded = r.landedAt;   // for "land at A, then B" (read on the NEXT flight)
+  return finish(save, [...firsts, ...due, ...daily]);
 }
+
+// ---------- Firsts: one-off funny cards (1 crystal), never in the list; they pop on the results ----------
+export const FIRSTS = [
+  { id: 'bird', title: 'Birds 1, plane 0. Fly over or under them next time!', when: r => r.crash === 'bird' },
+  { id: 'storm', title: 'Bumped a storm cloud! Aim for the middle of the gap.', when: r => r.crash === 'storm' },
+  { id: 'nofly', title: 'Told off! No-fly zones mean no flying, even a wingtip.', when: r => r.crash === 'nofly' },
+  { id: 'golden', title: 'Your first golden seed: lucky pilot!', when: r => (r.goldens || 0) >= 1 },
+  { id: 'skip3', title: 'Three airports skipped in one go: bold pilot!', when: r => r.landed && r.airportsSkipped >= 3 },
+];
+
+// ---------- the daily trio: three small missions a real day, from the area you are in ----------
+// The DATE stays out of the rules (they run in the sim, no clock): the menu calls setDaily(save, 'YYYY-MM-DD') and the
+// rules check save.daily. Picked from a small easy pool by the date, so every player gets the same three on a day.
+export const DAILY_POOL = [
+  { id: 'd-seeds', prize: 15, title: f => `Bring home ${8 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 8 * f.k },
+  { id: 'd-shade', prize: 10, title: f => `Shade the Earth ${3 * f.k} times`, flight: (r, s, f) => r.sunBlocked >= 3 * f.k },
+  { id: 'd-gaps', prize: 15, title: f => `Fly ${5 * f.k} clean storm gaps`, flight: (r, s, f) => (r.cleanGaps || 0) >= 5 * f.k },
+  { id: 'd-skip', prize: 20, title: () => 'Skip an airport, then land', flight: r => r.airportsSkipped >= 1 },
+  { id: 'd-plant', prize: 15, title: f => `Plant ${f.k + 1} trees`, flight: (r, s, f) => r.planted >= f.k + 1 },
+  { id: 'd-night', prize: 20, title: () => 'Dodge an icy patch at night', flight: r => (r.dodges || 0) >= 1 },
+];
+const hash = str => [...str].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+export function setDaily(save, date) {
+  if (lessonsLeft(save).length || (save.daily && save.daily.date === date)) return;
+  const pool = DAILY_POOL.slice(), pick = [];
+  for (let i = 0; i < 3; i++) pick.push(pool.splice(hash(date + i) % pool.length, 1)[0].id);
+  save.daily = { date, ids: pick };
+}
+export function dailyVisible(save) {
+  if (!save.daily || lessonsLeft(save).length) return [];
+  const f = fillFor(save, areaOf(save.city) || area(save));
+  return save.daily.ids.map(id => DAILY_POOL.find(d => d.id === id)).filter(Boolean)
+    .map(d => ({ key: `daily:${save.daily.date}:${d.id}`, title: d.title(f), prize: { seeds: d.prize * f.k, crystals: 0 }, def: d, fill: f, daily: true }))
+    .filter(d => !done(save).has(d.key));
+}
+
 // After anything that changes the save outside a flight (a purchase, a project, a tree opening).
 export function onSave(save) {
   if (lessonsLeft(save).length) return [];
