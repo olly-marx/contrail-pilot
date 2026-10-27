@@ -83,6 +83,12 @@ reach bound ignores the bob and the tilt, so a pass is evidence, not proof. No g
 Rebase onto main after 0.12.0, then a full 2-shard `tools/test.sh`. Not run here: `tests/sim-bank`, `sim-masks` and
 `sim-rng-split` need the browser (playwright-core). The other 10 Node sim tests pass, `sim-equiv` byte-identical.
 
+> **Caveat (2026-10-27): these runs used the CLASSIC whole-world route network.** `SEASON2_ON` (src/cities.js) reads
+> `window.SEASON2`, which never exists in Node, so the progression sim never flew season 2's area-locked routes or its
+> S2 bridges. Route-driven numbers here (where crossings open, biodiversity, projects, the shop) are approximate until
+> re-run with season 2 on in Node. Crash and hazard rates do not depend on routes. Do not cite the route-driven numbers as
+> season-2 measurements; do not assume they are wrong either: they are unverified.
+
 ## 6. Crossing lengths (user decisions, 2026-10-26)
 
 **0.12.x: 6,500 / 13,000 / 18,000 km** (crossing 1 unchanged; 2 and 3 "very hard"). Basis: B storms, saves from a

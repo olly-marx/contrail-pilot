@@ -10,6 +10,12 @@ s = 0.75 / 0.80 / 0.90 / 1.0, 4 seeds x 100 flights each. The cheapest-first sho
 progression.js. Scratch tree `~/sim-9fa8805` (live code + a `gateBest` switch for the offer rule; areas are not modelled,
 so all flights count for one area). "Empty" = a flight after which nothing is bought.
 
+> **Caveat (2026-10-27): these runs used the CLASSIC whole-world route network.** `SEASON2_ON` (src/cities.js) reads
+> `window.SEASON2`, which never exists in Node, so the progression sim never flew season 2's area-locked routes or its
+> S2 bridges. Route-driven numbers here (where crossings open, biodiversity, projects, the shop) are approximate until
+> re-run with season 2 on in Node. Crash and hazard rates do not depend on routes. Do not cite the route-driven numbers as
+> season-2 measurements; do not assume they are wrong either: they are unverified.
+
 ## 1. The landing rule decides almost everything
 
 The simulated player lands once it has passed `maxSkip` airports. With maxSkip 2 (the value the progression runs used
