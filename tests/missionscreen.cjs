@@ -39,7 +39,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(await p.evaluate(() => !document.getElementById('hangar').hidden), 'tapping NEXT opens the hangar');
   // Pick the free part (the user: a must-do, no "later"), then TAKE OFF unlocks.
   const pick = await p.evaluate(() => ({ rows: document.querySelectorAll('#hFleet .freepick .freerow').length, top: (document.querySelector('#hFleet .freepick') || {}).offsetTop }));
-  check(pick.rows === 3, `the hangar opens with a simple FREE part picker, 3 choices at the top: ${JSON.stringify(pick)}`);
+  check(pick.rows === 1, `on the rails the hangar opens with ONE free choice (cleaner engines) at the top: ${JSON.stringify(pick)}`);
   const free = await p.$('#hFleet .freepick .btn.free');
   check(!!free, 'the hangar shows FREE! buttons');
   if (free) { await free.click(); await p.waitForTimeout(400); }
