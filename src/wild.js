@@ -174,6 +174,7 @@ export class WildScreen {
   buy(id) {
     const s = this.save, r = this.region, p = this.projects.find(x => x.id === id);
     if (!fundProject(s, r, id)) { sfx.nope(); return; }   // src/nature.js: the same rule the sim engine's player uses
+    this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
     writeSave(s); sfx.buy();
     this.render();
     // Who might come now? (only animals that are drawn can turn up in flight)

@@ -7,6 +7,7 @@ import { GAP_HINT, FORECAST, FARES, syncFleet } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
+import { isSeason2, onFlight as s2Flight, next as s2NextMission } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
 import { REGION_DATA, REGION_NAMES } from '../habitats.js';
@@ -716,14 +717,18 @@ export const RULES = {
     // A new part of the world: landing in a region you had never landed in before.
     const landReg = landed && city(this.landedAt) ? city(this.landedAt).region : null;
     const newRegion = !!landReg && !this.school && !(this.save.visited || []).some(n => city(n) && city(n).region === landReg);
-    const mission = this.school ? null : currentMission(this.save);
+    const s2 = isSeason2(this.save);   // season 2: many missions at once (src/missions2.js); classic: one in order
+    const mission = this.school || s2 ? null : currentMission(this.save);
     const partial = { landed, landedAt: this.landedAt, lap, newRegion, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
       crash, crashes: this.save.crashes || {}, distance: m, kinds: this.speciesPlanted.size, bumped: this.bumped, goldens: this.goldens,
       onRunway: this.parcelOnRunway, forestFull: this.forestFullSaid, projects: projectsDone(this.save).map(p => p.id) };
     const missionDone = !!(mission && mission.check(partial, this.save));
     const missionIndex = missionDone ? missionIndexOf(mission) : null;
     if (missionDone) completeMission(this.save, mission);
-    const nextMission = this.school ? null : currentMission(this.save);
+    const nextMission = this.school || s2 ? null : currentMission(this.save);
+    // (save.city is still the START city here: "here" missions count where the flight began.)
+    const s2Done = !this.school && s2 ? s2Flight(this.save, { ...partial, dodges: this.dodgesTotal }) : [];
+    const s2Next = s2 && !this.school ? s2NextMission(this.save) : null;
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
     // Each land whose meter rose this flight (0.11.1: the results used to show the UK's only).
     const natureGains = this.school ? [] : Object.keys(REGION_NAMES).map(r => ({ region: r, name: REGION_NAMES[r], gain: biodiversity(this.save, r) - ((this.bioStartAll || {})[r] || 0) })).filter(g => g.gain > 0);
@@ -741,8 +746,8 @@ export const RULES = {
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
     // Missions and badges are prizes to CLAIM, not paid now (src/rewards.js, src/badges.js).
-    const rewards = this.school ? [] : addPrizes(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, dodges: this.dodgesTotal,
-      kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionDone ? mission : null, missionIndex);
+    const rewards = this.school ? [] : [...s2Done.map(d => ({ key: `mission:${d.key}`, kind: 'mission', id: d.key, label: d.title, ...d.prize })), ...addPrizes(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, dodges: this.dodgesTotal,
+      kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionDone ? mission : null, missionIndex)];
     const newBadges = rewards.filter(p => p.kind === 'badge').map(p => p.id);
     this.persist();   // the game writes the save (the engine keeps it in memory)
 
@@ -753,6 +758,7 @@ export const RULES = {
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])],
+      missions2: s2 ? { done: s2Done.map(d => d.title), next: s2Next ? s2Next.title : null } : null,
       mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, natureGains, bio: biodiversity(this.save),
     };
     this.bank = { m, missionDone, lap, crash, gained };

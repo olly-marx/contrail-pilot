@@ -21,6 +21,7 @@ import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, l
 import { composeOnto } from './planelook.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
+import { isSeason2, next as s2Next } from './missions2.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { animalDir, animalPortrait } from './animalart.js';
@@ -1316,8 +1317,10 @@ export class GameScene extends Phaser.Scene {
     else this.nextText.setText('');
     this.fitText(this.nextText, WIDTH - 12);
     // The mission line: what this flight is for.
-    const mis = this.school ? null : currentMission(this.save);
-    this.missionText.setText(mis && this.state !== 'over' ? mis.progress(this) : '');
+    if (isSeason2(this.save)) { const n = this.school ? null : s2Next(this.save);   // season 2 (S3): the NEXT goal (a scene restart keeps fields, so no cache)
+      this.missionText.setText(n && this.state !== 'over' ? n.title : ''); }
+    else { const mis = this.school ? null : currentMission(this.save);
+      this.missionText.setText(mis && this.state !== 'over' ? mis.progress(this) : ''); }
 
     if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! shade: cooler' : 'ICY AIR! heat trapped!');
     else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');

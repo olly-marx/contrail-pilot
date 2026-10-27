@@ -3,14 +3,15 @@
 // and the animal to look out for. Pure (no DOM): src/wild.js draws it, tests/nexthere.cjs checks it.
 import { biodiversity, projectsDone, regionSpecies, canAppear } from './nature.js';
 import { TIERS } from './habitats.js';
-import { landTrees, foundHere } from './landtrees.js';
+import { landTrees, foundHere, OPENS } from './landtrees.js';
+import { isSeason2 } from './missions2.js';
 
 // Progress toward each native slot's rule: [have, need] (src/landtrees.js OPENS, same order).
 const PROGRESS = [null,
   (save, land) => [projectsDone(save, land).length, 1],
   (save, land) => [biodiversity(save, land), 20],
   (save, land) => [foundHere(save, land), 5],
-  (save, land) => [biodiversity(save, land), 40]];
+  (save, land) => (isSeason2(save) ? [OPENS[4].ok(save, land) ? 1 : 0, 1] : [biodiversity(save, land), 40])];   // season 2: the 'kinds3' mission (S3)
 
 const FARM = ['cow', 'sheep'];   // always there (nature.js wildlifeScene leaves them out of the wild animals)
 

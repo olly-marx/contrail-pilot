@@ -42,6 +42,7 @@ export class FleetHangar {
     el.querySelectorAll('[data-fbuy]').forEach(b => b.onclick = () => {
       const [kind, id] = b.dataset.fbuy.split(':'), free = !!s.freeUpgrade;
       if (!buyFleet(s, kind, id, { free })) { this.ui.sfx.nope(); return; }
+      this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
       if (free) s.freeUpgrade = false;
       s.sparkle = true;
       this.ui.persist(); this.ui.sfx.buy(); this.ui.renderHangar();

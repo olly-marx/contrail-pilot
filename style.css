@@ -608,3 +608,11 @@ h2.sub { margin-top: -4px; }
 .hub-back { position: fixed; left: 6px; top: 6px; z-index: 30; font-size: 8px; }
 #title.hub.world #tJourney { display: block; order: 4; }   /* tap the route: the way choice and the crossings */
 #title.hub #jGlobe { display: none; }   /* the big globe is the hub's own */
+/* S3: the free upgrade leads into the hangar; the MISSIONS screen */
+.hub-tile.pulse { animation: hubpulse 0.9s ease-in-out infinite; }
+@keyframes hubpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); box-shadow: 0 0 0 3px #ffd23a; } }
+#goBtn.secondary { opacity: .55; transform: scale(.92); }
+.hub-tile .badge { z-index: 2; opacity: 1; }
+.mlist { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.mrow { display: flex; justify-content: space-between; gap: 6px; padding: 5px 6px; background: #fff7d6; border: 1px solid #1a1a2e; font-size: 8px; }
+.mrow.star { background: #ffe9a8; }

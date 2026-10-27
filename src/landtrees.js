@@ -2,6 +2,9 @@
 // Slot 0, the plantation tree, is open from the start; each native slot opens with that land's own nature.
 // The hangar no longer sells tree kinds: it keeps the planting tools (parcels, soil patches, nursery).
 import { REGION_TREES } from './habitat/trees.js';
+import { isSeason2 } from './missions2.js';
+import { AREAS } from './areas.js';
+import { city } from './route.js';
 import { UK_SLOTS, SPECIES, projectsDone, biodiversity, regionSpecies, localTree } from './nature.js';
 
 // What opens each native slot, in order (slot 1..4). Each rule reads only that land.
@@ -10,10 +13,15 @@ export const OPENS = [
   { text: 'Finish a habitat project here', ok: (save, land) => projectsDone(save, land).length >= 1 },
   { text: 'Reach biodiversity 20 here', ok: (save, land) => biodiversity(save, land) >= 20 },
   { text: 'Find 5 of the animals here', ok: (save, land) => foundHere(save, land) >= 5 },
-  // TODO(area missions): the proposal opens native 4 with a mission of that land, but missions are global
-  // today (no area missions). Placeholder agreed with the coordinator 2026-10-26: biodiversity 40 there.
-  { text: 'Reach biodiversity 40 here', ok: (save, land) => biodiversity(save, land) >= 40 },
+  // Native 4 (S3, PROPOSAL-TREE-MISSIONS.md): season 2 opens it with the area's crossing-trial mission "plant 3 kinds of
+  // this land's tree in one flight" (src/missions2.js 'kinds3'), done in an area that has this land. Classic saves have
+  // no area missions and keep the old rule, biodiversity 40 there.
+  { text: 'Plant 3 kinds of tree here in one flight', ok: (save, land) => (isSeason2(save) ? kindsMissionDone(save, land) : biodiversity(save, land) >= 40) },
 ];
+
+// Is the "3 kinds of tree" mission done in an area with this land (any of its cities stands in it)?
+const kindsMissionDone = (save, land) => Object.keys(AREAS).some(a => (save.missionsDone || []).includes(`${a}:kinds3`)
+  && AREAS[a].cities.some(c => { const x = city(c); return x && x.region === land; }));
 
 const NO_TREES = ['ocean', 'ice'];
 export const hasTrees = land => !NO_TREES.includes(land) && (land === 'woodland' || !!REGION_TREES[land]);

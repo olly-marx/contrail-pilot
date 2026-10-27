@@ -16,7 +16,7 @@ const crossingsHTML = s => {
   if (!list.length) { const le = laterEra(s); if (le !== null) return `<div id="jCross"><p class="small" id="jLater"><b>NEXT CROSSING</b><br>New crossings open in ${ERAS[le].name}. Keep flying to get there!</p></div>`; }
   if (!list.length) return moreToCome(s) ? '<div id="jCross"><p class="small" id="jMore"><b>MORE TO COME!</b><br>You have flown every crossing there is for now. Faster planes and the far oceans are on their way.</p></div>' : '';
   return `<div id="jCross">${list.map(c => { const ctx = offerCtx(s, c), o = offerCheck(c, ctx), go = o.offered || S2_UNLOCK;
-    const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: `a landed flight of ${km(Math.round(SEASON.offer.distanceShare * c.km))} from here (best so far ${km(ctx.capabilityKm)})`, nature: `biodiversity ${SEASON.offer.biodiversity} here (now ${ctx.bio})`, contrails: "this area's contrail missions" })[k]);
+    const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: `a landed flight of ${km(Math.round(SEASON.offer.distanceShare * c.km))} from here (best so far ${km(ctx.capabilityKm)})`, nature: `biodiversity ${SEASON.offer.biodiversity} here (now ${ctx.bio})`, contrails: 'the 3 starred missions here' })[k]);
     return `<p class="small"><b>CROSSING: ${c.from} &gt; ${c.to}</b>, ${km(c.km)} non-stop${c.opens ? ` (opens ${AREAS[c.opens].name})` : ''}<br>
       ${go ? `<button class="btn go" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : `Needs: ${needs.join(', ')}`}</p>`; }).join('')}</div>`;
 };
@@ -25,6 +25,7 @@ const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS)
   return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
 import { hubView } from './hub.js';
+import { isSeason2, onSave as missionsOnSave, visible as missionsVisible } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
@@ -205,15 +206,19 @@ export class UI {
   renderHub() {
     const s = this.save;
     const ready = s.tutorialDone ? crossingsNow(s).find(c => offerCheck(c, offerCtx(s, c)).offered || S2_UNLOCK) : null;
-    const v = hubView(s, { badges: { hangar: this.hasNew() ? (s.freeUpgrade ? 'FREE' : 'NEW') : '' }, crossingReady: ready ? `${ready.from} to ${ready.to}` : null });
+    const v = hubView(s, { badges: { hangar: this.hasNew() ? (s.freeUpgrade ? 'FREE' : 'NEW') : '', missions: unclaimedCount(s) ? String(unclaimedCount(s)) : '' }, crossingReady: ready ? `${ready.from} to ${ready.to}` : null, freeLater: this.freeLater });
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
     $('hubNext').hidden = !v.next || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
     $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>` : '';
-    $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : null;
+    const toHangar = v.next && v.next.hangar;   // a free upgrade LEADS into the hangar (the user, 2026-10-27)
+    $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : null;
+    if (toHangar) $('hubNext').innerHTML += ' <button id="hubLater" class="btn tiny" type="button">later</button>';
+    if ($('hubLater')) $('hubLater').onclick = e => { e.stopPropagation(); sfx.flap(); this.freeLater = true; this.renderHub(); };
+    $('goBtn').classList.toggle('secondary', !!toHangar);
     $('hubRoute').innerHTML = `${v.route[0] || ''} &#9654; ${v.route[1] || ''}`;
-    $('hubTiles').innerHTML = v.tiles.filter(t => t.id !== 'missions')   // (the MISSIONS tile comes with S3's mission list)
-      .map(t => `<button class="btn hub-tile" type="button" data-go="${t.id}">${t.label}${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</button>`).join('');
+    $('hubTiles').innerHTML = v.tiles
+      .map(t => `<button class="btn hub-tile ${t.id === 'hangar' && toHangar ? 'pulse' : ''}" type="button" data-go="${t.id}">${t.label}${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</button>`).join('');
     $('hubTiles').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     const path = flightPath(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
@@ -222,22 +227,39 @@ export class UI {
     this.hubWords = v.words;
   }
 
+  // Season 2 (S3): off-flight missions complete the moment the save changes (a purchase, a project): src/missions2.js.
+  missionsAfterSave() {
+    if (!isSeason2(this.save)) return;
+    const got = missionsOnSave(this.save);
+    if (got.length) { writeSave(this.save); this.toast('Mission done!', got.map(m => m.title).join(', '), 'good', 3); }
+  }
+  // The MISSIONS screen: what you can do now (the area's open tiers, starred = the crossing trial), and prizes to claim.
+  showMissions() {
+    const s = this.save, list = missionsVisible(s);
+    $('mList').innerHTML = list.map(m => `<div class="mrow ${m.star ? 'star' : ''}"><span>${m.star ? '&#9733; ' : ''}${m.title}</span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`).join('')
+      || '<p>All done here. Fly a crossing to a new area!</p>';
+    $('mTier').textContent = list.length && list[0].tier ? `Tier ${Math.max(...list.map(m => m.tier))} of 3` : 'Chapter 1';
+    this.showOnly('missions');
+    this.renderPrizes($('mPrizes'), () => this.showMissions());
+  }
+
   // ---------- navigation ----------
   // One screen at a time, chosen from the bar along the bottom. Pop-ups (how to play, about,
   // info, points) close on any move. `this.pilot` (PilotScreens) renders PILOT and BOARDS.
   go(tab) {
     if (tab === 'fly') return this.showTitle();
     if (tab === 'hangar') return this.showHangar();
+    if (tab === 'missions') return this.showMissions();
     if (tab === 'nature') { this.markShopSeen(); this.showOnly('nature'); return this.wild && this.wild.render(); }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
     if (tab === 'boards') { this.showOnly('boards'); return this.pilot && this.pilot.showBoards(); }
   }
 
   showOnly(id) {
-    for (const s of ['title', 'results', 'hangar', 'nature', 'pilot', 'boards']) $(s).hidden = s !== id;
+    for (const s of ['title', 'results', 'hangar', 'nature', 'pilot', 'boards', 'missions']) $(s).hidden = s !== id;
     for (const s of ['how', 'about', 'info', 'scoreInfo', 'wInfo']) $(s).hidden = true;
     $('tabbar').hidden = !id || FEATURES.season2;   // no bar while flying; season 2: the hub's tiles instead (S2)
-    $('hubBack').hidden = !FEATURES.season2 || !['hangar', 'nature', 'pilot', 'boards'].includes(id);
+    $('hubBack').hidden = !FEATURES.season2 || !['hangar', 'nature', 'pilot', 'boards', 'missions'].includes(id);
     if (id !== 'title') $('title').classList.remove('menu', 'world');
     const on = { title: 'fly', results: 'fly', hangar: 'hangar', nature: 'nature', pilot: 'pilot', boards: 'boards' }[id];
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === on));
@@ -324,8 +346,13 @@ export class UI {
 
     $('rTitle').textContent = r.school ? 'Flight school done!' : r.landed ? `Landed in ${r.landedAt}!` : r.reason.replace('\n', ' ');
     const mb = $('rMission');
-    mb.hidden = !r.mission;
-    if (r.mission) {
+    mb.hidden = !r.mission && !r.missions2;
+    if (r.missions2) {   // season 2 (S3): what this flight finished, then NEXT (the hub's goal)
+      const d = r.missions2.done;
+      mb.className = `step mission ${d.length ? 'done' : 'notyet'}`;
+      mb.innerHTML = (d.length ? `<b>DONE!</b> ${d.join(', ')}` : '') + (r.missions2.next ? `${d.length ? '<br>' : ''}NEXT: <b>${r.missions2.next}</b>` : '');
+      mb.hidden = !mb.innerHTML;
+    } else if (r.mission) {
       mb.className = `step mission ${r.mission.done ? 'done' : 'notyet'}`;
       mb.innerHTML = r.mission.done
         ? `<b>MISSION DONE!</b> ${r.mission.title}${r.mission.doneText ? `<span class="done-text">${r.mission.doneText}</span>` : ''}${r.mission.last ? '<br>You finished ALL the missions!' : r.mission.next ? `<br>Next: <b>${r.mission.next}</b>` : ''}`
@@ -372,7 +399,7 @@ export class UI {
     const [title, missionStep, dist, record, tally, earth, ...rest] = steps;
     show(title);
     await wait(350);
-    if (r.mission) { show(missionStep); if (r.mission.done) sfx.buy(); await wait(600); }
+    if (r.mission || (r.missions2 && !$('rMission').hidden)) { show(missionStep); if ((r.mission && r.mission.done) || (r.missions2 && r.missions2.done.length)) sfx.buy(); await wait(600); }
     show(dist); await count($('rDist'), r.distance, 600, km);
     if (r.newRecord) { show(record); sfx.buy(); }
     await wait(200);
@@ -562,6 +589,7 @@ export class UI {
   buy(id) {
     const s = this.save;
     if (!buyLevel(s, id)) { sfx.nope(); return; }   // src/upgrades.js: the same rule the sim engine's player uses
+    this.missionsAfterSave();
     this.sparkleModel = true;
     writeSave(s);
     sfx.buy();

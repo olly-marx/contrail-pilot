@@ -45,7 +45,9 @@ export class Tour {
     if ($(where === 'title' ? 'title' : 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
     if (FEATURES.season2 && !this.done('name')) this.markDone('name');   // season 2 plays offline: no pilot name yet
     if (where === 'title' && !this.done('name') && !getPilot()) return this.run('name', this.nameSteps());
-    if (where === 'results' && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
+    if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
+    // Season 2 (S3; the user: a free upgrade must LEAD you into the hangar): from the HUB, where the tile is, 3 bubbles.
+    if (where === 'title' && FEATURES.season2 && !this.done('hangar') && this.save.freeUpgrade && $('hubTiles').querySelector('[data-go="hangar"]')) return this.run('hangar', this.hubHangarSteps());
     if (where === 'title' && (this.done('name') || getPilot())) {
       // Several can open at once (3 at the 3rd landing): one walk-through for all of a hangar tab's.
       const fresh = LINES.filter(l => unlocked(this.save, l) && !this.save.shownLines.includes(l.id));
@@ -66,6 +68,14 @@ export class Tour {
       { target: '#tabBoards', text: tip('tour-boards'), tap: true },
       { target: '#bList', text: tip('tour-best'), ok: true },
       { target: '#tabFly', text: tip('tour-fly'), tap: true },
+    ];
+  }
+
+  hubHangarSteps() {
+    return [
+      { target: '#hubTiles [data-go="hangar"]', text: tip('tour-hangar'), tap: true },
+      { area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true },
+      { target: '#hubBack', text: tip('tour-home'), tap: true },
     ];
   }
 
