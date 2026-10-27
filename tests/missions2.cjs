@@ -16,9 +16,11 @@
   check(M.next(s).key === 'L1' && !M.revealed(s, 'hangar'), `a new pilot starts on lesson 1, hangar shut (${M.next(s).key})`);
   M.onFlight(s, landed());
   check(s.missionsDone.includes('L1') && M.revealed(s, 'hangar') && M.revealed(s, 'missions') && !M.revealed(s, 'nature'), `L1 done opens HANGAR + MISSIONS only: ${s.missionsDone}`);
-  M.onFlight(s, landed({ nightOwl: true }));
+  M.onFlight(s, landed({ dodges: 1 }));
   check(!s.missionsDone.includes('L3'), 'lessons go in order: L3 is not done before L2');
-  for (const r of [{ sunBlocked: 3 }, { nightOwl: true }, { airportsSkipped: 1 }, { planted: 1 }]) M.onFlight(s, landed(r));
+  const l3 = { ...s, missionsDone: [...s.missionsDone, 'L2'] }; M.onFlight(l3, landed({ nightOwl: true }));
+  check(!l3.missionsDone.includes('L3'), 'L3 is one night DODGE now: a clean night alone does not complete it (the whole night is a tier star)');
+  for (const r of [{ sunBlocked: 3 }, { dodges: 1 }, { airportsSkipped: 1 }, { planted: 1 }]) M.onFlight(s, landed(r));
   check(M.lessonsLeft(s).length === 0 && M.revealed(s, 'world'), `all 5 lessons done: ${s.missionsDone}`);
   // 2. Off-flight: funding a project completes "Fund a nature project here" at once.
   s.habitat = { woodland: ['deadwood'] };

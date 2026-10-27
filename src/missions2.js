@@ -41,7 +41,9 @@ const HARDER = { teach: 1, challenge: 2, mastery: 3 };   // numbers scale with t
 export const LESSONS = [
   { id: 'L1', title: 'Land at the next airport', reveals: ['hangar', 'missions'], prize: { seeds: 60, crystals: 1 }, flight: r => r.landed },
   { id: 'L2', title: 'Fly through icy air in daytime', reveals: ['nature'], prize: { seeds: 60, crystals: 1 }, flight: r => r.sunBlocked >= 3 },
-  { id: 'L3', title: "Keep tonight's sky contrail-free", reveals: [], prize: { seeds: 70, crystals: 1 }, flight: r => r.nightOwl },
+  // L3 teaches night contrails by ONE dodge (the user's audit pick, 2026-10-27): a whole clean night (nightOwl) blocked
+  // weaker pilots for many flights while lessons were the only thing offered; it stays a tier-3 star, not a lesson.
+  { id: 'L3', title: 'Dodge an icy patch at night', reveals: [], prize: { seeds: 70, crystals: 1 }, flight: r => (r.dodges || 0) >= 1 },
   { id: 'L4', title: 'Skip one airport, land at the next', reveals: ['world'], prize: { seeds: 70, crystals: 1 }, flight: r => r.landed && r.airportsSkipped >= 1 },
   { id: 'L5', title: 'Drop a tree on brown soil', reveals: [], prize: { seeds: 70, crystals: 2 }, flight: r => r.planted >= 1 },
 ];

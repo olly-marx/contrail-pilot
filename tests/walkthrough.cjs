@@ -101,7 +101,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t) t.hidden = true; game.registry.get('ui').tour.busy = false; });
   await p.click('#tabFly'); await p.waitForTimeout(500);
   // Flights 3-4 (night, skip one); then lesson 5 asks for parcels first.
-  const f3 = await fly(6, { tag: '3', vals: { nightOwl: true } });
+  const f3 = await fly(6, { tag: '3', vals: { dodgesTotal: 1 } });   // L3: one dodge at night
   check(f3.allowed === true, `flight 3: wild animals are allowed after the NATURE lesson: ${JSON.stringify(f3)}`); await shot('results-flight3'); await p.click('#againBtn'); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   await fly(4, { tag: '4', vals: { airportsSkipped: 1 } }); await shot('results-flight4'); await p.click('#againBtn'); await p.waitForTimeout(500);
