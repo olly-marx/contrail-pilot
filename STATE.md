@@ -1,6 +1,13 @@
 # Contrail Pilot — state of the work
 
-Read this first in a new session. Last updated 2026-10-16.
+Read this first in a new session. Last updated 2026-10-16 (the sections below are older than that unless marked; season 2 is described in the next section, 2026-10-27).
+
+## Season 2 is the game since 0.12.0 (2026-10-27; much of the text below describes the classic game it replaced)
+
+- `index.html` sets `window.SEASON2_FORCE = true` (unless a test set it `false`: `tests/lib/classic.js`), so `src/season2.js` turns season 2 on for everyone: a separate save under the `s2:` localStorage prefix (the old save is untouched), online OFF (no uploads, boards, pilot names), `FEATURES.season2`, `window.SEASON2`.
+- A new player picks a starter area and a city (`src/startchoice.js`), flies flight school from THAT city (`schoolSave` in `src/route.js`), and flies only in the areas they have unlocked (`src/areas.js`, nine areas). A CROSSING (`src/crossings.js`) is one long mission flight that opens the next area; it is OFFERED when the best landed flight from the area is >= 70% of its km (`save.areaBest`, recorded in `src/sim/rules.js`) AND the area's biodiversity is >= 30. Lengths 6500 / 13000 / 18000 km (`src/season.js` SEASON: the one place for season 2 numbers); `SEASON.maxEra` 2 ends the release after the 1990s crossings (a MORE TO COME card).
+- Storms are gentler for everyone since 0.12.0 (`config.js` STORMS startGap 200, gapShrinkPerPair 2). The `/preview/` site idea was dropped (the redesign went straight to main).
+- What tests season 2: RELEASING.md "Season 2 is the shipped game" (`tests/season2.cjs`, `tests/season2-smoke.cjs`, `tests/offer-gate.cjs`, ...). Most other browser tests run the classic game on purpose.
 
 ## What this is
 

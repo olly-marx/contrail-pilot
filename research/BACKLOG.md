@@ -51,5 +51,6 @@ else is copied from a doc and **unverified** (the docs are not always current: S
 - Open questions 1 to 6 in STATE.md: (1) forecast site URL (2) done (3) Drop sight as an upgrade? (4) trees on a crashed flight count for biodiversity (currently yes) (5) fact-check of `src/nature.js` by the group / Citizen Zoo (6) pace of the first upgrade: all WAITING-USER; (2) is done.
 - "Possible next work": more hazards (downdrafts, ash, crosswinds), pixel art for remaining code-drawn textures, festival kiosk and QR poster: OPEN, not asked for.
 
-## H. Uncommitted in ~/cp-fixes (will go out with the next release, after a full 2-shard run)
+## H. Shipped since this file was written (2026-10-27)
+Everything in sections F and the Part-B tools went out in 28841f6 / ffa7bdc. 0.12.0 (season 2 is the game) and 0.12.1 (gap markers, NATURE next-here and web of life, school from your own city, season 2 smoke suite) are live. The /preview/ machinery was removed. The text below is the old list of what was uncommitted in ~/cp-fixes (only the art and PROPOSAL-18 are still unshipped):
 `tests/updates.cjs`, `tools/income.cjs`, `tools/price-ladder.mjs`, `research/PROPOSAL-6/12/18`, `research/BALANCE-TIME-TO-EARN.md`, this file, and the art (`tools/art/make_upgrades.py` + PNGs + provenance). Nothing art-related is wired.
