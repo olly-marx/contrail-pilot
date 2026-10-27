@@ -47,14 +47,13 @@ export function recordFlight(save, f) {
   for (const period of ['ever', 'week']) {
     const c = r[period];
     if (f.landed) {
-      if (f.distance > c.longest) { if (true) beaten.push({ id: 'longest', period }); c.longest = f.distance; }   // (the first one is a start, not a record beaten)
+      if (f.distance > c.longest) { if (c.longest > 0) beaten.push({ id: 'longest', period }); c.longest = f.distance; }   // (the first one is a start, not a record beaten)
       c.cool += net;
     } else {
-      c.crashes += 0;
       c.crashes += 1;
       if (f.crash === 'bird') c.bird += 1;
       if (f.distance > c.longestCrash) { if (c.longestCrash > 0) beaten.push({ id: 'longestCrash', period }); c.longestCrash = f.distance; }
-      if (c.shortest === null || f.distance > c.shortest) { if (c.shortest !== null) beaten.push({ id: 'shortest', period }); c.shortest = f.distance; }
+      if (c.shortest === null || f.distance < c.shortest) { if (c.shortest !== null) beaten.push({ id: 'shortest', period }); c.shortest = f.distance; }
     }
   }
   for (const b of beaten) if (!r.fresh.includes(b.id)) r.fresh.push(b.id);
@@ -71,7 +70,7 @@ export function mondayOf(iso) {
 // The menu calls this with today's date: a new week starts the THIS WEEK numbers from zero, and remembers where KINDS and MISSIONS stood.
 export function rollWeek(save, iso) {
   const r = ensure(save), start = mondayOf(iso);
-
+  if (r.week.start === start) return false;
   r.week = { ...counts(), start, kindsBase: treeTags(save), missionsBase: (save.missionsDone || []).length };
   return true;
 }
@@ -81,9 +80,9 @@ export function values(save) {
   const r = ensure(save), tags = treeTags(save), done = (save.missionsDone || []).length;
   const pick = (c, period) => ({
     longest: c.longest || null,
-    kinds: period === 'ever' ? tags.length : tags.length,
+    kinds: period === 'ever' ? tags.length : tags.filter(t => !r.week.kindsBase.includes(t)).length,
     cool: c.cool,
-    missions: period === 'ever' ? done : done,
+    missions: period === 'ever' ? done : Math.max(0, done - r.week.missionsBase),
     longestCrash: c.longestCrash || null,
     shortest: c.shortest,
     bird: c.bird,
