@@ -586,6 +586,7 @@ h2.sub { margin-top: -4px; }
 #title.hub #tMission, #title.hub .credit { display: none; }
 #title.hub .buttons { display: none; order: 1; }
 #title.hub.menu .buttons { display: flex; }
+#hubGear { font-size: 18px; line-height: 1; padding: 2px 6px; }
 #title.hub #hubTop { display: flex; justify-content: space-between; align-items: center; order: 0; }
 #title.hub #hubNext { order: 2; }
 #title.hub #hubWorld { order: 3; }
@@ -596,12 +597,12 @@ h2.sub { margin-top: -4px; }
 .hub-next .label { font-size: 7px; opacity: .7; margin: 0 0 2px; }
 .hub-next.crossing { background: #d6f5ff; }
 .hub-world { position: relative; text-align: center; }
-.hub-globe { width: min(84vw, 44vh); height: min(84vw, 44vh); image-rendering: pixelated; display: block; margin: 0 auto; }
+.hub-globe { width: min(100%, 44vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
 .hub-spin { position: absolute; top: 42%; background: rgba(26,26,46,.55); color: #fff; border: 0; font-size: 14px; padding: 8px 6px; cursor: pointer; }
 #hubSpinL { left: 0; } #hubSpinR { right: 0; }
 .hub-route { margin: 2px 0 0; font-size: 8px; }
 .hub-route small { display: block; opacity: .7; }
-.hub-tiles { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.hub-tiles { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 6px; }
 .hub-tile { position: relative; padding: 10px 2px; font-size: 8px; }
 .hub-tile .badge { position: absolute; top: -6px; right: -4px; background: #e8433a; color: #fff; font-size: 6px; padding: 2px 3px; border-radius: 6px; }
 .hub-back { position: fixed; left: 6px; top: 6px; z-index: 30; font-size: 8px; }
