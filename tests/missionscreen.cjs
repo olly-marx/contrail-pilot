@@ -77,6 +77,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(pid && (fund.missionsDone || []).includes('weurope:project') && (fund.unclaimed || []).some(u => u.key === 'mission:weurope:project'), `funding a project completes "Fund a nature project here" with no flight: ${pid} ${JSON.stringify(fund.missionsDone)}`);
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close();
+  // 4b. An off-flight mission ALREADY met ticks when the menu or the MISSIONS screen opens, not at the next purchase (S5; the sim
+  // chat's nit): tier 2 open, a helper system owned, "Buy a helper system" not yet done.
+  p = await open({ ...s2, freeUpgrade: false, fleet: { ...fleet, systems: { forecast: 1 } },
+    missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:shade', 'weurope:bring', 'weurope:project'] });
+  await p.click('#hubTiles [data-go="missions"]'); await p.waitForTimeout(400);
+  const met = await saveIn(p);
+  check((met.missionsDone || []).includes('weurope:system'), `opening MISSIONS ticks an off-flight mission already met: ${JSON.stringify(met.missionsDone)}`);
+  await p.close();
   // 5. The hangar tour starts on the hub (tours on).
   p = await open({ ...s2, seenTips: ['x-bars'], tours: [], shownLines: [], flights: 1 });   // a real new player: shownLines set on first load (else tour.js counts an old save's hangar tour as done)
   await p.waitForTimeout(1200);

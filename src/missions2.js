@@ -25,9 +25,15 @@ const landOf = (save, a) => { const c = city(areaOf(save.city) === a ? save.city
 
 // ---------- stage ----------
 // Crossings flown = areas opened beyond the first. (Eras add more later: the goal stage comes with the boss, M4.)
-export function stageOf(save) {
+export function stageOf(save, a = null) {
+  // Before any crossing: 'teach' (the lessons, the home area). After: each AREA has its own stage (the user, 2026-10-27:
+  // a new area reached after 2 crossings started at mastery with no nature built there). An area starts at 'challenge'
+  // and becomes 'mastery' once its crossing gate (any 2 of its 3 stars) is done in it. With no area given: the global
+  // teach-or-not answer (lessons, reveals).
   const crossings = Math.max(0, (save.areas || []).length - 1);
-  return crossings === 0 ? 'teach' : crossings <= 2 ? 'challenge' : 'mastery';
+  if (crossings === 0) return 'teach';
+  if (!a) return 'challenge';
+  return gateDone(save, a) ? 'mastery' : 'challenge';
 }
 const HARDER = { teach: 1, challenge: 2, mastery: 3 };   // numbers scale with the stage
 
@@ -84,7 +90,7 @@ function tierFinished(save, land) {
 
 // The fill: real names of this area, and the stage's numbers. `here` = the flight started in this area.
 export function fillFor(save, a, startCity = save.city) {
-  const k = HARDER[stageOf(save)], land = landOf(save, a), cities = (AREAS[a] && AREAS[a].cities) || [];
+  const k = HARDER[stageOf(save, a)], land = landOf(save, a), cities = (AREAS[a] && AREAS[a].cities) || [];
   const city = cities.find(c => c !== (save.homeCity || AREAS[a].start) && !(save.visited || []).includes(c)) || cities[1] || cities[0];
   const landName = (REGION_NAMES[land] || 'this land').replace(/^Temperate /, '');
   const others = cities.filter(c => c !== city);
@@ -92,7 +98,7 @@ export function fillFor(save, a, startCity = save.city) {
   const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
   const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));
   const animal = wild.find(w => canAppear(save, w.id, land)) || null;
-  return { area: a, land, landName, city, cityB: others[0] || city, cityC: others[others.length - 1] || city, k, stage: stageOf(save),
+  return { area: a, land, landName, city, cityB: others[0] || city, cityC: others[others.length - 1] || city, k, stage: stageOf(save, a),
     here: areaOf(startCity) === a, treeName: tree ? tree.name : 'tree', treeTag, animal: animal && animal.id, animalName: animal ? animal.name : 'wild animal' };
 }
 const key = (a, t) => `${a}:${t.id}`;
