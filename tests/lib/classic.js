@@ -10,7 +10,10 @@ const { chromium } = require('playwright-core');
 // test touches (the page's own season-2 layer already prefixes: a key that starts with 's2:' is left alone). Nothing else changes.
 if (process.env.SHIPPED && !chromium.__classic) {
   const shim = () => { const P = 's2:', pro = Storage.prototype, g = pro.getItem, s = pro.setItem, r = pro.removeItem, pre = k => (String(k).startsWith(P) ? String(k) : P + k);
-    pro.getItem = function (k) { return g.call(this, pre(k)); }; pro.setItem = function (k, v) { return s.call(this, pre(k), v); }; pro.removeItem = function (k) { return r.call(this, pre(k)); }; };
+    pro.getItem = function (k) { return g.call(this, pre(k)); }; pro.setItem = function (k, v) {
+      // A classic save has no start area, so the shipped game would put the start choice over TAKE OFF: give it the first starter area (and keep a city the save already names).
+      if (pre(k) === 's2:contrailPilot.v2') try { const o = JSON.parse(v); if (o && typeof o === 'object' && !Array.isArray(o.areas)) { o.areas = ['weurope']; o.homeArea = 'weurope'; o.city = o.city || 'LONDON'; v = JSON.stringify(o); } } catch (e) {}
+      return s.call(this, pre(k), v); }; pro.removeItem = function (k) { return r.call(this, pre(k)); }; };
   const launch = chromium.launch.bind(chromium);
   chromium.launch = async (...a) => {
     const b = await launch(...a), newContext = b.newContext.bind(b), newPage = b.newPage.bind(b);

@@ -121,3 +121,57 @@ CI s = the 2026-10-22 CI seconds where known (stale). Sleeps = fixed `waitForTim
 | twilight | LOGIC | - | 0 | 0/0/0 |
 | welcome | SCREEN | - | 3 | 2/9/0 |
 | wildfield | SCREEN | - | 5 | 7/11/1 |
+
+## Classic triage, step 1: what the shipped game does with the 75 classic tests (measured 2026-10-27)
+
+Classic is RETIRED (user decision, 2026-10-27): `index.html` forces season 2 for everyone and the old classic save is never read, so no player can reach classic and there is no classic smoke to keep. 75 of the 78 browser tests `require('./lib/classic.js')` (1674 s of the 2014 s baseline). Method: `SHIPPED=1` makes `tests/lib/classic.js` run the SAME test against the shipped game (an `s2:` storage-key shim; a save with no `areas` gets `areas ['weurope'], homeArea, city LONDON` so the start choice does not cover TAKE OFF). Shim proven first: the same page reports `window.SEASON2 false` without it and `true` with the season-2 tag showing under it. `tools/shipped-probe.sh`, once per test, no retries, 150 s limit; probe 1 = all 75 (12 passed, 63 failed, 54 of them a 32 s TimeoutError = the start choice), probe 2 = the 63 with the start-area shim.
+
+**RESULT: 40 of 75 pass UNCHANGED in the shipped game; 35 still fail.** A pass means the rule survives in season 2 and the test is re-homed by making the shipped game its default (no classic.js). It does NOT yet mean its planted defect is re-proven in the new mode: that is still owed per test (a test can pass vacuously). Seconds are the 0.15.0 baseline.
+
+### Rule survives (pass in the shipped game as is), 40 tests, 865 s of baseline
+
+atc (9), badgeart (8), badges (3), cache (46), collisions (12), controls (40), crash (13), crystals (49), eras (12), everyleg (12), faces (6), fares (21), flight (79), forecast (8), forest (57), forestmeter (10), gaphint (24), hazards (38), issr-reveal (24), lanes (76), margin (8), nature-unknown (3), pickupgates (21), pixelpreview (14), ponds (32), powerups (8), projectart (7), reset (10), runway-back (8), savesafe (14), season2-smoke (58), sim-masks (6), sim-rng-split (8), stormart (4), textfit (10), textures (2), treelayout (6), twilight (3), updates (79), welcome (16)
+
+### Fail in the shipped game, 35 tests, 808 s of baseline: each needs a decision from its failure (DELETE if the rule is gone / PORT to the season-2 screens or to Node)
+
+| test | baseline s | first failure line in the shipped game |
+|---|---|---|
+| banners | 13 |   name: 'TimeoutError' |
+| biodiversity | 11 |   name: 'TimeoutError' |
+| features | 22 |   name: 'TimeoutError' |
+| fields | 8 |   name: 'TimeoutError' |
+| fleetfacts | 7 |   name: 'TimeoutError' |
+| flightregion | 11 | FAIL |
+| gate | 17 |   name: 'TimeoutError' |
+| globe | 20 | FAIL |
+| hangar | 25 |   name: 'TimeoutError' |
+| hangarnew | 9 |   name: 'TimeoutError' |
+| journey | 32 |   name: 'TimeoutError' |
+| landmarks | 5 | FAIL |
+| links | 4 |   name: 'TimeoutError' |
+| looks | 22 |   name: 'TimeoutError' |
+| missions | 50 | FAIL |
+| nature | 26 |   name: 'TimeoutError' |
+| newplayer | 23 |   fails: [ |
+| offline | 56 | FAIL |
+| online | 29 | page.evaluate: TypeError: Cannot read properties of null (reading 'length') |
+| onlinesave | 36 |   name: 'TimeoutError' |
+| progression | 38 |   name: 'TimeoutError' |
+| regions | 11 |   name: 'TimeoutError' |
+| restore | 16 | FAIL |
+| rewards | 28 | FAIL |
+| school | 74 |   name: 'TimeoutError' |
+| season2 | 44 |   fails: [ |
+| sim-bank | 7 | FAIL |
+| swipe | 29 | FAIL |
+| terrain | 22 |   fails: [ |
+| tours | 37 |   name: 'TimeoutError' |
+| treepic | 10 |   fails: [ |
+| upgrades | 12 |   name: 'TimeoutError' |
+| wild | 16 |   name: 'TimeoutError' |
+| wildfield | 16 |   name: 'TimeoutError' |
+| wildlife | 25 | FAIL |
+
+Reading the failing set by what the tests need (judgement, to be confirmed one by one): (a) ONLINE features that are dormant until M8 (online, onlinesave, restore, newplayer, tours' name step, offline): the rule exists in code but is not reachable in season 2 -> park in a DORMANT list, not delete; (b) the OLD-HUB SCREENS (hangar, hangarnew, nature, wild, wildfield, regions, fields, biodiversity, looks, upgrades, progression, rewards, school, missions, journey, fleetfacts, gate, links, features, banners, tours, treepic, terrain, wildlife, flightregion, globe, swipe): the season-2 hub replaced the buttons and flow they click, so each is PORT (new selectors) or, where the rule is only classic's (missions' index flow, journey's London-first choices, season2's preview switch), DELETE with the season-2 Node tests (missions2/4, areas) as the replacement; (c) `sim-bank` fails in the shipped game because its Node side is not season 2 (a CONTRACT test: fix the engine side, not the game).
+
+**Classic code paths now dead for players** (note for later removal, not removed in this pass): `window.SEASON2_FORCE === false` branches, `?season2=off` and the preview switch in `src/season2.js`, the classic mission index flow (`save.mission`, `MISSION n/N`), the London-first `schoolSave`/`HOME` path in `src/route.js`, `?newplayer=1` (`src/newplayer.js`), and the old-save migrations (`trees` -> seeds, eras reset, welcome cards) which only an old classic save can reach.
