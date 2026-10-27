@@ -61,7 +61,7 @@ const KEY = 'contrailPilot.v2';
 
   // 1. Name tour, online.
   let p = await page(fresh);
-  check(await on(p, '#tabPilot') && /choose a name/.test(await bubble(p)), `a new pilot is pointed at PILOT: "${await bubble(p)}"`);
+  check(await on(p, '#tabPilot') && /pilot name/.test(await bubble(p)), `a new pilot is pointed at PILOT: "${await bubble(p)}"`);
   await tapAt(p, '#goBtn'); await p.waitForTimeout(600);
   check(await p.evaluate(() => !document.getElementById('title').hidden && game.scene.getScene('game').state !== 'playing'), 'a tap on TAKE OFF must be swallowed while the tour points elsewhere');
   await p.click('#tabPilot');

@@ -215,7 +215,7 @@ export class UI {
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
     $('hubNext').hidden = !v.next || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
-    $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>` : '';
+    $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>${v.next.hangar ? '<img class="next-pic" src="assets/ui/lesson-hangar.png" alt="">' : ''}` : '';   // the free part: a picture of where to go
     const toHangar = v.next && v.next.hangar;   // a free upgrade LEADS into the hangar (the user, 2026-10-27)
     $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : v.next && v.next.nature ? () => { sfx.flap(); this.go('nature'); } : null;
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
@@ -369,7 +369,8 @@ export class UI {
     if (r.missions2) {   // season 2 (S3): what this flight finished, then NEXT (the hub's goal)
       const d = r.missions2.done;
       mb.className = `step mission ${d.length ? 'done' : 'notyet'}`;
-      mb.innerHTML = (d.length ? `<b>DONE!</b> ${d.join(', ')}` : '') + (r.missions2.next ? `${d.length ? '<br>' : ''}NEXT: <b>${r.missions2.next}</b>` : '');
+      mb.innerHTML = (d.length ? `<b>DONE!</b> ${d.join(', ')}` : '') + (r.missions2.next ? `${d.length ? '<br>' : ''}NEXT: <b>${r.missions2.next}</b>` : '')
+        + ({ hangar: '<img class="next-pic" src="assets/ui/lesson-hangar.png" alt="">', nature: '<img class="next-pic" src="assets/ui/lesson-nature.png" alt="">' }[this.resultsLead()] || '');   // where the button leads
       mb.hidden = !mb.innerHTML;
     } else if (r.mission) {
       mb.className = `step mission ${r.mission.done ? 'done' : 'notyet'}`;
@@ -718,6 +719,7 @@ export class UI {
     ok.hidden = !this.coachButton;
     if (this.coachButton) { ok.disabled = true; clearTimeout(this.okTimer); this.okTimer = setTimeout(() => { ok.disabled = false; }, 700); }
     $('coach').classList.toggle('waiting', !!waiting);
+    $('coach').classList.toggle('tappable', !waiting && !school);   // an in-flight tip: a tap ON it may close it (after 2 s: GameScene.onCoachTap)
     $('coach').hidden = false;
     $('coach').classList.toggle('high', !school);   // explanations sit high, so the ground stays visible
     $('skipSchool').hidden = !school;

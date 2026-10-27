@@ -59,7 +59,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   if (web) { await web.click(); await p.waitForTimeout(300); }
   check(web && await p.evaluate(() => !document.getElementById('wInfo').hidden && /\S/.test(document.getElementById('wInfoBody').innerText)), 'tapping an animal on a project card opens its card');
   await p.evaluate(() => { document.getElementById('wInfo').hidden = true; });
-  const critter = await p.$('#wScene [data-species]');
+  const critter = await p.$('#wScene [data-critter]');
   if (critter) { await critter.evaluate(e => e.click()); await p.waitForTimeout(300); }   // (it walks about: a timed mouse click can miss it)
   const card = await p.evaluate(() => ({ shown: !document.getElementById('wInfo').hidden, text: document.getElementById('wInfoBody').innerText.slice(0, 40) }));
   check(critter && card.shown && /Found!/i.test(card.text), `tapping a found animal in the NATURE picture opens its card: ${!!critter} ${JSON.stringify(card)}`);

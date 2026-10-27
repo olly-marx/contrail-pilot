@@ -23,7 +23,7 @@ const KEY = 'contrailPilot.v2';
     hud: await p.evaluate(() => !!document.getElementById('previewHud')) });
   const go = async u => { urls = []; await p.goto(u); await ready(p); };
   const card = async () => { await p.evaluate(() => game.registry.get('ui').go('nature')); await p.waitForTimeout(300);
-    const r = await p.evaluate(() => (document.querySelector('[data-species="fox"] img') || {}).src || '');
+    const r = await p.evaluate(() => (document.querySelector('#wFound [data-species="fox"] img') || {}).src || '');
     await p.evaluate(() => game.registry.get('ui').go('fly')); return r; };
 
   // 1. On by default: PixelLab art in flight and on the cards, but no readout.

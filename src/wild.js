@@ -343,7 +343,7 @@ class Field {
         speed: fly ? 22 + Math.random() * 10 : 6 + Math.random() * 6, dir: Math.random() < 0.5 ? -1 : 1 };
       if (!fly) this.pick(c);
       // Tap an animal in the picture to see it close up (the user, 2026-10-27): the same card as the collection's.
-      c.img.style.pointerEvents = 'auto'; c.img.style.cursor = 'pointer'; c.img.dataset.species = w.id;
+      c.img.style.pointerEvents = 'auto'; c.img.style.cursor = 'pointer'; c.img.dataset.critter = w.id;   // (not data-species: the collection cards use that)
       c.img.addEventListener('click', e => { e.stopPropagation(); if (this.onPick) this.onPick(w.id); });
       return c;
     });

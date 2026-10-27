@@ -625,3 +625,5 @@ h2.sub { margin-top: -4px; }
 .freepick { background: #fff7d6; border: 2px solid #1a1a2e; padding: 6px; margin-bottom: 8px; }
 .freerow { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 5px 0; border-top: 1px dashed #c9b98a; font-size: 8px; }
 .freerow:first-of-type { border-top: 0; }
+.coach.tappable { pointer-events: auto; cursor: pointer; }   /* an in-flight tip bubble can be tapped away (after 2 s) */
+.next-pic { display: block; width: 100%; max-width: 240px; margin: 4px auto 0; image-rendering: pixelated; }
