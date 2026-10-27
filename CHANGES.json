@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-27-missions-tiers",
+    "version": "0.15.0",
+    "date": "2026-10-27",
+    "level": "minor",
+    "notes": [
+      "Missions grow with you: every area has three tiers of missions. Any 3 of a tier open the next, and any 2 of the 3 starred ones open the crossing.",
+      "Today: the MISSIONS screen shows three small missions that change every day.",
+      "Behind the scenes: much faster tests, so new fixes reach you sooner."
+    ]
+  },
+  {
     "id": "2026-10-27-first-hour-missions",
     "version": "0.14.0",
     "date": "2026-10-27",
