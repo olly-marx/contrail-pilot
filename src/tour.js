@@ -78,7 +78,7 @@ export class Tour {
   hubHangarSteps() {
     return [
       { skipIf: () => !$('hangar').hidden, target: '#hubTiles [data-go="hangar"]', text: tip('tour-hangar'), tap: true },   // already inside (OPEN THE HANGAR)
-      { area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true },
+      { area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true, scroll: true },   // scrolled into view: the bubble was cut off at the top
       { target: '#hubBack', text: tip('tour-home'), tap: true },
     ];
   }

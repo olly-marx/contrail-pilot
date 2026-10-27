@@ -123,7 +123,7 @@ export class WildScreen {
     // what parcels planted THERE (save.plantedIn[region], that region's trees: src/nature.js localTree).
     const mine = this.region === 'woodland' ? s.planted : (s.plantedIn || {})[this.region];
     const planted = Object.entries(mine || {}).filter(([, n]) => n > 0);
-    this.field = new Field($('wScene'), this.region, done, planted, found, this.projects.map(p => p.id));
+    this.field = new Field($('wScene'), this.region, done, planted, found, this.projects.map(p => p.id), id => { sfx.flap(); this.speciesInfo(id); });   // tap an animal: its card
     if (!found.length && !done.length) $('wScene').insertAdjacentHTML('beforeend', '<p class="w-empty">Bare land. Start a habitat project, and plant trees on your flights!</p>');
   }
 
@@ -154,6 +154,7 @@ export class WildScreen {
     }).join('') + (next ? `<div class="line project locked" data-tier-locked="${next.tier}"><div><div class="name">Tier ${next.tier}: ${esc(next.name)}</div>
         <div class="small">Reach Biodiversity <b>${next.needs}</b> to unlock ${P.filter(p => p.tier === next.tier).length} more projects. ${how}</div></div></div>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = () => this.buy(b.dataset.project));
+    $('wProjects').querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); });   // tap an animal: its card
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
     $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
       const t = Number(b.dataset.tierToggle), o = this.openTiers || [];
@@ -170,7 +171,7 @@ export class WildScreen {
     return `<div class="w-web"><span class="small">Brings back:</span>${who.map(a => {
       const more = a.more.map(n => names[n]).filter(Boolean);
       const tip = a.found ? a.name : `${a.name}?${more.length ? ` Also needs: ${more.join(', ')}` : ''}${a.bio ? ` (biodiversity ${a.bio})` : ''}`;
-      return `<span class="w-webpic" title="${esc(tip)}">${picHTML(a.w, a.found ? '' : 'w-shadow')}</span>`;
+      return `<button class="w-webpic" type="button" data-species="${a.id}" title="${esc(tip)}">${picHTML(a.w, a.found ? '' : 'w-shadow')}</button>`;
     }).join('')}</div>`;
   }
 
@@ -304,8 +305,8 @@ function treeSpots(region, feats = []) {
 }
 
 class Field {
-  constructor(el, region, done, planted, found, order = []) {
-    this.el = el;
+  constructor(el, region, done, planted, found, order = [], onPick = null) {
+    this.el = el; this.onPick = onPick;   // onPick(id): an animal in the picture was tapped
     el.innerHTML = '';
     el.classList.add('wfield-box');
     const f = this.f = document.createElement('div');
@@ -341,6 +342,9 @@ class Field {
         x: 20 + Math.random() * (FW - 40), y: fly ? 14 + Math.random() * 30 : GROUND[0] + Math.random() * (GROUND[1] - GROUND[0]),
         speed: fly ? 22 + Math.random() * 10 : 6 + Math.random() * 6, dir: Math.random() < 0.5 ? -1 : 1 };
       if (!fly) this.pick(c);
+      // Tap an animal in the picture to see it close up (the user, 2026-10-27): the same card as the collection's.
+      c.img.style.pointerEvents = 'auto'; c.img.style.cursor = 'pointer'; c.img.dataset.species = w.id;
+      c.img.addEventListener('click', e => { e.stopPropagation(); if (this.onPick) this.onPick(w.id); });
       return c;
     });
     this.fit();

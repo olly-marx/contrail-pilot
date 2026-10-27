@@ -620,3 +620,8 @@ h2.sub { margin-top: -4px; }
 #startChoice.full .panel { width: min(94vw, 420px); }
 .pic-storm { background-image: url("assets/ui/lesson-storm.png"); background-size: cover; image-rendering: pixelated; }
 #goBtn.locked { opacity: .5; filter: grayscale(1); font-size: 70%; }
+.w-webpic { background: none; border: 0; padding: 0; cursor: pointer; } .critter { pointer-events: auto; box-sizing: content-box; padding: 10px; margin: -10px; }   /* a finger-sized tap area round a 13 px animal */
+/* The free part, made easy (src/hangar.js freePickHTML) */
+.freepick { background: #fff7d6; border: 2px solid #1a1a2e; padding: 6px; margin-bottom: 8px; }
+.freerow { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 5px 0; border-top: 1px dashed #c9b98a; font-size: 8px; }
+.freerow:first-of-type { border-top: 0; }

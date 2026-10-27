@@ -61,7 +61,7 @@ export const FACTS_BASE = [
 ];
 
 export const FACTS = [...FACTS_BASE, ...NATURE_FACTS];
-const TOAST_MIN = 3, TOAST_END_MIN = 2;   // s a toast stays before another may replace it / before a flight's end may close it
+const TOAST_MIN = 3, TOAST_END_MIN = 2.5;   // s a toast stays before another may replace it / before a flight's end may close it
 const $ = id => document.getElementById(id);
 // A prize as icons: "+40 [seed] +3 [crystal]".
 const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;

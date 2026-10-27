@@ -38,7 +38,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#hubNext'); await p.waitForTimeout(400);
   check(await p.evaluate(() => !document.getElementById('hangar').hidden), 'tapping NEXT opens the hangar');
   // Pick the free part (the user: a must-do, no "later"), then TAKE OFF unlocks.
-  const free = await p.$('#hFleet .btn.free');
+  const pick = await p.evaluate(() => ({ rows: document.querySelectorAll('#hFleet .freepick .freerow').length, top: (document.querySelector('#hFleet .freepick') || {}).offsetTop }));
+  check(pick.rows === 3, `the hangar opens with a simple FREE part picker, 3 choices at the top: ${JSON.stringify(pick)}`);
+  const free = await p.$('#hFleet .freepick .btn.free');
   check(!!free, 'the hangar shows FREE! buttons');
   if (free) { await free.click(); await p.waitForTimeout(400); }
   await p.click('#hubBack'); await p.waitForTimeout(400);
@@ -46,12 +48,22 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(!/free upgrade/.test(after2.next) && !after2.locked && /TAKE OFF/.test(after2.text), `after picking the free part: NEXT is the lesson, TAKE OFF is unlocked: ${JSON.stringify(after2)}`);
   await p.close();
   // 3-4. The MISSIONS screen, and an off-flight mission.
-  p = await open({ ...s2, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:dodge', 'weurope:skip2', 'weurope:rich', 'weurope:shade', 'weurope:plant', 'weurope:bring'] });
+  p = await open({ ...s2, freeUpgrade: false, found: { rabbit: 1, fox: 1 }, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:dodge', 'weurope:skip2', 'weurope:rich', 'weurope:shade', 'weurope:plant', 'weurope:bring'] });
   await p.click('#hubTiles [data-go="missions"]'); await p.waitForTimeout(400);
   const ms = await p.evaluate(() => ({ shown: !document.getElementById('missions').hidden, rows: document.querySelectorAll('#mList .mrow').length, stars: document.querySelectorAll('#mList .mrow.star').length, back: !document.getElementById('hubBack').hidden }));
   check(ms.shown && ms.rows >= 3 && ms.stars === 3 && ms.back, `the MISSIONS screen lists the open missions, 3 starred, with HOME: ${JSON.stringify(ms)}`);
   await p.click('#hubBack'); await p.waitForTimeout(300);
   await p.click('#hubTiles [data-go="nature"]'); await p.waitForTimeout(600);
+  // Tap an animal to see it close up (the user, 2026-10-27): on a project card's "Brings back" row, and in the field picture.
+  const web = await p.$('#wProjects .w-webpic[data-species]');
+  if (web) { await web.click(); await p.waitForTimeout(300); }
+  check(web && await p.evaluate(() => !document.getElementById('wInfo').hidden && /\S/.test(document.getElementById('wInfoBody').innerText)), 'tapping an animal on a project card opens its card');
+  await p.evaluate(() => { document.getElementById('wInfo').hidden = true; });
+  const critter = await p.$('#wScene [data-species]');
+  if (critter) { await critter.evaluate(e => e.click()); await p.waitForTimeout(300); }   // (it walks about: a timed mouse click can miss it)
+  const card = await p.evaluate(() => ({ shown: !document.getElementById('wInfo').hidden, text: document.getElementById('wInfoBody').innerText.slice(0, 40) }));
+  check(critter && card.shown && /Found!/i.test(card.text), `tapping a found animal in the NATURE picture opens its card: ${!!critter} ${JSON.stringify(card)}`);
+  await p.evaluate(() => { document.getElementById('wInfo').hidden = true; });
   const pid = await p.evaluate(() => { const b = document.querySelector('#wProjects [data-project]:not([disabled])'); return b && b.dataset.project; });
   if (pid) { await p.click(`#wProjects [data-project="${pid}"]`); await p.waitForTimeout(400); }
   const fund = await saveIn(p);

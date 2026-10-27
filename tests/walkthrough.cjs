@@ -39,7 +39,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
     let animals = 0;
     for (let i = 0; i < seconds * 4; i++) { await p.waitForTimeout(250); await scene(() => { const s = game.scene.getScene('game'); s.heat = 0; if (s.plane.y > 300) s.applyFlap(); }); animals = Math.max(animals, await wild()); }
     await shot(`flight-${set.tag}`);
-    await p.evaluate(set => { const s = game.scene.getScene('game'); Object.assign(s, set.vals || {}); s.finish({ landed: true }); }, set);
+    await p.evaluate(set => { const s = game.scene.getScene('game'); Object.assign(s, { landedAt: s.path[1] }, set.vals || {}); s.finish({ landed: true }); }, set);   // (a real landing names its city)
     await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 15000 }).catch(() => {});
     await p.waitForTimeout(2500);   // the results reveal
     return animals;
@@ -70,10 +70,11 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   check(animals === 0, `flight 1: no wild animals before the NATURE lesson (${animals} drawn)`);
   let rs = await resultsState();
   check(/OPEN THE HANGAR/.test(rs.btn) && !rs.coach, `after flight 1 the results lead to the HANGAR, nothing left open: ${JSON.stringify(rs)}`);
+  await p.waitForFunction(() => /OPEN THE HANGAR/.test(document.getElementById('againBtn').textContent) && document.getElementById('againBtn').offsetParent !== null, null, { timeout: 8000 }).catch(() => {});
   await shot('results-flight1');
   await p.click('#againBtn'); await p.waitForTimeout(1500);
   check(await p.evaluate(() => !document.getElementById('hangar').hidden), 'OPEN THE HANGAR opens the hangar');
-  await shot('hangar-free-part');
+  await p.waitForTimeout(1500); await shot('hangar-free-part');
   const free = await p.$('#hFleet .btn.free'); check(!!free, 'a FREE! part to pick');
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t) t.hidden = true; game.registry.get('ui').tour.busy = false; });   // (the tour's dim layer would catch the click: the tour itself is checked in missionscreen.cjs)
   if (free) { await free.click(); await p.waitForTimeout(500); }

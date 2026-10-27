@@ -56,6 +56,13 @@ export const TIPS = {
   'start-area':   { say: 'This is your part of the world. Grow its nature, then explore further!', more: 'You will fly around this part of the world. Grow its nature and learn its skies, and one day you can cross to the next.' },
   'start-city':   { say: 'Which city is home?' },
 
+  // ---- the free part, at the top of the hangar (src/hangar.js freePickHTML) ----
+  'free-head':    { say: 'Pick ONE free part for your plane. Tap FREE! on the one you like.' },
+  'free-engines': { say: 'Cleaner engines: your plane makes less CO2, so the Earth stays cooler.' },
+  'free-magnet':  { say: 'A seed magnet: grab seeds from a little further away.' },
+  'free-gear':    { say: 'Landing help: the runway is easier to hit when you land.' },
+  'free-more':    { say: 'Or scroll down to see every part in the hangar.' },
+
   // ---- menu tours (src/tour.js) ----
   'tour-hello':   { say: 'Welcome, pilot! Tap <b>PILOT</b> to choose your pilot name.' },
   'tour-first':   { say: 'Type your <b>first name</b> here.' },

@@ -5,6 +5,7 @@
 //   GADGETS: Magnet, Cargo hold, Landing gear, Sensors, Autopilot (fleet-wide).
 // Data and rules: src/fleet.js. Rendered into #hFleet by UI.renderHangar (src/ui.js).
 import { ERAS, eraProgress } from './eras.js';
+import { tip } from './tips.js';
 import { LINE_INFO, levelCard } from './fleetfacts.js';
 import { composedURL } from './planelook.js';
 import { onSwipe } from './swipe.js';
@@ -25,7 +26,7 @@ export class FleetHangar {
 
   render() {
     const s = this.ui.save, el = $('hFleet');
-    el.innerHTML = this.previewHTML(s) + this.timelineHTML(s) + `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
+    el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.timelineHTML(s) + `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
       `<button class="btn ftab ${this.tab === k ? 'on' : ''}" data-ftab="${k}" type="button">${n}</button>`).join('')}</div>`
       + `<p class="small ftabhelp">${{ plane: 'Choose your plane, and upgrade the one you fly.', systems: 'Systems help every flight, whichever plane you fly.', gadgets: 'Gadgets are fitted to every plane in your fleet.' }[this.tab]}</p>`
       + (this.tab === 'plane' ? this.planeHTML(s) : this.groupHTML(s, this.tab === 'systems' ? SYSTEMS : GADGETS, this.tab === 'systems' ? 'system' : 'gadget'));
@@ -47,6 +48,19 @@ export class FleetHangar {
       s.sparkle = true;
       this.ui.persist(); this.ui.sfx.buy(); this.ui.renderHangar();
     });
+  }
+
+  // The FREE part, made easy (the user, 2026-10-27: the hangar is confusing on the first visit): while a free upgrade waits,
+  // three clear choices at the very top, each with what it does in a short sentence (src/tips.js); the full hangar below.
+  freePickHTML(s) {
+    if (!s.freeUpgrade) return '';
+    const f = fleetOf(s), open = nextBuys(s).filter(b => b.open && b.level === 1);
+    const want = [['plane', `${f.plane}.engines`, 'free-engines'], ['gadget', 'magnet', 'free-magnet'], ['gadget', 'gear', 'free-gear']];
+    const picks = want.map(([kind, id, t]) => ({ b: open.find(x => x.kind === kind && x.id === id), t })).filter(x => x.b);
+    if (!picks.length) return '';
+    return `<div class="freepick"><p class="label">${tip('free-head')}</p>${picks.map(({ b, t }) =>
+      `<div class="freerow"><span><b>${b.name}</b><br><small>${tip(t)}</small></span><button class="btn free" data-fbuy="${b.kind}:${b.id}" type="button">FREE!</button></div>`).join('')}
+      <p class="small">${tip('free-more')}</p></div>`;
   }
 
   // The big picture at the top (400 x 176, the art session's hangar portrait): the plane you fly, or
