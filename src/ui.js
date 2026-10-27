@@ -489,7 +489,7 @@ export class UI {
       await showEraWelcome(ERAS.findIndex(e => e.name === r.eraOpened));
       return this.showHangar();
     }
-    if (this.tour && !r.school) this.tour.maybe('results');
+    if (this.tour && (!r.school || FEATURES.season2)) this.tour.maybe('results');   // season 2: the rails start on the school-done card
   }
 
   // Small pixel Earth for the results, matching the in-game face.

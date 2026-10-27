@@ -41,6 +41,7 @@ const W = 390, H = 844;
     check(modal || (a.up && expect.test(a.text)), `${name}: the rails step shows ("${a.text}")`);
     check(a.reach.length === 1, `${name}: exactly ONE thing can be tapped (${a.reach.length}: ${a.reach.join(' / ')})`);
     check(a.ringIn && a.bubbleIn, `${name}: the target and the sentence are fully on screen (ring ${a.ringIn}, bubble ${a.bubbleIn})`);
+    if (!modal && !a.up) return;   // (no bubble: already recorded as a failure above; nothing to tap)
     if (modal) await p.click(modal);
     else { const okBtn = await p.$('#tour .tbubble .btn:not([hidden])'); if (okBtn && await okBtn.isVisible()) await okBtn.click(); else await p.mouse.click(a.ring.l + a.ring.w / 2, a.ring.t + a.ring.h / 2); }
     await p.waitForTimeout(700);
