@@ -85,7 +85,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const free = await p.$('#hFleet .btn.free'); check(!!free, 'a FREE! part to pick');
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t) t.hidden = true; game.registry.get('ui').tour.busy = false; });   // (the tour's dim layer would catch the click: the tour itself is checked in missionscreen.cjs)
   if (free) { await free.click(); await p.waitForTimeout(500); }
-  await p.click('#hubBack'); await p.waitForTimeout(500);
+  await p.click('#tabFly'); await p.waitForTimeout(500);
   const hub2 = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, tiles: [...document.querySelectorAll('#hubTiles [data-go]')].map(t => t.dataset.go) }));
   check(!hub2.locked && hub2.tiles.includes('hangar'), `after the free part: TAKE OFF unlocked, the HANGAR tile is there: ${JSON.stringify(hub2)}`);
   await shot('hub-flight2');
@@ -99,7 +99,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   check(await p.evaluate(() => !document.getElementById('nature').hidden), 'OPEN NATURE opens NATURE');
   await shot('nature');
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t) t.hidden = true; game.registry.get('ui').tour.busy = false; });
-  await p.click('#hubBack'); await p.waitForTimeout(500);
+  await p.click('#tabFly'); await p.waitForTimeout(500);
   // Flights 3-4 (night, skip one); then lesson 5 asks for parcels first.
   const f3 = await fly(6, { tag: '3', vals: { nightOwl: true } });
   check(f3.allowed === true, `flight 3: wild animals are allowed after the NATURE lesson: ${JSON.stringify(f3)}`); await shot('results-flight3'); await p.click('#againBtn'); await p.waitForTimeout(500);

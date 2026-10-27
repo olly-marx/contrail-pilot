@@ -1337,6 +1337,9 @@ export class GameScene extends Phaser.Scene {
       this.missionText.setText(n && this.state !== 'over' ? n.title : ''); }
     else { const mis = this.school ? null : currentMission(this.save);
       this.missionText.setText(mis && this.state !== 'over' ? mis.progress(this) : ''); }
+    // The "Next: <city>" line sits UNDER the mission line, however many lines that wraps to (a player saw two HUD lines
+    // drawn over each other: season 2 mission titles wrap to 2 lines, the next line was fixed at y 58).
+    this.nextText.y = this.missionText.text ? this.missionText.y + this.missionText.height + 1 : this.missionText.y;
 
     if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! shade: cooler' : 'ICY AIR! heat trapped!');
     else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');
