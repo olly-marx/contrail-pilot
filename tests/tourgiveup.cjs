@@ -20,7 +20,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // The data-loss guard of the old wait stays: a target that EXISTS but shows a moment later is still waited for.
   const ms2 = await p.evaluate(async () => { const t = game.registry.get('ui').tour, el = document.createElement('button'); el.id = 'lateTarget'; el.style.display = 'none'; document.body.appendChild(el);
     setTimeout(() => { el.style.display = 'block'; }, 600); const t0 = performance.now();
-    const done = t.step({ target: '#lateTarget', text: 'x', ok: true }); setTimeout(() => document.querySelector('#tour .tbubble .btn').click(), 900); await done; return Math.round(performance.now() - t0); });
+    const done = t.step({ target: '#lateTarget', text: 'x', ok: true }); const tick = setInterval(() => { const ok = document.querySelector('#tour .tbubble .btn'); if (ok.onclick && document.querySelector('#tour .tbubble p').textContent === 'x') { clearInterval(tick); ok.click(); } }, 50); await done; /* (OK once it is live: the step may scroll first) */ return Math.round(performance.now() - t0); });
   check(ms2 >= 600, `a target that exists but appears a moment later is still waited for (${ms2} ms)`);
   await b.close();
   console.log(fails.length ? `FAIL tourgiveup:\n - ${fails.join('\n - ')}` : `PASS tourgiveup: an absent target gives up in ${ms} ms; a late-showing one is still waited for`);
