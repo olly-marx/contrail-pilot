@@ -85,6 +85,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const free = await p.$('#hFleet .btn.free'); check(!!free, 'a FREE! part to pick');
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t) t.hidden = true; const u = game.registry.get('ui').tour; u.busy = false; u.save.tours = [...(u.save.tours || []), '*']; });   // (the tour's dim layer would catch the click: the tour itself is checked in missionscreen.cjs)
   if (free) { await free.click(); await p.waitForTimeout(500); }
+  if (await p.isVisible('#payOk')) await p.click('#payOk');   // (season 2: the free part's payoff, its OK goes home)
   await p.click('#tabFly'); await p.waitForTimeout(500);
   const hub2 = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, tiles: [...document.querySelectorAll('#hubTiles [data-go]')].map(t => t.dataset.go) }));
   check(!hub2.locked && hub2.tiles.includes('hangar'), `after the free part: TAKE OFF unlocked, the HANGAR tile is there: ${JSON.stringify(hub2)}`);

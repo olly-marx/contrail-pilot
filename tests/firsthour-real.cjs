@@ -78,6 +78,7 @@ const W = 390, H = 844;
   await p.click('#hubTiles [data-go="hangar"]', { force: true }); await p.waitForTimeout(800);   // (it pulses: a finger does not wait for it to stand still)
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; const u = game.registry.get('ui').tour; u.busy = false; u.save.tours = [...(u.save.tours || []), '*']; } });
   const free = await p.$('#hFleet .freepick .btn.free'); if (free) { await free.click(); await p.waitForTimeout(500); }
+  if (await p.isVisible('#payOk')) await p.click('#payOk');   // (season 2: the free part's payoff, its OK goes home)
   await p.click('#tabFly'); await p.waitForTimeout(500);
   check(await p.evaluate(() => !document.getElementById('goBtn').disabled), 'after the pick TAKE OFF works');
   await p.click('#goBtn');
