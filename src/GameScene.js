@@ -89,6 +89,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.save = this.registry.get('save');
     this.ui = this.registry.get('ui');
+    this.wildOK0 = null;   // decided once per flight (L1 completes on touchdown: no animal on the landing roll of flight 1)
     this.builtWith = JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]);   // scenery depends on upgrades (e.g. meadow flowers)
     this.makeTextures();
     this.initFlight();   // the flight's state: kit, random stream, world, heat, path (src/sim/rules.js)
@@ -295,7 +296,7 @@ export class GameScene extends Phaser.Scene {
     return true;
   }
   // Season 2: wild animals (and scenery birds) only once the NATURE lesson (L2) is done: one new thing at a time.
-  wildAllowed() { return !isSeason2(this.save) || (this.save.missionsDone || []).includes('L1'); }   // from flight 2 (the user's rails, 2026-10-27)
+  wildAllowed() { if (this.wildOK0 == null) this.wildOK0 = !isSeason2(this.save) || (this.save.missionsDone || []).includes('L1'); return this.wildOK0; }   // from flight 2 (the user's rails, 2026-10-27)
 
   showTip(html, pic) {
     this.explaining = true;   // a bubble is up (NOT frozen)
