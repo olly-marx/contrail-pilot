@@ -10,7 +10,7 @@ Three fixes, each gated by a test that fails when the fix is planted out:
 
 | Change | Commit | Gate | Effect at s = 1 |
 |---|---|---|---|
-| Look-ahead tap planner around birds | fdf476c | `tests/sim-hazards.cjs` (PLANT=old fails) | bird strikes per flock met 21.6% -> 5.3% (comet, heat off, 20 skies) |
+| Look-ahead tap planner around birds | fdf476c | `tests/sim-hazards.cjs` (PLANT=old fails, on the pinned pre-0.12 storms) | bird strikes per flock met 21.6% -> 5.3% under the PRE-0.12 storms (comet, heat off, 20 skies). Under the live 0.12+ storms: 5.1% -> 3.4% (20 skies, not significant): the wider gaps took most of the problem away |
 | Faster hammering on long climbs, ramped in above s = 0.9 | ff3c733 | fit unchanged (calibrate byte-identical at 0.75 / 0.8 / 0.9) | no-fly deaths per zone 5.2% -> 3.3% (80 skies) |
 | `simulate()`'s player drops tree parcels (progression.js's rule) | 09dabc6 | `tests/sim-trees.cjs` (PLANT=nodrop fails) | a save that owns trees now gets their cooling in single flights |
 
