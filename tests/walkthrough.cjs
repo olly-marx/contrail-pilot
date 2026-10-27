@@ -74,7 +74,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
   await shot('hub-flight1');
   let f1 = await fly(8, { tag: '1', vals: {} });
-  check(f1.animals === 0 && f1.allowed === false, `flight 1: no wild animals before the NATURE lesson (${JSON.stringify(f1)})`);
+  check(f1.animals === 0 && f1.allowed === false, `flight 1: no wild animals yet (they start on flight 2) (${JSON.stringify(f1)})`);
   let rs = await resultsState();
   check(/OPEN THE HANGAR/.test(rs.btn) && !rs.coach, `after flight 1 the results lead to the HANGAR, nothing left open: ${JSON.stringify(rs)}`);
   await p.waitForFunction(() => /OPEN THE HANGAR/.test(document.getElementById('againBtn').textContent) && document.getElementById('againBtn').offsetParent !== null, null, { timeout: 8000 }).catch(() => {});
@@ -92,7 +92,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await shot('hub-flight2');
   // Flight 2 (lesson 2: daytime icy air) -> NATURE.
   const f2 = await fly(8, { tag: '2', vals: { sunBlocked: 3.5 } });
-  check(f2.animals === 0 && f2.allowed === false, `flight 2: still no wild animals (the NATURE lesson ends this flight): ${JSON.stringify(f2)}`);
+  check(f2.allowed === true, `flight 2: wildlife is allowed from flight 2 (the rails: after landing lesson L1): ${JSON.stringify(f2)}`);
   rs = await resultsState();
   check(/OPEN NATURE/.test(rs.btn) && !rs.coach, `after lesson 2 the results lead to NATURE: ${JSON.stringify(rs)}`);
   await shot('results-flight2');
