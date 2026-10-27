@@ -268,6 +268,11 @@ export class UI {
   }
 
   showTitle() {
+    // Season 2: a save with no start area chooses it first, as a full screen (S3), before the hub ever shows.
+    if (FEATURES.season2 && needsStartChoice(this.save)) {
+      if (!this.choosingStart) { this.choosingStart = true; chooseStart().then(c => { this.choosingStart = false; applyStart(this.save, c); writeSave(this.save); this.showTitle(); }); }
+      return;
+    }
     $('tTrees').textContent = this.save.seeds;
     $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = km(this.save.bestDistance);

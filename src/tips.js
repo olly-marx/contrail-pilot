@@ -51,6 +51,10 @@ export const TIPS = {
   safAhead:   { say: 'SAF ahead! Grab the green can.' },
   forestFull: { say: 'Forest full! More kinds hold more.', more: 'A forest can only soak up so much CO2 in one flight. Plant all 5 kinds of tree to make it hold much more.' },
   firstDrop:  { say: 'Parcel away! Drop before the soil.', more: 'It floats down AND forwards. Drop it before the brown soil to plant a tree.' },
+  // ---- season 2 start choice (src/startchoice.js) ----
+  'start-area':   { say: 'Choose your first area. Grow its nature!', more: 'You will fly around this part of the world. Grow its nature and learn its skies, and one day you can cross to the next.' },
+  'start-city':   { say: 'Which city is home?' },
+
   // ---- menu tours (src/tour.js) ----
   'tour-hello':   { say: 'Welcome, pilot! Tap <b>PILOT</b> to choose a name.' },
   'tour-first':   { say: 'Type your <b>first name</b> here.' },
