@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-10-27-tab-bar",
+    "version": "0.15.4",
+    "date": "2026-10-27",
+    "level": "minor",
+    "notes": [
+      "The bottom menu bar is back on every screen.",
+      "Fixed: two lines of flight text drawn on top of each other."
+    ]
+  },
+  {
     "id": "2026-10-27-progress-safe",
     "version": "0.15.3",
     "date": "2026-10-27",
