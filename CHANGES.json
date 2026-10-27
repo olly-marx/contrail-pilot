@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-27-resting-boards",
+    "version": "0.12.2",
+    "date": "2026-10-27",
+    "level": "minor",
+    "notes": [
+      "Season 2 tells you the truth: the pilot names and leaderboards are resting for now, instead of saying there is no internet.",
+      "When there is no crossing to fly yet, the FLY screen now says when the next one opens.",
+      "The laps count now says it is times round the Earth, wherever you start."
+    ]
+  },
+  {
     "id": "2026-10-27-nature-hints",
     "version": "0.12.1",
     "date": "2026-10-27",
