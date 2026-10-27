@@ -23,8 +23,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const saveIn = p => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));   // (in the page the s2: prefix is already applied)
   // 1. The start choice: a full screen, at once.
   let p = await open({ ...base });
-  const sc = await p.evaluate(() => { const e = document.getElementById('startChoice'); if (!e) return null; const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, hubShown: !document.getElementById('title').hidden && document.getElementById('title').getBoundingClientRect().height > 0 }; });
-  check(sc && sc.w >= 380 && sc.h >= 830, `the start choice fills the screen at once: ${JSON.stringify(sc)}`);
+  const sc = await p.evaluate(() => { const e = document.getElementById('startChoice'); if (!e) return null; const r = e.getBoundingClientRect(); const bg = getComputedStyle(e).backgroundColor; return { w: r.width, h: r.height, opaque: /^rgb\(/.test(bg) || /, 1\)$/.test(bg), bg, hubShown: !document.getElementById('title').hidden && document.getElementById('title').getBoundingClientRect().height > 0 }; });
+  check(sc && sc.w >= 380 && sc.h >= 830 && sc.opaque, `the start choice is an opaque full screen at once (not a pop-up over the hub): ${JSON.stringify(sc)}`);
   if (sc) { await p.click('#startChoice [data-area="weurope"]'); await p.click('#startChoice [data-city="LONDON"]'); await p.waitForTimeout(500); }
   const after = await p.evaluate(() => ({ gone: !document.getElementById('startChoice'), hub: !document.getElementById('title').hidden }));
   check(after.gone && after.hub && (await saveIn(p)).city === 'LONDON', `after choosing: the hub, from LONDON: ${JSON.stringify(after)}`);
