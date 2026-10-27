@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-27-season-2-home",
+    "version": "0.13.0",
+    "date": "2026-10-27",
+    "level": "major",
+    "notes": [
+      "Season 2 home screen: one NEXT goal, a big world you can spin, TAKE OFF, and tiles for the hangar and nature.",
+      "Much shorter tips that never pause the game. Tap a tip to close it and keep flying.",
+      "Behind the scenes: a new plan for season 2 missions."
+    ]
+  },
+  {
     "id": "2026-10-27-resting-boards",
     "version": "0.12.2",
     "date": "2026-10-27",
