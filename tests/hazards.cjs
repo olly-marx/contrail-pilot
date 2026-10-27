@@ -20,11 +20,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const start = async () => { await p.goto(URL); await ready(p); await p.waitForTimeout(600);
     await p.evaluate(async () => { (await import('./src/config.js')).HAZARDS.birds.chance = 1; });
     await p.click('#goBtn'); await started(p); await p.waitForTimeout(2300); };
-  // A new hazard pauses the game to explain it; tap the captain's bubble to carry on.
-  let sawPause = false;
+  // A new hazard shows a short bubble WITHOUT pausing (S1, the user 2026-10-27); nothing to dismiss.
+  let sawBubble = false, sawFreeze = false;
   const dismiss = async () => {
     const st = await p.evaluate(() => { const s = game.scene.getScene('game'); return { ex: s.explaining, frozen: s.frozen }; });
-    if (st.ex) { if (st.frozen) sawPause = true; await p.click('#coachOk'); }
+    if (st.ex) sawBubble = true; if (st.frozen) sawFreeze = true;
   };
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; s.heat = 0; }, y);
 
@@ -63,7 +63,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   let c2 = await scene(() => { const s = game.scene.getScene('game'); return { turbsSeen: s.nextTurbAt > 2500, birdsSeen: s.nextBirdsAt > 6000, noFly: s.storms.some(x => x.noFly), state: s.state }; });
   const spawned = await scene(() => { const s = game.scene.getScene('game'); return { t: s.turbs.length + (s.hazardSeen?.turbulence ? 1 : 0), seen: JSON.parse(localStorage.getItem('contrailPilot.v2')).seenTips }; });
   check(spawned.seen.includes('hazard-turbulence'), 'turbulence never appeared after 2000 m');
-  check(sawPause, 'a new hazard should pause the game to explain it');
+  check(sawBubble && !sawFreeze, `a new hazard shows its bubble without pausing (bubble ${sawBubble}, paused ${sawFreeze})`);
   check(spawned.seen.includes('hazard-noFly'), 'no-fly zone never appeared after 8000 m');
   check(spawned.seen.includes('hazard-birds'), 'birds never appeared after 10000 m');
 

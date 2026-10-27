@@ -104,15 +104,19 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(typeof r.miss === 'number' && Math.abs(r.miss) <= 6, `parcel from y=${hy} should land under the X, missed by ${r.miss} px`);
     await p.waitForTimeout(200);
   }
-  // 5. A mid-run tip closes only with its OK button: taps on the game (meant for the plane) don't.
+  // 5. A mid-run tip never pauses the game (S1, the user 2026-10-27): the bubble shows, the plane keeps flying, a tap on the
+  // game both flies and closes the bubble, and an untouched bubble goes by itself after a few seconds.
   await scene(() => { const s = game.scene.getScene('game'); s.save.seenTips = s.save.seenTips.filter(t => t !== '*'); s.explain('test-tip', 'Test tip'); });
-  await p.mouse.click(195, 700); await p.mouse.click(195, 700);
-  const tip1 = await scene(() => ({ ex: game.scene.getScene('game').explaining, okDisabled: document.getElementById('coachOk').disabled }));
-  check(tip1.ex, 'tapping the game should not close a tip');
-  check(tip1.okDisabled, 'the OK button should wait a moment before it works');
-  await p.waitForTimeout(800); await p.click('#coachOk');
-  const tip2 = await scene(() => ({ ex: game.scene.getScene('game').explaining, frozen: game.scene.getScene('game').frozen }));
-  check(!tip2.ex && !tip2.frozen, `the OK button should close the tip and resume: ${JSON.stringify(tip2)}`);
+  const tip1 = await scene(() => { const s = game.scene.getScene('game'); return { ex: s.explaining, frozen: s.frozen, shown: !document.getElementById('coach').hidden, ok: !document.getElementById('coachOk').hidden }; });
+  check(tip1.ex && tip1.shown && !tip1.frozen && !tip1.ok, `a tip shows without pausing and without an OK button: ${JSON.stringify(tip1)}`);
+  const vy0 = await scene(() => game.scene.getScene('game').plane.vy);
+  await p.mouse.click(195, 700);
+  const tip2 = await scene(() => { const s = game.scene.getScene('game'); return { ex: s.explaining, frozen: s.frozen, shown: !document.getElementById('coach').hidden, vy: s.plane.vy }; });
+  check(!tip2.ex && !tip2.shown && !tip2.frozen && tip2.vy < vy0, `a tap closes the tip AND flies: ${JSON.stringify({ vy0, ...tip2 })}`);
+  await scene(() => game.scene.getScene('game').explain('test-tip-2', 'Test tip'));
+  await p.waitForTimeout(3600);
+  check(await scene(() => !game.scene.getScene('game').explaining && document.getElementById('coach').hidden), 'an untouched tip goes by itself after ~3 s');
+  await scene(() => game.scene.getScene('game').startGrace());   // the breather still follows pop-ups (crash cards etc.)
   // ...then a breather: the AUTOPILOT steers towards the next storm gap (not a frozen hover), a
   // storm right on the plane doesn't end the flight, the label shows, and a tap hands back control.
   const gr = await scene(() => new Promise(res => { const s = game.scene.getScene('game'); const y0 = s.plane.y, f = s.finish; let crashed = false;
@@ -121,7 +125,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const g0 = s.gameTime, wall0 = Date.now(), timer = setInterval(() => { if (s.gameTime - g0 < 700 && Date.now() - wall0 < 15000) return; clearInterval(timer);
       const r = { grace: s.inGrace(), climbed: Math.round(y0 - s.plane.y), crashed, label: s.autoText.visible };
       s.storms.pop().parts.forEach(q => q.destroy()); s.applyFlap(); r.afterTap = s.inGrace(); s.finish = f; res(r); }, 10); }));
-  check(gr.grace && !gr.crashed, `after a tip the plane should be safe for a moment: ${JSON.stringify(gr)}`);
+  check(gr.grace && !gr.crashed, `in a breather the plane should be safe for a moment: ${JSON.stringify(gr)}`);
   check(gr.climbed > 40, `the autopilot should steer up towards the storm gap, not hover: ${JSON.stringify(gr)}`);
   check(gr.label, 'the AUTOPILOT label should show during the breather');
   check(!gr.afterTap, 'a tap should end the breather');
