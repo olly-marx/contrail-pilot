@@ -10,7 +10,7 @@ The user's brief: "there's too many options right now, and the point system does
 2. **Remove "Ultimate Flyer" and its points table entirely?** Recommended yes: it is the opaque part (section 1).
 3. **Time periods.** Today there are 4 (TODAY, WEEK, MONTH, EVER). Recommended 2: THIS WEEK (resets every Monday, so a new player can win) and EVER. OK?
 4. **Season 2 is offline. Start with "MY RECORDS"** (the same 8 boards, showing only YOUR best on this device, no server, no database change), and add the ranking against other pilots when online returns (M8)? Or keep the whole screen "resting" until M8?
-5. **When it appears.** The BOARDS tab is hidden until you have landed 3 times, then a one-time card introduces it ("Your records!") with the first oops joke. The name tour (PILOT, name, BOARDS) moves from "right after school" to that moment. OK?
+5. **When it appears.** Today in season 2 the PILOT and BOARDS tabs are simply hidden (`show.pilot`/`show.boards` are `false` in `src/ui.js`) and the name tour is skipped (`src/tour.js` marks it done). The proposal: BOARDS appears after your 3rd landing, with a one-time card ("Your records!") and the first oops joke. PILOT (names) stays hidden until online returns. OK?
 6. **For M8 (online) only:** MISSIONS needs one new column in the live database (section 4). That is a live database change: your yes, at that time, not now.
 
 ## 1. What there is today (measured from the code and the migrations, not from docs)
@@ -44,7 +44,7 @@ On screen: the 8 boards as two rows of four cards (GOOD above, OOPS below, a fun
 
 **MY RECORDS.** The BOARDS screen shows the 8 cards with YOUR best / total on this device, a "NEW RECORD!" mark the moment you beat yourself, and a line "Pilots' rankings come back with online." Everything it needs is already in the save except COOL SKIES, which needs a running total: one new save field `records.cool` (shade minus heat trapped, landed flights), added where a finished flight is banked (`RULES.bankFlight` in `src/sim/rules.js`, shared by the game and the Node engine, so it is testable in Node in under a second). THIS WEEK for personal records: `records.week = { start, ...}` kept the same way, reset on Monday by the menu (the date stays out of the rules, as for the daily missions).
 
-**Onboarding.** After the 3rd landing the BOARDS tab appears and a one-time card says "Your records! Beat yourself. And watch out for the OOPS boards." It also fires one oops joke the first time you crash a particular way ("Bird Magnet: 1"). The PILOT/BOARDS name tour moves to this moment (it is a tour step list in `src/tour.js`); no change before flight 3.
+**Onboarding.** After the 3rd landing the BOARDS tab appears (one line in the tab bar's reveal list in `src/ui.js`, next to HANGAR/NATURE) and a one-time card says "Your records! Beat yourself. And watch out for the OOPS boards." The first time you crash a particular way, a joke toast ("Bird Magnet: 1"). Nothing changes before flight 3; no name tour is needed while online is off.
 
 **Tests (plan, each proved by a planted defect).** Node: each of the 8 records changes only on the flight that should change it (a landing changes the good ones; a crash by kind changes exactly one oops one; a landed flight never touches the oops ones; COOL SKIES = shade minus heat; THIS WEEK resets). Browser (one test, shipped game): BOARDS hidden before the 3rd landing, appears after; 4 + 4 cards; a crash by a bird raises BIRD MAGNET on the screen.
 
