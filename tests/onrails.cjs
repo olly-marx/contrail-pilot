@@ -8,7 +8,7 @@
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const { ready } = require('./lib/ready.js');
-const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHOTS || '';
+const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHOTS || '', MISS_L2 = !!process.env.MISS_L2;   // MISS_L2=1: flights 2-3 steer AWAY from icy air (the never-stall fallback must still open NATURE)
 const W = 390, H = 844;
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
@@ -34,10 +34,11 @@ const W = 390, H = 844;
       ringIn: inView(ring), bubbleIn: inView(bub), ring: ring && { l: ring.left, t: ring.top, w: ring.width, h: ring.height } };
   });
   // One rails step: wait for its bubble (or a modal), check (a)+(b), screenshot, tap the one target, check (d).
-  const step = async (name, expect, effect, { modal = null } = {}) => {
+  const step = async (name, expect, effect, { modal = null, screen = null } = {}) => {
     let a = null;
     for (let i = 0; i < 60; i++) { a = await audit(); if (modal ? await p.$(modal) : a.up && expect.test(a.text)) break; await p.waitForTimeout(150); }
     await shot(name);
+    if (screen) check(await p.evaluate(id => !document.getElementById(id).hidden, screen), `${name}: on the ${screen} screen`);
     check(modal || (a.up && expect.test(a.text)), `${name}: the rails step shows ("${a.text}")`);
     check(a.reach.length === 1, `${name}: exactly ONE thing can be tapped (${a.reach.length}: ${a.reach.join(' / ')}; ring ${JSON.stringify(a.ring)})`);
     check(a.ringIn && a.bubbleIn, `${name}: the target and the sentence are fully on screen (ring ${a.ringIn}, bubble ${a.bubbleIn})`);
@@ -63,8 +64,9 @@ const W = 390, H = 844;
       covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), turbs: (s.turbs || []).length,
       wild: (s.life || []).filter(x => x.kind && !/animal-(cow|sheep)/.test(x.kind)).length };
   });
+  let avoid = false;
   const target = v => v.toRunway < 40 && v.toRunway > -220 ? 1e9 : v.gap != null ? v.gap
-    : v.issr ? (v.day ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
+    : v.issr ? (v.day && !avoid ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
     : v.toRunway < 700 ? v.skyH - 30 : v.skyH * 0.45;
   const fly = async (label, seconds, rules = {}) => {
     const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0;
@@ -104,18 +106,27 @@ const W = 390, H = 844;
   await step('R9c-wildlife', /wildlife/i, () => !document.getElementById('title').hidden);
   await step('R10-takeoff2', /animals/i, null);
   // R10-R11: flight 2, then NATURE and its free first project.
+  const L2 = () => p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).missionsDone || []).includes('L2'));
+  avoid = MISS_L2;
   await fly('flight 2', 240, { noTurb: true });
-  // A player can miss the daytime icy air: FLY ON and fly again (up to 3 more flights), as they would. NATURE must follow L2.
-  for (let i = 0; i < 3 && !(await p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).missionsDone || []).includes('L2'))); i++) {
-    await p.evaluate(() => { const t = document.getElementById('tour'); return t && !t.hidden; }) && await p.click('#tour .tbubble .btn:not([hidden])').catch(() => {});
+  let flights = 1;
+  if (MISS_L2) {   // missed once: still pending, and the results don't lead to NATURE yet; FLY ON for the second try
+    check(!(await L2()), 'MISS_L2: one miss leaves L2 pending (the autopilot avoided the icy air)');
+    await shot('R10b-missed-once');
+    const t = await p.evaluate(() => !document.getElementById('tour').hidden);
+    if (t) await p.click('#tour .tbubble .btn:not([hidden])').catch(() => {});
     await p.click('#againBtn'); await p.waitForTimeout(800);
     if (await p.evaluate(() => !document.getElementById('title').hidden)) await p.click('#goBtn');
-    await fly(`flight 2 retry ${i + 1}`, 240, { noTurb: true });
+    await fly('flight 2, second try (missed again)', 240, { noTurb: true }); flights++;
   }
-  await step('R11a-nature', /NATURE/i, () => !document.getElementById('nature').hidden);
-  await step('R11b-free-project', /FREE/i, () => (JSON.parse(localStorage.getItem('contrailPilot.v2')).habitat || {}) && JSON.parse(localStorage.getItem('contrailPilot.v2')).freeProjectGiven === true);
-  await step('R11c-projects', /animals back/i, null);
-  await step('R11d-how', /trees/i, null);
+  avoid = false;
+  const l2 = await L2();
+  check(l2, `L2 is done after ${flights} flight(s) (${MISS_L2 ? 'two misses: the fallback' : 'the guaranteed daytime icy patch'})`);
+  if (!l2) { await b.close(); console.log(`FAIL onrails:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (NATURE needs it: the rest would pass or fail by accident)
+  await step('R11a-nature', /NATURE/i, () => !document.getElementById('nature').hidden, { screen: 'results' });
+  await step('R11b-free-project', /FREE/i, () => (JSON.parse(localStorage.getItem('contrailPilot.v2')).habitat || {}) && JSON.parse(localStorage.getItem('contrailPilot.v2')).freeProjectGiven === true, { screen: 'nature' });
+  await step('R11c-projects', /animals back/i, null, { screen: 'nature' });
+  await step('R11d-how', /trees/i, null, { screen: 'nature' });
   await step('R11e-home', /wild animals/i, () => !document.getElementById('title').hidden);
   check(!p.errs.length, `page errors: ${p.errs}`);
   await b.close();
