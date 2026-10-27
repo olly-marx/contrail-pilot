@@ -204,7 +204,8 @@ export class Tour {
   place() {
     if (!this.target || this.el.hidden) return;
     const r = this.target.getBoundingClientRect(), W = innerWidth, H = innerHeight, pad = 4;
-    const x0 = Math.max(0, r.left - pad), y0 = Math.max(0, r.top - pad), x1 = Math.min(W, r.right + pad), y1 = Math.min(H, r.bottom + pad);
+    const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar && !bar.contains(this.target) ? bar.getBoundingClientRect().top : H;   // a target sliding behind the tab bar must not open a hole onto its tabs
+    const x0 = Math.max(0, r.left - pad), y0 = Math.max(0, Math.min(r.top - pad, barTop - 8)), x1 = Math.min(W, r.right + pad), y1 = Math.min(H, barTop, r.bottom + pad);
     const set = (el, s) => Object.assign(el.style, s);
     const d = k => this.el.querySelector(`[data-d="${k}"]`);
     set(d('t'), { left: '0', top: '0', width: `${W}px`, height: `${y0}px` });
