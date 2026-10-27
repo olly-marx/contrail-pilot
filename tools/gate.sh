@@ -3,7 +3,7 @@
 #   tools/gate.sh           run the gate; prints each test's seconds and one summary line; exit 1 if any failed
 #   tools/gate.sh --deep   the full sweeps (tests/DEEP) without GATE=1: nightly / before a balance change
 #   tools/gate.sh --lint    only check the declared lists (tests/GATE, tests/BROWSER, tests/DEEP) against tests/*.cjs
-#   JOBS=n                  workers (default 4: memory is the limit on this machine, not cores)
+#   JOBS=n                  workers (default 6: measured 2026-10-27, 4 -> 12.1 s, 8 -> 10.2 s, 16 -> 10.3 s on a loaded machine; the pool is small Node processes of ~100-150 MB)
 #   TIMES=file              append `test<TAB>seconds<TAB>pass|fail`
 # No retries: a test that fails once fails the gate (a flaky Node test is a bug).
 set -u
@@ -38,7 +38,7 @@ one() {
 export -f one
 OUT=$(mktemp -d); export OUT
 # Slowest first (declared weights come from the last TIMES file if given, else list order) so the long tests start at once.
-list $LIST | xargs -P "${JOBS:-4}" -I{} bash -c 'one {}'
+list $LIST | xargs -P "${JOBS:-6}" -I{} bash -c 'one {}'
 fails=0; n=0
 for r in "$OUT"/*.res; do n=$((n + 1)); [ "$(cut -f3 "$r")" = pass ] || fails=$((fails + 1)); [ -n "${TIMES:-}" ] && cat "$r" >> "$TIMES"; done
 sort -t$'\t' -k2 -nr "$OUT"/*.res | head -n 5 | awk -F'\t' '{ printf "   slowest: %-22s %5.1f s\n", $1, $2 }'
