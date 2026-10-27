@@ -31,9 +31,10 @@ const W = 390, H = 844;
     return r; });
   const tap = () => p.mouse.click(W / 2, H * 0.55);
   // A player's eye: where to be. Gap first, then icy air (INTO by day, AWAY at night), the runway, else mid-sky.
-  const target = v => v.gap != null ? v.gap
+  const target = v => v.toRunway < 40 && v.toRunway > -220 ? 1e9 : v.gap != null ? v.gap
     : v.issr ? (v.day ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
-    : v.toRunway < 700 ? v.skyH - 26 : v.skyH * 0.45;
+    : v.toRunway < 40 && v.toRunway > -220 ? 1e9   // over the runway: stop tapping and settle onto it (that is how you land)
+    : v.toRunway < 700 ? v.skyH - 30 : v.skyH * 0.45;
   const playUntil = async (done, seconds, fly = true) => {
     const t0 = Date.now();
     while (Date.now() - t0 < seconds * 1000) {
@@ -55,12 +56,13 @@ const W = 390, H = 844;
   await p.click('#goBtn'); await p.waitForTimeout(500); await shot('how-to');
   await p.click('#howClose'); await p.waitForTimeout(500);
   const finished = await playUntil(v => v.results, 300);
+  if (process.env.DBG) for (let i = 0; i < 8; i++) { console.log('DBG', JSON.stringify(await p.evaluate(() => { const s = game.scene.getScene('game'); return { t: Math.round(performance.now()), res: !document.getElementById('results').hidden, title: document.getElementById('rTitle').textContent, btn: document.getElementById('againBtn').textContent, state: s.state, school: !!s.school, km: Math.round(s.distancePx), done: game.registry.get('save').tutorialDone }; }))); await p.waitForTimeout(500); }
   check(finished, 'a player can fly the whole flight school to its landing with real taps');
   await p.waitForTimeout(3000);   // the card's reveal
   await shot('school-done');
-  const card = await p.evaluate(() => ({ title: document.getElementById('rTitle').textContent, btn: document.getElementById('againBtn').textContent,
+  const card = await p.evaluate(() => ({ shown: !document.getElementById('results').hidden, title: document.getElementById('rTitle').textContent, btn: document.getElementById('againBtn').textContent,
     free: !document.getElementById('rFree').hidden, fact: !document.getElementById('rFact').hidden && document.getElementById('rFact').textContent }));
-  check(/school/i.test(card.title) && /OPEN THE HANGAR/.test(card.btn), `the school-done card leads to the HANGAR: ${JSON.stringify(card)}`);
+  check(card.shown && /school/i.test(card.title) && /OPEN THE HANGAR/.test(card.btn), `the school-done card leads to the HANGAR: ${JSON.stringify(card)}`);
   check(!card.fact, `no random fact on a card that leads somewhere: ${JSON.stringify(card.fact)}`);
   await p.click('#againBtn'); await p.waitForTimeout(1500);
   await shot('hangar');
@@ -72,7 +74,7 @@ const W = 390, H = 844;
   check(hub.locked && /free upgrade/i.test(hub.next) && hub.tile, `skipping the pick: TAKE OFF locked, NEXT leads to the hangar, the tile is there: ${JSON.stringify(hub)}`);
   await shot('hub-locked');
   // Pick it, then crash flight 1 on purpose (no taps): the hangar stays reachable, nothing locks the player out.
-  await p.click('#hubTiles [data-go="hangar"]'); await p.waitForTimeout(800);
+  await p.click('#hubTiles [data-go="hangar"]', { force: true }); await p.waitForTimeout(800);   // (it pulses: a finger does not wait for it to stand still)
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; game.registry.get('ui').tour.busy = false; } });
   const free = await p.$('#hFleet .freepick .btn.free'); if (free) { await free.click(); await p.waitForTimeout(500); }
   await p.click('#hubBack'); await p.waitForTimeout(500);
