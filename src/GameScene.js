@@ -233,8 +233,10 @@ export class GameScene extends Phaser.Scene {
 
   startSchool() {
     // Rebuild unless this scene is fresh, built with these upgrades AND at the school's start (LONDON; season 2: your own city).
-    const sp = flightPath(schoolSave(this.save));
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]) || this.path[0] !== sp[0] || this.path[1] !== sp[1]) { this.scene.restart({ go: true, mode: 'school' }); return; }
+    // The checks run in this order on purpose: a tap before the scene's create() (slow phone, assets still loading) has no state and no
+    // save yet, and must just restart (0.12.2 crashed here with `save.areas` of undefined on an iPhone).
+    const stale = () => { const sp = flightPath(schoolSave(this.save)); return this.path[0] !== sp[0] || this.path[1] !== sp[1]; };
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]) || stale()) { this.scene.restart({ go: true, mode: 'school' }); return; }
     this.school = new School(this, this.ui);
     this.nextAirport = { worldX: 1e9, name: this.path[1], spawned: false };
     this.startFlight();
@@ -260,9 +262,9 @@ export class GameScene extends Phaser.Scene {
   startFlight() {
     // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
     // Also if a new direction was chosen on the FLY screen since (the path is built with the scene).
-    const pathNow = this.school ? this.path : this.save.flyCrossing ? crossingPath(this.save.flyCrossing) : flightPath(this.save.tutorialDone ? this.save : schoolSave(this.save));   // (school: set by startSchool)
+    const pathNow = () => (this.school ? this.path : this.save.flyCrossing ? crossingPath(this.save.flyCrossing) : flightPath(this.save.tutorialDone ? this.save : schoolSave(this.save)));   // (school: set by startSchool; lazy: a tap before create() has no save)
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])
-      || pathNow[0] !== this.path[0] || pathNow[1] !== this.path[1]) { this.scene.restart({ go: true }); return; }
+      || (p => p[0] !== this.path[0] || p[1] !== this.path[1])(pathNow())) { this.scene.restart({ go: true }); return; }
     this.takeOff();   // the flight's rules (src/sim/rules.js): kit, random stream, onto the runway
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
     this.regionBanner(this.regionNow);   // which land you take off from, and its meter

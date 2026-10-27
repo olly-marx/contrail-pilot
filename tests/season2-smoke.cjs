@@ -7,6 +7,7 @@
 //   D  the offer card with the gate met through a seeded save (areaBest + planted trees): 4,549 km not offered, another
 //      area's flight does not count, 4,550 km + biodiversity 30 offered; a crossing flight starts (Stockholm 6,500 km on)
 //   E  every area open and the last era: the MORE TO COME card
+//   G  a tap before the scene exists (the 0.12.2 iPhone crash): startSchool/startFlight restart instead of throwing
 //   F  nothing to fly yet in an early era: the card says when the next crossing opens, not silence
 //   (C also: PILOT and BOARDS say they are resting in season 2, no name form; Pilot LAPS text does not say London)
 // Planted defects, each must FAIL the check named (revert with git checkout after):
@@ -16,6 +17,7 @@
 //   D  sed -i 's/maxEra: 2/maxEra: 9/' src/season.js ... (offer-gate.cjs covers it); crossing start: break crossingPath in src/crossings.js
 //   F  sed -i 's/if (best === null || c.era < best)/if (false)/' src/crossings.js  -> "F: nothing to fly yet"
 //   C  sed -i 's/const off = onlineOff();/const off = false;/' src/pilot.js -> "C: PILOT says"
+//   G  git show d1ca9d1:src/GameScene.js > src/GameScene.js (today's 0.12.2 code)  -> "G: startSchool before create()" (restore with git checkout HEAD -- src/GameScene.js)
 //   E  sed -i 's/export const moreToCome = save => /export const moreToCome = save => false \&\& /' src/crossings.js -> "E: ..."
 // Run: python3 -m http.server 8000 & node tests/season2-smoke.cjs
 const { chromium } = require('playwright-core');
@@ -137,6 +139,17 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const later = await p.evaluate(() => ({ later: (document.getElementById('jLater') || {}).innerText || '', cross: !!document.querySelector('#jCross [data-cross]'), more: !!document.getElementById('jMore') }));
   check(/NEXT CROSSING/.test(later.later) && /1970s/.test(later.later) && !later.cross && !later.more, `F: nothing to fly yet: the card says the next crossing opens in the 1970s: ${JSON.stringify(later)}`);
+  await p.context().close();
+
+  // G. the 0.12.2 live crash (iPhone: `undefined is not an object (evaluating 'save.areas')` in startSchool): a tap on TAKE OFF / the how-to
+  // card before the scene's create() has run finds no state and no save; the scene must just restart, not throw.
+  p = await fresh();
+  const early = await p.evaluate(() => { const proto = game.scene.getScene('game').constructor.prototype, out = {};
+    for (const m of ['startSchool', 'startFlight']) { let called = null, err = null; const fake = { state: undefined, save: undefined, scene: { restart: d => { called = d; } } };
+      try { proto[m].call(fake); } catch (e) { err = String(e); } out[m] = { called, err }; }
+    return out; });
+  check(early.startSchool.err === null && early.startSchool.called && early.startSchool.called.mode === 'school', `G: startSchool before create() restarts into school, no crash: ${JSON.stringify(early.startSchool)}`);
+  check(early.startFlight.err === null && early.startFlight.called && early.startFlight.called.go === true, `G: startFlight before create() restarts, no crash: ${JSON.stringify(early.startFlight)}`);
   await p.context().close();
 
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
