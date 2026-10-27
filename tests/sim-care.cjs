@@ -23,9 +23,11 @@ const GOLD = {
   const fly = (opts, seed) => { const w = createWorld(comet, seed); for (let i = 0; i < 3000 && w.state !== 'playing'; i++) w.step(1 / 60); w.explain = () => false; w.nextAirport.worldX = 1e12;
     const p = P.makePlayer({ ...opts, plan: 'classic', seed }); for (let i = 0; i < 200000 && w.state === 'playing'; i++) { if (p.wantsFlap(w)) w.applyFlap(); w.step(16.67 / 1000); } return Math.round(w.distancePx * 1000) / 1000; };
   const fails = [], got = { care0: [], care1: [], care5: [] };
-  for (const skill of [0.8, 1]) for (let seed = 1; seed <= 6; seed++) for (const [k, care] of [['care0', 0], ['care1', 1], ['care5', 0.5]]) got[k].push(fly({ skill, care }, seed));
-  for (const k of ['care0', 'care1']) if (JSON.stringify(got[k]) !== JSON.stringify(GOLD[k])) fails.push(`${k}: ${JSON.stringify(got[k])} != before-the-knob ${JSON.stringify(GOLD[k])}`);
+  // GATE form (tools/gate.sh sets GATE=1): a SUBSET of the same skies, compared with the SAME golden numbers by index (never new skies).
+  const SKIES = process.env.GATE ? (process.env.SKIES || '3').split(',').map(Number) : [1, 2, 3, 4, 5, 6], idx = [];
+  for (const [si, skill] of [0.8, 1].entries()) for (const seed of SKIES) { idx.push(si * 6 + seed - 1); for (const [k, care] of [['care0', 0], ['care1', 1], ['care5', 0.5]]) got[k].push(fly({ skill, care }, seed)); }
+  for (const k of ['care0', 'care1']) if (JSON.stringify(got[k]) !== JSON.stringify(idx.map(i => GOLD[k][i]))) fails.push(`${k}: ${JSON.stringify(got[k])} != before-the-knob ${JSON.stringify(idx.map(i => GOLD[k][i]))}`);
   if (got.care5.every((v, i) => v === got.care0[i] || v === got.care1[i])) fails.push(`c = 0.5 flies like c = 0 or c = 1 on every sky: the knob does nothing in between (${JSON.stringify(got.care5)})`);
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log(`PASS: care 0 and 1 fly exactly as the barrier-only and careful players did before the knob (12 skies each); care 0.5 flies differently`);
+  console.log(`PASS: care 0 and 1 fly exactly as the barrier-only and careful players did before the knob (${idx.length} skies each); care 0.5 flies differently`);
 })();

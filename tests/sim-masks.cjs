@@ -3,7 +3,7 @@
 // against (the plane, birds, storm clouds). Also checks the check: one flipped pixel must fail.
 // Run: python3 -m http.server 8000 & node tests/sim-masks.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

@@ -10,7 +10,7 @@
 // No page.route here (Playwright switches the HTTP cache OFF when one is set): Supabase is blocked in DNS instead.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/cache.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const http = require('http'), fs = require('fs'), os = require('os'), path = require('path'), crypto = require('crypto');
 const { ready } = require('./lib/ready.js');
 const root = path.join(__dirname, '..');

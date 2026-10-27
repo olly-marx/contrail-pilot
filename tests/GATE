@@ -1,0 +1,36 @@
+# Tests in the release GATE (tools/gate.sh): plain Node, no browser, run with GATE=1 (a test with a heavy sweep runs its small form).
+# DECLARED, not inferred. A test with a small form must still FAIL on every one of its planted defects in that form (proved, see research/TEST-SPEED.md).
+# tools/gate.sh --lint: every tests/*.cjs must be in GATE or BROWSER (not both) or, with no gate form, in DEEP alone; a GATE test must not mention a browser.
+areas
+fleet
+gapmarkers
+geo
+habitatdata
+hub
+landtrees
+lessonart
+missionclean
+missions2
+missions4
+nexthere
+offer-gate
+release
+season2-node
+sim-care
+sim-crossing
+sim-equiv
+sim-flight
+sim-forest
+sim-issr-variants
+sim-lanes
+sim-paired
+sim-physics
+sim-pilots
+sim-player
+sim-result-fields
+sim-trees
+textbudget
+treeart
+weboflife
+wildlifelist
+sim-crystals

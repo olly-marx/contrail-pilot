@@ -37,6 +37,7 @@ Risk to watch: a Node test that passes because the engine is too forgiving (it m
 - **2026-10-27 batch 2, test 1: `lanes` (CI 65 s, browser) -> `tests/sim-lanes.cjs` (0.6 s, Node, the sim engine).** Same two halves (icy air never fills a storm gap; flocks never sit in a gap as the plane passes) and the same pass marks. Plants (edit `src/sim/rules.js`; the header of the test lists the sed lines): the addIssr guard removed -> FAILS (196 of 200 direct tries, 349 steps in the long run); the addFlock guard removed -> FAILS ONLY after I added a direct bird check (the long run alone PASSED the planted defect: a flock almost never arrives in a gap by chance; the old browser test has the same blind spot, to be confirmed on the baseline turn). Old `lanes.cjs` is kept until the baseline turn runs it against both plants, then retired. Before/after: ~65 s -> 0.6 s.
 - **2026-10-27 batch 2, test 2: `flight` (CI 90 s, browser) -> `tests/sim-flight.cjs` (0.6 s, Node, 3 clean runs PASS).** Same six checks (land at the 2nd airport with takeoff/landing/night seen; night heat trapped, no sun; day sun blocked, no heat; overheat ends the run for the heat; no-tap ground crash; storm hit ends the flight). Plants, all FAIL in Node: landing disabled, overheat disabled, ground crash disabled, heatTrapped zeroed, sunBlocked zeroed, hitsStorm disabled (header lists the seds). The old `flight.cjs` is kept until the baseline turn runs it against the same six plants. Before/after: ~90 s -> 0.6 s.
 - **2026-10-27 batch 2, test 3: `forest` (CI 60 s, browser) -> `tests/sim-forest.cjs` (0.3 s, Node).** Same 11 checks, 50 ms frames. Five plants, all FAIL in Node (header lists the seds): forest cap removed, land cap removed, old-wood boost removed, kinds power zeroed, store power zeroed. Old `forest.cjs` kept until the baseline turn runs it against the same five. ~60 s -> 0.3 s.
+- **2026-10-27 GATE batch (Node half of the gate): `tools/gate.sh` = 32 declared Node tests in a 4-worker pool, GATE=1 small forms: 13.3 s wall clock (was ~64 s as a plain pool; the sim chat's studies were running, load 7-9).** Three tiers declared in `tests/GATE`, `tests/DEEP` (full sweeps, `gate.sh --deep`, thresholds untouched) and `tests/BROWSER`, with `gate.sh --lint` (proven by 4 planted list defects). Small forms (env `GATE=1`; no GATE = the unchanged full sweep): `sim-result-fields` 9 flights -> 4 (6@0.85 + the three s=0.8 scrape skies): 1.7 s, plants scrape/nofly/trees all FAIL; `sim-care` 12 skies -> seed 3 at both skills (same GOLD by index): 1.2 s, PLANT=care FAILS; `sim-player` 20/30 skies -> 5: PLANT=bob FAILS in 2 s, clean PASSES in 14 s; PLANT=classic did not fail even at the full size on the live storms (the sim chat pins STORMS startGap 150 / shrink 1 on its branch feat/progression-s2: re-derive after it lands). **Findings (gates that could not fail):** `sim-hazards` PLANT=old PASSED on main and at the commit that introduced it (the 22% figure was measured on the pre-0.12 storms; sim chat fixed it with a pin, 14107ca); `sim-player` PLANT=classic likewise. `sim-tapper` (52 s, 1.4 GB) has no gate form: the clean control is one state-space search that does not shrink, and a 36-frame window of the planted sky found no dead end (the control could not fail); DEEP only, until a different cheap control is found. `sim-hazards` stays DEEP until the pin lands.
 - **Correction to the plan:** batch 1 (DATA) is worth little in seconds (the CI table gives 2 s each) and several "DATA" tests are not: `textures.cjs` needs the real Phaser loader, and `links.cjs` mixes a data check (upgrade links, Node-able) with the About page (screen). Do the big LOGIC tests first (batch 2/3: flight 90, school 67, forest 60, missions 39, crystals 38, progression 33, hazards 32, ponds 29, rewards 28), then DATA.
 
 ## Per-test table (browser tests only; Node tests already run in ~0.1-25 s)
@@ -120,3 +121,57 @@ CI s = the 2026-10-22 CI seconds where known (stale). Sleeps = fixed `waitForTim
 | twilight | LOGIC | - | 0 | 0/0/0 |
 | welcome | SCREEN | - | 3 | 2/9/0 |
 | wildfield | SCREEN | - | 5 | 7/11/1 |
+
+## Classic triage, step 1: what the shipped game does with the 75 classic tests (measured 2026-10-27)
+
+Classic is RETIRED (user decision, 2026-10-27): `index.html` forces season 2 for everyone and the old classic save is never read, so no player can reach classic and there is no classic smoke to keep. 75 of the 78 browser tests `require('./lib/classic.js')` (1674 s of the 2014 s baseline). Method: `SHIPPED=1` makes `tests/lib/classic.js` run the SAME test against the shipped game (an `s2:` storage-key shim; a save with no `areas` gets `areas ['weurope'], homeArea, city LONDON` so the start choice does not cover TAKE OFF). Shim proven first: the same page reports `window.SEASON2 false` without it and `true` with the season-2 tag showing under it. `tools/shipped-probe.sh`, once per test, no retries, 150 s limit; probe 1 = all 75 (12 passed, 63 failed, 54 of them a 32 s TimeoutError = the start choice), probe 2 = the 63 with the start-area shim.
+
+**RESULT: 40 of 75 pass UNCHANGED in the shipped game; 35 still fail.** A pass means the rule survives in season 2 and the test is re-homed by making the shipped game its default (no classic.js). It does NOT yet mean its planted defect is re-proven in the new mode: that is still owed per test (a test can pass vacuously). Seconds are the 0.15.0 baseline.
+
+### Rule survives (pass in the shipped game as is), 40 tests, 865 s of baseline
+
+atc (9), badgeart (8), badges (3), cache (46), collisions (12), controls (40), crash (13), crystals (49), eras (12), everyleg (12), faces (6), fares (21), flight (79), forecast (8), forest (57), forestmeter (10), gaphint (24), hazards (38), issr-reveal (24), lanes (76), margin (8), nature-unknown (3), pickupgates (21), pixelpreview (14), ponds (32), powerups (8), projectart (7), reset (10), runway-back (8), savesafe (14), season2-smoke (58), sim-masks (6), sim-rng-split (8), stormart (4), textfit (10), textures (2), treelayout (6), twilight (3), updates (79), welcome (16)
+
+### Fail in the shipped game, 35 tests, 808 s of baseline: each needs a decision from its failure (DELETE if the rule is gone / PORT to the season-2 screens or to Node)
+
+| test | baseline s | first failure line in the shipped game |
+|---|---|---|
+| banners | 13 |   name: 'TimeoutError' |
+| biodiversity | 11 |   name: 'TimeoutError' |
+| features | 22 |   name: 'TimeoutError' |
+| fields | 8 |   name: 'TimeoutError' |
+| fleetfacts | 7 |   name: 'TimeoutError' |
+| flightregion | 11 | FAIL |
+| gate | 17 |   name: 'TimeoutError' |
+| globe | 20 | FAIL |
+| hangar | 25 |   name: 'TimeoutError' |
+| hangarnew | 9 |   name: 'TimeoutError' |
+| journey | 32 |   name: 'TimeoutError' |
+| landmarks | 5 | FAIL |
+| links | 4 |   name: 'TimeoutError' |
+| looks | 22 |   name: 'TimeoutError' |
+| missions | 50 | FAIL |
+| nature | 26 |   name: 'TimeoutError' |
+| newplayer | 23 |   fails: [ |
+| offline | 56 | FAIL |
+| online | 29 | page.evaluate: TypeError: Cannot read properties of null (reading 'length') |
+| onlinesave | 36 |   name: 'TimeoutError' |
+| progression | 38 |   name: 'TimeoutError' |
+| regions | 11 |   name: 'TimeoutError' |
+| restore | 16 | FAIL |
+| rewards | 28 | FAIL |
+| school | 74 |   name: 'TimeoutError' |
+| season2 | 44 |   fails: [ |
+| sim-bank | 7 | FAIL |
+| swipe | 29 | FAIL |
+| terrain | 22 |   fails: [ |
+| tours | 37 |   name: 'TimeoutError' |
+| treepic | 10 |   fails: [ |
+| upgrades | 12 |   name: 'TimeoutError' |
+| wild | 16 |   name: 'TimeoutError' |
+| wildfield | 16 |   name: 'TimeoutError' |
+| wildlife | 25 | FAIL |
+
+Reading the failing set by what the tests need (judgement, to be confirmed one by one): (a) ONLINE features that are dormant until M8 (online, onlinesave, restore, newplayer, tours' name step, offline): the rule exists in code but is not reachable in season 2 -> park in a DORMANT list, not delete; (b) the OLD-HUB SCREENS (hangar, hangarnew, nature, wild, wildfield, regions, fields, biodiversity, looks, upgrades, progression, rewards, school, missions, journey, fleetfacts, gate, links, features, banners, tours, treepic, terrain, wildlife, flightregion, globe, swipe): the season-2 hub replaced the buttons and flow they click, so each is PORT (new selectors) or, where the rule is only classic's (missions' index flow, journey's London-first choices, season2's preview switch), DELETE with the season-2 Node tests (missions2/4, areas) as the replacement; (c) `sim-bank` also fails in the shipped game; my GUESS (not checked) is that its Node side is not season 2, so the two sides disagree; it is a CONTRACT test, so check which side is wrong before touching either.
+
+**Classic code paths now dead for players** (note for later removal, not removed in this pass): `window.SEASON2_FORCE === false` branches, `?season2=off` and the preview switch in `src/season2.js`, the classic mission index flow (`save.mission`, `MISSION n/N`), the London-first `schoolSave`/`HOME` path in `src/route.js`, `?newplayer=1` (`src/newplayer.js`), and the old-save migrations (`trees` -> seeds, eras reset, welcome cards) which only an old classic save can reach.

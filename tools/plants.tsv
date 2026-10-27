@@ -1,0 +1,40 @@
+# Declared planted defects (test-speed, 2026-10-27). One per line, TAB separated:  test <TAB> file <TAB> sed expression <TAB> label
+# tools/prove-plants.sh applies each (the file must be unchanged in git), runs `node tests/<test>.cjs` (browser tests need URL + NODE_PATH),
+# requires a NON-ZERO exit, and restores the file with `git checkout`. A plant that does not change the file, or a test that still passes, is reported.
+# Rules for a plant: it leaves the code parseable; it breaks exactly the rule the test names; `if (false)` not `{}` as an arrow body.
+flight	src/sim/rules.js	s/if (rw) this.land(rw);/if (false) this.land(rw);/	landing disabled
+flight	src/sim/rules.js	s/if (this.heat >= CLIMATE.dangerLine) { this.finish/if (false) { this.finish/	overheat disabled
+flight	src/sim/rules.js	s/else this.finish({ reason: 'You hit the ground!' });/else {}/	ground crash disabled
+flight	src/sim/rules.js	s/this.heatTrapped += rate \* dt;/this.heatTrapped += 0;/	night heat zeroed
+flight	src/sim/rules.js	s/this.sunBlocked += -rate \* dt;/this.sunBlocked += 0;/	day sun zeroed
+flight	src/sim/rules.js	s/      if (this.hitsStorm(s)) {/      if (false) {/	storm hit disabled
+lanes	src/sim/rules.js	s/      if (!blocks) {/      if (true) {/	addIssr guard removed
+lanes	src/sim/rules.js	s/if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t;/y = t;/	flock guard removed
+forest	src/sim/rules.js	s/const cool = forestFull ? 0 : /const cool = /	forest cap removed
+forest	src/sim/rules.js	s/const land = landFull ? 0 : /const land = /	land cap removed
+forest	src/sim/rules.js	s/(stage === 2 ? 1 + oldWood : 1)/1/	old-wood boost removed
+forest	src/sim/physics.js	s/FOREST.power);/0);/	kinds power zeroed
+forest	src/sim/physics.js	s/FOREST.storePower)/0)/	store power zeroed
+crystals	src/sim/rules.js	s/this.earnCrystals(this.kit.dodgeCrystals, /this.earnCrystals(0 * this.kit.dodgeCrystals, /	no dodge crystal
+crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay \&\&/if (!i.fake \&\& i.inPath \&\& !i.entered \&\&/	day dodge counts
+crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& !i.entered \&\& !this.isDay/	no path needed
+crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& i.inPath \&\& !this.isDay/	night contrail counts
+crystals	src/sim/rules.js	s/this.save.crystals = (this.save.crystals || 0) + this.crystals;/this.save.crystals = (this.save.crystals || 0) + (landed ? this.crystals : 0);/	crystals lost on crash
+sim-flight	src/sim/rules.js	s/if (rw) this.land(rw);/if (false) this.land(rw);/	landing disabled
+sim-flight	src/sim/rules.js	s/if (this.heat >= CLIMATE.dangerLine) { this.finish/if (false) { this.finish/	overheat disabled
+sim-flight	src/sim/rules.js	s/else this.finish({ reason: 'You hit the ground!' });/else {}/	ground crash disabled
+sim-flight	src/sim/rules.js	s/this.heatTrapped += rate \* dt;/this.heatTrapped += 0;/	night heat zeroed
+sim-flight	src/sim/rules.js	s/this.sunBlocked += -rate \* dt;/this.sunBlocked += 0;/	day sun zeroed
+sim-flight	src/sim/rules.js	s/      if (this.hitsStorm(s)) {/      if (false) {/	storm hit disabled
+sim-lanes	src/sim/rules.js	s/      if (!blocks) {/      if (true) {/	addIssr guard removed
+sim-lanes	src/sim/rules.js	s/if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t;/y = t;/	flock guard removed
+sim-forest	src/sim/rules.js	s/const cool = forestFull ? 0 : /const cool = /	forest cap removed
+sim-forest	src/sim/rules.js	s/const land = landFull ? 0 : /const land = /	land cap removed
+sim-forest	src/sim/rules.js	s/(stage === 2 ? 1 + oldWood : 1)/1/	old-wood boost removed
+sim-forest	src/sim/physics.js	s/FOREST.power);/0);/	kinds power zeroed
+sim-forest	src/sim/physics.js	s/FOREST.storePower)/0)/	store power zeroed
+sim-crystals	src/sim/rules.js	s/this.earnCrystals(this.kit.dodgeCrystals, /this.earnCrystals(0 * this.kit.dodgeCrystals, /	no dodge crystal
+sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay \&\&/if (!i.fake \&\& i.inPath \&\& !i.entered \&\&/	day dodge counts
+sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& !i.entered \&\& !this.isDay/	no path needed
+sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& i.inPath \&\& !this.isDay/	night contrail counts
+sim-crystals	src/sim/rules.js	s/this.save.crystals = (this.save.crystals || 0) + this.crystals;/this.save.crystals = (this.save.crystals || 0) + (landed ? this.crystals : 0);/	crystals lost on crash

@@ -3,7 +3,7 @@
 // "get LOW to land" call comes at 450 m instead of 300 m (level 4+). No ATC = today's game.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/atc.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

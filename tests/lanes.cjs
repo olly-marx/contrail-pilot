@@ -3,7 +3,7 @@
 // stretch with birds and icy air turned up to always spawn, checking every frame.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/lanes.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const { ready, started } = require('./lib/ready.js');
 const { throttle } = require('./lib/throttle.js');
 const URL = process.env.URL || 'http://localhost:8000/';

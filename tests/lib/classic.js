@@ -4,6 +4,7 @@
 // run (then the ?season2=1 / ?season2=off switch of src/season2.js works as before). A test that wants the shipped
 // default adds its own init script after (`window.SEASON2_FORCE = undefined`); tests/season2.cjs does.
 const { chromium } = require('playwright-core');
+if (process.env.SHIPPED) require('./shipped.js');   // SHIPPED=1: run a classic test against the shipped game (tools/shipped-probe.sh); see shipped.js
 if (!chromium.__classic) {
   const launch = chromium.launch.bind(chromium);
   const declare = ctx => ctx.addInitScript(() => { window.SEASON2_FORCE = false; }).then(() => ctx);

@@ -3,7 +3,7 @@
 // Probed with the real scene's icy-air test at points 0.5, 0.9 and 1.1 of a blob's radius.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/margin.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

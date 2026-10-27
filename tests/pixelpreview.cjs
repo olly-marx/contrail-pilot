@@ -3,7 +3,7 @@
 // out (remembered); ?pixelart=on opts back in and also shows a small load-time / fps readout.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/pixelpreview.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';

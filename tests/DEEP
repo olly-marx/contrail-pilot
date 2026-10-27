@@ -1,0 +1,7 @@
+# Full sweeps (tools/gate.sh --deep): run WITHOUT GATE, so a test with a small gate form runs its full original form (the thresholds were set on it).
+# For nightly runs or before a balance change. A test here and not in GATE has no usable small form (reason beside it).
+sim-tapper      # no GATE form: one state-space search (~20-50 s, 1.4 GB) that does not shrink; a short-window control cannot fail on the planted sky
+sim-hazards     # GATE form waits for the sim chat's 14107ca (its plant did not fail on the live storms)
+sim-player
+sim-result-fields
+sim-care
