@@ -43,10 +43,14 @@ should part of it carry over (e.g. the biodiversity condition counts your best a
 |---|---|---|---|
 | none | items 74-80, crossing 2 in 3 of 4 | items 98-101, bank 17,200, empty 123-127 | items 99-103, bank 17,300, empty 124-127 |
 | Exchange desk, reserve 1,500, 20 seeds : 1 crystal | items 75-78, **crossing 2 in 0 of 4** (its seeds went to crystals, not projects: bio and missions lag) | **items 210-219**, bank ~1,500, empty 71-78 | **items 209-214**, bank ~1,500, empty 73-78 |
+| **Exchange desk, reserve 4,000, 20 : 1** (+ pursue) | identical to none (never banks 4,000): crossing 2 in 3 of 4 kept | **items 190-202**, bank steady ~4,000, empty 71-82 | **items 195-206**, bank ~4,000, empty 73-77 |
 
 Reading: an exchange fixes the experts' flood (twice the items, a third fewer empty flights) but with a 1,500 reserve it
 hurts the typical player's crossing 2. Typical players bank 800-1,900, so a reserve above that (~4,000) should leave them
-untouched. **Next run: reserve 4,000.**
+untouched: **measured, it does** (the 4,000 row). **Recommendation: an exchange desk with a 4,000-seed reserve at 20 seeds per
+crystal** turns the experts' flood into progress and leaves typical and beginner players exactly as they are. Also seen: a
+typical (s 0.8) player can starve after crossing 1 (one run: 92 flights with nothing bought, bank down to 131 seeds); the
+exchange does not help there (seeds, not crystals, are short). That is a seed-income question for the 2nd area (open).
 
 ## 3. Still to do (needs machine time)
 
