@@ -627,3 +627,4 @@ h2.sub { margin-top: -4px; }
 .freerow:first-of-type { border-top: 0; }
 .coach.tappable { pointer-events: auto; cursor: pointer; }   /* an in-flight tip bubble can be tapped away (after 2 s) */
 .next-pic { display: block; width: 100%; max-width: 240px; margin: 4px auto 0; image-rendering: pixelated; }
+.mrow.daily { background: #e6f4ff; }
