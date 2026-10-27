@@ -142,7 +142,7 @@ export const S2_CITIES = [
   { name: 'ROVANIEMI', lat: 66.56, lon: 25.83, region: 'boreal' },
   { name: 'NUUK', lat: 64.19, lon: -51.68, region: 'tundra' },   // geo.js: ice
 ];
-export const SEASON2_ON = typeof window !== 'undefined' && window.SEASON2 === true;
+export const SEASON2_ON = globalThis.SEASON2 === true;   // (globalThis = window in the browser; the Node sim can set it too)
 export const CITIES = SEASON2_ON ? [...BASE_CITIES, ...S2_CITIES] : BASE_CITIES;
 // Season 2 only: the Silk Road (3,028 km, over the 2,600 km link limit; research/STORY-ANY-START.md).
 export const S2_BRIDGES = [['TASHKENT', 'ULAANBAATAR']];
