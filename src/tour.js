@@ -6,6 +6,9 @@
 // Saves with seenTips ['*'] or tours ['*'] (automated tests) never see a tour. save.tours: tours done;
 // save.shownLines: upgrade lines already pointed out.
 import { tip } from './tips.js';
+import { FEATURES } from './config.js';
+// Tab-bar targets and what replaces them on the season 2 hub (the tiles; HOME goes back to the hub).
+const HUB_TARGETS = { '#tabHangar': '#hubTiles [data-go="hangar"]', '#tabNature': '#hubTiles [data-go="nature"]', '#tabFly': '#hubBack' };
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf } from './upgrades.js';
 import { getPilot } from './online.js';
@@ -40,6 +43,7 @@ export class Tour {
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($(where === 'title' ? 'title' : 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
+    if (FEATURES.season2 && !this.done('name')) this.markDone('name');   // season 2 plays offline: no pilot name yet
     if (where === 'title' && !this.done('name') && !getPilot()) return this.run('name', this.nameSteps());
     if (where === 'results' && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     if (where === 'title' && (this.done('name') || getPilot())) {
@@ -122,7 +126,8 @@ export class Tour {
     await new Promise(resolve => {
       const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; resolve(); };
       // A tap on the target (with `area`, on ANY element matching `target` inside the hole). Let the button do its job first.
-      const onTap = e => { if (e.target.closest && e.target.closest(st.target)) setTimeout(finish, 0); };
+      const want = FEATURES.season2 ? HUB_TARGETS[st.target] || st.target : st.target;
+      const onTap = e => { if (e.target.closest && e.target.closest(want)) setTimeout(finish, 0); };
       if (st.tap) document.addEventListener('click', onTap, true);
       if (st.ok) ok.onclick = finish;
       const poll = setInterval(() => { this.place(); if (st.until && st.until()) finish(); }, 150);
@@ -132,6 +137,7 @@ export class Tour {
   }
 
   find(sel) {
+    if (FEATURES.season2) sel = HUB_TARGETS[sel] || sel;   // season 2 has no tab bar: the hub's tiles and HOME button (S2)
     const all = [...document.querySelectorAll(sel)].filter(e => e.offsetParent !== null);
     return all[0] || null;
   }

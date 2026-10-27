@@ -578,3 +578,32 @@ h2.sub { margin-top: -4px; }
 .w-next .label { margin: 0 0 2px; opacity: .8; }
 .w-nbar { display: inline-block; width: 40px; height: 5px; background: rgba(255,255,255,.15); vertical-align: middle; }
 .w-nbar i { display: block; height: 100%; background: #8fd18f; }
+/* ---- Season 2 hub (S2, src/hub.js): NEXT, a BIG world, TAKE OFF at thumb height, tiles. The tab bar goes. ---- */
+#title .hubonly { display: none; }
+#title.hub .panel { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+#title.hub .hubonly { display: block; }
+#title.hub h1, #title.hub .lead, #title.hub .panel > .stats, #title.hub #tEra, #title.hub #tJourney, #title.hub #tMeter,
+#title.hub #tMission, #title.hub .credit { display: none; }
+#title.hub .buttons { display: none; order: 1; }
+#title.hub.menu .buttons { display: flex; }
+#title.hub #hubTop { display: flex; justify-content: space-between; align-items: center; order: 0; }
+#title.hub #hubNext { order: 2; }
+#title.hub #hubWorld { order: 3; }
+#title.hub #goBtn { order: 4; }
+#title.hub #tChallenges { order: 5; }
+#title.hub #hubTiles { display: grid; order: 6; }
+.hub-next { background: #fff7d6; border: 2px solid #1a1a2e; padding: 6px 8px; font-size: 9px; text-align: left; }
+.hub-next .label { font-size: 7px; opacity: .7; margin: 0 0 2px; }
+.hub-next.crossing { background: #d6f5ff; }
+.hub-world { position: relative; text-align: center; }
+.hub-globe { width: min(84vw, 44vh); height: min(84vw, 44vh); image-rendering: pixelated; display: block; margin: 0 auto; }
+.hub-spin { position: absolute; top: 42%; background: rgba(26,26,46,.55); color: #fff; border: 0; font-size: 14px; padding: 8px 6px; cursor: pointer; }
+#hubSpinL { left: 0; } #hubSpinR { right: 0; }
+.hub-route { margin: 2px 0 0; font-size: 8px; }
+.hub-route small { display: block; opacity: .7; }
+.hub-tiles { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.hub-tile { position: relative; padding: 10px 2px; font-size: 8px; }
+.hub-tile .badge { position: absolute; top: -6px; right: -4px; background: #e8433a; color: #fff; font-size: 6px; padding: 2px 3px; border-radius: 6px; }
+.hub-back { position: fixed; left: 6px; top: 6px; z-index: 30; font-size: 8px; }
+#title.hub.world #tJourney { display: block; order: 4; }   /* tap the route: the way choice and the crossings */
+#title.hub #jGlobe { display: none; }   /* the big globe is the hub's own */

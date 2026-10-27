@@ -163,7 +163,7 @@ function getIslands() { return islands || (islands = ISLANDS); }
 // Make the globe live: drag to turn it (the surface follows the finger, then coasts a little), tap one of the first-step
 // airports (`ways`: city objects) to choose that way. A touch that moved less than TAP_PX and ended within TAP_MS is a TAP,
 // never a drag; anything that moved further is a drag and never picks. The picture is redrawn only when it changes: at one
-// sample a pixel while it moves, five once it settles. Returns { frame(), destroy() }.
+// sample a pixel while it moves, five once it settles. Returns { frame(), nudge(dx), destroy() }.
 export const TAP_PX = 6, TAP_MS = 400;
 export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null } = {}) {
   let f = frameRoute(path.length ? path : [CITIES[0]]);
@@ -210,7 +210,8 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null
   canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onCancel);
   paint(canvas, f, path, 2, ways, lit);
-  return { frame: () => f, destroy() { alive = false; if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
+  // nudge(dx): turn by dx canvas pixels, as a drag would (the hub's spin buttons, S2 of PROPOSAL-HOME-MISSIONS.md).
+  return { frame: () => f, nudge(dx) { coast = null; f = turn(f, dx, 0, R()); redraw(2); }, destroy() { alive = false; if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
 }
 
 // The old entry point (src/ui.js): draw the globe for `path`, framed on the route; pass { ways, onPick } to make it live.

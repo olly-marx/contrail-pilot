@@ -14,6 +14,7 @@
   <div id="toast" class="toast" hidden></div>
 
   <!-- Title: as little as possible; flight school teaches the rest -->
+  <button id="hubBack" class="btn hub-back" type="button" hidden>&#9664; HOME</button>
   <section id="title" class="overlay clear screen" hidden>
     <div class="panel slim">
       <h1>CONTRAIL<br>PILOT</h1>
@@ -22,9 +23,14 @@
       <div id="tEra" class="era"></div>
       <div id="tJourney" class="journey"></div>
       <div id="tMeter"></div>
+      <!-- Season 2 hub (S2, research/PROPOSAL-HOME-MISSIONS.md): NEXT, the world, TAKE OFF, tiles. src/hub.js decides what shows. -->
+      <div id="hubTop" class="hubonly"><span class="stats"><span><i class="seedicon"></i> <b id="hubSeeds">0</b></span><span><i class="crysicon"></i> <b id="hubCrystals">0</b></span></span><button id="hubGear" class="btn tiny" type="button" aria-label="Settings">&#9881;</button></div>
+      <div id="hubNext" class="hubonly hub-next"></div>
+      <div id="hubWorld" class="hubonly hub-world"><button id="hubSpinL" class="hub-spin" type="button" aria-label="Spin left">&#9664;</button><canvas id="hubGlobe" class="hub-globe" width="128" height="128"></canvas><button id="hubSpinR" class="hub-spin" type="button" aria-label="Spin right">&#9654;</button><p id="hubRoute" class="hub-route"></p></div>
       <div id="tMission" class="mission-card" hidden></div>
       <div id="tChallenges" class="challenges" hidden></div>
       <button id="goBtn" class="btn go big" type="button">TAKE OFF</button>
+      <div id="hubTiles" class="hubonly hub-tiles"></div>
       <div class="buttons">
         <button id="howBtn" class="btn tiny" type="button">how to play</button>
         <button id="schoolBtn" class="btn tiny" type="button">flight school</button>

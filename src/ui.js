@@ -24,6 +24,7 @@ const crossingsHTML = s => {
 const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS).filter(k => !open.includes(k));
   return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
+import { hubView } from './hub.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
@@ -101,6 +102,7 @@ export class UI {
     // Feature switches: hide whole sections whose feature is off (see FEATURES in config.js).
     document.querySelectorAll('[data-feature]').forEach(el => { if (!FEATURES[el.dataset.feature]) el.hidden = true; });
     if (FEATURES.citizenZoo) this.setupRealTree();
+    if (FEATURES.season2) this.setupHub();
     window.addEventListener('keydown', e => {
       if ((e.key === 'Enter' || e.key === ' ') && !$('title').hidden) { e.preventDefault(); this.start(); }
     });
@@ -191,6 +193,35 @@ export class UI {
     $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => pick(b.dataset.way));
   }
 
+  // ---------- the season 2 hub (S2 of research/PROPOSAL-HOME-MISSIONS.md; what shows: src/hub.js) ----------
+  setupHub() {
+    $('title').classList.add('hub');
+    $('hubGear').onclick = () => { sfx.flap(); $('title').classList.toggle('menu'); };
+    $('hubBack').onclick = () => { sfx.flap(); this.go('fly'); };
+    $('hubSpinL').onclick = () => this.hubGlobe && this.hubGlobe.nudge(-24);
+    $('hubSpinR').onclick = () => this.hubGlobe && this.hubGlobe.nudge(24);
+    $('hubRoute').onclick = () => { sfx.flap(); $('title').classList.toggle('world'); };   // the route choice and crossings, on demand
+  }
+  renderHub() {
+    const s = this.save;
+    const ready = s.tutorialDone ? crossingsNow(s).find(c => offerCheck(c, offerCtx(s, c)).offered || S2_UNLOCK) : null;
+    const v = hubView(s, { badges: { hangar: this.hasNew() ? (s.freeUpgrade ? 'FREE' : 'NEW') : '' }, crossingReady: ready ? `${ready.from} to ${ready.to}` : null });
+    $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
+    $('hubNext').hidden = !v.next || !s.tutorialDone;
+    $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
+    $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>` : '';
+    $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : null;
+    $('hubRoute').innerHTML = `${v.route[0] || ''} &#9654; ${v.route[1] || ''}`;
+    $('hubTiles').innerHTML = v.tiles.filter(t => t.id !== 'missions')   // (the MISSIONS tile comes with S3's mission list)
+      .map(t => `<button class="btn hub-tile" type="button" data-go="${t.id}">${t.label}${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</button>`).join('');
+    $('hubTiles').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
+    // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
+    const path = flightPath(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
+    const pick = name => { sfx.flap(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
+    this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, lit: linksFor(s) });
+    this.hubWords = v.words;
+  }
+
   // ---------- navigation ----------
   // One screen at a time, chosen from the bar along the bottom. Pop-ups (how to play, about,
   // info, points) close on any move. `this.pilot` (PilotScreens) renders PILOT and BOARDS.
@@ -205,7 +236,9 @@ export class UI {
   showOnly(id) {
     for (const s of ['title', 'results', 'hangar', 'nature', 'pilot', 'boards']) $(s).hidden = s !== id;
     for (const s of ['how', 'about', 'info', 'scoreInfo', 'wInfo']) $(s).hidden = true;
-    $('tabbar').hidden = !id;   // no bar while flying
+    $('tabbar').hidden = !id || FEATURES.season2;   // no bar while flying; season 2: the hub's tiles instead (S2)
+    $('hubBack').hidden = !FEATURES.season2 || !['hangar', 'nature', 'pilot', 'boards'].includes(id);
+    if (id !== 'title') $('title').classList.remove('menu', 'world');
     const on = { title: 'fly', results: 'fly', hangar: 'hangar', nature: 'nature', pilot: 'pilot', boards: 'boards' }[id];
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === on));
     $('tNew').hidden = !this.hasNew();
@@ -226,6 +259,7 @@ export class UI {
     this.renderPrizes();
     $('tEra').innerHTML = this.save.tutorialDone ? eraBarHTML(this.save) : '';   // era progress (src/eras.js)
     this.renderJourney();
+    if (FEATURES.season2) this.renderHub();
     this.showOnly('title');
     if (this.showRepriced()) return;
     if (this.showResetWelcome()) return;
