@@ -48,7 +48,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(!/free upgrade/.test(after2.next) && !after2.locked && /TAKE OFF/.test(after2.text), `after picking the free part: NEXT is the lesson, TAKE OFF is unlocked: ${JSON.stringify(after2)}`);
   await p.close();
   // 3-4. The MISSIONS screen, and an off-flight mission.
-  p = await open({ ...s2, freeUpgrade: false, found: { rabbit: 1, fox: 1 }, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:dodge', 'weurope:skip2', 'weurope:rich', 'weurope:shade', 'weurope:plant', 'weurope:bring'] });
+  p = await open({ ...s2, freeUpgrade: false, found: { rabbit: 1, fox: 1 }, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:shade', 'weurope:plant-tree', 'weurope:bring', 'weurope:chain', 'weurope:dodge', 'weurope:rescue'] });
   await p.click('#hubTiles [data-go="missions"]'); await p.waitForTimeout(400);
   const ms = await p.evaluate(() => ({ shown: !document.getElementById('missions').hidden, rows: document.querySelectorAll('#mList .mrow').length, stars: document.querySelectorAll('#mList .mrow.star').length, back: !document.getElementById('hubBack').hidden }));
   check(ms.shown && ms.rows >= 3 && ms.stars === 3 && ms.back, `the MISSIONS screen lists the open missions, 3 starred, with HOME: ${JSON.stringify(ms)}`);
