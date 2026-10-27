@@ -38,3 +38,14 @@ sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !
 sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& !i.entered \&\& !this.isDay/	no path needed
 sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& i.inPath \&\& !this.isDay/	night contrail counts
 sim-crystals	src/sim/rules.js	s/this.save.crystals = (this.save.crystals || 0) + this.crystals;/this.save.crystals = (this.save.crystals || 0) + (landed ? this.crystals : 0);/	crystals lost on crash
+records	src/records.js	s/      c.crashes += 1;/      c.crashes += 0;/	MOST CRASHES not counted
+records	src/records.js	s/if (f.crash === 'bird') c.bird += 1;/if (f.crash) c.bird += 1;/	every crash counts as a bird strike
+records	src/records.js	s/if (c.shortest === null || f.distance < c.shortest)/if (c.shortest === null || f.distance > c.shortest)/	SHORTEST FLIGHT wrong way round
+records	src/records.js	s/Math.max(0, (f.shade || 0) - (f.heatTrapped || 0))/(f.shade || 0) - (f.heatTrapped || 0)/	a bad flight scores negative
+records	src/records.js	s/const net = f.landed ? /const net = true ? /	crashes count for COOL SKIES
+records	src/records.js	s/back = (d.getUTCDay() + 6) % 7;/back = d.getUTCDay();/	week starts on Sunday
+records	src/records.js	s/  if (r.week.start === start) return false;//	the week is re-rolled every call
+records	src/records.js	s/Math.max(0, done - r.week.missionsBase)/done/	MISSIONS this week = ever
+records	src/records.js	s/tags.filter(t => !r.week.kindsBase.includes(t)).length/tags.length/	KINDS this week = ever
+records	src/sim/rules.js	s/    if (!this.school) recordFlight(/    recordFlight(/	flight school counts
+records	src/records.js	s/      if (f.distance > c.longest) { if (c.longest > 0) beaten.push/      if (f.distance > c.longest) { if (true) beaten.push/	the first landing is a NEW RECORD

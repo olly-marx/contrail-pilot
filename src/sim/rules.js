@@ -18,6 +18,7 @@ import { loadout, FUELS } from '../upgrades.js';
 // Planted defects for tests/sim-result-fields.cjs (each must FAIL it): scrape = every gap counts as clean; nofly = a
 // no-fly zone counts when the nose reaches it (a crash in it counts too); trees = treeIds left empty.
 export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false };
+import { recordFlight } from '../records.js';
 import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
 import * as P from './physics.js';
@@ -736,6 +737,8 @@ export const RULES = {
     if (landed && heat < 0 && !this.school) this.save.coolLandings = (this.save.coolLandings || 0) + 1;   // Cool Planet badge
     const crash = landed ? null : crashKind(reason);
     if (crash && !this.school) { this.save.crashes = this.save.crashes || {}; this.save.crashes[crash] = (this.save.crashes[crash] || 0) + 1; }
+    // MY RECORDS (src/records.js): the 8 boards' running numbers, kept in the save; flight school does not count.
+    if (!this.school) recordFlight(this.save, { landed, distance: m, crash, shade: this.sunBlocked, heatTrapped: this.heatTrapped });
     // Mission: done or not, and move on to the next one.
     // The journey: landing moves you to that city; reaching LONDON again (or passing it) is a lap.
     // Times round the Earth (flownKm / EARTH_KM, the real size of the Earth): `lap` = one more this flight.
