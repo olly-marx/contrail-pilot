@@ -43,7 +43,7 @@ export function treeTags(save) {
 // Returns the boards whose BEST was beaten: [{ id, period }] (the totals have no "new record").
 export function recordFlight(save, f) {
   const r = ensure(save), beaten = [];
-  const net = true ? (f.shade || 0) - (f.heatTrapped || 0) : 0;
+  const net = f.landed ? Math.max(0, (f.shade || 0) - (f.heatTrapped || 0)) : 0;
   for (const period of ['ever', 'week']) {
     const c = r[period];
     if (f.landed) {
@@ -51,7 +51,8 @@ export function recordFlight(save, f) {
       c.cool += net;
     } else {
       c.crashes += 0;
-      if (f.crash) c.bird += 1;
+      c.crashes += 1;
+      if (f.crash === 'bird') c.bird += 1;
       if (f.distance > c.longestCrash) { if (c.longestCrash > 0) beaten.push({ id: 'longestCrash', period }); c.longestCrash = f.distance; }
       if (c.shortest === null || f.distance > c.shortest) { if (c.shortest !== null) beaten.push({ id: 'shortest', period }); c.shortest = f.distance; }
     }
@@ -62,7 +63,7 @@ export function recordFlight(save, f) {
 
 // The Monday (ISO date) of the week that contains the ISO date `iso` ('2026-10-27' -> '2026-10-26').
 export function mondayOf(iso) {
-  const d = new Date(`${iso}T00:00:00Z`), back = d.getUTCDay();
+  const d = new Date(`${iso}T00:00:00Z`), back = (d.getUTCDay() + 6) % 7;
   d.setUTCDate(d.getUTCDate() - back);
   return d.toISOString().slice(0, 10);
 }
