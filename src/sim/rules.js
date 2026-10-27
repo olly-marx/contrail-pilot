@@ -282,7 +282,7 @@ export const RULES = {
       // places one wide mid-sky patch at fixed geometry (no rand() for placement), met in daylight (~5-11 s after take-off).
       // makeIssr's cloud shape draws from the physics stream, so this one flight's later spawns shift (L2-pending flights only).
       if (this.l2Patch == null) this.l2Patch = !this.school && isSeason2(this.save) && (s2LessonsLeft(this.save)[0] || {}).id === 'L2';
-      if (this.l2Patch) { this.l2Patch = false; const h = 100; this.addIssrAt(WIDTH + 10, SKY_H / 2 - h / 2, Math.max(450, 3.5 * this.speed + PLANE.w), h); }
+      if (this.l2Patch) { this.l2Patch = false; const h = 100; this.addIssrAt(WIDTH + 10, SKY_H / 2 - h / 2, Math.max(450, 3.5 * this.speed + PLANE.w), h).entered = true; }   // shown from the start: the lesson's patch must be seen
       // Forecasting (eras): good forecasts route you round a few night patches (nightPatches < 1).
       const routed = !this.isDay && this.rand() > this.kit.nightPatches;
       if (!routed && this.rand() < Math.min(1, ISSR.spawnChance * this.lateRamp())) this.addIssr();   // more icy air on long flights
