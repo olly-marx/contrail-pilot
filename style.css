@@ -630,3 +630,10 @@ h2.sub { margin-top: -4px; }
 .mrow.daily { background: #e6f4ff; }
 .freeup.tappable { cursor: pointer; text-decoration: underline; }
 .btn.claim.pulse { animation: hubpulse 0.9s ease-in-out infinite; }
+/* MY RECORDS (src/recordsui.js): the boards screen in season 2 */
+#boards.records .board-pick { grid-template-columns: repeat(2, 1fr); }
+#boards.records .board-pick .btn:first-child { grid-column: auto; }
+.board-pick .btn.rec { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px; position: relative; }
+.board-pick .btn.rec b { font-size: 7px; }
+.board-pick .btn.rec .val { font-size: 10px; }
+.board-pick .btn.rec .new { position: absolute; top: -5px; right: -2px; font-style: normal; font-size: 6px; background: #ffe15a; color: #333; padding: 1px 3px; border-radius: 3px; }
