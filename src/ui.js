@@ -403,6 +403,8 @@ export class UI {
     for (const id of ['barCo2', 'barNight', 'barSun', 'barTrees']) $(id).style.width = '0';
     for (const id of ['rCo2', 'rNight', 'rSun', 'rTreesCool']) $(id).textContent = '';
     $('rFree').hidden = !this.save.freeUpgrade;
+    $('rFree').onclick = lead === 'hangar' ? () => { sfx.flap(); this.go('hangar'); } : null;   // the banner leads there too
+    $('rFree').classList.toggle('tappable', lead === 'hangar');
     $('rSkip').hidden = false;
     $('tabHangar').classList.toggle('glow', this.hasNew());   // something to spend: the bar's HANGAR glows
     const rw = (r.rewards || []).filter(u => (this.save.unclaimed || []).some(x => x.key === u.key));
@@ -421,6 +423,7 @@ export class UI {
     $('rBadges').hidden = !nb.length;
     $('rBadges').innerHTML = nb.map(u => `<span class="new-badge"><img src="${medal(u.id, u.tier)}" alt="">NEW BADGE: <b>${u.label}</b></span>`).join('');
     $('rFact').textContent = FACTS[Math.floor(Math.random() * FACTS.length)];
+    $('rFact').hidden = !!lead;   // one idea per screen: no random fact when the card leads somewhere (the user, 2026-10-27)
     this.showOnly('results');
 
     const [title, missionStep, dist, record, tally, earth, ...rest] = steps;

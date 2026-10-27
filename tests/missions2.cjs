@@ -53,6 +53,10 @@
   check(!L.OPENS[4].ok({ ...s, missionsDone: s.missionsDone.filter(k => k !== 'weurope:kinds3') }, 'woodland'), 'and not without it');
   // 9. Prizes.
   check(s.unclaimed.filter(u => u.key.startsWith('mission:weurope')).every(u => u.crystals === 0 && u.seeds > 0), 'area prizes are seeds only');
+  // 10b. A free part waiting reveals the hangar by ITSELF (the user's live bug, 2026-10-27): the school landing grants it,
+  // but no lesson is done yet (school flights don't count), and a crash on flight 1 leaves L1 undone too.
+  const afterSchool = { ...base(), missionsDone: [], freeUpgrade: true, freeGiven: true };
+  check(M.revealed(afterSchool, 'hangar') && H.hubView(afterSchool).next.hangar, `after the school landing (no lesson done) the hangar is revealed and NEXT leads there: ${JSON.stringify(H.hubView(afterSchool).next)}`);
   // 10. A free upgrade leads into the hangar.
   const f = { ...base(), missionsDone: ['L1'], freeUpgrade: true };
   check(H.hubView(f).next.hangar && H.hubView(f).next.title === H.FREE_NEXT, `free upgrade: NEXT = "${H.FREE_NEXT}" (${JSON.stringify(H.hubView(f).next)})`);
