@@ -1,7 +1,7 @@
 // ISSR visibility check: hidden until within revealPx, clearly visible once inside.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/issr-reveal.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const { ready, started } = require('./lib/ready.js');
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });

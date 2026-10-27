@@ -3,7 +3,7 @@
 // is 288 game-px wide and scaled to fit, so fitting 288 means fitting any phone). Longest names are used on purpose.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/textfit.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 

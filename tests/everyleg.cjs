@@ -4,7 +4,7 @@
 // must keep going, with no page errors, and the region below must be the one the strip says.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/everyleg.cjs
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';

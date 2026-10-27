@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright-core');
-require('./lib/classic.js');
+require('./lib/shipped.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 
 const root = path.join(__dirname, '..');
