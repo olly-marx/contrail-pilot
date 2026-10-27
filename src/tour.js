@@ -67,6 +67,7 @@ export class Tour {
     // R5: in the hangar, only the cleaner engines' FREE! (one target); R6's payoff comes from hangar.js after the buy.
     if (where === 'hangar' && s.freeUpgrade && !this.done('r-free')) return ['r-free', [{ target: '#hFleet .freepick .btn.free', text: tip('rail-free'), tap: true }]];
     // R7: the hub, only TAKE OFF.
+    if (hub && s.freeUpgrade) return ['r-hangar', [{ target: '#hubTiles [data-go="hangar"]', text: tip('rail-hangar'), tap: true }]];   // (every time: a reload with the part still waiting)
     if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];
     // R9: after flight 1: the seeds are yours; claim the mission's prize; another flight, watch for wildlife.
     if (res && d('L1') && !this.done('r-res1')) return ['r-res1', [

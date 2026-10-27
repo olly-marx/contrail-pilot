@@ -43,7 +43,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const free = await p.$('#hFleet .freepick .btn.free');
   check(!!free, 'the hangar shows FREE! buttons');
   if (free) { await free.click(); await p.waitForTimeout(400); }
-  await p.click('#tabFly'); await p.waitForTimeout(400);
+  if (await p.isVisible('#payOk')) { check(await p.evaluate(() => !!document.querySelector('#payoff img')), 'the free part shows its payoff (the plane with it)'); await p.click('#payOk'); } else await p.click('#tabFly');   // (season 2: the payoff's OK goes home)
+  await p.waitForTimeout(400);
   const after2 = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, locked: document.getElementById('goBtn').disabled, text: document.getElementById('goBtn').textContent }));
   check(!/free upgrade/.test(after2.next) && !after2.locked && /TAKE OFF/.test(after2.text), `after picking the free part: NEXT is the lesson, TAKE OFF is unlocked: ${JSON.stringify(after2)}`);
   await p.close();
@@ -104,7 +105,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   p = await open({ ...s2, seenTips: ['x-bars'], tours: [], shownLines: [], flights: 1 });   // a real new player: shownLines set on first load (else tour.js counts an old save's hangar tour as done)
   await p.waitForTimeout(1200);
   const tour = await p.evaluate(() => { const t = document.getElementById('tour'); return t && !t.hidden ? t.querySelector('.tbubble p').textContent : ''; });
-  check(/hangar/i.test(tour), `with a free upgrade the hangar tour starts on the hub: "${tour}"`);
+  check(/Open the hangar/i.test(tour), `with a free upgrade the rails point at the hangar from the hub: "${tour}"`);
   await p.close(); await b.close();
   console.log(fails.length ? `FAIL missionscreen:\n - ${fails.join('\n - ')}` : 'PASS missionscreen: full-screen start choice, the free upgrade leads into the hangar, MISSIONS screen, off-flight on funding, hangar tour from the hub');
   process.exit(fails.length ? 1 : 0);
