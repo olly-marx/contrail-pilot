@@ -31,15 +31,21 @@ fi
 [ -n "${DRY:-}" ] && { printf '%s\n' "${tests[@]}"; exit 0; }   # DRY=1: just list what would run
 
 pass=() flaky=() fail=()
+# Per-test seconds (2026-10-27, test-speed work): printed after every test, and appended as `test<TAB>seconds<TAB>result` to the file named by
+# TIMES (e.g. TIMES=times.tsv tools/test.sh ...). Seconds include a retry. Needs only bash + date.
+now() { date +%s.%N; }
+tick() { awk -v a="$1" -v b="$(now)" 'BEGIN { printf "%.1f", b - a }'; }
+note() { local sec; sec=$(tick "$2"); echo "-- $1: ${sec}s ($3)"; [ -n "${TIMES:-}" ] && printf '%s\t%s\t%s\n' "$1" "$sec" "$3" >> "$TIMES"; }
 for t in "${tests[@]}"; do
   echo "== $t"
-  if node "$t" > /tmp/test-out.$$ 2>&1; then pass+=("$t"); tail -1 /tmp/test-out.$$
+  t0=$(now)
+  if node "$t" > /tmp/test-out.$$ 2>&1; then pass+=("$t"); tail -1 /tmp/test-out.$$; note "$t" "$t0" pass
   else
     echo "-- failed, output:"; grep -v '^\s*-\s*\(waiting\|retrying\|attempting\)\|\[2m' /tmp/test-out.$$ | tail -25
     echo "-- retrying $t once"
-    if node "$t" > /tmp/test-out.$$ 2>&1; then flaky+=("$t"); echo "-- passed on retry: FLAKY"
+    if node "$t" > /tmp/test-out.$$ 2>&1; then flaky+=("$t"); echo "-- passed on retry: FLAKY"; note "$t" "$t0" flaky
       [ -n "${GITHUB_ACTIONS:-}" ] && echo "::warning title=Flaky test::$t failed, then passed on retry"
-    else fail+=("$t"); grep -v '^\s*-\s*\(waiting\|retrying\|attempting\)\|\[2m' /tmp/test-out.$$ | tail -25
+    else fail+=("$t"); note "$t" "$t0" fail; grep -v '^\s*-\s*\(waiting\|retrying\|attempting\)\|\[2m' /tmp/test-out.$$ | tail -25
       [ -n "${GITHUB_ACTIONS:-}" ] && echo "::error title=Test failed twice::$t"
     fi
   fi
