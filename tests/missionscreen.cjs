@@ -1,0 +1,65 @@
+// Season 2 missions on screen (S3 of research/PROPOSAL-HOME-MISSIONS.md). Phone size.
+// 1. a save with no start area gets the start choice as a FULL screen at once, and the hub after it;
+// 2. a free upgrade LEADS into the hangar (the user): NEXT says so and opens the hangar, the tile pulses, TAKE OFF is
+//    secondary, and "later" lets you fly on; 3. the MISSIONS tile opens the list (starred rows = the crossing trial);
+// 4. an off-flight mission completes the moment you fund a project, with no flight; 5. the hangar tour starts on the hub.
+// Run: python3 -m http.server 8000 & node tests/missionscreen.cjs   (proved by planted defects)
+const { chromium } = require('playwright-core');
+const { ready } = require('./lib/ready.js');
+const URL = process.env.URL || 'http://localhost:8000/';
+(async () => {
+  const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
+  const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  const fleet = { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} };
+  const base = { tutorialDone: true, muted: true, seenTips: ['*'], tours: ['*'], priceVersion: 2, landings: 3, flights: 4, seeds: 300, crystals: 40, fleet };
+  const open = async save => {
+    const p = await b.newPage({ viewport: { width: 390, height: 844 } });
+    p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
+    await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
+    await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); }, save);   // season 2 keeps its save under s2:
+    await p.goto(URL); await ready(p); await p.waitForTimeout(600);
+    return p;
+  };
+  const saveIn = p => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));   // (in the page the s2: prefix is already applied)
+  // 1. The start choice: a full screen, at once.
+  let p = await open({ ...base });
+  const sc = await p.evaluate(() => { const e = document.getElementById('startChoice'); if (!e) return null; const r = e.getBoundingClientRect(); return { w: r.width, h: r.height, hubShown: !document.getElementById('title').hidden && document.getElementById('title').getBoundingClientRect().height > 0 }; });
+  check(sc && sc.w >= 380 && sc.h >= 830, `the start choice fills the screen at once: ${JSON.stringify(sc)}`);
+  if (sc) { await p.click('#startChoice [data-area="weurope"]'); await p.click('#startChoice [data-city="LONDON"]'); await p.waitForTimeout(500); }
+  const after = await p.evaluate(() => ({ gone: !document.getElementById('startChoice'), hub: !document.getElementById('title').hidden }));
+  check(after.gone && after.hub && (await saveIn(p)).city === 'LONDON', `after choosing: the hub, from LONDON: ${JSON.stringify(after)}`);
+  await p.close();
+  // 2. The free upgrade leads into the hangar.
+  const s2 = { ...base, areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', missionsDone: ['L1'], freeUpgrade: true, freeGiven: true };
+  p = await open(s2);
+  const lead = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, pulse: !!document.querySelector('#hubTiles [data-go="hangar"].pulse'), dim: document.getElementById('goBtn').classList.contains('secondary') }));
+  check(/Open the hangar: free upgrade/.test(lead.next) && lead.pulse && lead.dim, `a free upgrade: NEXT leads to the hangar, the tile pulses, TAKE OFF dims: ${JSON.stringify(lead)}`);
+  await p.click('#hubNext'); await p.waitForTimeout(400);
+  check(await p.evaluate(() => !document.getElementById('hangar').hidden), 'tapping NEXT opens the hangar');
+  await p.click('#hubBack'); await p.waitForTimeout(300);
+  await p.click('#hubLater'); await p.waitForTimeout(300);
+  const later = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, dim: document.getElementById('goBtn').classList.contains('secondary') }));
+  check(!/free upgrade/.test(later.next) && !later.dim, `"later": NEXT goes back to the mission, TAKE OFF is the button again: ${JSON.stringify(later)}`);
+  await p.close();
+  // 3-4. The MISSIONS screen, and an off-flight mission.
+  p = await open({ ...s2, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:dodge', 'weurope:skip2', 'weurope:rich', 'weurope:shade', 'weurope:plant', 'weurope:bring'] });
+  await p.click('#hubTiles [data-go="missions"]'); await p.waitForTimeout(400);
+  const ms = await p.evaluate(() => ({ shown: !document.getElementById('missions').hidden, rows: document.querySelectorAll('#mList .mrow').length, stars: document.querySelectorAll('#mList .mrow.star').length, back: !document.getElementById('hubBack').hidden }));
+  check(ms.shown && ms.rows >= 3 && ms.stars === 3 && ms.back, `the MISSIONS screen lists the open missions, 3 starred, with HOME: ${JSON.stringify(ms)}`);
+  await p.click('#hubBack'); await p.waitForTimeout(300);
+  await p.click('#hubTiles [data-go="nature"]'); await p.waitForTimeout(600);
+  const pid = await p.evaluate(() => { const b = document.querySelector('#wProjects [data-project]:not([disabled])'); return b && b.dataset.project; });
+  if (pid) { await p.click(`#wProjects [data-project="${pid}"]`); await p.waitForTimeout(400); }
+  const fund = await saveIn(p);
+  check(pid && (fund.missionsDone || []).includes('weurope:project') && (fund.unclaimed || []).some(u => u.key === 'mission:weurope:project'), `funding a project completes "Fund a nature project here" with no flight: ${pid} ${JSON.stringify(fund.missionsDone)}`);
+  check(!p.errs.length, `page errors: ${p.errs}`);
+  await p.close();
+  // 5. The hangar tour starts on the hub (tours on).
+  p = await open({ ...s2, seenTips: ['x-bars'], tours: [], shownLines: [], flights: 1 });   // a real new player: shownLines set on first load (else tour.js counts an old save's hangar tour as done)
+  await p.waitForTimeout(1200);
+  const tour = await p.evaluate(() => { const t = document.getElementById('tour'); return t && !t.hidden ? t.querySelector('.tbubble p').textContent : ''; });
+  check(/hangar/i.test(tour), `with a free upgrade the hangar tour starts on the hub: "${tour}"`);
+  await p.close(); await b.close();
+  console.log(fails.length ? `FAIL missionscreen:\n - ${fails.join('\n - ')}` : 'PASS missionscreen: full-screen start choice, the free upgrade leads into the hangar, MISSIONS screen, off-flight on funding, hangar tour from the hub');
+  process.exit(fails.length ? 1 : 0);
+})();
