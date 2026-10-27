@@ -61,6 +61,7 @@ export const FACTS_BASE = [
 ];
 
 export const FACTS = [...FACTS_BASE, ...NATURE_FACTS];
+const TOAST_MIN = 3;   // s a toast stays before another may take its place
 const $ = id => document.getElementById(id);
 // A prize as icons: "+40 [seed] +3 [crystal]".
 const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;
@@ -326,6 +327,7 @@ export class UI {
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
   async showResults(r) {
+    this.hideCoach();   // nothing left open from the flight (the user saw a stray OK at the top after landing, 0.13.0)
     // Season 2: a crossing flown (src/crossings.js): the big news first.
     if (r.crossing) this.toast(r.crossing.landed ? (r.crossing.opens ? `NEW AREA: ${AREAS[r.crossing.opens].name.toUpperCase()}!` : 'YOU MADE IT!') : 'Crossing not made',
       r.crossing.landed ? 'Your crossing is done. Fly on from here!' : 'Improve your plane, your nature and your contrail skill, and try again.', r.crossing.landed ? 'good' : '', 6);
@@ -651,6 +653,14 @@ export class UI {
   // ---------- in-flight tips ----------
   toast(title, body, kind = '', secs = 3.5) {
     if (!$('coach').hidden) return;   // flight school talks instead
+    // A toast is never replaced before TOAST_MIN s (the user, 2026-10-27: one vanished "in literally a microsecond"): it queues.
+    const now = Date.now();
+    if (!$('toast').hidden && now - (this.toastAt || 0) < TOAST_MIN * 1000) {
+      (this.toastQueue = this.toastQueue || []).push([title, body, kind, secs]);
+      clearTimeout(this.toastNext); this.toastNext = setTimeout(() => this.toastNow(), TOAST_MIN * 1000 - (now - this.toastAt));
+      return;
+    }
+    this.toastAt = now;
     const t = $('toast');
     t.className = `toast ${kind}`;
     t.innerHTML = `<b>${title}</b>${body}`;
@@ -658,7 +668,8 @@ export class UI {
     clearTimeout(this.toastTimer);
     this.toastTimer = setTimeout(() => (t.hidden = true), secs * 1000);
   }
-  hideToast() { clearTimeout(this.toastTimer); $('toast').hidden = true; }
+  toastNow() { const q = (this.toastQueue || []).shift(); if (q) { $('toast').hidden = true; this.toast(...q); } }
+  hideToast() { clearTimeout(this.toastTimer); clearTimeout(this.toastNext); this.toastQueue = []; $('toast').hidden = true; }
 
   // Show a tip only the first time on this device.
   tipOnce(id, title, body, kind, secs) {

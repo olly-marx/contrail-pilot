@@ -16,12 +16,12 @@ import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
 import { gateFor, MARK, GATE_RIGHT } from './gapmarkers.js';
 import { tip } from './tips.js';
-const TIP_SECONDS = 3;   // how long a tip bubble stays (it never pauses the game)
+const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
 import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra } from './fleet.js';
 import { composeOnto } from './planelook.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
-import { isSeason2, next as s2Next } from './missions2.js';
+import { isSeason2, next as s2Next, revealed as s2Revealed } from './missions2.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { animalDir, animalPortrait } from './animalart.js';
@@ -278,23 +278,33 @@ export class GameScene extends Phaser.Scene {
     this.ui.showTitle();
   }
 
-  // A new mechanic, once per device: a short bubble at the top (src/tips.js, <= 8 words) for TIP_SECONDS while you keep
-  // flying. It never freezes the game (S1 of research/PROPOSAL-HOME-MISSIONS.md, the user 2026-10-27: far too much
-  // text; flight school is the only place that stops to teach). One bubble at a time: a second waits for its next chance.
-  // seenTips containing '*' skips all explanations (used by automated tests).
+  // A new mechanic, once per device: a short bubble at the top (src/tips.js) while you keep flying; it never freezes the
+  // game (S1). The user, 2026-10-27, after playing 0.13.0: one "vanished in literally a microsecond". So a bubble stays at
+  // least TIP_MIN s and goes by itself at TIP_MAX s; a tap on the GAME (children tap all the time) never closes it, only a
+  // tap ON the bubble after TIP_MIN_TAP s; a new bubble waits its turn instead of replacing the one showing; and a bubble
+  // never clears a toast. seenTips containing '*' skips all explanations (used by automated tests).
   // `pic`: an assets/ui/*.png drawing shown with the words; text only until the file exists.
   explain(id, html, pic = null) {
-    if (this.school || this.explaining) return false;
+    if (this.school) return false;
     const seen = this.save.seenTips;
     if (seen.includes(id) || seen.includes('*')) return false;
     seen.push(id);
     writeSave(this.save);
-    this.ui.hideToast();
+    if (this.explaining) { (this.tipQueue = this.tipQueue || []).push([html, pic]); return true; }   // waits its turn
+    this.showTip(html, pic);
+    return true;
+  }
+  showTip(html, pic) {
     this.explaining = true;   // a bubble is up (NOT frozen)
+    this.tipAt = this.time.now;
     this.ui.coach(html, false, false, false, pic);
     const mine = this.tipSerial = (this.tipSerial || 0) + 1;
-    this.time.delayedCall(TIP_SECONDS * 1000, () => { if (this.tipSerial === mine && this.explaining) { this.explaining = false; this.ui.hideCoach(); } });
-    return true;
+    this.time.delayedCall(TIP_MAX * 1000, () => { if (this.tipSerial === mine && this.explaining) this.closeTip(); });
+  }
+  closeTip() {
+    this.explaining = false; this.ui.hideCoach();
+    const q = (this.tipQueue || []).shift();
+    if (q && this.state === 'playing') this.time.delayedCall(400, () => { if (!this.explaining) this.showTip(...q); });
   }
 
 
@@ -315,8 +325,9 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1200, tryNow);
   }
 
-  onCoachTap() {
-    if (this.explaining) { this.explaining = false; this.ui.hideCoach(); return false; }   // a tap closes the bubble AND flies
+  onCoachTap(fromBubble = false) {
+    // A tip bubble: only a tap ON it closes it, and not before TIP_MIN_TAP s; a tap on the game just flies (returns false).
+    if (this.explaining) { if (fromBubble && this.time.now - this.tipAt >= TIP_MIN_TAP * 1000) this.closeTip(); return false; }
     return !!(this.school && this.school.onTap());
   }
 
@@ -523,8 +534,10 @@ export class GameScene extends Phaser.Scene {
       this.seen(sprite);
     };
     if (due('farm', W.farmPerScreen)) animal(pick(['animal-cow', 'animal-sheep']));
-    if (due('wild', W.wildPerScreen)) { const k = W.pickWild(this.distancePx); if (k && this.textures.exists(`${k}-0`)) animal(k); }   // (still loading: not yet)   // rarer ones only far into a flight
-    const b = due('bird', W.birdsPerScreen) && W.pickSky(this.distancePx);   // null: no bird this far in
+    // Season 2: no wild animals before the NATURE lesson (L2), then the first one is explained (the user: one new thing at a time).
+    const wildOK = !isSeason2(this.save) || s2Revealed(this.save, 'nature');
+    if (wildOK && due('wild', W.wildPerScreen)) { const k = W.pickWild(this.distancePx); if (k && this.textures.exists(`${k}-0`)) { animal(k); if (isSeason2(this.save)) this.explain('x-first-animal', tip('x-first-animal')); } }   // (still loading: not yet)   // rarer ones only far into a flight
+    const b = wildOK && due('bird', W.birdsPerScreen) && W.pickSky(this.distancePx);   // null: no bird this far in (or before the NATURE lesson)
     if (b && this.textures.exists(`${b}-0`)) {
       // Scenery birds fly LOW, just over the hills, small and faded: background life, never mistaken
       // for a bird-strike flock (2026-10-22). Half size = their original small sprite size.

@@ -498,7 +498,10 @@ export const RULES = {
   // ---------- the region below (the user, 2026-10-22: real geography decides it; src/geo.js) ----------
   // The leg from the airport behind to the one ahead; how far along it the plane is, as a fraction.
   regionHere() {
-    if (this.school || !this.nextAirport || this.nextAirport.worldX > 1e8) return 'woodland';
+    // Flight school flies over your START city's land (season 2 starts anywhere; the user flew a Johannesburg start over UK woodland).
+    // A coastal start that maps to the open sea or the ice keeps 'woodland' (nothing could be planted or shown there).
+    if (this.school) { const r = (city(this.save.city) || {}).region; return r && !['ocean', 'ice'].includes(r) ? r : 'woodland'; }
+    if (!this.nextAirport || this.nextAirport.worldX > 1e8) return 'woodland';   // the never-landing test/sim pilots: unchanged (sim baselines)
     const i = this.airportIndex, len = this.legKm(i), from = this.nextAirport.worldX - len;
     return regionBelow(city(this.path[i]), city(this.path[i + 1]), (this.distancePx - from) / len);
   },
