@@ -1,4 +1,4 @@
-# Balance: earnings against upgrade prices under season 2 (sim engine, 2026-10-27). INTERIM
+# Balance: earnings against upgrade prices under season 2 (sim engine, 2026-10-27)
 
 Task A from the user: per skill, do seeds and crystals per flight match upgrade prices, does each upgrade arrive at a
 sensible point, do experts reach crossing 3 at a fair time, is any level starved or flooded? Measured on 0.15.0
@@ -31,6 +31,22 @@ the twin at ~86, levels 4 at ~100-135. Beginners (0.75): the twin at ~113, level
   crossing 3 would. So "when do experts reach crossing 3" is NOT measured yet: it needs an area-choosing strategy in the
   progression sim.
 
+**Crossing 3, investigated (2026-10-27): the model cannot reach it, and that is not a game bug.** With a strategy that works
+on the frontier area ("pursue": every ordinary flight from that area's start city) and chases the 12,600 km distance gate,
+crossings 1-2 come at the same flights as before, but crossing 3 is still not reached in 200 flights. At flight 150 (expert,
+s 1.0) North America's biodiversity is met (38), its best landed flight is 11,628 km (short), and its stars are locked: the
+save is in the MASTERY stage (3 crossings made), so mission targets are x3, and no tier-2 mission in North America is done,
+so tier 3 (the stars) never opens. The model fails tier 2 there because it does not play missions: "Land at <city>, then
+<cityB>" and "Plant 6 trees, then land at <cityB>" need landings at NAMED cities (it never steers for them); "Dodge 9 icy
+patches at night" is hard in one flight; "Spot a raccoon" cannot happen in Node (animal sightings come from the browser's
+drawing). "Buy a helper system (level 3)" is already met, but save missions tick after a purchase made while in that area
+(ui.js missionsAfterSave), so it waits for one. So **crossing 3's timing is NOT measured**: it needs a mission-playing
+progression player (steer for named cities, a stand-in for animal sightings), about 1-2 hours of model work.
+
+**Design note for a playtest:** a newly opened area at the mastery stage starts with tier-2 targets already tripled (9 night
+dodges, 6 trees then a named city), with no nature built there yet, and its crossing gate counts only that area. Crossing 3
+may play much harder than its 18,000 km flight suggests.
+
 **Design question for the user (from the Coordinator):** crossing 3's gate counts ONLY its departure area (North America for
 north-pacific): its best landed flight, its biodiversity (the meter of its start city's land) and its own starred missions.
 So a player who has built up Western Europe starts again from zero there (how many flights that takes is measured by the pursue runs, section 3): projects, missions and a long
@@ -52,12 +68,14 @@ crystal** turns the experts' flood into progress and leaves typical and beginner
 typical (s 0.8) player can starve after crossing 1 (one run: 92 flights with nothing bought, bank down to 131 seeds); the
 exchange does not help there (seeds, not crystals, are short). That is a seed-income question for the 2nd area (open).
 
-## 3. Still to do (needs machine time)
+## 3. Recommendation and still to do
 
-1. Exchange reserve 4,000 (s 0.8 / 0.9 / 1.0): confirm typical players keep crossing 2 and experts keep the gain.
-2. An area-choosing strategy in the progression sim (go for the crossing whose gate is nearest, fly from its area), then
-   the crossing-3 timing per skill.
-3. A re-pricing table for the late seed sink, if the exchange is not wanted (e.g. raise the SEED price of levels 5-6
-   and lower their crystal price).
+**Recommended: add an exchange desk (seeds -> crystals, 20:1, keeping a 4,000-seed reserve).** Experts buy about twice as many
+items and their bank stops flooding; typical and beginner players are untouched. **No other price change**: the early game is
+fine with S4's missions, and the experts' late game is paced by crystals, which the desk addresses.
+
+Still to do: (1) a mission-playing progression player, then crossing 3 timing per skill; (2) the typical player's seed
+starvation after crossing 1 (one run of 4 went 92 flights without a purchase): a seed-income question for a 2nd area; (3) the
+user's answer to the design question above.
 
 Caveats: one start area (Western Europe); 4 seeds per cell; the shop buys the cheapest first; area borders now real.
