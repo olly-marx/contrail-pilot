@@ -27,7 +27,8 @@
   check(!ok(green), 'biodiversity alone (no long flight) is not enough');
   check(!ok(fly(green, need - 1)), `a flight of ${need - 1} km (just under 70%) is not enough`);
   check(ok(fly(green, need)), `${need} km (70%) + biodiversity 30 offers it`);
-  check(!ok(fly({ ...green, missionsDone: ['weurope:night', 'weurope:shade10'] }, need)), 'S3: distance + biodiversity but only 2 of the 3 starred missions is not enough');
+  check(!ok(fly({ ...green, missionsDone: ['weurope:shade10'] }, need)), 'distance + biodiversity but only 1 of the 3 starred missions is not enough (any 2 of 3: the user, 2026-10-27)');
+  check(ok(fly({ ...green, missionsDone: ['weurope:shade10', 'weurope:kinds3'] }, need)), 'any 2 of the 3 starred (without the night one) is enough');
   check(!ok({ ...green, areaBest: { nordic: 99999 } }), 'a long flight from ANOTHER area does not count');
   // recordAreaBest keeps the best, per area, and ignores nothing-flights
   const r = fly(fly(base, 4000), 2500); check(r.areaBest.weurope === 4000, `areaBest keeps the longest: ${JSON.stringify(r.areaBest)}`);

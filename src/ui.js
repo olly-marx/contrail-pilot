@@ -25,7 +25,7 @@ const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS)
   return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
-import { isSeason2, onSave as missionsOnSave, visible as missionsVisible } from './missions2.js';
+import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
@@ -253,8 +253,10 @@ export class UI {
   // The MISSIONS screen: what you can do now (the area's open tiers, starred = the crossing trial), and prizes to claim.
   showMissions() {
     const s = this.save, list = missionsVisible(s);
-    $('mList').innerHTML = list.map(m => `<div class="mrow ${m.star ? 'star' : ''}"><span>${m.star ? '&#9733; ' : ''}${m.title}</span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`).join('')
-      || '<p>All done here. Fly a crossing to a new area!</p>';
+    const row = m => `<div class="mrow ${m.star ? 'star' : ''} ${m.daily ? 'daily' : ''}"><span>${m.star ? '&#9733; ' : ''}${m.title}</span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`;
+    const daily = dailyVisible(s);
+    $('mList').innerHTML = (list.map(row).join('') || '<p>All done here. Fly a crossing to a new area!</p>')
+      + (daily.length ? '<p class="label">Today</p>' + daily.map(row).join('') : '');
     $('mTier').textContent = list.length && list[0].tier ? `Tier ${Math.max(...list.map(m => m.tier))} of 3` : 'Chapter 1';
     this.showOnly('missions');
     this.renderPrizes($('mPrizes'), () => this.showMissions());
@@ -300,6 +302,7 @@ export class UI {
     this.renderPrizes();
     $('tEra').innerHTML = this.save.tutorialDone ? eraBarHTML(this.save) : '';   // era progress (src/eras.js)
     this.renderJourney();
+    if (FEATURES.season2 && isSeason2(this.save)) { setDaily(this.save, new Date().toISOString().slice(0, 10)); writeSave(this.save); }   // the daily trio: the date comes from here, not the rules
     if (FEATURES.season2) this.renderHub();
     this.showOnly('title');
     if (this.showRepriced()) return;

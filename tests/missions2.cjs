@@ -30,10 +30,10 @@
   check(M.visible(s3).find(m => m.key.endsWith(':bring')).title.includes('20'), `challenge asks more (bring 20, not 10): ${M.visible(s3).find(m => m.key.endsWith(':bring')).title}`);
   // 4. Tiers.
   check(!M.tierOpen(s, 'weurope', 2), 'tier 2 shut with 1 of tier 1 done');
-  M.onFlight(s, landed({ cargo: 10, planted: 2 }));
+  M.onFlight(s, landed({ cargo: 10, cleanGaps: 3 }));   // bring + clean gaps (+ the project) = 3 of tier 1
   check(M.tierOpen(s, 'weurope', 2) && !M.tierOpen(s, 'weurope', 3), `any 3 of tier 1 open tier 2 (done: ${s.missionsDone.filter(k => k.startsWith('weurope'))})`);
   // 5-6. Area and landing.
-  const t3 = () => ['dodge', 'skip2', 'rich'].forEach(id => s.missionsDone.push(`weurope:${id}`));
+  const t3 = () => ['dodge', 'chain', 'rescue'].forEach(id => s.missionsDone.push(`weurope:${id}`));
   t3();
   const away = { ...s, city: 'NEW YORK', missionsDone: [...s.missionsDone] };
   M.onFlight(away, landed({ nightOwl: true, sunBlocked: 12 }));
@@ -43,10 +43,10 @@
   check(crash.missionsDone.length === s.missionsDone.length, 'a crash completes nothing');
   // 7. The gate.
   const raw = C.CROSSINGS.find(x => x.id === 'warsaw-stockholm'), c = { ...raw, from: 'WARSAW', to: 'STOCKHOLM', km: C.crossingKm(raw) }, full = { capabilityKm: 1e9, bio: 99 };   // as available() orients it
-  M.onFlight(s, landed({ nightOwl: true, sunBlocked: 10 }));   // 2 of 3 starred
-  check(!M.gateDone(s, 'weurope') && !C.offerCheck(c, { ...full, missionsDone: C.offerCtx(s, c).missionsDone }).offered, 'two of the three starred: no crossing');
-  M.onFlight(s, landed({ kinds: 3 }));
-  check(M.gateDone(s, 'weurope') && C.offerCtx(s, c).missionsDone === true && C.offerCheck(c, { ...full, missionsDone: true }).offered, 'all three starred: the gate is open');
+  M.onFlight(s, landed({ sunBlocked: 10 }));   // 1 of 3 starred
+  check(M.starsDone(s, 'weurope') === 1 && !M.gateDone(s, 'weurope') && !C.offerCheck(c, { ...full, missionsDone: C.offerCtx(s, c).missionsDone }).offered, 'one of the three starred: no crossing');
+  M.onFlight(s, landed({ treeIds: ['spruce', 'birch', 'oak'] }));   // 2 of 3 (the night star NOT done: it blocked weaker pilots)
+  check(M.starsDone(s, 'weurope') === 2 && M.gateDone(s, 'weurope') && C.offerCtx(s, c).missionsDone === true && C.offerCheck(c, { ...full, missionsDone: true }).offered, 'any two of the three starred (the user, 2026-10-27): the gate is open');
   check(!M.gateDone(s, 'namerica'), "Western Europe's trio does not open North America's gate");
   // 8. The 4th tree.
   check(L.treesOpen(s, 'woodland').includes(4) || L.OPENS[4].ok(s, 'woodland'), "woodland's 4th tree opens on Western Europe's 'kinds3'");
@@ -57,6 +57,6 @@
   const f = { ...base(), missionsDone: ['L1'], freeUpgrade: true };
   check(H.hubView(f).next.hangar && H.hubView(f).next.title === H.FREE_NEXT, `free upgrade: NEXT = "${H.FREE_NEXT}" (${JSON.stringify(H.hubView(f).next)})`);
   check(!H.hubView({ ...f, freeUpgrade: false }).next.hangar && H.hubView({ ...f, freeUpgrade: false }).next.id === 'L2', 'once the free part is picked, NEXT goes back to the lesson (no "later": the user wants it a must-do)');
-  console.log(fails.length ? `FAIL missions2:\n - ${fails.join('\n - ')}` : 'PASS missions2: lessons in order with reveals, off-flight on purchase, stages, tiers by 3, area-bound, crash = nothing, gate = 3 stars, 4th tree, seeds-only, free upgrade leads to the hangar');
+  console.log(fails.length ? `FAIL missions2:\n - ${fails.join('\n - ')}` : 'PASS missions2: lessons in order with reveals, off-flight on purchase, stages, tiers by 3, area-bound, crash = nothing, gate = any 2 of 3 stars, 4th tree, seeds-only, free upgrade leads to the hangar');
   process.exit(fails.length ? 1 : 0);
 })();
