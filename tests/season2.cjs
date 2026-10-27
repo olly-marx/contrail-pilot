@@ -92,7 +92,7 @@ const KEY = 'contrailPilot.v2';
   // biodiversity 30 in the start city's land; a real landed flight records the area's best; MORE TO COME when all is flown.
   const seed2e = (best, stars = ['weurope:night', 'weurope:shade10', 'weurope:kinds3']) => p.evaluate(async ([best, stars]) => { const s = game.registry.get('save'); const planted = {};
     for (const id of ['spruce', 'birch', 'oak', 'beech', 'pine', 'ash', 'rowan', 'hazel', 'willow', 'alder']) planted[id] = 40;
-    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', crossed: [], planted, areaBest: best, flyCrossing: null, missionsDone: stars });   // S3: the 3 starred missions are a condition too
+    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', crossed: [], planted, areaBest: best, flyCrossing: null, missionsDone: stars, freeUpgrade: false, freeGiven: true });   // (0.15.2: a free part still waiting locks TAKE OFF until it is picked; this player has picked it)   // S3: the 3 starred missions are a condition too
     (await import('/src/save.js')).writeSave(s); }, [best, stars]);
   const cardNow = async (best, stars) => { await seed2e(best, stars); await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
     return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
