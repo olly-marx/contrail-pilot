@@ -25,6 +25,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const dismiss = async () => {
     const st = await p.evaluate(() => { const s = game.scene.getScene('game'); return { ex: s.explaining, frozen: s.frozen }; });
     if (st.ex) sawBubble = true; if (st.frozen) sawFreeze = true;
+    if (st.ex) await p.evaluate(() => game.scene.getScene('game').onCoachTap());   // a tap closes the bubble, as a child's would
   };
   const hold = (y = 200) => scene(y => { const s = game.scene.getScene('game'); s.plane.y = y; s.plane.vy = 0; s.heat = 0; }, y);
 
