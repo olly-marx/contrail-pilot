@@ -36,4 +36,5 @@ export function chooseStart() {
 // Apply a choice to the save.
 export function applyStart(save, { area, city: name }) {
   save.areas = [area]; save.homeArea = area; save.city = name; save.heading = null;
+  save.visited = [name];   // not the default save's LONDON (the non-UK starter audit, 2026-10-28)
 }

@@ -34,7 +34,7 @@ const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia',
 export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = (a && a.start) || save.city, c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
 // Been there: the UK always; the home land; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {
-  if (region === 'woodland') return true;
+  if (region === 'woodland' && !(isSeason2(save) && homeRegion(save) && homeRegion(save) !== 'woodland')) return true;   // the UK: always, except for a season-2 player who started elsewhere
   if (homeRegion(save) === region) return true;
   if ((save.discovered || {})[region]) return true;   // flown over (GameScene.setRegion)
   return (save.visited || []).some(n => (CITIES.find(c => c.name === n) || {}).region === region);   // src/cities.js
@@ -48,6 +48,7 @@ export class WildScreen {
     $('wInfoClose').onclick = () => { $('wInfo').hidden = true; };
   }
 
+  home() { return homeRegion(this.save); }   // the player's home land (ui.js asks: no import cycle)
   get projects() { return REGION_DATA[this.region].projects; }
   get species() { return REGION_DATA[this.region].species; }
   animals() { return regionSpecies(this.region); }
@@ -102,8 +103,9 @@ export class WildScreen {
     }
     row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
-    // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the UK tab.
-    const uk = this.region === 'woodland';
+    // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the HOME land's tab (the
+    // non-UK starter audit, 2026-10-28: a Melbourne or Lagos player had to visit the UK's tab to get them).
+    const uk = this.region === (homeRegion(s) || 'woodland');
     // Season 2: the planting tools wait for lesson 5 (trees), one new thing at a time (research/FLOW-FIRST-HOUR.md).
     const treesTime = !isSeason2(s) || (s.missionsDone || []).includes('L4');
     $('wTrees').hidden = !uk || !treesTime;
@@ -161,7 +163,7 @@ export class WildScreen {
         <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
         <div class="next">${btn}</div></div>`;
     };
-    const how = this.region === 'woodland' ? 'Plant trees and finish the projects above!' : 'Finish the projects above!';
+    const how = 'Plant trees and finish the projects above!';   // every land takes trees (plantedIn)
     const open = TIERS.filter(t => bio >= t.needs), next = TIERS.find(t => bio < t.needs);
     $('wProjects').innerHTML = open.map(t => {
       const ps = P.filter(p => p.tier === t.tier), n = ps.filter(p => done.includes(p.id)).length;

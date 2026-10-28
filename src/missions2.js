@@ -100,7 +100,7 @@ export function fillFor(save, a, startCity = save.city) {
   const k = HARDER[stageOf(save, a)], land = landOf(save, a), cities = (AREAS[a] && AREAS[a].cities) || [];
   const city = cities.find(c => c !== (save.homeCity || AREAS[a].start) && !(save.visited || []).includes(c)) || cities[1] || cities[0];
   const landName = (REGION_NAMES[land] || 'this land').replace(/^Temperate /, '');
-  const others = cities.filter(c => c !== city);
+  const home = save.homeCity || (AREAS[a] && AREAS[a].start), others = cities.filter(c => c !== city && c !== home);   // not the home city (the audit: '...then MANAUS' for a Manaus start)
   const trees = landTrees(save, land), open = trees.filter(t => t.open), tree = open[open.length - 1] || trees[0];
   const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
   const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));

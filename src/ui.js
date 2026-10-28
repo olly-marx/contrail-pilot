@@ -279,7 +279,7 @@ export class UI {
     if (tab === 'hangar') return this.showHangar();
     if (tab === 'missions') return this.showMissions();
     if (tab === 'nature') { this.markShopSeen(); if (this.tour) this.tour.markDone('nature-lead'); this.showOnly('nature');
-      if (this.wild && parcelsWanted(this.save)) this.wild.region = 'woodland';   // L5 waits for parcels: open on the tab that sells them (they are shown on the UK tab)
+      if (this.wild && parcelsWanted(this.save)) this.wild.region = this.wild.home() || 'woodland';   // L5 waits for parcels: open on the tab that sells them (the home land's)
       this.wild && this.wild.render(); if (this.tour) this.tour.maybe('nature'); return; }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
     if (tab === 'boards') { this.showOnly('boards'); if (FEATURES.season2) return showRecords(this.save); return this.pilot && this.pilot.showBoards(); }   // season 2: MY RECORDS (src/records.js), online is off
