@@ -724,3 +724,5 @@ h2.sub { margin-top: -4px; }
 .hcap { margin: 0 0 6px; text-align: center; }
 .hcap.working .dots::after { content: '...'; animation: hcapdots 1.2s steps(4) infinite; display: inline-block; width: 1.5em; overflow: hidden; vertical-align: bottom; }
 @keyframes hcapdots { from { width: 0; } to { width: 1.5em; } }
+/* M4: the ending card (ui.js showEnding), on the payoff's overlay style */
+.ending .ending-title { font-size: 14px; color: #1b1b2f; margin: 4px 0 10px; }

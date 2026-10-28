@@ -1429,8 +1429,8 @@ export class GameScene extends Phaser.Scene {
       lap, crash,
     });
     if (this.crossing) {   // season 2: landing the crossing (at the gateway or beyond) opens the area; either way it is over
-      if (landed) completeCrossing(this.save, this.crossing);
-      this.result.crossing = { id: this.crossing.id, landed, opens: this.crossing.opens, to: this.crossing.to };
+      const done = landed && completeCrossing(this.save, this.crossing);   // (the lap: only when you land back home)
+      this.result.crossing = { id: this.crossing.id, kind: this.crossing.kind, landed: !!done, opens: this.crossing.opens, to: this.crossing.to };
       delete this.save.flyCrossing;
       writeSave(this.save);
     }
