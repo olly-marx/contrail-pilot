@@ -64,7 +64,9 @@
   // 10c. Lesson 5 needs tree parcels; lesson prizes only pay once CLAIMED (the audit, 2026-10-27): with prizes waiting and
   // too few seeds/crystals, NEXT says to claim them (not "buy parcels", which a child could not do).
   const l5 = { ...base(), missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, unclaimed: [{ key: 'mission:L4', seeds: 70, crystals: 1 }] };
-  check(H.hubView(l5).next.claims && /Claim/.test(H.hubView(l5).next.title), `lesson 5, prizes unclaimed, parcels unaffordable: NEXT = claim (${JSON.stringify(H.hubView(l5).next)})`);
+  check(H.hubView(l5).next.nature && /Free tree parcels/.test(H.hubView(l5).next.title), `lesson 5, parcels not yet taken: NEXT = the FREE parcels in NATURE, not 'claim' (the user, 2026-10-28) (${JSON.stringify(H.hubView(l5).next)})`);
+  const l5used = { ...l5, freeParcelsGiven: true };   // (the free ones used up and sold back is not possible; this is the old path's guard)
+  check(H.hubView(l5used).next.claims && /Claim/.test(H.hubView(l5used).next.title), `lesson 5, free parcels already given, prizes unclaimed, parcels unaffordable: NEXT = claim (${JSON.stringify(H.hubView(l5used).next)})`);
   check(H.hubView({ ...l5, unclaimed: [], seeds: 100, crystals: 5 }).next.nature, 'with the money in the bank: NEXT = buy parcels in NATURE');
   // 10. A free upgrade leads into the hangar.
   const f = { ...base(), missionsDone: ['L1'], freeUpgrade: true };
