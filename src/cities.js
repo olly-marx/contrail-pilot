@@ -127,9 +127,9 @@ const BASE_CITIES = [
 // (Hobart reads as sea, Nuuk as ice): declared here. The new biomes (patagonia, australia, newzealand) and skylines
 // are later work (art budget); until then these use today's regions.
 export const S2_CITIES = [
-  { name: 'PUNTA ARENAS', lat: -53.00, lon: -70.85, region: 'plains' },
-  { name: 'PUERTO MADRYN', lat: -42.76, lon: -65.10, region: 'plains' },
-  { name: 'BALMACEDA', lat: -45.92, lon: -71.69, region: 'plains' },
+  { name: 'PUNTA ARENAS', lat: -53.00, lon: -70.85, region: 'steppe' },
+  { name: 'PUERTO MADRYN', lat: -42.76, lon: -65.10, region: 'steppe' },
+  { name: 'BALMACEDA', lat: -45.92, lon: -71.69, region: 'steppe' },
   { name: 'MELBOURNE', lat: -37.67, lon: 144.84, region: 'bush' },
   { name: 'BRISBANE', lat: -27.38, lon: 153.12, region: 'bush' },
   { name: 'CAIRNS', lat: -16.88, lon: 145.75, region: 'bush' },

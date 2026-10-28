@@ -50,7 +50,8 @@ export const LAND = [
   ['plains', 15, 30, -118, -80],           // Mexico
   ['rainforest', 7, 15, -92, -77],         // Central America
   ['rainforest', -25, 11, -82, -34],       // the Amazon and the Atlantic Forest
-  ['plains', -56, -25, -76, -48],          // the Pampas and Patagonia (no region of their own yet)
+  ['steppe', -56, -39, -76, -62],          // Patagonia, south of the Río Negro (its own region since 2026-10-28)
+  ['plains', -56, -25, -76, -48],          // the Pampas
   // Australia and New Zealand (no region of their own yet: part B will decide).
   ['bush', -39, -11, 113, 154],          // Australia
   ['islandforest', -47, -34, 166, 179],        // New Zealand

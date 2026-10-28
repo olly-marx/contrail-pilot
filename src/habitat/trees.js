@@ -4,6 +4,14 @@ const AF = 'https://apps.worldagroforestry.org/treedb/AFTPDFS/';
 const WT = 'https://www.woodlandtrust.org.uk/trees-woods-and-wildlife/british-trees/a-z-of-british-trees/';
 const EF = 'https://www.euforgen.org/species/';
 export const REGION_TREES = {
+  // Patagonia (research: ~/contrail-research/patagonia.v3.md). Radiata pine is the plantation tree (non-native).
+  steppe: [
+    { id: 'radiatapine', name: 'Radiata pine', slot: 0, native: false, short: 'A fast-growing pine planted in huge rows for wood. It is not a native tree here.', fact: 'In a study in south-central Chile, the soil under native forest had 27 kinds of tiny animals, but under pine plantations only 22.', src: [['PMC (Scientific Reports): soil invertebrates under pine plantations in Chile', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC7210289/']] },
+    { id: 'lenga', name: 'Lenga', slot: 1, native: true, short: 'A tough southern beech that drops its leaves in winter.', fact: 'Lenga grows along more than 2,000 km of the Andes, in cold mountain forests.', src: [['PMC (Evolutionary Applications): Nothofagus pumilio', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC13093351/'], ['WCS Chile: Bosque', 'https://chile.wcs.org/Paisajes/Bosque.aspx']] },
+    { id: 'notro', name: 'Notro (Chilean firebush)', slot: 2, native: true, short: 'A tree with bright scarlet flowers.', fact: 'Hummingbirds are the main visitors to notro flowers in the wettest parts of north-west Patagonia, but in the driest areas bees do the job.', src: [['Trees and Shrubs Online: Embothrium coccineum', 'https://www.treesandshrubsonline.org/articles/embothrium/embothrium-coccineum/']] },
+    { id: 'guaitecas', name: 'Guaitecas cypress', slot: 3, native: true, short: 'A conifer that grows further south than any other in the world.', fact: 'The Guaitecas cypress is the southernmost conifer in the world.', src: [['Rewilding Chile: Cape Froward National Park project', 'https://www.rewildingchile.org/en/projects/cape-froward-national-park-project/']] },
+    { id: 'alerce', name: 'Alerce', slot: 4, native: true, short: 'A giant, ancient rainforest tree.', fact: 'About a quarter of Chile\'s thousand-year-old alerce trees grow in Pumalín park.', src: [['Rewilding Chile: Pumalín Douglas Tompkins National Park', 'https://www.rewildingchile.org/en/projects/pumalin-douglas-tompkins-national-park/']] },
+  ],
   // Australia (research: ~/contrail-research/australia.v3.md). Blue gum is the plantation tree.
   bush: [
     { id: 'bluegum', name: 'Blue gum', slot: 0, native: true, short: 'A gum tree planted in neat rows on farms in the south-west.', fact: 'In Western Australia, native bush had almost twice as many animal species as blue gum plantations, but plantations held more wildlife than open paddocks.', src: [['FAO AGRIS: Hobbs et al. (2003), Faunal use of bluegum plantations in south-western Australia', 'https://agris.fao.org/search/en/records/65df20f74c5aef494fe0156c']] },
