@@ -93,8 +93,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(stuck.tile && /free upgrade/i.test(stuck.next) && stuck.locked, `an existing save with a free part waiting and no lesson done: hangar revealed, NEXT leads there, TAKE OFF locked: ${JSON.stringify(stuck)}`);
   await p.close();
   // 4d. Lesson 5 with prizes unclaimed and parcels unaffordable (the audit, 2026-10-27): NEXT says to claim them and opens
-  // MISSIONS, where the CLAIM buttons pulse during the lessons.
-  p = await open({ ...s2, freeUpgrade: false, seeds: 0, crystals: 0, missionsDone: ['L1', 'L2', 'L3', 'L4'], unclaimed: [{ key: 'mission:L4', kind: 'mission', id: 'L4', label: 'Skip one airport, land at the next', seeds: 70, crystals: 1 }] });
+  // MISSIONS, where the CLAIM buttons pulse during the lessons. (Since 2026-10-28 the first parcels are free: this is the case once they were given.)
+  p = await open({ ...s2, freeUpgrade: false, seeds: 0, crystals: 0, missionsDone: ['L1', 'L2', 'L3', 'L4'], freeParcelsGiven: true, unclaimed: [{ key: 'mission:L4', kind: 'mission', id: 'L4', label: 'Skip one airport, land at the next', seeds: 70, crystals: 1 }] });
   const cl = await p.evaluate(() => document.getElementById('hubNext').innerText);
   check(/Claim your prizes/i.test(cl), `lesson 5, prizes unclaimed, parcels unaffordable: NEXT = "${cl}"`);
   await p.click('#hubNext'); await p.waitForTimeout(400);
