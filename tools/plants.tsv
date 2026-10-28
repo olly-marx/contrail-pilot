@@ -108,3 +108,9 @@ sim-progression-s2@PLANT=nostars	-	-	crossings offered without the area missions
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
 sim-twists@PLANT=still	-	-	no twist ever moves
 sim-twists@PLANT=early	-	-	twists ignore their start distance
+era4-knobs	src/sim/physics.js	s/gapAdd: false/gapAdd: true/	ATC 8 no-fly gap add ignored
+era4-knobs	src/sim/physics.js	s/nightHeat: false/nightHeat: true/	night contrail heat multiplier ignored
+era4-knobs	src/sim/physics.js	s/clean: false }/clean: true }/	contrail-free cruise ignored
+hangar-feedback	src/fleet.js	s/keys: \['pickup'\]/keys: ['pickupX']/	a changed setting with no bar
+lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return false;/	the lap counts away from home
+capability	src/capability.js	s/crashes: true, skill/crashes: false, skill/	the estimate flies with crashes off

@@ -57,6 +57,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('plane-comet', 'assets/plane-comet.png');   // eras (src/fleet.js): looks only
     this.load.image('plane-twin', 'assets/plane-twin.png');
     this.load.image('plane-747', 'assets/plane-747.png');   // the 1970s paint (era colour ladder)
+    this.load.image('plane-787', 'assets/plane-787.png');   // the 2010s Dreamliner (code-made from the twin: tools/art/make_787.py)
     for (const k of UPGRADE_ART) this.load.image(k, `assets/upgrades/${k}.png`);   // upgrade looks, stickers, towers (src/fleet.js)
     for (const [id, n] of Object.entries(PART_LINES)) for (let i = 1; i <= n; i++) this.load.image(`plane-${id}-${i}`, `assets/plane-${id}-${i}.png`);
     for (let i = 1; i <= 4; i++) this.load.image(`plane-nature-${i}`, `assets/plane-nature-${i}.png`);
