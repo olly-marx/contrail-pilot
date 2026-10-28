@@ -63,7 +63,7 @@ const W = 390, H = 844;
       issr: issr ? { top: issr.y, bot: issr.y + issr.height } : null,
       covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), turbs: (s.turbs || []).length,
       wild: (s.life || []).filter(x => x.kind && !/animal-(cow|sheep)/.test(x.kind)).length,
-      lesson: (l => l && { ahead: l.x - (s.plane.x + 50), drawn: l.view ? l.view.alpha * (l.view.visible ? 1 : 0) : 0, day: s.isDay })((s.issrs || []).find(i => i.height === 200 && i.width >= 560)) };   // flight 2's guaranteed patch (rules.js l2Patch)
+      lesson: (l => l && { ahead: l.x - (s.plane.x + 50), onScreen: l.x < 288 - 10, drawn: l.view ? l.view.alpha * (l.view.visible ? 1 : 0) : 0, day: s.isDay })((s.issrs || []).find(i => i.height === 200 && i.width >= 560)) };   // flight 2's guaranteed patch (rules.js l2Patch)
   });
   let avoid = false;
   const target = v => v.toRunway < 40 && v.toRunway > -220 ? 1e9 : avoid && v.issr ? (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 40) : v.gap != null ? v.gap
@@ -74,7 +74,7 @@ const W = 390, H = 844;
     while (Date.now() - t0 < seconds * 1000) {
       const v = await look();
       if (v.results) break;
-      if (rules.lessonPatch && !lesson && v.lesson && v.lesson.ahead <= 200 && v.lesson.ahead >= 0) { lesson = v.lesson; await shot('flight2-lesson-patch'); }
+      if (rules.lessonPatch && !lesson && v.lesson && v.lesson.ahead <= 140 && v.lesson.ahead >= 0) { lesson = v.lesson; await shot('flight2-lesson-patch'); }
       if (v.covered) covered++; turbs = Math.max(turbs, v.turbs); wild = Math.max(wild, v.wild);
       if (v.okUp) { await p.click('#coachOk').catch(() => {}); continue; }
       if (v.tapStep) { await p.mouse.click(W / 2, H * 0.55); await p.waitForTimeout(150); continue; }
@@ -87,7 +87,7 @@ const W = 390, H = 844;
     check(!covered, `${label}: no teaching strip ever covered the plane (${covered} frames did)`);
     if (rules.noTurb) check(!turbs, `${label}: no turbulence yet (${turbs})`);
     if (rules.noWild) check(!wild, `${label}: no wild animals yet (${wild})`);
-    if (rules.lessonPatch) check(lesson && lesson.drawn > 0 && lesson.day, `${label}: the guaranteed icy patch is DRAWN (alpha > 0) in daylight as the plane nears it, 200 px out (${JSON.stringify(lesson)})`);
+    if (rules.lessonPatch) check(lesson && lesson.onScreen && lesson.drawn > 0 && lesson.day, `${label}: the guaranteed icy patch is DRAWN on screen (alpha > 0) in daylight as the plane nears it, 140 px out (${JSON.stringify(lesson)})`);
   };
 
   // R1-R3: start choice (Seoul), how to play, flight school (choice screens: several options by design).
