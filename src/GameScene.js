@@ -315,7 +315,8 @@ export class GameScene extends Phaser.Scene {
     document.getElementById('coach').classList.toggle('strip-low', this.plane.y < HEIGHT * 0.4);
     // A toast already up (dusk, SAF, a token) drops below a top strip instead of sitting under it (the audit, 2026-10-28).
     const coachEl = document.getElementById('coach'), toastEl = document.getElementById('toast');
-    if (toastEl && !toastEl.hidden && !coachEl.classList.contains('strip-low')) toastEl.style.top = `${Math.round(coachEl.getBoundingClientRect().bottom + 6)}px`;
+    const dropToast = () => { if (this.explaining && toastEl && !toastEl.hidden && !coachEl.hidden && !coachEl.classList.contains('strip-low')) toastEl.style.top = `${Math.round(coachEl.getBoundingClientRect().bottom + 6)}px`; };
+    dropToast(); setTimeout(dropToast, 250); setTimeout(dropToast, 800);   // again once the strip's picture has loaded (it grows)
     const mine = this.tipSerial = (this.tipSerial || 0) + 1;
     this.time.delayedCall(TIP_MAX * 1000, () => { if (this.tipSerial === mine && this.explaining) this.closeTip(); });
   }

@@ -23,7 +23,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // A toast already up + a tip strip at the top: the toast drops below the strip, no overlap (audit #6).
   const r0 = await p.evaluate(async () => { const s = game.scene.getScene('game'); s.hitsStorm = () => false; s.hitBird = () => false; s.plane.y = 300;   // (low: the strip goes on top)
     game.registry.get('ui').toast('Night is coming!', 'A toast that is already up.', 'bad', 6); await new Promise(r => setTimeout(r, 100));
-    s.explain('tq-t', 'At night a contrail traps heat like a blanket. Fly under or over the icy air to keep Earth cool!', 'lesson-hot');   /* (a real-sized tip: two lines and a picture) */ await new Promise(r => setTimeout(r, 150));
+    s.explain('tq-t', 'At night a contrail traps heat like a blanket. Fly under or over the icy air to keep Earth cool!', 'lesson-hot');   /* (a real-sized tip: two lines and a picture) */ await new Promise(r => setTimeout(r, 1000));
     const c = document.getElementById('coach').getBoundingClientRect(), t = document.getElementById('toast').getBoundingClientRect();
     const out = { toast: !document.getElementById('toast').hidden, coach: !document.getElementById('coach').hidden, overlap: c.bottom > t.top && t.bottom > c.top && c.right > t.left && t.right > c.left, cb: Math.round(c.bottom), tt: Math.round(t.top) };
     s.closeTip(); return out; });
