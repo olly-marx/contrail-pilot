@@ -48,6 +48,28 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   p = await open(save({ landings: 2 }), { width: 390, height: 844 }); await p.waitForTimeout(800);
   a = await audit(p); check(!(a.up && /records/i.test(a.text)), `R14: no records step before landing 3 ("${a.text}")`); await p.close();
 
+  // L5 parcels (audit #3): NEXT says the parcels are free; NATURE opens on the tab that sells them even after viewing
+  // another land; the rails point at the FREE button (one target); the tap gives them free.
+  const l5 = { landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, discovered: { savanna: true, desert: true, steppe: true, rainforest: true } };
+  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-parcels'] }), { width: 390, height: 844 });
+  check(/Free tree parcels/.test(await p.evaluate(() => document.getElementById('hubNext').innerText)), `L5: NEXT says the tree parcels are free (${await p.evaluate(() => document.getElementById('hubNext').innerText)})`);
+  await p.click('#tabNature'); await p.waitForTimeout(500);
+  const other = await p.$('#wRegions [data-region]:not([disabled]):not(.on)');
+  check(!!other, 'L5: another land tab to view (the trap: NATURE kept the last-viewed tab)');
+  if (other) { await other.click(); await p.waitForTimeout(400); }
+  await p.click('#tabFly'); await p.waitForTimeout(400); await p.click('#hubNext'); await p.waitForTimeout(700);
+  check(await p.evaluate(() => !document.getElementById('nature').hidden && !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]')), 'L5: NEXT opens NATURE on the tab that sells the parcels, after viewing another land');
+  await p.close();
+  p = await open(save(l5), { width: 390, height: 844 });
+  await p.click('#tabNature');
+  a = null; for (let i = 0; i < 40; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
+  if (SHOTS) await p.screenshot({ path: `${SHOTS}/L5-free-parcels.png` });
+  check(a.up && /parcels/i.test(a.text) && a.reach.length === 1 && /FREE/.test(a.reach[0] || '') && a.inView, `L5: the rails point at the FREE parcels, the only tappable thing, on screen ("${a.text}"; ${a.reach.join(' / ')})`);
+  if (a.ring) { await p.mouse.click(a.ring.x, a.ring.y); await p.waitForTimeout(700); }
+  const sv = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
+  check((sv.levels || {}).trees === 1 && sv.seeds === 0 && sv.freeParcelsGiven, `L5: the tap gives the first parcels free (${JSON.stringify(sv.levels)}, seeds ${sv.seeds})`);
+  check(!p.errs.length, `L5 page errors: ${p.errs}`); await p.close();
+
   // "tap to skip" on a small phone, during the results reveal.
   p = await open(save({ landings: 3, tours: ['*'] }), { width: 375, height: 667 });
   await p.click('#goBtn'); await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).catch(() => {});
