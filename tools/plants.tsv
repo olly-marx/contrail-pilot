@@ -108,3 +108,9 @@ sim-progression-s2@PLANT=nostars	-	-	crossings offered without the area missions
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
 sim-twists@PLANT=still	-	-	no twist ever moves
 sim-twists@PLANT=early	-	-	twists ignore their start distance
+boardsonline	src/GameScene.js	s/shade: Math.max(0, this.sunBlocked), heat_trapped/shade: Math.max(0, -this.sunBlocked), heat_trapped/	the shade sent was always 0 (the sign bug)
+boardsonline	src/recordsui.js	s/leaderboard(pick, period)/leaderboard(pick, 'week')/	EVER asks for the week again
+boardsonline	src/online.js	s/{ batch, client: VERSION }/{ batch }/	the client version is not sent
+boardsonline	src/online.js	s/if (tooOld(error)) { needUpdate(); stalled = true; break; }//	an old game is not told to update
+boardsonline	src/recordsui.js	s/if (!getPilot()) {/if (false) {/	no pilot name still asks the boards
+boardsonline	src/GameScene.js	s/ missions_done: this.result.missions2 ? this.result.missions2.done.length : 0,//	missions_done is not sent
