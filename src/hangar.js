@@ -49,7 +49,9 @@ export class FleetHangar {
     if (pid && f.planes[pid]) { const files = lookFiles(pid, f.planes[pid], 'hangar'); composedURL(files.base, files.parts, hangarGadgets(s, pid)).then(u => { if (pv.isConnected) pv.src = u; }).catch(() => {}); }
     // Tap a row = preview it (the user, 2026-10-28: "tap on things and SEE THE EFFECT before purchasing"): the row is
     // marked, the card under the picture shows its bars, and the picture shows the new part ghosted.
-    el.querySelectorAll('[data-ftap]').forEach(b => b.onclick = () => { this.sel = b.dataset.ftap; this.ui.sfx.flap(); this.render(); });
+    // (screenshots, 2026-10-28: a row tapped low in the list previewed OFF SCREEN at the top; bring the picture + card into view)
+    el.querySelectorAll('[data-ftap]').forEach(b => b.onclick = () => { this.sel = b.dataset.ftap; this.ui.sfx.flap(); this.render();
+      const pv = $('hFleet').querySelector('.fpreview'); if (pv && pv.scrollIntoView) pv.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
     el.querySelectorAll('[data-pview]').forEach(c => c.onclick = () => { const p = c.dataset.pview; this.preview = p;
       this.sel = f.planes[p] && f.plane !== p ? `fly:${p}` : null; this.ui.sfx.flap(); this.render(); });
     el.querySelectorAll('[data-fbuy]').forEach(b => b.onclick = () => {

@@ -116,3 +116,4 @@ lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return f
 capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazard pool ignored (heat only)
 twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
 finance	src/finance.js	s/Math.round(L.base - L.slope \* B)/Math.round(L.base - L.slope * 0)/	the rate ignores nature
+hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (false) pv.scrollIntoView/	a tapped row previews off screen
