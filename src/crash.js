@@ -8,6 +8,11 @@ import { VERSION } from './version.js';
 
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
+// A sound that could not start is never a crash (live bug 2026-10-28, iPhone CriOS 156 on REOPENING the app: "Promise: Failed to start the audio device" showed this card on
+// a healthy game). The browser rejects AudioContext.resume() when the app was backgrounded; Phaser's own unlock/focus code (vendor/phaser.min.js: `resume().then(...)`, no
+// catch) lets it escape. Anything that looks like an audio-start/playback refusal is ignored here, and sound.js retries quietly on the next sound.
+export const isBenignAudioRejection = r => /audio device|audiocontext|NotAllowedError|AbortError|play\(\) request was interrupted/i.test(`${(r && r.name) || ''} ${(r && r.message) || r || ''}`);
+
 // where(): a short line about the game's state (distance, region, leg), for the card.
 export function catchCrashes(where, beforeReload) {
   let shown = false;
@@ -39,6 +44,7 @@ version ${esc(VERSION)} (${esc(v)}) | ${esc(navigator.userAgent)}</pre>
   window.addEventListener('unhandledrejection', ev => {
     const r = ev.reason;
     if (r && /fetch|network|load failed|supabase/i.test(String(r.message || r))) return;   // offline: not a crash
+    if (isBenignAudioRejection(r)) return;   // a sound that would not start: never a stuck game (see above)
     show(`Promise: ${r && r.message ? r.message : r}`, stack(r));
   });
   return {

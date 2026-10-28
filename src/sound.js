@@ -8,7 +8,7 @@ function ac() {
     if (!AC) return null;
     ctx = new AC();
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  if (ctx.state !== 'running') { try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) { /* no sound: play on */ } }   // refused (backgrounded app): quietly try again at the next sound
   return ctx;
 }
 

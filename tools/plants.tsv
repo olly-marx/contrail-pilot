@@ -71,3 +71,33 @@ eras	src/eras.js	s/ERA_BASE_MIN = 20;/ERA_BASE_MIN = 30;/	era base minutes chang
 eras	src/eras.js	s/Math.pow(n, 1.5)/Math.pow(n, 2)/	era growth exponent changed
 controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 2, TIP_MIN_TAP = 2;/	a tip goes too early
 controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 20, TIP_MIN_TAP = 2;/	a tip stays too long
+releasegate	tests/PATHMAP	s/ src\/badges.js src\/eras.js |/ src\/badges.js |/	a tracked file left unmapped (src/eras.js)
+releasegate	tests/PATHMAP	s/ textfit crash$/ textfit/	a smoke test dropped
+releasegate	tests/PATHMAP	s/^group heavy-onboarding | \(.*\) | postrails$/group heavy-onboarding | \1 | NONE/	postrails no longer chosen for lessons/parcels
+releasegate	tests/PATHMAP	s/\(tools\/gate-plan.py\) | ALL$/\1 | NONE/	the harness no longer means the whole tier
+releasegate	tests/PATHMAP	s/| records-screen$/| records-screenX/	a group names a test that does not exist
+releasegate	tools/gate-plan.py	s/return 2 if unmapped else 0/return 0/	an unmapped file is no longer refused
+releasegate	tools/gate-plan.py	s/if path.startswith('tests\/') and path.endswith('.cjs') and/if False and/	a changed test no longer runs itself
+releasegate	tests/PATHMAP	s/^group sim-node-only | \(.*\) | NONE$/group sim-node-only | \1 | flight/	Node-only sim files wrongly pull browser tests
+releasegate	tests/PATHMAP	s/ walkthrough postrails school flightregion/ walkthrough school flightregion/	rules.js no longer pulls postrails
+releasegate	tests/PATHMAP	s/| sim-bank fares flight$/| fares flight/	imports of rules.js no longer pull the contract test
+releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails$/| onrails tipqueue l4hint/	GameScene no longer pulls postrails
+releasegate	tests/PATHMAP	s/ onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school/ onrails rails2 tipqueue l4hint walkthrough school/	the short-phone onrails run dropped
+season2-smoke@PART=Bweurope,Bnamerica,Bsasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B1)
+season2-smoke@PART=Bafrica,Bsamerica,Beasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B2)
+season2-smoke@PART=A,C,E,F,G	src/ui.js	s/if (tab === 'nature')/if (tab === 'natur')/	C: NATURE does not open
+season2-smoke@PART=A,C,E,F,G	src/pilot.js	s/const off = onlineOff();/const off = false;/	C: PILOT offers a name form
+season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/(best === null || c.era < best)) best = c.era;/false) best = c.era;/	F: nothing to fly yet is silent
+season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/export const moreToCome = save => /export const moreToCome = save => false \&\& /	E: no MORE TO COME card
+season2-smoke@PART=D	src/season.js	s/distanceShare: 0.7/distanceShare: 0/	D: a short flight is offered the crossing
+releasegate	tests/PATHMAP	s/ season2-smoke@PART=D / /	a season2-smoke piece dropped (section D unchecked)
+releasegate	tests/PATHMAP	s/season2-smoke@PART=D /season2-smoke@PART=D,C /	a season2-smoke section checked twice
+releasegate	tools/gate-plan.py	s/    for t in \[t for t in why if '@PART=' in t and t.split('@')\[0\] in why\]:/    for t in []:/	the pieces are repeated next to the whole test
+sim-hazards@GATE=1+PLANT=old	-	-	the old bird play (small form)
+sim-hazards@PLANT=old	-	-	the old bird play (full sweep)
+sim-player@GATE=1+PLANT=bob	-	-	no bob in the safe band (small form)
+sim-player@GATE=1+PLANT=classic	-	-	the classic planning (small form)
+audiocrash	src/crash.js	s/^    if (isBenignAudioRejection(r)) return;.*$//	the OLD handler: audio refusals show the stuck card
+audiocrash	src/crash.js	s/audio device|audiocontext|NotAllowedError|AbortError/zzz/	the audio filter no longer matches the iPhone message
+audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no longer catches a rejected resume()
+audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
