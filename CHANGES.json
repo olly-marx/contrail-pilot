@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-28-nature-flow",
+    "version": "0.16.5",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "NATURE has a guided start: claim your prizes, pick a land, tap a project's name to see a preview, and take your first project for FREE.",
+      "Tap any nature project to preview it: you see the trees and animals it will bring. When you buy one, it drops into the land.",
+      "Fixed: the guide's speech bubble no longer jumps from side to side."
+    ]
+  },
+  {
     "id": "2026-10-28-payoff-zoom",
     "version": "0.16.4",
     "date": "2026-10-28",
