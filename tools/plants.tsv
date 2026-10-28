@@ -93,3 +93,7 @@ season2-smoke@PART=D	src/season.js	s/distanceShare: 0.7/distanceShare: 0/	D: a s
 releasegate	tests/PATHMAP	s/ season2-smoke@PART=D / /	a season2-smoke piece dropped (section D unchecked)
 releasegate	tests/PATHMAP	s/season2-smoke@PART=D /season2-smoke@PART=D,C /	a season2-smoke section checked twice
 releasegate	tools/gate-plan.py	s/    for t in \[t for t in why if '@PART=' in t and t.split('@')\[0\] in why\]:/    for t in []:/	the pieces are repeated next to the whole test
+sim-hazards@GATE=1+PLANT=old	-	-	the old bird play (small form)
+sim-hazards@PLANT=old	-	-	the old bird play (full sweep)
+sim-player@GATE=1+PLANT=bob	-	-	no bob in the safe band (small form)
+sim-player@GATE=1+PLANT=classic	-	-	the classic planning (small form)

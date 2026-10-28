@@ -12,6 +12,14 @@ while IFS=$'\t' read -r test file expr label; do
   case "$test" in '#'*|'') continue ;; esac
   [ $# -eq 0 ] || case "$want" in *" $test "*|*" ${test%%@*} "*) ;; *) continue ;; esac   # a piece (test@KEY=VALUE) is selected by its base name too
   n=$((n + 1))
+  if [ "$file" = "-" ]; then   # an ENV plant: nothing to edit; the test token carries the switch (test@GATE=1+PLANT=old)
+    base=${test%%@*}; ev=${test#*@}; ev=${ev//+/ }
+    if [ -n "${DRY:-}" ]; then echo "applies      $test / $label (env plant)"; continue; fi
+    s=$(date +%s.%N); out=$(env $ev timeout "${LIMIT:-200}" node "tests/$base.cjs" 2>&1); rc=$?; e=$(date +%s.%N); t=$(awk -v a="$s" -v b="$e" 'BEGIN { printf "%.0f", b - a }')
+    if [ $rc -eq 0 ]; then echo "NOT CAUGHT   $test / $label (${t}s): the test still PASSES"; missed=1
+    else echo "caught       $test / $label (${t}s): $(printf '%s\n' "$out" | grep -iE 'FAIL|^ *- |Error' | head -n 1 | cut -c1-110)"; fi
+    continue
+  fi
   git ls-files --error-unmatch -- "$file" >/dev/null 2>&1 || { echo "SKIP $test / $label: $file is not tracked in git (commit it first: a plant must be undoable)"; missed=1; continue; }
   git diff --quiet -- "$file" || { echo "SKIP $test / $label: $file has uncommitted edits"; missed=1; continue; }
   keep=$(mktemp); cp "$file" "$keep"          # the file is put back from THIS copy, whatever happens
