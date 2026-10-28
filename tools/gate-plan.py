@@ -8,6 +8,7 @@
 
 tests/PATHMAP is DECLARED by subject (never inferred from which test mentions which file). Union over all matching groups; NONE = nothing to run, ALL = every browser test.
 A test whose own tests/NAME.cjs changed runs itself. Smoke tests always run.
+A NAME@PART=... token is one PIECE of NAME (run in parallel with its other pieces); when the whole NAME is selected too, its pieces are dropped (the whole covers them).
 A test token NAME@KEY=VALUE means "run tests/NAME.cjs with KEY=VALUE in its environment" (e.g. onrails@VP=375x667, the short-phone run); it is a separate run of the same file.
 """
 import fnmatch
@@ -104,6 +105,8 @@ def plan(files):
             why.setdefault(os.path.basename(path)[:-4], []).append(f'{path} changed')
         if not hit:
             unmapped.append(path)
+    for t in [t for t in why if '@PART=' in t and t.split('@')[0] in why]:   # the whole test is selected: its pieces would only repeat it
+        del why[t]
     return why, unmapped
 
 

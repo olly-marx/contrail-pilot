@@ -8,14 +8,17 @@ const fails = [], check = (c, m) => { if (!c) fails.push(m); };
 const py = args => spawnSync('python3', [path.join(root, 'tools/gate-plan.py'), ...args], { cwd: root, encoding: 'utf8' });
 const list = files => { const r = py(['--list', ...files]); return { code: r.status, tests: new Set(r.stdout.split('\n').filter(Boolean)), err: r.stderr }; };
 const browser = fs.readFileSync(path.join(root, 'tests/BROWSER'), 'utf8').split('\n').map(l => l.split('#')[0].trim()).filter(Boolean);
-const SMOKE = ['season2-smoke', 'hubscreen', 'firsthour-real', 'saveloss', 'records-screen', 'missionscreen', 'hudlayout', 'tourgiveup', 'textfit', 'crash'];
+// season2-smoke runs as 4 parallel pieces (PART=...), see tests/season2-smoke.cjs; the pieces together are all its sections, each exactly once.
+const S2_SECTIONS = ['A', 'Bweurope', 'Bnamerica', 'Bsasia', 'Bafrica', 'Bsamerica', 'Beasia', 'C', 'D', 'E', 'F', 'G'];
+const SMOKE = ['season2-smoke@PART=A,C,E,F,G', 'season2-smoke@PART=D', 'season2-smoke@PART=Bweurope,Bnamerica,Bsasia', 'season2-smoke@PART=Bafrica,Bsamerica,Beasia',
+  'hubscreen', 'firsthour-real', 'saveloss', 'records-screen', 'missionscreen', 'hudlayout', 'tourgiveup', 'textfit', 'crash'];
 
 // 0. The declarations lint clean on the real repo.
 const lint = py(['--lint']);
 check(lint.status === 0, `tests/PATHMAP lints clean: ${lint.stdout.trim().slice(0, 300)}`);
 // 1. A docs-only change needs just the smoke set (ten tests), nothing else.
 let r = list(['research/BACKLOG.md', 'CHANGES.json', 'src/version.js']);
-check(r.code === 0 && r.tests.size === 10 && SMOKE.every(t => r.tests.has(t)), `docs-only: exactly the 10 smoke tests: ${[...r.tests].join(' ')}`);
+check(r.code === 0 && r.tests.size === SMOKE.length && SMOKE.every(t => r.tests.has(t)), `docs-only: exactly the smoke set: ${[...r.tests].join(' ')}`);
 // 2. The nature screen pulls its declared tests, and not the heavy onboarding ones (src/animalart.js is art for the nature cards).
 r = list(['src/animalart.js']);
 check(['treepic'].every(t => r.tests.has(t)) && !r.tests.has('postrails') && SMOKE.every(t => r.tests.has(t)), `src/animalart.js -> treepic + smoke, no postrails: ${[...r.tests].join(' ')}`);
@@ -39,13 +42,23 @@ const pl = py(['--plan', 'src/wild.js']).stdout; check(/nature\tsrc\/wild\.js \(
 
 // 9. The sim chat's split of src/sim/*: files only Node loads need the Node gate and the smoke set, nothing more; the shared engine files pull the flight tests;
 //    rules.js (banking, missions hook, school, land, forest, the L2 patch) pulls the contract tests and the onboarding ones.
-r = list(['src/sim/player.js', 'src/sim/progression.js']); check(r.code === 0 && r.tests.size === 10, `Node-only sim files -> just the smoke set: ${[...r.tests].join(' ')}`);
+r = list(['src/sim/player.js', 'src/sim/progression.js']); check(r.code === 0 && r.tests.size === SMOKE.length, `Node-only sim files -> just the smoke set: ${[...r.tests].join(' ')}`);
 r = list(['src/sim/physics.js']); check(['collisions', 'sim-masks', 'hazards', 'flight'].every(t => r.tests.has(t)) && !r.tests.has('postrails'), `src/sim/physics.js -> collisions, sim-masks, hazards, flight; not postrails`);
 r = list(['src/sim/rules.js']); check(['sim-bank', 'fares', 'crystals', 'onrails', 'postrails', 'school', 'terrain', 'forestmeter', 'walkthrough'].every(t => r.tests.has(t)), `src/sim/rules.js -> the contract, banking, onboarding, school, land and forest tests: ${r.tests.size} tests`);
 r = list(['src/GameScene.js']); check(['onrails', 'tipqueue', 'l4hint', 'postrails', 'flight', 'hazards'].every(t => r.tests.has(t)), 'src/GameScene.js -> the tip-queue/onboarding tests and the flight tests');
 r = list(['src/eras.js']); check(r.tests.has('sim-bank') && r.tests.has('fares') && r.tests.has('eras'), 'src/eras.js (imported by rules.js) -> sim-bank, fares, eras');
 // 10. A variant token runs the same test with an environment setting (the short-phone onrails run).
 r = list(['src/tour.js']); check(r.tests.has('onrails') && r.tests.has('onrails@VP=375x667'), `src/tour.js -> onrails and onrails@VP=375x667`);
+
+// 11. The season2-smoke pieces cover every section exactly once (a section in no piece would silently stop being checked before a push; one in two would waste time).
+{
+  const pm = fs.readFileSync(path.join(root, 'tests/PATHMAP'), 'utf8').split('\n').find(l => l.startsWith('smoke |'));
+  const parts = pm.split(' | ')[1].split(' ').filter(t => t.startsWith('season2-smoke@PART=')).flatMap(t => t.slice('season2-smoke@PART='.length).split(','));
+  const count = id => parts.filter(x => x === id).length;
+  check(S2_SECTIONS.every(id => count(id) === 1) && parts.length === S2_SECTIONS.length, `season2-smoke pieces cover each section exactly once: ${parts.join(',')}`);
+  const src = fs.readFileSync(path.join(root, 'tests/season2-smoke.cjs'), 'utf8');
+  check(S2_SECTIONS.filter(id => id.length === 1).every(id => src.includes(`on('${id}')`)) && /on\('B' \+ k\)/.test(src), 'every section letter is guarded by on(...) in tests/season2-smoke.cjs');
+}
 
 if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
 console.log('PASS releasegate (docs-only = smoke, group unions, postrails only for lessons/parcels, harness = all, own test, unmapped refused)');

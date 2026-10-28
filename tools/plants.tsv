@@ -83,3 +83,13 @@ releasegate	tests/PATHMAP	s/ walkthrough postrails school flightregion/ walkthro
 releasegate	tests/PATHMAP	s/| sim-bank fares flight$/| fares flight/	imports of rules.js no longer pull the contract test
 releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails$/| onrails tipqueue l4hint/	GameScene no longer pulls postrails
 releasegate	tests/PATHMAP	s/ onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school/ onrails rails2 tipqueue l4hint walkthrough school/	the short-phone onrails run dropped
+season2-smoke@PART=Bweurope,Bnamerica,Bsasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B1)
+season2-smoke@PART=Bafrica,Bsamerica,Beasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B2)
+season2-smoke@PART=A,C,E,F,G	src/ui.js	s/if (tab === 'nature')/if (tab === 'natur')/	C: NATURE does not open
+season2-smoke@PART=A,C,E,F,G	src/pilot.js	s/const off = onlineOff();/const off = false;/	C: PILOT offers a name form
+season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/if (best === null || c.era < best)/if (false)/	F: nothing to fly yet is silent
+season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/export const moreToCome = save => /export const moreToCome = save => false \&\& /	E: no MORE TO COME card
+season2-smoke@PART=D	src/season.js	s/distanceShare: 0.7/distanceShare: 0/	D: a short flight is offered the crossing
+releasegate	tests/PATHMAP	s/ season2-smoke@PART=D / /	a season2-smoke piece dropped (section D unchecked)
+releasegate	tests/PATHMAP	s/season2-smoke@PART=D /season2-smoke@PART=D,C /	a season2-smoke section checked twice
+releasegate	tools/gate-plan.py	s/    for t in \[t for t in why if '@PART=' in t and t.split('@')\[0\] in why\]:/    for t in []:/	the pieces are repeated next to the whole test

@@ -18,7 +18,8 @@ while IFS=$'\t' read -r test file expr label; do
   sed -i "$expr" "$file"
   if cmp -s "$file" "$keep"; then rm -f "$keep"; echo "NOT APPLIED  $test / $label"; missed=1; continue; fi
   if [ -n "${DRY:-}" ]; then ch=$(diff "$keep" "$file" | grep -c '^>'); cp "$keep" "$file"; rm -f "$keep"; echo "applies      $test / $label ($ch line(s) changed)"; continue; fi
-  s=$(date +%s.%N); out=$(timeout "${LIMIT:-200}" node "tests/$test.cjs" 2>&1); rc=$?; e=$(date +%s.%N)
+  base=${test%%@*}; ev=""; [[ $test == *@* ]] && ev=${test#*@}   # test@KEY=VALUE runs tests/test.cjs with KEY=VALUE (a piece of a split test)
+  s=$(date +%s.%N); out=$(env $ev timeout "${LIMIT:-200}" node "tests/$base.cjs" 2>&1); rc=$?; e=$(date +%s.%N)
   cp "$keep" "$file"; rm -f "$keep"
   t=$(awk -v a="$s" -v b="$e" 'BEGIN { printf "%.0f", b - a }')
   if [ $rc -eq 0 ]; then echo "NOT CAUGHT   $test / $label (${t}s): the test still PASSES"; missed=1

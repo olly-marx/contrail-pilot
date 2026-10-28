@@ -19,11 +19,18 @@
 //   C  sed -i 's/const off = onlineOff();/const off = false;/' src/pilot.js -> "C: PILOT says"
 //   G  git show d1ca9d1:src/GameScene.js > src/GameScene.js (today's 0.12.2 code)  -> "G: startSchool before create()" (restore with git checkout HEAD -- src/GameScene.js)
 //   E  sed -i 's/export const moreToCome = save => /export const moreToCome = save => false \&\& /' src/crossings.js -> "E: ..."
+// PART=<ids> runs only those sections (test-speed, 2026-10-28: the release gate runs them as parallel pieces, see tests/PATHMAP). Ids: A, Bweurope, Bnamerica, Bsasia, Bafrica,
+// Bsamerica, Beasia, C, D, E, F, G. No PART = every section (CI, tools/test.sh). An unknown id FAILS (a typo must not run nothing). tests/releasegate.cjs checks the pieces
+// in tests/PATHMAP cover every section exactly once.
 // Run: python3 -m http.server 8000 & node tests/season2-smoke.cjs
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const STARTERS = ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia'];
+const SECTIONS = ['A', ...STARTERS.map(k => 'B' + k), 'C', 'D', 'E', 'F', 'G'];
+const WANT = process.env.PART ? process.env.PART.split(',').map(x => x.trim()).filter(Boolean) : null;
+if (WANT && (!WANT.length || WANT.some(x => !SECTIONS.includes(x)))) { console.log(`FAIL: PART=${process.env.PART} names a section that does not exist (have: ${SECTIONS.join(',')})`); process.exit(1); }
+const on = id => !WANT || WANT.includes(id);
 
 setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minutes (a hang is a failure)'); process.exit(1); }, 240000).unref();
 (async () => {
@@ -45,7 +52,9 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   };
 
   // A. fresh start
-  let p = await fresh();
+  let p;
+  if (on('A')) {
+  p = await fresh();
   const a = await p.evaluate(async () => ({ on: (await import('/src/config.js')).FEATURES.season2, tag: !!document.getElementById('s2Tag'), areas: (game.registry.get('save').areas || []).length, tut: game.registry.get('save').tutorialDone }));
   check(a.on && !a.tag && a.areas === 0 && !a.tut, `A: a fresh device plays season 2 (no SEASON 2 tag or reset link for players), no area chosen yet: ${JSON.stringify(a)}`);
   await p.evaluate(() => { game.registry.get('ui').start(); });
@@ -53,9 +62,11 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   const offered = await p.$$eval('#startChoice [data-area]', bs => bs.map(x => x.dataset.area));
   check(JSON.stringify(offered.sort()) === JSON.stringify([...STARTERS].sort()), `A: the six starter areas are offered: ${offered}`);
   await p.context().close();
+  }
 
   // B. one flight start per starter area
   for (const k of STARTERS) {
+    if (!on('B' + k)) continue;
     p = await fresh();
     await p.evaluate(() => { game.registry.get('ui').start(); });
     await p.waitForSelector(`#startChoice [data-area="${k}"]`, { timeout: 5000 }).catch(() => {});
@@ -77,6 +88,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   }
 
   // C. the tabs, for a player with a plane and an area
+  if (on('C')) {
   p = await fresh();
   await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM' });
   for (const [tab, id] of [['hangar', 'hangar'], ['nature', 'nature'], ['pilot', 'pilot'], ['boards', 'boards'], ['fly', 'title']]) {
@@ -96,7 +108,10 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   check(await p.evaluate(async () => !/back to LONDON/i.test(await (await fetch('/src/pilot.js')).text())), 'C: the Pilot LAPS text does not say "back to LONDON" (season 2 starts anywhere)');
   await p.context().close();
 
+  }
+
   // D. the offer card and a crossing flight
+  if (on('D')) {
   p = await fresh();
   const PLANTED = {}; for (const id of ['spruce', 'birch', 'oak', 'beech', 'pine', 'ash', 'rowan', 'hazel', 'willow', 'alder']) PLANTED[id] = 40;
   const STARS = ['weurope:night', 'weurope:shade10', 'weurope:kinds3'];   // S3: the area's 3 starred missions are a condition too
@@ -128,7 +143,10 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   }
   await p.context().close();
 
+  }
+
   // E. the end of this release
+  if (on('E')) {
   p = await fresh();
   await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania'], homeArea: 'weurope', city: 'AMSTERDAM' });
   await p.evaluate(() => game.registry.get('ui').showTitle());
@@ -136,7 +154,10 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   check(more.card && !more.cross, `E: every area open, the last era: the MORE TO COME card, no crossing: ${JSON.stringify(more)}`);
   await p.context().close();
 
+  }
+
   // F. an empty FLY screen is not silent: the next crossing opens in a later era
+  if (on('F')) {
   p = await fresh();
   await seed(p, { areas: ['weurope', 'nordic'], homeArea: 'weurope', city: 'STOCKHOLM', flightSeconds: 0 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
@@ -144,7 +165,10 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   check(/NEXT CROSSING/.test(later.later) && /1970s/.test(later.later) && !later.cross && !later.more, `F: nothing to fly yet: the card says the next crossing opens in the 1970s: ${JSON.stringify(later)}`);
   await p.context().close();
 
+  }
+
   // G. the 0.12.2 live crash (iPhone: `undefined is not an object (evaluating 'save.areas')` in startSchool): a tap on TAKE OFF / the how-to
+  if (on('G')) {
   // card before the scene's create() has run finds no state and no save; the scene must just restart, not throw.
   p = await fresh();
   const early = await p.evaluate(() => { const proto = game.scene.getScene('game').constructor.prototype, out = {};
@@ -154,6 +178,8 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   check(early.startSchool.err === null && early.startSchool.called && early.startSchool.called.mode === 'school', `G: startSchool before create() restarts into school, no crash: ${JSON.stringify(early.startSchool)}`);
   check(early.startFlight.err === null && early.startFlight.called && early.startFlight.called.go === true, `G: startFlight before create() restarts, no crash: ${JSON.stringify(early.startFlight)}`);
   await p.context().close();
+
+  }
 
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
   console.log({ fails });
