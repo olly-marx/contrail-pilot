@@ -63,7 +63,11 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'] }), { width: 390, height: 844 });   // (the earlier rails already shown, as in play)
   { let h = null; for (let i = 0; i < 20; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); }   // the hub's 'Something NEW!' lights NATURE: tap what is lit
     if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(600); }
-  a = null; for (let i = 0; i < 40; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
+  // A player taps what is lit (the 'NEW: Tree Planting! Tap i' spotlight first, closing its info card) until the parcels step.
+  a = null; for (let i = 0; i < 60; i++) { a = await audit(p); if (a.up && /parcels/i.test(a.text)) break;
+    if (await p.isVisible('#iClose')) await p.click('#iClose');
+    else if (a.up) { const ok = await p.$('#tour .tbubble .btn:not([hidden])'); if (ok && await ok.isVisible()) await ok.click(); else if (a.ring) await p.mouse.click(a.ring.x, a.ring.y); }
+    await p.waitForTimeout(250); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/L5-free-parcels.png` });
   check(a.up && /parcels/i.test(a.text) && a.reach.length === 1 && /FREE/.test(a.reach[0] || '') && a.inView, `L5: the rails point at the FREE parcels, the only tappable thing, on screen ("${a.text}"; ${a.reach.join(' / ')})`);
   if (a.ring) { await p.mouse.click(a.ring.x, a.ring.y); await p.waitForTimeout(700); }
