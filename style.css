@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Pixel';
-  src: url('vendor/fonts/press-start-2p.woff2') format('woff2');
+  src: url('vendor/fonts/contrail-pixel.woff2') format('woff2');   /* Press Start 2P + Maori macrons, renamed (OFL Reserved Font Name): tools/art/add_macrons.py */
   font-display: block;
 }
 

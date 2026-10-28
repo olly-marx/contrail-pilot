@@ -1,0 +1,17 @@
+id|name|kind|pose
+redkangaroo|red kangaroo, big red-brown kangaroo with long feet and a thick tail|animal|ground
+platypus|platypus, brown with a flat duck bill and a flat tail|animal|ground
+quokka|quokka, a small round brown wallaby with a smiling face|animal|ground
+koala|koala, grey with big fluffy ears and a black nose|animal|ground
+bilby|greater bilby, grey with very long rabbit-like ears and a black-and-white tail|animal|ground
+numbat|numbat, small reddish marsupial with white stripes across its back and a bushy tail|animal|ground
+woylie|woylie, a small brown rat-kangaroo with a black-tipped tail|animal|ground
+bettong|burrowing bettong, a small grey-brown rat-kangaroo|animal|ground
+nailtail|bridled nailtail wallaby, a small grey wallaby with a white stripe from the neck|animal|ground
+phascogale|red-tailed phascogale, a tiny grey marsupial with a red-brown and black brush tail|animal|ground
+nquoll|northern quoll, a small brown marsupial with white spots|animal|ground
+devil|Tasmanian devil, black with a white chest stripe and pink ears|animal|ground
+cassowary|southern cassowary, a huge black bird with a blue neck, red wattles and a tall casque|bird|standing
+hairynosed|northern hairy-nosed wombat, a sturdy grey-brown wombat with a hairy nose|animal|ground
+gouldian|Gouldian finch, green back, yellow belly, purple chest, red face|bird|flying
+kidunnart|Kangaroo Island dunnart, a tiny grey-brown mouse-like marsupial|animal|ground

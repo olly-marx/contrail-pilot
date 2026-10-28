@@ -10,7 +10,8 @@ import { sfx } from './sound.js';
 import { LINES, tabOf } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject } from './nature.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
-import { CITIES } from './cities.js';
+import { CITIES, S2_CITIES } from './cities.js';
+import { AREAS } from './areas.js';
 import { animalDir, animalPortrait } from './animalart.js';
 import { meterHTML } from './ui.js';
 import { onSwipe } from './swipe.js';
@@ -26,11 +27,15 @@ const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';
 // Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
-const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest'];   // PixelLab backdrops, 2026-10-24
+const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush', 'steppe'];   // PixelLab backdrops, 2026-10-24
 
-// Been there: the UK always; other regions once flown over, or landed in one of their cities.
+// The land a player started in (season 2: their home area's start city), so NATURE opens there (the regions run,
+// 2026-10-28: a Punta Arenas or Auckland start opened NATURE on the UK's woodland).
+export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = (a && a.start) || save.city, c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
+// Been there: the UK always; the home land; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {
   if (region === 'woodland') return true;
+  if (homeRegion(save) === region) return true;
   if ((save.discovered || {})[region]) return true;   // flown over (GameScene.setRegion)
   return (save.visited || []).some(n => (CITIES.find(c => c.name === n) || {}).region === region);   // src/cities.js
 }
@@ -39,7 +44,7 @@ export class WildScreen {
   constructor(ui) {
     this.ui = ui;
     this.save = ui.save;
-    this.region = 'woodland';
+    this.region = null;   // the home land until a tab is chosen (render)
     $('wInfoClose').onclick = () => { $('wInfo').hidden = true; };
   }
 
@@ -51,7 +56,8 @@ export class WildScreen {
 
   render() {
     const s = this.save;
-    if (!discovered(s, this.region)) this.region = 'woodland';
+    if (!this.region) this.region = homeRegion(s) || 'woodland';
+    if (!discovered(s, this.region)) this.region = homeRegion(s) || 'woodland';
     $('wSeeds').textContent = s.seeds; $('wCrystals').textContent = s.crystals || 0;
     $('wRegions').innerHTML = Object.entries(REGION_NAMES).map(([id, name]) => {
       const open = discovered(s, id);
