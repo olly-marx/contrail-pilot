@@ -60,7 +60,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.click('#tabFly'); await p.waitForTimeout(400); await p.click('#hubNext'); await p.waitForTimeout(700);
   check(await p.evaluate(() => !document.getElementById('nature').hidden && !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]')), 'L5: NEXT opens NATURE on the tab that sells the parcels, after viewing another land');
   await p.close();
-  p = await open(save(l5), { width: 390, height: 844 });
+  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'] }), { width: 390, height: 844 });   // (the earlier rails already shown, as in play)
   { let h = null; for (let i = 0; i < 20; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); }   // the hub's 'Something NEW!' lights NATURE: tap what is lit
     if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(600); }
   a = null; for (let i = 0; i < 40; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
@@ -74,7 +74,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // An empty missions list says what is missing (audit #8): every easia mission done, no crossing offered yet.
   p = await open(save({ landings: 12, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['*'] }), { width: 390, height: 844 });
   await p.evaluate(async () => { const M = await import('./src/missions2.js'), s = JSON.parse(localStorage.getItem('contrailPilot.v2'));
-    s.missionsDone = [...s.missionsDone, ...M.TEMPLATES.map(t => `easia:${t.id}`)]; s.daily = null; localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); });
+    for (let i = 0; i < 10 && M.visible(s).length; i++) s.missionsDone = [...s.missionsDone, ...M.visible(s).map(m => m.key)]; s.daily = null; /* (every tier, as the game keys them) */ localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); });
   await p.reload(); await ready(p); await p.waitForTimeout(800);
   await p.click('#tabMissions'); await p.waitForTimeout(600);
   const ml = await p.evaluate(() => document.getElementById('mList').innerText);
