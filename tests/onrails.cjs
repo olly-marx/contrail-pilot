@@ -55,7 +55,7 @@ const W = 390, H = 844;
     const k = cv.getBoundingClientRect(), sx = k.width / 288, sy = k.height / 512, pr = { l: k.left + s.plane.x * sx, t: k.top + (s.plane.y - 8) * sy, r: k.left + (s.plane.x + 58) * sx, b: k.top + (s.plane.y + 22) * sy };
     const cr = !coach.hidden && coach.classList.contains('tappable') ? coach.getBoundingClientRect() : null;
     const ahead = (s.storms || []).filter(st => st.rects[0].x + st.rects[0].width > s.plane.x - 4).sort((a, b) => a.rects[0].x - b.rects[0].x)[0];
-    const issr = (s.issrs || []).find(i => i.x + i.width > s.plane.x && i.x < s.plane.x + 200);
+    const issr = (s.issrs || []).find(i => i.x + i.width > s.plane.x && i.x < s.plane.x + (window.__avoid ? 450 : 200));   // (avoiding: seen from further, to steer clear in time)
     return { state: s.state, school: !!s.school, y: s.plane.y, vy: s.plane.vy, day: s.isDay, results: !document.getElementById('results').hidden,
       okUp: !coach.hidden && !ok.hidden && !ok.disabled, tapStep: !coach.hidden && coach.classList.contains('waiting') && ok.hidden,
       skyH: 464, toRunway: s.nextAirport ? s.nextAirport.worldX - s.distancePx : 1e9,
@@ -65,7 +65,7 @@ const W = 390, H = 844;
       wild: (s.life || []).filter(x => x.kind && !/animal-(cow|sheep)/.test(x.kind)).length };
   });
   let avoid = false;
-  const target = v => v.toRunway < 40 && v.toRunway > -220 ? 1e9 : v.gap != null ? v.gap
+  const target = v => v.toRunway < 40 && v.toRunway > -220 ? 1e9 : avoid && v.issr ? (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 40) : v.gap != null ? v.gap
     : v.issr ? (v.day && !avoid ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
     : v.toRunway < 700 ? v.skyH - 30 : v.skyH * 0.45;
   const fly = async (label, seconds, rules = {}) => {
@@ -107,7 +107,7 @@ const W = 390, H = 844;
   await step('R10-takeoff2', /animals/i, null);
   // R10-R11: flight 2, then NATURE and its free first project.
   const L2 = () => p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).missionsDone || []).includes('L2'));
-  avoid = MISS_L2;
+  avoid = MISS_L2; await p.evaluate(a => { window.__avoid = a; }, avoid);
   await fly('flight 2', 240, { noTurb: true });
   let flights = 1;
   if (MISS_L2) {   // missed once: still pending, and the results don't lead to NATURE yet; FLY ON for the second try
@@ -119,7 +119,7 @@ const W = 390, H = 844;
     if (await p.evaluate(() => !document.getElementById('title').hidden)) await p.click('#goBtn');
     await fly('flight 2, second try (missed again)', 240, { noTurb: true }); flights++;
   }
-  avoid = false;
+  avoid = false; await p.evaluate(() => { window.__avoid = false; });
   const l2 = await L2();
   check(l2, `L2 is done after ${flights} flight(s) (${MISS_L2 ? 'two misses: the fallback' : 'the guaranteed daytime icy patch'})`);
   if (!l2) { await b.close(); console.log(`FAIL onrails:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (NATURE needs it: the rest would pass or fail by accident)
