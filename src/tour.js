@@ -53,7 +53,7 @@ export class Tour {
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
-    if (FEATURES.season2 && !this.done('name')) this.markDone('name');   // season 2 plays offline: no pilot name yet
+    if (FEATURES.season2 && !window.CP_PREVIEW && !this.done('name')) this.markDone('name');   // (preview: the name step is shown, local only)   // season 2 plays offline: no pilot name yet
     if (where === 'title' && !this.done('name') && !getPilot()) return this.run('name', this.nameSteps());
     if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     // Season 2: the ON-RAILS onboarding (the user, 2026-10-27: "the ONLY thing they should be able to do is what you want
@@ -86,12 +86,18 @@ export class Tour {
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
     // R11: after flight 2: NATURE opens; its first project is FREE; how nature works.
-    if (res && d('L2') && !this.done('r-res2')) return ['r-res2', [{ target: '#againBtn', text: tip('rail-nature'), tap: true }]];
+    // N0-N5, the NATURE introduction (the user approved, 2026-10-28): one idea per step, in the order a child asks - what is
+    // this place, why animals, do this one thing, see the result - claim the prizes first, then open NATURE.
+    if (res && d('L2') && !this.done('r-res2')) return ['r-res2', [
+      { skipIf: () => !document.querySelector('#rRewards .btn.claim.all'), target: '#rRewards .btn.claim.all', text: tip('rail-claim-all'), tap: true },   // CLAIM ALL when there are several
+      { skipIf: () => !!document.querySelector('#rRewards .btn.claim.all') || !document.querySelector('#rRewards .btn.claim'), target: '#rRewards .btn.claim', text: tip('rail-claim-all'), tap: true },
+      { target: '#againBtn', text: tip('rail-nature'), tap: true }]];
     if (where === 'nature' && d('L2') && !this.done('r-nature')) return ['r-nature', [
+      { target: '#wScene', text: tip('rail-nat-land'), ok: true },
+      { target: '#wProjects .line.project.freeline .w-pname', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .line.project.previewing') },
       { target: '#wProjects [data-project].free', text: tip('rail-project'), tap: true },
-      { target: '#wScene', text: tip('rail-project-done'), ok: true },
-      { target: '#wMeter', text: tip('rail-nature-how'), ok: true },
-      { target: '#tabFly', text: tip('tour-lookout'), tap: true }]];
+      { target: '#wMeter', text: tip('rail-nat-bio'), ok: true },
+      { target: '#tabFly', text: tip('rail-nat-home'), tap: true }]];
     // R12: a landing past an airport: the bonus payoff.
     if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMultRow', text: tip('rail-bonus'), ok: true }]];
     // R13: once lesson L3 is done: the hangar's SYSTEMS.
@@ -187,7 +193,7 @@ export class Tour {
     // The target fully on screen first, always (the user's screenshot: the hangar opened half-way down, the target off-screen).
     const vr = t.getBoundingClientRect();
     if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
-    this.target = t;
+    this.target = t; this.side = null;   // (a new step decides its bubble's side afresh)
     this.keepVisible();
     this.el.querySelector('.tbubble p').innerHTML = st.text;
     const ok = this.el.querySelector('.tbubble .btn');
@@ -245,11 +251,19 @@ export class Tour {
     set(this.el.querySelector('.tring'), { left: `${x0}px`, top: `${y0}px`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
     // The bubble (Captain Contrail + the sentence) goes on the side with more room, then is CLAMPED inside the screen and
     // kept off the target (the user's screenshot, 2026-10-27: the bubble's text was cut off above the page).
-    const below = r.top + r.height / 2 < H / 2, b = this.el.querySelector('.tbubble');
+    // Measured WITHOUT the target's pulse (a transform: scale), and the side is decided ONCE per step: the user's live bug,
+    // 2026-10-28, the bubble jumped above/below the pulsing FREE button as its box grew and shrank.
+    const cy = r.top + r.height / 2, hh = (this.target.offsetHeight || r.height) / 2;
+    const u0 = Math.max(0, cy - hh - pad), u1 = Math.min(H, barTop, cy + hh + pad), b = this.el.querySelector('.tbubble');
     set(b, { top: '0px', bottom: 'auto' });
     const bh = b.getBoundingClientRect().height, gap = 10;
-    let top = below ? y1 + gap : y0 - gap - bh;
-    if (top < 4 || top + bh > H - 4) top = below ? y0 - gap - bh : y1 + gap;   // no room on that side: the other side
+    if (this.side == null) {
+      let below = cy < H / 2;
+      const t0 = below ? u1 + gap : u0 - gap - bh;
+      if (t0 < 4 || t0 + bh > H - 4) below = !below;   // no room on that side: the other side (decided once)
+      this.side = below ? 'below' : 'above';
+    }
+    let top = this.side === 'below' ? u1 + gap : u0 - gap - bh;
     top = Math.max(4, Math.min(H - 4 - bh, top));
     set(b, { top: `${top}px` });
     // The captain points AT the target: mirrored when the target is to the left of the bubble's middle.

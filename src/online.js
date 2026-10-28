@@ -46,6 +46,7 @@ async function session() {
 // Save (or change) this device's pilot name. Needs the internet: the word filter lives in the
 // database. Returns { ok: true } or { ok: false, why: 'rude' | 'offline' }.
 export async function savePilot(p) {
+  if (typeof window !== 'undefined' && window.CP_PREVIEW) { write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag }); return { ok: true }; }   // ?preview=1: local only, nothing sent
   if (noOnline()) return { ok: false, why: 'offline' };
   try {
     const s = await session(), c = db();

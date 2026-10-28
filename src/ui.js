@@ -291,7 +291,7 @@ export class UI {
     $('tabbar').hidden = !id;
     $('hubBack').hidden = true;   // (the bar's HOME replaces the old floating button)
     if (FEATURES.season2) {
-      const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: false, boards: hubRevealed(this.save, 'boards') };
+      const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: !!window.CP_PREVIEW, boards: hubRevealed(this.save, 'boards') };
       document.querySelectorAll('#tabbar [data-go]').forEach(b => { b.hidden = !show[b.dataset.go]; });
       $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';
     }
