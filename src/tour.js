@@ -85,7 +85,7 @@ export class Tour {
       { target: '#tabFly', text: tip('tour-lookout'), tap: true }]];
     // R12: a landing past an airport: the bonus payoff.
     if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMultRow', text: tip('rail-bonus'), ok: true }]];
-    // R13: after flight 3: the hangar's SYSTEMS.
+    // R13: once lesson L3 is done: the hangar's SYSTEMS.
     if (hub && d('L3') && !this.done('r-systems')) return ['r-systems', [
       { target: '#tabHangar', text: tip('rail-systems'), tap: true },
       { target: '#hFleet [data-ftab="systems"]', text: tip('rail-systems-tab'), tap: true },
