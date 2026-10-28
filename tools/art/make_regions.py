@@ -27,6 +27,8 @@ GROUND = {
     # Added 2026-10-24 (plane build session): the four regions flown over without strips until 0.10.6.
     'savanna':       dict(top=('#f0d488', '#e0bc60', '#c8a048', '#a8843a', '#86682c'), soil=('#b0562e', '#8e4424', '#c8703e', '#e0a070'), tufts='#a8843a'),
     'rainforest':    dict(top=('#4aa83e', '#36902e', '#267a24', '#1c621c', '#144c16'), soil=('#7a3a24', '#5e2c1c', '#94503a', '#b07858'), tufts='#144c16'),
+    # Aotearoa New Zealand, the Island forest (2026-10-28): lush green on dark volcanic soil, snowy peaks behind.
+    'islandforest':  dict(top=('#7acc6a', '#5ab450', '#3e9a3e', '#2e7e32', '#226428'), soil=('#4a3a32', '#3a2c26', '#5e4a3e', '#8a7466'), tufts='#226428'),
     'ocean':         dict(water=('#bfe6f4', '#7cc4e4', '#3e98cc', '#2a7cb4', '#1c5e94')),   # all water: nothing grows, nothing is planted
     'ice':           dict(top=('#ffffff', '#eef6fc', '#d8e8f4', '#bcd4e8', '#9cbcd8'), soil=('#a8cce4', '#8cb4d4', '#c4e0f0', '#ffffff'), cracks=True),
 }
@@ -42,6 +44,7 @@ HILLS = {
     'tundra':        dict(kind='peaks', back=('#8a8a96', '#ffffff'), front=('#5a5a66', '#787884'), detail='lava'),
     'savanna':       dict(kind='low', back=('#e8d8a8', '#f4e8c4'), front=('#d4b878', '#e4cc90'), detail='acacia'),
     'rainforest':    dict(kind='canopy', back=('#7ab878', '#98cc94'), front=('#2e8a3a', '#46a250'), detail='mist'),
+    'islandforest':  dict(kind='peaks', back=('#b8c8d0', '#ffffff'), front=('#3e8a4e', '#5aa464'), detail='mist'),
     'ocean':         dict(kind='swell', back=('#a8d8ec', '#d4eef8'), front=('#7cc4e4', '#bfe6f4')),
     'ice':           dict(kind='peaks', back=('#cfe2f0', '#ffffff'), front=('#e8f2fa', '#ffffff')),
 }
