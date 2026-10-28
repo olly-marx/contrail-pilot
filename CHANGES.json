@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-28-skylines",
+    "version": "0.16.3",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "Fixed: the guided steps no longer get stuck on a short phone. The glowing button always stays on screen, and you can scroll the page behind the dimmed layer.",
+      "New: when you pick your first upgrade, your plane shows as it was, then the new part slides on with a sparkle.",
+      "Every city now has its own skyline picture, including the new ones like Melbourne, Wellington and Tromso."
+    ]
+  },
+  {
     "id": "2026-10-28-audit-2",
     "version": "0.16.2",
     "date": "2026-10-28",
