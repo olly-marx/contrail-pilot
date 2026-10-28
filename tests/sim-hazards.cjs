@@ -10,6 +10,8 @@
 // GATE form (tools/gate.sh sets GATE=1): 5 of the 12 skies - 1, 4, 6, 7, 12 - the skies where the old play strikes (measured 2026-10-28: PLANT=old
 // hits 5 of its 7 flocks there, clean hits 0 of 13), the same 0.10 rate threshold, at least 10 flocks met (the power check, 15 for all 12 skies). The full 12
 // skies (clean 2 of 29 flocks = 0.069) stay as the DEEP form (no GATE).
+// CAVEAT (sim chat, 2026-10-28): those 5 skies were chosen FOR the plant, so the clean 0 of 13 there says nothing about the LIVE strike rate; measuring that is
+// the full sweep's job (DEEP). The small form only guarantees that a bird-logic regression of the old kind cannot pass the gate.
 // Run: node tests/sim-hazards.cjs
 (async () => {
   const { simulate } = await import('../src/sim/simulate.js');
