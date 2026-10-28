@@ -63,7 +63,7 @@ const W = 390, H = 844;
       issr: issr ? { top: issr.y, bot: issr.y + issr.height } : null,
       covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), turbs: (s.turbs || []).length,
       wild: (s.life || []).filter(x => x.kind && !/animal-(cow|sheep)/.test(x.kind)).length,
-      lesson: (l => l && { ahead: l.x - (s.plane.x + 50), drawn: l.view ? l.view.alpha * (l.view.visible ? 1 : 0) : 0, day: s.isDay })((s.issrs || []).find(i => i.height === 100 && i.width >= 450)) };   // flight 2's guaranteed patch (rules.js l2Patch)
+      lesson: (l => l && { ahead: l.x - (s.plane.x + 50), drawn: l.view ? l.view.alpha * (l.view.visible ? 1 : 0) : 0, day: s.isDay })((s.issrs || []).find(i => i.height === 200 && i.width >= 560)) };   // flight 2's guaranteed patch (rules.js l2Patch)
   });
   let avoid = false;
   const target = v => v.toRunway < 40 && v.toRunway > -220 ? 1e9 : avoid && v.issr ? (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 40) : v.gap != null ? v.gap
