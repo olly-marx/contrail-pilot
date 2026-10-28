@@ -123,3 +123,36 @@ postrails	src/GameScene.js	s/const dropToast = () => { if (this.explaining/const
 era5-knobs	src/sim/physics.js	s/wobble: false }/wobble: true }/	bird detection ignored
 finance	src/finance.js	s/(save.landings || 0) - x.at >= b.landings/(save.landings || 0) - x.at >= 0/	bonds pay at once
 hangar-feedback	src/statbars.js	s/  if (r.then === r.now) return 'same';//	a no-change bar shows a red 0%
+# ---- the game chat's plants (onboarding rails, preview, NATURE, regions, starters, hangar rails; 2026-10-28) ----
+starterfill	src/startchoice.js	s#save\.visited = \[name\];#void 0;#	no visited reset at the start choice
+starterfill	src/missions2.js	s#c !== city && c !== home)#c !== city)#	the home city can be a mission target
+homenature	src/wild.js	s#if (!this.region) this.region = homeRegion(s) || 'woodland';#if (!this.region) this.region = 'woodland';#	NATURE opens on the UK, not home
+homenature	src/wild.js	s#const uk = this.region === (homeRegion(s) || 'woodland');#const uk = this.region === 'woodland';#	the planting card UK-only
+onrails	src/hangar.js	s#toFly: false, rails:#toFly: free \&\& !!s.areas, rails:#	the payoff goes to FLY
+onrails	src/tour.js	s#text: tip('rail-free-tap'),#skipIf: () => true, text: tip('rail-free-tap'),#	R5 without the tap-to-see step
+onrails	style.css	s#background: rgba(10, 10, 30, 0.62); pointer-events: auto;#background: rgba(10, 10, 30, 0.62); pointer-events: none;#	the dim lets taps through
+onrails	src/upgrades.js	s#{ gapTurb: 0 }#{}#	turbulence before L2
+onrails	src/tour.js	s#  keepVisible() {#  keepVisible() { return;#	rails targets not kept above the tab bar
+onrails	style.css	s#.payoff.arrive .pay-plane { transform: scale(1.8); }#.payoff.arrive .pay-plane { transform: none; }#	no payoff zoom
+onrails	src/hangar.js	s#lab.style.left = `${Math.round(x)}px`;#lab.style.left = `${Math.round(x) + 140}px`;#	payoff label off the part
+onrails	src/hangar.js	s#) > 60) {#) > -1) {#	payoff part = the whole picture
+onrails	src/sim/rules.js	s#pw, h).entered = true;#pw, h);#	the L2 lesson patch hidden
+onrails	src/wild.js	s#  ghost(id) { this.clearGhosts();#  ghost(id) { return; this.clearGhosts();#	no NATURE tap-preview ghost
+onrails	src/wild.js	s#  arrive(id) { this.f.#  arrive(id) { return; this.f.#	no NATURE buy arrival
+onrails@MISS_L2=1	src/missions2.js	s#return lm\[cur.id\] >= 2 ?#return false ?#	no never-stall fallback
+lessonfallback	src/missions2.js	s#return lm\[cur.id\] >= 2 ?#return false ?#	no never-stall fallback
+l2fallback	src/missions2.js	s#return lm\[cur.id\] >= 2 ?#return false ?#	no L2 fallback
+freeparcels	src/upgrades.js	s#&& (save.missionsDone || \[\]).includes('L4') && !save.freeParcelsGiven#\&\& false \&\& !save.freeParcelsGiven#	no free first parcels
+rails2	src/tour.js	s#if (hub && s2Revealed(s, 'boards')#if (false \&\& s2Revealed(s, 'boards')#	no R14 records step
+rails2	index.html	s#<p class="small skiphint" id="rSkip">tap to skip</p>#<p class="small skiphint" id="rSkip" style="position:fixed;bottom:-30px">tap to skip</p>#	the skip hint off screen
+rails2	src/tour.js	s#el.querySelectorAll('.tdim, .tbubble').forEach(d => {#\[\].forEach(d => {#	no scroll through the rails dim
+bubblestill	src/tour.js	s#    if (this.side == null) {#    this.side = null; if (this.side == null) {#;s#hh = (this.target.offsetHeight || r.height) / 2;#hh = r.height / 2;#	the bubble re-decided per frame, with the pulse
+preview	src/season2.js	s#const store = PREVIEW ? {#const store = false ? {#	preview writes through to the real save
+tipqueue	src/GameScene.js	s#  dropTips() {#  dropTips() { return;#	unshown tips not unmarked
+tipqueue	src/GameScene.js	s#^    dropToast();$#    void 0;#;s#this.stripWatch.observe(coachEl);#void 0;#	the toast stays under the strip
+l4hint	src/GameScene.js	s#else if (skipThis && toAirport < AIRPORT.signFrom)#else if (false \&\& skipThis)#	the landing call on an L4 flight
+railwords	index.html	s#<span>Landing bonus</span>#<span>Long flight</span>#	the bonus row's old label
+railwords	src/tips.js	s#Forecasting shows icy air sooner. Save up for it!#Forecasting shows icy air sooner. Buy it when you can!#	the systems rail pushes a purchase
+season2	src/areas.js	s#aotearoa: { name: 'Aotearoa New Zealand', starter: true,#aotearoa: { name: 'Aotearoa New Zealand', starter: false,#	NZ not a starter
+sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
+# macrons: not sed-able (a font edit). Proven 2026-10-28 by deleting U+012B from vendor/fonts/contrail-pixel.woff2's cmap (fontTools) -> FAIL.
