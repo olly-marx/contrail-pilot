@@ -2,6 +2,7 @@
 // Supabase down, the game plays on, and finished flights wait in a small outbox on the device.
 // The key below is the PUBLISHABLE key: safe in a web page. Row-level security in
 // supabase/migrations/ decides what it can do (write your own player and flights, read boards).
+import { VERSION } from './version.js';
 const SUPABASE_URL = 'https://mkucbsjzbipjaiqzrlkj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Oa3FSfnjmRu2xL_RmiKOqA_j3tEfgMd';
 const PILOT_KEY = 'contrailPilot.pilot';     // { first, word, tag } once saved online
@@ -22,10 +23,10 @@ export const randomTag = () => 10 + Math.floor(Math.random() * 90);
 const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } };
 export const getPilot = () => read(PILOT_KEY, null);
-// Online is OFF by design (src/newplayer.js, the plane build's test mode, sets window.__CP_NO_ONLINE = true before any module runs):
+// Online is off ONLY in the tester modes (src/newplayer.js sets window.__CP_NO_ONLINE = true before any module runs; the shipped game never does), and in ?preview=1 (nothing is saved or sent):
 // nothing is queued, sent, retried or announced, and no network is touched.
-const noOnline = () => typeof window !== 'undefined' && window.__CP_NO_ONLINE === true;
-export const onlineOff = noOnline;   // the PILOT and BOARDS screens say so instead of 'No internet right now' (season 2 is offline by design)
+const noOnline = () => typeof window !== 'undefined' && (window.__CP_NO_ONLINE === true || window.CP_PREVIEW === true);   // ?preview=1 saves and sends NOTHING
+export const onlineOff = noOnline;   // the PILOT and BOARDS screens say so instead of 'No internet right now'
 
 let client = null;
 function db() {
@@ -87,15 +88,18 @@ const say = ev => listeners.forEach(fn => { try { fn(ev); } catch (e) { /* a lis
 // What a failed send means. A bad flight (data / constraint error, Postgres classes 22 and 23) will never
 // be accepted: drop it. Everything else (no network, server down, a rate or daily limit) is worth trying again.
 const permanent = e => /^(22|23)/.test(String((e && e.code) || ''));
-const noBatch = e => e && (e.code === 'PGRST202' || e.code === '42883' || /send_flights/.test(String(e.message || '')) && /find|exist/.test(String(e.message || '')));
+// The database refuses a game older than the season's minimum version (supabase/drafts/20261027020000_season_controls.sql):
+// SQLSTATE CP001, 'update required'. Retrying is pointless, so the game asks the player to update instead.
+const tooOld = e => e && (e.code === 'CP001' || /update required/.test(String(e.message || '')));
 const rateLimited = e => e && /too many flights/.test(String(e.message || ''));
 
-let flushing = false, retryTimer = null, recovering = false;
-// Send the outbox: whole batches through send_flights (one call, however many flights); if the database
-// has no such function yet, one by one (5 a minute). Returns { sent, stalled }.
+let flushing = false, retryTimer = null, recovering = false, updateNeeded = false;
+const needUpdate = () => { if (!updateNeeded) { updateNeeded = true; say({ type: 'update' }); } };
+// Send the outbox: whole batches through send_flights (one call, however many flights); if a batch has one bad
+// flight, one by one (also send_flights: the database takes no direct inserts) to find and drop it. Returns { sent, stalled }.
 export async function flush() {
   if (noOnline()) return { sent: 0, stalled: false };
-  if (flushing || !getPilot() || !outboxSize()) return { sent: 0, stalled: false };
+  if (updateNeeded || flushing || !getPilot() || !outboxSize()) return { sent: 0, stalled: false };
   flushing = true;
   let sent = 0, stalled = false, wait = 15000;
   const drop = n => write(OUTBOX_KEY, read(OUTBOX_KEY, []).slice(n));   // new flights are added at the END while we wait
@@ -104,22 +108,24 @@ export async function flush() {
     for (let box = read(OUTBOX_KEY, []), single = false; box.length; box = read(OUTBOX_KEY, [])) {
       if (!single) {
         const batch = box.slice(0, OUTBOX_MAX);
-        const { error } = await db().rpc('send_flights', { batch });
+        const { error } = await db().rpc('send_flights', { batch, client: VERSION });
         if (!error) { drop(batch.length); sent += batch.length; continue; }
-        if (!(noBatch(error) || permanent(error))) { stalled = true; if (rateLimited(error)) wait = 10 * 60 * 1000; break; }
-        single = true;   // an old database, or one bad flight in the batch: find out flight by flight
+        if (tooOld(error)) { needUpdate(); stalled = true; break; }
+        if (!permanent(error)) { stalled = true; if (rateLimited(error)) wait = 10 * 60 * 1000; break; }
+        single = true;   // one bad flight in the batch: find out flight by flight
       }
-      const { error } = await db().from('flights').insert(box[0]);
+      const { error } = await db().rpc('send_flights', { batch: [box[0]], client: VERSION });
       if (!error) { drop(1); sent++; continue; }
+      if (tooOld(error)) { needUpdate(); stalled = true; break; }
       if (permanent(error)) { drop(1); continue; }   // never acceptable: stop it blocking the rest
-      stalled = true; if (rateLimited(error)) wait = 65000;   // 5 a minute: the next minute
+      stalled = true; if (rateLimited(error)) wait = 10 * 60 * 1000;
       break;
     }
   } catch (e) { stalled = true; }   // offline: the outbox waits
   flushing = false;
   if (stalled) {
     recovering = true;
-    if (!retryTimer && typeof navigator !== 'undefined' && navigator.onLine !== false) retryTimer = setTimeout(() => { retryTimer = null; catchUp(); }, wait);
+    if (!updateNeeded && !retryTimer && typeof navigator !== 'undefined' && navigator.onLine !== false) retryTimer = setTimeout(() => { retryTimer = null; catchUp(); }, wait);
   } else recovering = false;
   return { sent, stalled };
 }
@@ -139,8 +145,8 @@ export async function catchUp(atStartup = false) {
   return r;
 }
 
-// Top 50 for one board: board = ultimate | longest | total | nature | cooler | cleaner | missions,
-// period = today | week | month | all. Returns null when it can't be reached.
+// Top 50 (and your own row, is_me) for one board: board = longest | kinds | cool | missions | longestCrash | shortest | bird | crashes,
+// period = week | ever (supabase/drafts/20261028010000_boards8_leaderboard.sql). Returns null when it can't be reached.
 export async function leaderboard(board, period) {
   if (noOnline()) return null;
   try {
@@ -149,29 +155,6 @@ export async function leaderboard(board, period) {
     const { data, error } = await c.rpc('leaderboard', { board, period });
     return error ? null : data;
   } catch (e) { return null; }
-}
-
-// TEMPORARY personal restore links (2026-10-22, migration 20261022120000_restore_links.sql):
-// ?restore=<code> previews whose pilot it is, then claims it for this device (its flights and name
-// move here). Return { ok, pilot | flights, why: 'used' | 'offline' }.
-export async function restorePreview(code) {
-  if (noOnline()) return { ok: false, why: 'offline' };
-  try {
-    await session();
-    const { data, error } = await db().rpc('restore_preview', { code });
-    if (error) return { ok: false, why: 'offline' };
-    return data && data.length ? { ok: true, pilot: data[0] } : { ok: false, why: 'used' };
-  } catch (e) { return { ok: false, why: 'offline' }; }
-}
-export async function restoreClaim(code, name) {
-  if (noOnline()) return { ok: false, why: 'offline' };
-  try {
-    await session();
-    const { data, error } = await db().rpc('restore_claim', { code });
-    if (error) return { ok: false, why: /used/.test(error.message) ? 'used' : 'offline' };
-    write(PILOT_KEY, name);   // this device is now that pilot
-    return { ok: true, flights: data };
-  } catch (e) { return { ok: false, why: 'offline' }; }
 }
 
 // ---------- online save and pilot codes (2026-10-22; migration 20261022150000_online_save.sql) ----------
@@ -202,7 +185,8 @@ export async function syncUp(save) {
   try {
     await session();
     const stamp = Math.max(Date.now(), (last.stamp || 0) + 1);
-    const { data, error } = await db().rpc('put_save', { save, stamp });
+    const { data, error } = await db().rpc('put_save', { save, stamp, client: VERSION });
+    if (tooOld(error)) needUpdate();
     if (error) return false;
     write(SYNC_KEY, { json, stamp });
     return data === true;

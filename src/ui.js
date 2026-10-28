@@ -287,11 +287,11 @@ export class UI {
     for (const s of ['title', 'results', 'hangar', 'nature', 'pilot', 'boards', 'missions']) $(s).hidden = s !== id;
     for (const s of ['how', 'about', 'info', 'scoreInfo', 'wInfo']) $(s).hidden = true;
     // The bottom bar on every menu screen (players missed it when the S2 hub removed it: Lola, 2026-10-27). Season 2:
-    // HOME / MISSIONS / HANGAR / NATURE, each only once revealed; PILOT and BOARDS rest. No bar while flying.
+    // HOME / MISSIONS / HANGAR / NATURE, each only once revealed; PILOT and BOARDS come with the 3rd landing. No bar while flying.
     $('tabbar').hidden = !id;
     $('hubBack').hidden = true;   // (the bar's HOME replaces the old floating button)
     if (FEATURES.season2) {
-      const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: !!window.CP_PREVIEW, boards: hubRevealed(this.save, 'boards') };
+      const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: hubRevealed(this.save, 'boards'), boards: hubRevealed(this.save, 'boards') };
       document.querySelectorAll('#tabbar [data-go]').forEach(b => { b.hidden = !show[b.dataset.go]; });
       $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';
     }

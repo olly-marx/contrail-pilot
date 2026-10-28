@@ -1,9 +1,9 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
-import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, restorePreview, restoreClaim, getCode, ensureCode, pilotLogin, outboxSize, onlineOff } from './online.js';
-import { rebuildSave } from './restore.js';
+import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, getCode, ensureCode, pilotLogin, outboxSize, onlineOff } from './online.js';
 import { writeSave } from './save.js';
 import { MISSIONS } from './missions.js';
 import { km } from './config.js';
+import { BOARDS as RECORD_BOARDS } from './records.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -94,30 +94,6 @@ export class PilotScreens {
     location.reload();
   }
 
-  // TEMPORARY (2026-10-22): a personal restore link (?restore=<code>, sent by the game makers)
-  // brings back progress a browser wiped: this device takes over that pilot and the save is
-  // rebuilt from its flights (src/restore.js). The code leaves the address bar at once.
-  async checkRestoreLink() {
-    const url = new URL(location.href), code = url.searchParams.get('restore');
-    if (!code) return;
-    url.searchParams.delete('restore');
-    history.replaceState(null, '', url.pathname + url.search + url.hash);
-    const pv = await restorePreview(code);
-    if (!pv.ok) { alert(pv.why === 'used' ? 'This restore link has already been used.' : 'No internet right now. Open the link again soon!'); return; }
-    const p = pv.pilot;
-    if (!confirm(`Restore ${p.name} #${p.tag}? (${p.flights} flights, best ${km(p.best)})\nThe progress on this device will be replaced by ${p.name}'s rebuilt progress.`)) return;
-    const [first, , ...rest] = p.name.split(' ');
-    const r = await restoreClaim(code, { first, word: rest.join(' '), tag: p.tag });
-    if (!r.ok) { alert(r.why === 'used' ? 'This restore link has already been used.' : 'No internet right now. Open the link again soon!'); return; }
-    const keep = { muted: this.save.muted, seenTips: this.save.seenTips, found: this.save.found, shownLines: this.save.shownLines };
-    const { save } = rebuildSave(r.flights, keep);
-    for (const k of Object.keys(this.save)) delete this.save[k];
-    Object.assign(this.save, save);
-    writeSave(this.save);
-    alert(`Welcome back, ${p.name}! Best flight ${km(save.bestDistance)}, ${save.mission} missions, ${Object.values(save.levels).reduce((a, n) => a + n, 0)} upgrade levels and ${save.seeds} seeds rebuilt from your flights.`);
-    location.reload();
-  }
-
   renderButton() {
     const p = getPilot();
     $('tabPilotName').textContent = p ? p.first.toUpperCase() : 'PILOT';   // the bar's PILOT tab shows your name
@@ -174,10 +150,10 @@ export class PilotScreens {
       + row('Kinds of tree planted', kinds) + row('Missions done', `${Math.min(s.mission || 0, MISSIONS.length)} / ${MISSIONS.length}`);
     $('pStats').innerHTML = local;
     if (!getPilot()) return;
-    // Where am I today? Only the good boards I am on (not the Oops boards).
-    const places = (await Promise.all(BOARDS.filter(b => !b.oops).map(async b => {
-      const rows = await leaderboard(b.id, 'today'), me = rows && rows.find(r => r.is_me);
-      return me ? row(`Today: ${b.name.toLowerCase()}`, place(Number(me.place))) : '';
+    // Where am I this week? Only the good boards I am on (not the Oops boards): the 8 boards of src/records.js.
+    const places = (await Promise.all(RECORD_BOARDS.filter(b => !b.oops).map(async b => {
+      const rows = await leaderboard(b.id, 'week'), me = rows && rows.find(r => r.is_me);
+      return me ? row(`This week: ${b.name.toLowerCase()}`, place(Number(me.place))) : '';
     }))).join('');
     if (!$('pilot').hidden) $('pStats').innerHTML = local + places;
   }

@@ -8,8 +8,7 @@
 // then always on, ?season2=off is ignored, and the mode flag is NEVER written (localStorage is per origin, not per
 // path). The old game's save is never touched: it stays under its own keys. 'reset' still
 // wipes the s2: keys only; there is no 'exit' link.
-// While on: every localStorage key the game uses is stored under a separate 's2:' prefix, nothing goes to the
-// online server, and window.SEASON2 is true (src/config.js FEATURES.season2).
+// While on: every localStorage key the game uses is stored under a separate 's2:' prefix, and window.SEASON2 is true (src/config.js FEATURES.season2).
 (function () {
   const real = window.localStorage, FLAG = 'contrailPilot.season2Mode', P = 's2:';
   const q = new URLSearchParams(location.search).get('season2');
@@ -49,10 +48,7 @@
     get length() { return mine().length; },
   };
   Object.defineProperty(window, 'localStorage', { configurable: true, get: () => store });
-  const realFetch = window.fetch.bind(window);
-  window.fetch = (u, ...a) => (/supabase\.co/.test(String((u && u.url) || u)) ? Promise.reject(new TypeError('season 2 preview: offline')) : realFetch(u, ...a));
   window.SEASON2 = true;
-  window.__CP_NO_ONLINE = true;
   const tag = () => {
     const d = document.createElement('div');
     d.id = 's2Tag';

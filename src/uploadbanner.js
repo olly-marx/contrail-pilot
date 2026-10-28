@@ -14,16 +14,18 @@ const CSS = `
 export class UploadBanner {
   constructor(inFlight) {
     this.inFlight = inFlight;
-    this.state = null;   // null | 'uploading' | 'done'
+    this.state = null;   // null | 'uploading' | 'done' | 'update'
     this.note = '';
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     setInterval(() => this.render(), 500);
   }
 
-  // The events of src/online.js onUpload: { type: 'start', flights, save } | { type: 'done' } | { type: 'stalled' }
+  // The events of src/online.js onUpload: { type: 'start', flights, save } | { type: 'done' } | { type: 'stalled' } | { type: 'update' }
   handle(ev) {
     clearTimeout(this.doneTimer);
-    if (ev.type === 'start') {
+    if (this.state === 'update') return;   // the database wants a newer game: that message stays until the player updates
+    if (ev.type === 'update') this.state = 'update';
+    else if (ev.type === 'start') {
       this.state = 'uploading';
       this.note = ev.flights > 1 ? ` (${ev.flights} flights)` : '';
     } else if (ev.type === 'done') {
@@ -38,11 +40,17 @@ export class UploadBanner {
     let el = document.getElementById('upload');
     if (!this.state || this.inFlight()) { if (el) el.remove(); return; }
     if (!el) { el = document.createElement('div'); el.id = 'upload'; document.body.appendChild(el); }
-    const text = this.state === 'uploading'
+    const text = this.state === 'update'
+      ? '<b>Update to keep playing!</b><br>A new season has started. <u id="upload-update">UPDATE NOW</u>'
+      : this.state === 'uploading'
       ? `<b>Back online!</b><br>Uploading your progress from offline play${this.note}...`
       : '<b>All saved!</b><br>Your offline progress is safe online.';
     el.className = this.state === 'done' ? 'done' : '';
     const html = `<i class="spin"></i><p>${text}</p>`;
-    if (el.innerHTML !== html) el.innerHTML = html;
+    if (el.innerHTML !== html) {
+      el.innerHTML = html;
+      const u = document.getElementById('upload-update');
+      if (u) { u.style.cursor = 'pointer'; u.onclick = () => location.reload(); }
+    }
   }
 }

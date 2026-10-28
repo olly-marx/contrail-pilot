@@ -1,9 +1,14 @@
 // The BOARDS screen in season 2 = MY RECORDS (src/records.js): the 4 good and 4 oops boards as cards, THIS WEEK / EVER, your own numbers.
-// Renders into the existing #boards section (index.html). Online is off in season 2, so there are no other pilots yet.
+// Renders into the existing #boards section (index.html). Online (0.18.0): under the cards, the RANKING of the picked board for the picked period
+// (the database's leaderboard(): top 50 and your own row), when the device has a pilot name and can reach it; offline, your numbers stand alone.
 import { BOARDS, PERIODS, values, fresh, clearFresh } from './records.js';
+import { leaderboard, getPilot } from './online.js';
 import { writeSave } from './save.js';
 
 const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const place = n => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th'}`;
+let shown = 0;   // the latest ranking asked for: an answer for a board the player has moved off is dropped
 let period = 'week', pick = 'longest';
 
 export function showRecords(save) {
@@ -26,7 +31,16 @@ export function showRecords(save) {
     const b = BOARDS.find(x => x.id === pick);
     $('bWhat').textContent = b.rule; $('bWhat').classList.toggle('oops', !!b.oops);
     $('bList').innerHTML = '';
-    $('bMsg').textContent = intro ? 'These are YOUR records. Beat yourself! And watch out for the OOPS ones. Rankings against other pilots come back with online.' : 'Rankings against other pilots come back with online.';
+    const mine = intro ? 'These are YOUR records. Beat yourself! And watch out for the OOPS ones.' : '';
+    $('bMsg').textContent = mine;
+    const ask = ++shown;
+    if (!getPilot()) { $('bMsg').textContent = `${mine} Pick a name in PILOT to join the rankings!`.trim(); return; }
+    leaderboard(pick, period).then(rows => {
+      if (ask !== shown || !rows) return;   // moved on, or no connection: your own numbers above are enough
+      $('bMsg').textContent = rows.length ? `${mine} Everyone's ranking:`.trim() : `${mine} Nobody on this board yet${b.oops ? '. Phew!' : '. Be the first!'}`.trim();
+      $('bList').innerHTML = rows.map(r => `<li class="${r.is_me ? 'me' : ''} p${Math.min(r.place, 4)}"><span class="place">${place(Number(r.place))}</span>`
+        + `<span class="who"><b>${esc(r.name)}</b><small>#${esc(r.tag)}${r.is_me ? ' (you)' : ''}</small></span><span class="score">${b.fmt(Number(r.score))}</span></li>`).join('');
+    });
   };
   render();
 }
