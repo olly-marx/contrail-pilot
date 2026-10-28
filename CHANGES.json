@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-10-28-era-4",
+    "version": "0.17.0",
+    "date": "2026-10-28",
+    "level": "major",
+    "notes": [
+      "A new plane to build: the 787! Fly it on the long crossing to the next land, 27,000 km away.",
+      "The sky gets trickier in the 2010s: gaps in the storms move and drift, and the screen now shows you where they are going.",
+      "In the hangar, tap a part to see what it does before you buy. Every buy plays a little show of your plane getting better.",
+      "The big lap of the Earth is waiting for you at the very end.",
+      "NATURE projects: the first two levels of finance are open."
+    ]
+  },
+  {
     "id": "2026-10-28-slower-seeds",
     "version": "0.16.6",
     "date": "2026-10-28",
