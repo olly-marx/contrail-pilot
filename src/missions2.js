@@ -137,10 +137,17 @@ function finish(save, list) {
 export function onFlight(save, r) {
   if (!r || r.school) return [];
   const firsts = FIRSTS.filter(x => !done(save).has(`first:${x.id}`) && x.when(r)).map(x => ({ key: `first:${x.id}`, title: x.title, prize: { seeds: 0, crystals: 1 } }));
-  // The rails never stall (Coordinator, 2026-10-27): lesson L2 missed on 2 flights (landed or not) -> it counts as taught, NATURE opens.
-  const l2 = (lessonsLeft(save)[0] || {}).id === 'L2', L2 = LESSONS.find(l => l.id === 'L2');
-  const taught = got => { if (!l2 || got.some(m => m.key === 'L2')) return got; save.l2Misses = (save.l2Misses || 0) + 1;
-    return save.l2Misses >= 2 ? [...got, { key: 'L2', title: L2.title, tier: 0, star: false, kind: 'flight', prize: L2.prize, def: L2, taught: true }] : got; };
+  // The rails never stall (the user, 2026-10-28; L2 first on 2026-10-27): any lesson after L1 missed on 2 flights (landed
+  // or not) counts as taught. A per-lesson count (save.lessonMisses; the old save.l2Misses is carried over). L5 counts a
+  // miss only once tree parcels are owned (before that the flight could not try it).
+  const cur = lessonsLeft(save)[0];
+  const taught = got => {
+    if (!cur || cur.id === 'L1' || got.some(m => m.key === cur.id)) return got;
+    if (cur.id === 'L5' && !((save.levels || {}).trees > 0)) return got;
+    const lm = save.lessonMisses = save.lessonMisses || {};
+    if (cur.id === 'L2' && save.l2Misses) lm.L2 = Math.max(lm.L2 || 0, save.l2Misses);
+    lm[cur.id] = (lm[cur.id] || 0) + 1;
+    return lm[cur.id] >= 2 ? [...got, { key: cur.id, title: cur.title, tier: 0, star: false, kind: 'flight', prize: cur.prize, def: cur, taught: true }] : got; };
   if (!r.landed) return finish(save, taught(firsts));
   const startCity = save.city;
   const due = visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true));
