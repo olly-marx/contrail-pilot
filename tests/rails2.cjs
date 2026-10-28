@@ -77,9 +77,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
 
   // An empty missions list says what is missing (audit #8): every easia mission done, no crossing offered yet.
   p = await open(save({ landings: 12, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['*'] }), { width: 390, height: 844 });
-  await p.evaluate(async () => { const M = await import('./src/missions2.js'), s = JSON.parse(localStorage.getItem('contrailPilot.v2'));
-    for (let i = 0; i < 10 && M.visible(s).length; i++) s.missionsDone = [...s.missionsDone, ...M.visible(s).map(m => m.key)]; s.daily = null; /* (every tier, as the game keys them) */ localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); });
-  await p.reload(); await ready(p); await p.waitForTimeout(800);
+  await p.evaluate(async () => { const M = await import('./src/missions2.js'), s = game.registry.get('save');   // (setup on the live save: the page's localStorage is season 2's wrapper)
+    for (let i = 0; i < 10 && M.visible(s).length; i++) s.missionsDone = [...s.missionsDone, ...M.visible(s).map(m => m.key)]; s.daily = null; });
   await p.click('#tabMissions'); await p.waitForTimeout(600);
   const ml = await p.evaluate(() => document.getElementById('mList').innerText);
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/missions-empty.png` });
