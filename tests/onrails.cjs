@@ -29,9 +29,10 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
       if (c && !c.disabled && getComputedStyle(c).pointerEvents !== 'none') reach.set(c, `${c.id || c.className}|${(c.textContent || '').trim().slice(0, 24)}`);
     }
     const ring = up ? tour.querySelector('.tring').getBoundingClientRect() : null, bub = up ? tour.querySelector('.tbubble').getBoundingClientRect() : null;
-    const inView = r => !r || (r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1);
+    const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar ? bar.getBoundingClientRect().top : innerHeight;
+    const inView = (r, onBar) => !r || (r.top >= 0 && r.left >= 0 && r.bottom <= (onBar ? innerHeight : barTop) + 1 && r.right <= innerWidth + 1);   // above the bottom bar (the user's R9b report), unless the target IS on the bar
     return { up, text: up ? tour.querySelector('.tbubble p').textContent : '', reach: [...reach.values()],
-      ringIn: inView(ring), bubbleIn: inView(bub), ring: ring && { l: ring.left, t: ring.top, w: ring.width, h: ring.height } };
+      ringIn: inView(ring, up && !!bar && ring.top >= barTop - 6), bubbleIn: inView(bub, true), ring: ring && { l: ring.left, t: ring.top, w: ring.width, h: ring.height } };
   });
   // One rails step: wait for its bubble (or a modal), check (a)+(b), screenshot, tap the one target, check (d).
   const step = async (name, expect, effect, { modal = null, screen = null } = {}) => {

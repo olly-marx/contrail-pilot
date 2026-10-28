@@ -37,8 +37,8 @@ export class Tour {
     let lastY = null;
     el.querySelectorAll('.tdim').forEach(d => {
       d.addEventListener('touchstart', e => { lastY = e.touches[0].clientY; }, { passive: true });
-      d.addEventListener('touchmove', e => { const sc = scroller(), y = e.touches[0].clientY; if (sc && lastY != null) { sc.scrollTop -= y - lastY; this.place(); } lastY = y; e.preventDefault(); }, { passive: false });
-      d.addEventListener('wheel', e => { const sc = scroller(); if (sc) { sc.scrollTop += e.deltaY; this.place(); } e.preventDefault(); }, { passive: false });
+      d.addEventListener('touchmove', e => { const sc = scroller(), y = e.touches[0].clientY; if (sc && lastY != null) { sc.scrollTop -= y - lastY; this.userScrollAt = Date.now(); this.place(); } lastY = y; e.preventDefault(); }, { passive: false });
+      d.addEventListener('wheel', e => { const sc = scroller(); if (sc) { sc.scrollTop += e.deltaY; this.userScrollAt = Date.now(); this.place(); } e.preventDefault(); }, { passive: false });
     });
     window.addEventListener('resize', () => this.place());
     // Players from before tours existed: whatever is already open counts as shown.
@@ -188,6 +188,7 @@ export class Tour {
     const vr = t.getBoundingClientRect();
     if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
     this.target = t;
+    this.keepVisible();
     this.el.querySelector('.tbubble p').innerHTML = st.text;
     const ok = this.el.querySelector('.tbubble .btn');
     ok.hidden = !st.ok;
@@ -201,7 +202,7 @@ export class Tour {
       const onTap = e => { if (e.target.closest && e.target.closest(want)) setTimeout(finish, 0); };
       if (st.tap) document.addEventListener('click', onTap, true);
       if (st.ok) ok.onclick = finish;
-      const poll = setInterval(() => { this.place(); if (st.until && st.until()) finish(); }, 150);
+      const poll = setInterval(() => { if (Date.now() - (this.userScrollAt || 0) > 1500) this.keepVisible(); this.place(); if (st.until && st.until()) finish(); }, 150);
     });
     await sleep(150);
     return true;
@@ -211,6 +212,18 @@ export class Tour {
     if (FEATURES.season2) sel = HUB_TARGETS[sel] || sel;   // season 2 has no tab bar: the hub's tiles and HOME button (S2)
     const all = [...document.querySelectorAll(sel)].filter(e => e.offsetParent !== null);
     return all[0] || null;
+  }
+
+  // The target stays in the VISIBLE band: below the top, above the bottom tab bar (the user's live report, 2026-10-28: R9b's
+  // CLAIM sat behind the bar on their phone, the rails blocked scrolling, they were stuck). Scrolls its screen if needed.
+  keepVisible() {
+    const t = this.target; if (!t) return;
+    let sc = t.parentElement; while (sc && sc !== document.body && !(sc.classList.contains('overlay') && sc.scrollHeight > sc.clientHeight)) sc = sc.parentElement;
+    if (!sc || sc === document.body) return;
+    const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar && !bar.contains(t) ? bar.getBoundingClientRect().top : innerHeight;
+    const r = t.getBoundingClientRect(), bottom = barTop - 12, top = 12;
+    if (r.bottom > bottom) sc.scrollTop += Math.min(r.bottom - bottom, r.top - top);
+    else if (r.top < top) sc.scrollTop -= top - r.top;
   }
 
   // Put the hole, ring, finger and bubble round the target.
