@@ -316,12 +316,14 @@ export class GameScene extends Phaser.Scene {
     // A toast already up (dusk, SAF, a token) drops below a top strip instead of sitting under it (the audit, 2026-10-28).
     const coachEl = document.getElementById('coach'), toastEl = document.getElementById('toast');
     const dropToast = () => { if (this.explaining && toastEl && !toastEl.hidden && !coachEl.hidden && !coachEl.classList.contains('strip-low')) toastEl.style.top = `${Math.round(coachEl.getBoundingClientRect().bottom + 6)}px`; };
-    dropToast(); setTimeout(dropToast, 250); setTimeout(dropToast, 800);   // again once the strip's picture has loaded (it grows)
+    dropToast();
+    if (typeof ResizeObserver !== 'undefined') { (this.stripWatch = this.stripWatch || new ResizeObserver(() => dropToast())).disconnect(); this.stripWatch.observe(coachEl); }   // the strip grows when its picture loads: follow it at once
+    else { setTimeout(dropToast, 250); setTimeout(dropToast, 800); }
     const mine = this.tipSerial = (this.tipSerial || 0) + 1;
     this.time.delayedCall(TIP_MAX * 1000, () => { if (this.tipSerial === mine && this.explaining) this.closeTip(); });
   }
   closeTip() {
-    this.explaining = false; this.ui.hideCoach(); document.getElementById('toast').style.top = '';
+    this.explaining = false; this.ui.hideCoach(); document.getElementById('toast').style.top = ''; if (this.stripWatch) this.stripWatch.disconnect();
     if (this.state !== 'playing') { this.dropTips(); return; }   // the flight ended: unshown tips are unmarked, not lost
     const q = (this.tipQueue || []).shift();
     if (q) this.time.delayedCall(400, () => { if (!this.explaining && this.state === 'playing') this.showTip(q[0], q[1]); else { this.tipQueue.unshift(q); this.dropTips(); } });
