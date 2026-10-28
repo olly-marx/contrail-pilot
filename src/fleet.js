@@ -198,10 +198,50 @@ export function buyFleet(save, kind, id, { free = false } = {}) {
   const item = nextBuys(save).find(b => b.kind === kind && b.id === id);
   if (!item || !item.open || (free ? item.level !== 1 : !canAfford(save, item))) return false;
   if (!free) { save.seeds -= item.cost; save.crystals = (save.crystals || 0) - (item.crystals || 0); }
-  const f = save.fleet;
+  addLevel(save.fleet, kind, id);
+  return true;
+}
+function addLevel(f, kind, id) {
   if (kind === 'plane') { const [p, line] = id.split('.'); f.planes[p][line] = (f.planes[p][line] || 0) + 1; }
   else { const box = kind === 'system' ? (f.systems = f.systems || {}) : (f.gadgets = f.gadgets || {}); box[id] = (box[id] || 0) + 1; }
-  return true;
+}
+
+// Hangar feedback (the user, 2026-10-28: "tap on things and SEE THE EFFECT before purchasing"): a COPY of the save
+// with the next level of one item added (never stored), so the preview is the same fleetKit() the flight uses.
+export function withNext(save, kind, id) {
+  const copy = { ...save, fleet: JSON.parse(JSON.stringify(fleetOf(save))) };
+  if (kind === 'fly') copy.fleet.plane = id; else addLevel(copy.fleet, kind, id);
+  return copy;
+}
+// The stat bars (src/statbars.js): one per thing an upgrade can change. keys = the fleetKit fields it shows
+// (tests/hangar-feedback.cjs: every kit field a purchase changes must be in some bar's keys).
+export const STAT_BARS = [
+  { id: 'co2', label: 'CO2 per km', keys: ['co2'], v: k => k.co2, min: 0, max: 1.2, better: 'lower' },
+  { id: 'takeoff', label: 'Take-off CO2', keys: ['takeoff'], v: k => k.takeoff, min: 0, max: 1, better: 'lower' },
+  { id: 'margin', label: 'Contrails made', keys: ['margin'], v: k => CONTRAIL_MARGIN[k.margin], min: 0.5, max: 1.3, better: 'lower' },
+  { id: 'reveal', label: 'Icy air seen ahead', keys: ['revealPx'], v: k => k.revealPx, min: 0, max: 200, better: 'higher' },
+  { id: 'fakes', label: 'False alarms', keys: ['fakes'], v: k => k.fakes, min: 0, max: 0.4, better: 'lower' },
+  { id: 'late', label: 'Icy air missed', keys: ['late'], v: k => k.late, min: 0, max: 0.3, better: 'lower' },
+  { id: 'night', label: 'Icy air at night', keys: ['nightPatches'], v: k => k.nightPatches, min: 0, max: 1, better: 'lower' },
+  { id: 'gaps', label: 'Room in storm gaps', keys: ['gaps'], v: k => k.gaps, min: 1, max: 1.05, better: 'higher' },
+  { id: 'gapTurb', label: 'Bumps in gaps', keys: ['gapTurb'], v: k => k.gapTurb, min: 0, max: 1, better: 'lower' },
+  { id: 'gapBirds', label: 'Birds near gaps', keys: ['gapBirds'], v: k => k.gapBirds, min: 0, max: 1, better: 'lower' },
+  { id: 'early', label: 'Early landing call', keys: ['airportEarly'], v: k => (k.airportEarly ? 1 : 0), onoff: true, better: 'higher' },
+  { id: 'hint', label: 'Next-gap hint', keys: ['hintLevel'], v: k => k.hintLevel, min: 0, max: 6, better: 'higher' },
+  { id: 'fares', label: 'Fares', keys: ['fares'], v: k => k.fares, min: 1, max: 2, better: 'higher' },
+  { id: 'skip', label: 'Bonus per airport skipped', keys: ['perSkip'], v: k => k.perSkip, min: 0, max: 1, better: 'higher' },
+  { id: 'flare', label: 'Landing window', keys: ['flare'], v: k => k.flare, min: 1, max: 2, better: 'higher' },
+  { id: 'pickup', label: 'Pick-up reach', keys: ['pickup'], v: k => k.pickup, min: 0, max: 34, better: 'higher' },
+  { id: 'dodge', label: 'Crystals per night', keys: ['dodgeCrystals', 'dodgesPerNight'], v: k => k.dodgeCrystals * k.dodgesPerNight, min: 0, max: 24, better: 'higher' },
+  { id: 'autoSecs', label: 'Autopilot time', keys: ['autoSecs'], v: k => k.autoSecs, min: 0, max: 13, better: 'higher' },
+  { id: 'autoChance', label: 'Autopilot pick-ups', keys: ['autoChance'], v: k => k.autoChance, min: 0, max: 0.1, better: 'higher' },
+];
+// Kit fields that are pictures, not stats (the plane picture shows them).
+export const PICTURE_KEYS = ['plane', 'sprite'];
+// The bars an item would move: [{ ...bar, now, then }]. kind 'fly' = switch to that plane (id = plane id).
+export function previewBars(save, kind, id) {
+  const a = fleetKit(save), b = fleetKit(withNext(save, kind, id));
+  return STAT_BARS.map(d => ({ ...d, now: d.v(a), then: d.v(b) })).filter(r => r.now !== r.then);
 }
 
 // Fly any plane in your fleet (controls are the same on every plane: only what's around it changes).

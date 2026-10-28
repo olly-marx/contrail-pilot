@@ -690,3 +690,33 @@ h2.sub { margin-top: -4px; }
 #wTrees .line.previewing { outline: 3px solid #ffe15a; outline-offset: 1px; }
 .w-pname { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: underline dotted; }
 .w-pname[disabled] { text-decoration: none; cursor: default; }
+/* Hangar feedback (plane build, 2026-10-28): tap a row to preview it (src/hangar.js previewCardHTML), the new part
+   ghosted on the picture, stat bars (src/statbars.js, shared with NATURE), and the bars moving in the payoff. */
+.fpreview img.fghost { position: absolute; inset: 0; height: 100%; opacity: .5; animation: fghost 1.2s ease-in-out infinite alternate; }
+@keyframes fghost { from { opacity: .25; } to { opacity: .7; } }
+.hpreview { border: 2px solid #2b4a6f; background: #fffbe8; padding: 6px 8px; margin: 0 0 8px; }
+.hpreview.empty { border-style: dashed; text-align: center; }
+.hpreview.empty p { margin: 2px 0; }
+.hp-name { margin: 0 0 4px; font-size: 10px; }
+.hp-buy { display: flex; justify-content: flex-end; margin-top: 6px; }
+.frow-tap { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.frow-tap .name { font-size: 9px; }
+.tapme { font-size: 6px; color: #2b4a6f; border: 1px solid #2b4a6f; padding: 1px 3px; margin-top: 2px; }
+.fline.sel { outline: 3px solid #ffb000; outline-offset: -1px; background: #fff3c4; }
+.fline.sel .tapme { background: #ffb000; color: #1b1b2f; }
+.sbars { display: flex; flex-direction: column; gap: 4px; }
+.sbar { display: grid; grid-template-columns: 38% 1fr 3.4em; align-items: center; gap: 6px; font-size: 7px; }
+.sbar-track { position: relative; height: 9px; background: #d9dde4; border: 1px solid #1b1b2f; overflow: hidden; }
+.sbar-fill { position: absolute; left: 0; top: 0; bottom: 0; background: #5a6b80; transition: width .6s ease-out; }
+.sbar-ghost { position: absolute; top: 0; bottom: 0; transition: opacity .6s ease-out; }
+.sbar-ghost.add { background: repeating-linear-gradient(45deg, #9fb3c8 0 3px, #5a6b80 3px 6px); }
+.sbar-ghost.cut { background: repeating-linear-gradient(45deg, #fff 0 3px, #5a6b80 3px 6px); }
+.sbar-delta { text-align: right; font-weight: bold; }
+.sbar-delta.good { color: #1f7a3a; }
+.sbar-delta.bad { color: #a12a2a; }
+.sbar.done .sbar-track { animation: sbarflash .7s ease-out; }
+@keyframes sbarflash { 0% { box-shadow: 0 0 0 0 #ffe15a; } 50% { box-shadow: 0 0 8px 3px #ffe15a; } 100% { box-shadow: 0 0 0 0 #ffe15a; } }
+.pay-bars { margin: 8px 0 0; text-align: left; }
+.payoff.nopart.arrive .pay-plane { transform: none; }   /* a system: no part to zoom onto; the bars are the payoff */
+.payoff.nopart .pay-label { display: none; }
+.payoff.nopart.arrive .pay-spark { top: auto; bottom: 30%; }
