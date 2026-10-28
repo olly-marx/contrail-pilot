@@ -262,7 +262,7 @@ export class UI {
     const s = this.save, list = missionsVisible(s);
     const row = m => `<div class="mrow ${m.star ? 'star' : ''} ${m.daily ? 'daily' : ''}"><span>${m.star ? '&#9733; ' : ''}${m.title}</span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`;
     const daily = dailyVisible(s);
-    $('mList').innerHTML = (list.map(row).join('') || '<p>All done here. Fly a crossing to a new area!</p>')
+    $('mList').innerHTML = (list.map(row).join('') || `<p>All done here!</p>${crossingsHTML(s).replace(/<button[^>]*data-cross[^>]*>.*?<\/button>/g, '<b>Ready!</b> Tap HOME, then NEXT.') || '<p class="small">Keep flying: new missions come with new eras.</p>'}`)   // (the audit, 2026-10-28: it said 'fly a crossing' when none was offered; now it says what is missing)
       + (daily.length ? '<p class="label">Today</p>' + daily.map(row).join('') : '');
     $('mTier').textContent = list.length && list[0].tier ? `Tier ${Math.max(...list.map(m => m.tier))} of 3` : 'Chapter 1';
     this.showOnly('missions');

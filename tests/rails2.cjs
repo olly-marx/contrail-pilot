@@ -70,6 +70,17 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   check((sv.levels || {}).trees === 1 && sv.seeds === 0 && sv.freeParcelsGiven, `L5: the tap gives the first parcels free (${JSON.stringify(sv.levels)}, seeds ${sv.seeds})`);
   check(!p.errs.length, `L5 page errors: ${p.errs}`); await p.close();
 
+  // An empty missions list says what is missing (audit #8): every easia mission done, no crossing offered yet.
+  p = await open(save({ landings: 12, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['*'] }), { width: 390, height: 844 });
+  await p.evaluate(async () => { const M = await import('./src/missions2.js'), s = JSON.parse(localStorage.getItem('contrailPilot.v2'));
+    s.missionsDone = [...s.missionsDone, ...M.TEMPLATES.map(t => `easia:${t.id}`)]; s.daily = null; localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); });
+  await p.reload(); await ready(p); await p.waitForTimeout(800);
+  await p.click('#tabMissions'); await p.waitForTimeout(600);
+  const ml = await p.evaluate(() => document.getElementById('mList').innerText);
+  if (SHOTS) await p.screenshot({ path: `${SHOTS}/missions-empty.png` });
+  check(/All done here/.test(ml) && !/Fly a crossing to a new area/.test(ml) && /Needs:|Ready!|new eras|crossing/i.test(ml), `an empty missions list says what a crossing still needs, not "fly a crossing" (${JSON.stringify(ml.slice(0, 160))})`);
+  check(!p.errs.length, `missions page errors: ${p.errs}`); await p.close();
+
   // "tap to skip" on a small phone, during the results reveal.
   p = await open(save({ landings: 3, tours: ['*'] }), { width: 375, height: 667 });
   await p.click('#goBtn'); await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).catch(() => {});
