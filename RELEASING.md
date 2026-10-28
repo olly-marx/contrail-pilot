@@ -29,6 +29,10 @@ Before 1.0.0, MINOR may carry a big feature and MAJOR stays 0.
 
 **A change to `src/sim/rules.js` (or `physics.js`, `world.js`) that alters behaviour ON PURPOSE** makes `tests/sim-equiv.cjs` fail: it replays 18 flights the game recorded. Re-record that golden from the browser, deliberately, and say so in the commit; never loosen the check. `sim-bank`, `sim-masks` and `sim-rng-split` (game versus engine) are necessary but not sufficient for a rules change, which is why `rules.js` pulls the whole `engine-core` group in `tests/PATHMAP`.
 
+**Push-now** (pushing before the gate has finished) may be authorised ONLY for a bug that blocks players: they cannot play, or they lose saves (the user, 2026-10-28). Even then the gate keeps running and a red result is fixed forward at once. Every other release waits for the gate.
+
+**What the smoke set is** (`tests/PATHMAP`, 11 runs, ~100 s wall): `season2-smoke` in 4 parallel pieces, `hubscreen`, `saveloss`, `records-screen`, `missionscreen`, `hudlayout`, `tourgiveup`, `textfit`, `crash`. `firsthour-real` (80 s, the only test that plays flight school like a child) is NOT in it: it runs for onboarding, engine-core and harness changes (user, 2026-10-28), and CI always runs it.
+
 The full browser suite locally (`tools/test.sh`, 17-20 minutes) and the full sweeps (`tools/gate.sh --deep`) stay available for a risky change or a balance change; the old rule "a full 2-shard run clean before every push" is retired (research/PROPOSAL-RELEASE-GATE.md has the evidence: in this session's full local runs every failure was a test that needed updating or a flake, none a game bug; the two bugs players met had no test).
 
 Commit subjects start with `fix:`, `feat:` or `chore:` (or `art:` for pictures), so the bump size is visible at a glance.

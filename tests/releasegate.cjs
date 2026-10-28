@@ -11,7 +11,7 @@ const browser = fs.readFileSync(path.join(root, 'tests/BROWSER'), 'utf8').split(
 // season2-smoke runs as 4 parallel pieces (PART=...), see tests/season2-smoke.cjs; the pieces together are all its sections, each exactly once.
 const S2_SECTIONS = ['A', 'Bweurope', 'Bnamerica', 'Bsasia', 'Bafrica', 'Bsamerica', 'Beasia', 'C', 'D', 'E', 'F', 'G'];
 const SMOKE = ['season2-smoke@PART=A,C,E,F,G', 'season2-smoke@PART=D', 'season2-smoke@PART=Bweurope,Bnamerica,Bsasia', 'season2-smoke@PART=Bafrica,Bsamerica,Beasia',
-  'hubscreen', 'firsthour-real', 'saveloss', 'records-screen', 'missionscreen', 'hudlayout', 'tourgiveup', 'textfit', 'crash'];
+  'hubscreen', 'saveloss', 'records-screen', 'missionscreen', 'hudlayout', 'tourgiveup', 'textfit', 'crash'];
 
 // 0. The declarations lint clean on the real repo.
 const lint = py(['--lint']);
@@ -59,6 +59,12 @@ r = list(['src/tour.js']); check(r.tests.has('onrails') && r.tests.has('onrails@
   const src = fs.readFileSync(path.join(root, 'tests/season2-smoke.cjs'), 'utf8');
   check(S2_SECTIONS.filter(id => id.length === 1).every(id => src.includes(`on('${id}')`)) && /on\('B' \+ k\)/.test(src), 'every section letter is guarded by on(...) in tests/season2-smoke.cjs');
 }
+
+// 12. firsthour-real (80 s, the only test that plays school like a child) is NOT in the always-run smoke (user, 2026-10-28): it runs for onboarding-group changes (and engine-core, harness), CI always.
+r = list(['research/BACKLOG.md']); check(!r.tests.has('firsthour-real'), 'a docs-only change does not run firsthour-real');
+r = list(['src/tour.js']); check(r.tests.has('firsthour-real'), 'an onboarding file (src/tour.js) runs firsthour-real');
+r = list(['src/records.js']); check(!r.tests.has('firsthour-real'), 'a records change does not run firsthour-real');
+r = list(['src/sim/rules.js']); check(r.tests.has('firsthour-real'), 'rules.js (school landing, free part) runs firsthour-real');
 
 if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
 console.log('PASS releasegate (docs-only = smoke, group unions, postrails only for lessons/parcels, harness = all, own test, unmapped refused)');
