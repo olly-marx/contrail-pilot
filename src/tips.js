@@ -83,7 +83,7 @@ export const TIPS = {
   'rail-bonus':        { say: 'Bonus! Flying past airports makes each landing worth more.' },
   'rail-systems':      { say: 'New in the hangar: systems that help every flight!' },
   'rail-systems-tab':  { say: 'Tap SYSTEMS.' },
-  'rail-systems-line': { say: 'Forecasting shows icy air sooner. Buy it when you can!' },
+  'rail-systems-line': { say: 'Forecasting shows icy air sooner. Save up for it!' },
 
   // ---- menu tours (src/tour.js) ----
   'tour-hello':   { say: 'Welcome, pilot! Tap <b>PILOT</b> to choose your pilot name.' },
