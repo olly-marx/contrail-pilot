@@ -42,12 +42,13 @@ export class FleetHangar {
     el.querySelectorAll('[data-pview]').forEach(c => c.onclick = () => { this.preview = c.dataset.pview; this.ui.sfx.flap(); this.render(); });
     el.querySelectorAll('[data-fbuy]').forEach(b => b.onclick = () => {
       const [kind, id] = b.dataset.fbuy.split(':'), free = !!s.freeUpgrade;
+      const fb = fleetOf(s), before = lookFiles(fb.plane, JSON.parse(JSON.stringify(fb.planes[fb.plane] || {})), 'hangar');   // the plane BEFORE (the payoff shows it first)
       if (!buyFleet(s, kind, id, { free })) { this.ui.sfx.nope(); return; }
       this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
       if (free) s.freeUpgrade = false;
       s.sparkle = true;
       this.ui.persist(); this.ui.sfx.buy(); this.ui.renderHangar();
-      if (free && s.areas) this.payoff();   // R6: the payoff - the plane zooms in, wearing its new part
+      if (free && s.areas) this.payoff(before);   // R6: the payoff - the plane as it was, then the new part arrives on it
     });
   }
 
@@ -67,14 +68,20 @@ export class FleetHangar {
 
   // R6 (the user, 2026-10-27: "tapping an upgrade did NOT show the plane looking cooler"): the plane, with the part just
   // fitted (src/planelook.js), zooms in over the hangar with one line and one OK.
-  payoff() {
+  // R6, the payoff (the user, 2026-10-28: it "just pops up the upgraded plane, you never see it BEFORE"): the plane as it
+  // was, then the new part fades and slides onto it with a sparkle, then "Your plane is cleaner now!" and OK.
+  payoff(before) {
     const s = this.ui.save, f = fleetOf(s), id = f.plane, files = lookFiles(id, f.planes[id], 'hangar');
+    const added = files.parts.filter(p => !(before ? before.parts : files.parts.slice(0, -1)).includes(p));
     let el = $('payoff');
     if (!el) { el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff'; document.body.appendChild(el); }
-    el.innerHTML = `<div class="payoff-card"><img alt=""><p>${tip('rail-payoff')}</p><button id="payOk" class="btn go big" type="button">OK</button></div>`;
+    el.innerHTML = `<div class="payoff-card"><div class="pay-plane"><img id="payBefore" alt="">${added.map(p => `<img class="pay-part" src="${p}" alt="">`).join('')}<i class="pay-spark"></i></div>
+      <p id="payText" class="pay-later">${tip('rail-payoff')}</p><button id="payOk" class="btn go big pay-later" type="button">OK</button></div>`;
     el.hidden = false;
-    composedURL(files.base, files.parts, hangarGadgets(s, id)).then(u => { const img = el.querySelector('img'); if (img) img.src = u; }).catch(() => {});
-    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; this.ui.go('fly'); };   // then the hub: TAKE OFF (R7)
+    const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
+    composedURL(files.base, old, hangarGadgets(s, id)).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
+    setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); } }, 900);   // the new part arrives
+    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive'); this.ui.go('fly'); };   // then the hub: TAKE OFF (R7)
   }
 
   // The big picture at the top (400 x 176, the art session's hangar portrait): the plane you fly, or
