@@ -9,6 +9,8 @@ Status: PROPOSAL ONLY. It replaces the user's standing push rule ("a full 2-shar
 3. **The smoke set** (section 4): the 10 browser tests that always run locally. Include `firsthour-real` (70 s, the only test that plays school like a child; it found the hangar trap) or drop it for a ~50 s smoke?
 4. **The path map** (section 4) is my first DECLARATION by subject; the game chat and the sim chat should correct the groups they own.
 
+> **Amendment 2026-10-28 (the user):** `firsthour-real` is moved OUT of the always-run smoke set; it runs for onboarding-group changes (and rules.js, harness), and CI always. The smoke set is therefore 11 runs; decision 3 above is answered this way.
+
 ## 1. What a release costs today (measured, 0.16.2 run on a quiet machine)
 
 - Browser tier: **88 tests, 2,365 s of test time**; run on 2 shards that is **17-20 min** (`postrails` 283 s, `walkthrough` 181 s, `onrails` 134 s, `updates` 72 s are the long ones). Node gate: 39 tests, 83 s of test time, **10 s wall clock** with 6 workers.

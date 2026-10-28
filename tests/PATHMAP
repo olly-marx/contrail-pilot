@@ -6,11 +6,11 @@
 #   group NAME | glob glob ... | test ...  a changed file matching ANY glob adds these tests (union over all matching groups). NONE = nothing to run, ALL = the whole browser tier.
 #   ci-only | test test ...                browser tests deliberately run only in CI (a browser test in no group and not here fails the lint)
 # Globs are fnmatch patterns on repo-relative paths (`*` also matches `/`). `gate.sh --lint` fails if a tracked file matches no group, or a test named here is not in tests/BROWSER.
-smoke | season2-smoke@PART=A,C,E,F,G season2-smoke@PART=D season2-smoke@PART=Bweurope,Bnamerica,Bsasia season2-smoke@PART=Bafrica,Bsamerica,Beasia hubscreen firsthour-real saveloss records-screen missionscreen hudlayout tourgiveup textfit crash
+smoke | season2-smoke@PART=A,C,E,F,G season2-smoke@PART=D season2-smoke@PART=Bweurope,Bnamerica,Bsasia season2-smoke@PART=Bafrica,Bsamerica,Beasia hubscreen saveloss records-screen missionscreen hudlayout tourgiveup textfit crash
 group docs-tools | research/* *.md CHANGES.json .gitignore .nojekyll *.png supabase/* .github/* tools/* src/version.js | NONE
 group harness | tests/lib/* tests/BROWSER tests/PATHMAP tests/GATE tests/DEEP tools/test.sh tools/gate.sh tools/gate-plan.py | ALL
 group tests-themselves | tests/*.cjs tests/*.json | NONE
-group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/hub.js src/upgrades.js src/startchoice.js src/school.js src/rewards.js src/wild.js | onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school rewards missions tours bubblestill
+group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/hub.js src/upgrades.js src/startchoice.js src/school.js src/rewards.js src/wild.js | onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school rewards missions tours bubblestill firsthour-real
 group heavy-onboarding | src/missions2.js src/upgrades.js src/hub.js src/wild.js | postrails
 group records | src/records.js src/recordsui.js | records-screen
 group save-season2 | src/save.js src/season2.js src/areas.js src/season.js src/crossings.js src/updates.js src/main.js src/reprice.js src/welcome.js | season2 season2-smoke savesafe updates cache reset welcome saveloss preview

@@ -101,3 +101,5 @@ audiocrash	src/crash.js	s/^    if (isBenignAudioRejection(r)) return;.*$//	the O
 audiocrash	src/crash.js	s/audio device|audiocontext|NotAllowedError|AbortError/zzz/	the audio filter no longer matches the iPhone message
 audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no longer catches a rejected resume()
 audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
+releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
+releasegate	tests/PATHMAP	s/ tours firsthour-real$/ tours/	onboarding changes no longer run firsthour-real
