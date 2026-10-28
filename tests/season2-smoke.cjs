@@ -148,7 +148,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   // E. the end of this release
   if (on('E')) {
   p = await fresh();
-  await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania'], homeArea: 'weurope', city: 'AMSTERDAM' });
+  await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania', 'ocean'], homeArea: 'weurope', city: 'AMSTERDAM' });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const more = await p.evaluate(() => ({ card: !!document.getElementById('jMore'), cross: !!document.querySelector('#jCross [data-cross]') }));
   check(more.card && !more.cross, `E: every area open, the last era: the MORE TO COME card, no crossing: ${JSON.stringify(more)}`);
