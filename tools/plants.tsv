@@ -56,3 +56,16 @@ records-screen	src/recordsui.js	s/\$('bInfo').hidden = true;/$('bInfo').hidden =
 records-screen	src/records.js	s/{ id: 'bird', name: 'BIRD MAGNET', oops: true,/{ id: 'bird', name: 'BIRD MAGNET',/	BIRD MAGNET is not an oops card
 records-screen	src/records.js	s/missions: period === 'ever' ? done : Math.max(0, done - r.week.missionsBase),/missions: done,/	MISSIONS this week = ever
 school	src/school.js	s/if (!this.madeDay \&\& this.issr.x + this.issr.width < s.plane.x) {/if (false) {/	school never brings more icy air
+hazards	src/config.js	s/turbulence: { from: 2000,/turbulence: { from: 200,/	turbulence appears too early
+hazards	src/config.js	s/noFly:      { from: 8000,/noFly:      { from: 800,/	no-fly zones appear too early
+hazards	src/config.js	s/birds:      { from: 10000,/birds:      { from: 1000,/	birds appear too early
+hazards	src/sim/rules.js	s/^    if (this.inTurb) {$/    if (false) {/	tap in turbulence acts at once
+hazards	src/sim/rules.js	s/Restricted airspace!/Blocked!/	no-fly reason text changed
+hazards	src/sim/rules.js	s/Bird strike!/Oops!/	bird reason text changed
+pickupgates	src/sim/rules.js	s/!this.school \&\& this.kit.safCans \&\& safHelps/!this.school \&\& safHelps/	SAF cans before SAF exists
+pickupgates	src/sim/rules.js	s/else if (!this.school \&\& this.kit.autoChance \&\& r > 1 - this.kit.autoChance)/else if (!this.school \&\& r > 0.5)/	autopilot pick-up without the gadget
+fares	src/sim/rules.js	s/const fares = landed \&\& !this.school ?/const fares = !this.school ?/	a crash pays fares
+fares	src/fleet.js	s/export const FARES = { comet: 2,/export const FARES = { comet: 3,/	Comet fare changed
+fares	src/sim/rules.js	s/\/ 1e6 \* this.kit.fares)/\/ 1e6)/	Cabin upgrades ignored
+eras	src/eras.js	s/ERA_BASE_MIN = 20;/ERA_BASE_MIN = 30;/	era base minutes changed
+eras	src/eras.js	s/Math.pow(n, 1.5)/Math.pow(n, 2)/	era growth exponent changed

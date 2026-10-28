@@ -24,6 +24,7 @@ while IFS=$'\t' read -r test file expr label; do
   if [ $rc -eq 0 ]; then echo "NOT CAUGHT   $test / $label (${t}s): the test still PASSES"; missed=1
   else echo "caught       $test / $label (${t}s): $(printf '%s\n' "$out" | grep -iE 'FAIL|^ *- |Error' | head -n 1 | cut -c1-110)"; fi
 done < tools/plants.tsv
+[ "$n" -gt 0 ] || { echo "plants: NONE declared for: ${*:-(any)} in tools/plants.tsv (a missing declaration is a failure, not a pass)"; exit 1; }
 if [ -n "${DRY:-}" ]; then verb="checked (DRY, no test run)"; ok="all apply"; else verb="run"; ok="all caught"; fi
 echo "plants: $n $verb, $([ $missed -eq 0 ] && echo "$ok" || echo "SOME NOT CAUGHT / SKIPPED")"
 [ $missed -eq 0 ]
