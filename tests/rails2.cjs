@@ -61,7 +61,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   check(await p.evaluate(() => !document.getElementById('nature').hidden && !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]')), 'L5: NEXT opens NATURE on the tab that sells the parcels, after viewing another land');
   await p.close();
   p = await open(save(l5), { width: 390, height: 844 });
-  await p.click('#tabNature');
+  { let h = null; for (let i = 0; i < 20; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); }   // the hub's 'Something NEW!' lights NATURE: tap what is lit
+    if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(600); }
   a = null; for (let i = 0; i < 40; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/L5-free-parcels.png` });
   check(a.up && /parcels/i.test(a.text) && a.reach.length === 1 && /FREE/.test(a.reach[0] || '') && a.inView, `L5: the rails point at the FREE parcels, the only tappable thing, on screen ("${a.text}"; ${a.reach.join(' / ')})`);

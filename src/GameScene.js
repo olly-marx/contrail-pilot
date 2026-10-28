@@ -1360,7 +1360,7 @@ export class GameScene extends Phaser.Scene {
     // Lesson L4 ("skip one airport, land at the next"): no landing call at the FIRST airport, it would contradict the lesson (the audit, 2026-10-28).
     const skipThis = isSeason2(this.save) && !this.school && this.airportsSkipped === 0 && (this.save.missionsDone || []).includes('L3') && !(this.save.missionsDone || []).includes('L4');
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
-    else if (skipThis && toAirport < AIRPORT.signFrom) this.nextText.setText(`${this.nextAirport.name} ${km(Math.max(0, toAirport))}: fly PAST this one!`);
+    else if (skipThis && toAirport < AIRPORT.signFrom) this.nextText.setText(`${this.nextAirport.name} ${Math.max(0, toAirport)}m: fly PAST this one!`);
     else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
     else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);   // ATC (eras): the call comes sooner
     else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${km(toAirport)}`);
