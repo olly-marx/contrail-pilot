@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-28-audit-2",
+    "version": "0.16.2",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "Your first tree parcels are FREE! The game tells you where to pick them up.",
+      "Lessons never get you stuck: if you miss one twice, the game counts it as taught and moves on.",
+      "Tips never get lost or show at the wrong moment, and pop-ups no longer sit on top of each other or cover the plane.",
+      "The fly-past lesson tells you to fly PAST the first airport, and the results line says \"Landing bonus\"."
+    ]
+  },
+  {
     "id": "2026-10-28-rails-polish",
     "version": "0.16.1",
     "date": "2026-10-28",
