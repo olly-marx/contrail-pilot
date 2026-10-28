@@ -975,13 +975,14 @@ export class GameScene extends Phaser.Scene {
   //   ATC 7 (kit.noFlyWarnPx): a no-fly zone within that many px ahead gets a white outline on its gap and an arrow for its drift.
   //   COMBO Barrier outlook (kit.outlook): the next two columns ahead show as ticks at the right edge, at their gaps.
   //   Sensors 7-8 (kit.birdWarnPx): a flock within that many px ahead shows the band it will fly through (its bob).
+  //   ATC 10 (kit.turnShown, 2030s): a flock that will turn shows an arrow the way it will go.
   //   CLEAN meter: the bar under the button, this night's contrail-free seconds left.
   drawEra4() {
     for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);
     const k = this.kit;
     if (this.cleanMeter) { const left = (this.cleanLeft || 0) / ((k.cleanSecs || 1) * 1000), night = !this.isDay;
       this.cleanMeter.width = 56 * Math.max(0, Math.min(1, left)); this.cleanBg.setFillStyle(this.cleanHeld && night && left > 0 ? 0x9fe0ff : 0x5a6b80).setAlpha(night ? 1 : 0.45); }
-    if (!k.noFlyWarnPx && !k.outlook && !k.birdWarnPx) return;
+    if (!k.noFlyWarnPx && !k.outlook && !k.birdWarnPx && !k.turnShown) return;
     const g = this.era4Gfx || (this.era4Gfx = this.add.graphics().setDepth(50));
     g.clear();
     const nose = this.plane.x + PLANE.w;
@@ -1004,6 +1005,12 @@ export class GameScene extends Phaser.Scene {
       if (ahead < 0 || ahead > k.birdWarnPx) continue;
       const half = f.half ?? (f.birds.length - 1) / 2, wob = HAZARDS.birds.wobble * (k.birdWobbleMul ?? 1), top = f.y - half * 9 - 4 - wob, bot = f.y + half * 9 + 16 + wob;
       g.fillStyle(0xffffff, 0.12); g.fillRect(f.x - 4, top, half * 26 + 24, bot - top);
+    }
+    // ATC 10 turn calls (2030s): a flock that has not turned yet shows an arrow the way it will go (rules.js f.turn.dir).
+    if (k.turnShown) for (const f of this.birds) {
+      if (!f.turn || f.turn.left >= 0 || f.x < nose) continue;
+      const ax = f.x + 10, ay = f.y + (f.turn.dir > 0 ? 30 : -22), d = f.turn.dir > 0 ? 1 : -1;
+      g.fillStyle(0xffe15a, 0.95); g.fillTriangle(ax - 5, ay - 4 * d, ax + 5, ay - 4 * d, ax, ay + 4 * d);
     }
   }
   // A drifting or pulsing gap: its pictures to the rects (no-fly: the two red tiles, edge lines and words; storm: the clouds).

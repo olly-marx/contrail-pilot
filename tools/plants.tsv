@@ -121,3 +121,4 @@ hudlayout	src/GameScene.js	s/if (this.kindsText) this.kindsText.setOrigin(1, 0).
 season2	src/areas.js	s/\.filter(k => AREAS\[k\])/.filter(k => k)/	save.areas holds ocean (Pacific stepping stones): the title crashed on AREAS[ocean]
 postrails	src/GameScene.js	s/const dropToast = () => { if (this.explaining/const dropToast = () => { if (false \&\& this.explaining/	a toast is not dropped below a teaching strip (persistent overlap)
 era5-knobs	src/sim/physics.js	s/wobble: false }/wobble: true }/	bird detection ignored
+finance	src/finance.js	s/(save.landings || 0) - x.at >= b.landings/(save.landings || 0) - x.at >= 0/	bonds pay at once

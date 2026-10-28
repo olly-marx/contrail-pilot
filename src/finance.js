@@ -18,6 +18,9 @@ export const FINANCE = {
   levels: [
     { name: 'Natural capital account', cost: 1500, base: 40, slope: 0.25, floor: 20, reserve: 4000, cap: 10 },
     { name: 'Nature-positive rating', cost: 3000, base: 40, slope: 0.30, floor: 16, reserve: 3500, cap: 15 },
+    // The 2030s: BONDS. Lock `lock` seeds for `landings` landings; get them back plus floor(B / perB) crystals, B read at
+    // PAYOUT (nature pays interest only if you keep it healthy). At most `most` bonds at once; the reserve still holds.
+    { name: 'Biodiversity bonds', cost: 5000, era: 4, base: 40, slope: 0.30, floor: 16, reserve: 3500, cap: 15, bond: { lock: 1000, landings: 10, perB: 4, most: 3 } },
   ],
 };
 export const financeLevel = save => Math.min(FINANCE.levels.length, (save.finance && save.finance.level) || 0);
@@ -44,7 +47,31 @@ export function trade(save) {
 }
 export function buyFinance(save) {
   const L = FINANCE.levels[financeLevel(save)];
-  if (!L || !financeOpen(save) || (save.seeds || 0) < L.cost) return false;
+  if (!L || !financeOpen(save) || eraProgress(save).index < (L.era ?? FINANCE.era) || (save.seeds || 0) < L.cost) return false;
   save.seeds -= L.cost; save.finance = { ...(save.finance || {}), level: financeLevel(save) + 1 };
   return true;
+}
+
+// ---------- bonds (level 3) ----------
+const bondCfg = save => { const L = FINANCE.levels[financeLevel(save) - 1]; return L && L.bond; };
+export const bonds = save => (save.finance && save.finance.bonds) || [];
+export function canLock(save) {
+  const b = bondCfg(save), L = FINANCE.levels[financeLevel(save) - 1];
+  return !!b && bonds(save).length < b.most && (save.seeds || 0) - b.lock >= L.reserve;
+}
+export function lockBond(save) {
+  if (!canLock(save)) return false;
+  const b = bondCfg(save); save.seeds -= b.lock;
+  save.finance.bonds = [...bonds(save), { at: save.landings || 0, seeds: b.lock }];
+  return true;
+}
+// Matured bonds pay out (the hangar calls this on each visit): { seeds, crystals } paid, or null.
+export function payBonds(save) {
+  const b = bondCfg(save); if (!b) return null;
+  const due = bonds(save).filter(x => (save.landings || 0) - x.at >= b.landings);
+  if (!due.length) return null;
+  const crystals = due.length * Math.floor(natureHealth(save) / b.perB), seeds = due.reduce((a, x) => a + x.seeds, 0);
+  save.seeds = (save.seeds || 0) + seeds; save.crystals = (save.crystals || 0) + crystals;
+  save.finance.bonds = bonds(save).filter(x => !due.includes(x));
+  return { seeds, crystals };
 }

@@ -24,6 +24,19 @@ const src = f => path.resolve(__dirname, '../src', f);
   check(M.canTake(save) === 0, 'a second trade in the same landing');
   save.landings++; save.seeds = 4000 + r - 1;
   check(M.canTake(save) === 0, 'a trade dipped into the reserve');
+  // Bonds (level 3, the 2030s): not before its era; lock keeps the reserve; at most 3; pays after 10 landings, not before.
+  const planted = { spruce: 40, birch: 40, oak: 40, rowan: 40, orchard: 40 };   // nature health ~41: the interest is real
+  const bs = { tutorialDone: true, seeds: 20000, crystals: 0, landings: 0, flightSeconds: 1e7, areas: ['weurope'], city: 'WARSAW', planted, finance: { level: 2 } };
+  check(!M.buyFinance({ ...bs, flightSeconds: 0, finance: { level: 2 } }), 'bonds bought before the 2030s');
+  check(M.buyFinance(bs) && M.financeLevel(bs) === 3, 'buying bonds (level 3) failed');
+  check(M.lockBond(bs) && M.lockBond(bs) && M.lockBond(bs) && !M.lockBond(bs) && M.bonds(bs).length === 3, 'not exactly 3 bonds at once');
+  const seedsLocked = bs.seeds; bs.landings = 9;
+  check(M.payBonds(bs) === null && bs.seeds === seedsLocked, 'a bond paid out before 10 landings');
+  bs.landings = 10; const pay = M.payBonds(bs), want = 3 * Math.floor(M.natureHealth(bs) / 4);
+  check(want >= 30, `nature health too low to test the interest (${M.natureHealth(bs)})`);
+  check(pay && pay.seeds === 3000 && pay.crystals === want && bs.seeds === seedsLocked + 3000 && !M.bonds(bs).length, `bonds paid ${JSON.stringify(pay)}, want 3000 seeds + ${want} crystals`);
+  const low = { ...bs, seeds: 4400, finance: { level: 3 } };
+  check(!M.lockBond(low), 'a bond dipped into the reserve');
   if (fails.length) { console.log(`FAIL finance\n  ${fails.join('\n  ')}`); process.exit(1); }
   console.log(`PASS finance: 30:1 at B 40, 20:1 at B 80 (level 2: 16:1), reserve kept, cap and one trade a landing (this save: B ${B}, ${r}:1)`);
 })();
