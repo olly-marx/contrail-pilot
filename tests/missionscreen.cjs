@@ -42,7 +42,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(pick.rows === 1, `on the rails the hangar opens with ONE free choice (cleaner engines) at the top: ${JSON.stringify(pick)}`);
   const free = await p.$('#hFleet .freepick .btn.free');
   check(!!free, 'the hangar shows FREE! buttons');
-  if (free) { await free.click(); await p.waitForTimeout(400); }
+  // 0.16.3: the payoff (the plane, then the new part arriving, then OK) covers the screen until OK is tapped.
+  if (free) { await free.click(); await p.click('#payOk', { timeout: 10000 }).catch(() => fails.push('the payoff OK never appeared after the free pick')); await p.waitForTimeout(400); }
   if (await p.isVisible('#payOk')) { check(await p.evaluate(() => !!document.querySelector('#payoff img')), 'the free part shows its payoff (the plane with it)'); await p.click('#payOk'); } else await p.click('#tabFly');   // (season 2: the payoff's OK goes home)
   await p.waitForTimeout(400);
   const after2 = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, locked: document.getElementById('goBtn').disabled, text: document.getElementById('goBtn').textContent }));

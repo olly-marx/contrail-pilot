@@ -69,3 +69,5 @@ fares	src/fleet.js	s/export const FARES = { comet: 2,/export const FARES = { com
 fares	src/sim/rules.js	s/\/ 1e6 \* this.kit.fares)/\/ 1e6)/	Cabin upgrades ignored
 eras	src/eras.js	s/ERA_BASE_MIN = 20;/ERA_BASE_MIN = 30;/	era base minutes changed
 eras	src/eras.js	s/Math.pow(n, 1.5)/Math.pow(n, 2)/	era growth exponent changed
+controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 2, TIP_MIN_TAP = 2;/	a tip goes too early
+controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 20, TIP_MIN_TAP = 2;/	a tip stays too long

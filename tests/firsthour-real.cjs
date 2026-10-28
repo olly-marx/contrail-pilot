@@ -77,7 +77,8 @@ const W = 390, H = 844;
   // Pick it, then crash flight 1 on purpose (no taps): the hangar stays reachable, nothing locks the player out.
   await p.click('#hubTiles [data-go="hangar"]', { force: true }); await p.waitForTimeout(800);   // (it pulses: a finger does not wait for it to stand still)
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; const u = game.registry.get('ui').tour; u.busy = false; u.save.tours = [...(u.save.tours || []), '*']; } });
-  const free = await p.$('#hFleet .freepick .btn.free'); if (free) { await free.click(); await p.waitForTimeout(500); }
+  // 0.16.3: the payoff (the plane, then the new part arriving, then OK) covers the screen until OK is tapped.
+  const free = await p.$('#hFleet .freepick .btn.free'); if (free) { await free.click(); await p.click('#payOk', { timeout: 10000 }).catch(() => fails.push('the payoff OK never appeared after the free pick')); await p.waitForTimeout(500); }
   if (await p.isVisible('#payOk')) await p.click('#payOk');   // (season 2: the free part's payoff, its OK goes home)
   await p.click('#tabFly'); await p.waitForTimeout(500);
   check(await p.evaluate(() => !document.getElementById('goBtn').disabled), 'after the pick TAKE OFF works');

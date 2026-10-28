@@ -121,9 +121,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await scene(() => game.scene.getScene('game').explain('test-tip-2', 'Test tip'));
   await p.waitForTimeout(3500);
   check(await scene(() => game.scene.getScene('game').explaining), 'an untouched tip is still up at 3.5 s');
-  let gone = false;   // ~6 s of GAME time (a loaded machine draws fewer frames, so allow up to 10 s of wall time)
-  for (let i = 0; i < 26 && !gone; i++) { await p.waitForTimeout(250); gone = await scene(() => !game.scene.getScene('game').explaining && document.getElementById('coach').hidden); }
-  check(gone, 'an untouched tip goes by itself after ~6 s');
+  // The tip goes at TIP_MAX = 6 s of GAME time (Phaser's clock: a busy machine draws fewer frames, so game time runs slower than the wall clock; a fixed
+  // 10 s wall wait flaked in the 0.16.3 run). Wait for the state (cap 40 s of wall time), then assert how much GAME time it took.
+  let gone = false;
+  for (let i = 0; i < 160 && !gone; i++) { await p.waitForTimeout(250); gone = await scene(() => !game.scene.getScene('game').explaining && document.getElementById('coach').hidden); }
+  const gameMs = await scene(() => { const s = game.scene.getScene('game'); return Math.round(s.time.now - s.tipAt); });
+  check(gone, 'an untouched tip goes by itself (within 40 s of wall time)');
+  check(gone && gameMs >= 5900 && gameMs < 9000, `an untouched tip goes by itself after ~6 s of game time: ${gameMs} ms`);
   await scene(() => game.scene.getScene('game').startGrace());   // the breather still follows pop-ups (crash cards etc.)
   // ...then a breather: the AUTOPILOT steers towards the next storm gap (not a frozen hover), a
   // storm right on the plane doesn't end the flight, the label shows, and a tap hands back control.
