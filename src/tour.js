@@ -7,6 +7,7 @@
 // save.shownLines: upgrade lines already pointed out.
 import { tip } from './tips.js';
 import { FEATURES } from './config.js';
+import { revealed as s2Revealed } from './missions2.js';
 // Tab-bar targets and what replaces them on the season 2 hub (the tiles; HOME goes back to the hub).
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
@@ -89,7 +90,8 @@ export class Tour {
       { target: '#tabHangar', text: tip('rail-systems'), tap: true },
       { target: '#hFleet [data-ftab="systems"]', text: tip('rail-systems-tab'), tap: true },
       { target: '#hFleet .line .next', text: tip('rail-systems-line'), ok: true }]];
-    // R14 (stub): the boards, once they are redone and back online (the bug-fix chat's proposal).
+    // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).
+    if (hub && s2Revealed(s, 'boards') && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true }]];
     return null;
   }
 

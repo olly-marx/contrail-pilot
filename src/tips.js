@@ -66,6 +66,7 @@ export const TIPS = {
   // ---- the on-rails onboarding (src/tour.js railsFor; research/FLOW-FIRST-HOUR.md) ----
   'rail-school':       { say: 'You landed! Your first upgrade is FREE. Open the hangar!' },
   'rail-hangar':       { say: 'Your first upgrade is FREE. Open the hangar!' },
+  'rail-boards':       { say: 'Your records! Beat your best.' },
   'rail-free':         { say: 'Cleaner engines: less CO2, a cooler Earth. Tap FREE!' },
   'rail-payoff':       { say: 'Your plane is cleaner now!' },
   'rail-takeoff':      { say: 'Take off! Land at the next airport.' },

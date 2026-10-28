@@ -62,17 +62,19 @@ const W = 390, H = 844;
       gap: ahead && ahead.rects[0].x < s.plane.x + 220 ? (ahead.rects[0].height + ahead.rects[1].y) / 2 - 6 : null,
       issr: issr ? { top: issr.y, bot: issr.y + issr.height } : null,
       covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), turbs: (s.turbs || []).length,
-      wild: (s.life || []).filter(x => x.kind && !/animal-(cow|sheep)/.test(x.kind)).length };
+      wild: (s.life || []).filter(x => x.kind && !/animal-(cow|sheep)/.test(x.kind)).length,
+      lesson: (l => l && { ahead: l.x - (s.plane.x + 50), drawn: l.view ? l.view.alpha * (l.view.visible ? 1 : 0) : 0, day: s.isDay })((s.issrs || []).find(i => i.height === 100 && i.width >= 450)) };   // flight 2's guaranteed patch (rules.js l2Patch)
   });
   let avoid = false;
   const target = v => v.toRunway < 40 && v.toRunway > -220 ? 1e9 : avoid && v.issr ? (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 40) : v.gap != null ? v.gap
     : v.issr ? (v.day && !avoid ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
     : v.toRunway < 700 ? v.skyH - 30 : v.skyH * 0.45;
   const fly = async (label, seconds, rules = {}) => {
-    const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0;
+    const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0, lesson = null;
     while (Date.now() - t0 < seconds * 1000) {
       const v = await look();
       if (v.results) break;
+      if (rules.lessonPatch && !lesson && v.lesson && v.lesson.ahead <= 200 && v.lesson.ahead >= 0) { lesson = v.lesson; await shot('flight2-lesson-patch'); }
       if (v.covered) covered++; turbs = Math.max(turbs, v.turbs); wild = Math.max(wild, v.wild);
       if (v.okUp) { await p.click('#coachOk').catch(() => {}); continue; }
       if (v.tapStep) { await p.mouse.click(W / 2, H * 0.55); await p.waitForTimeout(150); continue; }
@@ -85,6 +87,7 @@ const W = 390, H = 844;
     check(!covered, `${label}: no teaching strip ever covered the plane (${covered} frames did)`);
     if (rules.noTurb) check(!turbs, `${label}: no turbulence yet (${turbs})`);
     if (rules.noWild) check(!wild, `${label}: no wild animals yet (${wild})`);
+    if (rules.lessonPatch) check(lesson && lesson.drawn > 0 && lesson.day, `${label}: the guaranteed icy patch is DRAWN (alpha > 0) in daylight as the plane nears it, 200 px out (${JSON.stringify(lesson)})`);
   };
 
   // R1-R3: start choice (Seoul), how to play, flight school (choice screens: several options by design).
@@ -108,7 +111,7 @@ const W = 390, H = 844;
   // R10-R11: flight 2, then NATURE and its free first project.
   const L2 = () => p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).missionsDone || []).includes('L2'));
   avoid = MISS_L2; await p.evaluate(a => { window.__avoid = a; }, avoid);
-  await fly('flight 2', 240, { noTurb: true });
+  await fly('flight 2', 240, { noTurb: true, lessonPatch: true });
   let flights = 1;
   // The rails must never stall; pilot skill is not what this test checks (0.16.0 strict run 3: the real-tap pilot once
   // missed the guaranteed patch, a child can too). So a miss gets the second try, and the fallback opens NATURE after it.

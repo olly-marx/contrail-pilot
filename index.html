@@ -117,6 +117,8 @@
   <section id="results" class="overlay screen" hidden>
     <div class="panel slim">
       <h2 id="rTitle" class="step slam">Landed!</h2>
+      <!-- the reveal hint: under the title, not under the button (small phones cut it off; the audit 2026-10-27) -->
+      <p class="small skiphint" id="rSkip">tap to skip</p>
       <div id="rMission" class="step mission" hidden></div>
       <div class="step bigstat"><span id="rDist">0 km</span></div>
       <p class="newbest step" id="rRecord" hidden>NEW RECORD!</p>
@@ -151,7 +153,6 @@
       <div class="step buttons">
         <button id="againBtn" class="btn go big" type="button">FLY ON</button>
       </div>
-      <p class="small skiphint" id="rSkip">tap to skip</p>
     </div>
   </section>
 
