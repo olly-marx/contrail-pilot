@@ -8,7 +8,7 @@ const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const KEY = 'contrailPilot.v2';
 // A real player's save from before the eras (no fleet), with old plane levels.
-const OLD = { tutorialDone: true, muted: true, seenTips: ['issr'], tours: ['name', 'hangar', 'nature', 'wild'], freeGiven: true, priceVersion: 2,
+const OLD = { tutorialDone: true, muted: true, seenTips: ['issr'], tours: ['*', 'name', 'hangar', 'nature', 'wild'], freeGiven: true, priceVersion: 2,
   seeds: 420, crystals: 60, flights: 35, landings: 8, bestDistance: 5200000, flownKm: 30000, city: 'PARIS', visited: ['LONDON', 'PARIS'],
   levels: { engine: 2, radar: 1, trees: 1 }, planted: { spruce: 5 } };
 

@@ -14,7 +14,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const fly = async atc => {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
-    await p.addInitScript(a => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'],
+    await p.addInitScript(a => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'],
       flights: 20, landings: 6, seeds: 200, flightSeconds: 8000, levels: { trees: 1 }, fleet: { plane: 'jumbo', planes: { comet: {}, jumbo: {} }, systems: { atc: a }, gadgets: {} } })); }, atc);
     await p.goto(URL); await ready(p); await p.waitForTimeout(300);
     await p.click('#goBtn');
