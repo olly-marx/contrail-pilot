@@ -52,7 +52,7 @@ export const LAND = [
   ['plains', -56, -25, -76, -48],          // the Pampas and Patagonia (no region of their own yet)
   // Australia and New Zealand (no region of their own yet: part B will decide).
   ['desert', -39, -11, 113, 154],          // Australia
-  ['woodland', -47, -34, 166, 179],        // New Zealand
+  ['islandforest', -47, -34, 166, 179],        // New Zealand
 ];
 
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;

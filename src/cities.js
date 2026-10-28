@@ -115,7 +115,7 @@ const BASE_CITIES = [
   { name: 'SYDNEY', lat: -33.95, lon: 151.18, region: 'desert' },
   { name: 'PERTH', lat: -31.94, lon: 115.97, region: 'desert' },
   { name: 'DARWIN', lat: -12.41, lon: 130.88, region: 'desert' },
-  { name: 'AUCKLAND', lat: -37.01, lon: 174.79, region: 'woodland' },
+  { name: 'AUCKLAND', lat: -37.01, lon: 174.79, region: 'islandforest' },
   // Island stepping stones over the big oceans
   { name: 'HONOLULU', lat: 21.32, lon: -157.92, region: 'ocean' },
   { name: 'NADI', lat: -17.76, lon: 177.44, region: 'ocean' },
@@ -135,9 +135,9 @@ export const S2_CITIES = [
   { name: 'CAIRNS', lat: -16.88, lon: 145.75, region: 'desert' },
   { name: 'HOBART', lat: -42.84, lon: 147.51, region: 'woodland' },   // geo.js: ocean (mask too coarse)
   { name: 'ADELAIDE', lat: -34.95, lon: 138.53, region: 'desert' },
-  { name: 'WELLINGTON', lat: -41.33, lon: 174.81, region: 'woodland' },
-  { name: 'CHRISTCHURCH', lat: -43.49, lon: 172.53, region: 'woodland' },
-  { name: 'DUNEDIN', lat: -45.93, lon: 170.20, region: 'woodland' },
+  { name: 'WELLINGTON', lat: -41.33, lon: 174.81, region: 'islandforest' },
+  { name: 'CHRISTCHURCH', lat: -43.49, lon: 172.53, region: 'islandforest' },
+  { name: 'DUNEDIN', lat: -45.93, lon: 170.20, region: 'islandforest' },
   { name: 'TROMSO', lat: 69.68, lon: 18.92, region: 'boreal' },
   { name: 'ROVANIEMI', lat: 66.56, lon: 25.83, region: 'boreal' },
   { name: 'NUUK', lat: 64.19, lon: -51.68, region: 'tundra' },   // geo.js: ice

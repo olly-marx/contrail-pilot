@@ -16,6 +16,7 @@ export const CROSSINGS = [
   { id: 'hanoi-hongkong', a: 'HANOI', b: 'HONG KONG', era: 0, kind: 'frontier' },
   { id: 'jakarta-darwin', a: 'JAKARTA', b: 'DARWIN', era: 0, kind: 'frontier' },
   { id: 'mexico-panama', a: 'MEXICO CITY', b: 'PANAMA', era: 0, kind: 'frontier' },
+  { id: 'tasman', a: 'AUCKLAND', b: 'SYDNEY', era: 0, kind: 'frontier' },   // Aotearoa <-> Australia: the NZ start's first way out (2026-10-28)
   { id: 'north-atlantic', a: 'LISBON', b: 'NEW YORK', era: 1, kind: 'ocean' },
   { id: 'reykjavik-newyork', a: 'REYKJAVIK', b: 'NEW YORK', era: 1, kind: 'ocean' },
   { id: 'arabian-sea', a: 'MUSCAT', b: 'KARACHI', era: 1, kind: 'ocean' },
