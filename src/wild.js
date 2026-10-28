@@ -26,7 +26,7 @@ const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';
 // Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
-const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest'];   // PixelLab backdrops, 2026-10-24
+const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest'];   // PixelLab backdrops, 2026-10-24
 
 // Been there: the UK always; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {

@@ -32,7 +32,7 @@ def save(im, name):
 SKY = {'woodland': ('#6ec6e8', '#a8dff2'), 'mediterranean': ('#5ab8ee', '#a8dcf8'), 'desert': ('#7ac8ea', '#f0e4c0'),
        'monsoon': ('#7ab8d8', '#c8e4ec'), 'eastasia': ('#8ac0dc', '#e0ecf0'), 'boreal': ('#6aa8d8', '#d0e4f4'),
        'plains': ('#62b8ea', '#d8ecf4'), 'tundra': ('#8aaed0', '#dce8f0'),
-       'savanna': ('#6cbce8', '#f2e2b8'), 'rainforest': ('#78bcd8', '#d4eae4')}
+       'savanna': ('#6cbce8', '#f2e2b8'), 'rainforest': ('#78bcd8', '#d4eae4'), 'islandforest': ('#64b2e6', '#d6eaf4')}
 
 
 def backdrop(region):
