@@ -237,7 +237,7 @@ def field(region):
         if d > 0.4:
             im.putpixel((x, y - 1), dark)
         if d > 0.75:
-            im.putpixel((x + 1, y - 1), dark)
+            im.putpixel((min(x + 1, 287), y - 1), dark)   # (the last column: a tuft on the edge used to crash)
     save(im, f'field-{region}')
 
 

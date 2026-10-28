@@ -21,3 +21,4 @@ goldenplover redshank snowbunting ptarmigan tern puffin harlequin
 # Rainforest
 poisonfrog squirrelmonkey ghlt glt agouti skimmer
 hihi tieke kokako tuturuatu inanga wetapunga   # Aotearoa New Zealand (2026-10-28)
+phascogale kidunnart gouldian   # Australia (2026-10-28)
