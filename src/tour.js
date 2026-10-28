@@ -35,7 +35,7 @@ export class Tour {
     // 2026-10-28, "I can't scroll down or click the bottom". The hole follows the target as it moves.
     const scroller = () => { let n = this.target; while (n && n !== document.body) { if (n.classList && n.classList.contains('overlay') && n.scrollHeight > n.clientHeight) return n; n = n.parentElement; } return null; };
     let lastY = null;
-    el.querySelectorAll('.tdim').forEach(d => {
+    el.querySelectorAll('.tdim, .tbubble').forEach(d => {   // (the bubble too: a finger often lands on it)
       d.addEventListener('touchstart', e => { lastY = e.touches[0].clientY; }, { passive: true });
       d.addEventListener('touchmove', e => { const sc = scroller(), y = e.touches[0].clientY; if (sc && lastY != null) { sc.scrollTop -= y - lastY; this.userScrollAt = Date.now(); this.place(); } lastY = y; e.preventDefault(); }, { passive: false });
       d.addEventListener('wheel', e => { const sc = scroller(); if (sc) { sc.scrollTop += e.deltaY; this.userScrollAt = Date.now(); this.place(); } e.preventDefault(); }, { passive: false });
@@ -224,6 +224,10 @@ export class Tour {
     const r = t.getBoundingClientRect(), bottom = barTop - 12, top = 12;
     if (r.bottom > bottom) sc.scrollTop += Math.min(r.bottom - bottom, r.top - top);
     else if (r.top < top) sc.scrollTop -= top - r.top;
+    else {   // in the band but COVERED (a pinned header, e.g. NATURE's scene: content scrolls under it): bring it to the middle
+      const r2 = t.getBoundingClientRect(), top1 = document.elementsFromPoint(r2.left + r2.width / 2, r2.top + r2.height / 2).find(e => !e.closest('#tour'));
+      if (top1 && top1 !== t && !t.contains(top1)) sc.scrollTop += r2.top + r2.height / 2 - (top + bottom) / 2;
+    }
   }
 
   // Put the hole, ring, finger and bubble round the target.
