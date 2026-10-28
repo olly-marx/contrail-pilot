@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-28-new-lands",
+    "version": "0.18.0",
+    "date": "2026-10-28",
+    "level": "major",
+    "notes": [
+      "Three new places to start your journey: New Zealand's island forest, the Australian bush, and the Patagonian steppe!",
+      "Each land has its own trees, animals and projects to discover in NATURE.",
+      "Maori names now show properly, with their long vowels (like ā and ē).",
+      "Fixed: NATURE now opens on your own home land when you start somewhere far from the UK."
+    ]
+  },
+  {
     "id": "2026-10-28-era-4",
     "version": "0.17.0",
     "date": "2026-10-28",
