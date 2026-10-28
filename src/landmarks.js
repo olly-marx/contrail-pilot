@@ -623,5 +623,89 @@ export const LANDMARKS = {
     "name": "a colourful Hindu temple and palm trees with a thatched beach hut",
     "w": 118,
     "h": 54
+  },
+  "MELBOURNE": {
+    "key": "landmark-melbourne",
+    "name": "the yellow Flinders Street Station with its green dome and clocks and the gold-topped Eureka Tower",
+    "w": 122,
+    "h": 52
+  },
+  "BRISBANE": {
+    "key": "landmark-brisbane",
+    "name": "the sandstone City Hall clock tower, the Wheel of Brisbane and glass towers",
+    "w": 121,
+    "h": 54
+  },
+  "ADELAIDE": {
+    "key": "landmark-adelaide",
+    "name": "the white roof sails of Adelaide Oval, St Peter's Cathedral and the Town Hall clock tower",
+    "w": 122,
+    "h": 48
+  },
+  "HOBART": {
+    "key": "landmark-hobart",
+    "name": "Mount Wellington behind the sandstone Salamanca warehouses and the Tasman Bridge",
+    "w": 128,
+    "h": 37
+  },
+  "WELLINGTON": {
+    "key": "landmark-wellington",
+    "name": "the round Beehive parliament, a red cable car and a wind turbine on the hill",
+    "w": 120,
+    "h": 53
+  },
+  "CHRISTCHURCH": {
+    "key": "landmark-christchurch",
+    "name": "the triangular Cardboard Cathedral, the stone cathedral spire and a heritage tram",
+    "w": 120,
+    "h": 57
+  },
+  "DUNEDIN": {
+    "key": "landmark-dunedin",
+    "name": "the grand stone Railway Station with its clock tower",
+    "w": 119,
+    "h": 50
+  },
+  "TROMSO": {
+    "key": "landmark-tromso",
+    "name": "the white triangular Arctic Cathedral, a snowy mountain with a cable car and the bridge",
+    "w": 108,
+    "h": 48
+  },
+  "NUUK": {
+    "key": "landmark-nuuk",
+    "name": "the red wooden cathedral, colourful wooden houses and Sermitsiaq mountain",
+    "w": 125,
+    "h": 54
+  },
+  "ROVANIEMI": {
+    "key": "landmark-rovaniemi",
+    "name": "snowy pines, a log cabin and wooden houses",
+    "w": 141,
+    "h": 42
+  },
+  "PUNTA ARENAS": {
+    "key": "landmark-puntaarenas",
+    "name": "a row of colourful houses",
+    "w": 101,
+    "h": 25
+  },
+  "PUERTO MADRYN": {
+    "key": "landmark-puertomadryn",
+    "name": "a small white church and colourful houses",
+    "w": 113,
+    "h": 45
+  },
+  "BALMACEDA": {
+    "key": "landmark-balmaceda",
+    "name": "a snowy mountain and a few wooden houses",
+    "w": 124,
+    "h": 33
+  },
+  "CAIRNS": {
+    "key": "landmark-cairns",
+    "name": "palm trees and a tower",
+    "w": 83,
+    "h": 52
   }
 };
