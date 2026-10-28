@@ -23,5 +23,5 @@ group rules-imports | src/season.js src/crossings.js src/missions2.js src/reward
 group flight-rules | src/config.js src/crash.js src/gapmarkers.js src/Hud.js src/GameScene.js | flight hazards lanes forest atc forecast collisions margin ponds powerups pickupgates issr-reveal gaphint twilight runway-back controls banners sim-bank sim-masks sim-rng-split
 group game-scene | src/GameScene.js | onrails tipqueue l4hint postrails
 group menu-map | src/ui.js src/globe.js src/cities.js src/route.js src/network.js src/geo.js src/pilot.js src/swipe.js src/landmask.js src/links.js index.html style.css | globe journey swipe gate features links everyleg flightregion hubscreen tours onrails onrails@VP=375x667 rails2 tipqueue
-group art-sound | assets/* vendor/* src/sound.js src/pixellab.js src/landmarks.js | textures projectart badgeart faces landmarks stormart pixelpreview treelayout terrain
+group art-sound | assets/* vendor/* src/sound.js src/pixellab.js src/landmarks.js | textures projectart badgeart faces landmarks stormart pixelpreview treelayout terrain macrons
 group online-parked | src/online.js src/restore.js src/uploadbanner.js src/newplayer.js | online onlinesave restore offline newplayer
