@@ -64,7 +64,7 @@ export const PLANES = [
   // (tools/art/make_787.py, no PixelLab until the user tops up). Facts to check before text ships: research/PLANE-FUTURE.
   { id: 'dreamliner', era: 3, name: '787 Dreamliner', co2: 0.57, margin: 'edge2', sprite: 'plane-787', portrait: 'assets/ui/plane-hangar-787.png',
     lines: {
-      engines: [L(3, 900, 'GEnx turbofans (2011)', { co2: 0.93 }), L(3, 1300, 'Chevron nacelles: saw-tooth edges, quieter', { co2: 0.9 }),
+      engines: [L(3, 900, 'GEnx turbofans', { co2: 0.93 }), L(3, 1300, 'Chevron nacelles: saw-tooth edges, quieter', { co2: 0.9 }),
         L(3, 1800, 'Trent 1000 TEN engines', { co2: 0.85 })],
       body: [L(3, 900, 'One-piece carbon-fibre barrel', { co2: 0.94 }), L(3, 1300, 'Raked wingtips that flex upwards', { co2: 0.92 }),
         L(3, 1800, 'Electric brakes and systems', { takeoff: 0.9 })],

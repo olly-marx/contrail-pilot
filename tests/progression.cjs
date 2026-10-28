@@ -64,9 +64,12 @@ const KEY = 'contrailPilot.v2';
   await p.click('#tabHangar');
   check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
   await p.click('[data-ftab=systems]');
+  const okPayoff = async () => { await p.waitForSelector('#payOk', { state: 'visible', timeout: 5000 }).catch(() => {}); if (await p.isVisible('#payOk')) await p.click('#payOk'); };   // every purchase plays the payoff (2026-10-28)
   await p.click('[data-fbuy="system:forecast"]');   // 30 x 0.78 = 25 seeds + 3 crystals
+  await okPayoff();
   await p.click('[data-ftab=gadgets]');
   await p.click('[data-fbuy="gadget:magnet"]');     // 25 seeds + 3 crystals
+  await okPayoff();
   const save = await getSave();
   check(save.seeds === 10 && save.crystals === 0, `60 - 25 - 25 should leave 10 seeds and 6 - 3 - 3 = 0 crystals, got ${save.seeds}, ${save.crystals}`);
   check(save.fleet.systems.forecast === 1 && save.fleet.gadgets.magnet === 1, `levels not saved: ${JSON.stringify(save.fleet)}`);
