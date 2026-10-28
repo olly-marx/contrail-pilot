@@ -187,7 +187,7 @@ export class Tour {
     // The target fully on screen first, always (the user's screenshot: the hangar opened half-way down, the target off-screen).
     const vr = t.getBoundingClientRect();
     if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
-    this.target = t;
+    this.target = t; this.side = null;   // (a new step decides its bubble's side afresh)
     this.keepVisible();
     this.el.querySelector('.tbubble p').innerHTML = st.text;
     const ok = this.el.querySelector('.tbubble .btn');
@@ -245,11 +245,19 @@ export class Tour {
     set(this.el.querySelector('.tring'), { left: `${x0}px`, top: `${y0}px`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
     // The bubble (Captain Contrail + the sentence) goes on the side with more room, then is CLAMPED inside the screen and
     // kept off the target (the user's screenshot, 2026-10-27: the bubble's text was cut off above the page).
-    const below = r.top + r.height / 2 < H / 2, b = this.el.querySelector('.tbubble');
+    // Measured WITHOUT the target's pulse (a transform: scale), and the side is decided ONCE per step: the user's live bug,
+    // 2026-10-28, the bubble jumped above/below the pulsing FREE button as its box grew and shrank.
+    const cy = r.top + r.height / 2, hh = (this.target.offsetHeight || r.height) / 2;
+    const u0 = Math.max(0, cy - hh - pad), u1 = Math.min(H, barTop, cy + hh + pad), b = this.el.querySelector('.tbubble');
     set(b, { top: '0px', bottom: 'auto' });
     const bh = b.getBoundingClientRect().height, gap = 10;
-    let top = below ? y1 + gap : y0 - gap - bh;
-    if (top < 4 || top + bh > H - 4) top = below ? y0 - gap - bh : y1 + gap;   // no room on that side: the other side
+    if (this.side == null) {
+      let below = cy < H / 2;
+      const t0 = below ? u1 + gap : u0 - gap - bh;
+      if (t0 < 4 || t0 + bh > H - 4) below = !below;   // no room on that side: the other side (decided once)
+      this.side = below ? 'below' : 'above';
+    }
+    let top = this.side === 'below' ? u1 + gap : u0 - gap - bh;
     top = Math.max(4, Math.min(H - 4 - bh, top));
     set(b, { top: `${top}px` });
     // The captain points AT the target: mirrored when the target is to the left of the bubble's middle.
