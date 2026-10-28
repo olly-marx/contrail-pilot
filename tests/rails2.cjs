@@ -16,8 +16,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const save = x => ({ areas: ['easia'], homeArea: 'easia', city: 'SEOUL', tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['x-bars'], shownLines: [],
     freeGiven: true, freeProjectGiven: true, fleet, seeds: 40, crystals: 2, flights: 4, missionsDone: ['L1', 'L2'], unclaimed: [],
     tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name'], ...x });
-  const open = async (s, vp) => {
-    const p = await b.newPage({ viewport: vp }); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
+  const open = async (s, vp, touch = false) => {
+    const p = await b.newPage({ viewport: vp, hasTouch: touch }); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { if (!sessionStorage.getItem('seeded')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); } }, s);
     await p.goto(URL); await ready(p); await p.waitForTimeout(1200); return p; };
@@ -78,8 +78,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // Scrolling under a rails step (the user's live report, 2026-10-28: "I can't scroll down or click the bottom"): on a
   // 375x667 phone, during the parcels step on NATURE, a wheel and a finger drag on the dim layer scroll the screen, and taps
   // still reach only the target.
-  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'], shownLines: ['trees'] }), { width: 375, height: 667 });
-  await p.evaluate(() => { const t = document.getElementById('tour'); return t; });
+  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'], shownLines: ['trees'] }), { width: 375, height: 667 }, true);   // (a touch phone: the drag is real touch events)
   { let h = null; for (let i = 0; i < 20; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); } if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(700); }
   for (let i = 0; i < 40; i++) { const x = await audit(p); if (x.up && /parcels/i.test(x.text)) break; await p.waitForTimeout(150); }
   const sc0 = await p.evaluate(() => document.getElementById('nature').scrollTop);
@@ -90,10 +89,11 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   for (let y = 200; y <= 360; y += 20) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 20, y }] });
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(400);
   const sc2 = await p.evaluate(() => document.getElementById('nature').scrollTop);
+  await p.waitForTimeout(2000);   // (the target comes back into view 1.5 s after the player stops scrolling)
   a = await audit(p);
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/scroll-under-rails-375x667.png` });
   check(sc1 !== sc0 && sc2 !== sc1, `under a rails step the wheel and a drag on the dim layer scroll the screen (scrollTop ${sc0} -> wheel ${sc1} -> drag ${sc2})`);
-  check(a.up && a.reach.length === 1, `after scrolling, taps still reach only the target (${a.reach.length}: ${a.reach.join(' / ')})`);
+  check(a.up && a.reach.length === 1 && a.inView, `after scrolling, the target is back in view and taps still reach only it (${a.reach.length}: ${a.reach.join(' / ')})`);
   check(!p.errs.length, `scroll page errors: ${p.errs}`); await p.close();
 
   // An empty missions list says what is missing (audit #8): every easia mission done, no crossing offered yet.
