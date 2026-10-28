@@ -21,7 +21,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.mouse.move(195, 460); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up();   // (hold to take off)
   await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 });
   // A toast already up + a tip strip at the top: the toast drops below the strip, no overlap (audit #6).
-  const r0 = await p.evaluate(async () => { const s = game.scene.getScene('game'); s.hitsStorm = () => false; s.hitBird = () => false; s.plane.y = 300;   // (low: the strip goes on top)
+  const r0 = await p.evaluate(async () => { const s = game.scene.getScene('game'); s.hitsStorm = () => false; s.hitBird = () => false; s.plane.y = 300;   /* (low: the strip goes on top) */ if (s.explaining) s.closeTip(); s.tipQueue = []; await new Promise(r => setTimeout(r, 500)); if (s.explaining) s.closeTip(); s.tipQueue = [];   /* (a real tip may be up: start clean) */
     game.registry.get('ui').toast('Night is coming!', 'A toast that is already up.', 'bad', 6); await new Promise(r => setTimeout(r, 100));
     s.explain('tq-t', 'At night a contrail traps heat like a blanket. Fly under or over the icy air to keep Earth cool!', 'lesson-hot');   /* (a real-sized tip: two lines and a picture) */ await new Promise(r => setTimeout(r, 1000));
     const c = document.getElementById('coach').getBoundingClientRect(), t = document.getElementById('toast').getBoundingClientRect();
@@ -29,7 +29,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     s.closeTip(); return out; });
   check(r0.toast && r0.coach && !r0.overlap, `a toast already up drops below the tip strip (${JSON.stringify(r0)})`);
   await p.waitForTimeout(500);
-  const r2 = await p.evaluate(() => { const s = game.scene.getScene('game'); s.hitsStorm = () => false; s.hitBird = () => false;
+  const r2 = await p.evaluate(() => { const s = game.scene.getScene('game'); s.hitsStorm = () => false; s.hitBird = () => false; if (s.explaining) s.closeTip(); s.tipQueue = [];   /* (start clean) */
     const a = s.explain('tq-a', 'first tip'), q = s.explain('tq-b', 'second tip (queued)');
     return { a, q, queued: (s.tipQueue || []).length, seenB: s.save.seenTips.includes('tq-b') }; });
   check(r2.a && r2.q && r2.queued === 1 && r2.seenB, `a second tip queues behind the first (${JSON.stringify(r2)})`);
