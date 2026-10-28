@@ -24,7 +24,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     return { cities: CITIES.length, missing, added: s.landmarks.length - before, key: img && img.texture.key,
       h: img && img.displayHeight, alpha: img && img.alpha, base: img && img.y + img.displayHeight * (1 - img.originY), sky: 512 - 48 };
   });
-  check(r.cities === 104 && r.missing.length === 0, `every city has a loaded skyline: missing ${r.missing}`);
+  check(r.cities >= 104 && r.missing.length === 0, `every city (${r.cities}: season 2 adds 14) has a loaded skyline: missing ${r.missing}`);
   check(r.added === 1 && r.key === 'landmark-tokyo', `a runway gets its city's skyline: ${r.added} ${r.key}`);
   check(r.h >= 80, `big on screen (>= 80 px): ${r.h}`);
   check(r.alpha < 1 && r.alpha > 0.6, `a little hazy: alpha ${r.alpha}`);
