@@ -37,7 +37,7 @@ Top 50 plus the caller's own row if outside it; `hidden` players excluded (uncha
 
 **Schema changes (additive, with an undo each):** `alter table flights add column missions_done smallint not null default 0 check (missions_done between 0 and 200)`; `send_flights` reads it and the new client version; `leaderboard()` replaced (drop and recreate, as 4 times before); plus the drafted `season` table, `client_ok()`, the dropped direct-insert policy, the wipe and the restore-links retirement, in that order.
 
-**Client changes (one release, `0.17.0`):** remove the offline switch for the shipped game (`src/season2.js`: keep `__CP_NO_ONLINE` only for the tester modes); `shade: Math.max(0, this.sunBlocked)`; send `missions_done` and `client: VERSION`; BOARDS screen = MY RECORDS plus, when online, a ranking tab per board (THIS WEEK / EVER; "You: 12th" row); PILOT tab and the name tour return after the 3rd landing; "Update to keep playing!" on `CP001`; remove `src/restore.js` and its UI (restore links retired); the upload banner and the outbox (`flush`, `catchUp`) switched back on; MY RECORDS stays the offline fallback.
+**Client changes (one release, `0.19.0`; was planned as 0.17.0):** remove the offline switch for the shipped game (`src/season2.js`: keep `__CP_NO_ONLINE` only for the tester modes); `shade: Math.max(0, this.sunBlocked)`; send `missions_done` and `client: VERSION`; BOARDS screen = MY RECORDS plus, when online, a ranking tab per board (THIS WEEK / EVER; "You: 12th" row); PILOT tab and the name tour return after the 3rd landing; "Update to keep playing!" on `CP001`; remove `src/restore.js` and its UI (restore links retired); the upload banner and the outbox (`flush`, `catchUp`) switched back on; MY RECORDS stays the offline fallback.
 
 ## 3. Local proof first (no live access needed)
 
@@ -46,19 +46,24 @@ Top 50 plus the caller's own row if outside it; `hidden` players excluded (uncha
 3. **Planted defects** for each assertion (wrong sort order for `shortest`, a week boundary off by a day, clamp removed from `cool`, hidden player shown, min_client not enforced, undo that loses rows): each must fail the suite.
 4. The client against a local PostgREST-compatible stand-in is covered by the existing fake-Supabase browser tests (`online`, `onlinesave`, `offline`), re-homed to the shipped game.
 
-## 4. Live apply runbook (only after the user confirms in this chat)
+## 4. Live apply runbook (only after the user confirms in this chat) — UPDATED 2026-10-28: the online client is 0.19.0 (0.17.0 = era 4, 0.18.x = regions/starters)
 
-Preconditions: section 3 green; the user has given the database URL for the apply; the live schema version is READ once to confirm it equals the 7 repo migrations (the only live read, read-only, listed first). Then, one step at a time, each reported before the next:
-1. **Backup**: `pg_dump` of `players, flights, player_saves, devices, pilot_codes, restore_links` (data + schema) to a file kept outside the repo, with its row counts and checksum written to `research/M8-RUN-LOG.md`.
-2. Apply `tree_boards`, `boards8` (adds the column and the new `leaderboard`), verify with the same assertions as section 3 on a small read-only query set.
-3. **Wipe** (`season_wipe`): archive, compare counts, delete, verify; the undo script is tested again on the live backup copy in the local database, not on live.
-4. `season_controls` with `start_at = now()` and `min_client = '0.17.0'`; verify an old-version upload is refused.
-5. Retire the restore links.
-Each step has an undo script kept next to it; any failed check stops the run and restores from the backup. Nothing is destructive without its archive, and no step runs before the previous is verified.
+The scripts are the proven drafts in `supabase/drafts/` (branch `feat/m8-db`), proven by `supabase/tests/run-m8.sh` (Docker postgres:17: the live schema + the drafts; every undo returns the database to its exact pre-state; planted defects are caught).
+Order and why: (1)(2) are harmless to the game that is live now (0.18.1 does not use online; `send_flights(batch, client default null)` still takes the old call; `min_client` starts at 0.0.0). (3)(4) destroy nothing (archive first, counts compared, undo scripts). (5) happens only AFTER 0.19.0 is live, so a 0.19.0 player is never refused.
+
+Preconditions: the user has said yes in this chat after reading the exact scripts; the user supplies the database connection (this session has no live credentials); the live schema is READ once (read-only) to confirm it equals the 7 repo migrations, before anything runs.
+1. **Backup** (read-only on live): `pg_dump --format=custom` of schema `public` (data + schema), written outside the repo; row counts per table and the file's sha256 written to `research/M8-RUN-LOG.md`. The backup is restored into a local Postgres and `run-m8.sh`'s state check is run on it before step 2 (proves the undo path on real data, locally).
+2. **Schema** `20261028000000_boards8_schema.sql` (+ undo): `flights.missions_done`, `season`, `client_ok()`, `send_flights(batch, client)`, `put_save(save, stamp, client)`, drops the direct-insert policy. Verify: an old-style `send_flights({batch})` call still works; the policy is gone.
+3. **Boards** `20261028010000_boards8_leaderboard.sql` (+ undo): the 8 boards x week/ever. Verify with the A assertions' queries on live read-only (shape only).
+4. **Wipe** `20261028020000_season_wipe.sql` (+ undo): archive to `archive_season1` (not API-visible), counts compared INSIDE the transaction (it rolls back if they differ), then delete flights and player_saves. Players, devices, codes are kept. Refuses a second run.
+5. **Retire restore links** `20261028030000_retire_restore_links.sql` (+ undo): archive, drop `restore_*` and the table.
+6. Release the client 0.19.0 (gate on the exact commit); confirm version.json.
+7. **Season controls**: `update season set start_at = now(), min_client = '0.19.0'`; verify `send_flights('[]', '0.18.1')` raises CP001 and `'0.19.0'` is accepted. Undo: `update season set start_at = '-infinity', min_client = '0.0.0'`.
+Each step is reported to the user before the next; any failed check stops the run and the undo runs. After each step the row counts and the state digest are appended to `research/M8-RUN-LOG.md`.
 
 ## 5. Order of work
 
-(1) this plan and the decisions above; (2) move the drafts into the repo, write `boards8` and its tests, prove them with planted defects against local Postgres; (3) the client release `0.17.0` built and gate-tested against the fake Supabase, NOT yet released (an online client released before the database would show errors); (4) STOP and ask the user to confirm the live apply; (5) apply live step by step with reports; (6) release `0.17.0`; (7) watch the first real flights land on the boards.
+(1) this plan and the decisions above; (2) move the drafts into the repo, write `boards8` and its tests, prove them with planted defects against local Postgres; (3) the client release `0.19.0` built and gate-tested against the fake Supabase, NOT yet released (an online client released before the database would show errors); (4) STOP and ask the user to confirm the live apply; (5) apply live step by step with reports; (6) release `0.17.0`; (7) watch the first real flights land on the boards.
 
 ## 6. Risks
 
