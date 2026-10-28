@@ -14,11 +14,10 @@ shard=""
 if [ "${1:-}" = "--shard" ]; then shard="$2"; shift 2; fi
 if [ $# -gt 0 ]; then tests=("$@"); else tests=(tests/*.cjs); fi
 
-# Seconds each test took in CI (2026-10-22), to balance shards; unknown tests count as 20.
-declare -A secs=([forest]=60 [school]=67 [lanes]=65 [flight]=90 [missions]=39 [crystals]=38 [progression]=33
-  [hazards]=32 [ponds]=29 [rewards]=28 [controls]=27 [online]=25 [tours]=22 [issr-reveal]=21 [features]=20
-  [journey]=17 [nature]=15 [hangar]=14 [banners]=14 [gate]=11 [wild]=9 [upgrades]=9 [restore]=9 [reprice]=9
-  [collisions]=7 [savesafe]=6 [runway-back]=6 [textures]=2 [links]=2 [wildlife]=20 [treeart]=2 [powerups]=20 [habitatdata]=2 [geo]=2 [flightregion]=20 [everyleg]=15 [pixelpreview]=15 [forestmeter]=15 [updates]=20 [crash]=15)
+# Seconds each test took in a full local run (2026-10-28, tree 9d0c7022, 122 tests; the old table was CI seconds from 2026-10-22 and covered 40 tests),
+# to balance shards: with this table the 4 CI shards come out at ~543 s each (the old table gave 461-601). Unknown tests count as 20.
+# Refresh from a run with `TIMES=file tools/test.sh` (it writes test<TAB>seconds<TAB>result).
+declare -A secs=([walkthrough]=181 [onrails]=130 [flight]=73 [lanes]=71 [school]=71 [firsthour-real]=71 [updates]=69 [offline]=54 [sim-tapper]=48 [missions]=48 [crystals]=46 [cache]=42 [forest]=42 [season2-smoke]=40 [controls]=38 [sim-player]=38 [tours]=37 [season2]=37 [records-screen]=37 [progression]=35 [hazards]=34 [saveloss]=32 [ponds]=30 [onlinesave]=30 [swipe]=29 [online]=29 [rewards]=28 [missionscreen]=26 [features]=26 [nature]=25 [hudlayout]=24 [journey]=24 [sim-hazards]=23 [issr-reveal]=23 [looks]=23 [gaphint]=22 [wildlife]=21 [globe]=20 [hangar]=20 [pickupgates]=18 [wildfield]=18 [fares]=17 [terrain]=17 [restore]=16 [wild]=16 [welcome]=15 [sim-bank]=15 [regions]=14 [biodiversity]=14 [newplayer]=13 [crash]=12 [gate]=12 [banners]=12 [flightregion]=12 [textfit]=10 [sim-result-fields]=10 [eras]=10 [treepic]=10 [forestmeter]=10 [hangarnew]=10 [savesafe]=10 [pixelpreview]=9 [fields]=9 [forecast]=9 [upgrades]=9 [sim-care]=8 [everyleg]=8 [powerups]=8 [projectart]=8 [atc]=8 [reset]=8 [hubscreen]=7 [sim-rng-split]=7 [collisions]=7 [treelayout]=6 [sim-equiv]=6 [runway-back]=6 [margin]=5 [stormart]=5 [fleetfacts]=4 [textures]=4 [tourgiveup]=4 [sim-physics]=4 [links]=3 [landmarks]=3 [badgeart]=3 [nature-unknown]=3 [faces]=2 [sim-masks]=2 [twilight]=2 [badges]=2 [sim-issr-variants]=2 [sim-paired]=2 [sim-trees]=2 [gapmarkers]=1 [sim-l2patch]=1 [sim-lanes]=1 [geo]=1 [sim-forest]=1 [release]=1 [sim-flight]=1 [sim-crossing]=1 [areas]=1 [sim-pilots]=1 [season2-node]=1 [offer-gate]=1 [missions2]=1 [hub]=1 [wildlifelist]=1 [weboflife]=1 [textbudget]=1 [sim-crystals]=1 [records]=1 [nexthere]=1 [missions4]=1 [missionclean]=1 [landtrees]=1 [l2fallback]=1 [lessonart]=1 [fleet]=1 [habitatdata]=1 [treeart]=1)
 
 if [ -n "$shard" ]; then
   k=${shard%/*}; n=${shard#*/}
