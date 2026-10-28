@@ -29,6 +29,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
   await p.click('[data-fbuy="gadget:magnet"]'); await p.waitForTimeout(400);
+  // Every purchase plays the payoff (hangar feedback, 2026-10-28): the overlay, then OK keeps you in the hangar.
+  await p.waitForSelector('#payOk', { state: 'visible', timeout: 5000 }).catch(() => {});
+  check(await p.isVisible('#payOk'), 'buying a gadget did not play the payoff');
+  if (await p.isVisible('#payOk')) await p.click('#payOk');
+  await p.waitForTimeout(200);
+  check(await p.isVisible('#hFleet'), 'after the payoff OK: not in the hangar any more');
   let s = await saved(p);
   check(s.fleet.gadgets.magnet === 3 && s.seeds === 1185 && s.crystals === 142, `magnet 3 bought: ${JSON.stringify({ m: s.fleet.gadgets.magnet, seeds: s.seeds, crystals: s.crystals })}`);
   check(/Electromagnet/.test(await row(p, 'Magnet')) && /Next: Stronger coil/.test(await row(p, 'Magnet')), `the row moves on: "${await row(p, 'Magnet')}"`);

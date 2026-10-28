@@ -1010,7 +1010,8 @@ export class GameScene extends Phaser.Scene {
       const [tTop, tBot, lTop, lBot, wNo, wFly] = st.parts;
       tTop.height = top; tTop.displayHeight = top; tBot.y = bot; tBot.height = SKY_H - bot; tBot.displayHeight = SKY_H - bot;
       lTop.y = top - 2; lBot.y = bot; wNo.y = top - 12; wFly.y = bot + 12;
-    } else if (st.pics) st.parts.forEach((im, i) => { const q = st.pics[i]; im.y = q.y; im.cropH = Math.min(q.h, SKY_H - q.y); im.setCrop(0, 0, im.width, im.cropH); });
+    } else if (st.pics) st.pics.forEach((q, i) => {   // (only the clouds: a storm's parts gain sparks later, which do not move)
+      const im = st.parts[i]; if (!im) return; im.y = q.y; im.cropH = Math.min(q.h, SKY_H - q.y); im.setCrop(0, 0, im.width, im.cropH); });
   }
 
   // The next-gap hint: a faint gate at the right edge, at the height of a storm gap still off screen.
