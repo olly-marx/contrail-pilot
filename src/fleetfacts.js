@@ -28,6 +28,10 @@ export const LEVEL_FACTS = {
   'GEnx turbofans': F('The 787 was offered with a choice of two all-new engines: the GE GEnx or the Rolls-Royce Trent 1000.', 'guess', 'to check: GE Aerospace / Rolls-Royce 787 engine pages'),
   'One-piece carbon-fibre barrel': F('About half of a 787 is carbon-fibre composite. Its body is built in whole barrel sections, not riveted panels.', 'guess', 'to check: Boeing 787 composites'),
   'Dimmable windows': F('A 787 has no window blinds: you press a button and the glass slowly darkens.', 'guess', 'to check: Boeing 787 electrochromic windows'),
+  // Truss-braced wing, the 2030s (eras 4-6 build): NOT checked against sources yet ('guess').
+  'Open-fan engines: no casing round the fan': F('An open-fan engine has big fan blades with no casing round them, so it can push more air for less fuel.', 'guess', 'to check: CFM RISE programme'),
+  'Folding wingtips (fit at the gate)': F('Long thin wings save fuel but do not fit at airport gates, so their tips fold up on the ground.', 'guess', 'to check: NASA / Boeing X-66, Boeing 777X folding tips'),
+  'Wide cabin in the wing': F('In a blended wing the cabin spreads out sideways inside the wing, not in a long thin tube.', 'guess', 'to check: JetZero Z4'),
   // Comet 4
   'Rolls-Royce Avon turbojets, tuned': F('The Comet 4 had four Rolls-Royce Avon jet engines buried inside its wings.', 'real', 'enginehistory.org, de Havilland Comet [1]'),
   'Thrust reversers': F('Comet 4 engines could push air forwards to help the plane slow down after landing.', 'hist', 'enginehistory.org, Avon 525 reverser [2]'),
