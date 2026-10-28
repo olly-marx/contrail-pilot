@@ -206,7 +206,9 @@ export function fleetKit(save) {
     // Autopilot pick-ups only once the Autopilot gadget is bought (0.10.2: they used to come for everyone).
     autoSecs: ap.autoSecs || POWERUPS.autoSeconds, autoChance: ap.autoChance || 0,
     // Eras 4-6 (PROPOSAL-ERAS-4-6-SYSTEMS): kit fields the 2010s levels set; each is 0 / 1 / false before, so eras 1-3 fly as before.
-    noFlyWarnPx: atc.noFlyWarnPx || 0, noFlyGapAdd: atc.noFlyGapAdd || 0,       // ATC 7-8 (drawing; rules.js: the gap)
+    // noFlyGapAdd: ATC 8+ AND the plane's own (the era step, 2026-10-28: the sim chat measured a BARE 787 worse than a full twin
+    // past 21k, the drift costing more than its CO2 gain; a newer plane handles no-fly gaps a little better). TBD-SIM.
+    noFlyWarnPx: atc.noFlyWarnPx || 0, noFlyGapAdd: (p.noFlyGapAdd || 0) + (atc.noFlyGapAdd || 0),   // (drawing; rules.js: the gap)
     cleanSecs: ops.cleanSecs || 0,                                              // Ops 8: contrail-free cruise meter (rules.js)
     nightHeatMul: (p.nightHeat || 1) * (ops.nightHeat || 1),                     // night contrail heat (src/sim/physics.js rayRate)
     birdWarnPx: sen.birdWarnPx * ((f.systems.atc || 0) >= 9 && (f.gadgets.sensors || 0) >= 9 ? 2 : 1) || 0,   // Sensors 7+: bird radar; COMBO Bird corridor (ATC 9 + Sensors 9) doubles its reach (drawing)
