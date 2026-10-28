@@ -46,7 +46,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
     if (!modal && !a.up) return;   // (no bubble: already recorded as a failure above; nothing to tap)
     if (modal) await p.click(modal);
     else { await p.waitForTimeout(450); a = await audit();   // (tap where the target IS once it settles: the hangar's preview scrolls into view)
-      const okBtn = await p.$('#tour .tbubble .btn:not([hidden])'); if (okBtn && await okBtn.isVisible()) await okBtn.click(); else await p.mouse.click(a.ring.l + a.ring.w / 2, a.ring.t + a.ring.h / 2); }
+      const okBtn = await p.$('#tour .tbubble .btn:not([hidden])'); if (okBtn && await okBtn.isVisible()) await okBtn.click(); else if (a.ring) await p.mouse.click(a.ring.l + a.ring.w / 2, a.ring.t + a.ring.h / 2); /* (no ring: already recorded as a failure above) */ }
     await p.waitForTimeout(700);
     if (effect) check(await p.evaluate(effect), `${name}: the tap had its effect`);
   };
