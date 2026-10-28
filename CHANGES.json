@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-28-on-rails",
+    "version": "0.16.0",
+    "date": "2026-10-28",
+    "level": "major",
+    "notes": [
+      "Your first hour is now guided, one step at a time, by Captain Contrail (a friendly green planet). After flight school, each step lights up exactly one thing to tap and everything else waits.",
+      "Tips in the sky are small strips that never cover your plane.",
+      "The first daytime icy patch is easy to see, and if you miss it twice the game moves you on. No more getting stuck."
+    ]
+  },
+  {
     "id": "2026-10-27-my-records",
     "version": "0.15.6",
     "date": "2026-10-27",
