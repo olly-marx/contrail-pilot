@@ -5,7 +5,8 @@
     "date": "2026-10-28",
     "level": "minor",
     "notes": [
-      "Fixed: in some lands (like East Asia, Australia and Patagonia) the star for planting 3 kinds of tree could never be earned. It now asks for the kinds that land really has."
+      "Fixed: in some lands (like East Asia, Australia and Patagonia) the star for planting 3 kinds of tree could never be earned. It now asks for the kinds that land really has.",
+      "Fixed: when a trip loops back to your home city, you can now land there. Before, the plane could crash into that runway."
     ]
   },
   {
