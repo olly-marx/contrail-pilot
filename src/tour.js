@@ -86,12 +86,17 @@ export class Tour {
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
     // R11: after flight 2: NATURE opens; its first project is FREE; how nature works.
-    if (res && d('L2') && !this.done('r-res2')) return ['r-res2', [{ target: '#againBtn', text: tip('rail-nature'), tap: true }]];
+    // N0-N5, the NATURE introduction (the user approved, 2026-10-28): one idea per step, in the order a child asks - what is
+    // this place, why animals, do this one thing, see the result - claim the prizes first, then open NATURE.
+    if (res && d('L2') && !this.done('r-res2')) return ['r-res2', [
+      { skipIf: () => !document.querySelector('#rRewards .btn.claim'), target: '#rRewards .btn.claim.all, #rRewards .btn.claim', text: tip('rail-claim-all'), tap: true },
+      { target: '#againBtn', text: tip('rail-nature'), tap: true }]];
     if (where === 'nature' && d('L2') && !this.done('r-nature')) return ['r-nature', [
+      { target: '#wScene', text: tip('rail-nat-land'), ok: true },
+      { target: '#wProjects .line.project.freeline', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .line.project.previewing') },
       { target: '#wProjects [data-project].free', text: tip('rail-project'), tap: true },
-      { target: '#wScene', text: tip('rail-project-done'), ok: true },
-      { target: '#wMeter', text: tip('rail-nature-how'), ok: true },
-      { target: '#tabFly', text: tip('tour-lookout'), tap: true }]];
+      { target: '#wMeter', text: tip('rail-nat-bio'), ok: true },
+      { target: '#tabFly', text: tip('rail-nat-home'), tap: true }]];
     // R12: a landing past an airport: the bonus payoff.
     if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMultRow', text: tip('rail-bonus'), ok: true }]];
     // R13: once lesson L3 is done: the hangar's SYSTEMS.

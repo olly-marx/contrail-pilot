@@ -673,3 +673,18 @@ h2.sub { margin-top: -4px; }
 .coach.tappable .coach-face { width: 24px; height: 24px; background-size: 24px 24px; }
 /* One character: Captain Contrail replaces the old Captain Cumulus face everywhere (the user, 2026-10-27) */
 .coach-face { background-image: url("assets/ui/captain-stand.png") !important; background-size: contain !important; background-repeat: no-repeat; background-position: center top; background-color: #6ec6e8; }
+
+/* NATURE tap-to-preview and the buy animation (the user, 2026-10-28: see the effect BEFORE purchasing) */
+.wf.ghost { opacity: .45; filter: saturate(.4); animation: ghostpulse 1.2s ease-in-out infinite; }
+@keyframes ghostpulse { 50% { opacity: .7; } }
+.wf.arrive { animation: arrivefeat .7s cubic-bezier(.2, 1.4, .5, 1) both; }
+@keyframes arrivefeat { 0% { opacity: 0; translate: 0 -24px; } 100% { opacity: 1; translate: 0 0; } }
+.line.project { cursor: pointer; }
+.line.project.previewing { outline: 3px solid #ffe15a; outline-offset: 1px; }
+.mghost { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, #9ccc65 0 3px, #dcedc8 3px 6px); opacity: .9; }
+.mgain { position: absolute; right: 0; top: -14px; font-size: 8px; color: #2e7d32; }
+.w-webpic.w-hi { outline: 2px solid #ffe15a; background: #fff6c2; }
+.w-webpic.w-flash { animation: webflash .5s ease-in-out 3; }
+@keyframes webflash { 50% { background: #ffe15a; transform: scale(1.15); } }
+.w-trees .line[data-line], #wTrees .line[data-line] { cursor: pointer; }
+#wTrees .line.previewing { outline: 3px solid #ffe15a; outline-offset: 1px; }
