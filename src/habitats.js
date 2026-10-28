@@ -165,6 +165,7 @@ import * as tundra from './habitat/tundra.js';
 import * as savanna from './habitat/savanna.js';
 import * as rainforest from './habitat/rainforest.js';
 import * as islandforest from './habitat/islandforest.js';
+import * as bush from './habitat/bush.js';
 
 // Region tabs, in route order, then the two with no route city yet (the user wanted them anyway).
 // Biome names (user, 2026-10-24: "UK" is where the projects come from, not a climate; New Zealand must
@@ -172,13 +173,13 @@ import * as islandforest from './habitat/islandforest.js';
 export const REGION_NAMES = {
   woodland: 'Temperate woodland', mediterranean: 'Mediterranean scrub', desert: 'Desert', monsoon: 'Monsoon forest',
   eastasia: 'Temperate mountain forest', boreal: 'Boreal forest', plains: 'Plains & forest', tundra: 'Tundra',
-  savanna: 'African savanna', rainforest: 'Tropical rainforest', islandforest: 'Island forest',
+  savanna: 'African savanna', rainforest: 'Tropical rainforest', islandforest: 'Island forest', bush: 'Australian bush',
 };
 // Where each region's habitat projects were researched (src/habitat/*.js; place names counted 2026-10-24).
 export const REGION_SOURCE = {
   woodland: 'the UK', mediterranean: 'Spain, Italy and Greece', desert: 'the UAE and the Sahara\'s edge', monsoon: 'India and Nepal',
   eastasia: 'Japan, China and Korea', boreal: 'Canada and Alaska', plains: 'the USA', tundra: 'Iceland',
-  savanna: 'Kenya and southern Africa', rainforest: 'Brazil\'s Amazon and Atlantic Forest', islandforest: 'Aotearoa New Zealand',
+  savanna: 'Kenya and southern Africa', rainforest: 'Brazil\'s Amazon and Atlantic Forest', islandforest: 'Aotearoa New Zealand', bush: 'Australia',
 };
 // Seeds by tier and cost band, in the UK's range. Crystals: 1 per 8 seeds, as in the hangar.
 const PRICE = { 1: { cheap: 20, mid: 60, big: 140 }, 2: { cheap: 170, mid: 300, big: 450 }, 3: { cheap: 550, mid: 900, big: 1300 } };
@@ -195,5 +196,5 @@ export const REGION_DATA = {
   woodland: { projects: UK_PROJECTS, species: UK_SPECIES },
   mediterranean: region(mediterranean), desert: region(desert), monsoon: region(monsoon), eastasia: region(eastasia),
   boreal: region(boreal), plains: region(plains), tundra: region(tundra), savanna: region(savanna), rainforest: region(rainforest),
-  islandforest: region(islandforest),
+  islandforest: region(islandforest), bush: region(bush),
 };

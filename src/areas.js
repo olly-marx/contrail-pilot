@@ -10,7 +10,7 @@ export const AREAS = {
   easia: { name: 'East Asia', starter: true, start: 'SEOUL', cities: ['BEIJING', 'TOKYO', 'SHANGHAI', 'HONG KONG', 'SEOUL', 'CHENGDU', 'OSAKA', 'TAIPEI', 'SAPPORO', 'ULAANBAATAR'] },
   mideast: { name: 'North Africa & Middle East', starter: false, start: 'KHARTOUM', cities: ['CASABLANCA', 'TUNIS', 'CAIRO', 'KHARTOUM', 'TAMANRASSET', 'RIYADH', 'DUBAI', 'DOHA', 'MUSCAT', 'TEHRAN', 'TASHKENT'] },
   nordic: { name: 'Nordic & North Atlantic', starter: false, start: 'OSLO', cities: ['OSLO', 'STOCKHOLM', 'HELSINKI', 'REYKJAVIK', 'AKUREYRI', 'TROMSO', 'ROVANIEMI', 'NUUK'] },
-  oceania: { name: 'Australia', starter: false, start: 'MELBOURNE', cities: ['SYDNEY', 'PERTH', 'DARWIN', 'MELBOURNE', 'BRISBANE', 'CAIRNS', 'HOBART', 'ADELAIDE'] },
+  oceania: { name: 'Australia', starter: true, start: 'MELBOURNE', cities: ['SYDNEY', 'PERTH', 'DARWIN', 'MELBOURNE', 'BRISBANE', 'CAIRNS', 'HOBART', 'ADELAIDE'] },
   // New regions are their own starter areas (the user via the Coordinator, 2026-10-28): Aotearoa New Zealand, the Island forest.
   aotearoa: { name: 'Aotearoa New Zealand', starter: true, start: 'AUCKLAND', cities: ['AUCKLAND', 'WELLINGTON', 'CHRISTCHURCH', 'DUNEDIN'] },
 };

@@ -1,7 +1,7 @@
 // Region habitat data (src/habitat/<region>.js, 2026-10-22): every rule the user set for the research.
 // No browser: imports the modules directly. Run: node tests/habitatdata.cjs
 const path = require('path');
-const REGIONS = ['mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest'];
+const REGIONS = ['mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush'];
 const RARITIES = ['common', 'uncommon', 'rare', 'legendary'];
 const errs = [];
 const bad = (r, id, msg) => errs.push(`${r}/${id}: ${msg}`);
