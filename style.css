@@ -646,7 +646,14 @@ h2.sub { margin-top: -4px; }
 /* R6 payoff: the plane zooms in wearing its new part (src/hangar.js payoff) */
 .payoff { position: fixed; inset: 0; z-index: 45; background: rgba(10,14,40,.6); display: flex; align-items: center; justify-content: center; }
 .payoff-card { background: #fffbe8; border: 3px solid #1b1b2f; padding: 12px; width: min(92vw, 380px); text-align: center; }
-.pay-plane { position: relative; width: 100%; aspect-ratio: 400 / 176; }
+.payoff-card { position: relative; }
+.pay-frame { width: 100%; overflow: hidden; }
+.pay-plane { position: relative; width: 100%; aspect-ratio: 400 / 176; transition: transform .6s ease-in-out; }
+.payoff.arrive .pay-plane { transform: scale(1.8); }   /* the camera zooms onto the new part (origin = its centre, set in hangar.js) */
+.pay-mark { position: absolute; pointer-events: none; }
+.pay-label { position: absolute; transform: translate(-50%, -100%); background: #ffe15a; color: #1b1b2f; border: 2px solid #1b1b2f; font-size: 8px; padding: 3px 6px; white-space: nowrap; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 2; }
+.pay-label::after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1b1b2f; border-bottom: 0; }
+.payoff.labelled .pay-label { opacity: 1; }
 .pay-plane img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 .pay-part { opacity: 0; transform: translateY(-14px); transition: opacity .6s ease-out, transform .6s ease-out; }
 .payoff.arrive .pay-part { opacity: 1; transform: none; }
@@ -654,7 +661,7 @@ h2.sub { margin-top: -4px; }
 .payoff.arrive .pay-spark { animation: paysparkle .9s ease-out .3s both; }
 @keyframes paysparkle { 0% { opacity: 0; transform: rotate(45deg) scale(.2); } 40% { opacity: 1; transform: rotate(45deg) scale(2.4); } 100% { opacity: 0; transform: rotate(45deg) scale(3.2); } }
 .pay-later { visibility: hidden; }
-.payoff.arrive .pay-later { visibility: visible; }
+.payoff.labelled .pay-later { visibility: visible; }
 .payoff-card p { font-size: 10px; margin: 8px 0; }
 @keyframes payzoom { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
 /* In-flight teaching strip (tappable tips): small, never over the plane (top, or bottom when the plane is high) */

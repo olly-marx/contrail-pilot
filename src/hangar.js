@@ -75,13 +75,28 @@ export class FleetHangar {
     const added = files.parts.filter(p => !(before ? before.parts : files.parts.slice(0, -1)).includes(p));
     let el = $('payoff');
     if (!el) { el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff'; document.body.appendChild(el); }
-    el.innerHTML = `<div class="payoff-card"><div class="pay-plane"><img id="payBefore" alt="">${added.map(p => `<img class="pay-part" src="${p}" alt="">`).join('')}<i class="pay-spark"></i></div>
+    el.innerHTML = `<div class="payoff-card"><div class="pay-frame"><div class="pay-plane"><img id="payBefore" alt="">${added.map(p => `<img class="pay-part" src="${p}" alt="">`).join('')}<i class="pay-spark"></i><b id="payMark" class="pay-mark"></b></div></div>
+      <span id="payLabel" class="pay-label">${tip('rail-payoff-label')}</span>
       <p id="payText" class="pay-later">${tip('rail-payoff')}</p><button id="payOk" class="btn go big pay-later" type="button">OK</button></div>`;
     el.hidden = false;
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
     composedURL(files.base, old, hangarGadgets(s, id)).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
-    setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); } }, 900);   // the new part arrives
-    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive'); this.ui.go('fly'); };   // then the hub: TAKE OFF (R7)
+    // Where the new part is: the box of its visible pixels, as a marker inside the picture (it zooms with it).
+    const part = el.querySelector('.pay-part'), mark = $('payMark'), plane = el.querySelector('.pay-plane');
+    const measure = () => { if (!part || !part.naturalWidth) return; const c = document.createElement('canvas'); c.width = part.naturalWidth; c.height = part.naturalHeight;
+      const g = c.getContext('2d'); g.drawImage(part, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
+      for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 < 0) return;
+      const pct = (v, n) => `${(100 * v / n).toFixed(2)}%`;
+      Object.assign(mark.style, { left: pct(x0, c.width), top: pct(y0, c.height), width: pct(x1 - x0 + 1, c.width), height: pct(y1 - y0 + 1, c.height) });
+      plane.style.transformOrigin = `${pct((x0 + x1) / 2, c.width)} ${pct((y0 + y1) / 2, c.height)}`; };
+    if (part) { if (part.complete) measure(); else part.onload = measure; }
+    // The label arrow, placed over the part once the zoom has settled (the user, 2026-10-28: the payoff must not be flat).
+    const label = () => { const lab = $('payLabel'), card = el.querySelector('.payoff-card'); if (!lab || el.hidden) return;
+      const m = mark.getBoundingClientRect(), c = card.getBoundingClientRect();
+      lab.style.left = `${Math.round(m.left + m.width / 2 - c.left)}px`; lab.style.top = `${Math.round(m.top - c.top - 6)}px`; el.classList.add('labelled'); };
+    setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); setTimeout(label, 700); } }, 900);   // the part arrives, the camera zooms onto it, then the label
+    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled'); this.ui.go('fly'); };   // then the hub: TAKE OFF (R7)
   }
 
   // The big picture at the top (400 x 176, the art session's hangar portrait): the plane you fly, or
