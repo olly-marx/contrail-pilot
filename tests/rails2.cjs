@@ -100,6 +100,23 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   check(a.up && a.reach.length === 1 && a.inView, `after scrolling, the target is back in view and taps still reach only it (${a.reach.length}: ${a.reach.join(' / ')})`);
   check(!p.errs.length, `scroll page errors: ${p.errs}`); await p.close();
 
+  // The bubble never flips sides on a PULSING target at the threshold (the user's live bug, 2026-10-28): a test button with
+  // the game's pulse, placed so the bubble fits below it at scale 1 but not at the pulse's 1.15. 3 s of samples.
+  p = await open(save({ landings: 3, tours: ['*'] }), { width: 390, height: 844 });
+  const flips = await p.evaluate(async () => {
+    const t = game.registry.get('ui').tour, el = document.createElement('button'); el.id = 'pulseT'; el.textContent = 'FREE!';
+    el.style.cssText = 'position:fixed;left:150px;top:400px;width:90px;height:40px;z-index:1;animation:pulse 1s steps(2) infinite'; document.body.appendChild(el);
+    t.step({ target: '#pulseT', text: 'Your first tree parcels are FREE. Take them, then drop trees on brown soil!', ok: true });
+    await new Promise(r => setTimeout(r, 600));
+    const bh = document.querySelector('#tour .tbubble').getBoundingClientRect().height;
+    el.style.top = `${innerHeight - 4 - bh - 10 - 4 - 40 - 3}px`;   // bubble fits below by 3 px at scale 1, not at 1.15 (the box grows 3 px each way)
+    await new Promise(r => setTimeout(r, 400));
+    const sides = new Set(); for (let i = 0; i < 20; i++) { const b = document.querySelector('#tour .tbubble').getBoundingClientRect(), r = el.getBoundingClientRect(); sides.add(b.top > r.top ? 'below' : 'above'); await new Promise(r => setTimeout(r, 150)); }
+    document.querySelector('#tour .tbubble .btn').click(); return [...sides];
+  });
+  check(flips.length === 1, `a pulsing target at the threshold: the bubble keeps ONE side over 3 s (${flips.join(', ')})`);
+  check(!p.errs.length, `pulse page errors: ${p.errs}`); await p.close();
+
   // An empty missions list says what is missing (audit #8): every easia mission done, no crossing offered yet.
   p = await open(save({ landings: 12, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['*'] }), { width: 390, height: 844 });
   await p.evaluate(async () => { const M = await import('./src/missions2.js'), s = game.registry.get('save');   // (setup on the live save: the page's localStorage is season 2's wrapper)

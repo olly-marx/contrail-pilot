@@ -23,6 +23,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.goto(URL + '?preview=1'); await ready(p); await p.waitForTimeout(800);
   const fresh = await p.evaluate(() => ({ start: !!document.querySelector('#startChoice [data-area]') && !document.getElementById('startChoice').hidden && getComputedStyle(document.getElementById('startChoice')).display !== 'none', tag: (document.getElementById('previewTag') || {}).textContent || '' }));
   check(fresh.start && /PREVIEW: nothing is saved/.test(fresh.tag), `?preview=1 opens as a brand-new player (the start choice) with the tag (${JSON.stringify(fresh)})`);
+  if (!fresh.start) { await b.close(); console.log(`FAIL preview:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (not a new player: the rest cannot run)
   await p.click('#startChoice [data-area="easia"]'); await p.click('#startChoice [data-city="SEOUL"]'); await p.waitForTimeout(1200); await ready(p);
   await p.click('#goBtn'); await p.waitForTimeout(500); if (await p.isVisible('#howClose')) await p.click('#howClose'); await p.waitForTimeout(400);
   await p.mouse.move(195, 460); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up(); await p.waitForTimeout(1500);   // take off: the game saves as it plays
