@@ -688,3 +688,5 @@ h2.sub { margin-top: -4px; }
 @keyframes webflash { 50% { background: #ffe15a; transform: scale(1.15); } }
 .w-trees .line[data-line], #wTrees .line[data-line] { cursor: pointer; }
 #wTrees .line.previewing { outline: 3px solid #ffe15a; outline-offset: 1px; }
+.w-pname { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; text-decoration: underline dotted; }
+.w-pname[disabled] { text-decoration: none; cursor: default; }

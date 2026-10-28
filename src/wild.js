@@ -150,7 +150,7 @@ export class WildScreen {
       const btn = have ? '<span class="w-done">DONE</span>'
         : `<button class="btn ${free ? 'free' : ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(p)}</button>`;
       return `<div class="line project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing' : ''}" data-pline="${p.id}">
-        <div><div class="name"><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="" onerror="this.style.visibility='hidden'">${esc(p.name)}</div><div class="small">${esc(p.short)}</div>
+        <div><div class="name"><button class="w-pname" type="button" data-preview="${p.id}" ${have ? 'disabled' : ''}><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="" onerror="this.style.visibility='hidden'">${esc(p.name)}</button></div><div class="small">${esc(p.short)}</div>
         <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div>${this.webHTML(p)}</div>
         <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
         <div class="next">${btn}</div></div>`;
@@ -167,7 +167,7 @@ export class WildScreen {
         <div class="small">Reach Biodiversity <b>${next.needs}</b> to unlock ${P.filter(p => p.tier === next.tier).length} more projects. ${how}</div></div></div>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     // Tap a card (not its buttons) to PREVIEW it: ghosted in the land, the bar's gain, the animals it brings highlighted.
-    $('wProjects').querySelectorAll('.line.project[data-pline]:not(.maxed)').forEach(c => c.onclick = e => { if (e.target.closest('button')) return; sfx.flap(); this.preview(c.dataset.pline); });
+    $('wProjects').querySelectorAll('.line.project[data-pline]:not(.maxed)').forEach(c => c.onclick = e => { const pb = e.target.closest('button'); if (pb && !pb.dataset.preview) return; sfx.flap(); this.preview(c.dataset.pline); });
     $('wProjects').querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); });   // tap an animal: its card
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
     $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
