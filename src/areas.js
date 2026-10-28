@@ -16,5 +16,6 @@ export const OCEAN_STONES = ['HONOLULU', 'NADI'];
 // The default for a new season 2 player until the start choice (M2): Western Europe, from Amsterdam (PLANE-ONBOARDING-PLAN).
 export const DEFAULT_AREA = 'weurope';
 export const areaOf = name => Object.keys(AREAS).find(k => AREAS[k].cities.includes(name)) || null;
-export const unlockedAreas = save => (save.areas && save.areas.length ? save.areas : [DEFAULT_AREA]);
+// (save.areas may also hold 'ocean', the Pacific stepping stones a crossing to Honolulu/Nadi opens: not an area with cities of its own.)
+export const unlockedAreas = save => { const ks = (save.areas || []).filter(k => AREAS[k]); return ks.length ? ks : [DEFAULT_AREA]; };
 export const citiesOf = keys => keys.flatMap(k => AREAS[k].cities);

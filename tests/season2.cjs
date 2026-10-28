@@ -110,7 +110,8 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(500);
   const rec = await p.evaluate(() => game.registry.get('save').areaBest);
   check(rec && rec.weurope >= 2900 && rec.weurope <= 3100, `a landed flight from Warsaw records the best for Western Europe: ${JSON.stringify(rec)}`);
-  await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = Object.keys(a.AREAS); s.flightSeconds = 1e6; (await import('/src/save.js')).writeSave(s); });
+  // every area AND the Pacific stepping stones are open: crossings to Honolulu/Nadi are real crossings since maxEra 3
+  await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = [...Object.keys(a.AREAS), 'ocean']; s.flightSeconds = 1e6; (await import('/src/save.js')).writeSave(s); });
   await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
   check(await p.evaluate(() => !!document.getElementById('jMore')), 'every area open: the MORE TO COME card shows');
   // 3. Reset: from zero again.

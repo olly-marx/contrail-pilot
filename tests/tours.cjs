@@ -107,6 +107,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('#hFleet .btn.free >> nth=1');   // not the first one: the choice is yours
   const fl = (await save(p)).fleet, nbought = Object.values(fl.planes.comet).concat(Object.values(fl.systems), Object.values(fl.gadgets)).reduce((a, n) => a + n, 0);
   check(nbought === 1 && !(await save(p)).freeUpgrade, `the free upgrade was bought: ${JSON.stringify(fl)}`);
+  await p.waitForSelector('#payOk', { state: 'visible', timeout: 5000 }).catch(() => {}); if (await p.isVisible('#payOk')) await p.evaluate(() => document.getElementById('payOk').click());   // every purchase plays the payoff (hangar feedback): OK it (a script click: this CLASSIC tour's dim layer sits above the payoff; the shipped game's rails own that moment)
   check(await on(p, '#tabNature'), 'then NATURE'); await p.click('#tabNature');
   check(await on(p, '#wProjects'), 'then the habitat projects'); await p.click('#tour .tbubble .btn');
   check(await on(p, '#tabFly'), 'then FLY'); await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(1500);
