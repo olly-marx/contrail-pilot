@@ -120,3 +120,4 @@ hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (fals
 hudlayout	src/GameScene.js	s/if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);/if (false) this.kindsText.setX(cx - 4);/	the kinds meter under CLEAN
 season2	src/areas.js	s/\.filter(k => AREAS\[k\])/.filter(k => k)/	save.areas holds ocean (Pacific stepping stones): the title crashed on AREAS[ocean]
 postrails	src/GameScene.js	s/const dropToast = () => { if (this.explaining/const dropToast = () => { if (false \&\& this.explaining/	a toast is not dropped below a teaching strip (persistent overlap)
+kindsreach	src/missions2.js	s#  const kinds = Math.max(2, Math.min(3, open.length));#  const kinds = 3;#	the kinds star fixed at 3 (impossible in plateau lands)
