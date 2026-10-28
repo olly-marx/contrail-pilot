@@ -20,8 +20,8 @@
   tot.forEach((t, e) => check(t / F.ERA_BUDGET[e] >= 1.4 && t / F.ERA_BUDGET[e] <= 1.6, `era ${e} prices total ${t} = ${(t / F.ERA_BUDGET[e]).toFixed(2)}x its budget, want ~1.5x`));
   check(F.START_BONUS === 300, `start bonus 300 seeds (user, 2026-10-23): ${F.START_BONUS}`);
   // Eras 4-6 (2026-10-28): the three systems, Sensors and Autopilot go on to level 8 in the 2010s; Magnet, Hold, Gear stop at 6.
-  check(F.SYSTEMS.length === 3 && F.GADGETS.length === 5 && [...F.SYSTEMS, ...F.GADGETS].map(g => g.levels.length).join('') === '88866688', 'three systems and five gadgets: 8 / 6 levels');
-  check(F.PLANES.map(p => Object.values(p.lines).map(l => l.length).join('')).join(' ') === '222 333 444 333', 'Comet 2, 747 3, twin 4, 787 3 levels per line');
+  check(F.SYSTEMS.length === 3 && F.GADGETS.length === 5 && [...F.SYSTEMS, ...F.GADGETS].map(g => g.levels.length).join(',') === '10,10,10,6,6,6,10,10', 'three systems and five gadgets: 10 / 6 levels (eras 4-5)');
+  check(F.PLANES.map(p => Object.values(p.lines).map(l => l.length).join('')).join(' ') === '222 333 444 333 333', 'Comet 2, 747 3, twin 4, 787 3, truss wing 3 levels per line');
 
   // Era gates: the 1970s levels (3, 4) are blocked in the 1950s, open at 30 min of flying.
   const open = (secs, fleet) => Object.fromEntries(F.nextBuys({ flightSeconds: secs, fleet }).map(b => [`${b.id}${b.level}`, b.open]));

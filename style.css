@@ -726,3 +726,9 @@ h2.sub { margin-top: -4px; }
 @keyframes hcapdots { from { width: 0; } to { width: 1.5em; } }
 /* M4: the ending card (ui.js showEnding), on the payoff's overlay style */
 .ending .ending-title { font-size: 14px; color: #1b1b2f; margin: 4px 0 10px; }
+/* Nature finance desk (src/hangar.js financeHTML): one column, normal-size buttons (screenshot, 2026-10-28: cramped) */
+.fline.finance { display: block; }
+.fline.finance .fin-head { margin-bottom: 4px; }
+.fline.finance > .btn, .fline.finance .next .btn { font-size: 8px; padding: 6px 8px; width: auto; display: inline-block; }
+.fline.finance .next { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
+.sbar-delta.same { color: #5a6b80; }
