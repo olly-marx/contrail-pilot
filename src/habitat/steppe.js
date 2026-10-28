@@ -42,7 +42,7 @@ export const PROJECTS = [
     fact: 'The albatross-island project has been running for about ten years, and scientists have recognised about 14 different leopard seals in one fjord.',
     src: [['WCS Chile: black-browed albatross', `${WCS}Especies/Albatros-de-ceja-negra.aspx`], ['WCS Chile: Expedición científica (2025)', `${WCS}Nosotros/Noticias/ID/25795/Expedicion-cientifica-monitorea-objetos-de-proteccion-y-especies-clave-de-areas-protegidas-de-Magallanes.aspx`]],
     org: { name: 'Wildlife Conservation Society Chile', learn: `${WCS}Especies/Albatros-de-ceja-negra.aspx`, donate: WCSD } },   // WCS's own global form (its Chile site's Dona button)
-  { id: 'whalesea', name: 'Adopt a right whale', tier: 2, band: 'cheap',
+  { id: 'whalesea', name: 'Adopt a right whale', tier: 1, band: 'cheap',   // tier 1 (2026-10-28): Patagonia had one tier-1 project, short of the tier-2 threshold
     short: 'Pay for scientists to follow southern right whales, and adopt a whale by name.',
     chain: ['Money pays for research', 'scientists keep counting whales and calves', 'whales can be looked after'],
     fact: 'Scientists have photo-identified more than 4,500 right whales at Península Valdés since 1971.',
