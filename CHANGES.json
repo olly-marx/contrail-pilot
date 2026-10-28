@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-28-starters-hangar",
+    "version": "0.18.1",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "Starting in a new land now works smoothly: NATURE opens on your own home land and the tree-planting card is there, not in the UK.",
+      "The guide now shows you the hangar: tap the engines to see them, take them for free, and watch your plane get better before you take off.",
+      "Missions no longer send you to the city you are already in."
+    ]
+  },
+  {
     "id": "2026-10-28-new-lands",
     "version": "0.18.0",
     "date": "2026-10-28",

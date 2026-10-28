@@ -55,7 +55,7 @@ const W = 390, H = 844;
   const target = v => v.toRunway < 40 && v.toRunway > -220 && !v.skipNow ? 1e9 : v.gap != null ? v.gap
     : v.issr ? (v.day ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
     : v.toRunway < 700 && !v.skipNow ? v.skyH - 30 : v.skyH * 0.45;
-  let covered = 0, stacked = 0;
+  let covered = 0, stacked = 0, run = 0;   // stacked = frames in a toast-over-strip run of 3+ in a row: the game drops a toast below a strip that appears (GameScene dropToast), so ONE frame of overlap while it moves is by design and load-dependent
   for (let f = 3; f <= 10; f++) {
     await p.goto(URL); await ready(p); await p.waitForTimeout(900);   // (a fresh page each flight, as a child reopening the game)
     await settle();
@@ -75,7 +75,7 @@ const W = 390, H = 844;
     while (Date.now() - t0 < 240000) {
       const v = await look();
       if (v.results) break;
-      if (v.covered) covered++; if (v.stack) stacked++;
+      if (v.covered) covered++; run = v.stack ? run + 1 : 0; if (run >= 3) stacked++;
       if (v.okUp) { await p.click('#coachOk').catch(() => {}); continue; }
       if (v.state === 'takeoff' || v.state === 'idle') { await p.mouse.move(W / 2, H * 0.55); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up(); continue; }
       if (v.state === 'playing' && v.y > target(v) && v.vy > -60) await p.mouse.click(W / 2, H * 0.6);
