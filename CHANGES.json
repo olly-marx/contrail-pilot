@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-10-28-slower-seeds",
+    "version": "0.16.6",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "Early prizes give fewer seeds now, so your seeds come in more slowly and each upgrade feels earned.",
+      "Behind the scenes: new tests for the tougher skies of later years."
+    ]
+  },
+  {
     "id": "2026-10-28-nature-flow",
     "version": "0.16.5",
     "date": "2026-10-28",
