@@ -97,3 +97,7 @@ sim-hazards@GATE=1+PLANT=old	-	-	the old bird play (small form)
 sim-hazards@PLANT=old	-	-	the old bird play (full sweep)
 sim-player@GATE=1+PLANT=bob	-	-	no bob in the safe band (small form)
 sim-player@GATE=1+PLANT=classic	-	-	the classic planning (small form)
+audiocrash	src/crash.js	s/^    if (isBenignAudioRejection(r)) return;.*$//	the OLD handler: audio refusals show the stuck card
+audiocrash	src/crash.js	s/audio device|audiocontext|NotAllowedError|AbortError/zzz/	the audio filter no longer matches the iPhone message
+audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no longer catches a rejected resume()
+audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
