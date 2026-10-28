@@ -58,7 +58,7 @@ const KEY = 'contrailPilot.v2';
   const shown = await p.waitForSelector('#startChoice [data-area="africa"]', { timeout: 5000 }).then(() => true).catch(() => false);
   check(shown, 'season 2: a new player is asked where to start');
   const starters = await p.$$eval('#startChoice [data-area]', bs => bs.map(b => b.dataset.area));
-  check(starters.length === 6 && !starters.includes('oceania'), `six starter areas offered: ${starters}`);
+  check(starters.length === 7 && starters.includes('aotearoa') && !starters.includes('oceania'), `seven starter areas offered, Aotearoa New Zealand among them (the user, 2026-10-28): ${starters}`);
   if (shown) { await p.click('#startChoice [data-area="africa"]'); await p.click('#startChoice [data-city="LAGOS"]'); }
   await p.waitForTimeout(300);
   const st = await p.evaluate(async () => { const s = game.registry.get('save'), r = await import('/src/route.js'), a = await import('/src/areas.js');
