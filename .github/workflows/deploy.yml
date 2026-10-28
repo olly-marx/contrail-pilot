@@ -22,7 +22,7 @@ jobs:
   # prints one summary. fail-fast off: every shard reports, so one run shows everything wrong.
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25   # was 12: by 0.16.0 a shard needs ~12-13 min (the suite grew), and shard 3 of run 40621005262 was cancelled at the limit, which skipped the deploy
     strategy:
       fail-fast: false
       matrix:
