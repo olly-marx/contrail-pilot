@@ -113,4 +113,4 @@ era4-knobs	src/sim/physics.js	s/nightHeat: false/nightHeat: true/	night contrail
 era4-knobs	src/sim/physics.js	s/clean: false }/clean: true }/	contrail-free cruise ignored
 hangar-feedback	src/fleet.js	s/keys: \['pickup'\]/keys: ['pickupX']/	a changed setting with no bar
 lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return false;/	the lap counts away from home
-capability	src/capability.js	s/crashes: true, skill/crashes: false, skill/	the estimate flies with crashes off
+capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazard pool ignored (heat only)
