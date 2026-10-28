@@ -31,6 +31,15 @@ export class Tour {
     document.body.appendChild(el);
     this.el = el;
     el.querySelectorAll('.tdim').forEach(d => d.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); this.nudge(); }));
+    // A drag or the wheel on the dim layer still SCROLLS the screen under it (taps stay blocked): the user's live report,
+    // 2026-10-28, "I can't scroll down or click the bottom". The hole follows the target as it moves.
+    const scroller = () => { let n = this.target; while (n && n !== document.body) { if (n.classList && n.classList.contains('overlay') && n.scrollHeight > n.clientHeight) return n; n = n.parentElement; } return null; };
+    let lastY = null;
+    el.querySelectorAll('.tdim').forEach(d => {
+      d.addEventListener('touchstart', e => { lastY = e.touches[0].clientY; }, { passive: true });
+      d.addEventListener('touchmove', e => { const sc = scroller(), y = e.touches[0].clientY; if (sc && lastY != null) { sc.scrollTop -= y - lastY; this.place(); } lastY = y; e.preventDefault(); }, { passive: false });
+      d.addEventListener('wheel', e => { const sc = scroller(); if (sc) { sc.scrollTop += e.deltaY; this.place(); } e.preventDefault(); }, { passive: false });
+    });
     window.addEventListener('resize', () => this.place());
     // Players from before tours existed: whatever is already open counts as shown.
     if (!this.save.shownLines) { this.save.shownLines = LINES.filter(l => unlocked(this.save, l)).map(l => l.id); if (this.save.flights > 1) this.markDone('hangar'); writeSave(this.save); }
