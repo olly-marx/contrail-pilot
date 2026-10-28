@@ -53,7 +53,7 @@ export class Tour {
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
-    if (FEATURES.season2 && !this.done('name')) this.markDone('name');   // season 2 plays offline: no pilot name yet
+    if (FEATURES.season2 && !window.CP_PREVIEW && !this.done('name')) this.markDone('name');   // (preview: the name step is shown, local only)   // season 2 plays offline: no pilot name yet
     if (where === 'title' && !this.done('name') && !getPilot()) return this.run('name', this.nameSteps());
     if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     // Season 2: the ON-RAILS onboarding (the user, 2026-10-27: "the ONLY thing they should be able to do is what you want
