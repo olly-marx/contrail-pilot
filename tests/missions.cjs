@@ -88,7 +88,7 @@ const KEY = 'contrailPilot.v2';
   const later = await p.evaluate(async () => { const M = await import('./src/missions.js'); const m = id => M.MISSIONS.find(x => x.id === id);
     return { n: M.MISSIONS.length, ids: M.MISSIONS.map(x => x.id),
       rewild: [M.blocked({ habitat: { woodland: [] } }, m('rewild')), M.blocked({ habitat: { woodland: ['pond'] } }, m('rewild'))],
-      world: [m('world').check({ landed: true }, { discovered: { mediterranean: 1, desert: 1, monsoon: 1, eastasia: 1, boreal: 1, plains: 1, tundra: 1, savanna: 1, rainforest: 1 } }),
+      world: [m('world').check({ landed: true }, { discovered: { mediterranean: 1, desert: 1, monsoon: 1, eastasia: 1, boreal: 1, plains: 1, tundra: 1, savanna: 1, rainforest: 1, islandforest: 1, bush: 1, steppe: 1 } }),
         m('world').check({ landed: true, lap: true }, { discovered: { desert: 1 } })] }; });
   check(later.n === 13, `13 lesson missions: ${later.ids}`);
   check(String(later.rewild) === 'true,false', `Bring wildlife back needs a habitat project: ${later.rewild}`);

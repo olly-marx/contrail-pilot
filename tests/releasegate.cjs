@@ -9,8 +9,8 @@ const py = args => spawnSync('python3', [path.join(root, 'tools/gate-plan.py'), 
 const list = files => { const r = py(['--list', ...files]); return { code: r.status, tests: new Set(r.stdout.split('\n').filter(Boolean)), err: r.stderr }; };
 const browser = fs.readFileSync(path.join(root, 'tests/BROWSER'), 'utf8').split('\n').map(l => l.split('#')[0].trim()).filter(Boolean);
 // season2-smoke runs as 4 parallel pieces (PART=...), see tests/season2-smoke.cjs; the pieces together are all its sections, each exactly once.
-const S2_SECTIONS = ['A', 'Bweurope', 'Bnamerica', 'Bsasia', 'Bafrica', 'Bsamerica', 'Beasia', 'C', 'D', 'E', 'F', 'G'];
-const SMOKE = ['season2-smoke@PART=A,C,E,F,G', 'season2-smoke@PART=D', 'season2-smoke@PART=Bweurope,Bnamerica,Bsasia', 'season2-smoke@PART=Bafrica,Bsamerica,Beasia',
+const S2_SECTIONS = ['A', 'Bweurope', 'Bnamerica', 'Bsasia', 'Bafrica', 'Bsamerica', 'Beasia', 'Boceania', 'Baotearoa', 'Bpatagonia', 'C', 'D', 'E', 'F', 'G'];
+const SMOKE = ['season2-smoke@PART=A,C,E,F,G', 'season2-smoke@PART=D', 'season2-smoke@PART=Bweurope,Bnamerica,Bsasia,Baotearoa', 'season2-smoke@PART=Bafrica,Bsamerica,Beasia,Boceania,Bpatagonia',
   'hubscreen', 'saveloss', 'records-screen', 'missionscreen', 'hudlayout', 'tourgiveup', 'textfit', 'crash'];
 
 // 0. The declarations lint clean on the real repo.

@@ -6,7 +6,7 @@
 #   group NAME | glob glob ... | test ...  a changed file matching ANY glob adds these tests (union over all matching groups). NONE = nothing to run, ALL = the whole browser tier.
 #   ci-only | test test ...                browser tests deliberately run only in CI (a browser test in no group and not here fails the lint)
 # Globs are fnmatch patterns on repo-relative paths (`*` also matches `/`). `gate.sh --lint` fails if a tracked file matches no group, or a test named here is not in tests/BROWSER.
-smoke | season2-smoke@PART=A,C,E,F,G season2-smoke@PART=D season2-smoke@PART=Bweurope,Bnamerica,Bsasia season2-smoke@PART=Bafrica,Bsamerica,Beasia hubscreen saveloss records-screen missionscreen hudlayout tourgiveup textfit crash
+smoke | season2-smoke@PART=A,C,E,F,G season2-smoke@PART=D season2-smoke@PART=Bweurope,Bnamerica,Bsasia,Baotearoa season2-smoke@PART=Bafrica,Bsamerica,Beasia,Boceania,Bpatagonia hubscreen saveloss records-screen missionscreen hudlayout tourgiveup textfit crash
 group docs-tools | research/* *.md CHANGES.json .gitignore .nojekyll *.png supabase/* .github/* tools/* src/version.js | NONE
 group harness | tests/lib/* tests/BROWSER tests/PATHMAP tests/GATE tests/DEEP tools/test.sh tools/gate.sh tools/gate-plan.py | ALL
 group tests-themselves | tests/*.cjs tests/*.json | NONE
