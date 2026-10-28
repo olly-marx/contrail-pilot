@@ -9,7 +9,7 @@ const { chromium } = require('playwright-core');
 const fs = require('fs');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHOTS || '', MISS_L2 = !!process.env.MISS_L2;   // MISS_L2=1: flights 2-3 steer AWAY from icy air (the never-stall fallback must still open NATURE)
-const W = 390, H = 844;
+const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375x667: a short phone (the user's live report, 2026-10-28)
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };

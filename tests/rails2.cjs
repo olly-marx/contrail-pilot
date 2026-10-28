@@ -75,6 +75,27 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   check((sv.levels || {}).trees === 1 && sv.seeds === 0 && sv.freeParcelsGiven, `L5: the tap gives the first parcels free (${JSON.stringify(sv.levels)}, seeds ${sv.seeds})`);
   check(!p.errs.length, `L5 page errors: ${p.errs}`); await p.close();
 
+  // Scrolling under a rails step (the user's live report, 2026-10-28: "I can't scroll down or click the bottom"): on a
+  // 375x667 phone, during the parcels step on NATURE, a wheel and a finger drag on the dim layer scroll the screen, and taps
+  // still reach only the target.
+  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'], shownLines: ['trees'] }), { width: 375, height: 667 });
+  await p.evaluate(() => { const t = document.getElementById('tour'); return t; });
+  { let h = null; for (let i = 0; i < 20; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); } if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(700); }
+  for (let i = 0; i < 40; i++) { const x = await audit(p); if (x.up && /parcels/i.test(x.text)) break; await p.waitForTimeout(150); }
+  const sc0 = await p.evaluate(() => document.getElementById('nature').scrollTop);
+  await p.mouse.move(20, 120); await p.mouse.wheel(0, -200); await p.waitForTimeout(400);
+  const sc1 = await p.evaluate(() => document.getElementById('nature').scrollTop);
+  const cdp = await p.context().newCDPSession(p);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 20, y: 200 }] });
+  for (let y = 200; y <= 360; y += 20) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: 20, y }] });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); await p.waitForTimeout(400);
+  const sc2 = await p.evaluate(() => document.getElementById('nature').scrollTop);
+  a = await audit(p);
+  if (SHOTS) await p.screenshot({ path: `${SHOTS}/scroll-under-rails-375x667.png` });
+  check(sc1 !== sc0 && sc2 !== sc1, `under a rails step the wheel and a drag on the dim layer scroll the screen (scrollTop ${sc0} -> wheel ${sc1} -> drag ${sc2})`);
+  check(a.up && a.reach.length === 1, `after scrolling, taps still reach only the target (${a.reach.length}: ${a.reach.join(' / ')})`);
+  check(!p.errs.length, `scroll page errors: ${p.errs}`); await p.close();
+
   // An empty missions list says what is missing (audit #8): every easia mission done, no crossing offered yet.
   p = await open(save({ landings: 12, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['*'] }), { width: 390, height: 844 });
   await p.evaluate(async () => { const M = await import('./src/missions2.js'), s = game.registry.get('save');   // (setup on the live save: the page's localStorage is season 2's wrapper)
