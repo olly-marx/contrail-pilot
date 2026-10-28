@@ -296,12 +296,16 @@ export function loadout(save) {
 
 // Buy the next level of an upgrade line (moved from ui.buy, 2026-10-26, so the sim engine's player buys exactly as
 // the game). The first-landing free upgrade pays for a level-0 line. Returns true if bought.
+// The first tree parcels are FREE in season 2 (the user, 2026-10-28: lesson 5 must never be blocked by money).
+export const freeParcels = (save, id) => id === 'trees' && Array.isArray(save.areas) && save.areas.length > 0
+  && (save.missionsDone || []).includes('L4') && !save.freeParcelsGiven && level(save, 'trees') === 0;
+
 export function buyLevel(save, id) {
   const line = LINES.find(l => l.id === id), next = line && nextLevel(save, line);
   if (!next) return false;
-  const isFree = save.freeUpgrade && level(save, id) === 0;
+  const parcelsFree = freeParcels(save, id), isFree = parcelsFree || (save.freeUpgrade && level(save, id) === 0);
   if (!isFree && !canBuy(save, line)) return false;
-  if (isFree) save.freeUpgrade = false; else { save.seeds -= next.cost; save.crystals = (save.crystals || 0) - (next.crystals || 0); }
+  if (parcelsFree) save.freeParcelsGiven = true; else if (isFree) save.freeUpgrade = false; else { save.seeds -= next.cost; save.crystals = (save.crystals || 0) - (next.crystals || 0); }
   save.levels[id] = level(save, id) + 1;
   save.sparkle = true;   // the plane sparkles on its next take-off (GameScene.syncPlaneParts)
   if (next.fuel) save.fuel = next.fuel;              // switch to the new fuel straight away

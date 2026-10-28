@@ -34,7 +34,7 @@ import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js
 import { WILDLIFE } from './wildlife.js';
 import { animalPortrait } from './animalart.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
-import { LINES, FUELS, level, nextLevel, canBuy, buyLevel, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById } from './upgrades.js';
+import { LINES, FUELS, level, nextLevel, canBuy, buyLevel, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById, freeParcels } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
@@ -563,7 +563,7 @@ export class UI {
       const pips = line.levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
       const nowName = have ? line.levels[have - 1].name : 'Not yet';
       const waitBio = needsMoreNature(s, line);
-      const isFree = free && next && have === 0 && !waitBio;
+      const isFree = (free || freeParcels(s, line.id)) && next && have === 0 && !waitBio;   // (the first tree parcels: free in season 2)
       const ok = isFree || canBuy(s, line);
       // What is missing, so a grey button is never a mystery.
       const short = next && !ok && !waitBio ? [Math.max(0, next.cost - s.seeds) && `${next.cost - s.seeds}<i class="seedicon"></i>`,
