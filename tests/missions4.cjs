@@ -29,7 +29,7 @@
     hazard: [{}, { bumped: 1 }, { bumped: 0 }],
     night: [{}, { nightOwl: true }, { nightOwl: false }],
     shade10: [{}, { sunBlocked: 10 }, { sunBlocked: 9 }],
-    kinds3: [{}, { treeIds: ['spruce', 'birch', 'oak'] }, { treeIds: ['spruce', 'birch', 'savanna:baobab'] }],   // 3 kinds of THIS land (UK ids bare)
+    kinds3: [{}, { treeIds: ['spruce', 'birch', 'oak'].slice(0, fill(save({})).kinds) }, { treeIds: [...['spruce', 'birch', 'oak'].slice(0, fill(save({})).kinds - 1), 'savanna:baobab'] }],   // f.kinds kinds of THIS land (the kinds open, 2..3; UK ids bare); the near miss is one short + another land's
     route: [{}, { landedAt: f.cityC, airportsSkipped: 1 }, { landedAt: f.cityC, airportsSkipped: 0 }],
     golden: [{}, { goldens: 1 }, { goldens: 0 }],
   };

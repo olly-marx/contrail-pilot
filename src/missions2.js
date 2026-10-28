@@ -75,7 +75,7 @@ export const TEMPLATES = [
   // tier 3: the crossing trial (star = the gate)
   { id: 'night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
-  { id: 'kinds3', tier: 3, star: true, prize: 20, title: f => `Plant 3 kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= 3 },
+  { id: 'kinds3', tier: 3, star: true, prize: 20, title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
   { id: 'route', tier: 3, prize: 15, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
   { id: 'golden', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
   { id: 'tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
@@ -102,11 +102,12 @@ export function fillFor(save, a, startCity = save.city) {
   const landName = (REGION_NAMES[land] || 'this land').replace(/^Temperate /, '');
   const home = save.homeCity || (AREAS[a] && AREAS[a].start), others = cities.filter(c => c !== city && c !== home);   // not the home city (the audit: '...then MANAUS' for a Manaus start)
   const trees = landTrees(save, land), open = trees.filter(t => t.open), tree = open[open.length - 1] || trees[0];
+  const kinds = Math.max(2, Math.min(3, open.length));   // the '3 kinds' star asks for what this land can grow now (at least 2)
   const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
   const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));
   const animal = wild.find(w => canAppear(save, w.id, land)) || null;
   return { area: a, land, landName, city, cityB: others[0] || city, cityC: others[others.length - 1] || city, k, stage: stageOf(save, a),
-    here: areaOf(startCity) === a, treeName: tree ? tree.name : 'tree', treeTag, animal: animal && animal.id, animalName: animal ? animal.name : 'wild animal' };
+    here: areaOf(startCity) === a, treeName: tree ? tree.name : 'tree', treeTag, kinds, animal: animal && animal.id, animalName: animal ? animal.name : 'wild animal' };
 }
 const key = (a, t) => `${a}:${t.id}`;
 export const tierOpen = (save, a, tier) => tier === 1 || TEMPLATES.filter(t => t.tier === tier - 1 && done(save).has(key(a, t))).length >= 3;
