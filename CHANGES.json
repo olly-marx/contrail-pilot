@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-28-kinds-open",
+    "version": "0.19.1",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "Fixed: in some lands (like East Asia, Australia and Patagonia) the star for planting 3 kinds of tree could never be earned. It now asks for the kinds that land really has."
+    ]
+  },
+  {
     "id": "2026-10-28-era-5",
     "version": "0.19.0",
     "date": "2026-10-28",
