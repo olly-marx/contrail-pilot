@@ -89,7 +89,8 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.save = this.registry.get('save');
     this.ui = this.registry.get('ui');
-    this.wildOK0 = null;   // decided once per flight (L1 completes on touchdown: no animal on the landing roll of flight 1)
+    this.wildOK0 = null;
+    this.dropTips && this.tipQueue && this.dropTips();   // a scene restart keeps fields: no tip carried from the last flight   // decided once per flight (L1 completes on touchdown: no animal on the landing roll of flight 1)
     this.builtWith = JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]);   // scenery depends on upgrades (e.g. meadow flowers)
     this.makeTextures();
     this.initFlight();   // the flight's state: kit, random stream, world, heat, path (src/sim/rules.js)
@@ -285,13 +286,21 @@ export class GameScene extends Phaser.Scene {
   // tap ON the bubble after TIP_MIN_TAP s; a new bubble waits its turn instead of replacing the one showing; and a bubble
   // never clears a toast. seenTips containing '*' skips all explanations (used by automated tests).
   // `pic`: an assets/ui/*.png drawing shown with the words; text only until the file exists.
+  // Tips queued but never shown (the flight ended): unmark them so they show next time, and empty the queue.
+  dropTips() {
+    const ids = (this.tipQueue || []).map(q => q[2]).filter(Boolean);
+    if (ids.length) { this.save.seenTips = this.save.seenTips.filter(t => !ids.includes(t)); writeSave(this.save); }
+    this.tipQueue = [];
+  }
+
   explain(id, html, pic = null) {
     if (this.school) return false;
     const seen = this.save.seenTips;
     if (seen.includes(id) || seen.includes('*')) return false;
+    if (this.state !== 'playing') return false;   // not on take-off or the landing flare: it fires the next time instead (the audit, 2026-10-28)
     seen.push(id);
     writeSave(this.save);
-    if (this.explaining) { (this.tipQueue = this.tipQueue || []).push([html, pic]); return true; }   // waits its turn
+    if (this.explaining) { (this.tipQueue = this.tipQueue || []).push([html, pic, id]); return true; }   // waits its turn
     this.showTip(html, pic);
     return true;
   }
@@ -309,8 +318,9 @@ export class GameScene extends Phaser.Scene {
   }
   closeTip() {
     this.explaining = false; this.ui.hideCoach();
+    if (this.state !== 'playing') { this.dropTips(); return; }   // the flight ended: unshown tips are unmarked, not lost
     const q = (this.tipQueue || []).shift();
-    if (q && this.state === 'playing') this.time.delayedCall(400, () => { if (!this.explaining) this.showTip(...q); });
+    if (q) this.time.delayedCall(400, () => { if (!this.explaining && this.state === 'playing') this.showTip(q[0], q[1]); else { this.tipQueue.unshift(q); this.dropTips(); } });
   }
 
 
