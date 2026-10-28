@@ -39,13 +39,13 @@ const HARDER = { teach: 1, challenge: 2, mastery: 3 };   // numbers scale with t
 
 // ---------- chapter 1: lessons ----------
 export const LESSONS = [
-  { id: 'L1', title: 'Land at the next airport', reveals: ['hangar', 'missions'], prize: { seeds: 60, crystals: 1 }, flight: r => r.landed },
-  { id: 'L2', title: 'Fly through icy air in daytime', reveals: ['nature'], prize: { seeds: 60, crystals: 1 }, flight: r => r.sunBlocked >= 3 },
+  { id: 'L1', title: 'Land at the next airport', reveals: ['hangar', 'missions'], prize: { seeds: 20, crystals: 1 }, flight: r => r.landed },
+  { id: 'L2', title: 'Fly through icy air in daytime', reveals: ['nature'], prize: { seeds: 20, crystals: 1 }, flight: r => r.sunBlocked >= 3 },
   // L3 teaches night contrails by ONE dodge (the user's audit pick, 2026-10-27): a whole clean night (nightOwl) blocked
   // weaker pilots for many flights while lessons were the only thing offered; it stays a tier-3 star, not a lesson.
-  { id: 'L3', title: 'Dodge an icy patch at night', reveals: [], prize: { seeds: 70, crystals: 1 }, flight: r => (r.dodges || 0) >= 1 },
-  { id: 'L4', title: 'Skip one airport, land at the next', reveals: ['world'], prize: { seeds: 70, crystals: 1 }, flight: r => r.landed && r.airportsSkipped >= 1 },
-  { id: 'L5', title: 'Drop a tree on brown soil', reveals: [], prize: { seeds: 70, crystals: 2 }, flight: r => r.planted >= 1 },
+  { id: 'L3', title: 'Dodge an icy patch at night', reveals: [], prize: { seeds: 25, crystals: 1 }, flight: r => (r.dodges || 0) >= 1 },
+  { id: 'L4', title: 'Skip one airport, land at the next', reveals: ['world'], prize: { seeds: 25, crystals: 1 }, flight: r => r.landed && r.airportsSkipped >= 1 },
+  { id: 'L5', title: 'Drop a tree on brown soil', reveals: [], prize: { seeds: 25, crystals: 2 }, flight: r => r.planted >= 1 },
 ];
 export const lessonsLeft = save => (stageOf(save) === 'teach' ? LESSONS.filter(l => !done(save).has(l.id)) : []);
 // A free part waiting ALWAYS reveals the hangar (the user, 2026-10-27, twice: the school landing grants it, but lesson L1
@@ -53,30 +53,32 @@ export const lessonsLeft = save => (stageOf(save) === 'teach' ? LESSONS.filter(l
 export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === 'hangar' && !!(save.freeUpgrade || save.freeGiven)) || (tile === 'boards' && (save.landings || 0) >= 3)   // once given, it stays (a crash on flight 1 hid it again: firsthour-real.cjs)
   || LESSONS.some(l => l.reveals.includes(tile) && done(save).has(l.id));
 
+// Seed prizes x~0.33 on 2026-10-28 (the user: too much currency early; research/BALANCE-EARLY-PRIZES.md): lessons were
+// 60/60/70/70/70, tiers 30/50/60/40. Crystal prizes unchanged.
 // ---------- the area ladder (templates; f = the fill for this area and stage) ----------
 // Prizes: seeds only (crystals stay a skill reward), ~700 per area in the teach stage, x the stage factor.
 export const TEMPLATES = [
   // tier 1: try it (one mechanic each)
-  { id: 'land-city', tier: 1, prize: 30, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landedAt === f.city },
-  { id: 'shade', tier: 1, prize: 30, title: f => `Shade the Earth ${5 * f.k} times here`, flight: (r, s, f) => f.here && r.sunBlocked >= 5 * f.k },
-  { id: 'plant-tree', tier: 1, prize: 30, title: f => `Plant a ${f.treeName} in ${f.landName}`, flight: (r, s, f) => (r.treeIds || []).includes(f.treeTag) },
-  { id: 'clean-gaps', tier: 1, prize: 30, title: f => `Fly ${3 * f.k} storm gaps without a scrape`, flight: (r, s, f) => (r.cleanGaps || 0) >= 3 * f.k },
-  { id: 'bring', tier: 1, prize: 30, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 10 * f.k },
-  { id: 'project', tier: 1, prize: 30, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
+  { id: 'land-city', tier: 1, prize: 10, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landedAt === f.city },
+  { id: 'shade', tier: 1, prize: 10, title: f => `Shade the Earth ${5 * f.k} times here`, flight: (r, s, f) => f.here && r.sunBlocked >= 5 * f.k },
+  { id: 'plant-tree', tier: 1, prize: 10, title: f => `Plant a ${f.treeName} in ${f.landName}`, flight: (r, s, f) => (r.treeIds || []).includes(f.treeTag) },
+  { id: 'clean-gaps', tier: 1, prize: 10, title: f => `Fly ${3 * f.k} storm gaps without a scrape`, flight: (r, s, f) => (r.cleanGaps || 0) >= 3 * f.k },
+  { id: 'bring', tier: 1, prize: 10, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 10 * f.k },
+  { id: 'project', tier: 1, prize: 10, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
   // tier 2: combine it
-  { id: 'chain', tier: 2, prize: 50, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
-  { id: 'dodge', tier: 2, prize: 50, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
-  { id: 'rescue', tier: 2, prize: 50, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
-  { id: 'spot', tier: 2, prize: 50, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
-  { id: 'hazard', tier: 2, prize: 50, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
-  { id: 'system', tier: 2, prize: 50, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
+  { id: 'chain', tier: 2, prize: 15, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
+  { id: 'dodge', tier: 2, prize: 15, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
+  { id: 'rescue', tier: 2, prize: 15, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
+  { id: 'spot', tier: 2, prize: 15, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
+  { id: 'hazard', tier: 2, prize: 15, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
+  { id: 'system', tier: 2, prize: 15, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
   // tier 3: the crossing trial (star = the gate)
-  { id: 'night', tier: 3, star: true, prize: 60, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
-  { id: 'shade10', tier: 3, star: true, prize: 60, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
-  { id: 'kinds3', tier: 3, star: true, prize: 60, title: f => `Plant 3 kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= 3 },
-  { id: 'route', tier: 3, prize: 40, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
-  { id: 'golden', tier: 3, prize: 40, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
-  { id: 'tier', tier: 3, prize: 40, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
+  { id: 'night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
+  { id: 'shade10', tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
+  { id: 'kinds3', tier: 3, star: true, prize: 20, title: f => `Plant 3 kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= 3 },
+  { id: 'route', tier: 3, prize: 15, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
+  { id: 'golden', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
+  { id: 'tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
 ];
 // The hazard each stage meets (turbulence from 2,000 km; no-fly zones from 8,000 km; long clean runs for masters).
 const HAZARD = {
