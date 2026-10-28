@@ -110,18 +110,23 @@ const W = 390, H = 844;
   avoid = MISS_L2; await p.evaluate(a => { window.__avoid = a; }, avoid);
   await fly('flight 2', 240, { noTurb: true });
   let flights = 1;
-  if (MISS_L2) {   // missed once: still pending, and the results don't lead to NATURE yet; FLY ON for the second try
-    check(!(await L2()), 'MISS_L2: one miss leaves L2 pending (the autopilot avoided the icy air)');
+  // The rails must never stall; pilot skill is not what this test checks (0.16.0 strict run 3: the real-tap pilot once
+  // missed the guaranteed patch, a child can too). So a miss gets the second try, and the fallback opens NATURE after it.
+  // sim-l2patch.cjs (Node) proves the patch is there and flyable; MISS_L2=1 forces the miss to prove the fallback.
+  const missed = !(await L2());
+  if (MISS_L2) check(missed, 'MISS_L2: one miss leaves L2 pending (the autopilot avoided the icy air)');
+  else if (missed) console.log('note: the real-tap pilot missed the guaranteed patch on flight 2; the second try (and the fallback) must open NATURE');
+  if (missed) {   // still pending, and the results don't lead to NATURE yet; FLY ON for the second try
     await shot('R10b-missed-once');
     const t = await p.evaluate(() => !document.getElementById('tour').hidden);
     if (t) await p.click('#tour .tbubble .btn:not([hidden])').catch(() => {});
     await p.click('#againBtn'); await p.waitForTimeout(800);
     if (await p.evaluate(() => !document.getElementById('title').hidden)) await p.click('#goBtn');
-    await fly('flight 2, second try (missed again)', 240, { noTurb: true }); flights++;
+    await fly(MISS_L2 ? 'flight 2, second try (missed again)' : 'flight 2, second try', 240, { noTurb: true }); flights++;
   }
   avoid = false; await p.evaluate(() => { window.__avoid = false; });
   const l2 = await L2();
-  check(l2, `L2 is done after ${flights} flight(s) (${MISS_L2 ? 'two misses: the fallback' : 'the guaranteed daytime icy patch'})`);
+  check(l2, `L2 is done after ${flights} flight(s) (${flights === 1 ? 'the guaranteed daytime icy patch' : 'a miss, then the second try or the fallback'}): the rails never stall`);
   if (!l2) { await b.close(); console.log(`FAIL onrails:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (NATURE needs it: the rest would pass or fail by accident)
   await step('R11a-nature', /NATURE/i, () => !document.getElementById('nature').hidden, { screen: 'results' });
   await step('R11b-free-project', /FREE/i, () => (JSON.parse(localStorage.getItem('contrailPilot.v2')).habitat || {}) && JSON.parse(localStorage.getItem('contrailPilot.v2')).freeProjectGiven === true, { screen: 'nature' });
