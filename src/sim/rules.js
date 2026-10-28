@@ -235,7 +235,11 @@ export const RULES = {
   // reaches a storm, would the flock be near the plane and inside that storm's gap?
   flockBlocksGap(x, y, half) {   // half: the flock's size in old V steps (13 px across, 9 px down)
     const B = HAZARDS.birds, v = Math.max(1, this.speed);
-    const top = y - half * 9 - 4 - B.wobble, bottom = y + half * 9 + 16 + B.wobble;   // the V's height, bird size and bobbing
+    // Bird detection (Sensors 9-10, era 5): kit.birdWobbleMul x the bob, here and in the flock's motion and collision bands.
+    // In these spawn retries a smaller bob lets a different number of tries pass, so an era-5 sky parts from the same seed's
+    // era-4 sky: no new draws, a different sky of the same kind (as the twists). x1 = exact for eras 1-4.
+    const wob = B.wobble * (P.KNOB_PLANTS.wobble ? 1 : this.kit.birdWobbleMul ?? 1);
+    const top = y - half * 9 - 4 - wob, bottom = y + half * 9 + 16 + wob;   // the V's height, bird size and bobbing
     return this.storms.some(st => {
       const r = st.rects[0], t = (r.x - this.plane.x) / v;
       if (t < 0) return false;
@@ -965,7 +969,8 @@ export const RULES = {
       f.x -= B.extraSpeed * dt;
       // Birds steer out of a storm gap the plane is about to fly through (a flock there would
       // leave no way past). The spawn check usually prevents it; this catches the rest.
-      const half = f.half ?? (f.birds.length - 1) / 2, top = f.y - half * 9 - 4 - B.wobble, bottom = f.y + half * 9 + 16 + B.wobble;
+      const wob = B.wobble * (P.KNOB_PLANTS.wobble ? 1 : this.kit.birdWobbleMul ?? 1);   // bird detection (see flockBlocksGap)
+      const half = f.half ?? (f.birds.length - 1) / 2, top = f.y - half * 9 - 4 - wob, bottom = f.y + half * 9 + 16 + wob;
       for (const st of this.storms) {
         const r = st.rects[0], gTop = r.height, gBot = st.rects[1].y;
         if (r.x + r.width < this.plane.x - 10 || r.x > this.plane.x + 200) continue;     // only gaps the plane is reaching
@@ -978,7 +983,7 @@ export const RULES = {
         if (f.turn.left > 0 && !TWIST_PLANTS.still) { const k = Math.min(dt, f.turn.left); f.y += f.turn.dir * T.dy * k / T.secs; f.turn.left -= k; if (f.turn.left <= 0) f.turn.left = 0; }
       }
       f.phase += dt * 2;
-      const fy = f.y + Math.sin(f.phase) * B.wobble;
+      const fy = f.y + Math.sin(f.phase) * wob;
       const frame = Math.floor(this.gameTime / 120) % 2;
       for (const b of f.birds) { b.x = Math.round(f.x + b.ox); b.y = Math.round(fy + b.oy); b.key = `bird-${frame}`; }
     }

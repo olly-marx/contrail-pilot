@@ -58,6 +58,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('plane-twin', 'assets/plane-twin.png');
     this.load.image('plane-747', 'assets/plane-747.png');   // the 1970s paint (era colour ladder)
     this.load.image('plane-787', 'assets/plane-787.png');   // the 2010s Dreamliner (code-made from the twin: tools/art/make_787.py)
+    this.load.image('plane-truss', 'assets/plane-truss.png');   // the 2030s truss-braced wing (code-made: tools/art/make_787.py)
     for (const k of UPGRADE_ART) this.load.image(k, `assets/upgrades/${k}.png`);   // upgrade looks, stickers, towers (src/fleet.js)
     for (const [id, n] of Object.entries(PART_LINES)) for (let i = 1; i <= n; i++) this.load.image(`plane-${id}-${i}`, `assets/plane-${id}-${i}.png`);
     for (let i = 1; i <= 4; i++) this.load.image(`plane-nature-${i}`, `assets/plane-nature-${i}.png`);
@@ -1001,7 +1002,7 @@ export class GameScene extends Phaser.Scene {
     if (k.birdWarnPx) for (const f of this.birds) {
       const ahead = f.x - nose;
       if (ahead < 0 || ahead > k.birdWarnPx) continue;
-      const half = f.half ?? (f.birds.length - 1) / 2, B = HAZARDS.birds, top = f.y - half * 9 - 4 - B.wobble, bot = f.y + half * 9 + 16 + B.wobble;
+      const half = f.half ?? (f.birds.length - 1) / 2, wob = HAZARDS.birds.wobble * (k.birdWobbleMul ?? 1), top = f.y - half * 9 - 4 - wob, bot = f.y + half * 9 + 16 + wob;
       g.fillStyle(0xffffff, 0.12); g.fillRect(f.x - 4, top, half * 26 + 24, bot - top);
     }
   }
