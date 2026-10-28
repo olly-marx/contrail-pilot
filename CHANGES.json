@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-10-28-era-5",
+    "version": "0.19.0",
+    "date": "2026-10-28",
+    "level": "major",
+    "notes": [
+      "A new plane in the 2030s: the truss-braced wing, and at the top of its line the blended wing!",
+      "Two new levels for every part of your plane: smarter forecasts, contrail-aware air traffic control, low-soot fuel, bird detection and more.",
+      "Birds and turns: the sky shows you a bird corridor and arrows for turns ahead.",
+      "The 2030s crossings are open, 30,000 km long, including the long way from Auckland to Santiago.",
+      "NATURE money: level 3 brings bonds. Stats that do not change now say \"same\"."
+    ]
+  },
+  {
     "id": "2026-10-28-starters-hangar",
     "version": "0.18.1",
     "date": "2026-10-28",
