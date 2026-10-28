@@ -117,3 +117,4 @@ capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazar
 twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
 finance	src/finance.js	s/Math.round(L.base - L.slope \* B)/Math.round(L.base - L.slope * 0)/	the rate ignores nature
 hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (false) pv.scrollIntoView/	a tapped row previews off screen
+hudlayout	src/GameScene.js	s/if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);/if (false) this.kindsText.setX(cx - 4);/	the kinds meter under CLEAN

@@ -209,6 +209,8 @@ export class GameScene extends Phaser.Scene {
       this.input.on('pointerup', off); this.input.on('pointerupoutside', off);
       this.input.keyboard.on('keydown-C', () => { this.cleanHeld = true; }); this.input.keyboard.on('keyup-C', off);
       this.inCleanBox = inClean;
+      // The forest meter's 'kinds n/3' sat at x 126, under CLEAN (the screenshot, 2026-10-28): it ends just left of the button.
+      if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);
     }
 
     // Pause when the tab is hidden, so a phone in a pocket doesn't crash the plane.
