@@ -105,6 +105,10 @@ export const RULES = {
     this.stormCount = 0;
     this.lastContrail = 0;
     this.wasInIssr = false;
+    // Contrail-free cruise (Ops 8+, eras 4-6): while the player holds it (cleanHeld, set by GameScene from input; always
+    // false in the engine: the model never uses it), no contrail is made, for up to kit.cleanSecs each night.
+    this.cleanHeld = false;
+    this.cleanLeft = 0;
 
     this.heat = 0;                   // net heating (play units)
     this.totalCo2 = 0;
@@ -330,7 +334,7 @@ export const RULES = {
     let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * (this.stormCount - (this.warmStorms || 0)));
     const nf = HAZARDS.noFly;
     const noFly = this.distancePx >= nf.from && this.rand() < this.squeezed(nf.chance, 'capNoFly');
-    if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess);
+    if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess + (P.KNOB_PLANTS.gapAdd ? 0 : this.kit.noFlyGapAdd || 0));   // ATC 8 (2010s, free route airspace): wider no-fly gaps
     gap = Math.round(gap * this.kit.gaps);   // air traffic control (eras): better spacing, gaps up to ~3% wider
     const lo = STORMS.marginTop + gap / 2;
     const hi = SKY_H - STORMS.marginTop - gap / 2;
@@ -667,7 +671,11 @@ export const RULES = {
     this.updateParcels(dt);
     if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
     this.wasInIssr = inIssr;
-    if (inIssr && this.state !== 'landing' && time - this.lastContrail > this.kit.contrailEvery) {
+    // Contrail-free cruise: held, at night, meter left -> inside icy air but no puff. Skipping a puff also skips its
+    // rngPlane wobble draw: that is the PLANE stream, so the sky (this.rng) is unaffected (sim-paired stays green).
+    const clean = !P.KNOB_PLANTS.clean && this.cleanHeld && !this.isDay && this.cleanLeft > 0;
+    if (clean && inIssr) this.cleanLeft = Math.max(0, this.cleanLeft - dt * 1000);
+    if (inIssr && !clean && this.state !== 'landing' && time - this.lastContrail > this.kit.contrailEvery) {
       this.lastContrail = time;
       this.addContrail(time);
     }
@@ -1067,7 +1075,7 @@ export const RULES = {
     if (half !== this.lastHalf) {
       this.onDayHalf(half);
       // Night Owl: a whole night flown without trapping any heat.
-      if (half === 'night') this.nightDodges = 0;
+      if (half === 'night') { this.nightDodges = 0; this.cleanLeft = (this.kit.cleanSecs || 0) * 1000; }   // the clean-cruise meter refills each night
       if (half === 'night' && this.state === 'playing') this.night = { started: true, trappedAtStart: this.heatTrapped };
       if (half === 'dawn' && this.night.started && this.heatTrapped - this.night.trappedAtStart < 0.5) {
         this.nightOwl = true;

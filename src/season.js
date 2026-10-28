@@ -9,9 +9,11 @@ export const SEASON = {
   // from this area >= distanceShare of the crossing's km, and the missions condition is not asked (ctx.missionsDone undefined).
   offer: { rule: 'all3', biodiversity: 30, distanceShare: 0.7 },
   // The last era whose crossings this release offers (0 = 1950s ... 2 = 1990s); later ones need era 4-6 planes.
-  maxEra: 2,
+  maxEra: 3,   // the era 4 release (2010s: the 787, crossing 4 = 27,000 km); 2030s / far future crossings come with eras 5 / 6
   // Crossing mission lengths in GAME km by era (PROPOSAL-10, all TBD-SIM: to re-size from the crashes-on player at s~0.9).
-  crossingKm: { 1: 6500, 2: 13000, 3: 18000, 4: 21000, 5: 26000, final: 30000 },
+  // 4 / 5 / final SIZED by the sim chat (research/BALANCE-ERAS-4-6.md, user-approved 2026-10-28): expert ~10% / ~3% / <1 in 40.
+  // final = the LAP OF THE EARTH (the Earth is 40,075 km round). Still behind maxEra until the era 4-6 releases.
+  crossingKm: { 1: 6500, 2: 13000, 3: 18000, 4: 27000, 5: 30000, final: 40000 },
   // The tanker (PROPOSAL-REFUELLING option A): rendezvous marks on the mission bar per refuelling-gadget level.
   tanker: { marks: [[], [0.5], [1 / 3, 2 / 3], [1 / 3, 2 / 3], [0.25, 0.5, 0.75]], holdS: [0, 8, 6, 5, 4], boxPx: [0, 24, 30, 36, 40] },
 };

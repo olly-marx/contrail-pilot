@@ -363,7 +363,8 @@ export class UI {
     $('againBtn').textContent = lead === 'hangar' ? 'OPEN THE HANGAR' : lead === 'nature' ? 'OPEN NATURE' : 'FLY ON';
     this.hideCoach();   // nothing left open from the flight (the user saw a stray OK at the top after landing, 0.13.0)
     // Season 2: a crossing flown (src/crossings.js): the big news first.
-    if (r.crossing) this.toast(r.crossing.landed ? (r.crossing.opens ? `NEW AREA: ${AREAS[r.crossing.opens].name.toUpperCase()}!` : 'YOU MADE IT!') : 'Crossing not made',
+    if (r.crossing && r.crossing.kind === 'lap' && r.crossing.landed) this.showEnding();   // the final boss: the game's ending
+    else if (r.crossing) this.toast(r.crossing.landed ? (r.crossing.opens ? `NEW AREA: ${AREAS[r.crossing.opens].name.toUpperCase()}!` : 'YOU MADE IT!') : 'Crossing not made',
       r.crossing.landed ? 'Your crossing is done. Fly on from here!' : 'Improve your plane, your nature and your contrail skill, and try again.', r.crossing.landed ? 'good' : '', 6);
     // NEW ANIMALS this flight (landed or crashed): made once, next to the new badges, before the
     // reveal below collects its steps.
@@ -690,6 +691,18 @@ export class UI {
   }
 
   // ---------- in-flight tips ----------
+  // The game's ending (M4, the final boss = a lap of the Earth, home to home): one card, then on with the game.
+  showEnding() {
+    const s = this.save, km = (SEASON.crossingKm.final || 0).toLocaleString('en-GB');
+    let el = document.getElementById('ending');
+    if (!el) { el = document.createElement('div'); el.id = 'ending'; el.className = 'payoff ending'; document.body.appendChild(el); }
+    el.innerHTML = `<div class="payoff-card"><p class="ending-title">YOU FLEW AROUND THE WORLD!</p>
+      <p>${km} km, from ${s.city} back home. Every area open, and the sky still cool behind you.</p>
+      <p class="small">${(s.crossed || []).length} crossings flown. You finished Contrail Pilot!</p>
+      <button id="endingOk" class="btn go big" type="button">OK</button></div>`;
+    el.hidden = false; sfx.coin && sfx.coin();
+    document.getElementById('endingOk').onclick = () => { sfx.flap(); el.hidden = true; };
+  }
   toast(title, body, kind = '', secs = 3.5) {
     if (!$('coach').hidden) return;   // flight school talks instead
     // A toast is never replaced before TOAST_MIN s (the user, 2026-10-27: one vanished "in literally a microsecond"): it queues.

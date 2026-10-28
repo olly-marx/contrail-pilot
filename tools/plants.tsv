@@ -108,3 +108,13 @@ sim-progression-s2@PLANT=nostars	-	-	crossings offered without the area missions
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
 sim-twists@PLANT=still	-	-	no twist ever moves
 sim-twists@PLANT=early	-	-	twists ignore their start distance
+era4-knobs	src/sim/physics.js	s/gapAdd: false/gapAdd: true/	ATC 8 no-fly gap add ignored
+era4-knobs	src/sim/physics.js	s/nightHeat: false/nightHeat: true/	night contrail heat multiplier ignored
+era4-knobs	src/sim/physics.js	s/clean: false }/clean: true }/	contrail-free cruise ignored
+hangar-feedback	src/fleet.js	s/keys: \['pickup'\]/keys: ['pickupX']/	a changed setting with no bar
+lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return false;/	the lap counts away from home
+capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazard pool ignored (heat only)
+twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
+finance	src/finance.js	s/Math.round(L.base - L.slope \* B)/Math.round(L.base - L.slope * 0)/	the rate ignores nature
+hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (false) pv.scrollIntoView/	a tapped row previews off screen
+hudlayout	src/GameScene.js	s/if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);/if (false) this.kindsText.setX(cx - 4);/	the kinds meter under CLEAN
