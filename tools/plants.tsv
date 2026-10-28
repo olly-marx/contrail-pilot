@@ -73,7 +73,7 @@ controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 
 controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 20, TIP_MIN_TAP = 2;/	a tip stays too long
 releasegate	tests/PATHMAP	s/ src\/badges.js src\/eras.js |/ src\/badges.js |/	a tracked file left unmapped (src/eras.js)
 releasegate	tests/PATHMAP	s/ textfit crash$/ textfit/	a smoke test dropped
-releasegate	tests/PATHMAP	s/^group heavy-onboarding | src\/missions2.js src\/upgrades.js | postrails$/group heavy-onboarding | src\/missions2.js src\/upgrades.js | NONE/	postrails no longer chosen for lessons/parcels
+releasegate	tests/PATHMAP	s/^group heavy-onboarding | \(.*\) | postrails$/group heavy-onboarding | \1 | NONE/	postrails no longer chosen for lessons/parcels
 releasegate	tests/PATHMAP	s/\(tools\/gate-plan.py\) | ALL$/\1 | NONE/	the harness no longer means the whole tier
 releasegate	tests/PATHMAP	s/| records-screen$/| records-screenX/	a group names a test that does not exist
 releasegate	tools/gate-plan.py	s/return 2 if unmapped else 0/return 0/	an unmapped file is no longer refused
