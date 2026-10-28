@@ -64,7 +64,7 @@ export class FleetHangar {
       s.sparkle = true;
       this.ui.persist(); this.ui.sfx.buy(); this.ui.renderHangar();
       // R6: the payoff - the plane as it was, then the new part arrives on it - now for EVERY purchase (the user, 2026-10-28),
-      // with the stat bars moving to their new values. Only the rails' first free part still goes on to FLY (R7, game chat).
+      // with the stat bars moving to their new values. Every purchase stays in the hangar (the user, 2026-10-28); `rails` only picks the tutorial's words for the first free part.
       this.sel = null;
       this.payoff(before, { bars, gadBefore, name: item && item.name, toFly: false, rails: free && !!s.areas });   // stay in the hangar after EVERY purchase (the user); the rails' words for the first free part
     });
@@ -90,7 +90,7 @@ export class FleetHangar {
   // was, then the new part fades and slides onto it with a sparkle, then "Your plane is cleaner now!" and OK.
   // Every purchase (the user, 2026-10-28): opts.bars = the stat bars it moves (fleet.js previewBars, taken BEFORE the buy),
   // opts.gadBefore = the gadget overlays before (a new gadget is a part too), opts.name = the item, opts.toFly = the rails'
-  // first free part (OK goes on to FLY, R7); every other purchase stays in the hangar. A system has no part: no zoom,
+  // first free part (the tutorial's words: rails); every purchase stays in the hangar, the rails' next step is TAKE OFF there. A system has no part: no zoom,
   // the bars are the payoff.
   payoff(before, { bars = [], gadBefore, name, toFly = true, rails = toFly } = {}) {
     const s = this.ui.save, f = fleetOf(s), id = f.plane, files = lookFiles(id, f.planes[id], 'hangar');
@@ -131,7 +131,7 @@ export class FleetHangar {
     const settle = () => { if (el.hidden) return; if (added.length) label(); else el.classList.add('labelled'); };
     setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 900);   // the part arrives, the camera zooms onto it, then the label
     $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled', 'nopart');
-      if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar   // the rails' free part: the hub, TAKE OFF (R7); else stay in the hangar
+      if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }
 
   // The capability line under the picture (M4): the cached estimate, or "working it out" while it runs.
