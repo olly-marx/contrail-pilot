@@ -81,7 +81,7 @@ export class Tour {
       { target: '[data-ftap^="plane:"][data-ftap$=".engines"]', text: tip('rail-free-tap'), until: () => !!document.querySelector('[data-fline^="plane:"][data-fline$=".engines"].sel') && !!document.getElementById('hPreviewBuy') },
       { target: '#hPreviewBuy', text: tip('rail-free'), tap: true }]];
     // R7 in the hangar (the user: stay in the hangar after buying): its own TAKE OFF.
-    if (where === 'hangar' && !s.freeUpgrade && s.freeGiven && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#hGoTop', text: tip('rail-takeoff-h'), tap: true }]];
+    if (where === 'hangar' && !s.freeUpgrade && s.freeGiven && !d('L1') && !this.done('r-takeoff1') && !(document.getElementById('payoff') && !document.getElementById('payoff').hidden))   // (not under the payoff: its OK starts this step) return ['r-takeoff1', [{ target: '#hGoTop', text: tip('rail-takeoff-h'), tap: true }]];
     // R7: the hub, only TAKE OFF.
     if (hub && s.freeUpgrade) return ['r-hangar', [{ target: '#hubTiles [data-go="hangar"]', text: tip('rail-hangar'), tap: true }]];   // (every time: a reload with the part still waiting)
     if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];

@@ -12,7 +12,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const p = await b.newPage({ viewport: { width: 390, height: 844 } }); const errs = []; p.on('pageerror', e => errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); },
-      { areas: [area], homeArea: area, city, tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, missionsDone: ['L1', 'L2'], landings: 3, flights: 4,
+      { areas: [area], homeArea: area, city, visited: [city], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, missionsDone: ['L1', 'L2'], landings: 3, flights: 4,
         fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } });
     await p.goto(URL); await ready(p); await p.waitForTimeout(800);
     await p.click('#tabNature'); await p.waitForTimeout(800);
