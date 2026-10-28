@@ -18,7 +18,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     { areas: ['easia'], homeArea: 'easia', city: 'SEOUL', tutorialDone: true, muted: true, seeds: 777, landings: 9, flights: 10, missionsDone: ['L1', 'L2', 'L3'], priceVersion: 2 });
   await p.goto(URL); await ready(p); await p.waitForTimeout(800);
   const before = JSON.stringify((await ctx.storageState()).origins);
-  check(/777/.test(before), 'the real save is in the raw storage before the preview');
+  check(/s2:contrailPilot\.v2/.test(before), 'the real save (s2:contrailPilot.v2) is in the raw storage before the preview');   // (its values migrate on load: check the key)
   // The preview: a brand-new player.
   await p.goto(URL + '?preview=1'); await ready(p); await p.waitForTimeout(800);
   const fresh = await p.evaluate(() => ({ start: !!document.querySelector('#startChoice [data-area]') && !document.getElementById('startChoice').hidden && getComputedStyle(document.getElementById('startChoice')).display !== 'none', tag: (document.getElementById('previewTag') || {}).textContent || '' }));
