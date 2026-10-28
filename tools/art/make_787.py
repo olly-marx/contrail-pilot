@@ -9,6 +9,7 @@ from PIL import Image
 
 STEEL = (0.60, 0.38, 0.95)   # target hue (steel blue), saturation scale, brightness
 GRAPHITE = (0.58, 0.08, 0.8)   # the 2030s: nearly grey, darker
+SILVER = (0.55, 0.05, 1.15)   # the far future: pale silver
 
 def recolour(src, dst, to=STEEL):
     im = Image.open(src).convert('RGBA'); px = im.load(); n = 0
@@ -26,5 +27,6 @@ if __name__ == '__main__':
     a = recolour('assets/plane-twin.png', 'assets/plane-787.png')
     b = recolour('assets/ui/plane-hangar-twin.png', 'assets/ui/plane-hangar-787.png')
     assert a > 20 and b > 500, (a, b)   # the livery was found and changed
+    recolour('assets/plane-twin.png', 'assets/plane-hydrogen.png', SILVER); recolour('assets/ui/plane-hangar-twin.png', 'assets/ui/plane-hangar-hydrogen.png', SILVER)
     recolour('assets/plane-twin.png', 'assets/plane-truss.png', GRAPHITE); recolour('assets/ui/plane-hangar-twin.png', 'assets/ui/plane-hangar-truss.png', GRAPHITE)
     print('787 art:', a, 'flight px,', b, 'hangar px recoloured')

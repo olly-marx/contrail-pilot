@@ -23,8 +23,8 @@
   const k787 = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 6 }, gadgets: {} } }), kFull = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 8 }, gadgets: {} } });
   check(k787.noFlyGapAdd === 8 && kFull.noFlyGapAdd === 18, `787 no-fly help: bare ${k787.noFlyGapAdd} (want 8), with ATC 8 ${kFull.noFlyGapAdd} (want 18)`);
   // Eras 4-6 (2026-10-28): the three systems, Sensors and Autopilot go on to level 8 in the 2010s; Magnet, Hold, Gear stop at 6.
-  check(F.SYSTEMS.length === 3 && F.GADGETS.length === 5 && [...F.SYSTEMS, ...F.GADGETS].map(g => g.levels.length).join(',') === '10,10,10,6,6,6,10,10', 'three systems and five gadgets: 10 / 6 levels (eras 4-5)');
-  check(F.PLANES.map(p => Object.values(p.lines).map(l => l.length).join('')).join(' ') === '222 333 444 333 333', 'Comet 2, 747 3, twin 4, 787 3, truss wing 3 levels per line');
+  check(F.SYSTEMS.length === 3 && F.GADGETS.length === 5 && [...F.SYSTEMS, ...F.GADGETS].map(g => g.levels.length).join(',') === '12,12,12,6,6,6,12,12', 'three systems and five gadgets: 12 / 6 levels (eras 4-6)');
+  check(F.PLANES.map(p => Object.values(p.lines).map(l => l.length).join('')).join(' ') === '222 333 444 333 333 333', 'Comet 2, 747 3, twin 4, 787 3, truss wing 3, hydrogen 3 levels per line');
 
   // Era gates: the 1970s levels (3, 4) are blocked in the 1950s, open at 30 min of flying.
   const open = (secs, fleet) => Object.fromEntries(F.nextBuys({ flightSeconds: secs, fleet }).map(b => [`${b.id}${b.level}`, b.open]));
