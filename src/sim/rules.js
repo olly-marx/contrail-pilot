@@ -201,7 +201,9 @@ export const RULES = {
   // Bottom of the drawn plane (wheels), used for ground contact.
   spriteBottom() { return this.plane.y - PLANE.spriteOffY + PLANE.spriteH; },
   runwayUnder(box) {
-    return this.runways.find(r => r.x <= box.x && box.x + box.w <= r.x + AIRPORT.runwayLen && r.name !== this.homeName);
+    // Home is landable when the route loops back to it (a 3-city area's 3rd stop: the sim chat, 2026-10-28, beginners crashed
+    // on a drawn home runway); only a DEPARTURE runway (at or behind the start, worldX <= 0) is never 'landed' on.
+    return this.runways.find(r => r.x <= box.x && box.x + box.w <= r.x + AIRPORT.runwayLen && !(r.name === this.homeName && r.worldX <= 0));
   },
   // The k-th airport ahead of the start city (0 = the next one), at worldX `from` + that leg.
   airportAhead(k, from = 0) {
