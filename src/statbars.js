@@ -11,19 +11,21 @@ const pct = v => `${(v * 100).toFixed(1)}%`;
 
 export function deltaText(r) {
   if (r.onoff) return r.then ? 'ON' : 'OFF';
+  if (r.then === r.now) return 'same';
   if (!r.now) return r.then ? 'NEW' : '';
   const d = (r.then - r.now) / Math.abs(r.now) * 100;
   return `${d > 0 ? '+' : ''}${Math.abs(d) < 1 ? d.toFixed(1) : Math.round(d)}%`;
 }
 export const isBetter = r => (r.better === 'lower' ? r.then < r.now : r.then > r.now);
+const tone = r => (r.then === r.now ? 'same' : isBetter(r) ? 'good' : 'bad');   // (no change: neutral, never a red 0%)
 
 export function barHTML(r) {
   const a = r.onoff ? (r.now ? 1 : 0) : frac(r, r.now), b = r.onoff ? (r.then ? 1 : 0) : frac(r, r.then);
-  const solid = Math.min(a, b), ghost = Math.abs(b - a), good = isBetter(r);
+  const solid = Math.min(a, b), ghost = Math.abs(b - a);
   return `<div class="sbar" data-now="${a}" data-then="${b}"><span class="sbar-label">${r.label}</span>`
     + `<span class="sbar-track"><span class="sbar-fill" style="width:${pct(a)}"></span>`
     + `<span class="sbar-ghost ${b > a ? 'add' : 'cut'}" style="left:${pct(solid)};width:${pct(ghost)}"></span></span>`
-    + `<span class="sbar-delta ${good ? 'good' : 'bad'}">${deltaText(r)}</span></div>`;
+    + `<span class="sbar-delta ${tone(r)}">${deltaText(r)}</span></div>`;
 }
 export const statBarsHTML = rows => `<div class="sbars">${rows.map(barHTML).join('')}</div>`;
 

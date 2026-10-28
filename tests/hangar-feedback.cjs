@@ -35,6 +35,9 @@ const src = f => path.resolve(__dirname, '../src', f);
   // The bars point the right way: a cleaner engine shrinks CO2.
   const eng = F.previewBars(base({ plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} }), 'plane', 'comet.engines').find(r => r.id === 'co2');
   check(eng && eng.then < eng.now && eng.better === 'lower', 'Comet engines 1: no shrinking CO2 bar');
+  // A bar with no change reads 'same' in neutral grey, never a red 0% (the finance desk screenshot, 2026-10-28).
+  const SB = await import(src('statbars.js')), same = SB.barHTML({ label: 'x', now: 40, then: 40, min: 0, max: 40, better: 'lower' });
+  check(/>same</.test(same) && !/sbar-delta bad/.test(same), `a no-change bar: ${same}`);
   if (fails.length) { console.log(`FAIL hangar-feedback (${n} items)\n  ${fails.slice(0, 12).join('\n  ')}`); process.exit(1); }
   console.log(`PASS hangar-feedback: ${n} items, each shows a part or a bar, every changed setting has a bar`);
 })();

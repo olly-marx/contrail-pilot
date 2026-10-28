@@ -150,12 +150,14 @@ export class FleetHangar {
     const lv = financeLevel(s), B = natureHealth(s), next = FINANCE.levels[lv], L = FINANCE.levels[lv - 1];
     const bar = lvTo => statBarsHTML([{ label: 'Seeds per crystal', now: lv ? rate(s) : 40, then: rateAt(lvTo, B), min: 0, max: 40, better: 'lower' }]);
     const n = canTake(s);
-    return `<div class="line fline finance"><div><div class="name">Natural capital</div><div class="small">${L ? L.name : 'Not yet'}. Your nature: ${B} / 100</div></div>
+    // (screenshot, 2026-10-28: a level that adds bonds / the dividend does not change the rate: say what it adds, no 0% bar)
+    const adds = next && (next.dividend && !(L && L.dividend) ? 'Adds the nature dividend: crystals for landing where nature is healthy.' : next.bond && !(L && L.bond) ? 'Adds bonds: lock seeds, get them back with crystals.' : '');
+    return `<div class="line fline finance"><div class="fin-head"><div class="name">Natural capital</div><div class="small">${L ? L.name : 'Not yet'}. Your nature: ${B} / 100</div></div>
       ${L ? `<p class="small">Today: <b>${rate(s)} seeds = 1 crystal</b>. You keep ${L.reserve.toLocaleString('en-GB')} seeds.</p>
         <button class="btn ${n ? 'go' : ''}" id="hTrade" type="button" ${n ? '' : 'disabled'}>${n ? `TRADE ${n * rate(s)} seeds for ${n} crystals` : 'Trade again after your next landing'}</button>` : '<p class="small">Healthier nature, a better rate.</p>'}
       ${L && L.bond ? `<p class="small">Bonds: ${bonds(s).map(b => `${Math.max(0, L.bond.landings - ((s.landings || 0) - b.at))} landings left`).join(', ') || 'none yet'}. Each pays back its seeds + about ${Math.floor(B / L.bond.perB)} crystals (your nature at payout).</p>
         <button class="btn ${canLock(s) ? 'go' : ''}" id="hBond" type="button" ${canLock(s) ? '' : 'disabled'}>LOCK ${L.bond.lock.toLocaleString('en-GB')} seeds for ${L.bond.landings} landings</button>` : ''}
-      ${next ? `<div class="next"><span>Next: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost}<i class="seedicon"></i></button></div>${bar(lv + 1)}` : ''}</div>`;
+      ${next ? `<div class="next"><span>Next: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost}<i class="seedicon"></i></button></div>${adds ? `<p class="small">${adds}</p>` : bar(lv + 1)}` : ''}</div>`;
   }
 
   // The item behind a selection ('plane:comet.engines', 'gadget:magnet', 'fly:jumbo').
