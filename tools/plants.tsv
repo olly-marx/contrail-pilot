@@ -103,3 +103,5 @@ audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no 
 audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
 releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
 releasegate	tests/PATHMAP	s/ tours firsthour-real$/ tours/	onboarding changes no longer run firsthour-real
+sim-twists@PLANT=still	-	-	no twist ever moves
+sim-twists@PLANT=early	-	-	twists ignore their start distance
