@@ -13,7 +13,7 @@ group tests-themselves | tests/*.cjs tests/*.json | NONE
 group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/hub.js src/upgrades.js src/startchoice.js src/school.js src/rewards.js src/wild.js | onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school rewards missions tours
 group heavy-onboarding | src/missions2.js src/upgrades.js src/hub.js src/wild.js | postrails
 group records | src/records.js src/recordsui.js | records-screen
-group save-season2 | src/save.js src/season2.js src/areas.js src/season.js src/crossings.js src/updates.js src/main.js src/reprice.js src/welcome.js | season2 season2-smoke savesafe updates cache reset welcome saveloss
+group save-season2 | src/save.js src/season2.js src/areas.js src/season.js src/crossings.js src/updates.js src/main.js src/reprice.js src/welcome.js | season2 season2-smoke savesafe updates cache reset welcome saveloss preview
 group nature-screen | src/wild.js src/nature.js src/habitats.js src/habitat/* src/landtrees.js src/wildlife.js src/animalart.js src/weboflife.js src/nexthere.js | nature nature-unknown wild wildfield regions biodiversity treepic wildlife forestmeter fields
 group hangar-upgrades | src/hangar.js src/fleet.js src/fleetfacts.js src/planelook.js src/planeparts.js src/badges.js src/eras.js | hangar hangarnew upgrades progression looks fleetfacts badges badgeart fares eras crystals onrails
 group sim-node-only | src/sim/player.js src/sim/progression.js src/sim/simulate.js src/sim/pilots.js src/sim/trace.js | NONE
