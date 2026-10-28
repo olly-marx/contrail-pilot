@@ -1,0 +1,22 @@
+# Release-gate declarations (user decision 2026-10-28; research/PROPOSAL-RELEASE-GATE.md). DECLARED by subject, never inferred from mentions.
+# `tools/gate.sh --release` runs: the Node gate + the SMOKE tests below + the browser tests of every group whose globs match a file changed since origin/main
+# (+ a browser test whose own tests/NAME.cjs changed). CI then runs everything and deploys only if green.
+# Syntax (one per line, fields separated by ' | '):
+#   smoke | test test ...                  always run locally
+#   group NAME | glob glob ... | test ...  a changed file matching ANY glob adds these tests (union over all matching groups). NONE = nothing to run, ALL = the whole browser tier.
+#   ci-only | test test ...                browser tests deliberately run only in CI (a browser test in no group and not here fails the lint)
+# Globs are fnmatch patterns on repo-relative paths (`*` also matches `/`). `gate.sh --lint` fails if a tracked file matches no group, or a test named here is not in tests/BROWSER.
+smoke | season2-smoke hubscreen firsthour-real saveloss records-screen missionscreen hudlayout tourgiveup textfit crash
+group docs-tools | research/* *.md CHANGES.json .gitignore .nojekyll *.png supabase/* .github/* tools/* src/version.js | NONE
+group harness | tests/lib/* tests/BROWSER tests/PATHMAP tests/GATE tests/DEEP tools/test.sh tools/gate.sh tools/gate-plan.py | ALL
+group tests-themselves | tests/*.cjs tests/*.json | NONE
+group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/hub.js src/upgrades.js src/startchoice.js src/school.js src/rewards.js | onrails rails2 tipqueue l4hint walkthrough school rewards missions
+group heavy-onboarding | src/missions2.js src/upgrades.js | postrails
+group records | src/records.js src/recordsui.js | records-screen
+group save-season2 | src/save.js src/season2.js src/areas.js src/season.js src/crossings.js src/updates.js src/main.js src/reprice.js src/welcome.js | season2 season2-smoke savesafe updates cache reset welcome saveloss
+group nature-screen | src/wild.js src/nature.js src/habitats.js src/habitat/* src/landtrees.js src/wildlife.js src/animalart.js src/weboflife.js src/nexthere.js | nature nature-unknown wild wildfield regions biodiversity treepic wildlife forestmeter fields
+group hangar-upgrades | src/hangar.js src/fleet.js src/fleetfacts.js src/planelook.js src/planeparts.js src/badges.js src/eras.js | hangar hangarnew upgrades progression looks fleetfacts badges badgeart fares eras crystals
+group flight-rules | src/sim/* src/GameScene.js src/config.js src/crash.js src/gapmarkers.js src/Hud.js | flight hazards lanes forest atc forecast collisions margin ponds powerups pickupgates issr-reveal gaphint twilight runway-back controls banners sim-bank sim-masks sim-rng-split
+group menu-map | src/ui.js src/globe.js src/cities.js src/route.js src/network.js src/geo.js src/pilot.js src/swipe.js src/landmask.js src/links.js index.html style.css | globe journey swipe gate features links everyleg flightregion hubscreen tours
+group art-sound | assets/* vendor/* src/sound.js src/pixellab.js src/landmarks.js | textures projectart badgeart faces landmarks stormart pixelpreview treelayout terrain
+group online-parked | src/online.js src/restore.js src/uploadbanner.js src/newplayer.js | online onlinesave restore offline newplayer
