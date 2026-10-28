@@ -5,3 +5,4 @@ sim-hazards     # full 12 skies; its GATE form is 5 skies (see the test header)
 sim-player
 sim-result-fields
 sim-care
+sim-progression-s2   # no GATE form: ~24 s (2 seeds x 40 progression flights); the missions-blocked power needs that many
