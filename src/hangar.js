@@ -81,20 +81,27 @@ export class FleetHangar {
     el.hidden = false;
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
     composedURL(files.base, old, hangarGadgets(s, id)).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
-    // Where the new part is: the box of its visible pixels, as a marker inside the picture (it zooms with it).
-    const part = el.querySelector('.pay-part'), mark = $('payMark'), plane = el.querySelector('.pay-plane');
-    const measure = () => { if (!part || !part.naturalWidth) return; const c = document.createElement('canvas'); c.width = part.naturalWidth; c.height = part.naturalHeight;
-      const g = c.getContext('2d'); g.drawImage(part, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data; let x0 = c.width, y0 = c.height, x1 = -1, y1 = -1;
-      for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (d[(y * c.width + x) * 4 + 3] > 40) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    // Where the new part is: each part layer is a whole repainted plane, so the part = the pixels that CHANGE when the
+    // layer goes on (before vs after). Their box becomes a marker inside the picture (it zooms with it).
+    const part = el.querySelector('.pay-part'), mark = $('payMark'), plane = el.querySelector('.pay-plane'), beforeImg = $('payBefore');
+    const measure = () => { if (!part || !part.naturalWidth || !beforeImg.naturalWidth || mark.dataset.done) return; mark.dataset.done = '1';
+      const w = part.naturalWidth, h = part.naturalHeight, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d', { willReadFrequently: true });
+      g.drawImage(beforeImg, 0, 0, w, h); const A = g.getImageData(0, 0, w, h).data; g.drawImage(part, 0, 0); const B = g.getImageData(0, 0, w, h).data;
+      let x0 = w, y0 = h, x1 = -1, y1 = -1;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const k = (y * w + x) * 4; if (Math.abs(A[k] - B[k]) + Math.abs(A[k + 1] - B[k + 1]) + Math.abs(A[k + 2] - B[k + 2]) + Math.abs(A[k + 3] - B[k + 3]) > 60) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
       if (x1 < 0) return;
       const pct = (v, n) => `${(100 * v / n).toFixed(2)}%`;
-      Object.assign(mark.style, { left: pct(x0, c.width), top: pct(y0, c.height), width: pct(x1 - x0 + 1, c.width), height: pct(y1 - y0 + 1, c.height) });
-      plane.style.transformOrigin = `${pct((x0 + x1) / 2, c.width)} ${pct((y0 + y1) / 2, c.height)}`; };
-    if (part) { if (part.complete) measure(); else part.onload = measure; }
+      Object.assign(mark.style, { left: pct(x0, w), top: pct(y0, h), width: pct(x1 - x0 + 1, w), height: pct(y1 - y0 + 1, h) });
+      plane.style.transformOrigin = `${pct((x0 + x1) / 2, w)} ${pct((y0 + y1) / 2, h)}`; };
+    const whenLoaded = img => new Promise(r => { if (img.complete && img.naturalWidth) r(); else img.addEventListener('load', r, { once: true }); });
+    if (part) Promise.all([whenLoaded(part), whenLoaded(beforeImg)]).then(measure);
     // The label arrow, placed over the part once the zoom has settled (the user, 2026-10-28: the payoff must not be flat).
     const label = () => { const lab = $('payLabel'), card = el.querySelector('.payoff-card'); if (!lab || el.hidden) return;
       const m = mark.getBoundingClientRect(), c = card.getBoundingClientRect();
-      lab.style.left = `${Math.round(m.left + m.width / 2 - c.left)}px`; lab.style.top = `${Math.round(m.top - c.top - 6)}px`; el.classList.add('labelled'); };
+      const x = Math.max(lab.offsetWidth / 2 + 4, Math.min(c.width - lab.offsetWidth / 2 - 4, m.left + m.width / 2 - c.left));
+      const above = m.top - c.top - 6 >= lab.offsetHeight + 4;   // room above the part inside the card? else below it, arrow up
+      lab.classList.toggle('below', !above);
+      lab.style.left = `${Math.round(x)}px`; lab.style.top = `${Math.round(above ? m.top - c.top - 6 : m.bottom - c.top + 6)}px`; el.classList.add('labelled'); };
     setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); setTimeout(label, 700); } }, 900);   // the part arrives, the camera zooms onto it, then the label
     $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled'); this.ui.go('fly'); };   // then the hub: TAKE OFF (R7)
   }

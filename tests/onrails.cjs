@@ -108,14 +108,17 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   check(pay0.parts >= 1 && pay0.op < 0.2 && !pay0.okShown, `R6: first the plane as it was: the new part's layer is there but not shown yet, no OK (${JSON.stringify(pay0)})`);
   await p.waitForTimeout(2700);   // the part arrives (0.9 s), the camera zooms onto it (0.6 s), then the label (0.7 s)
   const pay1 = await p.evaluate(() => { const part = document.querySelector('#payoff .pay-part'), ok = document.getElementById('payOk'), lab = document.getElementById('payLabel'), m = document.getElementById('payMark').getBoundingClientRect();
-    const l = lab.getBoundingClientRect(), tip = { x: l.left + l.width / 2, y: l.bottom + 8 }, plane = document.querySelector('#payoff .pay-plane');
+    const below = lab.classList.contains('below'), l = lab.getBoundingClientRect(), tip = { x: l.left + l.width / 2, y: below ? l.top - 8 : l.bottom + 8 }, plane = document.querySelector('#payoff .pay-plane');
+    const fr = document.querySelector('#payoff .pay-frame').getBoundingClientRect(), card = document.querySelector('#payoff .payoff-card').getBoundingClientRect();
+    const inFrame = m.left >= fr.left - 1 && m.right <= fr.right + 1 && m.top >= fr.top - 1 && m.bottom <= fr.bottom + 1, small = (m.width * m.height) < 0.4 * fr.width * fr.height;
+    const labelInCard = l.left >= card.left - 1 && l.right <= card.right + 1 && l.top >= card.top - 1 && l.bottom <= card.bottom + 1;
     const scale = new DOMMatrix(getComputedStyle(plane).transform).a;
     return { op: part ? +getComputedStyle(part).opacity : null, okShown: !!ok && getComputedStyle(ok).visibility !== 'hidden', text: document.getElementById('payText').textContent,
       label: lab.textContent, labelOn: +getComputedStyle(lab).opacity > 0.9, scale: +scale.toFixed(2), mark: { l: Math.round(m.left), t: Math.round(m.top), r: Math.round(m.right), b: Math.round(m.bottom) },
-      points: m.width > 2 && tip.x >= m.left && tip.x <= m.right && tip.y >= m.top - 2 && tip.y <= m.bottom }; });
+      points: m.width > 2 && tip.x >= m.left && tip.x <= m.right && tip.y >= m.top - 2 && tip.y <= m.bottom + 2, inFrame, small, labelInCard }; });
   await shot('R6b-payoff-after');
   check(pay1.op > 0.9 && pay1.okShown && /cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
-  check(pay1.scale > 1.5 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points, `R6: the camera zooms onto the new part and the label arrow points INTO the part's box (${JSON.stringify(pay1)})`);
+  check(pay1.scale > 1.5 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points && pay1.inFrame && pay1.small && pay1.labelInCard, `R6: the camera zooms onto the new part (its box in view and small: the part, not the plane) and the label, inside the card, points INTO it (${JSON.stringify(pay1)})`);
   await step('R6-payoff', /./, () => document.getElementById('payoff').hidden && !document.getElementById('title').hidden, { modal: '#payOk' });
   await step('R7-takeoff', /Take off/i, () => !document.getElementById('title').hidden || game.scene.getScene('game').state !== 'idle');
   // R8-R9: flight 1, then the seeds, the mission's prize, and the wildlife hint.
