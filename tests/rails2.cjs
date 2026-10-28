@@ -83,7 +83,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   { let h = null; for (let i = 0; i < 20; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); } if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(700); }
   for (let i = 0; i < 40; i++) { const x = await audit(p); if (x.up && /parcels/i.test(x.text)) break; await p.waitForTimeout(150); }
   const sc0 = await p.evaluate(() => document.getElementById('nature').scrollTop);
-  await p.mouse.move(20, 120); await p.mouse.wheel(0, -200); await p.waitForTimeout(400);
+  await p.mouse.move(20, 120); await p.mouse.wheel(0, 200); await p.waitForTimeout(400);
   const sc1 = await p.evaluate(() => document.getElementById('nature').scrollTop);
   const cdp = await p.context().newCDPSession(p);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 20, y: 200 }] });
