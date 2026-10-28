@@ -195,6 +195,21 @@ export class GameScene extends Phaser.Scene {
     this.dropLabel = this.add.text(bx + 32, by + 16, 'DROP', { ...font, fontSize: '8px', strokeThickness: 3, align: 'center', lineSpacing: 3 }).setOrigin(0.5);
     this.dropLabel.setFontSize(7);
     this.setDropVisible(false);
+    // CLEAN (Ops 8+, eras 4-6): hold it at night to fly through icy air with no contrail, for kit.cleanSecs a night
+    // (src/sim/rules.js cleanHeld / cleanLeft). Next to DROP, in the ground strip; the bar under it is the night's meter.
+    if (this.kit.cleanSecs) {
+      const cx = bx - 70;
+      this.cleanBox = { x: cx, y: by, w: 64, h: 32 };
+      this.cleanBg = this.add.rectangle(cx, by, 64, 32, 0x5a6b80).setOrigin(0).setStrokeStyle(2, 0x1b1b2f).setDepth(20);
+      this.cleanLabel = this.add.text(cx + 32, by + 13, 'HOLD:\nCLEAN', { ...font, fontSize: '7px', strokeThickness: 3, align: 'center', lineSpacing: 2 }).setOrigin(0.5).setDepth(20);
+      this.cleanMeter = this.add.rectangle(cx + 4, by + 27, 56, 3, 0x9fe0ff).setOrigin(0).setDepth(21);
+      const inClean = p => { const c = this.cleanBox; return p.x >= c.x && p.x <= c.x + c.w && p.y >= c.y && p.y <= c.y + c.h; };
+      this.input.on('pointerdown', p => { if (inClean(p)) this.cleanHeld = true; });
+      const off = () => { this.cleanHeld = false; };
+      this.input.on('pointerup', off); this.input.on('pointerupoutside', off);
+      this.input.keyboard.on('keydown-C', () => { this.cleanHeld = true; }); this.input.keyboard.on('keyup-C', off);
+      this.inCleanBox = inClean;
+    }
 
     // Pause when the tab is hidden, so a phone in a pocket doesn't crash the plane.
     this.onVis = () => { if (document.hidden) this.scene.pause(); else this.scene.resume(); };
@@ -365,6 +380,7 @@ export class GameScene extends Phaser.Scene {
       this.tweens.add({ targets: [this.dropBg, this.dropLabel], scale: 0.9, duration: 60, yoyo: true });
       return;
     }
+    if (this.inCleanBox && this.inCleanBox(p)) return;   // CLEAN is held, not a flap
     // Tapping the ground strip plants a tree; anywhere else flaps.
     this.flap();
   }
@@ -950,6 +966,53 @@ export class GameScene extends Phaser.Scene {
 
 
 
+  // Eras 4-6 (PROPOSAL-ERAS-4-6-SYSTEMS): the moving gaps' pictures follow their rects every frame (drifting no-fly zones,
+  // pulsing storms: rules.js updateTwists moves only the records), and the 2010s helpers are drawn. Drawing only: no rule
+  // and no random number here, so the engine (which never draws) flies the same flights.
+  //   ATC 7 (kit.noFlyWarnPx): a no-fly zone within that many px ahead gets a white outline on its gap and an arrow for its drift.
+  //   COMBO Barrier outlook (kit.outlook): the next two columns ahead show as ticks at the right edge, at their gaps.
+  //   Sensors 7-8 (kit.birdWarnPx): a flock within that many px ahead shows the band it will fly through (its bob).
+  //   CLEAN meter: the bar under the button, this night's contrail-free seconds left.
+  drawEra4() {
+    for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);
+    const k = this.kit;
+    if (this.cleanMeter) { const left = (this.cleanLeft || 0) / ((k.cleanSecs || 1) * 1000), night = !this.isDay;
+      this.cleanMeter.width = 56 * Math.max(0, Math.min(1, left)); this.cleanBg.setFillStyle(this.cleanHeld && night && left > 0 ? 0x9fe0ff : 0x5a6b80).setAlpha(night ? 1 : 0.45); }
+    if (!k.noFlyWarnPx && !k.outlook && !k.birdWarnPx) return;
+    const g = this.era4Gfx || (this.era4Gfx = this.add.graphics().setDepth(50));
+    g.clear();
+    const nose = this.plane.x + PLANE.w;
+    if (k.noFlyWarnPx) for (const st of this.storms) {
+      if (!st.noFly) continue;
+      const x = st.rects[0].x, ahead = x - nose;
+      if (ahead < 0 || ahead > k.noFlyWarnPx) continue;
+      const top = st.rects[0].height, bot = st.rects[1].y, W = st.rects[0].width;
+      g.lineStyle(2, 0xffffff, 0.9); g.strokeRect(x - 2, top, W + 4, bot - top);
+      if (st.drift) { const up = st.drift.v < 0, ax = x + W / 2, ay = up ? top - 10 : bot + 10;
+        g.fillStyle(0xffffff, 0.95); g.fillTriangle(ax - 5, ay + (up ? 4 : -4), ax + 5, ay + (up ? 4 : -4), ax, ay + (up ? -4 : 4)); }
+    }
+    if (k.outlook) {
+      const next = this.storms.filter(st => st.rects[0].x > nose).sort((a, b) => a.rects[0].x - b.rects[0].x).slice(0, 2);
+      next.forEach((st, i) => { const top = st.rects[0].height, bot = st.rects[1].y, c = st.noFly ? 0xff8080 : 0xffe15a;
+        g.fillStyle(c, i ? 0.55 : 0.95); g.fillRect(WIDTH - 10 + i * 5, top, 4, 2); g.fillRect(WIDTH - 10 + i * 5, bot - 2, 4, 2); g.fillRect(WIDTH - 9 + i * 5, top, 2, bot - top); });
+    }
+    if (k.birdWarnPx) for (const f of this.birds) {
+      const ahead = f.x - nose;
+      if (ahead < 0 || ahead > k.birdWarnPx) continue;
+      const half = f.half ?? (f.birds.length - 1) / 2, B = HAZARDS.birds, top = f.y - half * 9 - 4 - B.wobble, bot = f.y + half * 9 + 16 + B.wobble;
+      g.fillStyle(0xffffff, 0.12); g.fillRect(f.x - 4, top, half * 26 + 24, bot - top);
+    }
+  }
+  // A drifting or pulsing gap: its pictures to the rects (no-fly: the two red tiles, edge lines and words; storm: the clouds).
+  followGap(st) {
+    const top = st.rects[0].height, bot = st.rects[1].y;
+    if (st.noFly) {
+      const [tTop, tBot, lTop, lBot, wNo, wFly] = st.parts;
+      tTop.height = top; tTop.displayHeight = top; tBot.y = bot; tBot.height = SKY_H - bot; tBot.displayHeight = SKY_H - bot;
+      lTop.y = top - 2; lBot.y = bot; wNo.y = top - 12; wFly.y = bot + 12;
+    } else if (st.pics) st.parts.forEach((im, i) => { const q = st.pics[i]; im.y = q.y; im.cropH = Math.min(q.h, SKY_H - q.y); im.setCrop(0, 0, im.width, im.cropH); });
+  }
+
   // The next-gap hint: a faint gate at the right edge, at the height of a storm gap still off screen.
   drawGapHint() {
     const lv = this.kit.hintLevel;
@@ -1137,6 +1200,7 @@ export class GameScene extends Phaser.Scene {
     this.syncContrails(time);
     this.drawRays(time);
     this.drawGapHint();
+    this.drawEra4();
 
     this.hud.setCo2(this.co2Rate);
     this.hud.setHeat(this.heat, time);
