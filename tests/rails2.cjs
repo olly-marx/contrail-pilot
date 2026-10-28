@@ -69,6 +69,10 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
     else if (a.up) { const ok = await p.$('#tour .tbubble .btn:not([hidden])'); if (ok && await ok.isVisible()) await ok.click(); else if (a.ring) await p.mouse.click(a.ring.x, a.ring.y); }
     await p.waitForTimeout(250); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/L5-free-parcels.png` });
+  // The bubble holds still while the FREE button pulses (the user's live bug, 2026-10-28: it jumped above/below): 3 s of samples.
+  const tops = []; for (let i = 0; i < 20; i++) { tops.push(await p.evaluate(() => { const b = document.querySelector('#tour .tbubble').getBoundingClientRect(), r = document.querySelector('#tour .tring').getBoundingClientRect(); return { top: Math.round(b.top), below: b.top > r.top }; })); await p.waitForTimeout(150); }
+  const sides = new Set(tops.map(t => t.below)), spread = Math.max(...tops.map(t => t.top)) - Math.min(...tops.map(t => t.top));
+  check(sides.size === 1 && spread <= 2, `L5: over 3 s of the pulse the bubble keeps its side and place (sides ${sides.size}, moved ${spread} px)`);
   check(a.up && /parcels/i.test(a.text) && a.reach.length === 1 && /FREE/.test(a.reach[0] || '') && a.inView, `L5: the rails point at the FREE parcels, the only tappable thing, on screen ("${a.text}"; ${a.reach.join(' / ')})`);
   if (a.ring) { await p.mouse.click(a.ring.x, a.ring.y); await p.waitForTimeout(700); }
   const sv = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
