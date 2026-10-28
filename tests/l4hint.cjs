@@ -14,7 +14,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); },
       { areas: ['easia'], homeArea: 'easia', city: 'SEOUL', tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true,
         missionsDone: done, landings: 4, flights: 5, fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } });
-    await p.goto(URL); await ready(p); await p.waitForTimeout(500); await p.click('#goBtn'); await started(p);
+    await p.goto(URL); await ready(p); await p.waitForTimeout(500); await p.click('#goBtn'); await started(p); await p.mouse.move(195, 460); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up();   // (hold to take off)
     await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 });
     await p.evaluate(() => { const s = game.scene.getScene('game'); s.hitsStorm = () => false; s.hitBird = () => false; s.nextAirport.worldX = s.distancePx + 200; });
     await p.waitForTimeout(300);

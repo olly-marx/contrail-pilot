@@ -51,7 +51,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // L5 parcels (audit #3): NEXT says the parcels are free; NATURE opens on the tab that sells them even after viewing
   // another land; the rails point at the FREE button (one target); the tap gives them free.
   const l5 = { landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, discovered: { savanna: true, desert: true, steppe: true, rainforest: true } };
-  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-parcels'] }), { width: 390, height: 844 });
+  p = await open(save({ ...l5, shownLines: ['trees'], tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-parcels', 'nature-lead'] }), { width: 390, height: 844 });   // (phase A: every guide seen, to test the tab alone)
   check(/Free tree parcels/.test(await p.evaluate(() => document.getElementById('hubNext').innerText)), `L5: NEXT says the tree parcels are free (${await p.evaluate(() => document.getElementById('hubNext').innerText)})`);
   await p.click('#tabNature'); await p.waitForTimeout(500);
   const other = await p.$('#wRegions [data-region]:not([disabled]):not(.on)');

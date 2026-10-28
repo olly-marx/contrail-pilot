@@ -18,6 +18,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#goBtn'); await started(p);
   const r1 = await p.evaluate(() => { const s = game.scene.getScene('game'); const st = s.state; return { st, shown: s.explain('tq-takeoff', 'take-off tip'), seen: s.save.seenTips.includes('tq-takeoff') }; });
   check(r1.st !== 'playing' && !r1.shown && !r1.seen, `a tip outside 'playing' is not shown and not marked (${JSON.stringify(r1)})`);
+  await p.mouse.move(195, 460); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up();   // (hold to take off)
   await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 });
   // A toast already up + a tip strip at the top: the toast drops below the strip, no overlap (audit #6).
   const r0 = await p.evaluate(async () => { const s = game.scene.getScene('game'); s.hitsStorm = () => false; s.hitBird = () => false; s.plane.y = 300;   // (low: the strip goes on top)
