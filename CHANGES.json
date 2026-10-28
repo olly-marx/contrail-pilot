@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-10-28-rails-polish",
+    "version": "0.16.1",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "Your first icy-air lesson is easier: the patch is big, sits at your height and is easy to see, with no storms in the way.",
+      "After your third landing, Captain Contrail points you to YOUR RECORDS.",
+      "The \"tap to skip\" hint no longer gets cut off on small phones."
+    ]
+  },
+  {
     "id": "2026-10-28-on-rails",
     "version": "0.16.0",
     "date": "2026-10-28",
