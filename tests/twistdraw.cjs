@@ -30,7 +30,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     s.events.on('postupdate', () => {
       frames++;
       worst = Math.max(worst, Math.abs(nf.parts[1].y - nf.rects[1].y), Math.abs(nf.parts[0].displayHeight - nf.rects[0].height));
-      st.parts.forEach((im, i) => { worst = Math.max(worst, Math.abs(im.y - st.pics[i].y)); });
+      st.pics.forEach((q, i) => { if (st.parts[i]) worst = Math.max(worst, Math.abs(st.parts[i].y - q.y)); });
       if (s.era4Gfx && s.era4Gfx.commandBuffer.length) arrow = true;
     });
     s.cleanHeld = false;
