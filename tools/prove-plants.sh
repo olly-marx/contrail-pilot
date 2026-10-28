@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 want=" $* "; missed=0; n=0
 while IFS=$'\t' read -r test file expr label; do
   case "$test" in '#'*|'') continue ;; esac
-  [ $# -eq 0 ] || case "$want" in *" $test "*) ;; *) continue ;; esac
+  [ $# -eq 0 ] || case "$want" in *" $test "*|*" ${test%%@*} "*) ;; *) continue ;; esac   # a piece (test@KEY=VALUE) is selected by its base name too
   n=$((n + 1))
   git ls-files --error-unmatch -- "$file" >/dev/null 2>&1 || { echo "SKIP $test / $label: $file is not tracked in git (commit it first: a plant must be undoable)"; missed=1; continue; }
   git diff --quiet -- "$file" || { echo "SKIP $test / $label: $file has uncommitted edits"; missed=1; continue; }
