@@ -75,7 +75,13 @@ export class Tour {
     // R4: the school-done card -> the hangar (the free part).
     if (res && s.freeUpgrade && !this.done('r-school')) return ['r-school', [{ target: '#againBtn', text: tip('rail-school'), tap: true }]];
     // R5: in the hangar, only the cleaner engines' FREE! (one target); R6's payoff comes from hangar.js after the buy.
-    if (where === 'hangar' && s.freeUpgrade && !this.done('r-free')) return ['r-free', [{ target: '#hFleet .freepick .btn.free', text: tip('rail-free'), tap: true }]];
+    // R5 (the user via the plane build, 2026-10-28: "it's not obvious you can tap a row"): TAP the engines row to see them
+    // (ghosted on the plane, the bars), THEN take them free from the preview card.
+    if (where === 'hangar' && s.freeUpgrade && !this.done('r-free')) return ['r-free', [
+      { target: '[data-ftap^="plane:"][data-ftap$=".engines"]', text: tip('rail-free-tap'), until: () => !!document.querySelector('[data-fline^="plane:"][data-fline$=".engines"].sel') && !!document.getElementById('hPreviewBuy') },
+      { target: '#hPreviewBuy', text: tip('rail-free'), tap: true }]];
+    // R7 in the hangar (the user: stay in the hangar after buying): its own TAKE OFF.
+    if (where === 'hangar' && !s.freeUpgrade && s.freeGiven && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#hGoTop', text: tip('rail-takeoff-h'), tap: true }]];
     // R7: the hub, only TAKE OFF.
     if (hub && s.freeUpgrade) return ['r-hangar', [{ target: '#hubTiles [data-go="hangar"]', text: tip('rail-hangar'), tap: true }]];   // (every time: a reload with the part still waiting)
     if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];

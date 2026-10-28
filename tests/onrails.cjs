@@ -98,7 +98,10 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await fly('flight school', 300);
   // R4-R7.
   await step('R4-school-done', /FREE/i, () => !document.getElementById('hangar').hidden);
-  await step('R5-hangar-free', /Cleaner engines/i, () => !JSON.parse(localStorage.getItem('contrailPilot.v2')).freeUpgrade);
+  // R5 (the user, 2026-10-28: teach "tap a row to see it"): TAP TO SEE on the engines row -> the preview -> FREE from the preview card.
+  await step('R5a-tap-to-see', /Tap here to see/i, () => !!document.querySelector('[data-fline$=".engines"].sel') && !document.getElementById('hPreview').classList.contains('empty'), { screen: 'hangar' });
+  await shot('R5a-preview');
+  await step('R5b-take-free', /FREE/i, () => !JSON.parse(localStorage.getItem('contrailPilot.v2')).freeUpgrade, { screen: 'hangar' });
   // R6, the payoff: the plane BEFORE (the new part's layer there but invisible, no OK yet), then the part arrives (the user:
   // it "just popped up the upgraded plane"). Screenshots of both.
   await p.waitForSelector('#payoff:not([hidden])', { timeout: 5000 }).catch(() => {});
@@ -119,8 +122,8 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await shot('R6b-payoff-after');
   check(pay1.op > 0.9 && pay1.okShown && /cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
   check(pay1.scale > 1.5 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points && pay1.inFrame && pay1.small && pay1.labelInCard, `R6: the camera zooms onto the new part (its box in view and small: the part, not the plane) and the label, inside the card, points INTO it (${JSON.stringify(pay1)})`);
-  await step('R6-payoff', /./, () => document.getElementById('payoff').hidden && !document.getElementById('title').hidden, { modal: '#payOk' });
-  await step('R7-takeoff', /Take off/i, () => !document.getElementById('title').hidden || game.scene.getScene('game').state !== 'idle');
+  await step('R6-payoff', /./, () => document.getElementById('payoff').hidden && !document.getElementById('hangar').hidden, { modal: '#payOk' });   // (stays in the hangar: the user)
+  await step('R7-takeoff', /take off/i, () => document.getElementById('hangar').hidden, { screen: 'hangar' });   // (the hangar's own TAKE OFF)
   // R8-R9: flight 1, then the seeds, the mission's prize, and the wildlife hint.
   await fly('flight 1', 240, { noTurb: true, noWild: true });
   const seeds0 = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds);
