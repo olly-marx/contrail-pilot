@@ -13,15 +13,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 } });
   let online = 0; await ctx.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => { online++; r.abort(); });
   const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
-  // A real player's save (season 2), written once through the game's own wrapper.
-  await p.goto(URL); await ready(p);
-  await p.evaluate(() => { localStorage.setItem('contrailPilot.v2', JSON.stringify({ areas: ['easia'], homeArea: 'easia', city: 'SEOUL', tutorialDone: true, muted: true, seeds: 777, landings: 9, flights: 10, missionsDone: ['L1', 'L2', 'L3'], priceVersion: 2 })); });
-  await p.reload(); await ready(p); await p.waitForTimeout(600);
+  // A real player's season-2 save, in the RAW storage before the game loads (once: the game's in-memory save would overwrite a later write).
+  await ctx.addInitScript(s => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); } },
+    { areas: ['easia'], homeArea: 'easia', city: 'SEOUL', tutorialDone: true, muted: true, seeds: 777, landings: 9, flights: 10, missionsDone: ['L1', 'L2', 'L3'], priceVersion: 2 });
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800);
   const before = JSON.stringify((await ctx.storageState()).origins);
   check(/777/.test(before), 'the real save is in the raw storage before the preview');
   // The preview: a brand-new player.
   await p.goto(URL + '?preview=1'); await ready(p); await p.waitForTimeout(800);
-  const fresh = await p.evaluate(() => ({ start: !!document.querySelector('#startChoice [data-area]') && document.querySelector('#startChoice').offsetParent !== null, tag: (document.getElementById('previewTag') || {}).textContent || '' }));
+  const fresh = await p.evaluate(() => ({ start: !!document.querySelector('#startChoice [data-area]') && !document.getElementById('startChoice').hidden && getComputedStyle(document.getElementById('startChoice')).display !== 'none', tag: (document.getElementById('previewTag') || {}).textContent || '' }));
   check(fresh.start && /PREVIEW: nothing is saved/.test(fresh.tag), `?preview=1 opens as a brand-new player (the start choice) with the tag (${JSON.stringify(fresh)})`);
   await p.click('#startChoice [data-area="easia"]'); await p.click('#startChoice [data-city="SEOUL"]'); await p.waitForTimeout(1200); await ready(p);
   await p.click('#goBtn'); await p.waitForTimeout(500); if (await p.isVisible('#howClose')) await p.click('#howClose'); await p.waitForTimeout(400);
@@ -32,7 +32,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(pil.r.ok && pil.got && pil.got.first === 'Zoe' && /Pilot: Zoe Otter/.test(tag2), `the pilot name is saved LOCALLY in the preview and shown in the tag (${JSON.stringify(pil)}; "${tag2}")`);
   // A reload of the preview: brand-new again.
   await p.reload(); await ready(p); await p.waitForTimeout(800);
-  const again = await p.evaluate(() => ({ start: document.querySelector('#startChoice').offsetParent !== null, tag: document.getElementById('previewTag').textContent }));
+  const again = await p.evaluate(() => ({ start: !document.getElementById('startChoice').hidden && getComputedStyle(document.getElementById('startChoice')).display !== 'none', tag: document.getElementById('previewTag').textContent }));
   check(again.start && !/Zoe/.test(again.tag), `a reload of ?preview=1 is a brand-new player again (${JSON.stringify(again)})`);
   const after = JSON.stringify((await ctx.storageState()).origins);
   check(after === before, `the real storage is byte-identical after the preview (${before.length} vs ${after.length} chars)`);

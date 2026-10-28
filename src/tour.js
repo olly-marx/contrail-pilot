@@ -89,7 +89,8 @@ export class Tour {
     // N0-N5, the NATURE introduction (the user approved, 2026-10-28): one idea per step, in the order a child asks - what is
     // this place, why animals, do this one thing, see the result - claim the prizes first, then open NATURE.
     if (res && d('L2') && !this.done('r-res2')) return ['r-res2', [
-      { skipIf: () => !document.querySelector('#rRewards .btn.claim'), target: '#rRewards .btn.claim.all, #rRewards .btn.claim', text: tip('rail-claim-all'), tap: true },
+      { skipIf: () => !document.querySelector('#rRewards .btn.claim.all'), target: '#rRewards .btn.claim.all', text: tip('rail-claim-all'), tap: true },   // CLAIM ALL when there are several
+      { skipIf: () => !!document.querySelector('#rRewards .btn.claim.all') || !document.querySelector('#rRewards .btn.claim'), target: '#rRewards .btn.claim', text: tip('rail-claim-all'), tap: true },
       { target: '#againBtn', text: tip('rail-nature'), tap: true }]];
     if (where === 'nature' && d('L2') && !this.done('r-nature')) return ['r-nature', [
       { target: '#wScene', text: tip('rail-nat-land'), ok: true },
