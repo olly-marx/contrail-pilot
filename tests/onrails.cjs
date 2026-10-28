@@ -152,11 +152,21 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   const l2 = await L2();
   check(l2, `L2 is done after ${flights} flight(s) (${flights === 1 ? 'the guaranteed daytime icy patch' : 'a miss, then the second try or the fallback'}): the rails never stall`);
   if (!l2) { await b.close(); console.log(`FAIL onrails:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (NATURE needs it: the rest would pass or fail by accident)
-  await step('R11a-nature', /NATURE/i, () => !document.getElementById('nature').hidden, { screen: 'results' });
-  await step('R11b-free-project', /FREE/i, () => (JSON.parse(localStorage.getItem('contrailPilot.v2')).habitat || {}) && JSON.parse(localStorage.getItem('contrailPilot.v2')).freeProjectGiven === true, { screen: 'nature' });
-  await step('R11c-projects', /animals back/i, null, { screen: 'nature' });
-  await step('R11d-how', /trees/i, null, { screen: 'nature' });
-  await step('R11e-home', /wild animals/i, () => !document.getElementById('title').hidden);
+  // N0-N5, the NATURE introduction (the user's approved script, 2026-10-28): claim first, then open NATURE.
+  if (await p.evaluate(() => !!document.querySelector('#rRewards .btn.claim'))) await step('N0a-claim-all', /prizes/i, () => !document.querySelector('#rRewards .btn.claim'), { screen: 'results' });
+  await step('N0b-open-nature', /Animals need places/i, () => !document.getElementById('nature').hidden, { screen: 'results' });
+  await step('N1-the-land', /wild land/i, null, { screen: 'nature' });
+  await step('N2-tap-to-see', /Tap this one/i, () => !!document.querySelector('#wProjects .line.project.previewing'), { screen: 'nature' });
+  const pv = await p.evaluate(() => ({ ghost: document.querySelectorAll('#wScene .wf.ghost').length, gain: (document.querySelector('#wMeter .mgain') || {}).textContent || '', hi: document.querySelectorAll('#wProjects .w-webpic.w-hi').length }));
+  await shot('N2b-preview');
+  check(pv.ghost >= 1 && /\+\d/.test(pv.gain) && pv.hi >= 1, `N2: tapping the project PREVIEWS it: ghosted in the land, the bar's gain, the animals it brings highlighted (${JSON.stringify(pv)})`);
+  const w0 = await p.evaluate(() => parseFloat(document.querySelector('#wMeter .mfill').style.width) || 0);
+  await step('N3-take-free', /FREE/i, () => JSON.parse(localStorage.getItem('contrailPilot.v2')).freeProjectGiven === true, { screen: 'nature' });
+  const ar = await p.evaluate(() => ({ arrive: document.querySelectorAll('#wScene .wf.arrive').length, ghost: document.querySelectorAll('#wScene .wf.ghost').length, w: parseFloat(document.querySelector('#wMeter .mfill').style.width) || 0 }));
+  await shot('N3b-arrived');
+  check(ar.arrive >= 1 && !ar.ghost && ar.w > w0, `N3: buying animates it in: the feature arrives, no ghost left, the bar grew (${w0} -> ${JSON.stringify(ar)})`);
+  await step('N4-biodiversity', /BIODIVERSITY/, null, { screen: 'nature' });
+  await step('N5-fly-on', /Fly on/i, () => !document.getElementById('title').hidden);
   check(!p.errs.length, `page errors: ${p.errs}`);
   await b.close();
   console.log(fails.length ? `FAIL onrails:\n - ${fails.join('\n - ')}` : 'PASS onrails: every rails step has exactly one tappable target, fully on screen, each tap works; no strip covers the plane; flights 1-2 follow the rails rules');
