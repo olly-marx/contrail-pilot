@@ -27,6 +27,8 @@ Before 1.0.0, MINOR may carry a big feature and MAJOR stays 0.
 5. Commit, push to `main`. **CI then runs the whole suite on 4 shards and deploys only if it is green** (`deploy` needs `test`). Watch `version.json` for the new version (not the GitHub API: its unauthenticated quota is 60 requests an hour). The live game updates players on their next visit.
 6. **If CI goes red** after a push: stop releasing until `main` is green; fix forward or revert within the hour; tell the Coordinator. Players are not affected (a red CI never deploys). A flaky test is a bug to fix (wait on game state, never on a fixed time), not a retry to ignore.
 
+**A change to `src/sim/rules.js` (or `physics.js`, `world.js`) that alters behaviour ON PURPOSE** makes `tests/sim-equiv.cjs` fail: it replays 18 flights the game recorded. Re-record that golden from the browser, deliberately, and say so in the commit; never loosen the check. `sim-bank`, `sim-masks` and `sim-rng-split` (game versus engine) are necessary but not sufficient for a rules change, which is why `rules.js` pulls the whole `engine-core` group in `tests/PATHMAP`.
+
 The full browser suite locally (`tools/test.sh`, 17-20 minutes) and the full sweeps (`tools/gate.sh --deep`) stay available for a risky change or a balance change; the old rule "a full 2-shard run clean before every push" is retired (research/PROPOSAL-RELEASE-GATE.md has the evidence: in this session's full local runs every failure was a test that needed updating or a flake, none a game bug; the two bugs players met had no test).
 
 Commit subjects start with `fix:`, `feat:` or `chore:` (or `art:` for pictures), so the bump size is visible at a glance.

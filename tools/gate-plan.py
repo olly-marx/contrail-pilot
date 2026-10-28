@@ -8,6 +8,7 @@
 
 tests/PATHMAP is DECLARED by subject (never inferred from which test mentions which file). Union over all matching groups; NONE = nothing to run, ALL = every browser test.
 A test whose own tests/NAME.cjs changed runs itself. Smoke tests always run.
+A test token NAME@KEY=VALUE means "run tests/NAME.cjs with KEY=VALUE in its environment" (e.g. onrails@VP=375x667, the short-phone run); it is a separate run of the same file.
 """
 import fnmatch
 import os
@@ -61,12 +62,14 @@ def lint():
         if not g['globs'] or not g['tests']:
             problems.append(f"group {g['name']}: needs globs and tests (NONE or ALL if nothing)")
         for t in g['tests']:
-            if t not in ('NONE', 'ALL') and t not in browser:
+            if t not in ('NONE', 'ALL') and t.split('@')[0] not in browser:
                 problems.append(f"group {g['name']}: test '{t}' is not in tests/BROWSER")
+            if '@' in t and '=' not in t.split('@', 1)[1]:
+                problems.append(f"group {g['name']}: variant '{t}' must look like NAME@KEY=VALUE")
     for t in smoke + ci_only:
-        if t not in browser:
+        if t.split('@')[0] not in browser:
             problems.append(f"smoke/ci-only test '{t}' is not in tests/BROWSER")
-    named = set(smoke) | set(ci_only) | {t for g in groups for t in g['tests']}
+    named = {t.split('@')[0] for t in smoke + ci_only} | {t.split('@')[0] for g in groups for t in g['tests']}
     for t in sorted(browser - named):
         problems.append(f"browser test '{t}' is in no group, not smoke and not ci-only (declare where it runs)")
     for path in tracked():

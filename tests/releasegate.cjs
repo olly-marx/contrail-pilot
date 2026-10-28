@@ -16,9 +16,11 @@ check(lint.status === 0, `tests/PATHMAP lints clean: ${lint.stdout.trim().slice(
 // 1. A docs-only change needs just the smoke set (ten tests), nothing else.
 let r = list(['research/BACKLOG.md', 'CHANGES.json', 'src/version.js']);
 check(r.code === 0 && r.tests.size === 10 && SMOKE.every(t => r.tests.has(t)), `docs-only: exactly the 10 smoke tests: ${[...r.tests].join(' ')}`);
-// 2. The nature screen pulls its declared tests, and not the heavy onboarding ones.
-r = list(['src/wild.js']);
-check(['nature', 'wild', 'wildfield', 'regions'].every(t => r.tests.has(t)) && !r.tests.has('postrails') && SMOKE.every(t => r.tests.has(t)), `src/wild.js -> the nature tests + smoke, no postrails: ${[...r.tests].join(' ')}`);
+// 2. The nature screen pulls its declared tests, and not the heavy onboarding ones (src/animalart.js is art for the nature cards).
+r = list(['src/animalart.js']);
+check(['treepic'].every(t => r.tests.has(t)) && !r.tests.has('postrails') && SMOKE.every(t => r.tests.has(t)), `src/animalart.js -> treepic + smoke, no postrails: ${[...r.tests].join(' ')}`);
+// 2b. src/wild.js holds the free first project and the L5 parcels tab: it DOES pull the onboarding tests and postrails (the game chat's correction).
+r = list(['src/wild.js']); check(['nature', 'wildfield', 'regions', 'onrails', 'postrails'].every(t => r.tests.has(t)), `src/wild.js -> nature tests + onrails + postrails: ${[...r.tests].join(' ')}`);
 // 3. The heavy onboarding test only for the files that really change lessons or parcels.
 r = list(['src/missions2.js']); check(r.tests.has('postrails') && r.tests.has('onrails') && r.tests.has('walkthrough'), `src/missions2.js -> postrails + onrails + walkthrough: ${[...r.tests].join(' ')}`);
 r = list(['src/upgrades.js']); check(r.tests.has('postrails'), 'src/upgrades.js -> postrails');
@@ -34,6 +36,16 @@ r = list(['src/records.js', 'src/hangar.js']); check(r.tests.has('hangar') && r.
 r = list(['src/brandnew-file.js']); check(r.code === 2 && /UNMAPPED\tsrc\/brandnew-file\.js/.test(r.err), `an unmapped file exits 2 and is named: code ${r.code} ${r.err.trim().slice(0, 120)}`);
 // 8. The plan text names the reason for each test.
 const pl = py(['--plan', 'src/wild.js']).stdout; check(/nature\tsrc\/wild\.js \(nature-screen\)/.test(pl), `--plan says why: ${pl.split('\n').slice(0, 3).join(' | ')}`);
+
+// 9. The sim chat's split of src/sim/*: files only Node loads need the Node gate and the smoke set, nothing more; the shared engine files pull the flight tests;
+//    rules.js (banking, missions hook, school, land, forest, the L2 patch) pulls the contract tests and the onboarding ones.
+r = list(['src/sim/player.js', 'src/sim/progression.js']); check(r.code === 0 && r.tests.size === 10, `Node-only sim files -> just the smoke set: ${[...r.tests].join(' ')}`);
+r = list(['src/sim/physics.js']); check(['collisions', 'sim-masks', 'hazards', 'flight'].every(t => r.tests.has(t)) && !r.tests.has('postrails'), `src/sim/physics.js -> collisions, sim-masks, hazards, flight; not postrails`);
+r = list(['src/sim/rules.js']); check(['sim-bank', 'fares', 'crystals', 'onrails', 'postrails', 'school', 'terrain', 'forestmeter', 'walkthrough'].every(t => r.tests.has(t)), `src/sim/rules.js -> the contract, banking, onboarding, school, land and forest tests: ${r.tests.size} tests`);
+r = list(['src/GameScene.js']); check(['onrails', 'tipqueue', 'l4hint', 'postrails', 'flight', 'hazards'].every(t => r.tests.has(t)), 'src/GameScene.js -> the tip-queue/onboarding tests and the flight tests');
+r = list(['src/eras.js']); check(r.tests.has('sim-bank') && r.tests.has('fares') && r.tests.has('eras'), 'src/eras.js (imported by rules.js) -> sim-bank, fares, eras');
+// 10. A variant token runs the same test with an environment setting (the short-phone onrails run).
+r = list(['src/tour.js']); check(r.tests.has('onrails') && r.tests.has('onrails@VP=375x667'), `src/tour.js -> onrails and onrails@VP=375x667`);
 
 if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
 console.log('PASS releasegate (docs-only = smoke, group unions, postrails only for lessons/parcels, harness = all, own test, unmapped refused)');

@@ -78,3 +78,8 @@ releasegate	tests/PATHMAP	s/\(tools\/gate-plan.py\) | ALL$/\1 | NONE/	the harnes
 releasegate	tests/PATHMAP	s/| records-screen$/| records-screenX/	a group names a test that does not exist
 releasegate	tools/gate-plan.py	s/return 2 if unmapped else 0/return 0/	an unmapped file is no longer refused
 releasegate	tools/gate-plan.py	s/if path.startswith('tests\/') and path.endswith('.cjs') and/if False and/	a changed test no longer runs itself
+releasegate	tests/PATHMAP	s/^group sim-node-only | \(.*\) | NONE$/group sim-node-only | \1 | flight/	Node-only sim files wrongly pull browser tests
+releasegate	tests/PATHMAP	s/ walkthrough postrails school flightregion/ walkthrough school flightregion/	rules.js no longer pulls postrails
+releasegate	tests/PATHMAP	s/| sim-bank fares flight$/| fares flight/	imports of rules.js no longer pull the contract test
+releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails$/| onrails tipqueue l4hint/	GameScene no longer pulls postrails
+releasegate	tests/PATHMAP	s/ onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school/ onrails rails2 tipqueue l4hint walkthrough school/	the short-phone onrails run dropped

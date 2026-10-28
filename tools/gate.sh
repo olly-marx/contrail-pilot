@@ -50,15 +50,16 @@ if [ -n "${RELEASE:-}" ]; then
   export URL="http://localhost:$port/"
   [ -n "${NODE_PATH:-}" ] || { [ -d node_modules ] && export NODE_PATH="$PWD/node_modules" || export NODE_PATH="$HOME/contrail-pilot/node_modules"; }
   BOUT=$(mktemp -d); export BOUT
-  bone() { local t=$1 s e out rc; s=$(date +%s.%N); out=$(node "tests/$t.cjs" 2>&1); rc=$?; e=$(date +%s.%N)
-    awk -v t="$t" -v a="$s" -v b="$e" -v rc="$rc" 'BEGIN { printf "%s\t%.1f\t%s\n", t, b - a, rc == 0 ? "pass" : "fail" }' > "$BOUT/$t.res"
-    [ "$rc" -eq 0 ] || { echo "== FAIL (browser) $t"; echo "$out" | sed 's/\x1b\[[0-9;]*m//g' | grep -vE '^\s*$|Call log|^\s+at ' | tail -n 20; }; }
+  bone() { local run=$1 t=${1%%@*} ev="" s e out rc; [[ $1 == *@* ]] && ev=${1#*@}   # NAME@KEY=VALUE: the same test with KEY=VALUE in its environment
+    s=$(date +%s.%N); out=$(env $ev node "tests/$t.cjs" 2>&1); rc=$?; e=$(date +%s.%N)
+    awk -v t="$run" -v a="$s" -v b="$e" -v rc="$rc" 'BEGIN { printf "%s\t%.1f\t%s\n", t, b - a, rc == 0 ? "pass" : "fail" }' > "$BOUT/$(echo "$run" | tr '@=' '__').res"
+    [ "$rc" -eq 0 ] || { echo "== FAIL (browser) $run"; echo "$out" | sed 's/\x1b\[[0-9;]*m//g' | grep -vE '^\s*$|Call log|^\s+at ' | tail -n 20; }; }
   export -f bone
   # the Node gate and the browser tests run at the same time (the Node tests are light)
   ( JOBS=3 "$0" > "$BOUT/node.out" 2>&1; echo $? > "$BOUT/node.rc" ) &
   nodepid=$!
   # longest first: declared weights are the test seconds in tools/test.sh (unknown = 20)
-  echo "$sel" | while read -r t; do w=$(grep -o "\[$t\]=[0-9]*" tools/test.sh | head -n 1 | cut -d= -f2); echo "${w:-20} $t"; done | sort -rn | awk '{print $2}' | xargs -P "${BJOBS:-4}" -I{} bash -c 'bone {}'
+  echo "$sel" | while read -r t; do b=${t%%@*}; w=$(grep -o "\[$b\]=[0-9]*" tools/test.sh | head -n 1 | cut -d= -f2); echo "${w:-20} $t"; done | sort -rn | awk '{print $2}' | xargs -P "${BJOBS:-4}" -I{} bash -c 'bone {}'
   wait $nodepid
   nrc=$(cat "$BOUT/node.rc"); tail -n 6 "$BOUT/node.out"
   bf=0; for r in "$BOUT"/*.res; do [ "$(cut -f3 "$r")" = pass ] || bf=$((bf + 1)); done
