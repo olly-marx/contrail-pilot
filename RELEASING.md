@@ -23,8 +23,11 @@ Before 1.0.0, MINOR may carry a big feature and MAJOR stays 0.
    - `level`: `minor` = the update banner only; `major` = also a one-time "What's new" card (use it for MINOR/MAJOR releases).
    - `notes`: short sentences a 7-10 year old can read. The banner shows the FIRST one, so lead with the headline.
 3. `python3 tools/check-release.py` (also `tests/release.cjs`): version and top entry must agree; versions must fall down the list.
-4. Full `tools/test.sh` (2 shards locally; count failures). Stage only your own paths: other chats share the tree.
-5. Commit, push to `main`, watch CI to "deploy success" and the `tag` job. The live game updates players on their next visit.
+4. **The release gate** (the user's decision, 2026-10-28, replacing the full local 2-shard run): `tools/gate.sh --release`. It runs the Node gate (`tests/GATE`, ~10 s), the browser SMOKE tests and the browser tests of every group in `tests/PATHMAP` that a file changed since `origin/main` matches, all at once (about 1-3 minutes). It must end `RELEASE GATE: Node gate PASS, N browser test(s), 0 failed`. It refuses a loaded machine (load average above 10 or swap-in) and a changed file that no `tests/PATHMAP` group declares (declare it: `tools/gate.sh --lint`). `tools/gate.sh --plan` shows what a change would run and why. Stage only your own paths: other chats share the tree.
+5. Commit, push to `main`. **CI then runs the whole suite on 4 shards and deploys only if it is green** (`deploy` needs `test`). Watch `version.json` for the new version (not the GitHub API: its unauthenticated quota is 60 requests an hour). The live game updates players on their next visit.
+6. **If CI goes red** after a push: stop releasing until `main` is green; fix forward or revert within the hour; tell the Coordinator. Players are not affected (a red CI never deploys). A flaky test is a bug to fix (wait on game state, never on a fixed time), not a retry to ignore.
+
+The full browser suite locally (`tools/test.sh`, 17-20 minutes) and the full sweeps (`tools/gate.sh --deep`) stay available for a risky change or a balance change; the old rule "a full 2-shard run clean before every push" is retired (research/PROPOSAL-RELEASE-GATE.md has the evidence: in this session's full local runs every failure was a test that needed updating or a flake, none a game bug; the two bugs players met had no test).
 
 Commit subjects start with `fix:`, `feat:` or `chore:` (or `art:` for pictures), so the bump size is visible at a glance.
 Entries before 0.9.1 have no `version`: they predate this scheme.
