@@ -11,6 +11,8 @@ import { composedURL } from './planelook.js';
 import { onSwipe } from './swipe.js';
 import { lookFiles, hangarGadgets, previewBars, withNext } from './fleet.js';
 import { statBarsHTML, animateBars } from './statbars.js';
+import { capFor, estimate, estimating } from './capability.js';
+import { areaOf } from './areas.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
 
 const $ = id => document.getElementById(id);
@@ -27,10 +29,12 @@ export class FleetHangar {
 
   render() {
     const s = this.ui.save, el = $('hFleet');
-    el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.previewCardHTML(s) + this.timelineHTML(s) + `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
+    el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.capHTML(s) + this.previewCardHTML(s) + this.timelineHTML(s) + `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
       `<button class="btn ftab ${this.tab === k ? 'on' : ''}" data-ftab="${k}" type="button">${n}</button>`).join('')}</div>`
       + `<p class="small ftabhelp">${{ plane: 'Choose your plane, and upgrade the one you fly.', systems: 'Systems help every flight, whichever plane you fly.', gadgets: 'Gadgets are fitted to every plane in your fleet.' }[this.tab]}</p>`
       + (this.tab === 'plane' ? this.planeHTML(s) : this.groupHTML(s, this.tab === 'systems' ? SYSTEMS : GADGETS, this.tab === 'systems' ? 'system' : 'gadget'));
+    // M4: how far this plane + nature can get (src/capability.js), worked out in the background after a purchase.
+    estimate(s, () => { this.ui.persist(); const c = $('hCap'); if (c) c.outerHTML = this.capHTML(s); });
     el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.flap(); this.render(); });
     // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS (src/swipe.js).
     const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.flap(); this.render(); };
@@ -125,6 +129,12 @@ export class FleetHangar {
       if (toFly) this.ui.go('fly'); else this.render(); };   // the rails' free part: the hub, TAKE OFF (R7); else stay in the hangar
   }
 
+  // The capability line under the picture (M4): the cached estimate, or "working it out" while it runs.
+  capHTML(s) {
+    const km = capFor(s, areaOf(s.city) || null);
+    return km ? `<p id="hCap" class="small hcap">Your plane + nature can reach <b>~${km.toLocaleString('en-GB')} km</b></p>`
+      : `<p id="hCap" class="small hcap working">${estimating() ? 'Working out how far your plane can go' : 'How far can your plane go?'}<i class="dots"></i></p>`;
+  }
   // The item behind a selection ('plane:comet.engines', 'gadget:magnet', 'fly:jumbo').
   itemOf(s, kind, id) {
     if (kind === 'fly') { const p = planeById(id), f = fleetOf(s); return p && f.planes[id] && f.plane !== id && { kind, id, name: p.name, open: true, cost: 0 }; }

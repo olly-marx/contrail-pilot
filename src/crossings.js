@@ -9,6 +9,7 @@ import { linksOf, choices, city } from './network.js';
 import { tourPath } from './route.js';
 import { biodiversity } from './nature.js';
 import { gateDone } from './missions2.js';
+import { capFor } from './capability.js';
 
 export const CROSSINGS = [
   { id: 'warsaw-stockholm', a: 'WARSAW', b: 'STOCKHOLM', era: 0, kind: 'frontier' },
@@ -80,7 +81,8 @@ export function recordAreaBest(save, from, m) {
 export function offerCtx(save, c) {
   const k = areaOf(c.from), home = k && city(AREAS[k].start);
   // missionsDone (S3): the area's crossing trial, its 3 starred missions (src/missions2.js), done in THIS area.
-  return { capabilityKm: (save.areaBest || {})[k] || 0, bio: home ? biodiversity(save, home.region) : 0, missionsDone: k ? gateDone(save, k) : false };
+  // capabilityKm (M4): the best landed flight OR the hangar's estimate for this area (src/capability.js), whichever is larger.
+  return { capabilityKm: Math.max((save.areaBest || {})[k] || 0, k ? capFor(save, k) : 0), bio: home ? biodiversity(save, home.region) : 0, missionsDone: k ? gateDone(save, k) : false };
 }
 
 // Why a crossing is or is not OFFERED (MASTER-PLAN B4): the conditions and the rule from src/season.js.

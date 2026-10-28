@@ -720,3 +720,7 @@ h2.sub { margin-top: -4px; }
 .payoff.nopart.arrive .pay-plane { transform: none; }   /* a system: no part to zoom onto; the bars are the payoff */
 .payoff.nopart .pay-label { display: none; }
 .payoff.nopart.arrive .pay-spark { top: auto; bottom: 30%; }
+/* M4: the capability line (src/hangar.js capHTML) */
+.hcap { margin: 0 0 6px; text-align: center; }
+.hcap.working .dots::after { content: '...'; animation: hcapdots 1.2s steps(4) infinite; display: inline-block; width: 1.5em; overflow: hidden; vertical-align: bottom; }
+@keyframes hcapdots { from { width: 0; } to { width: 1.5em; } }

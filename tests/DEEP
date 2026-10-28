@@ -6,3 +6,4 @@ sim-player
 sim-result-fields
 sim-care
 sim-progression-s2   # no GATE form: ~24 s (2 seeds x 40 progression flights); the missions-blocked power needs that many
+capability      # no GATE form: 5 crashes-on flights of a full twin (~25 s); a fresh Comet cannot fail the no-crash plant
