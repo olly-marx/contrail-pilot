@@ -13,6 +13,7 @@ import { lookFiles, hangarGadgets, previewBars, withNext } from './fleet.js';
 import { statBarsHTML, animateBars } from './statbars.js';
 import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
+import { FINANCE, financeLevel, financeOpen, natureHealth, rate, rateAt, canTake, trade, buyFinance } from './finance.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
 
 const $ = id => document.getElementById(id);
@@ -35,6 +36,8 @@ export class FleetHangar {
       + (this.tab === 'plane' ? this.planeHTML(s) : this.groupHTML(s, this.tab === 'systems' ? SYSTEMS : GADGETS, this.tab === 'systems' ? 'system' : 'gadget'));
     // M4: how far this plane + nature can get (src/capability.js), worked out in the background after a purchase.
     estimate(s, () => { this.ui.persist(); const c = $('hCap'); if (c) c.outerHTML = this.capHTML(s); });
+    const tb = $('hTrade'); if (tb) tb.onclick = () => { if (trade(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };
+    const fb2 = $('hFinBuy'); if (fb2) fb2.onclick = () => { if (buyFinance(s)) { this.ui.persist(); this.ui.sfx.buy(); this.render(); requestAnimationFrame(() => animateBars($('hFleet'))); } else this.ui.sfx.nope(); };
     el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.flap(); this.render(); });
     // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS (src/swipe.js).
     const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.flap(); this.render(); };
@@ -135,6 +138,19 @@ export class FleetHangar {
     return km ? `<p id="hCap" class="small hcap">Your plane + nature can reach <b>~${km.toLocaleString('en-GB')} km</b></p>`
       : `<p id="hCap" class="small hcap working">${estimating() ? 'Working out how far your plane can go' : 'How far can your plane go?'}<i class="dots"></i></p>`;
   }
+  // NATURE FINANCE (src/finance.js), from the 2010s: the desk's level, today's rate from your nature's health (a bar: fewer
+  // seeds a crystal is better), the next level's rate previewed, and the TRADE button (once a landing, above the reserve).
+  financeHTML(s) {
+    if (!financeOpen(s)) return '';
+    const lv = financeLevel(s), B = natureHealth(s), next = FINANCE.levels[lv], L = FINANCE.levels[lv - 1];
+    const bar = lvTo => statBarsHTML([{ label: 'Seeds per crystal', now: lv ? rate(s) : 40, then: rateAt(lvTo, B), min: 0, max: 40, better: 'lower' }]);
+    const n = canTake(s);
+    return `<div class="line fline finance"><div><div class="name">Natural capital</div><div class="small">${L ? L.name : 'Not yet'}. Your nature: ${B} / 100</div></div>
+      ${L ? `<p class="small">Today: <b>${rate(s)} seeds = 1 crystal</b>. You keep ${L.reserve.toLocaleString('en-GB')} seeds.</p>
+        <button class="btn ${n ? 'go' : ''}" id="hTrade" type="button" ${n ? '' : 'disabled'}>${n ? `TRADE ${n * rate(s)} seeds for ${n} crystals` : 'Trade again after your next landing'}</button>` : '<p class="small">Healthier nature, a better rate.</p>'}
+      ${next ? `<div class="next"><span>Next: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost}<i class="seedicon"></i></button></div>${bar(lv + 1)}` : ''}</div>`;
+  }
+
   // The item behind a selection ('plane:comet.engines', 'gadget:magnet', 'fly:jumbo').
   itemOf(s, kind, id) {
     if (kind === 'fly') { const p = planeById(id), f = fleetOf(s); return p && f.planes[id] && f.plane !== id && { kind, id, name: p.name, open: true, cost: 0 }; }
@@ -199,7 +215,8 @@ export class FleetHangar {
 
   groupHTML(s, list, kind) {
     const f = fleetOf(s), owned = kind === 'system' ? f.systems : f.gadgets, now = eraProgress(s).index;
-    return list.map(g => this.lineHTML(s, { kind, id: g.id, name: g.name, levels: g.levels, have: owned[g.id] || 0, eraOf: levelEra, now })).join('');
+    return list.map(g => this.lineHTML(s, { kind, id: g.id, name: g.name, levels: g.levels, have: owned[g.id] || 0, eraOf: levelEra, now })).join('')
+      + (kind === 'system' ? this.financeHTML(s) : '');
   }
 
   // The (i) card: what the line is, every level (era, price, what it does, how sure we are of the

@@ -115,3 +115,4 @@ hangar-feedback	src/fleet.js	s/keys: \['pickup'\]/keys: ['pickupX']/	a changed s
 lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return false;/	the lap counts away from home
 capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazard pool ignored (heat only)
 twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
+finance	src/finance.js	s/Math.round(L.base - L.slope \* B)/Math.round(L.base - L.slope * 0)/	the rate ignores nature
