@@ -24,4 +24,4 @@ group flight-rules | src/config.js src/crash.js src/gapmarkers.js src/Hud.js src
 group game-scene | src/GameScene.js | onrails tipqueue l4hint postrails twistdraw
 group menu-map | src/ui.js src/globe.js src/cities.js src/route.js src/network.js src/geo.js src/pilot.js src/swipe.js src/landmask.js src/links.js index.html style.css | globe journey swipe gate features links everyleg flightregion hubscreen tours onrails onrails@VP=375x667 rails2 tipqueue
 group art-sound | assets/* vendor/* src/sound.js src/pixellab.js src/landmarks.js | textures projectart badgeart faces landmarks stormart pixelpreview treelayout terrain macrons
-group online | src/online.js src/uploadbanner.js src/newplayer.js src/recordsui.js | online onlinesave offline newplayer boardsonline
+group online | src/online.js src/restore.js src/uploadbanner.js src/newplayer.js src/recordsui.js | online onlinesave offline newplayer boardsonline
