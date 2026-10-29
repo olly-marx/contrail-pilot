@@ -8,17 +8,19 @@ const URL = process.env.URL || 'http://localhost:8000/';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], rows = [];
-  for (const [area, city, want] of [['patagonia', 'PUNTA ARENAS', 'Patagonian steppe'], ['aotearoa', 'AUCKLAND', 'Island forest'], ['oceania', 'SYDNEY', 'Australian bush'], ['weurope', 'AMSTERDAM', 'Temperate woodland']]) {
+  // (Each fix on its own: the last case has the UK tab DISCOVERED - a Patagonia start that later landed in London - so only
+  //  the 'open on the home land' line keeps NATURE at home; the bug-fix chat's prove-plants run, 2026-10-29.)
+  for (const [area, city, want, been] of [['patagonia', 'PUNTA ARENAS', 'Patagonian steppe'], ['aotearoa', 'AUCKLAND', 'Island forest'], ['oceania', 'SYDNEY', 'Australian bush'], ['weurope', 'AMSTERDAM', 'Temperate woodland'], ['patagonia', 'PUNTA ARENAS', 'Patagonian steppe', 'LONDON']]) {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } }); const errs = []; p.on('pageerror', e => errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); },
-      { areas: [area], homeArea: area, city, visited: [city], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, missionsDone: ['L1', 'L2'], landings: 3, flights: 4,
+      { areas: [area], homeArea: area, city, visited: been ? [city, been] : [city], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, missionsDone: ['L1', 'L2'], landings: 3, flights: 4,
         fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } });
     await p.goto(URL); await ready(p); await p.waitForTimeout(800);
     await p.click('#tabNature'); await p.waitForTimeout(800);
     const on = await p.evaluate(() => (document.querySelector('#wRegions .btn.on') || {}).textContent || '');
     const ukTab = await p.evaluate(() => { const b = document.querySelector('#wRegions [data-region="woodland"]'); return b ? !b.disabled : false; });
-    if (area !== 'weurope' && ukTab) fails.push(`${city}: the UK tab is open to a player who never flew there`);
+    if (area !== 'weurope' && !been && ukTab) fails.push(`${city}: the UK tab is open to a player who never flew there`);
     rows.push(`${city}: ${on.trim()}`);
     if (!on.includes(want) || errs.length) fails.push(`${city}: NATURE opens on "${on.trim()}", want "${want}"${errs.length ? ` (errors: ${errs})` : ''}`);
     await p.close();
