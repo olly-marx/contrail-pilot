@@ -186,4 +186,4 @@ tourready	src/tour.js	s/tap: true, ready: namesOpen }/tap: true }/	the PILOT ste
 tourready	src/tour.js	s/      if (st.ready \&\& !st.ready()) { id = null; break; }/      if (false) { id = null; break; }/	run() ignores ready
 tourready	src/online.js	s/export const namesOpen = () => !noOnline() || (typeof window !== .undefined. \&\& !!window.CP_PREVIEW);/export const namesOpen = () => !noOnline();/	preview does not open names
 payoffdraw	src/hangar.js	s/new Promise(r => setTimeout(r, 6000))\]).then/Promise.resolve()]).then/	the payoff does not wait for its pictures (the playtest blank)
-payoffdraw	src/tips.js	s/Look: shiny new jet engines! (and less CO2 too)/Your plane is cleaner now!/	the old stat-only words
+payoffdraw	src/tips.js	s/Look: shiny new jet engines!/Your plane is cleaner now!/	the old stat-only words

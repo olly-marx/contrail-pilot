@@ -10,7 +10,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   for (const q of ['?preview=1', '']) {
-    const p = await b.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
+    const p = await b.newPage({ viewport: { width: +(process.env.W || 390), height: +(process.env.H || 844) }, hasTouch: true });
     const errs = []; p.on('pageerror', e => errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ muted: true })); });
