@@ -336,7 +336,7 @@ export class GameScene extends Phaser.Scene {
     // A toast already up (dusk, SAF, a token) drops below a top strip instead of sitting under it (the audit, 2026-10-28).
     const coachEl = document.getElementById('coach'), toastEl = document.getElementById('toast');
     const dropToast = () => { if (this.explaining && toastEl && !toastEl.hidden && !coachEl.hidden && !coachEl.classList.contains('strip-low')) toastEl.style.top = `${Math.round(coachEl.getBoundingClientRect().bottom + 6)}px`; };
-    dropToast();
+    this.dropToast = dropToast; dropToast();
     if (typeof ResizeObserver !== 'undefined') { (this.stripWatch = this.stripWatch || new ResizeObserver(() => dropToast())).disconnect(); this.stripWatch.observe(coachEl); }   // the strip grows when its picture loads: follow it at once
     else { setTimeout(dropToast, 250); setTimeout(dropToast, 800); }
     const mine = this.tipSerial = (this.tipSerial || 0) + 1;
@@ -1157,6 +1157,21 @@ export class GameScene extends Phaser.Scene {
     if (this.frozen) { this.scoreRays(dt, false); this.drawRays(this.gameTime); this.drawSky(this.gameTime); return; }
     const { dx, inIssr, over } = this.step(dt);   // the flight's rules (src/sim/rules.js): data only
     this.syncViews(dt, dx, inIssr, over);
+    if (this.explaining && !this.school) this.keepStripClear();
+  }
+  // The strip's side was chosen once, from the plane's height when it opened (showTip), and the plane flew on under it: on a slow
+  // phone the 0.21.0 gate saw it cover the plane for 25 frames. Every frame while a tip is up: if the plane (with a margin) is
+  // inside the strip, flip the strip to the other side. That is its own hysteresis: after a flip the plane is far from the strip.
+  keepStripClear() {
+    const coach = document.getElementById('coach'), cv = this.game.canvas;
+    if (!coach || coach.hidden || !cv) return;
+    const k = cv.getBoundingClientRect(), cr = coach.getBoundingClientRect(), sx = k.width / WIDTH, sy = k.height / HEIGHT, m = 12;
+    const l = k.left + this.plane.x * sx - m, r = k.left + (this.plane.x + 58) * sx + m, t = k.top + (this.plane.y - 8) * sy - m, b = k.top + (this.plane.y + 22) * sy + m;
+    if (!(cr.left < r && l < cr.right && cr.top < b && t < cr.bottom)) return;
+    const low = !coach.classList.contains('strip-low');
+    coach.classList.toggle('strip-low', low);
+    document.getElementById('toast').style.top = '';
+    if (!low && this.dropToast) this.dropToast();
   }
 
   // Draw the frame the rules just stepped: every picture where its record says (sim engine 5f).
