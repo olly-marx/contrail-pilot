@@ -31,7 +31,7 @@ import { drawGlobe } from './globe.js';
 import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
-import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft } from './missions2.js';
+import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName } from './badges.js';
@@ -265,9 +265,10 @@ export class UI {
     this.missionsAfterSave();   // an off-flight mission already met ticks now, not at the next purchase (sim chat's nit)
     const s = this.save, list = missionsVisible(s);
     const row = m => `<div class="mrow ${m.star ? 'star' : ''} ${m.daily ? 'daily' : ''}"><span>${m.star ? '&#9733; ' : ''}${m.title}</span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`;
-    const daily = dailyVisible(s);
+    const daily = dailyVisible(s), steady = steadyVisible(s);
     $('mList').innerHTML = (list.map(row).join('') || `<p>All done here!</p>${crossingsHTML(s).replace(/<button[^>]*data-cross[^>]*>.*?<\/button>/g, '<b>Ready!</b> Tap HOME, then NEXT.') || '<p class="small">Keep flying: new missions come with new eras.</p>'}`)   // (the audit, 2026-10-28: it said 'fly a crossing' when none was offered; now it says what is missing)
-      + (daily.length ? '<p class="label">Today</p>' + daily.map(row).join('') : '');
+      + (daily.length ? `<p class="label">Today${streakBonus(s) ? ` <span class="small">(streak +${streakBonus(s)})</span>` : ''}</p>` + daily.map(row).join('') : '')
+      + (steady.length ? '<p class="label">Steady</p>' + steady.map(m => `<div class="mrow steady"><span>${m.title}<span class="mbar"><i style="width:${Math.round(100 * m.progress / m.target)}%"></i></span><span class="small">${m.progress.toLocaleString('en')} / ${m.target.toLocaleString('en')}</span></span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`).join('') : '');
     $('mTier').textContent = list.length && list[0].tier ? `Tier ${Math.max(...list.map(m => m.tier))} of 3` : 'Chapter 1';
     this.showOnly('missions');
     this.renderPrizes($('mPrizes'), () => this.showMissions());

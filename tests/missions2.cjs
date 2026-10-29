@@ -42,7 +42,7 @@
   check(!away.missionsDone.some(k => /weurope:(night|shade10)/.test(k)), 'a flight from ANOTHER area completes no "here" mission of Western Europe');
   const crash = { ...s, missionsDone: [...s.missionsDone] };
   M.onFlight(crash, { ...landed({ nightOwl: true, sunBlocked: 12, cargo: 99 }), landed: false });
-  check(crash.missionsDone.length === s.missionsDone.length, 'a crash completes nothing');
+  check(crash.missionsDone.filter(k => !/^(steady|daily):/.test(k)).length === s.missionsDone.filter(k => !/^(steady|daily):/.test(k)).length, 'a crash completes no lesson or template mission (steady goals and the easy daily count on purpose)');
   // 7. The gate.
   const raw = C.CROSSINGS.find(x => x.id === 'warsaw-stockholm'), c = { ...raw, from: 'WARSAW', to: 'STOCKHOLM', km: C.crossingKm(raw) }, full = { capabilityKm: 1e9, bio: 99 };   // as available() orients it
   M.onFlight(s, landed({ sunBlocked: 10 }));   // 1 of 3 starred
