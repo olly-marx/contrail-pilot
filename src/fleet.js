@@ -11,10 +11,10 @@
 import { ISSR, CARGO, CRYSTALS, POWERUPS } from './config.js';
 import { eraProgress } from './eras.js';
 
-export const ERA_SCALE = [0.78, 0.43, 0.41, 0.54, 0.5];
+export const ERA_SCALE = [0.78, 0.43, 0.41, 0.54, 0.5, 0.46];
 // Seeds a typical player earns in each era (flight log, est.). 2010s 8,000: TBD-SIM (experts bank ~17,000 by flight 200,
 // BALANCE-RESCALE-S2; the sim chat re-measures with the 787 and nature finance before the era 4 release).
-export const ERA_BUDGET = [600, 1500, 3500, 8000, 14000];   // 2030s 14,000: TBD-SIM
+export const ERA_BUDGET = [600, 1500, 3500, 8000, 14000, 22000];   // 2030s 14,000, far future 22,000: TBD-SIM
 export const START_BONUS = 300;                // seeds, once, at the reset (user, 2026-10-23: no refund of old plane upgrades)
 
 const price = (era, cost) => { const seeds = Math.max(5, Math.round(cost * ERA_SCALE[era] / 5) * 5); return { cost: seeds, crystals: Math.round(seeds / 8) }; };
@@ -31,11 +31,11 @@ const V = { verify: true };
 export const FORECAST = { popPx: 30 };
 // The next-gap hint (PLANE-ERAS-1-3.md section 6), by the LOWEST of the three systems' levels:
 // seconds of warning before a storm gap scrolls on screen, and how bright the gate is. Game values.
-export const GAP_HINT = { lead: [0, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3], alpha: [0, 0.25, 0.32, 0.4, 0.5, 0.6, 0.75, 0.8, 0.85, 0.88, 0.9] };   // 7-8: the 2010s, 9-10: the 2030s
+export const GAP_HINT = { lead: [0, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5, 2.7], alpha: [0, 0.25, 0.32, 0.4, 0.5, 0.6, 0.75, 0.8, 0.85, 0.88, 0.9, 0.92, 0.94] };   // 7-8: the 2010s, 9-10: the 2030s, 11-12: far future
 // Passenger fares: seeds per 1,000 km of a LANDED flight, x the Cabin upgrades (GAME VALUES, est.;
 // tune against measured income ~39 seeds a flight). Bigger planes carry more people.
-export const FARES = { comet: 2, jumbo: 3, twin: 4, dreamliner: 5, truss: 6 };
-export const CONTRAIL_MARGIN = { deep: 0.75, inside: 1, edge: 1.12, edge2: 1.16, edge3: 1.2 };   // edge3: the 2030s   // edge2: the 2010s (the efficiency trap goes on)
+export const FARES = { comet: 2, jumbo: 3, twin: 4, dreamliner: 5, truss: 6, hydrogen: 7 };
+export const CONTRAIL_MARGIN = { deep: 0.75, inside: 1, edge: 1.12, edge2: 1.16, edge3: 1.2, edge4: 1.3 };   // edge3: the 2030s; edge4: hydrogen (more water, +46% formation: PROPOSAL-10)   // edge2: the 2010s (the efficiency trap goes on)
 export const PLANES = [
   { id: 'comet', era: 0, name: 'Comet 4', co2: 1.1, margin: 'deep', sprite: 'plane-comet', portrait: 'assets/ui/plane-hangar-comet.png',
     lines: {
@@ -85,6 +85,21 @@ export const PLANES = [
       cabin: [L(4, 1300, 'Wide cabin in the wing', { fares: 1.15 }), L(4, 1900, 'Quiet electric taxi', { takeoff: 0.85 }),
         L(4, 2800, 'Window-wall lounge', { fares: 1.35 })],
     } },
+  // ERA 6, the far future: the lap of the Earth. Sized to the sim chat's lap total (BALANCE-ERAS-4-6: CO2 x0.4 of the full
+  // twin = 0.211, night contrail heat x0.4): bare 0.32 x Ops 10 0.78 = 0.25 (cleaner than the full truss wing's 0.263),
+  // night 0.6; full 0.32 x 0.94 x 0.97 x 0.98 x Ops 12 0.74 = 0.211, night 0.6 x Ops 12 0.667 = 0.40. 'CO2' here is the
+  // hydrogen's making and the climb (a facts check is due before text ships). Art: code-made pale silver.
+  // noFlyGapAdd 12: the era step (sim chat, 2026-10-29: bare hydrogen +0 was worse than the full truss from 24k, the pulse and
+  // squeeze arriving with it; +12 passes everywhere at s 1.0, and at s 0.9 except 30k by -5 pts, ~1 SE at 80 skies).
+  { id: 'hydrogen', era: 5, name: 'Hydrogen blended wing', co2: 0.32, nightHeat: 0.6, noFlyGapAdd: 12, margin: 'edge4', sprite: 'plane-hydrogen', portrait: 'assets/ui/plane-hangar-hydrogen.png',
+    lines: {
+      engines: [L(5, 2600, 'Fuel-cell pods along the wing', { co2: 0.97 }), L(5, 3600, 'Superconducting motors', { co2: 0.94 }),
+        L(5, 5000, 'Quieter ducted fans', { takeoff: 0.85 })],
+      body: [L(5, 2600, 'Insulated liquid-hydrogen tanks', { co2: 0.97 }), L(5, 3600, 'Laminar-flow skin, all over', { co2: 0.98 }),
+        L(5, 5000, 'Cabin inside the wing', { fares: 1.15 })],
+      cabin: [L(5, 2000, 'Panorama seats', { fares: 1.15 }), L(5, 3000, 'Quiet cabin, no engine roar', { fares: 1.3 }),
+        L(5, 4400, 'Sleep pods for the lap', { fares: 1.5 })],
+    } },
 ];
 export const PLANE_LINES = { engines: 'Engines', body: 'Wings & body', cabin: 'Cabin' };
 
@@ -103,7 +118,9 @@ export const SYSTEMS = [
     S(6, 'Satellite contrail detection (2017)', { reveal: 240, fakes: 0.25, late: 0.15, nightPatches: 0.95 }),
     S(7, 'Ensemble humidity forecasts', { reveal: 280, fakes: 0.2, late: 0.12, nightPatches: 0.95 }),
     S(8, 'AI weather models (2023+)', { reveal: 330, fakes: 0.12, late: 0.08, nightPatches: 0.95 }),
-    S(9, 'Contrail forecasts in the flight plan', { reveal: 360, fakes: 0.1, late: 0.06, nightPatches: 0.95 })] },
+    S(9, 'Contrail forecasts in the flight plan', { reveal: 360, fakes: 0.1, late: 0.06, nightPatches: 0.95 }),
+    S(10, 'Lidar sky picture', { reveal: 400, fakes: 0.05, late: 0.03, nightPatches: 0.95 }),
+    S(11, 'Shared live humidity from every plane', { reveal: 440, fakes: 0.03, late: 0.02, nightPatches: 0.95 })] },
   { id: 'atc', name: 'Air traffic control', levels: [
     S(0, 'Fixed airways and radio', { gaps: 1.005 }), S(1, 'Position reports', { gaps: 1.01 }),
     S(2, 'Computer radar with altitude readout', { gaps: 1.01, gapTurb: 0.85 }), S(3, 'Better radar', { gaps: 1.02, gapTurb: 0.85, airportEarly: true }),
@@ -114,7 +131,10 @@ export const SYSTEMS = [
     S(7, 'Free route airspace', { gaps: 1.03, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 300, noFlyGapAdd: 10 }),
     // 2030s: the answer to turning flocks (they arrive at 18,000 km): the call before the turn.
     S(8, 'Contrail-aware air traffic control', { gaps: 1.04, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 350, noFlyGapAdd: 10 }),
-    S(9, 'Turn calls: "flock climbing"', { gaps: 1.04, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 350, noFlyGapAdd: 10, turnShown: true })] },
+    S(9, 'Turn calls: "flock climbing"', { gaps: 1.04, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 350, noFlyGapAdd: 10, turnShown: true }),
+    // Far future: the answer to pulsing storms (from 22,000 km) and the long-haul squeeze.
+    S(10, 'Automatic separation', { gaps: 1.05, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 400, noFlyGapAdd: 12, turnShown: true }),
+    S(11, 'Sky-wide traffic picture', { gaps: 1.05, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 400, noFlyGapAdd: 16, turnShown: true, pulseShown: true })] },
   { id: 'ops', name: 'Fuel & operations', levels: [
     S(0, 'Standard kerosene jet fuel (Jet A, 1959)', { co2: 0.96 }), S(1, 'Best cruise speed', { co2: 0.92 }, V),
     S(2, 'Oil-crisis savings: lighter loads (1973)', { co2: 0.92, takeoff: 0.92 }, V), S(3, 'Taxi on fewer engines', { co2: 0.92, takeoff: 0.86 }, V),
@@ -124,7 +144,10 @@ export const SYSTEMS = [
     S(7, 'Contrail-free cruise', { co2: 0.82, takeoff: 0.8, cleanSecs: 6 }),
     // 2030s: less night contrail heat (the measured x0.7 with the plane's 0.85), and a longer meter.
     S(8, 'Low-soot fuel: fewer ice crystals', { co2: 0.8, takeoff: 0.8, cleanSecs: 6, nightHeat: 0.9 }),
-    S(9, 'Contrail-free cruise 2', { co2: 0.78, takeoff: 0.78, cleanSecs: 10, nightHeat: 0.82 })] },   // (0.10.2: CO2 doubled for L1-2, kept rising after)
+    S(9, 'Contrail-free cruise 2', { co2: 0.78, takeoff: 0.78, cleanSecs: 10, nightHeat: 0.82 }),
+    // Far future: the measured x0.4 night heat with the plane's 0.6. (No contrail-free cruise by day: day contrails SHADE.)
+    S(10, 'Hydrogen logistics', { co2: 0.76, takeoff: 0.7, cleanSecs: 12, nightHeat: 0.8 }),
+    S(11, 'Contrail-free cruise 3', { co2: 0.74, takeoff: 0.6, cleanSecs: 14, nightHeat: 0.667 })] },   // (0.10.2: CO2 doubled for L1-2, kept rising after)
 ];
 export const GADGETS = [
   { id: 'magnet', name: 'Magnet', levels: [S(0, 'Horseshoe magnet', { pickup: 16 }), S(1, 'Bigger horseshoe', { pickup: 19 }),
@@ -138,12 +161,16 @@ export const GADGETS = [
     S(4, 'Humidity sensor (WVSS-I)', { dodge: 3, perNight: 6 }, V), S(5, 'Better humidity sensor', { dodge: 3, perNight: 8 }, V),
     S(6, 'Bird radar', { dodge: 3, perNight: 8, birdWarnPx: 250 }), S(7, 'Longer-range bird radar', { dodge: 3, perNight: 9, birdWarnPx: 350 }),
     // 2030s bird detection (the user's "less up/down bird movement"): steadier flocks. Sized by playtest (the sim cannot value it).
-    S(8, 'Bird detection', { dodge: 3, perNight: 9, birdWarnPx: 350, birdWobble: 0.6 }), S(9, 'Better bird detection', { dodge: 3, perNight: 10, birdWarnPx: 400, birdWobble: 0.35 })] },
+    S(8, 'Bird detection', { dodge: 3, perNight: 9, birdWarnPx: 350, birdWobble: 0.6 }), S(9, 'Better bird detection', { dodge: 3, perNight: 10, birdWarnPx: 400, birdWobble: 0.35 }),
+    // Far future: bird-aware routing, fewer flocks (x the spawn chance, with ATC's advisories: kit.gapBirds, no new rule).
+    S(10, 'Bird-aware routing', { dodge: 3, perNight: 10, birdWarnPx: 400, birdWobble: 0.35, birdChance: 0.85 }),
+    S(11, 'Better bird-aware routing', { dodge: 3, perNight: 11, birdWarnPx: 400, birdWobble: 0.35, birdChance: 0.7 })] },
   { id: 'autopilot', name: 'Autopilot', levels: [S(0, 'Height hold', { autoSecs: 8, autoChance: 0.06 }), S(1, 'Better height hold', { autoSecs: 9, autoChance: 0.06 }),
     S(2, 'Autothrottle', { autoSecs: 10, autoChance: 0.07 }), S(3, 'Better autothrottle', { autoSecs: 11, autoChance: 0.07 }),
     S(4, 'Flight management computer', { autoSecs: 12, autoChance: 0.08 }), S(5, 'Better flight computer', { autoSecs: 13, autoChance: 0.09 }),
     S(6, 'Gap-tracking autopilot', { autoSecs: 14, autoChance: 0.09 }), S(7, 'Better gap tracking', { autoSecs: 15, autoChance: 0.1 }),
-    S(8, 'Autopilot that sees birds', { autoSecs: 16, autoChance: 0.11 }), S(9, 'Better bird-aware autopilot', { autoSecs: 17, autoChance: 0.12 })] },
+    S(8, 'Autopilot that sees birds', { autoSecs: 16, autoChance: 0.11 }), S(9, 'Better bird-aware autopilot', { autoSecs: 17, autoChance: 0.12 }),
+    S(10, 'Autopilot that sees the whole sky', { autoSecs: 18, autoChance: 0.13 }), S(11, 'Best autopilot', { autoSecs: 19, autoChance: 0.14 })] },
 ];
 
 export const levelEra = k => Math.floor((k - 1) / 2);   // 1-based level -> era index
@@ -198,7 +225,7 @@ export function fleetKit(save) {
     // No forecasting: icy air is seen only up close, but honestly. With a forecast: seen sooner, with
     // false patches (`fakes` of those shown) and real ones it missed (`late`). ERA5 skill 0.2-0.4 (CONFIRMED).
     fakes: fc.reveal ? fc.fakes ?? 0.4 : 0, late: fc.reveal ? fc.late ?? 0.3 : 0, nightPatches: fc.nightPatches || 1,
-    gaps: atc.gaps || 1, gapTurb: atc.gapTurb || 1, gapBirds: atc.gapBirds || 1, airportEarly: !!atc.airportEarly,   // stage 6
+    gaps: atc.gaps || 1, gapTurb: atc.gapTurb || 1, gapBirds: (atc.gapBirds || 1) * (sen.birdChance || 1),   // Sensors 11-12: bird-aware routing airportEarly: !!atc.airportEarly,   // stage 6
     hintLevel: Math.min(f.systems.forecast || 0, f.systems.atc || 0, f.systems.ops || 0),   // next-gap hint (stage 7)
     pickup: gad('magnet').pickup || 12,
     perSkip: (gad('hold').perSkip || CARGO.multiplierPerSkip) + add('perSkip'),
@@ -215,6 +242,9 @@ export function fleetKit(save) {
     birdWarnPx: sen.birdWarnPx * ((f.systems.atc || 0) >= 9 && (f.gadgets.sensors || 0) >= 9 ? 2 : 1) || 0,   // Sensors 7+: bird radar; COMBO Bird corridor (ATC 9 + Sensors 9) doubles its reach (drawing)
     birdWobbleMul: sen.birdWobble || 1,                                         // Sensors 9-10: bird detection, steadier flocks (rules.js)
     turnShown: !!atc.turnShown,                                                 // ATC 10: turning flocks show their turn (drawing)
+    pulseShown: !!atc.pulseShown,                                               // ATC 12: a pulsing storm shows its beat (drawing)
+    // COMBO Full situational awareness: Forecast 11 + ATC 11 + Sensors 11: the outlook shows THREE gaps (drawing).
+    fullAware: (f.systems.forecast || 0) >= 11 && (f.systems.atc || 0) >= 11 && (f.gadgets.sensors || 0) >= 11,
     outlook: (f.systems.forecast || 0) >= 7 && (f.systems.atc || 0) >= 7,       // COMBO Barrier outlook: Forecast 7 + ATC 7 (drawing)
     safCans: eraProgress(save).index >= 3,   // SAF began in 2009: free SAF cans only from the 2010s era
   };
@@ -296,6 +326,8 @@ export const STAT_BARS = [
   { id: 'birdWarn', label: 'Birds seen early', keys: ['birdWarnPx'], v: k => k.birdWarnPx, min: 0, max: 400, better: 'higher' },
   { id: 'turnShown', label: 'Flock turn calls', keys: ['turnShown'], v: k => (k.turnShown ? 1 : 0), onoff: true, better: 'higher' },
   { id: 'birdWobble', label: 'Birds bobbing up and down', keys: ['birdWobbleMul'], v: k => k.birdWobbleMul, min: 0, max: 1, better: 'lower' },
+  { id: 'pulseShown', label: 'Storm beat shown', keys: ['pulseShown'], v: k => (k.pulseShown ? 1 : 0), onoff: true, better: 'higher' },
+  { id: 'fullAware', label: 'Full situational awareness', keys: ['fullAware'], v: k => (k.fullAware ? 1 : 0), onoff: true, better: 'higher' },
   { id: 'early', label: 'Early landing call', keys: ['airportEarly'], v: k => (k.airportEarly ? 1 : 0), onoff: true, better: 'higher' },
   { id: 'hint', label: 'Next-gap hint', keys: ['hintLevel'], v: k => k.hintLevel, min: 0, max: 6, better: 'higher' },
   { id: 'fares', label: 'Fares', keys: ['fares'], v: k => k.fares, min: 1, max: 2, better: 'higher' },
@@ -361,6 +393,7 @@ export const LOOKS = {
   // The 787: no part art yet (no PixelLab for eras 4-6): its levels show as stat bars (tests/hangar-feedback.cjs).
   dreamliner: { art: '787', engines: [null, null, null], body: [null, null, null], cabin: [null, null, null], noGadgetArt: true },
   truss: { art: 'truss', engines: [null, null, null], body: [null, null, null], cabin: [null, null, null], noGadgetArt: true },
+  hydrogen: { art: 'hydrogen', engines: [null, null, null], body: [null, null, null], cabin: [null, null, null], noGadgetArt: true },
 };
 export const NO_FLIGHT_LOOK = { '747': ['winglet'], twin: ['winglet'] };   // hangar only (too subtle in flight)
 // Gadget stickers on the plane (decoration, never collision): art name, and where its top-left sits on the

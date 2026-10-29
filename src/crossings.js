@@ -74,7 +74,7 @@ export function laterEra(save) {
   return best;
 }
 // The placeholder at the end of this release: you have reached the last era it covers and nothing is left to fly.
-export const moreToCome = save => eraProgress(save).index >= SEASON.maxEra && available(save).length === 0;
+export const moreToCome = save => !save.lapDone && eraProgress(save).index >= SEASON.maxEra && available(save).length === 0;   // (after the lap: finished, nothing more to come)
 
 // Season 2 stand-ins for the offer gate (user, 2026-10-26): the best LANDED ordinary flight from each area, kept on the
 // save (areaBest[area], game km) by recordAreaBest from GameScene.onFinish; and the area's biodiversity = the meter of the

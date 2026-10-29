@@ -88,7 +88,7 @@ season2-smoke@PART=Bafrica,Bsamerica,Beasia	src/route.js	s/(SEASON2_ON ? save : 
 season2-smoke@PART=A,C,E,F,G	src/ui.js	s/if (tab === 'nature')/if (tab === 'natur')/	C: NATURE does not open
 season2-smoke@PART=A,C,E,F,G	src/pilot.js	s/const off = onlineOff();/const off = false;/	C: PILOT offers a name form
 season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/(best === null || c.era < best)) best = c.era;/false) best = c.era;/	F: nothing to fly yet is silent
-season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/export const moreToCome = save => /export const moreToCome = save => false \&\& /	E: no MORE TO COME card
+season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/{ id: 'lap', era: 5,/{ id: 'lap', era: 9,/	E: the lap never offered (era 6: it replaced the MORE TO COME card)
 season2-smoke@PART=D	src/season.js	s/distanceShare: 0.7/distanceShare: 0/	D: a short flight is offered the crossing
 releasegate	tests/PATHMAP	s/ season2-smoke@PART=D / /	a season2-smoke piece dropped (section D unchecked)
 releasegate	tests/PATHMAP	s/season2-smoke@PART=D /season2-smoke@PART=D,C /	a season2-smoke section checked twice
@@ -159,3 +159,7 @@ sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
 kindsreach	src/missions2.js	s#  const kinds = Math.max(2, Math.min(3, open.length));#  const kinds = 3;#	the kinds star fixed at 3 (impossible in plateau lands)
 homelanding	src/sim/rules.js	s# \&\& !(r.name === this.homeName \&\& r.worldX <= 0));# \&\& r.name !== this.homeName);#	the home runway never landable (the old exclusion)
 fleet	src/fleet.js	s/co2: 0.57, noFlyGapAdd: 8, margin/co2: 0.57, noFlyGapAdd: 0, margin/	the 787 loses its era-step help
+finance	src/finance.js	s/if (since <= 0 || areaBio(save) < d.minBio) return 0;/if (since <= 0) return 0;/	the dividend ignores nature
+fleet	src/fleet.js	s/nightHeat: 0.6, noFlyGapAdd: 12, margin/nightHeat: 0.6, noFlyGapAdd: 0, margin/	the hydrogen plane loses its era-step help
+season2-smoke	src/ui.js	s/const head = c.kind === 'lap' ?/const head = false ?/	the lap shown as an ordinary crossing
+season2-smoke	src/crossings.js	s/export const moreToCome = save => !save.lapDone \&\&/export const moreToCome = save =>/	more to come after the lap

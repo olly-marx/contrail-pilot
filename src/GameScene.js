@@ -58,6 +58,7 @@ export class GameScene extends Phaser.Scene {
     this.load.image('plane-twin', 'assets/plane-twin.png');
     this.load.image('plane-747', 'assets/plane-747.png');   // the 1970s paint (era colour ladder)
     this.load.image('plane-787', 'assets/plane-787.png');   // the 2010s Dreamliner (code-made from the twin: tools/art/make_787.py)
+    this.load.image('plane-hydrogen', 'assets/plane-hydrogen.png');   // the far future (code-made: tools/art/make_787.py)
     this.load.image('plane-truss', 'assets/plane-truss.png');   // the 2030s truss-braced wing (code-made: tools/art/make_787.py)
     for (const k of UPGRADE_ART) this.load.image(k, `assets/upgrades/${k}.png`);   // upgrade looks, stickers, towers (src/fleet.js)
     for (const [id, n] of Object.entries(PART_LINES)) for (let i = 1; i <= n; i++) this.load.image(`plane-${id}-${i}`, `assets/plane-${id}-${i}.png`);
@@ -982,7 +983,7 @@ export class GameScene extends Phaser.Scene {
     const k = this.kit;
     if (this.cleanMeter) { const left = (this.cleanLeft || 0) / ((k.cleanSecs || 1) * 1000), night = !this.isDay;
       this.cleanMeter.width = 56 * Math.max(0, Math.min(1, left)); this.cleanBg.setFillStyle(this.cleanHeld && night && left > 0 ? 0x9fe0ff : 0x5a6b80).setAlpha(night ? 1 : 0.45); }
-    if (!k.noFlyWarnPx && !k.outlook && !k.birdWarnPx && !k.turnShown) return;
+    if (!k.noFlyWarnPx && !k.outlook && !k.birdWarnPx && !k.turnShown && !k.pulseShown) return;
     const g = this.era4Gfx || (this.era4Gfx = this.add.graphics().setDepth(50));
     g.clear();
     const nose = this.plane.x + PLANE.w;
@@ -996,7 +997,7 @@ export class GameScene extends Phaser.Scene {
         g.fillStyle(0xffffff, 0.95); g.fillTriangle(ax - 5, ay + (up ? 4 : -4), ax + 5, ay + (up ? 4 : -4), ax, ay + (up ? -4 : 4)); }
     }
     if (k.outlook) {
-      const next = this.storms.filter(st => st.rects[0].x > nose).sort((a, b) => a.rects[0].x - b.rects[0].x).slice(0, 2);
+      const next = this.storms.filter(st => st.rects[0].x > nose).sort((a, b) => a.rects[0].x - b.rects[0].x).slice(0, k.fullAware ? 3 : 2);   // full situational awareness: three
       next.forEach((st, i) => { const top = st.rects[0].height, bot = st.rects[1].y, c = st.noFly ? 0xff8080 : 0xffe15a;
         g.fillStyle(c, i ? 0.55 : 0.95); g.fillRect(WIDTH - 10 + i * 5, top, 4, 2); g.fillRect(WIDTH - 10 + i * 5, bot - 2, 4, 2); g.fillRect(WIDTH - 9 + i * 5, top, 2, bot - top); });
     }
@@ -1005,6 +1006,13 @@ export class GameScene extends Phaser.Scene {
       if (ahead < 0 || ahead > k.birdWarnPx) continue;
       const half = f.half ?? (f.birds.length - 1) / 2, wob = HAZARDS.birds.wobble * (k.birdWobbleMul ?? 1), top = f.y - half * 9 - 4 - wob, bot = f.y + half * 9 + 16 + wob;
       g.fillStyle(0xffffff, 0.12); g.fillRect(f.x - 4, top, half * 26 + 24, bot - top);
+    }
+    // ATC 12 (far future): a pulsing storm shows its beat: a bar beside the gap, long when the gap is wide.
+    if (k.pulseShown) for (const st of this.storms) {
+      if (!st.pulse || st.rects[0].x < nose - 20) continue;
+      const P = STORMS.pulse, off = P.amp * Math.sin(st.pulse.phase + 2 * Math.PI * (this.gameTime / 1000) / P.period), x = st.rects[0].x - 6;
+      const mid = (st.rects[0].height + st.rects[1].y) / 2, h = 6 + (P.amp - off) / P.amp * 10;
+      g.fillStyle(0x9fe0ff, 0.9); g.fillRect(x, mid - h, 3, 2 * h);
     }
     // ATC 10 turn calls (2030s): a flock that has not turned yet shows an arrow the way it will go (rules.js f.turn.dir).
     if (k.turnShown) for (const f of this.birds) {
