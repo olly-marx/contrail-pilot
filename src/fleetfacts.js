@@ -24,18 +24,17 @@ export const LINE_INFO = {
 
 const F = (fact, status, src) => ({ fact, status, src });
 export const LEVEL_FACTS = {
-  // 787 Dreamliner (eras 4-6 build, 2026-10-28): NOT checked against sources yet ('guess'); check before the era 4 release text.
-  'GEnx turbofans': F('The 787 was offered with a choice of two all-new engines: the GE GEnx or the Rolls-Royce Trent 1000.', 'guess', 'to check: GE Aerospace / Rolls-Royce 787 engine pages'),
-  'One-piece carbon-fibre barrel': F('About half of a 787 is carbon-fibre composite. Its body is built in whole barrel sections, not riveted panels.', 'guess', 'to check: Boeing 787 composites'),
-  'Dimmable windows': F('A 787 has no window blinds: you press a button and the glass slowly darkens.', 'guess', 'to check: Boeing 787 electrochromic windows'),
-  // Truss-braced wing, the 2030s (eras 4-6 build): NOT checked against sources yet ('guess').
-  'Open-fan engines: no casing round the fan': F('An open-fan engine has big fan blades with no casing round them, so it can push more air for less fuel.', 'guess', 'to check: CFM RISE programme'),
-  'Folding wingtips (fit at the gate)': F('Long thin wings save fuel but do not fit at airport gates, so their tips fold up on the ground.', 'guess', 'to check: NASA / Boeing X-66, Boeing 777X folding tips'),
-  'Wide cabin in the wing': F('In a blended wing the cabin spreads out sideways inside the wing, not in a long thin tube.', 'guess', 'to check: JetZero Z4'),
-  // Hydrogen blended wing, the far future (eras 4-6 build): NOT checked against sources yet ('guess').
-  'Fuel-cell pods along the wing': F('A fuel cell turns hydrogen and air into electricity, with water as the only exhaust.', 'guess', 'to check: Airbus ZEROe fuel-cell concept'),
-  'Insulated liquid-hydrogen tanks': F('Liquid hydrogen must stay colder than -250 C, so it needs big, thick-walled tanks.', 'guess', 'to check: Airbus ZEROe, hydrogen storage'),
-  'Panorama seats': F('With the engines out on the wing, a blended-wing cabin can have wide windows at the front.', 'guess', 'to check: blended wing cabin concepts'),
+  // 787 Dreamliner, truss-braced wing, hydrogen (eras 4-6): CHECKED 2026-10-29 against manufacturer / NASA / trade sources.
+  'GEnx turbofans': F('Airlines buying a 787 choose its engines: the GE GEnx-1B or the Rolls-Royce Trent 1000.', 'real', 'GE Aerospace / Rolls-Royce; airwaysmag.com 787 GEnx vs Trent 1000; ainonline.com 2012-07-11 engine options'),
+  'One-piece carbon-fibre barrel': F('About half of a 787, by weight, is carbon-fibre composite. Its body is made in whole tube-shaped sections, not riveted metal panels.', 'real', 'SAMPE (nasampe.org Boeing787): ~50% composite by weight, one-piece barrels; Kawasaki Heavy Industries R&D'),
+  'Dimmable windows': F('A 787 has no window blinds: you press a button and the glass slowly darkens, through five levels.', 'real', 'Boeing media room 2005-12-15 (PPG electrochromic windows); Gizmodo, how the 787 windows work'),
+  'Open-fan engines: no casing round the fan': F('An open-fan engine has huge fan blades with no casing round them. Its makers aim for about 20% less fuel than today\'s engines; it is still being tested.', 'real', 'GE Aerospace / CFM RISE programme (a target, not a result; entry into service aimed at the mid-2030s)'),
+  'Folding wingtips (fit at the gate)': F('NASA and Boeing studied this kind of wing for the X-66 test plane, paused in 2025. Its long wings may need tips that fold at the gate.', 'real', 'NASA news release 2023 (X-66A); NASA NTRS 20250002858 airport study; X-66 flight demonstrator paused May 2025 (militaryaerospace.com); Boeing 777X folding wingtips'),
+  'Wide cabin in the wing': F('In a blended wing like JetZero\'s planned Z4, the cabin is short and very wide, with fewer middle seats.', 'real', 'JetZero / United Airlines announcement, April 2025 (Z4: ~250 seats, service aimed at the early 2030s). Its fuel-saving claims are disputed (Hamburg University of Applied Sciences, 2026), so the game does not quote them.'),
+  'Fuel-cell pods along the wing': F('A fuel cell turns hydrogen and oxygen from the air into electricity. Its only exhaust is water. Hydrogen airliners are still many years away.', 'real', 'US DOE Hydrogen and Fuel Cell Technologies Office (fuel cell basics); Airbus ZEROe fuel-cell concept, 2022'),
+  'Insulated liquid-hydrogen tanks': F('Liquid hydrogen must stay at -253 C, so it needs big, well-insulated tanks: about four times the space of kerosene.', 'real', 'Airbus ZEROe; Sustainability Magazine 2025 on the ZEROe delay (cryogenic tanks ~4x the volume of kerosene tanks)'),
+  // Was 'cabin can have wide windows at the front' (unsupported: blended wings have FEW windows); softened to a labelled idea.
+  'Panorama seats': F('Blended wings have few windows, since most seats are far from the sides. One idea is screens that show the view outside.', 'guess', 'design idea, not a flying feature; no manufacturer source. Airbus delayed its hydrogen airliner (ZEROe) by 5-10 years in Feb 2025 (Bloomberg, 2025-02-07).'),
   // Comet 4
   'Rolls-Royce Avon turbojets, tuned': F('The Comet 4 had four Rolls-Royce Avon jet engines buried inside its wings.', 'real', 'enginehistory.org, de Havilland Comet [1]'),
   'Thrust reversers': F('Comet 4 engines could push air forwards to help the plane slow down after landing.', 'hist', 'enginehistory.org, Avon 525 reverser [2]'),

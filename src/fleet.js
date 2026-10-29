@@ -80,7 +80,7 @@ export const PLANES = [
   // night contrail heat x0.7): bare 0.40 x Ops 8 0.82 = 0.328 (cleaner than the full 787's 0.343), night 0.85;
   // full 0.40 x 0.92 x 0.97 x 0.97 x 0.975 x Ops 10 0.78 = 0.263, night 0.85 x Ops 10 0.82 = 0.70.
   // The last Wings & body level turns it into a blended wing (JetZero). Art: code-made (tools/art/make_787.py --truss).
-  { id: 'truss', era: 4, name: 'Truss-braced wing (X-66)', co2: 0.40, nightHeat: 0.85, margin: 'edge3', sprite: 'plane-truss', portrait: 'assets/ui/plane-hangar-truss.png',
+  { id: 'truss', era: 4, name: 'Truss-braced wing',   /* generic (Coordinator, 2026-10-29): the X-66 demonstrator is paused */ co2: 0.40, nightHeat: 0.85, margin: 'edge3', sprite: 'plane-truss', portrait: 'assets/ui/plane-hangar-truss.png',
     lines: {
       engines: [L(4, 1600, 'Open-fan engines: no casing round the fan', { co2: 0.95 }), L(4, 2300, 'Bigger open fans', { co2: 0.93 }),
         L(4, 3200, 'Hybrid-electric assist', { co2: 0.92 })],
