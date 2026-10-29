@@ -19,6 +19,9 @@
   for (const g of [...F.SYSTEMS, ...F.GADGETS]) g.levels.forEach((lv, i) => { tot[F.levelEra(i + 1)] += lv.cost; check(lv.crystals === Math.round(lv.cost / 8), `${g.id} ${i + 1}: crystals = seeds / 8`); });
   tot.forEach((t, e) => check(t / F.ERA_BUDGET[e] >= 1.4 && t / F.ERA_BUDGET[e] <= 1.6, `era ${e} prices total ${t} = ${(t / F.ERA_BUDGET[e]).toFixed(2)}x its budget, want ~1.5x`));
   check(F.START_BONUS === 300, `start bonus 300 seeds (user, 2026-10-23): ${F.START_BONUS}`);
+  // The era step (2026-10-29): a bare 787 has its own no-fly help (+8 px, measured), on top of ATC's (a full 787: 8 + 10).
+  const k787 = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 6 }, gadgets: {} } }), kFull = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 8 }, gadgets: {} } });
+  check(k787.noFlyGapAdd === 8 && kFull.noFlyGapAdd === 18, `787 no-fly help: bare ${k787.noFlyGapAdd} (want 8), with ATC 8 ${kFull.noFlyGapAdd} (want 18)`);
   // Eras 4-6 (2026-10-28): the three systems, Sensors and Autopilot go on to level 8 in the 2010s; Magnet, Hold, Gear stop at 6.
   check(F.SYSTEMS.length === 3 && F.GADGETS.length === 5 && [...F.SYSTEMS, ...F.GADGETS].map(g => g.levels.length).join(',') === '10,10,10,6,6,6,10,10', 'three systems and five gadgets: 10 / 6 levels (eras 4-5)');
   check(F.PLANES.map(p => Object.values(p.lines).map(l => l.length).join('')).join(' ') === '222 333 444 333 333', 'Comet 2, 747 3, twin 4, 787 3, truss wing 3 levels per line');

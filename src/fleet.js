@@ -62,7 +62,8 @@ export const PLANES = [
   // (BALANCE-ERAS-4-6.md: CO2 x0.65 of the full twin): full twin kit CO2 0.527 -> bare 787 0.57 x Ops 6 0.88 = 0.50 (a bit
   // cleaner: the era step) -> full 0.57 x 0.85 x 0.94 x 0.92 x Ops 8 0.82 = 0.343 (x0.65). Art: code-made from the twin
   // (tools/art/make_787.py, no PixelLab until the user tops up). Facts to check before text ships: research/PLANE-FUTURE.
-  { id: 'dreamliner', era: 3, name: '787 Dreamliner', co2: 0.57, margin: 'edge2', sprite: 'plane-787', portrait: 'assets/ui/plane-hangar-787.png',
+  // noFlyGapAdd 8: the era step (sim chat, 120 skies at s 0.9: bare 787 +8 >= full twin at 14-30k, 27k -3 pts inside the +-4 SE).
+  { id: 'dreamliner', era: 3, name: '787 Dreamliner', co2: 0.57, noFlyGapAdd: 8, margin: 'edge2', sprite: 'plane-787', portrait: 'assets/ui/plane-hangar-787.png',
     lines: {
       engines: [L(3, 900, 'GEnx turbofans', { co2: 0.93 }), L(3, 1300, 'Chevron nacelles: saw-tooth edges, quieter', { co2: 0.9 }),
         L(3, 1800, 'Trent 1000 TEN engines', { co2: 0.85 })],
@@ -206,7 +207,9 @@ export function fleetKit(save) {
     // Autopilot pick-ups only once the Autopilot gadget is bought (0.10.2: they used to come for everyone).
     autoSecs: ap.autoSecs || POWERUPS.autoSeconds, autoChance: ap.autoChance || 0,
     // Eras 4-6 (PROPOSAL-ERAS-4-6-SYSTEMS): kit fields the 2010s levels set; each is 0 / 1 / false before, so eras 1-3 fly as before.
-    noFlyWarnPx: atc.noFlyWarnPx || 0, noFlyGapAdd: atc.noFlyGapAdd || 0,       // ATC 7-8 (drawing; rules.js: the gap)
+    // noFlyGapAdd: ATC 8+ AND the plane's own (the era step, 2026-10-28: the sim chat measured a BARE 787 worse than a full twin
+    // past 21k, the drift costing more than its CO2 gain; a newer plane handles no-fly gaps a little better). TBD-SIM.
+    noFlyWarnPx: atc.noFlyWarnPx || 0, noFlyGapAdd: (p.noFlyGapAdd || 0) + (atc.noFlyGapAdd || 0),   // (drawing; rules.js: the gap)
     cleanSecs: ops.cleanSecs || 0,                                              // Ops 8: contrail-free cruise meter (rules.js)
     nightHeatMul: (p.nightHeat || 1) * (ops.nightHeat || 1),                     // night contrail heat (src/sim/physics.js rayRate)
     birdWarnPx: sen.birdWarnPx * ((f.systems.atc || 0) >= 9 && (f.gadgets.sensors || 0) >= 9 ? 2 : 1) || 0,   // Sensors 7+: bird radar; COMBO Bird corridor (ATC 9 + Sensors 9) doubles its reach (drawing)
