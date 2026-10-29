@@ -44,7 +44,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
       closecall: [[{ heat: 149 }], [{ heat: 148 }]], lucky7: [[{ cargo: 7 }], [{ cargo: 8 }]],
       seeddodger: [[{ cargo: 0, distance: 2000 }], [{ cargo: 0, distance: 1999 }]],
     };
-    const res = { missing: BADGES.filter(x => !cases[x.id]).map(x => x.id), wrong: [] };
+    // The 3 cumulative badges (distance, collector, threader) are earned from the save's lifetime totals, not from one flight's numbers: tests/cumbadges.cjs (Node, plants) covers them.
+    const CUMULATIVE = ['distance', 'collector', 'threader'];
+    const res = { missing: BADGES.filter(x => !cases[x.id] && !CUMULATIVE.includes(x.id)).map(x => x.id), wrong: [] };
     // Badges that say "then land" must not award on a crash with the same numbers.
     const mustLand = ['longhaul', 'hopper', 'bumpy', 'seedhunter', 'worldflight', 'closecall', 'lucky7', 'seeddodger'];
     for (const [id, [yes, no]] of Object.entries(cases)) {
