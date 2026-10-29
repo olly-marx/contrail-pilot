@@ -91,7 +91,17 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // Missing the icy air must not get flight school stuck: more icy air appears.
   const p2 = await b.newPage({ viewport: { width: 390, height: 844 } });
   await p2.goto(URL); await p2.evaluate(() => localStorage.clear()); await p2.reload(); await p2.waitForTimeout(700);
-  await p2.click('#goBtn'); await p2.waitForTimeout(300); await p2.click('#howClose'); await p2.waitForTimeout(300); await p2.mouse.move(195, 400); await p2.mouse.down(); await p2.waitForTimeout(2500); await p2.mouse.up();
+  await p2.click('#goBtn'); await p2.waitForTimeout(300); await p2.click('#howClose'); await p2.waitForTimeout(300);
+  // Press only once the game is in 'takeoff' (a press before it is ignored, and a fixed 2.5 s hold left the plane on the runway on a loaded machine: game time then stood still
+  // and nothing below ever happened, the real cause of the 'flaky' step-9 failure; measured 2026-10-29), and hold until the plane is flying.
+  let held2 = false;
+  for (let i = 0; i < 1200; i++) {
+    const st = await p2.evaluate(() => { const s = game.scene.getScene('game'); return s ? { state: s.state, school: !!s.school } : { state: 'none', school: false }; });
+    if (st.state === 'takeoff' && !held2) { await p2.mouse.move(195, 400); await p2.mouse.down(); held2 = true; }
+    if (st.state === 'playing' && st.school) break;
+    await p2.waitForTimeout(100);
+  }
+  if (held2) await p2.mouse.up();
   const stuck = await p2.evaluate(() => new Promise(res => { const s = game.scene.getScene('game'), sc = s.school;
     sc.i = 8; sc.next(); s.frozen = false; const first = sc.issr;   // step 9: day icy air
     // The patch is placed around where the plane WAS when the step began (school.js bigIssr), so a fixed y (it was 360) sat INSIDE the patch on some runs and the
