@@ -230,7 +230,7 @@ export const STEADY = [
   { id: 'st-plant', base: 5, prize: 15, ready: s => ((s.levels || {}).trees || 0) > 0, title: (t, f) => `Plant ${t} trees in ${f.landName}`, add: r => r.planted || 0 },
 ];
 const steadyOf = (save, a) => ((save.steady = save.steady || {})[a] = save.steady[a] || {});
-const rungTarget = (d, rung) => Math.round(d.base * Math.pow(1.5, rung));
+export const rungTarget = (d, rung) => Math.round(d.base * Math.pow(1.5, rung));
 export function steadyVisible(save, a = area(save)) {
   if (!dailiesOpen(save) || !AREAS[a]) return [];
   const st = steadyOf(save, a), f = fillFor(save, a), ready = STEADY.filter(d => !d.ready || d.ready(save));

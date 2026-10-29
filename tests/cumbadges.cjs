@@ -14,6 +14,7 @@
   for (const id of ['distance', 'collector', 'threader'])
     check(won.some(w => w.id === id && w.tier === 1 && w.seeds === 5), `${id} bronze is earned from the totals: ${JSON.stringify(won.map(w => w.id))}`);
   check(!B.earnBadges(s, { landed: false, distance: 0, cargo: 0 }).length, 'nothing earned twice');
+  s.badgeTiers.frequent = 3; s.landings = 250;   /* a finished badge must not get a bar */
   const near = B.nearBadges(s);
   check(near.length === 3 && near.every(x => x.value < x.goal), `3 badge bars, each not yet full: ${JSON.stringify(near.map(x => [x.b.id, x.value, x.goal]))}`);
   check(B.medal('distance', 1) === 'assets/ui/badge-longhaul-1.png', 'new badges borrow existing medal art');

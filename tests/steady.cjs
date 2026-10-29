@@ -23,7 +23,7 @@
   M.onFlight(s, crash({ distance: 2500 }));
   check(s.missionsDone.includes('steady:weurope:st-km:0') && s.steady.weurope['st-km'].rung === 1, `a full steady goal pays and climbs a rung: ${s.missionsDone}`);
   const next = M.steadyVisible(s).find(x => x.def.id === 'st-km');
-  check(!next || next.target === 4500, `the next rung asks x1.5 (${next && next.target})`);
+  check((!next || next.target === 4500) && M.rungTarget(M.STEADY[0], 1) === 4500 && M.rungTarget(M.STEADY[0], 2) === 6750, `the next rung asks x1.5 (${M.rungTarget(M.STEADY[0], 1)})`);
   // 3.
   const lots = base(['L1', 'L2', 'L3', 'steady:weurope:st-km:0', 'steady:weurope:st-km:1', 'steady:weurope:st-seeds:0']);
   check(!M.tierOpen(lots, 'weurope', 2), 'steady goals do not open tier 2');
