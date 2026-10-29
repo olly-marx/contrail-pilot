@@ -188,4 +188,4 @@ tourready	src/online.js	s/export const namesOpen = () => !noOnline() || (typeof 
 payoffdraw	src/hangar.js	s/new Promise(r => setTimeout(r, 6000))\]).then/Promise.resolve()]).then/	the payoff does not wait for its pictures (the playtest blank)
 payoffdraw	src/tips.js	s/Look: shiny new jet engines!/Your plane is cleaner now!/	the old stat-only words
 pilotpreview	src/pilot.js	s/const off = onlineOff(), names = namesOpen();/const off = onlineOff(), names = false;/	PILOT hides the name form in preview (the playtest trap)
-pilotpreview	src/tour.js	s/!getPilot() \&\& namesOpen()) return/!getPilot()) return/	the name tour starts while names rest
+pilotpreview	src/tour.js	s/!getPilot() \&\& namesOpen()) return/!getPilot()) return/;s/tap: true, ready: namesOpen }/tap: true }/	the name tour starts while names rest (both guards gone)
