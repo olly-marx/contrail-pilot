@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-10-29-era-6",
+    "version": "0.20.0",
+    "date": "2026-10-29",
+    "level": "major",
+    "notes": [
+      "The last plane is here: the hydrogen blended wing! Build it to fly the furthest of all.",
+      "THE LAP OF THE EARTH is open once you have visited every land: fly from home all the way round the world and back, 40,000 km.",
+      "Two more levels for every part of your plane, and a new combo: full awareness of the sky around you.",
+      "NATURE money: level 4 brings the dividend.",
+      "When you finish the lap, there is an ending card for you."
+    ]
+  },
+  {
     "id": "2026-10-29-787-gaps",
     "version": "0.19.3",
     "date": "2026-10-29",
