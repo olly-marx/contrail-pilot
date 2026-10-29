@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-29-goose-early",
+    "version": "0.19.2",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "Patagonia: guarding the ruddy-headed goose is now one of the first projects you can take."
+    ]
+  },
+  {
     "id": "2026-10-28-kinds-open",
     "version": "0.19.1",
     "date": "2026-10-28",
