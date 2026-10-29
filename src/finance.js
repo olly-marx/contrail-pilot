@@ -41,7 +41,10 @@ export const rate = (save, level = financeLevel(save)) => rateAt(level, natureHe
 export function canTake(save) {
   const lv = financeLevel(save), L = FINANCE.levels[lv - 1];
   if (!L || !financeOpen(save) || (save.finance.tradedAt ?? -1) === (save.landings || 0)) return 0;
-  return Math.max(0, Math.min(L.cap, Math.floor(((save.seeds || 0) - L.reserve) / rate(save))));
+  // Save up for the next desk level (sim chat + Coordinator, 2026-10-29): while it exists and its era is open, keep its price
+  // too, so the player reaches bonds and the dividend instead of trading down to the reserve every landing.
+  const N = FINANCE.levels[lv], keep = N && eraProgress(save).index >= (N.era ?? FINANCE.era) ? Math.max(L.reserve, N.cost) : L.reserve;
+  return Math.max(0, Math.min(L.cap, Math.floor(((save.seeds || 0) - keep) / rate(save))));
 }
 export function trade(save) {
   const n = canTake(save); if (!n) return 0;

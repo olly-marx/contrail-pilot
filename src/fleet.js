@@ -17,7 +17,11 @@ export const ERA_SCALE = [0.78, 0.43, 0.41, 0.54, 0.5, 0.46];
 export const ERA_BUDGET = [600, 1500, 3500, 8000, 14000, 22000];   // 2030s 14,000, far future 22,000: TBD-SIM
 export const START_BONUS = 300;                // seeds, once, at the reset (user, 2026-10-23: no refund of old plane upgrades)
 
-const price = (era, cost) => { const seeds = Math.max(5, Math.round(cost * ERA_SCALE[era] / 5) * 5); return { cost: seeds, crystals: Math.round(seeds / 8) }; };
+// Crystals = seeds / 8, HALVED from the 2030s (era >= 4; sim chat + Coordinator, 2026-10-29: experts there are paced by
+// crystals, the truss came 55-180 flights after its era opened; with half it comes 0-5 flights after). Seeds unchanged.
+export const CRYSTAL_HALF_FROM = 4;
+const price = (era, cost) => { const seeds = Math.max(5, Math.round(cost * ERA_SCALE[era] / 5) * 5), c = Math.round(seeds / 8);
+  return { cost: seeds, crystals: era >= CRYSTAL_HALF_FROM ? Math.round(c / 2) : c }; };
 const L = (era, cost, name, fx, more = {}) => ({ name, ...price(era, cost), ...fx, ...more });
 const V = { verify: true };
 
