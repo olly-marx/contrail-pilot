@@ -17,7 +17,7 @@ import { capability } from './simulate.js';
 import { makeRng } from './rng.js';
 import { CLIMATE } from '../config.js';
 import { nextBuys, canAfford, buyFleet, fleetOf, choosePlane, PLANES } from '../fleet.js';
-import { LINES, nextLevel, level, canBuy, buyLevel, unlocked, needsMoreNature } from '../upgrades.js';
+import { LINES, nextLevel, level, canBuy, buyLevel, unlocked, needsMoreNature, freeParcels } from '../upgrades.js';
 import { biodiversity, fundProject, projectsDone } from '../nature.js';
 import { REGION_DATA } from '../habitats.js';
 import { eraProgress } from '../eras.js';
@@ -67,7 +67,9 @@ export function shop(save, region) {
   const bought = [];
   const options = () => [
     ...nextBuys(save).filter(b => b.open && canAfford(save, b)).map(b => ({ cost: b.cost, name: `${b.id}${b.level}`, buy: () => buyFleet(save, b.kind, b.id) })),
-    ...LINES.filter(l => nextLevel(save, l) && unlocked(save, l) && !needsMoreNature(save, l) && canBuy(save, l)).map(l => ({ cost: nextLevel(save, l).cost, name: `${l.id}${level(save, l.id) + 1}`, buy: () => buyLevel(save, l.id) })),
+    // The first tree parcels are FREE in season 2 once L4 is done (upgrades.js freeParcels; the game offers them in NATURE): take them
+    // even when the player could not pay (2026-10-29: without this the model never planted for lesson L5).
+    ...LINES.filter(l => nextLevel(save, l) && unlocked(save, l) && !needsMoreNature(save, l) && (canBuy(save, l) || freeParcels(save, l.id))).map(l => ({ cost: freeParcels(save, l.id) ? 0 : nextLevel(save, l).cost, name: `${l.id}${level(save, l.id) + 1}${freeParcels(save, l.id) ? '(free)' : ''}`, buy: () => buyLevel(save, l.id) })),
     ...((REGION_DATA[region] || {}).projects || []).filter(p => !projectsDone(save, region).some(d => d.id === p.id) && biodiversity(save, region) >= p.needs && save.seeds >= p.cost && (save.crystals || 0) >= p.crystals)
       .map(p => ({ cost: p.cost, name: `project:${p.id}`, buy: () => fundProject(save, region, p.id) })),
   ];
