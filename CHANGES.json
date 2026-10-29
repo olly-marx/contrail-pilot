@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-29-steady-missions",
+    "version": "0.21.0",
+    "date": "2026-10-29",
+    "level": "major",
+    "notes": [
+      "New: steady missions! After your first lessons there is always a goal waiting for you, and even a crash counts.",
+      "New: daily missions, with an easy one every day, and a streak for coming back.",
+      "New: three more badges for your whole journey: distance, collecting and threading the gaps. They give crystals.",
+      "The MISSIONS screen now shows how close you are to your next badge."
+    ]
+  },
+  {
     "id": "2026-10-29-era-6",
     "version": "0.20.0",
     "date": "2026-10-29",
