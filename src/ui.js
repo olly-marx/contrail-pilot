@@ -19,7 +19,9 @@ const crossingsHTML = s => {
   if (!list.length) return moreToCome(s) ? '<div id="jCross"><p class="small" id="jMore"><b>MORE TO COME!</b><br>You have flown every crossing there is for now. Faster planes and the far oceans are on their way.</p></div>' : '';
   return `<div id="jCross">${list.map(c => { const ctx = offerCtx(s, c), o = offerCheck(c, ctx), go = o.offered || S2_UNLOCK;
     const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: `a landed flight of ${km(Math.round(SEASON.offer.distanceShare * c.km))} from here (best so far ${km(ctx.capabilityKm)})`, nature: `biodiversity ${SEASON.offer.biodiversity} here (now ${ctx.bio})`, contrails: 'the 3 starred missions here' })[k]);
-    return `<p class="small"><b>CROSSING: ${c.from} &gt; ${c.to}</b>, ${km(c.km)} non-stop${c.opens ? ` (opens ${opensName(c.opens)})` : ''}<br>
+    const head = c.kind === 'lap' ? `<b id="jLap">THE LAP OF THE EARTH</b>: from ${c.from} round the world and home, ${km(c.km)} non-stop`   // the final boss (M4)
+      : `<b>CROSSING: ${c.from} &gt; ${c.to}</b>, ${km(c.km)} non-stop${c.opens ? ` (opens ${opensName(c.opens)})` : ''}`;
+    return `<p class="small">${head}<br>
       ${go ? `<button class="btn go" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : `Needs: ${needs.join(', ')}`}</p>`; }).join('')}</div>`;
 };
 // Season 2: which areas you fly in, and which are still locked (dim dots on the globe; crossings open them).
