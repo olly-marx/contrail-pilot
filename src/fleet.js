@@ -225,7 +225,7 @@ export function fleetKit(save) {
     // No forecasting: icy air is seen only up close, but honestly. With a forecast: seen sooner, with
     // false patches (`fakes` of those shown) and real ones it missed (`late`). ERA5 skill 0.2-0.4 (CONFIRMED).
     fakes: fc.reveal ? fc.fakes ?? 0.4 : 0, late: fc.reveal ? fc.late ?? 0.3 : 0, nightPatches: fc.nightPatches || 1,
-    gaps: atc.gaps || 1, gapTurb: atc.gapTurb || 1, gapBirds: (atc.gapBirds || 1) * (sen.birdChance || 1),   // Sensors 11-12: bird-aware routing airportEarly: !!atc.airportEarly,   // stage 6
+    gaps: atc.gaps || 1, gapTurb: atc.gapTurb || 1, gapBirds: (atc.gapBirds || 1) * (sen.birdChance || 1), airportEarly: !!atc.airportEarly,   // stage 6; gapBirds also has Sensors 11-12 (bird-aware routing)
     hintLevel: Math.min(f.systems.forecast || 0, f.systems.atc || 0, f.systems.ops || 0),   // next-gap hint (stage 7)
     pickup: gad('magnet').pickup || 12,
     perSkip: (gad('hold').perSkip || CARGO.multiplierPerSkip) + add('perSkip'),
