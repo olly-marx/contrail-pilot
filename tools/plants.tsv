@@ -164,3 +164,4 @@ sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
 # macrons: not sed-able (a font edit). Proven 2026-10-28 by deleting U+012B from vendor/fonts/contrail-pixel.woff2's cmap (fontTools) -> FAIL.
 kindsreach	src/missions2.js	s#  const kinds = Math.max(2, Math.min(3, open.length));#  const kinds = 3;#	the kinds star fixed at 3 (impossible in plateau lands)
 homelanding	src/sim/rules.js	s# \&\& !(r.name === this.homeName \&\& r.worldX <= 0));# \&\& r.name !== this.homeName);#	the home runway never landable (the old exclusion)
+hubscreen	style.css	s/grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px;/grid-template-columns: repeat(5, 1fr); gap: 4px;/	the 6 tabs wrap to two rows and cover the buttons above
