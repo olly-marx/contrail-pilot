@@ -101,6 +101,7 @@ export const RULES = {
     this.school = null;
     this.nextStormAt = WIDTH + 200;  // first storm arrives after the climb-out
     this.nextIssrAt = 300;
+    this.lessonSeeds = null; this.nextLessonSeedAt = null;   // season 2 lesson flights (L1, L2): TOKENS.lessonSeeds placed seeds (no rand drawn)
     this.l2Patch = null;             // season 2, lesson L2 pending: one daytime icy patch is guaranteed (decided at the first ISSR check)
     this.stormCount = 0;
     this.lastContrail = 0;
@@ -315,6 +316,12 @@ export const RULES = {
     if (this.distancePx >= this.nextBirdsAt) {
       if (this.rand() < this.squeezed(B.chance, 'capBirds') * this.kit.gapBirds) this.addFlock();   // ATC bird advisories: fewer flocks
       this.nextBirdsAt += B.every;
+    }
+    if (this.lessonSeeds == null) this.lessonSeeds = !this.school && isSeason2(this.save) && ['L1', 'L2'].includes((s2LessonsLeft(this.save)[0] || {}).id) ? TOKENS.lessonSeeds || 0 : 0;
+    if (this.lessonSeeds > 0 && this.distancePx >= (this.nextLessonSeedAt ??= TOKENS.lessonSeedFrom)
+      && !this.storms.some(st => Math.abs(st.rects[0].x - (WIDTH + 10)) < STORMS.width + 30)) {   // (never inside a storm column: wait a tick)
+      const y = Math.max(40, Math.min(SKY_H - 60, this.plane.y + 6 - 7)), t = { x: WIDTH + 10, y, baseY: y, phase: 0, value: 1 };
+      this.tokens.push(t); this.showToken(t); this.lessonSeeds--; this.nextLessonSeedAt += TOKENS.lessonSeedEvery;
     }
     if (this.distancePx >= this.nextTokenAt) {
       const chance = Math.min(TOKENS.maxChance, TOKENS.chance + TOKENS.chancePerKm * this.distancePx / 1000);

@@ -77,6 +77,7 @@ export const TIPS = {
   'hangar-looks':      { say: 'A new look for your plane.' },
   'rail-takeoff':      { say: 'Take off! Land at the next airport.' },
   'rail-seeds':        { say: "You landed with your seeds: they're yours to spend!" },
+  'rail-seeds-none':   { say: 'No seeds this time: grab the seed bags as you fly! Your prize is below.' },
   'rail-claim':        { say: 'You completed a mission! Claim the seeds for it.' },
   'rail-wildlife':     { say: 'Another flight now: watch for wildlife on the ground!' },
   'rail-takeoff2':     { say: 'Take off, and keep an eye out for animals!' },

@@ -90,7 +90,7 @@ export class Tour {
     if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];
     // R9: after flight 1: the seeds are yours; claim the mission's prize; another flight, watch for wildlife.
     if (res && d('L1') && !this.done('r-res1')) return ['r-res1', [
-      { target: '#rGrab', text: tip('rail-seeds'), ok: true },
+      { target: '#rGrab', text: tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none'), ok: true },   // (playtest 2026-10-29: 0 seeds read 'your seeds')
       ...(un ? [{ target: '#rRewards .claim', text: tip('rail-claim'), tap: true }] : []),
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];

@@ -325,7 +325,7 @@ export class GameScene extends Phaser.Scene {
     return true;
   }
   // Season 2: wild animals (and scenery birds) only once the NATURE lesson (L2) is done: one new thing at a time.
-  wildAllowed() { if (this.wildOK0 == null) this.wildOK0 = !isSeason2(this.save) || (this.save.missionsDone || []).includes('L1'); return this.wildOK0; }   // from flight 2 (the user's rails, 2026-10-27)
+  wildAllowed() { if (this.wildOK0 == null) this.wildOK0 = !isSeason2(this.save) || (this.save.missionsDone || []).includes('L2'); return this.wildOK0; }   // from flight 3, after the NATURE lesson L2 (the user's playtest, 2026-10-29; it read L1 = flight 2, against the rails and tests/walkthrough.cjs)
 
   showTip(html, pic) {
     this.explaining = true;   // a bubble is up (NOT frozen)
@@ -452,6 +452,7 @@ export class GameScene extends Phaser.Scene {
   // real flight, once it is well on screen; the first time: a pop-up.
   seen(sprite) {
     if (this.school || this.state !== 'playing') return;
+    if (!this.wildAllowed()) return;   // nothing is FOUND before the NATURE lesson, cows and sheep too (the user's playtest, 2026-10-29: 'found' on flight 2)
     const w = (this.wildlife && this.wildlife.who && this.wildlife.who[sprite]) || WILDLIFE.find(x => x.sprite === sprite);   // who it is HERE
     if (!w) return;
     this.save.found = this.save.found || {};

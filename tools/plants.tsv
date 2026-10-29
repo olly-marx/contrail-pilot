@@ -188,3 +188,9 @@ tourready	src/online.js	s/export const namesOpen = () => !noOnline() || (typeof 
 payoffdraw	src/hangar.js	s/new Promise(r => setTimeout(r, 6000))\]).then/Promise.resolve()]).then/	the payoff does not wait for its pictures (the playtest blank)
 payoffdraw	src/tips.js	s/Look: shiny new jet engines!/Your plane is cleaner now!/	the old stat-only words
 pilotpreview	src/pilot.js	s/const off = onlineOff(), names = namesOpen();/const off = onlineOff(), names = false;/	PILOT hides the name form in preview (the playtest trap)
+lessonseeds	src/config.js	s/  lessonSeeds: 3,/  lessonSeeds: 0,/	no seeds placed on lesson flights
+lessonseeds	src/sim/rules.js	s/\&\& !this.storms.some(st => Math.abs(st.rects\[0\].x - (WIDTH + 10)) < STORMS.width + 30)) {/) {/	lesson seeds may sit inside a storm column
+lessonseeds	src/sim/rules.js	s/\['L1', 'L2'\].includes((s2LessonsLeft/['L1', 'L2', 'L3', 'L4', 'L5'].includes((s2LessonsLeft/	lesson seeds on every lesson flight (changes L3+ flights)
+lessonseeds	src/tour.js	s/tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none')/tip('rail-seeds')/	R9a says 'your seeds' with 0 seeds
+foundgate	src/GameScene.js	s/    if (!this.wildAllowed()) return;   \/\/ nothing is FOUND/    if (false) return;   \/\/ nothing is FOUND/	cows and sheep found before the NATURE lesson
+foundgate	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1'); return this.wildOK0;/	wild animals from flight 2 again
