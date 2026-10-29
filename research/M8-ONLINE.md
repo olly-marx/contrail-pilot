@@ -37,7 +37,7 @@ Top 50 plus the caller's own row if outside it; `hidden` players excluded (uncha
 
 **Schema changes (additive, with an undo each):** `alter table flights add column missions_done smallint not null default 0 check (missions_done between 0 and 200)`; `send_flights` reads it and the new client version; `leaderboard()` replaced (drop and recreate, as 4 times before); plus the drafted `season` table, `client_ok()`, the dropped direct-insert policy, the wipe and the restore-links retirement, in that order.
 
-**Client changes (one release, `0.20.0`; was planned as 0.17.0):** remove the offline switch for the shipped game (`src/season2.js`: keep `__CP_NO_ONLINE` only for the tester modes); `shade: Math.max(0, this.sunBlocked)`; send `missions_done` and `client: VERSION`; BOARDS screen = MY RECORDS plus, when online, a ranking tab per board (THIS WEEK / EVER; "You: 12th" row); PILOT tab and the name tour return after the 3rd landing; "Update to keep playing!" on `CP001`; remove `src/restore.js` and its UI (restore links retired); the upload banner and the outbox (`flush`, `catchUp`) switched back on; MY RECORDS stays the offline fallback.
+**Client changes (one release, `0.22.0`; was planned as 0.17.0):** remove the offline switch for the shipped game (`src/season2.js`: keep `__CP_NO_ONLINE` only for the tester modes); `shade: Math.max(0, this.sunBlocked)`; send `missions_done` and `client: VERSION`; BOARDS screen = MY RECORDS plus, when online, a ranking tab per board (THIS WEEK / EVER; "You: 12th" row); PILOT tab and the name tour return after the 3rd landing; "Update to keep playing!" on `CP001`; remove `src/restore.js` and its UI (restore links retired); the upload banner and the outbox (`flush`, `catchUp`) switched back on; MY RECORDS stays the offline fallback.
 
 ## 3. Local proof first (no live access needed)
 
@@ -46,7 +46,7 @@ Top 50 plus the caller's own row if outside it; `hidden` players excluded (uncha
 3. **Planted defects** for each assertion (wrong sort order for `shortest`, a week boundary off by a day, clamp removed from `cool`, hidden player shown, min_client not enforced, undo that loses rows): each must fail the suite.
 4. The client against a local PostgREST-compatible stand-in is covered by the existing fake-Supabase browser tests (`online`, `onlinesave`, `offline`), re-homed to the shipped game.
 
-## 4. Live apply runbook (only after the user confirms in this chat) — UPDATED 2026-10-28: the online client is 0.20.0 (0.17.0 = era 4, 0.18.x = starters, 0.19.x = era 5)
+## 4. Live apply runbook (only after the user confirms in this chat) — UPDATED 2026-10-28: the online client is 0.22.0 (0.17.0 = era 4, 0.18.x = starters, 0.19.x = era 5)
 
 The scripts are the proven drafts in `supabase/drafts/` (branch `feat/m8-db`), proven by `supabase/tests/run-m8.sh` (Docker postgres:17: the live schema + the drafts; every undo returns the database to its exact pre-state; planted defects are caught).
 Order and why: (1)(2) are harmless to the game that is live now (0.18.1 does not use online; `send_flights(batch, client default null)` still takes the old call; `min_client` starts at 0.0.0). (3)(4) destroy nothing (archive first, counts compared, undo scripts). (5) happens only AFTER 0.20.0 is live, so a 0.20.0 player is never refused.
@@ -57,8 +57,8 @@ Preconditions: the user has said yes in this chat after reading the exact script
 3. **Boards** `20261028010000_boards8_leaderboard.sql` (+ undo): the 8 boards x week/ever. Verify with the A assertions' queries on live read-only (shape only).
 4. **Wipe** `20261028020000_season_wipe.sql` (+ undo): archive to `archive_season1` (not API-visible), counts compared INSIDE the transaction (it rolls back if they differ), then delete flights and player_saves. Players, devices, codes are kept. Refuses a second run.
 5. **Retire restore links** `20261028030000_retire_restore_links.sql` (+ undo): archive, drop `restore_*` and the table.
-6. Release the client 0.20.0 (gate on the exact commit); confirm version.json.
-7. **Season controls**: `update season set start_at = now(), min_client = '0.20.0'`; verify `send_flights('[]', '0.18.1')` raises CP001 and `'0.20.0'` is accepted. Undo: `update season set start_at = '-infinity', min_client = '0.0.0'`.
+6. Release the client 0.22.0 (gate on the exact commit); confirm version.json.
+7. **Season controls**: `update season set start_at = now(), min_client = '0.22.0'`; verify `send_flights('[]', '0.18.1')` raises CP001 and `'0.20.0'` is accepted. Undo: `update season set start_at = '-infinity', min_client = '0.0.0'`.
 Each step is reported to the user before the next; any failed check stops the run and the undo runs. After each step the row counts and the state digest are appended to `research/M8-RUN-LOG.md`.
 
 ## 5. Order of work
