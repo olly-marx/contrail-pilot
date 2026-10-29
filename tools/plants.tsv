@@ -102,7 +102,7 @@ audiocrash	src/crash.js	s/audio device|audiocontext|NotAllowedError|AbortError/z
 audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no longer catches a rejected resume()
 audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
 releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
-releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real$/ tours bubblestill/	onboarding changes no longer run firsthour-real
+releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes$/ tours bubblestill missionlanes/	onboarding changes no longer run firsthour-real
 sim-hint@PLANT=blind	-	-	the player ignores the hint
 sim-progression-s2@PLANT=nostars	-	-	crossings offered without the area missions
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
