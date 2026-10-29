@@ -12,7 +12,7 @@
   check(s.totals.km === 5000 && s.totals.seeds === 50 && s.totals.gaps === 25, `totals add up, crashes too: ${JSON.stringify(s.totals)}`);
   const won = B.earnBadges(s, { landed: false, distance: 0, cargo: 0 });
   for (const id of ['distance', 'collector', 'threader'])
-    check(won.some(w => w.id === id && w.tier === 1 && w.seeds === 2), `${id} bronze is earned from the totals: ${JSON.stringify(won.map(w => w.id))}`);
+    check(won.some(w => w.id === id && w.tier === 1 && w.seeds === 0 && w.crystals === 1), `${id} bronze is earned from the totals: ${JSON.stringify(won.map(w => w.id))}`);
   check(!B.earnBadges(s, { landed: false, distance: 0, cargo: 0 }).length, 'nothing earned twice');
   s.badgeTiers.frequent = 3; s.landings = 250;   /* a finished badge must not get a bar */
   const near = B.nearBadges(s);

@@ -15,7 +15,7 @@ const projects = save => Object.values(save.habitat || {}).reduce((a, l) => a + 
 const T3 = (a, b, c) => [{ goal: a, seeds: 5, crystals: 2 }, { goal: b, seeds: 20, crystals: 6 }, { goal: c, seeds: 60, crystals: 15 }];
 const ONE = (goal = 1, seeds = 10, crystals = 4) => [{ goal, seeds, crystals }];
 const SECRET = ONE(1, 10, 3);
-const CUM = (a, b, c) => [{ goal: a, seeds: 2, crystals: 2 }, { goal: b, seeds: 8, crystals: 6 }, { goal: c, seeds: 25, crystals: 15 }];   // cumulative badges: seeds ~0.4x T3 (the sim's c), 2026-10-29)
+const CUM = (a, b, c) => [{ goal: a, seeds: 0, crystals: 1 }, { goal: b, seeds: 0, crystals: 2 }, { goal: c, seeds: 0, crystals: 4 }];   // cumulative badges: medal + a few crystals, no seeds (the sim's c), round 4, 2026-10-29)
 
 export const THEMES = { flying: 'Flying', climate: 'Climate', seeds: 'Seeds', nature: 'Nature', explorer: 'Explorer', secret: 'Secret' };
 
