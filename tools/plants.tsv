@@ -193,3 +193,6 @@ lessonseeds	src/sim/rules.js	s/\&\& !this.storms.some(st => Math.abs(st.rects\[0
 lessonseeds	src/sim/rules.js	s/\['L1', 'L2'\].includes((s2LessonsLeft/['L1', 'L2', 'L3', 'L4', 'L5'].includes((s2LessonsLeft/	lesson seeds on every lesson flight (changes L3+ flights)
 lessonseeds	src/tour.js	s/tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none')/tip('rail-seeds')/	R9a says 'your seeds' with 0 seeds
 foundgate	src/GameScene.js	s/    if (isSeason2(this.save) \&\& !(this.save.missionsDone || \[\]).includes('L2')) return;   \/\/ nothing is FOUND/    if (false) return;   \/\/ nothing is FOUND/	cows and sheep found before the NATURE lesson
+wildflight3	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1'); return this.wildOK0;/	animals on flight 2 again
+wildflight3	src/tips.js	s/Another flight now: find icy air in the daytime!/Another flight now: watch for wildlife on the ground!/	the old R9a wildlife line after flight 1
+walkthrough	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1'); return this.wildOK0;/	animals on flight 2 again (in a real flight)

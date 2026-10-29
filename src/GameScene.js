@@ -325,7 +325,7 @@ export class GameScene extends Phaser.Scene {
     return true;
   }
   // Season 2: wild animals (and scenery birds) only once the NATURE lesson (L2) is done: one new thing at a time.
-  wildAllowed() { if (this.wildOK0 == null) this.wildOK0 = !isSeason2(this.save) || (this.save.missionsDone || []).includes('L1'); return this.wildOK0; }   // from flight 2 (the user's rails, 2026-10-27; tests/walkthrough.cjs)
+  wildAllowed() { if (this.wildOK0 == null) this.wildOK0 = !isSeason2(this.save) || (this.save.missionsDone || []).includes('L2'); return this.wildOK0; }   // from flight 3, after the NATURE lesson (the user, 2026-10-29; was flight 2 since the rails of 2026-10-27)
 
   showTip(html, pic) {
     this.explaining = true;   // a bubble is up (NOT frozen)
