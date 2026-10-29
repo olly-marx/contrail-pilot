@@ -178,3 +178,5 @@ steady	src/missions2.js	s/prize: { seeds: !saving(save) ? 1 : /prize: { seeds: f
 steady	src/missions2.js	s/streakBonus = save => (saving(save) ? /streakBonus = save => (true ? /	rich pilots get the streak bonus
 missionlanes	src/ui.js	s/    if (FEATURES.season2 \&\& isSeason2(s)) setDaily(s, new Date/    if (false) setDaily(s, new Date/	MISSIONS does not set today's dailies
 missionlanes	src/ui.js	s/(isSeason2(s) \&\& (s.missionsDone || \[\]).includes('L3') ? '<p class="label">Badges/(isSeason2(s) \&\& !lessonsLeft(s).length ? '<p class="label">Badges/	badge bars wait for all lessons
+stripclear	src/GameScene.js	s/    if (this.explaining \&\& !this.school) this.keepStripClear();/    if (false) this.keepStripClear();/	the strip is placed once only, at open
+stripclear	src/GameScene.js	s/    const low = !coach.classList.contains(.strip-low.);/    const low = true;/	the strip only ever moves down (flips to low again over a low plane)
