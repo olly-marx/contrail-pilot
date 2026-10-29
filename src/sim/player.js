@@ -9,7 +9,7 @@
 //   'classic' (only the nearest gap within 200 px; slow climb: the earlier numbers).
 //   useHint (default false): it plans for gaps whose next-gap hint is showing beyond the screen edge (GAP_HINT.lead of the
 //   kit's hintLevel; a human sees the glow). false = only what is on screen (all numbers before 2026-10-27).
-//   land(w) -> true: it wants to land at the next airport. From 700 px out it holds low (still clearing storms);
+//   land(w) -> true: it wants to land at the next airport. From 700 px out, once no storm stands before the runway, it holds low;
 //   once no storm is left between it and the runway and the flare can reach it, it stops tapping and lets the
 //   game's landing flare put it down.
 //
@@ -38,7 +38,8 @@ let BOB = Math.ceil(PLANE.flapVelocity ** 2 / (2 * PLANE.gravity));
 let CARE_W = 1;
 export function __plantCareHalf() { CARE_W = 0.5; }   // tests/sim-care.cjs plants a weakened contrail term: must FAIL
 export function __plantNoBob() { BOB = 0; }   // tests/sim-player.cjs plants the old bug: the gate must fail
-let OLD_HAZARDS = false;
+let OLD_HAZARDS = false, OLD_APPROACH = false;
+export function __plantOldApproach() { OLD_APPROACH = true; }   // tests/sim-approach.cjs: the old low hold with storms ahead (must FAIL)
 export function __plantOldHazards() { OLD_HAZARDS = true; }   // the pre-2026-10-26-fix play (band only round birds, old flock box, old climb): tests/sim-hazards.cjs plants it (must FAIL); tests/sim-care.cjs flies it (its golden predates the fixes)
 const TILT = Math.ceil(PLANE.spriteW / 2 * Math.sin(PLANE.maxTilt) / 2);
 const MARGIN = 6;   // px kept clear of the cloud's edge
@@ -198,7 +199,11 @@ export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0
     const toStart = w.nextAirport.worldX - w.distancePx;
     if (toStart > 700 || toStart < -AIRPORT.runwayLen) return null;
     const clear = !w.storms.some(st => st.rects[0].x + st.rects[0].width > w.plane.x - 4 && st.rects[0].x < w.plane.x + Math.max(0, toStart) + PLANE.w);
-    return clear && toStart < AIRPORT.flareFrom * w.kit.flare ? 'glide' : 'low';
+    if (clear) return toStart < AIRPORT.flareFrom * w.kit.flare ? 'glide' : 'low';
+    // A storm still stands between the plane and the runway: fly its gap as usual (2026-10-29). Holding low from 700 km out
+    // with storms ahead cost beginners' landings everywhere (s 0.75 leg-3 landing: Europe 45.6% -> 67.0% without it; it also made
+    // Patagonia look worse than Europe, 28.4% vs 45.6%, a model artifact). __plantOldApproach restores the old hold (must FAIL).
+    return OLD_APPROACH ? 'low' : null;
   };
 
   return {

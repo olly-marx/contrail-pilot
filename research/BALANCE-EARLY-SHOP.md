@@ -1,5 +1,11 @@
 # Balance: the early shop gap (sim engine, 2026-10-27)
 
+> **Pre-approach-fix (2026-10-29): the progression numbers here were measured with a model handicap.** The gap-flying player held
+> low for the runway from 700 km out even with storms still ahead (src/sim/player.js approach); that cost beginners' landings
+> everywhere (s 0.75 leg-3 landing 45.6% -> 67.0% without it). Landing-driven numbers here (landings, seeds, crossings, empty
+> runs, the skill fit) are UNDERSTATED for weaker players until re-run with the fixed player (branch feat/approach-fix). Do not
+> cite them as final; do not assume the conclusions flip either: re-run pending.
+
 The question: under 0.12.0-1 every level-1 line seemed bought by flight 5-9, while crossing 1 was not offered until
 ~flight 30, so the shop looked empty for ~20 flights. Measured here under the LIVE 0.12.1 rules (9fa8805: B storms,
 crossings 6,500 / 13,000 / 18,000 km, offered when the best LANDED ordinary flight >= 70% of the crossing and

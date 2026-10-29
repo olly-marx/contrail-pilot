@@ -163,3 +163,4 @@ finance	src/finance.js	s/if (since <= 0 || areaBio(save) < d.minBio) return 0;/i
 fleet	src/fleet.js	s/nightHeat: 0.6, noFlyGapAdd: 12, margin/nightHeat: 0.6, noFlyGapAdd: 0, margin/	the hydrogen plane loses its era-step help
 season2-smoke	src/ui.js	s/const head = c.kind === 'lap' ?/const head = false ?/	the lap shown as an ordinary crossing
 season2-smoke	src/crossings.js	s/export const moreToCome = save => !save.lapDone \&\&/export const moreToCome = save =>/	more to come after the lap
+sim-approach@PLANT=old	-	-	the old low hold with storms ahead
