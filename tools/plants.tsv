@@ -175,3 +175,5 @@ cumbadges	src/badges.js	s/measure: (r, s) => (s.totals || {}).gaps || 0 }/measur
 cumbadges	src/badges.js	s/.filter(x => x.goal !== null \&\& x.value !== null)/.filter(x => x.value !== null)/	badge bars show finished badges
 steady	src/missions2.js	s/prize: { seeds: !saving(save) ? 1 : /prize: { seeds: false ? 1 : /	rich pilots get the full steady prize
 steady	src/missions2.js	s/streakBonus = save => (saving(save) ? /streakBonus = save => (true ? /	rich pilots get the streak bonus
+missionlanes	src/ui.js	s/    if (FEATURES.season2 \&\& isSeason2(s)) setDaily(s, new Date/    if (false) setDaily(s, new Date/	MISSIONS does not set today's dailies
+missionlanes	src/ui.js	s/(isSeason2(s) \&\& (s.missionsDone || \[\]).includes('L3') ? '<p class="label">Badges/(isSeason2(s) \&\& !lessonsLeft(s).length ? '<p class="label">Badges/	badge bars wait for all lessons
