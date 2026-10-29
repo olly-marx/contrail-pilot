@@ -31,7 +31,7 @@ import { drawGlobe } from './globe.js';
 import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
-import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus } from './missions2.js';
+import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus, saving } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
 import { BADGES, THEMES, tierOf, medal, progressOf, tierName, nearBadges } from './badges.js';
@@ -268,7 +268,7 @@ export class UI {
     const daily = dailyVisible(s), steady = steadyVisible(s);
     $('mList').innerHTML = (list.map(row).join('') || `<p>All done here!</p>${crossingsHTML(s).replace(/<button[^>]*data-cross[^>]*>.*?<\/button>/g, '<b>Ready!</b> Tap HOME, then NEXT.') || '<p class="small">Keep flying: new missions come with new eras.</p>'}`)   // (the audit, 2026-10-28: it said 'fly a crossing' when none was offered; now it says what is missing)
       + (daily.length ? `<p class="label">Today${streakBonus(s) ? ` <span class="small">(streak +${streakBonus(s)})</span>` : ''}</p>` + daily.map(row).join('') : '')
-      + (steady.length ? '<p class="label">Steady</p>' + steady.map(m => `<div class="mrow steady"><span>${m.title}<span class="mbar"><i style="width:${Math.round(100 * m.progress / m.target)}%"></i></span><span class="small">${m.progress.toLocaleString('en')} / ${m.target.toLocaleString('en')}</span></span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`).join('') : '')
+      + (steady.length ? `<p class="label">Steady${saving(s) ? '' : ' <span class="small">(1 seed each while you can afford an upgrade: spend to earn more!)</span>'}</p>` + steady.map(m => `<div class="mrow steady"><span>${m.title}<span class="mbar"><i style="width:${Math.round(100 * m.progress / m.target)}%"></i></span><span class="small">${m.progress.toLocaleString('en')} / ${m.target.toLocaleString('en')}</span></span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`).join('') : '')
       + (isSeason2(s) && !lessonsLeft(s).length ? '<p class="label">Badges</p>' + nearBadges(s).map(x => `<div class="mrow steady"><span>${x.b.name}${tierName(x.b, x.tier + 1) ? ` (${tierName(x.b, x.tier + 1)})` : ''}<span class="mbar"><i style="width:${Math.round(100 * x.value / x.goal)}%"></i></span><span class="small">${x.value.toLocaleString('en')} / ${x.goal.toLocaleString('en')} ${x.b.unit}</span></span><span class="prize">+${x.b.tiers[x.tier].seeds}<i class="seedicon"></i></span></div>`).join('') : '');
     $('mTier').textContent = list.length && list[0].tier ? `Tier ${Math.max(...list.map(m => m.tier))} of 3` : 'Chapter 1';
     this.showOnly('missions');

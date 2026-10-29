@@ -14,6 +14,7 @@ import { landTrees } from './landtrees.js';
 import { REGION_DATA, REGION_NAMES, TIERS } from './habitats.js';
 import { city } from './route.js';
 import { fleetOf } from './fleet.js';
+import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 
 // A season 2 save: save.areas is written only by season 2 (the start choice, src/startchoice.js, and crossings), so it is
 // the declared marker; classic saves keep the 13 classic missions (src/missions.js) for the classic tests.
@@ -196,7 +197,14 @@ export const DAILY_EASY = [
 ];
 const dailiesOpen = save => isSeason2(save) && done(save).has('L3');
 const dailyDef = id => DAILY_POOL.find(d => d.id === id) || DAILY_EASY.find(d => d.id === id);
-export const streakBonus = save => Math.min(5, (save.dailyStreak || {}).days || 0);   // +1 a day, up to +5 (was +2 to +10: the sim's c), 2026-10-29)
+// NEED-BASED pay (the sim's c), round 3, 2026-10-29): the steady prizes and the streak bonus pay in full only while the bank is
+// below the cheapest upgrade on sale (free ones aside). A rich pilot gets 1 seed a rung and no streak bonus, so the new prizes
+// help the beginner who is saving up and barely feed the expert, whose bank is far above the next purchase.
+export function saving(save) {
+  const costs = LINES.filter(l => unlocked(save, l) && !needsMoreNature(save, l)).map(l => nextLevel(save, l)).filter(n => n && n.cost > 0).map(n => n.cost);
+  return !costs.length || (save.seeds || 0) < Math.min(...costs);
+}
+export const streakBonus = save => (saving(save) ? Math.min(5, (save.dailyStreak || {}).days || 0) : 0);   // +1 a day, up to +5 (was +2 to +10: the sim's c), 2026-10-29)
 export function setDaily(save, date) {
   if (!dailiesOpen(save) || (save.daily && save.daily.date === date)) return;
   // The streak: the old day counts if any of its dailies was done; a gap of more than a day halves it.
@@ -230,14 +238,14 @@ export const STEADY = [
   { id: 'st-plant', base: 5, prize: 5, ready: s => ((s.levels || {}).trees || 0) > 0, title: (t, f) => `Plant ${t} trees in ${f.landName}`, add: r => r.planted || 0 },
 ];
 const steadyOf = (save, a) => ((save.steady = save.steady || {})[a] = save.steady[a] || {});
-export const rungTarget = (d, rung) => Math.round(d.base * Math.pow(1.5, rung));
+export const rungTarget = (d, rung) => Math.round(d.base * Math.pow(1.25, rung));
 export function steadyVisible(save, a = area(save)) {
   if (!dailiesOpen(save) || !AREAS[a]) return [];
   const st = steadyOf(save, a), f = fillFor(save, a), ready = STEADY.filter(d => !d.ready || d.ready(save));
   const turn = Object.values(st).reduce((n, x) => n + (x.rung || 0), 0);
   return [0, 1].map(i => ready[(turn + i) % ready.length]).filter((d, i, arr) => d && arr.indexOf(d) === i).map(d => {
     const x = st[d.id] || { rung: 0, n: 0 }, target = rungTarget(d, x.rung);
-    return { key: `steady:${a}:${d.id}:${x.rung}`, title: d.title(target, f), target, progress: Math.min(target, x.n), prize: { seeds: x.rung < 2 ? d.prize : 3, crystals: 0 }, def: d, steady: true };
+    return { key: `steady:${a}:${d.id}:${x.rung}`, title: d.title(target, f), target, progress: Math.min(target, x.n), prize: { seeds: !saving(save) ? 1 : x.rung < 2 ? d.prize : 3, crystals: 0 }, def: d, steady: true };
   });
 }
 // After every banked flight (landed or not): add to the steady goals on show in the flight's start area; full ones pay.

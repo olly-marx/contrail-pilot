@@ -23,7 +23,11 @@
   M.onFlight(s, crash({ distance: 1000 }));
   check(s.missionsDone.includes('steady:weurope:st-km:0') && s.steady.weurope['st-km'].rung === 1, `a full steady goal pays and climbs a rung: ${s.missionsDone}`);
   const next = M.steadyVisible(s).find(x => x.def.id === 'st-km');
-  check((!next || next.target === 3000) && M.rungTarget(M.STEADY[0], 1) === 3000 && M.rungTarget(M.STEADY[0], 2) === 4500, `the next rung asks x1.5 (${M.rungTarget(M.STEADY[0], 1)})`);
+  check((!next || next.target === 2500) && M.rungTarget(M.STEADY[0], 1) === 2500 && M.rungTarget(M.STEADY[0], 2) === 3125, `the next rung asks x1.25 (${M.rungTarget(M.STEADY[0], 1)})`);
+  // 2b. Need-based pay: full while saving up, 1 seed (and no streak bonus) when the bank is above the cheapest upgrade.
+  check(M.saving(s) && M.steadyVisible(s)[0].prize.seeds >= 3, 'a pilot saving up gets the full steady prize');
+  const rich = { ...s, seeds: 1e6 };
+  check(!M.saving(rich) && M.steadyVisible(rich).every(x => x.prize.seeds === 1), `a rich pilot gets 1 seed a rung: ${M.steadyVisible(rich).map(x => x.prize.seeds)}`);
   // 3.
   const lots = base(['L1', 'L2', 'L3', 'steady:weurope:st-km:0', 'steady:weurope:st-km:1', 'steady:weurope:st-seeds:0']);
   check(!M.tierOpen(lots, 'weurope', 2), 'steady goals do not open tier 2');
@@ -41,10 +45,11 @@
   M.setDaily(d, '2026-11-05');
   check(M.streakBonus(d) === 5, `6+ days in a row cap the streak at +5 (${M.streakBonus(d)}, days ${d.dailyStreak.days})`);
   check(M.dailyVisible(d).every(x => x.prize.seeds >= 10 + 5), 'the streak adds to every daily prize');
+  check(M.streakBonus({ ...d, seeds: 1e6 }) === 0, 'no streak bonus for a rich pilot');
   M.onFlight(d, crash({ distance: 1200, cargo: 9, cleanGaps: 5 }));
   M.setDaily(d, '2026-11-08');
   check(d.dailyStreak.days < 7 && d.dailyStreak.days >= 3, `a missed day halves the streak (days ${d.dailyStreak.days})`);
   void p0;
-  console.log(fails.length ? `FAIL steady:\n - ${fails.join('\n - ')}` : 'PASS steady: after L3 only; crashes count; rungs x1.5; no tier opening; easy daily; streak cap and halving');
+  console.log(fails.length ? `FAIL steady:\n - ${fails.join('\n - ')}` : 'PASS steady: after L3 only; crashes count; rungs x1.25; need-based pay; no tier opening; easy daily; streak cap and halving');
   process.exit(fails.length ? 1 : 0);
 })();
