@@ -139,6 +139,10 @@ function finish(save, list) {
 // (a crash too: "Birds 1, plane 0"); missions and the daily trio need a landing (PROPOSAL-12).
 export function onFlight(save, r) {
   if (!r || r.school) return [];
+  // Lifetime totals for the cumulative badges (src/badges.js distance/collector/threader; crashes count). Counted here, not in
+  // rewards.js, because only this call gets cleanGaps; it runs before addPrizes in the same flight (src/sim/rules.js).
+  const tot = save.totals = save.totals || { km: 0, seeds: 0, gaps: 0 };
+  tot.km += r.distance || 0; tot.seeds += Math.max(0, r.cargo || 0); tot.gaps += r.cleanGaps || 0;
   const firsts = FIRSTS.filter(x => !done(save).has(`first:${x.id}`) && x.when(r)).map(x => ({ key: `first:${x.id}`, title: x.title, prize: { seeds: 0, crystals: 1 } }));
   // The rails never stall (the user, 2026-10-28; L2 first on 2026-10-27): any lesson after L1 missed on 2 flights (landed
   // or not) counts as taught. A per-lesson count (save.lessonMisses; the old save.l2Misses is carried over). L5 counts a
