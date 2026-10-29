@@ -38,7 +38,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       check(/BOARDS/.test(next), `${tag}: the tour goes past the name step (to BOARDS): "${next}"`);
       check(!!kept, `${tag}: the name is kept on this device: ${JSON.stringify(kept)}`);
     } else {
-      check(!/pilot name/i.test(hello), `${tag}: names rest in season 2, so the name tour does not start: "${hello}"`);
+      check(!/pilot name/i.test(hello), `${tag}: names rest in season 2 (tour.js marks the name tour done there), so it does not start: "${hello}"`);
     }
     check(!errs.length, `${tag}: page errors ${errs}`);
     await p.close();
