@@ -14,6 +14,7 @@ import { landTrees } from './landtrees.js';
 import { REGION_DATA, REGION_NAMES, TIERS } from './habitats.js';
 import { city } from './route.js';
 import { fleetOf } from './fleet.js';
+import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 
 // A season 2 save: save.areas is written only by season 2 (the start choice, src/startchoice.js, and crossings), so it is
 // the declared marker; classic saves keep the 13 classic missions (src/missions.js) for the classic tests.
@@ -139,6 +140,10 @@ function finish(save, list) {
 // (a crash too: "Birds 1, plane 0"); missions and the daily trio need a landing (PROPOSAL-12).
 export function onFlight(save, r) {
   if (!r || r.school) return [];
+  // Lifetime totals for the cumulative badges (src/badges.js distance/collector/threader; crashes count). Counted here, not in
+  // rewards.js, because only this call gets cleanGaps; it runs before addPrizes in the same flight (src/sim/rules.js).
+  const tot = save.totals = save.totals || { km: 0, seeds: 0, gaps: 0 };
+  tot.km += r.distance || 0; tot.seeds += Math.max(0, r.cargo || 0); tot.gaps += r.cleanGaps || 0;
   const firsts = FIRSTS.filter(x => !done(save).has(`first:${x.id}`) && x.when(r)).map(x => ({ key: `first:${x.id}`, title: x.title, prize: { seeds: 0, crystals: 1 } }));
   // The rails never stall (the user, 2026-10-28; L2 first on 2026-10-27): any lesson after L1 missed on 2 flights (landed
   // or not) counts as taught. A per-lesson count (save.lessonMisses; the old save.l2Misses is carried over). L5 counts a
@@ -151,12 +156,14 @@ export function onFlight(save, r) {
     if (cur.id === 'L2' && save.l2Misses) lm.L2 = Math.max(lm.L2 || 0, save.l2Misses);
     lm[cur.id] = (lm[cur.id] || 0) + 1;
     return lm[cur.id] >= 2 ? [...got, { key: cur.id, title: cur.title, tier: 0, star: false, kind: 'flight', prize: cur.prize, def: cur, taught: true }] : got; };
-  if (!r.landed) return finish(save, taught(firsts));
+  const steady = steadyTick(save, r);
+  const easyDaily = dailyVisible(save).filter(d => d.easy && d.def.flight(r, save, d.fill) === true);
+  if (!r.landed) return finish(save, taught([...firsts, ...steady, ...easyDaily]));
   const startCity = save.city;
   const due = visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true));
   const daily = dailyVisible(save).filter(d => d.def.flight(r, save, d.fill) === true);
   save.prevLanded = r.landedAt;   // for "land at A, then B" (read on the NEXT flight)
-  return finish(save, taught([...firsts, ...due, ...daily]));
+  return finish(save, taught([...firsts, ...steady, ...due, ...daily]));
 }
 
 // ---------- Firsts: one-off funny cards (1 crystal), never in the list; they pop on the results ----------
@@ -180,18 +187,77 @@ export const DAILY_POOL = [
   { id: 'd-night', prize: 20, title: () => 'Dodge an icy patch at night', flight: r => (r.dodges || 0) >= 1 },
 ];
 const hash = str => [...str].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+// The daily trio starts AFTER lesson L3, alongside the remaining lessons (the user, 2026-10-29: beginners ran out of things
+// to do). Slot A is always EASY and any flight counts, a crash too; slots B and C come from the pool. A STREAK of days with at
+// least one daily done adds +2 seeds to each daily prize, up to +10; a missed day halves it (kind to children).
+export const DAILY_EASY = [
+  { id: 'e-km', prize: 10, easy: true, title: () => 'Fly 1,000 km (a crash counts too)', flight: r => (r.distance || 0) >= 1000 },
+  { id: 'e-seeds', prize: 10, easy: true, title: () => 'Pick up 8 seeds in the sky', flight: r => (r.cargo || 0) >= 8 },
+  { id: 'e-gaps', prize: 10, easy: true, title: () => 'Pass 4 storm gaps', flight: r => (r.cleanGaps || 0) >= 4 },
+];
+const dailiesOpen = save => isSeason2(save) && done(save).has('L3');
+const dailyDef = id => DAILY_POOL.find(d => d.id === id) || DAILY_EASY.find(d => d.id === id);
+// NEED-BASED pay (the sim's c), round 3, 2026-10-29): the steady prizes and the streak bonus pay in full only while the bank is
+// below the cheapest upgrade on sale (free ones aside). A rich pilot gets 1 seed a rung and no streak bonus, so the new prizes
+// help the beginner who is saving up and barely feed the expert, whose bank is far above the next purchase.
+export function saving(save) {
+  const costs = LINES.filter(l => unlocked(save, l) && !needsMoreNature(save, l)).map(l => nextLevel(save, l)).filter(n => n && n.cost > 0).map(n => n.cost);
+  return !costs.length || (save.seeds || 0) < Math.min(...costs);
+}
+export const streakBonus = save => (saving(save) ? Math.min(5, (save.dailyStreak || {}).days || 0) : 0);   // +1 a day, up to +5 (was +2 to +10: the sim's c), 2026-10-29)
 export function setDaily(save, date) {
-  if (lessonsLeft(save).length || (save.daily && save.daily.date === date)) return;
-  const pool = DAILY_POOL.slice(), pick = [];
-  for (let i = 0; i < 3; i++) pick.push(pool.splice(hash(date + i) % pool.length, 1)[0].id);
+  if (!dailiesOpen(save) || (save.daily && save.daily.date === date)) return;
+  // The streak: the old day counts if any of its dailies was done; a gap of more than a day halves it.
+  const st = save.dailyStreak = save.dailyStreak || { days: 0, last: null };
+  if (save.daily && save.daily.date !== date) {
+    const didOld = save.daily.ids.some(id => done(save).has(`daily:${save.daily.date}:${id}`));
+    const gap = Math.round((Date.parse(date) - Date.parse(save.daily.date)) / 86400000);
+    st.days = didOld && gap === 1 ? st.days + 1 : Math.floor(st.days / 2) + (didOld ? 1 : 0);
+  }
+  const easy = DAILY_EASY[hash(date + 'e') % DAILY_EASY.length].id;
+  const pool = DAILY_POOL.slice(), pick = [easy];
+  for (let i = 0; i < 2; i++) pick.push(pool.splice(hash(date + i) % pool.length, 1)[0].id);
   save.daily = { date, ids: pick };
 }
 export function dailyVisible(save) {
-  if (!save.daily || lessonsLeft(save).length) return [];
-  const f = fillFor(save, areaOf(save.city) || area(save));
-  return save.daily.ids.map(id => DAILY_POOL.find(d => d.id === id)).filter(Boolean)
-    .map(d => ({ key: `daily:${save.daily.date}:${d.id}`, title: d.title(f), prize: { seeds: d.prize * f.k, crystals: 0 }, def: d, fill: f, daily: true }))
+  if (!save.daily || !dailiesOpen(save)) return [];
+  const f = fillFor(save, areaOf(save.city) || area(save)), bonus = streakBonus(save);
+  return save.daily.ids.map(dailyDef).filter(Boolean)
+    .map(d => ({ key: `daily:${save.daily.date}:${d.id}`, title: d.title(f), prize: { seeds: d.prize * f.k + bonus, crystals: 0 }, def: d, fill: f, daily: true, easy: !!d.easy }))
     .filter(d => !done(save).has(d.key));
+}
+
+// ---------- (1) the STEADY lane (the user, 2026-10-29): cumulative goals with progress bars, crashes count ----------
+// Two per area are always on show after L3; each is a LADDER (done: the next rung at x1.5, the same prize). Steady goals do
+// NOT count toward opening the next tier (tierOpen reads TEMPLATES keys only), so good players' pace is unchanged.
+export const STEADY = [
+  { id: 'st-km', base: 2000, prize: 5, title: (t, f) => `Fly ${t.toLocaleString('en')} km in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => Math.round(r.distance || 0) },
+  { id: 'st-seeds', base: 20, prize: 5, title: t => `Pick up ${t} seeds in the sky`, add: r => r.cargo || 0 },
+  { id: 'st-gaps', base: 10, prize: 5, title: t => `Fly through ${t} storm gaps`, add: r => r.cleanGaps || 0 },
+  { id: 'st-land', base: 2, prize: 5, title: (t, f) => `Land ${t} times in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => (r.landed ? 1 : 0) },
+  { id: 'st-plant', base: 5, prize: 5, ready: s => ((s.levels || {}).trees || 0) > 0, title: (t, f) => `Plant ${t} trees in ${f.landName}`, add: r => r.planted || 0 },
+];
+const steadyOf = (save, a) => ((save.steady = save.steady || {})[a] = save.steady[a] || {});
+export const rungTarget = (d, rung) => Math.round(d.base * Math.pow(1.25, rung));
+export function steadyVisible(save, a = area(save)) {
+  if (!dailiesOpen(save) || !AREAS[a]) return [];
+  const st = steadyOf(save, a), f = fillFor(save, a), ready = STEADY.filter(d => !d.ready || d.ready(save));
+  const turn = Object.values(st).reduce((n, x) => n + (x.rung || 0), 0);
+  return [0, 1].map(i => ready[(turn + i) % ready.length]).filter((d, i, arr) => d && arr.indexOf(d) === i).map(d => {
+    const x = st[d.id] || { rung: 0, n: 0 }, target = rungTarget(d, x.rung);
+    return { key: `steady:${a}:${d.id}:${x.rung}`, title: d.title(target, f), target, progress: Math.min(target, x.n), prize: { seeds: !saving(save) ? 1 : x.rung < 2 ? d.prize : 3, crystals: 0 }, def: d, steady: true };
+  });
+}
+// After every banked flight (landed or not): add to the steady goals on show in the flight's start area; full ones pay.
+function steadyTick(save, r) {
+  const a = areaOf(save.city); if (!a) return [];
+  const st = steadyOf(save, a), out = [];
+  for (const v of steadyVisible(save, a)) {
+    const x = st[v.def.id] = st[v.def.id] || { rung: 0, n: 0 };
+    x.n += v.def.add(r);
+    if (x.n >= v.target) { out.push({ key: v.key, title: v.title, prize: v.prize, steady: true }); x.rung++; x.n = 0; }
+  }
+  return out;
 }
 
 // After anything that changes the save outside a flight (a purchase, a project, a tree opening).

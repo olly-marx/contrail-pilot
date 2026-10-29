@@ -164,3 +164,17 @@ fleet	src/fleet.js	s/nightHeat: 0.6, noFlyGapAdd: 12, margin/nightHeat: 0.6, noF
 season2-smoke	src/ui.js	s/const head = c.kind === 'lap' ?/const head = false ?/	the lap shown as an ordinary crossing
 season2-smoke	src/crossings.js	s/export const moreToCome = save => !save.lapDone \&\&/export const moreToCome = save =>/	more to come after the lap
 sim-approach@PLANT=old	-	-	the old low hold with storms ahead
+steady	src/missions2.js	s/const dailiesOpen = save => isSeason2(save) \&\& done(save).has('L3');/const dailiesOpen = save => isSeason2(save) \&\& !lessonsLeft(save).length;/	dailies and steady wait for all lessons again
+steady	src/missions2.js	s/  const steady = steadyTick(save, r);/  const steady = r.landed ? steadyTick(save, r) : [];/	crashes no longer count toward steady goals
+steady	src/missions2.js	s/Math.pow(1.25, rung)/Math.pow(1, rung)/	the ladder does not climb
+steady	src/missions2.js	s/Math.min(5, (save.dailyStreak/Math.min(50, (save.dailyStreak/	the streak bonus has no cap
+steady	src/missions2.js	s/: Math.floor(st.days \/ 2) + (didOld ? 1 : 0);/: st.days + (didOld ? 1 : 0);/	a missed day keeps the streak
+steady	src/missions2.js	s/const pool = DAILY_POOL.slice(), pick = \[easy\];/const pool = DAILY_POOL.slice(), pick = [];/	no easy daily slot
+steady	src/missions2.js	s/done(save).has(key(a, t))).length >= 3;/done(save).has(key(a, t))).length + [...done(save)].filter(k => k.startsWith('steady:')).length >= 3;/	steady goals open tiers
+cumbadges	src/missions2.js	s/tot.gaps += r.cleanGaps || 0;/tot.gaps += r.landed ? r.cleanGaps || 0 : 0;/	crashed flights' gaps do not count
+cumbadges	src/badges.js	s/measure: (r, s) => (s.totals || {}).gaps || 0 }/measure: (r, s) => 0 }/	Gap Threader never earns
+cumbadges	src/badges.js	s/.filter(x => x.goal !== null \&\& x.value !== null)/.filter(x => x.value !== null)/	badge bars show finished badges
+steady	src/missions2.js	s/prize: { seeds: !saving(save) ? 1 : /prize: { seeds: false ? 1 : /	rich pilots get the full steady prize
+steady	src/missions2.js	s/streakBonus = save => (saving(save) ? /streakBonus = save => (true ? /	rich pilots get the streak bonus
+missionlanes	src/ui.js	s/    if (FEATURES.season2 \&\& isSeason2(s)) setDaily(s, new Date/    if (false) setDaily(s, new Date/	MISSIONS does not set today's dailies
+missionlanes	src/ui.js	s/(isSeason2(s) \&\& (s.missionsDone || \[\]).includes('L3') ? '<p class="label">Badges/(isSeason2(s) \&\& !lessonsLeft(s).length ? '<p class="label">Badges/	badge bars wait for all lessons

@@ -15,6 +15,7 @@ const projects = save => Object.values(save.habitat || {}).reduce((a, l) => a + 
 const T3 = (a, b, c) => [{ goal: a, seeds: 5, crystals: 2 }, { goal: b, seeds: 20, crystals: 6 }, { goal: c, seeds: 60, crystals: 15 }];
 const ONE = (goal = 1, seeds = 10, crystals = 4) => [{ goal, seeds, crystals }];
 const SECRET = ONE(1, 10, 3);
+const CUM = (a, b, c) => [{ goal: a, seeds: 0, crystals: 1 }, { goal: b, seeds: 0, crystals: 2 }, { goal: c, seeds: 0, crystals: 4 }];   // cumulative badges: medal + a few crystals, no seeds (the sim's c), round 4, 2026-10-29)
 
 export const THEMES = { flying: 'Flying', climate: 'Climate', seeds: 'Seeds', nature: 'Nature', explorer: 'Explorer', secret: 'Secret' };
 
@@ -29,6 +30,9 @@ export const BADGES = [
     measure: r => (r.landed ? r.airportsSkipped : 0) },
   { id: 'bumpy', name: 'Bumpy Ride', theme: 'flying', tiers: ONE(), unit: 'get bumped by turbulence, then land',
     measure: r => (r.landed && r.bumped ? 1 : 0) },
+  // Cumulative (the user, 2026-10-29: something a beginner builds up daily; save.totals is counted in rewards.js addPrizes).
+  { id: 'distance', name: 'Sky Miles', theme: 'flying', tiers: CUM(5000, 25000, 100000), unit: 'km flown in all',
+    measure: (r, s) => Math.round((s.totals || {}).km || 0) },
   { id: 'sunshield', name: 'Sun Shield', theme: 'climate', tiers: T3(15, 40, 100), unit: 'shade in one flight',
     measure: r => Math.floor(r.sunBlocked || 0) },
   { id: 'nightowl', name: 'Night Owl', theme: 'climate', tiers: T3(3, 10, 25), unit: 'icy air dodged at night, in one flight',
@@ -39,6 +43,10 @@ export const BADGES = [
     measure: (r, s) => (((s.levels || {}).fuel || 0) >= 4 ? 1 : 0) },
   { id: 'seedhunter', name: 'Seed Hunter', theme: 'seeds', tiers: T3(15, 40, 100), unit: 'seeds on board when you land',
     measure: r => (r.landed ? r.cargo : 0) },
+  { id: 'collector', name: 'Seed Collector', theme: 'seeds', tiers: CUM(50, 250, 1000), unit: 'seeds picked up in all',
+    measure: (r, s) => (s.totals || {}).seeds || 0 },
+  { id: 'threader', name: 'Gap Threader', theme: 'climate', tiers: CUM(25, 150, 500), unit: 'storm gaps flown through in all',
+    measure: (r, s) => (s.totals || {}).gaps || 0 },
   { id: 'golden', name: 'Golden Touch', theme: 'seeds', tiers: T3(2, 5, 10), unit: 'golden seeds in one flight',
     measure: r => r.goldens || 0 },
   { id: 'forester', name: 'Forester', theme: 'nature', tiers: T3(5, 25, 100), unit: 'trees planted',
@@ -96,8 +104,15 @@ export function earnBadges(save, r) {
 export function progressOf(save, b) {
   const t = tierOf(save, b.id), next = b.tiers[t];
   const totals = { frequent: save.landings || 0, coolplanet: save.coolLandings || 0, forester: sum(save.planted), naturalist: found(save),
-    rewilder: projects(save), globetrotter: (save.visited || []).length };
+    rewilder: projects(save), globetrotter: (save.visited || []).length,
+    distance: Math.round((save.totals || {}).km || 0), collector: (save.totals || {}).seeds || 0, threader: (save.totals || {}).gaps || 0 };
   return { tier: t, goal: next ? next.goal : null, value: b.id in totals ? totals[b.id] : null };
+}
+
+// The MISSIONS screen's badge bars: the n history badges closest to their next tier, [{ b, value, goal }].
+export function nearBadges(save, n = 3) {
+  return BADGES.filter(b => !b.secret).map(b => ({ b, ...progressOf(save, b) })).filter(x => x.goal !== null && x.value !== null)
+    .sort((x, y) => y.value / y.goal - x.value / x.goal).slice(0, n);
 }
 
 // Old saves (before 2026-10-22) had 9 one-off badges and no tiers. Give the matching new tiers,
