@@ -20,10 +20,10 @@
   check(!!km, `the first pair includes the km goal: ${v.map(x => x.def.id)}`);
   M.onFlight(s, crash({ distance: 1000 }));
   check(M.steadyVisible(s).find(x => x.def.id === 'st-km').progress === 1000, 'a CRASH adds its km to the steady goal');
-  M.onFlight(s, crash({ distance: 2500 }));
+  M.onFlight(s, crash({ distance: 1000 }));
   check(s.missionsDone.includes('steady:weurope:st-km:0') && s.steady.weurope['st-km'].rung === 1, `a full steady goal pays and climbs a rung: ${s.missionsDone}`);
   const next = M.steadyVisible(s).find(x => x.def.id === 'st-km');
-  check((!next || next.target === 4500) && M.rungTarget(M.STEADY[0], 1) === 4500 && M.rungTarget(M.STEADY[0], 2) === 6750, `the next rung asks x1.5 (${M.rungTarget(M.STEADY[0], 1)})`);
+  check((!next || next.target === 3000) && M.rungTarget(M.STEADY[0], 1) === 3000 && M.rungTarget(M.STEADY[0], 2) === 4500, `the next rung asks x1.5 (${M.rungTarget(M.STEADY[0], 1)})`);
   // 3.
   const lots = base(['L1', 'L2', 'L3', 'steady:weurope:st-km:0', 'steady:weurope:st-km:1', 'steady:weurope:st-seeds:0']);
   check(!M.tierOpen(lots, 'weurope', 2), 'steady goals do not open tier 2');
@@ -39,8 +39,8 @@
     M.setDaily(d, date); M.onFlight(d, crash({ distance: 1200, cargo: 9, cleanGaps: 5 }));
   }
   M.setDaily(d, '2026-11-05');
-  check(M.streakBonus(d) === 10, `6+ days in a row cap the streak at +10 (${M.streakBonus(d)}, days ${d.dailyStreak.days})`);
-  check(M.dailyVisible(d).every(x => x.prize.seeds >= 10 + 10), 'the streak adds to every daily prize');
+  check(M.streakBonus(d) === 5, `6+ days in a row cap the streak at +5 (${M.streakBonus(d)}, days ${d.dailyStreak.days})`);
+  check(M.dailyVisible(d).every(x => x.prize.seeds >= 10 + 5), 'the streak adds to every daily prize');
   M.onFlight(d, crash({ distance: 1200, cargo: 9, cleanGaps: 5 }));
   M.setDaily(d, '2026-11-08');
   check(d.dailyStreak.days < 7 && d.dailyStreak.days >= 3, `a missed day halves the streak (days ${d.dailyStreak.days})`);

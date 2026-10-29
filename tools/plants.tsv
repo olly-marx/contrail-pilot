@@ -166,7 +166,7 @@ season2-smoke	src/crossings.js	s/export const moreToCome = save => !save.lapDone
 steady	src/missions2.js	s/const dailiesOpen = save => isSeason2(save) \&\& done(save).has('L3');/const dailiesOpen = save => isSeason2(save) \&\& !lessonsLeft(save).length;/	dailies and steady wait for all lessons again
 steady	src/missions2.js	s/  const steady = steadyTick(save, r);/  const steady = r.landed ? steadyTick(save, r) : [];/	crashes no longer count toward steady goals
 steady	src/missions2.js	s/Math.pow(1.5, rung)/Math.pow(1, rung)/	the ladder does not climb
-steady	src/missions2.js	s/2 \* Math.min(5, /2 * Math.min(50, /	the streak bonus has no cap
+steady	src/missions2.js	s/Math.min(5, (save.dailyStreak/Math.min(50, (save.dailyStreak/	the streak bonus has no cap
 steady	src/missions2.js	s/: Math.floor(st.days \/ 2) + (didOld ? 1 : 0);/: st.days + (didOld ? 1 : 0);/	a missed day keeps the streak
 steady	src/missions2.js	s/const pool = DAILY_POOL.slice(), pick = \[easy\];/const pool = DAILY_POOL.slice(), pick = [];/	no easy daily slot
 steady	src/missions2.js	s/done(save).has(key(a, t))).length >= 3;/done(save).has(key(a, t))).length + [...done(save)].filter(k => k.startsWith('steady:')).length >= 3;/	steady goals open tiers

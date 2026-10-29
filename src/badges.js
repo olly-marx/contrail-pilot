@@ -15,6 +15,7 @@ const projects = save => Object.values(save.habitat || {}).reduce((a, l) => a + 
 const T3 = (a, b, c) => [{ goal: a, seeds: 5, crystals: 2 }, { goal: b, seeds: 20, crystals: 6 }, { goal: c, seeds: 60, crystals: 15 }];
 const ONE = (goal = 1, seeds = 10, crystals = 4) => [{ goal, seeds, crystals }];
 const SECRET = ONE(1, 10, 3);
+const CUM = (a, b, c) => [{ goal: a, seeds: 2, crystals: 2 }, { goal: b, seeds: 8, crystals: 6 }, { goal: c, seeds: 25, crystals: 15 }];   // cumulative badges: seeds ~0.4x T3 (the sim's c), 2026-10-29)
 
 export const THEMES = { flying: 'Flying', climate: 'Climate', seeds: 'Seeds', nature: 'Nature', explorer: 'Explorer', secret: 'Secret' };
 
@@ -30,7 +31,7 @@ export const BADGES = [
   { id: 'bumpy', name: 'Bumpy Ride', theme: 'flying', tiers: ONE(), unit: 'get bumped by turbulence, then land',
     measure: r => (r.landed && r.bumped ? 1 : 0) },
   // Cumulative (the user, 2026-10-29: something a beginner builds up daily; save.totals is counted in rewards.js addPrizes).
-  { id: 'distance', name: 'Sky Miles', theme: 'flying', tiers: T3(5000, 25000, 100000), unit: 'km flown in all',
+  { id: 'distance', name: 'Sky Miles', theme: 'flying', tiers: CUM(5000, 25000, 100000), unit: 'km flown in all',
     measure: (r, s) => Math.round((s.totals || {}).km || 0) },
   { id: 'sunshield', name: 'Sun Shield', theme: 'climate', tiers: T3(15, 40, 100), unit: 'shade in one flight',
     measure: r => Math.floor(r.sunBlocked || 0) },
@@ -42,9 +43,9 @@ export const BADGES = [
     measure: (r, s) => (((s.levels || {}).fuel || 0) >= 4 ? 1 : 0) },
   { id: 'seedhunter', name: 'Seed Hunter', theme: 'seeds', tiers: T3(15, 40, 100), unit: 'seeds on board when you land',
     measure: r => (r.landed ? r.cargo : 0) },
-  { id: 'collector', name: 'Seed Collector', theme: 'seeds', tiers: T3(50, 250, 1000), unit: 'seeds picked up in all',
+  { id: 'collector', name: 'Seed Collector', theme: 'seeds', tiers: CUM(50, 250, 1000), unit: 'seeds picked up in all',
     measure: (r, s) => (s.totals || {}).seeds || 0 },
-  { id: 'threader', name: 'Gap Threader', theme: 'climate', tiers: T3(25, 150, 500), unit: 'storm gaps flown through in all',
+  { id: 'threader', name: 'Gap Threader', theme: 'climate', tiers: CUM(25, 150, 500), unit: 'storm gaps flown through in all',
     measure: (r, s) => (s.totals || {}).gaps || 0 },
   { id: 'golden', name: 'Golden Touch', theme: 'seeds', tiers: T3(2, 5, 10), unit: 'golden seeds in one flight',
     measure: r => r.goldens || 0 },

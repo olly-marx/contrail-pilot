@@ -196,7 +196,7 @@ export const DAILY_EASY = [
 ];
 const dailiesOpen = save => isSeason2(save) && done(save).has('L3');
 const dailyDef = id => DAILY_POOL.find(d => d.id === id) || DAILY_EASY.find(d => d.id === id);
-export const streakBonus = save => 2 * Math.min(5, (save.dailyStreak || {}).days || 0);
+export const streakBonus = save => Math.min(5, (save.dailyStreak || {}).days || 0);   // +1 a day, up to +5 (was +2 to +10: the sim's c), 2026-10-29)
 export function setDaily(save, date) {
   if (!dailiesOpen(save) || (save.daily && save.daily.date === date)) return;
   // The streak: the old day counts if any of its dailies was done; a gap of more than a day halves it.
@@ -223,11 +223,11 @@ export function dailyVisible(save) {
 // Two per area are always on show after L3; each is a LADDER (done: the next rung at x1.5, the same prize). Steady goals do
 // NOT count toward opening the next tier (tierOpen reads TEMPLATES keys only), so good players' pace is unchanged.
 export const STEADY = [
-  { id: 'st-km', base: 3000, prize: 10, title: (t, f) => `Fly ${t.toLocaleString('en')} km in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => Math.round(r.distance || 0) },
-  { id: 'st-seeds', base: 30, prize: 10, title: t => `Pick up ${t} seeds in the sky`, add: r => r.cargo || 0 },
-  { id: 'st-gaps', base: 15, prize: 10, title: t => `Fly through ${t} storm gaps`, add: r => r.cleanGaps || 0 },
-  { id: 'st-land', base: 3, prize: 15, title: (t, f) => `Land ${t} times in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => (r.landed ? 1 : 0) },
-  { id: 'st-plant', base: 5, prize: 15, ready: s => ((s.levels || {}).trees || 0) > 0, title: (t, f) => `Plant ${t} trees in ${f.landName}`, add: r => r.planted || 0 },
+  { id: 'st-km', base: 2000, prize: 5, title: (t, f) => `Fly ${t.toLocaleString('en')} km in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => Math.round(r.distance || 0) },
+  { id: 'st-seeds', base: 20, prize: 5, title: t => `Pick up ${t} seeds in the sky`, add: r => r.cargo || 0 },
+  { id: 'st-gaps', base: 10, prize: 5, title: t => `Fly through ${t} storm gaps`, add: r => r.cleanGaps || 0 },
+  { id: 'st-land', base: 2, prize: 5, title: (t, f) => `Land ${t} times in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => (r.landed ? 1 : 0) },
+  { id: 'st-plant', base: 5, prize: 5, ready: s => ((s.levels || {}).trees || 0) > 0, title: (t, f) => `Plant ${t} trees in ${f.landName}`, add: r => r.planted || 0 },
 ];
 const steadyOf = (save, a) => ((save.steady = save.steady || {})[a] = save.steady[a] || {});
 export const rungTarget = (d, rung) => Math.round(d.base * Math.pow(1.5, rung));
@@ -237,7 +237,7 @@ export function steadyVisible(save, a = area(save)) {
   const turn = Object.values(st).reduce((n, x) => n + (x.rung || 0), 0);
   return [0, 1].map(i => ready[(turn + i) % ready.length]).filter((d, i, arr) => d && arr.indexOf(d) === i).map(d => {
     const x = st[d.id] || { rung: 0, n: 0 }, target = rungTarget(d, x.rung);
-    return { key: `steady:${a}:${d.id}:${x.rung}`, title: d.title(target, f), target, progress: Math.min(target, x.n), prize: { seeds: d.prize, crystals: 0 }, def: d, steady: true };
+    return { key: `steady:${a}:${d.id}:${x.rung}`, title: d.title(target, f), target, progress: Math.min(target, x.n), prize: { seeds: x.rung < 2 ? d.prize : 3, crystals: 0 }, def: d, steady: true };
   });
 }
 // After every banked flight (landed or not): add to the steady goals on show in the flight's start area; full ones pay.
