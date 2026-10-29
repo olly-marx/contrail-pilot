@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-29-strip-clear",
+    "version": "0.21.1",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "Fixed: the helper message at the top or bottom of the screen could cover your plane on a slow phone. It now moves out of the way."
+    ]
+  },
+  {
     "id": "2026-10-29-steady-missions",
     "version": "0.21.0",
     "date": "2026-10-29",
