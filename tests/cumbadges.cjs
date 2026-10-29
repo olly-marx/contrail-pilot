@@ -17,7 +17,8 @@
   s.badgeTiers.frequent = 3; s.landings = 250;   /* a finished badge must not get a bar */
   const near = B.nearBadges(s);
   check(near.length === 3 && near.every(x => x.value < x.goal), `3 badge bars, each not yet full: ${JSON.stringify(near.map(x => [x.b.id, x.value, x.goal]))}`);
-  check(B.medal('distance', 1) === 'assets/ui/badge-longhaul-1.png', 'new badges borrow existing medal art');
+  const fs = require('fs');
+  check(['distance', 'collector', 'threader'].every(id => [1, 2, 3].every(t => B.medal(id, t) === `assets/ui/badge-${id}-${t}.png` && fs.existsSync(`${__dirname}/../${B.medal(id, t)}`))), 'each new badge has its own medal for every tier');
   console.log(fails.length ? `FAIL cumbadges:\n - ${fails.join('\n - ')}` : 'PASS cumbadges: totals count crashes; Sky Miles, Seed Collector, Gap Threader earn once; badge bars');
   process.exit(fails.length ? 1 : 0);
 })();

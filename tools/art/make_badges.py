@@ -242,6 +242,7 @@ def icon_seeddodger(p, cx, cy):
 BADGES = {
     'longhaul': ('flying', 3, icon_longhaul), 'frequent': ('flying', 3, icon_frequent), 'hopper': ('flying', 3, icon_hopper),
     'bumpy': ('flying', 1, icon_bumpy),
+    'distance': ('flying', 3, icon_longhaul), 'collector': ('seeds', 3, icon_seedhunter), 'threader': ('climate', 3, icon_nightowl),   # cumulative (2026-10-29); PixelLab pictures
     'sunshield': ('climate', 3, icon_sun), 'nightowl': ('climate', 3, icon_nightowl), 'coolplanet': ('climate', 3, icon_coolplanet),
     'zerocarbon': ('climate', 1, icon_zerocarbon),
     'seedhunter': ('seeds', 3, icon_seedhunter), 'golden': ('seeds', 3, icon_golden),

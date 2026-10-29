@@ -77,8 +77,7 @@ export const BADGES = [
 ];
 export const badgeById = id => BADGES.find(b => b.id === id);
 export const tierOf = (save, id) => (save.badgeTiers || {})[id] || 0;
-const ART = { distance: 'longhaul', collector: 'seedhunter', threader: 'nightowl' };   // (borrowed medals until their own art is drawn)
-export const medal = (id, tier) => `assets/ui/badge-${ART[id] || id}-${tier}.png`;
+export const medal = (id, tier) => `assets/ui/badge-${id}-${tier}.png`;
 export const tierName = (b, t) => (b.tiers.length === 1 ? '' : ['', 'Bronze', 'Silver', 'Gold'][t]);
 
 // After a flight: which new tiers did it earn? Records them in save.badgeTiers (and save.badges,
