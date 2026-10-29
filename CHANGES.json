@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-29-late-prices",
+    "version": "0.21.2",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "The newest planes and parts in the far future now cost half as many crystals, so you can reach the end of the story."
+    ]
+  },
+  {
     "id": "2026-10-29-strip-clear",
     "version": "0.21.1",
     "date": "2026-10-29",
