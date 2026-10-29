@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-29-playtest-fixes",
+    "version": "0.21.4",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "Fixed: your first upgrade's picture could come up blank on a slow phone. It now waits for the pictures, then shows the new part: \"NEW: jet engines!\".",
+      "Fixed: some players had no seeds to collect on their second flight. There are always a few seeds to grab now.",
+      "Fixed: the guide no longer says you found animals before you have opened NATURE.",
+      "Fixed: the pilot name screen works in the preview."
+    ]
+  },
+  {
     "id": "2026-10-29-plane-facts",
     "version": "0.21.3",
     "date": "2026-10-29",
