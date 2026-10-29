@@ -1,5 +1,73 @@
 [
   {
+    "id": "2026-10-29-goose-early",
+    "version": "0.19.2",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "Patagonia: guarding the ruddy-headed goose is now one of the first projects you can take."
+    ]
+  },
+  {
+    "id": "2026-10-28-kinds-open",
+    "version": "0.19.1",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "Fixed: in some lands (like East Asia, Australia and Patagonia) the star for planting 3 kinds of tree could never be earned. It now asks for the kinds that land really has.",
+      "Fixed: when a trip loops back to your home city, you can now land there. Before, the plane could crash into that runway."
+    ]
+  },
+  {
+    "id": "2026-10-28-era-5",
+    "version": "0.19.0",
+    "date": "2026-10-28",
+    "level": "major",
+    "notes": [
+      "A new plane in the 2030s: the truss-braced wing, and at the top of its line the blended wing!",
+      "Two new levels for every part of your plane: smarter forecasts, contrail-aware air traffic control, low-soot fuel, bird detection and more.",
+      "Birds and turns: the sky shows you a bird corridor and arrows for turns ahead.",
+      "The 2030s crossings are open, 30,000 km long, including the long way from Auckland to Santiago.",
+      "NATURE money: level 3 brings bonds. Stats that do not change now say \"same\"."
+    ]
+  },
+  {
+    "id": "2026-10-28-starters-hangar",
+    "version": "0.18.1",
+    "date": "2026-10-28",
+    "level": "minor",
+    "notes": [
+      "Starting in a new land now works smoothly: NATURE opens on your own home land and the tree-planting card is there, not in the UK.",
+      "The guide now shows you the hangar: tap the engines to see them, take them for free, and watch your plane get better before you take off.",
+      "Missions no longer send you to the city you are already in."
+    ]
+  },
+  {
+    "id": "2026-10-28-new-lands",
+    "version": "0.18.0",
+    "date": "2026-10-28",
+    "level": "major",
+    "notes": [
+      "Three new places to start your journey: New Zealand's island forest, the Australian bush, and the Patagonian steppe!",
+      "Each land has its own trees, animals and projects to discover in NATURE.",
+      "Maori names now show properly, with their long vowels (like ā and ē).",
+      "Fixed: NATURE now opens on your own home land when you start somewhere far from the UK."
+    ]
+  },
+  {
+    "id": "2026-10-28-era-4",
+    "version": "0.17.0",
+    "date": "2026-10-28",
+    "level": "major",
+    "notes": [
+      "A new plane to build: the 787! Fly it on the long crossing to the next land, 27,000 km away.",
+      "The sky gets trickier in the 2010s: gaps in the storms move and drift, and the screen now shows you where they are going.",
+      "In the hangar, tap a part to see what it does before you buy. Every buy plays a little show of your plane getting better.",
+      "The big lap of the Earth is waiting for you at the very end.",
+      "NATURE projects: the first two levels of finance are open."
+    ]
+  },
+  {
     "id": "2026-10-28-slower-seeds",
     "version": "0.16.6",
     "date": "2026-10-28",

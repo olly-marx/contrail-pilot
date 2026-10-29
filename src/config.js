@@ -155,6 +155,11 @@ export const HAZARDS = {
   squeeze: { from: 26000, era: 5, every: 4000, add: 0.03, capNoFly: 0.6, capBirds: 0.7 },
 };
 
+// The drift PLAYTEST flag (the user, 2026-10-28: "the drift playtest flag first"; drift is the steepest cliff in
+// BALANCE-ERAS-4-6): ?drift=N sets the no-fly drift speed to N px/s for this page load (?drift=0 turns it off). The game
+// writes the same config object the rules read, so game and engine still run identical code; Node never has a URL.
+if (typeof location !== 'undefined') { const d = Number(new URLSearchParams(location.search).get('drift')); if (location.search.includes('drift=') && d >= 0 && d <= 40) HAZARDS.noFly.drift.pxs = d; }
+
 export const PARCEL = {
   gravity: 320,        // px/s^2 until the parachute opens
   chuteAfter: 0.25,    // s

@@ -7,6 +7,7 @@
 export const LAND = [
   // Islands and small places first.
   ['tundra', 63, 67, -25, -13],            // Iceland
+  ['bush', -44, -40.5, 144, 149],          // Tasmania (the devil's island; the land mask is too coarse here: 2026-10-28)
   ['ice', 59.5, 70, -54, -40],             // Greenland (south)
   ['ice', 70, 84, -73, -18],               // Greenland (north)
   ['woodland', 49.8, 59, -11, 2],          // Britain and Ireland
@@ -49,10 +50,11 @@ export const LAND = [
   ['plains', 15, 30, -118, -80],           // Mexico
   ['rainforest', 7, 15, -92, -77],         // Central America
   ['rainforest', -25, 11, -82, -34],       // the Amazon and the Atlantic Forest
-  ['plains', -56, -25, -76, -48],          // the Pampas and Patagonia (no region of their own yet)
+  ['steppe', -56, -39, -76, -62],          // Patagonia, south of the Río Negro (its own region since 2026-10-28)
+  ['plains', -56, -25, -76, -48],          // the Pampas
   // Australia and New Zealand (no region of their own yet: part B will decide).
-  ['desert', -39, -11, 113, 154],          // Australia
-  ['woodland', -47, -34, 166, 179],        // New Zealand
+  ['bush', -39, -11, 113, 154],          // Australia
+  ['islandforest', -47, -34, 166, 179],        // New Zealand
 ];
 
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;

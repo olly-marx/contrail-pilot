@@ -94,11 +94,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p2.click('#goBtn'); await p2.waitForTimeout(300); await p2.click('#howClose'); await p2.waitForTimeout(300); await p2.mouse.move(195, 400); await p2.mouse.down(); await p2.waitForTimeout(2500); await p2.mouse.up();
   const stuck = await p2.evaluate(() => new Promise(res => { const s = game.scene.getScene('game'), sc = s.school;
     sc.i = 8; sc.next(); s.frozen = false; const first = sc.issr;   // step 9: day icy air
-    const iv = setInterval(() => { s.plane.y = sc.issr === first ? 420 - 60 : s.plane.y; s.plane.vy = 0; s.contrails.forEach(c => c.view.destroy()); s.contrails = []; }, 16);
+    // The patch is placed around where the plane WAS when the step began (school.js bigIssr), so a fixed y (it was 360) sat INSIDE the patch on some runs and the
+    // step was then made, not missed: that, not the load, was the flake. Hold the plane clear of THIS patch: above it, or below it when there is no room above.
+    const clear = first.y - 70 >= 10 ? first.y - 70 : first.y + first.height + 40;
+    const iv = setInterval(() => { s.plane.y = sc.issr === first ? clear : s.plane.y; s.plane.vy = 0; s.contrails.forEach(c => c.view.destroy()); s.contrails = []; }, 16);
     // Wait for the GAME to bring the new patch. A 300 px patch takes ~6 s of GAME time to pass, but game time runs slower than the clock on a busy
     // machine (a fixed 9 s wall wait flaked once in the 0.15.4 run; a 60 s wall cap failed twice at load 19 in the 0.15.6 run). So the limit is in
-    // game seconds (s.elapsed, 20 of them), with a long wall cap only so a frozen game still fails instead of hanging.
-    const t0 = performance.now(), e0 = s.elapsed, poll = setInterval(() => { if (sc.issr !== first || s.elapsed - e0 > 20 || performance.now() - t0 > 300000) { clearInterval(iv); clearInterval(poll); res({ step: sc.i, newIssr: sc.issr !== first, text: document.getElementById("coachText").textContent }); } }, 50); }));
+    // game seconds (s.elapsed, 30 of them: 5x the ~6 s a patch needs; the plane is held CLEAR of the patch, so the miss is certain), with a long wall cap only so a frozen game still fails instead of hanging.
+    const t0 = performance.now(), e0 = s.elapsed, poll = setInterval(() => { if (sc.issr !== first || s.elapsed - e0 > 30 || performance.now() - t0 > 300000) { clearInterval(iv); clearInterval(poll); res({ step: sc.i, newIssr: sc.issr !== first, text: document.getElementById("coachText").textContent }); } }, 50); }));
   if (!(stuck.step === 9 && stuck.newIssr && /missed it/i.test(stuck.text))) fails.push(`missing the icy air should bring more, not get stuck: ${JSON.stringify(stuck)}`);
   await p2.close();
 

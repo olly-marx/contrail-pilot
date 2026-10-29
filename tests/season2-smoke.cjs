@@ -1,6 +1,6 @@
 // SEASON 2 SMOKE SUITE (0.12.0 coverage; the shipped game IS season 2, but most of the suite runs classic through
 // tests/lib/classic.js). This test does NOT require classic.js: every page is the game as shipped (SEASON2_FORCE unset).
-//   A  fresh start: season 2 tag, no save, the start choice offers the six starter areas
+//   A  fresh start: season 2 tag, no save, the start choice offers the nine starter areas
 //   B  one flight start per starter area: the start choice, then flight school flies from YOUR city over YOUR area
 //      (not London > Paris), the first hop is the next airport, the plane takes off, no page errors
 //   C  the tabs: HANGAR, NATURE, PILOT, BOARDS and back to FLY open with content and without errors
@@ -26,7 +26,7 @@
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
-const STARTERS = ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia'];
+const STARTERS = ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'oceania', 'aotearoa', 'patagonia'];
 const SECTIONS = ['A', ...STARTERS.map(k => 'B' + k), 'C', 'D', 'E', 'F', 'G'];
 const WANT = process.env.PART ? process.env.PART.split(',').map(x => x.trim()).filter(Boolean) : null;
 if (WANT && (!WANT.length || WANT.some(x => !SECTIONS.includes(x)))) { console.log(`FAIL: PART=${process.env.PART} names a section that does not exist (have: ${SECTIONS.join(',')})`); process.exit(1); }
@@ -60,7 +60,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   await p.evaluate(() => { game.registry.get('ui').start(); });
   await p.waitForSelector('#startChoice [data-area]', { timeout: 5000 }).catch(() => {});
   const offered = await p.$$eval('#startChoice [data-area]', bs => bs.map(x => x.dataset.area));
-  check(JSON.stringify(offered.sort()) === JSON.stringify([...STARTERS].sort()), `A: the six starter areas are offered: ${offered}`);
+  check(JSON.stringify(offered.sort()) === JSON.stringify([...STARTERS].sort()), `A: the nine starter areas are offered: ${offered}`);
   await p.context().close();
   }
 
@@ -148,7 +148,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   // E. the end of this release
   if (on('E')) {
   p = await fresh();
-  await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania'], homeArea: 'weurope', city: 'AMSTERDAM' });
+  await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania', 'aotearoa', 'patagonia', 'ocean'], homeArea: 'weurope', city: 'AMSTERDAM' });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const more = await p.evaluate(() => ({ card: !!document.getElementById('jMore'), cross: !!document.querySelector('#jCross [data-cross]') }));
   check(more.card && !more.cross, `E: every area open, the last era: the MORE TO COME card, no crossing: ${JSON.stringify(more)}`);

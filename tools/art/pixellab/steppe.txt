@@ -1,0 +1,16 @@
+id|name|kind|pose
+guanaco|guanaco, a slim tan and white camel-like animal with a long neck|animal|ground
+magellanicpenguin|Magellanic penguin, black and white with two black bands across the chest|bird|standing
+leopardseal|leopard seal, long grey spotted seal with a big head|animal|ground
+huillin|southern river otter, dark brown sleek otter with a thick tail|animal|ground
+darwinsrhea|Darwin's rhea, a grey-brown flightless bird with white spots, long legs and neck|bird|standing
+magellanicwoodpecker|Magellanic woodpecker, black with a bright red head and crest|bird|flying
+blackbrowedalbatross|black-browed albatross, white body, dark wings, dark eyebrow stripe, orange beak|bird|flying
+elephantseal|southern elephant seal, huge grey-brown seal with a short trunk-like nose|animal|ground
+kingpenguin|king penguin, tall penguin with bright orange patches on its neck|bird|standing
+icefish|Patagonian icefish, small silvery fish|animal|ground
+huemul|huemul deer, a stocky brown deer with forked antlers and a dark face mask|animal|ground
+condor|Andean condor, huge black vulture with white wing patches and a white neck ruff, soaring|bird|flying
+puma|puma, a big tawny cat with a long dark-tipped tail|animal|ground
+rightwhale|southern right whale, huge dark whale with pale bumps on its head|animal|ground
+ruddyheadedgoose|ruddy-headed goose, a small goose with a chestnut head and barred grey-brown body|bird|standing

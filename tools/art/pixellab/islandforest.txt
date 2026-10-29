@@ -1,0 +1,19 @@
+id|name|kind|pose
+kaka|New Zealand kaka parrot, olive-brown with red under the wings|bird|flying
+korora|little blue penguin|bird|standing
+inanga|small silvery inanga whitebait fish|animal|ground
+tieke|North Island saddleback bird, black with a chestnut saddle and orange wattles|bird|flying
+whio|New Zealand blue duck, blue-grey with a pale bill|bird|flying
+kokako|North Island kokako, blue-grey bird with blue wattles and a black mask|bird|flying
+kiwi|brown kiwi bird, round body, long thin beak, no wings showing|bird|standing
+kea|kea mountain parrot, olive green with orange under the wings|bird|flying
+tuatara|tuatara reptile, grey-green with a spiny crest|animal|ground
+hihi|hihi stitchbird, black head, yellow shoulders, small|bird|flying
+toroa|northern royal albatross, white body, long black-topped wings|bird|flying
+hectors|Hector's dolphin, grey with a black rounded fin|animal|ground
+wetapunga|giant weta insect, brown, big spiny legs|animal|ground
+kakapo|kakapo parrot, big moss-green flightless parrot, owl-like face|bird|standing
+maui|Maui dolphin, small grey dolphin with a rounded black fin|animal|ground
+hoiho|yellow-eyed penguin, yellow band round the eyes|bird|standing
+takahe|takahe, big blue and green flightless bird with a huge red beak|bird|standing
+tuturuatu|shore plover, small brown wader with a black face mask and orange bill|bird|standing

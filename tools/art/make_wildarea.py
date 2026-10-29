@@ -32,7 +32,7 @@ def save(im, name):
 SKY = {'woodland': ('#6ec6e8', '#a8dff2'), 'mediterranean': ('#5ab8ee', '#a8dcf8'), 'desert': ('#7ac8ea', '#f0e4c0'),
        'monsoon': ('#7ab8d8', '#c8e4ec'), 'eastasia': ('#8ac0dc', '#e0ecf0'), 'boreal': ('#6aa8d8', '#d0e4f4'),
        'plains': ('#62b8ea', '#d8ecf4'), 'tundra': ('#8aaed0', '#dce8f0'),
-       'savanna': ('#6cbce8', '#f2e2b8'), 'rainforest': ('#78bcd8', '#d4eae4')}
+       'savanna': ('#6cbce8', '#f2e2b8'), 'rainforest': ('#78bcd8', '#d4eae4'), 'islandforest': ('#64b2e6', '#d6eaf4'), 'bush': ('#5eb6ea', '#f0dcb0'), 'steppe': ('#78b4dc', '#e4ecf0')}
 
 
 def backdrop(region):
@@ -237,7 +237,7 @@ def field(region):
         if d > 0.4:
             im.putpixel((x, y - 1), dark)
         if d > 0.75:
-            im.putpixel((x + 1, y - 1), dark)
+            im.putpixel((min(x + 1, 287), y - 1), dark)   # (the last column: a tuft on the edge used to crash)
     save(im, f'field-{region}')
 
 

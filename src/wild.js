@@ -10,7 +10,8 @@ import { sfx } from './sound.js';
 import { LINES, tabOf } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject } from './nature.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
-import { CITIES } from './cities.js';
+import { CITIES, S2_CITIES } from './cities.js';
+import { AREAS } from './areas.js';
 import { animalDir, animalPortrait } from './animalart.js';
 import { meterHTML } from './ui.js';
 import { onSwipe } from './swipe.js';
@@ -26,11 +27,15 @@ const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';
 // Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
-const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest'];   // PixelLab backdrops, 2026-10-24
+const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush', 'steppe'];   // PixelLab backdrops, 2026-10-24
 
-// Been there: the UK always; other regions once flown over, or landed in one of their cities.
+// The land a player started in (season 2: their home area's start city), so NATURE opens there (the regions run,
+// 2026-10-28: a Punta Arenas or Auckland start opened NATURE on the UK's woodland).
+export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = (a && a.start) || save.city, c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
+// Been there: the UK always; the home land; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {
-  if (region === 'woodland') return true;
+  if (region === 'woodland' && !(isSeason2(save) && homeRegion(save) && homeRegion(save) !== 'woodland')) return true;   // the UK: always, except for a season-2 player who started elsewhere
+  if (homeRegion(save) === region) return true;
   if ((save.discovered || {})[region]) return true;   // flown over (GameScene.setRegion)
   return (save.visited || []).some(n => (CITIES.find(c => c.name === n) || {}).region === region);   // src/cities.js
 }
@@ -39,10 +44,11 @@ export class WildScreen {
   constructor(ui) {
     this.ui = ui;
     this.save = ui.save;
-    this.region = 'woodland';
+    this.region = null;   // the home land until a tab is chosen (render)
     $('wInfoClose').onclick = () => { $('wInfo').hidden = true; };
   }
 
+  home() { return homeRegion(this.save); }   // the player's home land (ui.js asks: no import cycle)
   get projects() { return REGION_DATA[this.region].projects; }
   get species() { return REGION_DATA[this.region].species; }
   animals() { return regionSpecies(this.region); }
@@ -51,7 +57,8 @@ export class WildScreen {
 
   render() {
     const s = this.save;
-    if (!discovered(s, this.region)) this.region = 'woodland';
+    if (!this.region) this.region = homeRegion(s) || 'woodland';
+    if (!discovered(s, this.region)) this.region = homeRegion(s) || 'woodland';
     $('wSeeds').textContent = s.seeds; $('wCrystals').textContent = s.crystals || 0;
     $('wRegions').innerHTML = Object.entries(REGION_NAMES).map(([id, name]) => {
       const open = discovered(s, id);
@@ -96,8 +103,9 @@ export class WildScreen {
     }
     row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
-    // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the UK tab.
-    const uk = this.region === 'woodland';
+    // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the HOME land's tab (the
+    // non-UK starter audit, 2026-10-28: a Melbourne or Lagos player had to visit the UK's tab to get them).
+    const uk = this.region === (homeRegion(s) || 'woodland');
     // Season 2: the planting tools wait for lesson 5 (trees), one new thing at a time (research/FLOW-FIRST-HOUR.md).
     const treesTime = !isSeason2(s) || (s.missionsDone || []).includes('L4');
     $('wTrees').hidden = !uk || !treesTime;
@@ -155,7 +163,7 @@ export class WildScreen {
         <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
         <div class="next">${btn}</div></div>`;
     };
-    const how = this.region === 'woodland' ? 'Plant trees and finish the projects above!' : 'Finish the projects above!';
+    const how = 'Plant trees and finish the projects above!';   // every land takes trees (plantedIn)
     const open = TIERS.filter(t => bio >= t.needs), next = TIERS.find(t => bio < t.needs);
     $('wProjects').innerHTML = open.map(t => {
       const ps = P.filter(p => p.tier === t.tier), n = ps.filter(p => done.includes(p.id)).length;

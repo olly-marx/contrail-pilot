@@ -55,7 +55,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(s.seeds === 165 && s.crystals === 15 && s.unclaimed.length === 0, `CLAIM ALL pays +65 +5: ${s.seeds} / ${s.crystals}`);
 
   // 4. With every land discovered, a flight completes the World tour ('world'): its prize waits; no automatic bonus.
-  const ALL = { mediterranean: 1, desert: 1, monsoon: 1, eastasia: 1, boreal: 1, plains: 1, tundra: 1, savanna: 1, rainforest: 1 };
+  const ALL = { mediterranean: 1, desert: 1, monsoon: 1, eastasia: 1, boreal: 1, plains: 1, tundra: 1, savanna: 1, rainforest: 1, islandforest: 1, bush: 1, steppe: 1 };
   await setSave({ ...base, city: 'REYKJAVIK', discovered: ALL, missionsDone: MOST, badgeTiers: {} }); await reload();
   await fly(); r = await end(true);
   s = await save();

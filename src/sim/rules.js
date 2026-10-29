@@ -105,6 +105,10 @@ export const RULES = {
     this.stormCount = 0;
     this.lastContrail = 0;
     this.wasInIssr = false;
+    // Contrail-free cruise (Ops 8+, eras 4-6): while the player holds it (cleanHeld, set by GameScene from input; always
+    // false in the engine: the model never uses it), no contrail is made, for up to kit.cleanSecs each night.
+    this.cleanHeld = false;
+    this.cleanLeft = 0;
 
     this.heat = 0;                   // net heating (play units)
     this.totalCo2 = 0;
@@ -197,7 +201,9 @@ export const RULES = {
   // Bottom of the drawn plane (wheels), used for ground contact.
   spriteBottom() { return this.plane.y - PLANE.spriteOffY + PLANE.spriteH; },
   runwayUnder(box) {
-    return this.runways.find(r => r.x <= box.x && box.x + box.w <= r.x + AIRPORT.runwayLen && r.name !== this.homeName);
+    // Home is landable when the route loops back to it (a 3-city area's 3rd stop: the sim chat, 2026-10-28, beginners crashed
+    // on a drawn home runway); only a DEPARTURE runway (at or behind the start, worldX <= 0) is never 'landed' on.
+    return this.runways.find(r => r.x <= box.x && box.x + box.w <= r.x + AIRPORT.runwayLen && !(r.name === this.homeName && r.worldX <= 0));
   },
   // The k-th airport ahead of the start city (0 = the next one), at worldX `from` + that leg.
   airportAhead(k, from = 0) {
@@ -231,7 +237,11 @@ export const RULES = {
   // reaches a storm, would the flock be near the plane and inside that storm's gap?
   flockBlocksGap(x, y, half) {   // half: the flock's size in old V steps (13 px across, 9 px down)
     const B = HAZARDS.birds, v = Math.max(1, this.speed);
-    const top = y - half * 9 - 4 - B.wobble, bottom = y + half * 9 + 16 + B.wobble;   // the V's height, bird size and bobbing
+    // Bird detection (Sensors 9-10, era 5): kit.birdWobbleMul x the bob, here and in the flock's motion and collision bands.
+    // In these spawn retries a smaller bob lets a different number of tries pass, so an era-5 sky parts from the same seed's
+    // era-4 sky: no new draws, a different sky of the same kind (as the twists). x1 = exact for eras 1-4.
+    const wob = B.wobble * (P.KNOB_PLANTS.wobble ? 1 : this.kit.birdWobbleMul ?? 1);
+    const top = y - half * 9 - 4 - wob, bottom = y + half * 9 + 16 + wob;   // the V's height, bird size and bobbing
     return this.storms.some(st => {
       const r = st.rects[0], t = (r.x - this.plane.x) / v;
       if (t < 0) return false;
@@ -330,7 +340,7 @@ export const RULES = {
     let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * (this.stormCount - (this.warmStorms || 0)));
     const nf = HAZARDS.noFly;
     const noFly = this.distancePx >= nf.from && this.rand() < this.squeezed(nf.chance, 'capNoFly');
-    if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess);
+    if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess + (P.KNOB_PLANTS.gapAdd ? 0 : this.kit.noFlyGapAdd || 0));   // ATC 8 (2010s, free route airspace): wider no-fly gaps
     gap = Math.round(gap * this.kit.gaps);   // air traffic control (eras): better spacing, gaps up to ~3% wider
     const lo = STORMS.marginTop + gap / 2;
     const hi = SKY_H - STORMS.marginTop - gap / 2;
@@ -667,7 +677,11 @@ export const RULES = {
     this.updateParcels(dt);
     if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
     this.wasInIssr = inIssr;
-    if (inIssr && this.state !== 'landing' && time - this.lastContrail > this.kit.contrailEvery) {
+    // Contrail-free cruise: held, at night, meter left -> inside icy air but no puff. Skipping a puff also skips its
+    // rngPlane wobble draw: that is the PLANE stream, so the sky (this.rng) is unaffected (sim-paired stays green).
+    const clean = !P.KNOB_PLANTS.clean && this.cleanHeld && !this.isDay && this.cleanLeft > 0;
+    if (clean && inIssr) this.cleanLeft = Math.max(0, this.cleanLeft - dt * 1000);
+    if (inIssr && !clean && this.state !== 'landing' && time - this.lastContrail > this.kit.contrailEvery) {
       this.lastContrail = time;
       this.addContrail(time);
     }
@@ -957,7 +971,8 @@ export const RULES = {
       f.x -= B.extraSpeed * dt;
       // Birds steer out of a storm gap the plane is about to fly through (a flock there would
       // leave no way past). The spawn check usually prevents it; this catches the rest.
-      const half = f.half ?? (f.birds.length - 1) / 2, top = f.y - half * 9 - 4 - B.wobble, bottom = f.y + half * 9 + 16 + B.wobble;
+      const wob = B.wobble * (P.KNOB_PLANTS.wobble ? 1 : this.kit.birdWobbleMul ?? 1);   // bird detection (see flockBlocksGap)
+      const half = f.half ?? (f.birds.length - 1) / 2, top = f.y - half * 9 - 4 - wob, bottom = f.y + half * 9 + 16 + wob;
       for (const st of this.storms) {
         const r = st.rects[0], gTop = r.height, gBot = st.rects[1].y;
         if (r.x + r.width < this.plane.x - 10 || r.x > this.plane.x + 200) continue;     // only gaps the plane is reaching
@@ -970,7 +985,7 @@ export const RULES = {
         if (f.turn.left > 0 && !TWIST_PLANTS.still) { const k = Math.min(dt, f.turn.left); f.y += f.turn.dir * T.dy * k / T.secs; f.turn.left -= k; if (f.turn.left <= 0) f.turn.left = 0; }
       }
       f.phase += dt * 2;
-      const fy = f.y + Math.sin(f.phase) * B.wobble;
+      const fy = f.y + Math.sin(f.phase) * wob;
       const frame = Math.floor(this.gameTime / 120) % 2;
       for (const b of f.birds) { b.x = Math.round(f.x + b.ox); b.y = Math.round(fy + b.oy); b.key = `bird-${frame}`; }
     }
@@ -1067,7 +1082,7 @@ export const RULES = {
     if (half !== this.lastHalf) {
       this.onDayHalf(half);
       // Night Owl: a whole night flown without trapping any heat.
-      if (half === 'night') this.nightDodges = 0;
+      if (half === 'night') { this.nightDodges = 0; this.cleanLeft = (this.kit.cleanSecs || 0) * 1000; }   // the clean-cruise meter refills each night
       if (half === 'night' && this.state === 'playing') this.night = { started: true, trappedAtStart: this.heatTrapped };
       if (half === 'dawn' && this.night.started && this.heatTrapped - this.night.trappedAtStart < 0.5) {
         this.nightOwl = true;

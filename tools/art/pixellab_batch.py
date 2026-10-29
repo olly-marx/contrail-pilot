@@ -81,6 +81,17 @@ def card_prompt(name):
             'body, side view, plain empty transparent background, no ground, no grass, no scenery, no text, not chibi, not cartoon')
 
 
+NO_ANIMATE = [False]   # --no-animate (the user's art budget, 2026-10-28): 2 gens an animal; the walk frames are made here
+
+
+def local_frames(src, f0, f1):
+    """The two walk frames without animate-with-text: the sprite reduced to 10 colours, and the same frame bobbed 1 px up."""
+    from PIL import Image
+    im = Image.open(src).convert('RGBA'); a = im.split()[3]
+    q = im.convert('RGB').quantize(colors=10, dither=0).convert('RGBA'); q.putalpha(a)
+    q.save(f0); b = Image.new('RGBA', q.size, (0, 0, 0, 0)); b.alpha_composite(q, (0, -1)); b.save(f1)
+
+
 def animal(out, sid, name, pose, cap):
     o = Path(out); p = lambda s: o / f'{sid}-{s}.png'
     if p('card').exists() and p('f1').exists(): return 'done'
@@ -92,7 +103,10 @@ def animal(out, sid, name, pose, cap):
                  'view': 'side', 'direction': 'east', 'outline': 'single color black outline', 'shading': 'flat shading', 'detail': 'low detail'})
         save(r['image'], p('s')); charge(out, f'{sid}-s', r)
         log(out, 'provenance.jsonl', {'file': p('s').name, 'tool': 'create-image-pixflux', 'prompt': sprite, 'size': '32x32', 'date': today})
-    if not p('a2').exists():
+    if NO_ANIMATE[0] and not p('f1').exists():
+        local_frames(p('s'), p('f0'), p('f1'))
+        log(out, 'provenance.jsonl', {'file': f'{sid}-f0/f1.png', 'tool': 'local (10 colours + 1 px bob)', 'prompt': '-', 'size': '32x32', 'date': today})
+    if not NO_ANIMATE[0] and not p('a2').exists():
         r = call('/animate-with-text-v3', {'first_frame': b64(p('s')), 'action': action, 'frame_count': 4, 'no_background': True})
         job = r.get('background_job_id'); charge(out, f'{sid}-anim', r)
         for _ in range(225):   # up to 15 min: animations can queue behind other jobs on the account
@@ -120,8 +134,9 @@ def animal(out, sid, name, pose, cap):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('list'); ap.add_argument('out'); ap.add_argument('--cap', type=float, default=2.0); ap.add_argument('--workers', type=int, default=4)
+    ap.add_argument('list'); ap.add_argument('out'); ap.add_argument('--cap', type=float, default=2.0); ap.add_argument('--workers', type=int, default=4); ap.add_argument('--no-animate', action='store_true')
     a = ap.parse_args()
+    NO_ANIMATE[0] = a.no_animate
     Path(a.out).mkdir(parents=True, exist_ok=True)
     rows = [l.split('|') for l in Path(a.list).read_text().splitlines() if '|' in l and not l.startswith('id|')]
     def one(r):

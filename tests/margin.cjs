@@ -32,7 +32,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(JSON.stringify(probe.edge) === '[true,true,true]', `1990s twin (edge): a little past the edge: ${probe.edge}`);
   // The planes carry their margins.
   const m = await p.evaluate(async () => { const F = await import('/src/fleet.js'); return F.PLANES.map(x => x.margin).join(); });
-  check(m === 'deep,inside,edge', `Comet deep, 747 inside, twin edge: ${m}`);
+  check(m === 'deep,inside,edge,edge2,edge3', `Comet deep, 747 inside, twin edge, 787 edge2, truss edge3: ${m}`);
 
   console.log({ fails });
   await b.close();

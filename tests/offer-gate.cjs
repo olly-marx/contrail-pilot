@@ -33,14 +33,14 @@
   // recordAreaBest keeps the best, per area, and ignores nothing-flights
   const r = fly(fly(base, 4000), 2500); check(r.areaBest.weurope === 4000, `areaBest keeps the longest: ${JSON.stringify(r.areaBest)}`);
   check(!fly(base, 0).areaBest, 'a 0 km flight records nothing');
-  // maxEra: this save is in the last era, yet no crossing past SEASON.maxEra is offered (LA-Honolulu is era 3)...
+  // maxEra: this save is in the last era, yet no crossing past SEASON.maxEra is offered (the era 5 release: the lap is era 5)...
   const na = { ...base, areas: ['namerica'], city: 'DENVER' };
   const ids = X.available(na).map(x => x.id);
   check(ids.includes('mexico-panama') || ids.includes('north-atlantic'), `a North American save has its era 0-1 crossings: ${ids}`);
-  check(!ids.includes('pacific-islands') && X.available(na).every(x => x.era <= SEASON.maxEra), `nothing past SEASON.maxEra is offered: ${ids}`);
-  check(SEASON.maxEra === 2, `this release ends after the 1990s: maxEra ${SEASON.maxEra}`);
+  check(!ids.includes('lap') && X.available(na).every(x => x.era <= SEASON.maxEra), `nothing past SEASON.maxEra is offered: ${ids}`);
+  check(SEASON.maxEra === 4, `this release ends after the 2030s (era 5 release): maxEra ${SEASON.maxEra}`);
   // ...and when everything of this release is flown, a placeholder instead of an empty screen
-  const done = { ...base, areas: Object.keys((await import('../src/areas.js')).AREAS), crossed: [] };
+  const done = { ...base, areas: [...Object.keys((await import('../src/areas.js')).AREAS), 'ocean'], crossed: [] };   // (the era 4 release: the 2010s crossings reach Honolulu, the ocean)
   check(X.available(done).length === 0 && X.moreToCome(done), 'all areas open: nothing to fly, "more to come" shows');
   check(!X.moreToCome(base), 'a save with crossings still to fly shows no placeholder');
   // the empty FLY screen: nothing to fly now, but the next crossing opens in a later era (laterEra), told instead of silence

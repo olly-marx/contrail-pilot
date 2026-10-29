@@ -58,7 +58,7 @@ const KEY = 'contrailPilot.v2';
   const shown = await p.waitForSelector('#startChoice [data-area="africa"]', { timeout: 5000 }).then(() => true).catch(() => false);
   check(shown, 'season 2: a new player is asked where to start');
   const starters = await p.$$eval('#startChoice [data-area]', bs => bs.map(b => b.dataset.area));
-  check(starters.length === 6 && !starters.includes('oceania'), `six starter areas offered: ${starters}`);
+  check(starters.length === 9 && ['aotearoa', 'oceania', 'patagonia'].every(a => starters.includes(a)), `nine starter areas offered, Aotearoa New Zealand, Australia and Patagonia among them (the user, 2026-10-28): ${starters}`);
   if (shown) { await p.click('#startChoice [data-area="africa"]'); await p.click('#startChoice [data-city="LAGOS"]'); }
   await p.waitForTimeout(300);
   const st = await p.evaluate(async () => { const s = game.registry.get('save'), r = await import('/src/route.js'), a = await import('/src/areas.js');
@@ -110,7 +110,8 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(500);
   const rec = await p.evaluate(() => game.registry.get('save').areaBest);
   check(rec && rec.weurope >= 2900 && rec.weurope <= 3100, `a landed flight from Warsaw records the best for Western Europe: ${JSON.stringify(rec)}`);
-  await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = Object.keys(a.AREAS); s.flightSeconds = 1e6; (await import('/src/save.js')).writeSave(s); });
+  // every area AND the Pacific stepping stones are open: crossings to Honolulu/Nadi are real crossings since maxEra 3
+  await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = [...Object.keys(a.AREAS), 'ocean']; s.flightSeconds = 1e6; (await import('/src/save.js')).writeSave(s); });
   await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
   check(await p.evaluate(() => !!document.getElementById('jMore')), 'every area open: the MORE TO COME card shows');
   // 3. Reset: from zero again.

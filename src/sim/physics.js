@@ -46,8 +46,10 @@ export function rayColumns(contrails, isDay) {
 }
 
 // Heat per second from `blocked` columns (negative = cooling). f.kit.vapour.
+// Planted defects for tests/era4-knobs.cjs (each must FAIL it): the era 4-6 kit knobs ignored.
+export const KNOB_PLANTS = { gapAdd: false, nightHeat: false, clean: false, wobble: false };
 export function rayRate(f, isDay, strength, blocked) {
-  return (isDay ? CLIMATE.sunBlockedPerCol * f.kit.vapour ** CLIMATE.dayWaterPower : CLIMATE.heatTrappedPerCol * f.kit.vapour ** CLIMATE.nightWaterPower) * blocked * strength;
+  return (isDay ? CLIMATE.sunBlockedPerCol * f.kit.vapour ** CLIMATE.dayWaterPower : CLIMATE.heatTrappedPerCol * f.kit.vapour ** CLIMATE.nightWaterPower * (KNOB_PLANTS.nightHeat ? 1 : f.kit.nightHeatMul ?? 1)) * blocked * strength;   // nightHeatMul: eras 4-6 (planes + Ops), x1 = exact before
 }
 
 // 1 until CLIMATE.lateFrom km into a flight, then grows by latePer10k every 10,000 km. Only NIGHTS get harder.
