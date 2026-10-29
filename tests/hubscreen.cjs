@@ -49,8 +49,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // The bottom bar is back on every menu screen (Lola, 2026-10-27), showing only what is revealed: after lesson 1,
   // HOME, MISSIONS and HANGAR; not NATURE (lesson 2), PILOT or BOARDS (they come with the 3rd landing).
   const inH = await p.evaluate(() => ({ hangar: !document.getElementById('hangar').hidden, bar: !document.getElementById('tabbar').hidden,
-    tabs: [...document.querySelectorAll('#tabbar [data-go]')].filter(b => !b.hidden).map(b => b.dataset.go), barH: Math.round(document.getElementById('tabbar').getBoundingClientRect().height) }));
-  check(inH.barH <= 66, `the bottom bar is ONE row even with the PILOT tab (it wrapped to 2 rows and covered the buttons above it): ${inH.barH} px high`);
+    tabs: [...document.querySelectorAll('#tabbar [data-go]')].filter(b => !b.hidden).map(b => b.dataset.go) }));
+  const barH = await p.evaluate(() => { document.querySelectorAll('#tabbar [data-go]').forEach(b => { b.hidden = false; }); return Math.round(document.getElementById('tabbar').getBoundingClientRect().height); });   // all 6 tabs showing (HOME MISSIONS HANGAR NATURE PILOT BOARDS)
+  check(barH <= 66, `the bottom bar is ONE row even with the PILOT tab (it wrapped to 2 rows and covered the buttons above it): ${barH} px high with all 6 tabs`);
   check(inH.hangar && inH.bar && inH.tabs.join() === 'fly,missions,hangar,pilot,boards', `the hangar shows the bottom bar with the revealed tabs only (BOARDS appears after the 3rd landing: this save has 5; PILOT comes with it): ${JSON.stringify(inH)}`);
   await p.click('#tabFly'); await p.waitForTimeout(300);
   check(await p.evaluate(() => !document.getElementById('title').hidden && !document.getElementById('tabbar').hidden), 'HOME (on the bar) goes back to the hub, the bar stays');
