@@ -366,6 +366,7 @@ export class UI {
   // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
   // then the Earth bars grow one by one. A tap skips to the end.
   async showResults(r) {
+    this.lastGrab = r.earned && r.earned[0] ? r.earned[0].n : 0;   // seeds grabbed this flight (the rails' R9a words depend on it)
     const lead = this.resultsLead();   // season 2: the one place the lesson leads next (research/FLOW-FIRST-HOUR.md)
     $('againBtn').textContent = lead === 'hangar' ? 'OPEN THE HANGAR' : lead === 'nature' ? 'OPEN NATURE' : 'FLY ON';
     this.hideCoach();   // nothing left open from the flight (the user saw a stray OK at the top after landing, 0.13.0)

@@ -122,7 +122,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
       label: lab.textContent, labelOn: +getComputedStyle(lab).opacity > 0.9, scale: +scale.toFixed(2), mark: { l: Math.round(m.left), t: Math.round(m.top), r: Math.round(m.right), b: Math.round(m.bottom) },
       points: m.width > 2 && tip.x >= m.left && tip.x <= m.right && tip.y >= m.top - 2 && tip.y <= m.bottom + 2, inFrame, small, labelInCard }; });
   await shot('R6b-payoff-after');
-  check(pay1.op > 0.9 && pay1.okShown && /cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
+  check(pay1.op > 0.9 && pay1.okShown && /jet engines|cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
   check(pay1.scale > 1.5 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points && pay1.inFrame && pay1.small && pay1.labelInCard, `R6: the camera zooms onto the new part (its box in view and small: the part, not the plane) and the label, inside the card, points INTO it (${JSON.stringify(pay1)})`);
   await step('R6-payoff', /./, () => document.getElementById('payoff').hidden && !document.getElementById('hangar').hidden, { modal: '#payOk' });   // (stays in the hangar: the user)
   await step('R7-takeoff', /take off/i, () => document.getElementById('hangar').hidden, { screen: 'hangar' });   // (the hangar's own TAKE OFF)

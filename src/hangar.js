@@ -91,7 +91,7 @@ export class FleetHangar {
   // R6 (the user, 2026-10-27: "tapping an upgrade did NOT show the plane looking cooler"): the plane, with the part just
   // fitted (src/planelook.js), zooms in over the hangar with one line and one OK.
   // R6, the payoff (the user, 2026-10-28: it "just pops up the upgraded plane, you never see it BEFORE"): the plane as it
-  // was, then the new part fades and slides onto it with a sparkle, then "Your plane is cleaner now!" and OK.
+  // was, then the new part fades and slides onto it with a sparkle, then "Look: shiny new jet engines!" and OK.
   // Every purchase (the user, 2026-10-28): opts.bars = the stat bars it moves (fleet.js previewBars, taken BEFORE the buy),
   // opts.gadBefore = the gadget overlays before (a new gadget is a part too), opts.name = the item, opts.toFly = the rails'
   // first free part (the tutorial's words: rails); every purchase stays in the hangar, the rails' next step is TAKE OFF there. A system has no part: no zoom,
@@ -132,8 +132,14 @@ export class FleetHangar {
       lab.classList.toggle('below', !above);
       lab.style.left = `${Math.round(x)}px`; lab.style.top = `${Math.round(above ? m.top - c.top - 6 : m.bottom - c.top + 6)}px`; el.classList.add('labelled'); };
     // No part (a system, or a level with no new look): the bars ARE the payoff - they move with the sparkle, then OK.
-    const settle = () => { if (el.hidden) return; if (added.length) label(); else el.classList.add('labelled'); };
-    setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 900);   // the part arrives, the camera zooms onto it, then the label
+    // (the user's playtest, 2026-10-29, live on a phone: the pictures were still loading when the timeline ran, so the frame
+    // stayed EMPTY and the label, placed on an unmeasured marker, floated above the card.) Now the show starts only once both
+    // pictures are in (6 s at most), and the zoom + label need the measured part; without it, the plane shows flat (no zoom).
+    const settle = () => { if (el.hidden) return; if (added.length && mark.dataset.done) label(); else { el.classList.add('nopart'); el.classList.add('labelled'); } };
+    const pics = [whenLoaded(beforeImg), ...(part ? [whenLoaded(part)] : [])];
+    Promise.race([Promise.all(pics).then(() => part && measure()), new Promise(r => setTimeout(r, 6000))]).then(() => {
+      if (part && !mark.dataset.done) el.classList.add('nopart');
+      setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
     $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled', 'nopart');
       if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }

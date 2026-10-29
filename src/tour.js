@@ -12,7 +12,10 @@ import { revealed as s2Revealed } from './missions2.js';
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf } from './upgrades.js';
-import { getPilot } from './online.js';
+import { getPilot, namesOpen } from './online.js';
+// Rails rule (the user's playtest, 2026-10-29): a step that taps a bottom-bar tab must DECLARE whether the screen it opens has
+// something to act on (ready); run() stops before such a step when it is false. tests/tourready.cjs checks every tab step declares it.
+const always = () => true;
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -54,7 +57,7 @@ export class Tour {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
     if (FEATURES.season2 && !window.CP_PREVIEW && !this.done('name')) this.markDone('name');   // (preview: the name step is shown, local only)   // season 2 plays offline: no pilot name yet
-    if (where === 'title' && !this.done('name') && !getPilot()) return this.run('name', this.nameSteps());
+    if (where === 'title' && !this.done('name') && !getPilot() && namesOpen()) return this.run('name', this.nameSteps());
     if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     // Season 2: the ON-RAILS onboarding (the user, 2026-10-27: "the ONLY thing they should be able to do is what you want
     // them to do"). Each step: one lit target (the dim layer catches every other tap), scrolled into view, one sentence.
@@ -87,7 +90,7 @@ export class Tour {
     if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];
     // R9: after flight 1: the seeds are yours; claim the mission's prize; another flight, watch for wildlife.
     if (res && d('L1') && !this.done('r-res1')) return ['r-res1', [
-      { target: '#rGrab', text: tip('rail-seeds'), ok: true },
+      { target: '#rGrab', text: tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none'), ok: true },   // (playtest 2026-10-29: 0 seeds read 'your seeds')
       ...(un ? [{ target: '#rRewards .claim', text: tip('rail-claim'), tap: true }] : []),
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
@@ -103,34 +106,34 @@ export class Tour {
       { target: '#wProjects .line.project.freeline .w-pname', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .line.project.previewing') },
       { target: '#wProjects [data-project].free', text: tip('rail-project'), tap: true },
       { target: '#wMeter', text: tip('rail-nat-bio'), ok: true },
-      { target: '#tabFly', text: tip('rail-nat-home'), tap: true }]];
+      { target: '#tabFly', text: tip('rail-nat-home'), tap: true, ready: always }]];
     // R12: a landing past an airport: the bonus payoff.
     if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMultRow', text: tip('rail-bonus'), ok: true }]];
     // R13: once lesson L3 is done: the hangar's SYSTEMS.
     if (hub && d('L3') && !this.done('r-systems')) return ['r-systems', [
-      { target: '#tabHangar', text: tip('rail-systems'), tap: true },
+      { target: '#tabHangar', text: tip('rail-systems'), tap: true, ready: always },
       { target: '#hFleet [data-ftab="systems"]', text: tip('rail-systems-tab'), tap: true },
       { target: '#hFleet .line .next', text: tip('rail-systems-line'), ok: true }]];
     // L5 needs tree parcels (free the first time): on NATURE, point at the FREE button (the audit, 2026-10-28).
     if (where === 'nature' && d('L4') && !d('L5') && !((s.levels || {}).trees > 0) && !this.done('r-parcels')) return ['r-parcels', [{ target: '#wTrees [data-buy="trees"]', text: tip('rail-parcels'), tap: true }]];
     // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).
-    if (hub && s2Revealed(s, 'boards') && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true }]];
+    if (hub && s2Revealed(s, 'boards') && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true, ready: always }]];
     return null;
   }
 
   // ---------- the tours ----------
   nameSteps() {
     return [
-      { target: '#tabPilot', text: tip('tour-hello'), tap: true },
+      { target: '#tabPilot', text: tip('tour-hello'), tap: true, ready: namesOpen },
       { target: '#pFirst', text: tip('tour-first'), until: () => /^[A-Za-z]{2,12}$/.test($('pFirst').value), focus: true },
       { target: '#pWords', text: tip('tour-word'), until: () => !!(this.ui.pilot && this.ui.pilot.draft.word) },
       { target: '#pSave', text: tip('tour-save'), tap: true },
       { target: '#pName', text: tip('tour-saving'), until: () => !!getPilot() || /internet|different/.test($('pMsg').textContent), wait: true },
       { skipIf: () => !!getPilot() || !/different/.test($('pMsg').textContent), target: '#pEdit', text: tip('tour-retry'), until: () => !!getPilot() || /internet/.test($('pMsg').textContent) },
       { skipIf: () => !!getPilot(), target: '#pMsg', text: tip('tour-offline'), ok: true, end: true },
-      { target: '#tabBoards', text: tip('tour-boards'), tap: true },
+      { target: '#tabBoards', text: tip('tour-boards'), tap: true, ready: always },
       { target: '#bList', text: tip('tour-best'), ok: true },
-      { target: '#tabFly', text: tip('tour-fly'), tap: true },
+      { target: '#tabFly', text: tip('tour-fly'), tap: true, ready: always },
     ];
   }
 
@@ -138,21 +141,21 @@ export class Tour {
     return [
       { skipIf: () => !$('hangar').hidden, target: '#hubTiles [data-go="hangar"]', text: tip('tour-hangar'), tap: true },   // already inside (OPEN THE HANGAR)
       { area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true, scroll: true },   // scrolled into view: the bubble was cut off at the top
-      { target: '#tabFly', text: tip('tour-home'), tap: true },
+      { target: '#tabFly', text: tip('tour-home'), tap: true, ready: always },
     ];
   }
 
   hangarSteps() {
     const free = () => !!this.save.freeUpgrade;
     return [
-      { target: '#tabHangar', text: tip('tour-hangar'), tap: true },
+      { target: '#tabHangar', text: tip('tour-hangar'), tap: true, ready: always },
       { target: '.treebank', text: tip('tour-bank'), ok: true },
       { target: '#hFleet .ftimeline', text: tip('tour-eras'), ok: true },
       { target: '#hFleet .ftabs', text: tip('tour-tabs'), ok: true },
       { skipIf: () => !free(), area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true },
-      { target: '#tabNature', text: tip('tour-nature'), tap: true },
+      { target: '#tabNature', text: tip('tour-nature'), tap: true, ready: always },
       { target: '#wProjects', text: tip('tour-projects'), ok: true },
-      { target: '#tabFly', text: tip('tour-fly'), tap: true },
+      { target: '#tabFly', text: tip('tour-fly'), tap: true, ready: always },
     ];
   }
 
@@ -173,6 +176,7 @@ export class Tour {
     for (let i = 0; i < steps.length; i++) {
       const st = steps[i];
       if (st.skipIf && st.skipIf()) continue;
+      if (st.ready && !st.ready()) { id = null; break; }   // its target screen has nothing to act on: do not start (it runs again later)
       if (!await this.step(st)) { id = null; break; }   // its button is gone (e.g. a flight started): stop; it runs again next time
       if (st.after) st.after();
       if (st.end) break;
