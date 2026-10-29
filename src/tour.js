@@ -53,13 +53,17 @@ export class Tour {
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
-    // Online is back (0.18.0): the name step comes with BOARDS, after the 3rd landing (season 1 and the preview: at once).
-    if (where === 'title' && !this.done('name') && !getPilot() && (!FEATURES.season2 || window.CP_PREVIEW || (this.save.landings || 0) >= 3)) return this.run('name', this.nameSteps());
+    // Season 1 and the preview: the name step at once. Season 2 (online is back, 0.20.0): it comes with BOARDS after the 3rd landing, and only when no
+    // rails step is due (below), so it never cuts across the hangar rails.
+    const s2name = FEATURES.season2 && !window.CP_PREVIEW, wantName = !this.done('name') && !getPilot();
+    if (where === 'title' && wantName && !s2name) return this.run('name', this.nameSteps());
     if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     // Season 2: the ON-RAILS onboarding (the user, 2026-10-27: "the ONLY thing they should be able to do is what you want
     // them to do"). Each step: one lit target (the dim layer catches every other tap), scrolled into view, one sentence.
     if (FEATURES.season2) { const r = this.railsFor(where); if (r) return this.run(r[0], r[1]); }
-    if (where === 'title' && (this.done('name') || getPilot())) {
+    const nameDue = s2name && wantName && (this.save.landings || 0) >= 3;
+    if (where === 'title' && nameDue) return this.run('name', this.nameSteps());
+    if (where === 'title' && (this.done('name') || getPilot() || (s2name && !nameDue))) {
       // Several can open at once (3 at the 3rd landing): one walk-through for all of a hangar tab's.
       const fresh = LINES.filter(l => unlocked(this.save, l) && !this.save.shownLines.includes(l.id));
       if (fresh.length) return this.run(null, this.newSteps(fresh.filter(l => tabOf(l) === tabOf(fresh[0]))));

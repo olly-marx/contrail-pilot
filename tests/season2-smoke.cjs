@@ -9,7 +9,7 @@
 //   E  every area open and the last era: the MORE TO COME card
 //   G  a tap before the scene exists (the 0.12.2 iPhone crash): startSchool/startFlight restart instead of throwing
 //   F  nothing to fly yet in an early era: the card says when the next crossing opens, not silence
-//   (C also: PILOT says it is resting in season 2, no name form; BOARDS is MY RECORDS, rankings come back with online; Pilot LAPS text does not say London)
+//   (C also: PILOT offers the name form; BOARDS is MY RECORDS with a ranking once there is a pilot name; Pilot LAPS text does not say London)
 // Planted defects, each must FAIL the check named (revert with git checkout after):
 //   B  sed -i 's/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/' src/route.js        -> "B <area>: flight school starts in ..."
 //   C  sed -i "s/if (tab === 'nature')/if (tab === 'natur')/" src/ui.js                    -> "C: NATURE opens"
@@ -98,13 +98,13 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
     check(t.shown && t.len > 20, `C: ${tab.toUpperCase()} opens with content: ${JSON.stringify(t)}`);
   }
   check(await p.evaluate(() => !!document.getElementById('jAreas')), 'C: the FLY screen shows "Your area"');
-  // season 2 is offline by design: PILOT and BOARDS say so, they do not offer a name form that can only fail
+  // online is back (0.20.0): PILOT offers the name form and "I already have a pilot"; BOARDS (MY RECORDS) tells a device with no name to pick one
   await p.evaluate(() => game.registry.get('ui').go('pilot')); await p.waitForTimeout(250);
   const pil = await p.evaluate(() => { const v = id => { const e = document.getElementById(id); return !!e && !e.hidden; }; return { note: v('pOffNote'), edit: v('pEdit'), have: v('pHave'), code: v('pCodeBox'), stats: document.getElementById('pStats').innerText.length > 10 }; });
-  check(pil.note && !pil.edit && !pil.have && !pil.code && pil.stats, `C: PILOT says the pilot names are resting (no name form, no login) and still shows your stats: ${JSON.stringify(pil)}`);
+  check(!pil.note && pil.edit && pil.have && pil.stats, `C: PILOT offers the name form and the login (no 'resting' note) and shows your stats: ${JSON.stringify(pil)}`);
   await p.evaluate(() => game.registry.get('ui').go('boards')); await p.waitForTimeout(400);
   const bm = await p.evaluate(() => ({ msg: document.getElementById('bMsg').textContent, cards: document.querySelectorAll('#bBoards .btn.rec').length }));
-  check(/come back with online/.test(bm.msg) && !/No internet/.test(bm.msg) && bm.cards === 8, `C: BOARDS is MY RECORDS (8 cards) and says rankings come back with online, not 'No internet right now': ${JSON.stringify(bm)}`);
+  check(/Pick a name in PILOT/.test(bm.msg) && !/No internet/.test(bm.msg) && bm.cards === 8, `C: BOARDS is MY RECORDS (8 cards) and tells a device with no name to pick one in PILOT, not 'No internet right now': ${JSON.stringify(bm)}`);
   check(await p.evaluate(async () => !/back to LONDON/i.test(await (await fetch('/src/pilot.js')).text())), 'C: the Pilot LAPS text does not say "back to LONDON" (season 2 starts anywhere)');
   await p.context().close();
 

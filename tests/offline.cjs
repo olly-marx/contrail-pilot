@@ -121,11 +121,13 @@ const flight = i => ({ landed: true, distance_m: 1000 + i, shade: 0, heat_trappe
     check(c.got.flights.length === 8, `5: all 8 arrive: ${c.got.flights.length}`);
   });
 
-  // 6. An older database with no send_flights: flight by flight, still nothing lost.
-  await scenario('6 old database', { server: { noBatch: true } }, async c => {
+  // 6. A database with no send_flights (0.20.0: the database takes no direct inserts any more, everything goes through send_flights): nothing is
+  //    inserted flight by flight and nothing is lost: the flights wait in the outbox for the database to be ready.
+  await scenario('6 no send_flights', { server: { noBatch: true } }, async c => {
     await c.down(); await c.send(4); await c.up();
-    check(await c.waitFor(async () => (await c.outbox()) === 0, 8000), `6: should fall back to one by one (${await c.outbox()} left)`);
-    check(c.got.singles === 4, `6: 4 single inserts: ${c.got.singles}`);
+    await c.p.waitForTimeout(3000);
+    check(await c.outbox() === 4, `6: the 4 flights must wait on the device (${await c.outbox()} left)`);
+    check(c.got.singles === 0 && c.got.flights.length === 0, `6: no direct single inserts: ${c.got.singles} singles, ${c.got.flights.length} flights`);
   });
 
   // 7. One flight the database will never accept must not block the rest.
