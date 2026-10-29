@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-29-787-gaps",
+    "version": "0.19.3",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "The 787 is a little kinder in the sky now: the gaps between storms are a bit wider when you fly it."
+    ]
+  },
+  {
     "id": "2026-10-29-goose-early",
     "version": "0.19.2",
     "date": "2026-10-29",
