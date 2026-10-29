@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-10-29-plane-facts",
+    "version": "0.21.3",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "The plane facts for the 2010s, 2030s and far future now have careful, checked facts, and the 2030s plane is called the Truss-braced wing."
+    ]
+  },
+  {
     "id": "2026-10-29-late-prices",
     "version": "0.21.2",
     "date": "2026-10-29",
