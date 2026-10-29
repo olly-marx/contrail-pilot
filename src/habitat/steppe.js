@@ -30,7 +30,7 @@ export const PROJECTS = [
     fact: '33 pumas have worn radio collars in the park since 2008, and stray or farm dogs take more livestock than pumas do.',
     src: [['Rewilding Chile: Monitoring pumas', `${RC}projects/monitoring-pumas-in-patagonia-national-park/`]],
     org: { name: 'Fundación Rewilding Chile', learn: `${RC}projects/monitoring-pumas-in-patagonia-national-park/`, donate: RCD } },
-  { id: 'goosewatch', name: 'Guard the ruddy-headed goose', tier: 2, band: 'mid',
+  { id: 'goosewatch', name: 'Guard the ruddy-headed goose', tier: 1, band: 'mid',   /* tier 1 (2026-10-28): the steppe's beginners had 16-19-flight empty runs with 2 tier-1 projects */
     short: 'Rangers count one of Patagonia\'s rarest geese, watch with cameras, and put satellite tags on some to follow their long trip.',
     chain: ['Rangers and cameras watch the geese', 'tags show where they fly', 'people know where to protect them'],
     fact: 'Fewer than 1,000 of the mainland geese are left, and they fly more than 1,800 km to spend the winter.',
