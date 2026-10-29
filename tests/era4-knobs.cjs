@@ -17,7 +17,11 @@ const src = f => path.resolve(__dirname, '../src', f);
   const gaps = sys => { const seen = new Map();
     S.simulate(save(sys), { pilot: 'careful', seed: 3, maxKm: 16000, onStep: w => { for (const st of w.storms) if (st.noFly && !seen.has(st)) seen.set(st, st.rects[1].y - st.rects[0].height); } });
     return [...seen.values()]; };
-  const g7 = gaps({ atc: 7 }), g8 = gaps({ atc: 8 });
+  // (on the twin: a plane with no no-fly help of its own, so the two flights differ ONLY by ATC 8's +10; the 787 has +8 itself)
+  const gapsOn = (sys) => { const seen = new Map();
+    S.simulate(save(sys, 'twin'), { pilot: 'careful', seed: 3, maxKm: 16000, onStep: w => { for (const st of w.storms) if (st.noFly && !seen.has(st)) seen.set(st, st.rects[1].y - st.rects[0].height); } });
+    return [...seen.values()]; };
+  const g7 = gapsOn({ atc: 7 }), g8 = gapsOn({ atc: 8 });
   check(g7.length > 3 && g7.length === g8.length, `no-fly zones: ${g7.length} vs ${g8.length} (want the same sky, > 3 zones)`);
   const d = g8.map((v, i) => v - g7[i]);
   check(d.length && d.every(x => x >= 10 && x <= 11), `no-fly gaps wider by ${[...new Set(d)].join('/')} px, want 10-11`);

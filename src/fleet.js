@@ -62,7 +62,8 @@ export const PLANES = [
   // (BALANCE-ERAS-4-6.md: CO2 x0.65 of the full twin): full twin kit CO2 0.527 -> bare 787 0.57 x Ops 6 0.88 = 0.50 (a bit
   // cleaner: the era step) -> full 0.57 x 0.85 x 0.94 x 0.92 x Ops 8 0.82 = 0.343 (x0.65). Art: code-made from the twin
   // (tools/art/make_787.py, no PixelLab until the user tops up). Facts to check before text ships: research/PLANE-FUTURE.
-  { id: 'dreamliner', era: 3, name: '787 Dreamliner', co2: 0.57, margin: 'edge2', sprite: 'plane-787', portrait: 'assets/ui/plane-hangar-787.png',
+  // noFlyGapAdd 8: the era step (sim chat, 120 skies at s 0.9: bare 787 +8 >= full twin at 14-30k, 27k -3 pts inside the +-4 SE).
+  { id: 'dreamliner', era: 3, name: '787 Dreamliner', co2: 0.57, noFlyGapAdd: 8, margin: 'edge2', sprite: 'plane-787', portrait: 'assets/ui/plane-hangar-787.png',
     lines: {
       engines: [L(3, 900, 'GEnx turbofans', { co2: 0.93 }), L(3, 1300, 'Chevron nacelles: saw-tooth edges, quieter', { co2: 0.9 }),
         L(3, 1800, 'Trent 1000 TEN engines', { co2: 0.85 })],
