@@ -54,6 +54,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   // Flying with real taps (the same eye as tests/firsthour-real.cjs), checking (c) and the flight's rules as it goes.
   const look = () => p.evaluate(() => {
     const s = game.scene.getScene('game'), coach = document.getElementById('coach'), ok = document.getElementById('coachOk'), cv = document.querySelector('#game canvas');
+    if (!cv || !s || !s.plane) return { state: 'none', results: false, okUp: false, tapStep: false, toRunway: 1e9, covered: false, turbs: 0, wild: 0 };   // (not up yet: a loaded machine got here before the canvas)
     const k = cv.getBoundingClientRect(), sx = k.width / 288, sy = k.height / 512, pr = { l: k.left + s.plane.x * sx, t: k.top + (s.plane.y - 8) * sy, r: k.left + (s.plane.x + 58) * sx, b: k.top + (s.plane.y + 22) * sy };
     const cr = !coach.hidden && coach.classList.contains('tappable') ? coach.getBoundingClientRect() : null;
     const ahead = (s.storms || []).filter(st => st.rects[0].x + st.rects[0].width > s.plane.x - 4).sort((a, b) => a.rects[0].x - b.rects[0].x)[0];
@@ -63,7 +64,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
       skyH: 464, toRunway: s.nextAirport ? s.nextAirport.worldX - s.distancePx : 1e9,
       gap: ahead && ahead.rects[0].x < s.plane.x + 220 ? (ahead.rects[0].height + ahead.rects[1].y) / 2 - 6 : null,
       issr: issr ? { top: issr.y, bot: issr.y + issr.height } : null,
-      covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), turbs: (s.turbs || []).length,
+      covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), why: cr && { plane: [pr.l, pr.t, pr.r, pr.b].map(Math.round), strip: [cr.left, cr.top, cr.right, cr.bottom].map(Math.round), low: coach.classList.contains('strip-low'), planeY: Math.round(s.plane.y), text: coach.textContent.slice(0, 60) }, turbs: (s.turbs || []).length,
       wild: (s.life || []).filter(x => x.kind && !/animal-(cow|sheep)/.test(x.kind)).length,
       lesson: (l => l && { ahead: l.x - (s.plane.x + 50), onScreen: l.x < 288 - 10, drawn: l.view ? l.view.alpha * (l.view.visible ? 1 : 0) : 0, day: s.isDay })((s.issrs || []).find(i => i.height === 200 && i.width >= 560)) };   // flight 2's guaranteed patch (rules.js l2Patch)
   });
@@ -72,12 +73,12 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
     : v.issr ? (v.day && !avoid ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
     : v.toRunway < 700 ? v.skyH - 30 : v.skyH * 0.45;
   const fly = async (label, seconds, rules = {}) => {
-    const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0, lesson = null;
+    const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0, lesson = null, coverFirst = null, coverLast = null;
     while (Date.now() - t0 < seconds * 1000) {
       const v = await look();
       if (v.results) break;
       if (rules.lessonPatch && !lesson && v.lesson && v.lesson.ahead <= 140 && v.lesson.ahead >= 0) { lesson = v.lesson; await shot('flight2-lesson-patch'); }
-      if (v.covered) covered++; turbs = Math.max(turbs, v.turbs); wild = Math.max(wild, v.wild);
+      if (v.covered) { covered++; if (!coverFirst) coverFirst = { at: Date.now() - t0, ...v.why }; coverLast = { at: Date.now() - t0, ...v.why }; } turbs = Math.max(turbs, v.turbs); wild = Math.max(wild, v.wild);
       if (v.okUp) { await p.click('#coachOk').catch(() => {}); continue; }
       if (v.tapStep) { await p.mouse.click(W / 2, H * 0.55); await p.waitForTimeout(150); continue; }
       if (v.state === 'takeoff' || v.state === 'idle') { await p.mouse.move(W / 2, H * 0.55); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up(); continue; }
@@ -86,7 +87,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
     }
     await p.waitForTimeout(3200);   // the results reveal
     check(await p.evaluate(() => !document.getElementById('results').hidden), `${label}: the flight ended with the results`);
-    check(!covered, `${label}: no teaching strip ever covered the plane (${covered} frames did)`);
+    check(!covered, `${label}: no teaching strip ever covered the plane (${covered} frames did; first ${JSON.stringify(coverFirst)}, last ${JSON.stringify(coverLast)})`);   // (the rects are the diagnostic: is the strip stale (low/high chosen at open time) or the plane moving into it?)
     if (rules.noTurb) check(!turbs, `${label}: no turbulence yet (${turbs})`);
     if (rules.noWild) check(!wild, `${label}: no wild animals yet (${wild})`);
     if (rules.lessonPatch) check(lesson && lesson.onScreen && lesson.drawn > 0 && lesson.day, `${label}: the guaranteed icy patch is DRAWN on screen (alpha > 0) in daylight as the plane nears it, 140 px out (${JSON.stringify(lesson)})`);
