@@ -89,7 +89,9 @@ export const PLANES = [
   // twin = 0.211, night contrail heat x0.4): bare 0.32 x Ops 10 0.78 = 0.25 (cleaner than the full truss wing's 0.263),
   // night 0.6; full 0.32 x 0.94 x 0.97 x 0.98 x Ops 12 0.74 = 0.211, night 0.6 x Ops 12 0.667 = 0.40. 'CO2' here is the
   // hydrogen's making and the climb (a facts check is due before text ships). Art: code-made pale silver.
-  { id: 'hydrogen', era: 5, name: 'Hydrogen blended wing', co2: 0.32, nightHeat: 0.6, margin: 'edge4', sprite: 'plane-hydrogen', portrait: 'assets/ui/plane-hangar-hydrogen.png',
+  // noFlyGapAdd 12: the era step (sim chat, 2026-10-29: bare hydrogen +0 was worse than the full truss from 24k, the pulse and
+  // squeeze arriving with it; +12 passes everywhere at s 1.0, and at s 0.9 except 30k by -5 pts, ~1 SE at 80 skies).
+  { id: 'hydrogen', era: 5, name: 'Hydrogen blended wing', co2: 0.32, nightHeat: 0.6, noFlyGapAdd: 12, margin: 'edge4', sprite: 'plane-hydrogen', portrait: 'assets/ui/plane-hangar-hydrogen.png',
     lines: {
       engines: [L(5, 2600, 'Fuel-cell pods along the wing', { co2: 0.97 }), L(5, 3600, 'Superconducting motors', { co2: 0.94 }),
         L(5, 5000, 'Quieter ducted fans', { takeoff: 0.85 })],

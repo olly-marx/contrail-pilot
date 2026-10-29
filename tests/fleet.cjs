@@ -21,6 +21,8 @@
   check(F.START_BONUS === 300, `start bonus 300 seeds (user, 2026-10-23): ${F.START_BONUS}`);
   // The era step (2026-10-29): a bare 787 has its own no-fly help (+8 px, measured), on top of ATC's (a full 787: 8 + 10).
   const k787 = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 6 }, gadgets: {} } }), kFull = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 8 }, gadgets: {} } });
+  const kH2 = F.fleetKit({ fleet: { plane: 'hydrogen', planes: { hydrogen: {} }, systems: { atc: 10 }, gadgets: {} } });
+  check(kH2.noFlyGapAdd === 22, `hydrogen no-fly help with ATC 10: ${kH2.noFlyGapAdd} (want 12 + 10)`);
   check(k787.noFlyGapAdd === 8 && kFull.noFlyGapAdd === 18, `787 no-fly help: bare ${k787.noFlyGapAdd} (want 8), with ATC 8 ${kFull.noFlyGapAdd} (want 18)`);
   // Eras 4-6 (2026-10-28): the three systems, Sensors and Autopilot go on to level 8 in the 2010s; Magnet, Hold, Gear stop at 6.
   check(F.SYSTEMS.length === 3 && F.GADGETS.length === 5 && [...F.SYSTEMS, ...F.GADGETS].map(g => g.levels.length).join(',') === '12,12,12,6,6,6,12,12', 'three systems and five gadgets: 12 / 6 levels (eras 4-6)');

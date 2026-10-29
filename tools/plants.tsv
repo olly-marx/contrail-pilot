@@ -160,3 +160,4 @@ kindsreach	src/missions2.js	s#  const kinds = Math.max(2, Math.min(3, open.lengt
 homelanding	src/sim/rules.js	s# \&\& !(r.name === this.homeName \&\& r.worldX <= 0));# \&\& r.name !== this.homeName);#	the home runway never landable (the old exclusion)
 fleet	src/fleet.js	s/co2: 0.57, noFlyGapAdd: 8, margin/co2: 0.57, noFlyGapAdd: 0, margin/	the 787 loses its era-step help
 finance	src/finance.js	s/if (since <= 0 || areaBio(save) < d.minBio) return 0;/if (since <= 0) return 0;/	the dividend ignores nature
+fleet	src/fleet.js	s/nightHeat: 0.6, noFlyGapAdd: 12, margin/nightHeat: 0.6, noFlyGapAdd: 0, margin/	the hydrogen plane loses its era-step help
