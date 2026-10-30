@@ -153,7 +153,7 @@ tipqueue	src/GameScene.js	s#^    dropToast();$#    void 0;#;s#this.stripWatch.ob
 l4hint	src/GameScene.js	s#else if (skipThis && toAirport < AIRPORT.signFrom)#else if (false \&\& skipThis)#	the landing call on an L4 flight
 railwords	index.html	s#<span>Landing bonus</span>#<span>Long flight</span>#	the bonus row's old label
 railwords	src/tips.js	s#Forecasting shows icy air sooner. Save up for it!#Forecasting shows icy air sooner. Buy it when you can!#	the systems rail pushes a purchase
-season2	src/areas.js	s#aotearoa: { name: 'Aotearoa New Zealand', starter: true,#aotearoa: { name: 'Aotearoa New Zealand', starter: false,#	NZ not a starter
+season2	src/areas.js	s#aotearoa: { name: 'Aotearoa & Polynesia', starter: true,#aotearoa: { name: 'Aotearoa \& Polynesia', starter: false,#	NZ not a starter
 sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
 # macrons: not sed-able (a font edit). Proven 2026-10-28 by deleting U+012B from vendor/fonts/contrail-pixel.woff2's cmap (fontTools) -> FAIL.
 kindsreach	src/missions2.js	s#  const kinds = Math.max(2, Math.min(3, open.length));#  const kinds = 3;#	the kinds star fixed at 3 (impossible in plateau lands)
