@@ -25,7 +25,7 @@ from datetime import date
 from pathlib import Path
 
 API = 'https://api.pixellab.ai/v2'
-SWIM = ('salmon', 'pirarucu', 'dolphin', 'turtle', 'seal', 'oyster', 'loggerhead')
+SWIM = ('salmon', 'pirarucu', 'dolphin', 'turtle', 'seal', 'oyster', 'loggerhead', 'whale')
 lock = threading.Lock()
 spent = [0.0]
 

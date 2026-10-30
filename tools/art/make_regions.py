@@ -31,6 +31,8 @@ GROUND = {
     'islandforest':  dict(top=('#7acc6a', '#5ab450', '#3e9a3e', '#2e7e32', '#226428'), soil=('#4a3a32', '#3a2c26', '#5e4a3e', '#8a7466'), tufts='#226428'),
     # Australia, the Australian bush (2026-10-28): dry gold grass on red earth.
     'bush':          dict(top=('#e8cc80', '#d4b460', '#bc9a48', '#9e7e3a', '#80642e'), soil=('#b85a32', '#964826', '#d07448', '#e8a878'), tufts='#9e7e3a'),
+    # Polynesia (2026-10-30): bright island green on pale coral sand.
+    'polynesia':     dict(top=('#7ed66a', '#5cc054', '#42a64a', '#2e8a40', '#226e34'), soil=('#e8d8a8', '#d4c08c', '#f2e6c4', '#bfa878'), tufts='#2e8a40'),
     # Patagonia, the Patagonian steppe (2026-10-28): pale tussock grass on grey-brown stony soil.
     'steppe':        dict(top=('#d8d0a0', '#c4ba84', '#aaa06c', '#8e8658', '#726c46'), soil=('#7a6e5e', '#62584a', '#948674', '#b8ac98'), tufts='#8e8658'),
     'ocean':         dict(water=('#bfe6f4', '#7cc4e4', '#3e98cc', '#2a7cb4', '#1c5e94')),   # all water: nothing grows, nothing is planted
@@ -51,6 +53,7 @@ HILLS = {
     'islandforest':  dict(kind='peaks', back=('#b8c8d0', '#ffffff'), front=('#3e8a4e', '#5aa464'), detail='mist'),
     'bush':          dict(kind='low', back=('#d8c8a0', '#ece0c0'), front=('#a89a60', '#c4b47a'), detail='acacia'),
     'steppe':        dict(kind='peaks', back=('#b8c0cc', '#ffffff'), front=('#8a8e7a', '#a8ac96'), detail='mist'),
+    'polynesia':     dict(kind='peaks', back=('#8cc8a0', '#c8ecd4'), front=('#2e9a4e', '#4cb866'), detail='mist'),   # green volcanic peaks
     'ocean':         dict(kind='swell', back=('#a8d8ec', '#d4eef8'), front=('#7cc4e4', '#bfe6f4')),
     'ice':           dict(kind='peaks', back=('#cfe2f0', '#ffffff'), front=('#e8f2fa', '#ffffff')),
 }

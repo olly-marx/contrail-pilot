@@ -27,11 +27,11 @@ const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';
 // Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
-const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush', 'steppe'];   // PixelLab backdrops, 2026-10-24
+const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush', 'steppe', 'polynesia'];   // PixelLab backdrops, 2026-10-24
 
 // The land a player started in (season 2: their home area's start city), so NATURE opens there (the regions run,
 // 2026-10-28: a Punta Arenas or Auckland start opened NATURE on the UK's woodland).
-export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = (a && a.start) || save.city, c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
+export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = save.homeCity || (a && a.start) || save.city,   /* the CHOSEN home city's land (2026-10-30); old saves: the area start */ c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
 // Been there: the UK always; the home land; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {
   if (region === 'woodland' && !(isSeason2(save) && homeRegion(save) && homeRegion(save) !== 'woodland')) return true;   // the UK: always, except for a season-2 player who started elsewhere
@@ -282,7 +282,7 @@ function picHTML(w, cls = '') {
 function orgHTML(o) {
   return `<div class="w-org"><p class="label">Who does this?</p><p><b>${esc(o.name)}</b></p>
     <button class="btn green gate w-gate" type="button"><span class="gate-fill"></span><span class="gate-label">ASK A GROWN-UP</span></button>
-    <div class="links w-orglinks" hidden><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">Help them (donate) &gt;</a>` : ''}</div>
+    <div class="links w-orglinks" hidden><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">${esc(o.donateLabel || 'Help them (donate)')} &gt;</a>` : ''}</div>
     <p class="small w-gatemsg">Grown-ups: press and HOLD the button for 2 seconds.</p></div>`;
 }
 // Hold 2 s to show the links (as the Citizen Zoo gate in ui.js; links hide again after 10 s).

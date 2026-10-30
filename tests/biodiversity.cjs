@@ -7,7 +7,7 @@ const { chromium } = require('playwright-core');
 require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
-const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoon forest', 'Temperate mountain forest', 'Boreal forest', 'Plains & forest', 'Tundra', 'African savanna', 'Tropical rainforest', 'Island forest', 'Australian bush', 'Patagonian steppe'];
+const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoon forest', 'Temperate mountain forest', 'Boreal forest', 'Plains & forest', 'Tundra', 'African savanna', 'Tropical rainforest', 'Island forest', 'Australian bush', 'Patagonian steppe', 'Polynesian islands'];
 
 (async () => {
   const fails = [];
