@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-10-30-polynesia",
+    "version": "0.22.0",
+    "date": "2026-10-30",
+    "level": "major",
+    "notes": [
+      "New: Polynesia! Visit the island cities of Nuku'alofa, Apia, Rarotonga and Papeete.",
+      "A new land to discover in NATURE, with its own trees, animals and seven projects.",
+      "Five new crossings across the Pacific.",
+      "Crossings now count the best land in your area, so the first crossing is fairer."
+    ]
+  },
+  {
     "id": "2026-10-30-wild-flight-3",
     "version": "0.21.5",
     "date": "2026-10-30",
