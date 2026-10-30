@@ -201,3 +201,4 @@ polynesia	src/areas.js	s/, 'RAROTONGA', 'PAPEETE'\] },/, 'RAROTONGA'] },/	an isl
 polynesia	src/areas.js	s/OCEAN_STONES = \['HONOLULU', 'NADI'\]/OCEAN_STONES = ['HONOLULU']/	NADI is no longer an ocean stone
 polynesia	src/cities.js	s/{ name: 'RAROTONGA', lat: -21.20, lon: -159.81, region: 'polynesia' }/{ name: 'RAROTONGA', lat: -21.20, lon: -159.81, region: 'ocean' }/	an island read as sea
 polynesia	tools/art/install_skylines.py	s/key = re.sub('\[^a-z0-9\]', '', city.lower())/key = city.lower().replace(' ', '')/	the apostrophe back in skyline file names
+polynesia	src/habitat/polynesia.js	s/, donateLabel: 'Join \/ support them' }/ }/	the membership form labelled Donate

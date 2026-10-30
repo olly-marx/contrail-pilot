@@ -282,7 +282,7 @@ function picHTML(w, cls = '') {
 function orgHTML(o) {
   return `<div class="w-org"><p class="label">Who does this?</p><p><b>${esc(o.name)}</b></p>
     <button class="btn green gate w-gate" type="button"><span class="gate-fill"></span><span class="gate-label">ASK A GROWN-UP</span></button>
-    <div class="links w-orglinks" hidden><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">Help them (donate) &gt;</a>` : ''}</div>
+    <div class="links w-orglinks" hidden><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">${esc(o.donateLabel || 'Help them (donate)')} &gt;</a>` : ''}</div>
     <p class="small w-gatemsg">Grown-ups: press and HOLD the button for 2 seconds.</p></div>`;
 }
 // Hold 2 s to show the links (as the Citizen Zoo gate in ui.js; links hide again after 10 s).

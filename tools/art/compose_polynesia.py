@@ -17,7 +17,6 @@ BORROW = {
     'turtleclinic': 'turtlebeach', # sea turtles
     'tetiaroarats': 'islands',     # a predator-free island
     'atollrats': 'puffling',       # seabird atolls cleared of rats
-    'coralschool': 'kelpsea',      # a school's underwater nursery
 }
 if __name__ == '__main__':
     for new, old in BORROW.items():

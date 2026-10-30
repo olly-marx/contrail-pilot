@@ -31,8 +31,8 @@ export const PROJECTS = [
     short: 'People in Samoa listen for the rare manumea pigeon with sound recorders, and villages agree to keep its forest safe.',
     chain: ['Recorders listen in the forest', 'people learn where the birds live', 'villages protect those forests'],
     fact: 'The manumea is Samoa\'s national bird, and BirdLife thinks fewer than 250 are left.',   /* (BirdLife 2024, cited by SCS; Colossal says fewer than 100: the cautious, standard figure is used) */
-    src: [['Samoa Conservation Society: Protecting the Manumea', `${SCS}projects/protecting-the-manumea/`], ['Colossal Foundation and Samoa Conservation Society press release (silicon.co.uk)', 'https://www.silicon.co.uk/press-release/the-colossal-foundation-partners-with-the-samoa-conservation-society-to-find-the-critically-endangered-tooth-billed-pigeon-through-advanced-bioacoustic-technologies'], ['Samoa Observer: Plan to save Samoa\'s national bird launched', 'https://www.samoaobserver.ws/category/samoa/64553']],
-    org: { name: 'Samoa Conservation Society', learn: `${SCS}projects/protecting-the-manumea/`, donate: `${SCS}about/membership-form/` } },   // own domain; no donate page found, membership form is the support page its own site links to
+    src: [['Samoa Conservation Society: Protecting the Manumea (citing BirdLife International, the IUCN Red List authority, 2024: fewer than 250)', `${SCS}projects/protecting-the-manumea/`], ['Colossal Foundation and Samoa Conservation Society press release (silicon.co.uk)', 'https://www.silicon.co.uk/press-release/the-colossal-foundation-partners-with-the-samoa-conservation-society-to-find-the-critically-endangered-tooth-billed-pigeon-through-advanced-bioacoustic-technologies'], ['Samoa Observer: Plan to save Samoa\'s national bird launched', 'https://www.samoaobserver.ws/category/samoa/64553']],
+    org: { name: 'Samoa Conservation Society', learn: `${SCS}projects/protecting-the-manumea/`, donate: `${SCS}about/membership-form/`, donateLabel: 'Join / support them' } },   // own domain; no donate page found, membership form is the support page its own site links to
   { id: 'turtleclinic', name: 'Care for hurt sea turtles', tier: 2, band: 'mid',
     short: 'A turtle clinic in Moorea treats hurt sea turtles, and a team watches the beaches where turtles lay their eggs.',
     chain: ['Hurt turtles are treated', 'they swim free again', 'nests on the beach are counted and kept safe'],
@@ -51,12 +51,7 @@ export const PROJECTS = [
     fact: 'Rats were cleared from five of six islands, about 1,200 hectares. The rare Polynesian ground-dove now lives on three restored islands.',
     src: [['BirdLife International: It worked! Rare birds recovering', 'https://www.birdlife.org/news/2021/11/22/it-worked-rare-birds-recovering-thanks-to-ambitious-island-restoration/'], ['Island Conservation: Expedition to save the Polynesian ground-dove', 'https://www.islandconservation.org/update-from-the-field-expedition-to-save-critically-endangered-polynesian-ground-dove-on-track-to-be-a-success/']],
     org: { name: 'BirdLife, SOP Manu and Island Conservation', learn: 'https://www.birdlife.org/news/2021/11/22/it-worked-rare-birds-recovering-thanks-to-ambitious-island-restoration/', donate: 'https://www.islandconservation.org/donate/' } },   // Island Conservation's own domain (linked from its own project page)
-  { id: 'coralschool', name: 'A school coral garden in Vava\'u', tier: 2, band: 'cheap',
-    short: 'Children in a village school in Tonga snorkel each week to look after a coral nursery they can see from their classroom.',
-    chain: ['Corals grow in a nursery', 'children clean and count them', 'the reef and its fish get help'],
-    fact: 'The nursery began in 2012. Each week the students snorkel to measure the corals and count fish.',
-    src: [['Khaled bin Sultan Living Oceans Foundation: Backyard classroom', 'https://livingoceansfoundation.org/backyard-classroom']],
-    org: { name: 'Vava\'u Environmental Protection Association (VEPA)', learn: 'https://vavauenvironment.org/', donate: 'https://vavauenvironment.org/donate/' } },   // own domain
+
 ];
 
 const sp = (name, kind, rarity, needs, why, fact, src) => ({ name, kind, rarity, needs, why, fact, src });

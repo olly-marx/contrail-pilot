@@ -26,7 +26,8 @@ const srcOk = (r, id, src) => {
     try { m = await import(path.resolve(__dirname, `../src/habitat/${r}.js`)); }
     catch (e) { errs.push(`${r}: cannot load: ${e.message}`); continue; }
     const P = m.PROJECTS, S = m.SPECIES;
-    if (!Array.isArray(P) || P.length < 8) { errs.push(`${r}: needs at least 8 projects`); continue; }
+    const MIN = { polynesia: 7 }[r] || 8;   // declared exception (the Coordinator, 2026-10-30: polynesia keeps only projects with a current source)
+    if (!Array.isArray(P) || P.length < MIN) { errs.push(`${r}: needs at least ${MIN} projects`); continue; }
     const pids = new Set();
     for (const p of P) {
       if (!/^[a-z0-9]+$/.test(p.id || '')) bad(r, p.id, 'bad id');
