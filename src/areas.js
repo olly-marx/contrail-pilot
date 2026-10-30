@@ -12,7 +12,7 @@ export const AREAS = {
   nordic: { name: 'Nordic & North Atlantic', starter: false, start: 'OSLO', cities: ['OSLO', 'STOCKHOLM', 'HELSINKI', 'REYKJAVIK', 'AKUREYRI', 'TROMSO', 'ROVANIEMI', 'NUUK'] },
   oceania: { name: 'Australia', starter: true, start: 'MELBOURNE', cities: ['SYDNEY', 'PERTH', 'DARWIN', 'MELBOURNE', 'BRISBANE', 'CAIRNS', 'HOBART', 'ADELAIDE'] },
   // New regions are their own starter areas (the user via the Coordinator, 2026-10-28): Aotearoa New Zealand, the Island forest.
-  aotearoa: { name: 'Aotearoa New Zealand', starter: true, start: 'AUCKLAND', cities: ['AUCKLAND', 'WELLINGTON', 'CHRISTCHURCH', 'DUNEDIN'] },
+  aotearoa: { name: 'Aotearoa & Polynesia', starter: true, start: 'AUCKLAND', cities: ['AUCKLAND', 'WELLINGTON', 'CHRISTCHURCH', 'DUNEDIN', "NUKU'ALOFA", 'APIA', 'RAROTONGA', 'PAPEETE'] },   // Polynesia added 2026-10-30 (the user)
   patagonia: { name: 'Patagonia', starter: true, start: 'PUNTA ARENAS', cities: ['PUNTA ARENAS', 'PUERTO MADRYN', 'BALMACEDA'] },
 };
 export const OCEAN_STONES = ['HONOLULU', 'NADI'];

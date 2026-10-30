@@ -55,6 +55,7 @@ export const LAND = [
   // Australia and New Zealand (no region of their own yet: part B will decide).
   ['bush', -39, -11, 113, 154],          // Australia
   ['islandforest', -47, -34, 166, 179],        // New Zealand
+  ['polynesia', -23, -12, -176, -149],          // Tonga, Samoa, the Cook Islands, Tahiti (cities declare it too: the mask reads them as sea)
 ];
 
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;

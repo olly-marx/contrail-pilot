@@ -197,3 +197,7 @@ wildflight3	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1
 wildflight3	src/tips.js	s/Another flight now: find icy air in the daytime!/Another flight now: watch for wildlife on the ground!/	the old R9a wildlife line after flight 1
 walkthrough	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1'); return this.wildOK0;/	animals on flight 2 again (in a real flight)
 onrails	style.css	s#^.pay-part { opacity: 0;#.pay-part { opacity: 1;#	the new part shows before the payoff arrives (R6 first-frame check)
+polynesia	src/areas.js	s/, 'RAROTONGA', 'PAPEETE'\] },/, 'RAROTONGA'] },/	an island left out of the area
+polynesia	src/areas.js	s/OCEAN_STONES = \['HONOLULU', 'NADI'\]/OCEAN_STONES = ['HONOLULU']/	NADI is no longer an ocean stone
+polynesia	src/cities.js	s/{ name: 'RAROTONGA', lat: -21.20, lon: -159.81, region: 'polynesia' }/{ name: 'RAROTONGA', lat: -21.20, lon: -159.81, region: 'ocean' }/	an island read as sea
+polynesia	tools/art/install_skylines.py	s/key = re.sub('\[^a-z0-9\]', '', city.lower())/key = city.lower().replace(' ', '')/	the apostrophe back in skyline file names

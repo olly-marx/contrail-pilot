@@ -138,6 +138,12 @@ export const S2_CITIES = [
   { name: 'WELLINGTON', lat: -41.33, lon: 174.81, region: 'islandforest' },
   { name: 'CHRISTCHURCH', lat: -43.49, lon: 172.53, region: 'islandforest' },
   { name: 'DUNEDIN', lat: -45.93, lon: 170.20, region: 'islandforest' },
+  // Polynesia (the user, 2026-10-29: Aotearoa was "too small"; it grows into "Aotearoa & Polynesia"). Small islands read as sea
+  // on the coarse land mask, so their region is declared (like Hobart). NADI stays an ocean stone (the era-4 crossing).
+  { name: "NUKU'ALOFA", lat: -21.24, lon: -175.15, region: 'polynesia' },
+  { name: 'APIA', lat: -13.83, lon: -172.01, region: 'polynesia' },
+  { name: 'RAROTONGA', lat: -21.20, lon: -159.81, region: 'polynesia' },
+  { name: 'PAPEETE', lat: -17.55, lon: -149.61, region: 'polynesia' },
   { name: 'TROMSO', lat: 69.68, lon: 18.92, region: 'boreal' },
   { name: 'ROVANIEMI', lat: 66.56, lon: 25.83, region: 'boreal' },
   { name: 'NUUK', lat: 64.19, lon: -51.68, region: 'tundra' },   // geo.js: ice
