@@ -33,6 +33,7 @@ globalThis.SEASON2 = true;
   check(scs && /membership/.test(scs.org.donate) && /join/i.test(scs.org.donateLabel || '') && /o\.donateLabel \|\| 'Help them \(donate\)'/.test(wild), 'a membership form is labelled "Join / support", not "Donate"');
   check(PD.PROJECTS.length === 7 && !PD.PROJECTS.some(x => x.id === 'coralschool'), `7 projects, the unconfirmed nursery dropped (${PD.PROJECTS.map(x => x.id)})`);
   check(/fewer than 250/.test(scs.fact) && scs.src.some(([t]) => /BirdLife/.test(t)), 'manumea: BirdLife\'s fewer than 250, cited');
+  check(/const FIELD_ART = \[[^\]]*'polynesia'/.test(wild), 'NATURE draws the polynesia field (FIELD_ART lists it; the browser turn found it missing)');
   console.log(fails.length ? `FAIL polynesia:\n - ${fails.join('\n - ')}` : `PASS polynesia: 8 cities, islands in 'polynesia', ${path.slice(0, 11).join(' > ')}, stones and crossings intact`);
   process.exit(fails.length ? 1 : 0);
 })();

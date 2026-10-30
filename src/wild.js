@@ -27,7 +27,7 @@ const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';
 // Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
-const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush', 'steppe'];   // PixelLab backdrops, 2026-10-24
+const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush', 'steppe', 'polynesia'];   // PixelLab backdrops, 2026-10-24
 
 // The land a player started in (season 2: their home area's start city), so NATURE opens there (the regions run,
 // 2026-10-28: a Punta Arenas or Auckland start opened NATURE on the UK's woodland).
