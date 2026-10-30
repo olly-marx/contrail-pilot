@@ -9,9 +9,9 @@ import { AREAS, OCEAN_STONES, areaOf, unlockedAreas } from './areas.js';
 import { eraProgress } from './eras.js';
 import { linksOf, choices, city } from './network.js';
 import { tourPath } from './route.js';
-import { biodiversity } from './nature.js';
 import { gateDone } from './missions2.js';
 import { capFor } from './capability.js';
+import { bestAreaBio } from './arealand.js';
 
 export const CROSSINGS = [
   { id: 'warsaw-stockholm', a: 'WARSAW', b: 'STOCKHOLM', era: 0, kind: 'frontier' },
@@ -86,10 +86,10 @@ export function recordAreaBest(save, from, m) {
   if (m > (save.areaBest[k] || 0)) save.areaBest[k] = Math.round(m);
 }
 export function offerCtx(save, c) {
-  const k = areaOf(c.from), home = k && city(AREAS[k].start);
+  const k = areaOf(c.from);
   // missionsDone (S3): the area's crossing trial, its 3 starred missions (src/missions2.js), done in THIS area.
   // capabilityKm (M4): the best landed flight OR the hangar's estimate for this area (src/capability.js), whichever is larger.
-  return { capabilityKm: Math.max((save.areaBest || {})[k] || 0, k ? capFor(save, k) : 0), bio: home ? biodiversity(save, home.region) : 0, missionsDone: k ? gateDone(save, k) : false };
+  return { capabilityKm: Math.max((save.areaBest || {})[k] || 0, k ? capFor(save, k) : 0), bio: k ? bestAreaBio(save, k) : 0,   /* the best of the area's lands (was the start city's land only) */ missionsDone: k ? gateDone(save, k) : false };
 }
 
 // Why a crossing is or is not OFFERED (MASTER-PLAN B4): the conditions and the rule from src/season.js.

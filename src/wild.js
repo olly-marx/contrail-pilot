@@ -31,7 +31,7 @@ const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia',
 
 // The land a player started in (season 2: their home area's start city), so NATURE opens there (the regions run,
 // 2026-10-28: a Punta Arenas or Auckland start opened NATURE on the UK's woodland).
-export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = (a && a.start) || save.city, c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
+export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = save.homeCity || (a && a.start) || save.city,   /* the CHOSEN home city's land (2026-10-30); old saves: the area start */ c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
 // Been there: the UK always; the home land; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {
   if (region === 'woodland' && !(isSeason2(save) && homeRegion(save) && homeRegion(save) !== 'woodland')) return true;   // the UK: always, except for a season-2 player who started elsewhere

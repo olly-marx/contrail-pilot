@@ -9,9 +9,10 @@
 //   you keep  = the reserve; at most `cap` crystals per landing.
 // Level 3 (bonds) opens in the 2030s, level 4 (the dividend) in the far future.
 import { AREAS } from './areas.js';
-import { city } from './network.js';
+
 import { biodiversity } from './nature.js';
 import { eraProgress } from './eras.js';
+import { bestAreaBio } from './arealand.js';
 
 export const FINANCE = {
   era: 3,
@@ -32,7 +33,7 @@ export const financeOpen = save => eraProgress(save).index >= FINANCE.era;
 export function natureHealth(save) {
   const areas = (save.areas || []).filter(k => AREAS[k]);
   if (!areas.length) return biodiversity(save);
-  const vals = areas.map(k => { const c = city(AREAS[k].start); return biodiversity(save, c ? c.region : undefined); });
+  const vals = areas.map(k => bestAreaBio(save, k));   // each area: the best of its lands (src/arealand.js)
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
 }
 export function rateAt(level, B) { const L = FINANCE.levels[level - 1]; return L ? Math.max(L.floor, Math.round(L.base - L.slope * B)) : null; }
@@ -84,7 +85,7 @@ export function payBonds(save) {
 
 // ---------- the dividend (level 4) ----------
 // The area you are in pays if its own land is healthy: landings since the last collection, at most `cap`.
-export function areaBio(save) { const k = (save.areas || []).find(a => AREAS[a] && AREAS[a].cities.includes(save.city)); const c = k && city(AREAS[k].start); return c ? biodiversity(save, c.region) : 0; }
+export function areaBio(save) { const k = (save.areas || []).find(a => AREAS[a] && AREAS[a].cities.includes(save.city)); return k ? bestAreaBio(save, k) : 0; }   // the best of the area's lands
 export function payDividend(save) {
   const L = FINANCE.levels[financeLevel(save) - 1], d = L && L.dividend; if (!d) return 0;
   const since = (save.landings || 0) - (save.finance.divAt ?? save.landings ?? 0);
