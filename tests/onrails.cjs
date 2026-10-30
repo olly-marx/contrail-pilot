@@ -132,8 +132,8 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await step('R9a-seeds', /seeds/i, null);
   await step('R9b-claim', /mission/i, () => true);
   check(await p.evaluate(s0 => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds > s0, seeds0), 'R9b: claiming added the seeds');
-  await step('R9c-wildlife', /wildlife/i, () => !document.getElementById('title').hidden);
-  await step('R10-takeoff2', /animals/i, null);
+  await step('R9c-icyair', /icy air/i, () => !document.getElementById('title').hidden);
+  await step('R10-takeoff2', /icy air/i, null);
   // R10-R11: flight 2, then NATURE and its free first project.
   const L2 = () => p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).missionsDone || []).includes('L2'));
   avoid = MISS_L2; await p.evaluate(a => { window.__avoid = a; }, avoid);
