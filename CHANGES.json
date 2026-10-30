@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-10-30-wild-flight-3",
+    "version": "0.21.5",
+    "date": "2026-10-30",
+    "level": "minor",
+    "notes": [
+      "Wild animals now show up from your third flight, so your first two flights are all about the sky.",
+      "The guide now tells you about icy air before your second flight, and about the animals at the end of the NATURE tour."
+    ]
+  },
+  {
     "id": "2026-10-29-playtest-fixes",
     "version": "0.21.4",
     "date": "2026-10-29",
