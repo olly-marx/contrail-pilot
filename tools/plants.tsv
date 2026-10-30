@@ -203,6 +203,6 @@ polynesia	src/cities.js	s/{ name: 'RAROTONGA', lat: -21.20, lon: -159.81, region
 polynesia	tools/art/install_skylines.py	s/key = re.sub('\[^a-z0-9\]', '', city.lower())/key = city.lower().replace(' ', '')/	the apostrophe back in skyline file names
 polynesia	src/habitat/polynesia.js	s/, donateLabel: 'Join \/ support them' }/ }/	the membership form labelled Donate
 polynesia	src/wild.js	s/'bush', 'steppe', 'polynesia'\];/'bush', 'steppe'];/	NATURE has no polynesia field picture
-arealand	src/crossings.js	s/bio: k ? bestAreaBio(save, k) : 0,/bio: k ? biodiversity(save, city(AREAS[k].start).region) : 0,/	the crossing gate reads the start land only (the Polynesia red flag)
+arealand	src/arealand.js	s/export const bestAreaBio = (save, k) => Math.max(0, ...areaLands(k).map(r => biodiversity(save, r)));/export const bestAreaBio = (save, k) => biodiversity(save, city(AREAS[k].start).region);/	the crossing gate reads the start land only (the Polynesia red flag)
 arealand	src/wild.js	s/n = save.homeCity || (a \&\& a.start) || save.city,/n = (a \&\& a.start) || save.city,/	NATURE opens on the area start's land
 arealand	src/startchoice.js	s/save.homeCity = name; save.city = name;/save.city = name;/	the start choice forgets the chosen home city
