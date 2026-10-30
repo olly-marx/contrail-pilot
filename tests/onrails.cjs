@@ -106,9 +106,11 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await step('R5b-take-free', /FREE/i, () => !JSON.parse(localStorage.getItem('contrailPilot.v2')).freeUpgrade, { screen: 'hangar' });
   // R6, the payoff: the plane BEFORE (the new part's layer there but invisible, no OK yet), then the part arrives (the user:
   // it "just popped up the upgraded plane"). Screenshots of both.
-  await p.waitForSelector('#payoff:not([hidden])', { timeout: 5000 }).catch(() => {});
-  const pay0 = await p.evaluate(() => { const part = document.querySelector('#payoff .pay-part'), ok = document.getElementById('payOk');
-    return { parts: document.querySelectorAll('#payoff .pay-part').length, op: part ? +getComputedStyle(part).opacity : null, okShown: !!ok && getComputedStyle(ok).visibility !== 'hidden' }; });
+  // Sampled on the FIRST animation frame the payoff is showing (polling 'raf'), not after a variable delay: the part fades in, so a late sample on a slow machine
+  // (CI, a loaded gate) read opacity 0.26 and failed ('R6 first the plane as it was': it failed the 0.21.4 CI twice).
+  const pay0h = await p.waitForFunction(() => { const el = document.getElementById('payoff'); if (!el || el.hidden) return false; const part = el.querySelector('.pay-part'), ok = document.getElementById('payOk');
+    return { parts: el.querySelectorAll('.pay-part').length, op: part ? +getComputedStyle(part).opacity : null, okShown: !!ok && getComputedStyle(ok).visibility !== 'hidden' }; }, null, { timeout: 5000, polling: 'raf' }).catch(() => null);
+  const pay0 = pay0h ? await pay0h.jsonValue() : { parts: 0, op: null, okShown: null };
   await shot('R6a-payoff-before');
   check(pay0.parts >= 1 && pay0.op < 0.2 && !pay0.okShown, `R6: first the plane as it was: the new part's layer is there but not shown yet, no OK (${JSON.stringify(pay0)})`);
   await p.waitForTimeout(2700);   // the part arrives (0.9 s), the camera zooms onto it (0.6 s), then the label (0.7 s)

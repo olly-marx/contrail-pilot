@@ -196,3 +196,4 @@ foundgate	src/GameScene.js	s/    if (isSeason2(this.save) \&\& !(this.save.missi
 wildflight3	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1'); return this.wildOK0;/	animals on flight 2 again
 wildflight3	src/tips.js	s/Another flight now: find icy air in the daytime!/Another flight now: watch for wildlife on the ground!/	the old R9a wildlife line after flight 1
 walkthrough	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1'); return this.wildOK0;/	animals on flight 2 again (in a real flight)
+onrails	style.css	s#^.pay-part { opacity: 0;#.pay-part { opacity: 1;#	the new part shows before the payoff arrives (R6 first-frame check)
