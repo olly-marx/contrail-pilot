@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-01-hangar-nature-redesign",
+    "version": "0.23.0",
+    "date": "2026-11-01",
+    "level": "major",
+    "notes": [
+      "A new look for the hangar and NATURE: tidy rows you can tap to see what each part or project does, with a short name and a picture.",
+      "Your planes are rows now, and the hangar tells you which plane comes next.",
+      "When you buy something, the \"fitted!\" show happens right where your plane is, and then you carry on.",
+      "Fixed: the hangar no longer jumps around after a purchase.",
+      "Fixed: the guide no longer sends you back to the hangar again and again."
+    ]
+  },
+  {
     "id": "2026-11-01-payoff-broken-pic",
     "version": "0.22.1",
     "date": "2026-11-01",
