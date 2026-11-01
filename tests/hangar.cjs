@@ -68,7 +68,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
       check(!left.paying && !left.payoff, `leaving the hangar mid-payoff ends it (no parked payoff on return): ${JSON.stringify(left)}`);
       await p.evaluate(() => game.registry.get('ui').go('hangar')); await p.waitForTimeout(300);
       check(v && v.onScreen, `the payoff's picture is on screen after a buy from far down the list (scroll anchoring once moved it): ${JSON.stringify(v)}`);
-      if (await p.isVisible('#payOk')) await p.click('#payOk').catch(() => {}); await p.waitForSelector('#payOk', { state: 'visible', timeout: 6000 }).then(() => p.click('#payOk')).catch(() => {}); await p.waitForTimeout(200); } }
+      if (await p.isVisible('#payOk')) await p.click('#payOk').catch(() => {}); await p.waitForSelector('#payOk', { state: 'visible', timeout: 6000 }).then(() => p.click('#payOk')).catch(() => {}); await p.waitForTimeout(300);
+      const back = await p.evaluate(() => { const b = document.querySelector('#hFleet .fpreview'), r = b && b.getBoundingClientRect(); return b && { shown: !b.hidden, top: Math.round(r.top), bottom: Math.round(r.bottom), h: innerHeight }; });
+      check(back && back.shown && back.bottom > 0 && back.top < back.h, `after OK the plane box is back, on screen (scroll anchoring must not throw it away): ${JSON.stringify(back)}`); } }
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   check(await p.evaluate(() => document.getElementById('hNextPlane').getBoundingClientRect().height) < 40, 'the Next plane line is one short line (its bar once grew 140 px tall)');
