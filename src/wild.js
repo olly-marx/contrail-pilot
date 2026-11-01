@@ -160,7 +160,7 @@ export class WildScreen {
       // The shared row (DESIGN-HANGAR-NATURE §5a): icon | short name / one line | price. The full story is in the strip.
       const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? (p.chain[0].length <= 22 ? p.chain[0] : 'Helps this land') : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings back: ${w.length} animal${w.length > 1 ? 's' : ''}`; })();   /* (an unfound animal is not named: the surprise stays) */
       return `<div class="rowc project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing sel' : ''}" data-pline="${p.id}">`
-        + `<button class="rowc-tap" type="button" data-preview="${p.id}" ${have ? 'disabled' : ''}><img class="rowc-icon" src="assets/ui/proj-${p.id}.png" alt="">`
+        + `<button class="rowc-tap" type="button" data-preview="${p.id}"><img class="rowc-icon" src="assets/ui/proj-${p.id}.png" alt="">`
         + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span></span><span class="rowc-sub">${esc(sub)}</span></button>`
         + `${have ? '<span class="rowc-price w-done">DONE</span>' : btn.replace('class="btn ', 'class="rowc-price btn ')}</div>`;
     };
@@ -176,7 +176,7 @@ export class WildScreen {
         <div class="small">Reach Biodiversity <b>${next.needs}</b> to unlock ${P.filter(p => p.tier === next.tier).length} more projects. ${how}</div></div></div>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     // Tap a card (not its buttons) to PREVIEW it: ghosted in the land, the bar's gain, the animals it brings highlighted.
-    $('wProjects').querySelectorAll('.project[data-pline]:not(.maxed) .rowc-tap').forEach(b => b.onclick = () => { sfx.flap(); this.preview(b.dataset.preview); });
+    $('wProjects').querySelectorAll('.project[data-pline] .rowc-tap').forEach(   /* done ones too: their info (regions.cjs found it gone) */b => b.onclick = () => { sfx.flap(); this.preview(b.dataset.preview); });
     $('wProjects').querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); });   // tap an animal: its card
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
     $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
@@ -206,6 +206,7 @@ export class WildScreen {
     $('wScene').classList.toggle('previewing', !!this.previewId);   // the 'Bare land' note steps aside so the ghost shows
     const tr = document.querySelector('#wMeter .mtrack'); if (tr) tr.querySelectorAll('.mghost, .mgain').forEach(g => g.remove());
     if (!this.previewId) { this.field && this.field.clearGhosts(); return; }
+    if (this.done().includes(this.previewId)) return;   // a done project: its strip (info, DONE), no ghost or gain
     this.field && this.field.ghost(this.previewId);
     const b0 = this.bio(), copy = JSON.parse(JSON.stringify(this.save)); copy.seeds = 1e9; copy.crystals = 1e9;
     const b1 = fundProject(copy, this.region, this.previewId) ? biodiversity(copy, this.region) : b0;

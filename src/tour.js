@@ -113,7 +113,7 @@ export class Tour {
     if (hub && d('L3') && !this.done('r-systems')) return ['r-systems', [
       { target: '#tabHangar', text: tip('rail-systems'), tap: true, ready: always },
       { target: '#hFleet [data-ftab="systems"]', text: tip('rail-systems-tab'), tap: true },
-      { target: '#hFleet .line .next', text: tip('rail-systems-line'), ok: true }]];
+      { target: '#hFleet .rowc .rowc-sub', text: tip('rail-systems-line'), ok: true }]];
     // L5 needs tree parcels (free the first time): on NATURE, point at the FREE button (the audit, 2026-10-28).
     if (where === 'nature' && d('L4') && !d('L5') && !((s.levels || {}).trees > 0) && !this.done('r-parcels')) return ['r-parcels', [{ target: '#wTrees [data-buy="trees"]', text: tip('rail-parcels'), tap: true }]];
     // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).

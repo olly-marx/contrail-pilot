@@ -218,3 +218,4 @@ hangar	src/hangar.js	s/    if (this.paying) { this.renderLater = true; return; }
 hangar	style.css	s/^\.payoff\.inbox { position: relative; inset: auto;/.payoff.inbox { position: fixed; inset: 0;/	the payoff is an overlay again
 payoffdraw	src/hangar.js	s/card = el.querySelector('.pay-frame'); if (!lab/card = el.querySelector('.payoff-card'); if (!lab/	the label is placed against the whole card (low, against the words and OK)
 hangar	src/ui.js	s/    if (tab !== 'hangar' \&\& this.fleet \&\& this.fleet.paying) this.fleet.endPayoff();/    if (false) this.fleet.endPayoff();/	a payoff stays parked when you leave the hangar
+postrails	src/tour.js	s|target: '#hFleet .rowc .rowc-sub'|target: '#hFleet .line .next'|	the systems rail points at the old row markup (it re-runs on every return HOME)
