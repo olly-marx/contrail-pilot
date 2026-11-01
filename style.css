@@ -757,3 +757,11 @@ h2.sub { margin-top: -4px; }
 .rowc.locked { background: #ece8dc; } .rowc.locked .rowc-tap { opacity: .6; }
 .rowc.maxed { background: #e7f6e7; }
 .rowc.sel { outline: 3px solid #ffe15a; outline-offset: -3px; }
+/* NATURE's preview strip (DESIGN-HANGAR-NATURE §4): pinned with the land, beside the ghost; the full name, what it does,
+   who it brings back, More about it, and the row's own BUY. */
+.wstrip { background: #fff; border: 3px solid var(--ink); padding: 6px 8px; display: grid; gap: 4px; }
+.wstrip .ws-name { font-size: 9px; margin: 0; }
+.wstrip .ws-chain { font-size: 7px; margin: 0; color: var(--muted); }
+.wstrip .ws-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.linkbtn { background: none; border: 0; padding: 0; font: inherit; font-size: 7px; color: var(--ink); text-decoration: underline; cursor: pointer; }
+#wProjects .rowc.previewing { outline: 3px solid #ffe15a; outline-offset: -3px; }

@@ -103,7 +103,7 @@ export class Tour {
       { target: '#againBtn', text: tip('rail-nature'), tap: true }]];
     if (where === 'nature' && d('L2') && !this.done('r-nature')) return ['r-nature', [
       { target: '#wScene', text: tip('rail-nat-land'), ok: true },
-      { target: '#wProjects .line.project.freeline .w-pname', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .line.project.previewing') },
+      { target: '#wProjects .project.freeline .rowc-tap', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .project.previewing') },
       { target: '#wProjects [data-project].free', text: tip('rail-project'), tap: true },
       { target: '#wMeter', text: tip('rail-nat-bio'), ok: true },
       { target: '#tabFly', text: tip('rail-nat-home'), tap: true, ready: always }]];
