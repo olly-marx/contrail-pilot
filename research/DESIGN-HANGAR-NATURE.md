@@ -129,7 +129,7 @@ Project names that are too long for one line (e.g. "Keep rats away from kakerori
 <div class="rowc [locked|maxed|sel]" data-row="kind:id">
   <button class="rowc-tap" type="button" data-ftap="kind:id">       <!-- NATURE: data-ptap="projectId" -->
     <img class="rowc-icon" src="…" alt="">                          <!-- 32x32 slot; no art = no img (an empty slot) -->
-    <span class="rowc-name">Engines</span><span class="rowc-pips">…</span>
+    <span class="rowc-top"><span class="rowc-name">Engines</span><span class="rowc-pips">…</span></span>
     <span class="rowc-sub">Next: thrust reversers</span>           <!-- one line, <= 30 characters -->
   </button>
   <button class="rowc-price btn …" data-fbuy="kind:id">70🌰 9❄</button>   <!-- a SIBLING: one tap target per row -->
