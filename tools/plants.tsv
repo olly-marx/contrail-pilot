@@ -221,3 +221,4 @@ hangar	style.css	s/^\.payoff\.inbox { position: relative; inset: auto;/.payoff.i
 payoffdraw	src/hangar.js	s/card = el.querySelector('.pay-frame'); if (!lab/card = el.querySelector('#payOk'); if (!lab/	the label is placed down by the words and OK (the stage-1 flaw)
 hangar	src/ui.js	s/    if (tab !== 'hangar' \&\& this.fleet \&\& this.fleet.paying) this.fleet.endPayoff();/    if (false) this.fleet.endPayoff();/	a payoff stays parked when you leave the hangar
 postrails	src/tour.js	s|target: '#hFleet .rowc .rowc-sub'|target: '#hFleet .line .next'|	the systems rail points at the old row markup (it re-runs on every return HOME)
+onrails	src/hangar.js	s/      if (rails \&\& this.ui.tour) this.ui.tour.payoffOk(); };/      if (false) this.ui.tour.payoffOk(); };/	the rails payoff leaves the whole live page tappable (no OK ring)
