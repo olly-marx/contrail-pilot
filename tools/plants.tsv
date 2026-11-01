@@ -211,3 +211,4 @@ rowfit	style.css	s/text-align: left; background: none; border: 0; padding: 0; ma
 rowfit	src/habitat/steppe.js	s/{ id: 'fenceoff', row: 'Clear fences and pines', name: /{ id: 'fenceoff', name: /	a 34-character row name
 rowfit	src/wild.js	s/<img class=\"rowc-icon\" src=\"assets\/ui\/proj-\${p.id}.png\"/<img class=\"rowc-icon\" src=\"assets\/ui\/projx-\${p.id}.png\"/	a broken picture (the blue '?')
 rowfit	style.css	s/^\.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 100px;/.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 84px;/	prices too narrow for 1800 225
+hangar	src/hangar.js	s/<span class="era-row"><span class="era-track">/<span><span class="era-track">/	the Next plane bar unwrapped (a tall box)

@@ -47,6 +47,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(vis, 'a row tapped low in the list: its preview card is not on screen'); }
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
+  check(await p.evaluate(() => document.getElementById('hNextPlane').getBoundingClientRect().height) < 40, 'the Next plane line is one short line (its bar once grew 140 px tall)');
   check(/1990s twin/.test(await p.textContent('#hNextPlane')) && /1990s/.test(await p.textContent('#hNextPlane')) && !(await p.$('.fplane.locked')), 'the 1990s twin is the one Next plane line (no silhouettes)');
   await p.click('[data-fly=comet]'); await p.waitForTimeout(300);
   s = await saved(p);
