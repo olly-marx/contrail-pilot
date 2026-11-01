@@ -122,7 +122,11 @@ export class FleetHangar {
       const pct = (v, n) => `${(100 * v / n).toFixed(2)}%`;
       Object.assign(mark.style, { left: pct(x0, w), top: pct(y0, h), width: pct(x1 - x0 + 1, w), height: pct(y1 - y0 + 1, h) });
       plane.style.transformOrigin = `${pct((x0 + x1) / 2, w)} ${pct((y0 + y1) / 2, h)}`; };
-    const whenLoaded = img => new Promise(r => { if (img.complete && img.naturalWidth) r(); else img.addEventListener('load', r, { once: true }); });
+    // A picture that FAILS to load (the user's iPhone, 2026-11-01: Safari's blue '?' icon on 'Tourist class: fitted!', the payoff
+    // waiting out its 6 s and showing the broken layer) is hidden and counts as done: never a broken icon, no 6 s wait.
+    const hideBroken = img => { if (!img.naturalWidth) { img.style.display = 'none'; img.dataset.broken = '1'; } };
+    const whenLoaded = img => new Promise(r => { if (img.complete && img.naturalWidth) return r();
+      img.addEventListener('load', r, { once: true }); img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true }); });
     if (part) Promise.all([whenLoaded(part), whenLoaded(beforeImg)]).then(measure);
     // The label arrow, placed over the part once the zoom has settled (the user, 2026-10-28: the payoff must not be flat).
     const label = () => { const lab = $('payLabel'), card = el.querySelector('.payoff-card'); if (!lab || el.hidden) return;
@@ -138,6 +142,7 @@ export class FleetHangar {
     const settle = () => { if (el.hidden) return; if (added.length && mark.dataset.done) label(); else { el.classList.add('nopart'); el.classList.add('labelled'); } };
     const pics = [whenLoaded(beforeImg), ...(part ? [whenLoaded(part)] : [])];
     Promise.race([Promise.all(pics).then(() => part && measure()), new Promise(r => setTimeout(r, 6000))]).then(() => {
+      el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)
       if (part && !mark.dataset.done) el.classList.add('nopart');
       setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
     $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled', 'nopart');

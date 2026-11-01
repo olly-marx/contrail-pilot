@@ -206,3 +206,4 @@ polynesia	src/wild.js	s/'bush', 'steppe', 'polynesia'\];/'bush', 'steppe'];/	NAT
 arealand	src/arealand.js	s/export const bestAreaBio = (save, k) => Math.max(0, ...areaLands(k).map(r => biodiversity(save, r)));/export const bestAreaBio = (save, k) => biodiversity(save, city(AREAS[k].start).region);/	the crossing gate reads the start land only (the Polynesia red flag)
 arealand	src/wild.js	s/n = save.homeCity || (a \&\& a.start) || save.city,/n = (a \&\& a.start) || save.city,/	NATURE opens on the area start's land
 arealand	src/startchoice.js	s/save.homeCity = name; save.city = name;/save.city = name;/	the start choice forgets the chosen home city
+payoffbroken	src/hangar.js	s/img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true });/img.addEventListener('error', () => {}, { once: true });/	broken pictures not hidden (the 6 s wait)
