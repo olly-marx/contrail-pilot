@@ -1,6 +1,6 @@
 # HANGAR and NATURE: one design (2026-11-01)
 
-**Status: PROPOSAL, for the user's approval. Nothing is built yet.**
+**Status: PROPOSAL, for the user's approval. Nothing is built yet.** Reviewed by the plane build (2026-11-01): rows, whole-row tap, strip and next-plane line are CHEAP; the in-box payoff is RISKY, so the overlay fallback is built first (§6).
 
 The user, on live 0.22.0 (phone): "I still really don't like the hangar layout... it has elements that work but it's poorly
 designed. The preview in nature leaves a lot to be desired too."
@@ -139,6 +139,16 @@ Every hook stays. Where a hook moves, it keeps its id or selector, so the tests 
 | 787 / truss / hydrogen: no part layers | Their upgrades show bars only, in the strip, with no sticker (rule 3: no broken image). |
 
 ## 6. Build plan (after approval)
+
+**The plane build's review (2026-11-01), adopted:**
+- **The payoff, stage 1, is the FALLBACK:** keep the `#payoff` overlay, but its `.pay-frame` takes exactly the plane box's rect, so to a player it looks the same as in-box.
+  - In-box is RISKY: render() rebuilds the box before payoff(); the ghosts must hide; the zoom clip and onrails R6 need rewriting.
+  - In-box comes only if the user wants it after seeing stage 1.
+- **The `i` and BUY are SIBLINGS of the row's `data-ftap` element, not children.** That keeps one tap target per row (the R5 audit), and a BUY tap never also previews.
+- **hangar.cjs reads "Next: <name>"**, so the row's second line keeps that wording. Tests are updated in the same change.
+- **The "?":** confirmed as Safari's broken-image icon. The payoff waits for both pictures, so a `.pay-part` that fails in WebKit stalls it halfway. The plane build owns that fix (an onerror drop plus a test, in payoff()) in a short WebKit turn. Rule 3 (no broken images) still lands with the redesign.
+- **Tapping a silhouette to preview a future plane goes away** with the one-line next plane. Accepted.
+
 
 - **Plane build chat (`src/hangar.js`):** the plane box as the only picture; the preview strip; the payoff moved into the box; the one-line next plane; row HTML using the shared component.
 - **Game chat (us):**
