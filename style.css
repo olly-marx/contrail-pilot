@@ -788,3 +788,11 @@ h2.sub { margin-top: -4px; }
    AFTER the payoff had scrolled the box into view, so the payoff card sat off the box (the gate in tests/hangar.cjs). */
 #hangar { overflow-anchor: none; }
 .rowc.tour-only .rowc-price { visibility: hidden; }   /* a tour step on the row's tap: one action only (tour.js) */
+/* Stage 2: the payoff IN the plane box (DESIGN-HANGAR-NATURE; the user's pick). #payoff takes the box's place in the page:
+   the frame copies .fpreview (border, radius, background, the 400:176 picture), the strip sits under it. Not an overlay. */
+.payoff.inbox { position: relative; inset: auto; z-index: auto; background: none; display: block; margin: 4px 0 6px; }
+.payoff.inbox .payoff-card { position: relative; width: auto; max-width: none; padding: 0; border: 0; background: none; text-align: center; }
+.payoff.inbox .pay-frame { position: relative; border: 2px solid #2b4a6f; border-radius: 4px; background: linear-gradient(#dfe9f3, #f6f1e6); overflow: hidden; }
+.payoff.inbox .pay-bars { margin: 6px 0 0; }
+.payoff.inbox #payText { margin: 6px 0 4px; }
+.payoff.inbox .pay-label { z-index: 2; }

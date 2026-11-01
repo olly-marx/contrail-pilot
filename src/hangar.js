@@ -31,6 +31,7 @@ export class FleetHangar {
   constructor(ui) { this.ui = ui; this.tab = 'plane'; }
 
   render() {
+    if (this.paying) { this.renderLater = true; return; }   // a payoff is showing IN the box: nothing may rebuild it (stage 2)
     const s = this.ui.save, el = $('hFleet');
     el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.capHTML(s) + this.previewCardHTML(s) + this.timelineHTML(s) + `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
       `<button class="btn ftab ${this.tab === k ? 'on' : ''}" data-ftab="${k}" type="button">${n}</button>`).join('')}</div>`
@@ -102,26 +103,20 @@ export class FleetHangar {
     const s = this.ui.save, f = fleetOf(s), id = f.plane, files = lookFiles(id, f.planes[id], 'hangar');
     const gadNow = hangarGadgets(s, id), gadOld = gadBefore || gadNow;
     const added = files.parts.filter(p => !(before ? before.parts : files.parts.slice(0, -1)).includes(p)).concat(gadNow.filter(g => !gadOld.includes(g)));
-    let el = $('payoff');
-    if (!el) { el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff'; document.body.appendChild(el); }
+    // Stage 2 (DESIGN-HANGAR-NATURE, the user's pick): the payoff happens IN the plane box. The box (.fpreview) steps aside and
+    // #payoff takes its exact place in the page: a frame of the same size and border (the picture), then the strip under it
+    // (the bars, the words, OK). No overlay, no card: the box you were looking at is what changes.
+    const box = $('hFleet') && $('hFleet').querySelector('.fpreview');
+    const stale = $('payoff'); if (stale) stale.remove();
+    const el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff inbox';
+    if (box) { box.hidden = true; box.insertAdjacentElement('afterend', el); } else document.body.appendChild(el);
+    this.paying = true;
     el.innerHTML = `<div class="payoff-card"><div class="pay-frame"><div class="pay-plane"><img id="payBefore" alt="">${added.map(p => `<img class="pay-part" src="${p}" alt="">`).join('')}<i class="pay-spark"></i><b id="payMark" class="pay-mark"></b></div></div>
       <span id="payLabel" class="pay-label">${rails || !name ? tip('rail-payoff-label') : `NEW: ${name}!`}</span>
       ${bars.length ? `<div class="pay-bars">${statBarsHTML(bars)}</div>` : ''}
       <p id="payText" class="pay-later">${rails || !name ? tip('rail-payoff') : `${name}: fitted!`}</p><button id="payOk" class="btn go big pay-later" type="button">OK</button></div>`;
-    el.hidden = false;
     el.classList.toggle('nopart', !added.length);
-    // Stage 1 of 'the payoff IN the box' (DESIGN-HANGAR-NATURE, the user's pick): the card sits so its picture frame lies
-    // EXACTLY on the hangar's plane box (.fpreview): the part drops into the box you were looking at. (Card padding 12 +
-    // border 3 = 15 px each side.) Falls back to the centred card when the box is not on screen.
-    const box = $('hFleet') && $('hFleet').querySelector('.fpreview'), card = el.querySelector('.payoff-card');
-    // (the 375 screenshot, 2026-11-01: a row tap's SMOOTH scroll was still running when the box was measured, so the card sat
-    // off the box, cut at the top.) Jump instantly, then measure and place one frame later.
-    const place = () => { const r = (box.querySelector('img') || box).getBoundingClientRect();   // the picture inside the box (its 2 px border excluded)
-      if (r.width > 100 && r.top >= 0 && r.bottom <= innerHeight) { el.classList.add('atbox');
-        Object.assign(card.style, { position: 'absolute', left: `${Math.round(r.left - 15)}px`, top: `${Math.round(r.top - 15)}px`, width: `${Math.round(r.width + 30)}px` }); } };
-    // (the gate, 2026-11-01: the hangar's panel moves again during the payoff, the box by its own height ~0.6 s in; the card
-    // follows the box every frame while the payoff is open: one rect read a frame)
-    if (box && card) { box.scrollIntoView({ block: 'start', behavior: 'instant' }); const follow = () => { if (el.hidden) return; place(); requestAnimationFrame(follow); }; follow(); }
+    if (box) el.scrollIntoView({ block: 'start', behavior: 'instant' });   // (instant: a smooth scroll still running moved the picture)
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
     composedURL(files.base, old, gadOld).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
     // Where the new part is: each part layer is a whole repainted plane, so the part = the pixels that CHANGE when the
@@ -143,7 +138,7 @@ export class FleetHangar {
       img.addEventListener('load', r, { once: true }); img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true }); });
     if (part) Promise.all([whenLoaded(part), whenLoaded(beforeImg)]).then(measure);
     // The label arrow, placed over the part once the zoom has settled (the user, 2026-10-28: the payoff must not be flat).
-    const label = () => { const lab = $('payLabel'), card = el.querySelector('.payoff-card'); if (!lab || el.hidden) return;
+    const label = () => { const lab = $('payLabel'), card = el.querySelector('.pay-frame'); if (!lab || !el.isConnected) return;   // placed inside the picture frame
       const m = mark.getBoundingClientRect(), c = card.getBoundingClientRect();
       const x = Math.max(lab.offsetWidth / 2 + 4, Math.min(c.width - lab.offsetWidth / 2 - 4, m.left + m.width / 2 - c.left));
       const above = m.top - c.top - 6 >= lab.offsetHeight + 4;   // room above the part inside the card? else below it, arrow up
@@ -153,13 +148,13 @@ export class FleetHangar {
     // (the user's playtest, 2026-10-29, live on a phone: the pictures were still loading when the timeline ran, so the frame
     // stayed EMPTY and the label, placed on an unmeasured marker, floated above the card.) Now the show starts only once both
     // pictures are in (6 s at most), and the zoom + label need the measured part; without it, the plane shows flat (no zoom).
-    const settle = () => { if (el.hidden) return; if (added.length && mark.dataset.done) label(); else { el.classList.add('nopart'); el.classList.add('labelled'); } };
+    const settle = () => { if (!el.isConnected) return; if (added.length && mark.dataset.done) label(); else { el.classList.add('nopart'); el.classList.add('labelled'); } };
     const pics = [whenLoaded(beforeImg), ...(part ? [whenLoaded(part)] : [])];
     Promise.race([Promise.all(pics).then(() => part && measure()), new Promise(r => setTimeout(r, 6000))]).then(() => {
       el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)
       if (part && !mark.dataset.done) el.classList.add('nopart');
-      setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
-    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled', 'nopart', 'atbox'); if (card) card.removeAttribute('style');
+      setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
+    $('payOk').onclick = () => { this.ui.sfx.flap(); el.remove(); if (box) box.hidden = false; this.paying = false; this.renderLater = false;
       if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }
 
