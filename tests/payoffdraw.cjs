@@ -29,7 +29,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       await p.waitForTimeout(150);
       seen = await p.evaluate(() => { const el = document.getElementById('payoff'); if (!el || el.hidden || !el.classList.contains('labelled')) return null;
         const ink = img => { if (!img || !img.naturalWidth) return 0; const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; const g = c.getContext('2d'); g.drawImage(img, 0, 0); const d = g.getImageData(0, 0, c.width, c.height).data; let n = 0; for (let k = 3; k < d.length; k += 4) if (d[k] > 40) n++; return n; };
-        const lab = document.getElementById('payLabel'), card = el.querySelector('.payoff-card').getBoundingClientRect(), l = lab.getBoundingClientRect(), shown = getComputedStyle(lab).display !== 'none';
+        const lab = document.getElementById('payLabel'), card = el.querySelector('.pay-frame').getBoundingClientRect(), l = lab.getBoundingClientRect(), shown = getComputedStyle(lab).display !== 'none';
         return { before: ink(document.getElementById('payBefore')), after: ink(el.querySelector('.pay-part')), labelInCard: !shown || (l.top >= card.top - 1 && l.bottom <= card.bottom + 1),
           text: document.getElementById('payText').textContent, label: lab.textContent }; });
     }

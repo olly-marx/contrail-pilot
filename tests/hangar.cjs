@@ -47,8 +47,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   if (low.length) { await low[low.length - 1].scrollIntoViewIfNeeded(); await low[low.length - 1].click(); await p.waitForTimeout(900);
     const vis = await p.evaluate(() => { const c = document.getElementById('hPreview'), r = c && c.getBoundingClientRect(); return !!r && r.top >= 0 && r.bottom <= innerHeight && !c.classList.contains('empty'); });
     check(vis, 'a row tapped low in the list: its preview card is not on screen'); }
-  // Payoff stage 1 (the redesign): after a row tap (a SMOOTH scroll) and BUY from the strip, the payoff's picture frame lies on
-  // the box's picture (within 2 px). The 375 screenshot showed it off the box, cut at the top, before the fix.
+  // Payoff stage 2 (the redesign, the user's pick): BUY from far down the list: the payoff takes the plane box's place and is
+  // scrolled into view (stage 1's overlay sat off the box after Chrome's scroll anchoring moved the panel).
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
   // (buy from a row's BUY with the page scrolled to the BOTTOM: the box is far off screen, so the payoff must scroll to it)
   const buyId = await p.evaluate(() => { const b = [...document.querySelectorAll('#hFleet .rowc-price[data-fbuy]')].filter(x => !x.disabled).pop(); return b ? b.dataset.fbuy : null; });
@@ -56,9 +56,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const boxOff = await p.evaluate(() => document.querySelector('#hFleet .fpreview').getBoundingClientRect().bottom < 0);
     check(boxOff, 'the test could not scroll the box off screen (the placement check would prove nothing)');
     { await p.evaluate(id => document.querySelector(`#hFleet .rowc-price[data-fbuy="${id}"]`).click(), buyId); await p.waitForTimeout(700);
-      const d = await p.evaluate(() => { const f = document.querySelector('#payoff .pay-frame').getBoundingClientRect(), i = document.querySelector('#hFleet .fpreview img').getBoundingClientRect();
-        return Math.max(Math.abs(f.left - i.left), Math.abs(f.top - i.top), Math.abs(f.width - i.width)); });
-      check(d <= 2, `the payoff's frame is ${d.toFixed(1)} px off the box's picture (want <= 2)`);
+      // Stage 2: the payoff IS the box: #payoff takes the box's place in the page (no overlay), at full width, on screen.
+      const v = await p.evaluate(() => { const po = document.getElementById('payoff'), box = document.querySelector('#hFleet .fpreview'), f = po && po.querySelector('.pay-frame').getBoundingClientRect();
+        return po && { inPlace: po.previousElementSibling === box && box.hidden, fixed: getComputedStyle(po).position === 'fixed', wide: f.width >= document.getElementById('hFleet').clientWidth - 6,
+          onScreen: f.top >= -1 && f.bottom <= innerHeight + 1, top: Math.round(f.top), h: Math.round(f.height) }; });
+      check(v && v.inPlace && !v.fixed && v.wide, `the payoff takes the box's place in the page, full width, no overlay: ${JSON.stringify(v)}`);
+      await p.evaluate(() => game.registry.get('ui').renderHangar()); await p.waitForTimeout(100);   /* something re-renders mid-payoff (the estimate, a toast) */
+      check(await p.evaluate(() => !!document.querySelector('#payoff .pay-frame') && document.querySelector('#hFleet .fpreview').hidden), 'a re-render during the payoff leaves it in the box (render() waits for OK)');
+      check(v && v.onScreen, `the payoff's picture is on screen after a buy from far down the list (scroll anchoring once moved it): ${JSON.stringify(v)}`);
       if (await p.isVisible('#payOk')) await p.click('#payOk').catch(() => {}); await p.waitForSelector('#payOk', { state: 'visible', timeout: 6000 }).then(() => p.click('#payOk')).catch(() => {}); await p.waitForTimeout(200); } }
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);

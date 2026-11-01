@@ -214,3 +214,6 @@ rowfit	style.css	s/^\.rowc-price { position: absolute; right: 8px; bottom: 6px; 
 hangar	src/hangar.js	s/<span class="era-row"><span class="era-track">/<span><span class="era-track">/	the Next plane bar unwrapped (a tall box)
 hangar	style.css	s/#hangar { overflow-anchor: none; }/#hangar { }/	scroll anchoring moves the box off the payoff card
 onrails	src/tour.js	s/if (solo) solo.classList.add('tour-only');/if (false) solo.classList.add('tour-only');/	a row step shows its price too (two things to tap)
+hangar	src/hangar.js	s/    if (this.paying) { this.renderLater = true; return; }/    if (false) { this.renderLater = true; return; }/	a re-render wipes the in-box payoff
+hangar	style.css	s/^\.payoff\.inbox { position: relative; inset: auto;/.payoff.inbox { position: fixed; inset: 0;/	the payoff is an overlay again
+payoffdraw	src/hangar.js	s/card = el.querySelector('.pay-frame'); if (!lab/card = el.querySelector('.payoff-card'); if (!lab/	the label is placed against the whole card (low, against the words and OK)
