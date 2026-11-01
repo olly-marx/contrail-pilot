@@ -737,3 +737,23 @@ h2.sub { margin-top: -4px; }
 .mrow .mbar i { display: block; height: 100%; background: #7fd36b; }
 .payoff-card .pay-bars + p { margin-top: 12px; }   /* (playtest 2026-10-29: the words sat on the bar) */
 .payoff-card #payOk { margin-top: 4px; }
+
+/* ---------- The shared row (research/DESIGN-HANGAR-NATURE.md §5a; the user approved 2026-11-01) ----------
+   One component for hangar parts, systems, gadgets and NATURE projects: icon | name + pips / one-line "Next: ..." | price.
+   Fixed columns, nothing wraps, nothing jumps (the old .line grid was `1fr auto`: the auto column followed its own text).
+   No ellipsis on purpose: text must FIT (tests/rowfit.cjs at 375 and 390 px). The whole .rowc-tap is the one tap target;
+   the price/BUY is its sibling. */
+.rowc { display: grid; grid-template-columns: 1fr 92px; align-items: center; gap: 0 8px; padding: 6px 8px; background: #fff; border-bottom: 2px solid #ece8dc; min-height: 44px; }
+.rowc-tap { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
+.rowc-icon { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
+.rowc-tap > .rowc-slot { grid-row: 1 / span 2; width: 32px; height: 32px; }   /* no art: an empty slot keeps the column */
+.rowc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.rowc-name { font-size: 9px; white-space: nowrap; }
+.rowc-pips { display: flex; gap: 2px; flex: none; }
+.rowc-pips .pip { width: 8px; height: 5px; background: #d8d4c8; }
+.rowc-pips .pip.on { background: var(--green); }
+.rowc-sub { font-size: 7px; color: var(--muted); white-space: nowrap; margin-top: 3px; }
+.rowc-price { width: 92px; box-sizing: border-box; font-size: 8px; padding: 6px 4px; white-space: nowrap; text-align: center; justify-self: end; }
+.rowc.locked { background: #ece8dc; } .rowc.locked .rowc-tap { opacity: .6; }
+.rowc.maxed { background: #e7f6e7; }
+.rowc.sel { outline: 3px solid #ffe15a; outline-offset: -3px; }
