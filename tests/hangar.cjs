@@ -52,7 +52,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
   // (buy from a row's BUY with the page scrolled to the BOTTOM: the box is far off screen, so the payoff must scroll to it)
   const buyId = await p.evaluate(() => { const b = [...document.querySelectorAll('#hFleet .rowc-price[data-fbuy]')].filter(x => !x.disabled).pop(); return b ? b.dataset.fbuy : null; });
-  if (buyId) { await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await p.waitForTimeout(150);
+  if (buyId) { await p.evaluate(() => { const r = [...document.querySelectorAll('#hFleet .rowc, #hFleet + *, #hFleet ~ *')].pop(); (r || document.querySelector('#hFleet .rowc:last-child')).scrollIntoView({ block: 'end', behavior: 'instant' }); }); await p.waitForTimeout(150);
     const boxOff = await p.evaluate(() => document.querySelector('#hFleet .fpreview').getBoundingClientRect().bottom < 0);
     check(boxOff, 'the test could not scroll the box off screen (the placement check would prove nothing)');
     { await p.evaluate(id => document.querySelector(`#hFleet .rowc-price[data-fbuy="${id}"]`).click(), buyId); await p.waitForTimeout(700);
