@@ -177,6 +177,56 @@ export const GADGETS = [
     S(10, 'Autopilot that sees the whole sky', { autoSecs: 18, autoChance: 0.13 }), S(11, 'Best autopilot', { autoSecs: 19, autoChance: 0.14 })] },
 ];
 
+// Short names for the one-line hangar row (DESIGN-HANGAR-NATURE: 'Next: <name>' fits at 375 px, <= 30 characters, no ellipsis).
+// The full name stays everywhere else (the preview strip, the (i) card, the facts, which are keyed by it).
+export const SHORT_NAMES = {
+"Rolls-Royce Avon turbojets, tuned": "Tuned Avon engines",
+"Oval windows and thicker skin": "Oval windows",
+"JT9D high-bypass turbofans": "JT9D turbofans",
+"Next-gen engines (747-400 era)": "Next-gen engines",
+"Stretched upper deck (747-300)": "Stretched upper deck",
+"Wide-body economy, nine or ten across": "Wide-body economy",
+"FADEC: engines run by computer": "Computer-run engines",
+"Winglets (A330/A340, 1993)": "Winglets",
+"Flat beds in first class (1995)": "Flat beds",
+"Chevron nacelles: saw-tooth edges, quieter": "Chevron nacelles",
+"One-piece carbon-fibre barrel": "Carbon-fibre body",
+"Raked wingtips that flex upwards": "Raked wingtips",
+"Electric brakes and systems": "Electric brakes",
+"Lower cabin altitude: less tiring": "Lower cabin altitude",
+"Open-fan engines: no casing round the fan": "Open-fan engines",
+"Folding wingtips (fit at the gate)": "Folding wingtips",
+"Blended wing body (JetZero, 2030)": "Blended wing body",
+"Fuel-cell pods along the wing": "Fuel-cell pods",
+"Insulated liquid-hydrogen tanks": "Hydrogen tanks",
+"Laminar-flow skin, all over": "Laminar-flow skin",
+"Quiet cabin, no engine roar": "Quiet cabin",
+"Pilot reports and weather balloons": "Weather balloons",
+"First computer weather forecasts": "Computer forecasts",
+"Global forecast model (ECMWF, 1979)": "Global forecast model",
+"Humidity sensors on airliners (MOZAIC, 1994)": "Humidity sensors",
+"Satellite contrail detection (2017)": "Satellite detection",
+"Ensemble humidity forecasts": "Ensemble forecasts",
+"AI weather models (2023+)": "AI weather models",
+"Contrail forecasts in the flight plan": "Contrail forecasts",
+"Shared live humidity from every plane": "Shared live humidity",
+"Computer radar with altitude readout": "Computer radar",
+"RVSM: more flight levels (North Atlantic, 1997)": "More flight levels",
+"Satellite tracking (ADS-B)": "Satellite tracking",
+"Contrail-aware air traffic control": "Contrail-aware ATC",
+"Turn calls: \"flock climbing\"": "Turn calls",
+"Standard kerosene jet fuel (Jet A, 1959)": "Standard jet fuel",
+"Oil-crisis savings: lighter loads (1973)": "Lighter loads",
+"Cost-index flight planning": "Cost-index planning",
+"Sustainable fuel blends (SAF)": "SAF fuel blends",
+"Low-soot fuel: fewer ice crystals": "Low-soot fuel",
+"Better bird-aware routing": "Better bird routing",
+"Flight management computer": "Flight computer",
+"Autopilot that sees birds": "Bird-aware autopilot",
+"Better bird-aware autopilot": "Better bird autopilot",
+"Autopilot that sees the whole sky": "Sky-wide autopilot"
+};
+export const shortName = lv => SHORT_NAMES[lv.name] || lv.name;
 export const levelEra = k => Math.floor((k - 1) / 2);   // 1-based level -> era index
 export const planeById = id => PLANES.find(p => p.id === id);
 

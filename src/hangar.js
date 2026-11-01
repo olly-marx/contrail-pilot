@@ -9,7 +9,7 @@ import { tip } from './tips.js';
 import { LINE_INFO, levelCard } from './fleetfacts.js';
 import { composedURL } from './planelook.js';
 import { onSwipe } from './swipe.js';
-import { lookFiles, hangarGadgets, previewBars, withNext } from './fleet.js';
+import { lookFiles, hangarGadgets, previewBars, withNext, shortName } from './fleet.js';
 import { statBarsHTML, animateBars } from './statbars.js';
 import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
@@ -20,6 +20,8 @@ const $ = id => document.getElementById(id);
 // Effects whose mechanics are not built yet (stages 5-8): said honestly on the card.
 const SOON = [];
 const eraName = i => ERAS[i].name;
+// What is still missing to buy it ('need 12 seeds and 7 crystals more'): in the strip now (the rows are one line).
+const needText = (s, l) => `need ${[Math.max(0, l.cost - s.seeds) && `${l.cost - s.seeds}<i class="seedicon"></i>`, Math.max(0, (l.crystals || 0) - (s.crystals || 0)) && `${(l.crystals || 0) - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ')} more`;
 const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
 
 // Things in the fleet you could buy right now, as keys ('gadget:magnet:3').
@@ -108,6 +110,13 @@ export class FleetHangar {
       <p id="payText" class="pay-later">${rails || !name ? tip('rail-payoff') : `${name}: fitted!`}</p><button id="payOk" class="btn go big pay-later" type="button">OK</button></div>`;
     el.hidden = false;
     el.classList.toggle('nopart', !added.length);
+    // Stage 1 of 'the payoff IN the box' (DESIGN-HANGAR-NATURE, the user's pick): the card sits so its picture frame lies
+    // EXACTLY on the hangar's plane box (.fpreview): the part drops into the box you were looking at. (Card padding 12 +
+    // border 3 = 15 px each side.) Falls back to the centred card when the box is not on screen.
+    const box = $('hFleet') && $('hFleet').querySelector('.fpreview'), card = el.querySelector('.payoff-card');
+    if (box && card) { box.scrollIntoView({ block: 'start' }); const r = (box.querySelector('img') || box).getBoundingClientRect();   // the picture inside the box (its 2 px border excluded)
+      if (r.width > 100 && r.top >= 0 && r.bottom <= innerHeight) { el.classList.add('atbox');
+        Object.assign(card.style, { position: 'absolute', left: `${Math.round(r.left - 15)}px`, top: `${Math.round(r.top - 15)}px`, width: `${Math.round(r.width + 30)}px` }); } }
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
     composedURL(files.base, old, gadOld).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
     // Where the new part is: each part layer is a whole repainted plane, so the part = the pixels that CHANGE when the
@@ -145,7 +154,7 @@ export class FleetHangar {
       el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)
       if (part && !mark.dataset.done) el.classList.add('nopart');
       setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
-    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled', 'nopart');
+    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled', 'nopart', 'atbox'); if (card) card.removeAttribute('style');
       if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }
 
@@ -172,6 +181,14 @@ export class FleetHangar {
       ${next ? `<div class="next"><span>Next: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost}<i class="seedicon"></i></button></div>${adds ? `<p class="small">${adds}</p>` : bar(lv + 1)}` : ''}</div>`;
   }
 
+  // 'Next plane': the next plane not reached yet, its era and a bar of the flying time to it (eras.js eraProgress).
+  nextPlaneHTML(s) {
+    const f = fleetOf(s), nxt = PLANES.find(pl => !f.planes[pl.id]); if (!nxt) return '';
+    const p = eraProgress(s), frac = nxt.era === p.index + 1 ? p.frac : 0;
+    return `<div class="nextplane" id="hNextPlane"><span class="small">Next plane: <b>${nxt.name}</b>, in ${ERAS[nxt.era].id}</span>`
+      + `<span class="era-track"><span class="era-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span></div>`;
+  }
+
   // The item behind a selection ('plane:comet.engines', 'gadget:magnet', 'fly:jumbo').
   itemOf(s, kind, id) {
     if (kind === 'fly') { const p = planeById(id), f = fleetOf(s); return p && f.planes[id] && f.plane !== id && { kind, id, name: p.name, open: true, cost: 0 }; }
@@ -195,8 +212,12 @@ export class FleetHangar {
     const btn = item.kind === 'fly' ? `<button id="hPreviewBuy" class="btn go" data-fly="${item.id}" type="button">FLY THIS</button>`
       : !item.open ? `<span class="small blocked">blocked until ${eraName(levelEra(item.level))}</span>`
       : `<button id="hPreviewBuy" class="btn ${free ? 'free' : ok ? 'go' : ''}" data-fbuy="${item.kind}:${item.id}" type="button" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(item)}</button>`;
+    // The strip (DESIGN-HANGAR-NATURE): the FULL name, what it does, the bars, and the (i) 'More about it' (moved off the rows).
+    const info = item.kind === 'fly' ? '' : `<button class="btn hp-info" data-finfo="${item.kind}:${item.id}" type="button">i More about it</button>`;
     return `<div id="hPreview" class="hpreview"><p class="hp-name"><b>${item.name}</b>${item.level ? ` <span class="small">level ${item.level}</span>` : ''}</p>`
-      + (bars.length ? statBarsHTML(bars) : `<p class="small">${tip('hangar-looks')}</p>`) + `<div class="hp-buy">${btn}</div></div>`;
+      + (item.kind === 'fly' ? '' : `<p class="small hp-what">${effectText(item)}</p>`)
+      + (bars.length ? statBarsHTML(bars) : `<p class="small">${tip('hangar-looks')}</p>`)
+      + (item.kind !== 'fly' && item.open && !ok ? `<p class="small need">${needText(s, item)}</p>` : '') + `<div class="hp-buy">${info}${btn}</div></div>`;
   }
 
   // The big picture at the top (400 x 176, the art session's hangar portrait): the plane you fly, or
@@ -223,14 +244,14 @@ export class FleetHangar {
     const f = fleetOf(s), now = eraProgress(s).index;
     const cards = PLANES.map(pl => {
       const owned = !!f.planes[pl.id], flying = f.plane === pl.id;
-      if (!owned) return `<div class="fplane locked" data-pview="${pl.id}"><img src="${pl.portrait}" alt=""><b>${pl.name}</b><span class="small">Opens in ${eraName(pl.era)}</span></div>`;
+      if (!owned) return '';   // planes not reached yet: the one 'Next plane' line below (DESIGN-HANGAR-NATURE: no row of silhouettes)
       return `<div class="fplane ${flying ? 'flying' : ''}" data-pview="${pl.id}"><img src="${pl.portrait}" alt=""><b>${pl.name}</b><span class="small">${ERAS[pl.era].id}. CO2 x${pl.co2.toFixed(2)}. Fares ${FARES[pl.id]} per 1,000 km</span>
         ${flying ? '<span class="fbadge">FLYING</span>' : `<button class="btn go" data-fly="${pl.id}" type="button">FLY THIS</button>`}</div>`;
     }).join('');
     const pl = planeById(f.plane), mine = f.planes[pl.id] || {};
     const lines = Object.entries(PLANE_LINES).map(([line, name]) =>
       this.lineHTML(s, { kind: 'plane', id: `${pl.id}.${line}`, name, levels: pl.lines[line], have: mine[line] || 0, eraOf: () => pl.era, now })).join('');
-    return `<div class="fplanes">${cards}</div><p class="small">Every plane flies the same way. Upgrades change what happens around it. A fuller plane makes less CO2 per passenger: that is why airlines fill every seat.</p>
+    return `<div class="fplanes">${cards}</div>${this.nextPlaneHTML(s)}<p class="small">Every plane flies the same way. Upgrades change what happens around it. A fuller plane makes less CO2 per passenger: that is why airlines fill every seat.</p>
       <h3 class="tree-head">${pl.name.toUpperCase()}</h3>${lines}`;
   }
 
@@ -268,22 +289,23 @@ export class FleetHangar {
   }
 
   // One line: name, pips, what you have, the next level (what it does, price, BUY) or why it is blocked.
+  // One row (DESIGN-HANGAR-NATURE section 5a, the shared .rowc): ONE tap target (the whole left part, [data-ftap]) and the
+  // price as a SIBLING button ([data-fbuy]); line 1 = name + pips, line 2 = 'Next: <short name>' (fits at 375, no ellipsis).
+  // The full name, what it does and the (i) facts are in the preview strip (#hPreview) when the row is tapped.
   lineHTML(s, { kind, id, name, levels, have, eraOf, now }) {
-    const next = levels[have], pips = levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
-    let row = '<div class="next"><span><b>All done!</b></span></div>';
+    const next = levels[have], key = `${kind}:${id}`, pips = levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
+    let sub = 'All done!', price = '<span class="rowc-price rowc-done">MAX</span>', locked = false;
     if (next) {
-      const era = eraOf(have + 1), open = era <= now, free = !!s.freeUpgrade && have === 0 && open;
-      const ok = open && (free || canAfford(s, next));
-      const soon = Object.keys(next).some(k => SOON.includes(k)) ? ' <span class="soon">(coming soon)</span>' : '';
-      const short = open && !ok ? [Math.max(0, next.cost - s.seeds) && `${next.cost - s.seeds}<i class="seedicon"></i>`,
-        Math.max(0, (next.crystals || 0) - (s.crystals || 0)) && `${next.crystals - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ') : '';
-      const btn = !open ? `<span class="small blocked">blocked until ${eraName(era)}</span>`
-        : `<span class="buywrap"><button class="btn ${free ? 'free' : ok ? 'go' : ''}" data-fbuy="${kind}:${id}" type="button" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(next)}</button>${short ? `<span class="small need">need ${short} more</span>` : ''}</span>`;
-      row = `<div class="next"><span>Next: <b>${next.name}</b>. ${effectText(next)}${soon}</span>${btn}</div>`;
+      const era = eraOf(have + 1), open = era <= now, free = !!s.freeUpgrade && have === 0 && open, ok = open && (free || canAfford(s, next));
+      locked = !open;
+      sub = open ? `Next: ${shortName(next)}` : `Opens in ${ERAS[era].id}`;
+      price = open ? `<button class="rowc-price btn ${free ? 'free' : ok ? 'go' : ''}" data-fbuy="${key}" type="button" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(next)}</button>`
+        : `<span class="rowc-price rowc-locked">${ERAS[era].id}</span>`;
     }
-    const key = `${kind}:${id}`;
-    return `<div class="line fline ${next ? '' : 'maxed'} ${this.sel === key ? 'sel' : ''}" data-fline="${key}"><button class="infobtn" data-finfo="${key}" type="button" aria-label="About ${name}">i</button>`
-      + (next ? `<button class="frow-tap" data-ftap="${key}" type="button" aria-label="See what ${name} does">` : '<span class="frow-tap">')
-      + `<span class="name">${name}</span><span class="small">${have ? levels[have - 1].name : 'Not yet'}</span><span class="pips">${pips}</span>${next ? '<span class="tapme">TAP TO SEE</span></button>' : '</span>'}${row}</div>`;
+    const tap = next ? `<button class="rowc-tap" data-ftap="${key}" type="button" aria-label="See what ${name} does">` : '<span class="rowc-tap">';
+    return `<div class="rowc ${next ? '' : 'maxed'} ${locked ? 'locked' : ''} ${this.sel === key ? 'sel' : ''}" data-row="${key}" data-fline="${key}">`
+      + `${tap}<span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${name}</span><span class="rowc-pips">${pips}</span></span>`
+      + `<span class="rowc-sub">${sub}</span>${next ? '</button>' : '</span>'}${price}</div>`;
   }
+
 }

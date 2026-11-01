@@ -21,7 +21,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.goto(URL); await ready(p); await p.waitForTimeout(900);
     return p;
   };
-  const row = (p, name) => p.evaluate(n => [...document.querySelectorAll('#hFleet .fline')].find(e => e.querySelector('.name').textContent === n).textContent.replace(/\s+/g, ' '), name);
+  const row = (p, name) => p.evaluate(n => [...document.querySelectorAll('#hFleet .rowc')].find(e => e.querySelector('.rowc-name').textContent === n).textContent.replace(/\s+/g, ' '), name);
   const saved = p => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
 
   // 1. Buy the 1970s magnet level (3): 150 x 0.43 = 65 seeds, 8 crystals.
@@ -47,7 +47,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(vis, 'a row tapped low in the list: its preview card is not on screen'); }
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
-  check(/Opens in the 1990s/.test(await p.textContent('.fplane.locked')), 'the 1990s twin is a locked silhouette');
+  check(/1990s twin/.test(await p.textContent('#hNextPlane')) && /1990s/.test(await p.textContent('#hNextPlane')) && !(await p.$('.fplane.locked')), 'the 1990s twin is the one Next plane line (no silhouettes)');
   await p.click('[data-fly=comet]'); await p.waitForTimeout(300);
   s = await saved(p);
   check(s.fleet.plane === 'comet' && /Comet 4/.test(await p.textContent('.fplane.flying')) && /COMET 4/.test(await p.textContent('#hFleet .tree-head')), `the Comet is chosen and its lines shown: ${s.fleet.plane}`);
@@ -57,7 +57,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 1b. In the 1950s the 1970s level is blocked: no BUY, says when.
   p = await open(150, { flightSeconds: 60 });
   await p.click('#tabHangar'); await p.waitForTimeout(300); await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
-  check(/blocked until the 1970s/.test(await row(p, 'Magnet')) && !(await p.$('[data-fbuy="gadget:magnet"]')), `1950s: magnet 3 blocked: "${await row(p, 'Magnet')}"`);
+  check(/Opens in 1970s/.test(await row(p, 'Magnet')) && !(await p.$('[data-fbuy="gadget:magnet"]')), `1950s: magnet 3 blocked: "${await row(p, 'Magnet')}"`);
   await p.close();
 
   p = await open(150);
@@ -84,7 +84,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   p = await open(1);   // 7 short of magnet 3's 8 crystals
   await p.click('#tabHangar'); await p.waitForTimeout(300); await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
   check(await p.isDisabled('[data-fbuy="gadget:magnet"]'), 'short of crystals: BUY should be grey');
-  check(/need 7 more/.test(await row(p, 'Magnet')), `short of crystals: should say "need 7 more": "${await row(p, 'Magnet')}"`);
+  await p.click('[data-ftap="gadget:magnet"]'); await p.waitForTimeout(300);
+  check(/need 7 more/.test(await p.textContent('#hPreview')), `short of crystals: the strip should say "need 7 more": "${await p.textContent('#hPreview')}"`);
   await p.close();
 
   await b.close();
