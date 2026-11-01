@@ -119,7 +119,8 @@ export class FleetHangar {
     const place = () => { const r = (box.querySelector('img') || box).getBoundingClientRect();   // the picture inside the box (its 2 px border excluded)
       if (r.width > 100 && r.top >= 0 && r.bottom <= innerHeight) { el.classList.add('atbox');
         Object.assign(card.style, { position: 'absolute', left: `${Math.round(r.left - 15)}px`, top: `${Math.round(r.top - 15)}px`, width: `${Math.round(r.width + 30)}px` }); } };
-    if (box && card) { box.scrollIntoView({ block: 'start', behavior: 'instant' }); place(); requestAnimationFrame(place); }
+    // (the gate: the hangar's panel still moves after one frame, re-render + scroll restore; follow the box for ~0.5 s)
+    if (box && card) { box.scrollIntoView({ block: 'start', behavior: 'instant' }); let n = 0; const follow = () => { if (el.hidden) return; place(); if (++n < 30) requestAnimationFrame(follow); }; follow(); }
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
     composedURL(files.base, old, gadOld).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
     // Where the new part is: each part layer is a whole repainted plane, so the part = the pixels that CHANGE when the
