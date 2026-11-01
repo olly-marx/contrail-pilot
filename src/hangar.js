@@ -114,9 +114,12 @@ export class FleetHangar {
     // EXACTLY on the hangar's plane box (.fpreview): the part drops into the box you were looking at. (Card padding 12 +
     // border 3 = 15 px each side.) Falls back to the centred card when the box is not on screen.
     const box = $('hFleet') && $('hFleet').querySelector('.fpreview'), card = el.querySelector('.payoff-card');
-    if (box && card) { box.scrollIntoView({ block: 'start' }); const r = (box.querySelector('img') || box).getBoundingClientRect();   // the picture inside the box (its 2 px border excluded)
+    // (the 375 screenshot, 2026-11-01: a row tap's SMOOTH scroll was still running when the box was measured, so the card sat
+    // off the box, cut at the top.) Jump instantly, then measure and place one frame later.
+    const place = () => { const r = (box.querySelector('img') || box).getBoundingClientRect();   // the picture inside the box (its 2 px border excluded)
       if (r.width > 100 && r.top >= 0 && r.bottom <= innerHeight) { el.classList.add('atbox');
-        Object.assign(card.style, { position: 'absolute', left: `${Math.round(r.left - 15)}px`, top: `${Math.round(r.top - 15)}px`, width: `${Math.round(r.width + 30)}px` }); } }
+        Object.assign(card.style, { position: 'absolute', left: `${Math.round(r.left - 15)}px`, top: `${Math.round(r.top - 15)}px`, width: `${Math.round(r.width + 30)}px` }); } };
+    if (box && card) { box.scrollIntoView({ block: 'start', behavior: 'instant' }); place(); requestAnimationFrame(place); }
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
     composedURL(files.base, old, gadOld).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
     // Where the new part is: each part layer is a whole repainted plane, so the part = the pixels that CHANGE when the

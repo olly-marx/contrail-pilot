@@ -47,6 +47,17 @@ const URL = process.env.URL || 'http://localhost:8000/';
   if (low.length) { await low[low.length - 1].scrollIntoViewIfNeeded(); await low[low.length - 1].click(); await p.waitForTimeout(900);
     const vis = await p.evaluate(() => { const c = document.getElementById('hPreview'), r = c && c.getBoundingClientRect(); return !!r && r.top >= 0 && r.bottom <= innerHeight && !c.classList.contains('empty'); });
     check(vis, 'a row tapped low in the list: its preview card is not on screen'); }
+  // Payoff stage 1 (the redesign): after a row tap (a SMOOTH scroll) and BUY from the strip, the payoff's picture frame lies on
+  // the box's picture (within 2 px). The 375 screenshot showed it off the box, cut at the top, before the fix.
+  await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
+  const g = await p.$$('[data-ftap^="gadget:"]');
+  if (g.length) { await g[g.length - 1].scrollIntoViewIfNeeded(); await g[g.length - 1].click(); await p.waitForTimeout(120);
+    const canBuy = await p.evaluate(() => { const b = document.getElementById('hPreviewBuy'); return !!b && !b.disabled; });
+    if (canBuy) { await p.click('#hPreviewBuy'); await p.waitForTimeout(700);
+      const d = await p.evaluate(() => { const f = document.querySelector('#payoff .pay-frame').getBoundingClientRect(), i = document.querySelector('#hFleet .fpreview img').getBoundingClientRect();
+        return Math.max(Math.abs(f.left - i.left), Math.abs(f.top - i.top), Math.abs(f.width - i.width)); });
+      check(d <= 2, `the payoff's frame is ${d.toFixed(1)} px off the box's picture (want <= 2)`);
+      if (await p.isVisible('#payOk')) await p.click('#payOk').catch(() => {}); await p.waitForSelector('#payOk', { state: 'visible', timeout: 6000 }).then(() => p.click('#payOk')).catch(() => {}); await p.waitForTimeout(200); } }
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   check(await p.evaluate(() => document.getElementById('hNextPlane').getBoundingClientRect().height) < 40, 'the Next plane line is one short line (its bar once grew 140 px tall)');
