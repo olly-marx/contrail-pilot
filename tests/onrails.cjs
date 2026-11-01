@@ -164,7 +164,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await step('N0b-open-nature', /Animals need places/i, () => !document.getElementById('nature').hidden, { screen: 'results' });
   await step('N1-the-land', /wild land/i, null, { screen: 'nature' });
   await step('N2-tap-to-see', /Tap this one/i, () => !!document.querySelector('#wProjects .project.previewing'), { screen: 'nature' });
-  const pv = await p.evaluate(() => ({ ghost: document.querySelectorAll('#wScene .wf.ghost').length, gain: (document.querySelector('#wMeter .mgain') || {}).textContent || '', hi: document.querySelectorAll('#wProjects .w-webpic.w-hi').length }));
+  const pv = await p.evaluate(() => ({ ghost: document.querySelectorAll('#wScene .wf.ghost').length, gain: (document.querySelector('#wMeter .mgain') || {}).textContent || '', hi: document.querySelectorAll('#wStrip .w-webpic.w-hi, #wProjects .w-webpic.w-hi').length }));
   await shot('N2b-preview');
   check(pv.ghost >= 1 && /\+\d/.test(pv.gain) && pv.hi >= 1, `N2: tapping the project PREVIEWS it: ghosted in the land, the bar's gain, the animals it brings highlighted (${JSON.stringify(pv)})`);
   const w0 = await p.evaluate(() => parseFloat(document.querySelector('#wMeter .mfill').style.width) || 0);

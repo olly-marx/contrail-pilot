@@ -223,7 +223,7 @@ export class WildScreen {
       + `<div class="ws-foot"><button class="linkbtn" type="button" data-pinfo="${p.id}">More about it &rsaquo;</button>${row ? row.outerHTML : ''}</div>`;
     el.querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     el.querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
-    el.querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); });
+    el.querySelectorAll('.w-webpic[data-species]').forEach(b => { b.classList.add('w-hi'); b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); }; });   // the animals it brings, highlighted
   }
 
   buy(id) {

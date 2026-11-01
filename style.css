@@ -784,3 +784,4 @@ h2.sub { margin-top: -4px; }
 .nextplane { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
 .payoff.atbox { align-items: flex-start; justify-content: flex-start; }
 .payoff.atbox .payoff-card { box-sizing: border-box; max-width: none; }
+.rowc.tour-only .rowc-price { visibility: hidden; }   /* a tour step on the row's tap: one action only (tour.js) */
