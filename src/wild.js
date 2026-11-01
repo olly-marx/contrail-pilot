@@ -158,7 +158,7 @@ export class WildScreen {
       const btn = have ? '<span class="w-done">DONE</span>'
         : `<button class="btn ${free ? 'free' : ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(p)}</button>`;
       // The shared row (DESIGN-HANGAR-NATURE §5a): icon | short name / one line | price. The full story is in the strip.
-      const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? p.chain[0] : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings back: ${w.length} animal${w.length > 1 ? 's' : ''}`; })();   /* (an unfound animal is not named: the surprise stays) */
+      const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? (p.chain[0].length <= 22 ? p.chain[0] : 'Helps this land') : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings back: ${w.length} animal${w.length > 1 ? 's' : ''}`; })();   /* (an unfound animal is not named: the surprise stays) */
       return `<div class="rowc project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing sel' : ''}" data-pline="${p.id}">`
         + `<button class="rowc-tap" type="button" data-preview="${p.id}" ${have ? 'disabled' : ''}><img class="rowc-icon" src="assets/ui/proj-${p.id}.png" alt="">`
         + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span></span><span class="rowc-sub">${esc(sub)}</span></button>`
@@ -203,6 +203,7 @@ export class WildScreen {
     this.previewId = this.previewId === id ? null : id;
     document.querySelectorAll('#wProjects .project').forEach(c => { const on = c.dataset.pline === this.previewId; c.classList.toggle('previewing', on); c.classList.toggle('sel', on); });
     this.renderStrip();
+    $('wScene').classList.toggle('previewing', !!this.previewId);   // the 'Bare land' note steps aside so the ghost shows
     const tr = document.querySelector('#wMeter .mtrack'); if (tr) tr.querySelectorAll('.mghost, .mgain').forEach(g => g.remove());
     if (!this.previewId) { this.field && this.field.clearGhosts(); return; }
     this.field && this.field.ghost(this.previewId);

@@ -34,7 +34,7 @@ export const PROJECTS = [
     fact: 'Numbats were down to around 300 in the late 1970s. Today about 2,000 to 3,000 are left in the wild.',
     src: [['Project Numbat', 'https://www.numbat.org.au/'], ['AWC: Numbat', `${AWC}animals/numbat`]],
     org: { name: 'Project Numbat (supports the Numbat Recovery Program)', learn: 'https://www.numbat.org.au/', donate: 'https://www.numbat.org.au/donations' } },   // own domain
-  { id: 'westernshield', name: 'Fox and cat control in the south-west', tier: 2, band: 'mid',
+  { id: 'westernshield', row: 'Fox and cat control', name: 'Fox and cat control in the south-west', tier: 2, band: 'mid',
     short: 'Rangers control foxes and feral cats over huge areas of bush so small animals can live safely.',
     chain: ['Fewer foxes and cats', 'small animals survive', 'numbats, quokkas and woylies spread again'],
     fact: 'Western Shield in Western Australia is 30 years old, and its fox and cat control now covers 4.7 million hectares.',

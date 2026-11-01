@@ -31,6 +31,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       for (const r of document.querySelectorAll(sel)) {
         if (!r.offsetParent) continue; out.rows++;
         for (const c of r.querySelectorAll('.rowc-name, .rowc-sub, .rowc-price')) {
+          if (c.classList.contains('rowc-price')) { if (c.scrollWidth > c.clientWidth + 1) out.bad.push(`price too wide: "${c.textContent.trim()}"`); continue; }   /* a button: padding + icon make it taller than a text line */
           const lh = parseFloat(getComputedStyle(c).lineHeight) || parseFloat(getComputedStyle(c).fontSize) * 1.3;
           if (c.scrollWidth > c.clientWidth + 1 || c.getBoundingClientRect().height > lh * 1.6) out.bad.push(`${c.className}: "${c.textContent.trim()}" (${c.scrollWidth}>${c.clientWidth} or ${Math.round(c.getBoundingClientRect().height)}px tall)`);
           if (c.getBoundingClientRect().right > r.getBoundingClientRect().right + 1) out.bad.push(`${c.className} spills out of its row: "${c.textContent.trim()}"`);
@@ -43,18 +44,18 @@ const URL = process.env.URL || 'http://localhost:8000/';
       return { ...out, names: [...out.names], prices: [...out.prices] };
     }, sel);
     for (const r of regions) {
-      await p.evaluate(r => { const ui = game.registry.get('ui'), w = ui.wild || ui.nature; const t = document.querySelector(`#wRegions [data-region="${r}"]`); if (t) t.click(); if (w) { w.openTiers = [1, 2, 3]; w.renderProjects && w.renderProjects(); } }, r);
+      await p.evaluate(r => { const ui = game.registry.get('ui'), w = ui.wild || ui.nature; const t = document.querySelector(`#wRegions [data-region="${r}"]`); if (t) t.click(); if (w) { w.bio = () => 100; w.openTiers = [1, 2, 3]; w.renderProjects && w.renderProjects(); }   /* every tier shown: all projects measured */ }, r);
       await p.waitForTimeout(700);
       const m = await measure('#wProjects .rowc');
       if (!m.rows) continue; landsSeen++; rowsSeen += m.rows;
       check(!m.bad.length, `${W}px NATURE ${r}: text does not fit: ${m.bad.slice(0, 4).join(' | ')}`);
       check(m.names.length <= 1 && m.prices.length <= 1, `${W}px NATURE ${r}: rows do not line up (names at ${m.names}, prices ${m.prices})`);
       check(!m.imgs.length, `${W}px NATURE ${r}: broken pictures ${m.imgs}`);
-      const first = await p.$('#wProjects .project:not(.maxed) .rowc-tap');
-      if (first) { await first.click(); await p.waitForTimeout(400);
+      const first = await p.$('#wProjects .project:not(.maxed) .rowc-tap');   /* (tapped from the page: the pinned land may cover a row a finger would scroll to) */
+      if (first) { await first.evaluate(e => e.click()); await p.waitForTimeout(400);
         const st = await p.evaluate(() => { const s = document.getElementById('wStrip'); return s && !s.hidden ? [...s.querySelectorAll('.ws-name, .ws-chain, .linkbtn')].filter(c => c.scrollWidth > c.clientWidth + 1).map(c => c.textContent.trim()) : ['(no strip)']; });
         check(!st.length, `${W}px NATURE ${r}: the preview strip's text does not fit: ${st}`);
-        await first.click(); await p.waitForTimeout(200); }
+        await first.evaluate(e => e.click()); await p.waitForTimeout(200); }
     }
     await p.evaluate(() => game.registry.get('ui').go('hangar')); await p.waitForTimeout(1200);
     for (const tab of ['plane', 'systems', 'gadgets']) {
@@ -67,7 +68,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(!errs.length, `${W}px page errors ${errs}`);
     await p.close();
   }
-  check(landsSeen >= 20 && rowsSeen >= 100, `enough NATURE rows were measured (${landsSeen} land views, ${rowsSeen} rows); else this proves nothing`);
+  check(landsSeen >= 20 && rowsSeen >= 250, `enough NATURE rows were measured (${landsSeen} land views, ${rowsSeen} rows); else this proves nothing`);
   if (process.env.HANGAR) check(hangarRows > 0, 'the hangar uses .rowc rows');
   await b.close();
   console.log(fails.length ? `FAIL rowfit:\n - ${fails.join('\n - ')}` : `PASS rowfit: ${rowsSeen} NATURE rows in ${landsSeen} land views fit, line up, all pictures load; hangar ${hangarRows ? `${hangarRows} rows` : 'no .rowc rows yet'}`);
