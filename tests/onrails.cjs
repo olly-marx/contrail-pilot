@@ -126,7 +126,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await shot('R6b-payoff-after');
   check(pay1.op > 0.9 && pay1.okShown && /jet engines|cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
   check(pay1.scale > 1.5 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points && pay1.inFrame && pay1.small && pay1.labelInCard, `R6: the camera zooms onto the new part (its box in view and small: the part, not the plane) and the label, inside the card, points INTO it (${JSON.stringify(pay1)})`);
-  await step('R6-payoff', /./, () => { const po = document.getElementById('payoff'); return (!po || po.hidden) && !document.getElementById('hangar').hidden; }   /* (stage 2 removes it) */, { modal: '#payOk' });   // (stays in the hangar: the user)
+  await step('R6-payoff', /new part/i, () => { const po = document.getElementById('payoff'); return (!po || po.hidden) && !document.getElementById('hangar').hidden; }   /* (stage 2 removes it) */);   /* stage 2: the tour rings OK (the page is live) */   // (stays in the hangar: the user)
   await step('R7-takeoff', /take off/i, () => document.getElementById('hangar').hidden, { screen: 'hangar' });   // (the hangar's own TAKE OFF)
   // R8-R9: flight 1, then the seeds, the mission's prize, and the wildlife hint.
   await fly('flight 1', 240, { noTurb: true, noWild: true });

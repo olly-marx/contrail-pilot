@@ -150,7 +150,8 @@ export class FleetHangar {
     // (the user's playtest, 2026-10-29, live on a phone: the pictures were still loading when the timeline ran, so the frame
     // stayed EMPTY and the label, placed on an unmeasured marker, floated above the card.) Now the show starts only once both
     // pictures are in (6 s at most), and the zoom + label need the measured part; without it, the plane shows flat (no zoom).
-    const settle = () => { if (!el.isConnected) return; if (added.length && mark.dataset.done) label(); else { el.classList.add('nopart'); el.classList.add('labelled'); } };
+    const settle = () => { if (!el.isConnected) return; if (added.length && mark.dataset.done) label(); else { el.classList.add('nopart'); el.classList.add('labelled'); }
+      if (rails && this.ui.tour) this.ui.tour.payoffOk(); };   // the rails: ring OK (the rest of the page is live)
     const pics = [whenLoaded(beforeImg), ...(part ? [whenLoaded(part)] : [])];
     Promise.race([Promise.all(pics).then(() => part && measure()), new Promise(r => setTimeout(r, 6000))]).then(() => {
       el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)

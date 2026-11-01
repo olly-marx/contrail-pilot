@@ -53,6 +53,10 @@ export class Tour {
   markDone(id) { this.save.tours = [...new Set([...(this.save.tours || []), id])]; writeSave(this.save); }
 
   // Called when the menu shows, and when the results have finished. Starts at most one tour.
+  // The rails' first payoff happens in the page (stage 2), so the rest of the hangar stays live: on the rails, one step
+  // rings OK and dims the rest, so a child sees ONE thing to tap (the one-target rule; onrails R6).
+  payoffOk() { if (this.busy || this.done('r-payoff') || !document.getElementById('payOk')) return; this.run('r-payoff', [{ target: '#payOk', text: tip('rail-payoff-ok'), tap: true }]); }
+
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
