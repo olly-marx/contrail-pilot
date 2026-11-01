@@ -61,6 +61,8 @@ The design lead is the game chat. The plane build chat owns `src/hangar.js` and 
 | 💺  Cabin             □□□   [25🌰 3❄] |
 |    Next: tourist class               |
 +--------------------------------------+
+| Comet 4                       FLYING |  owned planes = .rowc price-top rows (2026-11-01, Coordinator):
+| 747 jumbo · 1970s          FLY THIS |  tap = preview it in the box; FLY THIS = data-fly
 | Next plane: 747 jumbo (the 1970s)    |  ONE line (replaces 6 silhouettes)
 |   1 / 20 min of flying  ▓░░░░░░      |  + its progress bar
 | More planes come in later eras.      |

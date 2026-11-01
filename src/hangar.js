@@ -240,13 +240,17 @@ export class FleetHangar {
     const cards = PLANES.map(pl => {
       const owned = !!f.planes[pl.id], flying = f.plane === pl.id;
       if (!owned) return '';   // planes not reached yet: the one 'Next plane' line below (DESIGN-HANGAR-NATURE: no row of silhouettes)
-      return `<div class="fplane ${flying ? 'flying' : ''}" data-pview="${pl.id}"><img src="${pl.portrait}" alt=""><b>${pl.name}</b><span class="small">${ERAS[pl.era].id}. CO2 x${pl.co2.toFixed(2)}. Fares ${FARES[pl.id]} per 1,000 km</span>
-        ${flying ? '<span class="fbadge">FLYING</span>' : `<button class="btn go" data-fly="${pl.id}" type="button">FLY THIS</button>`}</div>`;
+      // An owned plane is a .rowc row too (Coordinator, 2026-11-01: one row component): tap = preview it in the box; the price
+      // column = FLY THIS (data-fly) or FLYING. (CO2 and fares moved to the preview strip, via the 'fly' bars.)
+      return `<div class="rowc price-top fplane-row ${flying ? 'sel flying' : ''}" data-row="fly:${pl.id}">`
+        + `<button class="rowc-tap" type="button" data-pview="${pl.id}" aria-label="Show the ${pl.name}"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${pl.name}</span></span>`
+        + `<span class="rowc-sub">${flying ? 'FLYING' : ERAS[pl.era].id}</span></button>`
+        + (flying ? '<span class="rowc-price rowc-done">FLYING</span>' : `<button class="rowc-price btn go" data-fly="${pl.id}" type="button">FLY THIS</button>`) + '</div>';
     }).join('');
     const pl = planeById(f.plane), mine = f.planes[pl.id] || {};
     const lines = Object.entries(PLANE_LINES).map(([line, name]) =>
       this.lineHTML(s, { kind: 'plane', id: `${pl.id}.${line}`, name, levels: pl.lines[line], have: mine[line] || 0, eraOf: () => pl.era, now })).join('');
-    return `<div class="fplanes">${cards}</div>${this.nextPlaneHTML(s)}<p class="small">Every plane flies the same way. Upgrades change what happens around it. A fuller plane makes less CO2 per passenger: that is why airlines fill every seat.</p>
+    return `<div class="fplanes-rows">${cards}</div>${this.nextPlaneHTML(s)}<p class="small">Every plane flies the same way. Upgrades change what happens around it. A fuller plane makes less CO2 per passenger: that is why airlines fill every seat.</p>
       <h3 class="tree-head">${pl.name.toUpperCase()}</h3>${lines}`;
   }
 

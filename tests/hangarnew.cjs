@@ -31,7 +31,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   let pv = await p.evaluate(() => ({ src: document.querySelector('#hFleet .fpreview img').dataset.plane, cap: document.querySelector('#hFleet .fpcap').textContent }));
   check(pv.src === 'jumbo' && /747 jumbo/.test(pv.cap) && /FLYING/.test(pv.cap), `preview shows the plane you fly: ${JSON.stringify(pv)}`);
-  await p.click('.fplane[data-pview="comet"] b'); await p.waitForTimeout(200);
+  await p.click('[data-pview="comet"]'); await p.waitForTimeout(200);
   pv = await p.evaluate(() => ({ src: document.querySelector('#hFleet .fpreview img').dataset.plane, cap: document.querySelector('#hFleet .fpcap').textContent }));
   check(pv.src === 'comet' && /IN YOUR FLEET/.test(pv.cap), `tapping the Comet card previews it: ${JSON.stringify(pv)}`);
   const plane = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).fleet.plane);
