@@ -186,7 +186,7 @@ export class FleetHangar {
     const f = fleetOf(s), nxt = PLANES.find(pl => !f.planes[pl.id]); if (!nxt) return '';
     const p = eraProgress(s), frac = nxt.era === p.index + 1 ? p.frac : 0;
     return `<div class="nextplane" id="hNextPlane"><span class="small">Next plane: <b>${nxt.name}</b>, in ${ERAS[nxt.era].id}</span>`
-      + `<span class="era-track"><span class="era-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span></div>`;
+      + `<span class="era-row"><span class="era-track"><span class="era-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span></span></div>`;   // (.era-track is a ROW item: flex-basis 140px; alone in this column it became 140 px TALL)
   }
 
   // The item behind a selection ('plane:comet.engines', 'gadget:magnet', 'fly:jumbo').
