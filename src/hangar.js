@@ -30,6 +30,8 @@ export const fleetBuyable = save => nextBuys(save).filter(b => b.open && canAffo
 export class FleetHangar {
   constructor(ui) { this.ui = ui; this.tab = 'plane'; }
 
+  endPayoff() {}   // (replaced while a payoff shows: see payoff())
+
   render() {
     if (this.paying) { this.renderLater = true; return; }   // a payoff is showing IN the box: nothing may rebuild it (stage 2)
     const s = this.ui.save, el = $('hFleet');
@@ -154,7 +156,9 @@ export class FleetHangar {
       el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)
       if (part && !mark.dataset.done) el.classList.add('nopart');
       setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
-    $('payOk').onclick = () => { this.ui.sfx.flap(); el.remove(); if (box) box.hidden = false; this.paying = false; this.renderLater = false;
+    // Ending the payoff: OK, or leaving the hangar mid-payoff (the plane build's review: it stayed parked until OK).
+    this.endPayoff = () => { el.remove(); if (box) box.hidden = false; this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
+    $('payOk').onclick = () => { this.ui.sfx.flap(); this.endPayoff();
       if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }
 

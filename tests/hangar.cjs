@@ -63,6 +63,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
       check(v && v.inPlace && !v.fixed && v.wide, `the payoff takes the box's place in the page, full width, no overlay: ${JSON.stringify(v)}`);
       await p.evaluate(() => game.registry.get('ui').renderHangar()); await p.waitForTimeout(100);   /* something re-renders mid-payoff (the estimate, a toast) */
       check(await p.evaluate(() => !!document.querySelector('#payoff .pay-frame') && document.querySelector('#hFleet .fpreview').hidden), 'a re-render during the payoff leaves it in the box (render() waits for OK)');
+      await p.evaluate(() => game.registry.get('ui').go('missions')); await p.waitForTimeout(150);
+      const left = await p.evaluate(() => ({ paying: !!game.registry.get('ui').fleet.paying, payoff: !!document.getElementById('payoff') }));
+      check(!left.paying && !left.payoff, `leaving the hangar mid-payoff ends it (no parked payoff on return): ${JSON.stringify(left)}`);
+      await p.evaluate(() => game.registry.get('ui').go('hangar')); await p.waitForTimeout(300);
       check(v && v.onScreen, `the payoff's picture is on screen after a buy from far down the list (scroll anchoring once moved it): ${JSON.stringify(v)}`);
       if (await p.isVisible('#payOk')) await p.click('#payOk').catch(() => {}); await p.waitForSelector('#payOk', { state: 'visible', timeout: 6000 }).then(() => p.click('#payOk')).catch(() => {}); await p.waitForTimeout(200); } }
   // Choose a plane: FLY THIS on the Comet.

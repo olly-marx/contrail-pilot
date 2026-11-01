@@ -217,3 +217,4 @@ onrails	src/tour.js	s/if (solo) solo.classList.add('tour-only');/if (false) solo
 hangar	src/hangar.js	s/    if (this.paying) { this.renderLater = true; return; }/    if (false) { this.renderLater = true; return; }/	a re-render wipes the in-box payoff
 hangar	style.css	s/^\.payoff\.inbox { position: relative; inset: auto;/.payoff.inbox { position: fixed; inset: 0;/	the payoff is an overlay again
 payoffdraw	src/hangar.js	s/card = el.querySelector('.pay-frame'); if (!lab/card = el.querySelector('.payoff-card'); if (!lab/	the label is placed against the whole card (low, against the words and OK)
+hangar	src/ui.js	s/    if (tab !== 'hangar' \&\& this.fleet \&\& this.fleet.paying) this.fleet.endPayoff();/    if (false) this.fleet.endPayoff();/	a payoff stays parked when you leave the hangar
