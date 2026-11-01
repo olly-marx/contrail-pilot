@@ -298,7 +298,7 @@ export class FleetHangar {
         : `<span class="rowc-price rowc-locked">${ERAS[era].id}</span>`;
     }
     const tap = next ? `<button class="rowc-tap" data-ftap="${key}" type="button" aria-label="See what ${name} does">` : '<span class="rowc-tap">';
-    return `<div class="rowc ${next ? '' : 'maxed'} ${locked ? 'locked' : ''} ${this.sel === key ? 'sel' : ''}" data-row="${key}" data-fline="${key}">`
+    return `<div class="rowc price-top ${next ? '' : 'maxed'} ${locked ? 'locked' : ''} ${this.sel === key ? 'sel' : ''}" data-row="${key}" data-fline="${key}">`
       + `${tap}<span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${name}</span><span class="rowc-pips">${pips}</span></span>`
       + `<span class="rowc-sub">${sub}</span>${next ? '</button>' : '</span>'}${price}</div>`;
   }
