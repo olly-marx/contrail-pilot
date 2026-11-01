@@ -71,6 +71,7 @@ export class FleetHangar {
       this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
       if (free) s.freeUpgrade = false;
       s.sparkle = true;
+      this.sel = null;   // (before the render: the strip must not show the NEXT item under the payoff: the 375 screenshot)
       this.ui.persist(); this.ui.sfx.buy(); this.ui.renderHangar();
       // R6: the payoff - the plane as it was, then the new part arrives on it - now for EVERY purchase (the user, 2026-10-28),
       // with the stat bars moving to their new values. Every purchase stays in the hangar (the user, 2026-10-28); `rails` only picks the tutorial's words for the first free part.

@@ -61,6 +61,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
         return po && { inPlace: po.previousElementSibling === box && box.hidden, fixed: getComputedStyle(po).position === 'fixed', wide: f.width >= document.getElementById('hFleet').clientWidth - 6,
           onScreen: f.top >= -1 && f.bottom <= innerHeight + 1, top: Math.round(f.top), h: Math.round(f.height) }; });
       check(v && v.inPlace && !v.fixed && v.wide, `the payoff takes the box's place in the page, full width, no overlay: ${JSON.stringify(v)}`);
+      check(await p.evaluate(() => !document.getElementById('hPreviewBuy')), 'no BUY in the strip under a payoff (the next item is not offered mid-payoff)');
       await p.evaluate(() => game.registry.get('ui').renderHangar()); await p.waitForTimeout(100);   /* something re-renders mid-payoff (the estimate, a toast) */
       check(await p.evaluate(() => !!document.querySelector('#payoff .pay-frame') && document.querySelector('#hFleet .fpreview').hidden), 'a re-render during the payoff leaves it in the box (render() waits for OK)');
       await p.evaluate(() => game.registry.get('ui').go('missions')); await p.waitForTimeout(150);
