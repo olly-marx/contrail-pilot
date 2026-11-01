@@ -57,7 +57,8 @@ const KEY = 'contrailPilot.v2';
   check(!(await p.isVisible('#wTrees')), 'tree upgrades are a UK thing: hidden in other regions');
 
   // 4. Who runs it: the name shows; the links only after a grown-up holds the button for 2 s.
-  await p.click('[data-pinfo="olives"]'); await p.waitForTimeout(200);
+  await p.evaluate(() => document.querySelector('[data-pline="olives"] .rowc-tap').click()); await p.waitForTimeout(300);   /* the (i) lives in the preview strip now (DESIGN-HANGAR-NATURE) */
+  await p.click('#wStrip [data-pinfo="olives"]'); await p.waitForTimeout(200);
   const before = await p.evaluate(() => ({ org: !!document.querySelector('#wInfoBody .w-org b'), shown: !document.querySelector('.w-orglinks').hidden }));
   check(before.org && !before.shown, `org named, links hidden until the gate: ${JSON.stringify(before)}`);
   const g = await p.$('.w-gate'), bb = await g.boundingBox();

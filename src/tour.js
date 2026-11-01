@@ -53,6 +53,10 @@ export class Tour {
   markDone(id) { this.save.tours = [...new Set([...(this.save.tours || []), id])]; writeSave(this.save); }
 
   // Called when the menu shows, and when the results have finished. Starts at most one tour.
+  // The rails' first payoff happens in the page (stage 2), so the rest of the hangar stays live: on the rails, one step
+  // rings OK and dims the rest, so a child sees ONE thing to tap (the one-target rule; onrails R6).
+  payoffOk() { if (this.busy || this.done('r-payoff') || !document.getElementById('payOk')) return; this.run('r-payoff', [{ target: '#payOk', text: tip('rail-payoff-ok'), tap: true }]); }
+
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
@@ -103,7 +107,7 @@ export class Tour {
       { target: '#againBtn', text: tip('rail-nature'), tap: true }]];
     if (where === 'nature' && d('L2') && !this.done('r-nature')) return ['r-nature', [
       { target: '#wScene', text: tip('rail-nat-land'), ok: true },
-      { target: '#wProjects .line.project.freeline .w-pname', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .line.project.previewing') },
+      { target: '#wProjects .project.freeline .rowc-tap', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .project.previewing') },
       { target: '#wProjects [data-project].free', text: tip('rail-project'), tap: true },
       { target: '#wMeter', text: tip('rail-nat-bio'), ok: true },
       { target: '#tabFly', text: tip('rail-nat-home'), tap: true, ready: always }]];
@@ -113,7 +117,7 @@ export class Tour {
     if (hub && d('L3') && !this.done('r-systems')) return ['r-systems', [
       { target: '#tabHangar', text: tip('rail-systems'), tap: true, ready: always },
       { target: '#hFleet [data-ftab="systems"]', text: tip('rail-systems-tab'), tap: true },
-      { target: '#hFleet .line .next', text: tip('rail-systems-line'), ok: true }]];
+      { target: '#hFleet .rowc .rowc-sub', text: tip('rail-systems-line'), ok: true }]];
     // L5 needs tree parcels (free the first time): on NATURE, point at the FREE button (the audit, 2026-10-28).
     if (where === 'nature' && d('L4') && !d('L5') && !((s.levels || {}).trees > 0) && !this.done('r-parcels')) return ['r-parcels', [{ target: '#wTrees [data-buy="trees"]', text: tip('rail-parcels'), tap: true }]];
     // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).
@@ -197,13 +201,16 @@ export class Tour {
     // on a phone); if it exists but is still hidden, wait up to 4 s for it to show, as before.
     const sel = st.area || st.target, inDom = () => !!document.querySelector(FEATURES.season2 ? HUB_TARGETS[sel] || sel : sel);
     for (let i = 0; i < 3 && !inDom(); i++) await sleep(100);
-    if (!inDom()) return false;   // nothing to point at: never trap the player
+    if (!inDom()) { (window.__tourGaveUp = window.__tourGaveUp || []).push(sel); return false; }   // nothing to point at: never trap the player (recorded: tests fail on a target that should exist but never does)
     for (let i = 0; i < 40 && !(t = this.find(sel)); i++) await sleep(100);
-    if (!t) return false;
+    if (!t) { (window.__tourGaveUp = window.__tourGaveUp || []).push(`${sel} (never shown)`); return false; }
     // The target fully on screen first, always (the user's screenshot: the hangar opened half-way down, the target off-screen).
     const vr = t.getBoundingClientRect();
     if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
     this.target = t; this.side = null;   // (a new step decides its bubble's side afresh)
+    // One action per step (the one-target audit): a row's own price/BUY sits inside the row's tap area (.rowc-price is
+    // absolute over .rowc-tap), so while the step points at the row's tap, that price hides (DESIGN-HANGAR-NATURE).
+    const solo = t.classList && t.classList.contains('rowc-tap') && t.closest('.rowc'); if (solo) solo.classList.add('tour-only');
     this.keepVisible();
     this.el.querySelector('.tbubble p').innerHTML = st.text;
     const ok = this.el.querySelector('.tbubble .btn');
@@ -212,7 +219,7 @@ export class Tour {
     this.place();
     if (st.focus) setTimeout(() => t.focus(), 50);
     await new Promise(resolve => {
-      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; resolve(); };
+      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; document.querySelectorAll('.rowc.tour-only').forEach(r => r.classList.remove('tour-only')); resolve(); };
       // A tap on the target (with `area`, on ANY element matching `target` inside the hole). Let the button do its job first.
       const want = FEATURES.season2 ? HUB_TARGETS[st.target] || st.target : st.target;
       const onTap = e => { if (e.target.closest && e.target.closest(want)) setTimeout(finish, 0); };

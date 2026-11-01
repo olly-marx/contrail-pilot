@@ -126,7 +126,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await shot('R6b-payoff-after');
   check(pay1.op > 0.9 && pay1.okShown && /jet engines|cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
   check(pay1.scale > 1.5 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points && pay1.inFrame && pay1.small && pay1.labelInCard, `R6: the camera zooms onto the new part (its box in view and small: the part, not the plane) and the label, inside the card, points INTO it (${JSON.stringify(pay1)})`);
-  await step('R6-payoff', /./, () => document.getElementById('payoff').hidden && !document.getElementById('hangar').hidden, { modal: '#payOk' });   // (stays in the hangar: the user)
+  await step('R6-payoff', /new part/i, () => { const po = document.getElementById('payoff'); return (!po || po.hidden) && !document.getElementById('hangar').hidden; }   /* (stage 2 removes it) */);   /* stage 2: the tour rings OK (the page is live) */   // (stays in the hangar: the user)
   await step('R7-takeoff', /take off/i, () => document.getElementById('hangar').hidden, { screen: 'hangar' });   // (the hangar's own TAKE OFF)
   // R8-R9: flight 1, then the seeds, the mission's prize, and the wildlife hint.
   await fly('flight 1', 240, { noTurb: true, noWild: true });
@@ -163,8 +163,8 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   if (await p.evaluate(() => !!document.querySelector('#rRewards .btn.claim'))) await step('N0a-claim-all', /prizes/i, () => !document.querySelector('#rRewards .btn.claim'), { screen: 'results' });
   await step('N0b-open-nature', /Animals need places/i, () => !document.getElementById('nature').hidden, { screen: 'results' });
   await step('N1-the-land', /wild land/i, null, { screen: 'nature' });
-  await step('N2-tap-to-see', /Tap this one/i, () => !!document.querySelector('#wProjects .line.project.previewing'), { screen: 'nature' });
-  const pv = await p.evaluate(() => ({ ghost: document.querySelectorAll('#wScene .wf.ghost').length, gain: (document.querySelector('#wMeter .mgain') || {}).textContent || '', hi: document.querySelectorAll('#wProjects .w-webpic.w-hi').length }));
+  await step('N2-tap-to-see', /Tap this one/i, () => !!document.querySelector('#wProjects .project.previewing'), { screen: 'nature' });
+  const pv = await p.evaluate(() => ({ ghost: document.querySelectorAll('#wScene .wf.ghost').length, gain: (document.querySelector('#wMeter .mgain') || {}).textContent || '', hi: document.querySelectorAll('#wStrip .w-webpic.w-hi, #wProjects .w-webpic.w-hi').length }));
   await shot('N2b-preview');
   check(pv.ghost >= 1 && /\+\d/.test(pv.gain) && pv.hi >= 1, `N2: tapping the project PREVIEWS it: ghosted in the land, the bar's gain, the animals it brings highlighted (${JSON.stringify(pv)})`);
   const w0 = await p.evaluate(() => parseFloat(document.querySelector('#wMeter .mfill').style.width) || 0);
@@ -175,6 +175,10 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await step('N4-biodiversity', /BIODIVERSITY/, null, { screen: 'nature' });
   await step('N5-fly-on', /Fly on/i, () => !document.getElementById('title').hidden);
   check(!p.errs.length, `page errors: ${p.errs}`);
+  // A rails step that gave up because its target never existed (the redesign, 2026-11-01: the systems rail pointed at the old
+  // rows, gave up unmarked and re-ran forever; the plane build's gate idea): none may happen in a normal run.
+  const gaveUp = [...(globalThis.__gaveUpSoFar || []), ...await p.evaluate(() => window.__tourGaveUp || []).catch(() => [])];
+  check(!gaveUp.length, `rails steps gave up on a target that never appeared: ${[...new Set(gaveUp)].join(', ')}`);
   await b.close();
   console.log(fails.length ? `FAIL onrails:\n - ${fails.join('\n - ')}` : 'PASS onrails: every rails step has exactly one tappable target, fully on screen, each tap works; no strip covers the plane; flights 1-2 follow the rails rules');
   process.exit(fails.length ? 1 : 0);

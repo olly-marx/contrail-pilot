@@ -6,7 +6,7 @@
 const RC = 'https://www.rewildingchile.org/en/', RCD = 'https://www.rewildingchile.org/en/donate/';
 const WCS = 'https://chile.wcs.org/', WCSD = 'https://www.wcs.org/wcs-donate';
 export const PROJECTS = [
-  { id: 'fenceoff', name: 'Clear old fences and invader pines', tier: 1, band: 'cheap',
+  { id: 'fenceoff', row: 'Clear fences and pines', name: 'Clear old fences and invader pines', tier: 1, band: 'cheap',
     short: 'Take away old ranch fences and pull out pine trees that do not belong, so wild animals can roam and huemul deer keep their forest.',
     chain: ['Fences come down', 'guanacos can roam', 'invader pines are pulled out of huemul forest'],
     fact: 'In Patagonia National Park, more than 370 miles of old fences have been removed, and more than 12,000 invasive pine trees have been taken out of huemul habitat.',
@@ -60,7 +60,7 @@ export const PROJECTS = [
     fact: 'The first 10 pairs of beavers, brought from Canada about 75 years ago, have grown to more than 100,000 animals.',
     src: [['WCS Chile: Recuperando los bosques de Tierra del Fuego', `${WCS}Nosotros/Noticias/ID/15668/Recuperando-los-bosques-de-Tierra-del-Fuego-afectados-por-el-castor.aspx`], ['CGTN: Brought in by humans, beavers threaten Patagonia forest', 'https://news.cgtn.com/news/2021-04-23/Brought-in-by-humans-beavers-threaten-Patagonia-forest-ZGQboF37Vu/index.html']],
     org: { name: 'Wildlife Conservation Society Chile (Karukinka Natural Park)', learn: `${WCS}Nosotros/Noticias/ID/15668/Recuperando-los-bosques-de-Tierra-del-Fuego-afectados-por-el-castor.aspx`, donate: WCSD } },
-  { id: 'penguinsea', name: 'Protect penguin colonies and their sea', tier: 3, band: 'big',
+  { id: 'penguinsea', row: 'Protect penguin colonies', name: 'Protect penguin colonies and their sea', tier: 3, band: 'big',
     short: 'Help protect penguin nesting beaches and the sea where parents catch fish for their chicks.',
     chain: ['Colonies and sea are protected', 'more fish for the parents', 'fewer chicks go hungry'],
     fact: 'At El Pedral, a new penguin colony grew from 6 pairs to 2,600 pairs in 10 years, and the place was made a wildlife refuge.',

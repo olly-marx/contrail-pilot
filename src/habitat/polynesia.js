@@ -9,7 +9,7 @@ const SCS = 'https://samoaconservationsociety.com/';
 const TMM = 'https://www.temanaotemoana.org/en/';
 const TS = 'https://www.tetiaroasociety.org/';
 export const PROJECTS = [
-  { id: 'kakerorisave', name: 'Keep rats away from kakerori nests', tier: 1, band: 'cheap',
+  { id: 'kakerorisave', row: 'Rat bait for kakerori', name: 'Keep rats away from kakerori nests', tier: 1, band: 'cheap',
     short: 'Every year, volunteers put out rat bait in a forest on Rarotonga, so the kakerori birds can raise their chicks.',
     chain: ['Rat bait goes out each year', 'fewer rats climb to the nests', 'more kakerori chicks grow up'],
     fact: 'There were fewer than 30 kakerori in the wild in the early 1990s. Now there are more than 700.',

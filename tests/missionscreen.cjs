@@ -64,9 +64,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#tabFly'); await p.waitForTimeout(300);
   await p.click('#hubTiles [data-go="nature"]'); await p.waitForTimeout(600);
   // Tap an animal to see it close up (the user, 2026-10-27): on a project card's "Brings back" row, and in the field picture.
-  const web = await p.$('#wProjects .w-webpic[data-species]');
+  // (the animals moved into the preview strip, DESIGN-HANGAR-NATURE: preview projects until one brings back an animal)
+  const web = await p.evaluate(async () => { for (const b of document.querySelectorAll('#wProjects .project:not(.maxed) .rowc-tap')) { b.click(); await new Promise(r => setTimeout(r, 150)); if (document.querySelector('#wStrip .w-webpic[data-species]')) return true; b.click(); } return false; }) ? await p.$('#wStrip .w-webpic[data-species]') : null;
   if (web) { await web.click(); await p.waitForTimeout(300); }
-  check(web && await p.evaluate(() => !document.getElementById('wInfo').hidden && /\S/.test(document.getElementById('wInfoBody').innerText)), 'tapping an animal on a project card opens its card');
+  check(web && await p.evaluate(() => !document.getElementById('wInfo').hidden && /\S/.test(document.getElementById('wInfoBody').innerText)), 'tapping an animal in a project\'s preview strip opens its card');
   await p.evaluate(() => { document.getElementById('wInfo').hidden = true; });
   const critter = await p.$('#wScene [data-critter]');
   if (critter) { await critter.evaluate(e => e.click()); await p.waitForTimeout(300); }   // (it walks about: a timed mouse click can miss it)

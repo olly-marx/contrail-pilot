@@ -737,3 +737,62 @@ h2.sub { margin-top: -4px; }
 .mrow .mbar i { display: block; height: 100%; background: #7fd36b; }
 .payoff-card .pay-bars + p { margin-top: 12px; }   /* (playtest 2026-10-29: the words sat on the bar) */
 .payoff-card #payOk { margin-top: 4px; }
+
+/* ---------- The shared row (research/DESIGN-HANGAR-NATURE.md §5a; the user approved 2026-11-01) ----------
+   One component for hangar parts, systems, gadgets and NATURE projects: icon | name + pips / one-line "Next: ..." | price.
+   Fixed columns, nothing wraps, nothing jumps (the old .line grid was `1fr auto`: the auto column followed its own text).
+   No ellipsis on purpose: text must FIT (tests/rowfit.cjs at 375 and 390 px). The whole .rowc-tap is the one tap target;
+   the price/BUY is its sibling. */
+.rowc { position: relative; padding: 6px 8px; background: #fff; border-bottom: 2px solid #ece8dc; min-height: 44px; box-sizing: border-box; }
+/* (measured 2026-11-01, Pixel = 1em per character: a 3-column row left the name 163 px = 18 characters at 375 px. The name
+   now has the WHOLE first line; only the second line shares its width with the price, which sits bottom-right.) */
+.rowc-tap { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
+.rowc-icon { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
+.rowc-tap > .rowc-slot { grid-row: 1 / span 2; width: 32px; height: 32px; }   /* no art: an empty slot keeps the column */
+.rowc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.rowc-name { font-size: 9px; white-space: nowrap; }
+.rowc-pips { display: flex; gap: 2px; flex: none; }
+.rowc-pips .pip { width: 8px; height: 5px; background: #d8d4c8; }
+.rowc-pips .pip.on { background: var(--green); }
+.rowc-sub { font-size: 7px; color: var(--muted); white-space: nowrap; margin-top: 4px; padding-right: 108px; box-sizing: border-box; min-width: 0; }
+.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 100px; box-sizing: border-box; font-size: 7px; padding: 4px 2px; white-space: nowrap; text-align: center; }
+.rowc.locked { background: #ece8dc; } .rowc.locked .rowc-tap { opacity: .6; }
+.rowc.maxed { background: #e7f6e7; }
+.rowc.sel { outline: 3px solid #ffe15a; outline-offset: -3px; }
+/* NATURE's preview strip (DESIGN-HANGAR-NATURE §4): pinned with the land, beside the ghost; the full name, what it does,
+   who it brings back, More about it, and the row's own BUY. */
+.wstrip { background: #fff; border: 3px solid var(--ink); padding: 4px 6px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
+.wstrip .ws-name { font-size: 8px; margin: 0; }   /* the FULL name: it may wrap here */
+.wstrip .ws-chain { font-size: 6px; margin: 0; color: var(--muted); grid-column: 1 / -1; }
+.wstrip .w-web { grid-column: 1; display: flex; align-items: center; gap: 2px; }
+.wstrip .w-web .w-webpic img, .wstrip .w-web .w-webpic .w-nopic { width: 18px; height: 18px; }
+.wstrip .ws-foot { display: contents; }
+.wstrip .ws-foot .linkbtn { grid-column: 1; justify-self: start; }
+.wstrip .ws-foot .rowc-price { position: static; grid-column: 2; grid-row: 1; }
+.linkbtn { background: none; border: 0; padding: 0; font: inherit; font-size: 7px; color: var(--ink); text-decoration: underline; cursor: pointer; }
+#wProjects .rowc.previewing { outline: 3px solid #ffe15a; outline-offset: -3px; }
+.wscene.previewing .w-empty { display: none; }   /* the preview's ghost must not sit under the 'Bare land' note (screenshot, 2026-11-01) */
+/* .price-top (the hangar): the price beside the SHORT name, so the long "Next: ..." line gets the full width. NATURE keeps
+   the default (long names, short second line). Measured 2026-11-01 at 375 px: name line 263 px = 29 characters at 9 px. */
+.rowc.price-top .rowc-price { top: 6px; bottom: auto; }
+.rowc.price-top .rowc-top { padding-right: 108px; box-sizing: border-box; }
+.rowc.price-top .rowc-sub { padding-right: 0; }
+/* Hangar redesign (plane build, on the game chat's .rowc): the strip's (i) and the 'Next plane' line */
+.hp-buy { gap: 8px; align-items: center; }
+.hp-info { font-size: 8px; padding: 6px 8px; }
+.hp-what { margin: 0 0 4px; }
+.nextplane { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
+.payoff.atbox { align-items: flex-start; justify-content: flex-start; }
+.payoff.atbox .payoff-card { box-sizing: border-box; max-width: none; }
+/* The hangar re-renders on every purchase; Chrome's scroll anchoring then moved the panel by the box's height (~145 px)
+   AFTER the payoff had scrolled the box into view, so the payoff card sat off the box (the gate in tests/hangar.cjs). */
+#hangar { overflow-anchor: none; }
+.rowc.tour-only .rowc-price { visibility: hidden; }   /* a tour step on the row's tap: one action only (tour.js) */
+/* Stage 2: the payoff IN the plane box (DESIGN-HANGAR-NATURE; the user's pick). #payoff takes the box's place in the page:
+   the frame copies .fpreview (border, radius, background, the 400:176 picture), the strip sits under it. Not an overlay. */
+.payoff.inbox { position: relative; inset: auto; z-index: auto; background: none; display: block; margin: 4px 0 6px; }
+.payoff.inbox .payoff-card { position: relative; width: auto; max-width: none; padding: 0; border: 0; background: none; text-align: center; }
+.payoff.inbox .pay-frame { position: relative; border: 2px solid #2b4a6f; border-radius: 4px; background: linear-gradient(#dfe9f3, #f6f1e6); overflow: hidden; }
+.payoff.inbox .pay-bars { margin: 6px 0 0; }
+.payoff.inbox #payText { margin: 6px 0 4px; }
+.payoff.inbox .pay-label { z-index: 2; }

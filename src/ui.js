@@ -96,7 +96,7 @@ export class UI {
     $('schoolBtn').onclick = () => this.startSchool();
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
     $('hGoBtn').onclick = () => this.start();
-    $('hGoTop').onclick = () => this.start();
+    $('hGoTop').onclick = () => { if (this.fleet.paying) this.fleet.endPayoff(); this.start(); };
     $('howBtn').onclick = () => { $('how').hidden = false; };
     $('howClose').onclick = () => { $('how').hidden = true; };
     $('aboutBtn').onclick = () => { $('aboutVersion').textContent = `Contrail Pilot v${VERSION}`; $('about').hidden = false; };
@@ -280,6 +280,7 @@ export class UI {
   // One screen at a time, chosen from the bar along the bottom. Pop-ups (how to play, about,
   // info, points) close on any move. `this.pilot` (PilotScreens) renders PILOT and BOARDS.
   go(tab) {
+    if (tab !== 'hangar' && this.fleet && this.fleet.paying) this.fleet.endPayoff();   // leaving mid-payoff: it ends (no parked payoff)
     if (tab === 'fly') return this.showTitle();
     if (tab === 'hangar') return this.showHangar();
     if (tab === 'missions') return this.showMissions();

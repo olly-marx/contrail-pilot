@@ -72,6 +72,7 @@ export const TIPS = {
   'rail-parcels':      { say: 'Your first tree parcels are FREE. Take them, then drop trees on brown soil!' },
   'rail-free':         { say: 'Cleaner engines: less CO2, a cooler Earth. Tap FREE!' },
   'rail-payoff':       { say: 'Look: shiny new jet engines!' },
+  'rail-payoff-ok':    { say: 'Look at your new part! Tap OK.' },
   'rail-payoff-label': { say: 'NEW: jet engines!' },
   'hangar-tap':        { say: 'Tap any upgrade to see what it does.' },
   'hangar-looks':      { say: 'A new look for your plane.' },

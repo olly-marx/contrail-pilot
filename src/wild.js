@@ -88,7 +88,7 @@ export class WildScreen {
     ].filter(Boolean).join('') || '<div class="w-nrow">Everything here is open. Wonderful!</div>';
     more.innerHTML = `Projects from ${esc(REGION_SOURCE[this.region])}. <b>Raise it:</b> plant this land's trees as you fly over it, and finish its projects. More life appears below you.`;
     this.renderScene();
-    this.renderProjects();
+    this.renderProjects(); this.renderStrip();
     // This land's 5 trees (research/PROPOSAL-TREES.md): open ones in colour with their count toward the cap
     // ("Oak 4/9"), shut ones as silhouettes with the one thing that opens them (src/landtrees.js).
     let row = $('wLandTrees');
@@ -157,11 +157,12 @@ export class WildScreen {
       const have = done.includes(p.id), free = p.id === freeId, ok = !have && (free || (s.seeds >= p.cost && (s.crystals || 0) >= p.crystals));
       const btn = have ? '<span class="w-done">DONE</span>'
         : `<button class="btn ${free ? 'free' : ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(p)}</button>`;
-      return `<div class="line project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing' : ''}" data-pline="${p.id}">
-        <div><div class="name"><button class="w-pname" type="button" data-preview="${p.id}" ${have ? 'disabled' : ''}><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="" onerror="this.style.visibility='hidden'">${esc(p.name)}</button></div><div class="small">${esc(p.short)}</div>
-        <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div>${this.webHTML(p)}</div>
-        <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
-        <div class="next">${btn}</div></div>`;
+      // The shared row (DESIGN-HANGAR-NATURE §5a): icon | short name / one line | price. The full story is in the strip.
+      const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? (p.chain[0].length <= 22 ? p.chain[0] : 'Helps this land') : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings back: ${w.length} animal${w.length > 1 ? 's' : ''}`; })();   /* (an unfound animal is not named: the surprise stays) */
+      return `<div class="rowc project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing sel' : ''}" data-pline="${p.id}">`
+        + `<button class="rowc-tap" type="button" data-preview="${p.id}"><img class="rowc-icon" src="assets/ui/proj-${p.id}.png" alt="">`
+        + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span></span><span class="rowc-sub">${esc(sub)}</span></button>`
+        + `${have ? '<span class="rowc-price w-done">DONE</span>' : btn.replace('class="btn ', 'class="rowc-price btn ')}</div>`;
     };
     const how = 'Plant trees and finish the projects above!';   // every land takes trees (plantedIn)
     const open = TIERS.filter(t => bio >= t.needs), next = TIERS.find(t => bio < t.needs);
@@ -175,7 +176,7 @@ export class WildScreen {
         <div class="small">Reach Biodiversity <b>${next.needs}</b> to unlock ${P.filter(p => p.tier === next.tier).length} more projects. ${how}</div></div></div>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     // Tap a card (not its buttons) to PREVIEW it: ghosted in the land, the bar's gain, the animals it brings highlighted.
-    $('wProjects').querySelectorAll('.line.project[data-pline]:not(.maxed)').forEach(c => c.onclick = e => { const pb = e.target.closest('button'); if (pb && !pb.dataset.preview) return; sfx.flap(); this.preview(c.dataset.pline); });
+    $('wProjects').querySelectorAll('.project[data-pline] .rowc-tap').forEach(   /* done ones too: their info (regions.cjs found it gone) */b => b.onclick = () => { sfx.flap(); this.preview(b.dataset.preview); });
     $('wProjects').querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); });   // tap an animal: its card
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
     $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
@@ -200,14 +201,30 @@ export class WildScreen {
   // The preview of one project (or null to clear): see what it does BEFORE paying.
   preview(id) {
     this.previewId = this.previewId === id ? null : id;
-    document.querySelectorAll('#wProjects .line.project').forEach(c => c.classList.toggle('previewing', c.dataset.pline === this.previewId));
-    document.querySelectorAll('#wProjects .w-webpic').forEach(b => b.classList.toggle('w-hi', !!this.previewId && !!b.closest(`[data-pline="${this.previewId}"]`)));
+    document.querySelectorAll('#wProjects .project').forEach(c => { const on = c.dataset.pline === this.previewId; c.classList.toggle('previewing', on); c.classList.toggle('sel', on); });
+    this.renderStrip();
+    $('wScene').classList.toggle('previewing', !!this.previewId);   // the 'Bare land' note steps aside so the ghost shows
     const tr = document.querySelector('#wMeter .mtrack'); if (tr) tr.querySelectorAll('.mghost, .mgain').forEach(g => g.remove());
     if (!this.previewId) { this.field && this.field.clearGhosts(); return; }
+    if (this.done().includes(this.previewId)) return;   // a done project: its strip (info, DONE), no ghost or gain
     this.field && this.field.ghost(this.previewId);
     const b0 = this.bio(), copy = JSON.parse(JSON.stringify(this.save)); copy.seeds = 1e9; copy.crystals = 1e9;
     const b1 = fundProject(copy, this.region, this.previewId) ? biodiversity(copy, this.region) : b0;
     if (tr && b1 > b0) tr.insertAdjacentHTML('beforeend', `<span class="mghost" style="left:${b0}%;width:${b1 - b0}%"></span><b class="mgain">+${Math.round(b1 - b0)}</b>`);
+  }
+
+  // The preview strip (DESIGN-HANGAR-NATURE §4), pinned under the land beside the ghost: the full name, what it does,
+  // who it brings back (their pictures), More about it, and the same BUY as the row (data-project: one buy path).
+  renderStrip() {
+    const el = $('wStrip'); if (!el) return;
+    const p = this.previewId && this.projects.find(x => x.id === this.previewId);
+    el.hidden = !p; if (!p) { el.innerHTML = ''; return; }
+    const row = document.querySelector(`#wProjects .project[data-pline="${p.id}"] .rowc-price`);
+    el.innerHTML = `<p class="ws-name"><b>${esc(p.name)}</b></p><p class="ws-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</p>${this.webHTML(p)}`
+      + `<div class="ws-foot"><button class="linkbtn" type="button" data-pinfo="${p.id}">More about it &rsaquo;</button>${row ? row.outerHTML : ''}</div>`;
+    el.querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
+    el.querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
+    el.querySelectorAll('.w-webpic[data-species]').forEach(b => { b.classList.add('w-hi'); b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); }; });   // the animals it brings, highlighted
   }
 
   buy(id) {

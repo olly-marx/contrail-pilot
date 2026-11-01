@@ -207,3 +207,19 @@ arealand	src/arealand.js	s/export const bestAreaBio = (save, k) => Math.max(0, .
 arealand	src/wild.js	s/n = save.homeCity || (a \&\& a.start) || save.city,/n = (a \&\& a.start) || save.city,/	NATURE opens on the area start's land
 arealand	src/startchoice.js	s/save.homeCity = name; save.city = name;/save.city = name;/	the start choice forgets the chosen home city
 payoffbroken	src/hangar.js	s/img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true });/img.addEventListener('error', () => {}, { once: true });/	broken pictures not hidden (the 6 s wait)
+rowfit	style.css	s/text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }/text-align: left; background: none; border: 0; padding: 0; margin: 0 0 0 auto; width: auto !important; font: inherit; color: inherit; cursor: pointer; min-width: 0; }/	row names jump with their text (the old auto column)
+rowfit	src/habitat/steppe.js	s/{ id: 'fenceoff', row: 'Clear fences and pines', name: /{ id: 'fenceoff', name: /	a 34-character row name
+rowfit	src/wild.js	s/<img class=\"rowc-icon\" src=\"assets\/ui\/proj-\${p.id}.png\"/<img class=\"rowc-icon\" src=\"assets\/ui\/projx-\${p.id}.png\"/	a broken picture (the blue '?')
+rowfit	style.css	s/^\.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 100px;/.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 84px;/	prices too narrow for 1800 225
+hangar	src/hangar.js	s/<span class="era-row"><span class="era-track">/<span><span class="era-track">/	the Next plane bar unwrapped (a tall box)
+# RETIRED 2026-11-01 (stage 2, the payoff in the page): the scroll-anchoring plant (#hangar overflow-anchor removed) is no longer caught by any check:
+# the payoff scrolls itself into view and the box returns on screen after OK, so anchoring no longer causes a visible fault. The CSS line stays (harmless).
+# hangar	style.css	s/#hangar { overflow-anchor: none; }/#hangar { }/	scroll anchoring moves the box off the payoff card
+onrails	src/tour.js	s/if (solo) solo.classList.add('tour-only');/if (false) solo.classList.add('tour-only');/	a row step shows its price too (two things to tap)
+hangar	src/hangar.js	s/    if (this.paying) { this.renderLater = true; return; }/    if (false) { this.renderLater = true; return; }/	a re-render wipes the in-box payoff
+hangar	style.css	s/^\.payoff\.inbox { position: relative; inset: auto;/.payoff.inbox { position: fixed; inset: 0;/	the payoff is an overlay again
+payoffdraw	src/hangar.js	s/card = el.querySelector('.pay-frame'); if (!lab/card = el.querySelector('#payOk'); if (!lab/	the label is placed down by the words and OK (the stage-1 flaw)
+hangar	src/ui.js	s/    if (tab !== 'hangar' \&\& this.fleet \&\& this.fleet.paying) this.fleet.endPayoff();/    if (false) this.fleet.endPayoff();/	a payoff stays parked when you leave the hangar
+postrails	src/tour.js	s|target: '#hFleet .rowc .rowc-sub'|target: '#hFleet .line .next'|	the systems rail points at the old row markup (it re-runs on every return HOME)
+onrails	src/hangar.js	s/      if (rails \&\& this.ui.tour) this.ui.tour.payoffOk(); };/      if (false) this.ui.tour.payoffOk(); };/	the rails payoff leaves the whole live page tappable (no OK ring)
+hangar	src/hangar.js	s/      this.sel = null;   \/\/ (before the render: the strip/      this.sel = this.sel;   \/\/ (before the render: the strip/	the next item's BUY shows under the payoff
