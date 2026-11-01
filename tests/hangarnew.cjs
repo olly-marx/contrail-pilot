@@ -42,8 +42,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   for (const tab of ['plane', 'systems', 'gadgets']) {
     await p.click(`[data-ftab=${tab}]`); await p.waitForTimeout(150);
     texts.push(await p.textContent('#hFleet'));
-    const ids = await p.evaluate(() => [...document.querySelectorAll('[data-finfo]')].map(e => e.dataset.finfo));
-    for (const id of ids) { await p.click(`[data-finfo="${id}"]`); await p.waitForTimeout(80); texts.push(await p.textContent('#info')); await p.click('#iClose'); }
+    // The (i) lives in the preview strip now (one row at a time): tap each row, then its 'More about it'.
+    const ids = await p.evaluate(() => [...document.querySelectorAll('[data-ftap]')].map(e => e.dataset.ftap));
+    for (const id of ids) { await p.click(`[data-ftap="${id}"]`); await p.waitForTimeout(120); texts.push(await p.textContent('#hFleet'));
+      await p.click(`#hPreview [data-finfo="${id}"]`); await p.waitForTimeout(80); texts.push(await p.textContent('#info')); await p.click('#iClose'); }
   }
   const bad = texts.filter(t => /GAME GUESS|game guess|game estimate|REAL \(|\bREAL\b/.test(t));
   check(!bad.length, `no sourcing labels shown to players: ${bad.map(t => t.slice(0, 80))}`);

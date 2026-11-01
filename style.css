@@ -777,3 +777,10 @@ h2.sub { margin-top: -4px; }
 .rowc.price-top .rowc-price { top: 6px; bottom: auto; }
 .rowc.price-top .rowc-top { padding-right: 108px; box-sizing: border-box; }
 .rowc.price-top .rowc-sub { padding-right: 0; }
+/* Hangar redesign (plane build, on the game chat's .rowc): the strip's (i) and the 'Next plane' line */
+.hp-buy { gap: 8px; align-items: center; }
+.hp-info { font-size: 8px; padding: 6px 8px; }
+.hp-what { margin: 0 0 4px; }
+.nextplane { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
+.payoff.atbox { align-items: flex-start; justify-content: flex-start; }
+.payoff.atbox .payoff-card { box-sizing: border-box; max-width: none; }
