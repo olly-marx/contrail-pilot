@@ -175,6 +175,10 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await step('N4-biodiversity', /BIODIVERSITY/, null, { screen: 'nature' });
   await step('N5-fly-on', /Fly on/i, () => !document.getElementById('title').hidden);
   check(!p.errs.length, `page errors: ${p.errs}`);
+  // A rails step that gave up because its target never existed (the redesign, 2026-11-01: the systems rail pointed at the old
+  // rows, gave up unmarked and re-ran forever; the plane build's gate idea): none may happen in a normal run.
+  const gaveUp = [...(globalThis.__gaveUpSoFar || []), ...await p.evaluate(() => window.__tourGaveUp || []).catch(() => [])];
+  check(!gaveUp.length, `rails steps gave up on a target that never appeared: ${[...new Set(gaveUp)].join(', ')}`);
   await b.close();
   console.log(fails.length ? `FAIL onrails:\n - ${fails.join('\n - ')}` : 'PASS onrails: every rails step has exactly one tappable target, fully on screen, each tap works; no strip covers the plane; flights 1-2 follow the rails rules');
   process.exit(fails.length ? 1 : 0);

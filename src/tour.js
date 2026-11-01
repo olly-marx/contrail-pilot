@@ -197,9 +197,9 @@ export class Tour {
     // on a phone); if it exists but is still hidden, wait up to 4 s for it to show, as before.
     const sel = st.area || st.target, inDom = () => !!document.querySelector(FEATURES.season2 ? HUB_TARGETS[sel] || sel : sel);
     for (let i = 0; i < 3 && !inDom(); i++) await sleep(100);
-    if (!inDom()) return false;   // nothing to point at: never trap the player
+    if (!inDom()) { (window.__tourGaveUp = window.__tourGaveUp || []).push(sel); return false; }   // nothing to point at: never trap the player (recorded: tests fail on a target that should exist but never does)
     for (let i = 0; i < 40 && !(t = this.find(sel)); i++) await sleep(100);
-    if (!t) return false;
+    if (!t) { (window.__tourGaveUp = window.__tourGaveUp || []).push(`${sel} (never shown)`); return false; }
     // The target fully on screen first, always (the user's screenshot: the hangar opened half-way down, the target off-screen).
     const vr = t.getBoundingClientRect();
     if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }

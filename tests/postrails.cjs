@@ -57,6 +57,7 @@ const W = 390, H = 844;
     : v.toRunway < 700 && !v.skipNow ? v.skyH - 30 : v.skyH * 0.45;
   let covered = 0, stacked = 0, run = 0;   // stacked = frames in a toast-over-strip run of 3+ in a row: the game drops a toast below a strip that appears (GameScene dropToast), so ONE frame of overlap while it moves is by design and load-dependent
   for (let f = 3; f <= 10; f++) {
+    globalThis.__gaveUpSoFar = [...(globalThis.__gaveUpSoFar || []), ...await p.evaluate(() => window.__tourGaveUp || []).catch(() => [])];   /* (each flight reloads the page) */
     await p.goto(URL); await ready(p); await p.waitForTimeout(900);   // (a fresh page each flight, as a child reopening the game)
     await settle();
     // Follow NEXT while it leads somewhere (not a take-off lead), as a player who reads it would.
@@ -92,6 +93,10 @@ const W = 390, H = 844;
   check(!covered, `no teaching strip ever covered the plane (${covered} frames did)`);
   check(!stacked, `no toast ever overlapped a teaching strip (${stacked} frames did)`);
   check(!p.errs.length, `page errors: ${p.errs}`);
+  // A rails step that gave up because its target never existed (the redesign, 2026-11-01: the systems rail pointed at the old
+  // rows, gave up unmarked and re-ran forever; the plane build's gate idea): none may happen in a normal run.
+  const gaveUp = [...(globalThis.__gaveUpSoFar || []), ...await p.evaluate(() => window.__tourGaveUp || []).catch(() => [])];
+  check(!gaveUp.length, `rails steps gave up on a target that never appeared: ${[...new Set(gaveUp)].join(', ')}`);
   await b.close();
   console.log(log.join('\n'));
   console.log(fails.length ? `FAIL postrails:\n - ${fails.join('\n - ')}` : 'PASS postrails: flights 3-10 with real taps reach L5 done; no strip over the plane, no toast over a strip, no page errors');
