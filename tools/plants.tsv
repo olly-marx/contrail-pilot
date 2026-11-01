@@ -213,3 +213,4 @@ rowfit	src/wild.js	s/<img class=\"rowc-icon\" src=\"assets\/ui\/proj-\${p.id}.pn
 rowfit	style.css	s/^\.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 100px;/.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 84px;/	prices too narrow for 1800 225
 hangar	src/hangar.js	s/<span class="era-row"><span class="era-track">/<span><span class="era-track">/	the Next plane bar unwrapped (a tall box)
 hangar	style.css	s/#hangar { overflow-anchor: none; }/#hangar { }/	scroll anchoring moves the box off the payoff card
+onrails	src/tour.js	s/if (solo) solo.classList.add('tour-only');/if (false) solo.classList.add('tour-only');/	a row step shows its price too (two things to tap)
