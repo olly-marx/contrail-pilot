@@ -743,8 +743,10 @@ h2.sub { margin-top: -4px; }
    Fixed columns, nothing wraps, nothing jumps (the old .line grid was `1fr auto`: the auto column followed its own text).
    No ellipsis on purpose: text must FIT (tests/rowfit.cjs at 375 and 390 px). The whole .rowc-tap is the one tap target;
    the price/BUY is its sibling. */
-.rowc { display: grid; grid-template-columns: 1fr 92px; align-items: center; gap: 0 8px; padding: 6px 8px; background: #fff; border-bottom: 2px solid #ece8dc; min-height: 44px; }
-.rowc-tap { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
+.rowc { position: relative; padding: 6px 8px; background: #fff; border-bottom: 2px solid #ece8dc; min-height: 44px; box-sizing: border-box; }
+/* (measured 2026-11-01, Pixel = 1em per character: a 3-column row left the name 163 px = 18 characters at 375 px. The name
+   now has the WHOLE first line; only the second line shares its width with the price, which sits bottom-right.) */
+.rowc-tap { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
 .rowc-icon { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
 .rowc-tap > .rowc-slot { grid-row: 1 / span 2; width: 32px; height: 32px; }   /* no art: an empty slot keeps the column */
 .rowc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
@@ -752,16 +754,26 @@ h2.sub { margin-top: -4px; }
 .rowc-pips { display: flex; gap: 2px; flex: none; }
 .rowc-pips .pip { width: 8px; height: 5px; background: #d8d4c8; }
 .rowc-pips .pip.on { background: var(--green); }
-.rowc-sub { font-size: 7px; color: var(--muted); white-space: nowrap; margin-top: 3px; }
-.rowc-price { width: 92px; box-sizing: border-box; font-size: 8px; padding: 6px 4px; white-space: nowrap; text-align: center; justify-self: end; }
+.rowc-sub { font-size: 7px; color: var(--muted); white-space: nowrap; margin-top: 4px; padding-right: 108px; box-sizing: border-box; min-width: 0; }
+.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 100px; box-sizing: border-box; font-size: 7px; padding: 4px 2px; white-space: nowrap; text-align: center; }
 .rowc.locked { background: #ece8dc; } .rowc.locked .rowc-tap { opacity: .6; }
 .rowc.maxed { background: #e7f6e7; }
 .rowc.sel { outline: 3px solid #ffe15a; outline-offset: -3px; }
 /* NATURE's preview strip (DESIGN-HANGAR-NATURE §4): pinned with the land, beside the ghost; the full name, what it does,
    who it brings back, More about it, and the row's own BUY. */
-.wstrip { background: #fff; border: 3px solid var(--ink); padding: 6px 8px; display: grid; gap: 4px; }
-.wstrip .ws-name { font-size: 9px; margin: 0; }
-.wstrip .ws-chain { font-size: 7px; margin: 0; color: var(--muted); }
-.wstrip .ws-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.wstrip { background: #fff; border: 3px solid var(--ink); padding: 4px 6px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
+.wstrip .ws-name { font-size: 8px; margin: 0; }   /* the FULL name: it may wrap here */
+.wstrip .ws-chain { font-size: 6px; margin: 0; color: var(--muted); grid-column: 1 / -1; }
+.wstrip .w-web { grid-column: 1; display: flex; align-items: center; gap: 2px; }
+.wstrip .w-web .w-webpic img, .wstrip .w-web .w-webpic .w-nopic { width: 18px; height: 18px; }
+.wstrip .ws-foot { display: contents; }
+.wstrip .ws-foot .linkbtn { grid-column: 1; justify-self: start; }
+.wstrip .ws-foot .rowc-price { position: static; grid-column: 2; grid-row: 1; }
 .linkbtn { background: none; border: 0; padding: 0; font: inherit; font-size: 7px; color: var(--ink); text-decoration: underline; cursor: pointer; }
 #wProjects .rowc.previewing { outline: 3px solid #ffe15a; outline-offset: -3px; }
+.wscene.previewing .w-empty { display: none; }   /* the preview's ghost must not sit under the 'Bare land' note (screenshot, 2026-11-01) */
+/* .price-top (the hangar): the price beside the SHORT name, so the long "Next: ..." line gets the full width. NATURE keeps
+   the default (long names, short second line). Measured 2026-11-01 at 375 px: name line 263 px = 29 characters at 9 px. */
+.rowc.price-top .rowc-price { top: 6px; bottom: auto; }
+.rowc.price-top .rowc-top { padding-right: 108px; box-sizing: border-box; }
+.rowc.price-top .rowc-sub { padding-right: 0; }

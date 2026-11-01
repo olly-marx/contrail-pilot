@@ -136,7 +136,13 @@ Project names that are too long for one line (e.g. "Keep rats away from kakerori
 </div>
 ```
 
-The CSS (`style.css`, owned by the game chat):
+**Measured in the browser turn (2026-11-01):** the Pixel font is 1 em per character, and the old 3-column row left a name only 163 px (18 characters) at 375 px. So the row changed:
+- **The name gets the whole first line:** 263 px = 29 characters at 9 px.
+- **The price** (100 px, 7 px text; the biggest, "1800 225", needs 96 px) sits bottom-right, beside the second line, which keeps 22 characters.
+- **`.rowc.price-top`** (the hangar): the price goes top-right beside the short name, and the long "Next: …" line gets the full width (about 37 characters at 7 px).
+- **NATURE needs short `row` names for 4 projects only** (penguinsea, kakerorisave, westernshield, fenceoff). The full name stays in the strip.
+
+The CSS (`style.css`, owned by the game chat), as first written (superseded by the measurements above):
 - `.rowc` is a grid, `32px 1fr 92px`.
 - `.rowc-tap` spans columns 1-2 as its own sub-grid: icon | (name + pips / sub).
 - `.rowc-name` and `.rowc-sub` use `white-space: nowrap`. There is NO ellipsis: text must fit, and the rowfit gate enforces it.
