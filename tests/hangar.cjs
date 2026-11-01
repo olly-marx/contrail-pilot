@@ -51,7 +51,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(/1990s twin/.test(await p.textContent('#hNextPlane')) && /1990s/.test(await p.textContent('#hNextPlane')) && !(await p.$('.fplane.locked')), 'the 1990s twin is the one Next plane line (no silhouettes)');
   await p.click('[data-fly=comet]'); await p.waitForTimeout(300);
   s = await saved(p);
-  check(s.fleet.plane === 'comet' && /Comet 4/.test(await p.textContent('.fplane.flying')) && /COMET 4/.test(await p.textContent('#hFleet .tree-head')), `the Comet is chosen and its lines shown: ${s.fleet.plane}`);
+  check(s.fleet.plane === 'comet' && /Comet 4/.test(await p.textContent('.fplane-row.flying')) && /COMET 4/.test(await p.textContent('#hFleet .tree-head')), `the Comet is chosen and its lines shown: ${s.fleet.plane}`);
   check(p.errs.length === 0, `buying threw: ${p.errs.join(' | ')}`);
   await p.close();
 
