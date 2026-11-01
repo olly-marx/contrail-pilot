@@ -1,6 +1,8 @@
 # HANGAR and NATURE: one design (2026-11-01)
 
-**Status: PROPOSAL, for the user's approval. Nothing is built yet.** Reviewed by the plane build (2026-11-01): rows, whole-row tap, strip and next-plane line are CHEAP; the in-box payoff is RISKY, so the overlay fallback is built first (§6).
+**Status: APPROVED by the user (2026-11-01, via the Coordinator). Being built.** The user's answers: (1) the payoff IN THE BOX is the target (the overlay matching the box rect is an acceptable first step only if it looks identical); (2) future planes = one "Next plane" line; (3) short project names in rows: the game chat's call (readable, one line).
+
+**Was:** PROPOSAL, for the user's approval. Reviewed by the plane build (2026-11-01): rows, whole-row tap, strip and next-plane line are CHEAP; the in-box payoff is RISKY, so the overlay fallback is built first (§6).
 
 The user, on live 0.22.0 (phone): "I still really don't like the hangar layout... it has elements that work but it's poorly
 designed. The preview in nature leaves a lot to be desired too."
@@ -120,6 +122,26 @@ Project names that are too long for one line (e.g. "Keep rats away from kakerori
    - Plant: point one part at a missing file. It must FAIL. This catches the "?".
 4. **Rows line up.** In every list, every row's name starts at the same x, and every price button has the same x and width.
    - Plant: the old `1fr auto` grid. It must FAIL.
+
+## 5a. The shared row component (the contract both chats build to)
+
+```html
+<div class="rowc [locked|maxed|sel]" data-row="kind:id">
+  <button class="rowc-tap" type="button" data-ftap="kind:id">       <!-- NATURE: data-ptap="projectId" -->
+    <img class="rowc-icon" src="…" alt="">                          <!-- 32x32 slot; no art = no img (an empty slot) -->
+    <span class="rowc-name">Engines</span><span class="rowc-pips">…</span>
+    <span class="rowc-sub">Next: thrust reversers</span>           <!-- one line, <= 30 characters -->
+  </button>
+  <button class="rowc-price btn …" data-fbuy="kind:id">70🌰 9❄</button>   <!-- a SIBLING: one tap target per row -->
+</div>
+```
+
+The CSS (`style.css`, owned by the game chat):
+- `.rowc` is a grid, `32px 1fr 92px`.
+- `.rowc-tap` spans columns 1-2 as its own sub-grid: icon | (name + pips / sub).
+- `.rowc-name` and `.rowc-sub` use `white-space: nowrap`. There is NO ellipsis: text must fit, and the rowfit gate enforces it.
+- The price column has a fixed width.
+- The `i` moves to the preview strip.
 
 ## 5b. Hooks kept (the plane build's constraints, 2026-11-01)
 
