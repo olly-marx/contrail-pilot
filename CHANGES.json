@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-01-payoff-broken-pic",
+    "version": "0.22.1",
+    "date": "2026-11-01",
+    "level": "minor",
+    "notes": [
+      "Fixed: if a part's picture could not load when you bought it, a broken picture showed on the \"fitted!\" screen. Now it just carries on without it."
+    ]
+  },
+  {
     "id": "2026-10-30-polynesia",
     "version": "0.22.0",
     "date": "2026-10-30",
