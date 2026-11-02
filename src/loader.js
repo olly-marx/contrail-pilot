@@ -6,7 +6,8 @@
 // All drawing is code (a small canvas, no pictures); the canvas is 96 x 54 game pixels scaled up with image-rendering: pixelated.
 import { tier1, tier2, regionArt, everything } from './preload.js';
 import { startServiceWorker } from './swreg.js';
-import { flightPath, city, schoolSave } from './route.js';
+import { city, schoolSave } from './route.js';
+import { routeFor } from './aim.js';   // the aimed route (src/aim.js): the same path the flight will fly
 import { crossingPath } from './crossings.js';
 
 const W = 96, H = 54;
@@ -17,7 +18,7 @@ const FLYING = ['takeoff', 'playing', 'landing'];
 // The lands of the trip a save would fly next (the chosen crossing, else the usual path): their art is tier 1.
 export function tripLands(save) {
   try {
-    const path = save.flyCrossing ? crossingPath(save.flyCrossing) : flightPath(save.tutorialDone ? save : schoolSave(save));   // (the same choice as GameScene's pathNow)
+    const path = save.flyCrossing ? crossingPath(save.flyCrossing) : routeFor(save.tutorialDone ? save : schoolSave(save));   // (the same choice as GameScene's pathNow)
     return [...new Set(path.map(n => (city(n) || {}).region).filter(Boolean))];
   } catch (e) { return []; }
 }

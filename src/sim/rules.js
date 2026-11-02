@@ -11,7 +11,8 @@ import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as 
 import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
 import { REGION_DATA, REGION_NAMES } from '../habitats.js';
-import { flightPath, legBetween, HOME, city, EARTH_KM, schoolSave } from '../route.js';
+import { legBetween, HOME, city, EARTH_KM, schoolSave } from '../route.js';
+import { routeFor } from '../aim.js';   // the aimed route (src/aim.js)
 import { crossingPath, recordAreaBest } from '../crossings.js';   // season 2 crossings (redesign)
 import { regionBelow } from '../geo.js';
 import { loadout, FUELS } from '../upgrades.js';
@@ -144,7 +145,7 @@ export const RULES = {
     // in one leg of crossing.km, then on through that area. Read from the save only (pure: the Node engine flies it too).
     this.crossing = this.autostart !== 'school' && this.save.tutorialDone && this.save.flyCrossing || null;   // (never before school is done)
     this.path = this.crossing ? crossingPath(this.crossing)
-      : flightPath(this.autostart === 'school' || !this.save.tutorialDone ? schoolSave(this.save) : this.save);
+      : routeFor(this.autostart === 'school' || !this.save.tutorialDone ? schoolSave(this.save) : this.save);
     this.startCity = 0;
     this.homeName = this.path[0];
     this.airportIndex = 0;

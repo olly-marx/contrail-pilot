@@ -1,6 +1,7 @@
 import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
-import { flightPath, choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
+import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
+import { routeFor } from './aim.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
@@ -184,7 +185,7 @@ export class UI {
   // way, and its land), a globe with the way ahead, and how many times round the Earth you have flown.
   renderJourney() {
     const s = this.save, first = !s.tutorialDone;
-    const path = flightPath(first ? schoolSave(s) : s, 5), here = city(path[0]);
+    const path = routeFor(first ? schoolSave(s) : s, 5), here = city(path[0]);
     const opts = first ? [] : choices(path[0], linksFor(s));
     const land = n => REGION_NAMES[city(n).region] || 'the sea';
     const trips = (s.flownKm || 0) / EARTH_KM;
@@ -234,12 +235,12 @@ export class UI {
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
     $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;
     $('goBtn').textContent = toHangar ? 'PICK YOUR FREE PART FIRST' : s.tutorialDone ? 'TAKE OFF' : 'START';
-    $('hubRoute').innerHTML = `${v.route[0] || ''} &#9654; ${v.route[1] || ''}`;
+    $('hubRoute').innerHTML = v.route.join(' &#9654; ') + (v.aim ? ' <span class="small">(mission)</span>' : '');   // the next stops (to the mission's city when aimed: src/aim.js)
     $('hubTiles').innerHTML = v.tiles
       .map(t => `<button class="btn hub-tile ${t.id === 'hangar' && toHangar ? 'pulse' : ''}" type="button" data-go="${t.id}">${t.label}${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</button>`).join('');
     $('hubTiles').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
-    const path = flightPath(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
+    const path = routeFor(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
     const pick = name => { sfx.flap(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, lit: linksFor(s) });
     this.hubWords = v.words;

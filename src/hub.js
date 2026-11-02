@@ -3,7 +3,7 @@
 // rest. What the hub shows is decided here, without the DOM, so tests/hub.cjs can check it: at most HUB_WORDS words,
 // tiles only once their reveal is earned, the NEXT card = the mission on top.
 import { current as currentMission, MISSIONS } from './missions.js';
-import { flightPath } from './route.js';
+import { routeFor, aimTarget } from './aim.js';
 import { wordCount } from './tips.js';
 import * as M2 from './missions2.js';
 import { lineById } from './upgrades.js';
@@ -20,10 +20,10 @@ export const FREE_NEXT = 'Open the hangar: free upgrade!';   // the user: a free
 
 // What the hub shows: { next, route, tiles, crossing, words }.
 //   next:  { title } the top mission (or a crossing that is ready replaces it); null when all done
-//   route: [from, to] this flight's first hop
+//   route: the next stops: [from, to] (the first hop), or up to the mission's city when the route aims at one (src/aim.js); aim: that city
 //   tiles: [{ id, label, badge }] only the revealed ones, in a fixed order
 export function hubView(save, { badges = {}, crossingReady = null } = {}) {
-  const s2 = M2.isSeason2(save), path = flightPath(save, 2);
+  const s2 = M2.isSeason2(save), path = routeFor(save, 4), aim = aimTarget(save);
   const m = s2 ? M2.next(save) : currentMission(save), mid = m && (m.key || m.id);
   const next = crossingReady ? { title: `Crossing ready: ${crossingReady}`, crossing: true }
     : s2 && save.freeUpgrade && revealed(save, 'hangar') ? { title: FREE_NEXT, hangar: true }   // must-do: TAKE OFF is locked meanwhile
@@ -33,7 +33,8 @@ export function hubView(save, { badges = {}, crossingReady = null } = {}) {
     : m ? { title: m.title, id: mid } : null;
   const tiles = [['missions', 'MISSIONS'], ['hangar', 'HANGAR'], ['nature', 'NATURE']]
     .filter(([id]) => revealed(save, id)).map(([id, label]) => ({ id, label, badge: badges[id] || '' }));
-  const route = path.slice(0, 2);
+  // The next stops, up to the mission's city when the route aims at one ("LONDON > PARIS > BERLIN (mission)"), else the first hop.
+  const at = aim ? path.indexOf(aim) : -1, route = path.slice(0, at > 0 ? Math.min(at + 1, 4) : 2);
   const words = wordCount(next ? next.title : '') + wordCount(route.join(' ')) + tiles.reduce((a, t) => a + wordCount(`${t.label} ${t.badge}`), 0) + wordCount('TAKE OFF');
-  return { next, route, tiles, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
+  return { next, route, aim: at > 0 && at <= 3 ? aim : null, tiles, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
 }
