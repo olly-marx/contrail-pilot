@@ -60,6 +60,8 @@ function measure(spec) {
   const label = e => ((e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 24) || e.className || e.tagName);
   const overlapList = [];
   for (let i = 0; i < leaves.length; i++) for (let j = i + 1; j < leaves.length; j++) {
+    const pic = e => e.tagName === 'IMG' || e.tagName === 'CANVAS';
+    if (pic(leaves[i]) && pic(leaves[j])) continue;   // stacked art (a plane + its ghost layers, a globe's layers) overlaps by design
     const p = extent(leaves[i]), q = extent(leaves[j]);
     const w = Math.min(p.right, q.right) - Math.max(p.left, q.left), h = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
     if (w > 2 && h > 2) overlapList.push(`"${label(leaves[i])}" x "${label(leaves[j])}"`);
