@@ -71,7 +71,7 @@ export const loading = {
     this.finished = true; document.body.dataset.loaded = '1';
     const box = document.getElementById('loader'); if (box) { box.style.pointerEvents = 'none'; box.classList.add('done'); setTimeout(() => box.remove(), 450); }
     this.startPump();
-    startServiceWorker([...this.phaserUrls, ...everything()]);   // (0.25.0) the worker keeps all of it for offline; does nothing on a page with no ?v build stamp
+    startServiceWorker([...this.phaserUrls, ...everything()]).then(r => { window.cpSw = r; });   // (0.25.0) the worker keeps all of it for offline; does nothing on a page with no ?v build stamp
   },
 
   draw(t) {

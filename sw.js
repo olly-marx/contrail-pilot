@@ -67,10 +67,10 @@ const networkFirst = async req => {
 const cacheFirst = async (req, name) => {
   if (name !== CUR && !(await caches.has(name))) return fetch(req);   // (no cache of that build: never create one just by asking)
   const cache = await caches.open(name);
-  const hit = await cache.match(req, { ignoreSearch: true });
+  const u = new URL(req.url); const hit = await cache.match(u.origin + u.pathname);   // exact: code is stored under its plain path, pictures have no query (an ignoreSearch match scans every entry)
   if (hit) return hit;
   const live = await fetch(req);
-  if (live.status === 200 && name === CUR) cache.put(req, live.clone());
+  if (live.status === 200 && name === CUR) cache.put(u.origin + u.pathname, live.clone());
   return live;
 };
 
@@ -86,13 +86,18 @@ self.addEventListener('fetch', e => {
 });
 
 // The page's list of everything it has loaded or may show (src/swreg.js): fetch what is missing, 4 at a time, from the browser's own cache first.
+let filling = false;
 self.addEventListener('message', e => {
-  if (!e.data || !Array.isArray(e.data.fill)) return;
+  if (!e.data || !Array.isArray(e.data.fill) || filling) return;   // (one fill at a time: the page sends its list again when a new worker activates)
+  filling = true;
   e.waitUntil((async () => {
-    const cache = await caches.open(CUR); const todo = e.data.fill.filter(Boolean); let n = 0;
+    const cache = await caches.open(CUR); const todo = e.data.fill.filter(Boolean); let n = 0, added = 0, failed = 0;
     await Promise.all(Array.from({ length: 4 }, async () => { while (n < todo.length) {
-      const u = todo[n++]; if (await cache.match(u, { ignoreSearch: true })) continue;
-      try { const r = await fetch(u, { cache: 'force-cache' }); if (r.status === 200) await cache.put(u, r); } catch (err) { /* offline now: the next visit fills it */ } } }));
-    await say({ sw: 'filled', build: BUILD, files: todo.length });
+      const u = todo[n++];
+      try {
+        if (await cache.match(u)) continue;
+        const r = await fetch(u, { cache: 'force-cache' }); if (r.status === 200) { await cache.put(u, r); added++; } else failed++;
+      } catch (err) { failed++; /* offline now, or the cache refused: the next visit fills it */ } } }));
+    filling = false; await say({ sw: 'filled', build: BUILD, files: todo.length, added, failed });
   })());
 });
