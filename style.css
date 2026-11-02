@@ -762,11 +762,11 @@ h2.sub { margin-top: -4px; }
 .rowc-icon { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
 .rowc-tap > .rowc-slot { grid-row: 1 / span 2; width: 32px; height: 32px; }   /* no art: an empty slot keeps the column */
 .rowc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.rowc-name { font-size: 9px; white-space: normal; overflow-wrap: anywhere; min-width: 0; }   /* may wrap to 2 lines on EVERY row (decision 8) */
+.rowc-name { font-size: 9px; white-space: normal; overflow-wrap: break-word; }   /* may wrap to 2 lines on EVERY row (decision 8) */
 .rowc-pips { display: flex; gap: 2px; flex: none; }
 .rowc-pips .pip { width: 8px; height: 5px; background: #d8d4c8; }
 .rowc-pips .pip.on { background: var(--green); }
-.rowc-sub { font-size: 7px; color: var(--muted); white-space: normal; overflow-wrap: anywhere; margin-top: 4px; padding-right: 108px; box-sizing: border-box; min-width: 0; min-height: var(--price-h); display: flex; align-items: center; }   /* beside the price it has ~100 px at 320 wide: it wraps there (it fits on one line at 375/390, tests/rowfit.cjs) instead of running under the price */
+.rowc-sub { font-size: 7px; color: var(--muted); white-space: normal; overflow-wrap: break-word; margin-top: 4px; padding-right: 108px; box-sizing: border-box; min-width: 0; min-height: var(--price-h); display: flex; align-items: center; }   /* beside the price it has ~100 px at 320 wide: it wraps there (it fits on one line at 375/390, tests/rowfit.cjs) instead of running under the price */
 .rowc > .rowc-price { grid-area: 2 / 2; align-self: end; position: relative; z-index: 1; }   /* above the row's tap area, as before */
 .rowc-price { width: 100px; box-sizing: border-box; font-size: 7px; padding: 4px 2px; white-space: nowrap; text-align: center; }
 .rowc.locked { background: #ece8dc; } .rowc.locked .rowc-tap { opacity: .6; }

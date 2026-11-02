@@ -1,5 +1,5 @@
 // The shared row (research/DESIGN-HANGAR-NATURE.md, approved by the user 2026-11-01): rules 1, 3 and 4, at 375x667 and 390x844.
-//   1. text fits: every .rowc name, sub line and price is ONE line and not cut (scrollWidth <= clientWidth), and so is the
+//   1. text fits: every .rowc sub line and price is ONE line, a name at most TWO (R0, decision 8: names wrap), and none is cut (scrollWidth <= clientWidth), and so is the
 //      preview strip's text in NATURE;
 //   3. no broken pictures: every <img> on the hangar and NATURE screens has loaded (naturalWidth > 0) — the blue "?";
 //   4. rows line up: in each list, every .rowc-name starts at the same x and every price has the same x and width.
@@ -27,13 +27,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
       const ui = game.registry.get('ui'); ui.tour.busy = true; ui.go('nature');
       return [...document.querySelectorAll('#wRegions [data-region]')].map(x => x.dataset.region); });
     const measure = sel => p.evaluate(sel => {
+      /* the height of the TEXT, not of its box: since R0 the sub line's box is as tall as the price button (a wrapped name may reach 2 lines at 320, one at 375/390) */
+      const textHeight = c => { const rg = document.createRange(); rg.selectNodeContents(c); const q = [...rg.getClientRects()].filter(x => x.width > 0); return q.length ? Math.max(...q.map(x => x.bottom)) - Math.min(...q.map(x => x.top)) : 0; };
       const out = { rows: 0, bad: [], names: new Set(), prices: new Set(), imgs: [] };
       for (const r of document.querySelectorAll(sel)) {
         if (!r.offsetParent) continue; out.rows++;
         for (const c of r.querySelectorAll('.rowc-name, .rowc-sub, .rowc-price')) {
           if (c.classList.contains('rowc-price')) { if (c.scrollWidth > c.clientWidth + 1) out.bad.push(`price too wide: "${c.textContent.trim()}"`); continue; }   /* a button: padding + icon make it taller than a text line */
           const lh = parseFloat(getComputedStyle(c).lineHeight) || parseFloat(getComputedStyle(c).fontSize) * 1.3;
-          if (c.scrollWidth > c.clientWidth + 1 || c.getBoundingClientRect().height > lh * 1.6) out.bad.push(`${c.className}: "${c.textContent.trim()}" (${c.scrollWidth}>${c.clientWidth} or ${Math.round(c.getBoundingClientRect().height)}px tall)`);
+          if (c.scrollWidth > c.clientWidth + 1 || textHeight(c) > lh * (c.classList.contains('rowc-name') ? 2.5 : 1.6)) out.bad.push(`${c.className}: "${c.textContent.trim()}" (${c.scrollWidth}>${c.clientWidth} or its text is ${Math.round(textHeight(c))}px tall)`);
           if (c.getBoundingClientRect().right > r.getBoundingClientRect().right + 1) out.bad.push(`${c.className} spills out of its row: "${c.textContent.trim()}"`);
         }
         const n = r.querySelector('.rowc-name'), pr = r.querySelector('.rowc-price');
