@@ -34,6 +34,8 @@ export const loading = {
 
   start(save) {
     this.save = save;
+    this.list = tier1(save, tripLands(save));   // known up front, so the total (and the plane) never jumps back when the menu step starts
+    this.menus = { done: 0, total: this.list.length };
     const box = document.getElementById('loader'); if (!box) return;
     this.cv = box.querySelector('canvas'); this.txt = box.querySelector('.loader-count');
     this.ctx = this.cv.getContext('2d');
@@ -52,9 +54,7 @@ export const loading = {
   // Phaser has every game picture: now tier 1 of the menu pictures.
   async onPhaserComplete() {
     if (this.menusStarted) return; this.menusStarted = true;
-    const list = tier1(this.save, tripLands(this.save));
-    this.menus = { done: 0, total: list.length };
-    await fetchAll(list, () => { this.menus.done++; });
+    await fetchAll(this.list, () => { this.menus.done++; });
     this.menusDone = true; this.maybeFinish();
   },
   // GameScene.create (the first time): the scene is built.
