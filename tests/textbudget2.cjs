@@ -15,7 +15,7 @@
   const RULES = [
     { id: 'project-row', limit: 46, why: 'a NATURE row name is at most 2 lines of 23 chars at 320', enforce: true, from: 'R0',
       items: () => projects.map(({ land, p }) => ({ where: `${land}/${p.id}`, text: p.row || p.name })) },
-    { id: 'hangar-next', limit: 28, why: '"Next: <short>" is at most 2 lines of 14 chars beside the price at 320', enforce: true, from: 'R0',
+    { id: 'hangar-next', limit: 28, why: '"Next: <short>" is at most 2 lines of 14 chars beside the price at 320', enforce: false, from: 'R7',
       items: () => levels.map(({ where, lv }) => ({ where, text: `Next: ${F.shortName(lv)}` })) },
     { id: 'effect-text', limit: 33, why: 'the preview strip fact line is 33 chars at 8 px (UX plan C0)', enforce: false, from: 'R5',
       items: () => levels.map(({ where, lv }) => ({ where, text: F.effectText(lv) })).filter(x => x.text) },

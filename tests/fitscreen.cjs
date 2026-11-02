@@ -1,5 +1,6 @@
 // UX gate 1 (research/UX-MASTER-PLAN.md F2): every screen in src/screens.js SCREENS fits as declared, at 390x667 and 320x568.
 //   scroll 'fits'  : scrollHeight <= clientHeight, scrollTop === 0, the primary button wholly above the tab bar
+//   every text fits: no box hides overflow yet has more text than room, nothing is drawn past the screen's side (the hangar is wider than 320 px on live)
 //   scroll 'first' : the primary action and the first card are above the tab bar without scrolling
 // RESULTS runs through the declared RESULT_VARIANTS (landed / seven missions / animal+badge / crash / first / school) via ui.showResults,
 // so "a flight" is not the only case. A screen whose `enforce.fit` is false is PENDING (red on live on purpose; see src/screens.js).
@@ -13,6 +14,7 @@ const { runGate } = require('../tools/uxlib.cjs');
       if (m.scrollHeight > m.clientHeight + 1) out.push(`scrolls (${m.scrollHeight} > ${m.clientHeight})`);
       if (m.scrollTop !== 0) out.push(`opens scrolled (scrollTop ${m.scrollTop})`);
     }
+    for (const c of m.clipped.slice(0, 4)) out.push(`cut-off text "${c}" (hidden overflow, or drawn past the screen's side)`);
     if (s.primary) { if (m.primBottom == null) out.push('primary action not found'); else if (m.primBottom > m.barTop || m.primTop < 0) out.push(`primary ${s.primary} is not above the bar (${m.primTop}..${m.primBottom}, bar at ${m.barTop})`); }
     if (s.first) { if (m.firstBottom == null) out.push('first card not found'); else if (m.firstBottom > m.barTop) out.push(`first card ${s.first} ends at ${m.firstBottom}, below the bar (${m.barTop})`); }
     return out;
