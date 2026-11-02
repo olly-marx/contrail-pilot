@@ -25,3 +25,5 @@ phascogale kidunnart gouldian   # Australia (2026-10-28)
 icefish   # Patagonia (2026-10-28)
 # Australia
 echidna
+# Polynesia
+tahitimonarch
