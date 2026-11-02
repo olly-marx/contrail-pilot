@@ -10,7 +10,10 @@
 const { chromium } = require('playwright-core');
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const { buildSite, host } = require('./lib/sitehost.js');
-const { ready, CHROME, ARGS, prepare, swMessage, stamp, cacheNames, sha1 } = require('./lib/swpage.js');
+const { ready, CHROME, ARGS, prepare, swMessage, stamp: stamp0, cacheNames, sha1 } = require('./lib/swpage.js');
+// (src/updates.js may reload the page under an evaluate: that is its job; ask again)
+const again = async fn => { for (let i = 0; i < 8; i++) { try { return await fn(); } catch (e) { if (!/context was destroyed|navigation|Target closed/i.test(e.message)) throw e; await new Promise(r => setTimeout(r, 1500)); } } return fn(); };
+const stamp = p => again(() => stamp0(p));
 
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
