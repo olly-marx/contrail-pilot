@@ -157,5 +157,5 @@ Each release is small, and the old screens keep working until replaced. The rail
 - **Cost:** 2 gens an animal (sprite + card) plus a test call per batch.
   - Australia's 7 = **15** (one test call).
   - Polynesia's 7 = another 15.
-- **Left: ~24.** So: Australia's 7 now (15, leaving ~9 in reserve), Polynesia's after a top-up.
+- **Left: was written here as "~24" — WRONG (an estimate).** Measured 2026-11-02 with GET /v2/balance: 9.6 subscription gens + $8.39 usd credits. With the user's OK, 4 animals were redrawn (Murray cod, wedge-tailed eagle, emu, kookaburra; 8 gens; branch aus-art d5b055b), leaving **1.6 gens** and the $8.39 untouched. Still code-drawn: cockatoo, echidna, wombat (Australia, ~6 gens) and Polynesia's 7 (~14): they need a top-up or the user's OK to spend credits.
 - **The user's call** (not spent).
