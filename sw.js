@@ -34,10 +34,8 @@ self.addEventListener('install', e => e.waitUntil((async () => {
   // Pictures that did not change since the previous build are copied from its cache (no download); changed or new ones wait for the page's fill.
   if (prev) {
     const old = await caches.open(prevName);
-    for (const req of await old.keys()) {
-      const p = path(req.url);
-      if (p.startsWith('assets/') && prev.files[p] && prev.files[p] === fresh.files[p]) { const r = await old.match(req); if (r) await cache.put(req, r); }
-    }
+    const keep = (await old.keys()).filter(req => { const p = path(req.url); return p.startsWith('assets/') && prev.files[p] && prev.files[p] === fresh.files[p]; });
+    for (let i = 0; i < keep.length; i += 32) await Promise.all(keep.slice(i, i + 32).map(async req => { const r = await old.match(req); if (r) await cache.put(req, r); }));
   }
   // This build's code, stored under its plain path (the page asks for it with ?v=<build> or without).
   await Promise.all(fresh.shell.map(async p => { const r = await fetch(p === 'index.html' ? './' : p, { cache: 'no-store' }); if (!r.ok) throw new Error('precache ' + p + ' ' + r.status); await cache.put(p, r.clone()); if (p === 'index.html') await cache.put('./', r); }));
@@ -88,6 +86,7 @@ self.addEventListener('fetch', e => {
 // The page's list of everything it has loaded or may show (src/swreg.js): fetch what is missing, 4 at a time, from the browser's own cache first.
 let filling = false;
 self.addEventListener('message', e => {
+  if (e.data && e.data.skip) { self.skipWaiting(); return; }
   if (!e.data || !Array.isArray(e.data.fill) || filling) return;   // (one fill at a time: the page sends its list again when a new worker activates)
   filling = true;
   e.waitUntil((async () => {

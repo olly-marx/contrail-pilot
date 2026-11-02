@@ -19,6 +19,11 @@ export async function startServiceWorker(urls = []) {
   } catch (e) { /* offline: the worker we have keeps working */ }
   try {
     const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
+    reg.update().catch(() => { /* offline: the worker we have keeps working */ });   // look for a NEW sw.js on every visit (a navigation alone only checks once a day)
+    // A new worker waits behind the old one (skipWaiting inside install is not honoured while pages are open): tell it to take over as soon as it is installed.
+    const promote = () => { if (reg.waiting) reg.waiting.postMessage({ skip: true }); };
+    reg.addEventListener('updatefound', () => { const w = reg.installing; if (w) w.addEventListener('statechange', () => { if (w.state === 'installed') promote(); }); });
+    promote();
     const fill = urls.map(u => new URL(u, location.href).href);
     const post = () => { const sw = navigator.serviceWorker.controller || reg.active; if (sw) sw.postMessage({ fill }); };
     // A NEW worker (an update) becomes active after this page has loaded: it says so, and gets the list again.

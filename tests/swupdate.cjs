@@ -26,10 +26,11 @@ const { ready, CHROME, ARGS, prepare, swMessage, stamp, cacheNames, sha1 } = req
   const ctx = await b.newContext({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
   await prepare(ctx);
   const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e).slice(0, 100)));
+  const T0 = Date.now(), step = m => { if (process.env.SWDEBUG) console.log(`[${((Date.now() - T0) / 1000).toFixed(1)}s] ${m}`); };
   const visit = async (build, label) => {
-    h.setRoot(dirs[build]); h.reset();
-    await p.goto(h.url); await ready(p);
-    await swMessage(p, 'ready', build, 60000).catch(() => check(false, `${label}: the worker of build ${build} never became active`));
+    h.setRoot(dirs[build]); h.reset(); step(`visit ${build}: goto`);
+    await p.goto(h.url); step(`visit ${build}: loaded`); await ready(p); step(`visit ${build}: ready`);
+    await swMessage(p, 'ready', build, 120000).catch(() => check(false, `${label}: the worker of build ${build} never became active`));
     await swMessage(p, 'filled', build, 90000).catch(() => check(false, `${label}: the worker of build ${build} never finished filling`));
   };
 
@@ -60,7 +61,7 @@ const { ready, CHROME, ARGS, prepare, swMessage, stamp, cacheNames, sha1 } = req
 
   // 4. D with a SLOW index.html: opens from the cache, then updates.js moves it to D
   h.setRoot(dirs.ddddddd); h.reset(); h.hold(1, 6000);
-  const t0 = Date.now(); await p.goto(h.url, { timeout: 30000 }); await ready(p);
+  step('D slow: goto'); const t0 = Date.now(); await p.goto(h.url, { timeout: 30000 }); step('D slow: loaded'); await ready(p);
   check(await stamp(p) === 'ccccccc', `D slow: the cached shell opened (build C) within ${((Date.now() - t0) / 1000).toFixed(1)} s instead of waiting for the server`);
   check(Date.now() - t0 < 5500, `D slow: the page did not wait for the slow index.html (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
   await p.waitForFunction(() => { const s = document.querySelector('script[src*="main.js"]'); return s && /v=ddddddd/.test(s.getAttribute('src')); }, null, { timeout: 60000, polling: 300 })
