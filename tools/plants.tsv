@@ -265,3 +265,8 @@ overlap	style.css	s/ min-height: var(--price-h); display: flex; align-items: cen
 fitscreen	style.css	s/^\.mlist { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }/.mlist { display: flex; flex-direction: column; gap: 4px; margin: 700px 0 6px; }/	the MISSIONS list starts below the tab bar (first row and primary not on the first screen)
 textbudget2	src/habitat/bush.js	s/row: 'Fox and cat control'/row: 'Fox and cat control across the whole of south-western Australia'/	a project row name over 2 lines at 320
 missionreach	src/missions2.js	s/ready: f => f.cityB !== f.start, //	a rescue mission offered with no target but where you start (the 3-city Patagonia case)
+skipaim	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the next trip would not aim)
+skipaim	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip (initFlight clears it)
+skipaim	src/aim.js	s/save && save.skipAim ? null : aimOpen(save)/aimOpen(save)/	the skip does nothing (the route still aims)
+skipaim	src/hub.js	s/skip: aimOpen(save) ? (save.skipAim ? 'on' : 'off') : null,/skip: save.skipAim ? 'on' : 'off',/	the skip button offered with no city mission to aim at
+textbudget2	src/aim.js	s/skip: 'Skip mission route this trip'/skip: 'Skip the mission route this trip'/	the skip chip text over one line at 320 (33 chars)
