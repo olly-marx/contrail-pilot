@@ -208,7 +208,7 @@ arealand	src/wild.js	s/n = save.homeCity || (a \&\& a.start) || save.city,/n = (
 arealand	src/startchoice.js	s/save.homeCity = name; save.city = name;/save.city = name;/	the start choice forgets the chosen home city
 payoffbroken	src/hangar.js	s/img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true });/img.addEventListener('error', () => {}, { once: true });/	broken pictures not hidden (the 6 s wait)
 rowfit	style.css	s/text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }/text-align: left; background: none; border: 0; padding: 0; margin: 0 0 0 auto; width: auto !important; font: inherit; color: inherit; cursor: pointer; min-width: 0; }/	row names jump with their text (the old auto column)
-rowfit	src/habitat/steppe.js	s/{ id: 'fenceoff', row: 'Clear fences and pines', name: /{ id: 'fenceoff', name: /	a 34-character row name
+rowfit	src/habitat/steppe.js	s/row: 'Clear fences and pines'/row: 'Clear every old fence and every invader pine across the whole of the Patagonian steppe lands'/	a row name too long for two lines
 rowfit	src/wild.js	s/<img class=\"rowc-icon\" src=\"assets\/ui\/proj-\${p.id}.png\"/<img class=\"rowc-icon\" src=\"assets\/ui\/projx-\${p.id}.png\"/	a broken picture (the blue '?')
 rowfit	style.css	s/^\.rowc-price { width: 100px;/.rowc-price { width: 84px;/	prices too narrow for 1800 225
 hangar	src/hangar.js	s/<span class="era-row"><span class="era-track">/<span><span class="era-track">/	the Next plane bar unwrapped (a tall box)
