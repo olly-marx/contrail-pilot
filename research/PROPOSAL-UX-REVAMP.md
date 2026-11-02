@@ -92,17 +92,50 @@ How the screens relate today:
 
 ### 2c. MISSIONS (light): the same `.rowc` rows as the hangar and NATURE; ticked rows fold into "7 done today ›".
 
-## 3. Rules (everywhere; the plane build applies them to the hangar and NATURE)
+## 3. The SHARED rules (one set, the same text as the plane build's research/PROPOSAL-NATURE-HANGAR-UX.md; agreed via the Coordinator)
 
-1. **Text budget per card:** a card has at most 3 lines of body text at 320 px; longer text goes behind a "›" tap. Row names are ONE line (the `.rowc` rule).
-2. **One primary action per screen,** always on screen without scrolling.
-3. **A new-dot on a tab AND on its sub-tab** (HANGAR, and SYSTEMS / GADGETS inside it; NATURE and the land tab). The same `hasNew(scope)` source for both, so they cannot disagree.
-4. **Nothing clipped, nothing under a button:**
-   - no text runs under another element (the NATURE screenshots: project names under the price buttons);
-   - no tab text is cut ("Mediterranean s").
-   - Tabs that do not fit scroll sideways with a fade, or shorten ("Med. scrub").
-5. **No scroll for the main loop:** HOME, the results card, each beat, and the first screen of MISSIONS fit 390x667 and 320x568.
-6. **Lists:** at most one list per screen, and never a list of buttons of the same kind (CLAIM x7 is the anti-pattern).
+1. **One primary action per screen,** always on screen without scrolling. It is the big button; everything else is smaller, outlined, or behind an (i).
+   - Results: FLY ON.
+   - HOME: TAKE OFF.
+   - NATURE: fund the next project you can afford, else the one thing that unlocks the next.
+   - Hangar: the next affordable upgrade (the strip's BUY).
+2. **Text budget:**
+   - a screen's intro is ONE line, the rest behind an (i) (≤ 60 words);
+   - a content card or row is a TITLE + ONE fact line (≤ 30 characters);
+   - a results or HOME section is at most 3 lines at 320 px;
+   - more always goes behind "›" or (i).
+3. **Titles:**
+   - a compact `.rowc` row (hangar, MISSIONS) keeps a ONE-line name;
+   - a NATURE project card may WRAP its title to 2 lines, with its price on its own row.
+   - In both cases: **never under a button.** This is gated as rect overlap: title ∩ price = ∅.
+4. **Nothing clipped:** every text node fits its box, at 320 and 390. Tab rows (NATURE's lands) scroll sideways with an edge fade, the current land first, never cut mid-word.
+5. **The NEW dot:**
+   - It shows on the bottom tab AND its sub-tab AND the row.
+   - An item is new when it became buyable or open since you last saw its sub-tab.
+   - Seeing the sub-tab clears it, and the bottom tab clears when no sub-tab has a dot.
+   - It is stored per save; at ship, everything already open counts as seen.
+   - One hasNew() source.
+6. **Tiers:** the current tier open; the others ONE line each ("Tier 1 · done ✓", "Tier 3 · needs biodiversity 30").
+7. **No scroll for the main loop:** HOME, the results card, each beat, and the first screen of MISSIONS fit 390x667 and 320x568. On NATURE and the hangar, the first project card / first upgrade row is on the first screen at 320x568.
+8. **Never a list of same-kind buttons** (CLAIM x7 is the anti-pattern).
+
+**Where the two proposals differed, and how it is settled:**
+- (a) Row titles: mine said "one line"; theirs lets NATURE titles wrap. Settled as rule 3, both.
+- (b) Text budget: mine said "≤ 3 lines per card"; theirs said "title + 1 fact". Settled as rule 2: theirs for cards, mine for results/HOME sections.
+- No other disagreement.
+
+## 3b. NATURE (wild.js: the game chat builds it; the plane build reviews)
+
+The plane build's §2a/2b, adopted:
+- **Project card:** the title wraps (≤ 2 lines); one fact line ("Brings back 2 animals"); the price chip on its own row at the right. When unaffordable it is outlined, not greyed, and shows "need N more" on tap. A done project is a ✓ and one line.
+- **The top fits one screen:**
+  1. the land tabs (scrolling, yours first);
+  2. the land picture;
+  3. one meter line with an (i);
+  4. **NEXT**: the one primary ("Fund Numbat helpers [300 🌰 38 ❄]" or "Plant 4 more trees here");
+  5. the current tier open, the other tiers one line each.
+- The NEXT HERE box and the two intro paragraphs go behind (i).
+- The preview strip under the land (shipped in 0.23.0) stays the place the full story lives.
 
 ## 4. Releases (each one gate-testable)
 
@@ -111,7 +144,7 @@ How the screens relate today:
 | R1 | Results: one fitted card; auto-claim or one CLAIM ALL (decision 1); missions as a count; UP NEXT | `resultsfit` at 390x667 + 320x568: no scroll (`scrollHeight <= clientHeight`), FLY ON on screen, no text clipped, missions shown as a count. Plants: the old mission list; CLAIM rows back; the card taller than the screen. |
 | R2 | The beats after the card (animal, badge, era, free part), one at a time | `resultbeats`: a flight that finds an animal AND earns a badge shows 2 beats in order, one button each. Plant: the animal folded back into the card. |
 | R3 | HOME's UP NEXT (the same component) + the MISSIONS "coming up" head | `homenext`: HOME fits with no scroll; its UP NEXT equals the results' after the same flight. Plant: different sources. |
-| R4 (the plane build) | The new-dot on sub-tabs; the NATURE clipping; tabs | `newdot`: a new GADGET lights HANGAR and GADGETS. `rowfit` gains **an "under a button" check** (a row's name rect must not intersect its price rect; today's gap: rowfit passed the NATURE rows the user screenshotted). Plants: the sub-tab dot removed; a long name under the price. |
+| R4 (NATURE: the game chat; the NEW dot: the plane build) | NATURE cards (wrap, price row), tabs that scroll, NEXT line, tiers; the NEW dot | `newdot`: a new GADGET lights HANGAR and GADGETS. `rowfit` gains **an "under a button" check** (a row's name rect must not intersect its price rect; today's gap: rowfit passed the NATURE rows the user screenshotted). Plants: the sub-tab dot removed; a long name under the price. |
 | R5 | Text-budget pass on NATURE / hangar copy (the plane build), MISSIONS rows | `textbudget`: card body <= 3 lines at 320. |
 
 Each release is small, and the old screens keep working until replaced. The rails (onrails, postrails, firsthour-real) are updated in the same release as the screen they walk through.
