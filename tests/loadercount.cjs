@@ -1,6 +1,6 @@
-// The loading screen's counter and plane (src/loader.js), with the race that really happens on a fast connection: the menu pictures start loading when loading.start() runs, but Phaser
-// registers ITS files (and so its total) later, when the page's load event lets the game boot. If the menu step has already finished some files by then, an un-guarded fraction
-// = done / total DROPS when Phaser's total joins and the plane flies backwards. Here the page's load event is held back 2.5 s (one logo image is delayed) so the race always happens.
+// The loading screen's counter and plane (src/loader.js), with the race that really happens on a fast connection: the menu pictures start loading when loading.start() runs, but Phaser's
+// total is only known when its loader reports progress (GameScene.preload 'progress'). If the menu step has already finished some files by then, an un-guarded fraction
+// = done / total DROPS when Phaser's total joins and the plane flies backwards. Here Phaser's loader is started 2.5 s late (LoaderPlugin.start wrapped) so the race always happens.
 //   1. the race really happened: when Phaser's total first appears, at least 5 menu files were already done (else the check proves nothing and FAILS)
 //   2. loading.fraction() never decreases, and neither does the plane's eased position
 //   3. the counter shows nothing until Phaser's total is known, and every number it shows has the same M
@@ -13,7 +13,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--host-resolver-rules=MAP mkucbsjzbipjaiqzrlkj.supabase.co 127.0.0.1:1'] });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const p = await b.newPage({ viewport: { width: 375, height: 667 } });
-  await p.route('**/assets/ui/logo-imperial.png', async r => { await new Promise(res => setTimeout(res, 2500)); await r.continue(); });   // holds the load event, so Phaser boots late
+  // Phaser's loader is held back 2.5 s: its files are queued by GameScene.preload, but it only STARTS (and reports its first progress, and so its total) later. The menu pictures (a separate
+  // fetch from loading.start()) are well under way by then, as on a connection where Phaser's own load starts late.
+  await p.addInitScript(() => {
+    let P; Object.defineProperty(window, 'Phaser', { configurable: true, get: () => P, set: v => { P = v; const L = v.Loader.LoaderPlugin.prototype, start = L.start; L.start = function () { setTimeout(() => start.call(this), 2500); }; } });
+  });
   await p.addInitScript(() => {
     localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ muted: true, tutorialDone: true, seenTips: ['*'], tours: ['*'], flights: 30, landings: 9, areas: ['weurope'], homeArea: 'weurope', city: 'LONDON',
       fleet: { plane: 'jumbo', planes: { comet: {}, jumbo: {} }, systems: {}, gadgets: {} } }));
