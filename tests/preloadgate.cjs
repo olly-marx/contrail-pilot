@@ -63,10 +63,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
     while (Date.now() - t0 < 60000) {
       const st = await p.evaluate(() => { const g = game.scene.getScene('game'); const next = g.storms && g.storms.find(x => x.rects[0].x + 44 > g.plane.x);
         const target = next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : 200;
-        const ok = document.getElementById('coachOk'); const okVis = !!(ok && ok.offsetParent);
-        return { state: g.state, tap: g.state === 'playing' && g.plane.y > target && g.plane.vy > -50, okVis, over: g.state === 'over' || !!g.result }; });
+        const ok = document.getElementById('coachOk'), how = document.getElementById('howClose'); const okVis = !!(ok && ok.offsetParent), howVis = !!(how && how.offsetParent);
+        return { howVis, state: g.state, tap: g.state === 'playing' && g.plane.y > target && g.plane.vy > -50, okVis, over: g.state === 'over' || !!g.result }; });
       if (st.state === 'playing') { flew = true; phase = 'air'; }
       if (st.over && flew) break;
+      if (st.howVis) await p.click('#howClose', { timeout: 1000 }).catch(() => {});   // a new player's first START shows the 'How to play' card
       if (st.okVis) await p.click('#coachOk', { timeout: 1000 }).catch(() => {});
       if (st.state === 'takeoff' && !held) { await p.mouse.move(187, 400); await p.mouse.down(); held = true; }
       else if (held && st.state === 'playing') { await p.mouse.up(); held = false; }
