@@ -27,7 +27,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   let p = await open({ ...base, landings: 2 });
   check(!(await tab(p)), 'BOARDS is hidden before the 3rd landing');
   await p.close();
-  const rec = { ever: { longest: 4321, cool: 12, longestCrash: 900, shortest: 150, bird: 2, crashes: 5 }, week: { start: '2026-10-26', longest: 2500, cool: 3, longestCrash: 400, shortest: 400, bird: 1, crashes: 1, kindsBase: [], missionsBase: 5 }, fresh: ['longest', 'shortest'] };
+  // THIS WEEK is the week of TODAY (the game rolls a save's week over on a new Monday, UTC like ui.js): a fixed '2026-10-26' made this test fail from Monday 2 Nov 2026 on (CI run 165).
+  const weekStart = (d => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7)); return x.toISOString().slice(0, 10); })(new Date().toISOString().slice(0, 10));
+  const rec = { ever: { longest: 4321, cool: 12, longestCrash: 900, shortest: 150, bird: 2, crashes: 5 }, week: { start: weekStart, longest: 2500, cool: 3, longestCrash: 400, shortest: 400, bird: 1, crashes: 1, kindsBase: [], missionsBase: 5 }, fresh: ['longest', 'shortest'] };
   p = await open({ ...base, landings: 3, planted: { oak: 2, birch: 1 }, missionsDone: [...base.missionsDone, 'weurope:shade', 'weurope:bring'], records: rec });
   check(await tab(p), 'BOARDS appears after the 3rd landing');
   await p.click('#tabBoards'); await p.waitForTimeout(500);
