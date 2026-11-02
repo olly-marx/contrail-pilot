@@ -51,7 +51,8 @@ export const loading = {
   // Real progress: the fraction of all files (both steps) that have arrived.
   fraction() {
     const total = this.phaser.total + this.menus.total;
-    return total ? Math.min(1, (this.phaser.done + this.menus.done) / total) : 0;
+    const f = total ? Math.min(1, (this.phaser.done + this.menus.done) / total) : 0;
+    this.maxF = Math.max(this.maxF || 0, f); return this.maxF;   // never lower: Phaser's total arrives after the menu step has started, and must not pull the plane back
   },
   // GameScene.preload: files done / files to load, from Phaser's own loader.
   onPhaser(done, total) { this.phaser = { done, total }; },
@@ -89,7 +90,8 @@ export const loading = {
     const sp = ['....wwwwww..', '.rrwwwwwwwww', 'rrrwwbwwwwww', '.rrwwwwwwwwg', '....gggggg..', '....g.......'];
     const col = { w: '#f4f4f4', r: '#e0463c', g: '#8c97a8', b: '#ffd34d' };
     sp.forEach((row, yy) => [...row].forEach((ch, xx) => { if (col[ch]) { c.fillStyle = col[ch]; c.fillRect(px + xx, py + yy - 1, 1, 1); } }));
-    if (this.txt) this.txt.textContent = this.phaser.total + this.menus.total ? `${this.phaser.done + this.menus.done} / ${this.phaser.total + this.menus.total}` : '';
+    if (this.txt) this.txt.textContent = this.phaser.total ?   // (the counter waits for Phaser's total: M is then fixed, it never turns '0 / 264' into 'N / 714')
+       `${this.phaser.done + this.menus.done} / ${this.phaser.total + this.menus.total}` : '';
   },
 
   // Tier 2: every other land's menu art, one picture at a time, only while the game is idle; a newly discovered land jumps the queue.

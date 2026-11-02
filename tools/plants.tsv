@@ -241,3 +241,5 @@ preloadgate	src/loader.js	s/box.style.pointerEvents = 'none'; box.classList.add(
 preloadgate	src/GameScene.js	s/    loading.flying = true;   \/\/ DECLARED/    loading.flying = !this.school;   \/\/ DECLARED/	the scene never declares a flight in flight school (the idle fetch runs through the whole school flight)
 flagclear	src/GameScene.js	s/    loading.flying = false;   \/\/ the flight is over (landed or crashed): the idle fetch may go on/    \/\/ (plant: onFinish does not clear)/	onFinish no longer clears loading.flying (a crash or landing leaves tier 2 stuck)
 flagclear	src/GameScene.js	/^    loading.flying = false;$/d	Esc on the runway (backToMenu) no longer clears loading.flying
+loadercount	src/loader.js	s/this.maxF = Math.max(this.maxF || 0, f); return this.maxF;/return f;/	the fraction is not kept at its maximum (the plane flies back when Phaser's total joins)
+loadercount	src/loader.js	s/if (this.txt) this.txt.textContent = this.phaser.total ?/if (this.txt) this.txt.textContent = this.phaser.total + this.menus.total ?/	the counter shows '0 \/ 264' before Phaser's total is known
