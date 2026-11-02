@@ -10,10 +10,7 @@
 const { chromium } = require('playwright-core');
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 const { buildSite, host } = require('./lib/sitehost.js');
-const { ready, CHROME, ARGS, prepare, swMessage, stamp: stamp0, cacheNames, sha1 } = require('./lib/swpage.js');
-// (src/updates.js may reload the page under an evaluate: that is its job; ask again)
-const again = async fn => { for (let i = 0; i < 8; i++) { try { return await fn(); } catch (e) { if (!/context was destroyed|navigation|Target closed/i.test(e.message)) throw e; await new Promise(r => setTimeout(r, 1500)); } } return fn(); };
-const stamp = p => again(() => stamp0(p));
+const { ready, CHROME, ARGS, prepare, swMessage, stamp, cacheNames, sha1 } = require('./lib/swpage.js');
 
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
@@ -37,14 +34,6 @@ const stamp = p => again(() => stamp0(p));
     await p.goto(h.url); step(`visit ${build}: loaded`); await ready(p); step(`visit ${build}: ready`);
     await swMessage(p, 'ready', build, 120000).catch(() => check(false, `${label}: the worker of build ${build} never became active`));
     await swMessage(p, 'filled', build, 90000).catch(() => check(false, `${label}: the worker of build ${build} never finished filling`));
-    await settle(label);
-  };
-  // Chrome runs update checks on its own schedule (~25-30 s after a visit): on a loaded machine one landed INSIDE the next step and swapped workers mid-navigation. Make the
-  // registration quiet before the next step: no worker installing or waiting, and an explicit update() that has come back (its job queue is empty).
-  const settle = async label => {
-    step(`${label}: settle`);
-    await p.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); if (r) await Promise.race([r.update().catch(() => {}), new Promise(ok => setTimeout(ok, 150000))]); }).catch(() => {});
-    for (let i = 0; i < 150; i++) { const busy = await p.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); return !!(r && (r.installing || r.waiting)); }).catch(() => false); if (!busy) break; await p.waitForTimeout(1000); }
   };
 
   // 1. A, and version.json never cached
