@@ -232,7 +232,9 @@ export class FleetHangar {
     const f = fleetOf(s), id = this.preview && planeById(this.preview) ? this.preview : f.plane, pl = planeById(id), owned = !!f.planes[id];
     const tag = f.plane === id ? 'FLYING' : owned ? 'IN YOUR FLEET' : `OPENS IN ${ERAS[pl.era].id.toUpperCase()}`;
     const ghosts = this.ghostParts(s, id).map(g => `<img class="fghost" src="${g}" alt="">`).join('');
-    return `<div class="fpreview ${owned ? '' : 'locked'}"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}<div class="fpcap"><b>${pl.name}</b><span>${tag}</span></div></div>`;
+    // .fpic: the PICTURE (400:176), base + ghost layers stacked inside it. The caption (.fpcap) is OUTSIDE it, so a ghost can never
+    // be sized to the caption too (the user's screenshot, 2026-11-02: the ghost filled the whole box, stretched ~14% tall).
+    return `<div class="fpreview ${owned ? '' : 'locked'}"><div class="fpic"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}</div><div class="fpcap"><b>${pl.name}</b><span>${tag}</span></div></div>`;
   }
 
   // 1950s ... far future: done eras lit, this one marked, the bar to the next and what it brings.

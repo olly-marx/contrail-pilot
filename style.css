@@ -692,7 +692,11 @@ h2.sub { margin-top: -4px; }
 .w-pname[disabled] { text-decoration: none; cursor: default; }
 /* Hangar feedback (plane build, 2026-10-28): tap a row to preview it (src/hangar.js previewCardHTML), the new part
    ghosted on the picture, stat bars (src/statbars.js, shared with NATURE), and the bars moving in the payoff. */
-.fpreview img.fghost { position: absolute; inset: 0; height: 100%; opacity: .5; animation: fghost 1.2s ease-in-out infinite alternate; }
+/* The picture (.fpic, 400:176) holds the base portrait and the ghost layers; the caption sits below it, outside. The ghosts
+   fill the PICTURE, never the box (2026-11-02: inset 0 on the whole box stretched them over the caption: two planes). */
+.fpic { position: relative; aspect-ratio: 400 / 176; }
+.fpic img { display: block; width: 100%; height: 100%; }
+.fpreview .fpic img.fghost { position: absolute; inset: 0; opacity: .5; animation: fghost 1.2s ease-in-out infinite alternate; }
 @keyframes fghost { from { opacity: .25; } to { opacity: .7; } }
 .hpreview { border: 2px solid #2b4a6f; background: #fffbe8; padding: 6px 8px; margin: 0 0 8px; }
 .hpreview.empty { border-style: dashed; text-align: center; }
