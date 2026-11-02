@@ -16,8 +16,16 @@ const { ready, CHROME, ARGS, prepare, swMessage, cacheNames } = require('./lib/s
   const b = await chromium.launch({ executablePath: CHROME, args: ARGS });
   const regs = p => p.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length);
   const cps = async p => (await cacheNames(p)).filter(k => k.startsWith('cp-'));
-  const gone = async (p, label) => { await p.waitForFunction(async () => (await navigator.serviceWorker.getRegistrations()).length === 0 && !(await caches.keys()).some(k => k.startsWith('cp-')), null, { timeout: 15000, polling: 300 })
-    .catch(() => check(false, `${label}: the worker or its caches are still there (${0} registrations expected)`)); };
+  // (polled with evaluate: waitForFunction with an async predicate treats the pending Promise as true at once, so it could never fail)
+  const gone = async (p, label) => {
+    let state = null;
+    for (let i = 0; i < 40; i++) {
+      state = await p.evaluate(async () => ({ regs: (await navigator.serviceWorker.getRegistrations()).length, cps: (await caches.keys()).filter(k => k.startsWith('cp-')) })).catch(() => null);
+      if (state && state.regs === 0 && !state.cps.length) return;
+      await p.waitForTimeout(400);
+    }
+    check(false, `${label}: the worker or its caches are still there (${JSON.stringify(state)})`);
+  };
   const fresh = async () => { const ctx = await b.newContext({ viewport: { width: 375, height: 667 } }); await prepare(ctx); return { ctx, p: await ctx.newPage() }; };
 
   // install a worker on the good site (used by 1 and 2)
@@ -39,6 +47,7 @@ const { ready, CHROME, ARGS, prepare, swMessage, cacheNames } = require('./lib/s
   const local = await host(repo, { port: 0 });
   ({ ctx, p } = await fresh());
   await p.goto(local.url); await ready(p); await p.waitForTimeout(3000);
+  check(!local.hits['sw.js'], `3: an unstamped page never even asks for sw.js (${local.hits['sw.js'] || 0} requests)`);
   check(await regs(p) === 0, `3: an unstamped page has no service worker (${await regs(p)})`);
   check((await cps(p)).length === 0, '3: an unstamped page has no cp-* cache');
   await ctx.close(); await b.close(); h.close(); local.close();
