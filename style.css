@@ -18,6 +18,10 @@
   --gold: #ffc23d;
   --gold-dark: #c98a00;
   --muted: #6b6b80;
+  /* R0 shared tokens (UX plan D1): the NEW dot colour, the height of a row's price button, the minimum tap size. */
+  --dot: #e8433a;
+  --price-h: 24px;
+  --tap: 40px;
 }
 
 [hidden] { display: none !important; }
@@ -747,19 +751,24 @@ h2.sub { margin-top: -4px; }
    Fixed columns, nothing wraps, nothing jumps (the old .line grid was `1fr auto`: the auto column followed its own text).
    No ellipsis on purpose: text must FIT (tests/rowfit.cjs at 375 and 390 px). The whole .rowc-tap is the one tap target;
    the price/BUY is its sibling. */
-.rowc { position: relative; padding: 6px 8px; background: #fff; border-bottom: 2px solid #ece8dc; min-height: 44px; box-sizing: border-box; }
+.rowc { position: relative; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; padding: 6px 8px; background: #fff; border-bottom: 2px solid #ece8dc; min-height: 44px; box-sizing: border-box; }
+/* R0 (research/UX-MASTER-PLAN.md D2, decision 8): the row is a GRID and the price is a grid item of it, no longer absolute. The tap
+   area spans the whole row (name over both columns, so the name keeps the full first line); the price sits bottom-right, and the
+   sub line is as tall as the price (--price-h), so a name that wraps to a 2nd line can never end up under it (tests/overlap.cjs). */
+.rowc > .rowc-tap { grid-area: 1 / 1 / 3 / 3; }
 /* (measured 2026-11-01, Pixel = 1em per character: a 3-column row left the name 163 px = 18 characters at 375 px. The name
    now has the WHOLE first line; only the second line shares its width with the price, which sits bottom-right.) */
 .rowc-tap { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
 .rowc-icon { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
 .rowc-tap > .rowc-slot { grid-row: 1 / span 2; width: 32px; height: 32px; }   /* no art: an empty slot keeps the column */
 .rowc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
-.rowc-name { font-size: 9px; white-space: nowrap; }
+.rowc-name { font-size: 9px; white-space: normal; overflow-wrap: anywhere; min-width: 0; }   /* may wrap to 2 lines on EVERY row (decision 8) */
 .rowc-pips { display: flex; gap: 2px; flex: none; }
 .rowc-pips .pip { width: 8px; height: 5px; background: #d8d4c8; }
 .rowc-pips .pip.on { background: var(--green); }
-.rowc-sub { font-size: 7px; color: var(--muted); white-space: nowrap; margin-top: 4px; padding-right: 108px; box-sizing: border-box; min-width: 0; }
-.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 100px; box-sizing: border-box; font-size: 7px; padding: 4px 2px; white-space: nowrap; text-align: center; }
+.rowc-sub { font-size: 7px; color: var(--muted); white-space: nowrap; margin-top: 4px; padding-right: 108px; box-sizing: border-box; min-width: 0; min-height: var(--price-h); display: flex; align-items: center; }   /* the fact line is budgeted, never wraps */
+.rowc > .rowc-price { grid-area: 2 / 2; align-self: end; position: relative; z-index: 1; }   /* above the row's tap area, as before */
+.rowc-price { width: 100px; box-sizing: border-box; font-size: 7px; padding: 4px 2px; white-space: nowrap; text-align: center; }
 .rowc.locked { background: #ece8dc; } .rowc.locked .rowc-tap { opacity: .6; }
 .rowc.maxed { background: #e7f6e7; }
 .rowc.sel { outline: 3px solid #ffe15a; outline-offset: -3px; }
@@ -778,7 +787,7 @@ h2.sub { margin-top: -4px; }
 .wscene.previewing .w-empty { display: none; }   /* the preview's ghost must not sit under the 'Bare land' note (screenshot, 2026-11-01) */
 /* .price-top (the hangar): the price beside the SHORT name, so the long "Next: ..." line gets the full width. NATURE keeps
    the default (long names, short second line). Measured 2026-11-01 at 375 px: name line 263 px = 29 characters at 9 px. */
-.rowc.price-top .rowc-price { top: 6px; bottom: auto; }
+.rowc.price-top > .rowc-price { grid-area: 1 / 2; align-self: start; }
 .rowc.price-top .rowc-top { padding-right: 108px; box-sizing: border-box; }
 .rowc.price-top .rowc-sub { padding-right: 0; }
 /* Hangar redesign (plane build, on the game chat's .rowc): the strip's (i) and the 'Next plane' line */
@@ -807,3 +816,21 @@ h2.sub { margin-top: -4px; }
 .loader canvas { width: min(92vw, 480px); aspect-ratio: 96 / 54; image-rendering: pixelated; border: 3px solid #f4f4f4; box-sizing: border-box; }
 .loader-title { margin: 0; color: #f4f4f4; font-family: 'Pixel', monospace; font-size: 14px; letter-spacing: 2px; }
 .loader-count { margin: 0; color: #a9c1de; font-family: 'Pixel', monospace; font-size: 10px; min-height: 12px; }
+
+/* ---------- R0: the shared UX section (research/UX-MASTER-PLAN.md D1/D2). INERT until a screen uses a class; each screen's owner
+   then edits only inside that screen's own section. Tokens are in :root (--dot, --price-h, --tap). ---------- */
+.card { background: var(--paper); border: 3px solid var(--ink); box-sizing: border-box; padding: 8px; display: grid; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 10px; border: 2px solid var(--ink); background: #fff; font: inherit; font-size: 8px; color: var(--ink); cursor: pointer; box-sizing: border-box; }
+.chip img { width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
+.dot { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--dot); pointer-events: none; }
+.dot.free { width: auto; height: auto; border-radius: 0; padding: 2px 4px; font-size: 7px; color: #fff; }
+.subtabs { display: flex; gap: 6px; }
+.subtab { position: relative; flex: 1; min-height: var(--tap); font: inherit; font-size: 8px; background: #fff; border: 2px solid var(--ink); color: var(--ink); cursor: pointer; box-sizing: border-box; }
+.subtab.on { background: var(--cool); color: #fff; }
+.sheet-wrap { display: flex; align-items: center; justify-content: center; background: rgba(27, 27, 47, 0.55); }
+.sheet { width: min(100%, 340px); max-height: 100%; overflow: hidden; }
+.sheet-title { margin: 0; font-size: 14px; color: var(--night); }
+.sheet-pic { justify-self: center; max-height: 90px; image-rendering: pixelated; }
+.sheet-body { margin: 0; font-size: 8px; line-height: 1.9; }
+.sheet-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+.sheet-buttons .btn { min-height: var(--tap); }
