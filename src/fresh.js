@@ -8,7 +8,7 @@
 // (so NATURE can no longer clear the hangar's dot: the old ui.js:287 bug was one shared list).
 // markSeen REPLACES the scope's list with the keys that exist now, so a key that went away (you spent the seeds) and comes back
 // is new again; a key that stays is not.
-// Not here yet (other lanes): missions ('tier:<n>', 'done:<key>', the game chat's) and 'fly:<plane>' for a plane just joined.
+// Not here yet: 'fly:<plane>' for a plane just joined (R5). MISSIONS is a declared hook (below), pending R4 (the game chat's).
 import { nextBuys, canAfford } from './fleet.js';
 import { LINES, canBuy, level, tabOf } from './upgrades.js';
 import { REGION_DATA } from './habitats.js';
@@ -17,6 +17,14 @@ import { landTrees } from './landtrees.js';
 import { BADGES, tierOf } from './badges.js';
 
 const KIND_SCOPE = { plane: 'hangar/plane', system: 'hangar/systems', gadget: 'hangar/gadgets' };
+// Every scope the master plan names, and who produces its keys. A scope with no producer must say 'pending: R<n>' (tests/newdot.cjs
+// fails on a scope that is neither), so nothing is silently unused.
+export const PRODUCERS = {
+  'hangar/plane': 'fresh.js current(): fleet nextBuys + old upgrade lines', 'hangar/systems': 'fresh.js current(): fleet nextBuys',
+  'hangar/gadgets': 'fresh.js current(): fleet nextBuys', 'nature/<land>': 'fresh.js current(): projects, trees, animals',
+  'boards/records': 'save.records.beaten (records.js recordFlight, R2 step 2)', 'boards/badges': 'fresh.js current(): save.badgeTiers',
+  'missions': 'pending: R4 (game chat): opts.missions(save) -> [\'tier:<n>\' (a tier opened), \'done:<key>\' (finished off-flight)]',
+};
 export const HANGAR_SCOPES = ['hangar/plane', 'hangar/systems', 'hangar/gadgets'];
 export const BOARD_SCOPES = ['boards/records', 'boards/badges'];
 
@@ -29,7 +37,7 @@ export const fleetBuyable = save => nextBuys(save).filter(b => b.open && canAffo
 export const defaultLands = save => ['woodland', ...Object.keys(save.discovered || {}).filter(r => r !== 'woodland' && REGION_DATA[r])];
 
 // Every key that exists right now, by scope: { scope: [keys] }. Empty scopes are left out.
-export function current(save, { lands = defaultLands(save) } = {}) {
+export function current(save, { lands = defaultLands(save), missions = null } = {}) {
   const out = {}, add = (scope, key) => (out[scope] = out[scope] || []).push(key);
   for (const b of nextBuys(save)) if (b.open && canAfford(save, b)) add(KIND_SCOPE[b.kind] || 'hangar/plane', `${b.kind}:${b.id}:${b.level}`);
   // The old upgrade lines (planting tools, trees): the Trees / Nature groups live on NATURE's home tab, the rest in the hangar.
@@ -43,6 +51,8 @@ export function current(save, { lands = defaultLands(save) } = {}) {
     for (const t of landTrees(save, land)) if (t.open && t.slot > 0) add(scope, `tree:${t.slot}`);   // slot 0 is open from the start: not news
     for (const w of regionSpecies(land)) if (w.kind === 'animal' && (save.found || {})[w.id]) add(scope, `animal:${w.id}`);
   }
+  // MISSIONS (declared hook, PRODUCERS above): the missions module passes missions(save) -> its keys; until then the scope is empty.
+  if (missions) for (const k of missions(save)) add('missions', k);
   // Boards: a record beaten (recordFlight writes save.records.beaten as 'record:<id>:<period>:<new value>', so a LATER beat is a new key)
   // and a badge tier earned.
   for (const k of ((save.records || {}).beaten || [])) add('boards/records', k);

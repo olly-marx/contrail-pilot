@@ -67,6 +67,16 @@ const src = f => path.join(__dirname, '..', 'src', f);
   b.records.beaten.push('record:longest:ever:6000');
   check(F.isFresh(b, 'boards/records', 'record:longest:ever:6000') && !F.isFresh(b, 'boards/records', 'record:longest:ever:5000'), 'a LATER beat of the same record is new');
 
+  // Every scope the plan names has a producer or an explicit 'pending: R<n>'; a producer that is not pending must really produce.
+  for (const [sc, who] of Object.entries(F.PRODUCERS)) check(typeof who === 'string' && who.length > 3 && (/^pending: R\d/.test(who) || !/pending/.test(who)), `scope ${sc} has no producer and no 'pending: R<n>' note`);
+  check(['hangar/plane', 'hangar/systems', 'hangar/gadgets', 'nature/<land>', 'boards/records', 'boards/badges', 'missions'].every(sc => F.PRODUCERS[sc]), 'a scope the plan names is missing from PRODUCERS');
+  const live = rich(); live.badgeTiers = { longhaul: 1 }; live.records = { beaten: ['record:longest:ever:1'] };
+  const got = F.current(live, { missions: () => ['tier:2', 'done:L3'] });
+  for (const sc of Object.keys(F.PRODUCERS).filter(k => !/pending/.test(F.PRODUCERS[k]))) {
+    const real = sc === 'nature/<land>' ? Object.keys(got).filter(k => k.startsWith('nature/')) : got[sc] ? [sc] : [];
+    check(real.length >= 1, `PRODUCERS says ${sc} is produced, but a rich save has no keys there`);
+  }
+  check((got.missions || []).join() === 'tier:2,done:L3' && !F.current(live).missions, 'the missions hook passes its keys through, and is empty without it');
   if (fails.length) { console.log(`FAIL newdot\n  ${fails.slice(0, 12).join('\n  ')}`); process.exit(1); }
   console.log(`PASS newdot: scopes ${hs.concat(ns).join(', ')}; separate, roll-up, re-dot, migration, boards`);
 })();
