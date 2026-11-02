@@ -28,7 +28,15 @@ const root = path.resolve(__dirname, '..');
   check(t2.every(f => !s1.has(f)), 'tier 2 repeats a tier-1 file');
   check(new Set([...t1, ...t2]).size === set.size, `tier 1 + tier 2 are the whole declared set (${new Set([...t1, ...t2]).size} of ${set.size})`);
   // 4. Tier 1 holds what a tap shows right away: the hangar, every badge medal, the home land's field + animals; not another land's.
-  check(BADGES.every(b => Array.from({ length: b.tiers.length }, (_, i) => medal(b.id, i + 1)).every(f => s1.has(f))), 'tier 1 holds every badge medal');
+  // Badges: the tier earned + the next one (what a landing can award) are tier 1; later tiers wait in tier 2.
+  const bsave = { ...save, badgeTiers: { longhaul: 1 } }, tb = P.tier1(bsave), tb2 = P.tier2(bsave);
+  check(BADGES.every(b => s1.has(medal(b.id, 1))), 'tier 1 holds the first medal of every badge (the one a first landing can award)');
+  check(tb.includes(medal('longhaul', 2)) && !tb.includes(medal('longhaul', 3)) && tb2.includes(medal('longhaul', 3)), 'a badge at tier 1: its tier-2 medal is in tier 1, tier 3 is in tier 2');
+  // Hangar: only the planes the save owns have their overlays in tier 1 (the levels bought + the next); every plane's picture is.
+  const hsave = { ...save, fleet: { plane: 'jumbo', planes: { comet: {}, jumbo: { engines: 1 } }, systems: {}, gadgets: {} } }, th = P.tier1(hsave), th2 = P.tier2(hsave);
+  check(th.includes('assets/ui/upgrades/hangar-747-jt9d.png') && th.includes('assets/ui/upgrades/hangar-747-hushkit.png') && !th.includes('assets/ui/upgrades/hangar-747-nextgen.png'), 'an owned plane: the levels bought + the next overlay are in tier 1, deeper ones are not');
+  check(!th.includes('assets/ui/upgrades/hangar-twin-giantfan.png') && th2.includes('assets/ui/upgrades/hangar-twin-giantfan.png'), 'a plane not owned: its overlays wait in tier 2');
+  check(th.includes('assets/ui/plane-hangar-twin.png'), "every plane's own picture is in tier 1");
   check(s1.has('assets/ui/plane-hangar-jumbo.png') && s1.has('assets/ui/badge-locked.png') && s1.has('assets/ui/captain-point.png'), 'tier 1 holds the hangar pictures and the single UI pictures');
   check(s1.has('assets/ui/field-woodland.png') && s1.has('assets/pixellab/ui/portrait-animal-fox-0.png'), 'tier 1 holds the home land (woodland): its field and the fox portrait');
   check(!s1.has('assets/ui/field-savanna.png'), 'tier 1 does not hold a land the player does not have (savanna)');

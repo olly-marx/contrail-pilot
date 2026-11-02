@@ -23,7 +23,7 @@ export function tripLands(save) {
 // One picture, fetched with fetch(): the browser's cache keeps it for the <img> that shows it later (nothing is held in memory here). The X-Preload header
 // marks the request as the loader's own: tests/preloadgate.cjs allows only those after 'ready'.
 const fetchPicture = url => fetch(url, { headers: { 'X-Preload': '1' } }).then(r => r.blob()).catch(() => {});
-async function fetchAll(list, onEach, lanes = 6) {
+async function fetchAll(list, onEach, lanes = 12) {
   let next = 0;
   await Promise.all(Array.from({ length: lanes }, async () => { while (next < list.length) { const url = list[next++]; await fetchPicture(url); onEach(); } }));
 }

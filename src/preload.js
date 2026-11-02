@@ -8,8 +8,8 @@ import { WILDLIFE } from './wildlife.js';
 import { REGION_DATA } from './habitats.js';
 import { regionSpecies } from './nature.js';
 import { animalPortrait, animalDir } from './animalart.js';
-import { BADGES, medal } from './badges.js';
-import { PLANES, LOOKS, STICKERS } from './fleet.js';
+import { BADGES, medal, tierOf } from './badges.js';
+import { PLANES, LOOKS, STICKERS, fleetOf } from './fleet.js';
 import { discovered } from './wild.js';
 
 // Single pictures the screens use (src/ui.js, tour.js, welcome.js, school.js, hub.js): declared one by one.
@@ -51,20 +51,24 @@ export function regionArt(region) {
   return out;
 }
 
-// The hangar: each plane's picture, every part overlay and gadget overlay, the badge medals.
-export function hangarArt() {
+// The hangar. Every plane's picture; the part and gadget overlays: for a save, only its OWNED planes, and per line only the levels bought + the next one (the one a
+// purchase shows); with no save, all of them (tier 2 = the rest).
+export function hangarArt(save) {
   const out = [];
+  const fleet = save && fleetOf(save);
   for (const p of PLANES) {
     if (p.portrait) out.push(p.portrait);
-    const L = LOOKS[p.id]; if (!L) continue;
-    for (const line of ['engines', 'body', 'cabin']) for (const part of L[line]) if (part) out.push(`assets/ui/upgrades/hangar-${L.art}-${part}.png`);
+    const L = LOOKS[p.id]; if (!L || (fleet && !fleet.planes[p.id])) continue;
+    const levels = fleet ? fleet.planes[p.id] : null;
+    for (const line of ['engines', 'body', 'cabin']) for (const part of L[line].slice(0, levels ? (levels[line] || 0) + 1 : undefined)) if (part) out.push(`assets/ui/upgrades/hangar-${L.art}-${part}.png`);
     if (!L.noGadgetArt) for (const s of Object.values(STICKERS)) out.push(`assets/ui/upgrades/gadget-${L.art}-${s.art}.png`);
   }
   return out;
 }
-export function badgeArt() {
+// The badge medals: for a save, the tier earned and the next one (what a landing can award); with no save, all of them. (The locked / secret pictures are FIXED_UI.)
+export function badgeArt(save) {
   const out = [];
-  for (const b of BADGES) for (let t = 1; t <= b.tiers.length; t++) out.push(medal(b.id, t));
+  for (const b of BADGES) for (let t = 1; t <= b.tiers.length; t++) if (!save || t <= tierOf(save, b.id) + 1) out.push(medal(b.id, t));
   return out;
 }
 
@@ -73,11 +77,11 @@ export const landsOf = (save, trip = []) => LANDS.filter(r => discovered(save, r
 
 const uniq = list => [...new Set(list)];
 export function tier1(save, trip = []) {
-  return uniq([...FIXED_UI, ...LESSON_ART, ...MISSION_ICONS, ...STYLE_ART, ...ERA_ART, ...hangarArt(), ...badgeArt(), ...landsOf(save, trip).flatMap(regionArt)]);
+  return uniq([...FIXED_UI, ...LESSON_ART, ...MISSION_ICONS, ...STYLE_ART, ...ERA_ART, ...hangarArt(save), ...badgeArt(save), ...landsOf(save, trip).flatMap(regionArt)]);
 }
 export function tier2(save, trip = []) {
   const have = new Set(tier1(save, trip));
-  return uniq(LANDS.flatMap(regionArt)).filter(f => !have.has(f));
+  return everything().filter(f => !have.has(f));
 }
 // The whole declared set (what the Node test checks against the files on disk).
 export const everything = () => uniq([...FIXED_UI, ...LESSON_ART, ...MISSION_ICONS, ...STYLE_ART, ...ERA_ART, ...hangarArt(), ...badgeArt(), ...LANDS.flatMap(regionArt)]);
