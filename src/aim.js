@@ -4,11 +4,11 @@
 // derived from the save, so a crash-retry aims the same way: the save's city does not move on a crash).
 // The sim chat's hooks: ROUTE_AIM.on (an A/B switch flippable in Node) and aimTarget(save) (the SAME choice routeFor uses).
 import { visible } from './missions2.js';
-import { flightPath, continueTour, pathTo, linksFor } from './route.js';
+import { flightPath, continueTour, pathTo, wayTo, linksFor, MAX_LEGS } from './route.js';
 import { choices } from './network.js';
 
 export const ROUTE_AIM = { on: true };   // shipping state: on
-export const MAX_LEGS = 3;               // a city mission's target is at most 3 stops away (the lessons' leg lengths)
+export { MAX_LEGS };                     // a city mission's target is at most 3 stops away (route.js; fillFor offers only those)
 // The missions that name a city, and which city they need NOW (declared, not inferred: tests/missionreach.cjs uses this list).
 // chain: its first city, then (once landed there: save.prevLanded) its second. route ("fly to C without stopping") needs at
 // least one airport passed on the way, so it aims at a 2-stop way when C is next door (see routeTo).
@@ -42,14 +42,9 @@ export function routeTo(save, target, tid = null, count = 60) {
   const L = linksFor(save), here = save.city;
   if (!ROUTE_AIM.on || !target || !L[here]) return flightPath(save, count);
   const opts = choices(here, L).map(o => o.name);
-  let way = save.heading && opts.includes(save.heading) && save.heading !== target
-    ? (p => p && [here, ...p])(pathTo(save.heading, target, L)) : pathTo(here, target, L);
+  const way = save.heading && opts.includes(save.heading) && save.heading !== target
+    ? (p => p && [here, ...p])(pathTo(save.heading, target, L)) : wayTo(here, target, L, tid === 'route');   // (route.js wayTo: round when an airport must be passed)
   if (!way) return flightPath(save, count);
-  if (tid === 'route' && way.length === 2) {   // next door: go round (the shortest way NOT using the direct link), so an airport is passed
-    const noDirect = { ...L, [here]: (L[here] || []).filter(n => n !== target) };
-    const round = pathTo(here, target, noDirect);
-    if (round && round.length - 1 <= MAX_LEGS) way = round;
-  }
   return continueTour(way, count, L);
 }
 

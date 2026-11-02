@@ -12,7 +12,7 @@ import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
 import { REGION_DATA, REGION_NAMES, TIERS } from './habitats.js';
-import { city } from './route.js';
+import { city, linksFor, wayTo, MAX_LEGS } from './route.js';
 import { fleetOf } from './fleet.js';
 import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 
@@ -99,7 +99,14 @@ function tierFinished(save, land) {
 // The fill: real names of this area, and the stage's numbers. `here` = the flight started in this area.
 export function fillFor(save, a, startCity = save.city) {
   const k = HARDER[stageOf(save, a)], land = landOf(save, a), cities = (AREAS[a] && AREAS[a].cities) || [];
-  const city = cities.find(c => c !== (save.homeCity || AREAS[a].start) && !(save.visited || []).includes(c)) || cities[1] || cities[0];
+  // Only cities the aimed route reaches within MAX_LEGS stops from where this flight starts (the guarantee, research/ROUTE-BUGS.md:
+  // the network's shape left 5 of 477 out of reach, e.g. "fly to SANTIAGO without stopping" from LIMA). The old preferences stay,
+  // among those: the first unvisited city; then others in list order; the LAST for 'route'. Nothing in reach: the old pick.
+  const L = linksFor(save), stops = (from, t, pass = false) => { const w = from && t && from !== t && L[from] ? wayTo(from, t, L, pass) : null; return w ? w.length - 1 : Infinity; };
+  const near = (from, t, pass = false) => { const n = stops(from, t, pass); return n <= MAX_LEGS && (!pass || n >= 2); };
+  const homeC = save.homeCity || (AREAS[a] && AREAS[a].start), pool = cities.filter(c => c !== homeC && c !== startCity);
+  const city = pool.find(c => !(save.visited || []).includes(c) && near(startCity, c)) || pool.find(c => near(startCity, c))
+    || cities.find(c => c !== homeC && !(save.visited || []).includes(c)) || cities[1] || cities[0];
   const landName = (REGION_NAMES[land] || 'this land').replace(/^Temperate /, '');
   const home = save.homeCity || (AREAS[a] && AREAS[a].start), others = cities.filter(c => c !== city && c !== home);   // not the home city (the audit: '...then MANAUS' for a Manaus start)
   const trees = landTrees(save, land), open = trees.filter(t => t.open), tree = open[open.length - 1] || trees[0];
@@ -107,7 +114,9 @@ export function fillFor(save, a, startCity = save.city) {
   const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
   const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));
   const animal = wild.find(w => canAppear(save, w.id, land)) || null;
-  return { area: a, land, landName, city, cityB: others[0] || city, cityC: others[others.length - 1] || city, k, stage: stageOf(save, a),
+  const cityB = others.find(c => near(startCity, c) && near(city, c)) || others[0] || city;   // rescue from here; a chain's 2nd from its 1st
+  const cityC = [...others].reverse().find(c => near(startCity, c, true)) || others[others.length - 1] || city;   // 'route': an airport passed on the way
+  return { area: a, land, landName, city, cityB, cityC, k, stage: stageOf(save, a),
     here: areaOf(startCity) === a, treeName: tree ? tree.name : 'tree', treeTag, kinds, animal: animal && animal.id, animalName: animal ? animal.name : 'wild animal' };
 }
 const key = (a, t) => `${a}:${t.id}`;

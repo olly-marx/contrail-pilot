@@ -25,7 +25,7 @@ globalThis.SEASON2 = true;
         fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
       const f = M.fillFor(save, a, c);
       for (const tid of CITY) {
-        const t = AIM.CITY_TEMPLATES[tid](f, save); if (!t || t === c) continue;
+        const t = AIM.CITY_TEMPLATES[tid](f, save); if (!t || t === c) { far.push(`${a} ${c} ${tid}: no city to offer (${t})`); (per[a] = per[a] || { cases: 0, far: 0 }).cases++; continue; }   /* every template keeps a target (the Coordinator, 2026-11-02) */
         const i = at(AIM.routeTo(save, t, tid, 12), t); cases++; (per[a] = per[a] || { cases: 0, far: 0 }).cases++;
         if (i < (tid === 'route' ? 2 : 1) || i > AIM.MAX_LEGS) far.push(`${a} ${c} ${tid} -> ${t} at stop ${i}`);
         if (tid === 'chain' && f.cityB && f.cityB !== f.city) {   // its second city, from its first (after landing there)

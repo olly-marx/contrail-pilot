@@ -68,6 +68,17 @@ export function pathTo(a, b, LINKS = WORLD) {
   }
   return null;
 }
+// A city mission's city is at most this many stops away on the route (src/aim.js aims there; src/missions2.js fillFor only
+// offers cities within it: the guarantee, research/ROUTE-BUGS.md).
+export const MAX_LEGS = 3;
+// The way the aimed route takes from `here` to `target`: the shortest; but when an airport must be PASSED on the way (a
+// "fly to C without stopping" mission) and C is next door, the shortest way round that does not use the direct link.
+export function wayTo(here, target, LINKS = WORLD, needPass = false) {
+  const way = pathTo(here, target, LINKS);
+  if (!needPass || !way || way.length !== 2) return way;
+  const round = pathTo(here, target, { ...LINKS, [here]: (LINKS[here] || []).filter(n => n !== target) });
+  return round && round.length - 1 <= MAX_LEGS ? round : way;
+}
 // The flight from a save: where you are and the direction you chose (a valid one, or the first offered).
 export function flightPath(save, count = 60) {
   const LINKS = linksFor(save);
