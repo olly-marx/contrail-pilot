@@ -252,3 +252,4 @@ swupdate	sw.js	s/^  if (prev) {$/  if (false) {/	nothing is copied forward (an u
 swkill	src/swreg.js	s/ || !stamp()) return 'skipped';/) return 'skipped';/	a worker registers on an unstamped (local) page
 swkill	src/swreg.js	s/if (v \&\& v.sw === false)/if (false)/	version.json "sw": false no longer removes the worker
 swkill	src/swreg.js	s/if (new URLSearchParams(location.search).get('nosw'))/if (false)/	?nosw=1 no longer removes the worker
+swupdate	sw.js	s/const keep = new Set(\[CUR, META, await meta('previous')\]);/const keep = new Set([CUR, META]);/	the previous build's cache is dropped at once (a page still running old code loses its files)
