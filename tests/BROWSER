@@ -104,3 +104,6 @@ keepvisible
 preloadgate
 flagclear
 loadercount
+swoffline
+swupdate
+swkill

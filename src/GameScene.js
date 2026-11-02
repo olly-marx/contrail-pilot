@@ -57,6 +57,7 @@ export class GameScene extends Phaser.Scene {
     if (!loading.hooked) {   // the loading screen counts these files (src/loader.js); once, not on every scene restart
       loading.hooked = true;
       this.load.on('progress', () => loading.onPhaser(this.load.totalComplete, this.load.totalToLoad));
+      this.load.on('load', f => { if (f.src) loading.phaserUrls.push(f.src); });   // (the service worker keeps these for offline)
       this.load.on('complete', () => loading.onPhaserComplete());
     }
     this.load.image('plane', 'assets/plane.png');   // the 747; also the collision mask for EVERY plane

@@ -243,3 +243,12 @@ flagclear	src/GameScene.js	s/    loading.flying = false;   \/\/ the flight is ov
 flagclear	src/GameScene.js	/^    loading.flying = false;$/d	Esc on the runway (backToMenu) no longer clears loading.flying
 loadercount	src/loader.js	s/this.maxF = Math.max(this.maxF || 0, f); return this.maxF;/return f;/	the fraction is not kept at its maximum (the plane flies back when Phaser's total joins)
 loadercount	src/loader.js	s/if (this.txt) this.txt.textContent = this.phaser.total ?/if (this.txt) this.txt.textContent = this.phaser.total + this.menus.total ?/	the counter shows '0 \/ 264' before Phaser's total is known
+swoffline	sw.js	s/await Promise.all(fresh.shell.map(async p => {/await Promise.all(fresh.shell.filter(p => p !== 'src\/GameScene.js').map(async p => {/	a core file (GameScene.js) is missing from the precache: a cold offline start cannot run
+swupdate	sw.js	s/return e.respondWith(networkFirst(req));/return e.respondWith(cacheFirst(req, CUR));/	the shell is cache-first (a stale index.html lock-in: the player never reaches the new build)
+swupdate	sw.js	s/return e.respondWith(fetch(req, { cache: 'no-store' }));/return e.respondWith(cacheFirst(req, CUR));/	version.json is cached (an update is never seen)
+swupdate	sw.js	/!keep.has(k)) await caches.delete(k)/d	old caches are never purged
+swupdate	sw.js	s/ \&\& prev.files\[p\] === fresh.files\[p\]//	the manifest diff copies a CHANGED picture from the old cache (the redrawn picture never arrives)
+swupdate	sw.js	s/^  if (prev) {$/  if (false) {/	nothing is copied forward (an unchanged picture is downloaded again)
+swkill	src/swreg.js	s/ || !stamp()) return 'skipped';/) return 'skipped';/	a worker registers on an unstamped (local) page
+swkill	src/swreg.js	s/if (v \&\& v.sw === false)/if (false)/	version.json "sw": false no longer removes the worker
+swkill	src/swreg.js	s/if (new URLSearchParams(location.search).get('nosw'))/if (false)/	?nosw=1 no longer removes the worker

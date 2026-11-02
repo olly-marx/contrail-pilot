@@ -27,3 +27,5 @@ group menu-map | src/ui.js src/globe.js src/cities.js src/route.js src/network.j
 group art-sound | assets/* vendor/* src/sound.js src/pixellab.js src/landmarks.js | textures projectart badgeart faces landmarks stormart pixelpreview treelayout terrain macrons
 group online-parked | src/online.js src/restore.js src/uploadbanner.js src/newplayer.js | online onlinesave restore offline newplayer
 group loader | src/preload.js src/loader.js | preloadgate flagclear loadercount hubscreen hangar nature onrails
+group loader | src/preload.js src/loader.js | preloadgate hubscreen hangar nature onrails
+group service-worker | sw.js manifest.webmanifest src/swreg.js | swoffline swupdate swkill

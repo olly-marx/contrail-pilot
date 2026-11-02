@@ -4,7 +4,8 @@
 // When both are done and the scene is built the screen goes: it stops catching taps at once (pointer-events) and is removed after a short fade.
 // Tier 2 (every other land's menu art) is fetched afterwards, one picture at a time, only when the game is idle (never while flying).
 // All drawing is code (a small canvas, no pictures); the canvas is 96 x 54 game pixels scaled up with image-rendering: pixelated.
-import { tier1, tier2, regionArt } from './preload.js';
+import { tier1, tier2, regionArt, everything } from './preload.js';
+import { startServiceWorker } from './swreg.js';
 import { flightPath, city, schoolSave } from './route.js';
 import { crossingPath } from './crossings.js';
 
@@ -31,7 +32,7 @@ async function fetchAll(list, onEach, lanes = 12) {
 
 export const loading = {
   phaser: { done: 0, total: 0 }, menus: { done: 0, total: 0 }, sceneBuilt: false, menusDone: false, finished: false, shown: 0, trail: [],
-  cv: null, ctx: null, save: null, flying: false,   // flying: set by GameScene.startFlight (school included), cleared by onFinish / backToMenu
+  phaserUrls: [], cv: null, ctx: null, save: null, flying: false,   // flying: set by GameScene.startFlight (school included), cleared by onFinish / backToMenu
 
   start(save) {
     this.save = save; window.cpLoading = this;   // (for tests/preloadgate.cjs, like window.game)
@@ -70,6 +71,7 @@ export const loading = {
     this.finished = true; document.body.dataset.loaded = '1';
     const box = document.getElementById('loader'); if (box) { box.style.pointerEvents = 'none'; box.classList.add('done'); setTimeout(() => box.remove(), 450); }
     this.startPump();
+    startServiceWorker([...this.phaserUrls, ...everything()]);   // (0.25.0) the worker keeps all of it for offline; does nothing on a page with no ?v build stamp
   },
 
   draw(t) {

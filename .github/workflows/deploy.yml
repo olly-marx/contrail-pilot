@@ -51,19 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Bundle the site (game files only)
-        run: |
-          mkdir _site
-          cp -r index.html style.css .nojekyll src assets vendor _site/
-          # Stamp every script/style URL with this commit. Pages lets browsers keep files for 10 min,
-          # so without this a phone could run a new index.html with OLD scripts (new buttons, dead).
-          V=${GITHUB_SHA::7}
-          sed -i -E "s#(from '\./[A-Za-z]+\.js)'#\1?v=$V'#g" _site/src/*.js
-          sed -i -E "s#(src|href)=\"(src/main\.js|src/newplayer\.js|style\.css|vendor/[a-z.]+\.js)\"#\1=\"\2?v=$V\"#g" _site/index.html
-          grep -q "src/main.js?v=$V" _site/index.html   # fail the deploy if the stamp didn't take
-          # version.json: what's live, read by src/updates.js to offer the update. tools/check-release.py stops
-          # the deploy unless src/version.js (semver) and the top entry of CHANGES.json agree (RELEASING.md).
-          python3 tools/check-release.py --write _site/version.json "$V"
-          grep -q "\"commit\": \"$V\"" _site/version.json
+        # tools/make-site.sh: the game files, every script/style URL stamped with this commit, version.json, the service worker + web manifest.
+        # The tests that need the real bundle (tests/sw*.cjs) run the same script.
+        run: tools/make-site.sh _site "${GITHUB_SHA::7}"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
