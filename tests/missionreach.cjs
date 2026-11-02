@@ -12,6 +12,7 @@ globalThis.SEASON2 = true;
   const A = await import('../src/areas.js'), M = await import('../src/missions2.js'), AIM = await import('../src/aim.js');
   if (process.env.AIM === 'off') AIM.ROUTE_AIM.on = false;
   // DECLARED: the mission templates that name a city (a new one must be added here AND to src/aim.js CITY_TEMPLATES).
+  const SMALL_AREA = 3; let notOffered = 0;   /* declared: an area of 3 cities (Patagonia) cannot offer rescue/route from a non-home start */
   const CITY = ['land-city', 'chain', 'rescue', 'route'];
   const naming = M.TEMPLATES.filter(t => /\$\{f\.city[BC]?\}/.test(String(t.title))).map(t => t.id).sort();
   check(JSON.stringify(naming) === JSON.stringify([...CITY].sort()) && JSON.stringify(Object.keys(AIM.CITY_TEMPLATES).sort()) === JSON.stringify([...CITY].sort()),
@@ -25,6 +26,7 @@ globalThis.SEASON2 = true;
         fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
       const f = M.fillFor(save, a, c);
       for (const tid of CITY) {
+        const def = M.TEMPLATES.find(d => d.id === tid); if (def.ready && !def.ready(f) && area.cities.length <= SMALL_AREA) { notOffered++; continue; }   /* declared: a 3-city area has no 2nd target once home and here are out; the mission is NOT offered (ROUTE-BUGS (c)) */
         const t = AIM.CITY_TEMPLATES[tid](f, save); if (!t || t === c) { far.push(`${a} ${c} ${tid}: no city to offer (${t})`); (per[a] = per[a] || { cases: 0, far: 0 }).cases++; continue; }   /* every template keeps a target (the Coordinator, 2026-11-02) */
         const i = at(AIM.routeTo(save, t, tid, 12), t); cases++; (per[a] = per[a] || { cases: 0, far: 0 }).cases++;
         if (i < (tid === 'route' ? 2 : 1) || i > AIM.MAX_LEGS) far.push(`${a} ${c} ${tid} -> ${t} at stop ${i}`);
@@ -45,7 +47,7 @@ globalThis.SEASON2 = true;
   }
   // Per area (the user asked to see how bad today's routing is): cases and how many are out of reach.
   for (const f of far) per[f.split(' ')[0]].far++;
-  console.log(`missionreach${AIM.ROUTE_AIM.on ? '' : ' (AIM=off: today\'s tour)'} per area, out of reach / checked: ` + Object.entries(per).map(([a, v]) => `${a} ${v.far}/${v.cases}`).join(', '));
+  console.log(`missionreach${AIM.ROUTE_AIM.on ? '' : ' (AIM=off: today\'s tour)'} per area, out of reach / checked (${notOffered} templates not offered in 3-city areas): ` + Object.entries(per).map(([a, v]) => `${a} ${v.far}/${v.cases}`).join(', '));
   check(cases > 100, `enough cases checked (${cases}); else this proves nothing`);
   check(!far.length, `city missions out of reach (> ${AIM.MAX_LEGS} stops, or a 'route' with no airport to pass): ${far.length} of ${cases}: ${far.slice(0, 8).join('; ')}`);
   console.log(fails.length ? `FAIL missionreach${AIM.ROUTE_AIM.on ? '' : ' (AIM=off: today\'s tour)'}:\n - ${fails.join('\n - ')}` : `PASS missionreach: ${cases} city missions from every start in every starter area are within ${AIM.MAX_LEGS} stops on the aimed route`);
