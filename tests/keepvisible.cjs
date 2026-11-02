@@ -1,0 +1,56 @@
+// A rails step keeps its target where a finger can reach it (tour.js keepVisible), even when nothing in the normal rails run
+// happens to need it (the plant sweep, 2026-11-02: after the redesign no onrails step put a target in the danger bands, so
+// removing keepVisible changed nothing there). Deterministic, at 375x667:
+//   A. HANGAR: a row placed BEHIND the bottom tab bar (on screen, so the step's own scrollIntoView does not fire): a step on it
+//      must bring it above the bar;
+//   B. NATURE: a project row scrolled UNDER the pinned land: a step on it must uncover it.
+// Run: python3 -m http.server 8000 & node tests/keepvisible.cjs   (proved by planted defects)
+const { chromium } = require('playwright-core');
+const { ready } = require('./lib/ready.js');
+const URL = process.env.URL || 'http://localhost:8000/';
+(async () => {
+  const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
+  const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  const p = await b.newPage({ viewport: { width: 375, height: 667 }, hasTouch: true });
+  const errs = []; p.on('pageerror', e => errs.push(String(e)));
+  await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
+  await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ muted: true })); });
+  await p.goto(URL); await ready(p); await p.waitForTimeout(800);
+  await p.click('#startChoice [data-area="weurope"]').catch(() => {}); await p.click('#startChoice [data-city]').catch(() => {}); await p.waitForTimeout(1200);
+  await p.evaluate(() => { const s = game.registry.get('save'); Object.assign(s, { tutorialDone: true, freeGiven: true, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], seeds: 999,
+    tours: ['hangar', 'name', 'r-boards', 'r-bonus', 'r-free', 'r-nature', 'r-parcels', 'r-res1', 'r-res2', 'r-school', 'r-systems', 'r-takeoff1', 'r-takeoff2', 'r-payoff'] });
+    const ui = game.registry.get('ui'); ui.tour.busy = false; ui.go('hangar'); });
+  await p.waitForTimeout(1200);
+  // Put `sel`'s element in a band (A: its bottom behind the tab bar; B: its middle under NATURE's pinned block), then run one step on it.
+  const run = (sel, band) => p.evaluate(async ({ sel, band }) => {
+    const t = document.querySelector(sel), ov = t.closest('.overlay'), bar = document.querySelector('.tabbar:not([hidden])').getBoundingClientRect();
+    if (band === 'bar') ov.scrollTop += t.getBoundingClientRect().bottom - (bar.top + Math.min(20, bar.height / 2));   // bottom 20 px behind the bar, top above it
+    else { const pin = document.querySelector('.wpin').getBoundingClientRect(); ov.scrollTop += t.getBoundingClientRect().top - (pin.top + pin.height / 2); }   // its top in the middle of the pinned land
+    await new Promise(r => setTimeout(r, 200));
+    const r0 = t.getBoundingClientRect();
+    const before = band === 'bar' ? r0.bottom > bar.top && r0.bottom <= innerHeight : (() => { const e = document.elementFromPoint(r0.left + r0.width / 2, r0.top + r0.height / 2); return !!e && !t.contains(e) && e !== t; })();
+    const ui = game.registry.get('ui'); ui.tour.run('kv-test', [{ target: sel, text: 'test', ok: true }]);
+    await new Promise(r => setTimeout(r, 900));
+    const r1 = t.getBoundingClientRect(), barTop = document.querySelector('.tabbar:not([hidden])').getBoundingClientRect().top;
+    const after = band === 'bar' ? r1.bottom <= barTop + 1 && r1.top >= 0 : (() => { const e = document.elementsFromPoint(r1.left + r1.width / 2, r1.top + r1.height / 2).find(x => !x.closest('#tour')); return !!e && (e === t || t.contains(e)); })();
+    const ok = document.querySelector('#tour .tbubble .btn'); if (ok) ok.click();
+    await new Promise(r => setTimeout(r, 400));
+    return { before, after, r0: [Math.round(r0.top), Math.round(r0.bottom)], r1: [Math.round(r1.top), Math.round(r1.bottom)], barTop: Math.round(barTop) };
+  }, { sel, band });
+  const rowSel = await p.evaluate(() => { const r = [...document.querySelectorAll('#hFleet .rowc[data-row]')].pop(); return r ? `#hFleet .rowc[data-row="${r.dataset.row}"] .rowc-tap` : null; });
+  check(!!rowSel, 'a hangar row to test with');
+  if (rowSel) { const a = await run(rowSel, 'bar');
+    check(a.before, `A: the test put the row behind the tab bar first (else it proves nothing): ${JSON.stringify(a)}`);
+    check(a.after, `A: a rails step brings a row from behind the tab bar to above it: ${JSON.stringify(a)}`); }
+  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.go('nature'); ui.wild.bio = () => 100; ui.wild.openTiers = [1, 2, 3]; ui.wild.renderProjects(); });
+  await p.waitForTimeout(900);
+  const projSel = await p.evaluate(() => { const r = [...document.querySelectorAll('#wProjects .project[data-pline]')][3]; return r ? `#wProjects .project[data-pline="${r.dataset.pline}"] .rowc-tap` : null; });
+  check(!!projSel, 'a NATURE row to test with');
+  if (projSel) { const c = await run(projSel, 'pin');
+    check(c.before, `B: the test put the row under the pinned land first (else it proves nothing): ${JSON.stringify(c)}`);
+    check(c.after, `B: a rails step uncovers a row from under the pinned land: ${JSON.stringify(c)}`); }
+  check(!errs.length, `page errors ${errs}`);
+  await b.close();
+  console.log(fails.length ? `FAIL keepvisible:\n - ${fails.join('\n - ')}` : 'PASS keepvisible: a rails step brings a row out from behind the tab bar and from under the pinned land');
+  process.exit(fails.length ? 1 : 0);
+})();
