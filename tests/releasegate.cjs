@@ -98,5 +98,8 @@ r = list(['src/sim/rules.js']); check(r.tests.has('firsthour-real'), 'rules.js (
   fs.rmSync(tmp, { recursive: true, force: true });
 }
 
+// 14. The service worker's tests follow the files that can break them (0.25.0): a change to sw.js, src/updates.js, src/swreg.js or the raw-Chrome / site-host helpers runs swupdate, swoffline and swkill.
+for (const f of ['sw.js', 'src/updates.js', 'src/swreg.js', 'tests/lib/rawchrome.js']) { r = list([f]); check(['swupdate', 'swoffline', 'swkill'].every(t => r.tests.has(t)), `${f} -> the service-worker tests (swupdate swoffline swkill): ${[...r.tests].filter(t => /^sw/.test(t)).join(' ')}`); }
+
 if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
 console.log('PASS releasegate (docs-only = smoke, group unions, postrails only for lessons/parcels, harness = all, own test, unmapped refused)');

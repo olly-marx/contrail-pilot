@@ -253,3 +253,4 @@ swkill	src/swreg.js	s/ || !stamp()) return 'skipped';/) return 'skipped';/	a wor
 swkill	src/swreg.js	s/if (v \&\& v.sw === false)/if (false)/	version.json "sw": false no longer removes the worker
 swkill	src/swreg.js	s/if (new URLSearchParams(location.search).get('nosw'))/if (false)/	?nosw=1 no longer removes the worker
 swupdate	sw.js	s/const keep = new Set(\[CUR, META, await meta('previous')\]);/const keep = new Set([CUR, META]);/	the previous build's cache is dropped at once (a page still running old code loses its files)
+releasegate	tests/PATHMAP	/^group sw-raw/d	src/updates.js no longer maps to the service-worker tests (the updater could change without swupdate running)
