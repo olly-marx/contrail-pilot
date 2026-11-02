@@ -21,7 +21,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
   // 1. flight one: take off, fly past the first airport (distance jumped past it: the game's own spawn() then shows its sign)
   await p.click('#goBtn'); await hold(() => game.scene.getScene('game').state === 'playing');
-  await p.evaluate(() => { const s = game.scene.getScene('game'); s.nextTurbAt = s.nextBirdsAt = 1e9; s.distancePx = s.nextAirport.worldX + 5000; });
+  await p.evaluate(() => { const s = game.scene.getScene('game'); s.nextTurbAt = s.nextBirdsAt = 1e9; s.distancePx = s.nextAirport.worldX + 260; });
   const sawSign = await p.waitForFunction(() => /Passed/.test(game.scene.getScene('game').nextText.text), null, { timeout: 8000 }).then(() => true, () => false);
   const h1 = await header(); check(sawSign, `control: the game shows its "Passed X. Next: Y" sign after passing an airport (header "${h1.text}")`);
 
@@ -29,10 +29,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.plane.y = 5000; });
   const over = await p.waitForFunction(() => game.scene.getScene('game').state === 'over', null, { timeout: 15000 }).then(() => true, () => false);
   check(over, 'the plane crashed (state over)');
-  await p.waitForTimeout(800);
+  const resultsUp = await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 15000 }).then(() => true, () => false);
+  check(resultsUp, 'the results screen came up after the crash'); await p.waitForTimeout(500);
+  if (process.env.RHDEBUG) console.log('after crash buttons:', JSON.stringify(await p.evaluate(() => [...document.querySelectorAll('button')].filter(b => b.offsetParent).map(b => b.id || b.textContent.trim().slice(0, 20)))), 'results hidden:', await p.evaluate(() => document.getElementById('results').hidden), 'title hidden:', await p.evaluate(() => document.getElementById('title').hidden));
 
   // 3. FLY ON, TAKE OFF again: the new flight's header
-  await p.evaluate(() => { const a = document.getElementById('againBtn'); if (a && !a.hidden) a.click(); }); await p.waitForTimeout(600);
+  await p.click('#againBtn', { timeout: 8000 }).catch(() => check(false, 'FLY ON (the results screen button) could not be tapped')); await p.waitForTimeout(600);
   await p.click('#goBtn', { timeout: 8000 }).catch(() => check(false, 'TAKE OFF could not be tapped after the crash'));
   await hold(() => ['takeoff', 'playing'].includes(game.scene.getScene('game').state) && game.scene.getScene('game').gameTime > 100);
   const seen = [];
