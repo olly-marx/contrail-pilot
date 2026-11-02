@@ -1,7 +1,7 @@
 import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
-import { routeFor } from './aim.js';
+import { routeFor, toggleSkip, SKIP_TEXT } from './aim.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
@@ -223,6 +223,14 @@ export class UI {
     $('hubSpinR').onclick = () => this.hubGlobe && this.hubGlobe.nudge(24);
     $('hubRoute').onclick = () => { sfx.flap(); $('title').classList.toggle('world'); };   // the route choice and crossings, on demand
   }
+  // 'Skip the mission route this trip' (src/aim.js): a button under HOME's route line, shown only while a city mission is open (v.skip).
+  // It flies the normal tour for this trip; the mission stays open; a landing clears it (rules.js), a crash keeps it.
+  renderSkip(skip) {
+    let b = $('hubSkip');
+    if (!b) { b = document.createElement('button'); b.id = 'hubSkip'; b.type = 'button'; b.className = 'chip hubonly hub-skip'; $('hubWorld').after(b);
+      b.onclick = () => { sfx.flap(); toggleSkip(this.save); writeSave(this.save); this.renderHub(); }; }
+    b.hidden = !skip; b.textContent = skip === 'on' ? SKIP_TEXT.undo : SKIP_TEXT.skip;
+  }
   renderHub() {
     const s = this.save;
     const ready = s.tutorialDone ? crossingsNow(s).find(c => offerCheck(c, offerCtx(s, c)).offered || S2_UNLOCK) : null;
@@ -236,6 +244,7 @@ export class UI {
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
     $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;
     $('goBtn').textContent = toHangar ? 'PICK YOUR FREE PART FIRST' : s.tutorialDone ? 'TAKE OFF' : 'START';
+    this.renderSkip(v.skip);
     $('hubRoute').innerHTML = v.route.join(' &#9654; ') + (v.aim ? ' <span class="small">(mission)</span>' : '');   // the next stops (to the mission's city when aimed: src/aim.js)
     $('hubTiles').innerHTML = v.tiles
       .map(t => `<button class="btn hub-tile ${t.id === 'hangar' && toHangar ? 'pulse' : ''}" type="button" data-go="${t.id}">${t.label}${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</button>`).join('');

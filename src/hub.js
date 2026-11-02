@@ -3,7 +3,7 @@
 // rest. What the hub shows is decided here, without the DOM, so tests/hub.cjs can check it: at most HUB_WORDS words,
 // tiles only once their reveal is earned, the NEXT card = the mission on top.
 import { current as currentMission, MISSIONS } from './missions.js';
-import { routeFor, aimTarget } from './aim.js';
+import { routeFor, aimTarget, aimOpen } from './aim.js';
 import { wordCount } from './tips.js';
 import * as M2 from './missions2.js';
 import { lineById } from './upgrades.js';
@@ -20,6 +20,7 @@ export const FREE_NEXT = 'Open the hangar: free upgrade!';   // the user: a free
 
 // What the hub shows: { next, route, tiles, crossing, words }.
 //   next:  { title } the top mission (or a crossing that is ready replaces it); null when all done
+//   skip: null (no city mission to aim at) | 'off' (the route aims) | 'on' (the player skipped this trip: src/aim.js)
 //   route: the next stops: [from, to] (the first hop), or up to the mission's city when the route aims at one (src/aim.js); aim: that city
 //   tiles: [{ id, label, badge }] only the revealed ones, in a fixed order
 export function hubView(save, { badges = {}, crossingReady = null } = {}) {
@@ -36,5 +37,5 @@ export function hubView(save, { badges = {}, crossingReady = null } = {}) {
   // The next stops, up to the mission's city when the route aims at one ("LONDON > PARIS > BERLIN (mission)"), else the first hop.
   const at = aim ? path.indexOf(aim) : -1, route = path.slice(0, at > 0 ? Math.min(at + 1, 4) : 2);
   const words = wordCount(next ? next.title : '') + wordCount(route.join(' ')) + tiles.reduce((a, t) => a + wordCount(`${t.label} ${t.badge}`), 0) + wordCount('TAKE OFF');
-  return { next, route, aim: at > 0 && at <= 3 ? aim : null, tiles, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
+  return { next, route, aim: at > 0 && at <= 3 ? aim : null, skip: aimOpen(save) ? (save.skipAim ? 'on' : 'off') : null, tiles, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
 }

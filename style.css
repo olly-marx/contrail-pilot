@@ -606,6 +606,7 @@ h2.sub { margin-top: -4px; }
 #hubSpinL { left: 0; } #hubSpinR { right: 0; }
 .hub-route { margin: 2px 0 0; font-size: 8px; }
 .hub-route small { display: block; opacity: .7; }
+#title.hub .hub-skip { display: flex; justify-content: center; text-align: center; }   /* 'Skip mission route this trip' (src/aim.js): the shared .chip, a 40 px tap target, centred under the route */
 .hub-tiles { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 6px; }
 .hub-tile { position: relative; padding: 10px 2px; font-size: 8px; }
 .hub-tile .badge { position: absolute; top: -6px; right: -4px; background: #e8433a; color: #fff; font-size: 6px; padding: 2px 3px; border-radius: 6px; }

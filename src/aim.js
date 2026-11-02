@@ -19,10 +19,10 @@ export const CITY_TEMPLATES = {
   route: (f) => f.cityC,
 };
 
-// The city the route aims at, or null: the FIRST open mission (MISSIONS screen order) that names a city which is not
+// The city the mission asks for (aimOpen), or null: the FIRST open mission (MISSIONS screen order) that names a city which is not
 // here and can be reached in the current network. Lessons, dailies and steady goals name no city: they never aim.
 // A target in a network the player cannot reach yet (another area) is skipped: the mission waits until you are there.
-export function aimTarget(save) {
+export function aimOpen(save) {
   if (!ROUTE_AIM.on || !save || !save.tutorialDone || save.flyCrossing) return null;
   const L = linksFor(save);
   if (!L[save.city]) return null;
@@ -34,6 +34,12 @@ export function aimTarget(save) {
   }
   return null;
 }
+// The per-trip choice (the sim chat's spec, research/BALANCE-AIMED-ROUTE.md; the Coordinator, 2026-11-02): 'Skip the mission route this trip'
+// flies the normal tour while the mission stays OPEN. save.skipAim is kept by a crash and cleared by the next landing (rules.js, beside
+// save.heading), so aimTarget is aimOpen unless the player skipped. The button words are data (tests/textbudget2.cjs: <= 29 chars at 320).
+export const SKIP_TEXT = { skip: 'Skip mission route this trip', undo: 'Mission route skipped: undo' };
+export const aimTarget = save => (save && save.skipAim ? null : aimOpen(save));
+export const toggleSkip = save => { save.skipAim = !save.skipAim; return save.skipAim; };
 const templateOf = (save, target) => { for (const m of visible(save)) { const pick = m.def && CITY_TEMPLATES[m.def.id]; if (pick && m.fill && pick(m.fill, save) === target) return m.def.id; } return null; };
 
 // The path from the save's city to `target` (then the normal tour). A heading the player CHOSE on the world map is kept: the
