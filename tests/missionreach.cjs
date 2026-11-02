@@ -43,6 +43,11 @@ globalThis.SEASON2 = true;
       }
     }
   }
+  // Per area (the user asked to see how bad today's routing is): cases and how many are out of reach.
+  const per = {}; for (const [a] of Object.entries(A.AREAS)) per[a] = { cases: 0, far: 0 };
+  for (const f of far) per[f.split(' ')[0]].far++;
+  for (const [a, area] of Object.entries(A.AREAS)) if (area.starter) per[a].cases = area.cities.length * (CITY.length + 1);   /* (approx: + a chain's 2nd) */
+  console.log(`missionreach${AIM.ROUTE_AIM.on ? '' : ' (AIM=off: today\'s tour)'} per area, out of reach / about checked: ` + Object.entries(per).filter(([a]) => A.AREAS[a].starter).map(([a, v]) => `${a} ${v.far}/${v.cases}`).join(', '));
   check(cases > 100, `enough cases checked (${cases}); else this proves nothing`);
   check(!far.length, `city missions out of reach (> ${AIM.MAX_LEGS} stops, or a 'route' with no airport to pass): ${far.length} of ${cases}: ${far.slice(0, 8).join('; ')}`);
   console.log(fails.length ? `FAIL missionreach${AIM.ROUTE_AIM.on ? '' : ' (AIM=off: today\'s tour)'}:\n - ${fails.join('\n - ')}` : `PASS missionreach: ${cases} city missions from every start in every starter area are within ${AIM.MAX_LEGS} stops on the aimed route`);
