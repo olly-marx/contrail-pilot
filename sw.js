@@ -66,7 +66,9 @@ const cacheFirst = async (req, name) => {
   if (name !== CUR && !(await caches.has(name))) return fetch(req);   // (no cache of that build: never create one just by asking)
   const cache = await caches.open(name);
   const u = new URL(req.url); const hit = await cache.match(u.origin + u.pathname);   // exact: code is stored under its plain path, pictures have no query (an ignoreSearch match scans every entry)
-  if (hit) return hit;
+  // A response from the cache carries the URL it was stored under (no ?v=): a module would then get an import.meta.url without its build stamp, and src/updates.js
+  // would think this is a local copy and never check for updates. A fresh Response has no URL of its own, so the page's request URL is used.
+  if (hit) return new Response(hit.body, { status: hit.status, statusText: hit.statusText, headers: hit.headers });
   const live = await fetch(req);
   if (live.status === 200 && name === CUR) cache.put(u.origin + u.pathname, live.clone());
   return live;
