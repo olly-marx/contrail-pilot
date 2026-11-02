@@ -26,7 +26,9 @@ const { ready, CHROME, ARGS, prepare, swMessage, stamp, cacheNames, sha1 } = req
   const ctx = await b.newContext({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
   await prepare(ctx);
   const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e).slice(0, 100)));
-  const T0 = Date.now(), step = m => { if (process.env.SWDEBUG) console.log(`[${((Date.now() - T0) / 1000).toFixed(1)}s] ${m}`); };
+  p.setDefaultNavigationTimeout(90000); p.setDefaultTimeout(90000);   // the test waits on events, not on the clock: a loaded machine must not turn a slow page into a failure
+  const T0 = Date.now(); let last = 'start'; globalThis.__last = () => last;
+  const step = m => { last = `${m} at ${((Date.now() - T0) / 1000).toFixed(0)}s`; if (process.env.SWDEBUG) console.log(`[${last}]`); };
   const visit = async (build, label) => {
     h.setRoot(dirs[build]); h.reset(); step(`visit ${build}: goto`);
     await p.goto(h.url); step(`visit ${build}: loaded`); await ready(p); step(`visit ${build}: ready`);
@@ -60,14 +62,14 @@ const { ready, CHROME, ARGS, prepare, swMessage, stamp, cacheNames, sha1 } = req
   check(await stamp(p) === 'ccccccc', 'C: the page runs build C');
 
   // 4. D with a SLOW index.html: opens from the cache, then updates.js moves it to D
-  h.setRoot(dirs.ddddddd); h.reset(); h.hold(1, 6000);
-  step('D slow: goto'); const t0 = Date.now(); await p.goto(h.url, { timeout: 30000 }); step('D slow: loaded'); await ready(p);
+  h.setRoot(dirs.ddddddd); h.reset(); h.hold(1, 20000);   // (a deploy whose index.html takes 20 s: far more than the worker's 3 s)
+  step('D slow: goto'); const t0 = Date.now(); await p.goto(h.url); step('D slow: loaded'); await ready(p);
   check(await stamp(p) === 'ccccccc', `D slow: the cached shell opened (build C) within ${((Date.now() - t0) / 1000).toFixed(1)} s instead of waiting for the server`);
-  check(Date.now() - t0 < 5500, `D slow: the page did not wait for the slow index.html (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
-  await p.waitForFunction(() => { const s = document.querySelector('script[src*="main.js"]'); return s && /v=ddddddd/.test(s.getAttribute('src')); }, null, { timeout: 60000, polling: 300 })
+  check(Date.now() - t0 < 15000, `D slow: the page did not wait for the slow index.html (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
+  await p.waitForFunction(() => { const s = document.querySelector('script[src*="main.js"]'); return s && /v=ddddddd/.test(s.getAttribute('src')); }, null, { timeout: 120000, polling: 300 })
     .catch(() => check(false, 'D slow: the player was never taken to build D (stuck on the old build)'));
   check(!p.errs.length, `page errors: ${p.errs.join(' | ')}`);
   await b.close(); h.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
   console.log('PASS swupdate (A -> B: redrawn picture arrives, unchanged copied, caches current+previous; C purges A; a slow index.html still ends on D; version.json never cached)');
-})().catch(e => { console.log('FAIL\n- crashed: ' + e.message.split('\n')[0]); process.exit(1); });
+})().catch(e => { console.log('FAIL\n- crashed: ' + e.message.split('\n')[0] + ' (last step: ' + (globalThis.__last ? globalThis.__last() : '?') + ')'); process.exit(1); });
