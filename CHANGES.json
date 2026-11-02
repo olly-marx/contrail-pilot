@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-02-lists-tidy",
+    "version": "0.25.3",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "The nature and hangar lists no longer put names under the buttons. Long names now use two lines, so every name can be read."
+    ]
+  },
+  {
+    "id": "2026-11-02-ghost-fit",
+    "version": "0.25.2",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "The hangar's upgrade preview now lines up exactly with your plane. It was drawn a little too tall, so you saw two planes on top of each other."
+    ]
+  },
+  {
     "id": "2026-11-02-route-header",
     "version": "0.25.1",
     "date": "2026-11-02",

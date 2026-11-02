@@ -47,6 +47,7 @@ import { writeSave, resetSave } from './save.js';
 import { eraBarHTML } from './eras.js';
 import { FleetHangar, fleetBuyable } from './hangar.js';
 import { showEraWelcome } from './welcome.js';
+import { showSheet } from './sheet.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -655,6 +656,8 @@ export class UI {
 
   // Redraw whichever shop screen is open (the hangar, or NATURE: src/wild.js).
   refresh() { if (!$('nature').hidden && this.wild) this.wild.render(); else this.renderHangar(); }
+
+  showSheet(opts) { return showSheet(opts); }   // the one pop-up (src/sheet.js; R10 moves #info / #wInfo onto it)
 
   showInfo(id) {
     const line = LINES.find(l => l.id === id), have = level(this.save, id);

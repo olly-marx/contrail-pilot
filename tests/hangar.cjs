@@ -72,6 +72,23 @@ const URL = process.env.URL || 'http://localhost:8000/';
       if (await p.isVisible('#payOk')) await p.click('#payOk').catch(() => {}); await p.waitForSelector('#payOk', { state: 'visible', timeout: 6000 }).then(() => p.click('#payOk')).catch(() => {}); await p.waitForTimeout(300);
       const back = await p.evaluate(() => { const b = document.querySelector('#hFleet .fpreview'), r = b && b.getBoundingClientRect(); return b && { shown: !b.hidden, top: Math.round(r.top), bottom: Math.round(r.bottom), h: innerHeight }; });
       check(back && back.shown && back.bottom > 0 && back.top < back.h, `after OK the plane box is back, on screen (scroll anchoring must not throw it away): ${JSON.stringify(back)}`); } }
+  // The ghost preview lies EXACTLY on the plane picture (the user's screenshot, 2026-11-02: the ghost filled the whole box,
+  // caption included, so it was ~14% taller: two planes). Tap a line whose next level has a part layer, then every .fghost's
+  // rect must equal the base picture's within 1 px (the PICTURE, not the box with its caption).
+  await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
+  await p.click('[data-ftap="plane:jumbo.engines"]'); await p.waitForTimeout(700);
+  const gh = await p.evaluate(() => { const base = document.querySelector('#hFleet .fpreview img:not(.fghost)'), gs = [...document.querySelectorAll('#hFleet .fpreview img.fghost')];
+    const b = base && base.getBoundingClientRect();
+    return { n: gs.length, worst: b ? Math.max(0, ...gs.map(g => { const r = g.getBoundingClientRect(); return Math.max(Math.abs(r.left - b.left), Math.abs(r.top - b.top), Math.abs(r.width - b.width), Math.abs(r.height - b.height)); })) : -1 }; });
+  check(gh.n >= 1, `jumbo engines: no ghost layer drawn (${gh.n}): the check would prove nothing`);
+  check(gh.worst >= 0 && gh.worst <= 1, `the ghost is ${gh.worst.toFixed(1)} px off the plane picture (want <= 1): two planes drawn`);
+  // ...and on the smallest phone (320 x 568): the same page resized, the same measure (the plant fails at both widths).
+  const vp0 = p.viewportSize(); await p.setViewportSize({ width: 320, height: 568 }); await p.waitForTimeout(300);
+  const gh320 = await p.evaluate(() => { const base = document.querySelector('#hFleet .fpreview img:not(.fghost)'), gs = [...document.querySelectorAll('#hFleet .fpreview img.fghost')];
+    const b = base && base.getBoundingClientRect();
+    return { n: gs.length, worst: b ? Math.max(0, ...gs.map(g => { const r = g.getBoundingClientRect(); return Math.max(Math.abs(r.left - b.left), Math.abs(r.top - b.top), Math.abs(r.width - b.width), Math.abs(r.height - b.height)); })) : -1 }; });
+  check(gh320.n >= 1 && gh320.worst >= 0 && gh320.worst <= 1, `at 320 x 568 the ghost is ${gh320.worst.toFixed(1)} px off the plane picture (${gh320.n} ghosts; want <= 1)`);
+  await p.setViewportSize(vp0); await p.waitForTimeout(200);
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   check(await p.evaluate(() => document.getElementById('hNextPlane').getBoundingClientRect().height) < 40, 'the Next plane line is one short line (its bar once grew 140 px tall)');
