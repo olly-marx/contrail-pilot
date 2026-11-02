@@ -97,6 +97,8 @@ export const RULES = {
     this.nextTokenAt = 420;
     this.clock = 0;                  // drives day and night (flight school can set it)
     this.gameTime = 0;               // ms of unfrozen flight, used for contrail ages
+    this.missedSign = null;          // 'Passed X. Next: Y' belongs to ONE flight (the user's report, 2026-11-02: after a crash the next flight
+                                     // showed the dead flight's 'Passed Paris. Next: Berlin': its `until` was in the old flight's game time)
     this.frozen = false;             // flight school pauses the action to explain
     this.school = null;
     this.nextStormAt = WIDTH + 200;  // first storm arrives after the climb-out
@@ -264,7 +266,7 @@ export const RULES = {
       this.airportsSkipped++;
       this.explain('x-multiplier', tip('x-multiplier'), 'lesson-bonus');
       this.nextAirport = this.airportAhead(this.airportIndex, na.worldX);
-      this.missedSign = { text: `Passed ${na.name}. Next: ${this.nextAirport.name}`, until: this.gameTime + 4000 };
+      this.missedSign = { text: `Passed ${na.name}. Next: ${this.nextAirport.name}`, to: this.nextAirport.name, until: this.gameTime + 4000 };
     }
     const toAirport = this.nextAirport.worldX - this.distancePx;
     if (this.school) return;   // flight school places everything itself

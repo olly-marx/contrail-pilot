@@ -1480,7 +1480,7 @@ export class GameScene extends Phaser.Scene {
     else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
     else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);   // ATC (eras): the call comes sooner
     else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${km(toAirport)}`);
-    else if (this.missedSign && this.gameTime < this.missedSign.until) this.nextText.setText(`${this.missedSign.text} ${km(toAirport)}`);
+    else if (this.missedSign && this.gameTime < this.missedSign.until && this.missedSign.to === this.nextAirport.name) this.nextText.setText(   /* only about THIS leg */`${this.missedSign.text} ${km(toAirport)}`);
     else this.nextText.setText('');
     this.fitText(this.nextText, WIDTH - 12);
     // The mission line: what this flight is for.
