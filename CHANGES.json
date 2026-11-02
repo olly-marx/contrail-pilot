@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-02-loading-faster",
+    "version": "0.24.1",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "The loading screen is quicker now: the game loads the pictures for your menus while it gets everything else ready."
+    ]
+  },
+  {
     "id": "2026-11-02-loading-screen",
     "version": "0.24.0",
     "date": "2026-11-02",
