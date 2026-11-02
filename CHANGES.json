@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-02-lists-tidy",
+    "version": "0.25.3",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "The nature and hangar lists no longer put names under the buttons. Long names now use two lines, so every name can be read."
+    ]
+  },
+  {
     "id": "2026-11-02-ghost-fit",
     "version": "0.25.2",
     "date": "2026-11-02",
