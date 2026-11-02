@@ -46,7 +46,7 @@ const KEY = 'contrailPilot.v2';
     });
 
     await p.addInitScript(([k, v, pl]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); if (pl) localStorage.setItem('contrailPilot.pilot', JSON.stringify(pl)); } }, [KEY, save, pilot]);
-    await p.goto(URL); await ready(p); await p.waitForTimeout(1200);
+    await p.goto(URL, { timeout: 30000 }); await ready(p); await p.waitForTimeout(1200);   // (the page's default is 4 s for CLICKS: a loaded machine took longer than that to LOAD the page, a flake seen twice)
     p.net = net;
     return p;
   };
