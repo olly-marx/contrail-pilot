@@ -2,7 +2,8 @@
 //   1. The loading screen is gone after ready() and never covers #goBtn (the new player's START is #goBtn too): pointer-events none / removed, and the button is what a tap would hit.
 //   2. After ready: HANGAR, NATURE (every open land), MISSIONS, BOARDS and back, then TAKE OFF: every request for a file under assets/ must be the loader's (X-Preload header) or served from the cache
 //      (the idle fetch of tier 2; its fetch() carries an X-Preload header); a request from any other script, or from the page's own <img>/CSS, fails with its URL.
-//   3. Flying: nothing at all is fetched once the plane is airborne (the loader's idle fetch yields to the flight).
+//   3. The WHOLE flight (a new player's is flight school), until it lands or crashes: the scene declares it (loading.flying) and the loader starts no fetch while it is on;
+//      timeline kept in the page (every loader fetch, and a 50 ms sample of the flag / scene state / school / bottom bar). Tier-2 work is still queued, so a loader that ignored the flight would fetch.
 // PLANTS: tools/plants.tsv, test `preloadgate` (each must FAIL this test). Run: python3 -m http.server 8000 & node tests/preloadgate.cjs
 const { chromium } = require('playwright-core');
 require('./lib/shipped.js');
@@ -17,6 +18,18 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const ctx = await b.newContext({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
     const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify(s)); }, save);
+    // A timeline kept IN the page: every fetch the loader makes, and every 50 ms what says 'a flight is on': the flag the scene declares (loading.flying), the scene state,
+    // flight school, and the bottom bar hidden. Whole flight, not a window: a loader fetch that starts while two or more of these samples in a row say flying is a failure.
+    await p.addInitScript(() => {
+      window.__tl = [];
+      const f = window.fetch.bind(window);
+      window.fetch = (u, o) => { if (o && o.headers && o.headers['X-Preload']) window.__tl.push({ k: 'req', t: performance.now(), u: String(u) }); return f(u, o); };
+      setInterval(() => {
+        const L = window.cpLoading, g = window.game && game.scene && game.scene.getScene('game'), tb = document.getElementById('tabbar');
+        if (!L || !L.finished) return;
+        window.__tl.push({ k: 's', t: performance.now(), flag: !!L.flying, state: g && g.state, school: !!(g && g.school), noBar: !!(tb && tb.hidden), q: (L.queue || []).length });
+      }, 50);
+    });
     const cdp = await ctx.newCDPSession(p); await cdp.send('Network.enable');
     const reqs = [], byId = new Map(); let phase = 'load';
     // A request counts only if it really went to the network: a picture the loader already fetched is served from the browser's cache (fromDiskCache / memory).
@@ -43,16 +56,33 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.evaluate(() => { const r = document.querySelector('#hFleet .rowc, .rowc'); if (r) r.click(); }); await p.waitForTimeout(500);
     await p.evaluate(() => game.registry.get('ui').go('fly')); await p.waitForTimeout(800);
     phase = 'takeoff';
+    await p.evaluate(() => { window.__tl.length = 0; });
     await p.click('#goBtn', { timeout: 5000 }).catch(e => check(false, `${label}: TAKE OFF could not be tapped (${e.message.split('\n')[0].slice(0, 90)})`));
-    await p.mouse.move(187, 400); await p.mouse.down();   // (hold the screen: the plane lifts off while the press is held)
-    const flew = await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).then(() => true, () => false);
-    await p.mouse.up();
-    phase = 'air'; await p.waitForTimeout(2500);
-    if (save.tutorialDone !== false) check(flew, `${label}: the plane took off (state playing)`);   // (a new player's START opens flight school, which waits for its own taps)
+    // Drive the whole flight (a new player's is flight school) until it lands or crashes: hold the screen for take-off, tap to stay in the gaps, press every coach OK.
+    let held = false, flew = false; const t0 = Date.now();
+    while (Date.now() - t0 < 60000) {
+      const st = await p.evaluate(() => { const g = game.scene.getScene('game'); const next = g.storms && g.storms.find(x => x.rects[0].x + 44 > g.plane.x);
+        const target = next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : 200;
+        const ok = document.getElementById('coachOk'); const okVis = !!(ok && ok.offsetParent);
+        return { state: g.state, tap: g.state === 'playing' && g.plane.y > target && g.plane.vy > -50, okVis, over: g.state === 'over' || !!g.result }; });
+      if (st.state === 'playing') { flew = true; phase = 'air'; }
+      if (st.over && flew) break;
+      if (st.okVis) await p.click('#coachOk', { timeout: 1000 }).catch(() => {});
+      if (st.state === 'takeoff' && !held) { await p.mouse.move(187, 400); await p.mouse.down(); held = true; }
+      else if (held && st.state === 'playing') { await p.mouse.up(); held = false; }
+      if (st.tap) await p.mouse.click(187, 400);
+      await p.waitForTimeout(120);
+    }
+    if (held) await p.mouse.up();
+    const tl = await p.evaluate(() => window.__tl), samples = tl.filter(x => x.k === 's'), loads = tl.filter(x => x.k === 'req');
+    const isFlying = x => x.flag || x.school || x.noBar || ['takeoff', 'playing', 'landing'].includes(x.state);
+    check(flew, `${label}: the plane took off (state playing) within the drive`);
+    check(samples.some(x => x.flag), `${label}: the scene DECLARED the flight (loading.flying was on at some point)`);
+    check(samples.some(x => x.flag && x.q > 0), `${label}: ... while tier-2 work was still queued (the test could fail)`);
+    const clash = loads.filter(r => { const before = samples.filter(x => x.t <= r.t).pop(), after = samples.find(x => x.t >= r.t); return before && after && isFlying(before) && isFlying(after); });
+    check(!clash.length, `${label}: the loader fetched ${clash.length} file(s) while a flight was on (of ${loads.length} fetches in all): ${clash.slice(0, 4).map(r => r.u.replace(/^.*\/assets\//, '')).join(', ')}`);
     const bad = reqs.filter(r => r.phase !== 'load' && !r.fromLoader && !r.cached);
     check(!bad.length, `${label}: ${bad.length} file(s) under assets/ fetched after ready (a tap, take-off or flight), not by the loader: ${bad.slice(0, 6).map(r => `${r.path} [${r.phase} via ${r.initiator}]`).join(', ')}`);
-    const inAir = reqs.filter(r => r.phase === 'air' && !r.cached);
-    check(!inAir.length, `${label}: ${inAir.length} file(s) fetched while flying (the loader must wait for the landing): ${inAir.slice(0, 5).map(r => r.path).join(', ')}`);
     check(menusSeen(n), `${label}: the NATURE screen had open lands to visit (${n})`);
     check(!p.errs.length, `${label}: page errors: ${p.errs.join(' | ').slice(0, 200)}`);
     await ctx.close();

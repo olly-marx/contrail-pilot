@@ -238,3 +238,4 @@ preloadgate	src/wild.js	s/assets\/ui\/proj-${p.id}.png"/assets\/ui\/proj-${p.id}
 preloadgate	src/preload.js	s/'assets\/ui\/badge-locked.png', 'assets\/ui\/badge-secret.png', //	the locked/secret badge pictures dropped from every tier (fetched when BOARDS opens)
 preloadgate	src/loader.js	s/(s \&\& FLYING.includes(s.state))/false/	the idle fetch keeps going while the plane flies
 preloadgate	src/loader.js	s/box.style.pointerEvents = 'none'; box.classList.add('done'); setTimeout(() => box.remove(), 450);/box.style.pointerEvents = 'auto'; box.classList.add('done');/	the loading screen stays on top and keeps catching taps after ready
+preloadgate	src/GameScene.js	s/    loading.flying = true;   \/\/ DECLARED/    loading.flying = !this.school;   \/\/ DECLARED/	the scene never declares a flight in flight school (the idle fetch runs through the whole school flight)

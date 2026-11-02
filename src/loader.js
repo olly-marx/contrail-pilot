@@ -30,10 +30,10 @@ async function fetchAll(list, onEach, lanes = 12) {
 
 export const loading = {
   phaser: { done: 0, total: 0 }, menus: { done: 0, total: 0 }, sceneBuilt: false, menusDone: false, finished: false, shown: 0, trail: [],
-  cv: null, ctx: null, save: null,
+  cv: null, ctx: null, save: null, flying: false,   // flying: set by GameScene.startFlight (school included), cleared by onFinish / backToMenu
 
   start(save) {
-    this.save = save;
+    this.save = save; window.cpLoading = this;   // (for tests/preloadgate.cjs, like window.game)
     this.list = tier1(save, tripLands(save));   // known up front, so the total (and the plane) never jumps back when the menu step starts
     this.menus = { done: 0, total: this.list.length };
     const box = document.getElementById('loader'); if (!box) return;
@@ -95,8 +95,9 @@ export const loading = {
     let trip = tripLands(this.save).join();
     const step = async () => {
       const s = scene();
-      const inMenus = !document.getElementById('tabbar').hidden;   // (the bottom bar shows on every menu screen, never while playing: flight school too, whose state is not 'playing')
-      if (document.hidden || !inMenus || (s && FLYING.includes(s.state))) return setTimeout(step, 1000);   // never while flying (or in the background)
+      // DECLARED by the scene: `flying` is on for the whole flight, flight school included. The other two checks are only a second guard.
+      const inMenus = !document.getElementById('tabbar').hidden;
+      if (document.hidden || this.flying || !inMenus || (s && FLYING.includes(s.state))) return setTimeout(step, 1000);   // never while flying (or in the background)
       const now = tripLands(this.save).join();
       if (now !== trip) {   // a different trip was chosen on HOME: its lands' art, and its animals' flight frames, go first (before TAKE OFF, never mid-flight)
         trip = now; for (const r of now.split(',')) this.promote(r);

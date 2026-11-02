@@ -297,6 +297,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])
       || (p => p[0] !== this.path[0] || p[1] !== this.path[1])(pathNow())) { this.scene.restart({ go: true }); return; }
     this.takeOff();   // the flight's rules (src/sim/rules.js): kit, random stream, onto the runway
+    loading.flying = true;   // DECLARED: a flight (flight school too) is on, so the idle picture fetch waits (src/loader.js); cleared by onFinish and backToMenu
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
     this.regionBanner(this.regionNow);   // which land you take off from, and its meter
   }
@@ -304,6 +305,7 @@ export class GameScene extends Phaser.Scene {
   // Esc while parked on the runway: back to the title, nothing lost, no flight counted.
   backToMenu() {
     if (this.state !== 'takeoff' || this.airborne || this.rollSpeed >= 5 || this.school) return;   // parked only: never mid-roll
+    loading.flying = false;
     this.scene.restart();
     this.ui.showTitle();
   }
@@ -1516,6 +1518,7 @@ export class GameScene extends Phaser.Scene {
   // The flight has ended and the rules have banked it (bankFlight: this.result, this.bank): the crash or
   // landing effects, the online boards, and the results screen.
   onFinish({ landed = false, reason = '', sound = 'crash' }) {
+    loading.flying = false;   // the flight is over (landed or crashed): the idle fetch may go on
     const { m, missionDone, lap, crash, gained } = this.bank;
     this.hud.setCo2(0);
     this.ui.endToasts();   // a fresh toast finishes its 2 s (the user: one vanished at once)
