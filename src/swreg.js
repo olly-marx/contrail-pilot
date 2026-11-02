@@ -5,8 +5,10 @@
 const stamp = () => window.__CP_VERSION || new URL(import.meta.url).searchParams.get('v') || ((/[?&]v=([^&]+)/.exec((document.querySelector('script[src*="main.js"]') || {}).src || '')) || [])[1] || null;   // (a module from the worker's cache has no ?v of its own)
 
 export async function killServiceWorker() {
-  try { for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister(); } catch (e) { /* nothing registered */ }
+  try { const c = navigator.serviceWorker.controller; if (c) c.postMessage({ kill: true }); } catch (e) { /* no worker controls this page */ }   // it stops answering at once
   try { for (const k of await caches.keys()) if (k.startsWith('cp-')) await caches.delete(k); } catch (e) { /* no Cache Storage */ }
+  // Not awaited: Chrome queues an unregister behind the registration's other jobs (an update check can hold it for ~30 s); the worker above is already silent.
+  try { navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister())); } catch (e) { /* nothing registered */ }
 }
 
 // urls: absolute or page-relative picture addresses to keep for offline.

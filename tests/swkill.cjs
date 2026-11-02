@@ -17,14 +17,16 @@ const { ready, CHROME, ARGS, prepare, swMessage, cacheNames } = require('./lib/s
   const regs = p => p.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length);
   const cps = async p => (await cacheNames(p)).filter(k => k.startsWith('cp-'));
   // (polled with evaluate: waitForFunction with an async predicate treats the pending Promise as true at once, so it could never fail)
+  // The caches go at once; Chrome may hold the unregistration back for ~30 s behind the registration's other jobs, so the registration gets up to 100 s.
   const gone = async (p, label) => {
-    let state = null;
-    for (let i = 0; i < 40; i++) {
+    let state = null, cachesGone = false;
+    for (let i = 0; i < 100; i++) {
       state = await p.evaluate(async () => ({ regs: (await navigator.serviceWorker.getRegistrations()).length, cps: (await caches.keys()).filter(k => k.startsWith('cp-')) })).catch(() => null);
+      if (state && !state.cps.length) cachesGone = true;
       if (state && state.regs === 0 && !state.cps.length) return;
-      await p.waitForTimeout(400);
+      await p.waitForTimeout(1000);
     }
-    check(false, `${label}: the worker or its caches are still there (${JSON.stringify(state)})`);
+    check(false, `${label}: the worker or its caches are still there after 100 s (${JSON.stringify(state)}; caches ever gone: ${cachesGone})`);
   };
   const fresh = async () => { const ctx = await b.newContext({ viewport: { width: 375, height: 667 } }); await prepare(ctx); return { ctx, p: await ctx.newPage() }; };
 

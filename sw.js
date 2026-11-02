@@ -27,6 +27,9 @@ const meta = async (key, value) => {
 const manifestOf = async name => { if (!(await caches.has(name))) return null; const c = await caches.open(name); const r = await c.match('assets-manifest.json'); return r ? r.json() : null; };
 
 self.addEventListener('install', e => e.waitUntil((async () => {
+  // The kill switch also reaches a worker that is only now updating: version.json says "sw": false -> clear every cp-* cache, unregister, and fail the install (nothing is created).
+  const ver = await fetch('version.json', { cache: 'no-store' }).then(r => r.json()).catch(() => ({}));
+  if (ver.sw === false) { for (const k of await caches.keys()) if (k.startsWith('cp-')) await caches.delete(k); self.registration.unregister(); throw new Error('service worker switched off (version.json)'); }   // (unregister is NOT awaited: its job waits behind this very install)
   const fresh = await (await fetch('assets-manifest.json', { cache: 'no-store' })).json();
   const cache = await caches.open(CUR);
   const prevName = await meta('current');
@@ -75,6 +78,7 @@ const cacheFirst = async (req, name) => {
 };
 
 self.addEventListener('fetch', e => {
+  if (killed) return;
   const req = e.request, url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== location.origin || !url.pathname.startsWith(new URL(self.registration.scope).pathname)) return;
   const p = path(req.url);
@@ -86,8 +90,9 @@ self.addEventListener('fetch', e => {
 });
 
 // The page's list of everything it has loaded or may show (src/swreg.js): fetch what is missing, 4 at a time, from the browser's own cache first.
-let filling = false;
+let filling = false, killed = false;   // killed: the page's kill switch (src/swreg.js): answer nothing, the page goes to the network
 self.addEventListener('message', e => {
+  if (e.data && e.data.kill) { killed = true; return; }
   if (e.data && e.data.skip) { self.skipWaiting(); return; }
   if (!e.data || !Array.isArray(e.data.fill) || filling) return;   // (one fill at a time: the page sends its list again when a new worker activates)
   filling = true;
