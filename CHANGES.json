@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-02-loading-screen",
+    "version": "0.24.0",
+    "date": "2026-11-02",
+    "level": "major",
+    "notes": [
+      "New: a loading screen! A little plane draws a contrail across the sky while the game gets ready.",
+      "Everything in the hangar, NATURE and the badge screens is ready before you play, so pictures no longer pop in when you tap.",
+      "The animals for your next trip are ready before take-off."
+    ]
+  },
+  {
     "id": "2026-11-01-hangar-nature-redesign",
     "version": "0.23.0",
     "date": "2026-11-01",
