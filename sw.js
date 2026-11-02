@@ -24,7 +24,7 @@ const meta = async (key, value) => {
   if (value === undefined) { const r = await c.match('/' + key); return r ? r.text() : null; }
   await c.put('/' + key, new Response(value));
 };
-const manifestOf = async name => { const c = await caches.open(name); const r = await c.match('assets-manifest.json'); return r ? r.json() : null; };
+const manifestOf = async name => { if (!(await caches.has(name))) return null; const c = await caches.open(name); const r = await c.match('assets-manifest.json'); return r ? r.json() : null; };
 
 self.addEventListener('install', e => e.waitUntil((async () => {
   const fresh = await (await fetch('assets-manifest.json', { cache: 'no-store' })).json();
@@ -47,8 +47,8 @@ self.addEventListener('install', e => e.waitUntil((async () => {
 
 self.addEventListener('activate', e => e.waitUntil((async () => {
   const before = await meta('current');
-  if (before !== BUILD) { await meta('previous', before || ''); await meta('current', BUILD); }
-  const keep = new Set([CUR, META, 'cp-' + (await meta('previous'))]);
+  if (before !== CUR) { await meta('previous', before || ''); await meta('current', CUR); }   // (cache NAMES, not build ids)
+  const keep = new Set([CUR, META, await meta('previous')]);
   for (const k of await caches.keys()) if (k.startsWith('cp-') && !keep.has(k)) await caches.delete(k);   // current + previous only
   await self.clients.claim();
   await say({ sw: 'ready', build: BUILD });

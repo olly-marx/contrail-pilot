@@ -19,9 +19,11 @@ export async function startServiceWorker(urls = []) {
   } catch (e) { /* offline: the worker we have keeps working */ }
   try {
     const reg = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' });
-    await navigator.serviceWorker.ready;
-    const sw = reg.active || navigator.serviceWorker.controller;
-    if (sw) sw.postMessage({ fill: urls.map(u => new URL(u, location.href).href) });
+    const fill = urls.map(u => new URL(u, location.href).href);
+    const post = () => { const sw = navigator.serviceWorker.controller || reg.active; if (sw) sw.postMessage({ fill }); };
+    // A NEW worker (an update) becomes active after this page has loaded: it says so, and gets the list again.
+    navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.sw === 'ready') post(); });
+    await navigator.serviceWorker.ready; post();
     return 'registered';
   } catch (e) { return 'failed: ' + e.message; }
 }

@@ -9,7 +9,13 @@ def walk(top):
         for n in sorted(names):
             yield os.path.relpath(os.path.join(d, n), site).replace(os.sep, '/')
 sha = lambda p: hashlib.sha1(open(os.path.join(site, p), 'rb').read()).hexdigest()
-shell = ['index.html', 'style.css', 'manifest.webmanifest'] + sorted(walk('src')) + sorted(walk('vendor'))
+import re
+# The pictures the page itself names (index.html <img>/<link>, style.css url(...)): they are part of the shell (a parse of the two files, nothing guessed).
+static = set()
+named = re.compile(r'(?:src|href)="(assets/[^"?]+)"|url\([\'"]?(assets/[^)\'"?]+)')
+for f in ('index.html', 'style.css'):
+    static |= {a or b for a, b in named.findall(open(os.path.join(site, f)).read())}
+shell = ['index.html', 'style.css', 'manifest.webmanifest'] + sorted(walk('src')) + sorted(walk('vendor')) + sorted(p for p in static if os.path.exists(os.path.join(site, p)))
 files = {p: sha(p) for p in sorted(walk('assets'))}
 json.dump({'build': build, 'shell': shell, 'files': files}, open(os.path.join(site, 'assets-manifest.json'), 'w'))
 print(f'assets-manifest.json: {len(shell)} shell files, {len(files)} pictures')
