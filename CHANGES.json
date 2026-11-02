@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-02-offline",
+    "version": "0.25.0",
+    "date": "2026-11-02",
+    "level": "major",
+    "notes": [
+      "New: the game now keeps itself on your phone, so it starts and plays without the internet after you have played it once.",
+      "You can add Contrail Pilot to your Home Screen, with its own icon, and open it like an app.",
+      "Updates still arrive by themselves."
+    ]
+  },
+  {
     "id": "2026-11-02-loading-faster",
     "version": "0.24.1",
     "date": "2026-11-02",
