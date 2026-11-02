@@ -95,7 +95,8 @@ export const loading = {
     let trip = tripLands(this.save).join();
     const step = async () => {
       const s = scene();
-      if (document.hidden || (s && FLYING.includes(s.state))) return setTimeout(step, 1000);   // never while flying (or in the background)
+      const inMenus = !document.getElementById('tabbar').hidden;   // (the bottom bar shows on every menu screen, never while playing: flight school too, whose state is not 'playing')
+      if (document.hidden || !inMenus || (s && FLYING.includes(s.state))) return setTimeout(step, 1000);   // never while flying (or in the background)
       const now = tripLands(this.save).join();
       if (now !== trip) {   // a different trip was chosen on HOME: its lands' art, and its animals' flight frames, go first (before TAKE OFF, never mid-flight)
         trip = now; for (const r of now.split(',')) this.promote(r);
