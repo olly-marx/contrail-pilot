@@ -28,14 +28,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
       return [...document.querySelectorAll('#wRegions [data-region]')].map(x => x.dataset.region); });
     const measure = sel => p.evaluate(sel => {
       /* the height of the TEXT, not of its box: since R0 the sub line's box is as tall as the price button (a wrapped name may reach 2 lines at 320, one at 375/390) */
-      const textHeight = c => { const rg = document.createRange(); rg.selectNodeContents(c); const q = [...rg.getClientRects()].filter(x => x.width > 0); return q.length ? Math.max(...q.map(x => x.bottom)) - Math.min(...q.map(x => x.top)) : 0; };
+      const lines = c => { const rg = document.createRange(); rg.selectNodeContents(c); const t = []; for (const x of rg.getClientRects()) if (x.width > 0) { const y = Math.round(x.top); if (!t.some(v => Math.abs(v - y) < 4)) t.push(y); } return t.length; };   /* rendered lines of TEXT, not the box height */
       const out = { rows: 0, bad: [], names: new Set(), prices: new Set(), imgs: [] };
       for (const r of document.querySelectorAll(sel)) {
         if (!r.offsetParent) continue; out.rows++;
         for (const c of r.querySelectorAll('.rowc-name, .rowc-sub, .rowc-price')) {
           if (c.classList.contains('rowc-price')) { if (c.scrollWidth > c.clientWidth + 1) out.bad.push(`price too wide: "${c.textContent.trim()}"`); continue; }   /* a button: padding + icon make it taller than a text line */
           const lh = parseFloat(getComputedStyle(c).lineHeight) || parseFloat(getComputedStyle(c).fontSize) * 1.3;
-          if (c.scrollWidth > c.clientWidth + 1 || textHeight(c) > lh * (c.classList.contains('rowc-name') ? 2.5 : 1.6)) out.bad.push(`${c.className}: "${c.textContent.trim()}" (${c.scrollWidth}>${c.clientWidth} or its text is ${Math.round(textHeight(c))}px tall)`);
+          if (c.scrollWidth > c.clientWidth + 1 || lines(c) > (c.classList.contains('rowc-name') ? 2 : 1)) out.bad.push(`${c.className}: "${c.textContent.trim()}" (${c.scrollWidth}>${c.clientWidth} or ${lines(c)} lines)`);
           if (c.getBoundingClientRect().right > r.getBoundingClientRect().right + 1) out.bad.push(`${c.className} spills out of its row: "${c.textContent.trim()}"`);
         }
         const n = r.querySelector('.rowc-name'), pr = r.querySelector('.rowc-price');

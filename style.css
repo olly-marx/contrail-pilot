@@ -761,7 +761,7 @@ h2.sub { margin-top: -4px; }
 .rowc-tap { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
 .rowc-icon { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
 .rowc-tap > .rowc-slot { grid-row: 1 / span 2; width: 32px; height: 32px; }   /* no art: an empty slot keeps the column */
-.rowc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.rowc-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-width: 0; }   /* the level pips drop under a long name instead of squeezing it */
 .rowc-name { font-size: 9px; white-space: normal; overflow-wrap: break-word; }   /* may wrap to 2 lines on EVERY row (decision 8) */
 .rowc-pips { display: flex; gap: 2px; flex: none; }
 .rowc-pips .pip { width: 8px; height: 5px; background: #d8d4c8; }
