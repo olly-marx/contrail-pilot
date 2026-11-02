@@ -9,6 +9,7 @@ import { flightPath, city, schoolSave } from './route.js';
 import { crossingPath } from './crossings.js';
 
 const W = 96, H = 54;
+const SPRITE_FRAME = /^assets\/(pixellab\/)?(animal|sky)-[^/]*\.png$/;   // the in-flight frames of an animal (not the menu portraits under ui/)
 const SKY = ['#10142b', '#16204a', '#1d2f66', '#264080', '#3a5a9c', '#5b82b8'];   // night to dawn, flat bands
 const FLYING = ['takeoff', 'playing', 'landing'];
 
@@ -36,6 +37,9 @@ export const loading = {
     this.save = save; window.cpLoading = this;   // (for tests/preloadgate.cjs, like window.game)
     this.list = tier1(save, tripLands(save));   // known up front, so the total (and the plane) never jumps back when the menu step starts
     this.menus = { done: 0, total: this.list.length };
+    // The menu pictures start loading NOW, beside Phaser's own files (their latency overlaps); only the animal frames wait for Phaser (it loads the trip's own: the same files, fetched once).
+    this.early = this.list.filter(f => !SPRITE_FRAME.test(f)); this.late = this.list.filter(f => SPRITE_FRAME.test(f));
+    this.earlyDone = fetchAll(this.early, () => { this.menus.done++; });
     const box = document.getElementById('loader'); if (!box) return;
     this.cv = box.querySelector('canvas'); this.txt = box.querySelector('.loader-count');
     this.ctx = this.cv.getContext('2d');
@@ -54,7 +58,8 @@ export const loading = {
   // Phaser has every game picture: now tier 1 of the menu pictures.
   async onPhaserComplete() {
     if (this.menusStarted) return; this.menusStarted = true;
-    await fetchAll(this.list, () => { this.menus.done++; });
+    await this.earlyDone;
+    await fetchAll(this.late, () => { this.menus.done++; });
     this.menusDone = true; this.maybeFinish();
   },
   // GameScene.create (the first time): the scene is built.

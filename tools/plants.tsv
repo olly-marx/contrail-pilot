@@ -239,3 +239,5 @@ preloadgate	src/preload.js	s/'assets\/ui\/badge-locked.png', 'assets\/ui\/badge-
 preloadgate	src/loader.js	s/if (document.hidden || this.flying || !inMenus || (s \&\& FLYING.includes(s.state))) return/if (document.hidden) return/	the idle fetch ignores the flight altogether (the flag and both second guards)
 preloadgate	src/loader.js	s/box.style.pointerEvents = 'none'; box.classList.add('done'); setTimeout(() => box.remove(), 450);/box.style.pointerEvents = 'auto'; box.classList.add('done');/	the loading screen stays on top and keeps catching taps after ready
 preloadgate	src/GameScene.js	s/    loading.flying = true;   \/\/ DECLARED/    loading.flying = !this.school;   \/\/ DECLARED/	the scene never declares a flight in flight school (the idle fetch runs through the whole school flight)
+flagclear	src/GameScene.js	s/    loading.flying = false;   \/\/ the flight is over (landed or crashed): the idle fetch may go on/    \/\/ (plant: onFinish does not clear)/	onFinish no longer clears loading.flying (a crash or landing leaves tier 2 stuck)
+flagclear	src/GameScene.js	/^    loading.flying = false;$/d	Esc on the runway (backToMenu) no longer clears loading.flying
