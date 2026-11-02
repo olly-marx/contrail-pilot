@@ -2,13 +2,14 @@
 // Renders into the existing #boards section (index.html). Online is off in season 2, so there are no other pilots yet.
 import { BOARDS, PERIODS, values, fresh, clearFresh } from './records.js';
 import { writeSave } from './save.js';
+import { markSeen } from './fresh.js';
 
 const $ = id => document.getElementById(id);
 let period = 'week', pick = 'longest';
 
 export function showRecords(save) {
   const fr = fresh(save);   // the NEW RECORD! marks: boards beaten since the screen was last opened
-  clearFresh(save); writeSave(save);
+  clearFresh(save); markSeen(save, 'boards/records'); writeSave(save);   // (showRecords runs only when BOARDS is the screen: the new dot's 'seen')
   const intro = !(save.seenTips || []).includes('records-intro');
   if (intro) { save.seenTips = [...(save.seenTips || []), 'records-intro']; writeSave(save); }
   $('boards').classList.add('records');
