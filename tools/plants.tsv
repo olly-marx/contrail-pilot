@@ -132,7 +132,7 @@ onrails	src/hangar.js	s#toFly: false, rails:#toFly: free \&\& !!s.areas, rails:#
 onrails	src/tour.js	s#text: tip('rail-free-tap'),#skipIf: () => true, text: tip('rail-free-tap'),#	R5 without the tap-to-see step
 onrails	style.css	s#background: rgba(10, 10, 30, 0.62); pointer-events: auto;#background: rgba(10, 10, 30, 0.62); pointer-events: none;#	the dim lets taps through
 onrails	src/upgrades.js	s#{ gapTurb: 0 }#{}#	turbulence before L2
-onrails	src/tour.js	s#  keepVisible() {#  keepVisible() { return;#	rails targets not kept above the tab bar
+keepvisible	src/tour.js	s#  keepVisible() {#  keepVisible() { return;#	rails targets not kept above the tab bar (moved from onrails 2026-11-02: no onrails step exercises it after the redesign)
 onrails	style.css	s#.payoff.arrive .pay-plane { transform: scale(1.8); }#.payoff.arrive .pay-plane { transform: none; }#	no payoff zoom
 onrails	src/hangar.js	s#lab.style.left = `${Math.round(x)}px`;#lab.style.left = `${Math.round(x) + 140}px`;#	payoff label off the part
 onrails	src/hangar.js	s#) > 60) {#) > -1) {#	payoff part = the whole picture
@@ -213,7 +213,7 @@ rowfit	src/wild.js	s/<img class=\"rowc-icon\" src=\"assets\/ui\/proj-\${p.id}.pn
 rowfit	style.css	s/^\.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 100px;/.rowc-price { position: absolute; right: 8px; bottom: 6px; width: 84px;/	prices too narrow for 1800 225
 hangar	src/hangar.js	s/<span class="era-row"><span class="era-track">/<span><span class="era-track">/	the Next plane bar unwrapped (a tall box)
 # RETIRED 2026-11-01 (stage 2, the payoff in the page): the scroll-anchoring plant (#hangar overflow-anchor removed) is no longer caught by any check:
-# the payoff scrolls itself into view and the box returns on screen after OK, so anchoring no longer causes a visible fault. The CSS line stays (harmless).
+# the payoff scrolls itself into view and the box returns on screen after OK, so anchoring no longer causes a visible fault. The CSS line STAYS: the finance desk (TRADE / LOCK / BUY) re-renders without a payoff, where anchoring could nudge the view (cosmetic; the plane build, 2026-11-01).
 # hangar	style.css	s/#hangar { overflow-anchor: none; }/#hangar { }/	scroll anchoring moves the box off the payoff card
 onrails	src/tour.js	s/if (solo) solo.classList.add('tour-only');/if (false) solo.classList.add('tour-only');/	a row step shows its price too (two things to tap)
 hangar	src/hangar.js	s/    if (this.paying) { this.renderLater = true; return; }/    if (false) { this.renderLater = true; return; }/	a re-render wipes the in-box payoff

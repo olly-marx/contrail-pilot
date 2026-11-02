@@ -61,7 +61,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
     const issr = (s.issrs || []).find(i => i.x + i.width > s.plane.x && i.x < s.plane.x + (window.__avoid ? 450 : 200));   // (avoiding: seen from further, to steer clear in time)
     return { state: s.state, school: !!s.school, y: s.plane.y, vy: s.plane.vy, day: s.isDay, results: !document.getElementById('results').hidden,
       okUp: !coach.hidden && !ok.hidden && !ok.disabled, tapStep: !coach.hidden && coach.classList.contains('waiting') && ok.hidden,
-      skyH: 464, toRunway: s.nextAirport ? s.nextAirport.worldX - s.distancePx : 1e9,
+      skyH: 464, toRunway: s.nextAirport ? s.nextAirport.worldX - s.distancePx : 1e9, kitTurb: s.kit ? s.kit.gapTurb : null,   /* the gate itself (the plant sweep, 2026-11-02: flights may end before turbulence can start, so watching for it alone proved nothing) */
       gap: ahead && ahead.rects[0].x < s.plane.x + 220 ? (ahead.rects[0].height + ahead.rects[1].y) / 2 - 6 : null,
       issr: issr ? { top: issr.y, bot: issr.y + issr.height } : null,
       covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), why: cr && { plane: [pr.l, pr.t, pr.r, pr.b].map(Math.round), strip: [cr.left, cr.top, cr.right, cr.bottom].map(Math.round), low: coach.classList.contains('strip-low'), planeY: Math.round(s.plane.y), text: coach.textContent.slice(0, 60) }, turbs: (s.turbs || []).length,
@@ -73,12 +73,12 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
     : v.issr ? (v.day && !avoid ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
     : v.toRunway < 700 ? v.skyH - 30 : v.skyH * 0.45;
   const fly = async (label, seconds, rules = {}) => {
-    const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0, lesson = null, coverFirst = null, coverLast = null;
+    const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0, kitTurbs = new Set(), lesson = null, coverFirst = null, coverLast = null;
     while (Date.now() - t0 < seconds * 1000) {
       const v = await look();
       if (v.results) break;
       if (rules.lessonPatch && !lesson && v.lesson && v.lesson.ahead <= 140 && v.lesson.ahead >= 0) { lesson = v.lesson; await shot('flight2-lesson-patch'); }
-      if (v.covered) { covered++; if (!coverFirst) coverFirst = { at: Date.now() - t0, ...v.why }; coverLast = { at: Date.now() - t0, ...v.why }; } turbs = Math.max(turbs, v.turbs); wild = Math.max(wild, v.wild);
+      if (v.covered) { covered++; if (!coverFirst) coverFirst = { at: Date.now() - t0, ...v.why }; coverLast = { at: Date.now() - t0, ...v.why }; } turbs = Math.max(turbs, v.turbs); if (v.state === 'playing' && v.kitTurb != null) kitTurbs.add(v.kitTurb); wild = Math.max(wild, v.wild);
       if (v.okUp) { await p.click('#coachOk').catch(() => {}); continue; }
       if (v.tapStep) { await p.mouse.click(W / 2, H * 0.55); await p.waitForTimeout(150); continue; }
       if (v.state === 'takeoff' || v.state === 'idle') { await p.mouse.move(W / 2, H * 0.55); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up(); continue; }
@@ -88,7 +88,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
     await p.waitForTimeout(3200);   // the results reveal
     check(await p.evaluate(() => !document.getElementById('results').hidden), `${label}: the flight ended with the results`);
     check(!covered, `${label}: no teaching strip ever covered the plane (${covered} frames did; first ${JSON.stringify(coverFirst)}, last ${JSON.stringify(coverLast)})`);   // (the rects are the diagnostic: is the strip stale (low/high chosen at open time) or the plane moving into it?)
-    if (rules.noTurb) check(!turbs, `${label}: no turbulence yet (${turbs})`);
+    if (rules.noTurb) { check(!turbs, `${label}: no turbulence yet (${turbs})`); check(kitTurbs.size === 1 && kitTurbs.has(0), `${label}: the flight's turbulence gate is shut (kit.gapTurb ${[...kitTurbs]})`); }
     if (rules.noWild) check(!wild, `${label}: no wild animals yet (${wild})`);
     if (rules.lessonPatch) check(lesson && lesson.onScreen && lesson.drawn > 0 && lesson.day, `${label}: the guaranteed icy patch is DRAWN on screen (alpha > 0) in daylight as the plane nears it, 140 px out (${JSON.stringify(lesson)})`);
   };
