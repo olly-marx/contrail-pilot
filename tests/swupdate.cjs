@@ -21,7 +21,7 @@ const { ready, CHROME, ARGS, prepare, swMessage, stamp, cacheNames, sha1 } = req
     ccccccc: buildSite('ccccccc'), ddddddd: buildSite('ddddddd'),
   };
   const hashOf = (b, f) => crypto.createHash('sha1').update(fs.readFileSync(path.join(dirs[b], f))).digest('hex');
-  const h = await host(dirs.aaaaaaa);
+  const h = await host(dirs.aaaaaaa, { base: '/contrail-pilot/' });   // (the subpath GitHub Pages uses)
   const b = await chromium.launch({ executablePath: CHROME, args: ARGS });
   const ctx = await b.newContext({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
   await prepare(ctx);

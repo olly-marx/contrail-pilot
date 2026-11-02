@@ -10,7 +10,7 @@ const { ready, CHROME, ARGS, prepare, swMessage, stamp } = require('./lib/swpage
 
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  const dir = buildSite('aaaaaaa'); const h = await host(dir);
+  const dir = buildSite('aaaaaaa'); const h = await host(dir, { base: '/contrail-pilot/' });   // (GitHub Pages serves the game under a subpath: the worker's scope, paths and cache keys must work there)
   const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'swprofile-'));
   const launch = () => chromium.launchPersistentContext(profile, { executablePath: CHROME, args: ARGS, viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
 

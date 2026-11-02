@@ -12,7 +12,7 @@ const { ready, CHROME, ARGS, prepare, swMessage, cacheNames } = require('./lib/s
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const on = buildSite('aaaaaaa');
   const off = buildSite('bbbbbbb', d => { const f = path.join(d, 'version.json'); const v = JSON.parse(fs.readFileSync(f, 'utf8')); v.sw = false; fs.writeFileSync(f, JSON.stringify(v)); });
-  const h = await host(on);
+  const h = await host(on, { base: '/contrail-pilot/' });   // (the subpath GitHub Pages uses)
   const b = await chromium.launch({ executablePath: CHROME, args: ARGS });
   const regs = p => p.evaluate(async () => (await navigator.serviceWorker.getRegistrations()).length);
   const cps = async p => (await cacheNames(p)).filter(k => k.startsWith('cp-'));
@@ -46,7 +46,7 @@ const { ready, CHROME, ARGS, prepare, swMessage, cacheNames } = require('./lib/s
   await ctx.close();
 
   // 3. the unstamped game registers nothing
-  const local = await host(repo, { port: 0 });
+  const local = await host(repo, { port: 0, base: '/contrail-pilot/' });
   ({ ctx, p } = await fresh());
   await p.goto(local.url); await ready(p); await p.waitForTimeout(3000);
   check(!local.hits['sw.js'], `3: an unstamped page never even asks for sw.js (${local.hits['sw.js'] || 0} requests)`);
