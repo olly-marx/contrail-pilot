@@ -90,7 +90,7 @@ export class GameScene extends Phaser.Scene {
     // Each region's ground strip and hills (woodland's are 'ground' and 'hills', loaded above).
     for (const r in REGIONS) for (const k of [REGIONS[r].ground, REGIONS[r].hills]) if (k && !['ground', 'hills'].includes(k)) this.load.image(k, `assets/${k}.png`);
     this.load.image('puff', 'assets/puff.png');
-    this.queueArt(tripLands(this.registry.get('save')));   // the animals of the lands on the trip HOME has chosen: loaded here, behind the loading screen, so TAKE OFF fetches nothing
+    this.queueArt(this.artLands(tripLands(this.registry.get('save'))));   // the animals of the lands on the trip HOME has chosen: loaded here, behind the loading screen, so TAKE OFF fetches nothing
     for (const kind of Object.keys(SPECIES)) for (let s = 0; s < 3; s++) this.load.image(`tree-${kind}-${s}`, `assets/tree-${kind}-${s}.png`);
   }
 
@@ -494,10 +494,11 @@ export class GameScene extends Phaser.Scene {
   }
   // After the scene is built: fetch, in the background, the drawings for every land on this flight's path
   // (a species also drawn for another land is in WILDLIFE once, under its own region, so check both).
+  // The lands whose drawings a trip needs: its own lands, and the home land of any species they share (see the note above).
+  artLands(lands) { return [...lands, ...new Set(lands.flatMap(r => regionSpecies(r).map(w => (WILDLIFE.find(x => x.sprite === w.sprite) || {}).region).filter(Boolean)))]; }
   loadPathArt() {
     const lands = [...new Set(this.path.map(n => (city(n) || {}).region).filter(Boolean))];
-    const extra = [...new Set(lands.flatMap(r => regionSpecies(r).map(w => (WILDLIFE.find(x => x.sprite === w.sprite) || {}).region).filter(Boolean)))];
-    if (this.queueArt([...lands, ...extra])) {
+    if (this.queueArt(this.artLands(lands))) {
       this.load.once('complete', () => { if (this.regionNow) this.wildlife = wildlifeScene(this.save, this.regionNow); });
       this.load.start();
     }

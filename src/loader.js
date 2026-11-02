@@ -5,7 +5,7 @@
 // Tier 2 (every other land's menu art) is fetched afterwards, one picture at a time, only when the game is idle (never while flying).
 // All drawing is code (a small canvas, no pictures); the canvas is 96 x 54 game pixels scaled up with image-rendering: pixelated.
 import { tier1, tier2, regionArt } from './preload.js';
-import { flightPath, city } from './route.js';
+import { flightPath, city, schoolSave } from './route.js';
 import { crossingPath } from './crossings.js';
 
 const W = 96, H = 54;
@@ -15,13 +15,14 @@ const FLYING = ['takeoff', 'playing', 'landing'];
 // The lands of the trip a save would fly next (the chosen crossing, else the usual path): their art is tier 1.
 export function tripLands(save) {
   try {
-    const path = save.flyCrossing ? crossingPath(save.flyCrossing) : flightPath(save);
+    const path = save.flyCrossing ? crossingPath(save.flyCrossing) : flightPath(save.tutorialDone ? save : schoolSave(save));   // (the same choice as GameScene's pathNow)
     return [...new Set(path.map(n => (city(n) || {}).region).filter(Boolean))];
   } catch (e) { return []; }
 }
 
-// One picture, fetched through a throwaway Image: the browser's cache keeps it for the <img> that shows it later (nothing is held in memory here).
-const fetchPicture = url => new Promise(res => { const i = new Image(); i.onload = i.onerror = () => res(); i.src = url; });
+// One picture, fetched with fetch(): the browser's cache keeps it for the <img> that shows it later (nothing is held in memory here). The X-Preload header
+// marks the request as the loader's own: tests/preloadgate.cjs allows only those after 'ready'.
+const fetchPicture = url => fetch(url, { headers: { 'X-Preload': '1' } }).then(r => r.blob()).catch(() => {});
 async function fetchAll(list, onEach, lanes = 6) {
   let next = 0;
   await Promise.all(Array.from({ length: lanes }, async () => { while (next < list.length) { const url = list[next++]; await fetchPicture(url); onEach(); } }));
@@ -98,7 +99,7 @@ export const loading = {
       const now = tripLands(this.save).join();
       if (now !== trip) {   // a different trip was chosen on HOME: its lands' art, and its animals' flight frames, go first (before TAKE OFF, never mid-flight)
         trip = now; for (const r of now.split(',')) this.promote(r);
-        if (s && s.queueArt && s.queueArt(now.split(','))) s.load.start();
+        if (s && s.queueArt && s.queueArt(s.artLands(now.split(',')))) s.load.start();
       }
       if (!this.queue.length) return setTimeout(step, 2000);   // (idle: look again for a new trip)
       await fetchPicture(this.queue.shift());
