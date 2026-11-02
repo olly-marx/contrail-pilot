@@ -289,6 +289,8 @@ loadercount	src/loader.js	s/const pool = FACTS.filter(f => words(f) <= FACT_MAX_
 newdot	src/fresh.js	s/save.seen\[scope\] = now.slice();/for (const sc of Object.keys(current(save, opts))) save.seen[sc] = current(save, opts)[sc].slice();/	markSeen on one scope marks EVERY scope seen (the old shared list: NATURE cleared the hangar, ui.js:287)
 newdot	src/fresh.js	s/!(seen\[scope\] || \[\]).includes(k)/true/	fresh ignores what was seen: the dot never clears
 newdot	src/fresh.js	s/save.seen\[scope\] = now.slice();/save.seen[scope] = [...new Set([...before, ...now])];/	markSeen unions instead of replacing: a key that left and came back never lights again
-newdot	src/fresh.js	s/if (save.seen) return false;/if (false) return false;/	migrateSeen runs every time (or a save always counts as unseen): see the migration check
+newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (false) return false;/	migrateSeen runs every time (or a save always counts as unseen): see the migration check
 newdot	src/fresh.js	s/'missions': 'pending: R4/'missions': 'TODO R4/	a scope with no producer and no 'pending: R<n>' note (silently unused)
 newdot	src/fresh.js	s/if (missions) for (const k of missions(save)) add('missions', k);/\/\/ (hook removed)/	the missions hook drops its keys
+newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (save.seen) return false;/	the migration keyed on save.seen: an early markSeen stops it and the other scopes get dots
+newdot	src/records.js	s/  for (const b of beaten) r.beaten.push(/  for (const b of []) r.beaten.push(/	recordFlight no longer writes the beaten keys: BOARDS never lights

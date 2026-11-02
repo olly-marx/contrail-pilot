@@ -78,6 +78,19 @@ const src = f => path.join(__dirname, '..', 'src', f);
     check(real.length >= 1, `PRODUCERS says ${sc} is produced, but a rich save has no keys there`);
   }
   check((got.missions || []).join() === 'tier:2,done:L3' && !F.current(live).missions, 'the missions hook passes its keys through, and is empty without it');
+  // An early markSeen (one scope) must not stop the migration from marking the others seen.
+  const e = rich(); F.markSeen(e, hs[0]);
+  check(F.migrateSeen(e) === true, 'migrateSeen must still run after an early markSeen created save.seen');
+  check(Object.keys(F.fresh(e)).length === 0, `an early markSeen then the migration leaves dots: ${JSON.stringify(F.fresh(e))}`);
+
+  // recordFlight appends 'record:<id>:<period>:<value>' keys (a later beat is a new key) and fresh() reads them.
+  const R = await import(src('records.js')), r0 = prepareSave(null), L = d => ({ landed: true, distance: d, shade: 0, heatTrapped: 0 });
+  R.recordFlight(r0, L(3000)); F.migrateSeen(r0); R.recordFlight(r0, L(5000));
+  check(JSON.stringify(r0.records.beaten) === '["record:longest:ever:5000","record:longest:week:5000"]', `recordFlight beaten keys: ${JSON.stringify(r0.records.beaten)}`);
+  check(F.dots(r0).boards === true, 'a beaten record lights BOARDS through recordFlight'); F.markSeen(r0, 'boards/records');
+  R.recordFlight(r0, L(7000));
+  check(F.isFresh(r0, 'boards/records', 'record:longest:ever:7000') && !F.isFresh(r0, 'boards/records', 'record:longest:ever:5000'), 'the next beat is a new key');
+
   if (fails.length) { console.log(`FAIL newdot\n  ${fails.slice(0, 12).join('\n  ')}`); process.exit(1); }
   console.log(`PASS newdot: scopes ${hs.concat(ns).join(', ')}; separate, roll-up, re-dot, migration, boards`);
 })();

@@ -13,6 +13,7 @@ import { lookFiles, hangarGadgets, previewBars, withNext, shortName } from './fl
 import { statBarsHTML, animateBars } from './statbars.js';
 import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
+import { markSeen, hangarScope } from './fresh.js';
 import { FINANCE, financeLevel, financeOpen, natureHealth, rate, rateAt, canTake, trade, buyFinance, bonds, canLock, lockBond, payBonds, payDividend } from './finance.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
 
@@ -24,8 +25,8 @@ const eraName = i => ERAS[i].name;
 const needText = (s, l) => `need ${[Math.max(0, l.cost - s.seeds) && `${l.cost - s.seeds}<i class="seedicon"></i>`, Math.max(0, (l.crystals || 0) - (s.crystals || 0)) && `${(l.crystals || 0) - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ')} more`;
 const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
 
-// Things in the fleet you could buy right now, as keys ('gadget:magnet:3').
-export const fleetBuyable = save => nextBuys(save).filter(b => b.open && canAfford(save, b)).map(b => `${b.kind}:${b.id}:${b.level}`);
+// Things in the fleet you could buy right now, as keys ('gadget:magnet:3'): src/fresh.js owns it (pure); re-exported for ui.js.
+export { fleetBuyable } from './fresh.js';
 
 export class FleetHangar {
   constructor(ui) { this.ui = ui; this.tab = 'plane'; }
@@ -42,6 +43,8 @@ export class FleetHangar {
     // Matured biodiversity bonds pay out when you come to the hangar (src/finance.js).
     const div = payDividend(s); if (div) { this.ui.persist(); this.ui.toast && this.ui.toast('NATURE DIVIDEND!', `+${div} crystals: your land here is healthy.`, 'good', 4); }
     const paid = payBonds(s); if (paid) { this.ui.persist(); this.ui.toast && this.ui.toast('BONDS PAID!', `${paid.seeds.toLocaleString('en-GB')} seeds back + ${paid.crystals} crystals: healthy nature pays interest.`, 'good', 4); }
+    // The NEW dots (src/fresh.js): this sub-tab is on screen, so what it shows is now seen. Only while the hangar is VISIBLE (refresh() also renders it behind NATURE).
+    if (!$('hangar').hidden && markSeen(s, hangarScope(this.tab))) this.ui.persist();
     // M4: how far this plane + nature can get (src/capability.js), worked out in the background after a purchase.
     estimate(s, () => { this.ui.persist(); const c = $('hCap'); if (c) c.outerHTML = this.capHTML(s); });
     const bb = $('hBond'); if (bb) bb.onclick = () => { if (lockBond(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };

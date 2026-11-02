@@ -1,6 +1,13 @@
 // ONE source for "what is new": fresh(save), dots(save), markSeen(save, scope). Pure (no DOM): the UI asks, it never decides.
 // Replaces shopSeen / shownLines / treesSeen / records.fresh / the hub badges (research: ~/contrail-research/UX-MASTER-PLAN.md B4).
 //
+// API (R2; for the screens, R6 NATURE and R4 MISSIONS):
+//   dots(save, opts)            -> { hangar: true, 'hangar/plane': true, nature: true, 'nature/<land>': true, boards: ... }  tab + sub-tab dots (lit only)
+//   isFresh(save, scope, key)   -> a ROW's dot: key = 'project:<id>' | 'tree:<slot>' | 'animal:<id>' | '<kind>:<id>:<level>' | 'badge:<id>:<tier>'
+//   markSeen(save, scope)       -> call from the sub-screen's render WHILE IT IS SHOWING (visible, not a hidden refresh); true = persist the save
+//   migrateSeen(save)           -> once at load (everything already there counts as seen); opts.lands = the NATURE lands, HOME FIRST (wild.js discovered/homeRegion)
+//   scope names: hangarScope(tab) / natureScope(land) / 'boards/records' / 'boards/badges' / 'missions'; PRODUCERS says who makes each scope's keys.
+//
 // A KEY names one thing that can be new ('gadget:magnet:3', 'project:meadow', 'tree:2', 'animal:badger', 'badge:coolplanet:1').
 // A SCOPE is the sub-screen it lives on ('hangar/plane', 'hangar/systems', 'hangar/gadgets', 'nature/<land>', 'boards/records',
 // 'boards/badges'). save.seen[scope] = the keys the player has been SHOWN there. fresh = keys that exist now and are not in seen.
@@ -25,6 +32,8 @@ export const PRODUCERS = {
   'boards/records': 'save.records.beaten (records.js recordFlight, R2 step 2)', 'boards/badges': 'fresh.js current(): save.badgeTiers',
   'missions': 'pending: R4 (game chat): opts.missions(save) -> [\'tier:<n>\' (a tier opened), \'done:<key>\' (finished off-flight)]',
 };
+export const hangarScope = tab => `hangar/${tab}`;   // tab: 'plane' | 'systems' | 'gadgets'
+export const natureScope = land => `nature/${land}`;
 export const HANGAR_SCOPES = ['hangar/plane', 'hangar/systems', 'hangar/gadgets'];
 export const BOARD_SCOPES = ['boards/records', 'boards/badges'];
 
@@ -90,11 +99,12 @@ export function markSeen(save, scope, opts) {
   return true;
 }
 
-// Once, when the save has no save.seen: everything already buyable / open / found / earned counts as seen (no dot storm on the
+// Once, when the save has no save.seenMigrated: everything already buyable / open / found / earned counts as seen (no dot storm on the
 // release). Returns true if it ran.
 export function migrateSeen(save, opts) {
-  if (save.seen) return false;
-  save.seen = {};
-  for (const [scope, keys] of Object.entries(current(save, opts))) save.seen[scope] = keys.slice();
+  if (save.seenMigrated) return false;   // a flag, not "save.seen exists": an early markSeen may have created save.seen with one scope
+  save.seen = save.seen || {};
+  for (const [scope, keys] of Object.entries(current(save, opts))) save.seen[scope] = [...new Set([...(save.seen[scope] || []), ...keys])];
+  save.seenMigrated = true;
   return true;
 }
