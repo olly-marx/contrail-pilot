@@ -10,6 +10,7 @@ import { mask } from './sim/masks-load.js';
 import { MASK_DATA } from './sim/masks.js';
 import { Hud } from './Hud.js';
 import { sendFlight } from './online.js';
+import { loading, tripLands } from './loader.js';
 import { flightPath, city, HOME, schoolSave } from './route.js';
 import { crossingPath, completeCrossing } from './crossings.js';
 import { AREAS } from './areas.js';
@@ -53,6 +54,11 @@ export class GameScene extends Phaser.Scene {
   constructor() { super('game'); }
 
   preload() {
+    if (!loading.hooked) {   // the loading screen counts these files (src/loader.js); once, not on every scene restart
+      loading.hooked = true;
+      this.load.on('progress', () => loading.onPhaser(this.load.totalComplete, this.load.totalToLoad));
+      this.load.on('complete', () => loading.onPhaserComplete());
+    }
     this.load.image('plane', 'assets/plane.png');   // the 747; also the collision mask for EVERY plane
     this.load.image('plane-comet', 'assets/plane-comet.png');   // eras (src/fleet.js): looks only
     this.load.image('plane-twin', 'assets/plane-twin.png');
@@ -84,6 +90,7 @@ export class GameScene extends Phaser.Scene {
     // Each region's ground strip and hills (woodland's are 'ground' and 'hills', loaded above).
     for (const r in REGIONS) for (const k of [REGIONS[r].ground, REGIONS[r].hills]) if (k && !['ground', 'hills'].includes(k)) this.load.image(k, `assets/${k}.png`);
     this.load.image('puff', 'assets/puff.png');
+    this.queueArt(tripLands(this.registry.get('save')));   // the animals of the lands on the trip HOME has chosen: loaded here, behind the loading screen, so TAKE OFF fetches nothing
     for (const kind of Object.keys(SPECIES)) for (let s = 0; s < 3; s++) this.load.image(`tree-${kind}-${s}`, `assets/tree-${kind}-${s}.png`);
   }
 
@@ -133,6 +140,7 @@ export class GameScene extends Phaser.Scene {
     this.wildLayer = this.add.layer();     // cows, sheep and wild animals
     this.regionNow = null; this.setRegion(this.regionHere(), true);   // what is below the plane (src/geo.js)
     this.loadPathArt();
+    loading.onSceneBuilt();   // (the loading screen goes once the menu pictures are in too)
     if (FEATURES.pixelReadout) this.previewReadout();
     this.buildWildlife();
     this.plotLayer = this.add.layer();
@@ -522,6 +530,7 @@ export class GameScene extends Phaser.Scene {
     this.save.discovered = this.save.discovered || {};
     if (this.save.discovered[r]) return;
     this.save.discovered[r] = Date.now();
+    loading.promote(r);   // its NATURE art first in line for the idle fetch
     this.popup(WIDTH / 2, SKY_H - 80, `YOU DISCOVERED:\n${REGION_NAMES[r].toUpperCase()}!`, '#8dffb0', 12);
   }
 
