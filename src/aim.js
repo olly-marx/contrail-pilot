@@ -45,9 +45,10 @@ export function routeTo(save, target, tid = null, count = 60) {
   let way = save.heading && opts.includes(save.heading) && save.heading !== target
     ? (p => p && [here, ...p])(pathTo(save.heading, target, L)) : pathTo(here, target, L);
   if (!way) return flightPath(save, count);
-  if (tid === 'route' && way.length === 2) {   // next door: go round by a neighbour of both, so one airport is passed
-    const via = opts.find(n => n !== target && (L[n] || []).includes(target));
-    if (via) way = [here, via, target];
+  if (tid === 'route' && way.length === 2) {   // next door: go round (the shortest way NOT using the direct link), so an airport is passed
+    const noDirect = { ...L, [here]: (L[here] || []).filter(n => n !== target) };
+    const round = pathTo(here, target, noDirect);
+    if (round && round.length - 1 <= MAX_LEGS) way = round;
   }
   return continueTour(way, count, L);
 }
