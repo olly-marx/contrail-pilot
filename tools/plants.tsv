@@ -226,3 +226,9 @@ hangar	src/hangar.js	s/      this.sel = null;   \/\/ (before the render: the str
 releasegate	tools/gate-plan.py	s/        if add is not None:      #/        if False:      #/	an append-only list diff is treated as a harness change again (the whole tier)
 releasegate	tools/gate-plan.py	s/        if line.startswith('-'):/        if False:/	an edited or removed list line is treated as an append (the plan is narrowed)
 releasegate	tests/PATHMAP	s/^group harness | tests\/lib\/\* /group harness | /	an edit to tests/lib/* no longer means the whole tier
+preloadlist	src/preload.js	s/\.\.\.hangarArt(), \.\.\.badgeArt(), \.\.\.landsOf/...hangarArt(), ...landsOf/	tier 1 forgets the badge medals (the BOARDS/badges screen would fetch on tap)
+preloadlist	src/preload.js	s/'bush', 'steppe', 'polynesia'\];/'bush', 'polynesia'];/	a land's field picture is in no tier
+preloadlist	src/preload.js	s/ || trip.includes(r))/)/	the lands of the chosen trip are not preloaded
+preloadlist	src/preload.js	s/for (let f = 0; f < (w.frames || 2); f++) out.push/for (let f = 0; f < 0; f++) out.push/	a land's animal frames (setRegion / the field) are not listed
+preloadlist	src/preload.js	s/ERA_PICS = \['1950s', '1970s', '1990s'\]/ERA_PICS = ['1950s', '1970s', '1990s', '2010s']/	welcome.js would ask for an era picture that is not on disk
+preloadlist	src/preload.js	s/'steppe', 'tundra', 'woodland'\])$/'steppe', 'tundra'])/	a picture file nobody declared (scene-woodland)
