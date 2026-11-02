@@ -226,7 +226,7 @@ hangar	src/hangar.js	s/      this.sel = null;   \/\/ (before the render: the str
 releasegate	tools/gate-plan.py	s/        if add is not None:      #/        if False:      #/	an append-only list diff is treated as a harness change again (the whole tier)
 releasegate	tools/gate-plan.py	s/        if line.startswith('-'):/        if False:/	an edited or removed list line is treated as an append (the plan is narrowed)
 releasegate	tests/PATHMAP	s/^group harness | tests\/lib\/\* /group harness | /	an edit to tests/lib/* no longer means the whole tier
-preloadlist	src/preload.js	s/\.\.\.hangarArt(), \.\.\.badgeArt(), \.\.\.landsOf/...hangarArt(), ...landsOf/	tier 1 forgets the badge medals (the BOARDS/badges screen would fetch on tap)
+preloadlist	src/preload.js	s/\.\.\.badgeArt(save), \.\.\.landsOf/...landsOf/	tier 1 forgets the badge medals (the BOARDS/badges screen would fetch on tap)
 preloadlist	src/preload.js	s/'bush', 'steppe', 'polynesia'\];/'bush', 'polynesia'];/	a land's field picture is in no tier
 preloadlist	src/preload.js	s/ || trip.includes(r))/)/	the lands of the chosen trip are not preloaded
 preloadlist	src/preload.js	s/for (let f = 0; f < (w.frames || 2); f++) out.push/for (let f = 0; f < 0; f++) out.push/	a land's animal frames (setRegion / the field) are not listed
