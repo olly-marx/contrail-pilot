@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-02-route-header",
+    "version": "0.25.1",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "Fixed: the top display no longer shows the old route after a crash. A new flight shows only its own trip."
+    ]
+  },
+  {
     "id": "2026-11-02-offline",
     "version": "0.25.0",
     "date": "2026-11-02",
