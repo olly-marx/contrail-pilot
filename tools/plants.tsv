@@ -264,3 +264,4 @@ overlap	style.css	s/^\.rowc > \.rowc-price { grid-area: 2 \/ 2; align-self: end;
 overlap	style.css	s/ min-height: var(--price-h); display: flex; align-items: center; }/ }/	the sub line is no taller than the price (a wrapped name reaches it)
 fitscreen	style.css	s/^\.mlist { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }/.mlist { display: flex; flex-direction: column; gap: 4px; margin: 700px 0 6px; }/	the MISSIONS list starts below the tab bar (first row and primary not on the first screen)
 textbudget2	src/habitat/bush.js	s/row: 'Fox and cat control'/row: 'Fox and cat control across the whole of south-western Australia'/	a project row name over 2 lines at 320
+missionreach	src/missions2.js	s/ready: f => f.cityB !== f.start, //	a rescue mission offered with no target but where you start (the 3-city Patagonia case)
