@@ -270,3 +270,7 @@ skipaim	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim
 skipaim	src/aim.js	s/save && save.skipAim ? null : aimOpen(save)/aimOpen(save)/	the skip does nothing (the route still aims)
 skipaim	src/hub.js	s/skip: aimOpen(save) ? (save.skipAim ? 'on' : 'off') : null,/skip: save.skipAim ? 'on' : 'off',/	the skip button offered with no city mission to aim at
 textbudget2	src/aim.js	s/skip: 'Skip mission route this trip'/skip: 'Skip the mission route this trip'/	the skip chip text over one line at 320 (33 chars)
+skiptrip	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the real landing keeps skipping)
+skiptrip	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip
+skiptrip	src/ui.js	s/toggleSkip(this.save); writeSave(this.save);/writeSave(this.save);/	the tap on the chip does nothing
+skiptrip	style.css	s/#title.hub .hub-skip { display: flex;/#title.hub .hub-skip { min-height: 20px; max-height: 20px; display: flex;/	the chip is a 20 px target (under the 40 px minimum)
