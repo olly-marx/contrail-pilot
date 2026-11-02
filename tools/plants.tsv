@@ -234,3 +234,7 @@ preloadlist	src/preload.js	s/ERA_PICS = \['1950s', '1970s', '1990s'\]/ERA_PICS =
 preloadlist	src/preload.js	s/'steppe', 'tundra', 'woodland'\])$/'steppe', 'tundra'])/	a picture file nobody declared (scene-woodland)
 preloadlist	src/preload.js	s/ || (fleet \&\& !fleet.planes\[p.id\])//	tier 1 holds overlays of planes the save does not own
 preloadlist	src/preload.js	s/t <= tierOf(save, b.id) + 1/t <= tierOf(save, b.id)/	the medal a landing can award next is not in tier 1 (it would fetch on the results card)
+preloadgate	src/wild.js	s/assets\/ui\/proj-${p.id}.png"/assets\/ui\/proj-${p.id}.png?lazy"/	a NATURE project icon fetched on the tap (a different URL: nothing preloaded it)
+preloadgate	src/preload.js	s/'assets\/ui\/badge-locked.png', 'assets\/ui\/badge-secret.png', //	the locked/secret badge pictures dropped from every tier (fetched when BOARDS opens)
+preloadgate	src/loader.js	s/(s \&\& FLYING.includes(s.state))/false/	the idle fetch keeps going while the plane flies
+preloadgate	src/loader.js	s/box.style.pointerEvents = 'none'; box.classList.add('done'); setTimeout(() => box.remove(), 450);/box.style.pointerEvents = 'auto'; box.classList.add('done');/	the loading screen stays on top and keeps catching taps after ready
