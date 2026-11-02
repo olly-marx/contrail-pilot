@@ -29,3 +29,4 @@ group online-parked | src/online.js src/restore.js src/uploadbanner.js src/newpl
 group loader | src/preload.js src/loader.js | preloadgate flagclear loadercount hubscreen hangar nature onrails
 group service-worker | sw.js manifest.webmanifest src/swreg.js | swoffline swupdate swkill
 group sw-raw | sw.js src/updates.js src/swreg.js tests/lib/rawchrome.js tests/lib/sitehost.js tests/lib/swpage.js | swupdate swoffline swkill
+group route-header | src/GameScene.js src/sim/rules.js | routeheader
