@@ -223,3 +223,6 @@ hangar	src/ui.js	s/    if (tab !== 'hangar' \&\& this.fleet \&\& this.fleet.payi
 postrails	src/tour.js	s|target: '#hFleet .rowc .rowc-sub'|target: '#hFleet .line .next'|	the systems rail points at the old row markup (it re-runs on every return HOME)
 onrails	src/hangar.js	s/      if (rails \&\& this.ui.tour) this.ui.tour.payoffOk(); };/      if (false) this.ui.tour.payoffOk(); };/	the rails payoff leaves the whole live page tappable (no OK ring)
 hangar	src/hangar.js	s/      this.sel = null;   \/\/ (before the render: the strip/      this.sel = this.sel;   \/\/ (before the render: the strip/	the next item's BUY shows under the payoff
+releasegate	tools/gate-plan.py	s/        if add is not None:      #/        if False:      #/	an append-only list diff is treated as a harness change again (the whole tier)
+releasegate	tools/gate-plan.py	s/        if line.startswith('-'):/        if False:/	an edited or removed list line is treated as an append (the plan is narrowed)
+releasegate	tests/PATHMAP	s/^group harness | tests\/lib\/\* /group harness | /	an edit to tests/lib/* no longer means the whole tier

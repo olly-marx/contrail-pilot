@@ -66,5 +66,37 @@ r = list(['src/tour.js']); check(r.tests.has('firsthour-real'), 'an onboarding f
 r = list(['src/records.js']); check(!r.tests.has('firsthour-real'), 'a records change does not run firsthour-real');
 r = list(['src/sim/rules.js']); check(r.tests.has('firsthour-real'), 'rules.js (school landing, free part) runs firsthour-real');
 
+// 13. Appending lines to the declared lists is NOT a harness change (user, 2026-11-01): the plan is the new tests + what the rest of the diff maps to. Editing/removing a
+//     list line, or touching tests/lib/*, is still the whole tier. Run in a scratch git repo holding copies of the planner and the lists.
+{
+  const os = require('os');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'gateplan-'));
+  const sh = (cmd, ...a) => spawnSync(cmd, a, { cwd: tmp, encoding: 'utf8' });
+  fs.mkdirSync(path.join(tmp, 'tools')); fs.mkdirSync(path.join(tmp, 'tests/lib'), { recursive: true });
+  fs.copyFileSync(path.join(root, 'tools/gate-plan.py'), path.join(tmp, 'tools/gate-plan.py'));
+  for (const f of ['GATE', 'DEEP', 'BROWSER', 'PATHMAP']) fs.copyFileSync(path.join(root, 'tests', f), path.join(tmp, 'tests', f));
+  fs.writeFileSync(path.join(tmp, 'tests/lib/shim.js'), '// shim\n');
+  sh('git', 'init', '-q'); sh('git', 'add', '-A'); sh('git', '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'base');
+  const plan = () => { const x = spawnSync('python3', [path.join(tmp, 'tools/gate-plan.py'), '--list', '--base', 'HEAD'], { cwd: tmp, encoding: 'utf8' }); return { code: x.status, tests: new Set(x.stdout.split('\n').filter(Boolean)), err: x.stderr }; };
+  const reset = () => { sh('git', 'checkout', '-q', '--', '.'); };
+  const append = (f, text) => fs.appendFileSync(path.join(tmp, f), text);
+  // (a) lines appended to the lists (a new browser test + a GATE, a DEEP and a PATHMAP line) -> the smoke set + the new browser test only, not the whole tier
+  append('tests/BROWSER', 'brandnewtest\n'); append('tests/DEEP', 'sim-newone # reason\n'); append('tests/GATE', 'gatenew\n'); append('tests/PATHMAP', 'group newgroup | src/newthing.js | NONE\n');
+  let q = plan(); check(q.code === 0 && q.tests.has('brandnewtest') && q.tests.size === SMOKE.length + 1, `append-only list diff -> smoke + the new browser test only, not the whole tier (got ${q.tests.size} of ${browser.length + 1}): ${[...q.tests].slice(0, 14).join(' ')}`);
+  reset();
+  // (b) an EDITED list line, or a deletion -> the whole tier
+  fs.writeFileSync(path.join(tmp, 'tests/BROWSER'), fs.readFileSync(path.join(tmp, 'tests/BROWSER'), 'utf8').replace('atc\n', 'atcx\n'));
+  q = plan(); check(q.tests.size === browser.length, `an edited tests/BROWSER line -> the whole tier (got ${q.tests.size} of ${browser.length})`);
+  reset();
+  fs.writeFileSync(path.join(tmp, 'tests/PATHMAP'), fs.readFileSync(path.join(tmp, 'tests/PATHMAP'), 'utf8').replace(' textfit crash', ' textfit'));
+  q = plan(); check(q.tests.size === browser.length, `an edited tests/PATHMAP line -> the whole tier (got ${q.tests.size})`);
+  reset();
+  // (c) a real harness edit (tests/lib/*) -> the whole tier, even together with an append
+  append('tests/lib/shim.js', '// changed\n'); append('tests/BROWSER', 'brandnewtest\n');
+  q = plan(); check(q.tests.size === browser.length + 1, `an edit to tests/lib/* (+ an appended test) -> the whole tier (got ${q.tests.size} of ${browser.length + 1})`);
+  reset();
+  fs.rmSync(tmp, { recursive: true, force: true });
+}
+
 if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
 console.log('PASS releasegate (docs-only = smoke, group unions, postrails only for lessons/parcels, harness = all, own test, unmapped refused)');
