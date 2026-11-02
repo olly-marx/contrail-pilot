@@ -16,7 +16,7 @@ globalThis.SEASON2 = true;
   const naming = M.TEMPLATES.filter(t => /\$\{f\.city[BC]?\}/.test(String(t.title))).map(t => t.id).sort();
   check(JSON.stringify(naming) === JSON.stringify([...CITY].sort()) && JSON.stringify(Object.keys(AIM.CITY_TEMPLATES).sort()) === JSON.stringify([...CITY].sort()),
     `the city templates are declared everywhere (missions2 names a city in: ${naming}; aim.js: ${Object.keys(AIM.CITY_TEMPLATES)})`);
-  let cases = 0; const far = [];
+  let cases = 0; const far = [], per = {};
   const at = (path, t) => path.indexOf(t, 1);
   for (const [a, area] of Object.entries(A.AREAS)) {
     if (!area.starter) continue;
@@ -26,11 +26,11 @@ globalThis.SEASON2 = true;
       const f = M.fillFor(save, a, c);
       for (const tid of CITY) {
         const t = AIM.CITY_TEMPLATES[tid](f, save); if (!t || t === c) continue;
-        const i = at(AIM.routeTo(save, t, tid, 12), t); cases++;
+        const i = at(AIM.routeTo(save, t, tid, 12), t); cases++; (per[a] = per[a] || { cases: 0, far: 0 }).cases++;
         if (i < (tid === 'route' ? 2 : 1) || i > AIM.MAX_LEGS) far.push(`${a} ${c} ${tid} -> ${t} at stop ${i}`);
         if (tid === 'chain' && f.cityB && f.cityB !== f.city) {   // its second city, from its first (after landing there)
           const s2 = { ...save, city: f.city, visited: [c, f.city], prevLanded: f.city }, t2 = AIM.CITY_TEMPLATES.chain(f, s2);
-          const j = at(AIM.routeTo(s2, t2, 'chain', 12), t2); cases++;
+          const j = at(AIM.routeTo(s2, t2, 'chain', 12), t2); cases++; per[a].cases++;
           if (j < 1 || j > AIM.MAX_LEGS) far.push(`${a} ${f.city} chain(2nd) -> ${t2} at stop ${j}`);
         }
       }
@@ -44,10 +44,8 @@ globalThis.SEASON2 = true;
     }
   }
   // Per area (the user asked to see how bad today's routing is): cases and how many are out of reach.
-  const per = {}; for (const [a] of Object.entries(A.AREAS)) per[a] = { cases: 0, far: 0 };
   for (const f of far) per[f.split(' ')[0]].far++;
-  for (const [a, area] of Object.entries(A.AREAS)) if (area.starter) per[a].cases = area.cities.length * (CITY.length + 1);   /* (approx: + a chain's 2nd) */
-  console.log(`missionreach${AIM.ROUTE_AIM.on ? '' : ' (AIM=off: today\'s tour)'} per area, out of reach / about checked: ` + Object.entries(per).filter(([a]) => A.AREAS[a].starter).map(([a, v]) => `${a} ${v.far}/${v.cases}`).join(', '));
+  console.log(`missionreach${AIM.ROUTE_AIM.on ? '' : ' (AIM=off: today\'s tour)'} per area, out of reach / checked: ` + Object.entries(per).map(([a, v]) => `${a} ${v.far}/${v.cases}`).join(', '));
   check(cases > 100, `enough cases checked (${cases}); else this proves nothing`);
   check(!far.length, `city missions out of reach (> ${AIM.MAX_LEGS} stops, or a 'route' with no airport to pass): ${far.length} of ${cases}: ${far.slice(0, 8).join('; ')}`);
   console.log(fails.length ? `FAIL missionreach${AIM.ROUTE_AIM.on ? '' : ' (AIM=off: today\'s tour)'}:\n - ${fails.join('\n - ')}` : `PASS missionreach: ${cases} city missions from every start in every starter area are within ${AIM.MAX_LEGS} stops on the aimed route`);
