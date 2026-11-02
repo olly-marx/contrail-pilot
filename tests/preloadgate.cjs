@@ -43,7 +43,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.evaluate(() => { const r = document.querySelector('#hFleet .rowc, .rowc'); if (r) r.click(); }); await p.waitForTimeout(500);
     await p.evaluate(() => game.registry.get('ui').go('fly')); await p.waitForTimeout(800);
     phase = 'takeoff';
-    await p.click('#goBtn');
+    await p.click('#goBtn', { timeout: 5000 }).catch(e => check(false, `${label}: TAKE OFF could not be tapped (${e.message.split('\n')[0].slice(0, 90)})`));
     await p.mouse.move(187, 400); await p.mouse.down();   // (hold the screen: the plane lifts off while the press is held)
     const flew = await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).then(() => true, () => false);
     await p.mouse.up();
