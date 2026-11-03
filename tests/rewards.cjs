@@ -43,17 +43,25 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(s.seeds === 115 && s.crystals === 11, `showing the card pays nothing more (no double pay): ${s.seeds} / ${s.crystals}`);
 
   // 3. An OLDER save that still holds two waiting prizes: paid ONCE at load (the migration), with a toast; a reload pays nothing more.
+  // The toast lives only 5 s from the first menu, and a slow machine can take longer than that to finish loading: so RECORD every toast text from the
+  // start of each page load (the recorder attaches as soon as #toast is parsed, before the game's modules run) instead of looking at it afterwards.
+  await p.addInitScript(() => {
+    const attach = () => { const t = document.getElementById('toast'); if (!t) return false; if (window.__toastObs) return true; window.__toasts = [];
+      window.__toastObs = new MutationObserver(() => { if (!t.hidden) window.__toasts.push(t.textContent); });
+      window.__toastObs.observe(t, { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true, characterData: true }); return true; };
+    if (!attach()) { const w = new MutationObserver(() => { if (attach()) w.disconnect(); }); w.observe(document, { childList: true, subtree: true }); }
+  });
   const two = [{ key: 'badge:frequent:1', kind: 'badge', id: 'frequent', tier: 1, label: 'Frequent Flyer (Bronze)', seeds: 30, crystals: 2 },
     { key: 'mission:seeds-5', kind: 'mission', id: 'seeds-5', label: 'Land with 5 seeds', seeds: 35, crystals: 3 }];
   await setSave({ ...base, missionsDone: ['land'], badgeTiers: { frequent: 1 }, unclaimed: two }); await reload();
   s = await save();
   check(s.seeds === 165 && s.crystals === 15 && (s.unclaimed || []).length === 0, `the migration pays +65 +5 once at load and empties the list: ${s.seeds} / ${s.crystals}, left ${JSON.stringify(s.unclaimed)}`);
-  const toast = await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden ? t.textContent : ''; });
-  check(/Prizes collected/.test(toast) && /65/.test(toast), `a toast says so on the first menu: "${toast}"`);
+  const toasts = await p.evaluate(() => window.__toasts || []);
+  check(toasts.some(t => /Prizes collected/.test(t) && /65/.test(t)), `a toast says so on the first menu (recorded from the start of the load): ${JSON.stringify(toasts)}`);
   await reload();
   s = await save();
-  const toast2 = await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden ? t.textContent : ''; });
-  check(s.seeds === 165 && s.crystals === 15 && !/Prizes collected/.test(toast2), `a reload pays nothing more and shows no second toast: ${s.seeds} / ${s.crystals} "${toast2}"`);
+  const toasts2 = await p.evaluate(() => window.__toasts || []);
+  check(s.seeds === 165 && s.crystals === 15 && !toasts2.some(t => /Prizes collected/.test(t)), `a reload pays nothing more and shows no second toast: ${s.seeds} / ${s.crystals} ${JSON.stringify(toasts2)}`);
 
   // 4. With every land discovered, a flight completes the World tour ('world'): its prize is PAID at the bank (R8); no automatic bonus beyond it.
   const sumOf = (list, k) => list.reduce((a, x) => a + (x[k] || 0), 0);
