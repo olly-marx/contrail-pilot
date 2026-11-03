@@ -29,7 +29,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const run = (sel, band) => p.evaluate(async ({ sel, band }) => {
     const t = document.querySelector(sel), ov = t.closest('.overlay'), bar = document.querySelector('.tabbar:not([hidden])').getBoundingClientRect();
     if (band === 'bar') ov.scrollTop += t.getBoundingClientRect().bottom - (bar.top + Math.min(20, bar.height / 2));   // bottom 20 px behind the bar, top above it
-    else { const pin = document.querySelector('.wpin').getBoundingClientRect(); ov.scrollTop += t.getBoundingClientRect().top - (pin.top + pin.height / 2); }   // its top in the middle of the pinned land
+    else {   // B: make the pinned land reach PAST the middle of the visible band (as it does in the real rails: measured at 320x568, its bottom was 299 against a middle of 254), room to scroll, then put the row's top in the middle of the pinned land
+      const pe = document.querySelector('.wpin'), mid = (12 + (bar.top - 12)) / 2, need = mid + 40 - pe.getBoundingClientRect().top;
+      if (pe.getBoundingClientRect().height < need) pe.style.minHeight = `${need}px`;
+      document.querySelector('#nature .panel').style.paddingBottom = '700px'; await new Promise(r => setTimeout(r, 100));
+      const pin = pe.getBoundingClientRect(); ov.scrollTop += t.getBoundingClientRect().top - (pin.top + pin.height / 2); }
     await new Promise(r => setTimeout(r, 200));
     const r0 = t.getBoundingClientRect();
     const before = band === 'bar' ? r0.bottom > bar.top && r0.bottom <= innerHeight : (() => { const e = document.elementFromPoint(r0.left + r0.width / 2, r0.top + r0.height / 2); return !!e && !t.contains(e) && e !== t; })();
