@@ -69,6 +69,9 @@ function measure(spec) {
   // clipped = text cut: a box that hides overflow yet has more content than room, or text drawn off the screen's side.
   const clippedList = [];
   for (const e of all) if (hasText(e)) {
+    // A DECLARED scrolling row ([data-scrollrow], overflow-x auto|scroll: NATURE's land tabs, with their edge fade): a label scrolled out or half out of view is the
+    // row doing its job, not cut text. The tab you are ON must still be whole (the plan: 'every label fully visible or fully scrolled out').
+    const sr = e.closest('[data-scrollrow]'); if (sr && e !== sr && /auto|scroll/.test(getComputedStyle(sr).overflowX) && !e.closest('.on')) continue;
     const cs = getComputedStyle(e), hides = cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
     const x = extent(e);
     if ((hides && (e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 2) && e.clientHeight > 0) || x.right > innerWidth + 1 || x.left < -1) clippedList.push(label(e));
