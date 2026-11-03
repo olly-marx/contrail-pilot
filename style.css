@@ -170,6 +170,11 @@ p { margin: 0; }
 .rc-chip span { font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rc-star { font-style: normal; color: var(--gold-dark); }
 .rc-rows p { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; font-size: 8px; }
+/* R10: the gear sheet (src/ui.js openGear) */
+.gear-list { display: grid; gap: 6px; margin: 4px 0; }
+.gear-list .chip { width: 100%; justify-content: center; }
+.chip.warn { border-color: var(--warm); color: var(--warm); }
+.gear-credit { margin: 8px 0 0; text-align: left; }
 .rc-go { margin-top: 2px; }
 #results.revealing .rcard button:not(#againBtn) { pointer-events: none; }   /* a tap to skip the reveal reaches #results, not a line under the finger */
 .tour-inert { pointer-events: none; }

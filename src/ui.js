@@ -221,7 +221,7 @@ export class UI {
   // ---------- the season 2 hub (S2 of research/PROPOSAL-HOME-MISSIONS.md; what shows: src/hub.js) ----------
   setupHub() {
     $('title').classList.add('hub');
-    $('hubGear').onclick = () => { sfx.flap(); $('title').classList.toggle('menu'); };
+    $('hubGear').onclick = () => this.openGear();   // R10 (research/UX-MASTER-PLAN.md C2): ONE gear sheet: how to play, flight school, sound, about, reset, the credit
     $('hubBack').onclick = () => { sfx.flap(); this.go('fly'); };
     $('hubSpinL').onclick = () => this.hubGlobe && this.hubGlobe.nudge(-24);
     $('hubSpinR').onclick = () => this.hubGlobe && this.hubGlobe.nudge(24);
@@ -235,6 +235,21 @@ export class UI {
       b.onclick = () => { sfx.flap(); toggleSkip(this.save); writeSave(this.save); this.renderHub(); }; }
     b.hidden = !skip; b.textContent = skip === 'on' ? SKIP_TEXT.undo : SKIP_TEXT.skip;
   }
+  // The gear sheet (R10): the four small buttons, reset and the credit behind one gear, as a sheet (src/sheet.js) with 40 px buttons. The old buttons
+  // stay in the page (the classic screens use them, and their handlers are the ones the sheet calls), hidden on HOME.
+  openGear() {
+    sfx.flap();
+    const s = this.save, credit = document.querySelector('#title .credit');
+    const close = showSheet({ eyebrow: 'MENU', title: 'Settings', ok: 'CLOSE',
+      html: `<div class="gear-list"><button class="chip" type="button" data-gear="how">HOW TO PLAY</button><button class="chip" type="button" data-gear="school">FLIGHT SCHOOL</button>`
+        + `<button class="chip" type="button" data-gear="sound">SOUND: ${s.muted ? 'OFF' : 'ON'}</button><button class="chip" type="button" data-gear="about">ABOUT US</button>`
+        + `<button class="chip warn" type="button" data-gear="reset">RESET PROGRESS</button></div>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
+    const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), reset: () => $('resetBtn').click() };
+    document.querySelectorAll('#sheet [data-gear]').forEach(b => b.onclick = () => {
+      if (b.dataset.gear === 'sound') { $('muteBtn').click(); b.textContent = `SOUND: ${this.save.muted ? 'OFF' : 'ON'}`; return; }   // the sheet stays open: you hear the change
+      close(); act[b.dataset.gear](); });
+  }
+
   renderHub() {
     const s = this.save;
     const ready = s.tutorialDone ? crossingsNow(s).find(c => offerCheck(c, offerCtx(s, c)).offered || S2_UNLOCK) : null;
