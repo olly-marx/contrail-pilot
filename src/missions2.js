@@ -7,13 +7,14 @@
 // - Two kinds of check: `flight(r, save, f)` on the banked flight, and `save(save, f)` on SAVE EVENTS (a purchase, a
 //   project): an off-flight mission completes the moment the save changes, no flight needed (the user).
 // Pure: no DOM, no random. The game (src/sim/rules.js at banking, the shop after a purchase) and the sim call it.
-// Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes go to save.unclaimed (src/rewards.js).
+// Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes are paid straight into the bank (src/rewards.js payPrize).
 import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
 import { REGION_DATA, REGION_NAMES, TIERS } from './habitats.js';
 import { city, linksFor, wayTo, MAX_LEGS } from './route.js';
 import { fleetOf } from './fleet.js';
+import { payPrize } from './rewards.js';
 import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 
 // A season 2 save: save.areas is written only by season 2 (the start choice, src/startchoice.js, and crossings), so it is
@@ -140,9 +141,9 @@ export function visible(save, startCity = save.city) {
 export const next = save => visible(save)[0] || null;
 
 function finish(save, list) {
+  const before = new Set(save.missionsDone || []);
   save.missionsDone = [...new Set([...(save.missionsDone || []), ...list.map(m => m.key)])];
-  save.unclaimed = save.unclaimed || [];
-  for (const m of list) if (!save.unclaimed.some(u => u.key === `mission:${m.key}`)) save.unclaimed.push({ key: `mission:${m.key}`, kind: 'mission', id: m.key, label: m.title, ...m.prize });
+  for (const m of list) if (!before.has(m.key)) payPrize(save, m.prize);   // R8: a mission pays the moment it is done (a flight: at the bank; a purchase or a project: at the buy)
   return list;
 }
 // After a flight is banked (r = the flight result; save.city is still the START city). Firsts can come from any flight

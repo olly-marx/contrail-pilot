@@ -847,7 +847,7 @@ export const RULES = {
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
-    // Missions and badges are prizes to CLAIM, not paid now (src/rewards.js, src/badges.js).
+    // Missions and badges are PAID here, the moment the flight is banked (R8; src/rewards.js addPrizes + src/missions2.js finish pay straight into the bank).
     const rewards = this.school ? [] : [...s2Done.map(d => ({ key: `mission:${d.key}`, kind: 'mission', id: d.key, label: d.title, ...d.prize })), ...addPrizes(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, dodges: this.dodgesTotal,
       kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionDone ? mission : null, missionIndex)];
     const newBadges = rewards.filter(p => p.kind === 'badge').map(p => p.id);

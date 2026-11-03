@@ -19,7 +19,7 @@ export const crashTitle = reason => { const first = String(reason || '').split('
 const sum = (a, f) => a.reduce((n, x) => n + f(x), 0);
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
-// `paid` = what the silent claim just added { seeds, crystals } (R1 keeps claim() running behind the prize line; R8 removes it).
+// `paid` = what this flight's prizes were worth { seeds, crystals }: they were PAID at the bank (R8), the card only shows them.
 // `next` = nextUp(save) rows (the caller asks for NEXT_ROWS), `lead` = 'hangar' | 'nature' | null (ui.resultsLead).
 export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = [], lead = null } = {}) {
   const earned = r.earned || [], total = sum(earned, e => e.n), grab = earned[0] ? earned[0].n : 0;

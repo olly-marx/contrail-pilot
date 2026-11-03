@@ -28,7 +28,7 @@ export function hubView(save, { crossingReady = null } = {}) {
   const f = up[0], m = s2 ? null : currentMission(save);
   const next = s2
     ? (!f ? null : f.key === 'lead:cross' ? { title: `Crossing ready: ${crossingReady}`, crossing: true } : f.key === 'lead:free' ? { title: FREE_NEXT, hangar: true }
-      : f.key === 'lead:parcels' ? { title: f.full, id: 'L5', nature: true } : f.key === 'lead:claims' ? { title: f.full, id: 'L5', claims: true } : { title: f.full, id: f.key })
+      : f.key === 'lead:parcels' ? { title: f.full, id: 'L5', nature: true } : { title: f.full, id: f.key })
     : crossingReady ? { title: `Crossing ready: ${crossingReady}`, crossing: true } : m ? { title: m.title, id: m.id } : null;
   // The next stops, up to the mission's city when the route aims at one ("LONDON > PARIS > BERLIN (mission)"), else the first hop.
   const at = aim ? path.indexOf(aim) : -1, route = path.slice(0, at > 0 ? Math.min(at + 1, 4) : 2);

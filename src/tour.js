@@ -95,7 +95,7 @@ export class Tour {
     // R9: after flight 1: the seeds are yours; claim the mission's prize; another flight, watch for wildlife.
     if (res && d('L1') && !this.done('r-res1')) return ['r-res1', [
       { target: '#rBank', text: tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none'), ok: true },   // (playtest 2026-10-29: 0 seeds read 'your seeds')
-      { skipIf: () => { const m = document.getElementById('rMission'); return !m || m.hidden; }, target: '#rMission', text: tip('rail-mission'), ok: true },   // R1: the prize is paid already (claim() runs silently); the line says so
+      { skipIf: () => { const m = document.getElementById('rMission'); return !m || m.hidden; }, target: '#rMission', text: tip('rail-mission'), ok: true },   // R1/R8: the prize is paid already (at the bank); the line says so
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
     // R11: after flight 2: NATURE opens; its first project is FREE; how nature works.

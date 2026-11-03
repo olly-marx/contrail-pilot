@@ -1,8 +1,7 @@
 // Badges: achievements, not lessons (missions teach; see src/missions.js). Each badge measures one
 // number, from this flight (`flight`) or from your whole history (`total`); passing a tier's goal
 // earns that tier: bronze, silver, gold (a one-tier badge is just gold). Secret badges show as "???"
-// until earned. Every tier earned goes into save.unclaimed and pays only when the player taps CLAIM
-// (src/rewards.js). Art: assets/ui/badge-<id>-<tier>.png (tools/art/make_badges.py).
+// until earned. Every tier earned is PAID the moment the flight is banked (R8; src/rewards.js addPrizes). Art: assets/ui/badge-<id>-<tier>.png (tools/art/make_badges.py).
 import { LAP_KM } from './route.js';
 import { CLIMATE } from './config.js';
 

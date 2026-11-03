@@ -24,8 +24,12 @@
   check(M.lessonsLeft(s).length === 0 && M.revealed(s, 'world'), `all 5 lessons done: ${s.missionsDone}`);
   // 2. Off-flight: funding a project completes "Fund a nature project here" at once.
   s.habitat = { woodland: ['deadwood'] };
+  const seedsBefore = s.seeds || 0;
   const got = M.onSave(s);
-  check(got.some(m => m.key === 'weurope:project') && s.unclaimed.some(u => u.key === 'mission:weurope:project'), `a project completes its mission on the spot: ${got.map(m => m.key)}`);
+  const proj = got.find(m => m.key === 'weurope:project');
+  check(!!proj && (s.seeds || 0) - seedsBefore === proj.prize.seeds && proj.prize.seeds > 0 && !(s.unclaimed || []).length, `a project completes its mission on the spot AND its prize is paid at that very moment (R8: not at the next bank): ${got.map(m => m.key)}, seeds ${seedsBefore} -> ${s.seeds}`);
+  const again = M.onSave(s); check(again.length === 0 || !again.some(m => m.key === 'weurope:project'), 'and a second check does not complete (or pay) it again');
+  check((s.seeds || 0) - seedsBefore === proj.prize.seeds, `paid exactly once: ${seedsBefore} -> ${s.seeds}`);
   // 3. Stages.
   const s3 = { ...base(), areas: ['weurope', 'nordic'] };
   check(M.stageOf(s3) === 'challenge' && !M.visible(s3).some(m => m.key.startsWith('L')), 'after the first crossing: challenge stage, no lessons');
@@ -54,19 +58,21 @@
   check(L.treesOpen(s, 'woodland').includes(4) || L.OPENS[4].ok(s, 'woodland'), "woodland's 4th tree opens on Western Europe's 'kinds3'");
   check(!L.OPENS[4].ok({ ...s, missionsDone: s.missionsDone.filter(k => k !== 'weurope:kinds3') }, 'woodland'), 'and not without it');
   // 9. Prizes.
-  check(s.unclaimed.filter(u => u.key.startsWith('mission:weurope')).every(u => u.crystals === 0 && u.seeds > 0), 'area prizes are seeds only');
+  const openNow = M.visible({ ...base(), missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'] });
+  check(openNow.length > 0 && openNow.every(m => m.prize.crystals === 0 && m.prize.seeds > 0), `area prizes are seeds only (${openNow.length} open missions)`);
   // 10b. A free part waiting reveals the hangar by ITSELF (the user's live bug, 2026-10-27): the school landing grants it,
   // but no lesson is done yet (school flights don't count), and a crash on flight 1 leaves L1 undone too.
   const afterSchool = { ...base(), missionsDone: [], freeUpgrade: true, freeGiven: true };
   check(M.revealed(afterSchool, 'hangar') && H.hubView(afterSchool).next.hangar, `after the school landing (no lesson done) the hangar is revealed and NEXT leads there: ${JSON.stringify(H.hubView(afterSchool).next)}`);
   const picked = { ...afterSchool, freeUpgrade: false };   // the free part picked, flight 1 then crashed: L1 still undone
   check(M.revealed(picked, 'hangar'), 'once the free part was given the hangar stays revealed (a crash on flight 1 must not hide it)');
-  // 10c. Lesson 5 needs tree parcels; lesson prizes only pay once CLAIMED (the audit, 2026-10-27): with prizes waiting and
-  // too few seeds/crystals, NEXT says to claim them (not "buy parcels", which a child could not do).
+  // 10c. Lesson 5 needs tree parcels. Since R8 prizes are paid when earned, there is no 'claim your prizes first' step: NEXT is the FREE parcels,
+  // or (the free ones used) buy them.
   const l5 = { ...base(), missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, unclaimed: [{ key: 'mission:L4', seeds: 70, crystals: 1 }] };
   check(H.hubView(l5).next.nature && /Free tree parcels/.test(H.hubView(l5).next.title), `lesson 5, parcels not yet taken: NEXT = the FREE parcels in NATURE, not 'claim' (the user, 2026-10-28) (${JSON.stringify(H.hubView(l5).next)})`);
-  const l5used = { ...l5, freeParcelsGiven: true };   // (the free ones used up and sold back is not possible; this is the old path's guard)
-  check(H.hubView(l5used).next.claims && /Claim/.test(H.hubView(l5used).next.title), `lesson 5, free parcels already given, prizes unclaimed, parcels unaffordable: NEXT = claim (${JSON.stringify(H.hubView(l5used).next)})`);
+  const l5used = { ...l5, freeParcelsGiven: true, unclaimed: [] };   // (the free ones used up and sold back is not possible; this is the old path's guard)
+  check(H.hubView(l5used).next.nature && !H.hubView(l5used).next.claims && /Buy tree parcels/.test(H.hubView(l5used).next.title), `lesson 5, free parcels already given, parcels unaffordable: NEXT = buy them in NATURE, never 'claim' (${JSON.stringify(H.hubView(l5used).next)})`);
+  check(!H.hubView({ ...l5used, unclaimed: [{ key: 'mission:L4', seeds: 70, crystals: 1 }] }).next.claims, 'an older save that still holds prizes gets no claim step either (the migration pays them at load)');
   check(H.hubView({ ...l5, unclaimed: [], seeds: 100, crystals: 5 }).next.nature, 'with the money in the bank: NEXT = buy parcels in NATURE');
   // 10. A free upgrade leads into the hangar.
   const f = { ...base(), missionsDone: ['L1'], freeUpgrade: true };
