@@ -33,7 +33,7 @@ export const PRODUCERS = {
   'hangar/plane': 'fresh.js current(): fleet nextBuys + old upgrade lines', 'hangar/systems': 'fresh.js current(): fleet nextBuys',
   'hangar/gadgets': 'fresh.js current(): fleet nextBuys', 'nature/<land>': 'fresh.js current(): projects, trees, animals',
   'boards/records': 'save.records.beaten (records.js recordFlight, R2 step 2)', 'boards/badges': 'fresh.js current(): save.badgeTiers',
-  'missions': 'pending: R4 (game chat): opts.missions(save) -> [\'tier:<n>\' (a tier opened), \'done:<key>\' (finished off-flight)]',
+  'missions': 'pending: R4 (shipped as a HOOK, so newdot still reads it as pending: the keys need opts.missions): ui.freshOpts() passes missionsFreshKeys (src/missionsview.js) -> [\'tier:<n>\', \'done:<key>\']',
 };
 export const hangarScope = tab => `hangar/${tab}`;   // tab: 'plane' | 'systems' | 'gadgets'
 export const natureScope = land => `nature/${land}`;
