@@ -41,7 +41,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
     await shot(`flight-${set.tag}`);
     await p.evaluate(set => { const s = game.scene.getScene('game'); Object.assign(s, { landedAt: s.path[1] }, set.vals || {}); s.finish({ landed: true }); }, set);   // (a real landing names its city)
     await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 15000 }).catch(() => {});
-    await p.waitForTimeout(2500);   // the results reveal
+    await p.waitForFunction(() => document.getElementById('rSkip').hidden, null, { timeout: 8000 }).catch(() => {});   // the results reveal is over (a condition, not 2.5 s)
     return { animals, allowed: set.allowed };
   };
   const resultsState = () => p.evaluate(() => ({ btn: document.getElementById('againBtn').textContent, coach: !document.getElementById('coach').hidden }));
