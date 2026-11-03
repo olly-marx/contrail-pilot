@@ -82,7 +82,7 @@ const W = 390, H = 844;
       if (v.state === 'playing' && v.y > target(v) && v.vy > -60) await p.mouse.click(W / 2, H * 0.6);
       await p.waitForTimeout(45);
     }
-    await p.waitForFunction(() => document.getElementById('rSkip').hidden, null, { timeout: 8000 }).catch(() => {});   // the results reveal is over (a condition, not 3.2 s)
+    await p.waitForFunction(() => !document.getElementById('results').classList.contains('revealing'), null, { timeout: 10000 }).catch(() => check(false, 'the results reveal never ended (#results still has .revealing after 10 s)'));   // the results reveal is over (#results.revealing is gone): a condition, not a fixed 3.2 s
     const sv = await save();
     log.push(`flight ${f}: ${(await p.evaluate(() => document.getElementById('rTitle').textContent))} | done ${sv.missionsDone.filter(k => /^L\d$/.test(k)).join(',')} | misses ${JSON.stringify(sv.lessonMisses || {})} | parcels ${(sv.levels || {}).trees || 0}`);
     await shot(`results-flight-${f}`);

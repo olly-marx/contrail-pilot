@@ -85,7 +85,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
       if (v.state === 'playing' && v.y > target(v) && v.vy > -60) await p.mouse.click(W / 2, H * 0.6);
       await p.waitForTimeout(45);
     }
-    await p.waitForFunction(() => document.getElementById('rSkip').hidden, null, { timeout: 8000 }).catch(() => {});   // the results reveal is over (the game hides #rSkip, 'tap to skip', when its last step is shown): a condition, not 3.2 s
+    await p.waitForFunction(() => !document.getElementById('results').classList.contains('revealing'), null, { timeout: 10000 }).catch(() => check(false, 'the results reveal never ended (#results still has .revealing after 10 s)'));   // the results reveal is over (the game removes #results.revealing when its last line is in): a condition, not a fixed 3.2 s
     check(await p.evaluate(() => !document.getElementById('results').hidden), `${label}: the flight ended with the results`);
     check(!covered, `${label}: no teaching strip ever covered the plane (${covered} frames did; first ${JSON.stringify(coverFirst)}, last ${JSON.stringify(coverLast)})`);   // (the rects are the diagnostic: is the strip stale (low/high chosen at open time) or the plane moving into it?)
     if (rules.noTurb) { check(!turbs, `${label}: no turbulence yet (${turbs})`); check(kitTurbs.size === 1 && kitTurbs.has(0), `${label}: the flight's turbulence gate is shut (kit.gapTurb ${[...kitTurbs]})`); }
