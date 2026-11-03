@@ -25,3 +25,15 @@ Checked in the code, because the rule is stated as a fact and I read the files: 
 
 ## Order proposed
 (1) pure test edits 1+2 (no rule touched; plants unchanged); (2) one measuring slot (~15 min): a per-test timeline, flight vs wait vs load; (3) decide the declared time source from those numbers, not from this estimate; (4) the `postrails` split.
+
+## Decisions and the postrails split design (2026-11-03, after the Coordinator's approval of (a) and (b))
+**Approved:** (a) fixed waits that precede a state check become conditions (a generous timeout stays as the failure bound); (b) split `postrails` into two halves of four flights, same assertions, run in parallel. **Held:** a declared game clock (`__CP_TIMESCALE`): the user's no-hooks rule stands for onrails and postrails.
+**Done in `ts1/waits`:** the results-reveal sleeps (3.2 s in onrails + postrails, 2.5 s in walkthrough) wait for `#results` to lose `.revealing`, which R1's `showResults` adds before the card builds and removes when the last line is in (src/ui.js `classList.add('revealing')` / `remove`). A first form waited for `#rSkip.hidden`: R1 removed `#rSkip`, so that predicate would have THROWN in the page and, with a swallowing `.catch`, not waited at all (a silent no-op). A reveal that never ends now FAILS (`check(false, ...)`). To prove the wait waits: a one-off probe must see `revealing` true then false around a `showResults` call (turn 2), and the gate time must drop.
+**postrails split, design:**
+1. postrails already starts from a seeded save at flight 3 (tests/postrails.cjs l.22-30) and loops f = 3..10, each flight on a FRESH page (`p.goto` per flight), so only `localStorage` carries over: the state after flight 6 is one JSON object.
+2. `PART=A` runs f = 3..6; `PART=B` runs f = 7..10 from a DECLARED fixture `tests/fixtures/postrails-after6.json` (captured ONCE from a real PART=A run with `CAPTURE=1`, never hand-written). No PART = both halves in sequence as today (so existing PATHMAP lines still work until they are changed to the PART tokens, which is a one-time ALL-tier edit).
+3. **The chain is not lost:** PART=A ends by asserting that the DECLARED, deterministic fields of the live save (missionsDone L-list, `levels`, `flights`, `landings`, habitat keys; NOT seeds, which vary with each flight) equal the fixture's. So a game change that breaks flights 3-6 fails A, and B always starts from a state A has just proved reachable.
+4. The final assertion ("L3, L4 and L5 are all done by flight 10") belongs to B; A asserts the same facts for flight 6 from the fixture.
+5. Tokens: `postrails@PART=A`, `postrails@PART=B` in the PATHMAP groups; the two plants (toast over a strip; the systems rail pointing at old row markup) must each be CAUGHT by the half that reaches them: measure which half in turn 2 (the plants file names the token, e.g. `postrails@PART=B`).
+6. Cost: an extra fixture file; benefit: the pool's tail drops from ~306 s to ~160 s. Risk: the fixture goes stale when the save format changes; A's equality check turns that into a loud failure, not a silent pass.
+
