@@ -129,11 +129,11 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await step('R6-payoff', /new part/i, () => { const po = document.getElementById('payoff'); return (!po || po.hidden) && !document.getElementById('hangar').hidden; }   /* (stage 2 removes it) */);   /* stage 2: the tour rings OK (the page is live) */   // (stays in the hangar: the user)
   await step('R7-takeoff', /take off/i, () => document.getElementById('hangar').hidden, { screen: 'hangar' });   // (the hangar's own TAKE OFF)
   // R8-R9: flight 1, then the seeds, the mission's prize, and the wildlife hint.
+  const seeds0 = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds);   // R1: the results card pays the prize itself, so count from BEFORE the flight
   await fly('flight 1', 240, { noTurb: true, noWild: true });
-  const seeds0 = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds);
   await step('R9a-seeds', /seeds/i, null);
   await step('R9b-claim', /mission/i, () => true);
-  check(await p.evaluate(s0 => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds > s0, seeds0), 'R9b: claiming added the seeds');
+  check(await p.evaluate(s0 => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds > s0, seeds0), 'R9b: the card paid the mission prize by itself (the seeds rose)');
   await step('R9c-icyair', /icy air/i, () => !document.getElementById('title').hidden);
   await step('R10-takeoff2', /icy air/i, null);
   // R10-R11: flight 2, then NATURE and its free first project.

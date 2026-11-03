@@ -37,7 +37,9 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(3500);   // no taps: falls and crashes
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && !r.landed && r.gained === 0, `crash should bank 0 trees, got ${r && r.gained}`);
-  check((await getSave()).seeds === 5, 'seeds in the bank changed after a crash');
+  const sumSeeds = rw => (rw || []).reduce((a, u) => a + u.seeds, 0), crashPrize = sumSeeds(r && r.rewards);   // R1: the results card pays a crash's prize (Oops!) by itself; the carried seeds stay lost
+  await p.waitForTimeout(1800);   // (the card shows 0.9-1.1 s after the crash)
+  check((await getSave()).seeds === 5 + crashPrize, `only the crash's own prize (${crashPrize}) reaches the bank after a crash, not the carried seeds: ${(await getSave()).seeds}`);
   await p.waitForTimeout(1300); await p.click('#results');   // results reveal; a tap skips to the end
   await p.waitForTimeout(300);
   check(await p.isVisible('#rLost'), 'results should say the trees were lost');
@@ -56,7 +58,8 @@ const KEY = 'contrailPilot.v2';
   r = await scene(() => game.scene.getScene('game').result);
   check(r && r.landed, 'did not land');
   check(r && r.gained === 6, `4 trees x1.5 should bank 6, got ${r && r.gained}`);
-  check((await getSave()).seeds === 11, `bank should be 5 + 6 = 11, got ${(await getSave()).seeds}`);
+  const landPrize = sumSeeds(r && r.rewards), seedsNow = (await getSave()).seeds;   // the landing's prize is paid by the card ~1 s after the landing: either side of that is fine
+  check(seedsNow === 11 + crashPrize || seedsNow === 11 + crashPrize + landPrize, `bank should be 5 + 6 = 11 plus the prizes the cards paid (${crashPrize}, then ${landPrize}), got ${seedsNow}`);
 
   // 3. Hangar (the fleet since the eras, 2026-10-23): systems and gadgets with prices; the next
   // era's levels are blocked. Tree species stay locked before planting a tree.
