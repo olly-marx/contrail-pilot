@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-03-missions-screen",
+    "version": "0.27.1",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The MISSIONS screen is tidier: the next mission is pinned at the top, then what is open, today's missions, what is coming up, your long goals and a count of what you finished.",
+      "Tap a mission to see how to do it. City missions have an AIM HERE button, so your route flies there first.",
+      "Badges now live only on the BOARDS screen."
+    ]
+  },
+  {
     "id": "2026-11-03-home-up-next",
     "version": "0.27.0",
     "date": "2026-11-03",

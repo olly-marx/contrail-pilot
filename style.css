@@ -102,6 +102,30 @@ p { margin: 0; }
 .fact { background: #fff4d0; padding: 8px; }
 .badges-new { background: #e7f6e7; padding: 8px; font-size: 8px; text-align: center; }
 
+/* ---------- R4: MISSIONS (src/missionsview.js is the data, src/ui.js showMissions draws it; research/UX-MASTER-PLAN.md C3) ----------
+   NEXT pinned, then OPEN / TODAY / COMING UP / STEADY, DONE as a count. Rows are the shared .rowc grid (R0): a 32 px pictogram | name + how | prize.
+   The whole row is the tap target (>= 40 px: tests/taptargets.cjs enforces MISSIONS), its sheet has the one action. */
+.m-head { display: flex; align-items: center; gap: 8px; }
+.m-head h2 { flex: 1; }
+.m-i { min-width: var(--tap); justify-content: center; padding: 0 8px; }
+#mNext .label, #mList .label { margin: 6px 0 2px; }
+.rowc.goal { cursor: pointer; }
+.rowc.goal .rowc-tap { min-height: 44px; }   /* the tap target stays >= 40 px now the row is compact (tests/taptargets.cjs) */
+.rowc.goal .rowc-slot { display: grid; place-items: center; }
+.rowc.goal .rowc-slot .mi { width: 28px; height: 28px; background-size: 28px 28px; flex: none; }
+.rowc.goal.next { outline: 3px solid #ffe15a; outline-offset: -3px; }
+.rowc.goal.star { background: #fff7d6; }
+.rowc.goal.daily { background: #eef7ff; }
+.rowc.goal.aimed .rowc-sub { color: var(--green-dark); }
+/* the prize shares the how line (right-aligned), so a row is a name line + one line, not 70 px of wrapped text */
+.rowc.goal .rowc-sub { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding-right: 0; min-height: 0; }
+.rowc.goal .m-how { flex: 1; min-width: 0; }
+.rowc-prize { display: inline-flex; align-items: center; gap: 3px; font-size: 8px; color: var(--ink); white-space: nowrap; }
+.rowc-prize .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
+#mNext .label, #mList .label { text-align: left; }
+.m-coming { font-size: 8px; color: var(--muted); margin: 0; padding: 4px 8px; background: #ece8dc; }
+.m-done { width: 100%; justify-content: center; margin-top: 8px; }
+
 /* ---------- R1: the results card (src/resultscard.js is the data, src/ui.js showResults draws it; research/UX-MASTER-PLAN.md C1) ----------
    ONE card that fits 390x667 and 320x568 with no scrolling and FLY ON on screen. The card's own gap (6) replaces the panel's 12. Text lines are
    <= 33 characters at 8 px (tests/resultscard.cjs); every line with a "›" opens a sheet (src/sheet.js). */

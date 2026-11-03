@@ -26,7 +26,9 @@ export function aimOpen(save) {
   if (!ROUTE_AIM.on || !save || !save.tutorialDone || save.flyCrossing) return null;
   const L = linksFor(save);
   if (!L[save.city]) return null;
-  for (const m of visible(save)) {
+  // The player's own choice first (R4: 'AIM HERE' on the MISSIONS screen sets save.aimKey to a mission key), then the first open city mission.
+  const list = visible(save), chosen = save.aimKey && list.find(m => m.key === save.aimKey);
+  for (const m of chosen ? [chosen, ...list.filter(x => x !== chosen)] : list) {
     const pick = m.def && CITY_TEMPLATES[m.def.id];
     if (!pick || !m.fill) continue;
     const t = pick(m.fill, save);
