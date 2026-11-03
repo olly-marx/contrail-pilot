@@ -5,6 +5,7 @@
 //     where  'fly' | 'hangar' | 'nature': what a tap on the row opens
 //     stops  a city mission: how many airports away its city is from here (src/route.js wayTo, the route the aim flies)
 //     lead   a MUST-DO (the free part, the first tree parcels, a crossing ready): at most one, always first
+//     pic    a lead's picture (the hangar's or NATURE's lesson picture): HOME's NEXT box shows it (ui.js renderHub); R3's UP NEXT strip keeps it
 // Priority: 1. the must-do lead. 2. the first open mission. 3. the first undone daily. Then more open missions, up to `limit`.
 import * as M2 from './missions2.js';
 import { CITY_TEMPLATES } from './aim.js';
@@ -30,8 +31,8 @@ export function leadOf(save, crossingReady = null) {
   if (!M2.isSeason2(save) || !save.tutorialDone) return null;
   const mid = (M2.next(save) || {}).key;
   if (crossingReady) return { key: 'lead:cross', short: clip(`Cross: ${crossingReady}`), full: `Crossing ready: ${crossingReady}`, where: 'fly', lead: true };
-  if (save.freeUpgrade && M2.revealed(save, 'hangar')) return { key: 'lead:free', short: 'Pick your free part', full: 'Open the hangar: free upgrade!', where: 'hangar', lead: true };
-  if (mid === 'L5' && !((save.levels || {}).trees)) return { key: 'lead:parcels', short: !save.freeParcelsGiven ? 'Free tree parcels' : 'Buy tree parcels', full: !save.freeParcelsGiven ? 'Free tree parcels in NATURE!' : 'Buy tree parcels in NATURE first', where: 'nature', lead: true };
+  if (save.freeUpgrade && M2.revealed(save, 'hangar')) return { key: 'lead:free', short: 'Pick your free part', full: 'Open the hangar: free upgrade!', where: 'hangar', pic: 'assets/ui/lesson-hangar.png', lead: true };
+  if (mid === 'L5' && !((save.levels || {}).trees)) return { key: 'lead:parcels', short: !save.freeParcelsGiven ? 'Free tree parcels' : 'Buy tree parcels', full: !save.freeParcelsGiven ? 'Free tree parcels in NATURE!' : 'Buy tree parcels in NATURE first', where: 'nature', pic: 'assets/ui/lesson-nature.png', lead: true };
   return null;
 }
 
