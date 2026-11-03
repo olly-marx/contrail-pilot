@@ -240,7 +240,7 @@ export class UI {
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
     $('hubNext').hidden = !v.next || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
-    $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>${v.next.hangar ? '<img class="next-pic" src="assets/ui/lesson-hangar.png" alt="">' : ''}` : '';   // the free part: a picture of where to go
+    $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>${v.next.hangar ? '<img class="next-pic" src="assets/ui/lesson-hangar.png" alt="">' : v.next.nature ? '<img class="next-pic" src="assets/ui/lesson-nature.png" alt="">' : ''}` : '';   // the lead: a picture of where to go (the hangar's free part; NATURE's tree parcels: moved here from the results card in R1)
     const toHangar = v.next && v.next.hangar;   // a free upgrade LEADS into the hangar (the user, 2026-10-27)
     $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : v.next && v.next.nature ? () => { sfx.flap(); this.go('nature'); } : v.next && v.next.claims ? () => { sfx.flap(); this.go('missions'); } : null;
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
