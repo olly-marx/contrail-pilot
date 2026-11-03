@@ -44,6 +44,10 @@ const fs = require('fs'), path = require('path');
   check(/^Tier 3 · \d\/6 done · stars 0\/2$/.test(v3.tierLine) && v3.comingUp === 'Crossing trial: 0/2 stars', `tier 3: ${JSON.stringify([v3.tierLine, v3.comingUp])}`);
   const v4 = V.missionsView(withDay(base([...d3, 'weurope:night', 'weurope:shade10'])));
   check(v4.comingUp === null && /stars 2\/2/.test(v4.tierLine), `the gate done: nothing further ahead: ${JSON.stringify([v4.tierLine, v4.comingUp])}`);
+  // Every area mission done: no pinned NEXT (a daily is never pinned), nothing open, the dailies still under TODAY.
+  const alld = withDay(base()); for (let i = 0; i < 10 && M.visible(alld).length; i++) alld.missionsDone = [...alld.missionsDone, ...M.visible(alld).map(m => m.key)];
+  const va = V.missionsView(alld);
+  check(va.next === null && va.open.length === 0 && va.today.rows.length >= 1, `all area missions done: no pinned NEXT, nothing open, the dailies under TODAY: ${JSON.stringify([va.next && va.next.key, va.open.length, va.today.rows.length])}`);
   // 4. AIM HERE.
   const aimSave = withDay(base([...M.LESSONS.map(x => x.id), 'weurope:shade', 'weurope:plant-tree', 'weurope:bring']));
   const first = A.aimOpen(aimSave), rescue = M.visible(aimSave).find(m => m.def.id === 'rescue'), want = rescue && A.CITY_TEMPLATES.rescue(rescue.fill, aimSave);
