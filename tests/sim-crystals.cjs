@@ -33,7 +33,9 @@
     }
     const crystals = w.crystals;
     w.plane.y = 600; for (let n = 0; n < 120 && w.state !== 'over'; n++) w.step(DT);   // crash: crystals are still banked
-    return { crystals, contrails: most, saved: w.save.crystals, over: w.state === 'over' };
+    // R8: the crash flight's prizes (the secret Oops! badge) are PAID at the bank now; this test is about the crystals the flight itself kept, so take the prizes out.
+    const prize = ((w.result || {}).rewards || []).reduce((a, p) => a + (p.crystals || 0), 0);
+    return { crystals, contrails: most, saved: w.save.crystals - prize, over: w.state === 'over' };
   }
   const nightDodge = pass({ night: true, through: false, dive: true });
   const nightNear = pass({ night: true, through: false });

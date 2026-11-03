@@ -20,8 +20,14 @@
   check(!!km, `the first pair includes the km goal: ${v.map(x => x.def.id)}`);
   M.onFlight(s, crash({ distance: 1000 }));
   check(M.steadyVisible(s).find(x => x.def.id === 'st-km').progress === 1000, 'a CRASH adds its km to the steady goal');
+  // R8: prizes are PAID at once, so a bank that is never spent soon passes the cheapest upgrade and turns the need-based pay off (missions2.js saving()).
+  // These pilots are the ones SAVING UP, so they spend what they earn: the bank goes back to 0 after each flight. The rich pilots below set 1e6 explicitly.
+  s.seeds = 0;
+  const stPrize = M.steadyVisible(s).find(x => x.def.id === 'st-km').prize.seeds;
   M.onFlight(s, crash({ distance: 1000 }));
   check(s.missionsDone.includes('steady:weurope:st-km:0') && s.steady.weurope['st-km'].rung === 1, `a full steady goal pays and climbs a rung: ${s.missionsDone}`);
+  check(stPrize >= 3 && s.seeds === stPrize, `and its prize was PAID at once (R8): bank ${s.seeds}, prize ${stPrize}`);
+  s.seeds = 0;   // (spent)
   const next = M.steadyVisible(s).find(x => x.def.id === 'st-km');
   check((!next || next.target === 2500) && M.rungTarget(M.STEADY[0], 1) === 2500 && M.rungTarget(M.STEADY[0], 2) === 3125, `the next rung asks x1.25 (${M.rungTarget(M.STEADY[0], 1)})`);
   // 2b. Need-based pay: full while saving up, 1 seed (and no streak bonus) when the bank is above the cheapest upgrade.
@@ -40,9 +46,9 @@
   // 5.
   const p0 = M.dailyVisible(d).concat([])[0];
   for (const date of ['2026-10-30', '2026-10-31', '2026-11-01', '2026-11-02', '2026-11-03', '2026-11-04']) {
-    M.setDaily(d, date); M.onFlight(d, crash({ distance: 1200, cargo: 9, cleanGaps: 5 }));
+    M.setDaily(d, date); M.onFlight(d, crash({ distance: 1200, cargo: 9, cleanGaps: 5 })); d.seeds = 0;   // (a pilot saving up spends what the flight paid: R8 pays at once)
   }
-  M.setDaily(d, '2026-11-05');
+  M.setDaily(d, '2026-11-05'); d.seeds = 0;
   check(M.streakBonus(d) === 5, `6+ days in a row cap the streak at +5 (${M.streakBonus(d)}, days ${d.dailyStreak.days})`);
   check(M.dailyVisible(d).every(x => x.prize.seeds >= 10 + 5), 'the streak adds to every daily prize');
   check(M.streakBonus({ ...d, seeds: 1e6 }) === 0, 'no streak bonus for a rich pilot');
