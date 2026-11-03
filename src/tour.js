@@ -8,7 +8,7 @@
 import { tip } from './tips.js';
 import { FEATURES } from './config.js';
 import { revealed as s2Revealed } from './missions2.js';
-// Tab-bar targets and what replaces them on the season 2 hub (the tiles; HOME goes back to the hub).
+// Tab-bar targets and what replaces them on the season 2 hub (nothing: since R3 the tiles are gone and the bar's tabs are the targets; HOME goes back to the hub).
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf } from './upgrades.js';
@@ -232,7 +232,7 @@ export class Tour {
   }
 
   find(sel) {
-    if (FEATURES.season2) sel = HUB_TARGETS[sel] || sel;   // season 2 has no tab bar: the hub's tiles and HOME button (S2)
+    if (FEATURES.season2) sel = HUB_TARGETS[sel] || sel;   // (the bar is back on the hub: no remapping needed)
     const all = [...document.querySelectorAll(sel)].filter(e => e.offsetParent !== null);
     return all[0] || null;
   }

@@ -395,7 +395,7 @@ export class UI {
     for (const [id, k] of [['dHangar', 'hangar'], ['dNature', 'nature'], ['dBoards', 'boards'], ['dMissions', 'missions']]) { const e = $(id); if (e) e.hidden = !d[k]; }
     $('tabHangar').classList.toggle('glow', free || !!d.hangar);   // something to spend: the bar's HANGAR glows
   }
-  hasNew() { return !!this.save.freeUpgrade || !!this.freshDots().hangar; }   // (HOME's hangar tile badge)
+  hasNew() { return !!this.save.freeUpgrade || !!this.freshDots().hangar; }   // (the bar's HANGAR tag and glow)
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).
   crossingReadyText() {
