@@ -286,3 +286,4 @@ lessonart	src/ui.js	s#assets/ui/lesson-nature.png#assets/ui/lesson-natur.png#	HO
 loadercount	src/loader.js	s/export const FACT_AFTER_MS = 2000,/export const FACT_AFTER_MS = 0,/	the fact shows at once, on every load (a warm load too)
 loadercount	src/loader.js	s/if (this.finished || !box || box.querySelector('.loader-fact')) return;/return;/	the fact is never shown
 loadercount	src/loader.js	s/const pool = FACTS.filter(f => words(f) <= FACT_MAX_WORDS);/const pool = FACTS.filter(f => words(f) > FACT_MAX_WORDS);/	the fact is a long one (over 15 words)
+keepvisible	src/tour.js	s#sc.scrollTop += r2.top + r2.height / 2 - (floor + bottom) / 2;#sc.scrollTop += r2.top + r2.height / 2 - (top + bottom) / 2;#	a covered target is only brought to the middle of the screen (it stays under the pinned block at 320x568)

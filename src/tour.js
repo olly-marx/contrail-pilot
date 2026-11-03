@@ -248,7 +248,13 @@ export class Tour {
     else if (r.top < top) sc.scrollTop -= top - r.top;
     else {   // in the band but COVERED (a pinned header, e.g. NATURE's scene: content scrolls under it): bring it to the middle
       const r2 = t.getBoundingClientRect(), top1 = document.elementsFromPoint(r2.left + r2.width / 2, r2.top + r2.height / 2).find(e => !e.closest('#tour'));
-      if (top1 && top1 !== t && !t.contains(top1)) sc.scrollTop += r2.top + r2.height / 2 - (top + bottom) / 2;
+      if (top1 && top1 !== t && !t.contains(top1)) {
+        // The target must end up BELOW what covers it (a pinned block: NATURE's land, the hangar dock), not merely at the middle of the screen: on a
+        // 568 px phone the pinned block's bottom (~258) is past the middle (254), so "the middle" left the FREE! button under it (onrails320, N3-N5).
+        // DIAGNOSED BY READING, NOT YET REPRODUCED (the browser turn proves it, 2026-11-03). A cover that is not above the target keeps the old aim.
+        const pin = top1.closest('.wpin, .hp-dock') || top1, cr = pin.getBoundingClientRect(), floor = cr.top <= r2.top + 1 ? Math.max(top, cr.bottom + 8) : top;
+        sc.scrollTop += r2.top + r2.height / 2 - (floor + bottom) / 2;
+      }
     }
   }
 

@@ -4,6 +4,8 @@
 //   A. HANGAR: a row placed BEHIND the bottom tab bar (on screen, so the step's own scrollIntoView does not fire): a step on it
 //      must bring it above the bar;
 //   B. NATURE: a project row scrolled UNDER the pinned land: a step on it must uncover it.
+// Run at 375x667 AND 320x568: at 320x568 the pinned block's bottom is past the middle of the screen, so a rails step that only aimed for
+// the middle (the old code) left the FREE! button covered (onrails320 N3-N5; diagnosed 2026-11-03).
 // Run: python3 -m http.server 8000 & node tests/keepvisible.cjs   (proved by planted defects)
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
@@ -11,7 +13,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  const p = await b.newPage({ viewport: { width: 375, height: 667 }, hasTouch: true });
+  for (const [W, H] of [[375, 667], [320, 568]]) {
+  const check = (c, m) => { if (!c) fails.push(`${W}x${H}: ${m}`); };
+  const p = await b.newPage({ viewport: { width: W, height: H }, hasTouch: true });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ muted: true })); });
@@ -50,7 +54,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(c.before, `B: the test put the row under the pinned land first (else it proves nothing): ${JSON.stringify(c)}`);
     check(c.after, `B: a rails step uncovers a row from under the pinned land: ${JSON.stringify(c)}`); }
   check(!errs.length, `page errors ${errs}`);
+  await p.close();
+  }
   await b.close();
-  console.log(fails.length ? `FAIL keepvisible:\n - ${fails.join('\n - ')}` : 'PASS keepvisible: a rails step brings a row out from behind the tab bar and from under the pinned land');
+  console.log(fails.length ? `FAIL keepvisible:\n - ${fails.join('\n - ')}` : 'PASS keepvisible: at 375x667 and 320x568 a rails step brings a row out from behind the tab bar and from under the pinned land');
   process.exit(fails.length ? 1 : 0);
 })();
