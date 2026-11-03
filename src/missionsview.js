@@ -7,7 +7,7 @@ import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
 import { nextUp, itemOf, clip, rightOf } from './nextup.js';
 import { CITY_TEMPLATES } from './aim.js';
 
-export const HOW_MAX = 28;       // a row's second line (the "how")
+export const HOW_MAX = 20;       // a row's second line (the "how"): MEASURED at 320 px, the prize shares it (a 28-character how wrapped every row to 70 px)
 export const NAME_MAX = 24;      // a row's name (nextup.SHORT_MAX)
 // A small pictogram per mission (the 8 existing code-drawn icons: assets/ui/mi-*.png; own pictograms are a later art task).
 export const ICONS = {
@@ -19,16 +19,22 @@ export const ICONS = {
   'e-km': 'mi-globe', 'e-seeds': 'mi-seed', 'e-gaps': 'mi-airports',
   'st-km': 'mi-globe', 'st-seeds': 'mi-seed', 'st-gaps': 'mi-airports', 'st-land': 'mi-land', 'st-plant': 'mi-tree',
 };
-// The one-line "how" under a mission's name (declared copy; the full title and the tip are in the row's sheet).
+// The one-line "how" under a mission's name (<= 20 characters: the prize shares that line at 320 px) and the longer TIP in its sheet.
 export const HOW = {
-  shade: 'Fly through icy air by day', 'plant-tree': 'Plant it on your flight', 'clean-gaps': 'No scrapes, in one flight', bring: 'Land with seeds on board',
-  project: 'In NATURE: fund any project', chain: 'Land at both, in order', dodge: 'Night flight, icy patches', rescue: 'Plant first, then land',
-  spot: 'Fly over it to find it', system: 'In HANGAR, then SYSTEMS', night: 'Land after a clean night', shade10: 'Shade a lot, then land',
-  kinds3: 'Different trees, one go', route: 'Fly past an airport, land', golden: 'Grab it, then land', tier: 'Finish them all in NATURE',
-  'e-km': 'A crash counts too', 'e-seeds': 'A crash counts too', 'e-gaps': 'A crash counts too',
+  shade: 'Icy air by day', 'plant-tree': 'Plant it in flight', 'clean-gaps': 'No scrapes', bring: 'Land with seeds', project: 'In NATURE',
+  chain: 'Both, in order', dodge: 'Icy patches, night', rescue: 'Plant, then land', spot: 'Fly over it', system: 'In HANGAR: SYSTEMS',
+  night: 'Clean night, land', shade10: 'Shade, then land', kinds3: 'Different trees', route: 'Fly past an airport', golden: 'Grab it, land', tier: 'Finish in NATURE',
+  'e-km': 'Crash counts too', 'e-seeds': 'Crash counts too', 'e-gaps': 'Crash counts too',
 };
-const HAZARD_HOW = { teach: 'Fly on, then land', challenge: 'Keep out of the red zones', mastery: 'No scrapes, ten in a row' };
-const DAILY_HOW = 'Today: one flight';
+export const TIP = {
+  shade: 'Fly through icy air by day to shade the Earth.', 'plant-tree': 'Plant it on your flight, in the right land.', 'clean-gaps': 'Fly through the storm gaps with no scrapes, in one flight.',
+  bring: 'Land with the seeds you picked up on board.', project: 'In NATURE, fund any habitat project.', chain: 'Land at both cities, in that order.', dodge: 'On a night flight, steer clear of icy patches.',
+  rescue: 'Plant the trees first, then land at the city.', spot: 'Fly over the animal to find it from the air.', system: 'In the HANGAR, open SYSTEMS and buy a helper.', night: 'Land after a whole night with no contrail.',
+  shade10: 'Make a lot of shade, then land.', kinds3: 'Plant different kinds of tree in one flight.', route: 'Fly past an airport, and land at the city.', golden: 'Grab a golden seed, then land.', tier: 'Finish every project of a tier in NATURE.',
+  'e-km': 'Any flight counts, even a crash.', 'e-seeds': 'Any flight counts, even a crash.', 'e-gaps': 'Any flight counts, even a crash.',
+};
+const HAZARD_HOW = { teach: 'Fly on, then land', challenge: 'Avoid the red zones', mastery: '10 clean, in a row' };
+const DAILY_HOW = 'Today: one flight';   // (17)
 // What a finished mission is called in the DONE list (generic: the city or animal of the day is not stored).
 export const DONE_NAME = {
   L1: 'Lesson: land', L2: 'Lesson: icy air by day', L3: 'Lesson: a night dodge', L4: 'Lesson: skip an airport', L5: 'Lesson: plant a tree',
@@ -74,8 +80,10 @@ export function missionsView(save) {
     const m = visList.concat(M2.dailyVisible(save)).find(x => x.key === n.key), def = m && m.def, id = def ? def.id : null;
     const hazard = id === 'hazard' ? HAZARD_HOW[stage] : null, lesson = id && /^L\d$/.test(id) ? `Lesson ${id.slice(1)} of ${M2.LESSONS.length}` : null;
     const city = !!(id && CITY_TEMPLATES[id]);
-    const how = n.lead ? n.full : n.stops ? `${n.stops} ${n.stops === 1 ? 'stop' : 'stops'} on your route` : lesson || hazard || (def && def.id && (m.daily && !HOW[id] ? DAILY_HOW : HOW[id])) || (n.daily ? DAILY_HOW : '');
-    return { key: n.key, short: n.short, full: n.full, how: clip(how, HOW_MAX), icon: ICONS[id] || (n.lead ? 'mi-globe' : 'mi-seed'), prize: m ? m.prize.seeds : 0, star: !!(m && m.star),
+    const stopsText = n.stops ? `${n.stops} ${n.stops === 1 ? 'stop' : 'stops'} away` : null;
+    const how = n.lead ? 'Do this first' : stopsText || lesson || hazard || (def && def.id && (m.daily && !HOW[id] ? DAILY_HOW : HOW[id])) || (n.daily ? DAILY_HOW : '');
+    const tip = n.lead ? n.full : n.stops ? `${stopsText} on your route. Tap AIM HERE to fly there first.` : lesson ? `${lesson}: ${n.full}.` : hazard ? `${hazard}.` : (m && m.daily ? (TIP[id] || 'Today only: any flight that does it.') : TIP[id]) || '';
+    return { key: n.key, short: n.short, full: n.full, how: clip(how, HOW_MAX), tip, icon: ICONS[id] || (n.lead ? 'mi-globe' : 'mi-seed'), prize: m ? m.prize.seeds : 0, star: !!(m && m.star),
       where: n.where, lead: !!n.lead, city, aimed: !!(city && save.aimKey === n.key), daily: !!n.daily, right: rightOf(n) };
   }
 }

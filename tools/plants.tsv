@@ -317,5 +317,5 @@ fitscreen	src/ui.js	s#v.up\[0\] \&\& v.up\[0\].pic ? v.up.slice(0, 2) : v.up#v.u
 missionsview	src/missionsview.js	s/Tier ${tierNow + 1} · after 3 of tier/Tier ${tierNow + 2} · after 3 of tier/	COMING UP names the wrong tier
 missionsview	src/missionsview.js	s/'land-city': 'mi-land', shade/'land-city': 'mi-nope', shade/	a mission with a pictogram that does not exist
 missionsview	src/aim.js	s/chosen = save.aimKey \&\& list.find/chosen = false \&\& list.find/	AIM HERE does nothing (aimKey ignored by the route)
-missionsview	src/missionsview.js	s/shade: 'Fly through icy air by day'/shade: 'Fly through icy air in the daytime please'/	a how line over 28 characters
+missionsview	src/missionsview.js	s/shade: 'Icy air by day'/shade: 'Icy air by day, any day please'/	a how line over 20 characters
 missionsview	src/missionsview.js	s/for (const t of \[2, 3\]) if (M2.tierOpen/for (const t of [2]) if (M2.tierOpen/	tier 3 opening never lights the MISSIONS dot

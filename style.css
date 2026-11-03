@@ -116,8 +116,12 @@ p { margin: 0; }
 .rowc.goal.star { background: #fff7d6; }
 .rowc.goal.daily { background: #eef7ff; }
 .rowc.goal.aimed .rowc-sub { color: var(--green-dark); }
-.rowc-prize { display: inline-flex; align-items: center; justify-content: flex-end; gap: 3px; background: none; font-size: 8px; padding: 4px 2px; }
+/* the prize shares the how line (right-aligned), so a row is a name line + one line, not 70 px of wrapped text */
+.rowc.goal .rowc-sub { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding-right: 0; min-height: 0; }
+.rowc.goal .m-how { flex: 1; min-width: 0; }
+.rowc-prize { display: inline-flex; align-items: center; gap: 3px; font-size: 8px; color: var(--ink); white-space: nowrap; }
 .rowc-prize .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
+#mNext .label, #mList .label { text-align: left; }
 .m-coming { font-size: 8px; color: var(--muted); margin: 0; padding: 4px 8px; background: #ece8dc; }
 .m-done { width: 100%; justify-content: center; margin-top: 8px; }
 

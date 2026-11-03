@@ -1,5 +1,5 @@
 // The MISSIONS screen as data (src/missionsview.js; research/UX-MASTER-PLAN.md C3, F4 R4). No browser. Checks, on DECLARED saves:
-//   1. every mission has a pictogram that exists, a "how" line <= 28 characters, a generic DONE name <= 24, and the (i) sheet is <= 60 words;
+//   1. every mission has a pictogram that exists, a "how" line <= 20 characters (the prize shares it at 320 px) and a sheet TIP <= 12 words, a generic DONE name <= 24, and the (i) sheet is <= 60 words;
 //   2. the tier line and the COMING UP line are right at each stage (lessons, tier 1, 2 and 3, the gate done) and never show anything further ahead;
 //   3. NEXT is nextUp's top row (one source), OPEN does not repeat it, the dailies and steady rows follow the save;
 //   4. AIM HERE: save.aimKey makes the route aim at THAT city mission (src/aim.js), a stale key falls back to the first;
@@ -15,6 +15,7 @@ const fs = require('fs'), path = require('path');
     const ic = V.ICONS[d.id];
     check(!!ic && fs.existsSync(path.join(__dirname, '..', 'assets', 'ui', `${ic}.png`)), `${d.id} has a pictogram that exists (${ic})`);
   }
+  for (const t of M.TEMPLATES.filter(x => x.id !== 'hazard' && x.id !== 'land-city')) check(!!V.HOW[t.id] && !!V.TIP[t.id] && T.wordCount(V.TIP[t.id]) <= 12, `${t.id} has a how and a tip of <= 12 words: ${V.TIP[t.id]}`);
   for (const [id, t] of Object.entries(V.HOW)) check(t.length <= V.HOW_MAX, `how "${t}" (${id}) is ${t.length} characters (max ${V.HOW_MAX})`);
   for (const [id, t] of Object.entries(V.DONE_NAME)) check(t.length <= V.NAME_MAX, `done name "${t}" (${id}) is ${t.length} characters (max ${V.NAME_MAX})`);
   check(T.wordCount(V.INFO.body) <= 60, `the (i) sheet is <= 60 words (${T.wordCount(V.INFO.body)})`);
@@ -32,7 +33,7 @@ const fs = require('fs'), path = require('path');
   check(v1.next && v1.next.key === up[0].key && v1.next.short === up[0].short, `one source: NEXT is nextUp's top row (${v1.next && v1.next.key} vs ${up[0].key})`);
   check(!v1.open.some(r => r.key === v1.next.key) && v1.open.length >= 4, `OPEN does not repeat NEXT (${v1.open.length} rows)`);
   check(v1.today.rows.length >= 1 && v1.today.rows.length <= 3 && v1.steady.length === 2, `dailies and steady rows follow the save: ${v1.today.rows.length} / ${v1.steady.length}`);
-  for (const r of [v1.next, ...v1.open, ...v1.today.rows]) check(r.short.length <= V.NAME_MAX && r.how.length <= V.HOW_MAX && !!r.icon, `row "${r.short}" fits: short ${r.short.length}, how ${r.how.length}`);
+  for (const r of [v1.next, ...v1.open, ...v1.today.rows]) check(r.short.length <= V.NAME_MAX && r.how.length <= V.HOW_MAX && !!r.icon && !!r.tip, `row "${r.short}" fits: short ${r.short.length}, how ${r.how.length}`);
   check(JSON.stringify(V.missionsView(t1)) === JSON.stringify(v1), 'the view is pure: the same save gives the same view');
   // Tier 2 (3 of tier 1 done; the city mission is left open).
   const d2 = base([...M.LESSONS.map(x => x.id), 'weurope:shade', 'weurope:plant-tree', 'weurope:bring']), t2 = withDay(d2), v2 = V.missionsView(t2);

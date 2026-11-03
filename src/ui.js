@@ -290,7 +290,7 @@ export class UI {
     // R4 (research/UX-MASTER-PLAN.md C3): NEXT pinned, then OPEN / TODAY / COMING UP / STEADY, DONE as a count. The data is src/missionsview.js.
     const v = this.missionsV = missionsView(s);
     const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    const rowHTML = (r, cls = '') => `<div class="rowc goal ${cls}${r.star ? ' star' : ''}${r.aimed ? ' aimed' : ''}"><button class="rowc-tap" type="button" data-mrow="${esc(r.key)}"><span class="rowc-slot"><i class="mi ${r.icon}"></i></span><span class="rowc-top"><span class="rowc-name">${esc(r.short)}</span></span><span class="rowc-sub">${esc((r.aimed ? 'AIMED · ' : '') + r.how)}</span></button>${r.prize ? `<span class="rowc-price rowc-prize">+${r.prize}<i class="seedicon"></i></span>` : ''}</div>`;
+    const rowHTML = (r, cls = '') => `<div class="rowc goal ${cls}${r.star ? ' star' : ''}${r.aimed ? ' aimed' : ''}"><button class="rowc-tap" type="button" data-mrow="${esc(r.key)}"><span class="rowc-slot"><i class="mi ${r.icon}"></i></span><span class="rowc-top"><span class="rowc-name">${esc(r.short)}</span></span><span class="rowc-sub"><span class="m-how">${esc(r.aimed ? 'AIMED' : r.how)}</span>${r.prize ? `<b class="rowc-prize">+${r.prize}<i class="seedicon"></i></b>` : ''}</span></button></div>`;
     $('mArea').textContent = v.area; $('mTier').textContent = v.tierLine;
     $('mNext').innerHTML = v.next ? `<p class="label">NEXT</p>${rowHTML(v.next, 'next')}` : '';
     const group = (label, rows, extra = '') => rows.length ? `<p class="label">${label}${extra}</p>${rows.join('')}` : '';
@@ -299,7 +299,7 @@ export class UI {
       + group('OPEN', v.open.map(r => rowHTML(r)))
       + group('TODAY', v.today.rows.map(r => rowHTML(r, 'daily')), v.today.streak ? ` <span class="small">(streak +${v.today.streak})</span>` : '')
       + (v.comingUp ? `<p class="label">COMING UP</p><p class="m-coming">${esc(v.comingUp)}</p>` : '')
-      + group('STEADY', v.steady.map(r => rowHTML({ ...r, star: false }, 'steady')), saving(s) ? '' : ' <span class="small">(1 seed each while you can afford an upgrade)</span>')
+      + group('STEADY', v.steady.map(r => rowHTML({ ...r, star: false }, 'steady')), saving(s) ? '' : ' <span class="small">(1 seed each: bank is rich)</span>')
       + (v.done.count ? `<button id="mDone" class="chip m-done" type="button">DONE ${v.done.count} ›</button>` : '');
     // Tap a row: its sheet (the full title, the how, the prize) with the one action it has: AIM HERE (a city mission), or the hop to HANGAR / NATURE.
     const all = [v.next, ...v.open, ...v.today.rows, ...v.steady].filter(Boolean);
@@ -307,7 +307,7 @@ export class UI {
       const hop = r.where === 'hangar' ? 'HANGAR' : r.where === 'nature' ? 'NATURE' : null;
       const action = r.city ? { label: r.aimed ? 'STOP AIMING' : 'AIM HERE', onTap: () => { s.aimKey = r.aimed ? null : r.key; writeSave(s); this.toast(r.aimed ? 'Back to the first mission' : `Aiming at: ${r.short}`, '', 'good', 3); this.showMissions(); } }
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
-      showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.how}.${r.prize ? ` Prize: +${r.prize} seeds.` : ''}`, action }); });
+      showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds.` : ''}`, action }); });
     $('mInfo').onclick = () => { sfx.flap(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
     if ($('mDone')) $('mDone').onclick = () => { sfx.flap(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
