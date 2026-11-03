@@ -40,7 +40,7 @@ const KEY = 'contrailPilot.v2';
   const sumSeeds = rw => (rw || []).reduce((a, u) => a + u.seeds, 0), crashPrize = sumSeeds(r && r.rewards);   // R1: the results card pays a crash's prize (Oops!) by itself; the carried seeds stay lost
   await p.waitForTimeout(1800);   // (the card shows 0.9-1.1 s after the crash)
   check((await getSave()).seeds === 5 + crashPrize, `only the crash's own prize (${crashPrize}) reaches the bank after a crash, not the carried seeds: ${(await getSave()).seeds}`);
-  await p.waitForTimeout(1300); await p.click('#results');   // results reveal; a tap skips to the end
+  await p.waitForTimeout(1300); await p.click('#results', { position: { x: 4, y: 4 } });   // results reveal; a tap skips to the end (R1: in the overlay's margin, not on a line of the card, which would open its sheet)
   await p.waitForTimeout(300);
   check(await p.isVisible('#rLost'), 'results should say the trees were lost');
 
