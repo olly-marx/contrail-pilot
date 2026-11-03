@@ -51,7 +51,7 @@ const KEY = 'contrailPilot.v2';
   }
   r = await scene(() => game.scene.getScene('game').result);
   check(r && r.landed && r.mission && r.mission.done, `landing at PARIS should complete mission 1: ${JSON.stringify(r && r.mission)}`);
-  check(((await getSave()).unclaimed || []).some(u => u.key === 'mission:land'), 'its prize waits to be claimed');
+  check((r.rewards || []).some(u => u.key === 'mission:land') && !((await getSave()).unclaimed || []).length, 'its prize was PAID at the bank, nothing waits to be claimed (R8)');
   check((await getSave()).mission === 1, 'mission index should be 1 after mission 1');
   await p.waitForTimeout(1800);   // the results reveal starts 900 ms after landing
   const rm = await p.textContent('#rMission');
@@ -93,7 +93,7 @@ const KEY = 'contrailPilot.v2';
   check(later.n === 13, `13 lesson missions: ${later.ids}`);
   check(String(later.rewild) === 'true,false', `Bring wildlife back needs a habitat project: ${later.rewild}`);
   check(String(later.world) === 'true,false', `the World tour needs every land discovered (a lap is not enough): ${later.world}`);
-  // 6b. In a real flight: a bird crash is counted and earns the secret Bird Strike badge to claim.
+  // 6b. In a real flight: a bird crash is counted and earns the secret Bird Strike badge (paid at once).
   await setSave({ ...base, missionsDone: first5, landings: 9 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#goBtn'); await flying();
   await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.finish({ reason: 'Bird strike!\nYou hit a bird.' }); });

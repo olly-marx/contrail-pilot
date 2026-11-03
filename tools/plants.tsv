@@ -323,3 +323,9 @@ missionsview	src/missionsview.js	s/up\[0\] \&\& !up\[0\].daily ? up\[0\] : null/
 gear	src/ui.js	s/    \$('hubGear').onclick = () => this.openGear();/    $('hubGear').onclick = () => { sfx.flap(); $('title').classList.toggle('menu'); };/	the gear only toggles the old tiny buttons (no sheet)
 gear	src/ui.js	s/if (b.dataset.gear === 'sound') { \$('muteBtn').click();/if (b.dataset.gear === 'sound') { /	SOUND does nothing in the sheet
 gear	style.css	s/\.gear-list \.chip { width: 100%; justify-content: center; }/.gear-list .chip { width: 100%; justify-content: center; min-height: 18px; max-height: 18px; padding: 0; }/	the gear buttons are 18 px tall (under the 40 px target)
+autoclaim	src/rewards.js	s#  const add = p => { payPrize(save, p); added.push(p); };#  const add = p => { added.push(p); };#	a flight's prizes are no longer paid by addPrizes (they would wait for nobody to claim)
+autoclaim	src/rewards.js	s#  save.unclaimed = \[\];#  save.unclaimed = list;#	the migration leaves the list in place (it pays an older save again on every load)
+autoclaim	src/rewards.js	s#  list.forEach(p => payPrize(save, p));#  void 0;#	the migration empties the list but pays nothing (an older save's prizes are lost)
+missions2	src/missions2.js	s#if (!before.has(m.key)) payPrize(save, m.prize);#if (false) payPrize(save, m.prize);#	a mission done by a purchase or a project is no longer paid at the buy (paid only at the next bank, or never)
+missions2	src/missions2.js	s#if (!before.has(m.key)) payPrize(save, m.prize);#if (!before.has(m.key)) { payPrize(save, m.prize); payPrize(save, m.prize); }#	a finished mission is paid twice
+rewards	src/ui.js	s#this.migrated = migrateClaims(save); if (this.migrated) writeSave(save);#this.migrated = null;#	the UI never runs the migration: an older save keeps prizes nobody can claim
