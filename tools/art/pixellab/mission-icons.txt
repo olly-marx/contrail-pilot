@@ -1,0 +1,18 @@
+# id|tool|w|h|colours|prompt   (mission pictograms, 32x32, composed onto the sky tile by tools/art/compose_mission_icons.py)
+airport|pixflux|32|32|10|tiny flat game icon of an airport control tower beside a short grey runway, centered with empty margin, side view
+shade|pixflux|32|32|10|tiny flat game icon of a yellow sun and a small white cloud casting a shadow patch on green ground, centered with empty margin
+sapling|pixflux|32|32|10|tiny flat game icon of one small young green sapling with two leaves growing out of brown soil, centered with empty margin
+stormgap|pixflux|32|32|10|tiny flat game icon of two dark grey storm clouds with a clear gap between them, centered with empty margin
+seedbag|pixflux|32|32|10|tiny flat game icon of a small brown sack full of seeds tied at the top, centered with empty margin
+natureproj|pixflux|32|32|10|tiny flat game icon of a wooden signpost with a green leaf on it, centered with empty margin
+twopins|pixflux|32|32|10|tiny flat game icon of two red map pins joined by a dotted line, centered with empty margin
+moonpatch|pixflux|32|32|10|tiny flat game icon of a white crescent moon in a dark blue night sky with one white snowflake, centered with empty margin
+binoculars|pixflux|32|32|10|tiny flat game icon of black binoculars, centered with empty margin
+gear|pixflux|32|32|10|tiny flat game icon of one grey metal cog gear, centered with empty margin
+forest|pixflux|32|32|10|tiny flat game icon of three different small trees side by side, one round, one pointed, one tall, centered with empty margin
+nonstop|pixflux|32|32|10|tiny flat game icon of a side view white passenger airplane with a blue stripe flying right, simple, centered with empty margin
+goldenseed|pixflux|32|32|10|tiny flat game icon of one shiny golden seed with small sparkles, centered with empty margin
+roadkm|pixflux|32|32|10|tiny flat game icon of a winding grey road with a small white distance marker post, centered with empty margin
+runway|pixflux|32|32|10|tiny flat game icon of a side view white passenger airplane landing on a flat grey runway with white dashes, simple, centered with empty margin
+flag|pixflux|32|32|10|tiny flat game icon of a black and white checkered finish flag on a pole, centered with empty margin
+shovel|pixflux|32|32|10|tiny flat game icon of a garden shovel with a brown wooden handle and a grey metal blade, standing upright, simple, centered with empty margin
