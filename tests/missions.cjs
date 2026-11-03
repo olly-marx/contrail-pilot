@@ -100,7 +100,8 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(3500);
   const sv = await getSave();
   check(sv.crashes && sv.crashes.bird === 1 && (sv.badgeTiers || {}).birdstrike === 1, `a bird crash is counted and earns Bird Strike (the card pays its prize itself since R1): crashes ${JSON.stringify(sv.crashes)}, tiers ${JSON.stringify(sv.badgeTiers)}`);
-  check(/Bird Strike/.test(await p.textContent('#rChips [data-kind="badge"]').catch(() => '')), `results show the new badge as a chip: ${await p.textContent('#rChips').catch(() => '')}`);   // R1: chips (animal / badge / first), a tap opens the sheet
+  const badgeChips = await p.$$eval('#rChips [data-kind="badge"]', els => els.map(e => e.textContent).join(' | ')).catch(() => '');
+  check(/Bird Strike/.test(badgeChips), `results show the new badge as a chip: ${badgeChips}`);   // R1: chips (animal / badge / first), a tap opens the sheet
   await p.screenshot({ path: '/tmp/mission-birds.png' });
   // 7. All done.
   await setSave({ ...base, missionsDone: later.ids }); await p.reload(); await ready(p); await p.waitForTimeout(600);
