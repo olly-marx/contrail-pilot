@@ -126,7 +126,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(eras.n === 6 && /1950s/.test(eras.txt) && /Far future/.test(eras.txt), `tapping the era line opens the six eras: ${eras.n}`);
   await p.click('#sheet .sheet-ok', { timeout: 2500 }).catch(() => fails.push('a sheet that should be open is not')); await p.waitForTimeout(150);
   check(!(await p.$('#sheet')), 'OK closes the era sheet (it is gone from the page)');
-  await p.click('[data-planeinfo]'); await p.waitForTimeout(200);
+  await p.click('[data-planeinfo]', { timeout: 3000 }).catch(() => fails.push('the plane (i) cannot be tapped (a sheet is still covering it)')); await p.waitForTimeout(200);
   check(/Every plane flies the same way/.test(await p.evaluate(() => (document.querySelector('#sheet') || {}).textContent || '')), 'the (i) beside the plane name opens the "every plane flies the same way" text');
   await p.click('#sheet .sheet-ok', { timeout: 2500 }).catch(() => fails.push('a sheet that should be open is not')); await p.waitForTimeout(150);
   check(!(await p.$('#sheet')), 'OK closes the plane sheet (it is gone from the page)');
