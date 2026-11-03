@@ -72,6 +72,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
       if (await p.isVisible('#payOk')) await p.click('#payOk').catch(() => {}); await p.waitForSelector('#payOk', { state: 'visible', timeout: 6000 }).then(() => p.click('#payOk')).catch(() => {}); await p.waitForTimeout(300);
       const back = await p.evaluate(() => { const b = document.querySelector('#hFleet .fpreview'), r = b && b.getBoundingClientRect(); return b && { shown: !b.hidden, top: Math.round(r.top), bottom: Math.round(r.bottom), h: innerHeight }; });
       check(back && back.shown && back.bottom > 0 && back.top < back.h, `after OK the plane box is back, on screen (scroll anchoring must not throw it away): ${JSON.stringify(back)}`); } }
+  // Nothing of the hangar is drawn past the screen's side (R0 fitscreen found the panel wider than a 320 phone: the grid's implicit
+  // column grew to its widest nowrap row). Measured at 320 x 568 and at the normal size; the ghost image animation is excluded by size.
+  const past = async w => p.evaluate(W => [...document.querySelectorAll('#hangar .panel, #hangar .panel *')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.right > W + 1 && getComputedStyle(e).position !== 'fixed'; }).slice(0, 4).map(e => `${e.id ? '#' + e.id : e.tagName.toLowerCase() + '.' + String(e.className).split(' ')[0]} right ${Math.round(e.getBoundingClientRect().right)} > ${W}`), w);
   // The ghost preview lies EXACTLY on the plane picture (the user's screenshot, 2026-11-02: the ghost filled the whole box,
   // caption included, so it was ~14% taller: two planes). Tap a line whose next level has a part layer, then every .fghost's
   // rect must equal the base picture's within 1 px (the PICTURE, not the box with its caption).
@@ -88,7 +91,18 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const b = base && base.getBoundingClientRect();
     return { n: gs.length, worst: b ? Math.max(0, ...gs.map(g => { const r = g.getBoundingClientRect(); return Math.max(Math.abs(r.left - b.left), Math.abs(r.top - b.top), Math.abs(r.width - b.width), Math.abs(r.height - b.height)); })) : -1 }; });
   check(gh320.n >= 1 && gh320.worst >= 0 && gh320.worst <= 1, `at 320 x 568 the ghost is ${gh320.worst.toFixed(1)} px off the plane picture (${gh320.n} ghosts; want <= 1)`);
+  // Each shrinkable row fits the panel's inner box (the tabs once spilled past the panel's padding yet stayed inside the screen).
+  const rowsOver = await p.evaluate(() => ['.hangar-head', '.ftabs', '.ftimeline'].map(sel => { const e = document.querySelector('#hangar ' + sel); if (!e) return ''; const pan = document.querySelector('#hangar .panel'), inner = pan.clientWidth - 32, w = Math.round(e.getBoundingClientRect().width);   // (a grid item never shrinks below its min-content, so a too-wide row is itself wider than the panel's inner box)
+    return e.scrollWidth > e.clientWidth + 1 || w > inner + 1 ? `${sel} content ${e.scrollWidth}, box ${w} > the panel's inner ${inner}` : ''; }).filter(Boolean));
+  check(rowsOver.length === 0, `at 320 x 568 a hangar row spills out of its own box: ${rowsOver.join('; ')}`);
+  // ONE rogue wide row must not drag the whole panel out (the grid's implicit column; minmax(0, 1fr) pins it): TAKE OFF stays on screen.
+  const rogueRight = await p.evaluate(() => { const d = document.createElement('div'); d.style.cssText = 'white-space:nowrap;width:max-content;font-size:9px'; d.textContent = 'x'.repeat(60); document.querySelector('#hFleet').appendChild(d); const r = document.getElementById('hGoTop').getBoundingClientRect().right; d.remove(); return Math.round(r); });
+  check(rogueRight <= 321, `at 320 x 568 one 60-character nowrap row pushes TAKE OFF to ${rogueRight} px (the grid column is not pinned)`);
+  const over320 = await past(320);
+  check(over320.length === 0, `at 320 x 568 the hangar is drawn past the screen's side: ${over320.join('; ')}`);
   await p.setViewportSize(vp0); await p.waitForTimeout(200);
+  const over390 = await past(vp0.width);
+  check(over390.length === 0, `at ${vp0.width} the hangar is drawn past the screen's side: ${over390.join('; ')}`);
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   check(await p.evaluate(() => document.getElementById('hNextPlane').getBoundingClientRect().height) < 40, 'the Next plane line is one short line (its bar once grew 140 px tall)');
