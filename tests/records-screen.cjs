@@ -32,6 +32,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const rec = { ever: { longest: 4321, cool: 12, longestCrash: 900, shortest: 150, bird: 2, crashes: 5 }, week: { start: weekStart, longest: 2500, cool: 3, longestCrash: 400, shortest: 400, bird: 1, crashes: 1, kindsBase: [], missionsBase: 5 }, fresh: ['longest', 'shortest'] };
   p = await open({ ...base, landings: 3, planted: { oak: 2, birch: 1 }, missionsDone: [...base.missionsDone, 'weurope:shade', 'weurope:bring'], records: rec });
   check(await tab(p), 'BOARDS appears after the 3rd landing');
+  // (R9: NEW RECORD! comes from src/fresh.js keys; a record beaten BEFORE the load would be marked seen by the one-time migration, so two records are beaten now, in the session)
+  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.records.beaten = ['record:longest:ever:4321', 'record:shortest:ever:150']; ui.go('fly'); }); await p.waitForTimeout(200);
   await p.click('#tabBoards'); await p.waitForTimeout(500);
   const toast1 = await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden ? t.textContent : ''; });   // (R9: the first-visit line + 'rankings come back with online' are ONE toast)
 
