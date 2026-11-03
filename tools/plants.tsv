@@ -320,3 +320,6 @@ missionsview	src/aim.js	s/chosen = save.aimKey \&\& list.find/chosen = false \&\
 missionsview	src/missionsview.js	s/shade: 'Icy air by day'/shade: 'Icy air by day, any day please'/	a how line over 20 characters
 missionsview	src/missionsview.js	s/for (const t of \[2, 3\]) if (M2.tierOpen/for (const t of [2]) if (M2.tierOpen/	tier 3 opening never lights the MISSIONS dot
 missionsview	src/missionsview.js	s/up\[0\] \&\& !up\[0\].daily ? up\[0\] : null/up[0] || null/	a daily pinned as NEXT (an empty mission list stops saying what a crossing needs)
+gear	src/ui.js	s/    \$('hubGear').onclick = () => this.openGear();/    $('hubGear').onclick = () => { sfx.flap(); $('title').classList.toggle('menu'); };/	the gear only toggles the old tiny buttons (no sheet)
+gear	src/ui.js	s/if (b.dataset.gear === 'sound') { \$('muteBtn').click();/if (b.dataset.gear === 'sound') { /	SOUND does nothing in the sheet
+gear	style.css	s/\.gear-list \.chip { width: 100%; justify-content: center; }/.gear-list .chip { width: 100%; justify-content: center; min-height: 18px; max-height: 18px; padding: 0; }/	the gear buttons are 18 px tall (under the 40 px target)

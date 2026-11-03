@@ -42,3 +42,4 @@ group save-writers | src/fresh.js src/records.js src/recordsui.js src/ui.js src/
 group records-badge | src/records.js src/recordsui.js | badgeart
 group hangar-swipe | src/hangar.js | swipe features
 group missions-screen | src/missionsview.js | missionscreen missionlanes walkthrough fitscreen overlap taptargets
+group gear-sheet | src/ui.js | gear

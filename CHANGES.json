@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-03-gear-pictograms",
+    "version": "0.27.2",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "Settings (how to play, flight school, sound, about us, reset) moved behind the gear on the home screen, in one Settings sheet.",
+      "Every mission has its own little picture."
+    ]
+  },
+  {
     "id": "2026-11-03-missions-screen",
     "version": "0.27.1",
     "date": "2026-11-03",

@@ -9,15 +9,45 @@ import { CITY_TEMPLATES } from './aim.js';
 
 export const HOW_MAX = 20;       // a row's second line (the "how"): MEASURED at 320 px, the prize shares it (a 28-character how wrapped every row to 70 px)
 export const NAME_MAX = 24;      // a row's name (nextup.SHORT_MAX)
-// A small pictogram per mission (the 8 existing code-drawn icons: assets/ui/mi-*.png; own pictograms are a later art task).
+// A 32 px pictogram per mission type (PixelLab, branch mission-icons: assets/ui/mi32-*.png, composed by tools/art/compose_mission_icons.py).
 export const ICONS = {
-  L1: 'mi-land', L2: 'mi-shade', L3: 'mi-night', L4: 'mi-airports', L5: 'mi-tree',
-  'land-city': 'mi-land', shade: 'mi-shade', 'plant-tree': 'mi-tree', 'clean-gaps': 'mi-airports', bring: 'mi-seed', project: 'mi-tree',
-  chain: 'mi-land', dodge: 'mi-night', rescue: 'mi-tree', spot: 'mi-globe', hazard: 'mi-airports', system: 'mi-crystal',
-  night: 'mi-night', shade10: 'mi-shade', kinds3: 'mi-tree', route: 'mi-globe', golden: 'mi-seed', tier: 'mi-tree',
-  'd-seeds': 'mi-seed', 'd-shade': 'mi-shade', 'd-gaps': 'mi-airports', 'd-skip': 'mi-airports', 'd-plant': 'mi-tree', 'd-night': 'mi-night',
-  'e-km': 'mi-globe', 'e-seeds': 'mi-seed', 'e-gaps': 'mi-airports',
-  'st-km': 'mi-globe', 'st-seeds': 'mi-seed', 'st-gaps': 'mi-airports', 'st-land': 'mi-land', 'st-plant': 'mi-tree',
+  L1: 'mi32-runway',
+  L2: 'mi32-shade',
+  L3: 'mi32-moonpatch',
+  L4: 'mi32-nonstop',
+  L5: 'mi32-sapling',
+  'land-city': 'mi32-runway',
+  shade: 'mi32-shade',
+  'plant-tree': 'mi32-sapling',
+  'clean-gaps': 'mi32-stormgap',
+  bring: 'mi32-seedbag',
+  project: 'mi32-natureproj',
+  chain: 'mi32-twopins',
+  dodge: 'mi32-moonpatch',
+  rescue: 'mi32-shovel',
+  spot: 'mi32-binoculars',
+  hazard: 'mi32-stormgap',
+  system: 'mi32-gear',
+  night: 'mi32-moonpatch',
+  shade10: 'mi32-shade',
+  kinds3: 'mi32-forest',
+  route: 'mi32-nonstop',
+  golden: 'mi32-goldenseed',
+  tier: 'mi32-flag',
+  'd-seeds': 'mi32-seedbag',
+  'd-shade': 'mi32-shade',
+  'd-gaps': 'mi32-stormgap',
+  'd-skip': 'mi32-nonstop',
+  'd-plant': 'mi32-sapling',
+  'd-night': 'mi32-moonpatch',
+  'e-km': 'mi32-roadkm',
+  'e-seeds': 'mi32-seedbag',
+  'e-gaps': 'mi32-stormgap',
+  'st-km': 'mi32-roadkm',
+  'st-seeds': 'mi32-seedbag',
+  'st-gaps': 'mi32-stormgap',
+  'st-land': 'mi32-airport',
+  'st-plant': 'mi32-sapling',
 };
 // The one-line "how" under a mission's name (<= 20 characters: the prize shares that line at 320 px) and the longer TIP in its sheet.
 export const HOW = {
@@ -83,7 +113,7 @@ export function missionsView(save) {
     const stopsText = n.stops ? `${n.stops} ${n.stops === 1 ? 'stop' : 'stops'} away` : null;
     const how = n.lead ? 'Do this first' : stopsText || lesson || hazard || (def && def.id && (m.daily && !HOW[id] ? DAILY_HOW : HOW[id])) || (n.daily ? DAILY_HOW : '');
     const tip = n.lead ? n.full : n.stops ? `${stopsText} on your route. Tap AIM HERE to fly there first.` : lesson ? `${lesson}: ${n.full}.` : hazard ? `${hazard}.` : (m && m.daily ? (TIP[id] || 'Today only: any flight that does it.') : TIP[id]) || '';
-    return { key: n.key, short: n.short, full: n.full, how: clip(how, HOW_MAX), tip, icon: ICONS[id] || (n.lead ? 'mi-globe' : 'mi-seed'), prize: m ? m.prize.seeds : 0, star: !!(m && m.star),
+    return { key: n.key, short: n.short, full: n.full, how: clip(how, HOW_MAX), tip, icon: ICONS[id] || (n.where === 'hangar' ? 'mi32-gear' : n.where === 'nature' ? 'mi32-natureproj' : 'mi32-seedbag'), prize: m ? m.prize.seeds : 0, star: !!(m && m.star),
       where: n.where, lead: !!n.lead, city, aimed: !!(city && save.aimKey === n.key), daily: !!n.daily, right: rightOf(n) };
   }
 }
