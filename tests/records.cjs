@@ -11,15 +11,16 @@
 
   // 1. A landing changes the GOOD numbers, never the oops ones.
   let s = fresh(); R.recordFlight(s, L(3000, 10, 4));
+  const B = x => (x.records && x.records.beaten) || [];   // the NEW marks are src/fresh.js keys: record:<id>:<period>:<value> (records.fresh / clearFresh were retired)
   let v = R.values(s);
   check(v.ever.longest === 3000 && v.week.longest === 3000, `a landing sets FURTHEST FLIGHT (both periods): ${JSON.stringify(v)}`);
   check(v.ever.cool === 6, `COOL SKIES = shade minus night heat: ${v.ever.cool}`);
   check(v.ever.crashes === 0 && v.ever.bird === 0 && v.ever.longestCrash === null && v.ever.shortest === null, `a landing touches no oops board: ${JSON.stringify(v.ever)}`);
-  check(R.fresh(s).length === 0, `the first landing is a start, not a record beaten: ${R.fresh(s)}`);
+  check(B(s).length === 0, `the first landing is a start, not a record beaten: ${B(s)}`);
 
   // 2. Beating yourself marks NEW; a shorter flight does not.
-  R.recordFlight(s, L(5000)); check(R.fresh(s).includes('longest'), `a longer landing is a NEW RECORD: ${R.fresh(s)}`);
-  R.clearFresh(s); R.recordFlight(s, L(4000)); check(R.fresh(s).length === 0 && R.values(s).ever.longest === 5000, `a shorter landing keeps the record and marks nothing: ${JSON.stringify(R.values(s).ever)}`);
+  R.recordFlight(s, L(5000)); check(B(s).includes('record:longest:ever:5000') && B(s).includes('record:longest:week:5000'), `a longer landing is a NEW RECORD (both periods): ${B(s)}`);
+  const n0 = B(s).length; R.recordFlight(s, L(4000)); check(B(s).length === n0 && R.values(s).ever.longest === 5000, `a shorter landing keeps the record and marks nothing: ${JSON.stringify(R.values(s).ever)}`);
 
   // 3. A crash changes the OOPS numbers (by kind), never the good ones.
   s = fresh(); R.recordFlight(s, L(2000, 8, 0));
@@ -28,7 +29,7 @@
   check(v.crashes === 2 && v.bird === 1, `MOST CRASHES counts every crash, BIRD MAGNET only birds: ${JSON.stringify(v)}`);
   check(v.longestCrash === 800 && v.shortest === 300, `LONGEST CRASH 800 and SHORTEST FLIGHT 300 (the smaller one is the record): ${JSON.stringify(v)}`);
   check(v.longest === 2000 && v.cool === 8, `crashes leave FURTHEST FLIGHT and COOL SKIES alone: ${JSON.stringify(v)}`);
-  check(R.fresh(s).includes('shortest'), `a shorter crash is a NEW RECORD for SHORTEST FLIGHT: ${R.fresh(s)}`);
+  check(B(s).some(k => k.startsWith('record:shortest:')), `a shorter crash is a NEW RECORD for SHORTEST FLIGHT: ${B(s)}`);
 
   // 4. COOL SKIES is flight by flight: a bad flight scores 0, never negative.
   s = fresh(); R.recordFlight(s, L(1000, 2, 5)); check(R.values(s).ever.cool === 0, `a flight that trapped more heat than it shaded scores 0: ${R.values(s).ever.cool}`);

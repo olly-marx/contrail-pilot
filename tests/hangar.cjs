@@ -102,6 +102,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // ONE rogue wide row must not drag the whole panel out (the grid's implicit column; minmax(0, 1fr) pins it): TAKE OFF stays on screen.
   const rogueRight = await p.evaluate(() => { const d = document.createElement('div'); d.style.cssText = 'white-space:nowrap;width:max-content;font-size:9px'; d.textContent = 'x'.repeat(60); document.querySelector('#hFleet').appendChild(d); const r = document.getElementById('hGoTop').getBoundingClientRect().right; d.remove(); return Math.round(r); });
   check(rogueRight <= 321, `at 320 x 568 one 60-character nowrap row pushes TAKE OFF to ${rogueRight} px (the grid column is not pinned)`);
+  // A rich bank (7-digit seeds, 6-digit crystals) must not push TAKE OFF off a 320 screen: the head wraps instead.
+  const bank0 = await p.evaluate(() => { const ui = game.registry.get('ui'), o = [ui.save.seeds, ui.save.crystals]; ui.save.seeds = 9999999; ui.save.crystals = 999999; ui.renderHangar(); return o; });
+  await p.waitForTimeout(200);
+  const bank = await p.evaluate(() => { const h = document.querySelector('#hangar .hangar-head'), g = document.getElementById('hGoTop').getBoundingClientRect(), pan = document.querySelector('#hangar .panel'); return { goRight: Math.round(g.right), inner: Math.round(pan.getBoundingClientRect().right - 16), w: h.scrollWidth, cw: h.clientWidth }; });
+  check(bank.goRight <= bank.inner + 1 && bank.w <= bank.cw + 1, `at 320 x 568 a 7-digit bank pushes the head out: ${JSON.stringify(bank)}`);
+  await p.evaluate(o => { const ui = game.registry.get('ui'); ui.save.seeds = o[0]; ui.save.crystals = o[1]; ui.renderHangar(); }, bank0);
   const over320 = await past(320);
   check(over320.length === 0, `at 320 x 568 the hangar is drawn past the screen's side: ${over320.join('; ')}`);
   await p.setViewportSize(vp0); await p.waitForTimeout(200);
@@ -119,9 +125,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const eras = await p.evaluate(() => ({ n: document.querySelectorAll('#sheet .sheet-body p b').length, txt: (document.querySelector('#sheet') || {}).textContent || '' }));
   check(eras.n === 6 && /1950s/.test(eras.txt) && /Far future/.test(eras.txt), `tapping the era line opens the six eras: ${eras.n}`);
   await p.click('#sheet .sheet-ok', { timeout: 2500 }).catch(() => fails.push('a sheet that should be open is not')); await p.waitForTimeout(150);
+  check(!(await p.$('#sheet')), 'OK closes the era sheet (it is gone from the page)');
   await p.click('[data-planeinfo]'); await p.waitForTimeout(200);
   check(/Every plane flies the same way/.test(await p.evaluate(() => (document.querySelector('#sheet') || {}).textContent || '')), 'the (i) beside the plane name opens the "every plane flies the same way" text');
   await p.click('#sheet .sheet-ok', { timeout: 2500 }).catch(() => fails.push('a sheet that should be open is not')); await p.waitForTimeout(150);
+  check(!(await p.$('#sheet')), 'OK closes the plane sheet (it is gone from the page)');
   await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seen = ui.save.seen || {}; ui.save.seen['hangar/gadgets'] = []; ui.save.seen['hangar/systems'] = []; ui.fleet.render(); });
   const dd = await p.evaluate(() => ({ cur: !!document.querySelector('.ftab.on .dot'), gad: !!document.querySelector('[data-ftab=gadgets] .dot') }));
   check(!dd.cur && dd.gad, `a dot on a sub-tab with news, never on the one showing: ${JSON.stringify(dd)}`);
