@@ -143,12 +143,12 @@ export class WildScreen {
     const pick = open.find(can) || open[0];
     if (pick) {
       const ok = can(pick), short = [Math.max(0, pick.cost - s.seeds) && `${pick.cost - s.seeds}<i class="seedicon"></i>`, Math.max(0, (pick.crystals || 0) - (s.crystals || 0)) && `${(pick.crystals || 0) - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ');
-      el.innerHTML = `<div class="rowc lead" id="wNextRow"><span class="rowc-tap"><span class="rowc-top"><span class="rowc-name">NEXT: ${esc(pick.row || pick.name)}</span></span>`
+      el.innerHTML = `<div class="rowc lead" id="wNextRow"><span class="rowc-tap"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">NEXT: ${esc(pick.row || pick.name)}</span></span>`
         + `<span class="rowc-sub">${ok ? 'Fund it now' : `need ${short} more`}</span></span>`
         + `<button class="rowc-price btn ${pick.id === free ? 'free' : ok ? 'go' : ''}" type="button" data-fund="${pick.id}" ${ok ? '' : 'disabled'}>${pick.id === free ? 'FREE!' : cost(pick)}</button></div>`;
       el.querySelector('[data-fund]').onclick = e => { e.stopPropagation(); this.buy(e.currentTarget.dataset.fund); };
     } else if (n.tree) {
-      el.innerHTML = `<div class="rowc lead" id="wNextRow"><span class="rowc-tap"><span class="rowc-top"><span class="rowc-name">NEXT: ${esc(n.tree.name)}</span></span><span class="rowc-sub">${esc(n.tree.rule.toLowerCase())}</span></span></div>`;
+      el.innerHTML = `<div class="rowc lead" id="wNextRow"><span class="rowc-tap"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">NEXT: ${esc(n.tree.name)}</span></span><span class="rowc-sub">${esc(n.tree.rule.toLowerCase())}</span></span></div>`;
     } else el.innerHTML = '';
   }
   freeProjectId() {
