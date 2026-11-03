@@ -48,7 +48,8 @@ const KEY = 'contrailPilot.v2';
     // Crash: crystals are still banked.
     await p.evaluate(() => { const s = game.scene.getScene('game'); s.plane.y = 600; });
     await p.waitForTimeout(800);
-    r.saved = await p.evaluate(k => JSON.parse(localStorage.getItem(k)).crystals, KEY);
+    // R8: the crash flight's prizes (the secret Oops! badge) are PAID at the bank now; this test is about the crystals the flight itself kept, so take them out.
+    r.saved = await p.evaluate(k => { const s = game.scene.getScene('game'), prize = (((s.result || {}).rewards) || []).reduce((a, x) => a + (x.crystals || 0), 0); return JSON.parse(localStorage.getItem(k)).crystals - prize; }, KEY);
     await p.close();
     return r;
   }
