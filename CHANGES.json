@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-03-aimed-route",
+    "version": "0.26.0",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "Missions now steer your route: a mission to fly to a city puts that city on your route, and the home screen shows it.",
+      "You can skip the mission route for one trip.",
+      "Missions you could never reach are no longer offered."
+    ]
+  },
+  {
     "id": "2026-11-03-hangar-fit",
     "version": "0.25.5",
     "date": "2026-11-03",
