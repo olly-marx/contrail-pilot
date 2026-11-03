@@ -34,7 +34,7 @@ function stopsFor(save, m) {
 }
 // The title never pushes its right column onto a second line (a long city: "Nonstop to DAR ES SALAAM" + "3 stops").
 export const fitRow = o => ({ ...o, short: clip(o.short, Math.min(SHORT_MAX, ROW_MAX - rightOf(o).length)) });
-const item = (save, m) => fitRow({ key: m.key, short: shortOf(m), full: m.title, where: whereOf(m), ...(stopsFor(save, m) ? { stops: stopsFor(save, m) } : {}), ...(m.daily ? { daily: true } : {}) });
+export const itemOf = (save, m) => fitRow({ key: m.key, short: shortOf(m), full: m.title, where: whereOf(m), ...(stopsFor(save, m) ? { stops: stopsFor(save, m) } : {}), ...(m.daily ? { daily: true } : {}) });
 
 export function leadOf(save, crossingReady = null) {
   if (!M2.isSeason2(save)) return null;   // (the screens decide whether to show it: HOME hides the strip until tutorialDone, as hub.js's chain always did)
@@ -50,8 +50,8 @@ export function nextUp(save, { crossingReady = null, limit = 3 } = {}) {
   if (!M2.isSeason2(save)) return [];
   const out = [], lead = leadOf(save, crossingReady), vis = M2.visible(save), daily = M2.lessonsLeft(save).length ? [] : M2.dailyVisible(save);
   if (lead) out.push(lead);
-  if (vis[0]) out.push(item(save, vis[0]));
-  if (daily[0]) out.push(item(save, daily[0]));
-  for (const m of vis.slice(1)) { if (out.length >= limit) break; out.push(item(save, m)); }
+  if (vis[0]) out.push(itemOf(save, vis[0]));
+  if (daily[0]) out.push(itemOf(save, daily[0]));
+  for (const m of vis.slice(1)) { if (out.length >= limit) break; out.push(itemOf(save, m)); }
   return out.filter((x, i, a) => a.findIndex(y => y.key === x.key) === i).slice(0, limit);
 }

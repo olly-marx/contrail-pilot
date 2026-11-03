@@ -51,6 +51,7 @@ import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp } from './nextup.js';
+import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -284,17 +285,34 @@ export class UI {
   // The MISSIONS screen: what you can do now (the area's open tiers, starred = the crossing trial), and prizes to claim.
   showMissions() {
     this.missionsAfterSave();   // an off-flight mission already met ticks now, not at the next purchase (sim chat's nit)
-    const s = this.save, list = missionsVisible(s);
-    const row = m => `<div class="mrow ${m.star ? 'star' : ''} ${m.daily ? 'daily' : ''}"><span>${m.star ? '&#9733; ' : ''}${m.title}</span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`;
+    const s = this.save;
     if (FEATURES.season2 && isSeason2(s)) setDaily(s, new Date().toISOString().slice(0, 10));   /* (the browser check: MISSIONS opened before the menu had set today) */
-    const daily = dailyVisible(s), steady = steadyVisible(s);
-    $('mList').innerHTML = (list.map(row).join('') || `<p>All done here!</p>${crossingsHTML(s).replace(/<button[^>]*data-cross[^>]*>.*?<\/button>/g, '<b>Ready!</b> Tap HOME, then NEXT.') || '<p class="small">Keep flying: new missions come with new eras.</p>'}`)   // (the audit, 2026-10-28: it said 'fly a crossing' when none was offered; now it says what is missing)
-      + (daily.length ? `<p class="label">Today${streakBonus(s) ? ` <span class="small">(streak +${streakBonus(s)})</span>` : ''}</p>` + daily.map(row).join('') : '')
-      + (steady.length ? `<p class="label">Steady${saving(s) ? '' : ' <span class="small">(1 seed each while you can afford an upgrade: spend to earn more!)</span>'}</p>` + steady.map(m => `<div class="mrow steady"><span>${m.title}<span class="mbar"><i style="width:${Math.round(100 * m.progress / m.target)}%"></i></span><span class="small">${m.progress.toLocaleString('en')} / ${m.target.toLocaleString('en')}</span></span><span class="prize">+${m.prize.seeds}<i class="seedicon"></i></span></div>`).join('') : '')
-      + (isSeason2(s) && (s.missionsDone || []).includes('L3') ? '<p class="label">Badges</p>' + nearBadges(s).map(x => `<div class="mrow steady"><span>${x.b.name}${tierName(x.b, x.tier + 1) ? ` (${tierName(x.b, x.tier + 1)})` : ''}<span class="mbar"><i style="width:${Math.round(100 * x.value / x.goal)}%"></i></span><span class="small">${x.value.toLocaleString('en')} / ${x.goal.toLocaleString('en')} ${x.b.unit}</span></span>${(t => (t.seeds ? prize(t) : `<span class="prize">+${t.crystals}<i class="crysicon"></i></span>`))(x.b.tiers[x.tier])}</div>`).join('') : '');
-    $('mTier').textContent = list.length && list[0].tier ? `Tier ${Math.max(...list.map(m => m.tier))} of 3` : 'Chapter 1';
+    // R4 (research/UX-MASTER-PLAN.md C3): NEXT pinned, then OPEN / TODAY / COMING UP / STEADY, DONE as a count. The data is src/missionsview.js.
+    const v = this.missionsV = missionsView(s);
+    const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const rowHTML = (r, cls = '') => `<div class="rowc goal ${cls}${r.star ? ' star' : ''}${r.aimed ? ' aimed' : ''}"><button class="rowc-tap" type="button" data-mrow="${esc(r.key)}"><span class="rowc-slot"><i class="mi ${r.icon}"></i></span><span class="rowc-top"><span class="rowc-name">${esc(r.short)}</span></span><span class="rowc-sub">${esc((r.aimed ? 'AIMED · ' : '') + r.how)}</span></button>${r.prize ? `<span class="rowc-price rowc-prize">+${r.prize}<i class="seedicon"></i></span>` : ''}</div>`;
+    $('mArea').textContent = v.area; $('mTier').textContent = v.tierLine;
+    $('mNext').innerHTML = v.next ? `<p class="label">NEXT</p>${rowHTML(v.next, 'next')}` : '';
+    const group = (label, rows, extra = '') => rows.length ? `<p class="label">${label}${extra}</p>${rows.join('')}` : '';
+    const empty = !v.next && !v.open.length;
+    $('mList').innerHTML = (empty ? `<p>All done here!</p>${crossingsHTML(s).replace(/<button[^>]*data-cross[^>]*>.*?<\/button>/g, '<b>Ready!</b> Tap HOME, then UP NEXT.') || '<p class="small">Keep flying: new missions come with new eras.</p>'}` : '')
+      + group('OPEN', v.open.map(r => rowHTML(r)))
+      + group('TODAY', v.today.rows.map(r => rowHTML(r, 'daily')), v.today.streak ? ` <span class="small">(streak +${v.today.streak})</span>` : '')
+      + (v.comingUp ? `<p class="label">COMING UP</p><p class="m-coming">${esc(v.comingUp)}</p>` : '')
+      + group('STEADY', v.steady.map(r => rowHTML({ ...r, star: false }, 'steady')), saving(s) ? '' : ' <span class="small">(1 seed each while you can afford an upgrade)</span>')
+      + (v.done.count ? `<button id="mDone" class="chip m-done" type="button">DONE ${v.done.count} ›</button>` : '');
+    // Tap a row: its sheet (the full title, the how, the prize) with the one action it has: AIM HERE (a city mission), or the hop to HANGAR / NATURE.
+    const all = [v.next, ...v.open, ...v.today.rows, ...v.steady].filter(Boolean);
+    document.querySelectorAll('#mNext [data-mrow], #mList [data-mrow]').forEach(b => b.onclick = () => { const r = all.find(x => x.key === b.dataset.mrow); if (!r) return; sfx.flap();
+      const hop = r.where === 'hangar' ? 'HANGAR' : r.where === 'nature' ? 'NATURE' : null;
+      const action = r.city ? { label: r.aimed ? 'STOP AIMING' : 'AIM HERE', onTap: () => { s.aimKey = r.aimed ? null : r.key; writeSave(s); this.toast(r.aimed ? 'Back to the first mission' : `Aiming at: ${r.short}`, '', 'good', 3); this.showMissions(); } }
+        : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
+      showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.how}.${r.prize ? ` Prize: +${r.prize} seeds.` : ''}`, action }); });
+    $('mInfo').onclick = () => { sfx.flap(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
+    if ($('mDone')) $('mDone').onclick = () => { sfx.flap(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
-    this.renderPrizes($('mPrizes'), () => this.showMissions());
+    if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
+    this.renderPrizes($('mPrizes'), () => this.showMissions());   // (event prizes still wait here until R8 retires claiming)
   }
 
   // ---------- navigation ----------
@@ -385,7 +403,7 @@ export class UI {
   // Something NEW to spend on: a free upgrade, or something that has become affordable or opened since
   // the hangar / NATURE was last looked at (0.10.2: it used to glow whenever ANYTHING was affordable).
   // The NEW dots come from ONE source (src/fresh.js). Lands are declared, HOME FIRST (the default is the UK + every land flown over).
-  freshOpts() { const home = (this.wild && this.wild.home && this.wild.home()) || 'woodland'; return { lands: [home, ...defaultLands(this.save).filter(r => r !== home)] }; }
+  freshOpts() { const home = (this.wild && this.wild.home && this.wild.home()) || 'woodland'; return { lands: [home, ...defaultLands(this.save).filter(r => r !== home)], missions: missionsFreshKeys }; }   // (R4: the MISSIONS scope's keys, src/missionsview.js)
   // The bar's text tag (FREE! only: a must-do lead) and the 6 px dots on HANGAR / NATURE / BOARDS / MISSIONS (a tab is lit iff a sub-scope is).
   // (the first ask migrates, once per save, AFTER main.js has made this.wild so the home land is known: what is already buyable / open
   // counts as seen, no dot storm)
