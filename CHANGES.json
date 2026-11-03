@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-03-online-back",
+    "version": "0.29.0",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "Online is back! Pick a pilot name in PILOT and see how you rank against other pilots on the BOARDS.",
+      "A new season starts: everyone begins fresh on the boards, and your progress is saved online so you can carry on from another device.",
+      "If the game says it needs an update, tap UPDATE NOW."
+    ]
+  },
+  {
     "id": "2026-11-03-branch-checks",
     "version": "0.28.2",
     "date": "2026-11-03",
