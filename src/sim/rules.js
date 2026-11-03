@@ -11,7 +11,8 @@ import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as 
 import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
 import { REGION_DATA, REGION_NAMES } from '../habitats.js';
-import { flightPath, legBetween, HOME, city, EARTH_KM, schoolSave } from '../route.js';
+import { legBetween, HOME, city, EARTH_KM, schoolSave } from '../route.js';
+import { routeFor } from '../aim.js';   // the aimed route (src/aim.js)
 import { crossingPath, recordAreaBest } from '../crossings.js';   // season 2 crossings (redesign)
 import { regionBelow } from '../geo.js';
 import { loadout, FUELS } from '../upgrades.js';
@@ -144,7 +145,7 @@ export const RULES = {
     // in one leg of crossing.km, then on through that area. Read from the save only (pure: the Node engine flies it too).
     this.crossing = this.autostart !== 'school' && this.save.tutorialDone && this.save.flyCrossing || null;   // (never before school is done)
     this.path = this.crossing ? crossingPath(this.crossing)
-      : flightPath(this.autostart === 'school' || !this.save.tutorialDone ? schoolSave(this.save) : this.save);
+      : routeFor(this.autostart === 'school' || !this.save.tutorialDone ? schoolSave(this.save) : this.save);
     this.startCity = 0;
     this.homeName = this.path[0];
     this.airportIndex = 0;
@@ -838,7 +839,7 @@ export const RULES = {
     if (!this.school) this.save.flightSeconds = (this.save.flightSeconds || 0) + (this.flySeconds || 0);   // crashes count too
     const eraOpened = !this.school && eraProgress(this.save).index > eraBefore ? eraProgress(this.save).era.name : null;
     const newPlane = eraOpened ? syncFleet(this.save, { fly: true }) : null;   // a new era's plane joins the fleet
-    if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; }   // choose a new direction from here
+    if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; this.save.skipAim = false; }   // choose a new direction from here
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save

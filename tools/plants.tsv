@@ -257,12 +257,23 @@ releasegate	tests/PATHMAP	/^group sw-raw/d	src/updates.js no longer maps to the 
 flightreset	src/sim/rules.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/	the passed-airport sign survives into the next flight (the user's stale header)
 flightreset	src/GameScene.js	s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	the HUD shows a sign about another leg
 routeheader	src/sim/rules.js,src/GameScene.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/;s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	JOINT plant: both halves of the fix removed (no reset, no 'this leg only' guard): the dead flight's sign shows in the next flight
+missionreach	src/aim.js	s/export const ROUTE_AIM = { on: true };/export const ROUTE_AIM = { on: false };/	the route does not aim at mission cities (today's tour)
 artsize	src/fleet.js	s/parts: parts.map(part => `assets\/ui\/upgrades\/hangar-/parts: parts.map(part => `assets\/upgrades\/plane-/	hangar layers pointed at the small flight sprites
 hangar	src/hangar.js	s/${ghosts}<\/div><div class="fpcap">/<\/div>${ghosts}<div class="fpcap">/	the ghosts outside the picture again (sized to the box)
 overlap	style.css	s/^\.rowc > \.rowc-price { grid-area: 2 \/ 2; align-self: end; position: relative; z-index: 1; }/.rowc > .rowc-price { position: absolute; right: 8px; bottom: 6px; z-index: 1; }/	the price is absolutely placed again (a name can run under it)
 overlap	style.css	s/ min-height: var(--price-h); display: flex; align-items: center; }/ }/	the sub line is no taller than the price (a wrapped name reaches it)
 fitscreen	style.css	s/^\.mlist { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }/.mlist { display: flex; flex-direction: column; gap: 4px; margin: 700px 0 6px; }/	the MISSIONS list starts below the tab bar (first row and primary not on the first screen)
 textbudget2	src/habitat/bush.js	s/row: 'Fox and cat control'/row: 'Fox and cat control across the whole of south-western Australia'/	a project row name over 2 lines at 320
+missionreach	src/missions2.js	s/ready: f => f.cityB !== f.start, //	a rescue mission offered with no target but where you start (the 3-city Patagonia case)
+skipaim	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the next trip would not aim)
+skipaim	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip (initFlight clears it)
+skipaim	src/aim.js	s/save && save.skipAim ? null : aimOpen(save)/aimOpen(save)/	the skip does nothing (the route still aims)
+skipaim	src/hub.js	s/skip: aimOpen(save) ? (save.skipAim ? 'on' : 'off') : null,/skip: save.skipAim ? 'on' : 'off',/	the skip button offered with no city mission to aim at
+textbudget2	src/aim.js	s/skip: 'Skip mission route this trip'/skip: 'Skip the mission route this trip'/	the skip chip text over one line at 320 (33 chars)
+skiptrip	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the real landing keeps skipping)
+skiptrip	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip
+skiptrip	src/ui.js	s/toggleSkip(this.save); writeSave(this.save);/writeSave(this.save);/	the tap on the chip does nothing
+skiptrip	style.css	s/#title.hub .hub-skip { display: flex;/#title.hub .hub-skip { min-height: 20px; max-height: 20px; display: flex;/	the chip is a 20 px target (under the 40 px minimum)
 hangar	style.css	/^#hangar .panel { grid-template-columns: minmax(0, 1fr); }$/d	the hangar grid column grows to its widest nowrap row again: the panel is wider than a 320 phone
 hangar	style.css	/^\.ftabs \.btn { flex: 1 1 0; min-width: 0;/d	the three tabs cannot share the width: PLANE SYSTEMS GADGETS run past the right edge (unmeasured: if this plant is NOT CAUGHT, the rule is not needed)
 hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap;/d	the head row cannot wrap: TAKE OFF runs past the right edge (unmeasured: if NOT CAUGHT, the rule is not needed)

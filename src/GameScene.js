@@ -12,6 +12,7 @@ import { Hud } from './Hud.js';
 import { sendFlight } from './online.js';
 import { loading, tripLands } from './loader.js';
 import { flightPath, city, HOME, schoolSave } from './route.js';
+import { routeFor } from './aim.js';
 import { crossingPath, completeCrossing } from './crossings.js';
 import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
@@ -294,9 +295,9 @@ export class GameScene extends Phaser.Scene {
   startFlight() {
     // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
     // Also if a new direction was chosen on the FLY screen since (the path is built with the scene).
-    const pathNow = () => (this.school ? this.path : this.save.flyCrossing ? crossingPath(this.save.flyCrossing) : flightPath(this.save.tutorialDone ? this.save : schoolSave(this.save)));   // (school: set by startSchool; lazy: a tap before create() has no save)
+    const pathNow = () => (this.school ? this.path : this.save.flyCrossing ? crossingPath(this.save.flyCrossing) : routeFor(this.save.tutorialDone ? this.save : schoolSave(this.save)));   // (school: set by startSchool; lazy: a tap before create() has no save)
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])
-      || (p => p[0] !== this.path[0] || p[1] !== this.path[1])(pathNow())) { this.scene.restart({ go: true }); return; }
+      || (p => p.slice(0, 12).join() !== this.path.slice(0, 12).join())(pathNow())) { this.scene.restart({ go: true }); return; }   // (the whole near route: an aimed route can change after the first hop, src/aim.js)
     this.takeOff();   // the flight's rules (src/sim/rules.js): kit, random stream, onto the runway
     loading.flying = true;   // DECLARED: a flight (flight school too) is on, so the idle picture fetch waits (src/loader.js); cleared by onFinish and backToMenu
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);

@@ -12,7 +12,7 @@ import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
 import { REGION_DATA, REGION_NAMES, TIERS } from './habitats.js';
-import { city } from './route.js';
+import { city, linksFor, wayTo, MAX_LEGS } from './route.js';
 import { fleetOf } from './fleet.js';
 import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 
@@ -60,16 +60,16 @@ export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === '
 // Prizes: seeds only (crystals stay a skill reward), ~700 per area in the teach stage, x the stage factor.
 export const TEMPLATES = [
   // tier 1: try it (one mechanic each)
-  { id: 'land-city', tier: 1, prize: 10, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landedAt === f.city },
+  { id: 'land-city', tier: 1, prize: 10, ready: f => f.city !== f.start, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landedAt === f.city },
   { id: 'shade', tier: 1, prize: 10, title: f => `Shade the Earth ${5 * f.k} times here`, flight: (r, s, f) => f.here && r.sunBlocked >= 5 * f.k },
   { id: 'plant-tree', tier: 1, prize: 10, title: f => `Plant a ${f.treeName} in ${f.landName}`, flight: (r, s, f) => (r.treeIds || []).includes(f.treeTag) },
   { id: 'clean-gaps', tier: 1, prize: 10, title: f => `Fly ${3 * f.k} storm gaps without a scrape`, flight: (r, s, f) => (r.cleanGaps || 0) >= 3 * f.k },
   { id: 'bring', tier: 1, prize: 10, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 10 * f.k },
   { id: 'project', tier: 1, prize: 10, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
   // tier 2: combine it
-  { id: 'chain', tier: 2, prize: 15, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
+  { id: 'chain', tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
   { id: 'dodge', tier: 2, prize: 15, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
-  { id: 'rescue', tier: 2, prize: 15, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
+  { id: 'rescue', tier: 2, prize: 15, ready: f => f.cityB !== f.start, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
   { id: 'spot', tier: 2, prize: 15, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
   { id: 'hazard', tier: 2, prize: 15, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
   { id: 'system', tier: 2, prize: 15, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
@@ -77,7 +77,7 @@ export const TEMPLATES = [
   { id: 'night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
   { id: 'kinds3', tier: 3, star: true, prize: 20, title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
-  { id: 'route', tier: 3, prize: 15, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
+  { id: 'route', tier: 3, prize: 15, ready: f => f.cityC !== f.start, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
   { id: 'golden', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
   { id: 'tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
 ];
@@ -99,7 +99,14 @@ function tierFinished(save, land) {
 // The fill: real names of this area, and the stage's numbers. `here` = the flight started in this area.
 export function fillFor(save, a, startCity = save.city) {
   const k = HARDER[stageOf(save, a)], land = landOf(save, a), cities = (AREAS[a] && AREAS[a].cities) || [];
-  const city = cities.find(c => c !== (save.homeCity || AREAS[a].start) && !(save.visited || []).includes(c)) || cities[1] || cities[0];
+  // Only cities the aimed route reaches within MAX_LEGS stops from where this flight starts (the guarantee, research/ROUTE-BUGS.md:
+  // the network's shape left 5 of 477 out of reach, e.g. "fly to SANTIAGO without stopping" from LIMA). The old preferences stay,
+  // among those: the first unvisited city; then others in list order; the LAST for 'route'. Nothing in reach: the old pick.
+  const L = linksFor(save), stops = (from, t, pass = false) => { const w = from && t && from !== t && L[from] ? wayTo(from, t, L, pass) : null; return w ? w.length - 1 : Infinity; };
+  const near = (from, t, pass = false) => { const n = stops(from, t, pass); return n <= MAX_LEGS && (!pass || n >= 2); };
+  const homeC = save.homeCity || (AREAS[a] && AREAS[a].start), pool = cities.filter(c => c !== homeC && c !== startCity);
+  const city = pool.find(c => !(save.visited || []).includes(c) && near(startCity, c)) || pool.find(c => near(startCity, c))
+    || cities.find(c => c !== homeC && !(save.visited || []).includes(c)) || cities[1] || cities[0];
   const landName = (REGION_NAMES[land] || 'this land').replace(/^Temperate /, '');
   const home = save.homeCity || (AREAS[a] && AREAS[a].start), others = cities.filter(c => c !== city && c !== home);   // not the home city (the audit: '...then MANAUS' for a Manaus start)
   const trees = landTrees(save, land), open = trees.filter(t => t.open), tree = open[open.length - 1] || trees[0];
@@ -107,7 +114,9 @@ export function fillFor(save, a, startCity = save.city) {
   const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
   const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));
   const animal = wild.find(w => canAppear(save, w.id, land)) || null;
-  return { area: a, land, landName, city, cityB: others[0] || city, cityC: others[others.length - 1] || city, k, stage: stageOf(save, a),
+  const cityB = others.find(c => near(startCity, c) && near(city, c)) || others[0] || city;   // rescue from here; a chain's 2nd from its 1st
+  const cityC = [...others].reverse().find(c => near(startCity, c, true)) || others[others.length - 1] || city;   // 'route': an airport passed on the way
+  return { area: a, land, landName, start: startCity, city, cityB, cityC, k, stage: stageOf(save, a),
     here: areaOf(startCity) === a, treeName: tree ? tree.name : 'tree', treeTag, kinds, animal: animal && animal.id, animalName: animal ? animal.name : 'wild animal' };
 }
 const key = (a, t) => `${a}:${t.id}`;
