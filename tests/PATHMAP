@@ -38,3 +38,4 @@ group ux-rows | src/hangar.js src/wild.js | overlap
 group rules-imports | src/aim.js | sim-bank fares flight
 group ux-fit | src/resultscard.js src/nextup.js | fitscreen overlap taptargets rowfit hangar nature
 ci-only | onrails320
+group fresh-bank | src/fresh.js src/records.js src/recordsui.js | sim-bank
