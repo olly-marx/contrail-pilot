@@ -5,12 +5,18 @@
 // while L4 is the lesson, land otherwise). Screenshots of every results card and hub to SHOTS. Asserts: L3, L4 and L5
 // are all done by flight 10 (each never stalls: 2 misses -> taught; the first parcels are free), no strip ever covers
 // the plane, no toast overlaps a strip, no page errors.
-// Run: python3 -m http.server 8000 & SHOTS=/tmp/post node tests/postrails.cjs
+// PART (test-speed split, 2026-11-03): PART=A flies flights 3-6 and checks the in-flight invariants (strip over the plane, toast over
+// a strip, gave-up rails steps, page errors); PART=B flies 7-10 starting from tests/fixtures/postrails-after6.json (a save captured from
+// a REAL run of PART=A with CAPTURE=1, never hand-written) and asserts L3, L4 and L5 are done by flight 10. No PART = all flights 3-10
+// in one run, as before: that unsplit run is the end-to-end check and runs in CI (CI runs every tests/*.cjs).
+// Run: python3 -m http.server 8000 & SHOTS=/tmp/post node tests/postrails.cjs     (PART=A|B, CAPTURE=1 for the fixture)
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHOTS || '';
 const W = 390, H = 844;
+const PART = process.env.PART || '', CAPTURE = !!process.env.CAPTURE, FIXTURE = require('path').join(__dirname, 'fixtures', 'postrails-after6.json');
+const FROM = PART === 'B' ? 7 : 3, TO = PART === 'A' ? 6 : 10;
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); }, log = [];
@@ -18,7 +24,7 @@ const W = 390, H = 844;
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   const fleet = { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} };
   await p.addInitScript(s => { if (!sessionStorage.getItem('seeded')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); } },
-    { areas: ['easia'], homeArea: 'easia', city: 'SEOUL', tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['x-bars', 'x-first-animal'], freeGiven: true, freeProjectGiven: true,
+    PART === 'B' ? JSON.parse(fs.readFileSync(FIXTURE, 'utf8')) : { areas: ['easia'], homeArea: 'easia', city: 'SEOUL', tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['x-bars', 'x-first-animal'], freeGiven: true, freeProjectGiven: true,
       fleet, seeds: 60, crystals: 2, flights: 3, landings: 2, missionsDone: ['L1', 'L2'], unclaimed: [], habitat: {},
       tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'hangar', 'nature-lead'] });
   if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
@@ -56,7 +62,7 @@ const W = 390, H = 844;
     : v.issr ? (v.day ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
     : v.toRunway < 700 && !v.skipNow ? v.skyH - 30 : v.skyH * 0.45;
   let covered = 0, stacked = 0, run = 0;   // stacked = frames in a toast-over-strip run of 3+ in a row: the game drops a toast below a strip that appears (GameScene dropToast), so ONE frame of overlap while it moves is by design and load-dependent
-  for (let f = 3; f <= 10; f++) {
+  for (let f = FROM; f <= TO; f++) {
     globalThis.__gaveUpSoFar = [...(globalThis.__gaveUpSoFar || []), ...await p.evaluate(() => window.__tourGaveUp || []).catch(() => [])];   /* (each flight reloads the page) */
     await p.goto(URL); await ready(p); await p.waitForTimeout(900);   // (a fresh page each flight, as a child reopening the game)
     await settle();
@@ -89,7 +95,8 @@ const W = 390, H = 844;
     await settle();
   }
   const sv = await save();
-  check(['L3', 'L4', 'L5'].every(k => sv.missionsDone.includes(k)), `L3, L4 and L5 are all done by flight 10 (${sv.missionsDone.filter(k => /^L\d$/.test(k))}; misses ${JSON.stringify(sv.lessonMisses || {})})`);
+  if (CAPTURE && PART === 'A') { fs.mkdirSync(require('path').dirname(FIXTURE), { recursive: true }); fs.writeFileSync(FIXTURE, JSON.stringify(sv, null, 1)); log.push(`captured the save after flight ${TO} to ${FIXTURE}`); }
+  if (PART !== 'A') check(['L3', 'L4', 'L5'].every(k => sv.missionsDone.includes(k)), `L3, L4 and L5 are all done by flight 10 (${sv.missionsDone.filter(k => /^L\d$/.test(k))}; misses ${JSON.stringify(sv.lessonMisses || {})})`);
   check(!covered, `no teaching strip ever covered the plane (${covered} frames did)`);
   check(!stacked, `no toast ever overlapped a teaching strip (${stacked} frames did)`);
   check(!p.errs.length, `page errors: ${p.errs}`);
@@ -99,6 +106,6 @@ const W = 390, H = 844;
   check(!gaveUp.length, `rails steps gave up on a target that never appeared: ${[...new Set(gaveUp)].join(', ')}`);
   await b.close();
   console.log(log.join('\n'));
-  console.log(fails.length ? `FAIL postrails:\n - ${fails.join('\n - ')}` : 'PASS postrails: flights 3-10 with real taps reach L5 done; no strip over the plane, no toast over a strip, no page errors');
+  console.log(fails.length ? `FAIL postrails:\n - ${fails.join('\n - ')}` : `PASS postrails${PART ? ' part ' + PART : ''}: flights ${FROM}-${TO} with real taps${PART === 'A' ? '' : ' reach L5 done'}; no strip over the plane, no toast over a strip, no page errors`);
   process.exit(fails.length ? 1 : 0);
 })();
