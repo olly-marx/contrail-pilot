@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-03-loading-fact",
+    "version": "0.26.2",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "The loading screen now shows a short fact if loading takes more than a couple of seconds."
+    ]
+  },
+  {
     "id": "2026-11-03-results-card",
     "version": "0.26.1",
     "date": "2026-11-03",

@@ -864,6 +864,7 @@ h2.sub { margin-top: -4px; }
 .loader.done { opacity: 0; pointer-events: none; }
 .loader canvas { width: min(92vw, 480px); aspect-ratio: 96 / 54; image-rendering: pixelated; border: 3px solid #f4f4f4; box-sizing: border-box; }
 .loader-title { margin: 0; color: #f4f4f4; font-family: 'Pixel', monospace; font-size: 14px; letter-spacing: 2px; }
+.loader-fact { margin: 0; max-width: min(88vw, 360px); color: #a9c1de; font-family: 'Pixel', monospace; font-size: 8px; line-height: 1.9; text-align: center; }   /* a load over 2 s only (src/loader.js showFact) */
 .loader-count { margin: 0; color: #a9c1de; font-family: 'Pixel', monospace; font-size: 10px; min-height: 12px; }
 
 /* ---------- R0: the shared UX section (research/UX-MASTER-PLAN.md D1/D2). INERT until a screen uses a class; each screen's owner

@@ -9,7 +9,10 @@ import { startServiceWorker } from './swreg.js';
 import { city, schoolSave } from './route.js';
 import { routeFor } from './aim.js';   // the aimed route (src/aim.js): the same path the flight will fly
 import { crossingPath } from './crossings.js';
+import { FACTS } from './ui.js';   // (already in the module graph: main.js loads ui.js before loading.start runs; a static import so the deploy's ?v= stamp applies)
 
+export const FACT_AFTER_MS = 2000, FACT_MAX_WORDS = 15;   // UX plan decision 4: one fact only on a load that takes longer than 2 s; it never takes a tap
+const words = t => t.trim().split(/\s+/).length;
 const W = 96, H = 54;
 const SPRITE_FRAME = /^assets\/(pixellab\/)?(animal|sky)-[^/]*\.png$/;   // the in-flight frames of an animal (not the menu portraits under ui/)
 const SKY = ['#10142b', '#16204a', '#1d2f66', '#264080', '#3a5a9c', '#5b82b8'];   // night to dawn, flat bands
@@ -45,10 +48,18 @@ export const loading = {
     const box = document.getElementById('loader'); if (!box) return;
     this.cv = box.querySelector('canvas'); this.txt = box.querySelector('.loader-count');
     this.ctx = this.cv.getContext('2d');
+    this.t0 = performance.now(); this.factTimer = setTimeout(() => this.showFact(), FACT_AFTER_MS);
     this.reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     const frame = t => { if (this.finished) return; this.draw(t); requestAnimationFrame(frame); };
     requestAnimationFrame(frame);
     setTimeout(() => { if (!this.finished) { this.sceneBuilt = this.menusDone = true; this.maybeFinish(); } }, 60000);   // fail open: a stuck download must never keep the game covered
+  },
+  // A long load (> FACT_AFTER_MS): ONE short fact under the counter, so waiting is not empty. Plain text on the loading screen, which takes no taps.
+  showFact() {
+    const box = document.getElementById('loader'); if (this.finished || !box || box.querySelector('.loader-fact')) return;
+    const pool = FACTS.filter(f => words(f) <= FACT_MAX_WORDS);
+    const p = document.createElement('p'); p.className = 'loader-fact'; p.textContent = pool[Math.floor(Math.random() * pool.length)] || '';
+    if (p.textContent) box.appendChild(p);
   },
   // Real progress: the fraction of all files (both steps) that have arrived.
   fraction() {
@@ -69,7 +80,7 @@ export const loading = {
   onSceneBuilt() { this.sceneBuilt = true; this.maybeFinish(); },
   maybeFinish() {
     if (this.finished || !this.sceneBuilt || !this.menusDone) return;
-    this.finished = true; document.body.dataset.loaded = '1';
+    this.finished = true; this.tDone = performance.now(); document.body.dataset.loaded = '1'; clearTimeout(this.factTimer);   // (tDone: for tests/loadercount.cjs)
     const box = document.getElementById('loader'); if (box) { box.style.pointerEvents = 'none'; box.classList.add('done'); setTimeout(() => box.remove(), 450); }
     this.startPump();
     startServiceWorker([...this.phaserUrls, ...everything()]).then(r => { window.cpSw = r; });   // (0.25.0) the worker keeps all of it for offline; does nothing on a page with no ?v build stamp
