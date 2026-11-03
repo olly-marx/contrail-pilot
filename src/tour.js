@@ -77,7 +77,7 @@ export class Tour {
   // Which rails step is due on this screen, from what has really happened (lessons done, the free part, flights), each
   // once (its tour id). Returns [id, steps] or null.
   railsFor(where) {
-    const s = this.save, d = id => (s.missionsDone || []).includes(id), un = (s.unclaimed || []).length;
+    const s = this.save, d = id => (s.missionsDone || []).includes(id);
     const hub = where === 'title', res = where === 'results';
     // R4: the school-done card -> the hangar (the free part).
     if (res && s.freeUpgrade && !this.done('r-school')) return ['r-school', [{ target: '#againBtn', text: tip('rail-school'), tap: true }]];
@@ -94,16 +94,14 @@ export class Tour {
     if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];
     // R9: after flight 1: the seeds are yours; claim the mission's prize; another flight, watch for wildlife.
     if (res && d('L1') && !this.done('r-res1')) return ['r-res1', [
-      { target: '#rGrab', text: tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none'), ok: true },   // (playtest 2026-10-29: 0 seeds read 'your seeds')
-      ...(un ? [{ target: '#rRewards .claim', text: tip('rail-claim'), tap: true }] : []),
+      { target: '#rBank', text: tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none'), ok: true },   // (playtest 2026-10-29: 0 seeds read 'your seeds')
+      { skipIf: () => { const m = document.getElementById('rMission'); return !m || m.hidden; }, target: '#rMission', text: tip('rail-mission'), ok: true },   // R1: the prize is paid already (claim() runs silently); the line says so
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
     // R11: after flight 2: NATURE opens; its first project is FREE; how nature works.
     // N0-N5, the NATURE introduction (the user approved, 2026-10-28): one idea per step, in the order a child asks - what is
     // this place, why animals, do this one thing, see the result - claim the prizes first, then open NATURE.
     if (res && d('L2') && !this.done('r-res2')) return ['r-res2', [
-      { skipIf: () => !document.querySelector('#rRewards .btn.claim.all'), target: '#rRewards .btn.claim.all', text: tip('rail-claim-all'), tap: true },   // CLAIM ALL when there are several
-      { skipIf: () => !!document.querySelector('#rRewards .btn.claim.all') || !document.querySelector('#rRewards .btn.claim'), target: '#rRewards .btn.claim', text: tip('rail-claim-all'), tap: true },
       { target: '#againBtn', text: tip('rail-nature'), tap: true }]];
     if (where === 'nature' && d('L2') && !this.done('r-nature')) return ['r-nature', [
       { target: '#wScene', text: tip('rail-nat-land'), ok: true },
@@ -112,7 +110,7 @@ export class Tour {
       { target: '#wMeter', text: tip('rail-nat-bio'), ok: true },
       { target: '#tabFly', text: tip('rail-nat-home'), tap: true, ready: always }]];
     // R12: a landing past an airport: the bonus payoff.
-    if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMultRow', text: tip('rail-bonus'), ok: true }]];
+    if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMaths', text: tip('rail-bonus'), ok: true }]];
     // R13: once lesson L3 is done: the hangar's SYSTEMS.
     if (hub && d('L3') && !this.done('r-systems')) return ['r-systems', [
       { target: '#tabHangar', text: tip('rail-systems'), tap: true, ready: always },
