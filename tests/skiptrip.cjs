@@ -20,18 +20,18 @@ const SIZES = [[390, 667], [320, 568]];
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { if (!sessionStorage.getItem('skiptrip-seeded')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('skiptrip-seeded', '1'); } }, SAVE);
     await p.goto(URL); await ready(p); await p.waitForTimeout(600);
-    const save = () => p.evaluate(() => JSON.parse(localStorage.getItem('s2:contrailPilot.v2')));
+    const save = () => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
     const reload = async () => { await p.reload(); await ready(p); await p.waitForTimeout(800); };
     const view = () => p.evaluate(() => { const c = document.getElementById('hubSkip'), r = document.getElementById('hubRoute'), g = document.getElementById('goBtn'), bar = document.getElementById('tabbar');
       const box = e => { if (!e || e.hidden || e.offsetParent === null) return null; const q = e.getBoundingClientRect(); return { x: q.x, y: q.y, w: q.width, h: q.height }; };
       return { route: r.innerText.replace(/\s+/g, ' ').trim(), chip: c && !c.hidden ? c.textContent.trim() : null, chipBox: box(c), goBox: box(g), barTop: bar && !bar.hidden ? bar.getBoundingClientRect().top : innerHeight,
         chipFits: c ? c.scrollWidth <= c.clientWidth + 1 : null, vw: innerWidth, vh: innerHeight }; });
-    const open = () => p.evaluate(async () => { const M = await import('./src/missions2.js'), s = JSON.parse(localStorage.getItem('s2:contrailPilot.v2')); return M.visible(s).map(m => m.key).join(); });
-    const target = () => p.evaluate(async () => { const A = await import('./src/aim.js'), s = JSON.parse(localStorage.getItem('s2:contrailPilot.v2')); return { open: A.aimOpen(s), aim: A.aimTarget(s) }; });
+    const open = () => p.evaluate(async () => { const M = await import('./src/missions2.js'), s = JSON.parse(localStorage.getItem('contrailPilot.v2')); return M.visible(s).map(m => m.key).join(); });
+    const target = () => p.evaluate(async () => { const A = await import('./src/aim.js'), s = JSON.parse(localStorage.getItem('contrailPilot.v2')); return { open: A.aimOpen(s), aim: A.aimTarget(s) }; });
     const fly = async () => { await p.click('#goBtn');
       for (let i = 0; i < 80 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
-      return p.evaluate(async () => { const R = await import('./src/route.js'), s = game.scene.getScene('game'), sv = JSON.parse(localStorage.getItem('s2:contrailPilot.v2'));
-        return { path: s.path.slice(0, 8), tour: R.flightPath(sv, 8) }; }); };
+      return p.evaluate(async () => { const R = await import('./src/route.js'), s = game.scene.getScene('game'), sv = JSON.parse(localStorage.getItem('contrailPilot.v2'));
+        return { path: s.path.slice(0, 8), tour: R.flightPath(sv, 8).slice(0, 8) }; }); };
     const end = (landed, k = 0) => p.evaluate(([landed, k]) => { const s = game.scene.getScene('game'); s.landedAt = landed ? s.path[k + 1] : null; s.airportIndex = k; s.airportsSkipped = k; s.finish({ landed }); return s.result; }, [landed, k]);
 
     // 1. The aimed route: HOME names the mission city, the chip is offered and reachable.
