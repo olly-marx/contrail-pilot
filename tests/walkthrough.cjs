@@ -123,10 +123,10 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await fly(4, { tag: '5', vals: { planted: 1 } }); await shot('results-flight5'); await p.click('#againBtn').catch(() => {}); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
   await p.click('#tabMissions'); await p.waitForTimeout(500);
-  const t1 = await p.evaluate(() => ({ tier: document.getElementById('mTier').textContent, rows: [...document.querySelectorAll('#mList .mrow:not(.daily)')].length, stars: document.querySelectorAll('#mList .mrow.star').length,
-    today: [...document.querySelectorAll('#mList .label')].some(e => e.textContent === 'Today'), daily: document.querySelectorAll('#mList .mrow.daily').length, lessonLeft: /Drop a tree/.test(document.getElementById('mList').innerText) }));
-  check(t1.tier === 'Tier 1 of 3' && t1.rows >= 3 && t1.stars === 0 && !t1.lessonLeft, `after lesson 5 the MISSIONS screen opens tier 1 (no star yet, no lesson left): ${JSON.stringify(t1)}`);
-  check(t1.today && t1.daily >= 1, `after the lessons the day's trio shows under "Today": ${JSON.stringify(t1)}`);
+  const t1 = await p.evaluate(() => ({ tier: document.getElementById('mTier').textContent, rows: document.querySelectorAll('#mNext .rowc.goal, #mList .rowc.goal:not(.daily):not(.steady)').length, stars: document.querySelectorAll('#mNext .rowc.goal.star, #mList .rowc.goal.star').length,
+    today: [...document.querySelectorAll('#mList .label')].some(e => /^TODAY/.test(e.textContent)), daily: document.querySelectorAll('#mList .rowc.goal.daily').length, lessonLeft: /Lesson \d of 5/.test(document.getElementById('missions').innerText) }));
+  check(/^Tier 1 · \d+\/6 done$/.test(t1.tier) && t1.rows >= 3 && t1.stars === 0 && !t1.lessonLeft, `after lesson 5 the MISSIONS screen opens tier 1 (no star yet, no lesson left): ${JSON.stringify(t1)}`);
+  check(t1.today && t1.daily >= 1, `after the lessons the day's trio shows under "TODAY": ${JSON.stringify(t1)}`);
   await shot('missions-tier1');
   // Bubbles: none shorter than 2 s after flight school (a tap or a newer bubble used to wipe one at once).
   const bubbles = await p.evaluate(() => (window.__bubbles || []).filter(x => !x.school && x.end != null).map(x => ({ ...x, ms: Math.round(x.end - x.start) })));

@@ -176,7 +176,6 @@ cumbadges	src/badges.js	s/.filter(x => x.goal !== null \&\& x.value !== null)/.f
 steady	src/missions2.js	s/prize: { seeds: !saving(save) ? 1 : /prize: { seeds: false ? 1 : /	rich pilots get the full steady prize
 steady	src/missions2.js	s/streakBonus = save => (saving(save) ? /streakBonus = save => (true ? /	rich pilots get the streak bonus
 missionlanes	src/ui.js	s/    if (FEATURES.season2 \&\& isSeason2(s)) setDaily(s, new Date/    if (false) setDaily(s, new Date/	MISSIONS does not set today's dailies
-missionlanes	src/ui.js	s/(isSeason2(s) \&\& (s.missionsDone || \[\]).includes('L3') ? '<p class="label">Badges/(isSeason2(s) \&\& !lessonsLeft(s).length ? '<p class="label">Badges/	badge bars wait for all lessons
 stripclear	src/GameScene.js	s/    if (this.explaining \&\& !this.school) this.keepStripClear();/    if (false) this.keepStripClear();/	the strip is placed once only, at open
 stripclear	src/GameScene.js	s/    const low = !coach.classList.contains(.strip-low.);/    const low = true;/	the strip only ever moves down (flips to low again over a low plane)
 finance	src/finance.js	s/const N = FINANCE.levels\[lv\], keep/const N = null \&\& FINANCE.levels[lv], keep/	the desk does not save up for its next level
@@ -315,3 +314,8 @@ hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }/d	a 7
 hangar	src/sheet.js	s/el.querySelector('.sheet-ok').onclick = close;/el.querySelector('.sheet-ok').onclick = () => {};/	the sheet's OK does not close it
 fitscreen	style.css	s#width: min(100%, 34vh);#width: min(100%, 50vh);#	the globe at 50vh (HOME overflows at 320x568)
 fitscreen	src/ui.js	s#v.up\[0\] \&\& v.up\[0\].pic ? v.up.slice(0, 2) : v.up#v.up#	the pictured lead row plus 3 rows (HOME's free-part state overflows at 320x568)
+missionsview	src/missionsview.js	s/Tier ${tierNow + 1} · after 3 of tier/Tier ${tierNow + 2} · after 3 of tier/	COMING UP names the wrong tier
+missionsview	src/missionsview.js	s/'land-city': 'mi-land', shade/'land-city': 'mi-nope', shade/	a mission with a pictogram that does not exist
+missionsview	src/aim.js	s/chosen = save.aimKey \&\& list.find/chosen = false \&\& list.find/	AIM HERE does nothing (aimKey ignored by the route)
+missionsview	src/missionsview.js	s/shade: 'Fly through icy air by day'/shade: 'Fly through icy air in the daytime please'/	a how line over 28 characters
+missionsview	src/missionsview.js	s/for (const t of \[2, 3\]) if (M2.tierOpen/for (const t of [2]) if (M2.tierOpen/	tier 3 opening never lights the MISSIONS dot

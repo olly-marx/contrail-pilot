@@ -52,15 +52,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 3-4. The MISSIONS screen, and an off-flight mission.
   p = await open({ ...s2, freeUpgrade: false, found: { rabbit: 1, fox: 1 }, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:shade', 'weurope:plant-tree', 'weurope:bring', 'weurope:chain', 'weurope:dodge', 'weurope:rescue'] });
   await p.click('#tabMissions'); await p.waitForTimeout(400);
-  const ms = await p.evaluate(() => ({ shown: !document.getElementById('missions').hidden, rows: document.querySelectorAll('#mList .mrow').length, stars: document.querySelectorAll('#mList .mrow.star').length, back: !document.getElementById('tabbar').hidden && !document.getElementById('tabFly').hidden }));
-  check(ms.shown && ms.rows >= 3 && ms.stars === 3 && ms.back, `the MISSIONS screen lists the open missions, 3 starred, with the bar's HOME: ${JSON.stringify(ms)}`);
+  const ms = await p.evaluate(() => ({ shown: !document.getElementById('missions').hidden, rows: document.querySelectorAll('#mNext .rowc.goal, #mList .rowc.goal:not(.daily):not(.steady)').length, stars: document.querySelectorAll('#mNext .rowc.goal.star, #mList .rowc.goal.star').length, back: !document.getElementById('tabbar').hidden && !document.getElementById('tabFly').hidden }));
+  check(ms.shown && ms.rows >= 3 && ms.stars === 3 && ms.back, `the MISSIONS screen lists NEXT and the open missions (R4: .rowc.goal rows), 3 starred, with the bar's HOME: ${JSON.stringify(ms)}`);
   // S4: the MISSIONS screen has a "Today" label and the day's trio under the tier list (the menu sets the trio from today's date), tinted
   // apart from the area's rows; none of them starred (only the crossing trial is).
-  const today = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent), daily: document.querySelectorAll('#mList .mrow.daily').length,
-    dailyStars: document.querySelectorAll('#mList .mrow.daily.star').length, tier: document.getElementById('mTier').textContent,
-    order: (() => { const l = document.querySelector('#mList .label'), d = document.querySelector('#mList .mrow.daily'), a = document.querySelector('#mList .mrow:not(.daily)'); return !!(l && d && a && (a.compareDocumentPosition(l) & 4) && (l.compareDocumentPosition(d) & 4)); })() }));
-  check(today.label.includes('Today') && today.daily >= 1 && today.daily <= 3 && today.dailyStars === 0 && today.order, `the MISSIONS screen lists the day's trio under a "Today" label, after the area's rows, none starred: ${JSON.stringify(today)}`);
-  check(/^Tier \d of 3$/.test(today.tier), `the MISSIONS screen names the tier: ${today.tier}`);
+  const today = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent.replace(/\s*\(.*$/, '')), daily: document.querySelectorAll('#mList .rowc.goal.daily').length,
+    dailyStars: document.querySelectorAll('#mList .rowc.goal.daily.star').length, tier: document.getElementById('mTier').textContent,
+    order: (() => { const l = [...document.querySelectorAll('#mList .label')].find(e => /^TODAY/.test(e.textContent)), d = document.querySelector('#mList .rowc.goal.daily'), a = document.querySelector('#mList .rowc.goal:not(.daily):not(.steady)'); return !!(l && d && a && (a.compareDocumentPosition(l) & 4) && (l.compareDocumentPosition(d) & 4)); })() }));
+  check(today.label.includes('TODAY') && today.daily >= 1 && today.daily <= 3 && today.dailyStars === 0 && today.order, `the MISSIONS screen lists the day's trio under a "TODAY" label, after the area's rows, none starred: ${JSON.stringify(today)}`);
+  check(/^Tier \d · \d+\/\d+ done/.test(today.tier), `the MISSIONS screen names the tier and its count (R4): ${today.tier}`);
   await p.click('#tabFly'); await p.waitForTimeout(300);
   await p.click('#tabNature'); await p.waitForTimeout(600);
   // Tap an animal to see it close up (the user, 2026-10-27): on a project card's "Brings back" row, and in the field picture.
