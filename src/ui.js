@@ -46,7 +46,7 @@ import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
 import { eraBarHTML } from './eras.js';
 import { FleetHangar } from './hangar.js';
-import { dots, markSeen, markSeenPrefix, migrateSeen, defaultLands } from './fresh.js';
+import { dots, markSeen, markSeenPrefix, migrateSeen, defaultLands, hangarScope } from './fresh.js';
 import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
@@ -497,7 +497,13 @@ export class UI {
   showHangar() {
     this.renderHangar();
     this.showOnly('hangar');
+    this.markHangarShown();   // (renderHangar ran while the screen was still hidden, so its own markSeen skipped: the screen is showing NOW)
     if (this.tour) this.tour.maybe('hangar');   // season 2: the free-part tour can start here (from OPEN THE HANGAR)
+  }
+
+  markHangarShown() {
+    const o = this.freshOpts(), a = markSeen(this.save, hangarScope(this.fleet.tab), o), b = markSeen(this.save, 'boards/badges', o);   // (until R9 the badge grid is on this screen)
+    if (a || b) this.persist();
   }
 
   renderHangar() {
