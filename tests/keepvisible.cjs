@@ -30,7 +30,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const t = document.querySelector(sel), ov = t.closest('.overlay'), bar = document.querySelector('.tabbar:not([hidden])').getBoundingClientRect();
     if (band === 'bar') ov.scrollTop += t.getBoundingClientRect().bottom - (bar.top + Math.min(20, bar.height / 2));   // bottom 20 px behind the bar, top above it
     else {   // B: make the pinned land reach PAST the middle of the visible band (as it does in the real rails: measured at 320x568, its bottom was 299 against a middle of 254), room to scroll, then put the row's top in the middle of the pinned land
-      const pe = document.querySelector('.wpin'), mid = (12 + (bar.top - 12)) / 2, need = mid + 40 - pe.getBoundingClientRect().top;
+      const pe = document.querySelector('.wpin'), mid = (12 + (bar.top - 12)) / 2, need = mid + 40 + 12;   // (stuck at top:-12 once scrolled, so its bottom is its height - 12: put that 40 px past the middle)
       if (pe.getBoundingClientRect().height < need) pe.style.minHeight = `${need}px`;
       document.querySelector('#nature .panel').style.paddingBottom = '700px'; await new Promise(r => setTimeout(r, 100));
       const pin = pe.getBoundingClientRect(); ov.scrollTop += t.getBoundingClientRect().top - (pin.top + pin.height / 2); }
