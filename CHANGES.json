@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-03-auto-claim",
+    "version": "0.27.3",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "Prizes now go into your seed bank the moment you earn them, so there is nothing to tap and claim any more. Prizes you had not claimed yet are added when you open the game.",
+      "Because your bank fills sooner, the extra bonus for saving up (on long goals and the daily streak) stops sooner once you have enough seeds to buy something."
+    ]
+  },
+  {
     "id": "2026-11-03-gear-pictograms",
     "version": "0.27.2",
     "date": "2026-11-03",

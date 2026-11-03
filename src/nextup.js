@@ -41,7 +41,6 @@ export function leadOf(save, crossingReady = null) {
   const mid = (M2.next(save) || {}).key;
   if (crossingReady) return { key: 'lead:cross', short: clip(`Cross to ${String(crossingReady).split(' to ').pop()}`), full: `Crossing ready: ${crossingReady}`, where: 'fly', lead: true };
   if (save.freeUpgrade && M2.revealed(save, 'hangar')) return { key: 'lead:free', short: 'Pick your free part', full: 'Open the hangar: free upgrade!', where: 'hangar', pic: 'assets/ui/lesson-hangar.png', lead: true };
-  if (mid === 'L5' && !((save.levels || {}).trees) && save.freeParcelsGiven && !canAffordParcels(save) && (save.unclaimed || []).length) return { key: 'lead:claims', short: 'Claim your prizes', full: 'Claim your prizes first', where: 'missions', lead: true };   // (can't buy parcels until the prizes are paid; R8 retires claims)
   if (mid === 'L5' && !((save.levels || {}).trees)) return { key: 'lead:parcels', short: !save.freeParcelsGiven ? 'Free tree parcels' : 'Buy tree parcels', full: !save.freeParcelsGiven ? 'Free tree parcels in NATURE!' : 'Buy tree parcels in NATURE first', where: 'nature', pic: 'assets/ui/lesson-nature.png', lead: true };
   return null;
 }

@@ -35,7 +35,7 @@ const DEFAULTS = {
   laps: 0,             // laps of the old 16-city loop (before 2026-10-22); kept, and counted into flownKm once
   visited: ['LONDON'], // cities landed in (a first landing in a new city pays a bonus)
   mission: 0,          // how many missions are done (src/missions.js); which ones: missionsDone
-  unclaimed: [],       // prizes waiting for the player to tap CLAIM (src/rewards.js)
+  unclaimed: [],       // retired in R8 (prizes are paid the moment they are earned); only src/rewards.js migrateClaims reads an older save's list, once
   coolLandings: 0,     // landings with the Earth cooler than at take-off (Cool Planet badge)
   // missionsDone and badgeTiers are NOT defaults: a save without them is converted from the old
   // mission list and badges once (missions.js migrateMissions, badges.js migrateBadges).

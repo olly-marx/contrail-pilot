@@ -21,7 +21,7 @@ import { LINES, nextLevel, level, canBuy, buyLevel, unlocked, needsMoreNature, f
 import { biodiversity, fundProject, projectsDone } from '../nature.js';
 import { REGION_DATA } from '../habitats.js';
 import { eraProgress } from '../eras.js';
-import { claim } from '../rewards.js';
+import { sumPrizes } from '../rewards.js';
 import { city } from '../route.js';
 import { SEASON2_ON } from '../cities.js';
 import { SEASON } from '../season.js';
@@ -140,9 +140,9 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
       events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `crossing ${crossing} km ${made ? 'MADE' : 'failed'}` });
       if (made && !c2) tier++;
     }
-    const prizes = claim(save);   // a child taps CLAIM on every finished mission and badge
+    const prizes = sumPrizes((w.result || {}).rewards);   // R8: prizes are PAID at the bank (RULES.bankFlight): the flight's prize total, for the row below
     const bought = shop(save, here);
-    if (s2) { const done = missionsOnSave(save); if (done.length) claim(save); }   // save-event missions (a purchase, a project), as the game checks after a buy
+    if (s2) missionsOnSave(save);   // save-event missions (a purchase, a project) pay at the buy itself (R8), as the game checks after a buy
     const era = eraProgress(save).index;
     if (era > eraWas) { events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `era ${era} opens (${fleetOf(save).plane})` }); eraWas = era; }
     rows.push({ flight: n, skill: +s.toFixed(3), km: Math.round(w.distancePx), landed: !!w.landed, end: w.landed ? 'landed' : (w.endReason || '').split('\n')[0],

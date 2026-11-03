@@ -34,7 +34,7 @@ import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
 import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus, saving } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
-import { missionReward, claim, unclaimedCount } from './rewards.js';
+import { missionReward, migrateClaims, sumPrizes } from './rewards.js';
 import { medal, tierName, nearBadges } from './badges.js';
 import { WILDLIFE } from './wildlife.js';
 import { animalPortrait } from './animalart.js';
@@ -93,6 +93,7 @@ export class UI {
   constructor(save, { onStart, onSchool }) {
     this.fleet = new FleetHangar(this); this.sfx = sfx;   // the plane side's hangar (src/hangar.js)
     this.save = save;
+    this.migrated = migrateClaims(save); if (this.migrated) writeSave(save);   // R8: prizes an older save never claimed are paid once, then a toast on the first menu
     this.onStart = onStart;
     this.onSchool = onSchool;
     this.toastTimer = null;
@@ -163,27 +164,6 @@ export class UI {
       if ($(b)) $(b).textContent = s.crystals || 0;
     }
     if (paid && (paid.seeds || paid.crystals)) sfx.coin();
-  }
-
-  // Prizes waiting to be claimed: each with a CLAIM button, plus CLAIM ALL. Missions and badges
-  // never pay themselves; the player taps to collect (src/rewards.js).
-  renderPrizes(el = $('tChallenges'), after = () => {}) {
-    const s = this.save, list = s.unclaimed || [];
-    el.hidden = !s.tutorialDone || !list.length;
-    if (el.hidden) { el.innerHTML = ''; return; }
-    const pic = u => (u.kind === 'badge' ? `<img class="prize-medal" src="${medal(u.id, u.tier)}" alt="">` : '<i class="mi mi-seed"></i>');
-    const pulse = isSeason2(s) && lessonsLeft(s).length ? ' pulse' : '';   // during the lessons: CLAIM pulses (an unclaimed prize can stall lesson 5)
-    el.innerHTML = `<p class="label">Prizes to claim</p>` + list.map(u => `<div class="claim-row"><span>${pic(u)}${u.label}</span>${prize(u)}<button class="btn claim${pulse}" data-key="${u.key}" type="button">CLAIM</button></div>`).join('')
-      + (list.length > 1 ? '<button class="btn claim all" data-key="" type="button">CLAIM ALL</button>' : '');
-    el.querySelectorAll('.claim').forEach(btn => btn.onclick = () => {
-      const paid = claim(s, btn.dataset.key || null);
-      writeSave(s);
-      sfx.buy();
-      btn.closest('.claim-row, .claim-panel, p, div')?.classList.add('claimed');
-      this.renderPrizes(el, after);
-      this.renderBank(paid);
-      after();
-    });
   }
 
   // The journey on the FLY screen (2026-10-22): where you are, three ways to go (the next city each
@@ -295,7 +275,10 @@ export class UI {
   missionsAfterSave() {
     if (!isSeason2(this.save)) return;
     const got = missionsOnSave(this.save);
-    if (got.length) { writeSave(this.save); this.toast('Mission done!', got.map(m => m.title).join(', '), 'good', 3); }
+    if (got.length) {   // R8: finish() paid them at this very moment
+      const paid = sumPrizes(got.map(m => m.prize)); writeSave(this.save); this.renderBank(paid);
+      this.toast('Mission done!', `${got.map(m => m.title).join(', ')}${paid.seeds ? `  +${paid.seeds} seeds` : ''}`, 'good', 3);
+    }
   }
   // The MISSIONS screen: what you can do now (the area's open tiers, starred = the crossing trial), and prizes to claim.
   showMissions() {
@@ -327,7 +310,6 @@ export class UI {
     if ($('mDone')) $('mDone').onclick = () => { sfx.flap(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
     if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
-    this.renderPrizes($('mPrizes'), () => this.showMissions());   // (event prizes still wait here until R8 retires claiming)
   }
 
   // ---------- navigation ----------
@@ -370,6 +352,7 @@ export class UI {
   showTitle() {
     // Season 2: a save with no start area chooses it first, as a full screen (S3), before the hub ever shows.
     if (FEATURES.season2 && needsStartChoice(this.save)) { this.askStart().then(() => this.showTitle()); return; }
+    if (this.migrated) { const m = this.migrated; this.migrated = null; this.toast('Prizes collected', `+${m.seeds} seeds${m.crystals ? ` and +${m.crystals} ice crystals` : ''} from your finished missions`, 'good', 5); }
     $('tTrees').textContent = this.save.seeds;
     $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = km(this.save.bestDistance);
@@ -380,7 +363,6 @@ export class UI {
     const any = Object.values(this.save.planted || {}).some(n => n > 0) || startBio > 0;
     $('tMeter').innerHTML = any && REGION_NAMES[startRegion] ? meterHTML(this.save, startBio, startRegion) : '';
     this.renderMission();
-    this.renderPrizes();
     $('tEra').innerHTML = this.save.tutorialDone ? eraBarHTML(this.save) : '';   // era progress (src/eras.js)
     this.renderJourney();
     if (FEATURES.season2 && isSeason2(this.save)) { const today = new Date().toISOString().slice(0, 10); setDaily(this.save, today); rollWeek(this.save, today); writeSave(this.save); this.missionsAfterSave(); }   // + off-flight missions already met (e.g. on entering a new area)   // the daily trio: the date comes from here, not the rules
@@ -438,8 +420,8 @@ export class UI {
   }
 
   // R1 (research/UX-MASTER-PLAN.md C1): the results are ONE card that fits the phone, no scrolling. The data is src/resultscard.js (budgets held by
-  // tests/resultscard.cjs); this draws it, reveals it in a short beat (a tap skips) and wires the sheets behind its lines. R1 keeps claim() running
-  // silently behind the prize line (every waiting prize is paid when the card shows); R8 retires it.
+  // tests/resultscard.cjs); this draws it, reveals it in a short beat (a tap skips) and wires the sheets behind its lines. The prizes were already PAID
+  // at the bank (R8: RULES.bankFlight); the prize line shows what they were worth.
   async showResults(r) {
     this.lastGrab = r.earned && r.earned[0] ? r.earned[0].n : 0;   // seeds grabbed this flight (the rails' R9a words depend on it)
     const lead = this.resultsLead();   // season 2: the one place the lesson leads next (research/FLOW-FIRST-HOUR.md)
@@ -449,8 +431,8 @@ export class UI {
     if (r.crossing && r.crossing.kind === 'lap' && r.crossing.landed) this.showEnding();   // the final boss: the game's ending
     else if (r.crossing) this.toast(r.crossing.landed ? (r.crossing.opens ? `NEW AREA: ${opensName(r.crossing.opens).toUpperCase()}!` : 'YOU MADE IT!') : 'Crossing not made',
       r.crossing.landed ? 'Your crossing is done. Fly on from here!' : 'Improve your plane, your nature and your contrail skill, and try again.', r.crossing.landed ? 'good' : '', 6);
-    const s = this.save, paid = claim(s);
-    if (paid.seeds || paid.crystals) { writeSave(s); this.renderBank(paid); }
+    const s = this.save, paid = sumPrizes(r.rewards);   // R8: these were PAID at the bank (RULES.bankFlight); this is what the card shows
+    if (paid.seeds || paid.crystals) this.renderBank(paid);
     const v = this.resultView = resultsView(r, s, { paid, lead, next: nextUp(s, { crossingReady: this.crossingReadyText(), limit: NEXT_ROWS }) });
     const steps = [...document.querySelectorAll('#results .step')];
     steps.forEach(el => el.classList.remove('in'));

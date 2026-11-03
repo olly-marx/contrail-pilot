@@ -159,8 +159,7 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   const l2 = await L2();
   check(l2, `L2 is done after ${flights} flight(s) (${flights === 1 ? 'the guaranteed daytime icy patch' : 'a miss, then the second try or the fallback'}): the rails never stall`);
   if (!l2) { await b.close(); console.log(`FAIL onrails:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (NATURE needs it: the rest would pass or fail by accident)
-  // N0-N5, the NATURE introduction (the user's approved script, 2026-10-28): claim first, then open NATURE.
-  if (await p.evaluate(() => !!document.querySelector('#rRewards .btn.claim'))) await step('N0a-claim-all', /prizes/i, () => !document.querySelector('#rRewards .btn.claim'), { screen: 'results' });
+  // N0-N5, the NATURE introduction (the user's approved script, 2026-10-28): open NATURE (R8: prizes are paid when earned, no claim step comes first).
   await step('N0b-open-nature', /Animals need places/i, () => !document.getElementById('nature').hidden, { screen: 'results' });
   await step('N1-the-land', /wild land/i, null, { screen: 'nature' });
   await step('N2-tap-to-see', /Tap this one/i, () => !!document.querySelector('#wProjects .project.previewing'), { screen: 'nature' });

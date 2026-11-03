@@ -77,8 +77,8 @@
   const lessonSave = { ...save(), missionsDone: [] }; M.setDaily(lessonSave, '2026-10-27');
   check(!lessonSave.daily, 'no daily trio during the lessons');
   // Firsts.
-  const fs1 = save(); const c1 = M.onFlight(fs1, { ...base, landed: false, crash: 'bird' });
-  check(c1.some(m => m.key === 'first:bird') && fs1.unclaimed.find(u => u.key === 'mission:first:bird').crystals === 1, 'a first bird crash: a funny card worth 1 crystal');
+  const fs1 = save(); const cr0 = fs1.crystals || 0; const c1 = M.onFlight(fs1, { ...base, landed: false, crash: 'bird' });
+  check(c1.some(m => m.key === 'first:bird') && (fs1.crystals || 0) - cr0 === 1 && !(fs1.unclaimed || []).length, 'a first bird crash: a funny card worth 1 crystal, PAID at once (R8)');
   check(!M.onFlight(fs1, { ...base, landed: false, crash: 'bird' }).some(m => m.key === 'first:bird'), 'only once');
   check(c1.every(m => m.key.startsWith('first:')), 'a crash completes nothing else');
   console.log(fails.length ? `FAIL missions4:\n - ${fails.join('\n - ')}` : `PASS missions4: all ${M.TEMPLATES.length} templates complete on their case, not on a near miss, and every near miss is proven by an always-true plant; daily trio and Firsts right`);

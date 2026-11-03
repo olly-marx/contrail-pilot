@@ -75,9 +75,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(critter && card.shown && /Found!/i.test(card.text), `tapping a found animal in the NATURE picture opens its card: ${!!critter} ${JSON.stringify(card)}`);
   await p.evaluate(() => { document.getElementById('wInfo').hidden = true; });
   const pid = await p.evaluate(() => { const b = document.querySelector('#wProjects [data-project]:not([disabled])'); return b && b.dataset.project; });
+  // R8: the mission's prize must be PAID at the buy. Record what the project costs and what the mission pays BEFORE the tap (a free first project costs nothing).
+  const pre = await p.evaluate(async pid => { const M = await import('./src/missions2.js'), s = game.registry.get('save'), ui = game.registry.get('ui');
+    const m = M.visible(s).find(x => x.key === 'weurope:project'), P = ((ui.wild || ui.nature || {}).projects || []).find(x => x.id === pid);
+    return { seeds: s.seeds, prize: m && m.prize.seeds, cost: P ? P.cost : null }; }, pid);
   if (pid) { await p.click(`#wProjects [data-project="${pid}"]`); await p.waitForTimeout(400); }
   const fund = await saveIn(p);
-  check(pid && (fund.missionsDone || []).includes('weurope:project') && (fund.unclaimed || []).some(u => u.key === 'mission:weurope:project'), `funding a project completes "Fund a nature project here" with no flight: ${pid} ${JSON.stringify(fund.missionsDone)}`);
+  const delta = fund.seeds - pre.seeds;
+  check(pre.prize > 0 && pre.cost != null && (delta === pre.prize - pre.cost || delta === pre.prize), `the project mission's prize was PAID at the buy: seeds ${pre.seeds} -> ${fund.seeds} (prize +${pre.prize}, project cost ${pre.cost}, or free)`);
+  check(pid && (fund.missionsDone || []).includes('weurope:project') && !(fund.unclaimed || []).length, `funding a project completes "Fund a nature project here" with no flight, and nothing is left waiting to claim (R8: it is paid at the buy; the exact amount is proven in tests/missions2.cjs): ${pid} ${JSON.stringify(fund.missionsDone)}`);
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close();
   // 4b. An off-flight mission ALREADY met ticks when the menu or the MISSIONS screen opens, not at the next purchase (S5; the sim
@@ -94,14 +100,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const stuck = await p.evaluate(() => ({ tab: !!document.querySelector('#tabHangar:not([hidden])'), next: document.getElementById('hubNext').innerText, locked: document.getElementById('goBtn').disabled }));
   check(stuck.tab && /free part/i.test(stuck.next) && stuck.locked, `an existing save with a free part waiting and no lesson done: hangar revealed, NEXT leads there, TAKE OFF locked: ${JSON.stringify(stuck)}`);
   await p.close();
-  // 4d. Lesson 5 with prizes unclaimed and parcels unaffordable (the audit, 2026-10-27): NEXT says to claim them and opens
-  // MISSIONS, where the CLAIM buttons pulse during the lessons. (Since 2026-10-28 the first parcels are free: this is the case once they were given.)
+  // 4d. Lesson 5 with parcels unaffordable and an OLDER save that still held a prize (R8): the migration pays it at load, NEXT is the tree parcels in NATURE
+  // and never "claim your prizes" (there is no claim step any more).
   p = await open({ ...s2, freeUpgrade: false, seeds: 0, crystals: 0, missionsDone: ['L1', 'L2', 'L3', 'L4'], freeParcelsGiven: true, unclaimed: [{ key: 'mission:L4', kind: 'mission', id: 'L4', label: 'Skip one airport, land at the next', seeds: 70, crystals: 1 }] });
   const cl = await p.evaluate(() => document.getElementById('hubNext').innerText);
-  check(/Claim your prizes/i.test(cl), `lesson 5, prizes unclaimed, parcels unaffordable: NEXT = "${cl}"`);
+  check(/tree parcels/i.test(cl) && !/Claim/i.test(cl), `lesson 5: NEXT = the tree parcels in NATURE, never "claim": "${cl}"`);
+  const paidAtLoad = await saveIn(p);
+  check(paidAtLoad.seeds === 70 && paidAtLoad.crystals === 1 && !(paidAtLoad.unclaimed || []).length, `the older save's prize was paid at load: ${paidAtLoad.seeds} / ${paidAtLoad.crystals}, left ${JSON.stringify(paidAtLoad.unclaimed)}`);
   await p.click('#hubNext .rc-row'); await p.waitForTimeout(400);
-  const pulse = await p.evaluate(() => ({ shown: !document.getElementById('missions').hidden, pulse: document.querySelectorAll('#mPrizes .btn.claim.pulse').length }));
-  check(pulse.shown && pulse.pulse >= 1, `NEXT opens MISSIONS with the CLAIM buttons pulsing: ${JSON.stringify(pulse)}`);
+  check(await p.evaluate(() => !document.getElementById('nature').hidden), 'NEXT opens NATURE');
   await p.close();
   // 5. The hangar tour starts on the hub (tours on).
   p = await open({ ...s2, seenTips: ['x-bars'], tours: [], shownLines: [], flights: 1 });   // a real new player: shownLines set on first load (else tour.js counts an old save's hangar tour as done)
