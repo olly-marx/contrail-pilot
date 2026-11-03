@@ -178,8 +178,8 @@ export class FleetHangar {
   // The range in the picture caption (the flying plane only): a span so the background estimate can swap it (#hCap).
   capHTML(s) {
     const km = capFor(s, areaOf(s.city) || null);
-    return km ? `<span id="hCap" class="hcap">reaches ~${km.toLocaleString('en-GB')} km</span>`
-      : `<span id="hCap" class="hcap working">${estimating() ? 'working out the range' : ''}<i class="dots"></i></span>`;
+    return km ? `<span id="hCap" class="hcap" title="How far your plane and nature can reach">~${km.toLocaleString('en-GB')} km</span>`
+      : `<span id="hCap" class="hcap working" title="Working out how far your plane can go">${estimating() ? '~ km' : ''}<i class="dots"></i></span>`;
   }
   // NATURE FINANCE (src/finance.js), from the 2010s: the desk's level, today's rate from your nature's health (a bar: fewer
   // seeds a crystal is better), the next level's rate previewed, and the TRADE button (once a landing, above the reserve).
@@ -237,7 +237,7 @@ export class FleetHangar {
     const ghosts = this.ghostParts(s, id).map(g => `<img class="fghost" src="${g}" alt="">`).join('');
     // .fpic: the PICTURE (400:176), base + ghost layers stacked inside it. The caption (.fpcap) is OUTSIDE it, so a ghost can never
     // be sized to the caption too (the user's screenshot, 2026-11-02: the ghost filled the whole box, stretched ~14% tall).
-    return `<div class="fpreview ${owned ? '' : 'locked'}"><div class="fpic"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}</div><div class="fpcap"><b>${pl.name}</b><span>${tag}${f.plane === id ? ' &middot; ' : ''}</span>${f.plane === id ? this.capHTML(s) : ''}</div></div>`;
+    return `<div class="fpreview ${owned ? '' : 'locked'}"><div class="fpic"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}</div><div class="fpcap"><b>${pl.name}</b><span>${tag}</span>${f.plane === id ? this.capHTML(s) : ''}</div></div>`;
   }
 
   // The sub-tabs (>= 40 px each), a dot on the ones with something new that are NOT the one showing (src/fresh.js).
@@ -251,10 +251,10 @@ export class FleetHangar {
   // (tour.js and the tours test point at the era line by that class).
   eraLineHTML(s) {
     const f = fleetOf(s), p = eraProgress(s), nxt = PLANES.find(pl => !f.planes[pl.id]);
-    const frac = p.next ? p.frac : 1, what = nxt ? `Next plane: <b>${nxt.name}</b> &middot; ${ERAS[nxt.era].id}` : `Every era open`;
+    const frac = p.next ? p.frac : 1, what = nxt ? `Next: <b>${nxt.name}</b>` : `Every era open`;   // (the era's name is in the sheet: this line must fit ONE row at 320)
     return `<button class="ftimeline era-line" id="hNextPlane" type="button" aria-label="The eras"><span class="small">${what}</span>`
       + `<span class="era-row"><span class="era-track"><span class="era-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span></span>`
-      + (p.next ? `<span class="small">${Math.floor(p.done)}/${Math.round(p.need)} min</span>` : '') + '</button>';
+      + (p.next ? `<span class="small" title="minutes of flying">${Math.floor(p.done)}/${Math.round(p.need)}</span>` : '') + '</button>';
   }
   eraSheet(s) {
     const p = eraProgress(s), brings = p.next ? PLANES.filter(pl => pl.era === p.index + 1).map(pl => pl.name).concat(p.index + 1 < 3 ? ['new systems and gadgets'] : []) : [];

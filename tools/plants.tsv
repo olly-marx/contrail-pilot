@@ -308,3 +308,4 @@ records-screen	src/recordsui.js	s/if (opts.toast) opts.toast(/if (false) opts.to
 records-screen	src/recordsui.js	s/newBadges.includes(b.id) ?/false ?/	no dot on the new badge
 records-screen	style.css	s/background: #fff; padding: 4px; font-size: 7px; border: 0;/background: #fff; padding: 4px; font-size: 6px; border: 0;/	the badge text back at 6 px (below the 7 px minimum)
 records-screen	src/recordsui.js	s/k !== tab \&\& d\[`boards\/${k}`\]/false/	no dot on the sub-tab that is not showing
+fitscreen	style.css	s/^#hFleet > .ftabs { margin: 0; }//;s/^\.hpreview\.empty { padding: 3px 6px; }//;/^#hFleet \.fplane-row \.rowc-sub { display: none; }/d	the R5 compaction undone (sub-tab margin, empty strip padding, the plane row sub line): the hangar primary falls below the bar at 320x568
