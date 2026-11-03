@@ -5,7 +5,7 @@
     "date": "2026-11-03",
     "level": "minor",
     "notes": [
-      "Fixed: on a small phone, the guide in NATURE could point at a button that was hidden under the picture. Now the button slides into view, so you can tap it."
+      "Small phones: on a very narrow screen the first nature step could be hidden behind the pinned header; it now scrolls clear so new players can take their free project."
     ]
   },
   {
