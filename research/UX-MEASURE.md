@@ -86,3 +86,34 @@ NATURE and HANGAR rows only (everything else is unchanged by R0; the full run is
 | nature/mediterranean (tiers open) | 320x568 | 2335 | 568 | 0 | 612 | 666 | 508 | 34 | 0 | 24 | 13 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Mediterranean scrub |
 
 Width check of the other grid panels (the implicit-column trap, plane build's note): at 320x568 only #hangar draws text past the screen's side; #results, #missions and #boards measured 0 cut-off text.
+
+
+## After R1 (live 0.26.1, 90710d4, measured 2026-11-03 against the deployed site)
+RESULTS, HOME, MISSIONS and BOARDS rows (HANGAR and NATURE are unchanged by R1; the full run is `~/.ux0/measure-live-0261.md`).
+| screen | viewport | scrollHeight | clientHeight | scrollTop | first-card top | primary bottom | bar top | text < 7 px | overlaps | cut text | taps < 40 px | verdict | examples |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| results/rich | 390x667 | 667 | 667 | 0 | 181 | 502 | 607 | 0 | 0 | 0 | 4 | SMALL TAPS |  |
+| results/seven | 390x667 | 667 | 667 | 0 | 204 | 479 | 607 | 0 | 0 | 0 | 4 | SMALL TAPS |  |
+| results/animalbadge | 390x667 | 667 | 667 | 0 | 181 | 502 | 607 | 0 | 0 | 0 | 4 | SMALL TAPS |  |
+| results/plain | 390x667 | 667 | 667 | 0 | 219 | 464 | 607 | 0 | 0 | 0 | 3 | SMALL TAPS |  |
+| results/crash | 390x667 | 667 | 667 | 0 | 219 | 464 | 607 | 0 | 0 | 0 | 2 | SMALL TAPS |  |
+| results/first | 390x667 | 667 | 667 | 0 | 219 | 464 | 607 | 0 | 0 | 0 | 3 | SMALL TAPS |  |
+| results/school | 390x667 | 667 | 667 | 0 | 267 | 416 | 607 | 0 | 0 | 0 | 2 | SMALL TAPS |  |
+| home | 390x667 | 667 | 667 | 0 | 130 | 521 | 607 | 1 | 2 | 0 | 6 | OVERLAP + SMALL TEXT + SMALL TAPS | "◀" x "hub-globe" |
+| missions | 390x667 | 926 | 667 | 0 | 103 | 131 | 607 | 0 | 0 | 0 | 0 | SCROLLS |  |
+| boards | 390x667 | 667 | 667 | 0 | - | - | 607 | 0 | 0 | 0 | 10 | SMALL TAPS |  |
+| results/rich | 320x568 | 568 | 568 | 0 | 131 | 453 | 508 | 0 | 0 | 0 | 4 | SMALL TAPS |  |
+| results/seven | 320x568 | 568 | 568 | 0 | 154 | 430 | 508 | 0 | 0 | 0 | 4 | SMALL TAPS |  |
+| results/animalbadge | 320x568 | 568 | 568 | 0 | 131 | 453 | 508 | 0 | 0 | 0 | 4 | SMALL TAPS |  |
+| results/plain | 320x568 | 568 | 568 | 0 | 169 | 415 | 508 | 0 | 0 | 0 | 3 | SMALL TAPS |  |
+| results/crash | 320x568 | 568 | 568 | 0 | 169 | 415 | 508 | 0 | 0 | 0 | 2 | SMALL TAPS |  |
+| results/first | 320x568 | 568 | 568 | 0 | 169 | 415 | 508 | 0 | 0 | 0 | 3 | SMALL TAPS |  |
+| results/school | 320x568 | 568 | 568 | 0 | 217 | 366 | 508 | 0 | 0 | 0 | 2 | SMALL TAPS |  |
+| home | 320x568 | 601 | 568 | 0 | 106 | 479 | 508 | 1 | 2 | 0 | 6 | SCROLLS + OVERLAP + SMALL TEXT + SMALL TAPS | "◀" x "hub-globe" |
+| missions | 320x568 | 970 | 568 | 0 | 103 | 131 | 508 | 0 | 0 | 0 | 0 | SCROLLS |  |
+| boards | 320x568 | 568 | 568 | 0 | - | - | 508 | 0 | 0 | 0 | 10 | SMALL TAPS |  |
+
+- **RESULTS now fits, all 7 variants, both sizes**: scrollHeight == clientHeight (667 at 390x667, 568 at 320x568; before: 740-1,760). FLY ON ends at 416-502 (before: 654-1,674), always above the bar (607 / 508). 0 overlaps, 0 cut-off text. Its remaining tap-size problems (2-4 per variant) are the one-line rows, 24 px tall: `taptargets` for results stays PENDING by design.
+- **HOME dropped from 1,040 / 1,064 px to 667 / 601 px** (fits at 390x667; 33 px over at 320x568) without any HOME change: the CLAIM rows for the unclaimed prizes of the rich save no longer appear (the silent claim). HOME's fit stays pending until R3. HOME still has 2 overlaps (the globe's spin arrows) and 1 text under 7 px.
+- **MISSIONS dropped from 1,383 / 1,484 to 926 / 970 px** for the same reason (no prizes block).
+- BOARDS is unchanged (fits; 10 small taps).
