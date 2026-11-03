@@ -1,0 +1,229 @@
+{
+ "seeds": 170,
+ "crystals": 21,
+ "levels": {
+  "trees": 1
+ },
+ "fuel": "kerosene",
+ "badges": [
+  "longhaul",
+  "hopper",
+  "distance",
+  "threader",
+  "naturalist",
+  "globetrotter",
+  "seeddodger"
+ ],
+ "bestDistance": 3868,
+ "flights": 7,
+ "seenTips": [
+  "x-bars",
+  "x-first-animal",
+  "issrDay",
+  "issrNight",
+  "airport",
+  "hazard-turbulence",
+  "records-intro",
+  "rail-skip",
+  "x-crystals",
+  "x-multiplier",
+  "firstToken",
+  "tree-1"
+ ],
+ "dayNightSeen": {
+  "dusk": 5,
+  "dawn": 1
+ },
+ "tutorialDone": true,
+ "freeUpgrade": false,
+ "freeGiven": true,
+ "landings": 6,
+ "planted": {},
+ "city": "SAPPORO",
+ "heading": null,
+ "skipAim": false,
+ "flightSeconds": 111.4330049999996,
+ "flownKm": 10081,
+ "laps": 0,
+ "visited": [
+  "LONDON",
+  "SAPPORO",
+  "TOKYO",
+  "OSAKA"
+ ],
+ "mission": 0,
+ "unclaimed": [],
+ "coolLandings": 0,
+ "fleet": {
+  "plane": "comet",
+  "planes": {
+   "comet": {
+    "engines": 1
+   }
+  },
+  "systems": {},
+  "gadgets": {}
+ },
+ "muted": true,
+ "priceVersion": 2,
+ "areas": [
+  "easia"
+ ],
+ "homeArea": "easia",
+ "freeProjectGiven": true,
+ "missionsDone": [
+  "L1",
+  "L2",
+  "L3",
+  "steady:easia:st-km:0",
+  "L4",
+  "daily:2026-11-03:e-km",
+  "daily:2026-11-03:d-gaps"
+ ],
+ "habitat": {},
+ "tours": [
+  "r-school",
+  "r-free",
+  "r-takeoff1",
+  "r-res1",
+  "r-takeoff2",
+  "r-res2",
+  "r-nature",
+  "name",
+  "hangar",
+  "nature-lead",
+  "r-boards",
+  "r-systems",
+  "r-bonus",
+  "r-parcels"
+ ],
+ "badgeTiers": {
+  "longhaul": 1,
+  "seeddodger": 1,
+  "hopper": 1,
+  "distance": 1,
+  "naturalist": 1,
+  "globetrotter": 1,
+  "threader": 1
+ },
+ "seen": {
+  "nature/woodland": [
+   "project:deadwood",
+   "project:meadow",
+   "project:margins",
+   "project:hedgerow"
+  ],
+  "hangar/plane": [
+   "plane:comet.body:1",
+   "plane:comet.cabin:1"
+  ],
+  "hangar/systems": [
+   "system:forecast:1",
+   "system:atc:1",
+   "system:ops:1"
+  ],
+  "nature/eastasia": [
+   "line:trees:1",
+   "project:satoyama",
+   "project:grainforgreen",
+   "project:cranefeed",
+   "tree:3",
+   "animal:tanuki",
+   "animal:snowmonkey",
+   "animal:sika"
+  ]
+ },
+ "seenMigrated": true,
+ "records": {
+  "ever": {
+   "longest": 3868,
+   "cool": 5.218881081956471,
+   "longestCrash": 0,
+   "shortest": null,
+   "bird": 0,
+   "crashes": 0
+  },
+  "week": {
+   "longest": 3868,
+   "cool": 5.218881081956471,
+   "longestCrash": 0,
+   "shortest": null,
+   "bird": 0,
+   "crashes": 0,
+   "start": "2026-11-02",
+   "kindsBase": [],
+   "missionsBase": 2
+  },
+  "fresh": [
+   "longest"
+  ],
+  "beaten": [
+   "record:longest:ever:3868",
+   "record:longest:week:3868"
+  ]
+ },
+ "shownLines": [
+  "trees"
+ ],
+ "found": {
+  "snowmonkey": 1793693373803,
+  "tanuki": 1793693385980,
+  "sika": 1793693405818,
+  "mandarinduck": 1793693414401,
+  "pheasantgreen": 1793693443600
+ },
+ "totals": {
+  "km": 10081,
+  "seeds": 3,
+  "gaps": 30
+ },
+ "steady": {
+  "easia": {
+   "st-km": {
+    "rung": 1,
+    "n": 0
+   },
+   "st-seeds": {
+    "rung": 0,
+    "n": 3
+   },
+   "st-gaps": {
+    "rung": 0,
+    "n": 6
+   }
+  }
+ },
+ "prevLanded": "SAPPORO",
+ "lessonMisses": {
+  "L3": 2,
+  "L5": 1
+ },
+ "areaBest": {
+  "easia": 3868
+ },
+ "dailyStreak": {
+  "days": 0,
+  "last": null
+ },
+ "daily": {
+  "date": "2026-11-03",
+  "ids": [
+   "e-km",
+   "d-plant",
+   "d-gaps"
+  ]
+ },
+ "capability": {
+  "km": 12000,
+  "key": "1fvrj4n",
+  "area": "easia"
+ },
+ "treesSeen": {
+  "eastasia": [
+   0,
+   3
+  ]
+ },
+ "freeParcelsGiven": true,
+ "sparkle": false
+}
