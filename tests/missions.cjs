@@ -35,7 +35,7 @@ const KEY = 'contrailPilot.v2';
   check(new RegExp(`${first}: [\\d,]+ km`).test(line), `the mission line should show the next airport (${first}) and its distance, got "${line}"`);
   await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.plane.y = 600; });
   // Wait for the crash and the results text, not a fixed time (it failed under load).
-  await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.result && document.getElementById('rMission').textContent.trim(); }, null, { timeout: 15000 }).catch(() => {});
+  await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.result && document.getElementById('rMissionTxt').textContent.trim(); }, null, { timeout: 15000 }).catch(() => {});
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && r.mission && !r.mission.done, `a crash should not complete the mission: ${JSON.stringify(r && r.mission)}`);
   check((await getSave()).mission === 0, 'mission index should stay 0 after a crash');
@@ -55,7 +55,7 @@ const KEY = 'contrailPilot.v2';
   check((await getSave()).mission === 1, 'mission index should be 1 after mission 1');
   await p.waitForTimeout(1800);   // the results reveal starts 900 ms after landing
   const rm = await p.textContent('#rMission');
-  check(/MISSION DONE/.test(rm) && /Land with 5 seeds/.test(rm), `results should say MISSION DONE and name the next: ${rm}`);
+  check(/✓/.test(rm) && /Land/.test(rm), `results show mission 1 done on one line (R1; the next mission is the season-2 UP NEXT): ${rm}`);
 
   // 3b. Lola's flight: past PARIS, landed in BERLIN. Mission 1 is done anyway (it was stuck before).
   await setSave({ ...base, mission: 0 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
@@ -99,8 +99,9 @@ const KEY = 'contrailPilot.v2';
   await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.finish({ reason: 'Bird strike!\nYou hit a bird.' }); });
   await p.waitForTimeout(3500);
   const sv = await getSave();
-  check(sv.crashes && sv.crashes.bird === 1 && (sv.unclaimed || []).some(u => u.key === 'badge:birdstrike:1'), `a bird crash is counted and earns Bird Strike: crashes ${JSON.stringify(sv.crashes)}, ${JSON.stringify(sv.unclaimed)}`);
-  check(/NEW BADGE/.test(await p.textContent('#rBadges')) && /Bird Strike/.test(await p.textContent('#rBadges')), `results show the new badge: ${await p.textContent('#rBadges')}`);
+  check(sv.crashes && sv.crashes.bird === 1 && (sv.badgeTiers || {}).birdstrike === 1, `a bird crash is counted and earns Bird Strike (the card pays its prize itself since R1): crashes ${JSON.stringify(sv.crashes)}, tiers ${JSON.stringify(sv.badgeTiers)}`);
+  const badgeChips = await p.$$eval('#rChips [data-kind="badge"]', els => els.map(e => e.textContent).join(' | ')).catch(() => '');
+  check(/Bird Strike/.test(badgeChips), `results show the new badge as a chip: ${badgeChips}`);   // R1: chips (animal / badge / first), a tap opens the sheet
   await p.screenshot({ path: '/tmp/mission-birds.png' });
   // 7. All done.
   await setSave({ ...base, missionsDone: later.ids }); await p.reload(); await ready(p); await p.waitForTimeout(600);

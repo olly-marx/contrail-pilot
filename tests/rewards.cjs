@@ -1,6 +1,6 @@
-// Rewards (src/rewards.js, 2026-10-22): mission and badge prizes are never paid automatically.
-// They wait in save.unclaimed (and survive a reload) until the player taps CLAIM on the results or
-// the FLY screen. Checks the exact amounts banked.
+// Rewards (src/rewards.js, 2026-10-22): a finished mission or badge goes into save.unclaimed (and survives a reload). Since R1 (2026-11-03,
+// research/UX-MASTER-PLAN.md B5) the results card pays everything waiting by itself and shows it as ONE line (no CLAIM button); R8 retires
+// claim(). The FLY screen still lists prizes that were waiting from before. Checks the exact amounts banked.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/rewards.cjs
 const { chromium } = require('playwright-core');
 require('./lib/classic.js');
@@ -31,17 +31,17 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(/\+15/.test(await p.textContent('#tMission')), `mission 1 card should show its prize (+15): "${await p.textContent('#tMission')}"`);
   check(await p.$eval('#tChallenges', e => e.hidden), 'no prizes panel when nothing is waiting');
 
-  // 2. Land in PARIS: mission 1's prize (+15 +1) WAITS. Nothing paid until CLAIM on the results.
+  // 2. Land in PARIS: mission 1's prize (+15 +1) is recorded; the results card pays it (R1: silently, one line).
   await fly(); let r = await end(true);
   let s = await save();
-  check(s.seeds === 100 && s.crystals === 10, `nothing paid on landing: ${s.seeds} / ${s.crystals}`);
+  check(s.seeds === 100 && s.crystals === 10, `nothing paid by the landing itself (the results card pays it): ${s.seeds} / ${s.crystals}`);
   check(r.rewards.map(x => x.key).join() === 'mission:land' && s.unclaimed.length === 1, `prize waiting: ${JSON.stringify(r.rewards)}`);
   await p.waitForTimeout(1200); await p.mouse.click(195, 400); await p.waitForTimeout(600);
-  const btn = await p.$('#rRewards .btn.claim');
-  check(!!btn && /CLAIM/.test(await p.textContent('#rRewards')), `results show a CLAIM button: "${await p.textContent('#rRewards')}"`);
-  if (btn) await btn.click();
+  // R1 (research/UX-MASTER-PLAN.md B5/C1): the results card pays every waiting prize silently and says so on ONE line; there is no CLAIM button.
+  const line = await p.textContent('#rMission');
+  check(!(await p.$('#rRewards')) && !(await p.$('.claim')) && /\+15/.test(line), `the card shows the prize on one line and no CLAIM button: "${line}"`);
   s = await save();
-  check(s.seeds === 115 && s.crystals === 11 && s.unclaimed.length === 0, `CLAIM pays exactly +15 +1: ${s.seeds} / ${s.crystals}, left ${JSON.stringify(s.unclaimed)}`);
+  check(s.seeds === 115 && s.crystals === 11 && s.unclaimed.length === 0, `the card pays exactly +15 +1 by itself: ${s.seeds} / ${s.crystals}, left ${JSON.stringify(s.unclaimed)}`);
 
   // 3. Prizes from earlier wait on the FLY screen; CLAIM ALL pays them all exactly; they survive a reload.
   const two = [{ key: 'badge:frequent:1', kind: 'badge', id: 'frequent', tier: 1, label: 'Frequent Flyer (Bronze)', seeds: 30, crystals: 2 },

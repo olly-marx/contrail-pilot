@@ -48,6 +48,8 @@ import { eraBarHTML } from './eras.js';
 import { FleetHangar, fleetBuyable } from './hangar.js';
 import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
+import { resultsView, NEXT_ROWS } from './resultscard.js';
+import { nextUp } from './nextup.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -375,8 +377,15 @@ export class UI {
   hasNew() { const seen = this.save.shopSeen || []; return !!this.save.freeUpgrade || this.buyableKeys().some(k => !seen.includes(k)); }
   markShopSeen() { this.save.shopSeen = [...new Set([...(this.save.shopSeen || []), ...this.buyableKeys()])]; writeSave(this.save); }   // canBuy checks unlocks
 
-  // Arcade-style reveal: title slams in, distance counts up, trees tally, the total stamps down,
-  // then the Earth bars grow one by one. A tap skips to the end.
+  // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).
+  crossingReadyText() {
+    const s = this.save, c = s.tutorialDone ? crossingsNow(s).find(x => offerCheck(x, offerCtx(s, x)).offered || S2_UNLOCK) : null;
+    return c ? `${c.from} to ${c.to}` : null;
+  }
+
+  // R1 (research/UX-MASTER-PLAN.md C1): the results are ONE card that fits the phone, no scrolling. The data is src/resultscard.js (budgets held by
+  // tests/resultscard.cjs); this draws it, reveals it in a short beat (a tap skips) and wires the sheets behind its lines. R1 keeps claim() running
+  // silently behind the prize line (every waiting prize is paid when the card shows); R8 retires it.
   async showResults(r) {
     this.lastGrab = r.earned && r.earned[0] ? r.earned[0].n : 0;   // seeds grabbed this flight (the rails' R9a words depend on it)
     const lead = this.resultsLead();   // season 2: the one place the lesson leads next (research/FLOW-FIRST-HOUR.md)
@@ -386,16 +395,15 @@ export class UI {
     if (r.crossing && r.crossing.kind === 'lap' && r.crossing.landed) this.showEnding();   // the final boss: the game's ending
     else if (r.crossing) this.toast(r.crossing.landed ? (r.crossing.opens ? `NEW AREA: ${opensName(r.crossing.opens).toUpperCase()}!` : 'YOU MADE IT!') : 'Crossing not made',
       r.crossing.landed ? 'Your crossing is done. Fly on from here!' : 'Improve your plane, your nature and your contrail skill, and try again.', r.crossing.landed ? 'good' : '', 6);
-    // NEW ANIMALS this flight (landed or crashed): made once, next to the new badges, before the
-    // reveal below collects its steps.
-    if (!$('rAnimals')) $('rBadges').insertAdjacentHTML('afterend', '<div id="rAnimals" class="step animals-new" hidden></div>');
-
+    const s = this.save, paid = claim(s);
+    if (paid.seeds || paid.crystals) { writeSave(s); this.renderBank(paid); }
+    const v = this.resultView = resultsView(r, s, { paid, lead, next: nextUp(s, { crossingReady: this.crossingReadyText(), limit: NEXT_ROWS }) });
     const steps = [...document.querySelectorAll('#results .step')];
     steps.forEach(el => el.classList.remove('in'));
     this.skipReveal = false;
     const wait = ms => new Promise(res => (this.skipReveal ? res() : setTimeout(res, ms)));
     const show = el => el.classList.add('in');
-    const count = async (el, to, ms, fmt = v => v) => {
+    const count = async (el, to, ms, fmt = x => x) => {
       const t0 = performance.now();
       while (!this.skipReveal) {
         const f = Math.min(1, (performance.now() - t0) / ms);
@@ -405,111 +413,52 @@ export class UI {
       }
       el.textContent = fmt(to);
     };
-
-    $('rTitle').textContent = r.school ? 'Flight school done!' : r.landed ? `Landed in ${r.landedAt}!` : r.reason.replace('\n', ' ');
-    const mb = $('rMission');
-    mb.hidden = !r.mission && !r.missions2;
-    if (r.missions2) {   // season 2 (S3): what this flight finished, then NEXT (the hub's goal)
-      const d = r.missions2.done;
-      mb.className = `step mission ${d.length ? 'done' : 'notyet'}`;
-      mb.innerHTML = (d.length ? `<b>DONE!</b> ${d.join(', ')}` : '') + (r.missions2.next ? `${d.length ? '<br>' : ''}NEXT: <b>${r.missions2.next}</b>` : '')
-        + ({ hangar: '<img class="next-pic" src="assets/ui/lesson-hangar.png" alt="">', nature: '<img class="next-pic" src="assets/ui/lesson-nature.png" alt="">' }[this.resultsLead()] || '');   // where the button leads
-      mb.hidden = !mb.innerHTML;
-    } else if (r.mission) {
-      mb.className = `step mission ${r.mission.done ? 'done' : 'notyet'}`;
-      mb.innerHTML = r.mission.done
-        ? `<b>MISSION DONE!</b> ${r.mission.title}${r.mission.doneText ? `<span class="done-text">${r.mission.doneText}</span>` : ''}${r.mission.last ? '<br>You finished ALL the missions!' : r.mission.next ? `<br>Next: <b>${r.mission.next}</b>` : ''}`
-        : `<b>Not this time:</b> ${r.mission.title}<br><span class="small">${r.mission.fail}</span>`;
-    }
-    $('rRecord').hidden = !r.newRecord;
+    const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    // -- fill every line first; the reveal below only fades it in (a hidden line takes no room, so the card is never taller than what shows)
+    $('rEyebrow').textContent = v.eyebrow; $('rTitle').textContent = v.title; $('rTitle').classList.toggle('crash', !v.landed && !v.school);
+    $('rRecord').hidden = !v.record;
     $('rDist').textContent = km(0);
-    $('rGrab').textContent = '0';
-    $('rMultRow').hidden = true; $('rCoolRow').hidden = true; $('rLost').hidden = true;
-    $('rFareRow').hidden = true;
-    $('rNatureRow').hidden = true;
-    $('rCrysRow').hidden = true; $('rCrysRow').classList.remove('stamp');
-    // One row per land whose biodiversity rose (each land has its own meter).
-    const gains = r.natureGains || (r.natureGain > 0 ? [{ name: REGION_NAMES.woodland, gain: r.natureGain }] : []);
-    // Kinds of tree this flight and the forest bonus they give long flights (PROPOSAL-TREES.md: the boost made visible).
-    const kinds = r.kinds || 0, bonus = Math.pow(Math.min(1, kinds / FOREST.kinds), FOREST.power);
-    $('rNatureRow').innerHTML = gains.map(g => `<div class="nrow"><span>${g.name}</span><b>+${g.gain}</b></div>`).join('') +
-      (kinds ? `<div class="nrow"><span>${kinds} kind${kinds === 1 ? '' : 's'} of tree today: forest bonus</span><b>x${bonus.toFixed(2)}</b></div>` : '');
-    $('rTotalRow').classList.remove('zero', 'stamp');
-    $('rGain').textContent = '';
-    for (const id of ['barCo2', 'barNight', 'barSun', 'barTrees']) $(id).style.width = '0';
-    for (const id of ['rCo2', 'rNight', 'rSun', 'rTreesCool']) $(id).textContent = '';
-    $('rFree').hidden = !this.save.freeUpgrade;
-    $('rFree').onclick = lead === 'hangar' ? () => { sfx.flap(); this.go('hangar'); } : null;   // the banner leads there too
-    $('rFree').classList.toggle('tappable', lead === 'hangar');
-    $('rSkip').hidden = false;
+    $('rBank').classList.toggle('lost', !v.landed && !v.school && !v.bank.seeds);
+    $('rGain').textContent = '+0'; $('rCrys').textContent = `+${v.bank.crystals}`; $('rCrysBox').hidden = !v.bank.crystals;
+    $('rMaths').hidden = !v.maths || !v.landed; $('rMathsTxt').textContent = v.maths;
+    $('rLost').hidden = !v.maths || v.landed; $('rLost').textContent = v.maths;
+    const mi = v.missions; $('rMission').hidden = !mi;
+    if (mi) { $('rMission').className = `step rc-line rc-mission ${mi.fail !== undefined ? 'notyet' : 'done'}`; $('rMissionTxt').textContent = mi.line; $('rMissionPrize').innerHTML = mi.seeds ? `+${mi.seeds}<i class="seedicon"></i>` : ''; }
+    $('rNext').hidden = !v.next.length;
+    $('rNextRows').innerHTML = v.next.map((n, i) => `<button class="rc-row${n.lead ? ' lead' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b></button>`).join('');
+    $('rEarth').hidden = !v.earth;
+    if (v.earth) { $('rWarm').textContent = v.earth.warm; $('rCool').textContent = v.earth.cool; this.drawEarthFace($('rFace'), v.earth.heat); }
+    $('rEra').hidden = !v.era;
+    $('rEra').innerHTML = v.era ? `<span class="era-badge">${esc(v.era.id)}</span><span class="era-track"><span class="era-fill" style="width:${(v.era.frac * 100).toFixed(1)}%"></span></span><span class="rc-erat">${esc(v.era.text)}</span>` : '';
+    const chipHTML = (c, i) => `<button class="chip rc-chip" type="button" data-i="${i}" data-kind="${c.kind}">${c.kind === 'animal' ? `<img src="${animalPortrait(WILDLIFE.find(w => w.id === c.id))}" alt="">`
+      : c.kind === 'badge' ? `<img src="${medal(c.id, c.tier)}" alt="">` : '<i class="rc-star">&#9733;</i>'}<span>${esc(c.label)}</span></button>`;
+    $('rChips').hidden = !v.chips.length;
+    $('rChips').innerHTML = v.chips.map(chipHTML).join('') + (v.moreChips ? `<button class="chip rc-chip more" type="button" data-more="1"><span>+${v.moreChips} more</span></button>` : '');
     $('tabHangar').classList.toggle('glow', this.hasNew());   // something to spend: the bar's HANGAR glows
-    const rw = (r.rewards || []).filter(u => (this.save.unclaimed || []).some(x => x.key === u.key));
-    $('rRewards').hidden = !rw.length;
-    if (rw.length) this.renderPrizes($('rRewards'));
-    const na = (r.foundIds || []).map(id => WILDLIFE.find(w => w.id === id)).filter(Boolean);
-    $('rAnimals').hidden = !na.length;
-    $('rAnimals').innerHTML = na.length ? `<p class="label">New animal${na.length > 1 ? 's' : ''} discovered!</p><div class="na-list">${na.map(w =>
-      `<span class="na"><img src="${animalPortrait(w)}" alt=""><b>${w.name}</b></span>`).join('')}</div><p class="small">See them in your Wild Area (NATURE).</p>` : '';
-    // Flying time and era progress (src/eras.js): after every real flight, landed or crashed.
-    $('rEra').hidden = !!r.school;
-    $('rEra').innerHTML = r.school ? '' : `<p class="era-gain">+${(r.flyMinutes || 0).toFixed(1)} min flown</p>${eraBarHTML(this.save)}`
-      + (r.eraOpened ? `<p class="era-open">NEW ERA! Welcome to ${r.eraOpened}!</p>` : '')
-      + (r.newPlane ? `<p class="era-open">A new plane joins your fleet: the <b>${r.newPlane}</b>!</p>` : '');
-    const nb = (r.rewards || []).filter(u => u.kind === 'badge');
-    $('rBadges').hidden = !nb.length;
-    $('rBadges').innerHTML = nb.map(u => `<span class="new-badge"><img src="${medal(u.id, u.tier)}" alt="">NEW BADGE: <b>${u.label}</b></span>`).join('');
-    $('rFact').textContent = FACTS[Math.floor(Math.random() * FACTS.length)];
-    $('rFact').hidden = !!lead;   // one idea per screen: no random fact when the card leads somewhere (the user, 2026-10-27)
+    // -- the sheets behind the lines (src/sheet.js): the old tally, the missions, the four Earth bars, a chip's story
+    $('rMaths').onclick = () => showSheet({ eyebrow: 'THIS FLIGHT', title: 'Where it came from', html: `<div class="rc-rows">${v.tally.map(([a, b]) => `<p><span>${esc(a)}</span><b>${esc(b)}</b></p>`).join('')}</div>` });
+    $('rMission').onclick = () => showSheet({ eyebrow: mi && mi.fail !== undefined ? 'NOT THIS TIME' : 'MISSIONS DONE', title: mi ? mi.line.replace(/^✓ /, '') : '', body: mi && mi.fail ? mi.fail : (mi ? mi.titles.join('. ') : '') });
+    $('rEarth').onclick = () => showSheet({ eyebrow: 'THE EARTH', title: v.earth.warm.split(' ')[0] + ' and ' + v.earth.cool.split(' ')[0].toLowerCase(),
+      html: `<div class="earth-bars rc-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>` });
+    $('rNextRows').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.next[+b.dataset.i]; sfx.flap();
+      if (n.where === 'hangar' || n.where === 'nature') this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); });
+    const chipSheet = c => { const w = c.kind === 'animal' ? WILDLIFE.find(x => x.id === c.id) : null;
+      showSheet({ eyebrow: c.kind === 'animal' ? 'NEW ANIMAL' : c.kind === 'badge' ? 'NEW BADGE' : 'A FIRST', title: c.full, pic: w ? animalPortrait(w) : c.kind === 'badge' ? medal(c.id, c.tier) : '', body: c.body,
+        action: c.kind === 'animal' ? { label: 'SEE IT IN NATURE', onTap: () => this.go('nature') } : null }); };
+    $('rChips').querySelectorAll('.rc-chip').forEach(b => b.onclick = () => { sfx.flap(); if (b.dataset.more) showSheet({ eyebrow: 'ALSO NEW', title: 'More to see', body: v.allChips.slice(v.chips.length).map(c => c.full).join('. ') }); else chipSheet(v.chips[+b.dataset.i]); });
     this.showOnly('results');
-
-    const [title, missionStep, dist, record, tally, earth, ...rest] = steps;
-    show(title);
-    await wait(350);
-    if (r.mission || (r.missions2 && !$('rMission').hidden)) { show(missionStep); if ((r.mission && r.mission.done) || (r.missions2 && r.missions2.done.length)) sfx.buy(); await wait(600); }
-    show(dist); await count($('rDist'), r.distance, 600, km);
-    if (r.newRecord) { show(record); sfx.buy(); }
+    $('results').scrollTop = 0;
+    $('results').classList.add('revealing');   // while the card builds, its lines are inert: a tap to SKIP must not open a sheet (CSS: #results.revealing)
+    // -- the reveal: a short beat (under two seconds); a tap skips to the end
+    const [head, dist, bank, ...rest] = steps;
+    show(head); await wait(300);
+    show(dist); await count($('rDist'), r.distance, 500, km);
+    if (v.record) sfx.buy();
+    show(bank); await count($('rGain'), v.bank.seeds, 350, x => `+${x}`);
+    if (v.bank.seeds || v.bank.crystals) sfx.coin(); else if (!v.landed) sfx.nope();
     await wait(200);
-
-    // Trees: tally what was grabbed, then the bonuses, then stamp the total.
-    show(tally);
-    const grab = r.earned[0] ? r.earned[0].n : 0;
-    await count($('rGrab'), grab, 400);
-    const mult = r.earned.find(e => e.label.startsWith('Long'));
-    if (mult) { await wait(250); $('rMultRow').hidden = false; $('rMult').textContent = `x${r.mult}`; $('rMultRow').classList.add('stamp'); sfx.coin(); }
-    if (r.earned.some(e => e.label.startsWith('Cool'))) { await wait(250); $('rCoolRow').hidden = false; $('rCoolRow').classList.add('stamp'); sfx.coin(); }
-    const fare = r.earned.find(e => e.label === 'Passenger fares');
-    if (fare) { await wait(250); $('rFareRow').hidden = false; $('rFare').textContent = `+${fare.n}`; $('rFareRow').classList.add('stamp'); sfx.coin(); }
-    if (gains.length || kinds) { await wait(250); $('rNatureRow').hidden = false; $('rNatureRow').classList.add('stamp'); sfx.plant(); }
-    await wait(300);
-    const total = r.earned.reduce((a, e) => a + e.n, 0);
-    if (r.landed) {
-      $('rTotalRow').classList.add('stamp');
-      await count($('rGain'), total, 300, v => `+${v}`);
-      if (total) sfx.buy();
-    } else {
-      $('rGain').textContent = `+${total}`;
-      await wait(300);
-      $('rTotalRow').classList.add('zero', 'stamp');
-      $('rLost').hidden = false;
-      sfx.nope();
-    }
-    if (r.crystals) { await wait(250); $('rCrysRow').hidden = false; $('rCrys').textContent = `+${r.crystals}`; $('rCrysRow').classList.add('stamp'); sfx.coin(); }
-    await wait(450);
-
-    // The Earth: each cause grows in turn.
-    show(earth);
-    this.drawEarthFace($('rFace'), r.heat);
-    const b = r.breakdown;
-    const scale = Math.max(30, b.co2, b.night, b.sun, b.trees);
-    const bars = [['barCo2', 'rCo2', b.co2, '+'], ['barNight', 'rNight', b.night, '+'], ['barSun', 'rSun', b.sun, '-'], ['barTrees', 'rTreesCool', b.trees, '-']];
-    for (const [bar, label, v, sg] of bars) {
-      $(bar).style.width = `${Math.min(100, (v / scale) * 100)}%`;
-      $(label).textContent = `${sg}${Math.round(v)}`;
-      if (v >= 0.5) { sg === '+' ? sfx.warm() : sfx.cool(); await wait(380); }
-    }
-    await wait(200);
-    for (const el of rest) { if (!el.hidden) show(el); }
-    $('rSkip').hidden = true;
+    for (const el of rest) { if (el.hidden) continue; show(el); if (el.id === 'rMission' && v.missions && v.missions.fail === undefined) sfx.buy(); if (el.id === 'rEarth') v.earth && v.earth.bars[0][1] > v.earth.bars[2][1] ? sfx.warm() : sfx.cool(); await wait(110); }
+    $('results').classList.remove('revealing');
     if (r.eraOpened) {   // a new era: the big welcome, then the hangar to see what it brings
       await wait(600);
       await showEraWelcome(ERAS.findIndex(e => e.name === r.eraOpened));

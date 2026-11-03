@@ -63,3 +63,26 @@ The `.rowc` regrow (price a grid item in the flow, names and fact lines may wrap
 
 ## Caveats
 One rich save; the lesson-lead and era-opened results variants are not run yet. Per-block heights inside a screen (title, tally, claims ...) are not measured here; they arrive with R1.
+
+
+## After R0 (live 0.25.3, 3d12b87, measured 2026-11-03 against the deployed site)
+NATURE and HANGAR rows only (everything else is unchanged by R0; the full run is in `~/.ux0/measure-live-0253.md`). Overlaps are now 0 on every NATURE land and every HANGAR tab at both sizes (before: NATURE bush 7 / 21, woodland 2 / 19, mediterranean 5 / 17). Rows are taller where a name or fact line wraps, so the first row's price button now ends a little lower (e.g. NATURE bush at 390: 628 -> 639); fits and first-card-on-first-screen are unchanged and still PENDING (R5/R6). The hangar's 320-wide overflow is unchanged (plane build fixes it in R5).
+
+| screen | viewport | scrollHeight | clientHeight | scrollTop | first-card top | primary bottom | bar top | text < 7 px | overlaps | cut text | taps < 40 px | verdict | examples |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| hangar/plane | 390x667 | 2642 | 667 | 0 | 581 | 608 | 607 | 25 | 0 | 0 | 7 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + SMALL TEXT + SMALL TAPS |  |
+| hangar/systems | 390x667 | 2428 | 667 | 0 | 581 | 611 | 607 | 25 | 0 | 0 | 7 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + SMALL TEXT + SMALL TAPS |  |
+| hangar/gadgets | 390x667 | 2562 | 667 | 0 | 581 | 611 | 607 | 25 | 0 | 0 | 9 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + SMALL TEXT + SMALL TAPS |  |
+| nature/as opened | 390x667 | 2152 | 667 | 0 | 565 | 616 | 607 | 41 | 0 | 23 | 9 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Desert fly there |
+| nature/bush (tiers open) | 390x667 | 2386 | 667 | 0 | 588 | 639 | 607 | 38 | 0 | 23 | 14 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Desert fly there |
+| nature/woodland (tiers open) | 390x667 | 2608 | 667 | 0 | 565 | 616 | 607 | 41 | 0 | 23 | 15 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Desert fly there |
+| nature/mediterranean (tiers open) | 390x667 | 2222 | 667 | 0 | 588 | 639 | 607 | 34 | 0 | 23 | 13 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Desert fly there |
+| hangar/plane | 320x568 | 2735 | 568 | 0 | 602 | 629 | 508 | 25 | 0 | 21 | 7 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: TAKE OFF |
+| hangar/systems | 320x568 | 2555 | 568 | 0 | 602 | 632 | 508 | 25 | 0 | 6 | 7 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: TAKE OFF |
+| hangar/gadgets | 320x568 | 2660 | 568 | 0 | 602 | 632 | 508 | 25 | 0 | 0 | 9 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + SMALL TEXT + SMALL TAPS |  |
+| nature/as opened | 320x568 | 2250 | 568 | 0 | 584 | 638 | 508 | 41 | 0 | 24 | 9 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Mediterranean scrub |
+| nature/bush (tiers open) | 320x568 | 2555 | 568 | 0 | 599 | 669 | 508 | 38 | 0 | 24 | 14 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Mediterranean scrub |
+| nature/woodland (tiers open) | 320x568 | 2744 | 568 | 0 | 584 | 638 | 508 | 41 | 0 | 24 | 15 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Mediterranean scrub |
+| nature/mediterranean (tiers open) | 320x568 | 2335 | 568 | 0 | 612 | 666 | 508 | 34 | 0 | 24 | 13 | SCROLLS + PRIMARY UNDER BAR + FIRST CARD UNDER BAR + CUT TEXT + SMALL TEXT + SMALL TAPS | cut: Mediterranean scrub |
+
+Width check of the other grid panels (the implicit-column trap, plane build's note): at 320x568 only #hangar draws text past the screen's side; #results, #missions and #boards measured 0 cut-off text.

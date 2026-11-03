@@ -46,13 +46,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
       delete s.save.found[k.replace(/^(animal|sky)-/, '')];   // this animal is NEW now, even if one wandered on earlier
       s.state = 'playing'; s.seen(k); s.graceUntil = 0;
       if (landed) { s.landedAt = s.airportAhead(0).name; s.finish({ landed: true }); } else s.finish({ reason: 'Storm!\nYou flew into a storm.' }); }, [k, landed]);
-    await p.waitForFunction(() => document.getElementById('rAnimals') && !document.getElementById('results').hidden, null, { timeout: 10000 }).catch(() => {});
+    await p.waitForFunction(() => document.querySelector('#rChips [data-kind="animal"]') && !document.getElementById('results').hidden, null, { timeout: 10000 }).catch(() => {});   // R1: new animals are chips
     await p.waitForTimeout(600);
-    return p.evaluate(() => { const e = document.getElementById('rAnimals'); return e && !e.hidden ? e.textContent : ''; }); };
+    return p.evaluate(() => [...document.querySelectorAll('#rChips [data-kind="animal"]')].map(e => e.textContent).join(' ')); };
   const one = await flight('animal-otter', false);
   check(/Otter/.test(one), `a crash still lists the new animal: "${one}"`);
   // ...with its PixelLab picture, as on the NATURE cards (the user, 2026-10-24: the list showed the old pictures).
-  const pics = await p.$$eval('#rAnimals img', els => els.map(e => e.getAttribute('src')));
+  const pics = await p.$$eval('#rChips [data-kind="animal"] img', els => els.map(e => e.getAttribute('src')));
   check(pics.includes('assets/pixellab/ui/portrait-animal-otter-0.png'), `the new animal list shows the PixelLab otter: ${pics}`);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const two = await flight('sky-heron', true);

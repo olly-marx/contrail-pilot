@@ -110,11 +110,11 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   p = await open(save({ landings: 3, tours: ['*'] }), { width: 375, height: 667 });
   await p.click('#goBtn'); await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).catch(() => {});
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.landedAt = s.path[1]; s.finish({ landed: true }); });   // (a landing, forced: this checks the card's layout)
-  let hint = null;
-  for (let i = 0; i < 40; i++) { hint = await p.evaluate(() => { const h = document.getElementById('rSkip'), r = h.getBoundingClientRect(), bt = document.getElementById('againBtn').getBoundingClientRect();
-    return { shown: !h.hidden && !document.getElementById('results').hidden && r.height > 0, top: Math.round(r.top), bottom: Math.round(r.bottom), btnTop: Math.round(bt.top), H: innerHeight }; }); if (hint.shown) break; await p.waitForTimeout(100); }
+  let hint = null;   // R1: the card fits and FLY ON is on screen during the reveal (there is no tap-to-skip hint any more)
+  for (let i = 0; i < 40; i++) { hint = await p.evaluate(() => { const R = document.getElementById('results'), bt = document.getElementById('againBtn').getBoundingClientRect();
+    return { shown: !R.hidden && bt.height > 0, fits: R.scrollHeight <= R.clientHeight + 1, btnBottom: Math.round(bt.bottom), H: innerHeight }; }); if (hint.shown) break; await p.waitForTimeout(100); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/skip-hint-small-phone.png` });
-  check(hint.shown && hint.top >= 0 && hint.bottom <= hint.H && hint.bottom <= hint.btnTop, `"tap to skip" on a small phone: fully on screen and above the button during the reveal (${JSON.stringify(hint)})`);
+  check(hint.shown && hint.fits && hint.btnBottom <= hint.H, `the results card fits a small phone during the reveal and FLY ON is on screen (${JSON.stringify(hint)})`);
   check(!p.errs.length, `results page errors: ${p.errs}`);
   await b.close();
   console.log(fails.length ? `FAIL rails2:\n - ${fails.join('\n - ')}` : 'PASS rails2: R14 points at MY RECORDS at landing 3 (one target, on screen, opens it, once; not before); "tap to skip" sits on screen above the button on a 375x667 phone');

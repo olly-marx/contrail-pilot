@@ -40,13 +40,13 @@ const HARDER = { teach: 1, challenge: 2, mastery: 3 };   // numbers scale with t
 
 // ---------- chapter 1: lessons ----------
 export const LESSONS = [
-  { id: 'L1', title: 'Land at the next airport', reveals: ['hangar', 'missions'], prize: { seeds: 20, crystals: 1 }, flight: r => r.landed },
-  { id: 'L2', title: 'Fly through icy air in daytime', reveals: ['nature'], prize: { seeds: 20, crystals: 1 }, flight: r => r.sunBlocked >= 3 },
+  { id: 'L1', short: 'Land at next airport', title: 'Land at the next airport', reveals: ['hangar', 'missions'], prize: { seeds: 20, crystals: 1 }, flight: r => r.landed },
+  { id: 'L2', short: 'Icy air in daytime', title: 'Fly through icy air in daytime', reveals: ['nature'], prize: { seeds: 20, crystals: 1 }, flight: r => r.sunBlocked >= 3 },
   // L3 teaches night contrails by ONE dodge (the user's audit pick, 2026-10-27): a whole clean night (nightOwl) blocked
   // weaker pilots for many flights while lessons were the only thing offered; it stays a tier-3 star, not a lesson.
-  { id: 'L3', title: 'Dodge an icy patch at night', reveals: [], prize: { seeds: 25, crystals: 1 }, flight: r => (r.dodges || 0) >= 1 },
-  { id: 'L4', title: 'Skip one airport, land at the next', reveals: ['world'], prize: { seeds: 25, crystals: 1 }, flight: r => r.landed && r.airportsSkipped >= 1 },
-  { id: 'L5', title: 'Drop a tree on brown soil', reveals: [], prize: { seeds: 25, crystals: 2 }, flight: r => r.planted >= 1 },
+  { id: 'L3', short: 'Dodge icy air at night', title: 'Dodge an icy patch at night', reveals: [], prize: { seeds: 25, crystals: 1 }, flight: r => (r.dodges || 0) >= 1 },
+  { id: 'L4', short: 'Skip one, land at next', title: 'Skip one airport, land at the next', reveals: ['world'], prize: { seeds: 25, crystals: 1 }, flight: r => r.landed && r.airportsSkipped >= 1 },
+  { id: 'L5', short: 'Plant a tree', title: 'Drop a tree on brown soil', reveals: [], prize: { seeds: 25, crystals: 2 }, flight: r => r.planted >= 1 },
 ];
 export const lessonsLeft = save => (stageOf(save) === 'teach' ? LESSONS.filter(l => !done(save).has(l.id)) : []);
 // A free part waiting ALWAYS reveals the hangar (the user, 2026-10-27, twice: the school landing grants it, but lesson L1
@@ -60,32 +60,32 @@ export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === '
 // Prizes: seeds only (crystals stay a skill reward), ~700 per area in the teach stage, x the stage factor.
 export const TEMPLATES = [
   // tier 1: try it (one mechanic each)
-  { id: 'land-city', tier: 1, prize: 10, ready: f => f.city !== f.start, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landedAt === f.city },
-  { id: 'shade', tier: 1, prize: 10, title: f => `Shade the Earth ${5 * f.k} times here`, flight: (r, s, f) => f.here && r.sunBlocked >= 5 * f.k },
-  { id: 'plant-tree', tier: 1, prize: 10, title: f => `Plant a ${f.treeName} in ${f.landName}`, flight: (r, s, f) => (r.treeIds || []).includes(f.treeTag) },
-  { id: 'clean-gaps', tier: 1, prize: 10, title: f => `Fly ${3 * f.k} storm gaps without a scrape`, flight: (r, s, f) => (r.cleanGaps || 0) >= 3 * f.k },
-  { id: 'bring', tier: 1, prize: 10, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 10 * f.k },
-  { id: 'project', tier: 1, prize: 10, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
+  { id: 'land-city', short: f => `Land at ${f.city}`, tier: 1, prize: 10, ready: f => f.city !== f.start, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landedAt === f.city },
+  { id: 'shade', short: f => `Shade ${5 * f.k} times`, tier: 1, prize: 10, title: f => `Shade the Earth ${5 * f.k} times here`, flight: (r, s, f) => f.here && r.sunBlocked >= 5 * f.k },
+  { id: 'plant-tree', short: f => `Plant a ${f.treeName}`, tier: 1, prize: 10, title: f => `Plant a ${f.treeName} in ${f.landName}`, flight: (r, s, f) => (r.treeIds || []).includes(f.treeTag) },
+  { id: 'clean-gaps', short: f => `${3 * f.k} clean storm gaps`, tier: 1, prize: 10, title: f => `Fly ${3 * f.k} storm gaps without a scrape`, flight: (r, s, f) => (r.cleanGaps || 0) >= 3 * f.k },
+  { id: 'bring', short: f => `Bring home ${10 * f.k} seeds`, tier: 1, prize: 10, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 10 * f.k },
+  { id: 'project', short: () => 'Fund a nature project', tier: 1, prize: 10, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
   // tier 2: combine it
-  { id: 'chain', tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
-  { id: 'dodge', tier: 2, prize: 15, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
-  { id: 'rescue', tier: 2, prize: 15, ready: f => f.cityB !== f.start, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
-  { id: 'spot', tier: 2, prize: 15, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
-  { id: 'hazard', tier: 2, prize: 15, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
-  { id: 'system', tier: 2, prize: 15, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
+  { id: 'chain', short: f => `Visit ${f.city} + 1`, tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
+  { id: 'dodge', short: f => `Dodge ${3 * f.k} icy patches`, tier: 2, prize: 15, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
+  { id: 'rescue', short: f => `${f.cityB} + ${2 * f.k} trees`, tier: 2, prize: 15, ready: f => f.cityB !== f.start, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
+  { id: 'spot', short: f => `Spot a ${f.animalName}`, tier: 2, prize: 15, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
+  { id: 'hazard', short: f => HAZARD[f.stage].short, tier: 2, prize: 15, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
+  { id: 'system', short: () => 'Buy a helper system', tier: 2, prize: 15, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
   // tier 3: the crossing trial (star = the gate)
-  { id: 'night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
-  { id: 'shade10', tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
-  { id: 'kinds3', tier: 3, star: true, prize: 20, title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
-  { id: 'route', tier: 3, prize: 15, ready: f => f.cityC !== f.start, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
-  { id: 'golden', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
-  { id: 'tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
+  { id: 'night', short: () => 'A whole clean night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
+  { id: 'shade10', short: f => `Make ${10 * f.k} shade, land`, tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
+  { id: 'kinds3', short: f => `Plant ${f.kinds} kinds in one go`, tier: 3, star: true, prize: 20, title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
+  { id: 'route', short: f => `Nonstop to ${f.cityC}`, tier: 3, prize: 15, ready: f => f.cityC !== f.start, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
+  { id: 'golden', short: () => 'Find a golden seed', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
+  { id: 'tier', short: () => 'Finish a project tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
 ];
 // The hazard each stage meets (turbulence from 2,000 km; no-fly zones from 8,000 km; long clean runs for masters).
 const HAZARD = {
-  teach: { title: 'Ride out the turbulence and land', check: r => (r.bumped || 0) >= 1 },
-  challenge: { title: 'Thread 2 no-fly zones and land', check: r => (r.noFlyPassed || 0) >= 2 },
-  mastery: { title: 'Fly 10 storm gaps in a row without a scrape', check: r => (r.cleanGaps || 0) >= 10 },
+  teach: { short: 'Ride out turbulence', title: 'Ride out the turbulence and land', check: r => (r.bumped || 0) >= 1 },
+  challenge: { short: 'Thread 2 no-fly zones', title: 'Thread 2 no-fly zones and land', check: r => (r.noFlyPassed || 0) >= 2 },
+  mastery: { short: '10 clean gaps in a row', title: 'Fly 10 storm gaps in a row without a scrape', check: r => (r.cleanGaps || 0) >= 10 },
 };
 // Distinct trees of ONE land planted this flight, from r.treeIds ('land:id'; the UK's are bare ids).
 const kindsOf = (r, land) => new Set((r.treeIds || []).filter(t => (land === 'woodland' ? !t.includes(':') : t.startsWith(`${land}:`)))).size;
@@ -177,32 +177,32 @@ export function onFlight(save, r) {
 
 // ---------- Firsts: one-off funny cards (1 crystal), never in the list; they pop on the results ----------
 export const FIRSTS = [
-  { id: 'bird', title: 'Birds 1, plane 0. Fly over or under them next time!', when: r => r.crash === 'bird' },
-  { id: 'storm', title: 'Bumped a storm cloud! Aim for the middle of the gap.', when: r => r.crash === 'storm' },
-  { id: 'nofly', title: 'Told off! No-fly zones mean no flying, even a wingtip.', when: r => r.crash === 'nofly' },
-  { id: 'golden', title: 'Your first golden seed: lucky pilot!', when: r => (r.goldens || 0) >= 1 },
-  { id: 'skip3', title: 'Three airports skipped in one go: bold pilot!', when: r => r.landed && r.airportsSkipped >= 3 },
+  { id: 'bird', short: 'Birds 1, plane 0', title: 'Birds 1, plane 0. Fly over or under them next time!', when: r => r.crash === 'bird' },
+  { id: 'storm', short: 'Bumped a storm', title: 'Bumped a storm cloud! Aim for the middle of the gap.', when: r => r.crash === 'storm' },
+  { id: 'nofly', short: 'No-fly zone!', title: 'Told off! No-fly zones mean no flying, even a wingtip.', when: r => r.crash === 'nofly' },
+  { id: 'golden', short: 'First golden seed', title: 'Your first golden seed: lucky pilot!', when: r => (r.goldens || 0) >= 1 },
+  { id: 'skip3', short: 'Bold pilot!', title: 'Three airports skipped in one go: bold pilot!', when: r => r.landed && r.airportsSkipped >= 3 },
 ];
 
 // ---------- the daily trio: three small missions a real day, from the area you are in ----------
 // The DATE stays out of the rules (they run in the sim, no clock): the menu calls setDaily(save, 'YYYY-MM-DD') and the
 // rules check save.daily. Picked from a small easy pool by the date, so every player gets the same three on a day.
 export const DAILY_POOL = [
-  { id: 'd-seeds', prize: 15, title: f => `Bring home ${8 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 8 * f.k },
-  { id: 'd-shade', prize: 10, title: f => `Shade the Earth ${3 * f.k} times`, flight: (r, s, f) => r.sunBlocked >= 3 * f.k },
-  { id: 'd-gaps', prize: 15, title: f => `Fly ${5 * f.k} clean storm gaps`, flight: (r, s, f) => (r.cleanGaps || 0) >= 5 * f.k },
-  { id: 'd-skip', prize: 20, title: () => 'Skip an airport, then land', flight: r => r.airportsSkipped >= 1 },
-  { id: 'd-plant', prize: 15, title: f => `Plant ${f.k + 1} trees`, flight: (r, s, f) => r.planted >= f.k + 1 },
-  { id: 'd-night', prize: 20, title: () => 'Dodge an icy patch at night', flight: r => (r.dodges || 0) >= 1 },
+  { id: 'd-seeds', short: f => `Bring home ${8 * f.k} seeds`, prize: 15, title: f => `Bring home ${8 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 8 * f.k },
+  { id: 'd-shade', short: f => `Shade ${3 * f.k} times`, prize: 10, title: f => `Shade the Earth ${3 * f.k} times`, flight: (r, s, f) => r.sunBlocked >= 3 * f.k },
+  { id: 'd-gaps', short: f => `${5 * f.k} clean storm gaps`, prize: 15, title: f => `Fly ${5 * f.k} clean storm gaps`, flight: (r, s, f) => (r.cleanGaps || 0) >= 5 * f.k },
+  { id: 'd-skip', short: () => 'Skip an airport, land', prize: 20, title: () => 'Skip an airport, then land', flight: r => r.airportsSkipped >= 1 },
+  { id: 'd-plant', short: f => `Plant ${f.k + 1} trees`, prize: 15, title: f => `Plant ${f.k + 1} trees`, flight: (r, s, f) => r.planted >= f.k + 1 },
+  { id: 'd-night', short: () => 'Dodge icy air at night', prize: 20, title: () => 'Dodge an icy patch at night', flight: r => (r.dodges || 0) >= 1 },
 ];
 const hash = str => [...str].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 // The daily trio starts AFTER lesson L3, alongside the remaining lessons (the user, 2026-10-29: beginners ran out of things
 // to do). Slot A is always EASY and any flight counts, a crash too; slots B and C come from the pool. A STREAK of days with at
 // least one daily done adds +2 seeds to each daily prize, up to +10; a missed day halves it (kind to children).
 export const DAILY_EASY = [
-  { id: 'e-km', prize: 10, easy: true, title: () => 'Fly 1,000 km (a crash counts too)', flight: r => (r.distance || 0) >= 1000 },
-  { id: 'e-seeds', prize: 10, easy: true, title: () => 'Pick up 8 seeds in the sky', flight: r => (r.cargo || 0) >= 8 },
-  { id: 'e-gaps', prize: 10, easy: true, title: () => 'Pass 4 storm gaps', flight: r => (r.cleanGaps || 0) >= 4 },
+  { id: 'e-km', short: () => 'Fly 1,000 km', prize: 10, easy: true, title: () => 'Fly 1,000 km (a crash counts too)', flight: r => (r.distance || 0) >= 1000 },
+  { id: 'e-seeds', short: () => 'Pick up 8 seeds', prize: 10, easy: true, title: () => 'Pick up 8 seeds in the sky', flight: r => (r.cargo || 0) >= 8 },
+  { id: 'e-gaps', short: () => 'Pass 4 storm gaps', prize: 10, easy: true, title: () => 'Pass 4 storm gaps', flight: r => (r.cleanGaps || 0) >= 4 },
 ];
 const dailiesOpen = save => isSeason2(save) && done(save).has('L3');
 const dailyDef = id => DAILY_POOL.find(d => d.id === id) || DAILY_EASY.find(d => d.id === id);
@@ -240,11 +240,11 @@ export function dailyVisible(save) {
 // Two per area are always on show after L3; each is a LADDER (done: the next rung at x1.5, the same prize). Steady goals do
 // NOT count toward opening the next tier (tierOpen reads TEMPLATES keys only), so good players' pace is unchanged.
 export const STEADY = [
-  { id: 'st-km', base: 2000, prize: 5, title: (t, f) => `Fly ${t.toLocaleString('en')} km in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => Math.round(r.distance || 0) },
-  { id: 'st-seeds', base: 20, prize: 5, title: t => `Pick up ${t} seeds in the sky`, add: r => r.cargo || 0 },
-  { id: 'st-gaps', base: 10, prize: 5, title: t => `Fly through ${t} storm gaps`, add: r => r.cleanGaps || 0 },
-  { id: 'st-land', base: 2, prize: 5, title: (t, f) => `Land ${t} times in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => (r.landed ? 1 : 0) },
-  { id: 'st-plant', base: 5, prize: 5, ready: s => ((s.levels || {}).trees || 0) > 0, title: (t, f) => `Plant ${t} trees in ${f.landName}`, add: r => r.planted || 0 },
+  { id: 'st-km', short: t => `Fly ${t.toLocaleString('en')} km`, base: 2000, prize: 5, title: (t, f) => `Fly ${t.toLocaleString('en')} km in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => Math.round(r.distance || 0) },
+  { id: 'st-seeds', short: t => `${t} seeds in the sky`, base: 20, prize: 5, title: t => `Pick up ${t} seeds in the sky`, add: r => r.cargo || 0 },
+  { id: 'st-gaps', short: t => `${t} storm gaps`, base: 10, prize: 5, title: t => `Fly through ${t} storm gaps`, add: r => r.cleanGaps || 0 },
+  { id: 'st-land', short: t => `Land ${t} times`, base: 2, prize: 5, title: (t, f) => `Land ${t} times in ${AREAS[f.area] ? AREAS[f.area].name : 'this area'}`, add: r => (r.landed ? 1 : 0) },
+  { id: 'st-plant', short: t => `Plant ${t} trees`, base: 5, prize: 5, ready: s => ((s.levels || {}).trees || 0) > 0, title: (t, f) => `Plant ${t} trees in ${f.landName}`, add: r => r.planted || 0 },
 ];
 const steadyOf = (save, a) => ((save.steady = save.steady || {})[a] = save.steady[a] || {});
 export const rungTarget = (d, rung) => Math.round(d.base * Math.pow(1.25, rung));

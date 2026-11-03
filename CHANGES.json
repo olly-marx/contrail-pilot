@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-03-results-card",
+    "version": "0.26.1",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The results screen is one tidy card now: it fits on your phone with no scrolling, and FLY ON is always in view.",
+      "Your mission prizes are added to your seeds for you, so there are no more CLAIM buttons to tap.",
+      "UP NEXT tells you what to do next, in the same words as the home screen."
+    ]
+  },
+  {
     "id": "2026-11-03-aimed-route",
     "version": "0.26.0",
     "date": "2026-11-03",

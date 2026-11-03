@@ -60,10 +60,10 @@ const W = 390, H = 844;
   check(finished, 'a player can fly the whole flight school to its landing with real taps');
   await p.waitForTimeout(3000);   // the card's reveal
   await shot('school-done');
-  const card = await p.evaluate(() => ({ shown: !document.getElementById('results').hidden, title: document.getElementById('rTitle').textContent, btn: document.getElementById('againBtn').textContent,
-    free: !document.getElementById('rFree').hidden, fact: !document.getElementById('rFact').hidden && document.getElementById('rFact').textContent }));
+  const card = await p.evaluate(() => ({ shown: !document.getElementById('results').hidden, title: document.getElementById('rEyebrow').textContent, btn: document.getElementById('againBtn').textContent,
+    lead: !!document.querySelector('#rNext .rc-row.lead'), fact: !!document.getElementById('rFact') }));   // R1: the free part is the UP NEXT lead row; the random fact is gone
   check(card.shown && /school/i.test(card.title) && /OPEN THE HANGAR/.test(card.btn), `the school-done card leads to the HANGAR: ${JSON.stringify(card)}`);
-  check(!card.fact, `no random fact on a card that leads somewhere: ${JSON.stringify(card.fact)}`);
+  check(!card.fact && card.lead, `no random fact, and the free part is the UP NEXT lead row: ${JSON.stringify(card)}`);
   if (!/OPEN THE HANGAR/.test(card.btn)) { await b.close(); console.log(`FAIL firsthour-real:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (the rest needs the lead)
   await p.click('#againBtn'); await p.waitForTimeout(1500);
   await shot('hangar');
