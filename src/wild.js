@@ -7,7 +7,7 @@
 // its cities, or flown over it).
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
-import { LINES, tabOf } from './upgrades.js';
+import { LINES, tabOf, level, nextLevel, unlocked, unlockText, needsMoreNature, canBuy, freeParcels } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject } from './nature.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
 import { CITIES, S2_CITIES } from './cities.js';
@@ -103,19 +103,9 @@ export class WildScreen {
     const treesTime = !isSeason2(s) || (s.missionsDone || []).includes('L4');
     $('wTrees').hidden = !uk || !treesTime;
     row.hidden = !trees.length;
-    $('wTrees').innerHTML = uk ? LINES.filter(l => tabOf(l) === 'nature').map(l => this.ui.lineCardHTML(l)).join('') : '';
-    $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => this.ui.buy(b.dataset.buy));
-    $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = () => this.ui.showInfo(b.dataset.info));
-    // Tap a planting card (not its buttons) to PREVIEW it: the trees it would add, ghosted in the land.
-    $('wTrees').querySelectorAll('.line[data-line]').forEach(c => c.onclick = e => {
-      if (e.target.closest('button')) return;
-      const on = !c.classList.contains('previewing'); $('wTrees').querySelectorAll('.line').forEach(x => x.classList.remove('previewing'));
-      if (!this.field) return; sfx.flap();
-      if (!on) { this.field.clearGhosts(); return; }
-      c.classList.add('previewing');
-      const line = LINES.find(l => l.id === c.dataset.line), lv = (this.save.levels || {})[c.dataset.line] || 0, next = line && line.levels[lv];
-      this.field.ghostTrees((next && next.parcels) || 2);
-    });
+    $('wTrees').innerHTML = uk ? LINES.filter(l => tabOf(l) === 'nature').map(l => this.toolRowHTML(l)).join('') : '';
+    $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ui.buy(b.dataset.buy); });
+    $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = () => this.ui.showInfo(b.dataset.info));   // the row's tap = the line's info (the rails' new-line step taps it)
     this.renderFound();
     // This land is SHOWING (NATURE visible, not a refresh behind another screen): what it shows is now seen (src/fresh.js).
     if (!$('nature').hidden && markSeen(s, natureScope(this.region), fo)) this.ui.persist();
@@ -174,6 +164,26 @@ export class WildScreen {
         n.animal && `<p><b>${esc(n.animal.name)}</b>: ${n.animal.ready ? 'out there now, look out on your flights!' : 'not back yet: see the projects'}</p>`].filter(Boolean).join('') });
   }
 
+  // R6: a planting tool (tree parcels, soil, nursery) as a shared `.rowc` row, under the trees on the home land. The rails' contract:
+  // `[data-buy="<line id>"]` is the row's price button, `[data-info="<line id>"]` its tap area (tour.js points at both).
+  toolRowHTML(line) {
+    const s = this.save, cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
+    if (!unlocked(s, line)) {   // a branch shows its name and what it needs; other locked lines stay a surprise
+      return `<div class="rowc locked" data-line="${line.id}"><span class="rowc-tap"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${line.requires ? esc(line.name) : '???'}</span></span><span class="rowc-sub">${esc(unlockText(line, s))}</span></span></div>`;
+    }
+    const have = level(s, line.id), next = nextLevel(s, line), waitBio = needsMoreNature(s, line);
+    const isFree = (!!s.freeUpgrade || freeParcels(s, line.id)) && next && have === 0 && !waitBio, ok = isFree || canBuy(s, line);
+    const short = next && !ok && !waitBio ? [Math.max(0, next.cost - s.seeds) && `${next.cost - s.seeds}<i class="seedicon"></i>`, Math.max(0, (next.crystals || 0) - (s.crystals || 0)) && `${next.crystals - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ') : '';
+    const pips = line.levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
+    const price = !next ? '<span class="rowc-price rowc-done">MAX</span>'
+      : waitBio ? `<span class="rowc-price rowc-locked">bio ${next.needsBio}</span>`
+      : `<button class="rowc-price btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>`;
+    const sub = !next ? 'All done!' : short ? `need ${short} more` : `Next: ${esc(next.name)}`;
+    return `<div class="rowc price-top tool ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}" data-line="${line.id}">`
+      + `<button class="rowc-tap" data-info="${line.id}" type="button" aria-label="About ${esc(line.name)}"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span>${this.isNew && this.isNew(`line:${line.id}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
+      + `<span class="rowc-sub">${sub}</span></button>${price}</div>`;
+  }
+
   renderProjects() {
     // In tiers (the user, 2026-10-22: all 11 at once was confusing): open tiers show their projects;
     // the next locked tier is one card saying what opens it; later tiers stay hidden.
@@ -188,7 +198,7 @@ export class WildScreen {
       const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? (p.chain[0].length <= 22 ? p.chain[0] : 'Helps this land') : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings back: ${w.length} animal${w.length > 1 ? 's' : ''}`; })();   /* (an unfound animal is not named: the surprise stays) */
       return `<div class="rowc project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing sel' : ''}" data-pline="${p.id}">`
         + `<button class="rowc-tap" type="button" data-preview="${p.id}"><img class="rowc-icon" src="assets/ui/proj-${p.id}.png" alt="">`
-        + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span></span><span class="rowc-sub">${esc(sub)}</span></button>`
+        + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span>${!have && this.isNew && this.isNew(`project:${p.id}`) ? '<i class="dot row-new"></i>' : ''}</span><span class="rowc-sub">${esc(sub)}</span></button>`
         + `${have ? '<span class="rowc-price w-done">DONE</span>' : btn.replace('class="btn ', 'class="rowc-price btn ')}</div>`;
     };
     const how = 'Plant trees and finish the projects above!';   // every land takes trees (plantedIn)
