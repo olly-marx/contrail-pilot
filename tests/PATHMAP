@@ -36,4 +36,3 @@ group ux-fit | src/ui.js index.html style.css src/screens.js src/sheet.js tools/
 group ux-rows | src/hangar.js src/wild.js | overlap
 group rules-imports | src/aim.js | sim-bank fares flight
 group ux-fit | src/resultscard.js src/nextup.js | fitscreen overlap taptargets rowfit hangar nature
-ci-only | onrails320
