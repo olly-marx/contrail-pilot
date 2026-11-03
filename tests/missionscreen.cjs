@@ -75,8 +75,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(critter && card.shown && /Found!/i.test(card.text), `tapping a found animal in the NATURE picture opens its card: ${!!critter} ${JSON.stringify(card)}`);
   await p.evaluate(() => { document.getElementById('wInfo').hidden = true; });
   const pid = await p.evaluate(() => { const b = document.querySelector('#wProjects [data-project]:not([disabled])'); return b && b.dataset.project; });
+  // R8: the mission's prize must be PAID at the buy. Record what the project costs and what the mission pays BEFORE the tap (a free first project costs nothing).
+  const pre = await p.evaluate(async pid => { const M = await import('./src/missions2.js'), s = game.registry.get('save'), ui = game.registry.get('ui');
+    const m = M.visible(s).find(x => x.key === 'weurope:project'), P = ((ui.wild || ui.nature || {}).projects || []).find(x => x.id === pid);
+    return { seeds: s.seeds, prize: m && m.prize.seeds, cost: P ? P.cost : null }; }, pid);
   if (pid) { await p.click(`#wProjects [data-project="${pid}"]`); await p.waitForTimeout(400); }
   const fund = await saveIn(p);
+  const delta = fund.seeds - pre.seeds;
+  check(pre.prize > 0 && pre.cost != null && (delta === pre.prize - pre.cost || delta === pre.prize), `the project mission's prize was PAID at the buy: seeds ${pre.seeds} -> ${fund.seeds} (prize +${pre.prize}, project cost ${pre.cost}, or free)`);
   check(pid && (fund.missionsDone || []).includes('weurope:project') && !(fund.unclaimed || []).length, `funding a project completes "Fund a nature project here" with no flight, and nothing is left waiting to claim (R8: it is paid at the buy; the exact amount is proven in tests/missions2.cjs): ${pid} ${JSON.stringify(fund.missionsDone)}`);
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close();
