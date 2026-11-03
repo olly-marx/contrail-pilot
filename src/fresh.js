@@ -99,6 +99,13 @@ export function markSeen(save, scope, opts) {
   return true;
 }
 
+// A whole screen is showing (NATURE until R6 gives every land tab its own render): mark every scope under 'nature/' seen. Returns true if it changed.
+export function markSeenPrefix(save, prefix, opts) {
+  let changed = false;
+  for (const scope of Object.keys(current(save, opts))) if (scope.startsWith(prefix)) changed = markSeen(save, scope, opts) || changed;
+  return changed;
+}
+
 // Once, when the save has no save.seenMigrated: everything already buyable / open / found / earned counts as seen (no dot storm on the
 // release). Returns true if it ran.
 export function migrateSeen(save, opts) {

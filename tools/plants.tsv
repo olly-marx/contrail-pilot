@@ -294,3 +294,5 @@ newdot	src/fresh.js	s/'missions': 'pending: R4/'missions': 'TODO R4/	a scope wit
 newdot	src/fresh.js	s/if (missions) for (const k of missions(save)) add('missions', k);/\/\/ (hook removed)/	the missions hook drops its keys
 newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (save.seen) return false;/	the migration keyed on save.seen: an early markSeen stops it and the other scopes get dots
 newdot	src/records.js	s/  for (const b of beaten) r.beaten.push(/  for (const b of []) r.beaten.push(/	recordFlight no longer writes the beaten keys: BOARDS never lights
+hangarnew	src/ui.js	s/markSeenPrefix(this.save, .nature\/., this.freshOpts())/markSeenPrefix(this.save, "", this.freshOpts())/	opening NATURE marks every scope seen again (the old ui.js:287 bug): the hangar dot is cleared by NATURE
+hangarnew	src/hangar.js	s/ \&\& markSeen(s, hangarScope(this.tab))) this.ui.persist();/ \&\& markSeen(s, "hangar\/plane")) this.ui.persist();/	every hangar sub-tab marks only PLANE seen: SYSTEMS and GADGETS keep the tab lit forever

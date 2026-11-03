@@ -17,14 +17,25 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.addInitScript(() => { if (sessionStorage.i) return; sessionStorage.i = 1; localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], tours: ['*'],
     flights: 30, landings: 9, seeds: 60, crystals: 20, flightSeconds: 1500, priceVersion: 2, levels: { trees: 1 }, fleet: { plane: 'jumbo', planes: { comet: {}, jumbo: { engines: 1 } }, systems: {}, gadgets: {} } })); });
   await p.goto(URL); await ready(p); await p.waitForTimeout(500);
-  const isNew = () => p.evaluate(() => !document.getElementById('tNew').hidden);
+  const dot = id => p.evaluate(i => !document.getElementById(i).hidden, id);
+  const raise = () => p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seeds = 2000; ui.save.crystals = 300; ui.showTitle(); });
 
-  // 1. NEW: lit (things affordable, never looked at), off after a look, back only when something new is affordable.
-  check(await isNew(), 'NEW is lit before the first look');
-  await p.click('#tabHangar'); await p.waitForTimeout(300); await p.click('#tabFly'); await p.waitForTimeout(200);
-  check(!(await isNew()), 'after looking at the hangar, NEW is off although things are still affordable');
-  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seeds = 2000; ui.save.crystals = 300; ui.showTitle(); });
-  check(await isNew(), 'with more seeds, newly affordable things light NEW again');
+  // 1. The NEW dots (src/fresh.js; real taps). Money that was already there at load is SEEN (no dot storm); newly affordable things light
+  // the HANGAR and NATURE dots; NATURE's dot clears only NATURE's (the old ui.js:287 bug: opening NATURE cleared the hangar's NEW);
+  // the HANGAR dot clears when its three sub-tabs have been shown.
+  check(!(await dot('dHangar')) && !(await dot('dNature')), 'no dot storm: what was already affordable at load is seen');
+  await raise();
+  check(await dot('dHangar'), 'with more seeds, newly affordable fleet things light the HANGAR dot');
+  check(await dot('dNature'), 'with more seeds, newly affordable NATURE things light the NATURE dot');
+  await p.click('#tabNature'); await p.waitForTimeout(400);
+  check(!(await dot('dNature')), 'after looking at NATURE, its dot is off');
+  check(await dot('dHangar'), 'opening NATURE must NOT clear the hangar dot (the old shared list did)');
+  await p.click('#tabHangar'); await p.waitForTimeout(400);
+  check(await dot('dHangar'), 'the plane sub-tab alone does not clear the HANGAR dot while SYSTEMS / GADGETS still have something new');
+  for (const t of ['systems', 'gadgets']) { await p.click(`[data-ftab=${t}]`); await p.waitForTimeout(300); }
+  check(!(await dot('dHangar')), 'after PLANE, SYSTEMS and GADGETS have been shown, the HANGAR dot is off');
+  await p.click('#tabFly'); await p.waitForTimeout(200);
+  check(!(await dot('dHangar')), 'the dot stays off on HOME');
   await p.reload(); await ready(p); await p.waitForTimeout(400);
 
   // 2. The big picture: the plane you fly; tapping the Comet's card previews the Comet.
