@@ -35,7 +35,7 @@ import { hubView, revealed as hubRevealed } from './hub.js';
 import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus, saving } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, claim, unclaimedCount } from './rewards.js';
-import { BADGES, THEMES, tierOf, medal, progressOf, tierName, nearBadges } from './badges.js';
+import { medal, tierName, nearBadges } from './badges.js';
 import { WILDLIFE } from './wildlife.js';
 import { animalPortrait } from './animalart.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
@@ -304,7 +304,9 @@ export class UI {
       if (markSeenPrefix(this.save, 'nature/', this.freshOpts())) this.persist();   // NATURE is showing (until R6 gives each land its own markSeen); it clears ONLY nature scopes
       if (this.tour) this.tour.maybe('nature'); return; }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
-    if (tab === 'boards') { this.showOnly('boards'); if (FEATURES.season2) { showRecords(this.save); this.refreshDots(); return; } return this.pilot && this.pilot.showBoards(); }   // season 2: MY RECORDS (src/records.js), online is off
+    if (tab === 'boards') { this.showOnly('boards'); if (FEATURES.season2) { showRecords(this.save, { onSeen: () => this.refreshDots(), toast: (t, b) => this.toast(t, b, 'good', 6) }); this.refreshDots(); return; }
+      $('bSubtabs').hidden = true; $('bRecords').hidden = false; $('bBadges').hidden = true;   // (the online board: no sub-tabs)
+      return this.pilot && this.pilot.showBoards(); }   // season 2: MY RECORDS (src/records.js), online is off
   }
 
   showOnly(id) {
@@ -503,8 +505,7 @@ export class UI {
   }
 
   markHangarShown() {
-    const o = this.freshOpts(), a = markSeen(this.save, hangarScope(this.fleet.tab), o), b = markSeen(this.save, 'boards/badges', o);   // (until R9 the badge grid is on this screen)
-    if (a || b) this.persist();
+    if (markSeen(this.save, hangarScope(this.fleet.tab), this.freshOpts())) this.persist();
   }
 
   renderHangar() {
@@ -528,21 +529,6 @@ export class UI {
     $('hUpgrades').innerHTML = '';
     this.fleet.render();
 
-    $('hBadges').innerHTML = this.badgeGridHTML();
-    if (!$('hangar').hidden && markSeen(this.save, 'boards/badges', this.freshOpts())) this.persist();   // (until R9 moves the badges to BOARDS they are SHOWN here)
-  }
-
-  // Every badge, by theme: medal (or locked / ??? for secrets), name, what it needs, next tier.
-  badgeGridHTML() {
-    const s = this.save;
-    return Object.entries(THEMES).map(([th, name]) => `<p class="label">${name}</p><div class="badge-grid">` + BADGES.filter(b => b.theme === th).map(b => {
-      const t = tierOf(s, b.id), pr = progressOf(s, b), hidden = b.secret && !t;
-      const img = t ? medal(b.id, t) : hidden ? 'assets/ui/badge-secret.png' : 'assets/ui/badge-locked.png';
-      const say = x => x.charAt(0).toUpperCase() + x.slice(1);   // one-tier badges: just what to do, no "1 ..."
-      const next = pr.goal === null ? 'Done!' : b.tiers.length === 1 ? `${say(b.unit)}.`
-        : `${tierName(b, t + 1)}: ${pr.goal.toLocaleString()} ${b.unit}${pr.value !== null ? ` (${pr.value.toLocaleString()} so far)` : ''}`;
-      return `<div class="badge2 ${t ? 'got' : ''}"><img src="${img}" alt=""><b>${hidden ? '???' : b.name}</b><span>${hidden ? 'A secret badge. Keep flying!' : next}</span></div>`;
-    }).join('') + '</div>').join('');
   }
 
   // One upgrade line's card (hangar and NATURE screen): name, level pips, (i), next level + BUY.

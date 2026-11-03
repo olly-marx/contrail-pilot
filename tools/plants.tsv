@@ -304,3 +304,8 @@ hangar	src/hangar.js	s/if (pinfo) pinfo.onclick/if (false) pinfo.onclick/	the (i
 hangar	src/hangar.js	s/if (era) era.onclick/if (false) era.onclick/	tapping the era line does nothing
 hangar	src/hangar.js	s/this.rowNew.has(`${key}:${have + 1}`)/false/	no row dot beside a name with a new item
 hangar	src/ui.js	s/this.fleet.rowNew = null;/this.fleet.rowNew = this.fleet.rowNew;/	row dots survive into the next visit (never cleared)
+records-screen	src/recordsui.js	s/^    seen();   \/\/ this sub-tab is showing/    \/\/ seen();   \/\/ this sub-tab is showing/	the BOARDS sub-tabs never mark themselves seen: the dots and NEW RECORD! never clear
+records-screen	src/recordsui.js	s/if (opts.toast) opts.toast(/if (false) opts.toast(/	the first-visit line (and the online note) is not shown at all
+records-screen	src/recordsui.js	s/newBadges.includes(b.id) ?/false ?/	no dot on the new badge
+records-screen	style.css	s/background: #fff; padding: 4px; font-size: 7px; border: 0;/background: #fff; padding: 4px; font-size: 6px; border: 0;/	the badge text back at 6 px (below the 7 px minimum)
+records-screen	src/recordsui.js	s/k !== tab \&\& d\[`boards\/${k}`\]/false/	no dot on the sub-tab that is not showing

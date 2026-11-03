@@ -104,7 +104,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   check(pil.note && !pil.edit && !pil.have && !pil.code && pil.stats, `C: PILOT says the pilot names are resting (no name form, no login) and still shows your stats: ${JSON.stringify(pil)}`);
   await p.evaluate(() => game.registry.get('ui').go('boards')); await p.waitForTimeout(400);
   const bm = await p.evaluate(() => ({ msg: document.getElementById('bMsg').textContent, cards: document.querySelectorAll('#bBoards .btn.rec').length }));
-  check(/come back with online/.test(bm.msg) && !/No internet/.test(bm.msg) && bm.cards === 8, `C: BOARDS is MY RECORDS (8 cards) and says rankings come back with online, not 'No internet right now': ${JSON.stringify(bm)}`);
+  check(!/No internet/.test(bm.msg) && bm.cards === 8, `C: BOARDS is MY RECORDS (8 cards), not 'No internet right now' (R9: the 'rankings come back with online' line is a one-time toast now): ${JSON.stringify(bm)}`);
   check(await p.evaluate(async () => !/back to LONDON/i.test(await (await fetch('/src/pilot.js')).text())), 'C: the Pilot LAPS text does not say "back to LONDON" (season 2 starts anywhere)');
   await p.context().close();
 

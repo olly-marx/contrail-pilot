@@ -502,10 +502,10 @@ h2.sub { margin-top: -4px; }
 .new-badge { display: flex; align-items: center; gap: 6px; justify-content: center; font-size: 8px; margin: 2px 0; }
 .new-badge img { width: 32px; height: 32px; image-rendering: pixelated; }
 .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 4px; margin: 2px 0 8px; }
-.badge2 { display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 6px; text-align: center; color: var(--muted); opacity: .75; }
+.badge2 { position: relative; display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 7px; border: 0; font-family: inherit; cursor: pointer; text-align: center; color: var(--muted); opacity: .75; }
 .badge2.got { opacity: 1; color: inherit; }
 .badge2 img { width: 64px; height: 64px; image-rendering: pixelated; }
-#hBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
+#bBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
 .badge2 b { font-size: 7px; color: inherit; }
 /* NATURE tiers and rarity (src/wild.js, 2026-10-22) */
 .w-tier { margin: 8px 0 2px; font-weight: bold; color: #1e7a3c; }

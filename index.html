@@ -161,8 +161,6 @@
       <div id="hFuel" class="fuel"></div>
       <div id="hFleet" class="upgrades fleet"></div>
       <div id="hUpgrades" class="upgrades"></div>
-      <h3>Badges</h3>
-      <div id="hBadges" class="badges"></div>
       <div class="realtree" data-feature="citizenZoo">
         <p><b>Plant a real tree!</b> Citizen Zoo plants real trees in London.</p>
         <button id="realTreeBtn" class="btn green gate" type="button"><span class="gate-fill"></span><span class="gate-label">ASK A GROWN-UP</span></button>
@@ -219,10 +217,14 @@
     <div class="panel">
       <h2>Leaderboard</h2>
       <h2 class="sub"><button id="bInfo" class="btn tiny" type="button" aria-label="How points work">&#9432; how points work</button></h2>
-      <div id="bBoards" class="board-pick"></div>
-      <div id="bPeriods" class="tabs"></div>
-      <p id="bWhat" class="board-what"></p>
-      <ol id="bList" class="board"></ol>
+      <div id="bSubtabs" class="subtabs" hidden></div>
+      <div id="bRecords">
+        <div id="bBoards" class="board-pick"></div>
+        <div id="bPeriods" class="tabs"></div>
+        <p id="bWhat" class="board-what"></p>
+        <ol id="bList" class="board"></ol>
+      </div>
+      <div id="bBadges" class="badges" hidden></div>
       <p id="bMsg" class="small msg"></p>
     </div>
   </section>

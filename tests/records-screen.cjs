@@ -33,6 +33,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   p = await open({ ...base, landings: 3, planted: { oak: 2, birch: 1 }, missionsDone: [...base.missionsDone, 'weurope:shade', 'weurope:bring'], records: rec });
   check(await tab(p), 'BOARDS appears after the 3rd landing');
   await p.click('#tabBoards'); await p.waitForTimeout(500);
+  const toast1 = await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden ? t.textContent : ''; });   // (R9: the first-visit line + 'rankings come back with online' are ONE toast)
 
   // 2. 4 good + 4 oops cards, 2 periods, no points.
   const s1 = await p.evaluate(() => ({ shown: !document.getElementById('boards').hidden, cards: [...document.querySelectorAll('#bBoards .btn.rec')].map(e => e.querySelector('b').textContent),
@@ -58,11 +59,29 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 5. A card says its rule; the first visit says these are YOUR records.
   await p.click('#bBoards [data-board="bird"]'); await p.waitForTimeout(150);
   const what = await p.evaluate(() => ({ rule: document.getElementById('bWhat').textContent, msg: document.getElementById('bMsg').textContent }));
-  check(/bird strike/i.test(what.rule) && /YOUR records/.test(what.msg), `a tap shows the rule; the first visit says YOUR records: ${JSON.stringify(what)}`);
+  check(/bird strike/i.test(what.rule) && /YOUR records/.test(toast1) && /online/.test(toast1) && what.msg === '', `a tap shows the rule; the first visit TOASTS YOUR records + online, no standing line: ${JSON.stringify({ what, toast1 })}`);
   await p.click('#hubBack').catch(() => {}); await p.evaluate(() => game.registry.get('ui').go('fly')); await p.waitForTimeout(300);
   await p.click('#tabBoards'); await p.waitForTimeout(400);
-  const again = await p.evaluate(() => ({ marks: document.querySelectorAll('#bBoards .new').length, msg: document.getElementById('bMsg').textContent }));
-  check(again.marks === 0 && !/YOUR records/.test(again.msg), `NEW RECORD! and the first-visit line are gone on the second visit: ${JSON.stringify(again)}`);
+  const again = await p.evaluate(() => ({ marks: document.querySelectorAll('#bBoards .new').length, msg: document.getElementById('bMsg').textContent, toast: (t => t && !t.hidden ? t.textContent : '')(document.getElementById('toast')) }));
+  check(again.marks === 0 && !/YOUR records/.test(again.msg + again.toast), `NEW RECORD! and the first-visit toast are gone on the second visit: ${JSON.stringify(again)}`);
+  // 6. R9: RECORDS / BADGES sub-tabs. A badge tier earned since the last visit lights a dot on BADGES (the bar's BOARDS too) while RECORDS shows;
+  // BADGES shows the grid at 7 px minimum with a dot on the new badge; a tap opens its sheet; the next visit has no dots; the hangar has no badge grid.
+  const st = () => p.evaluate(() => ({ tabs: [...document.querySelectorAll('#bSubtabs .subtab')].map(e => e.textContent + (e.querySelector('.dot') ? '*' : '')), bar: !document.getElementById('dBoards').hidden }));
+  const s0 = await st();
+  check(JSON.stringify(s0.tabs) === JSON.stringify(['RECORDS', 'BADGES']) && !s0.bar, `two sub-tabs, no dots yet: ${JSON.stringify(s0)}`);
+  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.badgeTiers = { ...(ui.save.badgeTiers || {}), forester: 2 }; ui.go('fly'); });
+  await p.waitForTimeout(200);
+  check(await p.evaluate(() => !document.getElementById('dBoards').hidden), 'a badge tier earned lights the BOARDS dot on the bar');
+  await p.click('#tabBoards'); await p.waitForTimeout(300);
+  check(JSON.stringify((await st()).tabs) === JSON.stringify(['RECORDS', 'BADGES*']), `RECORDS is showing: the dot is on BADGES: ${JSON.stringify(await st())}`);
+  await p.click('[data-btab=badges]'); await p.waitForTimeout(300);
+  const bd = await p.evaluate(() => { const g = [...document.querySelectorAll('#bBadges .badge2')], f = e => parseFloat(getComputedStyle(e).fontSize); return { n: g.length, small: g.filter(e => f(e) < 7 || [...e.querySelectorAll('b,span')].some(x => f(x) < 7)).length, dots: [...document.querySelectorAll('#bBadges .badge2 .dot')].map(d => d.parentElement.dataset.badge), bar: !document.getElementById('dBoards').hidden, hangar: !!document.getElementById('hBadges') }; });
+  check(bd.n >= 20 && bd.small === 0 && JSON.stringify(bd.dots) === '["forester"]' && !bd.bar && !bd.hangar, `BADGES: the grid at >= 7 px, a dot on the new badge only, the bar dot cleared, no badge grid in the hangar: ${JSON.stringify(bd)}`);
+  await p.click('#bBadges [data-badge=forester]'); await p.waitForTimeout(200);
+  check(await p.evaluate(() => /Forester|forester/i.test((document.getElementById('sheet') || {}).textContent || '') && !!document.querySelector('#sheet .sheet-ok')), 'tapping a badge opens its sheet');
+  await p.click('#sheet .sheet-ok'); await p.waitForTimeout(150);
+  await p.evaluate(() => game.registry.get('ui').go('fly')); await p.waitForTimeout(200); await p.click('#tabBoards'); await p.waitForTimeout(300); await p.click('[data-btab=badges]'); await p.waitForTimeout(250);
+  check(await p.evaluate(() => document.querySelectorAll('#bBadges .badge2 .dot').length) === 0, 'the next visit has no badge dot (it was seen)');
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close(); await b.close();
   console.log(fails.length ? `FAIL records-screen:\n - ${fails.join('\n - ')}` : 'PASS records-screen: BOARDS after the 3rd landing, 4 good + 4 oops cards, THIS WEEK / EVER, own numbers, NEW RECORD! once, rules on tap');
