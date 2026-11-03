@@ -849,6 +849,7 @@ h2.sub { margin-top: -4px; }
 /* The hangar re-renders on every purchase; Chrome's scroll anchoring then moved the panel by the box's height (~145 px)
    AFTER the payoff had scrolled the box into view, so the payoff card sat off the box (the gate in tests/hangar.cjs). */
 #hangar { overflow-anchor: none; }
+.rowc.tour-price .rowc-tap { pointer-events: none; }   /* a tour step on the row's price: one action only (tour.js; the mirror of tour-only) */
 .rowc.tour-only .rowc-price { visibility: hidden; }   /* a tour step on the row's tap: one action only (tour.js) */
 /* Stage 2: the payoff IN the plane box (DESIGN-HANGAR-NATURE; the user's pick). #payoff takes the box's place in the page:
    the frame copies .fpreview (border, radius, background, the 400:176 picture), the strip sits under it. Not an overlay. */
