@@ -40,23 +40,29 @@ for t in "${tests[@]}"; do
   if node "$t" > /tmp/test-out.$$ 2>&1; then pass+=("$t"); tail -1 /tmp/test-out.$$; note "$t" "$t0" pass
   else
     echo "-- failed, output:"; grep -v '^\s*-\s*\(waiting\|retrying\|attempting\)\|\[2m' /tmp/test-out.$$ | tail -25
+    if [ -n "${NO_RETRY:-}" ]; then   # the branch-verify run (.github/workflows/verify-branch.yml): a failure is final, a pass-on-retry would be a FLAKY test = not green
+      fail+=("$t"); note "$t" "$t0" fail
+      [ -n "${GITHUB_ACTIONS:-}" ] && echo "::error title=Test failed (no retry)::$t"
+    else
     echo "-- retrying $t once"
     if node "$t" > /tmp/test-out.$$ 2>&1; then flaky+=("$t"); echo "-- passed on retry: FLAKY"; note "$t" "$t0" flaky
       [ -n "${GITHUB_ACTIONS:-}" ] && echo "::warning title=Flaky test::$t failed, then passed on retry"
     else fail+=("$t"); note "$t" "$t0" fail; grep -v '^\s*-\s*\(waiting\|retrying\|attempting\)\|\[2m' /tmp/test-out.$$ | tail -25
       [ -n "${GITHUB_ACTIONS:-}" ] && echo "::error title=Test failed twice::$t"
     fi
+    fi
   fi
 done
 rm -f /tmp/test-out.$$
 
+lbl="failed twice"; [ -n "${NO_RETRY:-}" ] && lbl="failed (no retry)"
 summary="PASSED ${#pass[@]}  FLAKY ${#flaky[@]}  FAILED ${#fail[@]}${shard:+  (shard $shard)}"
 echo; echo "$summary"
 [ ${#flaky[@]} -gt 0 ] && echo "flaky (passed on retry): ${flaky[*]}"
-[ ${#fail[@]} -gt 0 ] && echo "failed twice: ${fail[*]}"
+[ ${#fail[@]} -gt 0 ] && echo "$lbl: ${fail[*]}"
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   { echo "### Tests ${shard:+(shard $shard)}"; echo "$summary"; echo
     [ ${#flaky[@]} -gt 0 ] && echo "- ⚠️ flaky (passed on retry): ${flaky[*]}"
-    [ ${#fail[@]} -gt 0 ] && echo "- ❌ failed twice: ${fail[*]}"; } >> "$GITHUB_STEP_SUMMARY"
+    [ ${#fail[@]} -gt 0 ] && echo "- ❌ $lbl: ${fail[*]}"; } >> "$GITHUB_STEP_SUMMARY"
 fi
 [ ${#fail[@]} -eq 0 ]
