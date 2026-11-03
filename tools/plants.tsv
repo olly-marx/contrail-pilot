@@ -282,3 +282,4 @@ nextup	src/missions2.js	s/short: f => `Bring home \${10 \* f.k} seeds`,/short: f
 resultscard	src/resultscard.js	s/`✓ \${n} missions done`/`✓ ${missionTitles.join(', ')}`/	the mission names joined back into the line (7 missions overflow it)
 resultscard	src/resultscard.js	s/(r.landed ? total : 0) + paid.seeds/total + paid.seeds/	a crash counts the seeds it LOST as banked
 resultscard	src/resultscard.js	s/export const CHIPS_MAX = 3;/export const CHIPS_MAX = 9;/	the chips uncapped (the card would grow)
+lessonart	src/ui.js	s#assets/ui/lesson-nature.png#assets/ui/lesson-natur.png#	HOME no longer shows the nature lesson picture (it would be on no shipped screen)
