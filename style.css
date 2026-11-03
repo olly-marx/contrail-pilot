@@ -112,7 +112,24 @@ p { margin: 0; }
 .rowc.goal { cursor: pointer; }
 .rowc.goal .rowc-tap { min-height: 44px; }   /* the tap target stays >= 40 px now the row is compact (tests/taptargets.cjs) */
 .rowc.goal .rowc-slot { display: grid; place-items: center; }
-.rowc.goal .rowc-slot .mi { width: 28px; height: 28px; background-size: 28px 28px; flex: none; }
+.rowc.goal .rowc-slot .mi { width: 32px; height: 32px; background-size: 32px 32px; background-color: transparent; flex: none; }   /* 32 px art shown 1:1 */
+.mi32-airport { background-image: url('assets/ui/mi32-airport.png'); }
+.mi32-binoculars { background-image: url('assets/ui/mi32-binoculars.png'); }
+.mi32-flag { background-image: url('assets/ui/mi32-flag.png'); }
+.mi32-forest { background-image: url('assets/ui/mi32-forest.png'); }
+.mi32-gear { background-image: url('assets/ui/mi32-gear.png'); }
+.mi32-goldenseed { background-image: url('assets/ui/mi32-goldenseed.png'); }
+.mi32-moonpatch { background-image: url('assets/ui/mi32-moonpatch.png'); }
+.mi32-natureproj { background-image: url('assets/ui/mi32-natureproj.png'); }
+.mi32-nonstop { background-image: url('assets/ui/mi32-nonstop.png'); }
+.mi32-roadkm { background-image: url('assets/ui/mi32-roadkm.png'); }
+.mi32-runway { background-image: url('assets/ui/mi32-runway.png'); }
+.mi32-sapling { background-image: url('assets/ui/mi32-sapling.png'); }
+.mi32-seedbag { background-image: url('assets/ui/mi32-seedbag.png'); }
+.mi32-shade { background-image: url('assets/ui/mi32-shade.png'); }
+.mi32-shovel { background-image: url('assets/ui/mi32-shovel.png'); }
+.mi32-stormgap { background-image: url('assets/ui/mi32-stormgap.png'); }
+.mi32-twopins { background-image: url('assets/ui/mi32-twopins.png'); }
 .rowc.goal.next { outline: 3px solid #ffe15a; outline-offset: -3px; }
 .rowc.goal.star { background: #fff7d6; }
 .rowc.goal.daily { background: #eef7ff; }

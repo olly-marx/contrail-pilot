@@ -21,7 +21,7 @@ export const FIXED_UI = [
 // The lesson pictures (school, tips, the missions screen), the mission icons and the pieces style.css draws from: explicit names, each used by a screen.
 const names = (pre, list) => list.map(n => `assets/ui/${pre}${n}.png`);
 export const LESSON_ART = names('lesson-', ['bars', 'biodiversity', 'birds', 'bonus', 'crystals', 'day', 'gold', 'heat', 'hot', 'land', 'night', 'nofly', 'plot', 'seed', 'storm', 'tap', 'tree-co2', 'turbulence']);
-export const MISSION_ICONS = names('mi-', ['airports', 'crystal', 'globe', 'land', 'night', 'seed', 'shade', 'tree']);
+export const MISSION_ICONS = [...names('mi-', ['airports', 'crystal', 'globe', 'land', 'night', 'seed', 'shade', 'tree']), ...names('mi32-', ['airport', 'binoculars', 'flag', 'forest', 'gear', 'goldenseed', 'moonpatch', 'natureproj', 'nonstop', 'roadkm', 'runway', 'sapling', 'seedbag', 'shade', 'shovel', 'stormgap', 'twopins'])];   // (mi32-: the MISSIONS rows' own 32 px pictograms, R4 + the mission-icons art)
 export const STYLE_ART = ['assets/ui/tour-finger.png', 'assets/ui/captain-stand.png', 'assets/ui/card-frame.png'];
 export const ERA_PICS = ['1950s', '1970s', '1990s'];   // the eras with a drawn picture; the later ones show the painted gradient (src/welcome.js), so no file is asked for
 export const ERA_ART = ERA_PICS.map(id => `assets/ui/era-${id}.png`);
