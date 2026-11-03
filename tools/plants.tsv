@@ -313,3 +313,5 @@ tours	src/tour.js	s#^    if (id) this.markDone(id);#    if (false) this.markDone
 nextup	src/nextup.js	s#short: clip(o.short, Math.min(SHORT_MAX, ROW_MAX - rightOf(o).length))#short: o.short#	a long title pushes the right column onto a second line (the row budget)
 hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }/d	a 7-digit bank pushes TAKE OFF off a 320 screen (the head cannot wrap)
 hangar	src/sheet.js	s/el.querySelector('.sheet-ok').onclick = close;/el.querySelector('.sheet-ok').onclick = () => {};/	the sheet's OK does not close it
+fitscreen	style.css	s#width: min(100%, 34vh);#width: min(100%, 50vh);#	the globe at 50vh (HOME overflows at 320x568)
+fitscreen	src/ui.js	s#v.up\[0\] \&\& v.up\[0\].pic ? v.up.slice(0, 2) : v.up#v.up#	the pictured lead row plus 3 rows (HOME's free-part state overflows at 320x568)
