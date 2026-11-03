@@ -916,3 +916,4 @@ h2.sub { margin-top: -4px; }
 .hpreview.empty p { margin: 0; }
 #hFleet .fplane-row .rowc-sub { display: none; }   /* the plane row is its name and FLYING; the era is in the picture caption / the era sheet */
 #hFleet .tree-head { margin: 0; display: flex; justify-content: space-between; align-items: center; }
+#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }   /* a rich bank (7-digit seeds) wraps TAKE OFF to a second row instead of leaving the screen (hangar.cjs, 320 x 568) */

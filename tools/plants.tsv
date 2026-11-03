@@ -311,3 +311,5 @@ fitscreen	style.css	s/^#hFleet > .ftabs { margin: 0; }//;s/^\.hpreview\.empty { 
 swipe	src/hangar.js	s/onSwipe(\$('hangar'), { next: () => goTab(1)/onSwipe(el, { next: () => goTab(1)/	the hangar swipe is bound to the short list again: a flick below it (a tall phone) does nothing
 tours	src/tour.js	s#^    if (id) this.markDone(id);#    if (false) this.markDone(id);#	a finished tour is not remembered (it would come back: 'the name tour ends and is remembered', 'the hangar tour is remembered')
 nextup	src/nextup.js	s#short: clip(o.short, Math.min(SHORT_MAX, ROW_MAX - rightOf(o).length))#short: o.short#	a long title pushes the right column onto a second line (the row budget)
+hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }/d	a 7-digit bank pushes TAKE OFF off a 320 screen (the head cannot wrap)
+hangar	src/sheet.js	s/el.querySelector('.sheet-ok').onclick = close;/el.querySelector('.sheet-ok').onclick = () => {};/	the sheet's OK does not close it
