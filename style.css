@@ -637,32 +637,30 @@ h2.sub { margin-top: -4px; }
 #title.hub.menu .buttons { display: flex; }
 #hubGear { font-size: 18px; line-height: 1; padding: 2px 6px; }
 #title.hub #hubTop { display: flex; justify-content: space-between; align-items: center; order: 0; }
-#title.hub #hubNext { order: 2; }
-#title.hub #hubWorld { order: 3; }
+#title.hub #hubWorld { order: 1; }
+#title.hub .hub-skip { order: 2; }
+#title.hub #hubNext { order: 3; }
 #title.hub #goBtn { order: 4; }
 #title.hub #tChallenges { order: 5; }
-#title.hub #hubTiles { display: grid; order: 6; }
-.hub-next { background: #fff7d6; border: 2px solid #1a1a2e; padding: 6px 8px; font-size: 9px; text-align: left; }
-.hub-next .label { font-size: 7px; opacity: .7; margin: 0 0 2px; }
-.hub-next.crossing { background: #d6f5ff; }
+/* R3: HOME's UP NEXT strip: the results card's rows (.rc-row, R1) in a plain block; a lead row (the free part, NATURE's parcels) is gold and carries its lesson picture */
+.hub-next { padding: 0; text-align: left; }
+.hub-next .rc-label { margin: 0 0 2px; text-align: left; }
+#hubUpRows { display: grid; gap: 3px; }
+.rc-row.lead { flex-wrap: wrap; }
+.hub-next .next-pic { flex: 0 0 100%; max-width: 160px; margin: 2px auto 0; }
 .hub-world { position: relative; text-align: center; }
-.hub-globe { width: min(100%, 44vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
+.hub-globe { width: min(100%, 34vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
 .hub-spin { position: absolute; top: 42%; background: rgba(26,26,46,.55); color: #fff; border: 0; font-size: 14px; padding: 8px 6px; cursor: pointer; }
 #hubSpinL { left: 0; } #hubSpinR { right: 0; }
 .hub-route { margin: 2px 0 0; font-size: 8px; }
 .hub-route small { display: block; opacity: .7; }
 #title.hub .hub-skip { display: flex; justify-content: center; text-align: center; }   /* 'Skip mission route this trip' (src/aim.js): the shared .chip, a 40 px tap target, centred under the route */
-.hub-tiles { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 6px; }
-.hub-tile { position: relative; padding: 10px 2px; font-size: 8px; }
-.hub-tile .badge { position: absolute; top: -6px; right: -4px; background: #e8433a; color: #fff; font-size: 6px; padding: 2px 3px; border-radius: 6px; }
 .hub-back { position: fixed; left: 6px; top: 6px; z-index: 30; font-size: 8px; }
 #title.hub.world #tJourney { display: block; order: 4; }   /* tap the route: the way choice and the crossings */
 #title.hub #jGlobe { display: none; }   /* the big globe is the hub's own */
 /* S3: the free upgrade leads into the hangar; the MISSIONS screen */
-.hub-tile.pulse { animation: hubpulse 0.9s ease-in-out infinite; }
 @keyframes hubpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); box-shadow: 0 0 0 3px #ffd23a; } }
 #goBtn.secondary { opacity: .55; transform: scale(.92); }
-.hub-tile .badge { z-index: 2; opacity: 1; }
 .mlist { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
 .mrow { display: flex; justify-content: space-between; gap: 6px; padding: 5px 6px; background: #fff7d6; border: 1px solid #1a1a2e; font-size: 8px; }
 .mrow.star { background: #ffe9a8; }

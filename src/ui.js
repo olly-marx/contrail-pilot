@@ -237,21 +237,25 @@ export class UI {
   renderHub() {
     const s = this.save;
     const ready = s.tutorialDone ? crossingsNow(s).find(c => offerCheck(c, offerCtx(s, c)).offered || S2_UNLOCK) : null;
-    const v = hubView(s, { badges: { hangar: this.hasNew() ? (s.freeUpgrade ? 'FREE' : 'NEW') : '', missions: unclaimedCount(s) ? String(unclaimedCount(s)) : '' }, crossingReady: ready ? `${ready.from} to ${ready.to}` : null });
+    const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null });
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
-    $('hubNext').hidden = !v.next || !s.tutorialDone;
+    // UP NEXT (R3, research/UX-MASTER-PLAN.md C2): the SAME rows as the results card (src/nextup.js is the one source). A lead row (the free part,
+    // NATURE's tree parcels) carries its lesson picture and leads where it says; a city mission says how many stops away it is. The tiles are gone:
+    // the bottom bar is the navigation (its dots and the FREE! tag come from fresh.js and refreshDots).
+    const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    $('hubNext').hidden = !v.up.length || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
-    $('hubNext').innerHTML = v.next ? `<p class="label">NEXT</p><b>${v.next.title}</b>${v.next.hangar ? '<img class="next-pic" src="assets/ui/lesson-hangar.png" alt="">' : v.next.nature ? '<img class="next-pic" src="assets/ui/lesson-nature.png" alt="">' : ''}` : '';   // the lead: a picture of where to go (the hangar's free part; NATURE's tree parcels: moved here from the results card in R1)
+    $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${v.up.map((n, i) => `<button class="rc-row${n.lead ? ' lead' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
+    $('hubNext').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.up[+b.dataset.i]; sfx.flap();
+      if (n.key === 'lead:cross' && ready) { s.flyCrossing = ready; writeSave(s); this.start(); }
+      else if (n.where === 'hangar' || n.where === 'nature' || n.where === 'missions') this.go(n.where);
+      else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); });
     const toHangar = v.next && v.next.hangar;   // a free upgrade LEADS into the hangar (the user, 2026-10-27)
-    $('hubNext').onclick = ready ? () => { sfx.flap(); s.flyCrossing = ready; writeSave(s); this.start(); } : toHangar ? () => { sfx.flap(); this.go('hangar'); } : v.next && v.next.nature ? () => { sfx.flap(); this.go('nature'); } : v.next && v.next.claims ? () => { sfx.flap(); this.go('missions'); } : null;
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
     $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;
     $('goBtn').textContent = toHangar ? 'PICK YOUR FREE PART FIRST' : s.tutorialDone ? 'TAKE OFF' : 'START';
     this.renderSkip(v.skip);
     $('hubRoute').innerHTML = v.route.join(' &#9654; ') + (v.aim ? ' <span class="small">(mission)</span>' : '');   // the next stops (to the mission's city when aimed: src/aim.js)
-    $('hubTiles').innerHTML = v.tiles
-      .map(t => `<button class="btn hub-tile ${t.id === 'hangar' && toHangar ? 'pulse' : ''}" type="button" data-go="${t.id}">${t.label}${t.badge ? `<span class="badge">${t.badge}</span>` : ''}</button>`).join('');
-    $('hubTiles').querySelectorAll('[data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     const path = routeFor(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
     const pick = name => { sfx.flap(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };

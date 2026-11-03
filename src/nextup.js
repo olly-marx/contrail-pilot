@@ -2,7 +2,7 @@
 // HOME (R3) shows 3, MISSIONS (R4) pins row 1, so the player sees the next things in the same words on every screen.
 //   nextUp(save, { crossingReady, limit }) -> [{ key, short, full, where, stops?, daily?, lead? }]
 //     short  <= SHORT_MAX characters (the mission's own `short`, src/missions2.js; clipped as a safety net: tests/nextup.cjs reports any clip)
-//     where  'fly' | 'hangar' | 'nature': what a tap on the row opens
+//     where  'fly' | 'hangar' | 'nature' | 'missions' (the claims lead only): what a tap on the row opens
 //     stops  a city mission: how many airports away its city is from here (src/route.js wayTo, the route the aim flies)
 //     lead   a MUST-DO (the free part, the first tree parcels, a crossing ready): at most one, always first
 //     pic    a lead's picture (the hangar's or NATURE's lesson picture): HOME's NEXT box shows it (ui.js renderHub); R3's UP NEXT strip keeps it
@@ -10,8 +10,14 @@
 import * as M2 from './missions2.js';
 import { CITY_TEMPLATES } from './aim.js';
 import { linksFor, wayTo } from './route.js';
+import { lineById } from './upgrades.js';
 
 export const SHORT_MAX = 24;
+// The first Tree Planting level (lesson 5 needs it): affordable with the seeds and crystals in the bank? (was hub.js; the claims lead below reads it)
+export const canAffordParcels = save => { const l = lineById('trees').levels[0]; return (save.seeds || 0) >= l.cost && (save.crystals || 0) >= (l.crystals || 0); };
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+// The right-hand column of a row, ONE source for HOME and the results: the hop, the stops, or "today" (never a sentence). <= 9 characters.
+export const rightOf = n => (n.where === 'hangar' ? 'HANGAR ›' : n.where === 'nature' ? 'NATURE ›' : n.where === 'missions' ? 'CLAIM ›' : n.stops ? plural(n.stops, 'stop') : n.daily ? 'today' : '');
 export const clip = (t, n = SHORT_MAX) => { t = String(t || ''); if (t.length <= n) return t; const c = t.slice(0, n - 1), sp = c.lastIndexOf(' '); return (sp > 8 ? c.slice(0, sp) : c).replace(/[ ,]+$/, '') + '…'; };
 
 // The tab a mission's row leads to: a purchase (system) -> the hangar; a project -> NATURE; everything else is a flight.
@@ -32,6 +38,7 @@ export function leadOf(save, crossingReady = null) {
   const mid = (M2.next(save) || {}).key;
   if (crossingReady) return { key: 'lead:cross', short: clip(`Cross: ${crossingReady}`), full: `Crossing ready: ${crossingReady}`, where: 'fly', lead: true };
   if (save.freeUpgrade && M2.revealed(save, 'hangar')) return { key: 'lead:free', short: 'Pick your free part', full: 'Open the hangar: free upgrade!', where: 'hangar', pic: 'assets/ui/lesson-hangar.png', lead: true };
+  if (mid === 'L5' && !((save.levels || {}).trees) && save.freeParcelsGiven && !canAffordParcels(save) && (save.unclaimed || []).length) return { key: 'lead:claims', short: 'Claim your prizes', full: 'Claim your prizes first', where: 'missions', lead: true };   // (can't buy parcels until the prizes are paid; R8 retires claims)
   if (mid === 'L5' && !((save.levels || {}).trees)) return { key: 'lead:parcels', short: !save.freeParcelsGiven ? 'Free tree parcels' : 'Buy tree parcels', full: !save.freeParcelsGiven ? 'Free tree parcels in NATURE!' : 'Buy tree parcels in NATURE first', where: 'nature', pic: 'assets/ui/lesson-nature.png', lead: true };
   return null;
 }
