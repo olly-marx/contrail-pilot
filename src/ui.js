@@ -425,7 +425,7 @@ export class UI {
     const mi = v.missions; $('rMission').hidden = !mi;
     if (mi) { $('rMission').className = `step rc-line rc-mission ${mi.fail !== undefined ? 'notyet' : 'done'}`; $('rMissionTxt').textContent = mi.line; $('rMissionPrize').innerHTML = mi.seeds ? `+${mi.seeds}<i class="seedicon"></i>` : ''; }
     $('rNext').hidden = !v.next.length;
-    $('rNextRows').innerHTML = v.next.map((n, i) => `<button class="rc-row${n.lead ? ' lead' : ''}" type="button" data-i="${i}"><span>&#9656; ${esc(n.short)}</span><b>${esc(n.right)}</b></button>`).join('');
+    $('rNextRows').innerHTML = v.next.map((n, i) => `<button class="rc-row${n.lead ? ' lead' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b></button>`).join('');
     $('rEarth').hidden = !v.earth;
     if (v.earth) { $('rWarm').textContent = v.earth.warm; $('rCool').textContent = v.earth.cool; this.drawEarthFace($('rFace'), v.earth.heat); }
     $('rEra').hidden = !v.era;
@@ -438,8 +438,8 @@ export class UI {
     // -- the sheets behind the lines (src/sheet.js): the old tally, the missions, the four Earth bars, a chip's story
     $('rMaths').onclick = () => showSheet({ eyebrow: 'THIS FLIGHT', title: 'Where it came from', html: `<div class="rc-rows">${v.tally.map(([a, b]) => `<p><span>${esc(a)}</span><b>${esc(b)}</b></p>`).join('')}</div>` });
     $('rMission').onclick = () => showSheet({ eyebrow: mi && mi.fail !== undefined ? 'NOT THIS TIME' : 'MISSIONS DONE', title: mi ? mi.line.replace(/^✓ /, '') : '', body: mi && mi.fail ? mi.fail : (mi ? mi.titles.join('. ') : '') });
-    $('rEarth').onclick = () => showSheet({ eyebrow: 'THE EARTH', title: v.earth.warm.split(':')[0] + ' and ' + v.earth.cool.split(':')[0].toLowerCase(),
-      html: `<div class="earth-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>` });
+    $('rEarth').onclick = () => showSheet({ eyebrow: 'THE EARTH', title: v.earth.warm.split(' ')[0] + ' and ' + v.earth.cool.split(' ')[0].toLowerCase(),
+      html: `<div class="earth-bars rc-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>` });
     $('rNextRows').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.next[+b.dataset.i]; sfx.flap();
       if (n.where === 'hangar' || n.where === 'nature') this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); });
     const chipSheet = c => { const w = c.kind === 'animal' ? WILDLIFE.find(x => x.id === c.id) : null;

@@ -127,18 +127,23 @@ p { margin: 0; }
 .rc-mission b { display: inline-flex; align-items: center; gap: 3px; color: var(--green-dark); }
 .rc-mission .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
 .rc-more { font-style: normal; color: var(--muted); }
-.rc-next .rc-label { margin: 0 0 2px; }
+.rc-next .rc-label { margin: 0 0 2px; text-align: left; }
 #rNextRows { display: grid; gap: 3px; }
 .rc-row b { color: var(--muted); font-size: 7px; font-weight: normal; white-space: nowrap; }
 .rc-row.lead { background: var(--gold); }
 .rc-earth { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; min-height: 40px; padding: 2px 6px; background: #fff; border: 0; cursor: pointer; font-family: inherit; color: var(--ink); text-align: left; }
-.rc-earthtxt { display: grid; flex: 1; font-size: 8px; line-height: 1.6; }
+.rc-earth { gap: 6px; }
+.rc-earth .earth-face { width: 28px; height: 28px; background-size: 28px 28px; flex: none; }
+.rc-earthtxt { display: grid; flex: 1; min-width: 0; font-size: 7px; line-height: 1.7; }
+.rc-bars .ebar { grid-template-columns: 52px 1fr 36px; font-size: 8px; }
 .rc-era { display: flex; align-items: center; gap: 6px; font-size: 7px; text-align: left; }
 .rc-era .era-track { flex: 1 1 auto; }
 .rc-erat { white-space: nowrap; color: var(--muted); }
 .rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.rc-chip img { width: 24px; height: 24px; image-rendering: pixelated; }
-.rc-chip span { font-size: 8px; }
+.rc-chip { flex: 1 1 0; min-width: 0; padding: 0 6px; gap: 4px; justify-content: flex-start; }
+.rc-chip.more { flex: none; }
+.rc-chip img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
+.rc-chip span { font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rc-star { font-style: normal; color: var(--gold-dark); }
 .rc-rows p { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; font-size: 8px; }
 .rc-go { margin-top: 2px; }

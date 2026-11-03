@@ -5,9 +5,10 @@ import { km } from './config.js';
 import { eraProgress } from './eras.js';
 import { FIRSTS } from './missions2.js';
 import { clip } from './nextup.js';
+const chipLabel = name => (String(name).length <= 11 ? String(name) : String(name).split(' ')[0].length <= 11 ? String(name).split(' ')[0] : clip(name, 11));
 import { WILDLIFE } from './wildlife.js';
 
-export const LINE_MAX = 33;      // a muted/maths/missions/earth line at 8 px, 320 px phone
+export const LINE_MAX = 28;      // a muted/maths/missions/earth line at 320 px: MEASURED in the browser (the pixel font is ~8.2 px a character at 8 px, so 33 wrapped; research/UX-MEASURE.md)
 export const CHIPS_MAX = 3;      // chips on the card; more become "+N more"
 export const NEXT_ROWS = 2;      // UP NEXT rows on the results (HOME shows 3)
 
@@ -34,7 +35,8 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   v.bank = { seeds: (r.landed ? total : 0) + paid.seeds, crystals: (r.crystals || 0) + paid.crystals, lost: r.landed ? 0 : total };
   const mult = Number(r.mult) > 1 && earned.some(e => /^Long/.test(e.label)) ? ` × ${r.mult} bonus` : '';   // the word the r-bonus rail says (tests/railwords.cjs)
   const kinds = r.kinds ? ` · ${r.kinds} ${r.kinds === 1 ? 'kind' : 'kinds'}` : '';
-  v.maths = r.school ? '' : r.landed ? clip(`${grab} grabbed${mult}${kinds}`, LINE_MAX) : clip(`${total} seeds lost · ${v.bank.crystals} ❄ kept`, LINE_MAX);
+  const base = `${grab} grabbed${mult}`;   // the tree kinds ride along only while the line still fits one row; the sheet always has them
+  v.maths = r.school ? '' : r.landed ? clip((base + kinds).length <= LINE_MAX ? base + kinds : base, LINE_MAX) : `${total} seeds lost`;   // (the crystals kept are the hero line; the pixel font has no snowflake)
   // The sheet behind the maths line: every row of the old tally.
   const gains = r.natureGains || [];
   v.tally = [...earned.map(e => [e.label === 'Seeds' ? 'Seeds grabbed' : e.label, r.landed ? `+${e.n}` : `${e.n} lost`]),
@@ -52,15 +54,15 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
     right: n.where === 'hangar' ? 'HANGAR ›' : n.where === 'nature' ? 'NATURE ›' : n.stops ? plural(n.stops, 'stop') : n.daily ? 'today' : '' }));
   // 5. The Earth, two lines and the face; the four numbers are also the sheet.
   const b = r.breakdown || { co2: 0, night: 0, sun: 0, trees: 0 }, R = Math.round;
-  v.earth = r.school ? null : { heat: r.heat, warm: `Warmed: CO2 ${R(b.co2)} · Night ${R(b.night)}`, cool: `Cooled: Shade ${R(b.sun)} · Nature ${R(b.trees)}`,
+  v.earth = r.school ? null : { heat: r.heat, warm: `Warmed CO2 ${R(b.co2)} · Night ${R(b.night)}`, cool: `Cooled Shade ${R(b.sun)} · Nature ${R(b.trees)}`,
     bars: [['CO2', R(b.co2), '+'], ['Night', R(b.night), '+'], ['Shade', R(b.sun), '-'], ['Nature', R(b.trees), '-']] };
   // 6. The era: one line (the badge, the bar, the minutes). "NEW ERA" is its own beat in ui.showResults, before the hangar.
   if (r.school) v.era = null;
   else { const p = eraProgress(save); v.era = { id: p.era.id === 'future' ? 'Far future' : p.era.id, frac: p.frac, text: p.next ? `${Math.floor(p.done)}/${Math.round(p.need)} min` : 'every era open', to: p.next ? p.next.name : '' }; }
   // 7. Chips: a new animal, a new badge, a first. Max CHIPS_MAX; the rest "+N more". Each opens a sheet (ui.showResults).
   const chips = [
-    ...(r.foundIds || []).map(id => WILDLIFE.find(w => w.id === id)).filter(Boolean).map(w => ({ kind: 'animal', id: w.id, label: clip(w.name, 11), full: w.name, body: `A new animal! ${w.name} now lives in your Wild Area. See it in NATURE.` })),
-    ...rewards.filter(u => u.kind === 'badge').map(u => ({ kind: 'badge', id: u.id, tier: u.tier, label: clip(u.label, 11), full: u.label, body: `New badge: ${u.label}. You earned +${u.seeds} seeds and +${u.crystals} crystals. All your badges are in BOARDS.` })),
+    ...(r.foundIds || []).map(id => WILDLIFE.find(w => w.id === id)).filter(Boolean).map(w => ({ kind: 'animal', id: w.id, label: chipLabel(w.name), full: w.name, body: `A new animal! ${w.name} now lives in your Wild Area. See it in NATURE.` })),
+    ...rewards.filter(u => u.kind === 'badge').map(u => ({ kind: 'badge', id: u.id, tier: u.tier, label: chipLabel(u.label), full: u.label, body: `New badge: ${u.label}. You earned +${u.seeds} seeds and +${u.crystals} crystals. All your badges are in BOARDS.` })),
     ...firstTitles.map(t => { const f = FIRSTS.find(x => x.title === t); return { kind: 'first', id: f.id, label: clip(f.short, 11), full: t, body: t }; }),
   ];
   v.chips = chips.slice(0, CHIPS_MAX); v.moreChips = Math.max(0, chips.length - CHIPS_MAX); v.allChips = chips;
