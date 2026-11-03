@@ -44,6 +44,25 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const after = await p.evaluate(id => ({ seeds: game.registry.get('ui').save.seeds, done: [...document.querySelectorAll(`[data-pline="${id}"] .w-done`)].length }), before.id);
     check(after.seeds < before.seeds && after.done === 1, `NEXT buys the project (seeds ${before.seeds} -> ${after.seeds}, row done ${after.done})`); }
   else check(false, 'the NEXT line has no project to fund with 5000 seeds (the test would prove nothing)');
+  // 4. The planting card preview (the user, 2026-11-03: 'the ghost preview can come back'): a tap ghosts the trees it would add INTO the land; a second tap, or a buy,
+  // puts them away; the card's (i) still opens the line's info (the rails' new-line step taps it).
+  await p.click('#wRegions [data-region="woodland"]').catch(() => {}); await p.waitForTimeout(400);   // (the home land: the planting cards live there)
+  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seeds = 5000; ui.save.crystals = 500; ui.wild.render(); });
+  const ghosts = () => p.evaluate(() => document.querySelectorAll('#wScene .ghost').length);
+  check(await p.isVisible('#wTrees [data-tpreview="trees"]'), 'the tree parcels card is on the home land (the preview test would prove nothing otherwise)');
+  check(await ghosts() === 0, 'no ghost trees before the tap');
+  await p.click('#wTrees [data-tpreview="trees"]'); await p.waitForTimeout(500);
+  const g1 = await ghosts();
+  check(g1 >= 1, `a tap on the planting card draws its ghost trees in the land (${g1})`);
+  check(await p.evaluate(() => !!document.querySelector('#wTrees .rowc.previewing')), 'the card is marked as previewed');
+  await p.click('#wTrees [data-tpreview="trees"]'); await p.waitForTimeout(500);
+  check(await ghosts() === 0, 'a second tap puts the ghost trees away');
+  await p.click('#wTrees [data-tpreview="trees"]'); await p.waitForTimeout(400);
+  check(await ghosts() >= 1, 'previewed again');
+  await p.click('#wTrees [data-buy="trees"]'); await p.waitForTimeout(900);
+  check(await ghosts() === 0, 'a buy ends the preview (no ghost trees left in the land)');
+  await p.click('#wTrees [data-info]'); await p.waitForTimeout(300);
+  check(await p.evaluate(() => !document.getElementById('info').hidden), "the card's (i) opens the line's info");
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
   await b.close();
   if (fails.length) { console.log('FAIL naturefresh\n- ' + fails.join('\n- ')); process.exit(1); }

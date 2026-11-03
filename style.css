@@ -977,3 +977,7 @@ h2.sub { margin-top: -4px; }
 .w-tree, .w-card { position: relative; }
 .rowc.project .rowc-price[disabled] { background: #fff; color: var(--muted); }   /* an unaffordable price is outlined, not a grey slab; the strip says what is missing */
 #wStrip .need { margin: 2px 0; color: #c0392b; }
+/* R6: a planting card has its own (i) (the rails' new-line step taps it); a tap on the card previews its trees in the land. */
+.rowc > .rowc-info { grid-area: 2 / 2; align-self: end; justify-self: end; position: relative; z-index: 1; min-width: 28px; font-size: 8px; padding: 3px 6px; }
+.rowc.tour-info .rowc-tap, .rowc.tour-info .rowc-price { pointer-events: none; }
+.rowc.tour-price .rowc-info, .rowc.tour-only .rowc-info { pointer-events: none; }

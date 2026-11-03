@@ -210,6 +210,7 @@ export class Tour {
     // absolute over .rowc-tap), so while the step points at the row's tap, that price hides (DESIGN-HANGAR-NATURE).
     const solo = t.classList && t.classList.contains('rowc-tap') && t.closest('.rowc'); if (solo) solo.classList.add('tour-only');
     const soloP = t.classList && t.classList.contains('rowc-price') && t.closest('.rowc'); if (soloP) soloP.classList.add('tour-price');   // the mirror: a step on a row's PRICE (FREE!) makes the row's own tap area inert, so the lit hole has ONE tappable thing (onrails320 N3)
+    const soloI = t.classList && t.classList.contains('rowc-info') && t.closest('.rowc'); if (soloI) soloI.classList.add('tour-info');   // R6: a step on a row's (i) makes that row's tap area and price inert (one target)
     if (st.ok && !st.tap) t.classList.add('tour-inert');   // an OK step points at something to READ: if it is a button (R1: the results lines) it must not also be tappable (the one-target rule)
     this.keepVisible();
     this.el.querySelector('.tbubble p').innerHTML = st.text;
@@ -219,7 +220,7 @@ export class Tour {
     this.place();
     if (st.focus) setTimeout(() => t.focus(), 50);
     await new Promise(resolve => {
-      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; document.querySelectorAll('.rowc.tour-only').forEach(r => r.classList.remove('tour-only')); document.querySelectorAll('.rowc.tour-price').forEach(r => r.classList.remove('tour-price')); document.querySelectorAll('.tour-inert').forEach(r => r.classList.remove('tour-inert')); resolve(); };
+      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; document.querySelectorAll('.rowc.tour-only').forEach(r => r.classList.remove('tour-only')); document.querySelectorAll('.rowc.tour-price').forEach(r => r.classList.remove('tour-price')); document.querySelectorAll('.rowc.tour-info').forEach(r => r.classList.remove('tour-info')); document.querySelectorAll('.tour-inert').forEach(r => r.classList.remove('tour-inert')); resolve(); };
       // A tap on the target (with `area`, on ANY element matching `target` inside the hole). Let the button do its job first.
       const want = FEATURES.season2 ? HUB_TARGETS[st.target] || st.target : st.target;
       const onTap = e => { if (e.target.closest && e.target.closest(want)) setTimeout(finish, 0); };

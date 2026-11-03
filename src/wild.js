@@ -78,7 +78,7 @@ export class WildScreen {
     const cur = $('wRegions').querySelector('.on'); if (cur) $('wRegions').scrollLeft = Math.max(0, cur.offsetLeft - 24);   // the land you are on is the first thing in view
     $('wRegions').querySelectorAll('[data-region]:not([disabled])').forEach(b => b.onclick = () => {
       if (b.dataset.region === this.region) return;
-      sfx.flap(); this.region = b.dataset.region; this.openTiers = []; this.render();
+      sfx.flap(); this.region = b.dataset.region; this.openTiers = []; this.toolId = null; this.render();
     });
     // Swipe sideways to change region (0.11.0): the next / previous region tab that is open (src/swipe.js).
     const goRegion = d => { const open = [...$('wRegions').querySelectorAll('[data-region]:not([disabled])')], i = open.findIndex(b => b.dataset.region === this.region) + d; if (i >= 0 && i < open.length) open[i].click(); };
@@ -89,6 +89,8 @@ export class WildScreen {
     this.renderNext();
     this.renderScene();
     this.renderProjects(); this.renderStrip();
+    // a planting card is previewed: its trees, ghosted in the land (field.ghostTrees)
+    if (this.toolId && this.field) { const line = LINES.find(l => l.id === this.toolId), nx = line && nextLevel(s, line); if (nx) this.field.ghostTrees(nx.parcels || 2); else this.toolId = null; }
     // This land's 5 trees (research/PROPOSAL-TREES.md): open ones in colour with their count toward the cap
     // ("Oak 4/9"), shut ones as silhouettes with the one thing that opens them (src/landtrees.js).
     let row = $('wLandTrees');
@@ -105,7 +107,10 @@ export class WildScreen {
     row.hidden = !trees.length;
     $('wTrees').innerHTML = uk ? LINES.filter(l => tabOf(l) === 'nature').map(l => this.toolRowHTML(l)).join('') : '';
     $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ui.buy(b.dataset.buy); });
-    $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = () => this.ui.showInfo(b.dataset.info));   // the row's tap = the line's info (the rails' new-line step taps it)
+    $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ui.showInfo(b.dataset.info); });   // the (i) = the line's info (the rails' new-line step taps it)
+    // Tap a planting card to PREVIEW it (the user, 2026-11-03: 'the ghost preview can come back'): the trees it would add, ghosted in the land; tap again to put them away.
+    $('wTrees').querySelectorAll('[data-tpreview]').forEach(b => b.onclick = () => { sfx.flap(); const id = b.dataset.tpreview; this.toolId = this.toolId === id ? null : id; this.previewId = null; this.render(); });
+    $('wTrees').querySelectorAll('[data-buy]').forEach(b => { const go = b.onclick; b.onclick = e => { this.toolId = null; if (this.field) this.field.clearGhosts(); go(e); }; });   // a buy ends the preview
     this.renderFound();
     // This land is SHOWING (NATURE visible, not a refresh behind another screen): what it shows is now seen (src/fresh.js).
     if (!$('nature').hidden && markSeen(s, natureScope(this.region), fo)) this.ui.persist();
@@ -179,9 +184,9 @@ export class WildScreen {
       : waitBio ? `<span class="rowc-price rowc-locked">bio ${next.needsBio}</span>`
       : `<button class="rowc-price btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>`;
     const sub = !next ? 'All done!' : short ? `need ${short} more` : `Next: ${esc(next.name)}`;
-    return `<div class="rowc price-top tool ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''}" data-line="${line.id}">`
-      + `<button class="rowc-tap" data-info="${line.id}" type="button" aria-label="About ${esc(line.name)}"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span>${this.isNew && this.isNew(`line:${line.id}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
-      + `<span class="rowc-sub">${sub}</span></button>${price}</div>`;
+    return `<div class="rowc price-top tool ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''} ${this.toolId === line.id ? 'previewing sel' : ''}" data-line="${line.id}">`
+      + `<button class="rowc-tap" data-tpreview="${line.id}" type="button" aria-label="See where ${esc(line.name)} would grow trees"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span>${this.isNew && this.isNew(`line:${line.id}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
+      + `<span class="rowc-sub">${sub}</span></button>${price}<button class="rowc-info btn" data-info="${line.id}" type="button" aria-label="About ${esc(line.name)}">i</button></div>`;
   }
 
   renderProjects() {
@@ -236,6 +241,7 @@ export class WildScreen {
 
   // The preview of one project (or null to clear): see what it does BEFORE paying.
   preview(id) {
+    if (this.toolId) { this.toolId = null; document.querySelectorAll('#wTrees .rowc.previewing').forEach(r => r.classList.remove('previewing', 'sel')); }   // one preview at a time (the project's own ghost replaces the planting one)
     this.previewId = this.previewId === id ? null : id;
     document.querySelectorAll('#wProjects .project').forEach(c => { const on = c.dataset.pline === this.previewId; c.classList.toggle('previewing', on); c.classList.toggle('sel', on); });
     this.renderStrip();
