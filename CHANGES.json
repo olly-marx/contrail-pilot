@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-03-planting-ghost",
+    "version": "0.28.1",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "Tapping a planting card shows the trees it would add on the picture again; the small (i) button opens the explanation."
+    ]
+  },
+  {
     "id": "2026-11-03-nature-calmer",
     "version": "0.28.0",
     "date": "2026-11-03",
