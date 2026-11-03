@@ -274,3 +274,6 @@ skiptrip	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false
 skiptrip	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip
 skiptrip	src/ui.js	s/toggleSkip(this.save); writeSave(this.save);/writeSave(this.save);/	the tap on the chip does nothing
 skiptrip	style.css	s/#title.hub .hub-skip { display: flex;/#title.hub .hub-skip { min-height: 20px; max-height: 20px; display: flex;/	the chip is a 20 px target (under the 40 px minimum)
+hangar	style.css	/^#hangar .panel { grid-template-columns: minmax(0, 1fr); }$/d	the hangar grid column grows to its widest nowrap row again: the panel is wider than a 320 phone
+hangar	style.css	/^\.ftabs \.btn { flex: 1 1 0; min-width: 0;/d	the three tabs cannot share the width: PLANE SYSTEMS GADGETS run past the right edge (unmeasured: if this plant is NOT CAUGHT, the rule is not needed)
+hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap;/d	the head row cannot wrap: TAKE OFF runs past the right edge (unmeasured: if NOT CAUGHT, the rule is not needed)

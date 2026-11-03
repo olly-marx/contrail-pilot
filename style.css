@@ -835,3 +835,13 @@ h2.sub { margin-top: -4px; }
 .sheet-body { margin: 0; font-size: 8px; line-height: 1.9; }
 .sheet-buttons { display: flex; gap: 8px; justify-content: flex-end; }
 .sheet-buttons .btn { min-height: var(--tap); }
+
+/* ---------- R5 item 1: the hangar fits a 320 px phone (found by R0's fitscreen, 2026-11-02; cause BY READING, confirmed by the
+   hangar.cjs 'nothing past the screen's side' check). .panel is a grid with one implicit `auto` column, so its min-width:auto items
+   stretch the column to the widest nowrap row (head, tabs, era chips; the Pixel font is 1em per character) and everything spills
+   past the right edge. minmax(0, 1fr) pins the column to the panel; the three rows then shrink or wrap. Scoped to #hangar: the other
+   screens measured 0 cut text at 320. ---------- */
+#hangar .panel { grid-template-columns: minmax(0, 1fr); }
+#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }
+#hangar .hangar-head .btn { margin-left: auto; }
+.ftabs .btn { flex: 1 1 0; min-width: 0; padding: 8px 2px; font-size: 9px; }

@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-03-hangar-fit",
+    "version": "0.25.5",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "The hangar fits small phones: TAKE OFF and the tabs no longer run off the right edge on a 320-pixel-wide screen."
+    ]
+  },
+  {
     "id": "2026-11-03-animal-art",
     "version": "0.25.4",
     "date": "2026-11-03",
