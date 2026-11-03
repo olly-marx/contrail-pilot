@@ -647,14 +647,14 @@ h2.sub { margin-top: -4px; }
 .hub-next .rc-label { margin: 0 0 2px; text-align: left; }
 #hubUpRows { display: grid; gap: 3px; }
 .rc-row.must { flex-wrap: wrap; }
-.hub-next .next-pic { flex: 0 0 100%; max-width: 120px; margin: 2px auto 0; }   /* 120 px (64 tall): the first-hour lead row must leave TAKE OFF on a 320x568 screen */
+.hub-next .next-pic { flex: 0 0 100%; max-width: 100px; margin: 2px auto 0; }   /* 100 px (53 tall): the first-hour lead row must leave TAKE OFF on a 320x568 screen (measured) */
 .hub-world { position: relative; text-align: center; }
 .hub-globe { width: min(100%, 34vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
 .hub-spin { position: absolute; top: 42%; background: rgba(26,26,46,.55); color: #fff; border: 0; font-size: 14px; padding: 8px 6px; cursor: pointer; }
 #hubSpinL { left: 0; } #hubSpinR { right: 0; }
 .hub-route { margin: 2px 0 0; font-size: 8px; }
 .hub-route small { display: block; opacity: .7; }
-#title.hub .hub-skip { display: flex; justify-content: center; text-align: center; }   /* 'Skip mission route this trip' (src/aim.js): the shared .chip, a 40 px tap target, centred under the route */
+#title.hub .hub-skip { display: flex; justify-content: center; text-align: center; border: 0; background: transparent; color: var(--muted); text-decoration: underline; }   /* a quiet option under the route, not a rival to TAKE OFF (the screenshot, R3): still a 40 px target */   /* 'Skip mission route this trip' (src/aim.js): the shared .chip, a 40 px tap target, centred under the route */
 .hub-back { position: fixed; left: 6px; top: 6px; z-index: 30; font-size: 8px; }
 #title.hub.world #tJourney { display: block; order: 4; }   /* tap the route: the way choice and the crossings */
 #title.hub #jGlobe { display: none; }   /* the big globe is the hub's own */
