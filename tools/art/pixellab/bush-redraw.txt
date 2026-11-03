@@ -1,0 +1,5 @@
+id|name|kind|pose
+murraycod|Murray cod, a big green-gold freshwater fish with dark mottled spots and a wide mouth|animal|ground
+wedgetail|wedge-tailed eagle, a big dark brown eagle with long fingered wings and a wedge-shaped tail|bird|flying
+emu|emu, a tall shaggy grey-brown flightless bird with a long neck and long legs|bird|standing
+kookaburra|laughing kookaburra, a stout kingfisher with a white-buff head, a dark eye stripe and a big bill|bird|flying

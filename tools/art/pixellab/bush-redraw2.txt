@@ -1,0 +1,4 @@
+id|name|kind|pose
+cockatoo|sulphur-crested cockatoo, a white parrot with a yellow swept-up crest and a dark grey bill|bird|flying
+echidna|echidna, a small brown mammal with a dome of solid dark brown and cream spikes, a tiny pointed snout and four stubby legs|animal|ground
+wombat|wombat, a stocky square-bodied dark grey-brown marsupial with a big blunt flat nose, small round ears, very short thick legs, no tail|animal|ground
