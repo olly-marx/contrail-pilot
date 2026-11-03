@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-03-animal-art",
+    "version": "0.25.4",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "New pictures for 14 animals: the Murray cod, wedge-tailed eagle, emu, kookaburra, cockatoo, echidna and wombat from Australia, and the flying fox, reef heron, white tern, imperial pigeon, coconut crab, malau and Tahiti monarch from the Pacific islands."
+    ]
+  },
+  {
     "id": "2026-11-02-lists-tidy",
     "version": "0.25.3",
     "date": "2026-11-02",
