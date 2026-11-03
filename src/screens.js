@@ -12,7 +12,7 @@
 //   budget    visible text lines before any tap (C0); read by the Node text gate (textbudget2), not by these browser gates
 export const SCREENS = {
   results:  { root: '#results',  primary: '#againBtn',               first: '#rBank',           scroll: 'fits',  budget: 10, enforce: { fit: true,  overlap: true,  taps: false }, from: 'R1' },
-  home:     { root: '#title',    primary: '#goBtn',                  first: '#hubNext',         scroll: 'fits',  budget: 25, enforce: { fit: false, overlap: false, taps: false }, from: 'R3' },
+  home:     { root: '#title',    primary: '#goBtn',                  first: '#hubNext',         scroll: 'fits',  budget: 25, enforce: { fit: true,  overlap: false, taps: false }, from: 'R3' },   // fit flipped in R3 (measured 390x667: 667/667, TAKE OFF 543 vs bar 607; 320x568: 568/568, 477 vs 508)
   missions: { root: '#missions', primary: '.mrow',                   first: '.mrow',            scroll: 'first', budget: 2,  enforce: { fit: true,  overlap: true,  taps: true  }, from: 'R4' },   // taps flipped in R1: the results card pays the rich save's prizes, so MISSIONS no longer has the small CLAIM buttons
   hangar:   { root: '#hangar',   primary: '#hFleet .rowc-price.btn',     first: '#hFleet .rowc',    scroll: 'first', budget: 1,  enforce: { fit: true,  overlap: true,  taps: false }, from: 'R5' },
   nature:   { root: '#nature',   primary: '#wProjects .rowc-price',  first: '#wProjects .rowc', scroll: 'first', budget: 1,  enforce: { fit: false, overlap: true,  taps: false }, from: 'R6' },

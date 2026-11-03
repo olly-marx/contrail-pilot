@@ -130,7 +130,7 @@ p { margin: 0; }
 .rc-next .rc-label { margin: 0 0 2px; text-align: left; }
 #rNextRows { display: grid; gap: 3px; }
 .rc-row b { color: var(--muted); font-size: 7px; font-weight: normal; white-space: nowrap; }
-.rc-row.lead { background: var(--gold); }
+.rc-row.must { background: var(--gold); }   /* (not `.lead`: that class is the title screen's legacy intro paragraph, hidden on HOME: #title.hub .lead) */
 .rc-earth { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; min-height: 40px; padding: 2px 6px; background: #fff; border: 0; cursor: pointer; font-family: inherit; color: var(--ink); text-align: left; }
 .rc-earth { gap: 6px; }
 .rc-earth .earth-face { width: 28px; height: 28px; background-size: 28px 28px; flex: none; }
@@ -646,7 +646,7 @@ h2.sub { margin-top: -4px; }
 .hub-next { padding: 0; text-align: left; }
 .hub-next .rc-label { margin: 0 0 2px; text-align: left; }
 #hubUpRows { display: grid; gap: 3px; }
-.rc-row.lead { flex-wrap: wrap; }
+.rc-row.must { flex-wrap: wrap; }
 .hub-next .next-pic { flex: 0 0 100%; max-width: 120px; margin: 2px auto 0; }   /* 120 px (64 tall): the first-hour lead row must leave TAKE OFF on a 320x568 screen */
 .hub-world { position: relative; text-align: center; }
 .hub-globe { width: min(100%, 34vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }

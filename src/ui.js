@@ -245,7 +245,7 @@ export class UI {
     const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     $('hubNext').hidden = !v.up.length || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
-    $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${v.up.map((n, i) => `<button class="rc-row${n.lead ? ' lead' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
+    $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${v.up.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
     const act = n => { sfx.flap();
       if (n.key === 'lead:cross' && ready) { s.flyCrossing = ready; writeSave(s); this.start(); }
       else if (n.where === 'hangar' || n.where === 'nature' || n.where === 'missions') this.go(n.where);
@@ -445,7 +445,7 @@ export class UI {
     const mi = v.missions; $('rMission').hidden = !mi;
     if (mi) { $('rMission').className = `step rc-line rc-mission ${mi.fail !== undefined ? 'notyet' : 'done'}`; $('rMissionTxt').textContent = mi.line; $('rMissionPrize').innerHTML = mi.seeds ? `+${mi.seeds}<i class="seedicon"></i>` : ''; }
     $('rNext').hidden = !v.next.length;
-    $('rNextRows').innerHTML = v.next.map((n, i) => `<button class="rc-row${n.lead ? ' lead' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b></button>`).join('');
+    $('rNextRows').innerHTML = v.next.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b></button>`).join('');
     $('rEarth').hidden = !v.earth;
     if (v.earth) { $('rWarm').textContent = v.earth.warm; $('rCool').textContent = v.earth.cool; this.drawEarthFace($('rFace'), v.earth.heat); }
     $('rEra').hidden = !v.era;

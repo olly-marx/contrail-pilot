@@ -32,10 +32,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 2. The free upgrade leads into the hangar.
   const s2 = { ...base, areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', missionsDone: ['L1'], freeUpgrade: true, freeGiven: true };
   p = await open(s2);
-  const lead = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, glow: document.getElementById('tabHangar').classList.contains('glow'), leadRow: !!document.querySelector('#hubNext .rc-row.lead'), dim: document.getElementById('goBtn').classList.contains('locked') }));
+  const lead = await p.evaluate(() => ({ next: document.getElementById('hubNext').innerText, glow: document.getElementById('tabHangar').classList.contains('glow'), leadRow: !!document.querySelector('#hubNext .rc-row.must'), dim: document.getElementById('goBtn').classList.contains('locked') }));
   check(/free part/i.test(lead.next) && lead.leadRow && lead.glow && lead.dim, `a free upgrade: UP NEXT leads to the hangar (R3: a gold lead row), the bar's HANGAR glows, TAKE OFF is locked: ${JSON.stringify(lead)}`);
   check(await p.evaluate(() => document.getElementById('goBtn').disabled), 'TAKE OFF is locked while the free part waits (checked on the hub)');
-  await p.click('#hubNext .rc-row.lead'); await p.waitForTimeout(400);
+  await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(400);
   check(await p.evaluate(() => !document.getElementById('hangar').hidden), 'tapping the lead row of UP NEXT opens the hangar');
   // Pick the free part (the user: a must-do, no "later"), then TAKE OFF unlocks.
   const pick = await p.evaluate(() => ({ rows: document.querySelectorAll('#hFleet .freepick .freerow').length, top: (document.querySelector('#hFleet .freepick') || {}).offsetTop }));

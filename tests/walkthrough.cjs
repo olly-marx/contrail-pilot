@@ -111,7 +111,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // Lesson 5 needs parcels; with prizes unclaimed and no crystals, NEXT first says to claim them (audit fix 2), then parcels.
   let n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
   if (/Claim your prizes/i.test(n5)) {
-    await p.click('#hubNext .rc-row.lead'); await p.waitForTimeout(400);
+    await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(400);
     const all = await p.$('#mPrizes .claim.all') || await p.$('#mPrizes .claim'); if (all) { await all.click(); await p.waitForTimeout(400); }
     await p.click('#tabFly'); await p.waitForTimeout(400);
     n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);

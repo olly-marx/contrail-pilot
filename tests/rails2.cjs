@@ -58,7 +58,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const other = await p.$('#wRegions [data-region]:not([disabled]):not(.on)');
   check(!!other, 'L5: another land tab to view (the trap: NATURE kept the last-viewed tab)');
   if (other) { await other.click(); await p.waitForTimeout(400); }
-  await p.click('#tabFly'); await p.waitForTimeout(400); await p.click('#hubNext .rc-row.lead'); await p.waitForTimeout(700);
+  await p.click('#tabFly'); await p.waitForTimeout(400); await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(700);
   check(await p.evaluate(() => !document.getElementById('nature').hidden && !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]')), 'L5: NEXT opens NATURE on the tab that sells the parcels, after viewing another land');
   await p.close();
   p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'] }), { width: 390, height: 844 });   // (the earlier rails already shown, as in play)

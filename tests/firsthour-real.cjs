@@ -61,7 +61,7 @@ const W = 390, H = 844;
   await p.waitForTimeout(3000);   // the card's reveal
   await shot('school-done');
   const card = await p.evaluate(() => ({ shown: !document.getElementById('results').hidden, title: document.getElementById('rEyebrow').textContent, btn: document.getElementById('againBtn').textContent,
-    lead: !!document.querySelector('#rNext .rc-row.lead'), fact: !!document.getElementById('rFact') }));   // R1: the free part is the UP NEXT lead row; the random fact is gone
+    lead: !!document.querySelector('#rNext .rc-row.must'), fact: !!document.getElementById('rFact') }));   // R1: the free part is the UP NEXT lead row; the random fact is gone
   check(card.shown && /school/i.test(card.title) && /OPEN THE HANGAR/.test(card.btn), `the school-done card leads to the HANGAR: ${JSON.stringify(card)}`);
   check(!card.fact && card.lead, `no random fact, and the free part is the UP NEXT lead row: ${JSON.stringify(card)}`);
   if (!/OPEN THE HANGAR/.test(card.btn)) { await b.close(); console.log(`FAIL firsthour-real:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (the rest needs the lead)
@@ -71,7 +71,7 @@ const W = 390, H = 844;
   // Leave WITHOUT picking: TAKE OFF must be locked and NEXT must lead back.
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; const u = game.registry.get('ui').tour; u.busy = false; u.save.tours = [...(u.save.tours || []), '*']; } });   // (the guided tour's dim layer; the test leaves on purpose)
   await p.click('#tabFly'); await p.waitForTimeout(500);
-  const hub = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, next: document.getElementById('hubNext').innerText, tab: !!document.querySelector('#tabHangar:not([hidden])'), leadRow: !!document.querySelector('#hubNext .rc-row.lead') }));
+  const hub = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, next: document.getElementById('hubNext').innerText, tab: !!document.querySelector('#tabHangar:not([hidden])'), leadRow: !!document.querySelector('#hubNext .rc-row.must') }));
   check(hub.locked && /free part/i.test(hub.next) && hub.leadRow && hub.tab, `skipping the pick: TAKE OFF locked, UP NEXT leads to the hangar (the gold lead row), the bar's HANGAR tab is there: ${JSON.stringify(hub)}`);
   await shot('hub-locked');
   // Pick it, then crash flight 1 on purpose (no taps): the hangar stays reachable, nothing locks the player out.
