@@ -844,4 +844,3 @@ h2.sub { margin-top: -4px; }
 #hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }
 #hangar .hangar-head .btn { margin-left: auto; }
 .ftabs .btn { flex: 1 1 0; min-width: 0; padding: 8px 2px; font-size: 9px; }
-.ftimeline .fera { flex: 1 1 auto; min-width: 0; padding: 2px 1px; text-align: center; }
