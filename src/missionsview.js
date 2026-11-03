@@ -58,7 +58,7 @@ export function missionsView(save) {
   const v = { area: (AREAS[a] && AREAS[a].name) || a, stage, teach };
   v.tierLine = teach ? `Lessons · ${lessonsDone}/${M2.LESSONS.length}` : `Tier ${tierNow} · ${doneInTier}/${inTier.length} done${tierNow === 3 ? ` · stars ${stars}/${M2.GATE_STARS}` : ''}`;
   // 2. NEXT, pinned: nextUp's top row (a must-do lead, or the first open mission), the same words as HOME and the results.
-  const top = up[0] || null;
+  const top = up[0] && !up[0].daily ? up[0] : null;   // a daily is never pinned (it is under TODAY): with no open mission left the screen says what a crossing needs
   v.next = top ? row(save, top, vis) : null;
   // 3. OPEN: every open mission except the pinned one.
   v.open = vis.filter(m => !top || m.key !== top.key).map(m => row(save, itemOf(save, m), vis));
