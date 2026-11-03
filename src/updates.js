@@ -23,7 +23,8 @@ const CHECK_MS = 60 * 1000;          // (3 minutes until 0.11.0)
 const AUTO_WAIT_MS = 1500;           // "Updating..." shows this long before the reload, so a tap in that moment cancels it
 const AUTO_AFTER_MS = 24 * 3600 * 1000;
 
-const ownCommit = () => window.__CP_VERSION || new URL(import.meta.url).searchParams.get('v');
+// (the build stamp: this module's own ?v=, else the one on main.js in index.html: a module served from the service worker's cache must not look like a local copy)
+const ownCommit = () => window.__CP_VERSION || new URL(import.meta.url).searchParams.get('v') || ((/[?&]v=([^&]+)/.exec((document.querySelector('script[src*="main.js"]') || {}).src || '')) || [])[1] || null;
 const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
 const store = s => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* private mode */ } };
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);

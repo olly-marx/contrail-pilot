@@ -204,3 +204,14 @@ distributions (and sim-equiv / sim-paired with it off), not on matching skies.
 - 0.11.7: the whole update loop, the Node engine, `simulate()`, `capability()`.
 - Found on the way: before 0.11.5, flights with weather forecasts were not repeatable. A fake patch faded through
   a Phaser tween with varying timing, and the careful pilot reads that fade.
+
+## Model artifacts found and parked (2026-10-29)
+
+- **Patagonia beginners "land less" (40.2% vs Europe 56.4% on the 3rd leg, s 0.75, 640 flights each, z -4.4) is a MODEL
+  artifact, not a game gap.** It came from the player's landing approach, which held low from 700 km out with storms still
+  ahead; without that hold, Patagonia 66.1% vs Europe 67.0%. Parked: no game change. The REAL Patagonia bug was separate and is
+  fixed: the home runway was unlandable on a route that loops home (rules.js runwayUnder, 0.19.2).
+- **The approach hold itself** understated every beginner's landings (Europe 45.6% -> 67.0% without it); fixed in player.js
+  (feat/approach-fix, tests/sim-approach.cjs). Progression-based results before it are marked "pre-approach-fix" in their docs.
+- An earlier claim that Patagonia's last leg has "50% more storm columns" was a counting artifact (only surviving flights were
+  counted); storms sit on a fixed 230-km grid with clear zones only 120 km before / 40 km after the next runway.

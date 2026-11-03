@@ -6,7 +6,7 @@
 //             parcels onto soil. Crashes are OFF (it never hits storms or birds), so it is a bit better than a real player.
 //   Landing:  at each airport it lands if flying on to the next one would get the Earth too hot, or once it has passed
 //             MAXSKIP airports. It does NOT chase mission goals: mission and badge prizes arrive only as it plays.
-//   Prizes:   after each flight it taps CLAIM ALL (like a child who always does), so prize seeds are counted separately.
+//   Prizes:   paid at the bank since R8 (no CLAIM step); they are split out of the flight's bank delta with the flight's own prize rows, so prize seeds are still counted separately.
 //   Buying:   after each flight, the cheapest open level it can afford (src/fleet.js nextBuys/buyFleet), again and again;
 //             the free first upgrade (after the first landing) goes on the cheapest level-1 item.
 // Output: one line a flight, then per-era income and a JSON line `INCOME {...}` (mean seeds a flight per era) that
@@ -92,10 +92,9 @@ const NORENDER = Number(process.env.NORENDER || 0), PROBE = Number(process.env.P
       }
       for (let i = 0; i < 600 && !s.result; i++) { t += 16.67; game.step(t, 16.67); }
       const res = s.result || {};
-      // What the flight itself paid (the game banks the carried seeds, fares and dividends when the flight ends)...
-      const flightSeeds = save.seeds - before.seeds, flightCrystals = (save.crystals || 0) - before.crystals;
-      // ...then, like a child who always taps CLAIM ALL, the prizes (missions and badges).
-      const paid = R.claim(save);
+      // R8: the prizes (missions and badges) are PAID at the bank, so the flight's bank delta holds both; split them with the flight's own prize rows.
+      const paid = R.sumPrizes(res.rewards);
+      const flightSeeds = save.seeds - before.seeds - paid.seeds, flightCrystals = (save.crystals || 0) - before.crystals - paid.crystals;
       F.syncFleet(save);   // an era that opened during the flight brings its plane
       // Buy: the free first upgrade (cheapest level-1 item), then the cheapest open level it can afford, again and again.
       const bought = []; let spent = 0;

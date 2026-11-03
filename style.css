@@ -18,6 +18,10 @@
   --gold: #ffc23d;
   --gold-dark: #c98a00;
   --muted: #6b6b80;
+  /* R0 shared tokens (UX plan D1): the NEW dot colour, the height of a row's price button, the minimum tap size. */
+  --dot: #e8433a;
+  --price-h: 24px;
+  --tap: 40px;
 }
 
 [hidden] { display: none !important; }
@@ -97,6 +101,100 @@ p { margin: 0; }
 .earned li.lost { color: var(--warm); }
 .fact { background: #fff4d0; padding: 8px; }
 .badges-new { background: #e7f6e7; padding: 8px; font-size: 8px; text-align: center; }
+
+/* ---------- R4: MISSIONS (src/missionsview.js is the data, src/ui.js showMissions draws it; research/UX-MASTER-PLAN.md C3) ----------
+   NEXT pinned, then OPEN / TODAY / COMING UP / STEADY, DONE as a count. Rows are the shared .rowc grid (R0): a 32 px pictogram | name + how | prize.
+   The whole row is the tap target (>= 40 px: tests/taptargets.cjs enforces MISSIONS), its sheet has the one action. */
+.m-head { display: flex; align-items: center; gap: 8px; }
+.m-head h2 { flex: 1; }
+.m-i { min-width: var(--tap); justify-content: center; padding: 0 8px; }
+#mNext .label, #mList .label { margin: 6px 0 2px; }
+.rowc.goal { cursor: pointer; }
+.rowc.goal .rowc-tap { min-height: 44px; }   /* the tap target stays >= 40 px now the row is compact (tests/taptargets.cjs) */
+.rowc.goal .rowc-slot { display: grid; place-items: center; }
+.rowc.goal .rowc-slot .mi { width: 32px; height: 32px; background-size: 32px 32px; background-color: transparent; flex: none; }   /* 32 px art shown 1:1 */
+.mi32-airport { background-image: url('assets/ui/mi32-airport.png'); }
+.mi32-binoculars { background-image: url('assets/ui/mi32-binoculars.png'); }
+.mi32-flag { background-image: url('assets/ui/mi32-flag.png'); }
+.mi32-forest { background-image: url('assets/ui/mi32-forest.png'); }
+.mi32-gear { background-image: url('assets/ui/mi32-gear.png'); }
+.mi32-goldenseed { background-image: url('assets/ui/mi32-goldenseed.png'); }
+.mi32-moonpatch { background-image: url('assets/ui/mi32-moonpatch.png'); }
+.mi32-natureproj { background-image: url('assets/ui/mi32-natureproj.png'); }
+.mi32-nonstop { background-image: url('assets/ui/mi32-nonstop.png'); }
+.mi32-roadkm { background-image: url('assets/ui/mi32-roadkm.png'); }
+.mi32-runway { background-image: url('assets/ui/mi32-runway.png'); }
+.mi32-sapling { background-image: url('assets/ui/mi32-sapling.png'); }
+.mi32-seedbag { background-image: url('assets/ui/mi32-seedbag.png'); }
+.mi32-shade { background-image: url('assets/ui/mi32-shade.png'); }
+.mi32-shovel { background-image: url('assets/ui/mi32-shovel.png'); }
+.mi32-stormgap { background-image: url('assets/ui/mi32-stormgap.png'); }
+.mi32-twopins { background-image: url('assets/ui/mi32-twopins.png'); }
+.rowc.goal.next { outline: 3px solid #ffe15a; outline-offset: -3px; }
+.rowc.goal.star { background: #fff7d6; }
+.rowc.goal.daily { background: #eef7ff; }
+.rowc.goal.aimed .rowc-sub { color: var(--green-dark); }
+/* the prize shares the how line (right-aligned), so a row is a name line + one line, not 70 px of wrapped text */
+.rowc.goal .rowc-sub { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding-right: 0; min-height: 0; }
+.rowc.goal .m-how { flex: 1; min-width: 0; }
+.rowc-prize { display: inline-flex; align-items: center; gap: 3px; font-size: 8px; color: var(--ink); white-space: nowrap; }
+.rowc-prize .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
+#mNext .label, #mList .label { text-align: left; }
+.m-coming { font-size: 8px; color: var(--muted); margin: 0; padding: 4px 8px; background: #ece8dc; }
+.m-done { width: 100%; justify-content: center; margin-top: 8px; }
+
+/* ---------- R1: the results card (src/resultscard.js is the data, src/ui.js showResults draws it; research/UX-MASTER-PLAN.md C1) ----------
+   ONE card that fits 390x667 and 320x568 with no scrolling and FLY ON on screen. The card's own gap (6) replaces the panel's 12. Text lines are
+   <= 33 characters at 8 px (tests/resultscard.cjs); every line with a "›" opens a sheet (src/sheet.js). */
+#results .rcard { gap: 6px; padding: 10px 12px; line-height: 1.5; }
+.rc-head { position: relative; text-align: left; }
+.rc-eyebrow { font-size: 7px; letter-spacing: 1px; color: var(--muted); }
+.rc-title { font-size: 16px; line-height: 1.25; overflow-wrap: anywhere; }
+.rc-title.crash { color: var(--warm); }
+.rc-record { position: absolute; right: 0; top: 0; font-size: 8px; margin: 0; }
+.rc-dist { font-size: 26px; line-height: 1.2; color: var(--night); text-align: left; }
+.rc-bank { display: flex; align-items: center; gap: 16px; font-size: 22px; line-height: 1.2; color: var(--green-dark); }
+.rc-bank > span { display: inline-flex; align-items: center; gap: 6px; }
+.rc-bank .seedicon { width: 20px; height: 22px; background-size: 20px 22px; }
+.rc-bank .crysicon { width: 20px; height: 20px; background-size: 20px 20px; }
+.rc-bank .rc-crys { color: var(--cool); }
+.rc-bank.lost .rc-seeds { color: var(--muted); }
+.rc-line, .rc-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; box-sizing: border-box; min-height: 24px; padding: 3px 6px;
+  font-family: inherit; font-size: 8px; line-height: 1.5; text-align: left; color: var(--ink); background: #fff; border: 0; cursor: pointer; }
+.rc-line > span:first-child, .rc-row > span { flex: 1; }
+.rc-line.done { background: #d6f5d6; }
+.rc-line.notyet { background: #fde2e2; }
+.rc-lost { color: var(--warm); background: none; cursor: default; }
+.rc-mission b { display: inline-flex; align-items: center; gap: 3px; color: var(--green-dark); }
+.rc-mission .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
+.rc-more { font-style: normal; color: var(--muted); }
+.rc-next .rc-label { margin: 0 0 2px; text-align: left; }
+#rNextRows { display: grid; gap: 3px; }
+.rc-row b { color: var(--muted); font-size: 7px; font-weight: normal; white-space: nowrap; }
+.rc-row.must { background: var(--gold); }   /* (not `.lead`: that class is the title screen's legacy intro paragraph, hidden on HOME: #title.hub .lead) */
+.rc-earth { display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; min-height: 40px; padding: 2px 6px; background: #fff; border: 0; cursor: pointer; font-family: inherit; color: var(--ink); text-align: left; }
+.rc-earth { gap: 6px; }
+.rc-earth .earth-face { width: 28px; height: 28px; background-size: 28px 28px; flex: none; }
+.rc-earthtxt { display: grid; flex: 1; min-width: 0; font-size: 7px; line-height: 1.7; }
+.rc-bars .ebar { grid-template-columns: 52px 1fr 36px; font-size: 8px; }
+.rc-era { display: flex; align-items: center; gap: 6px; font-size: 7px; text-align: left; }
+.rc-era .era-track { flex: 1 1 auto; }
+.rc-erat { white-space: nowrap; color: var(--muted); }
+.rc-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-chip { flex: 1 1 0; min-width: 0; padding: 0 6px; gap: 4px; justify-content: flex-start; }
+.rc-chip.more { flex: none; }
+.rc-chip img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
+.rc-chip span { font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-star { font-style: normal; color: var(--gold-dark); }
+.rc-rows p { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; font-size: 8px; }
+/* R10: the gear sheet (src/ui.js openGear) */
+.gear-list { display: grid; gap: 6px; margin: 4px 0; }
+.gear-list .chip { width: 100%; justify-content: center; }
+.chip.warn { border-color: var(--warm); color: var(--warm); }
+.gear-credit { margin: 8px 0 0; text-align: left; }
+.rc-go { margin-top: 2px; }
+#results.revealing .rcard button:not(#againBtn) { pointer-events: none; }   /* a tap to skip the reveal reaches #results, not a line under the finger */
+.tour-inert { pointer-events: none; }
 
 /* ---------- hangar ---------- */
 .hangar-head { display: flex; justify-content: space-between; align-items: center; }
@@ -453,15 +551,15 @@ h2.sub { margin-top: -4px; }
 .new-badge { display: flex; align-items: center; gap: 6px; justify-content: center; font-size: 8px; margin: 2px 0; }
 .new-badge img { width: 32px; height: 32px; image-rendering: pixelated; }
 .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 4px; margin: 2px 0 8px; }
-.badge2 { display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 6px; text-align: center; color: var(--muted); opacity: .75; }
+.badge2 { position: relative; display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 7px; border: 0; font-family: inherit; cursor: pointer; text-align: center; color: var(--muted); opacity: .75; }
 .badge2.got { opacity: 1; color: inherit; }
 .badge2 img { width: 64px; height: 64px; image-rendering: pixelated; }
-#hBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
+#bBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
 .badge2 b { font-size: 7px; color: inherit; }
 /* NATURE tiers and rarity (src/wild.js, 2026-10-22) */
 .w-tier { margin: 8px 0 2px; font-weight: bold; color: #1e7a3c; }
 .line.project.locked { opacity: .75; background: #ece8dc; }
-.w-rarity { font-size: 6px; opacity: .8; }
+.w-rarity { font-size: 7px; opacity: .8; }   /* R6: 7 px is the floor */
 .w-card.r-rare .w-rarity { color: #2a6fb0; } .w-card.r-legendary .w-rarity { color: #a0329a; font-weight: bold; }
 
 /* ---------- Wild Area 2D field (src/wild.js Field) ---------- */
@@ -503,9 +601,6 @@ h2.sub { margin-top: -4px; }
 
 /* The fleet hangar (src/hangar.js). */
 .ftimeline { display: flex; justify-content: space-between; gap: 2px; font-size: 7px; margin: 4px 0; }
-.fera { padding: 2px 3px; border-radius: 3px; background: #1b2838; color: #6d7f95; }
-.fera.done { background: #2b4a6f; color: #cfe6ff; }
-.fera.now { background: #ffe15a; color: #1b2838; font-weight: bold; }
 .ftabs { display: flex; gap: 4px; justify-content: center; margin: 8px 0; }
 .ftab.on { background: #ffe15a; color: #1b2838; }
 .fplanes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
@@ -591,31 +686,30 @@ h2.sub { margin-top: -4px; }
 #title.hub.menu .buttons { display: flex; }
 #hubGear { font-size: 18px; line-height: 1; padding: 2px 6px; }
 #title.hub #hubTop { display: flex; justify-content: space-between; align-items: center; order: 0; }
-#title.hub #hubNext { order: 2; }
-#title.hub #hubWorld { order: 3; }
+#title.hub #hubWorld { order: 1; }
+#title.hub .hub-skip { order: 2; }
+#title.hub #hubNext { order: 3; }
 #title.hub #goBtn { order: 4; }
 #title.hub #tChallenges { order: 5; }
-#title.hub #hubTiles { display: grid; order: 6; }
-.hub-next { background: #fff7d6; border: 2px solid #1a1a2e; padding: 6px 8px; font-size: 9px; text-align: left; }
-.hub-next .label { font-size: 7px; opacity: .7; margin: 0 0 2px; }
-.hub-next.crossing { background: #d6f5ff; }
+/* R3: HOME's UP NEXT strip: the results card's rows (.rc-row, R1) in a plain block; a lead row (the free part, NATURE's parcels) is gold and carries its lesson picture */
+.hub-next { padding: 0; text-align: left; }
+.hub-next .rc-label { margin: 0 0 2px; text-align: left; }
+#hubUpRows { display: grid; gap: 3px; }
+.rc-row.must { flex-wrap: wrap; }
+.hub-next .next-pic { flex: 0 0 100%; max-width: 100px; margin: 2px auto 0; }   /* 100 px (53 tall): the first-hour lead row must leave TAKE OFF on a 320x568 screen (measured) */
 .hub-world { position: relative; text-align: center; }
-.hub-globe { width: min(100%, 44vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
+.hub-globe { width: min(100%, 34vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
 .hub-spin { position: absolute; top: 42%; background: rgba(26,26,46,.55); color: #fff; border: 0; font-size: 14px; padding: 8px 6px; cursor: pointer; }
 #hubSpinL { left: 0; } #hubSpinR { right: 0; }
 .hub-route { margin: 2px 0 0; font-size: 8px; }
 .hub-route small { display: block; opacity: .7; }
-.hub-tiles { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 6px; }
-.hub-tile { position: relative; padding: 10px 2px; font-size: 8px; }
-.hub-tile .badge { position: absolute; top: -6px; right: -4px; background: #e8433a; color: #fff; font-size: 6px; padding: 2px 3px; border-radius: 6px; }
+#title.hub .hub-skip { display: flex; justify-content: center; text-align: center; border: 0; background: transparent; color: var(--muted); text-decoration: underline; }   /* a quiet option under the route, not a rival to TAKE OFF (the screenshot, R3): still a 40 px target */   /* 'Skip mission route this trip' (src/aim.js): the shared .chip, a 40 px tap target, centred under the route */
 .hub-back { position: fixed; left: 6px; top: 6px; z-index: 30; font-size: 8px; }
 #title.hub.world #tJourney { display: block; order: 4; }   /* tap the route: the way choice and the crossings */
 #title.hub #jGlobe { display: none; }   /* the big globe is the hub's own */
 /* S3: the free upgrade leads into the hangar; the MISSIONS screen */
-.hub-tile.pulse { animation: hubpulse 0.9s ease-in-out infinite; }
 @keyframes hubpulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); box-shadow: 0 0 0 3px #ffd23a; } }
 #goBtn.secondary { opacity: .55; transform: scale(.92); }
-.hub-tile .badge { z-index: 2; opacity: 1; }
 .mlist { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
 .mrow { display: flex; justify-content: space-between; gap: 6px; padding: 5px 6px; background: #fff7d6; border: 1px solid #1a1a2e; font-size: 8px; }
 .mrow.star { background: #ffe9a8; }
@@ -695,7 +789,11 @@ h2.sub { margin-top: -4px; }
 .w-pname[disabled] { text-decoration: none; cursor: default; }
 /* Hangar feedback (plane build, 2026-10-28): tap a row to preview it (src/hangar.js previewCardHTML), the new part
    ghosted on the picture, stat bars (src/statbars.js, shared with NATURE), and the bars moving in the payoff. */
-.fpreview img.fghost { position: absolute; inset: 0; height: 100%; opacity: .5; animation: fghost 1.2s ease-in-out infinite alternate; }
+/* The picture (.fpic, 400:176) holds the base portrait and the ghost layers; the caption sits below it, outside. The ghosts
+   fill the PICTURE, never the box (2026-11-02: inset 0 on the whole box stretched them over the caption: two planes). */
+.fpic { position: relative; aspect-ratio: 400 / 176; }
+.fpic img { display: block; width: 100%; height: 100%; }
+.fpreview .fpic img.fghost { position: absolute; inset: 0; opacity: .5; animation: fghost 1.2s ease-in-out infinite alternate; }
 @keyframes fghost { from { opacity: .25; } to { opacity: .7; } }
 .hpreview { border: 2px solid #2b4a6f; background: #fffbe8; padding: 6px 8px; margin: 0 0 8px; }
 .hpreview.empty { border-style: dashed; text-align: center; }
@@ -735,3 +833,154 @@ h2.sub { margin-top: -4px; }
 .fline.finance > .btn, .fline.finance .next .btn { font-size: 8px; padding: 6px 8px; width: auto; display: inline-block; }
 .fline.finance .next { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
 .sbar-delta.same { color: #5a6b80; }
+/* Steady lane progress bars (src/missions2.js STEADY). */
+.mrow .mbar { display: block; height: 6px; margin: 4px 0 2px; background: rgba(255,255,255,.18); border-radius: 3px; overflow: hidden; }
+.mrow .mbar i { display: block; height: 100%; background: #7fd36b; }
+.payoff-card .pay-bars + p { margin-top: 12px; }   /* (playtest 2026-10-29: the words sat on the bar) */
+.payoff-card #payOk { margin-top: 4px; }
+
+/* ---------- The shared row (research/DESIGN-HANGAR-NATURE.md §5a; the user approved 2026-11-01) ----------
+   One component for hangar parts, systems, gadgets and NATURE projects: icon | name + pips / one-line "Next: ..." | price.
+   Fixed columns, nothing wraps, nothing jumps (the old .line grid was `1fr auto`: the auto column followed its own text).
+   No ellipsis on purpose: text must FIT (tests/rowfit.cjs at 375 and 390 px). The whole .rowc-tap is the one tap target;
+   the price/BUY is its sibling. */
+.rowc { position: relative; display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; padding: 6px 8px; background: #fff; border-bottom: 2px solid #ece8dc; min-height: 44px; box-sizing: border-box; }
+/* R0 (research/UX-MASTER-PLAN.md D2, decision 8): the row is a GRID and the price is a grid item of it, no longer absolute. The tap
+   area spans the whole row (name over both columns, so the name keeps the full first line); the price sits bottom-right, and the
+   sub line is as tall as the price (--price-h), so a name that wraps to a 2nd line can never end up under it (tests/overlap.cjs). */
+.rowc > .rowc-tap { grid-area: 1 / 1 / 3 / 3; }
+/* (measured 2026-11-01, Pixel = 1em per character: a 3-column row left the name 163 px = 18 characters at 375 px. The name
+   now has the WHOLE first line; only the second line shares its width with the price, which sits bottom-right.) */
+.rowc-tap { display: grid; grid-template-columns: 32px 1fr; grid-template-rows: auto auto; column-gap: 8px; align-items: center; width: 100%; text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }
+.rowc-icon { grid-row: 1 / span 2; width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
+.rowc-tap > .rowc-slot { grid-row: 1 / span 2; width: 32px; height: 32px; }   /* no art: an empty slot keeps the column */
+.rowc-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0 6px; min-width: 0; }   /* the level pips drop under a long name instead of squeezing it */
+.rowc-name { font-size: 9px; white-space: normal; overflow-wrap: break-word; }   /* may wrap to 2 lines on EVERY row (decision 8) */
+.rowc-pips { display: flex; gap: 2px; flex: none; }
+.rowc-pips .pip { width: 8px; height: 5px; background: #d8d4c8; }
+.rowc-pips .pip.on { background: var(--green); }
+.rowc-sub { font-size: 7px; color: var(--muted); white-space: normal; overflow-wrap: break-word; margin-top: 4px; padding-right: 108px; box-sizing: border-box; min-width: 0; min-height: var(--price-h); display: flex; align-items: center; }   /* beside the price it has ~100 px at 320 wide: it wraps there (it fits on one line at 375/390, tests/rowfit.cjs) instead of running under the price */
+.rowc > .rowc-price { grid-area: 2 / 2; align-self: end; position: relative; z-index: 1; }   /* above the row's tap area, as before */
+.rowc-price { width: 100px; box-sizing: border-box; font-size: 7px; padding: 4px 2px; white-space: nowrap; text-align: center; }
+.rowc.locked { background: #ece8dc; } .rowc.locked .rowc-tap { opacity: .6; }
+.rowc.maxed { background: #e7f6e7; }
+.rowc.sel { outline: 3px solid #ffe15a; outline-offset: -3px; }
+/* NATURE's preview strip (DESIGN-HANGAR-NATURE §4): pinned with the land, beside the ghost; the full name, what it does,
+   who it brings back, More about it, and the row's own BUY. */
+.wstrip { background: #fff; border: 3px solid var(--ink); padding: 4px 6px; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; }
+.wstrip .ws-name { font-size: 8px; margin: 0; }   /* the FULL name: it may wrap here */
+.wstrip .ws-chain { font-size: 6px; margin: 0; color: var(--muted); grid-column: 1 / -1; }
+.wstrip .w-web { grid-column: 1; display: flex; align-items: center; gap: 2px; }
+.wstrip .w-web .w-webpic img, .wstrip .w-web .w-webpic .w-nopic { width: 18px; height: 18px; }
+.wstrip .ws-foot { display: contents; }
+.wstrip .ws-foot .linkbtn { grid-column: 1; justify-self: start; }
+.wstrip .ws-foot .rowc-price { position: static; grid-column: 2; grid-row: 1; }
+.linkbtn { background: none; border: 0; padding: 0; font: inherit; font-size: 7px; color: var(--ink); text-decoration: underline; cursor: pointer; }
+#wProjects .rowc.previewing { outline: 3px solid #ffe15a; outline-offset: -3px; }
+.wscene.previewing .w-empty { display: none; }   /* the preview's ghost must not sit under the 'Bare land' note (screenshot, 2026-11-01) */
+/* .price-top (the hangar): the price beside the SHORT name, so the long "Next: ..." line gets the full width. NATURE keeps
+   the default (long names, short second line). Measured 2026-11-01 at 375 px: name line 263 px = 29 characters at 9 px. */
+.rowc.price-top > .rowc-price { grid-area: 1 / 2; align-self: start; }
+.rowc.price-top .rowc-top { padding-right: 108px; box-sizing: border-box; }
+.rowc.price-top .rowc-sub { padding-right: 0; }
+/* Hangar redesign (plane build, on the game chat's .rowc): the strip's (i) and the 'Next plane' line */
+.hp-buy { gap: 8px; align-items: center; }
+.hp-info { font-size: 8px; padding: 6px 8px; }
+.hp-what { margin: 0 0 4px; }
+.nextplane { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
+.payoff.atbox { align-items: flex-start; justify-content: flex-start; }
+.payoff.atbox .payoff-card { box-sizing: border-box; max-width: none; }
+/* The hangar re-renders on every purchase; Chrome's scroll anchoring then moved the panel by the box's height (~145 px)
+   AFTER the payoff had scrolled the box into view, so the payoff card sat off the box (the gate in tests/hangar.cjs). */
+#hangar { overflow-anchor: none; }
+.rowc.tour-price .rowc-tap { pointer-events: none; }   /* a tour step on the row's price: one action only (tour.js; the mirror of tour-only) */
+.rowc.tour-only .rowc-price { visibility: hidden; }   /* a tour step on the row's tap: one action only (tour.js) */
+/* Stage 2: the payoff IN the plane box (DESIGN-HANGAR-NATURE; the user's pick). #payoff takes the box's place in the page:
+   the frame copies .fpreview (border, radius, background, the 400:176 picture), the strip sits under it. Not an overlay. */
+.payoff.inbox { position: relative; inset: auto; z-index: auto; background: none; display: block; margin: 4px 0 6px; }
+.payoff.inbox .payoff-card { position: relative; width: auto; max-width: none; padding: 0; border: 0; background: none; text-align: center; }
+.payoff.inbox .pay-frame { position: relative; border: 2px solid #2b4a6f; border-radius: 4px; background: linear-gradient(#dfe9f3, #f6f1e6); overflow: hidden; }
+.payoff.inbox .pay-bars { margin: 6px 0 0; }
+.payoff.inbox #payText { margin: 6px 0 4px; }
+.payoff.inbox .pay-label { z-index: 2; }
+
+/* The loading screen (src/loader.js): night sky, a pixel plane drawing a contrail as files arrive. Above everything; pointer-events none the moment it is done. */
+.loader { position: fixed; inset: 0; z-index: 200; background: #10142b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; transition: opacity .35s; }
+.loader.done { opacity: 0; pointer-events: none; }
+.loader canvas { width: min(92vw, 480px); aspect-ratio: 96 / 54; image-rendering: pixelated; border: 3px solid #f4f4f4; box-sizing: border-box; }
+.loader-title { margin: 0; color: #f4f4f4; font-family: 'Pixel', monospace; font-size: 14px; letter-spacing: 2px; }
+.loader-fact { margin: 0; max-width: min(88vw, 360px); color: #a9c1de; font-family: 'Pixel', monospace; font-size: 8px; line-height: 1.9; text-align: center; }   /* a load over 2 s only (src/loader.js showFact) */
+.loader-count { margin: 0; color: #a9c1de; font-family: 'Pixel', monospace; font-size: 10px; min-height: 12px; }
+
+/* ---------- R0: the shared UX section (research/UX-MASTER-PLAN.md D1/D2). INERT until a screen uses a class; each screen's owner
+   then edits only inside that screen's own section. Tokens are in :root (--dot, --price-h, --tap). ---------- */
+.card { background: var(--paper); border: 3px solid var(--ink); box-sizing: border-box; padding: 8px; display: grid; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: var(--tap); padding: 0 10px; border: 2px solid var(--ink); background: #fff; font: inherit; font-size: 8px; color: var(--ink); cursor: pointer; box-sizing: border-box; }
+.chip img { width: 32px; height: 32px; image-rendering: pixelated; object-fit: contain; }
+.dot { position: absolute; top: 2px; right: 2px; width: 6px; height: 6px; border-radius: 50%; background: var(--dot); pointer-events: none; }
+.dot.free { width: auto; height: auto; border-radius: 0; padding: 2px 4px; font-size: 7px; color: #fff; }
+.subtabs { display: flex; gap: 6px; }
+.subtab { position: relative; flex: 1; min-height: var(--tap); font: inherit; font-size: 8px; background: #fff; border: 2px solid var(--ink); color: var(--ink); cursor: pointer; box-sizing: border-box; }
+.subtab.on { background: var(--cool); color: #fff; }
+.sheet-wrap { display: flex; align-items: center; justify-content: center; background: rgba(27, 27, 47, 0.55); }
+.sheet { width: min(100%, 340px); max-height: 100%; overflow: hidden; }
+.sheet-title { margin: 0; font-size: 14px; color: var(--night); }
+.sheet-pic { justify-self: center; max-height: 90px; image-rendering: pixelated; }
+.sheet-body { margin: 0; font-size: 8px; line-height: 1.9; }
+.sheet-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+.sheet-buttons .btn { min-height: var(--tap); }
+
+/* ---------- R5 item 1: the hangar fits a 320 px phone (found by R0's fitscreen, 2026-11-02; cause BY READING, confirmed by the
+   hangar.cjs 'nothing past the screen's side' check). .panel is a grid with one implicit `auto` column, so its min-width:auto items
+   stretch the column to the widest nowrap row (head, tabs, era chips; the Pixel font is 1em per character) and everything spills
+   past the right edge. minmax(0, 1fr) pins the column to the panel; the three rows then shrink or wrap. Scoped to #hangar: the other
+   screens measured 0 cut text at 320. ---------- */
+#hangar .panel { grid-template-columns: minmax(0, 1fr); }
+#hangar .hangar-head .btn { margin-left: auto; }
+.ftabs .btn { flex: 1 1 0; min-width: 0; padding: 8px 2px; font-size: 9px; }
+
+/* ---------- R5: the hangar top (UX plan C5). Sub-tabs >= 40 px with a dot, the era as ONE line, the head fits a 320 phone on one row, the first
+   affordable price pulses once. ---------- */
+#hangar .hangar-head h2 { font-size: 12px; }
+#hangar .treebank { font-size: 10px; }
+.ftabs .btn.ftab { position: relative; min-height: var(--tap); }
+.ftimeline.era-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; width: 100%; box-sizing: border-box; min-height: 30px; padding: 3px 6px; margin: 4px 0; font: inherit; color: var(--ink); background: #fff; border: 2px solid #ece8dc; cursor: pointer; text-align: left; }
+.era-line .era-row { flex: 1 1 40px; min-width: 24px; }
+.era-line .era-track { flex: 1 1 auto; }
+.rowc-price.pulse1 { animation: pulse1 .7s ease-in-out 2; }
+@keyframes pulse1 { 50% { filter: brightness(1.35); } }   /* (not a transform: rowfit measures the price column while it pulses) */
+.rowc-top .dot.row-new { position: static; flex: none; align-self: center; }   /* R7: the NEW dot sits beside the name, not over the price */
+#hFleet > .hpreview { margin-bottom: 0; }   /* R5: the sub-tabs sit directly under the strip (the grid's own 8 px gap is the only space) */
+#hFleet > .ftabs { margin: 0; }
+#hFleet .fpcap { flex-wrap: wrap; gap: 0 8px; }   /* R5: name, tag and range on ONE line at 320 */
+#hFleet .fpcap .hcap { margin-left: auto; font-size: 7px; color: #cfe6ff; }
+#hFleet .fplane-row { min-height: 36px; }   /* the plane row has no price column: it need not be as tall as an upgrade row */
+#hFleet .fplane-row .rowc-sub { min-height: 0; }
+@media (max-width: 340px) {   /* 320-wide phones: HANGAR, the bank and TAKE OFF on ONE row */
+  #hangar .hangar-head h2 { font-size: 10px; }
+  #hangar .treebank { font-size: 9px; gap: 3px; }
+  #hangar .hangar-head .btn { padding: 6px 8px; font-size: 8px; }
+}
+.hpreview.empty { padding: 3px 6px; }   /* the empty strip is one or two small lines, not a card */
+.hpreview.empty p { margin: 0; }
+#hFleet .fplane-row .rowc-sub { display: none; }   /* the plane row is its name and FLYING; the era is in the picture caption / the era sheet */
+#hFleet .tree-head { margin: 0; display: flex; justify-content: space-between; align-items: center; }
+#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }   /* a rich bank (7-digit seeds) wraps TAKE OFF to a second row instead of leaving the screen (hangar.cjs, 320 x 568) */
+
+/* ---------- R6: NATURE (UX plan C4). The land tabs scroll with an edge fade (a tab is never cut by a hard edge), a dot on a land with news; the
+   meter has an (i); the intro / NEXT HERE box / headings are gone; NEXT is the one primary; the locked tier is one line. ---------- */
+.wregions { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); padding-left: 12px; padding-right: 22px; }
+.wregions .btn { position: relative; }
+.wpin #wMeter { display: flex; align-items: center; gap: 6px; }
+.wpin #wMeter .meter { flex: 1; min-width: 0; }
+.w-i { flex: none; min-width: var(--tap); }
+#wNextLine .rowc.lead { background: #fffbe8; border: 2px solid var(--ink); }
+#wNextLine .rowc.lead .rowc-name { font-weight: bold; }
+.w-tier-lock { margin: 4px 0; color: var(--muted); font-weight: normal; }
+.w-tree, .w-card { position: relative; }
+.rowc.project .rowc-price[disabled] { background: #fff; color: var(--muted); }   /* an unaffordable price is outlined, not a grey slab; the strip says what is missing */
+#wStrip .need { margin: 2px 0; color: #c0392b; }
+/* R6: a planting card has its own (i) (the rails' new-line step taps it); a tap on the card previews its trees in the land. */
+.rowc > .rowc-info { grid-area: 2 / 2; align-self: end; justify-self: end; position: relative; z-index: 1; min-width: 28px; font-size: 8px; padding: 3px 6px; }
+.rowc.tour-info .rowc-tap, .rowc.tour-info .rowc-price { pointer-events: none; }
+.rowc.tour-price .rowc-info, .rowc.tour-only .rowc-info { pointer-events: none; }

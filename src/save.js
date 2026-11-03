@@ -28,12 +28,14 @@ const DEFAULTS = {
   planted: {},         // species id -> trees planted, all flights (drives the Biodiversity meter)
   city: 'LONDON',      // the journey: the city you are in (src/route.js); flights start there. (An index before 2026-10-22.)
   heading: null,       // the first city of the direction chosen before take-off (one of route.js choices)
+  aimKey: null,        // 'AIM HERE' (the MISSIONS screen, src/aim.js): the key of the city mission the route aims at; null = the first open one
+  skipAim: false,      // 'Skip the mission route this trip' (src/aim.js): kept by a crash, cleared by the next landing (rules.js, with heading)
   flightSeconds: 0,    // real seconds flown, take-off to landing or crash (src/eras.js: eras open by flying time)
   flownKm: 0,          // every km flown (not flight school): "times round the Earth" = flownKm / EARTH_KM
   laps: 0,             // laps of the old 16-city loop (before 2026-10-22); kept, and counted into flownKm once
   visited: ['LONDON'], // cities landed in (a first landing in a new city pays a bonus)
   mission: 0,          // how many missions are done (src/missions.js); which ones: missionsDone
-  unclaimed: [],       // prizes waiting for the player to tap CLAIM (src/rewards.js)
+  unclaimed: [],       // retired in R8 (prizes are paid the moment they are earned); only src/rewards.js migrateClaims reads an older save's list, once
   coolLandings: 0,     // landings with the Earth cooler than at take-off (Cool Planet badge)
   // missionsDone and badgeTiers are NOT defaults: a save without them is converted from the old
   // mission list and badges once (missions.js migrateMissions, badges.js migrateBadges).

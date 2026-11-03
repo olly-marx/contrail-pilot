@@ -9,33 +9,46 @@ import { tip } from './tips.js';
 import { LINE_INFO, levelCard } from './fleetfacts.js';
 import { composedURL } from './planelook.js';
 import { onSwipe } from './swipe.js';
-import { lookFiles, hangarGadgets, previewBars, withNext } from './fleet.js';
+import { lookFiles, hangarGadgets, previewBars, withNext, shortName } from './fleet.js';
 import { statBarsHTML, animateBars } from './statbars.js';
 import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
-import { FINANCE, financeLevel, financeOpen, natureHealth, rate, rateAt, canTake, trade, buyFinance, bonds, canLock, lockBond, payBonds } from './finance.js';
+import { markSeen, hangarScope, dots, fresh } from './fresh.js';
+import { showSheet } from './sheet.js';
+import { FINANCE, financeLevel, financeOpen, natureHealth, rate, rateAt, canTake, trade, buyFinance, bonds, canLock, lockBond, payBonds, payDividend } from './finance.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
 
 const $ = id => document.getElementById(id);
 // Effects whose mechanics are not built yet (stages 5-8): said honestly on the card.
 const SOON = [];
 const eraName = i => ERAS[i].name;
+// What is still missing to buy it ('need 12 seeds and 7 crystals more'): in the strip now (the rows are one line).
+const needText = (s, l) => `need ${[Math.max(0, l.cost - s.seeds) && `${l.cost - s.seeds}<i class="seedicon"></i>`, Math.max(0, (l.crystals || 0) - (s.crystals || 0)) && `${(l.crystals || 0) - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ')} more`;
 const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
 
-// Things in the fleet you could buy right now, as keys ('gadget:magnet:3').
-export const fleetBuyable = save => nextBuys(save).filter(b => b.open && canAfford(save, b)).map(b => `${b.kind}:${b.id}:${b.level}`);
+// Things in the fleet you could buy right now, as keys ('gadget:magnet:3'): src/fresh.js owns it (pure); re-exported for ui.js.
+export { fleetBuyable } from './fresh.js';
 
 export class FleetHangar {
   constructor(ui) { this.ui = ui; this.tab = 'plane'; }
 
+  endPayoff() {}   // (replaced while a payoff shows: see payoff())
+
   render() {
+    if (this.paying) { this.renderLater = true; return; }   // a payoff is showing IN the box: nothing may rebuild it (stage 2)
     const s = this.ui.save, el = $('hFleet');
-    el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.capHTML(s) + this.previewCardHTML(s) + this.timelineHTML(s) + `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
-      `<button class="btn ftab ${this.tab === k ? 'on' : ''}" data-ftab="${k}" type="button">${n}</button>`).join('')}</div>`
-      + `<p class="small ftabhelp">${{ plane: 'Choose your plane, and upgrade the one you fly.', systems: 'Systems help every flight, whichever plane you fly.', gadgets: 'Gadgets are fitted to every plane in your fleet.' }[this.tab]}</p>`
+    // R7: a row with a NEW item carries a dot beside its name for the rest of this visit. The set is taken BEFORE this render marks the
+    // tab seen (and keeps what earlier renders of this visit found); ui.showHangar() empties it when the hangar is opened again.
+    this.rowNew = this.rowNew || new Set(); (fresh(s, this.ui.freshOpts())[hangarScope(this.tab)] || []).forEach(k => this.rowNew.add(k));
+    // R5 (UX plan C5): picture + caption (the range lives in the caption), the strip, THEN the sub-tabs directly under it, then the rows.
+    // No era chips, no per-tab help sentence: the era is ONE line in PLANE (tap = a sheet), the plane paragraph is behind the (i).
+    el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.previewCardHTML(s) + this.tabsHTML(s)
       + (this.tab === 'plane' ? this.planeHTML(s) : this.groupHTML(s, this.tab === 'systems' ? SYSTEMS : GADGETS, this.tab === 'systems' ? 'system' : 'gadget'));
     // Matured biodiversity bonds pay out when you come to the hangar (src/finance.js).
+    const div = payDividend(s); if (div) { this.ui.persist(); this.ui.toast && this.ui.toast('NATURE DIVIDEND!', `+${div} crystals: your land here is healthy.`, 'good', 4); }
     const paid = payBonds(s); if (paid) { this.ui.persist(); this.ui.toast && this.ui.toast('BONDS PAID!', `${paid.seeds.toLocaleString('en-GB')} seeds back + ${paid.crystals} crystals: healthy nature pays interest.`, 'good', 4); }
+    // The NEW dots (src/fresh.js): this sub-tab is on screen, so what it shows is now seen. Only while the hangar is VISIBLE (refresh() also renders it behind NATURE).
+    if (!$('hangar').hidden && markSeen(s, hangarScope(this.tab))) this.ui.persist();
     // M4: how far this plane + nature can get (src/capability.js), worked out in the background after a purchase.
     estimate(s, () => { this.ui.persist(); const c = $('hCap'); if (c) c.outerHTML = this.capHTML(s); });
     const bb = $('hBond'); if (bb) bb.onclick = () => { if (lockBond(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };
@@ -44,7 +57,10 @@ export class FleetHangar {
     el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.flap(); this.render(); });
     // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS (src/swipe.js).
     const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.flap(); this.render(); };
-    onSwipe(el, { next: () => goTab(1), prev: () => goTab(-1) });
+    onSwipe($('hangar'), { next: () => goTab(1), prev: () => goTab(-1) });   // the WHOLE screen (the list is short now: #hFleet alone left a dead area below it on a tall phone)
+    const era = $('hNextPlane'); if (era) era.onclick = () => this.eraSheet(s);
+    const pinfo = el.querySelector('[data-planeinfo]'); if (pinfo) pinfo.onclick = () => this.planeSheet(s);
+    if (!this.sel) { const first = el.querySelector('.rowc-price.btn.go:not([disabled]), .rowc-price.btn.free:not([disabled])'); if (first) first.classList.add('pulse1'); }   // the ONE primary, shown once: no strip item is picked, so the first affordable price pulses
     el.querySelectorAll('[data-finfo]').forEach(b => b.onclick = () => { const [kind, id] = b.dataset.finfo.split(':'); this.showInfo(s, kind, id); });
     el.querySelectorAll('[data-fly]').forEach(b => b.onclick = e => { e.stopPropagation(); if (choosePlane(s, b.dataset.fly)) { this.preview = b.dataset.fly; this.ui.persist(); this.ui.sfx.coin(); this.render(); } });
     // The big picture with the plane's bought parts layered on (src/planelook.js); drawn when ready.
@@ -65,6 +81,7 @@ export class FleetHangar {
       this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
       if (free) s.freeUpgrade = false;
       s.sparkle = true;
+      this.sel = null;   // (before the render: the strip must not show the NEXT item under the payoff: the 375 screenshot)
       this.ui.persist(); this.ui.sfx.buy(); this.ui.renderHangar();
       // R6: the payoff - the plane as it was, then the new part arrives on it - now for EVERY purchase (the user, 2026-10-28),
       // with the stat bars moving to their new values. Every purchase stays in the hangar (the user, 2026-10-28); `rails` only picks the tutorial's words for the first free part.
@@ -90,7 +107,7 @@ export class FleetHangar {
   // R6 (the user, 2026-10-27: "tapping an upgrade did NOT show the plane looking cooler"): the plane, with the part just
   // fitted (src/planelook.js), zooms in over the hangar with one line and one OK.
   // R6, the payoff (the user, 2026-10-28: it "just pops up the upgraded plane, you never see it BEFORE"): the plane as it
-  // was, then the new part fades and slides onto it with a sparkle, then "Your plane is cleaner now!" and OK.
+  // was, then the new part fades and slides onto it with a sparkle, then "Look: shiny new jet engines!" and OK.
   // Every purchase (the user, 2026-10-28): opts.bars = the stat bars it moves (fleet.js previewBars, taken BEFORE the buy),
   // opts.gadBefore = the gadget overlays before (a new gadget is a part too), opts.name = the item, opts.toFly = the rails'
   // first free part (the tutorial's words: rails); every purchase stays in the hangar, the rails' next step is TAKE OFF there. A system has no part: no zoom,
@@ -99,14 +116,20 @@ export class FleetHangar {
     const s = this.ui.save, f = fleetOf(s), id = f.plane, files = lookFiles(id, f.planes[id], 'hangar');
     const gadNow = hangarGadgets(s, id), gadOld = gadBefore || gadNow;
     const added = files.parts.filter(p => !(before ? before.parts : files.parts.slice(0, -1)).includes(p)).concat(gadNow.filter(g => !gadOld.includes(g)));
-    let el = $('payoff');
-    if (!el) { el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff'; document.body.appendChild(el); }
+    // Stage 2 (DESIGN-HANGAR-NATURE, the user's pick): the payoff happens IN the plane box. The box (.fpreview) steps aside and
+    // #payoff takes its exact place in the page: a frame of the same size and border (the picture), then the strip under it
+    // (the bars, the words, OK). No overlay, no card: the box you were looking at is what changes.
+    const box = $('hFleet') && $('hFleet').querySelector('.fpreview');
+    const stale = $('payoff'); if (stale) stale.remove();
+    const el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff inbox';
+    if (box) { box.hidden = true; box.insertAdjacentElement('afterend', el); } else document.body.appendChild(el);
+    this.paying = true;
     el.innerHTML = `<div class="payoff-card"><div class="pay-frame"><div class="pay-plane"><img id="payBefore" alt="">${added.map(p => `<img class="pay-part" src="${p}" alt="">`).join('')}<i class="pay-spark"></i><b id="payMark" class="pay-mark"></b></div></div>
       <span id="payLabel" class="pay-label">${rails || !name ? tip('rail-payoff-label') : `NEW: ${name}!`}</span>
       ${bars.length ? `<div class="pay-bars">${statBarsHTML(bars)}</div>` : ''}
       <p id="payText" class="pay-later">${rails || !name ? tip('rail-payoff') : `${name}: fitted!`}</p><button id="payOk" class="btn go big pay-later" type="button">OK</button></div>`;
-    el.hidden = false;
     el.classList.toggle('nopart', !added.length);
+    if (box) el.scrollIntoView({ block: 'start', behavior: 'instant' });   // (instant: a smooth scroll still running moved the picture)
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
     composedURL(files.base, old, gadOld).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
     // Where the new part is: each part layer is a whole repainted plane, so the part = the pixels that CHANGE when the
@@ -121,27 +144,42 @@ export class FleetHangar {
       const pct = (v, n) => `${(100 * v / n).toFixed(2)}%`;
       Object.assign(mark.style, { left: pct(x0, w), top: pct(y0, h), width: pct(x1 - x0 + 1, w), height: pct(y1 - y0 + 1, h) });
       plane.style.transformOrigin = `${pct((x0 + x1) / 2, w)} ${pct((y0 + y1) / 2, h)}`; };
-    const whenLoaded = img => new Promise(r => { if (img.complete && img.naturalWidth) r(); else img.addEventListener('load', r, { once: true }); });
+    // A picture that FAILS to load (the user's iPhone, 2026-11-01: Safari's blue '?' icon on 'Tourist class: fitted!', the payoff
+    // waiting out its 6 s and showing the broken layer) is hidden and counts as done: never a broken icon, no 6 s wait.
+    const hideBroken = img => { if (!img.naturalWidth) { img.style.display = 'none'; img.dataset.broken = '1'; } };
+    const whenLoaded = img => new Promise(r => { if (img.complete && img.naturalWidth) return r();
+      img.addEventListener('load', r, { once: true }); img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true }); });
     if (part) Promise.all([whenLoaded(part), whenLoaded(beforeImg)]).then(measure);
     // The label arrow, placed over the part once the zoom has settled (the user, 2026-10-28: the payoff must not be flat).
-    const label = () => { const lab = $('payLabel'), card = el.querySelector('.payoff-card'); if (!lab || el.hidden) return;
+    const label = () => { const lab = $('payLabel'), card = el.querySelector('.pay-frame'); if (!lab || !el.isConnected) return;   // placed inside the picture frame
       const m = mark.getBoundingClientRect(), c = card.getBoundingClientRect();
       const x = Math.max(lab.offsetWidth / 2 + 4, Math.min(c.width - lab.offsetWidth / 2 - 4, m.left + m.width / 2 - c.left));
       const above = m.top - c.top - 6 >= lab.offsetHeight + 4;   // room above the part inside the card? else below it, arrow up
       lab.classList.toggle('below', !above);
       lab.style.left = `${Math.round(x)}px`; lab.style.top = `${Math.round(above ? m.top - c.top - 6 : m.bottom - c.top + 6)}px`; el.classList.add('labelled'); };
     // No part (a system, or a level with no new look): the bars ARE the payoff - they move with the sparkle, then OK.
-    const settle = () => { if (el.hidden) return; if (added.length) label(); else el.classList.add('labelled'); };
-    setTimeout(() => { if (!el.hidden) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 900);   // the part arrives, the camera zooms onto it, then the label
-    $('payOk').onclick = () => { this.ui.sfx.flap(); el.hidden = true; el.classList.remove('arrive', 'labelled', 'nopart');
+    // (the user's playtest, 2026-10-29, live on a phone: the pictures were still loading when the timeline ran, so the frame
+    // stayed EMPTY and the label, placed on an unmeasured marker, floated above the card.) Now the show starts only once both
+    // pictures are in (6 s at most), and the zoom + label need the measured part; without it, the plane shows flat (no zoom).
+    const settle = () => { if (!el.isConnected) return; if (added.length && mark.dataset.done) label(); else { el.classList.add('nopart'); el.classList.add('labelled'); }
+      if (rails && this.ui.tour) this.ui.tour.payoffOk(); };   // the rails: ring OK (the rest of the page is live)
+    const pics = [whenLoaded(beforeImg), ...(part ? [whenLoaded(part)] : [])];
+    Promise.race([Promise.all(pics).then(() => part && measure()), new Promise(r => setTimeout(r, 6000))]).then(() => {
+      el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)
+      if (part && !mark.dataset.done) el.classList.add('nopart');
+      setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
+    // Ending the payoff: OK, or leaving the hangar mid-payoff (the plane build's review: it stayed parked until OK).
+    this.endPayoff = () => { el.remove(); if (box) box.hidden = false; this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
+    $('payOk').onclick = () => { this.ui.sfx.flap(); this.endPayoff();
       if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }
 
   // The capability line under the picture (M4): the cached estimate, or "working it out" while it runs.
+  // The range in the picture caption (the flying plane only): a span so the background estimate can swap it (#hCap).
   capHTML(s) {
     const km = capFor(s, areaOf(s.city) || null);
-    return km ? `<p id="hCap" class="small hcap">Your plane + nature can reach <b>~${km.toLocaleString('en-GB')} km</b></p>`
-      : `<p id="hCap" class="small hcap working">${estimating() ? 'Working out how far your plane can go' : 'How far can your plane go?'}<i class="dots"></i></p>`;
+    return km ? `<span id="hCap" class="hcap" title="How far your plane and nature can reach">~${km.toLocaleString('en-GB')} km</span>`
+      : `<span id="hCap" class="hcap working" title="Working out how far your plane can go">${estimating() ? '~ km' : ''}<i class="dots"></i></span>`;
   }
   // NATURE FINANCE (src/finance.js), from the 2010s: the desk's level, today's rate from your nature's health (a bar: fewer
   // seeds a crystal is better), the next level's rate previewed, and the TRADE button (once a landing, above the reserve).
@@ -183,8 +221,12 @@ export class FleetHangar {
     const btn = item.kind === 'fly' ? `<button id="hPreviewBuy" class="btn go" data-fly="${item.id}" type="button">FLY THIS</button>`
       : !item.open ? `<span class="small blocked">blocked until ${eraName(levelEra(item.level))}</span>`
       : `<button id="hPreviewBuy" class="btn ${free ? 'free' : ok ? 'go' : ''}" data-fbuy="${item.kind}:${item.id}" type="button" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(item)}</button>`;
+    // The strip (DESIGN-HANGAR-NATURE): the FULL name, what it does, the bars, and the (i) 'More about it' (moved off the rows).
+    const info = item.kind === 'fly' ? '' : `<button class="btn hp-info" data-finfo="${item.kind}:${item.id}" type="button">i More about it</button>`;
     return `<div id="hPreview" class="hpreview"><p class="hp-name"><b>${item.name}</b>${item.level ? ` <span class="small">level ${item.level}</span>` : ''}</p>`
-      + (bars.length ? statBarsHTML(bars) : `<p class="small">${tip('hangar-looks')}</p>`) + `<div class="hp-buy">${btn}</div></div>`;
+      + (item.kind === 'fly' ? '' : `<p class="small hp-what">${effectText(item)}</p>`)
+      + (bars.length ? statBarsHTML(bars) : `<p class="small">${tip('hangar-looks')}</p>`)
+      + (item.kind !== 'fly' && item.open && !ok ? `<p class="small need">${needText(s, item)}</p>` : '') + `<div class="hp-buy">${info}${btn}</div></div>`;
   }
 
   // The big picture at the top (400 x 176, the art session's hangar portrait): the plane you fly, or
@@ -193,33 +235,54 @@ export class FleetHangar {
     const f = fleetOf(s), id = this.preview && planeById(this.preview) ? this.preview : f.plane, pl = planeById(id), owned = !!f.planes[id];
     const tag = f.plane === id ? 'FLYING' : owned ? 'IN YOUR FLEET' : `OPENS IN ${ERAS[pl.era].id.toUpperCase()}`;
     const ghosts = this.ghostParts(s, id).map(g => `<img class="fghost" src="${g}" alt="">`).join('');
-    return `<div class="fpreview ${owned ? '' : 'locked'}"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}<div class="fpcap"><b>${pl.name}</b><span>${tag}</span></div></div>`;
+    // .fpic: the PICTURE (400:176), base + ghost layers stacked inside it. The caption (.fpcap) is OUTSIDE it, so a ghost can never
+    // be sized to the caption too (the user's screenshot, 2026-11-02: the ghost filled the whole box, stretched ~14% tall).
+    return `<div class="fpreview ${owned ? '' : 'locked'}"><div class="fpic"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}</div><div class="fpcap"><b>${pl.name}</b><span>${tag}</span>${f.plane === id ? this.capHTML(s) : ''}</div></div>`;
   }
 
-  // 1950s ... far future: done eras lit, this one marked, the bar to the next and what it brings.
-  timelineHTML(s) {
-    const p = eraProgress(s);
-    const dots = ERAS.map((e, i) => `<span class="fera ${i < p.index ? 'done' : i === p.index ? 'now' : ''}">${e.id === 'future' ? 'Future' : e.id}</span>`).join('');
-    const brings = p.next ? PLANES.filter(pl => pl.era === p.index + 1).map(pl => `the <b>${pl.name}</b>`)
-      .concat(p.index + 1 < 3 ? ['new systems and gadgets'] : []) : [];
-    return `<div class="ftimeline">${dots}</div>`
-      + (p.next ? `<div class="era-row"><span class="era-track"><span class="era-fill" style="width:${(p.frac * 100).toFixed(1)}%"></span></span></div>
-        <p class="small">To ${p.next.name}: <b>${Math.floor(p.done)} / ${Math.round(p.need)} min</b> of flying${brings.length ? `. Next: ${brings.join(', ')}.` : ''}</p>` : '<p class="small">Every era open!</p>');
+  // The sub-tabs (>= 40 px each), a dot on the ones with something new that are NOT the one showing (src/fresh.js).
+  tabsHTML(s) {
+    const d = dots(s, this.ui.freshOpts());
+    return `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
+      `<button class="btn ftab ${this.tab === k ? 'on' : ''}" data-ftab="${k}" type="button">${n}${k !== this.tab && d[hangarScope(k)] ? '<i class="dot"></i>' : ''}</button>`).join('')}</div>`;
+  }
+
+  // The era, ONE line (tap = the six eras and what the next one brings). It keeps the id #hNextPlane and the class .ftimeline
+  // (tour.js and the tours test point at the era line by that class).
+  eraLineHTML(s) {
+    const f = fleetOf(s), p = eraProgress(s), nxt = PLANES.find(pl => !f.planes[pl.id]);
+    const frac = p.next ? p.frac : 1, what = nxt ? `Next: <b>${nxt.name}</b>` : `Every era open`;   // (the era's name is in the sheet: this line must fit ONE row at 320)
+    return `<button class="ftimeline era-line" id="hNextPlane" type="button" aria-label="The eras"><span class="small">${what}</span>`
+      + `<span class="era-row"><span class="era-track"><span class="era-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span></span>`
+      + (p.next ? `<span class="small" title="minutes of flying">${Math.floor(p.done)}/${Math.round(p.need)}</span>` : '') + '</button>';
+  }
+  eraSheet(s) {
+    const p = eraProgress(s), brings = p.next ? PLANES.filter(pl => pl.era === p.index + 1).map(pl => pl.name).concat(p.index + 1 < 3 ? ['new systems and gadgets'] : []) : [];
+    const rows = ERAS.map((e, i) => `<p><b>${e.id === 'future' ? 'Far future' : e.id}</b> ${i < p.index ? 'done' : i === p.index ? 'now' : 'to come'}</p>`).join('');
+    showSheet({ eyebrow: 'ERAS', title: 'Flying through time', html: rows + (p.next ? `<p>To ${p.next.name}: ${Math.floor(p.done)} of ${Math.round(p.need)} min of flying${brings.length ? `. Brings: ${brings.join(', ')}.` : ''}</p>` : '<p>Every era is open!</p>') });
+  }
+  planeSheet(s) {
+    const pl = planeById(fleetOf(s).plane);
+    showSheet({ eyebrow: pl.name.toUpperCase(), title: 'How planes work here', body: 'Every plane flies the same way. Upgrades change what happens around it. A fuller plane makes less CO2 per passenger: that is why airlines fill every seat.' });
   }
 
   planeHTML(s) {
     const f = fleetOf(s), now = eraProgress(s).index;
     const cards = PLANES.map(pl => {
       const owned = !!f.planes[pl.id], flying = f.plane === pl.id;
-      if (!owned) return `<div class="fplane locked" data-pview="${pl.id}"><img src="${pl.portrait}" alt=""><b>${pl.name}</b><span class="small">Opens in ${eraName(pl.era)}</span></div>`;
-      return `<div class="fplane ${flying ? 'flying' : ''}" data-pview="${pl.id}"><img src="${pl.portrait}" alt=""><b>${pl.name}</b><span class="small">${ERAS[pl.era].id}. CO2 x${pl.co2.toFixed(2)}. Fares ${FARES[pl.id]} per 1,000 km</span>
-        ${flying ? '<span class="fbadge">FLYING</span>' : `<button class="btn go" data-fly="${pl.id}" type="button">FLY THIS</button>`}</div>`;
+      if (!owned) return '';   // planes not reached yet: the one 'Next plane' line below (DESIGN-HANGAR-NATURE: no row of silhouettes)
+      // An owned plane is a .rowc row too (Coordinator, 2026-11-01: one row component): tap = preview it in the box; the price
+      // column = FLY THIS (data-fly) or FLYING. (CO2 and fares moved to the preview strip, via the 'fly' bars.)
+      return `<div class="rowc price-top fplane-row ${flying ? 'sel flying' : ''}" data-row="fly:${pl.id}">`
+        + `<button class="rowc-tap" type="button" data-pview="${pl.id}" aria-label="Show the ${pl.name}"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${pl.name}</span></span>`
+        + `<span class="rowc-sub">${flying ? 'FLYING' : ERAS[pl.era].id}</span></button>`
+        + (flying ? '<span class="rowc-price rowc-done">FLYING</span>' : '') + '</div>';   // (FLY THIS is the strip's button: tap the row, then it; one primary)
     }).join('');
     const pl = planeById(f.plane), mine = f.planes[pl.id] || {};
     const lines = Object.entries(PLANE_LINES).map(([line, name]) =>
       this.lineHTML(s, { kind: 'plane', id: `${pl.id}.${line}`, name, levels: pl.lines[line], have: mine[line] || 0, eraOf: () => pl.era, now })).join('');
-    return `<div class="fplanes">${cards}</div><p class="small">Every plane flies the same way. Upgrades change what happens around it. A fuller plane makes less CO2 per passenger: that is why airlines fill every seat.</p>
-      <h3 class="tree-head">${pl.name.toUpperCase()}</h3>${lines}`;
+    return `<div class="fplanes-rows">${cards}</div>${this.eraLineHTML(s)}
+      <h3 class="tree-head">${pl.name.toUpperCase()} <button class="btn hp-info" data-planeinfo="1" type="button" aria-label="How planes work">i</button></h3>${lines}`;
   }
 
   groupHTML(s, list, kind) {
@@ -256,22 +319,23 @@ export class FleetHangar {
   }
 
   // One line: name, pips, what you have, the next level (what it does, price, BUY) or why it is blocked.
+  // One row (DESIGN-HANGAR-NATURE section 5a, the shared .rowc): ONE tap target (the whole left part, [data-ftap]) and the
+  // price as a SIBLING button ([data-fbuy]); line 1 = name + pips, line 2 = 'Next: <short name>' (fits at 375, no ellipsis).
+  // The full name, what it does and the (i) facts are in the preview strip (#hPreview) when the row is tapped.
   lineHTML(s, { kind, id, name, levels, have, eraOf, now }) {
-    const next = levels[have], pips = levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
-    let row = '<div class="next"><span><b>All done!</b></span></div>';
+    const next = levels[have], key = `${kind}:${id}`, pips = levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
+    let sub = 'All done!', price = '<span class="rowc-price rowc-done">MAX</span>', locked = false;
     if (next) {
-      const era = eraOf(have + 1), open = era <= now, free = !!s.freeUpgrade && have === 0 && open;
-      const ok = open && (free || canAfford(s, next));
-      const soon = Object.keys(next).some(k => SOON.includes(k)) ? ' <span class="soon">(coming soon)</span>' : '';
-      const short = open && !ok ? [Math.max(0, next.cost - s.seeds) && `${next.cost - s.seeds}<i class="seedicon"></i>`,
-        Math.max(0, (next.crystals || 0) - (s.crystals || 0)) && `${next.crystals - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ') : '';
-      const btn = !open ? `<span class="small blocked">blocked until ${eraName(era)}</span>`
-        : `<span class="buywrap"><button class="btn ${free ? 'free' : ok ? 'go' : ''}" data-fbuy="${kind}:${id}" type="button" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(next)}</button>${short ? `<span class="small need">need ${short} more</span>` : ''}</span>`;
-      row = `<div class="next"><span>Next: <b>${next.name}</b>. ${effectText(next)}${soon}</span>${btn}</div>`;
+      const era = eraOf(have + 1), open = era <= now, free = !!s.freeUpgrade && have === 0 && open, ok = open && (free || canAfford(s, next));
+      locked = !open;
+      sub = open ? `Next: ${shortName(next)}` : `Opens in ${ERAS[era].id}`;
+      price = open ? `<button class="rowc-price btn ${free ? 'free' : ok ? 'go' : ''}" data-fbuy="${key}" type="button" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(next)}</button>`
+        : `<span class="rowc-price rowc-locked">${ERAS[era].id}</span>`;
     }
-    const key = `${kind}:${id}`;
-    return `<div class="line fline ${next ? '' : 'maxed'} ${this.sel === key ? 'sel' : ''}" data-fline="${key}"><button class="infobtn" data-finfo="${key}" type="button" aria-label="About ${name}">i</button>`
-      + (next ? `<button class="frow-tap" data-ftap="${key}" type="button" aria-label="See what ${name} does">` : '<span class="frow-tap">')
-      + `<span class="name">${name}</span><span class="small">${have ? levels[have - 1].name : 'Not yet'}</span><span class="pips">${pips}</span>${next ? '<span class="tapme">TAP TO SEE</span></button>' : '</span>'}${row}</div>`;
+    const tap = next ? `<button class="rowc-tap" data-ftap="${key}" type="button" aria-label="See what ${name} does">` : '<span class="rowc-tap">';
+    return `<div class="rowc price-top ${next ? '' : 'maxed'} ${locked ? 'locked' : ''} ${this.sel === key ? 'sel' : ''}" data-row="${key}" data-fline="${key}">`
+      + `${tap}<span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${name}</span>${next && this.rowNew && this.rowNew.has(`${key}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
+      + `<span class="rowc-sub">${sub}</span>${next ? '</button>' : '</span>'}${price}</div>`;
   }
+
 }

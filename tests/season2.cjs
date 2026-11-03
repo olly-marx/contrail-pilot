@@ -113,7 +113,7 @@ const KEY = 'contrailPilot.v2';
   // every area AND the Pacific stepping stones are open: crossings to Honolulu/Nadi are real crossings since maxEra 3
   await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = [...Object.keys(a.AREAS), 'ocean']; s.flightSeconds = 1e6; (await import('/src/save.js')).writeSave(s); });
   await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
-  check(await p.evaluate(() => !!document.getElementById('jMore')), 'every area open: the MORE TO COME card shows');
+  check(await p.evaluate(() => !document.getElementById('jMore') && !!document.getElementById('jLap')), 'every area open (far future, the era 6 release): THE LAP is listed, no MORE TO COME');
   // 3. Reset: from zero again.
   await p.goto(URL + '?season2=reset'); await ready(p);
   g = await state();

@@ -35,7 +35,7 @@ const KEY = 'contrailPilot.v2';
   check(new RegExp(`${first}: [\\d,]+ km`).test(line), `the mission line should show the next airport (${first}) and its distance, got "${line}"`);
   await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.plane.y = 600; });
   // Wait for the crash and the results text, not a fixed time (it failed under load).
-  await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.result && document.getElementById('rMission').textContent.trim(); }, null, { timeout: 15000 }).catch(() => {});
+  await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.result && document.getElementById('rMissionTxt').textContent.trim(); }, null, { timeout: 15000 }).catch(() => {});
   let r = await scene(() => game.scene.getScene('game').result);
   check(r && r.mission && !r.mission.done, `a crash should not complete the mission: ${JSON.stringify(r && r.mission)}`);
   check((await getSave()).mission === 0, 'mission index should stay 0 after a crash');
@@ -51,11 +51,11 @@ const KEY = 'contrailPilot.v2';
   }
   r = await scene(() => game.scene.getScene('game').result);
   check(r && r.landed && r.mission && r.mission.done, `landing at PARIS should complete mission 1: ${JSON.stringify(r && r.mission)}`);
-  check(((await getSave()).unclaimed || []).some(u => u.key === 'mission:land'), 'its prize waits to be claimed');
+  check((r.rewards || []).some(u => u.key === 'mission:land') && !((await getSave()).unclaimed || []).length, 'its prize was PAID at the bank, nothing waits to be claimed (R8)');
   check((await getSave()).mission === 1, 'mission index should be 1 after mission 1');
   await p.waitForTimeout(1800);   // the results reveal starts 900 ms after landing
   const rm = await p.textContent('#rMission');
-  check(/MISSION DONE/.test(rm) && /Land with 5 seeds/.test(rm), `results should say MISSION DONE and name the next: ${rm}`);
+  check(/✓/.test(rm) && /Land/.test(rm), `results show mission 1 done on one line (R1; the next mission is the season-2 UP NEXT): ${rm}`);
 
   // 3b. Lola's flight: past PARIS, landed in BERLIN. Mission 1 is done anyway (it was stuck before).
   await setSave({ ...base, mission: 0 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
@@ -88,19 +88,20 @@ const KEY = 'contrailPilot.v2';
   const later = await p.evaluate(async () => { const M = await import('./src/missions.js'); const m = id => M.MISSIONS.find(x => x.id === id);
     return { n: M.MISSIONS.length, ids: M.MISSIONS.map(x => x.id),
       rewild: [M.blocked({ habitat: { woodland: [] } }, m('rewild')), M.blocked({ habitat: { woodland: ['pond'] } }, m('rewild'))],
-      world: [m('world').check({ landed: true }, { discovered: { mediterranean: 1, desert: 1, monsoon: 1, eastasia: 1, boreal: 1, plains: 1, tundra: 1, savanna: 1, rainforest: 1, islandforest: 1, bush: 1, steppe: 1 } }),
+      world: [m('world').check({ landed: true }, { discovered: { mediterranean: 1, desert: 1, monsoon: 1, eastasia: 1, boreal: 1, plains: 1, tundra: 1, savanna: 1, rainforest: 1, islandforest: 1, bush: 1, steppe: 1, polynesia: 1 } }),
         m('world').check({ landed: true, lap: true }, { discovered: { desert: 1 } })] }; });
   check(later.n === 13, `13 lesson missions: ${later.ids}`);
   check(String(later.rewild) === 'true,false', `Bring wildlife back needs a habitat project: ${later.rewild}`);
   check(String(later.world) === 'true,false', `the World tour needs every land discovered (a lap is not enough): ${later.world}`);
-  // 6b. In a real flight: a bird crash is counted and earns the secret Bird Strike badge to claim.
+  // 6b. In a real flight: a bird crash is counted and earns the secret Bird Strike badge (paid at once).
   await setSave({ ...base, missionsDone: first5, landings: 9 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#goBtn'); await flying();
   await scene(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.finish({ reason: 'Bird strike!\nYou hit a bird.' }); });
   await p.waitForTimeout(3500);
   const sv = await getSave();
-  check(sv.crashes && sv.crashes.bird === 1 && (sv.unclaimed || []).some(u => u.key === 'badge:birdstrike:1'), `a bird crash is counted and earns Bird Strike: crashes ${JSON.stringify(sv.crashes)}, ${JSON.stringify(sv.unclaimed)}`);
-  check(/NEW BADGE/.test(await p.textContent('#rBadges')) && /Bird Strike/.test(await p.textContent('#rBadges')), `results show the new badge: ${await p.textContent('#rBadges')}`);
+  check(sv.crashes && sv.crashes.bird === 1 && (sv.badgeTiers || {}).birdstrike === 1, `a bird crash is counted and earns Bird Strike (the card pays its prize itself since R1): crashes ${JSON.stringify(sv.crashes)}, tiers ${JSON.stringify(sv.badgeTiers)}`);
+  const badgeChips = await p.$$eval('#rChips [data-kind="badge"]', els => els.map(e => e.textContent).join(' | ')).catch(() => '');
+  check(/Bird Strike/.test(badgeChips), `results show the new badge as a chip: ${badgeChips}`);   // R1: chips (animal / badge / first), a tap opens the sheet
   await p.screenshot({ path: '/tmp/mission-birds.png' });
   // 7. All done.
   await setSave({ ...base, missionsDone: later.ids }); await p.reload(); await ready(p); await p.waitForTimeout(600);

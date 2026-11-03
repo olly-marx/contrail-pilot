@@ -1,5 +1,11 @@
 # Balance: the top end (sim engine, 2026-10-26)
 
+> **Pre-approach-fix (2026-10-29): the progression numbers here were measured with a model handicap.** The gap-flying player held
+> low for the runway from 700 km out even with storms still ahead (src/sim/player.js approach); that cost beginners' landings
+> everywhere (s 0.75 leg-3 landing 45.6% -> 67.0% without it). Landing-driven numbers here (landings, seeds, crossings, empty
+> runs, the skill fit) are UNDERSTATED for weaker players until re-run with the fixed player (branch feat/approach-fix). Do not
+> cite them as final; do not assume the conclusions flip either: re-run pending.
+
 How far can the best players fly, and what stops them? Measured with the gap-flying player
 (`src/sim/player.js`) against the user's own flights. Each number is from Node runs of the simulator with
 the commits listed at the end; the per-hazard rates for the user are estimates (see section 2).

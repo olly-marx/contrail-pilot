@@ -46,7 +46,7 @@ const KEY = 'contrailPilot.v2';
     });
 
     await p.addInitScript(([k, v, pl]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); if (pl) localStorage.setItem('contrailPilot.pilot', JSON.stringify(pl)); } }, [KEY, save, pilot]);
-    await p.goto(URL); await ready(p); await p.waitForTimeout(1200);
+    await p.goto(URL, { timeout: 30000 }); await ready(p); await p.waitForTimeout(1200);   // (the page's default is 4 s for CLICKS: a loaded machine took longer than that to LOAD the page, a flake seen twice)
     p.net = net;
     return p;
   };
@@ -80,7 +80,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('#tabFly'); await p.waitForTimeout(800);
   if (process.env.DEBUG) console.log(await tourHidden(p), (await save(p)).tours, await p.evaluate(() => [document.getElementById('hangar').hidden, document.getElementById('title').hidden, document.querySelector('#tour .tbubble p').textContent]));
   check(await tourHidden(p) && ((await save(p)).tours || []).includes('name'), 'the name tour ends and is remembered');
-  await p.reload(); await ready(p); await p.waitForTimeout(1200);
+  await p.reload({ timeout: 30000 }); await ready(p);   /* (the page default is 4 s: a reload under load took longer, 2026-11-03; only THIS call gets 30 s) */ await p.waitForTimeout(1200);
   check(await tourHidden(p), 'and does not come back');
   await p.close();
 

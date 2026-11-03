@@ -1,5 +1,5 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
-import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, getCode, ensureCode, pilotLogin, outboxSize, onlineOff } from './online.js';
+import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, getCode, ensureCode, pilotLogin, outboxSize, onlineOff, namesOpen } from './online.js';
 import { writeSave } from './save.js';
 import { MISSIONS } from './missions.js';
 import { km } from './config.js';
@@ -105,9 +105,10 @@ export class PilotScreens {
     this.renderStats();
     this.renderCode();
     // Season 2 is offline by design: no name form, no code, no login (they would only say 'No internet right now').
-    const off = onlineOff();
-    $('pOffNote').hidden = !off;
-    if (off) for (const id of ['pName', 'pEdit', 'pChange', 'pCodeBox', 'pHave', 'pLogin']) $(id).hidden = true;
+    // In ?preview=1 the NAME form stays (local only; codes and login stay hidden).
+    const off = onlineOff(), names = namesOpen();
+    $('pOffNote').hidden = !off || names;
+    if (off) for (const id of names ? ['pCodeBox', 'pHave', 'pLogin'] : ['pName', 'pEdit', 'pChange', 'pCodeBox', 'pHave', 'pLogin']) $(id).hidden = true;
   }
 
   edit(on) {

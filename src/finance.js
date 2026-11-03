@@ -7,7 +7,7 @@
 //               rebuild there: the "new land, new nature" story).
 //   rate      = max(floor, base - slope x B) seeds per crystal.     Level 1 at B 40: 30:1; at B 80: 20:1 (the measured point).
 //   you keep  = the reserve; at most `cap` crystals per landing.
-// Levels 3 (bonds) and 4 (dividend) come with the 2030s / far-future releases.
+// Level 3 (bonds) opens in the 2030s, level 4 (the dividend) in the far future.
 import { AREAS } from './areas.js';
 import { city } from './network.js';
 import { biodiversity } from './nature.js';
@@ -21,6 +21,9 @@ export const FINANCE = {
     // The 2030s: BONDS. Lock `lock` seeds for `landings` landings; get them back plus floor(B / perB) crystals, B read at
     // PAYOUT (nature pays interest only if you keep it healthy). At most `most` bonds at once; the reserve still holds.
     { name: 'Biodiversity bonds', cost: 5000, era: 4, base: 40, slope: 0.30, floor: 16, reserve: 3500, cap: 15, bond: { lock: 1000, landings: 10, perB: 4, most: 3 } },
+    // The far future: the NATURE DIVIDEND. Each landing in an area whose OWN biodiversity is >= minBio pays perLanding crystal(s),
+    // collected on the next hangar visit (at most `cap` a visit). Bonds stay.
+    { name: 'Nature dividend', cost: 8000, era: 5, base: 40, slope: 0.30, floor: 16, reserve: 3000, cap: 20, bond: { lock: 1000, landings: 10, perB: 4, most: 3 }, dividend: { minBio: 60, perLanding: 1, cap: 3 } },
   ],
 };
 export const financeLevel = save => Math.min(FINANCE.levels.length, (save.finance && save.finance.level) || 0);
@@ -38,7 +41,10 @@ export const rate = (save, level = financeLevel(save)) => rateAt(level, natureHe
 export function canTake(save) {
   const lv = financeLevel(save), L = FINANCE.levels[lv - 1];
   if (!L || !financeOpen(save) || (save.finance.tradedAt ?? -1) === (save.landings || 0)) return 0;
-  return Math.max(0, Math.min(L.cap, Math.floor(((save.seeds || 0) - L.reserve) / rate(save))));
+  // Save up for the next desk level (sim chat + Coordinator, 2026-10-29): while it exists and its era is open, keep its price
+  // too, so the player reaches bonds and the dividend instead of trading down to the reserve every landing.
+  const N = FINANCE.levels[lv], keep = N && eraProgress(save).index >= (N.era ?? FINANCE.era) ? Math.max(L.reserve, N.cost) : L.reserve;
+  return Math.max(0, Math.min(L.cap, Math.floor(((save.seeds || 0) - keep) / rate(save))));
 }
 export function trade(save) {
   const n = canTake(save); if (!n) return 0;
@@ -74,4 +80,15 @@ export function payBonds(save) {
   save.seeds = (save.seeds || 0) + seeds; save.crystals = (save.crystals || 0) + crystals;
   save.finance.bonds = bonds(save).filter(x => !due.includes(x));
   return { seeds, crystals };
+}
+
+// ---------- the dividend (level 4) ----------
+// The area you are in pays if its own land is healthy: landings since the last collection, at most `cap`.
+export function areaBio(save) { const k = (save.areas || []).find(a => AREAS[a] && AREAS[a].cities.includes(save.city)); const c = k && city(AREAS[k].start); return c ? biodiversity(save, c.region) : 0; }
+export function payDividend(save) {
+  const L = FINANCE.levels[financeLevel(save) - 1], d = L && L.dividend; if (!d) return 0;
+  const since = (save.landings || 0) - (save.finance.divAt ?? save.landings ?? 0);
+  save.finance.divAt = save.landings || 0;
+  if (since <= 0 || areaBio(save) < d.minBio) return 0;
+  const n = Math.min(d.cap, since * d.perLanding); save.crystals = (save.crystals || 0) + n; return n;
 }

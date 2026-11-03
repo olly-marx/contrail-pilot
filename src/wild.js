@@ -7,7 +7,7 @@
 // its cities, or flown over it).
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
-import { LINES, tabOf } from './upgrades.js';
+import { LINES, tabOf, level, nextLevel, unlocked, unlockText, needsMoreNature, canBuy, freeParcels } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject } from './nature.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
 import { CITIES, S2_CITIES } from './cities.js';
@@ -19,6 +19,9 @@ import { landTrees, countText } from './landtrees.js';
 import { broughtBack } from './weboflife.js';
 import { isSeason2 } from './missions2.js';
 import { nextHere } from './nexthere.js';
+import { dots, markSeen, natureScope } from './fresh.js';
+import { showSheet } from './sheet.js';
+import { fresh } from './fresh.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -27,11 +30,11 @@ const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';
 // Regions with a drawn field (assets/ui/field-<region>.png); the others show a plain panel for now.
-const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush', 'steppe'];   // PixelLab backdrops, 2026-10-24
+const FIELD_ART = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'boreal', 'plains', 'tundra', 'savanna', 'rainforest', 'islandforest', 'bush', 'steppe', 'polynesia'];   // PixelLab backdrops, 2026-10-24
 
 // The land a player started in (season 2: their home area's start city), so NATURE opens there (the regions run,
 // 2026-10-28: a Punta Arenas or Auckland start opened NATURE on the UK's woodland).
-export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = (a && a.start) || save.city, c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
+export const homeRegion = save => { const a = save.homeArea && AREAS[save.homeArea], n = save.homeCity || (a && a.start) || save.city,   /* the CHOSEN home city's land (2026-10-30); old saves: the area start */ c = CITIES.find(x => x.name === n) || S2_CITIES.find(x => x.name === n); return (c && REGION_NAMES[c.region] && c.region) || null; };
 // Been there: the UK always; the home land; other regions once flown over, or landed in one of their cities.
 export function discovered(save, region) {
   if (region === 'woodland' && !(isSeason2(save) && homeRegion(save) && homeRegion(save) !== 'woodland')) return true;   // the UK: always, except for a season-2 player who started elsewhere
@@ -60,48 +63,40 @@ export class WildScreen {
     if (!this.region) this.region = homeRegion(s) || 'woodland';
     if (!discovered(s, this.region)) this.region = homeRegion(s) || 'woodland';
     $('wSeeds').textContent = s.seeds; $('wCrystals').textContent = s.crystals || 0;
+    // R6: what is NEW on each land, from src/fresh.js. Taken BEFORE this render marks the land seen, per scope, and kept for the rest of the
+    // visit (ui.go('nature') empties it), so a dot on a row / an animal / a tree outlives the render that clears the land's tab dot.
+    const fo = this.ui.freshOpts ? this.ui.freshOpts() : {}, fr = fresh(s, fo), dl = dots(s, fo);
+    this.rowNew = this.rowNew || {};
+    const sc = natureScope(this.region); this.rowNew[sc] = this.rowNew[sc] || new Set(); (fr[sc] || []).forEach(k => this.rowNew[sc].add(k));
+    const isNew = key => !!(this.rowNew[sc] && this.rowNew[sc].has(key));
+    this.isNew = isNew;
     $('wRegions').innerHTML = Object.entries(REGION_NAMES).map(([id, name]) => {
       const open = discovered(s, id);
       return `<button class="btn ${id === this.region ? 'on' : ''}" type="button" data-region="${id}" ${open ? '' : 'disabled'}
-        title="${open ? '' : 'Fly there to discover it'}">${esc(name)}${open ? '' : ' <small>fly there</small>'}</button>`;
+        title="${open ? '' : 'Fly there to discover it'}">${esc(name)}${open ? '' : ' <small>fly there</small>'}${open && id !== this.region && dl[natureScope(id)] ? '<i class="dot"></i>' : ''}</button>`;
     }).join('');
+    const cur = $('wRegions').querySelector('.on'); if (cur) $('wRegions').scrollLeft = Math.max(0, cur.offsetLeft - 24);   // the land you are on is the first thing in view
     $('wRegions').querySelectorAll('[data-region]:not([disabled])').forEach(b => b.onclick = () => {
       if (b.dataset.region === this.region) return;
-      sfx.flap(); this.region = b.dataset.region; this.openTiers = []; this.render();
+      sfx.flap(); this.region = b.dataset.region; this.openTiers = []; this.toolId = null; this.render();
     });
     // Swipe sideways to change region (0.11.0): the next / previous region tab that is open (src/swipe.js).
     const goRegion = d => { const open = [...$('wRegions').querySelectorAll('[data-region]:not([disabled])')], i = open.findIndex(b => b.dataset.region === this.region) + d; if (i >= 0 && i < open.length) open[i].click(); };
     onSwipe($('nature'), { next: () => goRegion(1), prev: () => goRegion(-1) });
-    // Whose meter, where its projects come from, and how to raise it (0.11.1: the system was unclear).
-    $('wMeter').innerHTML = meterHTML(s, this.bio(), this.region);
-    // Below the pinned picture + meter (bug-fix chat pins them in .wpin), so this scrolls with the list.
-    let more = $('wMeterMore');
-    if (!more) { more = document.createElement('p'); more.id = 'wMeterMore'; more.className = 'small w-how'; ($('wMeter').closest('.wpin') || $('wMeter')).after(more); }
-    // "Next here" (src/nexthere.js): the next tree, the next project tier and an animal to look out for.
-    let nx = $('wNext');
-    if (!nx) { nx = document.createElement('div'); nx.id = 'wNext'; nx.className = 'w-next'; more.after(nx); }
-    const n = nextHere(s, this.region), bar = (h, k) => `<span class="w-nbar"><i style="width:${Math.round(100 * Math.min(1, h / k))}%"></i></span> ${Math.min(h, k)}/${k}`;
-    nx.innerHTML = '<p class="label">Next here</p>' + [
-      n.tree && `<div class="w-nrow"><b>${esc(n.tree.name)}</b>: ${esc(n.tree.rule.toLowerCase())} ${bar(n.tree.have, n.tree.need)}</div>`,
-      n.tier && `<div class="w-nrow"><b>Tier ${n.tier.tier} projects</b>: biodiversity ${bar(n.tier.have, n.tier.need)}</div>`,
-      n.animal && `<div class="w-nrow"><b>${esc(n.animal.name)}</b>: ${n.animal.ready ? 'out there now, look out on your flights!' : 'not back yet: see the projects below'}</div>`,
-    ].filter(Boolean).join('') || '<div class="w-nrow">Everything here is open. Wonderful!</div>';
-    more.innerHTML = `Projects from ${esc(REGION_SOURCE[this.region])}. <b>Raise it:</b> plant this land's trees as you fly over it, and finish its projects. More life appears below you.`;
+    // The meter, with an (i) that holds what used to be the intro paragraph and the NEXT HERE box (R6: the page says one thing, NEXT).
+    $('wMeter').innerHTML = meterHTML(s, this.bio(), this.region) + '<button class="btn hp-info w-i" type="button" data-minfo aria-label="How this land works">i</button>';
+    $('wMeter').querySelector('[data-minfo]').onclick = () => this.landSheet();
+    this.renderNext();
     this.renderScene();
-    this.renderProjects();
+    this.renderProjects(); this.renderStrip();
+    // a planting card is previewed: its trees, ghosted in the land (field.ghostTrees)
+    if (this.toolId && this.field) { const line = LINES.find(l => l.id === this.toolId), nx = line && nextLevel(s, line); if (nx) this.field.ghostTrees(nx.parcels || 2); else this.toolId = null; }
     // This land's 5 trees (research/PROPOSAL-TREES.md): open ones in colour with their count toward the cap
     // ("Oak 4/9"), shut ones as silhouettes with the one thing that opens them (src/landtrees.js).
     let row = $('wLandTrees');
     if (!row) { row = document.createElement('div'); row.id = 'wLandTrees'; row.className = 'w-landtrees'; $('wTrees').before(row); }
     const trees = landTrees(s, this.region);
-    // A tree that opened since you last looked: one small card, once (save.treesSeen[land] = slots already shown).
-    const seen = ((s.treesSeen = s.treesSeen || {})[this.region] = s.treesSeen[this.region] || [0]);
-    const fresh = trees.filter(t => t.open && !seen.includes(t.slot));
-    if (fresh.length) {
-      fresh.forEach(t => seen.push(t.slot)); writeSave(s);
-      this.ui.toast(`New tree: ${fresh.map(t => t.name).join(', ')}!`, fresh[0].fact || 'Plant it as you fly over this land.', 'good', 5);
-    }
-    row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">
+    row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">${t.open && isNew(`tree:${t.slot}`) ? '<i class="dot"></i>' : ''}
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
     // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the HOME land's tab (the
     // non-UK starter audit, 2026-10-28: a Melbourne or Lagos player had to visit the UK's tab to get them).
@@ -109,21 +104,16 @@ export class WildScreen {
     // Season 2: the planting tools wait for lesson 5 (trees), one new thing at a time (research/FLOW-FIRST-HOUR.md).
     const treesTime = !isSeason2(s) || (s.missionsDone || []).includes('L4');
     $('wTrees').hidden = !uk || !treesTime;
-    if (row.previousElementSibling) row.previousElementSibling.hidden = !trees.length;   // the 'Trees' heading
-    $('wTrees').innerHTML = uk ? LINES.filter(l => tabOf(l) === 'nature').map(l => this.ui.lineCardHTML(l)).join('') : '';
-    $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => this.ui.buy(b.dataset.buy));
-    $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = () => this.ui.showInfo(b.dataset.info));
-    // Tap a planting card (not its buttons) to PREVIEW it: the trees it would add, ghosted in the land.
-    $('wTrees').querySelectorAll('.line[data-line]').forEach(c => c.onclick = e => {
-      if (e.target.closest('button')) return;
-      const on = !c.classList.contains('previewing'); $('wTrees').querySelectorAll('.line').forEach(x => x.classList.remove('previewing'));
-      if (!this.field) return; sfx.flap();
-      if (!on) { this.field.clearGhosts(); return; }
-      c.classList.add('previewing');
-      const line = LINES.find(l => l.id === c.dataset.line), lv = (this.save.levels || {})[c.dataset.line] || 0, next = line && line.levels[lv];
-      this.field.ghostTrees((next && next.parcels) || 2);
-    });
+    row.hidden = !trees.length;
+    $('wTrees').innerHTML = uk ? LINES.filter(l => tabOf(l) === 'nature').map(l => this.toolRowHTML(l)).join('') : '';
+    $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ui.buy(b.dataset.buy); });
+    $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ui.showInfo(b.dataset.info); });   // the (i) = the line's info (the rails' new-line step taps it)
+    // Tap a planting card to PREVIEW it (the user, 2026-11-03: 'the ghost preview can come back'): the trees it would add, ghosted in the land; tap again to put them away.
+    $('wTrees').querySelectorAll('[data-tpreview]').forEach(b => b.onclick = () => { sfx.flap(); const id = b.dataset.tpreview; this.toolId = this.toolId === id ? null : id; this.previewId = null; this.render(); });
+    $('wTrees').querySelectorAll('[data-buy]').forEach(b => { const go = b.onclick; b.onclick = e => { this.toolId = null; if (this.field) this.field.clearGhosts(); go(e); }; });   // a buy ends the preview
     this.renderFound();
+    // This land is SHOWING (NATURE visible, not a refresh behind another screen): what it shows is now seen (src/fresh.js).
+    if (!$('nature').hidden && markSeen(s, natureScope(this.region), fo)) this.ui.persist();
   }
 
   // The land as a 2D field you look across (2026-10-22): the habitat features of every project done,
@@ -147,35 +137,87 @@ export class WildScreen {
 
   found(id) { return !!(this.save.found || {})[id]; }
 
+  // R6: the ONE primary on NATURE. "Fund <project>" = the cheapest affordable project of an open tier; else the cheapest unaffordable one
+  // with what it still needs; else the tree that opens next (src/nexthere.js); else nothing to do. One line, one button: the SAME buy path as
+  // the row and the strip (this.buy).
+  renderNext() {
+    const el = $('wNextLine'); if (!el) return;
+    const s = this.save, done = this.done(), bio = this.bio(), n = nextHere(s, this.region);
+    const open = this.projects.filter(p => bio >= (TIERS.find(t => t.tier === p.tier) || { needs: 0 }).needs && !done.includes(p.id)).sort((a, b) => a.cost - b.cost || (a.crystals || 0) - (b.crystals || 0));
+    const free = this.freeProjectId(), can = p => p.id === free || (s.seeds >= p.cost && (s.crystals || 0) >= (p.crystals || 0));
+    const pick = open.find(can) || open[0];
+    if (pick) {
+      const ok = can(pick), short = [Math.max(0, pick.cost - s.seeds) && `${pick.cost - s.seeds}<i class="seedicon"></i>`, Math.max(0, (pick.crystals || 0) - (s.crystals || 0)) && `${(pick.crystals || 0) - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ');
+      el.innerHTML = `<div class="rowc lead" id="wNextRow"><span class="rowc-tap"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">NEXT: ${esc(pick.row || pick.name)}</span></span>`
+        + `<span class="rowc-sub">${ok ? 'Fund it now' : `need ${short} more`}</span></span>`
+        + `<button class="rowc-price btn ${pick.id === free ? 'free' : ok ? 'go' : ''}" type="button" data-fund="${pick.id}" ${ok ? '' : 'disabled'}>${pick.id === free ? 'FREE!' : cost(pick)}</button></div>`;
+      el.querySelector('[data-fund]').onclick = e => { e.stopPropagation(); this.buy(e.currentTarget.dataset.fund); };
+    } else if (n.tree) {
+      el.innerHTML = `<div class="rowc lead" id="wNextRow"><span class="rowc-tap"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">NEXT: ${esc(n.tree.name)}</span></span><span class="rowc-sub">${esc(n.tree.rule.toLowerCase())}</span></span></div>`;
+    } else el.innerHTML = '';
+  }
+  freeProjectId() {
+    const s = this.save, done = this.done();
+    return isSeason2(s) && (s.missionsDone || []).includes('L2') && !s.freeProjectGiven ? (this.projects.find(p => p.tier === 1 && !done.includes(p.id)) || {}).id : null;
+  }
+  // The (i) on the meter: what the intro paragraph and the NEXT HERE box said, now one short sheet.
+  landSheet() {
+    const n = nextHere(this.save, this.region), bar = (h, k) => `${Math.min(h, k)}/${k}`;
+    showSheet({ eyebrow: 'NATURE', title: REGION_NAMES[this.region], html: `<p>Projects from ${esc(REGION_SOURCE[this.region])}. <b>Raise it:</b> plant this land's trees as you fly over it, and finish its projects. More life appears below you.</p>`
+      + [n.tree && `<p><b>${esc(n.tree.name)}</b>: ${esc(n.tree.rule.toLowerCase())} ${bar(n.tree.have, n.tree.need)}</p>`,
+        n.tier && `<p><b>Tier ${n.tier.tier}</b>: biodiversity ${bar(n.tier.have, n.tier.need)}</p>`,
+        n.animal && `<p><b>${esc(n.animal.name)}</b>: ${n.animal.ready ? 'out there now, look out on your flights!' : 'not back yet: see the projects'}</p>`].filter(Boolean).join('') });
+  }
+
+  // R6: a planting tool (tree parcels, soil, nursery) as a shared `.rowc` row, under the trees on the home land. The rails' contract:
+  // `[data-buy="<line id>"]` is the row's price button, `[data-info="<line id>"]` its tap area (tour.js points at both).
+  toolRowHTML(line) {
+    const s = this.save, cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
+    if (!unlocked(s, line)) {   // a branch shows its name and what it needs; other locked lines stay a surprise
+      return `<div class="rowc locked" data-line="${line.id}"><span class="rowc-tap"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${line.requires ? esc(line.name) : '???'}</span></span><span class="rowc-sub">${esc(unlockText(line, s))}</span></span></div>`;
+    }
+    const have = level(s, line.id), next = nextLevel(s, line), waitBio = needsMoreNature(s, line);
+    const isFree = (!!s.freeUpgrade || freeParcels(s, line.id)) && next && have === 0 && !waitBio, ok = isFree || canBuy(s, line);
+    const short = next && !ok && !waitBio ? [Math.max(0, next.cost - s.seeds) && `${next.cost - s.seeds}<i class="seedicon"></i>`, Math.max(0, (next.crystals || 0) - (s.crystals || 0)) && `${next.crystals - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ') : '';
+    const pips = line.levels.map((_, i) => `<span class="pip ${i < have ? 'on' : ''}"></span>`).join('');
+    const price = !next ? '<span class="rowc-price rowc-done">MAX</span>'
+      : waitBio ? `<span class="rowc-price rowc-locked">bio ${next.needsBio}</span>`
+      : `<button class="rowc-price btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>`;
+    const sub = !next ? 'All done!' : short ? `need ${short} more` : `Next: ${esc(next.name)}`;
+    return `<div class="rowc price-top tool ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''} ${this.toolId === line.id ? 'previewing sel' : ''}" data-line="${line.id}">`
+      + `<button class="rowc-tap" data-tpreview="${line.id}" type="button" aria-label="See where ${esc(line.name)} would grow trees"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span>${this.isNew && this.isNew(`line:${line.id}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
+      + `<span class="rowc-sub">${sub}</span></button>${price}<button class="rowc-info btn" data-info="${line.id}" type="button" aria-label="About ${esc(line.name)}">i</button></div>`;
+  }
+
   renderProjects() {
     // In tiers (the user, 2026-10-22: all 11 at once was confusing): open tiers show their projects;
     // the next locked tier is one card saying what opens it; later tiers stay hidden.
     const s = this.save, done = this.done(), bio = this.bio(), P = this.projects;
     // R11b: season 2's first nature project is FREE (the user, 2026-10-27): the first tier-1 project, once lesson 2 is done.
-    const freeId = isSeason2(s) && (s.missionsDone || []).includes('L2') && !s.freeProjectGiven ? (P.find(p => p.tier === 1 && !done.includes(p.id)) || {}).id : null;
+    const freeId = this.freeProjectId();
     const card = p => {
       const have = done.includes(p.id), free = p.id === freeId, ok = !have && (free || (s.seeds >= p.cost && (s.crystals || 0) >= p.crystals));
       const btn = have ? '<span class="w-done">DONE</span>'
         : `<button class="btn ${free ? 'free' : ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(p)}</button>`;
-      return `<div class="line project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing' : ''}" data-pline="${p.id}">
-        <div><div class="name"><button class="w-pname" type="button" data-preview="${p.id}" ${have ? 'disabled' : ''}><img class="w-icon" src="assets/ui/proj-${p.id}.png" alt="" onerror="this.style.visibility='hidden'">${esc(p.name)}</button></div><div class="small">${esc(p.short)}</div>
-        <div class="w-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</div>${this.webHTML(p)}</div>
-        <button class="infobtn" type="button" data-pinfo="${p.id}" aria-label="About ${esc(p.name)}">i</button>
-        <div class="next">${btn}</div></div>`;
+      // The shared row (DESIGN-HANGAR-NATURE §5a): icon | short name / one line | price. The full story is in the strip.
+      const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? (p.chain[0].length <= 22 ? p.chain[0] : 'Helps this land') : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings back: ${w.length} animal${w.length > 1 ? 's' : ''}`; })();   /* (an unfound animal is not named: the surprise stays) */
+      return `<div class="rowc project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing sel' : ''}" data-pline="${p.id}">`
+        + `<button class="rowc-tap" type="button" data-preview="${p.id}"><img class="rowc-icon" src="assets/ui/proj-${p.id}.png" alt="">`
+        + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span>${!have && this.isNew && this.isNew(`project:${p.id}`) ? '<i class="dot row-new"></i>' : ''}</span><span class="rowc-sub">${esc(sub)}</span></button>`
+        + `${have ? '<span class="rowc-price w-done">DONE</span>' : btn.replace('class="btn ', 'class="rowc-price btn ')}</div>`;
     };
     const how = 'Plant trees and finish the projects above!';   // every land takes trees (plantedIn)
     const open = TIERS.filter(t => bio >= t.needs), next = TIERS.find(t => bio < t.needs);
     $('wProjects').innerHTML = open.map(t => {
       const ps = P.filter(p => p.tier === t.tier), n = ps.filter(p => done.includes(p.id)).length;
       const finished = n === ps.length, shown = !finished || (this.openTiers || []).includes(t.tier);   // a finished tier folds to one line
-      return `<p class="w-tier">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? '&#10003; ' : ''}${n} / ${ps.length} done</span>`
+      return `<p class="w-tier">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? 'done ' : ''}${n}/${ps.length}</span>`
         + (finished ? ` <button class="btn tiny" type="button" data-tier-toggle="${t.tier}">${shown ? 'hide' : 'show'}</button>` : '') + '</p>'
         + (shown ? ps.map(card).join('') : '');
-    }).join('') + (next ? `<div class="line project locked" data-tier-locked="${next.tier}"><div><div class="name">Tier ${next.tier}: ${esc(next.name)}</div>
-        <div class="small">Reach Biodiversity <b>${next.needs}</b> to unlock ${P.filter(p => p.tier === next.tier).length} more projects. ${how}</div></div></div>` : '');
+    }).join('') + (next ? `<p class="w-tier w-tier-lock" data-tier-locked="${next.tier}">Tier ${next.tier}: ${esc(next.name)} <span class="small">Biodiversity ${next.needs} to open (now ${Math.floor(bio)})</span></p>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     // Tap a card (not its buttons) to PREVIEW it: ghosted in the land, the bar's gain, the animals it brings highlighted.
-    $('wProjects').querySelectorAll('.line.project[data-pline]:not(.maxed)').forEach(c => c.onclick = e => { const pb = e.target.closest('button'); if (pb && !pb.dataset.preview) return; sfx.flap(); this.preview(c.dataset.pline); });
+    $('wProjects').querySelectorAll('.project[data-pline] .rowc-tap').forEach(   /* done ones too: their info (regions.cjs found it gone) */b => b.onclick = () => { sfx.flap(); this.preview(b.dataset.preview); });
     $('wProjects').querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); });   // tap an animal: its card
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
     $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
@@ -199,15 +241,33 @@ export class WildScreen {
 
   // The preview of one project (or null to clear): see what it does BEFORE paying.
   preview(id) {
+    if (this.toolId) { this.toolId = null; document.querySelectorAll('#wTrees .rowc.previewing').forEach(r => r.classList.remove('previewing', 'sel')); }   // one preview at a time (the project's own ghost replaces the planting one)
     this.previewId = this.previewId === id ? null : id;
-    document.querySelectorAll('#wProjects .line.project').forEach(c => c.classList.toggle('previewing', c.dataset.pline === this.previewId));
-    document.querySelectorAll('#wProjects .w-webpic').forEach(b => b.classList.toggle('w-hi', !!this.previewId && !!b.closest(`[data-pline="${this.previewId}"]`)));
+    document.querySelectorAll('#wProjects .project').forEach(c => { const on = c.dataset.pline === this.previewId; c.classList.toggle('previewing', on); c.classList.toggle('sel', on); });
+    this.renderStrip();
+    $('wScene').classList.toggle('previewing', !!this.previewId);   // the 'Bare land' note steps aside so the ghost shows
     const tr = document.querySelector('#wMeter .mtrack'); if (tr) tr.querySelectorAll('.mghost, .mgain').forEach(g => g.remove());
     if (!this.previewId) { this.field && this.field.clearGhosts(); return; }
+    if (this.done().includes(this.previewId)) return;   // a done project: its strip (info, DONE), no ghost or gain
     this.field && this.field.ghost(this.previewId);
     const b0 = this.bio(), copy = JSON.parse(JSON.stringify(this.save)); copy.seeds = 1e9; copy.crystals = 1e9;
     const b1 = fundProject(copy, this.region, this.previewId) ? biodiversity(copy, this.region) : b0;
     if (tr && b1 > b0) tr.insertAdjacentHTML('beforeend', `<span class="mghost" style="left:${b0}%;width:${b1 - b0}%"></span><b class="mgain">+${Math.round(b1 - b0)}</b>`);
+  }
+
+  // The preview strip (DESIGN-HANGAR-NATURE §4), pinned under the land beside the ghost: the full name, what it does,
+  // who it brings back (their pictures), More about it, and the same BUY as the row (data-project: one buy path).
+  renderStrip() {
+    const el = $('wStrip'); if (!el) return;
+    const p = this.previewId && this.projects.find(x => x.id === this.previewId);
+    el.hidden = !p; if (!p) { el.innerHTML = ''; return; }
+    const row = document.querySelector(`#wProjects .project[data-pline="${p.id}"] .rowc-price`);
+    const need = this.save.seeds < p.cost || (this.save.crystals || 0) < (p.crystals || 0) ? `<p class="small need">need ${[Math.max(0, p.cost - this.save.seeds) && `${p.cost - this.save.seeds}<i class="seedicon"></i>`, Math.max(0, (p.crystals || 0) - (this.save.crystals || 0)) && `${(p.crystals || 0) - (this.save.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ')} more</p>` : '';
+    el.innerHTML = `<p class="ws-name"><b>${esc(p.name)}</b></p>${need}<p class="ws-chain">${p.chain.map(esc).join(' <b>&rarr;</b> ')}</p>${this.webHTML(p)}`
+      + `<div class="ws-foot"><button class="linkbtn" type="button" data-pinfo="${p.id}">More about it &rsaquo;</button>${row ? row.outerHTML : ''}</div>`;
+    el.querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
+    el.querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
+    el.querySelectorAll('.w-webpic[data-species]').forEach(b => { b.classList.add('w-hi'); b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); }; });   // the animals it brings, highlighted
   }
 
   buy(id) {
@@ -247,7 +307,7 @@ export class WildScreen {
     $('wFoundHead').textContent = `Wildlife found: ${n} / ${all.length}`;
     $('wFound').innerHTML = all.map(w => {
       const got = this.found(w.id), r = w.c.rarity || 'common';
-      return `<button class="w-card ${got ? 'got' : ''} r-${r}" type="button" data-species="${w.id}">${picHTML(w)}<span>${got ? esc(w.name) : '???'}</span><small class="w-rarity">${RARITY[r].name}</small></button>`;
+      return `<button class="w-card ${got ? 'got' : ''} r-${r}" type="button" data-species="${w.id}">${got && this.isNew && this.isNew(`animal:${w.id}`) ? '<i class="dot"></i>' : ''}${picHTML(w)}<span>${got ? esc(w.name) : '???'}</span><small class="w-rarity">${RARITY[r].name}</small></button>`;
     }).join('');
     $('wFound').querySelectorAll('[data-species]').forEach(b => b.onclick = () => this.speciesInfo(b.dataset.species));
   }
@@ -282,7 +342,7 @@ function picHTML(w, cls = '') {
 function orgHTML(o) {
   return `<div class="w-org"><p class="label">Who does this?</p><p><b>${esc(o.name)}</b></p>
     <button class="btn green gate w-gate" type="button"><span class="gate-fill"></span><span class="gate-label">ASK A GROWN-UP</span></button>
-    <div class="links w-orglinks" hidden><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">Help them (donate) &gt;</a>` : ''}</div>
+    <div class="links w-orglinks" hidden><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">${esc(o.donateLabel || 'Help them (donate)')} &gt;</a>` : ''}</div>
     <p class="small w-gatemsg">Grown-ups: press and HOLD the button for 2 seconds.</p></div>`;
 }
 // Hold 2 s to show the links (as the Citizen Zoo gate in ui.js; links hide again after 10 s).

@@ -22,8 +22,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
       s.graceUntil = 0; s.distancePx = 5000000 * WORLD.pxPerMetre; s.landedAt = s.path[1]; s.finish(l ? { landed: true } : { reason: 'Bird strike!\nYou hit a bird.' });
       return s.result.earned.filter(e => e.label === 'Passenger fares').map(e => e.n); }, landed);
     let row = null;
-    if (landed) { await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 }); await p.click('#results'); await p.waitForTimeout(800);
-      row = await p.evaluate(() => !document.getElementById('rFareRow').hidden && document.getElementById('rFare').textContent); }
+    if (landed) { await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 }); await p.click('#results', { position: { x: 4, y: 4 } }); await p.waitForTimeout(800);
+      await p.click('#rMaths'); await p.waitForSelector('#sheet .rc-rows'); row = await p.evaluate(() => { const hit = [...document.querySelectorAll('#sheet .rc-rows p')].find(x => /Passenger fares/.test(x.textContent)); return hit ? hit.querySelector('b').textContent : false; }); }   // R1: the fares are a row of the maths sheet
     await p.close();
     return { fares: r, row };
   };

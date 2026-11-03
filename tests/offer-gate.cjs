@@ -33,15 +33,19 @@
   // recordAreaBest keeps the best, per area, and ignores nothing-flights
   const r = fly(fly(base, 4000), 2500); check(r.areaBest.weurope === 4000, `areaBest keeps the longest: ${JSON.stringify(r.areaBest)}`);
   check(!fly(base, 0).areaBest, 'a 0 km flight records nothing');
-  // maxEra: this save is in the last era, yet no crossing past SEASON.maxEra is offered (the era 5 release: the lap is era 5)...
+  // maxEra 5 (the era 6 release): every era is in; the lap is offered only once every area is open (tests/lap.cjs)...
   const na = { ...base, areas: ['namerica'], city: 'DENVER' };
   const ids = X.available(na).map(x => x.id);
   check(ids.includes('mexico-panama') || ids.includes('north-atlantic'), `a North American save has its era 0-1 crossings: ${ids}`);
-  check(!ids.includes('lap') && X.available(na).every(x => x.era <= SEASON.maxEra), `nothing past SEASON.maxEra is offered: ${ids}`);
-  check(SEASON.maxEra === 4, `this release ends after the 2030s (era 5 release): maxEra ${SEASON.maxEra}`);
+  check(!ids.includes('lap') && X.available(na).every(x => x.era <= SEASON.maxEra), `the lap is not offered with one area open: ${ids}`);
+  check(SEASON.maxEra === 5, `the era 6 release has every era: maxEra ${SEASON.maxEra}`);
   // ...and when everything of this release is flown, a placeholder instead of an empty screen
   const done = { ...base, areas: [...Object.keys((await import('../src/areas.js')).AREAS), 'ocean'], crossed: [] };   // (the era 4 release: the 2010s crossings reach Honolulu, the ocean)
-  check(X.available(done).length === 0 && X.moreToCome(done), 'all areas open: nothing to fly, "more to come" shows');
+  // The era 6 release: with every area open the ONLY crossing left is the lap; once it is flown the game is finished
+  // (the ending card), and there is no "more to come" placeholder any more.
+  check(X.available(done).map(c => c.id).join() === 'lap' && !X.moreToCome(done), `all areas open: only the lap is offered (${X.available(done).map(c => c.id)})`);
+  const finished = { ...done, crossed: ['lap'], lapDone: true };
+  check(X.available(finished).length === 0 && !X.moreToCome(finished), 'after the lap: nothing to fly and no "more to come" (the game is finished)');
   check(!X.moreToCome(base), 'a save with crossings still to fly shows no placeholder');
   // the empty FLY screen: nothing to fly now, but the next crossing opens in a later era (laterEra), told instead of silence
   const early = { ...base, flightSeconds: 0, areas: ['weurope', 'nordic'], city: 'STOCKHOLM' };

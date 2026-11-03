@@ -8,7 +8,7 @@ import { CITIES } from './cities.js';
 
 export const SIZE = 128;   // the canvas is SIZE x SIZE pixels (the page scales it, never smooths it)
 const LAND = { woodland: [94, 154, 74], mediterranean: [154, 168, 90], desert: [217, 181, 106], monsoon: [63, 138, 82], eastasia: [111, 163, 106],
-  boreal: [47, 110, 78], plains: [167, 184, 96], tundra: [157, 176, 160], savanna: [194, 163, 78], rainforest: [45, 122, 58], islandforest: [58, 132, 92], bush: [176, 150, 84], steppe: [184, 172, 118], ice: [238, 244, 248] };
+  boreal: [47, 110, 78], plains: [167, 184, 96], tundra: [157, 176, 160], savanna: [194, 163, 78], rainforest: [45, 122, 58], islandforest: [58, 132, 92], polynesia: [64, 168, 104], bush: [176, 150, 84], steppe: [184, 172, 118], ice: [238, 244, 248] };
 const FALLBACK = [122, 154, 106], SEA = [43, 95, 158], SHALLOW = [74, 130, 190], INK = [27, 27, 47];
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
 

@@ -17,21 +17,34 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.addInitScript(() => { if (sessionStorage.i) return; sessionStorage.i = 1; localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, muted: true, seenTips: ['*'], tours: ['*'],
     flights: 30, landings: 9, seeds: 60, crystals: 20, flightSeconds: 1500, priceVersion: 2, levels: { trees: 1 }, fleet: { plane: 'jumbo', planes: { comet: {}, jumbo: { engines: 1 } }, systems: {}, gadgets: {} } })); });
   await p.goto(URL); await ready(p); await p.waitForTimeout(500);
-  const isNew = () => p.evaluate(() => !document.getElementById('tNew').hidden);
+  const dot = id => p.evaluate(i => !document.getElementById(i).hidden, id);
+  const raise = () => p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seeds = 2000; ui.save.crystals = 300; ui.save.seen['hangar/gadgets'] = []; ui.showTitle(); });   // (+ GADGETS made unseen: two hangar sub-tabs have news)
 
-  // 1. NEW: lit (things affordable, never looked at), off after a look, back only when something new is affordable.
-  check(await isNew(), 'NEW is lit before the first look');
-  await p.click('#tabHangar'); await p.waitForTimeout(300); await p.click('#tabFly'); await p.waitForTimeout(200);
-  check(!(await isNew()), 'after looking at the hangar, NEW is off although things are still affordable');
-  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seeds = 2000; ui.save.crystals = 300; ui.showTitle(); });
-  check(await isNew(), 'with more seeds, newly affordable things light NEW again');
+  // 1. The NEW dots (src/fresh.js; real taps). Money that was already there at load is SEEN (no dot storm); newly affordable things light
+  // the HANGAR and NATURE dots; NATURE's dot clears only NATURE's (the old ui.js:287 bug: opening NATURE cleared the hangar's NEW);
+  // the HANGAR dot clears when its three sub-tabs have been shown.
+  check(!(await dot('dHangar')) && !(await dot('dNature')), 'no dot storm: what was already affordable at load is seen');
+  await raise();
+  check(await dot('dHangar'), 'with more seeds, newly affordable fleet things light the HANGAR dot');
+  check(await dot('dNature'), 'with more seeds, newly affordable NATURE things light the NATURE dot');
+  await p.click('#tabNature'); await p.waitForTimeout(400);
+  check(!(await dot('dNature')), 'after looking at NATURE, its dot is off');
+  check(await dot('dHangar'), 'opening NATURE must NOT clear the hangar dot (the old shared list did)');
+  await p.click('#tabHangar'); await p.waitForTimeout(400);   // PLANE is showing: only its news is seen
+  check(await dot('dHangar'), 'the PLANE sub-tab alone does not clear the HANGAR dot while GADGETS still has something new');
+  await p.click('[data-ftab=systems]'); await p.waitForTimeout(300);
+  check(await dot('dHangar'), 'PLANE + SYSTEMS shown: GADGETS still lights the HANGAR dot');
+  await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(300);
+  check(!(await dot('dHangar')), 'after PLANE, SYSTEMS and GADGETS have been shown, the HANGAR dot is off');
+  await p.click('#tabFly'); await p.waitForTimeout(200);
+  check(!(await dot('dHangar')), 'the dot stays off on HOME');
   await p.reload(); await ready(p); await p.waitForTimeout(400);
 
   // 2. The big picture: the plane you fly; tapping the Comet's card previews the Comet.
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   let pv = await p.evaluate(() => ({ src: document.querySelector('#hFleet .fpreview img').dataset.plane, cap: document.querySelector('#hFleet .fpcap').textContent }));
   check(pv.src === 'jumbo' && /747 jumbo/.test(pv.cap) && /FLYING/.test(pv.cap), `preview shows the plane you fly: ${JSON.stringify(pv)}`);
-  await p.click('.fplane[data-pview="comet"] b'); await p.waitForTimeout(200);
+  await p.click('[data-pview="comet"]'); await p.waitForTimeout(200);
   pv = await p.evaluate(() => ({ src: document.querySelector('#hFleet .fpreview img').dataset.plane, cap: document.querySelector('#hFleet .fpcap').textContent }));
   check(pv.src === 'comet' && /IN YOUR FLEET/.test(pv.cap), `tapping the Comet card previews it: ${JSON.stringify(pv)}`);
   const plane = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).fleet.plane);
@@ -42,8 +55,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   for (const tab of ['plane', 'systems', 'gadgets']) {
     await p.click(`[data-ftab=${tab}]`); await p.waitForTimeout(150);
     texts.push(await p.textContent('#hFleet'));
-    const ids = await p.evaluate(() => [...document.querySelectorAll('[data-finfo]')].map(e => e.dataset.finfo));
-    for (const id of ids) { await p.click(`[data-finfo="${id}"]`); await p.waitForTimeout(80); texts.push(await p.textContent('#info')); await p.click('#iClose'); }
+    // The (i) lives in the preview strip now (one row at a time): tap each row, then its 'More about it'.
+    const ids = await p.evaluate(() => [...document.querySelectorAll('[data-ftap]')].map(e => e.dataset.ftap));
+    for (const id of ids) { await p.click(`[data-ftap="${id}"]`); await p.waitForTimeout(120); texts.push(await p.textContent('#hFleet'));
+      await p.click(`#hPreview [data-finfo="${id}"]`); await p.waitForTimeout(80); texts.push(await p.textContent('#info')); await p.click('#iClose'); }
   }
   const bad = texts.filter(t => /GAME GUESS|game guess|game estimate|REAL \(|\bREAL\b/.test(t));
   check(!bad.length, `no sourcing labels shown to players: ${bad.map(t => t.slice(0, 80))}`);

@@ -114,6 +114,9 @@ export const AIRPORT = {
 
 export const TOKENS = {
   spawnEvery: 240,     // px between chances to place a floating tree
+  lessonSeeds: 3,      // season 2, while L1 or L2 is next: this many seeds are PLACED at the plane's height (0 = off; the user's playtest,
+  lessonSeedFrom: 900, // 2026-10-29: 'I landed my second flight with none'), the first at this many px, then every lessonSeedEvery px
+  lessonSeedEvery: 700,
   chance: 0.25,        // ...rising with distance (see chancePerKm)
   chancePerKm: 0.1,
   maxChance: 0.85,

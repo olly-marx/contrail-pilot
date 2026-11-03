@@ -1,5 +1,5 @@
 // Badge medals (the user, 2026-10-24: PixelLab pictures): every badge tier, the locked and the secret medal are
-// 64x64 pictures that load, and the badge list shows them at 64 px (whole pixels, not stretched 1.5x).
+// 64x64 pictures that load, and the badge list (BOARDS > BADGES) shows them at 64 px (whole pixels, not stretched 1.5x).
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/badgeart.cjs
 const { chromium } = require('playwright-core');
 require('./lib/shipped.js');
@@ -21,12 +21,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const size = src => new Promise(res => { const i = new Image(); i.onload = () => res([i.width, i.height]); i.onerror = () => res(null); i.src = src; });
     const bad = [];
     for (const s of srcs) { const z = await size(s); if (!z || z[0] !== 64 || z[1] !== 64) bad.push(`${s.split('/').pop()}:${z}`); }
-    game.registry.get('ui').go('hangar'); await new Promise(r => setTimeout(r, 300));
-    const img = document.querySelector('#hBadges .badge2 img'), cs = img && getComputedStyle(img);
+    game.registry.get('ui').go('boards'); await new Promise(r => setTimeout(r, 300)); document.querySelector('[data-btab=badges]').click(); await new Promise(r => setTimeout(r, 300));
+    const img = document.querySelector('#bBadges .badge2 img'), cs = img && getComputedStyle(img);
     return { n: srcs.length, bad, shown: cs ? [cs.width, cs.height] : null };
   });
   check(r.n >= 40 && r.bad.length === 0, `every medal is a 64x64 picture that loads: ${r.bad.join(' ')} (of ${r.n})`);
-  check(r.shown && r.shown[0] === '64px' && r.shown[1] === '64px', `the badge list shows them at 64 px: ${r.shown}`);
+  check(r.shown && r.shown[0] === '64px' && r.shown[1] === '64px', `the badge list (BOARDS > BADGES) shows them at 64 px: ${r.shown}`);
   check(errs.length === 0, `page errors: ${errs.join(' | ')}`);
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }

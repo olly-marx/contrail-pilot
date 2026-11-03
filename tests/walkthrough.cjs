@@ -3,7 +3,7 @@
 // choice, how-to, flight school and flights 1-5, with a screenshot of every step (SHOTS=<dir>). It asserts the flow:
 //   - flight school flies over the START area's land (savanna for Johannesburg), not UK woodland;
 //   - after flight 1 the results lead to the HANGAR (OPEN THE HANGAR), TAKE OFF stays locked until the free part is picked;
-//   - no wild animal is drawn before the NATURE lesson (lesson 2), and after lesson 2 the results lead to NATURE;
+//   - no wild animal is drawn before flight 3 (after the NATURE lesson, lesson 2), and after lesson 2 the results lead to NATURE;
 //   - no tip bubble or toast is up for less than 2 s (one "vanished in a microsecond"), and none is left on the results;
 //   - lesson 5 asks for tree parcels first (soil and parcels wait for it); finishing it opens tier 1 of the area ladder and "Today" (S4).
 // Run: python3 -m http.server 8000 & SHOTS=/tmp/walk node tests/walkthrough.cjs   (proved by planted defects)
@@ -41,7 +41,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
     await shot(`flight-${set.tag}`);
     await p.evaluate(set => { const s = game.scene.getScene('game'); Object.assign(s, { landedAt: s.path[1] }, set.vals || {}); s.finish({ landed: true }); }, set);   // (a real landing names its city)
     await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 15000 }).catch(() => {});
-    await p.waitForTimeout(2500);   // the results reveal
+    await p.waitForFunction(() => !document.getElementById('results').classList.contains('revealing'), null, { timeout: 10000 }).catch(() => check(false, 'the results reveal never ended (#results still has .revealing after 10 s)'));   // the results reveal is over (#results.revealing is gone): a condition, not a fixed 2.5 s
     return { animals, allowed: set.allowed };
   };
   const resultsState = () => p.evaluate(() => ({ btn: document.getElementById('againBtn').textContent, coach: !document.getElementById('coach').hidden }));
@@ -74,7 +74,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
   await shot('hub-flight1');
   let f1 = await fly(8, { tag: '1', vals: {} });
-  check(f1.animals === 0 && f1.allowed === false, `flight 1: no wild animals yet (they start on flight 2) (${JSON.stringify(f1)})`);
+  check(f1.animals === 0 && f1.allowed === false, `flight 1: no wild animals yet (they start on flight 3) (${JSON.stringify(f1)})`);
   let rs = await resultsState();
   check(/OPEN THE HANGAR/.test(rs.btn) && !rs.coach, `after flight 1 the results lead to the HANGAR, nothing left open: ${JSON.stringify(rs)}`);
   await p.waitForFunction(() => /OPEN THE HANGAR/.test(document.getElementById('againBtn').textContent) && document.getElementById('againBtn').offsetParent !== null, null, { timeout: 8000 }).catch(() => {});
@@ -88,12 +88,12 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   if (free) { await free.click(); await p.click('#payOk', { timeout: 10000 }).catch(() => fails.push('the payoff OK never appeared after the free pick')); await p.waitForTimeout(500); }
   if (await p.isVisible('#payOk')) await p.click('#payOk');   // (season 2: the free part's payoff, its OK goes home)
   await p.click('#tabFly'); await p.waitForTimeout(500);
-  const hub2 = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, tiles: [...document.querySelectorAll('#hubTiles [data-go]')].map(t => t.dataset.go) }));
-  check(!hub2.locked && hub2.tiles.includes('hangar'), `after the free part: TAKE OFF unlocked, the HANGAR tile is there: ${JSON.stringify(hub2)}`);
+  const hub2 = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, tabs: [...document.querySelectorAll('#tabbar [data-go]')].filter(b => !b.hidden).map(b => b.dataset.go) }));   // R3: the bar's tabs (the tiles are gone)
+  check(!hub2.locked && hub2.tabs.includes('hangar'), `after the free part: TAKE OFF unlocked, the HANGAR tab is there: ${JSON.stringify(hub2)}`);
   await shot('hub-flight2');
   // Flight 2 (lesson 2: daytime icy air) -> NATURE.
   const f2 = await fly(8, { tag: '2', vals: { sunBlocked: 3.5 } });
-  check(f2.allowed === true, `flight 2: wildlife is allowed from flight 2 (the rails: after landing lesson L1): ${JSON.stringify(f2)}`);
+  check(f2.allowed === false && f2.animals === 0, `flight 2: no wild animals yet, they come after the NATURE lesson (the user, 2026-10-29): ${JSON.stringify(f2)}`);
   rs = await resultsState();
   check(/OPEN NATURE/.test(rs.btn) && !rs.coach, `after lesson 2 the results lead to NATURE: ${JSON.stringify(rs)}`);
   await shot('results-flight2');
@@ -108,25 +108,19 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.evaluate(() => game.registry.get('ui').showTitle());
   await fly(4, { tag: '4', vals: { airportsSkipped: 1 } }); await shot('results-flight4'); await p.click('#againBtn'); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(400);
-  // Lesson 5 needs parcels; with prizes unclaimed and no crystals, NEXT first says to claim them (audit fix 2), then parcels.
-  let n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
-  if (/Claim your prizes/i.test(n5)) {
-    await p.click('#hubNext'); await p.waitForTimeout(400);
-    const all = await p.$('#mPrizes .claim.all') || await p.$('#mPrizes .claim'); if (all) { await all.click(); await p.waitForTimeout(400); }
-    await p.click('#tabFly'); await p.waitForTimeout(400);
-    n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
-  }
-  check(/tree parcels/i.test(n5), `lesson 5 asks for tree parcels in NATURE (after claiming the prizes): "${n5}"`);
+  // Lesson 5 needs parcels; prizes are paid when earned (R8), so NEXT goes straight to the parcels (it used to say 'claim your prizes' first).
+  const n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
+  check(/tree parcels/i.test(n5) && !/Claim/i.test(n5), `lesson 5 asks for tree parcels in NATURE, never to claim prizes: "${n5}"`);
   await shot('hub-lesson5');
   // Flight 5 (lesson 5: drop a tree) ends the lessons and opens the area ladder (S4): the MISSIONS screen is now TIER 1 of 3, no star yet,
   // and the day's trio sits under "Today".
   await fly(4, { tag: '5', vals: { planted: 1 } }); await shot('results-flight5'); await p.click('#againBtn').catch(() => {}); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
-  await p.click('#hubTiles [data-go="missions"]'); await p.waitForTimeout(500);
-  const t1 = await p.evaluate(() => ({ tier: document.getElementById('mTier').textContent, rows: [...document.querySelectorAll('#mList .mrow:not(.daily)')].length, stars: document.querySelectorAll('#mList .mrow.star').length,
-    today: [...document.querySelectorAll('#mList .label')].some(e => e.textContent === 'Today'), daily: document.querySelectorAll('#mList .mrow.daily').length, lessonLeft: /Drop a tree/.test(document.getElementById('mList').innerText) }));
-  check(t1.tier === 'Tier 1 of 3' && t1.rows >= 3 && t1.stars === 0 && !t1.lessonLeft, `after lesson 5 the MISSIONS screen opens tier 1 (no star yet, no lesson left): ${JSON.stringify(t1)}`);
-  check(t1.today && t1.daily >= 1, `after the lessons the day's trio shows under "Today": ${JSON.stringify(t1)}`);
+  await p.click('#tabMissions'); await p.waitForTimeout(500);
+  const t1 = await p.evaluate(() => ({ tier: document.getElementById('mTier').textContent, rows: document.querySelectorAll('#mNext .rowc.goal, #mList .rowc.goal:not(.daily):not(.steady)').length, stars: document.querySelectorAll('#mNext .rowc.goal.star, #mList .rowc.goal.star').length,
+    today: [...document.querySelectorAll('#mList .label')].some(e => /^TODAY/.test(e.textContent)), daily: document.querySelectorAll('#mList .rowc.goal.daily').length, lessonLeft: /Lesson \d of 5/.test(document.getElementById('missions').innerText) }));
+  check(/^Tier 1 · \d+\/6 done$/.test(t1.tier) && t1.rows >= 3 && t1.stars === 0 && !t1.lessonLeft, `after lesson 5 the MISSIONS screen opens tier 1 (no star yet, no lesson left): ${JSON.stringify(t1)}`);
+  check(t1.today && t1.daily >= 1, `after the lessons the day's trio shows under "TODAY": ${JSON.stringify(t1)}`);
   await shot('missions-tier1');
   // Bubbles: none shorter than 2 s after flight school (a tap or a newer bubble used to wipe one at once).
   const bubbles = await p.evaluate(() => (window.__bubbles || []).filter(x => !x.school && x.end != null).map(x => ({ ...x, ms: Math.round(x.end - x.start) })));

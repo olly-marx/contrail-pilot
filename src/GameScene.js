@@ -10,7 +10,9 @@ import { mask } from './sim/masks-load.js';
 import { MASK_DATA } from './sim/masks.js';
 import { Hud } from './Hud.js';
 import { sendFlight } from './online.js';
+import { loading, tripLands } from './loader.js';
 import { flightPath, city, HOME, schoolSave } from './route.js';
+import { routeFor } from './aim.js';
 import { crossingPath, completeCrossing } from './crossings.js';
 import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
@@ -53,11 +55,18 @@ export class GameScene extends Phaser.Scene {
   constructor() { super('game'); }
 
   preload() {
+    if (!loading.hooked) {   // the loading screen counts these files (src/loader.js); once, not on every scene restart
+      loading.hooked = true;
+      this.load.on('progress', () => loading.onPhaser(this.load.totalComplete, this.load.totalToLoad));
+      this.load.on('load', f => { if (f.src) loading.phaserUrls.push(f.src); });   // (the service worker keeps these for offline)
+      this.load.on('complete', () => loading.onPhaserComplete());
+    }
     this.load.image('plane', 'assets/plane.png');   // the 747; also the collision mask for EVERY plane
     this.load.image('plane-comet', 'assets/plane-comet.png');   // eras (src/fleet.js): looks only
     this.load.image('plane-twin', 'assets/plane-twin.png');
     this.load.image('plane-747', 'assets/plane-747.png');   // the 1970s paint (era colour ladder)
     this.load.image('plane-787', 'assets/plane-787.png');   // the 2010s Dreamliner (code-made from the twin: tools/art/make_787.py)
+    this.load.image('plane-hydrogen', 'assets/plane-hydrogen.png');   // the far future (code-made: tools/art/make_787.py)
     this.load.image('plane-truss', 'assets/plane-truss.png');   // the 2030s truss-braced wing (code-made: tools/art/make_787.py)
     for (const k of UPGRADE_ART) this.load.image(k, `assets/upgrades/${k}.png`);   // upgrade looks, stickers, towers (src/fleet.js)
     for (const [id, n] of Object.entries(PART_LINES)) for (let i = 1; i <= n; i++) this.load.image(`plane-${id}-${i}`, `assets/plane-${id}-${i}.png`);
@@ -83,6 +92,7 @@ export class GameScene extends Phaser.Scene {
     // Each region's ground strip and hills (woodland's are 'ground' and 'hills', loaded above).
     for (const r in REGIONS) for (const k of [REGIONS[r].ground, REGIONS[r].hills]) if (k && !['ground', 'hills'].includes(k)) this.load.image(k, `assets/${k}.png`);
     this.load.image('puff', 'assets/puff.png');
+    this.queueArt(this.artLands(tripLands(this.registry.get('save'))));   // the animals of the lands on the trip HOME has chosen: loaded here, behind the loading screen, so TAKE OFF fetches nothing
     for (const kind of Object.keys(SPECIES)) for (let s = 0; s < 3; s++) this.load.image(`tree-${kind}-${s}`, `assets/tree-${kind}-${s}.png`);
   }
 
@@ -132,6 +142,7 @@ export class GameScene extends Phaser.Scene {
     this.wildLayer = this.add.layer();     // cows, sheep and wild animals
     this.regionNow = null; this.setRegion(this.regionHere(), true);   // what is below the plane (src/geo.js)
     this.loadPathArt();
+    loading.onSceneBuilt();   // (the loading screen goes once the menu pictures are in too)
     if (FEATURES.pixelReadout) this.previewReadout();
     this.buildWildlife();
     this.plotLayer = this.add.layer();
@@ -284,10 +295,11 @@ export class GameScene extends Phaser.Scene {
   startFlight() {
     // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
     // Also if a new direction was chosen on the FLY screen since (the path is built with the scene).
-    const pathNow = () => (this.school ? this.path : this.save.flyCrossing ? crossingPath(this.save.flyCrossing) : flightPath(this.save.tutorialDone ? this.save : schoolSave(this.save)));   // (school: set by startSchool; lazy: a tap before create() has no save)
+    const pathNow = () => (this.school ? this.path : this.save.flyCrossing ? crossingPath(this.save.flyCrossing) : routeFor(this.save.tutorialDone ? this.save : schoolSave(this.save)));   // (school: set by startSchool; lazy: a tap before create() has no save)
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])
-      || (p => p[0] !== this.path[0] || p[1] !== this.path[1])(pathNow())) { this.scene.restart({ go: true }); return; }
+      || (p => p.slice(0, 12).join() !== this.path.slice(0, 12).join())(pathNow())) { this.scene.restart({ go: true }); return; }   // (the whole near route: an aimed route can change after the first hop, src/aim.js)
     this.takeOff();   // the flight's rules (src/sim/rules.js): kit, random stream, onto the runway
+    loading.flying = true;   // DECLARED: a flight (flight school too) is on, so the idle picture fetch waits (src/loader.js); cleared by onFinish and backToMenu
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
     this.regionBanner(this.regionNow);   // which land you take off from, and its meter
   }
@@ -295,6 +307,7 @@ export class GameScene extends Phaser.Scene {
   // Esc while parked on the runway: back to the title, nothing lost, no flight counted.
   backToMenu() {
     if (this.state !== 'takeoff' || this.airborne || this.rollSpeed >= 5 || this.school) return;   // parked only: never mid-roll
+    loading.flying = false;
     this.scene.restart();
     this.ui.showTitle();
   }
@@ -324,7 +337,7 @@ export class GameScene extends Phaser.Scene {
     return true;
   }
   // Season 2: wild animals (and scenery birds) only once the NATURE lesson (L2) is done: one new thing at a time.
-  wildAllowed() { if (this.wildOK0 == null) this.wildOK0 = !isSeason2(this.save) || (this.save.missionsDone || []).includes('L1'); return this.wildOK0; }   // from flight 2 (the user's rails, 2026-10-27)
+  wildAllowed() { if (this.wildOK0 == null) this.wildOK0 = !isSeason2(this.save) || (this.save.missionsDone || []).includes('L2'); return this.wildOK0; }   // from flight 3, after the NATURE lesson (the user, 2026-10-29; was flight 2 since the rails of 2026-10-27)
 
   showTip(html, pic) {
     this.explaining = true;   // a bubble is up (NOT frozen)
@@ -335,7 +348,7 @@ export class GameScene extends Phaser.Scene {
     // A toast already up (dusk, SAF, a token) drops below a top strip instead of sitting under it (the audit, 2026-10-28).
     const coachEl = document.getElementById('coach'), toastEl = document.getElementById('toast');
     const dropToast = () => { if (this.explaining && toastEl && !toastEl.hidden && !coachEl.hidden && !coachEl.classList.contains('strip-low')) toastEl.style.top = `${Math.round(coachEl.getBoundingClientRect().bottom + 6)}px`; };
-    dropToast();
+    this.dropToast = dropToast; dropToast();
     if (typeof ResizeObserver !== 'undefined') { (this.stripWatch = this.stripWatch || new ResizeObserver(() => dropToast())).disconnect(); this.stripWatch.observe(coachEl); }   // the strip grows when its picture loads: follow it at once
     else { setTimeout(dropToast, 250); setTimeout(dropToast, 800); }
     const mine = this.tipSerial = (this.tipSerial || 0) + 1;
@@ -451,6 +464,7 @@ export class GameScene extends Phaser.Scene {
   // real flight, once it is well on screen; the first time: a pop-up.
   seen(sprite) {
     if (this.school || this.state !== 'playing') return;
+    if (isSeason2(this.save) && !(this.save.missionsDone || []).includes('L2')) return;   // nothing is FOUND before the NATURE lesson, cows and sheep too (the user's playtest, 2026-10-29: 'found' on flight 2)
     const w = (this.wildlife && this.wildlife.who && this.wildlife.who[sprite]) || WILDLIFE.find(x => x.sprite === sprite);   // who it is HERE
     if (!w) return;
     this.save.found = this.save.found || {};
@@ -484,10 +498,11 @@ export class GameScene extends Phaser.Scene {
   }
   // After the scene is built: fetch, in the background, the drawings for every land on this flight's path
   // (a species also drawn for another land is in WILDLIFE once, under its own region, so check both).
+  // The lands whose drawings a trip needs: its own lands, and the home land of any species they share (see the note above).
+  artLands(lands) { return [...lands, ...new Set(lands.flatMap(r => regionSpecies(r).map(w => (WILDLIFE.find(x => x.sprite === w.sprite) || {}).region).filter(Boolean)))]; }
   loadPathArt() {
     const lands = [...new Set(this.path.map(n => (city(n) || {}).region).filter(Boolean))];
-    const extra = [...new Set(lands.flatMap(r => regionSpecies(r).map(w => (WILDLIFE.find(x => x.sprite === w.sprite) || {}).region).filter(Boolean)))];
-    if (this.queueArt([...lands, ...extra])) {
+    if (this.queueArt(this.artLands(lands))) {
       this.load.once('complete', () => { if (this.regionNow) this.wildlife = wildlifeScene(this.save, this.regionNow); });
       this.load.start();
     }
@@ -520,6 +535,7 @@ export class GameScene extends Phaser.Scene {
     this.save.discovered = this.save.discovered || {};
     if (this.save.discovered[r]) return;
     this.save.discovered[r] = Date.now();
+    loading.promote(r);   // its NATURE art first in line for the idle fetch
     this.popup(WIDTH / 2, SKY_H - 80, `YOU DISCOVERED:\n${REGION_NAMES[r].toUpperCase()}!`, '#8dffb0', 12);
   }
 
@@ -982,7 +998,7 @@ export class GameScene extends Phaser.Scene {
     const k = this.kit;
     if (this.cleanMeter) { const left = (this.cleanLeft || 0) / ((k.cleanSecs || 1) * 1000), night = !this.isDay;
       this.cleanMeter.width = 56 * Math.max(0, Math.min(1, left)); this.cleanBg.setFillStyle(this.cleanHeld && night && left > 0 ? 0x9fe0ff : 0x5a6b80).setAlpha(night ? 1 : 0.45); }
-    if (!k.noFlyWarnPx && !k.outlook && !k.birdWarnPx && !k.turnShown) return;
+    if (!k.noFlyWarnPx && !k.outlook && !k.birdWarnPx && !k.turnShown && !k.pulseShown) return;
     const g = this.era4Gfx || (this.era4Gfx = this.add.graphics().setDepth(50));
     g.clear();
     const nose = this.plane.x + PLANE.w;
@@ -996,7 +1012,7 @@ export class GameScene extends Phaser.Scene {
         g.fillStyle(0xffffff, 0.95); g.fillTriangle(ax - 5, ay + (up ? 4 : -4), ax + 5, ay + (up ? 4 : -4), ax, ay + (up ? -4 : 4)); }
     }
     if (k.outlook) {
-      const next = this.storms.filter(st => st.rects[0].x > nose).sort((a, b) => a.rects[0].x - b.rects[0].x).slice(0, 2);
+      const next = this.storms.filter(st => st.rects[0].x > nose).sort((a, b) => a.rects[0].x - b.rects[0].x).slice(0, k.fullAware ? 3 : 2);   // full situational awareness: three
       next.forEach((st, i) => { const top = st.rects[0].height, bot = st.rects[1].y, c = st.noFly ? 0xff8080 : 0xffe15a;
         g.fillStyle(c, i ? 0.55 : 0.95); g.fillRect(WIDTH - 10 + i * 5, top, 4, 2); g.fillRect(WIDTH - 10 + i * 5, bot - 2, 4, 2); g.fillRect(WIDTH - 9 + i * 5, top, 2, bot - top); });
     }
@@ -1005,6 +1021,13 @@ export class GameScene extends Phaser.Scene {
       if (ahead < 0 || ahead > k.birdWarnPx) continue;
       const half = f.half ?? (f.birds.length - 1) / 2, wob = HAZARDS.birds.wobble * (k.birdWobbleMul ?? 1), top = f.y - half * 9 - 4 - wob, bot = f.y + half * 9 + 16 + wob;
       g.fillStyle(0xffffff, 0.12); g.fillRect(f.x - 4, top, half * 26 + 24, bot - top);
+    }
+    // ATC 12 (far future): a pulsing storm shows its beat: a bar beside the gap, long when the gap is wide.
+    if (k.pulseShown) for (const st of this.storms) {
+      if (!st.pulse || st.rects[0].x < nose - 20) continue;
+      const P = STORMS.pulse, off = P.amp * Math.sin(st.pulse.phase + 2 * Math.PI * (this.gameTime / 1000) / P.period), x = st.rects[0].x - 6;
+      const mid = (st.rects[0].height + st.rects[1].y) / 2, h = 6 + (P.amp - off) / P.amp * 10;
+      g.fillStyle(0x9fe0ff, 0.9); g.fillRect(x, mid - h, 3, 2 * h);
     }
     // ATC 10 turn calls (2030s): a flock that has not turned yet shows an arrow the way it will go (rules.js f.turn.dir).
     if (k.turnShown) for (const f of this.birds) {
@@ -1149,6 +1172,21 @@ export class GameScene extends Phaser.Scene {
     if (this.frozen) { this.scoreRays(dt, false); this.drawRays(this.gameTime); this.drawSky(this.gameTime); return; }
     const { dx, inIssr, over } = this.step(dt);   // the flight's rules (src/sim/rules.js): data only
     this.syncViews(dt, dx, inIssr, over);
+    if (this.explaining && !this.school) this.keepStripClear();
+  }
+  // The strip's side was chosen once, from the plane's height when it opened (showTip), and the plane flew on under it: on a slow
+  // phone the 0.21.0 gate saw it cover the plane for 25 frames. Every frame while a tip is up: if the plane (with a margin) is
+  // inside the strip, flip the strip to the other side. That is its own hysteresis: after a flip the plane is far from the strip.
+  keepStripClear() {
+    const coach = document.getElementById('coach'), cv = this.game.canvas;
+    if (!coach || coach.hidden || !cv) return;
+    const k = cv.getBoundingClientRect(), cr = coach.getBoundingClientRect(), sx = k.width / WIDTH, sy = k.height / HEIGHT, m = 12;
+    const l = k.left + this.plane.x * sx - m, r = k.left + (this.plane.x + 58) * sx + m, t = k.top + (this.plane.y - 8) * sy - m, b = k.top + (this.plane.y + 22) * sy + m;
+    if (!(cr.left < r && l < cr.right && cr.top < b && t < cr.bottom)) return;
+    const low = !coach.classList.contains('strip-low');
+    coach.classList.toggle('strip-low', low);
+    document.getElementById('toast').style.top = '';
+    if (!low && this.dropToast) this.dropToast();
   }
 
   // Draw the frame the rules just stepped: every picture where its record says (sim engine 5f).
@@ -1443,7 +1481,7 @@ export class GameScene extends Phaser.Scene {
     else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
     else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);   // ATC (eras): the call comes sooner
     else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${km(toAirport)}`);
-    else if (this.missedSign && this.gameTime < this.missedSign.until) this.nextText.setText(`${this.missedSign.text} ${km(toAirport)}`);
+    else if (this.missedSign && this.gameTime < this.missedSign.until && this.missedSign.to === this.nextAirport.name) this.nextText.setText(   /* only about THIS leg */`${this.missedSign.text} ${km(toAirport)}`);
     else this.nextText.setText('');
     this.fitText(this.nextText, WIDTH - 12);
     // The mission line: what this flight is for.
@@ -1482,6 +1520,7 @@ export class GameScene extends Phaser.Scene {
   // The flight has ended and the rules have banked it (bankFlight: this.result, this.bank): the crash or
   // landing effects, the online boards, and the results screen.
   onFinish({ landed = false, reason = '', sound = 'crash' }) {
+    loading.flying = false;   // the flight is over (landed or crashed): the idle fetch may go on
     const { m, missionDone, lap, crash, gained } = this.bank;
     this.hud.setCo2(0);
     this.ui.endToasts();   // a fresh toast finishes its 2 s (the user: one vanished at once)

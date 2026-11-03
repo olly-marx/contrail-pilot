@@ -1,0 +1,8 @@
+id|name|kind|pose
+flyingfox|Pacific flying fox, a large fruit bat with a fox-like face, dark brown body and golden-orange neck, wide leathery wings|animal|flying
+reefheron|Pacific reef heron, a slate-grey long-legged heron with a long yellowish dagger bill|bird|standing
+whitetern|white tern, a slim all-white seabird with a big black eye and a thin black bill|bird|flying
+imperialpigeon|Pacific imperial pigeon, a large pigeon with a pale grey head and breast and a dark green-bronze back and wings|bird|flying
+coconutcrab|coconut crab, a huge land crab with a blue-purple and orange-brown shell and two big claws|animal|ground
+malau|malau, a dark brown chicken-sized megapode with a small head, a bare reddish face and big strong feet|bird|standing
+tahitimonarch|Tahiti monarch, a small glossy black songbird with a pale blue-grey bill|bird|flying

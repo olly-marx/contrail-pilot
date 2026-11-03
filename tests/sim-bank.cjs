@@ -9,7 +9,7 @@ require('./lib/classic.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const DT_MS = 16.67;
 // Save fields only the game's VIEW changes during a flight (animals seen, banners and tips shown): not banking.
-const VIEW_ONLY = ['found', 'foundAt', 'dayNightSeen', 'seenTips', 'tours', 'discovered', 'shownLines'];   // shownLines: the hangar's 'new line' marks
+const VIEW_ONLY = ['found', 'foundAt', 'dayNightSeen', 'seenTips', 'tours', 'discovered', 'shownLines', 'seen', 'seenMigrated'];   // shownLines: the hangar's 'new line' marks; seen + seenMigrated: the NEW-dot marks (src/fresh.js), written only by the game's screens
 // Result fields that come from the view: the animals seen this flight.
 const RESULT_VIEW_ONLY = ['foundIds'];
 

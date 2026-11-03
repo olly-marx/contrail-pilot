@@ -1,5 +1,7 @@
-// Prizes. Missions (src/missions.js) and badge tiers (src/badges.js) are never paid automatically:
-// a finished one goes into save.unclaimed, and pays only when the player taps CLAIM (claim()).
+// Prizes. Missions (src/missions.js) and badge tiers (src/badges.js) are paid THE MOMENT they are earned (R8, 2026-11-03; the
+// Coordinator and the sim chat's rule): a flight mission or badge when the flight is banked (RULES.bankFlight), a mission done by
+// a purchase or a project (src/missions2.js onSave) at the buy itself. There is no CLAIM step. `save.unclaimed` is only read once,
+// by migrateClaims, to pay what an older save was still holding.
 // The seeds you carry home are not a prize: GameScene.onFinish() banks those straight away.
 // Kid wording; numbers tuned against hangar prices (a level costs 5-70 seeds and 1-5 crystals).
 import { ROUTE } from './route.js';
@@ -12,12 +14,19 @@ export const missionReward = i => ({ seeds: 15 + 20 * i, crystals: 1 + 2 * i });
 export const NEW_CITY = { seeds: 15, crystals: 1 };
 export const LAP = { seeds: 300, crystals: 25 };
 
-// After a flight (not flight school): record what it earned as claimable prizes. Returns the
-// prizes it added, [{ key, kind, label, seeds, crystals, id, tier }], for the results screen.
+// Pay one prize into the bank, now.
+export function payPrize(save, p) {
+  save.seeds = (save.seeds || 0) + (p.seeds || 0);
+  save.crystals = (save.crystals || 0) + (p.crystals || 0);
+}
+// What a list of prizes is worth, { seeds, crystals } (the results card's prize line; the sim's per-flight stat).
+export const sumPrizes = list => (list || []).reduce((a, p) => ({ seeds: a.seeds + (p.seeds || 0), crystals: a.crystals + (p.crystals || 0) }), { seeds: 0, crystals: 0 });
+
+// After a flight (not flight school): PAY what it earned. Returns the prizes it paid,
+// [{ key, kind, label, seeds, crystals, id, tier }], for the results screen.
 export function addPrizes(save, r, mission, missionIndex) {
-  save.unclaimed = save.unclaimed || [];
   const added = [];
-  const add = p => { if (!save.unclaimed.some(u => u.key === p.key)) { save.unclaimed.push(p); added.push(p); } };
+  const add = p => { payPrize(save, p); added.push(p); };
   if (r.landed && r.landedAt) {                 // count the city first, so Globetrotter sees this landing
     save.visited = save.visited || [];
     if (!save.visited.includes(r.landedAt)) save.visited.push(r.landedAt);
@@ -27,15 +36,15 @@ export function addPrizes(save, r, mission, missionIndex) {
   return added;
 }
 
-// Tap CLAIM: pay one prize (by key) or all of them. Returns what was paid, { seeds, crystals }.
-export function claim(save, key = null) {
+// The one-time migration (R8): an older save may still hold prizes nobody tapped CLAIM on. Pay them all, empty the list, return what
+// was paid ({ seeds, crystals }) or null when there was nothing. Idempotent by construction (the list is empty afterwards): no flag,
+// so no new save field for the engine comparison (tests/sim-bank.cjs) to trip over.
+export function migrateClaims(save) {
   const list = save.unclaimed || [];
-  const take = key ? list.filter(u => u.key === key) : list.slice();
-  const paid = take.reduce((a, u) => ({ seeds: a.seeds + u.seeds, crystals: a.crystals + u.crystals }), { seeds: 0, crystals: 0 });
-  save.seeds += paid.seeds;
-  save.crystals = (save.crystals || 0) + paid.crystals;
-  save.unclaimed = list.filter(u => !take.includes(u));
+  if (!list.length) return null;
+  const paid = sumPrizes(list);
+  list.forEach(p => payPrize(save, p));
+  save.unclaimed = [];
   return paid;
 }
-export const unclaimedCount = save => (save.unclaimed || []).length;
 export const CITY_COUNT = ROUTE.length;   // every airport in the world network (src/cities.js)

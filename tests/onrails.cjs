@@ -54,16 +54,17 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   // Flying with real taps (the same eye as tests/firsthour-real.cjs), checking (c) and the flight's rules as it goes.
   const look = () => p.evaluate(() => {
     const s = game.scene.getScene('game'), coach = document.getElementById('coach'), ok = document.getElementById('coachOk'), cv = document.querySelector('#game canvas');
+    if (!cv || !s || !s.plane) return { state: 'none', results: false, okUp: false, tapStep: false, toRunway: 1e9, covered: false, turbs: 0, wild: 0 };   // (not up yet: a loaded machine got here before the canvas)
     const k = cv.getBoundingClientRect(), sx = k.width / 288, sy = k.height / 512, pr = { l: k.left + s.plane.x * sx, t: k.top + (s.plane.y - 8) * sy, r: k.left + (s.plane.x + 58) * sx, b: k.top + (s.plane.y + 22) * sy };
     const cr = !coach.hidden && coach.classList.contains('tappable') ? coach.getBoundingClientRect() : null;
     const ahead = (s.storms || []).filter(st => st.rects[0].x + st.rects[0].width > s.plane.x - 4).sort((a, b) => a.rects[0].x - b.rects[0].x)[0];
     const issr = (s.issrs || []).find(i => i.x + i.width > s.plane.x && i.x < s.plane.x + (window.__avoid ? 450 : 200));   // (avoiding: seen from further, to steer clear in time)
     return { state: s.state, school: !!s.school, y: s.plane.y, vy: s.plane.vy, day: s.isDay, results: !document.getElementById('results').hidden,
       okUp: !coach.hidden && !ok.hidden && !ok.disabled, tapStep: !coach.hidden && coach.classList.contains('waiting') && ok.hidden,
-      skyH: 464, toRunway: s.nextAirport ? s.nextAirport.worldX - s.distancePx : 1e9,
+      skyH: 464, toRunway: s.nextAirport ? s.nextAirport.worldX - s.distancePx : 1e9, kitTurb: s.kit ? s.kit.gapTurb : null,   /* the gate itself (the plant sweep, 2026-11-02: flights may end before turbulence can start, so watching for it alone proved nothing) */
       gap: ahead && ahead.rects[0].x < s.plane.x + 220 ? (ahead.rects[0].height + ahead.rects[1].y) / 2 - 6 : null,
       issr: issr ? { top: issr.y, bot: issr.y + issr.height } : null,
-      covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), turbs: (s.turbs || []).length,
+      covered: !!(cr && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom), why: cr && { plane: [pr.l, pr.t, pr.r, pr.b].map(Math.round), strip: [cr.left, cr.top, cr.right, cr.bottom].map(Math.round), low: coach.classList.contains('strip-low'), planeY: Math.round(s.plane.y), text: coach.textContent.slice(0, 60) }, turbs: (s.turbs || []).length,
       wild: (s.life || []).filter(x => x.kind && !/animal-(cow|sheep)/.test(x.kind)).length,
       lesson: (l => l && { ahead: l.x - (s.plane.x + 50), onScreen: l.x < 288 - 10, drawn: l.view ? l.view.alpha * (l.view.visible ? 1 : 0) : 0, day: s.isDay })((s.issrs || []).find(i => i.height === 200 && i.width >= 560)) };   // flight 2's guaranteed patch (rules.js l2Patch)
   });
@@ -72,22 +73,22 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
     : v.issr ? (v.day && !avoid ? (v.issr.top + v.issr.bot) / 2 - 6 : (v.issr.top > v.skyH / 2 ? v.issr.top - 40 : v.issr.bot + 30))
     : v.toRunway < 700 ? v.skyH - 30 : v.skyH * 0.45;
   const fly = async (label, seconds, rules = {}) => {
-    const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0, lesson = null;
+    const t0 = Date.now(); let covered = 0, turbs = 0, wild = 0, kitTurbs = new Set(), lesson = null, coverFirst = null, coverLast = null;
     while (Date.now() - t0 < seconds * 1000) {
       const v = await look();
       if (v.results) break;
       if (rules.lessonPatch && !lesson && v.lesson && v.lesson.ahead <= 140 && v.lesson.ahead >= 0) { lesson = v.lesson; await shot('flight2-lesson-patch'); }
-      if (v.covered) covered++; turbs = Math.max(turbs, v.turbs); wild = Math.max(wild, v.wild);
+      if (v.covered) { covered++; if (!coverFirst) coverFirst = { at: Date.now() - t0, ...v.why }; coverLast = { at: Date.now() - t0, ...v.why }; } turbs = Math.max(turbs, v.turbs); if (v.state === 'playing' && v.kitTurb != null) kitTurbs.add(v.kitTurb); wild = Math.max(wild, v.wild);
       if (v.okUp) { await p.click('#coachOk').catch(() => {}); continue; }
       if (v.tapStep) { await p.mouse.click(W / 2, H * 0.55); await p.waitForTimeout(150); continue; }
       if (v.state === 'takeoff' || v.state === 'idle') { await p.mouse.move(W / 2, H * 0.55); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up(); continue; }
       if (v.state === 'playing' && v.y > target(v) && v.vy > -60) await p.mouse.click(W / 2, H * 0.6);
       await p.waitForTimeout(45);
     }
-    await p.waitForTimeout(3200);   // the results reveal
+    await p.waitForFunction(() => !document.getElementById('results').classList.contains('revealing'), null, { timeout: 10000 }).catch(() => check(false, 'the results reveal never ended (#results still has .revealing after 10 s)'));   // the results reveal is over (the game removes #results.revealing when its last line is in): a condition, not a fixed 3.2 s
     check(await p.evaluate(() => !document.getElementById('results').hidden), `${label}: the flight ended with the results`);
-    check(!covered, `${label}: no teaching strip ever covered the plane (${covered} frames did)`);
-    if (rules.noTurb) check(!turbs, `${label}: no turbulence yet (${turbs})`);
+    check(!covered, `${label}: no teaching strip ever covered the plane (${covered} frames did; first ${JSON.stringify(coverFirst)}, last ${JSON.stringify(coverLast)})`);   // (the rects are the diagnostic: is the strip stale (low/high chosen at open time) or the plane moving into it?)
+    if (rules.noTurb) { check(!turbs, `${label}: no turbulence yet (${turbs})`); check(kitTurbs.size === 1 && kitTurbs.has(0), `${label}: the flight's turbulence gate is shut (kit.gapTurb ${[...kitTurbs]})`); }
     if (rules.noWild) check(!wild, `${label}: no wild animals yet (${wild})`);
     if (rules.lessonPatch) check(lesson && lesson.onScreen && lesson.drawn > 0 && lesson.day, `${label}: the guaranteed icy patch is DRAWN on screen (alpha > 0) in daylight as the plane nears it, 140 px out (${JSON.stringify(lesson)})`);
   };
@@ -105,9 +106,11 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await step('R5b-take-free', /FREE/i, () => !JSON.parse(localStorage.getItem('contrailPilot.v2')).freeUpgrade, { screen: 'hangar' });
   // R6, the payoff: the plane BEFORE (the new part's layer there but invisible, no OK yet), then the part arrives (the user:
   // it "just popped up the upgraded plane"). Screenshots of both.
-  await p.waitForSelector('#payoff:not([hidden])', { timeout: 5000 }).catch(() => {});
-  const pay0 = await p.evaluate(() => { const part = document.querySelector('#payoff .pay-part'), ok = document.getElementById('payOk');
-    return { parts: document.querySelectorAll('#payoff .pay-part').length, op: part ? +getComputedStyle(part).opacity : null, okShown: !!ok && getComputedStyle(ok).visibility !== 'hidden' }; });
+  // Sampled on the FIRST animation frame the payoff is showing (polling 'raf'), not after a variable delay: the part fades in, so a late sample on a slow machine
+  // (CI, a loaded gate) read opacity 0.26 and failed ('R6 first the plane as it was': it failed the 0.21.4 CI twice).
+  const pay0h = await p.waitForFunction(() => { const el = document.getElementById('payoff'); if (!el || el.hidden) return false; const part = el.querySelector('.pay-part'), ok = document.getElementById('payOk');
+    return { parts: el.querySelectorAll('.pay-part').length, op: part ? +getComputedStyle(part).opacity : null, okShown: !!ok && getComputedStyle(ok).visibility !== 'hidden' }; }, null, { timeout: 5000, polling: 'raf' }).catch(() => null);
+  const pay0 = pay0h ? await pay0h.jsonValue() : { parts: 0, op: null, okShown: null };
   await shot('R6a-payoff-before');
   check(pay0.parts >= 1 && pay0.op < 0.2 && !pay0.okShown, `R6: first the plane as it was: the new part's layer is there but not shown yet, no OK (${JSON.stringify(pay0)})`);
   await p.waitForTimeout(2700);   // the part arrives (0.9 s), the camera zooms onto it (0.6 s), then the label (0.7 s)
@@ -121,18 +124,18 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
       label: lab.textContent, labelOn: +getComputedStyle(lab).opacity > 0.9, scale: +scale.toFixed(2), mark: { l: Math.round(m.left), t: Math.round(m.top), r: Math.round(m.right), b: Math.round(m.bottom) },
       points: m.width > 2 && tip.x >= m.left && tip.x <= m.right && tip.y >= m.top - 2 && tip.y <= m.bottom + 2, inFrame, small, labelInCard }; });
   await shot('R6b-payoff-after');
-  check(pay1.op > 0.9 && pay1.okShown && /cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
+  check(pay1.op > 0.9 && pay1.okShown && /jet engines|cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
   check(pay1.scale > 1.5 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points && pay1.inFrame && pay1.small && pay1.labelInCard, `R6: the camera zooms onto the new part (its box in view and small: the part, not the plane) and the label, inside the card, points INTO it (${JSON.stringify(pay1)})`);
-  await step('R6-payoff', /./, () => document.getElementById('payoff').hidden && !document.getElementById('hangar').hidden, { modal: '#payOk' });   // (stays in the hangar: the user)
+  await step('R6-payoff', /new part/i, () => { const po = document.getElementById('payoff'); return (!po || po.hidden) && !document.getElementById('hangar').hidden; }   /* (stage 2 removes it) */);   /* stage 2: the tour rings OK (the page is live) */   // (stays in the hangar: the user)
   await step('R7-takeoff', /take off/i, () => document.getElementById('hangar').hidden, { screen: 'hangar' });   // (the hangar's own TAKE OFF)
   // R8-R9: flight 1, then the seeds, the mission's prize, and the wildlife hint.
+  const seeds0 = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds);   // R1: the results card pays the prize itself, so count from BEFORE the flight
   await fly('flight 1', 240, { noTurb: true, noWild: true });
-  const seeds0 = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds);
   await step('R9a-seeds', /seeds/i, null);
   await step('R9b-claim', /mission/i, () => true);
-  check(await p.evaluate(s0 => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds > s0, seeds0), 'R9b: claiming added the seeds');
-  await step('R9c-wildlife', /wildlife/i, () => !document.getElementById('title').hidden);
-  await step('R10-takeoff2', /animals/i, null);
+  check(await p.evaluate(s0 => JSON.parse(localStorage.getItem('contrailPilot.v2')).seeds > s0, seeds0), 'R9b: the card paid the mission prize by itself (the seeds rose)');
+  await step('R9c-icyair', /icy air/i, () => !document.getElementById('title').hidden);
+  await step('R10-takeoff2', /icy air/i, null);
   // R10-R11: flight 2, then NATURE and its free first project.
   const L2 = () => p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).missionsDone || []).includes('L2'));
   avoid = MISS_L2; await p.evaluate(a => { window.__avoid = a; }, avoid);
@@ -156,12 +159,11 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   const l2 = await L2();
   check(l2, `L2 is done after ${flights} flight(s) (${flights === 1 ? 'the guaranteed daytime icy patch' : 'a miss, then the second try or the fallback'}): the rails never stall`);
   if (!l2) { await b.close(); console.log(`FAIL onrails:\n - ${fails.join('\n - ')}`); process.exit(1); }   // (NATURE needs it: the rest would pass or fail by accident)
-  // N0-N5, the NATURE introduction (the user's approved script, 2026-10-28): claim first, then open NATURE.
-  if (await p.evaluate(() => !!document.querySelector('#rRewards .btn.claim'))) await step('N0a-claim-all', /prizes/i, () => !document.querySelector('#rRewards .btn.claim'), { screen: 'results' });
+  // N0-N5, the NATURE introduction (the user's approved script, 2026-10-28): open NATURE (R8: prizes are paid when earned, no claim step comes first).
   await step('N0b-open-nature', /Animals need places/i, () => !document.getElementById('nature').hidden, { screen: 'results' });
   await step('N1-the-land', /wild land/i, null, { screen: 'nature' });
-  await step('N2-tap-to-see', /Tap this one/i, () => !!document.querySelector('#wProjects .line.project.previewing'), { screen: 'nature' });
-  const pv = await p.evaluate(() => ({ ghost: document.querySelectorAll('#wScene .wf.ghost').length, gain: (document.querySelector('#wMeter .mgain') || {}).textContent || '', hi: document.querySelectorAll('#wProjects .w-webpic.w-hi').length }));
+  await step('N2-tap-to-see', /Tap this one/i, () => !!document.querySelector('#wProjects .project.previewing'), { screen: 'nature' });
+  const pv = await p.evaluate(() => ({ ghost: document.querySelectorAll('#wScene .wf.ghost').length, gain: (document.querySelector('#wMeter .mgain') || {}).textContent || '', hi: document.querySelectorAll('#wStrip .w-webpic.w-hi, #wProjects .w-webpic.w-hi').length }));
   await shot('N2b-preview');
   check(pv.ghost >= 1 && /\+\d/.test(pv.gain) && pv.hi >= 1, `N2: tapping the project PREVIEWS it: ghosted in the land, the bar's gain, the animals it brings highlighted (${JSON.stringify(pv)})`);
   const w0 = await p.evaluate(() => parseFloat(document.querySelector('#wMeter .mfill').style.width) || 0);
@@ -172,6 +174,10 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
   await step('N4-biodiversity', /BIODIVERSITY/, null, { screen: 'nature' });
   await step('N5-fly-on', /Fly on/i, () => !document.getElementById('title').hidden);
   check(!p.errs.length, `page errors: ${p.errs}`);
+  // A rails step that gave up because its target never existed (the redesign, 2026-11-01: the systems rail pointed at the old
+  // rows, gave up unmarked and re-ran forever; the plane build's gate idea): none may happen in a normal run.
+  const gaveUp = [...(globalThis.__gaveUpSoFar || []), ...await p.evaluate(() => window.__tourGaveUp || []).catch(() => [])];
+  check(!gaveUp.length, `rails steps gave up on a target that never appeared: ${[...new Set(gaveUp)].join(', ')}`);
   await b.close();
   console.log(fails.length ? `FAIL onrails:\n - ${fails.join('\n - ')}` : 'PASS onrails: every rails step has exactly one tappable target, fully on screen, each tap works; no strip covers the plane; flights 1-2 follow the rails rules');
   process.exit(fails.length ? 1 : 0);

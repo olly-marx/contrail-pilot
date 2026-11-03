@@ -1,5 +1,337 @@
 [
   {
+    "id": "2026-11-03-branch-checks",
+    "version": "0.28.2",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: we added a new way to test the game before an update, so updates are safer. Nothing changes for you."
+    ]
+  },
+  {
+    "id": "2026-11-03-planting-ghost",
+    "version": "0.28.1",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "Tapping a planting card shows the trees it would add on the picture again; the small (i) button opens the explanation."
+    ]
+  },
+  {
+    "id": "2026-11-03-nature-calmer",
+    "version": "0.28.0",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The nature screen is calmer: one line tells you what to do next, and the long explanations are behind the (i).",
+      "The land tabs scroll sideways, the planting tools are tidy rows, and it fits small phones.",
+      "A red dot shows which land, project, tree or animal has something new.",
+      "For now, tapping a planting card does not show the new trees on the picture. That comes back in the next update."
+    ]
+  },
+  {
+    "id": "2026-11-03-auto-claim",
+    "version": "0.27.3",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "Prizes now go into your seed bank the moment you earn them, so there is nothing to tap and claim any more. Prizes you had not claimed yet are added when you open the game.",
+      "Because your bank fills sooner, the extra bonus for saving up (on long goals and the daily streak) stops sooner once you have enough seeds to buy something."
+    ]
+  },
+  {
+    "id": "2026-11-03-gear-pictograms",
+    "version": "0.27.2",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "Settings (how to play, flight school, sound, about us, reset) moved behind the gear on the home screen, in one Settings sheet.",
+      "Every mission has its own little picture."
+    ]
+  },
+  {
+    "id": "2026-11-03-missions-screen",
+    "version": "0.27.1",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The MISSIONS screen is tidier: the next mission is pinned at the top, then what is open, today's missions, what is coming up, your long goals and a count of what you finished.",
+      "Tap a mission to see how to do it. City missions have an AIM HERE button, so your route flies there first.",
+      "Badges now live only on the BOARDS screen."
+    ]
+  },
+  {
+    "id": "2026-11-03-home-up-next",
+    "version": "0.27.0",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The home screen is simpler: your route and globe, then up to three things to do next, then TAKE OFF.",
+      "The three big buttons are gone: use the bar at the bottom to go to missions, the hangar and nature."
+    ]
+  },
+  {
+    "id": "2026-11-03-hangar-big-bank",
+    "version": "0.26.6",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "The hangar keeps TAKE OFF on screen even with a very large seed bank."
+    ]
+  },
+  {
+    "id": "2026-11-03-hangar-boards",
+    "version": "0.26.5",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The hangar is tidier: the plane, then the upgrade you can buy, then the tabs, all on one screen. It fits small phones too.",
+      "Badges now live on the BOARDS screen next to your records, and a red dot shows what is new."
+    ]
+  },
+  {
+    "id": "2026-11-03-new-dots",
+    "version": "0.26.4",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "A small red dot on the HANGAR, NATURE and BOARDS tabs now shows when something new is waiting there, and opening NATURE no longer clears the hangar's dot."
+    ]
+  },
+  {
+    "id": "2026-11-03-guide-small-phones",
+    "version": "0.26.3",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "Small phones: on a very narrow screen the first nature step could be hidden behind the pinned header; it now scrolls clear so new players can take their free project."
+    ]
+  },
+  {
+    "id": "2026-11-03-loading-fact",
+    "version": "0.26.2",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "The loading screen now shows a short fact if loading takes more than a couple of seconds."
+    ]
+  },
+  {
+    "id": "2026-11-03-results-card",
+    "version": "0.26.1",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The results screen is one tidy card now: it fits on your phone with no scrolling, and FLY ON is always in view.",
+      "Your mission prizes are added to your seeds for you, so there are no more CLAIM buttons to tap.",
+      "UP NEXT shows what is coming next."
+    ]
+  },
+  {
+    "id": "2026-11-03-aimed-route",
+    "version": "0.26.0",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "Missions now steer your route: a mission to fly to a city puts that city on your route, and the home screen shows it.",
+      "You can skip the mission route for one trip.",
+      "Missions you could never reach are no longer offered."
+    ]
+  },
+  {
+    "id": "2026-11-03-hangar-fit",
+    "version": "0.25.5",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "The hangar fits small phones: TAKE OFF and the tabs no longer run off the right edge on a 320-pixel-wide screen."
+    ]
+  },
+  {
+    "id": "2026-11-03-animal-art",
+    "version": "0.25.4",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "New pictures for 14 animals: the Murray cod, wedge-tailed eagle, emu, kookaburra, cockatoo, echidna and wombat from Australia, and the flying fox, reef heron, white tern, imperial pigeon, coconut crab, malau and Tahiti monarch from the Pacific islands."
+    ]
+  },
+  {
+    "id": "2026-11-02-lists-tidy",
+    "version": "0.25.3",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "The nature and hangar lists no longer put names under the buttons. Long names now use two lines, so every name can be read."
+    ]
+  },
+  {
+    "id": "2026-11-02-ghost-fit",
+    "version": "0.25.2",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "The hangar's upgrade preview now lines up exactly with your plane. It was drawn a little too tall, so you saw two planes on top of each other."
+    ]
+  },
+  {
+    "id": "2026-11-02-route-header",
+    "version": "0.25.1",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "Fixed: the top display no longer shows the old route after a crash. A new flight shows only its own trip."
+    ]
+  },
+  {
+    "id": "2026-11-02-offline",
+    "version": "0.25.0",
+    "date": "2026-11-02",
+    "level": "major",
+    "notes": [
+      "New: the game now keeps itself on your phone, so it starts and plays without the internet after you have played it once.",
+      "You can add Contrail Pilot to your Home Screen, with its own icon, and open it like an app.",
+      "Updates still arrive by themselves."
+    ]
+  },
+  {
+    "id": "2026-11-02-loading-faster",
+    "version": "0.24.1",
+    "date": "2026-11-02",
+    "level": "minor",
+    "notes": [
+      "The loading screen is quicker now: the game loads the pictures for your menus while it gets everything else ready."
+    ]
+  },
+  {
+    "id": "2026-11-02-loading-screen",
+    "version": "0.24.0",
+    "date": "2026-11-02",
+    "level": "major",
+    "notes": [
+      "New: a loading screen! A little plane draws a contrail across the sky while the game gets ready.",
+      "Everything in the hangar, NATURE and the badge screens is ready before you play, so pictures no longer pop in when you tap.",
+      "The animals for your next trip are ready before take-off."
+    ]
+  },
+  {
+    "id": "2026-11-01-hangar-nature-redesign",
+    "version": "0.23.0",
+    "date": "2026-11-01",
+    "level": "major",
+    "notes": [
+      "A new look for the hangar and NATURE: tidy rows you can tap to see what each part or project does, with a short name and a picture.",
+      "Your planes are rows now, and the hangar tells you which plane comes next.",
+      "When you buy something, the \"fitted!\" show happens right where your plane is, and then you carry on.",
+      "Fixed: the hangar no longer jumps around after a purchase.",
+      "Fixed: the guide no longer sends you back to the hangar again and again."
+    ]
+  },
+  {
+    "id": "2026-11-01-payoff-broken-pic",
+    "version": "0.22.1",
+    "date": "2026-11-01",
+    "level": "minor",
+    "notes": [
+      "Fixed: if a part's picture could not load when you bought it, a broken picture showed on the \"fitted!\" screen. Now it just carries on without it."
+    ]
+  },
+  {
+    "id": "2026-10-30-polynesia",
+    "version": "0.22.0",
+    "date": "2026-10-30",
+    "level": "major",
+    "notes": [
+      "New: Polynesia! Visit the island cities of Nuku'alofa, Apia, Rarotonga and Papeete.",
+      "A new land to discover in NATURE, with its own trees, animals and seven projects.",
+      "Five new crossings across the Pacific.",
+      "Crossings now count the best land in your area, so the first crossing is fairer."
+    ]
+  },
+  {
+    "id": "2026-10-30-wild-flight-3",
+    "version": "0.21.5",
+    "date": "2026-10-30",
+    "level": "minor",
+    "notes": [
+      "Wild animals now show up from your third flight, so your first two flights are all about the sky.",
+      "The guide now tells you about icy air before your second flight, and about the animals at the end of the NATURE tour."
+    ]
+  },
+  {
+    "id": "2026-10-29-playtest-fixes",
+    "version": "0.21.4",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "Fixed: your first upgrade's picture could come up blank on a slow phone. It now waits for the pictures, then shows the new part: \"NEW: jet engines!\".",
+      "Fixed: some players had no seeds to collect on their second flight. There are always a few seeds to grab now.",
+      "Fixed: the guide no longer says you found animals before you have opened NATURE.",
+      "Fixed: the pilot name screen works in the preview."
+    ]
+  },
+  {
+    "id": "2026-10-29-plane-facts",
+    "version": "0.21.3",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "The plane facts for the 2010s, 2030s and far future now have careful, checked facts, and the 2030s plane is called the Truss-braced wing."
+    ]
+  },
+  {
+    "id": "2026-10-29-late-prices",
+    "version": "0.21.2",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "The newest planes and parts in the far future now cost half as many crystals, so you can reach the end of the story."
+    ]
+  },
+  {
+    "id": "2026-10-29-strip-clear",
+    "version": "0.21.1",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "Fixed: the helper message at the top or bottom of the screen could cover your plane on a slow phone. It now moves out of the way."
+    ]
+  },
+  {
+    "id": "2026-10-29-steady-missions",
+    "version": "0.21.0",
+    "date": "2026-10-29",
+    "level": "major",
+    "notes": [
+      "New: steady missions! After your first lessons there is always a goal waiting for you, and even a crash counts.",
+      "New: daily missions, with an easy one every day, and a streak for coming back.",
+      "New: three more badges for your whole journey: distance, collecting and threading the gaps. They give crystals.",
+      "The MISSIONS screen now shows how close you are to your next badge."
+    ]
+  },
+  {
+    "id": "2026-10-29-era-6",
+    "version": "0.20.0",
+    "date": "2026-10-29",
+    "level": "major",
+    "notes": [
+      "The last plane is here: the hydrogen blended wing! Build it to fly the furthest of all.",
+      "THE LAP OF THE EARTH is open once you have visited every land: fly from home all the way round the world and back, 40,000 km.",
+      "Two more levels for every part of your plane, and a new combo: full awareness of the sky around you.",
+      "NATURE money: level 4 brings the dividend.",
+      "When you finish the lap, there is an ending card for you."
+    ]
+  },
+  {
+    "id": "2026-10-29-787-gaps",
+    "version": "0.19.3",
+    "date": "2026-10-29",
+    "level": "minor",
+    "notes": [
+      "The 787 is a little kinder in the sky now: the gaps between storms are a bit wider when you fly it."
+    ]
+  },
+  {
     "id": "2026-10-29-goose-early",
     "version": "0.19.2",
     "date": "2026-10-29",

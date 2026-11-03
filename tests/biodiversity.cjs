@@ -7,7 +7,7 @@ const { chromium } = require('playwright-core');
 require('./lib/classic.js');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
-const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoon forest', 'Temperate mountain forest', 'Boreal forest', 'Plains & forest', 'Tundra', 'African savanna', 'Tropical rainforest', 'Island forest', 'Australian bush', 'Patagonian steppe'];
+const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoon forest', 'Temperate mountain forest', 'Boreal forest', 'Plains & forest', 'Tundra', 'African savanna', 'Tropical rainforest', 'Island forest', 'Australian bush', 'Patagonian steppe', 'Polynesian islands'];
 
 (async () => {
   const fails = [];
@@ -47,7 +47,9 @@ const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoo
   // NATURE, savanna tab: name, source line, how to raise it.
   await p.click('#tabNature'); await p.waitForTimeout(300);
   await p.click('[data-region="savanna"]'); await p.waitForTimeout(300);
-  const nat = await p.evaluate(() => (document.getElementById('wMeter').textContent + ' ' + document.getElementById('wMeterMore').textContent).replace(/\s+/g, ' '));
+  await p.click('#wMeter [data-minfo]'); await p.waitForTimeout(200);   // (R6: the intro paragraph is behind the meter's (i), in a sheet)
+  const nat = await p.evaluate(() => (document.getElementById('wMeter').textContent + ' ' + ((document.getElementById('sheet') || {}).textContent || '')).replace(/\s+/g, ' '));
+  await p.click('#sheet .sheet-ok').catch(() => {}); await p.waitForTimeout(150);
   check(/African savanna/.test(nat) && /Projects from Kenya/.test(nat) && /Raise it/.test(nat), `NATURE explains the savanna's meter: "${nat}"`);
   // In flight: the banner when the land changes, and the results row for a land whose meter rose.
   await p.click('#tabFly'); await p.click('#goBtn');
@@ -59,8 +61,9 @@ const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoo
     s.finish({ landed: true }); return { banner, gains: s.result.natureGains }; }, all);
   check(r.banner && r.banner.region === 'rainforest' && r.banner.text.startsWith('TROPICAL RAINFOREST: BIODIVERSITY'), `entering the rainforest shows its banner: ${JSON.stringify(r.banner)}`);
   check(r.gains.length === 1 && r.gains[0].name === 'African savanna' && r.gains[0].gain > 0, `results list the savanna's gain: ${JSON.stringify(r.gains)}`);
-  await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 }); await p.click('#results'); await p.waitForTimeout(1200);
-  const row = await p.evaluate(() => { const e = document.getElementById('rNatureRow'); return e.hidden ? '' : e.textContent; });
+  await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 }); await p.click('#results', { position: { x: 4, y: 4 } }); await p.waitForTimeout(1200);
+  await p.click('#rMaths'); await p.waitForSelector('#sheet .rc-rows');   // R1: the biodiversity rows are in the maths sheet
+  const row = await p.evaluate(() => [...document.querySelectorAll('#sheet .rc-rows p')].map(x => x.textContent).join(' '));
   check(/African savanna\+\d+/.test(row.replace(/\s+/g, '')) || /African savanna/.test(row), `the results show the savanna row: "${row}"`);
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close();

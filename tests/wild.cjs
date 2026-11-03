@@ -45,7 +45,8 @@ const KEY = 'contrailPilot.v2';
   check(s.habitat.woodland.includes('deadwood') && s.seeds === 80 && s.crystals === 8, `dead wood bought for 20 + 2: ${JSON.stringify(s.habitat)} ${s.seeds}/${s.crystals}`);
   check(/DONE/.test(await p.textContent('[data-pline="deadwood"]')), 'a bought project says DONE');
   // A finished tier folds to one line (with 'show'); here tier 1 is not finished, so margins is listed.
-  await p.click('[data-pinfo="margins"]'); await p.waitForTimeout(200);
+  await p.evaluate(() => document.querySelector('[data-pline="margins"] .rowc-tap').click()); await p.waitForTimeout(300);   /* the (i) lives in the preview strip now (DESIGN-HANGAR-NATURE) */
+  await p.click('#wStrip [data-pinfo="margins"]'); await p.waitForTimeout(200);
   const info = await p.evaluate(() => ({ text: document.getElementById('wInfoBody').textContent, links: [...document.querySelectorAll('#wInfoBody a')].map(a => a.href) }));
   check(/Flower strips/.test(info.text) && /Brown hare/.test(info.text) && info.links.length >= 2 && info.links.every(u => u.startsWith('https://')), `the field margins page: chain, who it helps, source links: ${JSON.stringify(info)}`);
   await p.click('#wInfoClose');

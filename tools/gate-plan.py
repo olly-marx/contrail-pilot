@@ -88,7 +88,28 @@ def changed_files(base, extra):
     return sorted(files)
 
 
-def plan(files):
+# The declared lists. Appending lines to them is not a harness change (user decision 2026-11-01): the plan runs the tests the new lines name, plus whatever
+# the rest of the diff maps to. Any removed or edited line (a diff with a '-' line), and every other harness file, still means the whole tier.
+LIST_FILES = ('tests/GATE', 'tests/DEEP', 'tests/BROWSER', 'tests/PATHMAP')
+
+
+def added_lines(path, base):
+    """The lines added to PATHS since BASE (working tree included) if the diff only ADDS lines; None if any line was removed or edited (or no diff to read)."""
+    d = subprocess.run(['git', '-C', ROOT, 'diff', '-U0', base, '--', path], text=True, capture_output=True)
+    if d.returncode != 0 or not d.stdout.strip():
+        return None
+    add = []
+    for line in d.stdout.split('\n'):
+        if line.startswith('+++') or line.startswith('---'):
+            continue
+        if line.startswith('-'):
+            return None
+        if line.startswith('+'):
+            add.append(line[1:])
+    return add
+
+
+def plan(files, base=None):
     smoke, groups, _, _ = parse_pathmap()
     browser = read_list('tests/BROWSER')
     why, unmapped = {}, []
@@ -96,6 +117,18 @@ def plan(files):
         why.setdefault(t, []).append('smoke')
     for path in files:
         hit = False
+        add = added_lines(path, base) if base and path in LIST_FILES else None
+        if add is not None:      # append-only list change: not the harness; the new test names run
+            hit = True
+            for line in add:
+                tok = line.split('#')[0].split()
+                if path != 'tests/PATHMAP' and tok and tok[0] in browser:
+                    why.setdefault(tok[0], []).append(f'{path} (line added)')
+            for g in groups:     # other groups the file may match (none today) still count
+                if g['name'] != 'harness' and matches(path, g['globs']):
+                    for t in (browser if 'ALL' in g['tests'] else [x for x in g['tests'] if x != 'NONE']):
+                        why.setdefault(t, []).append(f"{path} ({g['name']})")
+            continue
         for g in groups:
             if matches(path, g['globs']):
                 hit = True
@@ -131,7 +164,7 @@ def main(argv):
                 extra.append(args[i])
                 i += 1
         files = changed_files(base, extra)
-        why, unmapped = plan(files)
+        why, unmapped = plan(files, None if extra else base)
         for path in unmapped:
             print(f'UNMAPPED\t{path}', file=sys.stderr)
         if '--list' in argv:

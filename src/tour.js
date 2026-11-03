@@ -8,11 +8,14 @@
 import { tip } from './tips.js';
 import { FEATURES } from './config.js';
 import { revealed as s2Revealed } from './missions2.js';
-// Tab-bar targets and what replaces them on the season 2 hub (the tiles; HOME goes back to the hub).
+// Tab-bar targets and what replaces them on the season 2 hub (nothing: since R3 the tiles are gone and the bar's tabs are the targets; HOME goes back to the hub).
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf } from './upgrades.js';
-import { getPilot } from './online.js';
+import { getPilot, namesOpen } from './online.js';
+// Rails rule (the user's playtest, 2026-10-29): a step that taps a bottom-bar tab must DECLARE whether the screen it opens has
+// something to act on (ready); run() stops before such a step when it is false. tests/tourready.cjs checks every tab step declares it.
+const always = () => true;
 
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -50,12 +53,16 @@ export class Tour {
   markDone(id) { this.save.tours = [...new Set([...(this.save.tours || []), id])]; writeSave(this.save); }
 
   // Called when the menu shows, and when the results have finished. Starts at most one tour.
+  // The rails' first payoff happens in the page (stage 2), so the rest of the hangar stays live: on the rails, one step
+  // rings OK and dims the rest, so a child sees ONE thing to tap (the one-target rule; onrails R6).
+  payoffOk() { if (this.busy || this.done('r-payoff') || !document.getElementById('payOk')) return; this.run('r-payoff', [{ target: '#payOk', text: tip('rail-payoff-ok'), tap: true }]); }
+
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
     // Season 1 and the preview: the name step at once. Season 2 (online is back, 0.20.0): it comes with BOARDS after the 3rd landing, and only when no
     // rails step is due (below), so it never cuts across the hangar rails.
-    const s2name = FEATURES.season2 && !window.CP_PREVIEW, wantName = !this.done('name') && !getPilot();
+    const s2name = FEATURES.season2 && !window.CP_PREVIEW, wantName = !this.done('name') && !getPilot() && namesOpen();
     if (where === 'title' && wantName && !s2name) return this.run('name', this.nameSteps());
     if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     // Season 2: the ON-RAILS onboarding (the user, 2026-10-27: "the ONLY thing they should be able to do is what you want
@@ -74,7 +81,7 @@ export class Tour {
   // Which rails step is due on this screen, from what has really happened (lessons done, the free part, flights), each
   // once (its tour id). Returns [id, steps] or null.
   railsFor(where) {
-    const s = this.save, d = id => (s.missionsDone || []).includes(id), un = (s.unclaimed || []).length;
+    const s = this.save, d = id => (s.missionsDone || []).includes(id);
     const hub = where === 'title', res = where === 'results';
     // R4: the school-done card -> the hangar (the free part).
     if (res && s.freeUpgrade && !this.done('r-school')) return ['r-school', [{ target: '#againBtn', text: tip('rail-school'), tap: true }]];
@@ -87,76 +94,74 @@ export class Tour {
     // R7 in the hangar (the user: stay in the hangar after buying): its own TAKE OFF.
     if (where === 'hangar' && !s.freeUpgrade && s.freeGiven && !d('L1') && !this.done('r-takeoff1') && !(document.getElementById('payoff') && !document.getElementById('payoff').hidden)) /* (not under the payoff: its OK starts this step) */ return ['r-takeoff1', [{ target: '#hGoTop', text: tip('rail-takeoff-h'), tap: true }]];
     // R7: the hub, only TAKE OFF.
-    if (hub && s.freeUpgrade) return ['r-hangar', [{ target: '#hubTiles [data-go="hangar"]', text: tip('rail-hangar'), tap: true }]];   // (every time: a reload with the part still waiting)
+    if (hub && s.freeUpgrade) return ['r-hangar', [{ target: '#tabHangar', text: tip('rail-hangar'), tap: true, ready: always }]];   // (R3: the tiles are gone: the bar's HANGAR tab)   // (every time: a reload with the part still waiting)
     if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];
     // R9: after flight 1: the seeds are yours; claim the mission's prize; another flight, watch for wildlife.
     if (res && d('L1') && !this.done('r-res1')) return ['r-res1', [
-      { target: '#rGrab', text: tip('rail-seeds'), ok: true },
-      ...(un ? [{ target: '#rRewards .claim', text: tip('rail-claim'), tap: true }] : []),
+      { target: '#rBank', text: tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none'), ok: true },   // (playtest 2026-10-29: 0 seeds read 'your seeds')
+      { skipIf: () => { const m = document.getElementById('rMission'); return !m || m.hidden; }, target: '#rMission', text: tip('rail-mission'), ok: true },   // R1/R8: the prize is paid already (at the bank); the line says so
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
     // R11: after flight 2: NATURE opens; its first project is FREE; how nature works.
     // N0-N5, the NATURE introduction (the user approved, 2026-10-28): one idea per step, in the order a child asks - what is
     // this place, why animals, do this one thing, see the result - claim the prizes first, then open NATURE.
     if (res && d('L2') && !this.done('r-res2')) return ['r-res2', [
-      { skipIf: () => !document.querySelector('#rRewards .btn.claim.all'), target: '#rRewards .btn.claim.all', text: tip('rail-claim-all'), tap: true },   // CLAIM ALL when there are several
-      { skipIf: () => !!document.querySelector('#rRewards .btn.claim.all') || !document.querySelector('#rRewards .btn.claim'), target: '#rRewards .btn.claim', text: tip('rail-claim-all'), tap: true },
       { target: '#againBtn', text: tip('rail-nature'), tap: true }]];
     if (where === 'nature' && d('L2') && !this.done('r-nature')) return ['r-nature', [
       { target: '#wScene', text: tip('rail-nat-land'), ok: true },
-      { target: '#wProjects .line.project.freeline .w-pname', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .line.project.previewing') },
+      { target: '#wProjects .project.freeline .rowc-tap', text: tip('rail-nat-tap'), until: () => !!document.querySelector('#wProjects .project.previewing') },
       { target: '#wProjects [data-project].free', text: tip('rail-project'), tap: true },
       { target: '#wMeter', text: tip('rail-nat-bio'), ok: true },
-      { target: '#tabFly', text: tip('rail-nat-home'), tap: true }]];
+      { target: '#tabFly', text: tip('rail-nat-home'), tap: true, ready: always }]];
     // R12: a landing past an airport: the bonus payoff.
-    if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMultRow', text: tip('rail-bonus'), ok: true }]];
+    if (res && d('L4') && !this.done('r-bonus')) return ['r-bonus', [{ target: '#rMaths', text: tip('rail-bonus'), ok: true }]];
     // R13: once lesson L3 is done: the hangar's SYSTEMS.
     if (hub && d('L3') && !this.done('r-systems')) return ['r-systems', [
-      { target: '#tabHangar', text: tip('rail-systems'), tap: true },
+      { target: '#tabHangar', text: tip('rail-systems'), tap: true, ready: always },
       { target: '#hFleet [data-ftab="systems"]', text: tip('rail-systems-tab'), tap: true },
-      { target: '#hFleet .line .next', text: tip('rail-systems-line'), ok: true }]];
+      { target: '#hFleet .rowc .rowc-sub', text: tip('rail-systems-line'), ok: true }]];
     // L5 needs tree parcels (free the first time): on NATURE, point at the FREE button (the audit, 2026-10-28).
     if (where === 'nature' && d('L4') && !d('L5') && !((s.levels || {}).trees > 0) && !this.done('r-parcels')) return ['r-parcels', [{ target: '#wTrees [data-buy="trees"]', text: tip('rail-parcels'), tap: true }]];
     // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).
-    if (hub && s2Revealed(s, 'boards') && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true }]];
+    if (hub && s2Revealed(s, 'boards') && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true, ready: always }]];
     return null;
   }
 
   // ---------- the tours ----------
   nameSteps() {
     return [
-      { target: '#tabPilot', text: tip('tour-hello'), tap: true },
+      { target: '#tabPilot', text: tip('tour-hello'), tap: true, ready: namesOpen },
       { target: '#pFirst', text: tip('tour-first'), until: () => /^[A-Za-z]{2,12}$/.test($('pFirst').value), focus: true },
       { target: '#pWords', text: tip('tour-word'), until: () => !!(this.ui.pilot && this.ui.pilot.draft.word) },
       { target: '#pSave', text: tip('tour-save'), tap: true },
       { target: '#pName', text: tip('tour-saving'), until: () => !!getPilot() || /internet|different/.test($('pMsg').textContent), wait: true },
       { skipIf: () => !!getPilot() || !/different/.test($('pMsg').textContent), target: '#pEdit', text: tip('tour-retry'), until: () => !!getPilot() || /internet/.test($('pMsg').textContent) },
       { skipIf: () => !!getPilot(), target: '#pMsg', text: tip('tour-offline'), ok: true, end: true },
-      { target: '#tabBoards', text: tip('tour-boards'), tap: true },
+      { target: '#tabBoards', text: tip('tour-boards'), tap: true, ready: always },
       { target: '#bList', text: tip('tour-best'), ok: true },
-      { target: '#tabFly', text: tip('tour-fly'), tap: true },
+      { target: '#tabFly', text: tip('tour-fly'), tap: true, ready: always },
     ];
   }
 
   hubHangarSteps() {
     return [
-      { skipIf: () => !$('hangar').hidden, target: '#hubTiles [data-go="hangar"]', text: tip('tour-hangar'), tap: true },   // already inside (OPEN THE HANGAR)
+      { skipIf: () => !$('hangar').hidden, target: '#tabHangar', text: tip('tour-hangar'), tap: true, ready: always },   // already inside (OPEN THE HANGAR)
       { area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true, scroll: true },   // scrolled into view: the bubble was cut off at the top
-      { target: '#tabFly', text: tip('tour-home'), tap: true },
+      { target: '#tabFly', text: tip('tour-home'), tap: true, ready: always },
     ];
   }
 
   hangarSteps() {
     const free = () => !!this.save.freeUpgrade;
     return [
-      { target: '#tabHangar', text: tip('tour-hangar'), tap: true },
+      { target: '#tabHangar', text: tip('tour-hangar'), tap: true, ready: always },
       { target: '.treebank', text: tip('tour-bank'), ok: true },
       { target: '#hFleet .ftimeline', text: tip('tour-eras'), ok: true },
       { target: '#hFleet .ftabs', text: tip('tour-tabs'), ok: true },
       { skipIf: () => !free(), area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true },
-      { target: '#tabNature', text: tip('tour-nature'), tap: true },
+      { target: '#tabNature', text: tip('tour-nature'), tap: true, ready: always },
       { target: '#wProjects', text: tip('tour-projects'), ok: true },
-      { target: '#tabFly', text: tip('tour-fly'), tap: true },
+      { target: '#tabFly', text: tip('tour-fly'), tap: true, ready: always },
     ];
   }
 
@@ -177,6 +182,7 @@ export class Tour {
     for (let i = 0; i < steps.length; i++) {
       const st = steps[i];
       if (st.skipIf && st.skipIf()) continue;
+      if (st.ready && !st.ready()) { id = null; break; }   // its target screen has nothing to act on: do not start (it runs again later)
       if (!await this.step(st)) { id = null; break; }   // its button is gone (e.g. a flight started): stop; it runs again next time
       if (st.after) st.after();
       if (st.end) break;
@@ -197,13 +203,19 @@ export class Tour {
     // on a phone); if it exists but is still hidden, wait up to 4 s for it to show, as before.
     const sel = st.area || st.target, inDom = () => !!document.querySelector(FEATURES.season2 ? HUB_TARGETS[sel] || sel : sel);
     for (let i = 0; i < 3 && !inDom(); i++) await sleep(100);
-    if (!inDom()) return false;   // nothing to point at: never trap the player
+    if (!inDom()) { (window.__tourGaveUp = window.__tourGaveUp || []).push(sel); return false; }   // nothing to point at: never trap the player (recorded: tests fail on a target that should exist but never does)
     for (let i = 0; i < 40 && !(t = this.find(sel)); i++) await sleep(100);
-    if (!t) return false;
+    if (!t) { (window.__tourGaveUp = window.__tourGaveUp || []).push(`${sel} (never shown)`); return false; }
     // The target fully on screen first, always (the user's screenshot: the hangar opened half-way down, the target off-screen).
     const vr = t.getBoundingClientRect();
     if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
     this.target = t; this.side = null;   // (a new step decides its bubble's side afresh)
+    // One action per step (the one-target audit): a row's own price/BUY sits inside the row's tap area (.rowc-price is
+    // absolute over .rowc-tap), so while the step points at the row's tap, that price hides (DESIGN-HANGAR-NATURE).
+    const solo = t.classList && t.classList.contains('rowc-tap') && t.closest('.rowc'); if (solo) solo.classList.add('tour-only');
+    const soloP = t.classList && t.classList.contains('rowc-price') && t.closest('.rowc'); if (soloP) soloP.classList.add('tour-price');   // the mirror: a step on a row's PRICE (FREE!) makes the row's own tap area inert, so the lit hole has ONE tappable thing (onrails320 N3)
+    const soloI = t.classList && t.classList.contains('rowc-info') && t.closest('.rowc'); if (soloI) soloI.classList.add('tour-info');   // R6: a step on a row's (i) makes that row's tap area and price inert (one target)
+    if (st.ok && !st.tap) t.classList.add('tour-inert');   // an OK step points at something to READ: if it is a button (R1: the results lines) it must not also be tappable (the one-target rule)
     this.keepVisible();
     this.el.querySelector('.tbubble p').innerHTML = st.text;
     const ok = this.el.querySelector('.tbubble .btn');
@@ -212,7 +224,7 @@ export class Tour {
     this.place();
     if (st.focus) setTimeout(() => t.focus(), 50);
     await new Promise(resolve => {
-      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; resolve(); };
+      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; document.querySelectorAll('.rowc.tour-only').forEach(r => r.classList.remove('tour-only')); document.querySelectorAll('.rowc.tour-price').forEach(r => r.classList.remove('tour-price')); document.querySelectorAll('.rowc.tour-info').forEach(r => r.classList.remove('tour-info')); document.querySelectorAll('.tour-inert').forEach(r => r.classList.remove('tour-inert')); resolve(); };
       // A tap on the target (with `area`, on ANY element matching `target` inside the hole). Let the button do its job first.
       const want = FEATURES.season2 ? HUB_TARGETS[st.target] || st.target : st.target;
       const onTap = e => { if (e.target.closest && e.target.closest(want)) setTimeout(finish, 0); };
@@ -225,7 +237,7 @@ export class Tour {
   }
 
   find(sel) {
-    if (FEATURES.season2) sel = HUB_TARGETS[sel] || sel;   // season 2 has no tab bar: the hub's tiles and HOME button (S2)
+    if (FEATURES.season2) sel = HUB_TARGETS[sel] || sel;   // (the bar is back on the hub: no remapping needed)
     const all = [...document.querySelectorAll(sel)].filter(e => e.offsetParent !== null);
     return all[0] || null;
   }
@@ -242,7 +254,13 @@ export class Tour {
     else if (r.top < top) sc.scrollTop -= top - r.top;
     else {   // in the band but COVERED (a pinned header, e.g. NATURE's scene: content scrolls under it): bring it to the middle
       const r2 = t.getBoundingClientRect(), top1 = document.elementsFromPoint(r2.left + r2.width / 2, r2.top + r2.height / 2).find(e => !e.closest('#tour'));
-      if (top1 && top1 !== t && !t.contains(top1)) sc.scrollTop += r2.top + r2.height / 2 - (top + bottom) / 2;
+      if (top1 && top1 !== t && !t.contains(top1)) {
+        // The target must end up BELOW what covers it (a pinned block: NATURE's land, the hangar dock), not merely at the middle of the screen: on a
+        // 568 px phone the pinned block's bottom (~258) is past the middle (254), so "the middle" left the FREE! button under it (onrails320, N3-N5).
+        // DIAGNOSED BY READING, NOT YET REPRODUCED (the browser turn proves it, 2026-11-03). A cover that is not above the target keeps the old aim.
+        const pin = top1.closest('.wpin, .hp-dock') || top1, cr = pin.getBoundingClientRect(), floor = cr.top <= r2.top + 1 ? Math.max(top, cr.bottom + 8) : top;
+        sc.scrollTop += r2.top + r2.height / 2 - (floor + bottom) / 2;
+      }
     }
   }
 

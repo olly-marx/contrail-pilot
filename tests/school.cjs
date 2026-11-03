@@ -121,7 +121,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const steps = seen.filter(x => x >= 0 && x < 18);   // 18 = finished
   if (steps.length !== 18 || Math.max(...seen) > 18) fails.push(`flight school should be exactly 18 steps (7 diagram lessons), all completed; saw ${JSON.stringify(steps)}`);
   if (!(await p.isVisible('#results'))) fails.push('results not shown after school');
-  if ((await p.textContent('#rTitle')).toLowerCase().indexOf('school') < 0) fails.push('results do not say flight school');
+  if ((await p.textContent('#rEyebrow')).toLowerCase().indexOf('school') < 0)   /* R1: the eyebrow says FLIGHT SCHOOL, the title Well done! */
+    fails.push('results do not say flight school');
   // Second visit: the button says TAKE OFF and starts a normal flight.
   await p.evaluate(() => { game.registry.get('save').tours = ['*']; });   // FLY ON now passes the menu, where the first-time tour would show
   await p.click('#againBtn'); await p.click('#goBtn'); await p.waitForTimeout(500);

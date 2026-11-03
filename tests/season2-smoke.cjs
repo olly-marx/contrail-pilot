@@ -6,7 +6,7 @@
 //   C  the tabs: HANGAR, NATURE, PILOT, BOARDS and back to FLY open with content and without errors
 //   D  the offer card with the gate met through a seeded save (areaBest + planted trees): 4,549 km not offered, another
 //      area's flight does not count, 4,550 km + biodiversity 30 offered; a crossing flight starts (Stockholm 6,500 km on)
-//   E  every area open and the last era: the MORE TO COME card
+//   E  every area open and the last era (far future, the era 6 release): THE LAP is listed, no MORE TO COME; after the lap, neither
 //   G  a tap before the scene exists (the 0.12.2 iPhone crash): startSchool/startFlight restart instead of throwing
 //   F  nothing to fly yet in an early era: the card says when the next crossing opens, not silence
 //   (C also: PILOT offers the name form; BOARDS is MY RECORDS with a ranking once there is a pilot name; Pilot LAPS text does not say London)
@@ -131,7 +131,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   await card({ weurope: 4550 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', crossing: document.getElementById('hubNext').classList.contains('crossing') }));
-  check(nextCard.crossing && /Crossing ready/i.test(nextCard.text), `D: the hub's NEXT card offers the ready crossing: ${JSON.stringify(nextCard)}`);
+  check(nextCard.crossing && /Cross to/i.test(nextCard.text), `D: the hub's UP NEXT leads with the ready crossing (R3: "Cross to <city>"): ${JSON.stringify(nextCard)}`);
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
   if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.click('#hubRoute');
   const btn = await p.$('#jCross [data-cross="warsaw-stockholm"]');
@@ -150,8 +150,12 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   p = await fresh();
   await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania', 'aotearoa', 'patagonia', 'ocean'], homeArea: 'weurope', city: 'AMSTERDAM' });
   await p.evaluate(() => game.registry.get('ui').showTitle());
-  const more = await p.evaluate(() => ({ card: !!document.getElementById('jMore'), cross: !!document.querySelector('#jCross [data-cross]') }));
-  check(more.card && !more.cross, `E: every area open, the last era: the MORE TO COME card, no crossing: ${JSON.stringify(more)}`);
+  const more = await p.evaluate(() => ({ card: !!document.getElementById('jMore'), lap: !!document.getElementById('jLap'), text: (document.getElementById('jCross') || {}).textContent || '' }));
+  check(!more.card && more.lap && /AMSTERDAM round the world and home, 40,000 km/.test(more.text), `E: every area open, the far future: THE LAP is listed (from home), no MORE TO COME: ${JSON.stringify(more)}`);
+  await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania', 'aotearoa', 'patagonia', 'ocean'], homeArea: 'weurope', city: 'AMSTERDAM', crossed: ['lap'], lapDone: true });
+  await p.evaluate(() => game.registry.get('ui').showTitle());
+  const done = await p.evaluate(() => ({ card: !!document.getElementById('jMore'), lap: !!document.getElementById('jLap') }));
+  check(!done.card && !done.lap, `E: after the lap: no MORE TO COME and no lap (the game is finished): ${JSON.stringify(done)}`);
   await p.context().close();
 
   }

@@ -1,5 +1,11 @@
 # Balance: early prizes trickle in slower (sim engine, 2026-10-28)
 
+> **Pre-approach-fix (2026-10-29): the progression numbers here were measured with a model handicap.** The gap-flying player held
+> low for the runway from 700 km out even with storms still ahead (src/sim/player.js approach); that cost beginners' landings
+> everywhere (s 0.75 leg-3 landing 45.6% -> 67.0% without it). Landing-driven numbers here (landings, seeds, crossings, empty
+> runs, the skill fit) are UNDERSTATED for weaker players until re-run with the fixed player (branch feat/approach-fix). Do not
+> cite them as final; do not assume the conclusions flip either: re-run pending.
+
 The user, on live 0.16.3: "I have WAY too much currency early on from completing missions. I do not need this much, it
 should TRICKLE IN SLOWER." Target: the user's bank never sits far above the next 2-3 purchases; a beginner (s 0.75) still
 never goes more than 10 flights with nothing to buy (allowed to relax to ~15 if needed: it was NOT needed).

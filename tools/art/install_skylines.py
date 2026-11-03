@@ -7,6 +7,7 @@ skyline_cities.tsv; redone ones in skylines-redo.txt) -> assets/landmark-<key>.p
 the bottom row; writes src/landmarks.js (city -> texture key, what it shows, size). GameScene draws them at
 LANDMARK_SCALE, a little hazy, behind the city row. (Replaces make_landmarks.py, the 16 hand-drawn landmarks.)
 """
+import re
 import json
 from pathlib import Path
 
@@ -20,7 +21,7 @@ def main():
     out = {}
     for line in (ROOT / 'tools/art/pixellab/skyline_cities.tsv').read_text().splitlines():
         city, what = line.split('\t')
-        key = city.lower().replace(' ', '')
+        key = re.sub('[^a-z0-9]', '', city.lower())   # letters and digits only (NUKU'ALOFA -> nukualofa: no quote in a file name)
         im = Image.open(SRC / f'sky-{key}.png').convert('RGBA')
         im = im.crop(im.getbbox())
         im.save(ROOT / 'assets' / f'landmark-{key}.png')

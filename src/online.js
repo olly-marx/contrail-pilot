@@ -27,6 +27,9 @@ export const getPilot = () => read(PILOT_KEY, null);
 // nothing is queued, sent, retried or announced, and no network is touched.
 const noOnline = () => typeof window !== 'undefined' && (window.__CP_NO_ONLINE === true || window.CP_PREVIEW === true);   // ?preview=1 saves and sends NOTHING
 export const onlineOff = noOnline;   // the PILOT and BOARDS screens say so instead of 'No internet right now'
+// The name form is usable when online is on, or in ?preview=1 (savePilot keeps the name LOCAL there: the user's playtest,
+// 2026-10-29, was stuck on a PILOT screen with no form while the tour said 'choose your pilot name').
+export const namesOpen = () => !noOnline() || (typeof window !== 'undefined' && !!window.CP_PREVIEW);
 
 let client = null;
 function db() {

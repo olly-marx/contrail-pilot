@@ -1,5 +1,5 @@
 // Badges, missions and prizes (2026-10-22 rework): every badge awards on a flight that meets it and
-// not on a near miss; tiers stack and never repeat; prizes wait in save.unclaimed until CLAIM; old
+// not on a near miss; tiers stack and never repeat; prizes are paid at once (R8: no CLAIM); old
 // saves convert without free prizes; mission 1 can't be stuck behind you (Lola flew past PARIS);
 // the HUD mission line stays on screen; the landing multiplier is a clean 1-decimal number.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/badges.cjs
@@ -44,7 +44,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
       closecall: [[{ heat: 149 }], [{ heat: 148 }]], lucky7: [[{ cargo: 7 }], [{ cargo: 8 }]],
       seeddodger: [[{ cargo: 0, distance: 2000 }], [{ cargo: 0, distance: 1999 }]],
     };
-    const res = { missing: BADGES.filter(x => !cases[x.id]).map(x => x.id), wrong: [] };
+    // The 3 cumulative badges (distance, collector, threader) are earned from the save's lifetime totals, not from one flight's numbers: tests/cumbadges.cjs (Node, plants) covers them.
+    const CUMULATIVE = ['distance', 'collector', 'threader'];
+    const res = { missing: BADGES.filter(x => !cases[x.id] && !CUMULATIVE.includes(x.id)).map(x => x.id), wrong: [] };
     // Badges that say "then land" must not award on a crash with the same numbers.
     const mustLand = ['longhaul', 'hopper', 'bumpy', 'seedhunter', 'worldflight', 'closecall', 'lucky7', 'seeddodger'];
     for (const [id, [yes, no]] of Object.entries(cases)) {
@@ -64,22 +66,21 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(out.wrong.length === 0, `badges: ${out.wrong.join('; ')}`);
   check(JSON.stringify(out.tiers.a) === '[1,2]' && out.tiers.again === 0 && out.tiers.kept === 2 && out.tiers.list, `tiers: 8,000 km earns bronze+silver once: ${JSON.stringify(out.tiers)}`);
 
-  // 2. Prizes wait for CLAIM, then pay exactly; CLAIM one pays only that one.
+  // 2. Prizes are PAID the moment they are earned (R8; there is no CLAIM step), exactly once; an older save's waiting prizes are paid once by the migration.
   const pz = await p.evaluate(async () => {
-    const { addPrizes, claim } = await import('./src/rewards.js');
+    const { addPrizes, migrateClaims } = await import('./src/rewards.js');
     const { MISSIONS } = await import('./src/missions.js');
     const s = { seeds: 10, crystals: 0, landings: 10, visited: ['LONDON'], planted: {}, crashes: {}, levels: {}, badgeTiers: {} };
     const added = addPrizes(s, { landed: true, landedAt: 'PARIS', distance: 2500, cargo: 3 }, MISSIONS[0], 0);
-    const before = s.seeds;
-    const one = claim(s, added[0].key);
-    const left = s.unclaimed.length, afterOne = s.seeds;
-    const rest = claim(s);
-    return { kinds: added.map(a => a.key), before, one, afterOne, left, rest, after: s.seeds, empty: s.unclaimed.length, sum: added.reduce((x, a) => x + a.seeds, 0) };
+    const sum = added.reduce((x, a) => x + a.seeds, 0), sumC = added.reduce((x, a) => x + a.crystals, 0);
+    const old = { seeds: 5, crystals: 1, unclaimed: [{ key: 'mission:land', seeds: 15, crystals: 1 }, { key: 'badge:frequent:1', seeds: 20, crystals: 2 }] };
+    const m1 = migrateClaims(old), afterM1 = { seeds: old.seeds, crystals: old.crystals, left: old.unclaimed.length }, m2 = migrateClaims(old);
+    return { kinds: added.map(a => a.key), seeds: s.seeds, crystals: s.crystals, sum, sumC, waiting: (s.unclaimed || []).length, m1, afterM1, m2, afterM2: { seeds: old.seeds, crystals: old.crystals } };
   });
-  check(pz.before === 10, `nothing paid before CLAIM: ${pz.before}`);
   check(pz.kinds.includes('mission:land') && pz.kinds.includes('badge:frequent:1') && pz.kinds.includes('badge:longhaul:1'), `prizes added: ${pz.kinds}`);
-  check(pz.afterOne === 10 + pz.one.seeds && pz.left === pz.kinds.length - 1, `CLAIM one pays only that one: ${JSON.stringify(pz)}`);
-  check(pz.after === 10 + pz.sum && pz.empty === 0, `CLAIM ALL pays the rest exactly: ${JSON.stringify(pz)}`);
+  check(pz.seeds === 10 + pz.sum && pz.crystals === pz.sumC && pz.sum > 0 && pz.waiting === 0, `the prizes are PAID at once, exactly, and nothing waits: ${JSON.stringify(pz)}`);
+  check(pz.m1 && pz.m1.seeds === 35 && pz.m1.crystals === 3 && pz.afterM1.seeds === 40 && pz.afterM1.crystals === 4 && pz.afterM1.left === 0, `the migration pays an older save's waiting prizes once and empties the list: ${JSON.stringify(pz)}`);
+  check(pz.m2 === null && pz.afterM2.seeds === 40 && pz.afterM2.crystals === 4, `a second migration pays nothing (idempotent): ${JSON.stringify(pz)}`);
 
   // 3. Old saves convert: missions by what they taught, old badges to tiers, no surprise prizes.
   const mig = await p.evaluate(async () => {

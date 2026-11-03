@@ -50,7 +50,6 @@ records	src/records.js	s/tags.filter(t => !r.week.kindsBase.includes(t)).length/
 records	src/sim/rules.js	s/    if (!this.school) recordFlight(/    recordFlight(/	flight school counts
 records	src/records.js	s/      if (f.distance > c.longest) { if (c.longest > 0) beaten.push/      if (f.distance > c.longest) { if (true) beaten.push/	the first landing is a NEW RECORD
 records-screen	src/missions2.js	s/(tile === 'boards' \&\& (save.landings || 0) >= 3)/(tile === 'boards' \&\& (save.landings || 0) >= 1)/	BOARDS appears too early
-records-screen	src/recordsui.js	s/  clearFresh(save); writeSave(save);/  writeSave(save);/	NEW RECORD! never goes away
 records-screen	src/recordsui.js	s/PERIODS.map(p =>/PERIODS.slice(0, 1).map(p =>/	only one period button
 records-screen	src/recordsui.js	s/\$('bInfo').hidden = true;/$('bInfo').hidden = false;/	"how points work" still offered
 records-screen	src/records.js	s/{ id: 'bird', name: 'BIRD MAGNET', oops: true,/{ id: 'bird', name: 'BIRD MAGNET',/	BIRD MAGNET is not an oops card
@@ -81,14 +80,14 @@ releasegate	tools/gate-plan.py	s/if path.startswith('tests\/') and path.endswith
 releasegate	tests/PATHMAP	s/^group sim-node-only | \(.*\) | NONE$/group sim-node-only | \1 | flight/	Node-only sim files wrongly pull browser tests
 releasegate	tests/PATHMAP	s/ walkthrough postrails school flightregion/ walkthrough school flightregion/	rules.js no longer pulls postrails
 releasegate	tests/PATHMAP	s/| sim-bank fares flight$/| fares flight/	imports of rules.js no longer pull the contract test
-releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails twistdraw$/| onrails tipqueue l4hint twistdraw/	GameScene no longer pulls postrails
+releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails twistdraw stripclear foundgate$/| onrails tipqueue l4hint twistdraw stripclear foundgate/	GameScene no longer pulls postrails
 releasegate	tests/PATHMAP	s/ onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school/ onrails rails2 tipqueue l4hint walkthrough school/	the short-phone onrails run dropped
 season2-smoke@PART=Bweurope,Bnamerica,Bsasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B1)
 season2-smoke@PART=Bafrica,Bsamerica,Beasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B2)
 season2-smoke@PART=A,C,E,F,G	src/ui.js	s/if (tab === 'nature')/if (tab === 'natur')/	C: NATURE does not open
-season2-smoke@PART=A,C,E,F,G	src/pilot.js	s/const off = onlineOff();/const off = false;/	C: PILOT offers a name form
+season2-smoke@PART=A,C,E,F,G	src/pilot.js	s/const off = onlineOff(), names/const off = false, names/	C: PILOT offers a name form
 season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/(best === null || c.era < best)) best = c.era;/false) best = c.era;/	F: nothing to fly yet is silent
-season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/export const moreToCome = save => /export const moreToCome = save => false \&\& /	E: no MORE TO COME card
+season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/{ id: 'lap', era: 5,/{ id: 'lap', era: 9,/	E: the lap never offered (era 6: it replaced the MORE TO COME card)
 season2-smoke@PART=D	src/season.js	s/distanceShare: 0.7/distanceShare: 0/	D: a short flight is offered the crossing
 releasegate	tests/PATHMAP	s/ season2-smoke@PART=D / /	a season2-smoke piece dropped (section D unchecked)
 releasegate	tests/PATHMAP	s/season2-smoke@PART=D /season2-smoke@PART=D,C /	a season2-smoke section checked twice
@@ -102,7 +101,7 @@ audiocrash	src/crash.js	s/audio device|audiocontext|NotAllowedError|AbortError/z
 audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no longer catches a rejected resume()
 audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
 releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
-releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real$/ tours bubblestill/	onboarding changes no longer run firsthour-real
+releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible$/ tours bubblestill missionlanes pilotpreview keepvisible/	onboarding changes no longer run firsthour-real
 sim-hint@PLANT=blind	-	-	the player ignores the hint
 sim-progression-s2@PLANT=nostars	-	-	crossings offered without the area missions
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
@@ -138,7 +137,7 @@ onrails	src/hangar.js	s#toFly: false, rails:#toFly: free \&\& !!s.areas, rails:#
 onrails	src/tour.js	s#text: tip('rail-free-tap'),#skipIf: () => true, text: tip('rail-free-tap'),#	R5 without the tap-to-see step
 onrails	style.css	s#background: rgba(10, 10, 30, 0.62); pointer-events: auto;#background: rgba(10, 10, 30, 0.62); pointer-events: none;#	the dim lets taps through
 onrails	src/upgrades.js	s#{ gapTurb: 0 }#{}#	turbulence before L2
-onrails	src/tour.js	s#  keepVisible() {#  keepVisible() { return;#	rails targets not kept above the tab bar
+keepvisible	src/tour.js	s#  keepVisible() {#  keepVisible() { return;#	rails targets not kept above the tab bar (moved from onrails 2026-11-02: no onrails step exercises it after the redesign)
 onrails	style.css	s#.payoff.arrive .pay-plane { transform: scale(1.8); }#.payoff.arrive .pay-plane { transform: none; }#	no payoff zoom
 onrails	src/hangar.js	s#lab.style.left = `${Math.round(x)}px`;#lab.style.left = `${Math.round(x) + 140}px`;#	payoff label off the part
 onrails	src/hangar.js	s#) > 60) {#) > -1) {#	payoff part = the whole picture
@@ -150,18 +149,197 @@ lessonfallback	src/missions2.js	s#return lm\[cur.id\] >= 2 ?#return false ?#	no 
 l2fallback	src/missions2.js	s#return lm\[cur.id\] >= 2 ?#return false ?#	no L2 fallback
 freeparcels	src/upgrades.js	s#&& (save.missionsDone || \[\]).includes('L4') && !save.freeParcelsGiven#\&\& false \&\& !save.freeParcelsGiven#	no free first parcels
 rails2	src/tour.js	s#if (hub && s2Revealed(s, 'boards')#if (false \&\& s2Revealed(s, 'boards')#	no R14 records step
-rails2	index.html	s#<p class="small skiphint" id="rSkip">tap to skip</p>#<p class="small skiphint" id="rSkip" style="position:fixed;bottom:-30px">tap to skip</p>#	the skip hint off screen
+rails2	style.css	s/^#results .rcard { gap: 6px;/#results .rcard { gap: 60px;/	the results card is too tall for a small phone: FLY ON is not on screen during the reveal (the R1 form of the old 'skip hint off screen' plant, whose markup R1 removed)
 rails2	src/tour.js	s#el.querySelectorAll('.tdim, .tbubble').forEach(d => {#\[\].forEach(d => {#	no scroll through the rails dim
 bubblestill	src/tour.js	s#    if (this.side == null) {#    this.side = null; if (this.side == null) {#;s#hh = (this.target.offsetHeight || r.height) / 2;#hh = r.height / 2;#	the bubble re-decided per frame, with the pulse
 preview	src/season2.js	s#const store = PREVIEW ? {#const store = false ? {#	preview writes through to the real save
 tipqueue	src/GameScene.js	s#  dropTips() {#  dropTips() { return;#	unshown tips not unmarked
 tipqueue	src/GameScene.js	s#^    dropToast();$#    void 0;#;s#this.stripWatch.observe(coachEl);#void 0;#	the toast stays under the strip
 l4hint	src/GameScene.js	s#else if (skipThis && toAirport < AIRPORT.signFrom)#else if (false \&\& skipThis)#	the landing call on an L4 flight
-railwords	index.html	s#<span>Landing bonus</span>#<span>Long flight</span>#	the bonus row's old label
+railwords	src/resultscard.js	s# × ${r.mult} bonus# × ${r.mult}#	the maths line without the word the rail says
 railwords	src/tips.js	s#Forecasting shows icy air sooner. Save up for it!#Forecasting shows icy air sooner. Buy it when you can!#	the systems rail pushes a purchase
-season2	src/areas.js	s#aotearoa: { name: 'Aotearoa New Zealand', starter: true,#aotearoa: { name: 'Aotearoa New Zealand', starter: false,#	NZ not a starter
+season2	src/areas.js	s#aotearoa: { name: 'Aotearoa & Polynesia', starter: true,#aotearoa: { name: 'Aotearoa \& Polynesia', starter: false,#	NZ not a starter
 sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
 # macrons: not sed-able (a font edit). Proven 2026-10-28 by deleting U+012B from vendor/fonts/contrail-pixel.woff2's cmap (fontTools) -> FAIL.
 kindsreach	src/missions2.js	s#  const kinds = Math.max(2, Math.min(3, open.length));#  const kinds = 3;#	the kinds star fixed at 3 (impossible in plateau lands)
 homelanding	src/sim/rules.js	s# \&\& !(r.name === this.homeName \&\& r.worldX <= 0));# \&\& r.name !== this.homeName);#	the home runway never landable (the old exclusion)
 hubscreen	style.css	s/grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px;/grid-template-columns: repeat(5, 1fr); gap: 4px;/	the 6 tabs wrap to two rows and cover the buttons above
+fleet	src/fleet.js	s/co2: 0.57, noFlyGapAdd: 8, margin/co2: 0.57, noFlyGapAdd: 0, margin/	the 787 loses its era-step help
+finance	src/finance.js	s/if (since <= 0 || areaBio(save) < d.minBio) return 0;/if (since <= 0) return 0;/	the dividend ignores nature
+fleet	src/fleet.js	s/nightHeat: 0.6, noFlyGapAdd: 12, margin/nightHeat: 0.6, noFlyGapAdd: 0, margin/	the hydrogen plane loses its era-step help
+season2-smoke	src/ui.js	s/const head = c.kind === 'lap' ?/const head = false ?/	the lap shown as an ordinary crossing
+season2-smoke	src/crossings.js	s/export const moreToCome = save => !save.lapDone \&\&/export const moreToCome = save =>/	more to come after the lap
+sim-approach@PLANT=old	-	-	the old low hold with storms ahead
+steady	src/missions2.js	s/const dailiesOpen = save => isSeason2(save) \&\& done(save).has('L3');/const dailiesOpen = save => isSeason2(save) \&\& !lessonsLeft(save).length;/	dailies and steady wait for all lessons again
+steady	src/missions2.js	s/  const steady = steadyTick(save, r);/  const steady = r.landed ? steadyTick(save, r) : [];/	crashes no longer count toward steady goals
+steady	src/missions2.js	s/Math.pow(1.25, rung)/Math.pow(1, rung)/	the ladder does not climb
+steady	src/missions2.js	s/Math.min(5, (save.dailyStreak/Math.min(50, (save.dailyStreak/	the streak bonus has no cap
+steady	src/missions2.js	s/: Math.floor(st.days \/ 2) + (didOld ? 1 : 0);/: st.days + (didOld ? 1 : 0);/	a missed day keeps the streak
+steady	src/missions2.js	s/const pool = DAILY_POOL.slice(), pick = \[easy\];/const pool = DAILY_POOL.slice(), pick = [];/	no easy daily slot
+steady	src/missions2.js	s/done(save).has(key(a, t))).length >= 3;/done(save).has(key(a, t))).length + [...done(save)].filter(k => k.startsWith('steady:')).length >= 3;/	steady goals open tiers
+cumbadges	src/missions2.js	s/tot.gaps += r.cleanGaps || 0;/tot.gaps += r.landed ? r.cleanGaps || 0 : 0;/	crashed flights' gaps do not count
+cumbadges	src/badges.js	s/measure: (r, s) => (s.totals || {}).gaps || 0 }/measure: (r, s) => 0 }/	Gap Threader never earns
+cumbadges	src/badges.js	s/.filter(x => x.goal !== null \&\& x.value !== null)/.filter(x => x.value !== null)/	badge bars show finished badges
+steady	src/missions2.js	s/prize: { seeds: !saving(save) ? 1 : /prize: { seeds: false ? 1 : /	rich pilots get the full steady prize
+steady	src/missions2.js	s/streakBonus = save => (saving(save) ? /streakBonus = save => (true ? /	rich pilots get the streak bonus
+missionlanes	src/ui.js	s/    if (FEATURES.season2 \&\& isSeason2(s)) setDaily(s, new Date/    if (false) setDaily(s, new Date/	MISSIONS does not set today's dailies
+stripclear	src/GameScene.js	s/    if (this.explaining \&\& !this.school) this.keepStripClear();/    if (false) this.keepStripClear();/	the strip is placed once only, at open
+stripclear	src/GameScene.js	s/    const low = !coach.classList.contains(.strip-low.);/    const low = true;/	the strip only ever moves down (flips to low again over a low plane)
+finance	src/finance.js	s/const N = FINANCE.levels\[lv\], keep/const N = null \&\& FINANCE.levels[lv], keep/	the desk does not save up for its next level
+fleet	src/fleet.js	s/export const CRYSTAL_HALF_FROM = 4;/export const CRYSTAL_HALF_FROM = 9;/	the 2030s crystal prices not halved
+tourready	src/tour.js	s/tap: true, ready: namesOpen }/tap: true }/	the PILOT step does not declare ready
+tourready	src/tour.js	s/      if (st.ready \&\& !st.ready()) { id = null; break; }/      if (false) { id = null; break; }/	run() ignores ready
+tourready	src/online.js	s/export const namesOpen = () => !noOnline() || (typeof window !== .undefined. \&\& !!window.CP_PREVIEW);/export const namesOpen = () => !noOnline();/	preview does not open names
+payoffdraw	src/hangar.js	s/new Promise(r => setTimeout(r, 6000))\]).then/Promise.resolve()]).then/	the payoff does not wait for its pictures (the playtest blank)
+payoffdraw	src/tips.js	s/Look: shiny new jet engines!/Your plane is cleaner now!/	the old stat-only words
+pilotpreview	src/pilot.js	s/const off = onlineOff(), names = namesOpen();/const off = onlineOff(), names = false;/	PILOT hides the name form in preview (the playtest trap)
+lessonseeds	src/config.js	s/  lessonSeeds: 3,/  lessonSeeds: 0,/	no seeds placed on lesson flights
+lessonseeds	src/sim/rules.js	s/\&\& !this.storms.some(st => Math.abs(st.rects\[0\].x - (WIDTH + 10)) < STORMS.width + 30)) {/) {/	lesson seeds may sit inside a storm column
+lessonseeds	src/sim/rules.js	s/\['L1', 'L2'\].includes((s2LessonsLeft/['L1', 'L2', 'L3', 'L4', 'L5'].includes((s2LessonsLeft/	lesson seeds on every lesson flight (changes L3+ flights)
+lessonseeds	src/tour.js	s/tip(this.ui.lastGrab > 0 ? 'rail-seeds' : 'rail-seeds-none')/tip('rail-seeds')/	R9a says 'your seeds' with 0 seeds
+foundgate	src/GameScene.js	s/    if (isSeason2(this.save) \&\& !(this.save.missionsDone || \[\]).includes('L2')) return;   \/\/ nothing is FOUND/    if (false) return;   \/\/ nothing is FOUND/	cows and sheep found before the NATURE lesson
+wildflight3	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1'); return this.wildOK0;/	animals on flight 2 again
+wildflight3	src/tips.js	s/Another flight now: find icy air in the daytime!/Another flight now: watch for wildlife on the ground!/	the old R9a wildlife line after flight 1
+walkthrough	src/GameScene.js	s/includes('L2'); return this.wildOK0;/includes('L1'); return this.wildOK0;/	animals on flight 2 again (in a real flight)
+onrails	style.css	s#^.pay-part { opacity: 0;#.pay-part { opacity: 1;#	the new part shows before the payoff arrives (R6 first-frame check)
+polynesia	src/areas.js	s/, 'RAROTONGA', 'PAPEETE'\] },/, 'RAROTONGA'] },/	an island left out of the area
+polynesia	src/areas.js	s/OCEAN_STONES = \['HONOLULU', 'NADI'\]/OCEAN_STONES = ['HONOLULU']/	NADI is no longer an ocean stone
+polynesia	src/cities.js	s/{ name: 'RAROTONGA', lat: -21.20, lon: -159.81, region: 'polynesia' }/{ name: 'RAROTONGA', lat: -21.20, lon: -159.81, region: 'ocean' }/	an island read as sea
+polynesia	tools/art/install_skylines.py	s/key = re.sub('\[^a-z0-9\]', '', city.lower())/key = city.lower().replace(' ', '')/	the apostrophe back in skyline file names
+polynesia	src/habitat/polynesia.js	s/, donateLabel: 'Join \/ support them' }/ }/	the membership form labelled Donate
+polynesia	src/wild.js	s/'bush', 'steppe', 'polynesia'\];/'bush', 'steppe'];/	NATURE has no polynesia field picture
+arealand	src/arealand.js	s/export const bestAreaBio = (save, k) => Math.max(0, ...areaLands(k).map(r => biodiversity(save, r)));/export const bestAreaBio = (save, k) => biodiversity(save, city(AREAS[k].start).region);/	the crossing gate reads the start land only (the Polynesia red flag)
+arealand	src/wild.js	s/n = save.homeCity || (a \&\& a.start) || save.city,/n = (a \&\& a.start) || save.city,/	NATURE opens on the area start's land
+arealand	src/startchoice.js	s/save.homeCity = name; save.city = name;/save.city = name;/	the start choice forgets the chosen home city
+payoffbroken	src/hangar.js	s/img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true });/img.addEventListener('error', () => {}, { once: true });/	broken pictures not hidden (the 6 s wait)
+rowfit	style.css	s/text-align: left; background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; cursor: pointer; min-width: 0; }/text-align: left; background: none; border: 0; padding: 0; margin: 0 0 0 auto; width: auto !important; font: inherit; color: inherit; cursor: pointer; min-width: 0; }/	row names jump with their text (the old auto column)
+rowfit	src/habitat/steppe.js	s/row: 'Clear fences and pines'/row: 'Clear every old fence and every invader pine across the whole of the Patagonian steppe lands'/	a row name too long for two lines
+rowfit	src/wild.js	s/<img class=\"rowc-icon\" src=\"assets\/ui\/proj-\${p.id}.png\"/<img class=\"rowc-icon\" src=\"assets\/ui\/projx-\${p.id}.png\"/	a broken picture (the blue '?')
+rowfit	style.css	s/^\.rowc-price { width: 100px;/.rowc-price { width: 84px;/	prices too narrow for 1800 225
+hangar	src/hangar.js	s/<span class="era-row"><span class="era-track">/<span><span class="era-track">/	the Next plane bar unwrapped (a tall box)
+# RETIRED 2026-11-01 (stage 2, the payoff in the page): the scroll-anchoring plant (#hangar overflow-anchor removed) is no longer caught by any check:
+# the payoff scrolls itself into view and the box returns on screen after OK, so anchoring no longer causes a visible fault. The CSS line STAYS: the finance desk (TRADE / LOCK / BUY) re-renders without a payoff, where anchoring could nudge the view (cosmetic; the plane build, 2026-11-01).
+# hangar	style.css	s/#hangar { overflow-anchor: none; }/#hangar { }/	scroll anchoring moves the box off the payoff card
+onrails	src/tour.js	s/if (solo) solo.classList.add('tour-only');/if (false) solo.classList.add('tour-only');/	a row step shows its price too (two things to tap)
+hangar	src/hangar.js	s/    if (this.paying) { this.renderLater = true; return; }/    if (false) { this.renderLater = true; return; }/	a re-render wipes the in-box payoff
+hangar	style.css	s/^\.payoff\.inbox { position: relative; inset: auto;/.payoff.inbox { position: fixed; inset: 0;/	the payoff is an overlay again
+payoffdraw	src/hangar.js	s/card = el.querySelector('.pay-frame'); if (!lab/card = el.querySelector('#payOk'); if (!lab/	the label is placed down by the words and OK (the stage-1 flaw)
+hangar	src/ui.js	s/    if (tab !== 'hangar' \&\& this.fleet \&\& this.fleet.paying) this.fleet.endPayoff();/    if (false) this.fleet.endPayoff();/	a payoff stays parked when you leave the hangar
+postrails	src/tour.js	s|target: '#hFleet .rowc .rowc-sub'|target: '#hFleet .line .next'|	the systems rail points at the old row markup (it re-runs on every return HOME)
+onrails	src/hangar.js	s/      if (rails \&\& this.ui.tour) this.ui.tour.payoffOk(); };/      if (false) this.ui.tour.payoffOk(); };/	the rails payoff leaves the whole live page tappable (no OK ring)
+hangar	src/hangar.js	s/      this.sel = null;   \/\/ (before the render: the strip/      this.sel = this.sel;   \/\/ (before the render: the strip/	the next item's BUY shows under the payoff
+releasegate	tools/gate-plan.py	s/        if add is not None:      #/        if False:      #/	an append-only list diff is treated as a harness change again (the whole tier)
+releasegate	tools/gate-plan.py	s/        if line.startswith('-'):/        if False:/	an edited or removed list line is treated as an append (the plan is narrowed)
+releasegate	tests/PATHMAP	s/^group harness | tests\/lib\/\* /group harness | /	an edit to tests/lib/* no longer means the whole tier
+preloadlist	src/preload.js	s/\.\.\.badgeArt(save), \.\.\.landsOf/...landsOf/	tier 1 forgets the badge medals (the BOARDS/badges screen would fetch on tap)
+preloadlist	src/preload.js	s/'bush', 'steppe', 'polynesia'\];/'bush', 'polynesia'];/	a land's field picture is in no tier
+preloadlist	src/preload.js	s/ || trip.includes(r))/)/	the lands of the chosen trip are not preloaded
+preloadlist	src/preload.js	s/for (let f = 0; f < (w.frames || 2); f++) out.push/for (let f = 0; f < 0; f++) out.push/	a land's animal frames (setRegion / the field) are not listed
+preloadlist	src/preload.js	s/ERA_PICS = \['1950s', '1970s', '1990s'\]/ERA_PICS = ['1950s', '1970s', '1990s', '2010s']/	welcome.js would ask for an era picture that is not on disk
+preloadlist	src/preload.js	s/'steppe', 'tundra', 'woodland'\])$/'steppe', 'tundra'])/	a picture file nobody declared (scene-woodland)
+preloadlist	src/preload.js	s/ || (fleet \&\& !fleet.planes\[p.id\])//	tier 1 holds overlays of planes the save does not own
+preloadlist	src/preload.js	s/t <= tierOf(save, b.id) + 1/t <= tierOf(save, b.id)/	the medal a landing can award next is not in tier 1 (it would fetch on the results card)
+preloadgate	src/wild.js	s/assets\/ui\/proj-${p.id}.png"/assets\/ui\/proj-${p.id}.png?lazy"/	a NATURE project icon fetched on the tap (a different URL: nothing preloaded it)
+preloadgate	src/preload.js	s/'assets\/ui\/badge-locked.png', 'assets\/ui\/badge-secret.png', //	the locked/secret badge pictures dropped from every tier (fetched when BOARDS opens)
+preloadgate	src/loader.js	s/if (document.hidden || this.flying || !inMenus || (s \&\& FLYING.includes(s.state))) return/if (document.hidden) return/	the idle fetch ignores the flight altogether (the flag and both second guards)
+preloadgate	src/loader.js	s/box.style.pointerEvents = 'none'; box.classList.add('done'); setTimeout(() => box.remove(), 450);/box.style.pointerEvents = 'auto'; box.classList.add('done');/	the loading screen stays on top and keeps catching taps after ready
+preloadgate	src/GameScene.js	s/    loading.flying = true;   \/\/ DECLARED/    loading.flying = !this.school;   \/\/ DECLARED/	the scene never declares a flight in flight school (the idle fetch runs through the whole school flight)
+flagclear	src/GameScene.js	s/    loading.flying = false;   \/\/ the flight is over (landed or crashed): the idle fetch may go on/    \/\/ (plant: onFinish does not clear)/	onFinish no longer clears loading.flying (a crash or landing leaves tier 2 stuck)
+flagclear	src/GameScene.js	/^    loading.flying = false;$/d	Esc on the runway (backToMenu) no longer clears loading.flying
+loadercount	src/loader.js	s/this.maxF = Math.max(this.maxF || 0, f); return this.maxF;/return f;/	the fraction is not kept at its maximum (the plane flies back when Phaser's total joins)
+loadercount	src/loader.js	s/if (this.txt) this.txt.textContent = this.phaser.total ?/if (this.txt) this.txt.textContent = this.phaser.total + this.menus.total ?/	the counter shows '0 \/ 264' before Phaser's total is known
+swoffline	sw.js	s/await Promise.all(fresh.shell.map(async p => {/await Promise.all(fresh.shell.filter(p => p !== 'src\/GameScene.js').map(async p => {/	a core file (GameScene.js) is missing from the precache: a cold offline start cannot run
+swupdate	sw.js	s/return e.respondWith(networkFirst(req));/return e.respondWith(cacheFirst(req, CUR));/	the shell is cache-first (a stale index.html lock-in: the player never reaches the new build)
+swupdate	sw.js	s/return e.respondWith(fetch(req, { cache: 'no-store' }));/return e.respondWith(cacheFirst(req, CUR));/	version.json is cached (an update is never seen)
+swupdate	sw.js	/!keep.has(k)) await caches.delete(k)/d	old caches are never purged
+swupdate	sw.js	s/ \&\& prev.files\[p\] === fresh.files\[p\]//	the manifest diff copies a CHANGED picture from the old cache (the redrawn picture never arrives)
+swupdate	sw.js	s/^  if (prev) {$/  if (false) {/	nothing is copied forward (an unchanged picture is downloaded again)
+swkill	src/swreg.js	s/ || !stamp()) return 'skipped';/) return 'skipped';/	a worker registers on an unstamped (local) page
+swkill	src/swreg.js	s/if (v \&\& v.sw === false)/if (false)/	version.json "sw": false no longer removes the worker
+swkill	src/swreg.js	s/if (new URLSearchParams(location.search).get('nosw'))/if (false)/	?nosw=1 no longer removes the worker
+swupdate	sw.js	s/const keep = new Set(\[CUR, META, await meta('previous')\]);/const keep = new Set([CUR, META]);/	the previous build's cache is dropped at once (a page still running old code loses its files)
+releasegate	tests/PATHMAP	/^group sw-raw/d	src/updates.js no longer maps to the service-worker tests (the updater could change without swupdate running)
+flightreset	src/sim/rules.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/	the passed-airport sign survives into the next flight (the user's stale header)
+flightreset	src/GameScene.js	s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	the HUD shows a sign about another leg
+routeheader	src/sim/rules.js,src/GameScene.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/;s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	JOINT plant: both halves of the fix removed (no reset, no 'this leg only' guard): the dead flight's sign shows in the next flight
+missionreach	src/aim.js	s/export const ROUTE_AIM = { on: true };/export const ROUTE_AIM = { on: false };/	the route does not aim at mission cities (today's tour)
+artsize	src/fleet.js	s/parts: parts.map(part => `assets\/ui\/upgrades\/hangar-/parts: parts.map(part => `assets\/upgrades\/plane-/	hangar layers pointed at the small flight sprites
+hangar	src/hangar.js	s/${ghosts}<\/div><div class="fpcap">/<\/div>${ghosts}<div class="fpcap">/	the ghosts outside the picture again (sized to the box)
+overlap	style.css	s/^\.rowc > \.rowc-price { grid-area: 2 \/ 2; align-self: end; position: relative; z-index: 1; }/.rowc > .rowc-price { position: absolute; right: 8px; bottom: 6px; z-index: 1; }/	the price is absolutely placed again (a name can run under it)
+overlap	style.css	s/ min-height: var(--price-h); display: flex; align-items: center; }/ }/	the sub line is no taller than the price (a wrapped name reaches it)
+fitscreen	style.css	s/^\.mlist { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }/.mlist { display: flex; flex-direction: column; gap: 4px; margin: 700px 0 6px; }/	the MISSIONS list starts below the tab bar (first row and primary not on the first screen)
+textbudget2	src/habitat/bush.js	s/row: 'Fox and cat control'/row: 'Fox and cat control across the whole of south-western Australia'/	a project row name over 2 lines at 320
+missionreach	src/missions2.js	s/ready: f => f.cityB !== f.start, //	a rescue mission offered with no target but where you start (the 3-city Patagonia case)
+skipaim	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the next trip would not aim)
+skipaim	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip (initFlight clears it)
+skipaim	src/aim.js	s/save && save.skipAim ? null : aimOpen(save)/aimOpen(save)/	the skip does nothing (the route still aims)
+skipaim	src/hub.js	s/skip: aimOpen(save) ? (save.skipAim ? 'on' : 'off') : null,/skip: save.skipAim ? 'on' : 'off',/	the skip button offered with no city mission to aim at
+textbudget2	src/aim.js	s/skip: 'Skip mission route this trip'/skip: 'Skip the mission route this trip'/	the skip chip text over one line at 320 (33 chars)
+skiptrip	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the real landing keeps skipping)
+skiptrip	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip
+skiptrip	src/ui.js	s/toggleSkip(this.save); writeSave(this.save);/writeSave(this.save);/	the tap on the chip does nothing
+skiptrip	style.css	s/#title.hub .hub-skip { display: flex;/#title.hub .hub-skip { min-height: 20px; max-height: 20px; display: flex;/	the chip is a 20 px target (under the 40 px minimum)
+hangar	style.css	/^#hangar .panel { grid-template-columns: minmax(0, 1fr); }$/d	the hangar grid column grows to its widest nowrap row again: the panel is wider than a 320 phone
+hangar	style.css	/^\.ftabs \.btn { flex: 1 1 0; min-width: 0;/d	the three tabs cannot share the width: PLANE SYSTEMS GADGETS run past the right edge (unmeasured: if this plant is NOT CAUGHT, the rule is not needed)
+nextup	src/nextup.js	s/if (vis\[0\]) out.push/if (vis[0] \&\& false) out.push/	the first open mission missing from UP NEXT (a second source / a dropped row)
+nextup	src/missions2.js	s/short: f => `Bring home \${10 \* f.k} seeds`,/short: f => `Bring home ${10 * f.k} seeds, then fly on`,/	a short title over 24 characters
+resultscard	src/resultscard.js	s/`✓ \${n} missions done`/`✓ ${missionTitles.join(', ')}`/	the mission names joined back into the line (7 missions overflow it)
+resultscard	src/resultscard.js	s/(r.landed ? total : 0) + paid.seeds/total + paid.seeds/	a crash counts the seeds it LOST as banked
+resultscard	src/resultscard.js	s/export const CHIPS_MAX = 3;/export const CHIPS_MAX = 9;/	the chips uncapped (the card would grow)
+lessonart	src/nextup.js	s#assets/ui/lesson-nature.png#assets/ui/lesson-natur.png#	HOME no longer shows the nature lesson picture (it would be on no shipped screen)
+loadercount	src/loader.js	s/export const FACT_AFTER_MS = 2000,/export const FACT_AFTER_MS = 0,/	the fact shows at once, on every load (a warm load too)
+loadercount	src/loader.js	s/if (this.finished || !box || box.querySelector('.loader-fact')) return;/return;/	the fact is never shown
+loadercount	src/loader.js	s/const pool = FACTS.filter(f => words(f) <= FACT_MAX_WORDS);/const pool = FACTS.filter(f => words(f) > FACT_MAX_WORDS);/	the fact is a long one (over 15 words)
+keepvisible	src/tour.js	s#sc.scrollTop += r2.top + r2.height / 2 - (floor + bottom) / 2;#sc.scrollTop += r2.top + r2.height / 2 - (top + bottom) / 2;#	a covered target is only brought to the middle of the screen (it stays under the pinned block at 320x568)
+onrails320	style.css	s#\.rowc\.tour-price \.rowc-tap { pointer-events: none; }#.rowc.tour-price .rowc-tap { pointer-events: auto; }#	the row tap area stays tappable under a step on its price (two tappable things in the lit hole)
+newdot	src/fresh.js	s/save.seen\[scope\] = now.slice();/for (const sc of Object.keys(current(save, opts))) save.seen[sc] = current(save, opts)[sc].slice();/	markSeen on one scope marks EVERY scope seen (the old shared list: NATURE cleared the hangar, ui.js:287)
+newdot	src/fresh.js	s/!(seen\[scope\] || \[\]).includes(k)/true/	fresh ignores what was seen: the dot never clears
+newdot	src/fresh.js	s/save.seen\[scope\] = now.slice();/save.seen[scope] = [...new Set([...before, ...now])];/	markSeen unions instead of replacing: a key that left and came back never lights again
+newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (false) return false;/	migrateSeen runs every time (or a save always counts as unseen): see the migration check
+newdot	src/fresh.js	s/'missions': 'pending: R4/'missions': 'TODO R4/	a scope with no producer and no 'pending: R<n>' note (silently unused)
+newdot	src/fresh.js	s/if (missions) for (const k of missions(save)) add('missions', k);/\/\/ (hook removed)/	the missions hook drops its keys
+newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (save.seen) return false;/	the migration keyed on save.seen: an early markSeen stops it and the other scopes get dots
+newdot	src/records.js	s/  for (const b of beaten) r.beaten.push(/  for (const b of []) r.beaten.push(/	recordFlight no longer writes the beaten keys: BOARDS never lights
+hangarnew	src/ui.js	s/markSeenPrefix(this.save, .nature\/., this.freshOpts())/markSeenPrefix(this.save, "", this.freshOpts())/	opening NATURE marks every scope seen again (the old ui.js:287 bug): the hangar dot is cleared by NATURE
+hangarnew	src/hangar.js	s/ \&\& markSeen(s, hangarScope(this.tab))) this.ui.persist();/ \&\& markSeen(s, "hangar\/plane")) this.ui.persist();/	every hangar sub-tab marks only PLANE seen: SYSTEMS and GADGETS keep the tab lit forever
+hangar	style.css	s/^\.ftabs \.btn\.ftab { position: relative; min-height: var(--tap); }/.ftabs .btn.ftab { position: relative; }/	the sub-tabs lose their 40 px minimum (unmeasured: NOT CAUGHT would mean the buttons are tall enough anyway)
+hangar	src/hangar.js	s/k !== this.tab \&\& d\[hangarScope(k)\]/false/	no dot on a sub-tab with news
+hangar	src/hangar.js	s/if (pinfo) pinfo.onclick/if (false) pinfo.onclick/	the (i) beside the plane name does nothing
+hangar	src/hangar.js	s/if (era) era.onclick/if (false) era.onclick/	tapping the era line does nothing
+hangar	src/hangar.js	s/this.rowNew.has(`${key}:${have + 1}`)/false/	no row dot beside a name with a new item
+hangar	src/ui.js	s/this.fleet.rowNew = null;/this.fleet.rowNew = this.fleet.rowNew;/	row dots survive into the next visit (never cleared)
+records-screen	src/recordsui.js	s/^    seen();   \/\/ this sub-tab is showing/    \/\/ seen();   \/\/ this sub-tab is showing/	the BOARDS sub-tabs never mark themselves seen: the dots and NEW RECORD! never clear
+records-screen	src/recordsui.js	s/if (opts.toast) opts.toast(/if (false) opts.toast(/	the first-visit line (and the online note) is not shown at all
+records-screen	src/recordsui.js	s/newBadges.includes(b.id) ?/false ?/	no dot on the new badge
+records-screen	style.css	s/background: #fff; padding: 4px; font-size: 7px; border: 0;/background: #fff; padding: 4px; font-size: 6px; border: 0;/	the badge text back at 6 px (below the 7 px minimum)
+records-screen	src/recordsui.js	s/k !== tab \&\& d\[`boards\/${k}`\]/false/	no dot on the sub-tab that is not showing
+fitscreen	style.css	s/^#hFleet > .ftabs { margin: 0; }//;s/^\.hpreview\.empty { padding: 3px 6px; }//;/^#hFleet \.fplane-row \.rowc-sub { display: none; }/d	the R5 compaction undone (sub-tab margin, empty strip padding, the plane row sub line): the hangar primary falls below the bar at 320x568
+swipe	src/hangar.js	s/onSwipe(\$('hangar'), { next: () => goTab(1)/onSwipe(el, { next: () => goTab(1)/	the hangar swipe is bound to the short list again: a flick below it (a tall phone) does nothing
+tours	src/tour.js	s#^    if (id) this.markDone(id);#    if (false) this.markDone(id);#	a finished tour is not remembered (it would come back: 'the name tour ends and is remembered', 'the hangar tour is remembered')
+nextup	src/nextup.js	s#short: clip(o.short, Math.min(SHORT_MAX, ROW_MAX - rightOf(o).length))#short: o.short#	a long title pushes the right column onto a second line (the row budget)
+hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }/d	a 7-digit bank pushes TAKE OFF off a 320 screen (the head cannot wrap)
+hangar	src/sheet.js	s/el.querySelector('.sheet-ok').onclick = close;/el.querySelector('.sheet-ok').onclick = () => {};/	the sheet's OK does not close it
+fitscreen	style.css	s#width: min(100%, 34vh);#width: min(100%, 50vh);#	the globe at 50vh (HOME overflows at 320x568)
+fitscreen	src/ui.js	s#v.up\[0\] \&\& v.up\[0\].pic ? v.up.slice(0, 2) : v.up#v.up#	the pictured lead row plus 3 rows (HOME's free-part state overflows at 320x568)
+missionsview	src/missionsview.js	s/Tier ${tierNow + 1} · after 3 of tier/Tier ${tierNow + 2} · after 3 of tier/	COMING UP names the wrong tier
+missionsview	src/missionsview.js	s/'land-city': 'mi-land', shade/'land-city': 'mi-nope', shade/	a mission with a pictogram that does not exist
+missionsview	src/aim.js	s/chosen = save.aimKey \&\& list.find/chosen = false \&\& list.find/	AIM HERE does nothing (aimKey ignored by the route)
+missionsview	src/missionsview.js	s/shade: 'Icy air by day'/shade: 'Icy air by day, any day please'/	a how line over 20 characters
+missionsview	src/missionsview.js	s/for (const t of \[2, 3\]) if (M2.tierOpen/for (const t of [2]) if (M2.tierOpen/	tier 3 opening never lights the MISSIONS dot
+missionsview	src/missionsview.js	s/up\[0\] \&\& !up\[0\].daily ? up\[0\] : null/up[0] || null/	a daily pinned as NEXT (an empty mission list stops saying what a crossing needs)
+gear	src/ui.js	s/    \$('hubGear').onclick = () => this.openGear();/    $('hubGear').onclick = () => { sfx.flap(); $('title').classList.toggle('menu'); };/	the gear only toggles the old tiny buttons (no sheet)
+gear	src/ui.js	s/if (b.dataset.gear === 'sound') { \$('muteBtn').click();/if (b.dataset.gear === 'sound') { /	SOUND does nothing in the sheet
+gear	style.css	s/\.gear-list \.chip { width: 100%; justify-content: center; }/.gear-list .chip { width: 100%; justify-content: center; min-height: 18px; max-height: 18px; padding: 0; }/	the gear buttons are 18 px tall (under the 40 px target)
+autoclaim	src/rewards.js	s#  const add = p => { payPrize(save, p); added.push(p); };#  const add = p => { added.push(p); };#	a flight's prizes are no longer paid by addPrizes (they would wait for nobody to claim)
+autoclaim	src/rewards.js	s#  save.unclaimed = \[\];#  save.unclaimed = list;#	the migration leaves the list in place (it pays an older save again on every load)
+autoclaim	src/rewards.js	s#  list.forEach(p => payPrize(save, p));#  void 0;#	the migration empties the list but pays nothing (an older save's prizes are lost)
+missions2	src/missions2.js	s#if (!before.has(m.key)) payPrize(save, m.prize);#if (false) payPrize(save, m.prize);#	a mission done by a purchase or a project is no longer paid at the buy (paid only at the next bank, or never)
+missions2	src/missions2.js	s#if (!before.has(m.key)) payPrize(save, m.prize);#if (!before.has(m.key)) { payPrize(save, m.prize); payPrize(save, m.prize); }#	a finished mission is paid twice
+rewards	src/ui.js	s#this.migrated = migrateClaims(save); if (this.migrated) writeSave(save);#this.migrated = null;#	the UI never runs the migration: an older save keeps prizes nobody can claim
+naturefresh	src/wild.js	s/ \&\& markSeen(s, natureScope(this.region), fo)) this.ui.persist();/ \&\& Object.keys(fr).concat([natureScope(this.region)]).some(k => markSeen(s, k, fo))) this.ui.persist();/	showing one land marks EVERY land seen (the old ui.go nature behaviour)
+naturefresh	src/wild.js	s/ \&\& id !== this.region \&\& dl\[natureScope(id)\] ?/ \&\& false ?/	no dot on a land tab with news
+naturefresh	src/wild.js	s/^    this.renderNext();/    \/\/ this.renderNext();/	the NEXT line is never drawn
+fitscreen	index.html	s/<div id="wNextLine"><\/div>/<h3>Habitat projects<\/h3><p class="small">Things people really do to help nature. Each one helps life come back, and new animals may appear on your flights! Plant trees as you fly over a land and finish its projects to raise its biodiversity.<\/p><div id="wNextLine"><\/div>/	the NATURE intro paragraph and heading are back: the first card falls below the tab bar at 320x568
+fitscreen	style.css	s/^\.wregions { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto;/.wregions { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: visible;/	a fixed-width land tab row (no scroll): the tabs run past the screen side
+naturefresh	src/wild.js	s/b.onclick = e => { this.toolId = null; if (this.field) this.field.clearGhosts(); go(e); };/b.onclick = e => { go(e); };/	the planting preview survives the buy (the ghost trees stay in the land)
+naturefresh	src/wild.js	s/this.toolId = this.toolId === id ? null : id; this.previewId = null;/this.toolId = null; this.previewId = null;/	tapping a planting card draws no ghost trees

@@ -13,15 +13,23 @@
   const today = { plane: 'comet', co2: 1.1, takeoff: 1, revealPx: 50, pickup: 12, perSkip: 0.5, flare: 1, dodgeCrystals: 1, dodgesPerNight: 3, autoSecs: 8, autoChance: 0, gaps: 1, fares: 1, hintLevel: 0 };
   for (const [key, v] of Object.entries(today)) check(k0[key] === v, `nothing bought: ${key} = ${k0[key]}, expected ${v}`);
 
-  // Prices: each era totals 1.4-1.6x its budget; crystals = seeds / 8.
+  // Prices: each era totals 1.4-1.6x its budget; crystals = seeds / 8, HALVED from the 2030s (era >= 4, 2026-10-29).
+  const crys = (seeds, era) => { const c = Math.round(seeds / 8); return era >= 4 ? Math.round(c / 2) : c; };
   const tot = F.ERA_BUDGET.map(() => 0);
   for (const p of F.PLANES) for (const l of Object.values(p.lines)) for (const lv of l) tot[p.era] += lv.cost;
-  for (const g of [...F.SYSTEMS, ...F.GADGETS]) g.levels.forEach((lv, i) => { tot[F.levelEra(i + 1)] += lv.cost; check(lv.crystals === Math.round(lv.cost / 8), `${g.id} ${i + 1}: crystals = seeds / 8`); });
+  for (const g of [...F.SYSTEMS, ...F.GADGETS]) g.levels.forEach((lv, i) => { tot[F.levelEra(i + 1)] += lv.cost; check(lv.crystals === crys(lv.cost, F.levelEra(i + 1)), `${g.id} ${i + 1}: crystals = seeds / 8 (half from the 2030s)`); });
+  for (const p of F.PLANES) for (const [line, l] of Object.entries(p.lines)) l.forEach((lv, i) => check(lv.crystals === crys(lv.cost, p.era), `${p.id}.${line} ${i + 1}: crystals = seeds / 8 (half from the 2030s): ${lv.crystals}`));
+  check(F.PLANES.find(p => p.id === 'truss').lines.engines[0].crystals === 50 && F.SYSTEMS[0].levels[8].crystals === 57, 'the 2030s crystal prices are the sim chat\'s (truss engines 1 = 50, level 9 = 57)');
   tot.forEach((t, e) => check(t / F.ERA_BUDGET[e] >= 1.4 && t / F.ERA_BUDGET[e] <= 1.6, `era ${e} prices total ${t} = ${(t / F.ERA_BUDGET[e]).toFixed(2)}x its budget, want ~1.5x`));
   check(F.START_BONUS === 300, `start bonus 300 seeds (user, 2026-10-23): ${F.START_BONUS}`);
+  // The era step (2026-10-29): a bare 787 has its own no-fly help (+8 px, measured), on top of ATC's (a full 787: 8 + 10).
+  const k787 = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 6 }, gadgets: {} } }), kFull = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 8 }, gadgets: {} } });
+  const kH2 = F.fleetKit({ fleet: { plane: 'hydrogen', planes: { hydrogen: {} }, systems: { atc: 10 }, gadgets: {} } });
+  check(kH2.noFlyGapAdd === 22, `hydrogen no-fly help with ATC 10: ${kH2.noFlyGapAdd} (want 12 + 10)`);
+  check(k787.noFlyGapAdd === 8 && kFull.noFlyGapAdd === 18, `787 no-fly help: bare ${k787.noFlyGapAdd} (want 8), with ATC 8 ${kFull.noFlyGapAdd} (want 18)`);
   // Eras 4-6 (2026-10-28): the three systems, Sensors and Autopilot go on to level 8 in the 2010s; Magnet, Hold, Gear stop at 6.
-  check(F.SYSTEMS.length === 3 && F.GADGETS.length === 5 && [...F.SYSTEMS, ...F.GADGETS].map(g => g.levels.length).join(',') === '10,10,10,6,6,6,10,10', 'three systems and five gadgets: 10 / 6 levels (eras 4-5)');
-  check(F.PLANES.map(p => Object.values(p.lines).map(l => l.length).join('')).join(' ') === '222 333 444 333 333', 'Comet 2, 747 3, twin 4, 787 3, truss wing 3 levels per line');
+  check(F.SYSTEMS.length === 3 && F.GADGETS.length === 5 && [...F.SYSTEMS, ...F.GADGETS].map(g => g.levels.length).join(',') === '12,12,12,6,6,6,12,12', 'three systems and five gadgets: 12 / 6 levels (eras 4-6)');
+  check(F.PLANES.map(p => Object.values(p.lines).map(l => l.length).join('')).join(' ') === '222 333 444 333 333 333', 'Comet 2, 747 3, twin 4, 787 3, truss wing 3, hydrogen 3 levels per line');
 
   // Era gates: the 1970s levels (3, 4) are blocked in the 1950s, open at 30 min of flying.
   const open = (secs, fleet) => Object.fromEntries(F.nextBuys({ flightSeconds: secs, fleet }).map(b => [`${b.id}${b.level}`, b.open]));

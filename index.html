@@ -6,10 +6,17 @@
   <meta name="theme-color" content="#1b1b2f">
   <title>Contrail Pilot</title>
   <link rel="icon" href="assets/plane.png">
+  <link rel="manifest" href="manifest.webmanifest">   <!-- add to Home Screen (0.25.0) -->
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="game"></div>
+  <!-- The loading screen (src/loader.js): covers everything until the pictures are in; it never takes a tap after that. -->
+  <div id="loader" class="loader"><canvas width="96" height="54"></canvas><p class="loader-title">GETTING READY</p><p class="loader-count"></p></div>
 
   <div id="toast" class="toast" hidden></div>
 
@@ -17,7 +24,14 @@
   <button id="hubBack" class="btn hub-back" type="button" hidden>&#9664; HOME</button>
   <!-- Season 2 MISSIONS screen (S3, src/missions2.js): the area's open tiers, starred = the crossing trial. -->
   <section id="missions" class="overlay screen" hidden>
-    <div class="panel slim"><h2>MISSIONS</h2><p id="mTier" class="small"></p><div id="mList" class="mlist"></div><div id="mPrizes" class="challenges"></div></div>
+    <div class="panel slim">
+      <!-- R4 (research/UX-MASTER-PLAN.md C3): src/missionsview.js is the data, src/ui.js showMissions draws it. NEXT pinned, then OPEN / TODAY / COMING UP / STEADY, DONE as a count. -->
+      <div class="m-head"><h2>MISSIONS</h2><span id="mArea" class="small"></span><button id="mInfo" class="chip m-i" type="button" aria-label="How missions work">i</button></div>
+      <p id="mTier" class="small"></p>
+      <div id="mNext"></div>
+      <div id="mList" class="mlist"></div>
+      
+    </div>
   </section>
   <section id="title" class="overlay clear screen" hidden>
     <div class="panel slim">
@@ -32,9 +46,7 @@
       <div id="hubNext" class="hubonly hub-next"></div>
       <div id="hubWorld" class="hubonly hub-world"><button id="hubSpinL" class="hub-spin" type="button" aria-label="Spin left">&#9664;</button><canvas id="hubGlobe" class="hub-globe" width="128" height="128"></canvas><button id="hubSpinR" class="hub-spin" type="button" aria-label="Spin right">&#9654;</button><p id="hubRoute" class="hub-route"></p></div>
       <div id="tMission" class="mission-card" hidden></div>
-      <div id="tChallenges" class="challenges" hidden></div>
       <button id="goBtn" class="btn go big" type="button">TAKE OFF</button>
-      <div id="hubTiles" class="hubonly hub-tiles"></div>
       <div class="buttons">
         <button id="howBtn" class="btn tiny" type="button">how to play</button>
         <button id="schoolBtn" class="btn tiny" type="button">flight school</button>
@@ -59,13 +71,12 @@
   <section id="nature" class="overlay screen" hidden>
     <div class="panel wide">
       <div class="hangar-head"><h2>NATURE</h2><span class="treebank"><i class="seedicon"></i><b id="wSeeds">0</b><i class="crysicon"></i><b id="wCrystals">0</b></span></div>
-      <div class="wpin"><div id="wRegions" class="wregions"></div>
+      <div class="wpin"><div id="wRegions" class="wregions" data-scrollrow></div>
       <div id="wScene" class="wscene"></div>
-      <div id="wMeter"></div></div>
-      <h3>Habitat projects</h3>
-      <p class="small">Things people really do to help nature. Each one helps life come back, and new animals may appear on your flights!</p>
+      <div id="wMeter"></div>
+      <div id="wStrip" class="wstrip" hidden></div></div>   <!-- the preview strip (DESIGN-HANGAR-NATURE §4): pinned under the land, beside its ghost -->
+      <div id="wNextLine"></div>
       <div id="wProjects" class="upgrades"></div>
-      <h3>Trees</h3>
       <div id="wTrees" class="upgrades"></div>
       <h3 id="wFoundHead">Wildlife found</h3>
       <div id="wFound" class="wfound"></div>
@@ -115,42 +126,23 @@
 
   <!-- Results: revealed bit by bit (see ui.js) -->
   <section id="results" class="overlay screen" hidden>
-    <div class="panel slim">
-      <h2 id="rTitle" class="step slam">Landed!</h2>
-      <!-- the reveal hint: under the title, not under the button (small phones cut it off; the audit 2026-10-27) -->
-      <p class="small skiphint" id="rSkip">tap to skip</p>
-      <div id="rMission" class="step mission" hidden></div>
-      <div class="step bigstat"><span id="rDist">0 km</span></div>
-      <p class="newbest step" id="rRecord" hidden>NEW RECORD!</p>
-
-      <div class="step tally">
-        <div class="tally-row"><span>Seeds grabbed</span><b id="rGrab">0</b></div>
-        <div class="tally-row mult" id="rMultRow" hidden><span>Landing bonus</span><b id="rMult">x1</b></div>
-        <div class="tally-row cool" id="rCoolRow" hidden><span>Cool Earth</span><b>+3</b></div>
-        <div class="tally-row" id="rFareRow" hidden><span>Passenger fares</span><b id="rFare">+0</b></div>
-        <div class="tally-row nature" id="rNatureRow" hidden><span>Biodiversity</span><b id="rNature">+0</b></div>
-        <div class="tally-total" id="rTotalRow"><i class="seedicon"></i><b id="rGain">+0</b></div>
-        <p class="lost-msg" id="rLost" hidden>Flight over! Seeds lost.<br>Land to keep them!</p>
-        <div class="tally-row crys" id="rCrysRow" hidden><span>Ice crystals (always kept)</span><b><i class="crysicon"></i> <span id="rCrys">+0</span></b></div>
+    <!-- R1 (research/UX-MASTER-PLAN.md C1): ONE fitted card, no scrolling. src/resultscard.js is the data, src/ui.js showResults draws it. -->
+    <div class="panel slim rcard">
+      <div class="step rc-head slam">
+        <p class="rc-eyebrow" id="rEyebrow">LANDED IN</p>
+        <h2 id="rTitle" class="rc-title">Landed!</h2>
+        <p class="newbest rc-record" id="rRecord" hidden>&#9733; RECORD</p>
       </div>
-
-      <div class="step earth">
-        <div class="earth-face" id="rFace"></div>
-        <div class="earth-bars">
-          <div class="ebar"><span class="elabel">CO2</span><span class="etrack"><span id="barCo2" class="efill co2"></span></span><b id="rCo2">+0</b></div>
-          <div class="ebar"><span class="elabel">Night</span><span class="etrack"><span id="barNight" class="efill night"></span></span><b id="rNight">+0</b></div>
-          <div class="ebar"><span class="elabel">Shade</span><span class="etrack"><span id="barSun" class="efill sun"></span></span><b id="rSun">-0</b></div>
-          <div class="ebar"><span class="elabel">Nature</span><span class="etrack"><span id="barTrees" class="efill trees"></span></span><b id="rTreesCool">-0</b></div>
-        </div>
-      </div>
-
-      <div id="rEra" class="step era" hidden></div>
-      <div id="rRewards" class="step rewards" hidden></div>
-      <div id="rBadges" class="step badges-new" hidden></div>
-      <div id="rFree" class="step freeup" hidden>Your first upgrade is <b>FREE!</b></div>
-      <p class="step fact small" id="rFact"></p>
-
-      <div class="step buttons">
+      <p class="step rc-dist" id="rDist">0 km</p>
+      <div class="step rc-bank" id="rBank"><span class="rc-seeds"><b id="rGain">+0</b><i class="seedicon"></i></span><span class="rc-crys" id="rCrysBox"><b id="rCrys">+0</b><i class="crysicon"></i></span></div>
+      <button class="step rc-line rc-maths" id="rMaths" type="button"><span id="rMathsTxt"></span><i class="rc-more">&#8250;</i></button>
+      <p class="step rc-line rc-lost" id="rLost" hidden></p>
+      <button class="step rc-line rc-mission" id="rMission" type="button" hidden><span id="rMissionTxt"></span><b id="rMissionPrize"></b><i class="rc-more">&#8250;</i></button>
+      <div class="step rc-next" id="rNext" hidden><p class="rc-label">UP NEXT</p><div id="rNextRows"></div></div>
+      <button class="step rc-earth" id="rEarth" type="button"><span class="earth-face" id="rFace"></span><span class="rc-earthtxt"><span id="rWarm"></span><span id="rCool"></span></span><i class="rc-more">&#8250;</i></button>
+      <div id="rEra" class="step rc-era" hidden></div>
+      <div class="step rc-chips" id="rChips" hidden></div>
+      <div class="step buttons rc-go">
         <button id="againBtn" class="btn go big" type="button">FLY ON</button>
       </div>
     </div>
@@ -172,8 +164,6 @@
       <div id="hFuel" class="fuel"></div>
       <div id="hFleet" class="upgrades fleet"></div>
       <div id="hUpgrades" class="upgrades"></div>
-      <h3>Badges</h3>
-      <div id="hBadges" class="badges"></div>
       <div class="realtree" data-feature="citizenZoo">
         <p><b>Plant a real tree!</b> Citizen Zoo plants real trees in London.</p>
         <button id="realTreeBtn" class="btn green gate" type="button"><span class="gate-fill"></span><span class="gate-label">ASK A GROWN-UP</span></button>
@@ -230,10 +220,14 @@
     <div class="panel">
       <h2>Leaderboard</h2>
       <h2 class="sub"><button id="bInfo" class="btn tiny" type="button" aria-label="How points work">&#9432; how points work</button></h2>
-      <div id="bBoards" class="board-pick"></div>
-      <div id="bPeriods" class="tabs"></div>
-      <p id="bWhat" class="board-what"></p>
-      <ol id="bList" class="board"></ol>
+      <div id="bSubtabs" class="subtabs" hidden></div>
+      <div id="bRecords">
+        <div id="bBoards" class="board-pick"></div>
+        <div id="bPeriods" class="tabs"></div>
+        <p id="bWhat" class="board-what"></p>
+        <ol id="bList" class="board"></ol>
+      </div>
+      <div id="bBadges" class="badges" hidden></div>
       <p id="bMsg" class="small msg"></p>
     </div>
   </section>
@@ -286,11 +280,11 @@
   <!-- One way to get anywhere: this bar, on every screen except while flying. -->
   <nav id="tabbar" class="tabbar" hidden>
     <button id="tabFly" class="tab" data-go="fly" type="button"><i class="ti ti-fly"></i>FLY</button>
-    <button id="tabMissions" class="tab" data-go="missions" type="button" hidden><i class="ti ti-pilot"></i>MISSIONS</button>
-    <button id="tabHangar" class="tab" data-go="hangar" type="button"><i class="ti ti-hangar"></i>HANGAR<span id="tNew" class="newtag" hidden>NEW!</span></button>
-    <button id="tabNature" class="tab" data-go="nature" type="button"><i class="ti ti-nature"></i>NATURE</button>
+    <button id="tabMissions" class="tab" data-go="missions" type="button" hidden><i class="ti ti-pilot"></i>MISSIONS<i id="dMissions" class="dot" hidden></i></button>
+    <button id="tabHangar" class="tab" data-go="hangar" type="button"><i class="ti ti-hangar"></i>HANGAR<span id="tNew" class="newtag" hidden>FREE!</span><i id="dHangar" class="dot" hidden></i></button>
+    <button id="tabNature" class="tab" data-go="nature" type="button"><i class="ti ti-nature"></i>NATURE<i id="dNature" class="dot" hidden></i></button>
     <button id="tabPilot" class="tab" data-go="pilot" type="button"><i class="ti ti-pilot"></i><span id="tabPilotName">PILOT</span></button>
-    <button id="tabBoards" class="tab" data-go="boards" type="button"><i class="ti ti-boards"></i>BOARDS</button>
+    <button id="tabBoards" class="tab" data-go="boards" type="button"><i class="ti ti-boards"></i>BOARDS<i id="dBoards" class="dot" hidden></i></button>
   </nav>
   <button id="skipSchool" class="btn tiny skip" type="button" hidden>skip flight school</button>
 

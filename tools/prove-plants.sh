@@ -20,15 +20,22 @@ while IFS=$'\t' read -r test file expr label; do
     else echo "caught       $test / $label (${t}s): $(printf '%s\n' "$out" | grep -iE 'FAIL|^ *- |Error' | head -n 1 | cut -c1-110)"; fi
     continue
   fi
-  git ls-files --error-unmatch -- "$file" >/dev/null 2>&1 || { echo "SKIP $test / $label: $file is not tracked in git (commit it first: a plant must be undoable)"; missed=1; continue; }
-  git diff --quiet -- "$file" || { echo "SKIP $test / $label: $file has uncommitted edits"; missed=1; continue; }
-  keep=$(mktemp); cp "$file" "$keep"          # the file is put back from THIS copy, whatever happens
-  sed -i "$expr" "$file"
-  if cmp -s "$file" "$keep"; then rm -f "$keep"; echo "NOT APPLIED  $test / $label"; missed=1; continue; fi
-  if [ -n "${DRY:-}" ]; then ch=$(diff "$keep" "$file" | grep -c '^>'); cp "$keep" "$file"; rm -f "$keep"; echo "applies      $test / $label ($ch line(s) changed)"; continue; fi
+  # `file` may be a comma list (a JOINT plant: a fix that lives in two files, each half is covered by the other, so only both together bring the bug back): the same sed script is run on
+  # every file (each file only matches its own command) and every file must change.
+  IFS=',' read -r -a files <<< "$file"; keeps=(); skip=""
+  for f in "${files[@]}"; do
+    git ls-files --error-unmatch -- "$f" >/dev/null 2>&1 || { echo "SKIP $test / $label: $f is not tracked in git (commit it first: a plant must be undoable)"; skip=1; break; }
+    git diff --quiet -- "$f" || { echo "SKIP $test / $label: $f has uncommitted edits"; skip=1; break; }
+  done
+  [ -z "$skip" ] || { missed=1; continue; }
+  for f in "${files[@]}"; do k=$(mktemp); cp "$f" "$k"; keeps+=("$k"); done   # each file is put back from ITS copy, whatever happens
+  restore() { for i in "${!files[@]}"; do cp "${keeps[$i]}" "${files[$i]}"; rm -f "${keeps[$i]}"; done; }
+  notapplied=""; for i in "${!files[@]}"; do sed -i "$expr" "${files[$i]}"; cmp -s "${files[$i]}" "${keeps[$i]}" && notapplied="${files[$i]}"; done
+  if [ -n "$notapplied" ]; then restore; echo "NOT APPLIED  $test / $label ($notapplied unchanged)"; missed=1; continue; fi
+  if [ -n "${DRY:-}" ]; then ch=0; for i in "${!files[@]}"; do ch=$((ch + $(diff "${keeps[$i]}" "${files[$i]}" | grep -c '^>'))); done; restore; echo "applies      $test / $label ($ch line(s) changed)"; continue; fi
   base=${test%%@*}; ev=""; [[ $test == *@* ]] && ev=${test#*@}   # test@KEY=VALUE runs tests/test.cjs with KEY=VALUE (a piece of a split test)
   s=$(date +%s.%N); out=$(env $ev timeout "${LIMIT:-200}" node "tests/$base.cjs" 2>&1); rc=$?; e=$(date +%s.%N)
-  cp "$keep" "$file"; rm -f "$keep"
+  restore
   t=$(awk -v a="$s" -v b="$e" 'BEGIN { printf "%.0f", b - a }')
   if [ $rc -eq 0 ]; then echo "NOT CAUGHT   $test / $label (${t}s): the test still PASSES"; missed=1
   else echo "caught       $test / $label (${t}s): $(printf '%s\n' "$out" | grep -iE 'FAIL|^ *- |Error' | head -n 1 | cut -c1-110)"; fi

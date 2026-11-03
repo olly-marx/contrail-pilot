@@ -33,9 +33,10 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
     return { up, text: up ? tour.querySelector('.tbubble p').textContent : '', reach: [...reach.values()], inView: !!up && inView(ring) && inView(bub), ring: ring && { x: ring.left + ring.width / 2, y: ring.top + ring.height / 2 } };
   });
 
+  // (the poll loops below are bounded by TIME, 30 s, not by a count of 150-250 ms rounds: a loaded machine needs longer, a fast one still breaks at once; 2026-11-03, the L5 loop gave up after 60 rounds in 1 of 3 runs under load)
   // R14: landing 3.
   let p = await open(save({ landings: 3 }), { width: 390, height: 844 });
-  let a = null; for (let i = 0; i < 40; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
+  let a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/R14-boards.png` });
   check(a.up && /records/i.test(a.text), `R14: at landing 3 the rails point at MY RECORDS ("${a.text}")`);
   check(a.reach.length === 1 && /tabBoards/.test(a.reach[0] || ''), `R14: exactly ONE thing can be tapped, the BOARDS tab (${a.reach.length}: ${a.reach.join(' / ')})`);
@@ -57,14 +58,14 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const other = await p.$('#wRegions [data-region]:not([disabled]):not(.on)');
   check(!!other, 'L5: another land tab to view (the trap: NATURE kept the last-viewed tab)');
   if (other) { await other.click(); await p.waitForTimeout(400); }
-  await p.click('#tabFly'); await p.waitForTimeout(400); await p.click('#hubNext'); await p.waitForTimeout(700);
+  await p.click('#tabFly'); await p.waitForTimeout(400); await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(700);
   check(await p.evaluate(() => !document.getElementById('nature').hidden && !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]')), 'L5: NEXT opens NATURE on the tab that sells the parcels, after viewing another land');
   await p.close();
   p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'] }), { width: 390, height: 844 });   // (the earlier rails already shown, as in play)
-  { let h = null; for (let i = 0; i < 20; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); }   // the hub's 'Something NEW!' lights NATURE: tap what is lit
+  { let h = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); }   // the hub's 'Something NEW!' lights NATURE: tap what is lit
     if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(600); }
   // A player taps what is lit (the 'NEW: Tree Planting! Tap i' spotlight first, closing its info card) until the parcels step.
-  a = null; for (let i = 0; i < 60; i++) { a = await audit(p); if (a.up && /parcels/i.test(a.text)) break;
+  a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up && /parcels/i.test(a.text)) break;
     if (await p.isVisible('#iClose')) await p.click('#iClose');
     else if (a.up) { const ok = await p.$('#tour .tbubble .btn:not([hidden])'); if (ok && await ok.isVisible()) await ok.click(); else if (a.ring) await p.mouse.click(a.ring.x, a.ring.y); }
     await p.waitForTimeout(250); }
@@ -79,8 +80,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // 375x667 phone, during the parcels step on NATURE, a wheel and a finger drag on the dim layer scroll the screen, and taps
   // still reach only the target.
   p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'], shownLines: ['trees'] }), { width: 375, height: 667 }, true);   // (a touch phone: the drag is real touch events)
-  { let h = null; for (let i = 0; i < 20; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); } if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(700); }
-  for (let i = 0; i < 40; i++) { const x = await audit(p); if (x.up && /parcels/i.test(x.text)) break; await p.waitForTimeout(150); }
+  { let h = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); } if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(700); }
+  for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { const x = await audit(p); if (x.up && /parcels/i.test(x.text)) break; await p.waitForTimeout(150); }
   const sc0 = await p.evaluate(() => document.getElementById('nature').scrollTop);
   await p.mouse.move(20, 120); await p.mouse.wheel(0, 200); await p.waitForTimeout(400);
   const sc1 = await p.evaluate(() => document.getElementById('nature').scrollTop);
@@ -110,11 +111,11 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   p = await open(save({ landings: 3, tours: ['*'] }), { width: 375, height: 667 });
   await p.click('#goBtn'); await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).catch(() => {});
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.landedAt = s.path[1]; s.finish({ landed: true }); });   // (a landing, forced: this checks the card's layout)
-  let hint = null;
-  for (let i = 0; i < 40; i++) { hint = await p.evaluate(() => { const h = document.getElementById('rSkip'), r = h.getBoundingClientRect(), bt = document.getElementById('againBtn').getBoundingClientRect();
-    return { shown: !h.hidden && !document.getElementById('results').hidden && r.height > 0, top: Math.round(r.top), bottom: Math.round(r.bottom), btnTop: Math.round(bt.top), H: innerHeight }; }); if (hint.shown) break; await p.waitForTimeout(100); }
+  let hint = null;   // R1: the card fits and FLY ON is on screen during the reveal (there is no tap-to-skip hint any more)
+  for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { hint = await p.evaluate(() => { const R = document.getElementById('results'), bt = document.getElementById('againBtn').getBoundingClientRect();
+    return { shown: !R.hidden && bt.height > 0, fits: R.scrollHeight <= R.clientHeight + 1, btnBottom: Math.round(bt.bottom), H: innerHeight }; }); if (hint.shown) break; await p.waitForTimeout(100); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/skip-hint-small-phone.png` });
-  check(hint.shown && hint.top >= 0 && hint.bottom <= hint.H && hint.bottom <= hint.btnTop, `"tap to skip" on a small phone: fully on screen and above the button during the reveal (${JSON.stringify(hint)})`);
+  check(hint.shown && hint.fits && hint.btnBottom <= hint.H, `the results card fits a small phone during the reveal and FLY ON is on screen (${JSON.stringify(hint)})`);
   check(!p.errs.length, `results page errors: ${p.errs}`);
   await b.close();
   console.log(fails.length ? `FAIL rails2:\n - ${fails.join('\n - ')}` : 'PASS rails2: R14 points at MY RECORDS at landing 3 (one target, on screen, opens it, once; not before); "tap to skip" sits on screen above the button on a 375x667 phone');

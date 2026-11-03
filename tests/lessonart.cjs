@@ -13,8 +13,8 @@ for (const n of FIRST_HOUR) {
   const { w, h } = png(f);
   check(w === 240 && h === 128, `lesson-${n}.png is 240x128 (got ${w}x${h})`);
 }
-// The two new pictures are used where the lesson leads (the hub's free-part card and the results).
-const ui = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui.js'), 'utf8');
+// The two new pictures are used where the lesson leads (HOME's UP NEXT lead rows: nextup.js carries them, ui.js draws them).
+const ui = fs.readFileSync(path.join(__dirname, '..', 'src', 'ui.js'), 'utf8') + fs.readFileSync(path.join(__dirname, '..', 'src', 'nextup.js'), 'utf8');   // R3: the lead rows (nextup.js) carry the pictures, HOME's UP NEXT strip (ui.js) draws them
 check(/lesson-hangar\.png/.test(ui) && /lesson-nature\.png/.test(ui), 'the hangar and nature pictures are shown where the lesson leads');
 console.log(fails.length ? `FAIL lessonart:\n - ${fails.join('\n - ')}` : `PASS lessonart: ${FIRST_HOUR.length} first-hour pictures at 240x128, hangar + nature wired in`);
 process.exit(fails.length ? 1 : 0);

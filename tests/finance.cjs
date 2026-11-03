@@ -37,6 +37,26 @@ const src = f => path.resolve(__dirname, '../src', f);
   check(pay && pay.seeds === 3000 && pay.crystals === want && bs.seeds === seedsLocked + 3000 && !M.bonds(bs).length, `bonds paid ${JSON.stringify(pay)}, want 3000 seeds + ${want} crystals`);
   const low = { ...bs, seeds: 4400, finance: { level: 3 } };
   check(!M.lockBond(low), 'a bond dipped into the reserve');
+  // The dividend (level 4, far future): +1 crystal a landing in a healthy area (own bio >= 60), at most 3 a visit; none
+  // in an unhealthy area; the first visit after buying pays nothing (no landings yet).
+  const N = await import(src('nature.js')), rich = Object.fromEntries(Object.keys(N.SPECIES).map(id => [id, 200]));
+  const region = (await import(src('network.js'))).city('WARSAW').region;   // every project of that land done, too
+  const RD = (await import(src('habitats.js'))).REGION_DATA;
+  const habitat = { [region]: (RD[region] || { projects: [] }).projects.map(p => p.id), woodland: N.PROJECTS.map(p => p.id) };
+  const dv = { tutorialDone: true, seeds: 20000, crystals: 0, landings: 0, flightSeconds: 1e8, areas: ['weurope'], city: 'WARSAW', planted: rich, habitat, finance: { level: 3 } };
+  check(M.buyFinance(dv) && M.financeLevel(dv) === 4, 'buying the dividend (level 4) failed');
+  check(M.areaBio(dv) >= 60, `test save not healthy enough (${M.areaBio(dv)})`);
+  check(M.payDividend(dv) === 0, 'a dividend with no landings');
+  dv.landings = 2; check(M.payDividend(dv) === 2 && dv.crystals === 2, 'two healthy landings did not pay 2');
+  dv.landings = 9; check(M.payDividend(dv) === 3, 'the dividend cap (3 a visit) did not hold');
+  const poor = { ...dv, planted: {}, habitat: {}, finance: { level: 4, divAt: 9 }, landings: 11 };
+  check(M.payDividend(poor) === 0, 'an unhealthy area paid a dividend');
+  // Save up for the next desk level (2026-10-29): at level 2 in the 2030s, the desk keeps the bonds' 5,000 (not the 3,500
+  // reserve); in the 2010s (bonds not open yet) only the reserve.
+  const su = era => ({ tutorialDone: true, seeds: 5200, crystals: 0, landings: 3, flightSeconds: era, areas: ['weurope'], city: 'WARSAW', finance: { level: 2 } });
+  const r2 = M.rateAt(2, 0), in2030s = M.canTake(su(1e8)), in2010s = M.canTake({ ...su(0), flightSeconds: 60 * 250 });   // 250 min = the 2010s (the 2030s open at ~341)
+  check(in2030s === Math.min(15, Math.floor((5200 - 5000) / r2)) && in2030s !== in2010s, `2030s, level 2: took ${in2030s}, want what is above the bonds' 5,000`);
+  check(in2010s === Math.min(15, Math.floor((5200 - 3500) / r2)), `2010s, level 2: took ${in2010s}, want what is above the 3,500 reserve`);
   if (fails.length) { console.log(`FAIL finance\n  ${fails.join('\n  ')}`); process.exit(1); }
   console.log(`PASS finance: 30:1 at B 40, 20:1 at B 80 (level 2: 16:1), reserve kept, cap and one trade a landing (this save: B ${B}, ${r}:1)`);
 })();

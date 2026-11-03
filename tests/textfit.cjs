@@ -25,7 +25,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       const longest = [...CITIES].sort((a, b) => b.name.length - a.name.length)[0].name;
       // 1. the airport call, in each of its forms, with the longest city name
       s.nextAirport = { ...s.nextAirport, name: longest }; out.longest = longest;
-      const forms = [() => { s.nextAirport.worldX = s.distancePx + 200; }, () => { s.nextAirport.worldX = s.distancePx - 5; }, () => { s.nextAirport.worldX = s.distancePx + 50000; s.missedSign = { text: `Passed ${longest}. Next: ${longest}`, until: s.gameTime + 4000 }; }];
+      const forms = [() => { s.nextAirport.worldX = s.distancePx + 200; }, () => { s.nextAirport.worldX = s.distancePx - 5; }, () => { s.nextAirport.worldX = s.distancePx + 50000; s.missedSign = { text: `Passed ${longest}. Next: ${longest}`, to: s.nextAirport.name, until: s.gameTime + 4000 }; }];   // (a real sign always names its leg: the header shows a sign only while its next airport is this one, 0.25.1)
       out.airport = forms.map(f => { f(); s.updateTexts(false); return { text: s.nextText.text, w: s.nextText.width, x: s.nextText.x }; });
       // 2. the biome banner for every land, and the discovery popup
       out.banners = Object.keys(REGION_NAMES).map(r => { s.regionBanner(r); const c = s.banner, t = c.list.filter(o => o.text !== undefined); const bg = c.list[0];

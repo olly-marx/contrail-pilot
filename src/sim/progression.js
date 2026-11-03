@@ -17,11 +17,11 @@ import { capability } from './simulate.js';
 import { makeRng } from './rng.js';
 import { CLIMATE } from '../config.js';
 import { nextBuys, canAfford, buyFleet, fleetOf, choosePlane, PLANES } from '../fleet.js';
-import { LINES, nextLevel, level, canBuy, buyLevel, unlocked, needsMoreNature } from '../upgrades.js';
+import { LINES, nextLevel, level, canBuy, buyLevel, unlocked, needsMoreNature, freeParcels } from '../upgrades.js';
 import { biodiversity, fundProject, projectsDone } from '../nature.js';
 import { REGION_DATA } from '../habitats.js';
 import { eraProgress } from '../eras.js';
-import { claim } from '../rewards.js';
+import { sumPrizes } from '../rewards.js';
 import { city } from '../route.js';
 import { SEASON2_ON } from '../cities.js';
 import { SEASON } from '../season.js';
@@ -67,7 +67,9 @@ export function shop(save, region) {
   const bought = [];
   const options = () => [
     ...nextBuys(save).filter(b => b.open && canAfford(save, b)).map(b => ({ cost: b.cost, name: `${b.id}${b.level}`, buy: () => buyFleet(save, b.kind, b.id) })),
-    ...LINES.filter(l => nextLevel(save, l) && unlocked(save, l) && !needsMoreNature(save, l) && canBuy(save, l)).map(l => ({ cost: nextLevel(save, l).cost, name: `${l.id}${level(save, l.id) + 1}`, buy: () => buyLevel(save, l.id) })),
+    // The first tree parcels are FREE in season 2 once L4 is done (upgrades.js freeParcels; the game offers them in NATURE): take them
+    // even when the player could not pay (2026-10-29: without this the model never planted for lesson L5).
+    ...LINES.filter(l => nextLevel(save, l) && unlocked(save, l) && !needsMoreNature(save, l) && (canBuy(save, l) || freeParcels(save, l.id))).map(l => ({ cost: freeParcels(save, l.id) ? 0 : nextLevel(save, l).cost, name: `${l.id}${level(save, l.id) + 1}${freeParcels(save, l.id) ? '(free)' : ''}`, buy: () => buyLevel(save, l.id) })),
     ...((REGION_DATA[region] || {}).projects || []).filter(p => !projectsDone(save, region).some(d => d.id === p.id) && biodiversity(save, region) >= p.needs && save.seeds >= p.cost && (save.crystals || 0) >= p.crystals)
       .map(p => ({ cost: p.cost, name: `project:${p.id}`, buy: () => fundProject(save, region, p.id) })),
   ];
@@ -138,9 +140,9 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
       events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `crossing ${crossing} km ${made ? 'MADE' : 'failed'}` });
       if (made && !c2) tier++;
     }
-    const prizes = claim(save);   // a child taps CLAIM on every finished mission and badge
+    const prizes = sumPrizes((w.result || {}).rewards);   // R8: prizes are PAID at the bank (RULES.bankFlight): the flight's prize total, for the row below
     const bought = shop(save, here);
-    if (s2) { const done = missionsOnSave(save); if (done.length) claim(save); }   // save-event missions (a purchase, a project), as the game checks after a buy
+    if (s2) missionsOnSave(save);   // save-event missions (a purchase, a project) pay at the buy itself (R8), as the game checks after a buy
     const era = eraProgress(save).index;
     if (era > eraWas) { events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `era ${era} opens (${fleetOf(save).plane})` }); eraWas = era; }
     rows.push({ flight: n, skill: +s.toFixed(3), km: Math.round(w.distancePx), landed: !!w.landed, end: w.landed ? 'landed' : (w.endReason || '').split('\n')[0],

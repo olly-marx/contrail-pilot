@@ -11,7 +11,8 @@ import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as 
 import { addPrizes } from '../rewards.js';
 import { eraProgress } from '../eras.js';
 import { REGION_DATA, REGION_NAMES } from '../habitats.js';
-import { flightPath, legBetween, HOME, city, EARTH_KM, schoolSave } from '../route.js';
+import { legBetween, HOME, city, EARTH_KM, schoolSave } from '../route.js';
+import { routeFor } from '../aim.js';   // the aimed route (src/aim.js)
 import { crossingPath, recordAreaBest } from '../crossings.js';   // season 2 crossings (redesign)
 import { regionBelow } from '../geo.js';
 import { loadout, FUELS } from '../upgrades.js';
@@ -97,10 +98,13 @@ export const RULES = {
     this.nextTokenAt = 420;
     this.clock = 0;                  // drives day and night (flight school can set it)
     this.gameTime = 0;               // ms of unfrozen flight, used for contrail ages
+    this.missedSign = null;          // 'Passed X. Next: Y' belongs to ONE flight (the user's report, 2026-11-02: after a crash the next flight
+                                     // showed the dead flight's 'Passed Paris. Next: Berlin': its `until` was in the old flight's game time)
     this.frozen = false;             // flight school pauses the action to explain
     this.school = null;
     this.nextStormAt = WIDTH + 200;  // first storm arrives after the climb-out
     this.nextIssrAt = 300;
+    this.lessonSeeds = null; this.nextLessonSeedAt = null;   // season 2 lesson flights (L1, L2): TOKENS.lessonSeeds placed seeds (no rand drawn)
     this.l2Patch = null;             // season 2, lesson L2 pending: one daytime icy patch is guaranteed (decided at the first ISSR check)
     this.stormCount = 0;
     this.lastContrail = 0;
@@ -141,7 +145,7 @@ export const RULES = {
     // in one leg of crossing.km, then on through that area. Read from the save only (pure: the Node engine flies it too).
     this.crossing = this.autostart !== 'school' && this.save.tutorialDone && this.save.flyCrossing || null;   // (never before school is done)
     this.path = this.crossing ? crossingPath(this.crossing)
-      : flightPath(this.autostart === 'school' || !this.save.tutorialDone ? schoolSave(this.save) : this.save);
+      : routeFor(this.autostart === 'school' || !this.save.tutorialDone ? schoolSave(this.save) : this.save);
     this.startCity = 0;
     this.homeName = this.path[0];
     this.airportIndex = 0;
@@ -263,7 +267,7 @@ export const RULES = {
       this.airportsSkipped++;
       this.explain('x-multiplier', tip('x-multiplier'), 'lesson-bonus');
       this.nextAirport = this.airportAhead(this.airportIndex, na.worldX);
-      this.missedSign = { text: `Passed ${na.name}. Next: ${this.nextAirport.name}`, until: this.gameTime + 4000 };
+      this.missedSign = { text: `Passed ${na.name}. Next: ${this.nextAirport.name}`, to: this.nextAirport.name, until: this.gameTime + 4000 };
     }
     const toAirport = this.nextAirport.worldX - this.distancePx;
     if (this.school) return;   // flight school places everything itself
@@ -315,6 +319,12 @@ export const RULES = {
     if (this.distancePx >= this.nextBirdsAt) {
       if (this.rand() < this.squeezed(B.chance, 'capBirds') * this.kit.gapBirds) this.addFlock();   // ATC bird advisories: fewer flocks
       this.nextBirdsAt += B.every;
+    }
+    if (this.lessonSeeds == null) this.lessonSeeds = !this.school && isSeason2(this.save) && ['L1', 'L2'].includes((s2LessonsLeft(this.save)[0] || {}).id) ? TOKENS.lessonSeeds || 0 : 0;
+    if (this.lessonSeeds > 0 && this.distancePx >= (this.nextLessonSeedAt ??= TOKENS.lessonSeedFrom)
+      && !this.storms.some(st => Math.abs(st.rects[0].x - (WIDTH + 10)) < STORMS.width + 30)) {   // (never inside a storm column: wait a tick)
+      const y = Math.max(40, Math.min(SKY_H - 60, this.plane.y + 6 - 7)), t = { x: WIDTH + 10, y, baseY: y, phase: 0, value: 1 };
+      this.tokens.push(t); this.showToken(t); this.lessonSeeds--; this.nextLessonSeedAt += TOKENS.lessonSeedEvery;
     }
     if (this.distancePx >= this.nextTokenAt) {
       const chance = Math.min(TOKENS.maxChance, TOKENS.chance + TOKENS.chancePerKm * this.distancePx / 1000);
@@ -829,7 +839,7 @@ export const RULES = {
     if (!this.school) this.save.flightSeconds = (this.save.flightSeconds || 0) + (this.flySeconds || 0);   // crashes count too
     const eraOpened = !this.school && eraProgress(this.save).index > eraBefore ? eraProgress(this.save).era.name : null;
     const newPlane = eraOpened ? syncFleet(this.save, { fly: true }) : null;   // a new era's plane joins the fleet
-    if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; }   // choose a new direction from here
+    if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; this.save.skipAim = false; }   // choose a new direction from here
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save
@@ -837,7 +847,7 @@ export const RULES = {
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
-    // Missions and badges are prizes to CLAIM, not paid now (src/rewards.js, src/badges.js).
+    // Missions and badges are PAID here, the moment the flight is banked (R8; src/rewards.js addPrizes + src/missions2.js finish pay straight into the bank).
     const rewards = this.school ? [] : [...s2Done.map(d => ({ key: `mission:${d.key}`, kind: 'mission', id: d.key, label: d.title, ...d.prize })), ...addPrizes(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, dodges: this.dodgesTotal,
       kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionDone ? mission : null, missionIndex)];
     const newBadges = rewards.filter(p => p.kind === 'badge').map(p => p.id);

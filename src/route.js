@@ -41,8 +41,11 @@ function toward(c, seen, LINKS) {
 // few unseen neighbours as better (it would be hard to come back for: Warnsdorff's rule). Measured
 // 2026-10-22: every city seen in a median of 108 legs (104 cities), against 127 for "turn least" alone.
 // Once the whole world has been seen, the tour starts again.
-export function tourPath(start, first, count = 60, LINKS = WORLD) {
-  const path = [start, first];
+export function tourPath(start, first, count = 60, LINKS = WORLD) { return continueTour([start, first], count, LINKS); }
+// The tour rule above, continued from a path already flown (the aimed route, src/aim.js: the shortest way to a mission's
+// city, THEN the normal tour from there). tourPath(start, first) === continueTour([start, first]).
+export function continueTour(start, count = 60, LINKS = WORLD) {
+  const path = [...start];
   let seen = new Set(path);
   while (path.length < count + 1) {
     if (seen.size >= Object.keys(LINKS).length) seen = new Set([path[path.length - 1]]);
@@ -53,6 +56,28 @@ export function tourPath(start, first, count = 60, LINKS = WORLD) {
     path.push(next); seen.add(next);
   }
   return path;
+}
+// The shortest way (fewest airports) from `a` to `b` in a network: [a, ..., b], or null if b cannot be reached from a.
+// Ties: the order of LINKS (deterministic; no random numbers).
+export function pathTo(a, b, LINKS = WORLD) {
+  if (a === b) return [a];
+  const prev = { [a]: null }, q = [a];
+  while (q.length) {
+    const x = q.shift();
+    for (const n of LINKS[x] || []) if (!(n in prev)) { prev[n] = x; if (n === b) { const out = [b]; let s = b; while (prev[s] !== null) { s = prev[s]; out.unshift(s); } return out; } q.push(n); }
+  }
+  return null;
+}
+// A city mission's city is at most this many stops away on the route (src/aim.js aims there; src/missions2.js fillFor only
+// offers cities within it: the guarantee, research/ROUTE-BUGS.md).
+export const MAX_LEGS = 3;
+// The way the aimed route takes from `here` to `target`: the shortest; but when an airport must be PASSED on the way (a
+// "fly to C without stopping" mission) and C is next door, the shortest way round that does not use the direct link.
+export function wayTo(here, target, LINKS = WORLD, needPass = false) {
+  const way = pathTo(here, target, LINKS);
+  if (!needPass || !way || way.length !== 2) return way;
+  const round = pathTo(here, target, { ...LINKS, [here]: (LINKS[here] || []).filter(n => n !== target) });
+  return round && round.length - 1 <= MAX_LEGS ? round : way;
 }
 // The flight from a save: where you are and the direction you chose (a valid one, or the first offered).
 export function flightPath(save, count = 60) {

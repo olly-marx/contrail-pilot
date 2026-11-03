@@ -707,5 +707,29 @@ export const LANDMARKS = {
     "name": "palm trees and a tower",
     "w": 83,
     "h": 52
+  },
+  "NUKU'ALOFA": {
+    "key": "landmark-nukualofa",
+    "name": "the royal palace, a church and palms",
+    "w": 114,
+    "h": 24
+  },
+  "APIA": {
+    "key": "landmark-apia",
+    "name": "a twin-towered cathedral and a fale",
+    "w": 123,
+    "h": 49
+  },
+  "RAROTONGA": {
+    "key": "landmark-rarotonga",
+    "name": "a green volcanic peak and a white church",
+    "w": 128,
+    "h": 42
+  },
+  "PAPEETE": {
+    "key": "landmark-papeete",
+    "name": "Moorea's peaks, a canoe and the market",
+    "w": 114,
+    "h": 36
   }
 };

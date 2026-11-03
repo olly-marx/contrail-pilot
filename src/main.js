@@ -11,6 +11,7 @@ import { Tour } from './tour.js';
 import { WildScreen } from './wild.js';
 import { Updates } from './updates.js';
 import { catchCrashes } from './crash.js';
+import { loading } from './loader.js';
 
 const save = loadSave();
 // Crash catcher (src/crash.js): an error shows a card with what broke and where, instead of a silent freeze.
@@ -33,6 +34,7 @@ document.getElementById('skipSchool').onclick = () => scene().skipSchool();
 document.getElementById('coachOk').addEventListener('click', e => { e.stopPropagation(); scene().onCoachTap(); });
 document.getElementById('coach').addEventListener('pointerdown', () => { if (!ui.coachButton) scene().onCoachTap(true); });   // a tap ON the bubble
 
+loading.start(save);   // the loading screen (src/loader.js): a contrail drawn as the game's pictures arrive
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
