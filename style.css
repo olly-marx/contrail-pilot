@@ -647,7 +647,7 @@ h2.sub { margin-top: -4px; }
 .hub-next .rc-label { margin: 0 0 2px; text-align: left; }
 #hubUpRows { display: grid; gap: 3px; }
 .rc-row.lead { flex-wrap: wrap; }
-.hub-next .next-pic { flex: 0 0 100%; max-width: 160px; margin: 2px auto 0; }
+.hub-next .next-pic { flex: 0 0 100%; max-width: 120px; margin: 2px auto 0; }   /* 120 px (64 tall): the first-hour lead row must leave TAKE OFF on a 320x568 screen */
 .hub-world { position: relative; text-align: center; }
 .hub-globe { width: min(100%, 34vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
 .hub-spin { position: absolute; top: 42%; background: rgba(26,26,46,.55); color: #fff; border: 0; font-size: 14px; padding: 8px 6px; cursor: pointer; }
