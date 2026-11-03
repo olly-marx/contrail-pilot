@@ -23,6 +23,7 @@
       const raw = typeof d.short === 'function' ? (kind === 'steady' ? d.short(9999999, f) : d.short(f)) : d.short;
       const out = N.clip(raw);
       check(out.length <= N.SHORT_MAX, `${kind} ${d.id} (${stage}): "${out}" is ${out.length} characters (max ${N.SHORT_MAX})`);
+      for (const where of ['fly', 'hangar']) { const row = N.fitRow({ short: raw, where, stops: where === 'fly' ? 3 : undefined }); check(row.short.length + N.rightOf(row).length <= N.ROW_MAX, `${kind} ${d.id} (${stage}, ${where}): "${row.short}" + "${N.rightOf(row)}" fits one row at 320 (${N.ROW_MAX})`); }
       if (!NAME_CLIPPED.includes(d.id)) check(raw.length <= N.SHORT_MAX, `${kind} ${d.id} (${stage}) short "${raw}" is ${raw.length} characters with the longest fill (max ${N.SHORT_MAX}; only ${NAME_CLIPPED} may rely on clip)`);
     }
   }
@@ -31,7 +32,8 @@
     missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: { trees: 1 }, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   const WHERE = ['fly', 'hangar', 'nature', 'missions'];
   const sane = (items, tag) => { check(items.length <= 3, `${tag}: at most 3 rows (${items.length})`);
-    for (const x of items) { check(x.short && x.short.length <= 24 && x.full && WHERE.includes(x.where), `${tag}: row "${x.short}" has a short <= 24, a full text and a valid where: ${JSON.stringify(x)}`);
+    for (const x of items) { check(x.short.length + N.rightOf(x).length <= N.ROW_MAX, `${tag}: row "${x.short}" + "${N.rightOf(x)}" fits one line (${N.ROW_MAX})`);
+      check(x.short && x.short.length <= 24 && x.full && WHERE.includes(x.where), `${tag}: row "${x.short}" has a short <= 24, a full text and a valid where: ${JSON.stringify(x)}`);
       if (x.stops !== undefined) check(Number.isInteger(x.stops) && x.stops >= 1 && x.stops <= 3, `${tag}: "${x.short}" stops ${x.stops} within MAX_LEGS`); }
     check(new Set(items.map(x => x.key)).size === items.length, `${tag}: no row twice`); };
   const full = base(); M.setDaily(full, '2026-11-03');

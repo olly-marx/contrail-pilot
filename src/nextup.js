@@ -13,6 +13,7 @@ import { linksFor, wayTo } from './route.js';
 import { lineById } from './upgrades.js';
 
 export const SHORT_MAX = 24;
+export const ROW_MAX = 29;   // short + right column on ONE line at 320 px (an 8 px row with 12 px padding holds ~31 characters: measured, R1)
 // The first Tree Planting level (lesson 5 needs it): affordable with the seeds and crystals in the bank? (was hub.js; the claims lead below reads it)
 export const canAffordParcels = save => { const l = lineById('trees').levels[0]; return (save.seeds || 0) >= l.cost && (save.crystals || 0) >= (l.crystals || 0); };
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
@@ -31,7 +32,9 @@ function stopsFor(save, m) {
   const L = linksFor(save), w = L[save.city] ? wayTo(save.city, t, L, m.def.id === 'route') : null;
   return w ? w.length - 1 : undefined;
 }
-const item = (save, m) => ({ key: m.key, short: shortOf(m), full: m.title, where: whereOf(m), ...(stopsFor(save, m) ? { stops: stopsFor(save, m) } : {}), ...(m.daily ? { daily: true } : {}) });
+// The title never pushes its right column onto a second line (a long city: "Nonstop to DAR ES SALAAM" + "3 stops").
+export const fitRow = o => ({ ...o, short: clip(o.short, Math.min(SHORT_MAX, ROW_MAX - rightOf(o).length)) });
+const item = (save, m) => fitRow({ key: m.key, short: shortOf(m), full: m.title, where: whereOf(m), ...(stopsFor(save, m) ? { stops: stopsFor(save, m) } : {}), ...(m.daily ? { daily: true } : {}) });
 
 export function leadOf(save, crossingReady = null) {
   if (!M2.isSeason2(save)) return null;   // (the screens decide whether to show it: HOME hides the strip until tutorialDone, as hub.js's chain always did)

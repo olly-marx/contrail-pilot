@@ -37,7 +37,7 @@
     check(v.maths.length <= LINE, `${tag}: maths line "${v.maths}" is ${v.maths.length} (max ${LINE})`);
     if (v.missions) { check(v.missions.line.length <= 24 && (v.missions.line + ` +${v.missions.seeds} ›`).length <= LINE, `${tag}: missions line "${v.missions.line}" + prize fits ${LINE}`); }
     if (v.earth) { check(v.earth.warm.length <= LINE && v.earth.cool.length <= LINE, `${tag}: earth lines "${v.earth.warm}" / "${v.earth.cool}" fit ${LINE}`); }
-    for (const n of v.next) check(n.short.length <= 24 && n.right.length <= 9 && (n.short.length + n.right.length) <= LINE, `${tag}: UP NEXT row "${n.short}" | "${n.right}" fits`);
+    for (const n of v.next) check(n.short.length <= 24 && n.right.length <= 9 && (n.short.length + n.right.length) <= N.ROW_MAX, `${tag}: UP NEXT row "${n.short}" | "${n.right}" fits`);
     check(v.next.length <= R.NEXT_ROWS, `${tag}: at most ${R.NEXT_ROWS} UP NEXT rows (${v.next.length})`);
     check(v.chips.length <= R.CHIPS_MAX && v.chips.every(c => c.label.length <= 11), `${tag}: at most ${R.CHIPS_MAX} chips, labels <= 11 characters: ${JSON.stringify(v.chips.map(c => c.label))}`);
     check(v.dist.length <= 10, `${tag}: the 26 px distance "${v.dist}" fits (max 10 characters at 320)`);
