@@ -510,7 +510,7 @@ export class UI {
     const s = this.save;
     $('hTrees').textContent = s.seeds; $('hCrystals').textContent = s.crystals || 0;
     const free = !!s.freeUpgrade;
-    $('hHint').innerHTML = free ? '<b>Pick ONE upgrade for FREE!</b>' : 'Spend your seeds and ice crystals. New eras open as you fly.';
+    $('hHint').innerHTML = free ? '<b>Pick ONE upgrade for FREE!</b>' : ''; $('hHint').hidden = !free;   // (R5: no standing help sentence; the strip says what to tap)
 
     const choices = fuelChoices(s);
     const current = choices.includes(s.fuel) ? s.fuel : choices[choices.length - 1];

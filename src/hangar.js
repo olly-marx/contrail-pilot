@@ -13,7 +13,8 @@ import { lookFiles, hangarGadgets, previewBars, withNext, shortName } from './fl
 import { statBarsHTML, animateBars } from './statbars.js';
 import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
-import { markSeen, hangarScope } from './fresh.js';
+import { markSeen, hangarScope, dots } from './fresh.js';
+import { showSheet } from './sheet.js';
 import { FINANCE, financeLevel, financeOpen, natureHealth, rate, rateAt, canTake, trade, buyFinance, bonds, canLock, lockBond, payBonds, payDividend } from './finance.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
 
@@ -36,9 +37,9 @@ export class FleetHangar {
   render() {
     if (this.paying) { this.renderLater = true; return; }   // a payoff is showing IN the box: nothing may rebuild it (stage 2)
     const s = this.ui.save, el = $('hFleet');
-    el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.capHTML(s) + this.previewCardHTML(s) + this.timelineHTML(s) + `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
-      `<button class="btn ftab ${this.tab === k ? 'on' : ''}" data-ftab="${k}" type="button">${n}</button>`).join('')}</div>`
-      + `<p class="small ftabhelp">${{ plane: 'Choose your plane, and upgrade the one you fly.', systems: 'Systems help every flight, whichever plane you fly.', gadgets: 'Gadgets are fitted to every plane in your fleet.' }[this.tab]}</p>`
+    // R5 (UX plan C5): picture + caption (the range lives in the caption), the strip, THEN the sub-tabs directly under it, then the rows.
+    // No era chips, no per-tab help sentence: the era is ONE line in PLANE (tap = a sheet), the plane paragraph is behind the (i).
+    el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.previewCardHTML(s) + this.tabsHTML(s)
       + (this.tab === 'plane' ? this.planeHTML(s) : this.groupHTML(s, this.tab === 'systems' ? SYSTEMS : GADGETS, this.tab === 'systems' ? 'system' : 'gadget'));
     // Matured biodiversity bonds pay out when you come to the hangar (src/finance.js).
     const div = payDividend(s); if (div) { this.ui.persist(); this.ui.toast && this.ui.toast('NATURE DIVIDEND!', `+${div} crystals: your land here is healthy.`, 'good', 4); }
@@ -54,6 +55,9 @@ export class FleetHangar {
     // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS (src/swipe.js).
     const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.flap(); this.render(); };
     onSwipe(el, { next: () => goTab(1), prev: () => goTab(-1) });
+    const era = $('hNextPlane'); if (era) era.onclick = () => this.eraSheet(s);
+    const pinfo = el.querySelector('[data-pinfo]'); if (pinfo) pinfo.onclick = () => this.planeSheet(s);
+    if (!this.sel) { const first = el.querySelector('.rowc-price.btn.go:not([disabled]), .rowc-price.btn.free:not([disabled])'); if (first) first.classList.add('pulse1'); }   // the ONE primary, shown once: no strip item is picked, so the first affordable price pulses
     el.querySelectorAll('[data-finfo]').forEach(b => b.onclick = () => { const [kind, id] = b.dataset.finfo.split(':'); this.showInfo(s, kind, id); });
     el.querySelectorAll('[data-fly]').forEach(b => b.onclick = e => { e.stopPropagation(); if (choosePlane(s, b.dataset.fly)) { this.preview = b.dataset.fly; this.ui.persist(); this.ui.sfx.coin(); this.render(); } });
     // The big picture with the plane's bought parts layered on (src/planelook.js); drawn when ready.
@@ -168,10 +172,11 @@ export class FleetHangar {
   }
 
   // The capability line under the picture (M4): the cached estimate, or "working it out" while it runs.
+  // The range in the picture caption (the flying plane only): a span so the background estimate can swap it (#hCap).
   capHTML(s) {
     const km = capFor(s, areaOf(s.city) || null);
-    return km ? `<p id="hCap" class="small hcap">Your plane + nature can reach <b>~${km.toLocaleString('en-GB')} km</b></p>`
-      : `<p id="hCap" class="small hcap working">${estimating() ? 'Working out how far your plane can go' : 'How far can your plane go?'}<i class="dots"></i></p>`;
+    return km ? `<span id="hCap" class="hcap">reaches ~${km.toLocaleString('en-GB')} km</span>`
+      : `<span id="hCap" class="hcap working">${estimating() ? 'working out the range' : ''}<i class="dots"></i></span>`;
   }
   // NATURE FINANCE (src/finance.js), from the 2010s: the desk's level, today's rate from your nature's health (a bar: fewer
   // seeds a crystal is better), the next level's rate previewed, and the TRADE button (once a landing, above the reserve).
@@ -188,14 +193,6 @@ export class FleetHangar {
       ${L && L.bond ? `<p class="small">Bonds: ${bonds(s).map(b => `${Math.max(0, L.bond.landings - ((s.landings || 0) - b.at))} landings left`).join(', ') || 'none yet'}. Each pays back its seeds + about ${Math.floor(B / L.bond.perB)} crystals (your nature at payout).</p>
         <button class="btn ${canLock(s) ? 'go' : ''}" id="hBond" type="button" ${canLock(s) ? '' : 'disabled'}>LOCK ${L.bond.lock.toLocaleString('en-GB')} seeds for ${L.bond.landings} landings</button>` : ''}
       ${next ? `<div class="next"><span>Next: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost}<i class="seedicon"></i></button></div>${adds ? `<p class="small">${adds}</p>` : bar(lv + 1)}` : ''}</div>`;
-  }
-
-  // 'Next plane': the next plane not reached yet, its era and a bar of the flying time to it (eras.js eraProgress).
-  nextPlaneHTML(s) {
-    const f = fleetOf(s), nxt = PLANES.find(pl => !f.planes[pl.id]); if (!nxt) return '';
-    const p = eraProgress(s), frac = nxt.era === p.index + 1 ? p.frac : 0;
-    return `<div class="nextplane" id="hNextPlane"><span class="small">Next plane: <b>${nxt.name}</b>, in ${ERAS[nxt.era].id}</span>`
-      + `<span class="era-row"><span class="era-track"><span class="era-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span></span></div>`;   // (.era-track is a ROW item: flex-basis 140px; alone in this column it became 140 px TALL)
   }
 
   // The item behind a selection ('plane:comet.engines', 'gadget:magnet', 'fly:jumbo').
@@ -237,18 +234,33 @@ export class FleetHangar {
     const ghosts = this.ghostParts(s, id).map(g => `<img class="fghost" src="${g}" alt="">`).join('');
     // .fpic: the PICTURE (400:176), base + ghost layers stacked inside it. The caption (.fpcap) is OUTSIDE it, so a ghost can never
     // be sized to the caption too (the user's screenshot, 2026-11-02: the ghost filled the whole box, stretched ~14% tall).
-    return `<div class="fpreview ${owned ? '' : 'locked'}"><div class="fpic"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}</div><div class="fpcap"><b>${pl.name}</b><span>${tag}</span></div></div>`;
+    return `<div class="fpreview ${owned ? '' : 'locked'}"><div class="fpic"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}</div><div class="fpcap"><b>${pl.name}</b><span>${tag}${f.plane === id ? ' &middot; ' : ''}</span>${f.plane === id ? this.capHTML(s) : ''}</div></div>`;
   }
 
-  // 1950s ... far future: done eras lit, this one marked, the bar to the next and what it brings.
-  timelineHTML(s) {
-    const p = eraProgress(s);
-    const dots = ERAS.map((e, i) => `<span class="fera ${i < p.index ? 'done' : i === p.index ? 'now' : ''}">${e.id === 'future' ? 'Future' : e.id}</span>`).join('');
-    const brings = p.next ? PLANES.filter(pl => pl.era === p.index + 1).map(pl => `the <b>${pl.name}</b>`)
-      .concat(p.index + 1 < 3 ? ['new systems and gadgets'] : []) : [];
-    return `<div class="ftimeline">${dots}</div>`
-      + (p.next ? `<div class="era-row"><span class="era-track"><span class="era-fill" style="width:${(p.frac * 100).toFixed(1)}%"></span></span></div>
-        <p class="small">To ${p.next.name}: <b>${Math.floor(p.done)} / ${Math.round(p.need)} min</b> of flying${brings.length ? `. Next: ${brings.join(', ')}.` : ''}</p>` : '<p class="small">Every era open!</p>');
+  // The sub-tabs (>= 40 px each), a dot on the ones with something new that are NOT the one showing (src/fresh.js).
+  tabsHTML(s) {
+    const d = dots(s, this.ui.freshOpts());
+    return `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
+      `<button class="btn ftab ${this.tab === k ? 'on' : ''}" data-ftab="${k}" type="button">${n}${k !== this.tab && d[hangarScope(k)] ? '<i class="dot"></i>' : ''}</button>`).join('')}</div>`;
+  }
+
+  // The era, ONE line (tap = the six eras and what the next one brings). It keeps the id #hNextPlane and the class .ftimeline
+  // (tour.js and the tours test point at the era line by that class).
+  eraLineHTML(s) {
+    const f = fleetOf(s), p = eraProgress(s), nxt = PLANES.find(pl => !f.planes[pl.id]);
+    const frac = p.next ? p.frac : 1, what = nxt ? `Next plane: <b>${nxt.name}</b> &middot; ${ERAS[nxt.era].id}` : `Every era open`;
+    return `<button class="ftimeline era-line" id="hNextPlane" type="button" aria-label="The eras"><span class="small">${what}</span>`
+      + `<span class="era-row"><span class="era-track"><span class="era-fill" style="width:${(frac * 100).toFixed(1)}%"></span></span></span>`
+      + (p.next ? `<span class="small">${Math.floor(p.done)}/${Math.round(p.need)} min</span>` : '') + '</button>';
+  }
+  eraSheet(s) {
+    const p = eraProgress(s), brings = p.next ? PLANES.filter(pl => pl.era === p.index + 1).map(pl => pl.name).concat(p.index + 1 < 3 ? ['new systems and gadgets'] : []) : [];
+    const rows = ERAS.map((e, i) => `<p><b>${e.id === 'future' ? 'Far future' : e.id}</b> ${i < p.index ? 'done' : i === p.index ? 'now' : 'to come'}</p>`).join('');
+    showSheet({ eyebrow: 'ERAS', title: 'Flying through time', html: rows + (p.next ? `<p>To ${p.next.name}: ${Math.floor(p.done)} of ${Math.round(p.need)} min of flying${brings.length ? `. Brings: ${brings.join(', ')}.` : ''}</p>` : '<p>Every era is open!</p>') });
+  }
+  planeSheet(s) {
+    const pl = planeById(fleetOf(s).plane);
+    showSheet({ eyebrow: pl.name.toUpperCase(), title: 'How planes work here', body: 'Every plane flies the same way. Upgrades change what happens around it. A fuller plane makes less CO2 per passenger: that is why airlines fill every seat.' });
   }
 
   planeHTML(s) {
@@ -261,13 +273,13 @@ export class FleetHangar {
       return `<div class="rowc price-top fplane-row ${flying ? 'sel flying' : ''}" data-row="fly:${pl.id}">`
         + `<button class="rowc-tap" type="button" data-pview="${pl.id}" aria-label="Show the ${pl.name}"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${pl.name}</span></span>`
         + `<span class="rowc-sub">${flying ? 'FLYING' : ERAS[pl.era].id}</span></button>`
-        + (flying ? '<span class="rowc-price rowc-done">FLYING</span>' : `<button class="rowc-price btn go" data-fly="${pl.id}" type="button">FLY THIS</button>`) + '</div>';
+        + (flying ? '<span class="rowc-price rowc-done">FLYING</span>' : '') + '</div>';   // (FLY THIS is the strip's button: tap the row, then it; one primary)
     }).join('');
     const pl = planeById(f.plane), mine = f.planes[pl.id] || {};
     const lines = Object.entries(PLANE_LINES).map(([line, name]) =>
       this.lineHTML(s, { kind: 'plane', id: `${pl.id}.${line}`, name, levels: pl.lines[line], have: mine[line] || 0, eraOf: () => pl.era, now })).join('');
-    return `<div class="fplanes-rows">${cards}</div>${this.nextPlaneHTML(s)}<p class="small">Every plane flies the same way. Upgrades change what happens around it. A fuller plane makes less CO2 per passenger: that is why airlines fill every seat.</p>
-      <h3 class="tree-head">${pl.name.toUpperCase()}</h3>${lines}`;
+    return `<div class="fplanes-rows">${cards}</div>${this.eraLineHTML(s)}
+      <h3 class="tree-head">${pl.name.toUpperCase()} <button class="btn hp-info" data-pinfo="1" type="button" aria-label="How planes work">i</button></h3>${lines}`;
   }
 
   groupHTML(s, list, kind) {

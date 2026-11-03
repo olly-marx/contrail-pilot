@@ -103,11 +103,32 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.setViewportSize(vp0); await p.waitForTimeout(200);
   const over390 = await past(vp0.width);
   check(over390.length === 0, `at ${vp0.width} the hangar is drawn past the screen's side: ${over390.join('; ')}`);
+  // R5: the hangar top (UX plan C5). Sub-tabs directly under the strip and >= 40 px tall; no era chips, no per-tab help sentence, no plane
+  // paragraph in the page (it is behind the (i)); the era is ONE line whose tap opens the six eras; a dot on a sub-tab that has news.
+  await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
+  const top = await p.evaluate(() => { const q = x => document.querySelector(x), r = e => e && e.getBoundingClientRect(); const strip = r(q('#hPreview')), tabs = r(q('#hFleet .ftabs')), t0 = r(q('#hFleet .ftab'));
+    return { gap: Math.round(tabs.top - strip.bottom), tabH: Math.round(t0.height), help: !!q('.ftabhelp'), chips: document.querySelectorAll('#hFleet .fera').length, era: document.querySelectorAll('#hNextPlane').length, para: /Every plane flies the same way/.test(q('#hFleet').textContent) }; });
+  check(top.gap >= 0 && top.gap <= 16, `the sub-tabs sit directly under the strip (gap ${top.gap} px)`);
+  check(top.tabH >= 40, `the sub-tabs are at least 40 px tall (${top.tabH})`);
+  check(!top.help && top.chips === 0 && !top.para && top.era === 1, `no help sentence / era chips / plane paragraph in the page; one era line: ${JSON.stringify(top)}`);
+  await p.click('#hNextPlane'); await p.waitForTimeout(200);
+  const eras = await p.evaluate(() => ({ n: document.querySelectorAll('#sheet .sheet-body p b').length, txt: (document.querySelector('#sheet') || {}).textContent || '' }));
+  check(eras.n === 6 && /1950s/.test(eras.txt) && /Far future/.test(eras.txt), `tapping the era line opens the six eras: ${eras.n}`);
+  await p.click('#sheet .sheet-ok'); await p.waitForTimeout(150);
+  await p.click('[data-pinfo]'); await p.waitForTimeout(200);
+  check(/Every plane flies the same way/.test(await p.evaluate(() => (document.querySelector('#sheet') || {}).textContent || '')), 'the (i) beside the plane name opens the "every plane flies the same way" text');
+  await p.click('#sheet .sheet-ok'); await p.waitForTimeout(150);
+  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seen = ui.save.seen || {}; ui.save.seen['hangar/gadgets'] = []; ui.save.seen['hangar/systems'] = []; ui.fleet.render(); });
+  const dd = await p.evaluate(() => ({ cur: !!document.querySelector('.ftab.on .dot'), gad: !!document.querySelector('[data-ftab=gadgets] .dot') }));
+  check(!dd.cur && dd.gad, `a dot on a sub-tab with news, never on the one showing: ${JSON.stringify(dd)}`);
+  await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(250);
+  check(!(await p.evaluate(() => !!document.querySelector('[data-ftab=gadgets] .dot'))), 'the gadgets dot is gone once GADGETS is showing');
+  await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   check(await p.evaluate(() => document.getElementById('hNextPlane').getBoundingClientRect().height) < 40, 'the Next plane line is one short line (its bar once grew 140 px tall)');
   check(/1990s twin/.test(await p.textContent('#hNextPlane')) && /1990s/.test(await p.textContent('#hNextPlane')) && !(await p.$('.fplane.locked')), 'the 1990s twin is the one Next plane line (no silhouettes)');
-  await p.click('[data-fly=comet]'); await p.waitForTimeout(300);
+  await p.click('[data-pview=comet]'); await p.waitForTimeout(300); await p.click('#hPreviewBuy'); await p.waitForTimeout(300);   // (R5: FLY THIS is the strip's button, the plane rows only preview)
   s = await saved(p);
   check(s.fleet.plane === 'comet' && /Comet 4/.test(await p.textContent('.fplane-row.flying')) && /COMET 4/.test(await p.textContent('#hFleet .tree-head')), `the Comet is chosen and its lines shown: ${s.fleet.plane}`);
   check(p.errs.length === 0, `buying threw: ${p.errs.join(' | ')}`);

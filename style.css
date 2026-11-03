@@ -552,9 +552,6 @@ h2.sub { margin-top: -4px; }
 
 /* The fleet hangar (src/hangar.js). */
 .ftimeline { display: flex; justify-content: space-between; gap: 2px; font-size: 7px; margin: 4px 0; }
-.fera { padding: 2px 3px; border-radius: 3px; background: #1b2838; color: #6d7f95; }
-.fera.done { background: #2b4a6f; color: #cfe6ff; }
-.fera.now { background: #ffe15a; color: #1b2838; font-weight: bold; }
 .ftabs { display: flex; gap: 4px; justify-content: center; margin: 8px 0; }
 .ftab.on { background: #ffe15a; color: #1b2838; }
 .fplanes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
@@ -895,3 +892,14 @@ h2.sub { margin-top: -4px; }
 #hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }
 #hangar .hangar-head .btn { margin-left: auto; }
 .ftabs .btn { flex: 1 1 0; min-width: 0; padding: 8px 2px; font-size: 9px; }
+
+/* ---------- R5: the hangar top (UX plan C5). Sub-tabs >= 40 px with a dot, the era as ONE line, the head fits a 320 phone on one row, the first
+   affordable price pulses once. ---------- */
+#hangar .hangar-head h2 { font-size: 12px; }
+#hangar .treebank { font-size: 10px; }
+.ftabs .btn.ftab { position: relative; min-height: var(--tap); }
+.ftimeline.era-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; width: 100%; box-sizing: border-box; min-height: 30px; padding: 3px 6px; margin: 4px 0; font: inherit; color: var(--ink); background: #fff; border: 2px solid #ece8dc; cursor: pointer; text-align: left; }
+.era-line .era-row { flex: 1 1 40px; min-width: 24px; }
+.era-line .era-track { flex: 1 1 auto; }
+.rowc-price.pulse1 { animation: pulse1 .7s ease-in-out 2; }
+@keyframes pulse1 { 50% { transform: scale(1.12); } }
