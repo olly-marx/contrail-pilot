@@ -39,3 +39,5 @@ group rules-imports | src/aim.js | sim-bank fares flight
 group ux-fit | src/resultscard.js src/nextup.js | fitscreen overlap taptargets rowfit hangar nature
 ci-only | onrails320
 group save-writers | src/fresh.js src/records.js src/recordsui.js src/ui.js src/tour.js src/wild.js src/main.js src/save.js src/habitats.js src/finance.js src/upgrades.js src/reprice.js src/startchoice.js src/missions.js src/route.js src/school.js src/capability.js src/pilot.js | sim-bank
+group records-badge | src/records.js src/recordsui.js | badgeart
+group hangar-swipe | src/hangar.js | swipe features

@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-03-hangar-boards",
+    "version": "0.26.5",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The hangar is tidier: the plane, then the upgrade you can buy, then the tabs, all on one screen. It fits small phones too.",
+      "Badges now live on the BOARDS screen next to your records, and a red dot shows what is new."
+    ]
+  },
+  {
     "id": "2026-11-03-new-dots",
     "version": "0.26.4",
     "date": "2026-11-03",

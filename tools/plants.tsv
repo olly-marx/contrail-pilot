@@ -50,7 +50,6 @@ records	src/records.js	s/tags.filter(t => !r.week.kindsBase.includes(t)).length/
 records	src/sim/rules.js	s/    if (!this.school) recordFlight(/    recordFlight(/	flight school counts
 records	src/records.js	s/      if (f.distance > c.longest) { if (c.longest > 0) beaten.push/      if (f.distance > c.longest) { if (true) beaten.push/	the first landing is a NEW RECORD
 records-screen	src/missions2.js	s/(tile === 'boards' \&\& (save.landings || 0) >= 3)/(tile === 'boards' \&\& (save.landings || 0) >= 1)/	BOARDS appears too early
-records-screen	src/recordsui.js	s/  clearFresh(save); writeSave(save);/  writeSave(save);/	NEW RECORD! never goes away
 records-screen	src/recordsui.js	s/PERIODS.map(p =>/PERIODS.slice(0, 1).map(p =>/	only one period button
 records-screen	src/recordsui.js	s/\$('bInfo').hidden = true;/$('bInfo').hidden = false;/	"how points work" still offered
 records-screen	src/records.js	s/{ id: 'bird', name: 'BIRD MAGNET', oops: true,/{ id: 'bird', name: 'BIRD MAGNET',/	BIRD MAGNET is not an oops card
@@ -276,7 +275,6 @@ skiptrip	src/ui.js	s/toggleSkip(this.save); writeSave(this.save);/writeSave(this
 skiptrip	style.css	s/#title.hub .hub-skip { display: flex;/#title.hub .hub-skip { min-height: 20px; max-height: 20px; display: flex;/	the chip is a 20 px target (under the 40 px minimum)
 hangar	style.css	/^#hangar .panel { grid-template-columns: minmax(0, 1fr); }$/d	the hangar grid column grows to its widest nowrap row again: the panel is wider than a 320 phone
 hangar	style.css	/^\.ftabs \.btn { flex: 1 1 0; min-width: 0;/d	the three tabs cannot share the width: PLANE SYSTEMS GADGETS run past the right edge (unmeasured: if this plant is NOT CAUGHT, the rule is not needed)
-hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap;/d	the head row cannot wrap: TAKE OFF runs past the right edge (unmeasured: if NOT CAUGHT, the rule is not needed)
 nextup	src/nextup.js	s/if (vis\[0\]) out.push/if (vis[0] \&\& false) out.push/	the first open mission missing from UP NEXT (a second source / a dropped row)
 nextup	src/missions2.js	s/short: f => `Bring home \${10 \* f.k} seeds`,/short: f => `Bring home ${10 * f.k} seeds, then fly on`,/	a short title over 24 characters
 resultscard	src/resultscard.js	s/`✓ \${n} missions done`/`✓ ${missionTitles.join(', ')}`/	the mission names joined back into the line (7 missions overflow it)
@@ -298,3 +296,16 @@ newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (save.seen) return
 newdot	src/records.js	s/  for (const b of beaten) r.beaten.push(/  for (const b of []) r.beaten.push(/	recordFlight no longer writes the beaten keys: BOARDS never lights
 hangarnew	src/ui.js	s/markSeenPrefix(this.save, .nature\/., this.freshOpts())/markSeenPrefix(this.save, "", this.freshOpts())/	opening NATURE marks every scope seen again (the old ui.js:287 bug): the hangar dot is cleared by NATURE
 hangarnew	src/hangar.js	s/ \&\& markSeen(s, hangarScope(this.tab))) this.ui.persist();/ \&\& markSeen(s, "hangar\/plane")) this.ui.persist();/	every hangar sub-tab marks only PLANE seen: SYSTEMS and GADGETS keep the tab lit forever
+hangar	style.css	s/^\.ftabs \.btn\.ftab { position: relative; min-height: var(--tap); }/.ftabs .btn.ftab { position: relative; }/	the sub-tabs lose their 40 px minimum (unmeasured: NOT CAUGHT would mean the buttons are tall enough anyway)
+hangar	src/hangar.js	s/k !== this.tab \&\& d\[hangarScope(k)\]/false/	no dot on a sub-tab with news
+hangar	src/hangar.js	s/if (pinfo) pinfo.onclick/if (false) pinfo.onclick/	the (i) beside the plane name does nothing
+hangar	src/hangar.js	s/if (era) era.onclick/if (false) era.onclick/	tapping the era line does nothing
+hangar	src/hangar.js	s/this.rowNew.has(`${key}:${have + 1}`)/false/	no row dot beside a name with a new item
+hangar	src/ui.js	s/this.fleet.rowNew = null;/this.fleet.rowNew = this.fleet.rowNew;/	row dots survive into the next visit (never cleared)
+records-screen	src/recordsui.js	s/^    seen();   \/\/ this sub-tab is showing/    \/\/ seen();   \/\/ this sub-tab is showing/	the BOARDS sub-tabs never mark themselves seen: the dots and NEW RECORD! never clear
+records-screen	src/recordsui.js	s/if (opts.toast) opts.toast(/if (false) opts.toast(/	the first-visit line (and the online note) is not shown at all
+records-screen	src/recordsui.js	s/newBadges.includes(b.id) ?/false ?/	no dot on the new badge
+records-screen	style.css	s/background: #fff; padding: 4px; font-size: 7px; border: 0;/background: #fff; padding: 4px; font-size: 6px; border: 0;/	the badge text back at 6 px (below the 7 px minimum)
+records-screen	src/recordsui.js	s/k !== tab \&\& d\[`boards\/${k}`\]/false/	no dot on the sub-tab that is not showing
+fitscreen	style.css	s/^#hFleet > .ftabs { margin: 0; }//;s/^\.hpreview\.empty { padding: 3px 6px; }//;/^#hFleet \.fplane-row \.rowc-sub { display: none; }/d	the R5 compaction undone (sub-tab margin, empty strip padding, the plane row sub line): the hangar primary falls below the bar at 320x568
+swipe	src/hangar.js	s/onSwipe(\$('hangar'), { next: () => goTab(1)/onSwipe(el, { next: () => goTab(1)/	the hangar swipe is bound to the short list again: a flick below it (a tall phone) does nothing

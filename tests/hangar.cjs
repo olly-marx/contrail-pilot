@@ -32,7 +32,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // Every purchase plays the payoff (hangar feedback, 2026-10-28): the overlay, then OK keeps you in the hangar.
   await p.waitForSelector('#payOk', { state: 'visible', timeout: 5000 }).catch(() => {});
   check(await p.isVisible('#payOk'), 'buying a gadget did not play the payoff');
-  if (await p.isVisible('#payOk')) await p.click('#payOk');
+  if (await p.isVisible('#payOk')) await p.click('#payOk', { timeout: 4000 }).catch(e => fails.push(`the payoff's OK cannot be tapped (something covers it): ${String(e.message).split('\n')[0].slice(0, 80)}`));
   await p.waitForTimeout(200);
   check(await p.isVisible('#hFleet'), 'after the payoff OK: not in the hangar any more');
   let s = await saved(p);
@@ -44,15 +44,19 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // Tap-to-preview (2026-10-28): a row LOW in the list is tapped -> its preview card must be on screen (it is at the top).
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   const low = await p.$$('[data-ftap^="plane:"]');
+  const vpLow = p.viewportSize(); await p.setViewportSize({ width: vpLow.width, height: 420 }); await p.waitForTimeout(200);   // (R9/R5 made the page short: on a tall screen no row is ever 'low'; a 420 px screen scrolls)
   if (low.length) { await low[low.length - 1].scrollIntoViewIfNeeded(); await low[low.length - 1].click(); await p.waitForTimeout(900);
     const vis = await p.evaluate(() => { const c = document.getElementById('hPreview'), r = c && c.getBoundingClientRect(); return !!r && r.top >= 0 && r.bottom <= innerHeight && !c.classList.contains('empty'); });
     check(vis, 'a row tapped low in the list: its preview card is not on screen'); }
+  await p.setViewportSize(vpLow); await p.waitForTimeout(200);
   // Payoff stage 2 (the redesign, the user's pick): BUY from far down the list: the payoff takes the plane box's place and is
   // scrolled into view (stage 1's overlay sat off the box after Chrome's scroll anchoring moved the panel).
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
   // (buy from a row's BUY with the page scrolled to the BOTTOM: the box is far off screen, so the payoff must scroll to it)
   const buyId = await p.evaluate(() => { const b = [...document.querySelectorAll('#hFleet .rowc-price[data-fbuy]')].filter(x => !x.disabled).pop(); return b ? b.dataset.fbuy : null; });
-  if (buyId) { await p.evaluate(() => { const r = [...document.querySelectorAll('#hFleet .rowc, #hFleet + *, #hFleet ~ *')].pop(); (r || document.querySelector('#hFleet .rowc:last-child')).scrollIntoView({ block: 'end', behavior: 'instant' }); }); await p.waitForTimeout(150);
+  // (R9 moved the badge grid out of the hangar, so the page is shorter than a phone screen tall: a spacer after the list stands in for it, or the box can never be scrolled off screen)
+  await p.evaluate(() => { if (!document.getElementById('hSpacer')) { const d = document.createElement('div'); d.id = 'hSpacer'; d.style.height = '1500px'; document.getElementById('hFleet').after(d); } });
+  if (buyId) try { await p.evaluate(() => { const r = [...document.querySelectorAll('#hFleet .rowc, #hFleet + *, #hFleet ~ *')].pop(); (r || document.querySelector('#hFleet .rowc:last-child')).scrollIntoView({ block: 'end', behavior: 'instant' }); }); await p.waitForTimeout(150);
     const boxOff = await p.evaluate(() => document.querySelector('#hFleet .fpreview').getBoundingClientRect().bottom < 0);
     check(boxOff, 'the test could not scroll the box off screen (the placement check would prove nothing)');
     { await p.evaluate(id => document.querySelector(`#hFleet .rowc-price[data-fbuy="${id}"]`).click(), buyId); await p.waitForTimeout(700);
@@ -71,7 +75,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       check(v && v.onScreen, `the payoff's picture is on screen after a buy from far down the list (scroll anchoring once moved it): ${JSON.stringify(v)}`);
       if (await p.isVisible('#payOk')) await p.click('#payOk').catch(() => {}); await p.waitForSelector('#payOk', { state: 'visible', timeout: 6000 }).then(() => p.click('#payOk')).catch(() => {}); await p.waitForTimeout(300);
       const back = await p.evaluate(() => { const b = document.querySelector('#hFleet .fpreview'), r = b && b.getBoundingClientRect(); return b && { shown: !b.hidden, top: Math.round(r.top), bottom: Math.round(r.bottom), h: innerHeight }; });
-      check(back && back.shown && back.bottom > 0 && back.top < back.h, `after OK the plane box is back, on screen (scroll anchoring must not throw it away): ${JSON.stringify(back)}`); } }
+      check(back && back.shown && back.bottom > 0 && back.top < back.h, `after OK the plane box is back, on screen (scroll anchoring must not throw it away): ${JSON.stringify(back)}`); } } catch (e) { fails.push(`the payoff section threw ${e.name} (a payoff that does not appear / complete as designed): ${String(e.message).split('\n')[0].slice(0, 120)}`); }
   // Nothing of the hangar is drawn past the screen's side (R0 fitscreen found the panel wider than a 320 phone: the grid's implicit
   // column grew to its widest nowrap row). Measured at 320 x 568 and at the normal size; the ghost image animation is excluded by size.
   const past = async w => p.evaluate(W => [...document.querySelectorAll('#hangar .panel, #hangar .panel *')].filter(e => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.right > W + 1 && getComputedStyle(e).position !== 'fixed'; }).slice(0, 4).map(e => `${e.id ? '#' + e.id : e.tagName.toLowerCase() + '.' + String(e.className).split(' ')[0]} right ${Math.round(e.getBoundingClientRect().right)} > ${W}`), w);
@@ -103,11 +107,39 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.setViewportSize(vp0); await p.waitForTimeout(200);
   const over390 = await past(vp0.width);
   check(over390.length === 0, `at ${vp0.width} the hangar is drawn past the screen's side: ${over390.join('; ')}`);
+  // R5: the hangar top (UX plan C5). Sub-tabs directly under the strip and >= 40 px tall; no era chips, no per-tab help sentence, no plane
+  // paragraph in the page (it is behind the (i)); the era is ONE line whose tap opens the six eras; a dot on a sub-tab that has news.
+  await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
+  const top = await p.evaluate(() => { const q = x => document.querySelector(x), r = e => e && e.getBoundingClientRect(); const strip = r(q('#hPreview')), tabs = r(q('#hFleet .ftabs')), t0 = r(q('#hFleet .ftab'));
+    return { gap: Math.round(tabs.top - strip.bottom), tabH: Math.round(t0.height), help: !!q('.ftabhelp'), chips: document.querySelectorAll('#hFleet .fera').length, era: document.querySelectorAll('#hNextPlane').length, para: /Every plane flies the same way/.test(q('#hFleet').textContent) }; });
+  check(top.gap >= 0 && top.gap <= 16, `the sub-tabs sit directly under the strip (gap ${top.gap} px)`);
+  check(top.tabH >= 40, `the sub-tabs are at least 40 px tall (${top.tabH})`);
+  check(!top.help && top.chips === 0 && !top.para && top.era === 1, `no help sentence / era chips / plane paragraph in the page; one era line: ${JSON.stringify(top)}`);
+  await p.click('#hNextPlane'); await p.waitForTimeout(200);
+  const eras = await p.evaluate(() => ({ n: document.querySelectorAll('#sheet .sheet-body p b').length, txt: (document.querySelector('#sheet') || {}).textContent || '' }));
+  check(eras.n === 6 && /1950s/.test(eras.txt) && /Far future/.test(eras.txt), `tapping the era line opens the six eras: ${eras.n}`);
+  await p.click('#sheet .sheet-ok', { timeout: 2500 }).catch(() => fails.push('a sheet that should be open is not')); await p.waitForTimeout(150);
+  await p.click('[data-planeinfo]'); await p.waitForTimeout(200);
+  check(/Every plane flies the same way/.test(await p.evaluate(() => (document.querySelector('#sheet') || {}).textContent || '')), 'the (i) beside the plane name opens the "every plane flies the same way" text');
+  await p.click('#sheet .sheet-ok', { timeout: 2500 }).catch(() => fails.push('a sheet that should be open is not')); await p.waitForTimeout(150);
+  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seen = ui.save.seen || {}; ui.save.seen['hangar/gadgets'] = []; ui.save.seen['hangar/systems'] = []; ui.fleet.render(); });
+  const dd = await p.evaluate(() => ({ cur: !!document.querySelector('.ftab.on .dot'), gad: !!document.querySelector('[data-ftab=gadgets] .dot') }));
+  check(!dd.cur && dd.gad, `a dot on a sub-tab with news, never on the one showing: ${JSON.stringify(dd)}`);
+  await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(250);
+  check(!(await p.evaluate(() => !!document.querySelector('[data-ftab=gadgets] .dot'))), 'the gadgets dot is gone once GADGETS is showing');
+  // R7: a row with a NEW item has a dot beside its name for this visit; the next visit has none (it was seen).
+  await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seen['hangar/gadgets'] = []; ui.showHangar(); });
+  await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(250);
+  const rd = await p.evaluate(() => ({ n: document.querySelectorAll('#hFleet .rowc .dot.row-new').length, inName: [...document.querySelectorAll('#hFleet .rowc .dot.row-new')].every(d => d.parentElement.classList.contains('rowc-top')) }));
+  check(rd.n >= 1 && rd.inName, `a gadget row with a new item has a dot beside its name: ${JSON.stringify(rd)}`);
+  await p.evaluate(() => game.registry.get('ui').showHangar()); await p.waitForTimeout(250);
+  check(await p.evaluate(() => document.querySelectorAll('#hFleet .rowc .dot.row-new').length) === 0, 'the next visit shows no row dot (it was seen)');
+  await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   check(await p.evaluate(() => document.getElementById('hNextPlane').getBoundingClientRect().height) < 40, 'the Next plane line is one short line (its bar once grew 140 px tall)');
   check(/1990s twin/.test(await p.textContent('#hNextPlane')) && /1990s/.test(await p.textContent('#hNextPlane')) && !(await p.$('.fplane.locked')), 'the 1990s twin is the one Next plane line (no silhouettes)');
-  await p.click('[data-fly=comet]'); await p.waitForTimeout(300);
+  await p.click('[data-pview=comet]'); await p.waitForTimeout(300); await p.click('#hPreviewBuy'); await p.waitForTimeout(300);   // (R5: FLY THIS is the strip's button, the plane rows only preview)
   s = await saved(p);
   check(s.fleet.plane === 'comet' && /Comet 4/.test(await p.textContent('.fplane-row.flying')) && /COMET 4/.test(await p.textContent('#hFleet .tree-head')), `the Comet is chosen and its lines shown: ${s.fleet.plane}`);
   check(p.errs.length === 0, `buying threw: ${p.errs.join(' | ')}`);

@@ -502,10 +502,10 @@ h2.sub { margin-top: -4px; }
 .new-badge { display: flex; align-items: center; gap: 6px; justify-content: center; font-size: 8px; margin: 2px 0; }
 .new-badge img { width: 32px; height: 32px; image-rendering: pixelated; }
 .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 4px; margin: 2px 0 8px; }
-.badge2 { display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 6px; text-align: center; color: var(--muted); opacity: .75; }
+.badge2 { position: relative; display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 7px; border: 0; font-family: inherit; cursor: pointer; text-align: center; color: var(--muted); opacity: .75; }
 .badge2.got { opacity: 1; color: inherit; }
 .badge2 img { width: 64px; height: 64px; image-rendering: pixelated; }
-#hBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
+#bBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
 .badge2 b { font-size: 7px; color: inherit; }
 /* NATURE tiers and rarity (src/wild.js, 2026-10-22) */
 .w-tier { margin: 8px 0 2px; font-weight: bold; color: #1e7a3c; }
@@ -552,9 +552,6 @@ h2.sub { margin-top: -4px; }
 
 /* The fleet hangar (src/hangar.js). */
 .ftimeline { display: flex; justify-content: space-between; gap: 2px; font-size: 7px; margin: 4px 0; }
-.fera { padding: 2px 3px; border-radius: 3px; background: #1b2838; color: #6d7f95; }
-.fera.done { background: #2b4a6f; color: #cfe6ff; }
-.fera.now { background: #ffe15a; color: #1b2838; font-weight: bold; }
 .ftabs { display: flex; gap: 4px; justify-content: center; margin: 8px 0; }
 .ftab.on { background: #ffe15a; color: #1b2838; }
 .fplanes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
@@ -892,6 +889,32 @@ h2.sub { margin-top: -4px; }
    past the right edge. minmax(0, 1fr) pins the column to the panel; the three rows then shrink or wrap. Scoped to #hangar: the other
    screens measured 0 cut text at 320. ---------- */
 #hangar .panel { grid-template-columns: minmax(0, 1fr); }
-#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }
 #hangar .hangar-head .btn { margin-left: auto; }
 .ftabs .btn { flex: 1 1 0; min-width: 0; padding: 8px 2px; font-size: 9px; }
+
+/* ---------- R5: the hangar top (UX plan C5). Sub-tabs >= 40 px with a dot, the era as ONE line, the head fits a 320 phone on one row, the first
+   affordable price pulses once. ---------- */
+#hangar .hangar-head h2 { font-size: 12px; }
+#hangar .treebank { font-size: 10px; }
+.ftabs .btn.ftab { position: relative; min-height: var(--tap); }
+.ftimeline.era-line { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; width: 100%; box-sizing: border-box; min-height: 30px; padding: 3px 6px; margin: 4px 0; font: inherit; color: var(--ink); background: #fff; border: 2px solid #ece8dc; cursor: pointer; text-align: left; }
+.era-line .era-row { flex: 1 1 40px; min-width: 24px; }
+.era-line .era-track { flex: 1 1 auto; }
+.rowc-price.pulse1 { animation: pulse1 .7s ease-in-out 2; }
+@keyframes pulse1 { 50% { filter: brightness(1.35); } }   /* (not a transform: rowfit measures the price column while it pulses) */
+.rowc-top .dot.row-new { position: static; flex: none; align-self: center; }   /* R7: the NEW dot sits beside the name, not over the price */
+#hFleet > .hpreview { margin-bottom: 0; }   /* R5: the sub-tabs sit directly under the strip (the grid's own 8 px gap is the only space) */
+#hFleet > .ftabs { margin: 0; }
+#hFleet .fpcap { flex-wrap: wrap; gap: 0 8px; }   /* R5: name, tag and range on ONE line at 320 */
+#hFleet .fpcap .hcap { margin-left: auto; font-size: 7px; color: #cfe6ff; }
+#hFleet .fplane-row { min-height: 36px; }   /* the plane row has no price column: it need not be as tall as an upgrade row */
+#hFleet .fplane-row .rowc-sub { min-height: 0; }
+@media (max-width: 340px) {   /* 320-wide phones: HANGAR, the bank and TAKE OFF on ONE row */
+  #hangar .hangar-head h2 { font-size: 10px; }
+  #hangar .treebank { font-size: 9px; gap: 3px; }
+  #hangar .hangar-head .btn { padding: 6px 8px; font-size: 8px; }
+}
+.hpreview.empty { padding: 3px 6px; }   /* the empty strip is one or two small lines, not a card */
+.hpreview.empty p { margin: 0; }
+#hFleet .fplane-row .rowc-sub { display: none; }   /* the plane row is its name and FLYING; the era is in the picture caption / the era sheet */
+#hFleet .tree-head { margin: 0; display: flex; justify-content: space-between; align-items: center; }
