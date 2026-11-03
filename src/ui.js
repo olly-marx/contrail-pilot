@@ -45,7 +45,8 @@ import { current as currentMission, blocked as missionBlocked, allDone as missio
 import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
 import { eraBarHTML } from './eras.js';
-import { FleetHangar, fleetBuyable } from './hangar.js';
+import { FleetHangar } from './hangar.js';
+import { dots, markSeen, markSeenPrefix, migrateSeen, defaultLands, hangarScope } from './fresh.js';
 import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
@@ -297,11 +298,13 @@ export class UI {
     if (tab === 'fly') return this.showTitle();
     if (tab === 'hangar') return this.showHangar();
     if (tab === 'missions') return this.showMissions();
-    if (tab === 'nature') { this.markShopSeen(); if (this.tour) this.tour.markDone('nature-lead'); this.showOnly('nature');
+    if (tab === 'nature') { if (this.tour) this.tour.markDone('nature-lead'); this.showOnly('nature');
       if (this.wild && parcelsWanted(this.save)) this.wild.region = this.wild.home() || 'woodland';   // L5 waits for parcels: open on the tab that sells them (the home land's)
-      this.wild && this.wild.render(); if (this.tour) this.tour.maybe('nature'); return; }
+      this.wild && this.wild.render();
+      if (markSeenPrefix(this.save, 'nature/', this.freshOpts())) this.persist();   // NATURE is showing (until R6 gives each land its own markSeen); it clears ONLY nature scopes
+      if (this.tour) this.tour.maybe('nature'); return; }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
-    if (tab === 'boards') { this.showOnly('boards'); if (FEATURES.season2) return showRecords(this.save); return this.pilot && this.pilot.showBoards(); }   // season 2: MY RECORDS (src/records.js), online is off
+    if (tab === 'boards') { this.showOnly('boards'); if (FEATURES.season2) { showRecords(this.save); this.refreshDots(); return; } return this.pilot && this.pilot.showBoards(); }   // season 2: MY RECORDS (src/records.js), online is off
   }
 
   showOnly(id) {
@@ -319,8 +322,7 @@ export class UI {
     if (id !== 'title') $('title').classList.remove('menu', 'world');
     const on = { title: 'fly', results: 'fly', hangar: 'hangar', nature: 'nature', pilot: 'pilot', boards: 'boards', missions: 'missions' }[id];
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === on));
-    $('tNew').hidden = !this.hasNew();
-    $('tNew').textContent = this.save.freeUpgrade ? 'FREE!' : 'NEW!';
+    this.refreshDots();
   }
 
   showTitle() {
@@ -330,7 +332,7 @@ export class UI {
     $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = km(this.save.bestDistance);
     $('goBtn').textContent = this.save.tutorialDone ? 'TAKE OFF' : 'START';
-    $('tNew').hidden = !this.hasNew();
+    this.refreshDots();
     // The meter of the land you take off from (each land has its own).
     const startRegion = (city(this.save.city) || {}).region || 'woodland', startBio = biodiversity(this.save, startRegion);
     const any = Object.values(this.save.planted || {}).some(n => n > 0) || startBio > 0;
@@ -373,9 +375,19 @@ export class UI {
   // Something to spend in the hangar? Drives the NEW! tags and the glowing button.
   // Something NEW to spend on: a free upgrade, or something that has become affordable or opened since
   // the hangar / NATURE was last looked at (0.10.2: it used to glow whenever ANYTHING was affordable).
-  buyableKeys() { return [...LINES.filter(l => canBuy(this.save, l)).map(l => `line:${l.id}:${level(this.save, l.id) + 1}`), ...fleetBuyable(this.save)]; }
-  hasNew() { const seen = this.save.shopSeen || []; return !!this.save.freeUpgrade || this.buyableKeys().some(k => !seen.includes(k)); }
-  markShopSeen() { this.save.shopSeen = [...new Set([...(this.save.shopSeen || []), ...this.buyableKeys()])]; writeSave(this.save); }   // canBuy checks unlocks
+  // The NEW dots come from ONE source (src/fresh.js). Lands are declared, HOME FIRST (the default is the UK + every land flown over).
+  freshOpts() { const home = (this.wild && this.wild.home && this.wild.home()) || 'woodland'; return { lands: [home, ...defaultLands(this.save).filter(r => r !== home)] }; }
+  // The bar's text tag (FREE! only: a must-do lead) and the 6 px dots on HANGAR / NATURE / BOARDS / MISSIONS (a tab is lit iff a sub-scope is).
+  // (the first ask migrates, once per save, AFTER main.js has made this.wild so the home land is known: what is already buyable / open
+  // counts as seen, no dot storm)
+  freshDots() { if (migrateSeen(this.save, this.freshOpts())) writeSave(this.save); return dots(this.save, this.freshOpts()); }
+  refreshDots() {
+    const d = this.freshDots(), free = !!this.save.freeUpgrade;
+    $('tNew').hidden = !free; $('tNew').textContent = 'FREE!';
+    for (const [id, k] of [['dHangar', 'hangar'], ['dNature', 'nature'], ['dBoards', 'boards'], ['dMissions', 'missions']]) { const e = $(id); if (e) e.hidden = !d[k]; }
+    $('tabHangar').classList.toggle('glow', free || !!d.hangar);   // something to spend: the bar's HANGAR glows
+  }
+  hasNew() { return !!this.save.freeUpgrade || !!this.freshDots().hangar; }   // (HOME's hangar tile badge)
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).
   crossingReadyText() {
@@ -434,7 +446,6 @@ export class UI {
       : c.kind === 'badge' ? `<img src="${medal(c.id, c.tier)}" alt="">` : '<i class="rc-star">&#9733;</i>'}<span>${esc(c.label)}</span></button>`;
     $('rChips').hidden = !v.chips.length;
     $('rChips').innerHTML = v.chips.map(chipHTML).join('') + (v.moreChips ? `<button class="chip rc-chip more" type="button" data-more="1"><span>+${v.moreChips} more</span></button>` : '');
-    $('tabHangar').classList.toggle('glow', this.hasNew());   // something to spend: the bar's HANGAR glows
     // -- the sheets behind the lines (src/sheet.js): the old tally, the missions, the four Earth bars, a chip's story
     $('rMaths').onclick = () => showSheet({ eyebrow: 'THIS FLIGHT', title: 'Where it came from', html: `<div class="rc-rows">${v.tally.map(([a, b]) => `<p><span>${esc(a)}</span><b>${esc(b)}</b></p>`).join('')}</div>` });
     $('rMission').onclick = () => showSheet({ eyebrow: mi && mi.fail !== undefined ? 'NOT THIS TIME' : 'MISSIONS DONE', title: mi ? mi.line.replace(/^✓ /, '') : '', body: mi && mi.fail ? mi.fail : (mi ? mi.titles.join('. ') : '') });
@@ -481,12 +492,18 @@ export class UI {
   }
 
   // ---------- hangar ----------
-  persist() { writeSave(this.save); }
+  persist() { writeSave(this.save); this.refreshDots(); }   // (the bar's dots follow every save: a purchase, a markSeen)
 
   showHangar() {
     this.renderHangar();
     this.showOnly('hangar');
+    this.markHangarShown();   // (renderHangar ran while the screen was still hidden, so its own markSeen skipped: the screen is showing NOW)
     if (this.tour) this.tour.maybe('hangar');   // season 2: the free-part tour can start here (from OPEN THE HANGAR)
+  }
+
+  markHangarShown() {
+    const o = this.freshOpts(), a = markSeen(this.save, hangarScope(this.fleet.tab), o), b = markSeen(this.save, 'boards/badges', o);   // (until R9 the badge grid is on this screen)
+    if (a || b) this.persist();
   }
 
   renderHangar() {
@@ -507,11 +524,11 @@ export class UI {
     // Since the eras (2026-10-23) the hangar is the fleet: planes, systems, gadgets (src/hangar.js).
     // The old plane lines are retired (upgrades.js); trees and habitat are on NATURE (src/wild.js).
     document.querySelector('#hangar .hp-dock').hidden = true;
-    this.markShopSeen();   // looking at the hangar: what is affordable now is no longer NEW
     $('hUpgrades').innerHTML = '';
     this.fleet.render();
 
     $('hBadges').innerHTML = this.badgeGridHTML();
+    if (!$('hangar').hidden && markSeen(this.save, 'boards/badges', this.freshOpts())) this.persist();   // (until R9 moves the badges to BOARDS they are SHOWN here)
   }
 
   // Every badge, by theme: medal (or locked / ??? for secrets), name, what it needs, next tier.

@@ -1,0 +1,120 @@
+// ONE source for "what is new": fresh(save), dots(save), markSeen(save, scope). Pure (no DOM): the UI asks, it never decides.
+// Replaces shopSeen / shownLines / treesSeen / records.fresh / the hub badges (research: ~/contrail-research/UX-MASTER-PLAN.md B4).
+//
+// API (R2; for the screens, R6 NATURE and R4 MISSIONS):
+//   dots(save, opts)            -> { hangar: true, 'hangar/plane': true, nature: true, 'nature/<land>': true, boards: ... }  tab + sub-tab dots (lit only)
+//   isFresh(save, scope, key)   -> a ROW's dot: key = 'project:<id>' | 'tree:<slot>' | 'animal:<id>' | '<kind>:<id>:<level>' | 'badge:<id>:<tier>'
+//   markSeen(save, scope)       -> call from the sub-screen's render WHILE IT IS SHOWING (visible, not a hidden refresh); true = persist the save
+//   migrateSeen(save)           -> once at load (everything already there counts as seen); opts.lands = the NATURE lands, HOME FIRST (wild.js discovered/homeRegion)
+//   STATUS (R2 shipped the bar): the bottom-tab dots are wired in ui.js (refreshDots). PENDING: sub-tab dots and ROW dots on the hangar (R5/R7),
+//   per-land markSeen + land-tab/animal/row dots in wild.js (R6; until then ui.go('nature') marks ALL nature/* scopes seen), BOARDS sub-tabs
+//   (R9), the MISSIONS keys (R4: pass opts.missions via ui.freshOpts()).
+//   scope names: hangarScope(tab) / natureScope(land) / 'boards/records' / 'boards/badges' / 'missions'; PRODUCERS says who makes each scope's keys.
+//
+// A KEY names one thing that can be new ('gadget:magnet:3', 'project:meadow', 'tree:2', 'animal:badger', 'badge:coolplanet:1').
+// A SCOPE is the sub-screen it lives on ('hangar/plane', 'hangar/systems', 'hangar/gadgets', 'nature/<land>', 'boards/records',
+// 'boards/badges'). save.seen[scope] = the keys the player has been SHOWN there. fresh = keys that exist now and are not in seen.
+// 'Shown' means the sub-screen's own render called markSeen WHILE VISIBLE: there is no timer, and a hidden render must not call it
+// (so NATURE can no longer clear the hangar's dot: the old ui.js:287 bug was one shared list).
+// markSeen REPLACES the scope's list with the keys that exist now, so a key that went away (you spent the seeds) and comes back
+// is new again; a key that stays is not.
+// Not here yet: 'fly:<plane>' for a plane just joined (R5). MISSIONS is a declared hook (below), pending R4 (the game chat's).
+import { nextBuys, canAfford } from './fleet.js';
+import { LINES, canBuy, level, tabOf } from './upgrades.js';
+import { REGION_DATA } from './habitats.js';
+import { biodiversity, regionSpecies } from './nature.js';
+import { landTrees } from './landtrees.js';
+import { BADGES, tierOf } from './badges.js';
+
+const KIND_SCOPE = { plane: 'hangar/plane', system: 'hangar/systems', gadget: 'hangar/gadgets' };
+// Every scope the master plan names, and who produces its keys. A scope with no producer must say 'pending: R<n>' (tests/newdot.cjs
+// fails on a scope that is neither), so nothing is silently unused.
+export const PRODUCERS = {
+  'hangar/plane': 'fresh.js current(): fleet nextBuys + old upgrade lines', 'hangar/systems': 'fresh.js current(): fleet nextBuys',
+  'hangar/gadgets': 'fresh.js current(): fleet nextBuys', 'nature/<land>': 'fresh.js current(): projects, trees, animals',
+  'boards/records': 'save.records.beaten (records.js recordFlight, R2 step 2)', 'boards/badges': 'fresh.js current(): save.badgeTiers',
+  'missions': 'pending: R4 (game chat): opts.missions(save) -> [\'tier:<n>\' (a tier opened), \'done:<key>\' (finished off-flight)]',
+};
+export const hangarScope = tab => `hangar/${tab}`;   // tab: 'plane' | 'systems' | 'gadgets'
+export const natureScope = land => `nature/${land}`;
+export const HANGAR_SCOPES = ['hangar/plane', 'hangar/systems', 'hangar/gadgets'];
+export const BOARD_SCOPES = ['boards/records', 'boards/badges'];
+
+// Things in the fleet you could buy right now: 'plane:comet.engines:2', 'system:atc:1', 'gadget:magnet:3'. (Moved here from
+// hangar.js so the dots do not need the DOM-bound hangar module; hangar.js re-exports it.)
+export const fleetBuyable = save => nextBuys(save).filter(b => b.open && canAfford(save, b)).map(b => `${b.kind}:${b.id}:${b.level}`);
+
+// The lands the NATURE screen can show, HOME FIRST. DECLARED by the caller (wild.js discovered() / homeRegion()); the default is
+// the UK plus every land flown over, which is only a fallback for tests and old callers.
+export const defaultLands = save => ['woodland', ...Object.keys(save.discovered || {}).filter(r => r !== 'woodland' && REGION_DATA[r])];
+
+// Every key that exists right now, by scope: { scope: [keys] }. Empty scopes are left out.
+export function current(save, { lands = defaultLands(save), missions = null } = {}) {
+  const out = {}, add = (scope, key) => (out[scope] = out[scope] || []).push(key);
+  for (const b of nextBuys(save)) if (b.open && canAfford(save, b)) add(KIND_SCOPE[b.kind] || 'hangar/plane', `${b.kind}:${b.id}:${b.level}`);
+  // The old upgrade lines (planting tools, trees): the Trees / Nature groups live on NATURE's home tab, the rest in the hangar.
+  for (const l of LINES) if (canBuy(save, l)) add(tabOf(l) === 'nature' ? `nature/${lands[0] || 'woodland'}` : 'hangar/plane', `line:${l.id}:${level(save, l.id) + 1}`);
+  for (const land of lands) {
+    const scope = `nature/${land}`, data = REGION_DATA[land];
+    if (data) {
+      const done = ((save.habitat || {})[land] || []), bio = biodiversity(save, land);
+      for (const p of data.projects) if (!done.includes(p.id) && bio >= p.needs && save.seeds >= p.cost && (save.crystals || 0) >= p.crystals) add(scope, `project:${p.id}`);
+    }
+    for (const t of landTrees(save, land)) if (t.open && t.slot > 0) add(scope, `tree:${t.slot}`);   // slot 0 is open from the start: not news
+    for (const w of regionSpecies(land)) if (w.kind === 'animal' && (save.found || {})[w.id]) add(scope, `animal:${w.id}`);
+  }
+  // MISSIONS (declared hook, PRODUCERS above): the missions module passes missions(save) -> its keys; until then the scope is empty.
+  if (missions) for (const k of missions(save)) add('missions', k);
+  // Boards: a record beaten (recordFlight writes save.records.beaten as 'record:<id>:<period>:<new value>', so a LATER beat is a new key)
+  // and a badge tier earned.
+  for (const k of ((save.records || {}).beaten || [])) add('boards/records', k);
+  for (const b of BADGES) for (let t = 1; t <= tierOf(save, b.id); t++) add('boards/badges', `badge:${b.id}:${t}`);
+  return out;
+}
+
+// fresh(save) -> { scope: [keys not yet seen] }. Only scopes with something new appear.
+export function fresh(save, opts) {
+  const seen = save.seen || {}, out = {};
+  for (const [scope, keys] of Object.entries(current(save, opts))) {
+    const f = keys.filter(k => !(seen[scope] || []).includes(k));
+    if (f.length) out[scope] = f;
+  }
+  return out;
+}
+
+// dots(save) -> { 'hangar/plane': true, hangar: true, 'nature/woodland': true, nature: true, boards: true, ... } lit entries only.
+// A bottom tab ('hangar', 'nature', 'boards') is lit iff any of its sub-scopes is; a ROW is lit iff its key is in fresh(save)[scope].
+export function dots(save, opts) {
+  const out = {};
+  for (const scope of Object.keys(fresh(save, opts))) { out[scope] = true; out[scope.split('/')[0]] = true; }
+  return out;
+}
+export const isFresh = (save, scope, key, opts) => (fresh(save, opts)[scope] || []).includes(key);
+
+// The sub-screen is SHOWING: everything on it is now seen. Call it from that screen's render, never from a hidden one.
+// Returns true if the save changed (the caller persists).
+export function markSeen(save, scope, opts) {
+  const now = current(save, opts)[scope] || [];
+  save.seen = save.seen || {};
+  const before = save.seen[scope] || [];
+  if (before.length === now.length && before.every((k, i) => k === now[i])) return false;
+  save.seen[scope] = now.slice();
+  return true;
+}
+
+// A whole screen is showing (NATURE until R6 gives every land tab its own render): mark every scope under 'nature/' seen. Returns true if it changed.
+export function markSeenPrefix(save, prefix, opts) {
+  let changed = false;
+  for (const scope of Object.keys(current(save, opts))) if (scope.startsWith(prefix)) changed = markSeen(save, scope, opts) || changed;
+  return changed;
+}
+
+// Once, when the save has no save.seenMigrated: everything already buyable / open / found / earned counts as seen (no dot storm on the
+// release). Returns true if it ran.
+export function migrateSeen(save, opts) {
+  if (save.seenMigrated) return false;   // a flag, not "save.seen exists": an early markSeen may have created save.seen with one scope
+  save.seen = save.seen || {};
+  for (const [scope, keys] of Object.entries(current(save, opts))) save.seen[scope] = [...new Set([...(save.seen[scope] || []), ...keys])];
+  save.seenMigrated = true;
+  return true;
+}

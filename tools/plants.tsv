@@ -288,3 +288,13 @@ loadercount	src/loader.js	s/if (this.finished || !box || box.querySelector('.loa
 loadercount	src/loader.js	s/const pool = FACTS.filter(f => words(f) <= FACT_MAX_WORDS);/const pool = FACTS.filter(f => words(f) > FACT_MAX_WORDS);/	the fact is a long one (over 15 words)
 keepvisible	src/tour.js	s#sc.scrollTop += r2.top + r2.height / 2 - (floor + bottom) / 2;#sc.scrollTop += r2.top + r2.height / 2 - (top + bottom) / 2;#	a covered target is only brought to the middle of the screen (it stays under the pinned block at 320x568)
 onrails320	style.css	s#\.rowc\.tour-price \.rowc-tap { pointer-events: none; }#.rowc.tour-price .rowc-tap { pointer-events: auto; }#	the row tap area stays tappable under a step on its price (two tappable things in the lit hole)
+newdot	src/fresh.js	s/save.seen\[scope\] = now.slice();/for (const sc of Object.keys(current(save, opts))) save.seen[sc] = current(save, opts)[sc].slice();/	markSeen on one scope marks EVERY scope seen (the old shared list: NATURE cleared the hangar, ui.js:287)
+newdot	src/fresh.js	s/!(seen\[scope\] || \[\]).includes(k)/true/	fresh ignores what was seen: the dot never clears
+newdot	src/fresh.js	s/save.seen\[scope\] = now.slice();/save.seen[scope] = [...new Set([...before, ...now])];/	markSeen unions instead of replacing: a key that left and came back never lights again
+newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (false) return false;/	migrateSeen runs every time (or a save always counts as unseen): see the migration check
+newdot	src/fresh.js	s/'missions': 'pending: R4/'missions': 'TODO R4/	a scope with no producer and no 'pending: R<n>' note (silently unused)
+newdot	src/fresh.js	s/if (missions) for (const k of missions(save)) add('missions', k);/\/\/ (hook removed)/	the missions hook drops its keys
+newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (save.seen) return false;/	the migration keyed on save.seen: an early markSeen stops it and the other scopes get dots
+newdot	src/records.js	s/  for (const b of beaten) r.beaten.push(/  for (const b of []) r.beaten.push(/	recordFlight no longer writes the beaten keys: BOARDS never lights
+hangarnew	src/ui.js	s/markSeenPrefix(this.save, .nature\/., this.freshOpts())/markSeenPrefix(this.save, "", this.freshOpts())/	opening NATURE marks every scope seen again (the old ui.js:287 bug): the hangar dot is cleared by NATURE
+hangarnew	src/hangar.js	s/ \&\& markSeen(s, hangarScope(this.tab))) this.ui.persist();/ \&\& markSeen(s, "hangar\/plane")) this.ui.persist();/	every hangar sub-tab marks only PLANE seen: SYSTEMS and GADGETS keep the tab lit forever
