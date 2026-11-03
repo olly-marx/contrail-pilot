@@ -110,6 +110,7 @@ p { margin: 0; }
 .m-i { min-width: var(--tap); justify-content: center; padding: 0 8px; }
 #mNext .label, #mList .label { margin: 6px 0 2px; }
 .rowc.goal { cursor: pointer; }
+.rowc.goal .rowc-tap { min-height: 44px; }   /* the tap target stays >= 40 px now the row is compact (tests/taptargets.cjs) */
 .rowc.goal .rowc-slot { display: grid; place-items: center; }
 .rowc.goal .rowc-slot .mi { width: 28px; height: 28px; background-size: 28px 28px; flex: none; }
 .rowc.goal.next { outline: 3px solid #ffe15a; outline-offset: -3px; }
