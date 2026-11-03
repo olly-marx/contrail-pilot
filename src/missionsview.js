@@ -63,12 +63,12 @@ export function missionsView(save) {
   // 3. OPEN: every open mission except the pinned one.
   v.open = vis.filter(m => !top || m.key !== top.key).map(m => row(save, itemOf(save, m), vis));
   // 4. TODAY: the day's trio, and the streak.
-  const daily = teach ? [] : M2.dailyVisible(save);
+  const daily = M2.dailyVisible(save);   // (open from lesson 3 on, alongside the remaining lessons: missions2 decides, not the stage)
   v.today = { rows: daily.map(m => row(save, itemOf(save, m), vis)), streak: M2.streakBonus(save) };
   // 5. COMING UP: the next tier as ONE line with its opener and the count; at tier 3 the crossing trial's stars. Nothing further ahead (surprise stays).
   v.comingUp = teach ? null : tierNow < 3 ? `Tier ${tierNow + 1} · after 3 of tier ${tierNow} (${Math.min(doneInTier, 3)}/3)` : !M2.gateDone(save, a) ? `Crossing trial: ${stars}/${M2.GATE_STARS} stars` : null;
   // 6. STEADY: the cumulative goals with progress.
-  v.steady = teach ? [] : M2.steadyVisible(save, a).map(m => ({ key: m.key, short: clip(m.def.short(m.target, {}), NAME_MAX), full: m.title, icon: ICONS[m.def.id], how: `${m.progress.toLocaleString('en')} / ${m.target.toLocaleString('en')}`,
+  v.steady = M2.steadyVisible(save, a).map(m => ({ key: m.key, short: clip(m.def.short(m.target, {}), NAME_MAX), full: m.title, icon: ICONS[m.def.id], how: `${m.progress.toLocaleString('en')} / ${m.target.toLocaleString('en')}`,
     frac: m.target ? Math.min(1, m.progress / m.target) : 0, prize: m.prize.seeds }));
   // 7. DONE: a count; the list is a sheet.
   const doneIds = [...M2.LESSONS.filter(l => done.has(l.id)).map(l => l.id), ...M2.TEMPLATES.filter(t => done.has(keyOf(a, t))).map(t => t.id)];
