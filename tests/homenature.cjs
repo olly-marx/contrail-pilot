@@ -34,7 +34,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       { areas: [area], homeArea: area, city, visited: [city], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['x-bars'], shownLines: ['trees'], freeGiven: true, freeProjectGiven: true, missionsDone: ['L1', 'L2', 'L3', 'L4'], landings: 5, flights: 6, seeds: 0, crystals: 0, unclaimed: [],
         tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-boards', 'r-bonus', 'nature-lead'], fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } });
     await p.goto(URL); await ready(p); await p.waitForTimeout(800);
-    await p.click('#hubNext'); await p.waitForTimeout(900);
+    await p.click('#hubNext .rc-row.lead'); await p.waitForTimeout(900);   // R3: UP NEXT's lead row (the tree parcels) leads to NATURE
     const st = await p.evaluate(() => ({ on: (document.querySelector('#wRegions .btn.on') || {}).textContent || '', card: !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]') }));
     let lit = null; for (let i = 0; i < 30; i++) { lit = await p.evaluate(() => { const t = document.getElementById('tour'); if (t.hidden) return null; const r = t.querySelector('.tring').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, text: t.querySelector('.tbubble p').textContent }; }); if (lit && /parcels/i.test(lit.text)) break; await p.waitForTimeout(150); }
     if (lit) { await p.mouse.click(lit.x, lit.y); await p.waitForTimeout(700); }

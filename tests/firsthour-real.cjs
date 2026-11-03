@@ -71,11 +71,11 @@ const W = 390, H = 844;
   // Leave WITHOUT picking: TAKE OFF must be locked and NEXT must lead back.
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; const u = game.registry.get('ui').tour; u.busy = false; u.save.tours = [...(u.save.tours || []), '*']; } });   // (the guided tour's dim layer; the test leaves on purpose)
   await p.click('#tabFly'); await p.waitForTimeout(500);
-  const hub = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, next: document.getElementById('hubNext').innerText, tile: !!document.querySelector('#hubTiles [data-go="hangar"]') }));
-  check(hub.locked && /free upgrade/i.test(hub.next) && hub.tile, `skipping the pick: TAKE OFF locked, NEXT leads to the hangar, the tile is there: ${JSON.stringify(hub)}`);
+  const hub = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, next: document.getElementById('hubNext').innerText, tab: !!document.querySelector('#tabHangar:not([hidden])'), leadRow: !!document.querySelector('#hubNext .rc-row.lead') }));
+  check(hub.locked && /free part/i.test(hub.next) && hub.leadRow && hub.tab, `skipping the pick: TAKE OFF locked, UP NEXT leads to the hangar (the gold lead row), the bar's HANGAR tab is there: ${JSON.stringify(hub)}`);
   await shot('hub-locked');
   // Pick it, then crash flight 1 on purpose (no taps): the hangar stays reachable, nothing locks the player out.
-  await p.click('#hubTiles [data-go="hangar"]', { force: true }); await p.waitForTimeout(800);   // (it pulses: a finger does not wait for it to stand still)
+  await p.click('#tabHangar', { force: true }); await p.waitForTimeout(800);   // (R3: the bar's tab; the tiles are gone)
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; const u = game.registry.get('ui').tour; u.busy = false; u.save.tours = [...(u.save.tours || []), '*']; } });
   // 0.16.3: the payoff (the plane, then the new part arriving, then OK) covers the screen until OK is tapped.
   const free = await p.$('#hFleet .freepick .btn.free'); if (free) { await free.click(); await p.click('#payOk', { timeout: 10000 }).catch(() => fails.push('the payoff OK never appeared after the free pick')); await p.waitForTimeout(500); }
@@ -87,7 +87,7 @@ const W = 390, H = 844;
   await p.waitForTimeout(2500); await shot('flight1-crash');
   check(crashed, 'flight 1 ends (a crash with no taps)');
   await p.click('#againBtn'); await p.waitForTimeout(800);
-  check(await p.evaluate(() => !!document.querySelector('#hubTiles [data-go="hangar"]')), 'after a crash on flight 1 the HANGAR tile is still on the hub');
+  check(await p.evaluate(() => !!document.querySelector('#tabHangar:not([hidden])')), 'after a crash on flight 1 the HANGAR tab is still on the bar');
   check(!p.errs.length, `page errors: ${p.errs}`);
   await b.close();
   console.log(fails.length ? `FAIL firsthour-real:\n - ${fails.join('\n - ')}` : 'PASS firsthour-real: real taps through flight school; the school-done card leads to the hangar, TAKE OFF locked until the free part is picked');

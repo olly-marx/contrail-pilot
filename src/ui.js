@@ -246,10 +246,12 @@ export class UI {
     $('hubNext').hidden = !v.up.length || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
     $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${v.up.map((n, i) => `<button class="rc-row${n.lead ? ' lead' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
-    $('hubNext').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.up[+b.dataset.i]; sfx.flap();
+    const act = n => { sfx.flap();
       if (n.key === 'lead:cross' && ready) { s.flyCrossing = ready; writeSave(s); this.start(); }
       else if (n.where === 'hangar' || n.where === 'nature' || n.where === 'missions') this.go(n.where);
-      else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); });
+      else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); };
+    $('hubNext').querySelectorAll('.rc-row').forEach(b => b.onclick = e => { e.stopPropagation(); act(v.up[+b.dataset.i]); });
+    $('hubNext').onclick = () => { if (v.up[0]) act(v.up[0]); };   // a tap on the strip's label or gap = its top row (the old NEXT card was one tap target)
     const toHangar = v.next && v.next.hangar;   // a free upgrade LEADS into the hangar (the user, 2026-10-27)
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
     $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;

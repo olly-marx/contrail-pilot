@@ -69,10 +69,10 @@ const FROM = PART === 'B' ? 7 : 3, TO = PART === 'A' ? 6 : 10;
     // Follow NEXT while it leads somewhere (not a take-off lead), as a player who reads it would.
     for (let k = 0; k < 4; k++) {
       if (await screen() !== 'title') { await settle(); if (await p.isVisible('#tabFly')) { await p.click('#tabFly'); await p.waitForTimeout(500); } await settle(); continue; }
-      const nx = await p.evaluate(() => { const e = document.getElementById('hubNext'); return e && e.offsetParent !== null ? e.innerText : ''; });
-      if (!/NATURE|hangar|Claim|prizes/i.test(nx)) break;
+      const nx = await p.evaluate(() => { const e = document.querySelector('#hubNext .rc-row.lead'); return e && e.offsetParent !== null ? e.innerText : ''; });
+      if (!/NATURE|HANGAR|CLAIM|part|parcels|prizes/i.test(nx)) break;   // R3: only a LEAD row of UP NEXT leads somewhere
       log.push(`flight ${f} NEXT: ${nx.replace(/\s+/g, ' ')}`);
-      await p.click('#hubNext'); await p.waitForTimeout(800); await settle();
+      await p.click('#hubNext .rc-row.lead'); await p.waitForTimeout(800); await settle();
       for (const sel of ['#hFleet .btn.free', '#wTrees .btn.free', '#mPrizes .btn.claim']) { const el = await p.$(sel); if (el && await el.isVisible()) { await el.click(); await p.waitForTimeout(600); await settle(); } }
       if (await p.isVisible('#tabFly')) { await p.click('#tabFly'); await p.waitForTimeout(500); } await settle();
     }
