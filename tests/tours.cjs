@@ -80,7 +80,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('#tabFly'); await p.waitForTimeout(800);
   if (process.env.DEBUG) console.log(await tourHidden(p), (await save(p)).tours, await p.evaluate(() => [document.getElementById('hangar').hidden, document.getElementById('title').hidden, document.querySelector('#tour .tbubble p').textContent]));
   check(await tourHidden(p) && ((await save(p)).tours || []).includes('name'), 'the name tour ends and is remembered');
-  await p.reload(); await ready(p); await p.waitForTimeout(1200);
+  await p.reload({ timeout: 30000 }); await ready(p);   /* (the page default is 4 s: a reload under load took longer, 2026-11-03; only THIS call gets 30 s) */ await p.waitForTimeout(1200);
   check(await tourHidden(p), 'and does not come back');
   await p.close();
 
