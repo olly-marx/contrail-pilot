@@ -267,7 +267,7 @@ export class Tour {
   // Put the hole, ring, finger and bubble round the target.
   place() {
     if (!this.target || this.el.hidden) return;
-    const r = this.target.getBoundingClientRect(), W = innerWidth, H = innerHeight, pad = 4;
+    const r = this.target.getBoundingClientRect(), W = innerWidth, H = innerHeight, pad = this.target.closest('.tabbar') ? 1 : 4;   // (the bar's tabs are 2 px apart with 6 showing: a 4 px hole would open onto the next tab)
     const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar && !bar.contains(this.target) ? bar.getBoundingClientRect().top : H;   // a target sliding behind the tab bar must not open a hole onto its tabs
     const x0 = Math.max(0, r.left - pad), y0 = Math.max(0, Math.min(r.top - pad, barTop - 8)), x1 = Math.min(W, r.right + pad), y1 = Math.min(H, barTop, r.bottom + pad);
     const set = (el, s) => Object.assign(el.style, s);

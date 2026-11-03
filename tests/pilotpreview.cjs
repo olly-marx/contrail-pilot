@@ -2,7 +2,8 @@
 // PILOT had no name form). From the post-rails state (lessons done, no pilot name), REAL TAPS only through the name tour:
 //   ?preview=1: the tour points at PILOT, the form is there, a name is typed, a word picked, SAVE tapped, the name is kept (local)
 //   and the tour goes on past the name step (to BOARDS);
-//   no preview (season 2, names resting): the name tour never starts.
+//   no preview, online OFF (a tester mode sets window.__CP_NO_ONLINE; names resting): the name tour never starts. (Online ON, shipped 0.29.0: the name
+//   tour comes with the 3rd landing; tests/boardsonline.cjs and tests/tourready.cjs cover it.)
 // Run: python3 -m http.server 8000 & node tests/pilotpreview.cjs   (proved by planted defects)
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
@@ -12,11 +13,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const bubble = p => p.evaluate(() => { const t = document.getElementById('tour'); return t && !t.hidden ? t.querySelector('.tbubble p').textContent : ''; });
   for (const q of ['?preview=1', '']) {
-    const tag = q || '(no preview)';
+    const tag = q || '(no preview, online off)';
     const p = await b.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true });
     const errs = []; p.on('pageerror', e => errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
-    await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ muted: true })); });
+    await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ muted: true })); if (!location.search) window.__CP_NO_ONLINE = true; });
     await p.goto(URL + q); await ready(p); await p.waitForTimeout(800);
     await p.click('#startChoice [data-area="weurope"]').catch(() => {}); await p.click('#startChoice [data-city]').catch(() => {}); await p.waitForTimeout(1200);
     // After the rails: lessons done, every rails tour done, NO pilot name, then back to the menu (the tour decides from here).
@@ -38,7 +39,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       check(/BOARDS/.test(next), `${tag}: the tour goes past the name step (to BOARDS): "${next}"`);
       check(!!kept, `${tag}: the name is kept on this device: ${JSON.stringify(kept)}`);
     } else {
-      check(!/pilot name/i.test(hello), `${tag}: names rest in season 2 (tour.js marks the name tour done there), so it does not start: "${hello}"`);
+      check(!/pilot name/i.test(hello), `${tag}: names rest while online is off (tour.js: namesOpen()), so it does not start: "${hello}"`);
     }
     check(!errs.length, `${tag}: page errors ${errs}`);
     await p.close();

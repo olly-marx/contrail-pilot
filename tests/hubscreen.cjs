@@ -28,7 +28,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(globe && globe.w >= 390 * 0.5 && globe.h >= 844 * 0.25, `the world is BIG: ${JSON.stringify(globe)}`);
   check(/UP NEXT/.test(st.next) && /icy air in daytime/i.test(st.next), `UP NEXT names the next lesson (L2): "${st.next}"`);
   check(go && go.y + go.h <= barTop, `TAKE OFF is on screen above the bottom bar, not under it: ${JSON.stringify({ go, barTop })}`);
-  check(st.tiles === 0 && st.tabs.join() === 'fly,missions,hangar,boards', `after lesson 1: no tiles any more, and the bar shows HOME, MISSIONS, HANGAR (+BOARDS after 3 landings): ${JSON.stringify([st.tiles, st.tabs])}`);
+  check(st.tiles === 0 && st.tabs.join() === 'fly,missions,hangar,pilot,boards', `after lesson 1: no tiles any more, and the bar shows HOME, MISSIONS, HANGAR (+PILOT and BOARDS after 3 landings): ${JSON.stringify([st.tiles, st.tabs])}`);
   // 2. Spin: the globe turns.
   const f0 = await p.evaluate(() => JSON.stringify(document.getElementById('hubGlobe').__globe.frame()));
   await p.click('#hubSpinR'); await p.waitForTimeout(200);
