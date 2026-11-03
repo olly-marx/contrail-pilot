@@ -302,3 +302,5 @@ hangar	style.css	s/^\.ftabs \.btn\.ftab { position: relative; min-height: var(--
 hangar	src/hangar.js	s/k !== this.tab \&\& d\[hangarScope(k)\]/false/	no dot on a sub-tab with news
 hangar	src/hangar.js	s/if (pinfo) pinfo.onclick/if (false) pinfo.onclick/	the (i) beside the plane name does nothing
 hangar	src/hangar.js	s/if (era) era.onclick/if (false) era.onclick/	tapping the era line does nothing
+hangar	src/hangar.js	s/this.rowNew.has(`${key}:${have + 1}`)/false/	no row dot beside a name with a new item
+hangar	src/ui.js	s/this.fleet.rowNew = null;/this.fleet.rowNew = this.fleet.rowNew;/	row dots survive into the next visit (never cleared)

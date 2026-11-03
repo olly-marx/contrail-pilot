@@ -903,3 +903,4 @@ h2.sub { margin-top: -4px; }
 .era-line .era-track { flex: 1 1 auto; }
 .rowc-price.pulse1 { animation: pulse1 .7s ease-in-out 2; }
 @keyframes pulse1 { 50% { transform: scale(1.12); } }
+.rowc-top .dot.row-new { position: static; flex: none; align-self: center; }   /* R7: the NEW dot sits beside the name, not over the price */

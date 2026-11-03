@@ -495,6 +495,7 @@ export class UI {
   persist() { writeSave(this.save); this.refreshDots(); }   // (the bar's dots follow every save: a purchase, a markSeen)
 
   showHangar() {
+    this.fleet.rowNew = null;   // a new visit: last visit's row dots are gone (src/hangar.js)
     this.renderHangar();
     this.showOnly('hangar');
     this.markHangarShown();   // (renderHangar ran while the screen was still hidden, so its own markSeen skipped: the screen is showing NOW)

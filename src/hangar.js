@@ -13,7 +13,7 @@ import { lookFiles, hangarGadgets, previewBars, withNext, shortName } from './fl
 import { statBarsHTML, animateBars } from './statbars.js';
 import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
-import { markSeen, hangarScope, dots } from './fresh.js';
+import { markSeen, hangarScope, dots, fresh } from './fresh.js';
 import { showSheet } from './sheet.js';
 import { FINANCE, financeLevel, financeOpen, natureHealth, rate, rateAt, canTake, trade, buyFinance, bonds, canLock, lockBond, payBonds, payDividend } from './finance.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
@@ -37,6 +37,9 @@ export class FleetHangar {
   render() {
     if (this.paying) { this.renderLater = true; return; }   // a payoff is showing IN the box: nothing may rebuild it (stage 2)
     const s = this.ui.save, el = $('hFleet');
+    // R7: a row with a NEW item carries a dot beside its name for the rest of this visit. The set is taken BEFORE this render marks the
+    // tab seen (and keeps what earlier renders of this visit found); ui.showHangar() empties it when the hangar is opened again.
+    this.rowNew = this.rowNew || new Set(); (fresh(s, this.ui.freshOpts())[hangarScope(this.tab)] || []).forEach(k => this.rowNew.add(k));
     // R5 (UX plan C5): picture + caption (the range lives in the caption), the strip, THEN the sub-tabs directly under it, then the rows.
     // No era chips, no per-tab help sentence: the era is ONE line in PLANE (tap = a sheet), the plane paragraph is behind the (i).
     el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.previewCardHTML(s) + this.tabsHTML(s)
@@ -331,7 +334,7 @@ export class FleetHangar {
     }
     const tap = next ? `<button class="rowc-tap" data-ftap="${key}" type="button" aria-label="See what ${name} does">` : '<span class="rowc-tap">';
     return `<div class="rowc price-top ${next ? '' : 'maxed'} ${locked ? 'locked' : ''} ${this.sel === key ? 'sel' : ''}" data-row="${key}" data-fline="${key}">`
-      + `${tap}<span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${name}</span><span class="rowc-pips">${pips}</span></span>`
+      + `${tap}<span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${name}</span>${next && this.rowNew && this.rowNew.has(`${key}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
       + `<span class="rowc-sub">${sub}</span>${next ? '</button>' : '</span>'}${price}</div>`;
   }
 
