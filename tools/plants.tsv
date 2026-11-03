@@ -151,7 +151,7 @@ preview	src/season2.js	s#const store = PREVIEW ? {#const store = false ? {#	prev
 tipqueue	src/GameScene.js	s#  dropTips() {#  dropTips() { return;#	unshown tips not unmarked
 tipqueue	src/GameScene.js	s#^    dropToast();$#    void 0;#;s#this.stripWatch.observe(coachEl);#void 0;#	the toast stays under the strip
 l4hint	src/GameScene.js	s#else if (skipThis && toAirport < AIRPORT.signFrom)#else if (false \&\& skipThis)#	the landing call on an L4 flight
-railwords	index.html	s#<span>Landing bonus</span>#<span>Long flight</span>#	the bonus row's old label
+railwords	src/resultscard.js	s# × ${r.mult} bonus# × ${r.mult}#	the maths line without the word the rail says
 railwords	src/tips.js	s#Forecasting shows icy air sooner. Save up for it!#Forecasting shows icy air sooner. Buy it when you can!#	the systems rail pushes a purchase
 season2	src/areas.js	s#aotearoa: { name: 'Aotearoa & Polynesia', starter: true,#aotearoa: { name: 'Aotearoa \& Polynesia', starter: false,#	NZ not a starter
 sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
@@ -277,3 +277,8 @@ skiptrip	style.css	s/#title.hub .hub-skip { display: flex;/#title.hub .hub-skip 
 hangar	style.css	/^#hangar .panel { grid-template-columns: minmax(0, 1fr); }$/d	the hangar grid column grows to its widest nowrap row again: the panel is wider than a 320 phone
 hangar	style.css	/^\.ftabs \.btn { flex: 1 1 0; min-width: 0;/d	the three tabs cannot share the width: PLANE SYSTEMS GADGETS run past the right edge (unmeasured: if this plant is NOT CAUGHT, the rule is not needed)
 hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap;/d	the head row cannot wrap: TAKE OFF runs past the right edge (unmeasured: if NOT CAUGHT, the rule is not needed)
+nextup	src/nextup.js	s/if (vis\[0\]) out.push/if (vis[0] \&\& false) out.push/	the first open mission missing from UP NEXT (a second source / a dropped row)
+nextup	src/missions2.js	s/short: f => `Bring home \${10 \* f.k} seeds`,/short: f => `Bring home ${10 * f.k} seeds, then fly on`,/	a short title over 24 characters
+resultscard	src/resultscard.js	s/`✓ \${n} missions done`/`✓ ${missionTitles.join(', ')}`/	the mission names joined back into the line (7 missions overflow it)
+resultscard	src/resultscard.js	s/(r.landed ? total : 0) + paid.seeds/total + paid.seeds/	a crash counts the seeds it LOST as banked
+resultscard	src/resultscard.js	s/export const CHIPS_MAX = 3;/export const CHIPS_MAX = 9;/	the chips uncapped (the card would grow)

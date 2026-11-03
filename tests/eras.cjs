@@ -52,7 +52,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#results');   // skip the reveal
   await p.waitForTimeout(1500);
   const r = await p.evaluate(() => { const e = document.getElementById('rEra'); return { hidden: e.hidden, t: e.textContent.replace(/\s+/g, ' ') }; });
-  check(!r.hidden && /\+0\.\d min flown/.test(r.t) && /1970s/.test(r.t) && /To the 1990s: \d \/ 57 min/.test(r.t) && /NEW ERA! Welcome to the 1970s!/.test(r.t) && /A new plane joins your fleet: the 747 jumbo!/.test(r.t), `results show time, bar and the new era: ${JSON.stringify(r)}`);
+  check(!r.hidden && /1970s/.test(r.t) && /\d+\/57 min/.test(r.t), `the results' ONE era line (R1) shows the new era's badge and its minutes: ${JSON.stringify(r)}`);   // the NEW ERA / new plane words are the welcome card's (welcome.js), a beat of their own
 
   console.log({ fails });
   await b.close();

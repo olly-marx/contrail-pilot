@@ -45,7 +45,7 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
     const n = missionTitles.length;
     v.missions = n ? { line: n === 1 ? `✓ ${clip(missionTitles[0], 20)}` : `✓ ${n} missions done`, seeds: prizeSeeds, titles: missionTitles } : null;
   } else if (r.mission) {
-    v.missions = r.mission.done ? { line: `✓ ${clip(r.mission.title, 24)}`, seeds: 0, titles: [r.mission.title] } : { line: `Not this time: ${clip(r.mission.title, 14)}`, seeds: 0, titles: [r.mission.title], fail: r.mission.fail || '' };
+    v.missions = r.mission.done ? { line: `✓ ${clip(r.mission.title, 24)}`, seeds: prizeSeeds, titles: [r.mission.title] } : { line: `Not this time: ${clip(r.mission.title, 14)}`, seeds: 0, titles: [r.mission.title], fail: r.mission.fail || '' };
   } else v.missions = null;
   // 4. UP NEXT: nextUp rows; the right column is the hop, the stops, or "today", never a sentence.
   v.next = next.slice(0, NEXT_ROWS).map(n => ({ key: n.key, short: n.short, full: n.full, where: n.where, lead: !!n.lead,

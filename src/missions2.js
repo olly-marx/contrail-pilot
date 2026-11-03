@@ -67,9 +67,9 @@ export const TEMPLATES = [
   { id: 'bring', short: f => `Bring home ${10 * f.k} seeds`, tier: 1, prize: 10, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 10 * f.k },
   { id: 'project', short: () => 'Fund a nature project', tier: 1, prize: 10, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
   // tier 2: combine it
-  { id: 'chain', short: f => `${f.city}, then ${f.cityB}`, tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
+  { id: 'chain', short: f => `Visit ${f.city} + 1`, tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
   { id: 'dodge', short: f => `Dodge ${3 * f.k} icy patches`, tier: 2, prize: 15, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
-  { id: 'rescue', short: f => `Plant ${2 * f.k}, land ${f.cityB}`, tier: 2, prize: 15, ready: f => f.cityB !== f.start, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
+  { id: 'rescue', short: f => `${f.cityB} + ${2 * f.k} trees`, tier: 2, prize: 15, ready: f => f.cityB !== f.start, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
   { id: 'spot', short: f => `Spot a ${f.animalName}`, tier: 2, prize: 15, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
   { id: 'hazard', short: f => HAZARD[f.stage].short, tier: 2, prize: 15, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
   { id: 'system', short: () => 'Buy a helper system', tier: 2, prize: 15, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
@@ -77,7 +77,7 @@ export const TEMPLATES = [
   { id: 'night', short: () => 'A whole clean night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', short: f => `Make ${10 * f.k} shade, land`, tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
   { id: 'kinds3', short: f => `Plant ${f.kinds} kinds in one go`, tier: 3, star: true, prize: 20, title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
-  { id: 'route', short: f => `Fly to ${f.cityC}, no stop`, tier: 3, prize: 15, ready: f => f.cityC !== f.start, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
+  { id: 'route', short: f => `Nonstop to ${f.cityC}`, tier: 3, prize: 15, ready: f => f.cityC !== f.start, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
   { id: 'golden', short: () => 'Find a golden seed', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
   { id: 'tier', short: () => 'Finish a project tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
 ];

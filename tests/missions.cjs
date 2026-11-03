@@ -55,7 +55,7 @@ const KEY = 'contrailPilot.v2';
   check((await getSave()).mission === 1, 'mission index should be 1 after mission 1');
   await p.waitForTimeout(1800);   // the results reveal starts 900 ms after landing
   const rm = await p.textContent('#rMission');
-  check(/MISSION DONE/.test(rm) && /Land with 5 seeds/.test(rm), `results should say MISSION DONE and name the next: ${rm}`);
+  check(/✓/.test(rm) && /PARIS/.test(rm), `results show mission 1 done on one line (R1; the next mission is the season-2 UP NEXT): ${rm}`);
 
   // 3b. Lola's flight: past PARIS, landed in BERLIN. Mission 1 is done anyway (it was stuck before).
   await setSave({ ...base, mission: 0 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
@@ -100,7 +100,7 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(3500);
   const sv = await getSave();
   check(sv.crashes && sv.crashes.bird === 1 && (sv.unclaimed || []).some(u => u.key === 'badge:birdstrike:1'), `a bird crash is counted and earns Bird Strike: crashes ${JSON.stringify(sv.crashes)}, ${JSON.stringify(sv.unclaimed)}`);
-  check(/NEW BADGE/.test(await p.textContent('#rBadges')) && /Bird Strike/.test(await p.textContent('#rBadges')), `results show the new badge: ${await p.textContent('#rBadges')}`);
+  check(/Bird Strike/.test(await p.textContent('#rChips [data-kind="badge"]').catch(() => '')), `results show the new badge as a chip: ${await p.textContent('#rChips').catch(() => '')}`);   // R1: chips (animal / badge / first), a tap opens the sheet
   await p.screenshot({ path: '/tmp/mission-birds.png' });
   // 7. All done.
   await setSave({ ...base, missionsDone: later.ids }); await p.reload(); await ready(p); await p.waitForTimeout(600);
