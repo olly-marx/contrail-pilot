@@ -902,7 +902,7 @@ h2.sub { margin-top: -4px; }
 .era-line .era-row { flex: 1 1 40px; min-width: 24px; }
 .era-line .era-track { flex: 1 1 auto; }
 .rowc-price.pulse1 { animation: pulse1 .7s ease-in-out 2; }
-@keyframes pulse1 { 50% { transform: scale(1.12); } }
+@keyframes pulse1 { 50% { filter: brightness(1.35); } }   /* (not a transform: rowfit measures the price column while it pulses) */
 .rowc-top .dot.row-new { position: static; flex: none; align-self: center; }   /* R7: the NEW dot sits beside the name, not over the price */
 #hFleet > .hpreview { margin-bottom: 0; }   /* R5: the sub-tabs sit directly under the strip (the grid's own 8 px gap is the only space) */
 #hFleet > .ftabs { margin: 0; }
