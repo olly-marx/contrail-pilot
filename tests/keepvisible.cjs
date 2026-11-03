@@ -29,7 +29,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await new Promise(r => setTimeout(r, 200));
     const r0 = t.getBoundingClientRect();
     const before = band === 'bar' ? r0.bottom > bar.top && r0.bottom <= innerHeight : (() => { const e = document.elementFromPoint(r0.left + r0.width / 2, r0.top + r0.height / 2); return !!e && !t.contains(e) && e !== t; })();
-    const ui = game.registry.get('ui'); ui.tour.run('kv-test', [{ target: sel, text: 'test', ok: true }]);
+    const ui = game.registry.get('ui'); ui.tour.run('kv-test', [{ target: sel, text: 'test', ok: true, tap: true }]);   // (tap: true keeps the target tappable: since R1 an OK-only step makes its target pointer-events:none, and the check below hit-tests the row)
     await new Promise(r => setTimeout(r, 900));
     const r1 = t.getBoundingClientRect(), barTop = document.querySelector('.tabbar:not([hidden])').getBoundingClientRect().top;
     const after = band === 'bar' ? r1.bottom <= barTop + 1 && r1.top >= 0 : (() => { const e = document.elementsFromPoint(r1.left + r1.width / 2, r1.top + r1.height / 2).find(x => !x.closest('#tour')); return !!e && (e === t || t.contains(e)); })();
