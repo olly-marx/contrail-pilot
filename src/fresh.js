@@ -6,6 +6,9 @@
 //   isFresh(save, scope, key)   -> a ROW's dot: key = 'project:<id>' | 'tree:<slot>' | 'animal:<id>' | '<kind>:<id>:<level>' | 'badge:<id>:<tier>'
 //   markSeen(save, scope)       -> call from the sub-screen's render WHILE IT IS SHOWING (visible, not a hidden refresh); true = persist the save
 //   migrateSeen(save)           -> once at load (everything already there counts as seen); opts.lands = the NATURE lands, HOME FIRST (wild.js discovered/homeRegion)
+//   STATUS (R2 shipped the bar): the bottom-tab dots are wired in ui.js (refreshDots). PENDING: sub-tab dots and ROW dots on the hangar (R5/R7),
+//   per-land markSeen + land-tab/animal/row dots in wild.js (R6; until then ui.go('nature') marks ALL nature/* scopes seen), BOARDS sub-tabs
+//   (R9), the MISSIONS keys (R4: pass opts.missions via ui.freshOpts()).
 //   scope names: hangarScope(tab) / natureScope(land) / 'boards/records' / 'boards/badges' / 'missions'; PRODUCERS says who makes each scope's keys.
 //
 // A KEY names one thing that can be new ('gadget:magnet:3', 'project:meadow', 'tree:2', 'animal:badger', 'badge:coolplanet:1').
