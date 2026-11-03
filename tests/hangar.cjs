@@ -91,8 +91,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const b = base && base.getBoundingClientRect();
     return { n: gs.length, worst: b ? Math.max(0, ...gs.map(g => { const r = g.getBoundingClientRect(); return Math.max(Math.abs(r.left - b.left), Math.abs(r.top - b.top), Math.abs(r.width - b.width), Math.abs(r.height - b.height)); })) : -1 }; });
   check(gh320.n >= 1 && gh320.worst >= 0 && gh320.worst <= 1, `at 320 x 568 the ghost is ${gh320.worst.toFixed(1)} px off the plane picture (${gh320.n} ghosts; want <= 1)`);
-  // Each shrinkable row holds its own content (the tabs once spilled past the panel's padding yet stayed inside the screen).
-  const rowsOver = await p.evaluate(() => ['.hangar-head', '.ftabs', '.ftimeline'].map(sel => { const e = document.querySelector('#hangar ' + sel); return e && e.scrollWidth > e.clientWidth + 1 ? `${sel} content ${e.scrollWidth} > box ${e.clientWidth}` : ''; }).filter(Boolean));
+  // Each shrinkable row fits the panel's inner box (the tabs once spilled past the panel's padding yet stayed inside the screen).
+  const rowsOver = await p.evaluate(() => ['.hangar-head', '.ftabs', '.ftimeline'].map(sel => { const e = document.querySelector('#hangar ' + sel); if (!e) return ''; const pan = document.querySelector('#hangar .panel'), inner = pan.clientWidth - 32, w = Math.round(e.getBoundingClientRect().width);   // (a grid item never shrinks below its min-content, so a too-wide row is itself wider than the panel's inner box)
+    return e.scrollWidth > e.clientWidth + 1 || w > inner + 1 ? `${sel} content ${e.scrollWidth}, box ${w} > the panel's inner ${inner}` : ''; }).filter(Boolean));
   check(rowsOver.length === 0, `at 320 x 568 a hangar row spills out of its own box: ${rowsOver.join('; ')}`);
   // ONE rogue wide row must not drag the whole panel out (the grid's implicit column; minmax(0, 1fr) pins it): TAKE OFF stays on screen.
   const rogueRight = await p.evaluate(() => { const d = document.createElement('div'); d.style.cssText = 'white-space:nowrap;width:max-content;font-size:9px'; d.textContent = 'x'.repeat(60); document.querySelector('#hFleet').appendChild(d); const r = document.getElementById('hGoTop').getBoundingClientRect().right; d.remove(); return Math.round(r); });
