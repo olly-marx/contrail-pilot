@@ -1,0 +1,69 @@
+# Verify a pushed BRANCH (no deploy, no release tag): the same 4 test shards as deploy.yml, run remotely so the heavy proof does not need this
+# machine (research/PROPOSAL-BRANCH-CI.md, approved by the user 2026-11-03). A chat opts in by pushing `ci/<name>`; ordinary WIP branches cost nothing.
+# 0 failed AND 0 flaky: tools/test.sh retries a failing test once and calls a pass-on-retry FLAKY (a warning, exit 0). This workflow fails the shard when the runner
+# reports ANY flaky test, so tools/test.sh itself is NOT changed (it is a gate-harness file, and main's CI keeps its retry-once behaviour).
+# The answer is a MARKER TAG on the commit: `ci-ok-<sha7>` or `ci-fail-<sha7>`; read it with `git ls-remote --tags origin 'ci-*-<sha7>'` (a git call, zero REST API quota).
+name: Verify branch (no deploy)
+
+on:
+  push:
+    branches: ['ci/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}   # NOT 'pages': this must never cancel, or be cancelled by, the main run
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test driver
+        run: npm i --no-save playwright-core@1
+      - name: Serve the game
+        run: python3 -m http.server 8000 >/dev/null 2>&1 &
+      - name: Run tests (shard ${{ matrix.shard }} of 4; a pass-on-retry fails the shard)
+        env:
+          CHROME: /usr/bin/google-chrome
+        run: |
+          set -o pipefail
+          tools/test.sh --shard ${{ matrix.shard }}/4 2>&1 | tee /tmp/shard.out
+          if grep -q '^flaky (passed on retry)' /tmp/shard.out; then
+            echo "::error title=Flaky test: a verify run allows none::$(grep '^flaky (passed on retry)' /tmp/shard.out)"
+            exit 1
+          fi
+
+  # The machine-readable answer. Runs even when `test` failed. A cancelled or skipped `test` (a newer push replaced this run) gives NO marker: no answer is not a "fail".
+  report:
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write the marker tag
+        env:
+          RESULT: ${{ needs.test.result }}
+        run: |
+          S="${GITHUB_SHA::7}"
+          case "$RESULT" in
+            success) T="ci-ok-$S";   O="ci-fail-$S" ;;
+            failure) T="ci-fail-$S"; O="ci-ok-$S" ;;
+            *) echo "test result '$RESULT': no marker"; exit 0 ;;
+          esac
+          git push origin ":refs/tags/$O" 2>/dev/null || true   # the latest answer wins for a re-run of the same commit
+          git tag -f "$T" && git push -f origin "refs/tags/$T"
+          echo "marker $T written"

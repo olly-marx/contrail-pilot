@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-03-branch-checks",
+    "version": "0.28.2",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: we added a new way to test the game before an update, so updates are safer. Nothing changes for you."
+    ]
+  },
+  {
     "id": "2026-11-03-planting-ghost",
     "version": "0.28.1",
     "date": "2026-11-03",

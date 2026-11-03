@@ -44,3 +44,4 @@ group hangar-swipe | src/hangar.js | swipe features
 group missions-screen | src/missionsview.js | missionscreen missionlanes walkthrough fitscreen overlap taptargets
 group gear-sheet | src/ui.js | gear
 group nature-r6 | src/wild.js src/fresh.js | naturefresh
+ci-only | onrails375
