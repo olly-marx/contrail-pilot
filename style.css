@@ -556,7 +556,7 @@ h2.sub { margin-top: -4px; }
 /* NATURE tiers and rarity (src/wild.js, 2026-10-22) */
 .w-tier { margin: 8px 0 2px; font-weight: bold; color: #1e7a3c; }
 .line.project.locked { opacity: .75; background: #ece8dc; }
-.w-rarity { font-size: 6px; opacity: .8; }
+.w-rarity { font-size: 7px; opacity: .8; }   /* R6: 7 px is the floor */
 .w-card.r-rare .w-rarity { color: #2a6fb0; } .w-card.r-legendary .w-rarity { color: #a0329a; font-weight: bold; }
 
 /* ---------- Wild Area 2D field (src/wild.js Field) ---------- */
@@ -963,3 +963,17 @@ h2.sub { margin-top: -4px; }
 #hFleet .fplane-row .rowc-sub { display: none; }   /* the plane row is its name and FLYING; the era is in the picture caption / the era sheet */
 #hFleet .tree-head { margin: 0; display: flex; justify-content: space-between; align-items: center; }
 #hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }   /* a rich bank (7-digit seeds) wraps TAKE OFF to a second row instead of leaving the screen (hangar.cjs, 320 x 568) */
+
+/* ---------- R6: NATURE (UX plan C4). The land tabs scroll with an edge fade (a tab is never cut by a hard edge), a dot on a land with news; the
+   meter has an (i); the intro / NEXT HERE box / headings are gone; NEXT is the one primary; the locked tier is one line. ---------- */
+.wregions { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); padding-left: 12px; padding-right: 22px; }
+.wregions .btn { position: relative; }
+.wpin #wMeter { display: flex; align-items: center; gap: 6px; }
+.wpin #wMeter .meter { flex: 1; min-width: 0; }
+.w-i { flex: none; min-width: var(--tap); }
+#wNextLine .rowc.lead { background: #fffbe8; border: 2px solid var(--ink); }
+#wNextLine .rowc.lead .rowc-name { font-weight: bold; }
+.w-tier-lock { margin: 4px 0; color: var(--muted); font-weight: normal; }
+.w-tree, .w-card { position: relative; }
+.rowc.project .rowc-price[disabled] { background: #fff; color: var(--muted); }   /* an unaffordable price is outlined, not a grey slab; the strip says what is missing */
+#wStrip .need { margin: 2px 0; color: #c0392b; }

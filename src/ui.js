@@ -46,7 +46,7 @@ import { LINKS } from './links.js';
 import { writeSave, resetSave } from './save.js';
 import { eraBarHTML } from './eras.js';
 import { FleetHangar } from './hangar.js';
-import { dots, markSeen, markSeenPrefix, migrateSeen, defaultLands, hangarScope } from './fresh.js';
+import { dots, markSeen, migrateSeen, defaultLands, hangarScope } from './fresh.js';
 import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
@@ -322,8 +322,7 @@ export class UI {
     if (tab === 'missions') return this.showMissions();
     if (tab === 'nature') { if (this.tour) this.tour.markDone('nature-lead'); this.showOnly('nature');
       if (this.wild && parcelsWanted(this.save)) this.wild.region = this.wild.home() || 'woodland';   // L5 waits for parcels: open on the tab that sells them (the home land's)
-      this.wild && this.wild.render();
-      if (markSeenPrefix(this.save, 'nature/', this.freshOpts())) this.persist();   // NATURE is showing (until R6 gives each land its own markSeen); it clears ONLY nature scopes
+      if (this.wild) { this.wild.rowNew = null; this.wild.render(); }   // a new visit: last visit's dots are gone; the land's own render marks it seen (R6)
       if (this.tour) this.tour.maybe('nature'); return; }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
     if (tab === 'boards') { this.showOnly('boards'); if (FEATURES.season2) { showRecords(this.save, { onSeen: () => this.refreshDots(), toast: (t, b) => this.toast(t, b, 'good', 6) }); this.refreshDots(); return; }
