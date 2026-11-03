@@ -47,7 +47,9 @@ const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoo
   // NATURE, savanna tab: name, source line, how to raise it.
   await p.click('#tabNature'); await p.waitForTimeout(300);
   await p.click('[data-region="savanna"]'); await p.waitForTimeout(300);
-  const nat = await p.evaluate(() => (document.getElementById('wMeter').textContent + ' ' + document.getElementById('wMeterMore').textContent).replace(/\s+/g, ' '));
+  await p.click('#wMeter [data-minfo]'); await p.waitForTimeout(200);   // (R6: the intro paragraph is behind the meter's (i), in a sheet)
+  const nat = await p.evaluate(() => (document.getElementById('wMeter').textContent + ' ' + ((document.getElementById('sheet') || {}).textContent || '')).replace(/\s+/g, ' '));
+  await p.click('#sheet .sheet-ok').catch(() => {}); await p.waitForTimeout(150);
   check(/African savanna/.test(nat) && /Projects from Kenya/.test(nat) && /Raise it/.test(nat), `NATURE explains the savanna's meter: "${nat}"`);
   // In flight: the banner when the land changes, and the results row for a land whose meter rose.
   await p.click('#tabFly'); await p.click('#goBtn');

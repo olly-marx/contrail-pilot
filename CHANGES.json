@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-03-nature-calmer",
+    "version": "0.28.0",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The nature screen is calmer: one line tells you what to do next, and the long explanations are behind the (i).",
+      "The land tabs scroll sideways, the planting tools are tidy rows, and it fits small phones.",
+      "A red dot shows which land, project, tree or animal has something new.",
+      "For now, tapping a planting card does not show the new trees on the picture. That comes back in the next update."
+    ]
+  },
+  {
     "id": "2026-11-03-auto-claim",
     "version": "0.27.3",
     "date": "2026-11-03",
