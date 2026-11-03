@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-03-hangar-big-bank",
+    "version": "0.26.6",
+    "date": "2026-11-03",
+    "level": "minor",
+    "notes": [
+      "The hangar keeps TAKE OFF on screen even with a very large seed bank."
+    ]
+  },
+  {
     "id": "2026-11-03-hangar-boards",
     "version": "0.26.5",
     "date": "2026-11-03",

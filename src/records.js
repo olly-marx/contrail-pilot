@@ -27,7 +27,6 @@ const ensure = save => {
   const r = save.records = save.records || {};
   r.ever = { ...counts(), ...(r.ever || {}) };
   r.week = { ...counts(), start: null, kindsBase: [], missionsBase: 0, ...(r.week || {}) };
-  r.fresh = r.fresh || [];
   r.beaten = r.beaten || [];   // src/fresh.js 'boards/records' keys: 'record:<id>:<period>:<new value>' (a LATER beat is a new key); capped, oldest dropped
   return r;
 };
@@ -57,7 +56,6 @@ export function recordFlight(save, f) {
       if (c.shortest === null || f.distance < c.shortest) { if (c.shortest !== null) beaten.push({ id: 'shortest', period, v: f.distance }); c.shortest = f.distance; }
     }
   }
-  for (const b of beaten) if (!r.fresh.includes(b.id)) r.fresh.push(b.id);
   for (const b of beaten) r.beaten.push(`record:${b.id}:${b.period}:${b.v}`);
   if (r.beaten.length > 40) r.beaten = r.beaten.slice(-40);
   return beaten;
@@ -95,5 +93,3 @@ export function values(save) {
 }
 
 // The boards beaten since the screen was last opened (the NEW RECORD! mark); opening the screen clears them.
-export const fresh = save => ensure(save).fresh.slice();
-export function clearFresh(save) { ensure(save).fresh = []; }
