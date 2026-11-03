@@ -147,6 +147,8 @@ p { margin: 0; }
 .rc-star { font-style: normal; color: var(--gold-dark); }
 .rc-rows p { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; font-size: 8px; }
 .rc-go { margin-top: 2px; }
+#results.revealing .rcard button:not(#againBtn) { pointer-events: none; }   /* a tap to skip the reveal reaches #results, not a line under the finger */
+.tour-inert { pointer-events: none; }
 
 /* ---------- hangar ---------- */
 .hangar-head { display: flex; justify-content: space-between; align-items: center; }

@@ -448,6 +448,7 @@ export class UI {
     $('rChips').querySelectorAll('.rc-chip').forEach(b => b.onclick = () => { sfx.flap(); if (b.dataset.more) showSheet({ eyebrow: 'ALSO NEW', title: 'More to see', body: v.allChips.slice(v.chips.length).map(c => c.full).join('. ') }); else chipSheet(v.chips[+b.dataset.i]); });
     this.showOnly('results');
     $('results').scrollTop = 0;
+    $('results').classList.add('revealing');   // while the card builds, its lines are inert: a tap to SKIP must not open a sheet (CSS: #results.revealing)
     // -- the reveal: a short beat (under two seconds); a tap skips to the end
     const [head, dist, bank, ...rest] = steps;
     show(head); await wait(300);
@@ -457,6 +458,7 @@ export class UI {
     if (v.bank.seeds || v.bank.crystals) sfx.coin(); else if (!v.landed) sfx.nope();
     await wait(200);
     for (const el of rest) { if (el.hidden) continue; show(el); if (el.id === 'rMission' && v.missions && v.missions.fail === undefined) sfx.buy(); if (el.id === 'rEarth') v.earth && v.earth.bars[0][1] > v.earth.bars[2][1] ? sfx.warm() : sfx.cool(); await wait(110); }
+    $('results').classList.remove('revealing');
     if (r.eraOpened) {   // a new era: the big welcome, then the hangar to see what it brings
       await wait(600);
       await showEraWelcome(ERAS.findIndex(e => e.name === r.eraOpened));

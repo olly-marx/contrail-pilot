@@ -209,6 +209,7 @@ export class Tour {
     // One action per step (the one-target audit): a row's own price/BUY sits inside the row's tap area (.rowc-price is
     // absolute over .rowc-tap), so while the step points at the row's tap, that price hides (DESIGN-HANGAR-NATURE).
     const solo = t.classList && t.classList.contains('rowc-tap') && t.closest('.rowc'); if (solo) solo.classList.add('tour-only');
+    if (st.ok && !st.tap) t.classList.add('tour-inert');   // an OK step points at something to READ: if it is a button (R1: the results lines) it must not also be tappable (the one-target rule)
     this.keepVisible();
     this.el.querySelector('.tbubble p').innerHTML = st.text;
     const ok = this.el.querySelector('.tbubble .btn');
@@ -217,7 +218,7 @@ export class Tour {
     this.place();
     if (st.focus) setTimeout(() => t.focus(), 50);
     await new Promise(resolve => {
-      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; document.querySelectorAll('.rowc.tour-only').forEach(r => r.classList.remove('tour-only')); resolve(); };
+      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; document.querySelectorAll('.rowc.tour-only').forEach(r => r.classList.remove('tour-only')); document.querySelectorAll('.tour-inert').forEach(r => r.classList.remove('tour-inert')); resolve(); };
       // A tap on the target (with `area`, on ANY element matching `target` inside the hole). Let the button do its job first.
       const want = FEATURES.season2 ? HUB_TARGETS[st.target] || st.target : st.target;
       const onTap = e => { if (e.target.closest && e.target.closest(want)) setTimeout(finish, 0); };
