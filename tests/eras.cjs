@@ -49,7 +49,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const saved = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')).flightSeconds);
   check(Math.abs(saved - (20 * 60 - 2 + before)) < 0.5, `a crash adds its flying time to the save: ${saved} vs ${20 * 60 - 2 + before}`);
   await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 });
-  await p.click('#results');   // skip the reveal
+  await p.click('#results', { position: { x: 4, y: 4 } });   // skip the reveal
   await p.waitForTimeout(1500);
   const r = await p.evaluate(() => { const e = document.getElementById('rEra'); return { hidden: e.hidden, t: e.textContent.replace(/\s+/g, ' ') }; });
   check(!r.hidden && /1970s/.test(r.t) && /\d+\/57 min/.test(r.t), `the results' ONE era line (R1) shows the new era's badge and its minutes: ${JSON.stringify(r)}`);   // the NEW ERA / new plane words are the welcome card's (welcome.js), a beat of their own

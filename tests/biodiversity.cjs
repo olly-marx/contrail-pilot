@@ -59,8 +59,9 @@ const APPROVED = ['Temperate woodland', 'Mediterranean scrub', 'Desert', 'Monsoo
     s.finish({ landed: true }); return { banner, gains: s.result.natureGains }; }, all);
   check(r.banner && r.banner.region === 'rainforest' && r.banner.text.startsWith('TROPICAL RAINFOREST: BIODIVERSITY'), `entering the rainforest shows its banner: ${JSON.stringify(r.banner)}`);
   check(r.gains.length === 1 && r.gains[0].name === 'African savanna' && r.gains[0].gain > 0, `results list the savanna's gain: ${JSON.stringify(r.gains)}`);
-  await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 }); await p.click('#results'); await p.waitForTimeout(1200);
-  const row = await p.evaluate(() => { const e = document.getElementById('rNatureRow'); return e.hidden ? '' : e.textContent; });
+  await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 }); await p.click('#results', { position: { x: 4, y: 4 } }); await p.waitForTimeout(1200);
+  await p.click('#rMaths'); await p.waitForSelector('#sheet .rc-rows');   // R1: the biodiversity rows are in the maths sheet
+  const row = await p.evaluate(() => [...document.querySelectorAll('#sheet .rc-rows p')].map(x => x.textContent).join(' '));
   check(/African savanna\+\d+/.test(row.replace(/\s+/g, '')) || /African savanna/.test(row), `the results show the savanna row: "${row}"`);
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close();
