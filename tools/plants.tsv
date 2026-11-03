@@ -144,7 +144,7 @@ lessonfallback	src/missions2.js	s#return lm\[cur.id\] >= 2 ?#return false ?#	no 
 l2fallback	src/missions2.js	s#return lm\[cur.id\] >= 2 ?#return false ?#	no L2 fallback
 freeparcels	src/upgrades.js	s#&& (save.missionsDone || \[\]).includes('L4') && !save.freeParcelsGiven#\&\& false \&\& !save.freeParcelsGiven#	no free first parcels
 rails2	src/tour.js	s#if (hub && s2Revealed(s, 'boards')#if (false \&\& s2Revealed(s, 'boards')#	no R14 records step
-rails2	index.html	s#<p class="small skiphint" id="rSkip">tap to skip</p>#<p class="small skiphint" id="rSkip" style="position:fixed;bottom:-30px">tap to skip</p>#	the skip hint off screen
+rails2	index.html	s#<button id="againBtn" class="btn go big" type="button">FLY ON</button>#<button id="againBtn" class="btn go big" type="button" style="position:fixed;bottom:-30px">FLY ON</button>#	FLY ON is off the bottom of a small phone's results card (the R1 form of the old 'skip hint off screen' plant, whose markup R1 removed)
 rails2	src/tour.js	s#el.querySelectorAll('.tdim, .tbubble').forEach(d => {#\[\].forEach(d => {#	no scroll through the rails dim
 bubblestill	src/tour.js	s#    if (this.side == null) {#    this.side = null; if (this.side == null) {#;s#hh = (this.target.offsetHeight || r.height) / 2;#hh = r.height / 2;#	the bubble re-decided per frame, with the pulse
 preview	src/season2.js	s#const store = PREVIEW ? {#const store = false ? {#	preview writes through to the real save
