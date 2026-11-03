@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-03-home-up-next",
+    "version": "0.27.0",
+    "date": "2026-11-03",
+    "level": "major",
+    "notes": [
+      "The home screen is simpler: your route and globe, then up to three things to do next, then TAKE OFF.",
+      "The three big buttons are gone: use the bar at the bottom to go to missions, the hangar and nature."
+    ]
+  },
+  {
     "id": "2026-11-03-hangar-big-bank",
     "version": "0.26.6",
     "date": "2026-11-03",

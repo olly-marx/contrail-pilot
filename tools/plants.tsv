@@ -280,7 +280,7 @@ nextup	src/missions2.js	s/short: f => `Bring home \${10 \* f.k} seeds`,/short: f
 resultscard	src/resultscard.js	s/`✓ \${n} missions done`/`✓ ${missionTitles.join(', ')}`/	the mission names joined back into the line (7 missions overflow it)
 resultscard	src/resultscard.js	s/(r.landed ? total : 0) + paid.seeds/total + paid.seeds/	a crash counts the seeds it LOST as banked
 resultscard	src/resultscard.js	s/export const CHIPS_MAX = 3;/export const CHIPS_MAX = 9;/	the chips uncapped (the card would grow)
-lessonart	src/ui.js	s#assets/ui/lesson-nature.png#assets/ui/lesson-natur.png#	HOME no longer shows the nature lesson picture (it would be on no shipped screen)
+lessonart	src/nextup.js	s#assets/ui/lesson-nature.png#assets/ui/lesson-natur.png#	HOME no longer shows the nature lesson picture (it would be on no shipped screen)
 loadercount	src/loader.js	s/export const FACT_AFTER_MS = 2000,/export const FACT_AFTER_MS = 0,/	the fact shows at once, on every load (a warm load too)
 loadercount	src/loader.js	s/if (this.finished || !box || box.querySelector('.loader-fact')) return;/return;/	the fact is never shown
 loadercount	src/loader.js	s/const pool = FACTS.filter(f => words(f) <= FACT_MAX_WORDS);/const pool = FACTS.filter(f => words(f) > FACT_MAX_WORDS);/	the fact is a long one (over 15 words)
@@ -310,5 +310,8 @@ records-screen	src/recordsui.js	s/k !== tab \&\& d\[`boards\/${k}`\]/false/	no d
 fitscreen	style.css	s/^#hFleet > .ftabs { margin: 0; }//;s/^\.hpreview\.empty { padding: 3px 6px; }//;/^#hFleet \.fplane-row \.rowc-sub { display: none; }/d	the R5 compaction undone (sub-tab margin, empty strip padding, the plane row sub line): the hangar primary falls below the bar at 320x568
 swipe	src/hangar.js	s/onSwipe(\$('hangar'), { next: () => goTab(1)/onSwipe(el, { next: () => goTab(1)/	the hangar swipe is bound to the short list again: a flick below it (a tall phone) does nothing
 tours	src/tour.js	s#^    if (id) this.markDone(id);#    if (false) this.markDone(id);#	a finished tour is not remembered (it would come back: 'the name tour ends and is remembered', 'the hangar tour is remembered')
+nextup	src/nextup.js	s#short: clip(o.short, Math.min(SHORT_MAX, ROW_MAX - rightOf(o).length))#short: o.short#	a long title pushes the right column onto a second line (the row budget)
 hangar	style.css	/^#hangar .hangar-head { flex-wrap: wrap; row-gap: 4px; }/d	a 7-digit bank pushes TAKE OFF off a 320 screen (the head cannot wrap)
 hangar	src/sheet.js	s/el.querySelector('.sheet-ok').onclick = close;/el.querySelector('.sheet-ok').onclick = () => {};/	the sheet's OK does not close it
+fitscreen	style.css	s#width: min(100%, 34vh);#width: min(100%, 50vh);#	the globe at 50vh (HOME overflows at 320x568)
+fitscreen	src/ui.js	s#v.up\[0\] \&\& v.up\[0\].pic ? v.up.slice(0, 2) : v.up#v.up#	the pictured lead row plus 3 rows (HOME's free-part state overflows at 320x568)

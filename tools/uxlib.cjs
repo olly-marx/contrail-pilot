@@ -90,7 +90,10 @@ async function views(p, key, S) {
   const out = [], spec = S[key], m = async (name) => { await p.waitForTimeout(600); out.push({ name, m: await p.evaluate(measure, spec) }); };
   const go = tab => p.evaluate(t => game.registry.get('ui').go(t), tab);
   if (key === 'results') { for (const k of ['rich', 'seven', 'animalbadge', 'plain', 'crash', 'first', 'school']) { await showVariant(p, k); await m(`results/${k}`); } }
-  else if (key === 'home') { await go('fly'); await m('home'); }
+  else if (key === 'home') { await go('fly'); await m('home');
+    // R3: a free part waiting is a lead row with its lesson picture and a locked TAKE OFF: it must fit too (the 320x568 overflow was found by hand, not by this gate)
+    await p.evaluate(() => { game.registry.get('save').freeUpgrade = true; game.registry.get('ui').go('fly'); }); await m('home/free part');
+    await p.evaluate(() => { game.registry.get('save').freeUpgrade = false; game.registry.get('ui').go('fly'); }); }
   else if (key === 'missions') { await go('missions'); await m('missions'); }
   else if (key === 'boards') { await go('boards'); await m('boards'); }
   else if (key === 'hangar') { await go('hangar'); await p.waitForTimeout(1000);

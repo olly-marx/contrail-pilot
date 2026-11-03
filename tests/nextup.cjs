@@ -23,15 +23,17 @@
       const raw = typeof d.short === 'function' ? (kind === 'steady' ? d.short(9999999, f) : d.short(f)) : d.short;
       const out = N.clip(raw);
       check(out.length <= N.SHORT_MAX, `${kind} ${d.id} (${stage}): "${out}" is ${out.length} characters (max ${N.SHORT_MAX})`);
+      for (const where of ['fly', 'hangar']) { const row = N.fitRow({ short: raw, where, stops: where === 'fly' ? 3 : undefined }); check(row.short.length + N.rightOf(row).length <= N.ROW_MAX, `${kind} ${d.id} (${stage}, ${where}): "${row.short}" + "${N.rightOf(row)}" fits one row at 320 (${N.ROW_MAX})`); }
       if (!NAME_CLIPPED.includes(d.id)) check(raw.length <= N.SHORT_MAX, `${kind} ${d.id} (${stage}) short "${raw}" is ${raw.length} characters with the longest fill (max ${N.SHORT_MAX}; only ${NAME_CLIPPED} may rely on clip)`);
     }
   }
   // 2-4. The list, on declared saves.
   const base = () => ({ fuel: 'kerosene', priceVersion: 2, tutorialDone: true, areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'],
     missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: { trees: 1 }, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
-  const WHERE = ['fly', 'hangar', 'nature'];
+  const WHERE = ['fly', 'hangar', 'nature', 'missions'];
   const sane = (items, tag) => { check(items.length <= 3, `${tag}: at most 3 rows (${items.length})`);
-    for (const x of items) { check(x.short && x.short.length <= 24 && x.full && WHERE.includes(x.where), `${tag}: row "${x.short}" has a short <= 24, a full text and a valid where: ${JSON.stringify(x)}`);
+    for (const x of items) { check(x.short.length + N.rightOf(x).length <= N.ROW_MAX, `${tag}: row "${x.short}" + "${N.rightOf(x)}" fits one line (${N.ROW_MAX})`);
+      check(x.short && x.short.length <= 24 && x.full && WHERE.includes(x.where), `${tag}: row "${x.short}" has a short <= 24, a full text and a valid where: ${JSON.stringify(x)}`);
       if (x.stops !== undefined) check(Number.isInteger(x.stops) && x.stops >= 1 && x.stops <= 3, `${tag}: "${x.short}" stops ${x.stops} within MAX_LEGS`); }
     check(new Set(items.map(x => x.key)).size === items.length, `${tag}: no row twice`); };
   const full = base(); M.setDaily(full, '2026-11-03');
@@ -54,8 +56,11 @@
   check(fr[0] && fr[0].lead && fr[0].where === 'hangar' && fr[1] && fr[1].key === 'L2', `free part waiting: the hangar leads, then the lesson: ${JSON.stringify(fr.map(x => x.key))}`);
   const l5 = base(); l5.missionsDone = ['L1', 'L2', 'L3', 'L4']; l5.levels = {}; const pr = N.nextUp(l5);
   check(pr[0] && pr[0].lead && pr[0].where === 'nature', `lesson 5 without tree parcels: NATURE leads: ${JSON.stringify(pr.map(x => x.key))}`);
+  const cl = base(); cl.missionsDone = ['L1', 'L2', 'L3', 'L4']; cl.levels = {}; cl.freeParcelsGiven = true; cl.seeds = 0; cl.crystals = 0; cl.unclaimed = [{ key: 'mission:L4', kind: 'mission', id: 'L4', label: 'x', seeds: 70, crystals: 1 }];
+  const clr = N.nextUp(cl);
+  check(clr[0] && clr[0].lead && clr[0].where === 'missions' && clr[0].short === 'Claim your prizes' && N.rightOf(clr[0]) === 'CLAIM ›', `lesson 5 with prizes waiting and parcels unaffordable: the claims lead opens MISSIONS: ${JSON.stringify(clr.map(x => x.key))}`);
   const cx = N.nextUp(full, { crossingReady: 'LONDON to NEW YORK' });
-  check(cx[0] && cx[0].lead && cx[0].where === 'fly' && cx.length === 3 && cx.filter(x => x.lead).length === 1, `a crossing ready leads, and only one lead: ${JSON.stringify(cx.map(x => x.key))}`);
+  check(cx[0] && cx[0].lead && cx[0].where === 'fly' && /^Cross to NEW YORK$/.test(cx[0].short) && cx.length === 3 && cx.filter(x => x.lead).length === 1, `a crossing ready leads, and only one lead: ${JSON.stringify(cx.map(x => x.key))}`);
   check(N.nextUp({ ...base(), areas: undefined }).length === 0, 'a season-1 save has no next-up rows');
   console.log(fails.length ? `FAIL nextup:\n - ${fails.join('\n - ')}` : `PASS nextup: ${defs.length} short titles fit 24 characters with the longest fill ("${longest}"); the lead, mission, daily order and one source hold on ${6} declared saves`);
   process.exit(fails.length ? 1 : 0);

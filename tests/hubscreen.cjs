@@ -21,14 +21,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 1. A new-ish pilot (lesson 1 done): hub, the bottom bar, big globe, NEXT, TAKE OFF, the MISSIONS and HANGAR tiles.
   let p = await open(['L1']);   // season 2 lessons (S3): L1 reveals MISSIONS and HANGAR
   const st = await p.evaluate(() => ({ hub: document.getElementById('title').classList.contains('hub'), bar: !document.getElementById('tabbar').hidden,
-    next: document.getElementById('hubNext').innerText, tiles: [...document.querySelectorAll('#hubTiles [data-go]')].map(t => t.dataset.go) }));
+    next: document.getElementById('hubNext').innerText, tabs: [...document.querySelectorAll('#tabbar [data-go]')].filter(b => !b.hidden).map(b => b.dataset.go), tiles: document.querySelectorAll('#hubTiles').length }));   // R3: the tiles are gone; the bar is the navigation
   const globe = await box(p, '#hubGlobe'), go = await box(p, '#goBtn');
   check(st.hub && st.bar, `season 2 shows the hub with the bottom bar: ${JSON.stringify(st)}`);
   const barTop = await p.evaluate(() => document.getElementById('tabbar').getBoundingClientRect().top);
   check(globe && globe.w >= 390 * 0.5 && globe.h >= 844 * 0.25, `the world is BIG: ${JSON.stringify(globe)}`);
-  check(/NEXT/.test(st.next) && /icy air in daytime/.test(st.next), `NEXT names the next lesson (L2): "${st.next}"`);
+  check(/UP NEXT/.test(st.next) && /icy air in daytime/i.test(st.next), `UP NEXT names the next lesson (L2): "${st.next}"`);
   check(go && go.y + go.h <= barTop, `TAKE OFF is on screen above the bottom bar, not under it: ${JSON.stringify({ go, barTop })}`);
-  check(st.tiles.join() === 'missions,hangar', `after lesson 1: MISSIONS and HANGAR only: ${st.tiles}`);
+  check(st.tiles === 0 && st.tabs.join() === 'fly,missions,hangar,boards', `after lesson 1: no tiles any more, and the bar shows HOME, MISSIONS, HANGAR (+BOARDS after 3 landings): ${JSON.stringify([st.tiles, st.tabs])}`);
   // 2. Spin: the globe turns.
   const f0 = await p.evaluate(() => JSON.stringify(document.getElementById('hubGlobe').__globe.frame()));
   await p.click('#hubSpinR'); await p.waitForTimeout(200);
@@ -44,8 +44,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const before = o.frame(), want = G.turn(before, 30, 0, c.width / 2 - 1); o.nudge(30);
     await new Promise(r => setTimeout(r, 400)); return { want: JSON.stringify(want), got: JSON.stringify(o.frame()) }; });
   check(nudged.want === nudged.got, `nudge turns by dx and stops the coast: want ${nudged.want.slice(0, 60)} got ${nudged.got.slice(0, 60)}`);
-  // 3. A tile opens its screen; HOME comes back.
-  await p.click('#hubTiles [data-go="hangar"]'); await p.waitForTimeout(400);
+  // 3. A bar tab opens its screen; HOME comes back.
+  await p.click('#tabHangar'); await p.waitForTimeout(400);   // R3: the bar's tab (the tiles are gone)
   // The bottom bar is back on every menu screen (Lola, 2026-10-27), showing only what is revealed: after lesson 1,
   // HOME, MISSIONS and HANGAR; not NATURE (lesson 2), PILOT or BOARDS (resting).
   const inH = await p.evaluate(() => ({ hangar: !document.getElementById('hangar').hidden, bar: !document.getElementById('tabbar').hidden,
@@ -55,10 +55,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(await p.evaluate(() => !document.getElementById('title').hidden && !document.getElementById('tabbar').hidden), 'HOME (on the bar) goes back to the hub, the bar stays');
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close();
-  // 4. Brand new (no lesson done): no tiles at all.
+  // 4. Brand new (no lesson done): none of the lesson-revealed tabs.
   p = await open([]);
-  check(await p.evaluate(() => document.querySelectorAll('#hubTiles [data-go]').length === 0), 'a brand-new pilot sees no tiles');
+  check(await p.evaluate(() => ![...document.querySelectorAll('#tabbar [data-go]')].some(b => !b.hidden && ['missions', 'hangar', 'nature'].includes(b.dataset.go))), 'a brand-new pilot sees no MISSIONS, HANGAR or NATURE tab yet');
   await p.close(); await b.close();
-  console.log(fails.length ? `FAIL hubscreen:\n - ${fails.join('\n - ')}` : 'PASS hubscreen: hub + bottom bar (revealed tabs only), big spinnable world, NEXT, TAKE OFF on screen, tiles by reveal, HOME back');
+  console.log(fails.length ? `FAIL hubscreen:\n - ${fails.join('\n - ')}` : 'PASS hubscreen: hub + bottom bar (revealed tabs only), big spinnable world, UP NEXT, TAKE OFF on screen, no tiles, HOME back');
   process.exit(fails.length ? 1 : 0);
 })();

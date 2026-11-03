@@ -4,7 +4,7 @@
 import { km } from './config.js';
 import { eraProgress } from './eras.js';
 import { FIRSTS } from './missions2.js';
-import { clip } from './nextup.js';
+import { clip, rightOf } from './nextup.js';
 const chipLabel = name => (String(name).length <= 11 ? String(name) : String(name).split(' ')[0].length <= 11 ? String(name).split(' ')[0] : clip(name, 11));
 import { WILDLIFE } from './wildlife.js';
 
@@ -51,7 +51,7 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   } else v.missions = null;
   // 4. UP NEXT: nextUp rows; the right column is the hop, the stops, or "today", never a sentence.
   v.next = next.slice(0, NEXT_ROWS).map(n => ({ key: n.key, short: n.short, full: n.full, where: n.where, lead: !!n.lead,
-    right: n.where === 'hangar' ? 'HANGAR ›' : n.where === 'nature' ? 'NATURE ›' : n.stops ? plural(n.stops, 'stop') : n.daily ? 'today' : '' }));
+    right: rightOf(n) }));
   // 5. The Earth, two lines and the face; the four numbers are also the sheet.
   const b = r.breakdown || { co2: 0, night: 0, sun: 0, trees: 0 }, R = Math.round;
   v.earth = r.school ? null : { heat: r.heat, warm: `Warmed CO2 ${R(b.co2)} · Night ${R(b.night)}`, cool: `Cooled Shade ${R(b.sun)} · Nature ${R(b.trees)}`,

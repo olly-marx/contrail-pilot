@@ -88,8 +88,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   if (free) { await free.click(); await p.click('#payOk', { timeout: 10000 }).catch(() => fails.push('the payoff OK never appeared after the free pick')); await p.waitForTimeout(500); }
   if (await p.isVisible('#payOk')) await p.click('#payOk');   // (season 2: the free part's payoff, its OK goes home)
   await p.click('#tabFly'); await p.waitForTimeout(500);
-  const hub2 = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, tiles: [...document.querySelectorAll('#hubTiles [data-go]')].map(t => t.dataset.go) }));
-  check(!hub2.locked && hub2.tiles.includes('hangar'), `after the free part: TAKE OFF unlocked, the HANGAR tile is there: ${JSON.stringify(hub2)}`);
+  const hub2 = await p.evaluate(() => ({ locked: document.getElementById('goBtn').disabled, tabs: [...document.querySelectorAll('#tabbar [data-go]')].filter(b => !b.hidden).map(b => b.dataset.go) }));   // R3: the bar's tabs (the tiles are gone)
+  check(!hub2.locked && hub2.tabs.includes('hangar'), `after the free part: TAKE OFF unlocked, the HANGAR tab is there: ${JSON.stringify(hub2)}`);
   await shot('hub-flight2');
   // Flight 2 (lesson 2: daytime icy air) -> NATURE.
   const f2 = await fly(8, { tag: '2', vals: { sunBlocked: 3.5 } });
@@ -111,7 +111,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // Lesson 5 needs parcels; with prizes unclaimed and no crystals, NEXT first says to claim them (audit fix 2), then parcels.
   let n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
   if (/Claim your prizes/i.test(n5)) {
-    await p.click('#hubNext'); await p.waitForTimeout(400);
+    await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(400);
     const all = await p.$('#mPrizes .claim.all') || await p.$('#mPrizes .claim'); if (all) { await all.click(); await p.waitForTimeout(400); }
     await p.click('#tabFly'); await p.waitForTimeout(400);
     n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
@@ -122,7 +122,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // and the day's trio sits under "Today".
   await fly(4, { tag: '5', vals: { planted: 1 } }); await shot('results-flight5'); await p.click('#againBtn').catch(() => {}); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
-  await p.click('#hubTiles [data-go="missions"]'); await p.waitForTimeout(500);
+  await p.click('#tabMissions'); await p.waitForTimeout(500);
   const t1 = await p.evaluate(() => ({ tier: document.getElementById('mTier').textContent, rows: [...document.querySelectorAll('#mList .mrow:not(.daily)')].length, stars: document.querySelectorAll('#mList .mrow.star').length,
     today: [...document.querySelectorAll('#mList .label')].some(e => e.textContent === 'Today'), daily: document.querySelectorAll('#mList .mrow.daily').length, lessonLeft: /Drop a tree/.test(document.getElementById('mList').innerText) }));
   check(t1.tier === 'Tier 1 of 3' && t1.rows >= 3 && t1.stars === 0 && !t1.lessonLeft, `after lesson 5 the MISSIONS screen opens tier 1 (no star yet, no lesson left): ${JSON.stringify(t1)}`);

@@ -8,7 +8,7 @@
 import { tip } from './tips.js';
 import { FEATURES } from './config.js';
 import { revealed as s2Revealed } from './missions2.js';
-// Tab-bar targets and what replaces them on the season 2 hub (the tiles; HOME goes back to the hub).
+// Tab-bar targets and what replaces them on the season 2 hub (nothing: since R3 the tiles are gone and the bar's tabs are the targets; HOME goes back to the hub).
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf } from './upgrades.js';
@@ -90,7 +90,7 @@ export class Tour {
     // R7 in the hangar (the user: stay in the hangar after buying): its own TAKE OFF.
     if (where === 'hangar' && !s.freeUpgrade && s.freeGiven && !d('L1') && !this.done('r-takeoff1') && !(document.getElementById('payoff') && !document.getElementById('payoff').hidden)) /* (not under the payoff: its OK starts this step) */ return ['r-takeoff1', [{ target: '#hGoTop', text: tip('rail-takeoff-h'), tap: true }]];
     // R7: the hub, only TAKE OFF.
-    if (hub && s.freeUpgrade) return ['r-hangar', [{ target: '#hubTiles [data-go="hangar"]', text: tip('rail-hangar'), tap: true }]];   // (every time: a reload with the part still waiting)
+    if (hub && s.freeUpgrade) return ['r-hangar', [{ target: '#tabHangar', text: tip('rail-hangar'), tap: true, ready: always }]];   // (R3: the tiles are gone: the bar's HANGAR tab)   // (every time: a reload with the part still waiting)
     if (hub && !s.freeUpgrade && !d('L1') && !this.done('r-takeoff1')) return ['r-takeoff1', [{ target: '#goBtn', text: tip('rail-takeoff'), tap: true }]];
     // R9: after flight 1: the seeds are yours; claim the mission's prize; another flight, watch for wildlife.
     if (res && d('L1') && !this.done('r-res1')) return ['r-res1', [
@@ -141,7 +141,7 @@ export class Tour {
 
   hubHangarSteps() {
     return [
-      { skipIf: () => !$('hangar').hidden, target: '#hubTiles [data-go="hangar"]', text: tip('tour-hangar'), tap: true },   // already inside (OPEN THE HANGAR)
+      { skipIf: () => !$('hangar').hidden, target: '#tabHangar', text: tip('tour-hangar'), tap: true, ready: always },   // already inside (OPEN THE HANGAR)
       { area: '#hFleet', target: '#hFleet .btn.free', text: tip('tour-free'), tap: true, scroll: true },   // scrolled into view: the bubble was cut off at the top
       { target: '#tabFly', text: tip('tour-home'), tap: true, ready: always },
     ];
@@ -232,7 +232,7 @@ export class Tour {
   }
 
   find(sel) {
-    if (FEATURES.season2) sel = HUB_TARGETS[sel] || sel;   // season 2 has no tab bar: the hub's tiles and HOME button (S2)
+    if (FEATURES.season2) sel = HUB_TARGETS[sel] || sel;   // (the bar is back on the hub: no remapping needed)
     const all = [...document.querySelectorAll(sel)].filter(e => e.offsetParent !== null);
     return all[0] || null;
   }
