@@ -24,9 +24,11 @@
   // These pilots are the ones SAVING UP, so they spend what they earn: the bank goes back to 0 after each flight. The rich pilots below set 1e6 explicitly.
   s.seeds = 0;
   const stPrize = M.steadyVisible(s).find(x => x.def.id === 'st-km').prize.seeds;
-  M.onFlight(s, crash({ distance: 1000 }));
+  const finished = M.onFlight(s, crash({ distance: 1000 }));
   check(s.missionsDone.includes('steady:weurope:st-km:0') && s.steady.weurope['st-km'].rung === 1, `a full steady goal pays and climbs a rung: ${s.missionsDone}`);
-  check(stPrize >= 3 && s.seeds === stPrize, `and its prize was PAID at once (R8): bank ${s.seeds}, prize ${stPrize}`);
+  // (this flight also finishes lesson L4: the bank holds EVERY mission it finished, so compare with the sum of their prizes, the rung's among them)
+  const paidSum = finished.reduce((a, m) => a + m.prize.seeds, 0);
+  check(stPrize >= 3 && finished.some(m => m.key === 'steady:weurope:st-km:0' && m.prize.seeds === stPrize) && s.seeds === paidSum, `and the prizes were PAID at once (R8): bank ${s.seeds}, the ${finished.length} finished missions are worth ${paidSum} (the rung ${stPrize})`);
   s.seeds = 0;   // (spent)
   const next = M.steadyVisible(s).find(x => x.def.id === 'st-km');
   check((!next || next.target === 2500) && M.rungTarget(M.STEADY[0], 1) === 2500 && M.rungTarget(M.STEADY[0], 2) === 3125, `the next rung asks x1.25 (${M.rungTarget(M.STEADY[0], 1)})`);
