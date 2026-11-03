@@ -57,9 +57,9 @@ export class FleetHangar {
     el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.flap(); this.render(); });
     // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS (src/swipe.js).
     const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.flap(); this.render(); };
-    onSwipe(el, { next: () => goTab(1), prev: () => goTab(-1) });
+    onSwipe($('hangar'), { next: () => goTab(1), prev: () => goTab(-1) });   // the WHOLE screen (the list is short now: #hFleet alone left a dead area below it on a tall phone)
     const era = $('hNextPlane'); if (era) era.onclick = () => this.eraSheet(s);
-    const pinfo = el.querySelector('[data-pinfo]'); if (pinfo) pinfo.onclick = () => this.planeSheet(s);
+    const pinfo = el.querySelector('[data-planeinfo]'); if (pinfo) pinfo.onclick = () => this.planeSheet(s);
     if (!this.sel) { const first = el.querySelector('.rowc-price.btn.go:not([disabled]), .rowc-price.btn.free:not([disabled])'); if (first) first.classList.add('pulse1'); }   // the ONE primary, shown once: no strip item is picked, so the first affordable price pulses
     el.querySelectorAll('[data-finfo]').forEach(b => b.onclick = () => { const [kind, id] = b.dataset.finfo.split(':'); this.showInfo(s, kind, id); });
     el.querySelectorAll('[data-fly]').forEach(b => b.onclick = e => { e.stopPropagation(); if (choosePlane(s, b.dataset.fly)) { this.preview = b.dataset.fly; this.ui.persist(); this.ui.sfx.coin(); this.render(); } });
@@ -282,7 +282,7 @@ export class FleetHangar {
     const lines = Object.entries(PLANE_LINES).map(([line, name]) =>
       this.lineHTML(s, { kind: 'plane', id: `${pl.id}.${line}`, name, levels: pl.lines[line], have: mine[line] || 0, eraOf: () => pl.era, now })).join('');
     return `<div class="fplanes-rows">${cards}</div>${this.eraLineHTML(s)}
-      <h3 class="tree-head">${pl.name.toUpperCase()} <button class="btn hp-info" data-pinfo="1" type="button" aria-label="How planes work">i</button></h3>${lines}`;
+      <h3 class="tree-head">${pl.name.toUpperCase()} <button class="btn hp-info" data-planeinfo="1" type="button" aria-label="How planes work">i</button></h3>${lines}`;
   }
 
   groupHTML(s, list, kind) {

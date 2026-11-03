@@ -14,7 +14,7 @@ group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/
 group aimed-route | src/aim.js src/hub.js src/route.js | skiptrip
 group results-card | src/resultscard.js src/nextup.js src/ui.js src/tour.js src/tips.js | rewards missions wildfield eras school progression firsthour-real biodiversity fares rails2
 group heavy-onboarding | src/missions2.js src/upgrades.js src/hub.js src/wild.js | postrails
-group records | src/records.js src/recordsui.js | records-screen badgeart
+group records | src/records.js src/recordsui.js | records-screen
 group save-season2 | src/save.js src/season2.js src/areas.js src/season.js src/crossings.js src/updates.js src/main.js src/reprice.js src/welcome.js | season2 season2-smoke savesafe updates cache reset welcome saveloss preview
 group nature-screen | src/wild.js src/nature.js src/habitats.js src/habitat/* src/landtrees.js src/wildlife.js src/animalart.js src/weboflife.js src/nexthere.js | nature nature-unknown wild wildfield regions biodiversity treepic wildlife forestmeter fields homenature
 group hangar-upgrades | src/hangar.js src/fleet.js src/fleetfacts.js src/planelook.js src/planeparts.js src/badges.js src/eras.js src/statbars.js src/capability.js src/cappool.js src/capworker.js src/finance.js | hangar hangarnew upgrades progression looks fleetfacts badges badgeart fares eras crystals onrails payoffdraw payoffbroken
@@ -39,3 +39,5 @@ group rules-imports | src/aim.js | sim-bank fares flight
 group ux-fit | src/resultscard.js src/nextup.js | fitscreen overlap taptargets rowfit hangar nature
 ci-only | onrails320
 group save-writers | src/fresh.js src/records.js src/recordsui.js src/ui.js src/tour.js src/wild.js src/main.js src/save.js src/habitats.js src/finance.js src/upgrades.js src/reprice.js src/startchoice.js src/missions.js src/route.js src/school.js src/capability.js src/pilot.js | sim-bank
+group records-badge | src/records.js src/recordsui.js | badgeart
+group hangar-swipe | src/hangar.js | swipe features
