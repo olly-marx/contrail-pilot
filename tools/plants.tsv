@@ -364,3 +364,4 @@ routechip	src/ui.js	s/if ((s.tours || \[\]).some(t => t === 'globe-hint' || t ==
 routechip	src/ui.js	s/hint.hidden = !s.tutorialDone ||/hint.hidden = true ||/	the caption never shows
 routechip	src/globe.js	s/ if (onUse) onUse(); }   \/\/ (the first drag: the hint can go)/ }/	a drag on the globe does not remove the caption
 crossingmoment	src/crossingview.js	s/(s.told ? s.kmText : `NEW ${s.kmText}`)/s.kmText/	the row never says NEW before the sheet is seen
+schoolicy	src/school.js	s/if (this.inT > 0.6) this.madeDay = true;/if (s.contrails.length > 25) this.madeDay = true;/	the old count rule back: a slow phone never has 26 puffs alive, and the daytime contrail step says missed it for ever

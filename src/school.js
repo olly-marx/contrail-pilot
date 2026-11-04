@@ -44,11 +44,14 @@ export class School {
       { say: tip('school-icy'),
         setup: () => { this.issr = this.bigIssr(); },
         // Missed it? Put more icy air right in front of the plane, so this step can always be done.
-        retry: () => { if (s.contrails.length > 25) this.madeDay = true;
+        // "Made a contrail" is time INSIDE the patch with puffs behind you, not a count of live puffs: at 24 fps (or with a fuel that puffs less often)
+        // a perfect pass never had 26 puffs alive at once, and the step said 'missed it' for ever (the user, 2026-11-04).
+        retry: dt => { if (s.wasInIssr && s.contrails.length > 0) this.inT = (this.inT || 0) + dt;
+          if (this.inT > 0.6) this.madeDay = true;
           if (!this.madeDay && this.issr.x + this.issr.width < s.plane.x) { this.issr = this.bigIssr(); this.ui.coach(tip('school-missed'), false); } },
         // Done once you are OUT the other side and have had a second to see the contrail behind you.
         // (Contrail squares scroll off screen fast, so remember that it was made.)
-        done: () => { if (!this.madeDay || s.wasInIssr) { this.outT = 0; return false; } this.outT = (this.outT || 0) + 1 / 60; return this.outT > 1.2; } },
+        done: dt => { if (!this.madeDay || s.wasInIssr) { this.outT = 0; return false; } this.outT = (this.outT || 0) + dt; return this.outT > 1.2; } },
       { say: tip('school-shade'), tap: true, high: true,
         setup: () => s.hud.highlight(true) },
       { say: tip('school-dusk'),
@@ -59,9 +62,9 @@ export class School {
           s.time.delayedCall(2800, () => { if (this.i >= 0) this.dusk.push(stormAt(Phaser.Math.Between(150, SKY_H - 150))); });
         },
         // Stay in the dark for a moment before the lesson card (2026-10-23): it used to end in the very frame the sky went dark.
-        done: () => {
+        done: dt => {
           if (s.isDay || s.nightAmount() <= 0.95 || this.dusk.length < 2 || !this.dusk.every(st => st.rects[0].x + STORMS.width < s.plane.x)) { this.darkT = 0; return false; }
-          this.darkT = (this.darkT || 0) + 1 / 60; return this.darkT > 0.6;
+          this.darkT = (this.darkT || 0) + dt; return this.darkT > 0.6;
         } },
       lesson('lesson-night', tip('lesson-night')),
       { say: tip('school-night'),
@@ -122,8 +125,8 @@ export class School {
     const step = this.steps[this.i];
     if (!step || step.tap) return;
     this.t += dt;
-    if (step.retry) step.retry();
-    if (step.done && step.done()) this.next();
+    if (step.retry) step.retry(dt);
+    if (step.done && step.done(dt)) this.next();
   }
 
   // During flight school nothing ends the flight early: bump the plane back instead.
