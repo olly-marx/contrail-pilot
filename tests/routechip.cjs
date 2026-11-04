@@ -20,7 +20,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       return { shown: !h.hidden && r.height > 0, text: h.textContent, inGlobe: r.top >= g.top && r.bottom <= g.bottom + 1 && r.left >= g.left - 1 && r.right <= g.right + 1, chipH: Math.round(c.height), chipText: document.getElementById('hubRoute').textContent, tag: document.getElementById('hubRoute').tagName, fits: R.scrollHeight <= R.clientHeight, goBottom: Math.round(go.bottom), barTop: Math.round(bar.top) }; });
     check(h0.shown && /Tap a dot to choose/.test(h0.text) && h0.inGlobe, `${tag}: the globe's caption shows inside its picture: ${JSON.stringify(h0)}`);
     check(h0.tag === 'BUTTON' && h0.chipH >= 40 && /›/.test(h0.chipText), `${tag}: the route line is a 40 px chip with an arrow: ${JSON.stringify([h0.tag, h0.chipH, h0.chipText])}`);
-    check(h0.goBottom <= h0.barTop, `${tag}: TAKE OFF is above the bar with the caption and the chip (fitscreen is the fit gate; TAKE OFF ${h0.goBottom} vs bar ${h0.barTop})`);
+    check(h0.fits && h0.goBottom <= h0.barTop, `${tag}: HOME does not scroll and TAKE OFF is above the bar with the caption and the chip (fits ${h0.fits}; TAKE OFF ${h0.goBottom} vs bar ${h0.barTop})`);
     // 2. the first spin removes it for good.
     await p.click('#hubSpinR'); await p.waitForTimeout(300);
     const h1 = await p.evaluate(() => ({ hidden: document.getElementById('hubHint').hidden, saved: (JSON.parse(localStorage.getItem('contrailPilot.v2')).tours || []).includes('globe-hint') }));
