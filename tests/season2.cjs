@@ -76,11 +76,12 @@ const KEY = 'contrailPilot.v2';
   await p.goto(URL + '?s2unlock=1'); await ready(p);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
+  if (await p.$('#sheet')) await p.click('#sheet .sheet-ok');   // (R-A: a ready crossing announces itself once, on HOME: LATER, then the route panel)
   if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.click('#hubRoute');
   const btn = await p.$('#jCross [data-cross="warsaw-stockholm"]');
   check(!!btn, 'with ?s2unlock=1 the crossing can be flown');
   if (btn) {
-    await btn.click(); await started(p);
+    await btn.click(); await p.click('#sheet .sheet-action'); await started(p);   // (R-A: the crossing sheet is the confirm before the flight starts)
     const fl = await p.evaluate(() => { const g = game.scene.getScene('game'); return { c: g.crossing && g.crossing.id, to: g.nextAirport.name, at: Math.round(g.nextAirport.worldX - g.distancePx), dist: g.distText.text }; });
     check(fl.c === 'warsaw-stockholm' && fl.to === 'STOCKHOLM' && fl.at >= 6400 && /TO STOCKHOLM/.test(fl.dist), `flying the crossing: ${JSON.stringify(fl)}`);
     await p.evaluate(() => { const g = game.scene.getScene('game'); g.landedAt = 'STOCKHOLM'; g.distancePx = 7000; g.finish({ landed: true }); });

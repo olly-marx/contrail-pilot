@@ -133,11 +133,12 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', crossing: document.getElementById('hubNext').classList.contains('crossing') }));
   check(nextCard.crossing && /Cross to/i.test(nextCard.text), `D: the hub's UP NEXT leads with the ready crossing (R3: "Cross to <city>"): ${JSON.stringify(nextCard)}`);
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
+  if (await p.$('#sheet')) await p.click('#sheet .sheet-ok');   // (R-A: a ready crossing announces itself once, on HOME: LATER, then the route panel)
   if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.click('#hubRoute');
   const btn = await p.$('#jCross [data-cross="warsaw-stockholm"]');
   check(!!btn, 'D: the FLY THE CROSSING button is there');
   if (btn) {
-    await btn.click(); await started(p);
+    await btn.click(); await p.click('#sheet .sheet-action'); await started(p);   // (R-A: the crossing sheet is the confirm before the flight starts)
     const fl = await p.evaluate(() => { const g = game.scene.getScene('game'); return { c: g.crossing && g.crossing.id, to: g.nextAirport.name, at: Math.round(g.nextAirport.worldX - g.distancePx), dist: g.distText.text, path: g.path.slice(0, 3) }; });
     check(fl.c === 'warsaw-stockholm' && fl.to === 'STOCKHOLM' && fl.at >= 6400 && fl.at <= 6500 && /TO STOCKHOLM/.test(fl.dist), `D: the crossing flight starts: Warsaw to Stockholm, 6,500 km away: ${JSON.stringify(fl)}`);
   }
