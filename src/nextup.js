@@ -52,8 +52,8 @@ export function nextUp(save, { crossingReady = null, crossing = null, limit = 3 
   const out = [], lead = leadOf(save, crossingReady, crossing), vis = M2.visible(save), daily = M2.lessonsLeft(save).length ? [] : M2.dailyVisible(save);
   if (lead) out.push(lead);
   if (vis[0]) out.push(itemOf(save, vis[0]));
-  // R-A: while a crossing is near but not ready, ONE quiet line says which condition is nearest (tap: where to do it).
-  if (crossing && !crossing.ready && crossing.nearest && !lead) out.push({ key: 'cross:progress', short: clip(nearestLine(crossing)), full: `${crossing.to} needs: ${crossing.conds.filter(x => !x.done).map(x => `${x.label} (${x.status})`).join(', ')}`, where: crossing.nearest.where, right: '', cross: true });
+  // R-A: while a crossing is near but not ready (and the lessons are done: they come first), ONE quiet line says which condition is nearest (tap: where to do it).
+  if (crossing && !crossing.ready && crossing.nearest && !lead && !M2.lessonsLeft(save).length) out.push({ key: 'cross:progress', short: clip(nearestLine(crossing)), full: `${crossing.to} needs: ${crossing.conds.filter(x => !x.done).map(x => `${x.label} (${x.status})`).join(', ')}`, where: crossing.nearest.where, right: '', cross: true });
   if (daily[0]) out.push(itemOf(save, daily[0]));
   for (const m of vis.slice(1)) { if (out.length >= limit) break; out.push(itemOf(save, m)); }
   return out.filter((x, i, a) => a.findIndex(y => y.key === x.key) === i).slice(0, limit);
