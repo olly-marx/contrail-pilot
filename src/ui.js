@@ -204,9 +204,9 @@ export class UI {
     $('title').classList.add('hub');
     $('hubGear').onclick = () => this.openGear();   // R10 (research/UX-MASTER-PLAN.md C2): ONE gear sheet: how to play, flight school, sound, about, reset, the credit
     $('hubBack').onclick = () => { sfx.flap(); this.go('fly'); };
-    $('hubSpinL').onclick = () => this.hubGlobe && this.hubGlobe.nudge(-24);
-    $('hubSpinR').onclick = () => this.hubGlobe && this.hubGlobe.nudge(24);
-    $('hubRoute').onclick = () => { sfx.flap(); $('title').classList.toggle('world'); };   // the route choice and crossings, on demand
+    $('hubSpinL').onclick = () => { this.globeUsed(); this.hubGlobe && this.hubGlobe.nudge(-24); };
+    $('hubSpinR').onclick = () => { this.globeUsed(); this.hubGlobe && this.hubGlobe.nudge(24); };
+    $('hubRoute').onclick = () => this.openRouteSheet();   // R-B: the route choice and the crossings open as a SHEET (no page push)
   }
   // 'Skip the mission route this trip' (src/aim.js): a button under HOME's route line, shown only while a city mission is open (v.skip).
   // It flies the normal tour for this trip; the mission stays open; a landing clears it (rules.js), a crash keeps it.
@@ -216,6 +216,17 @@ export class UI {
       b.onclick = () => { sfx.flap(); toggleSkip(this.save); writeSave(this.save); this.renderHub(); }; }
     b.hidden = !skip; b.textContent = skip === 'on' ? SKIP_TEXT.undo : SKIP_TEXT.skip;
   }
+  // R-B: the globe's caption goes away for good after the first spin, drag or dot tap (a save flag in `tours`, like the other one-time hints).
+  globeUsed() { const s = this.save; if ((s.tours || []).some(t => t === 'globe-hint' || t === '*')) return; s.tours = [...(s.tours || []), 'globe-hint']; writeSave(s); const h = $('hubHint'); if (h) h.hidden = true; }
+  // R-B: the route choice and the crossings (the old #tJourney panel behind the route line) as a SHEET: the panel's own node is moved into it (its handlers
+  // come along) and handed back when the sheet closes or is replaced (showSheet's onClose), so nothing pushes the page down.
+  openRouteSheet() {
+    sfx.flap(); this.renderJourney();
+    const j = $('tJourney'), home = j.parentNode, next = j.nextSibling;
+    showSheet({ eyebrow: 'YOUR ROUTE', title: 'Which way?', ok: 'CLOSE', html: '<div id="routeSheetBody" class="route-sheet"></div>', onClose: () => { home.insertBefore(j, next); j.style.display = ''; } });
+    $('routeSheetBody').appendChild(j); j.style.display = 'block';
+  }
+
   // The gear sheet (R10): the four small buttons, reset and the credit behind one gear, as a sheet (src/sheet.js) with 40 px buttons. The old buttons
   // stay in the page (the classic screens use them, and their handlers are the ones the sheet calls), hidden on HOME.
   openGear() {
@@ -255,11 +266,14 @@ export class UI {
     $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;
     $('goBtn').textContent = toHangar ? 'PICK YOUR FREE PART FIRST' : s.tutorialDone ? 'TAKE OFF' : 'START';
     this.renderSkip(v.skip);
-    $('hubRoute').innerHTML = v.route.join(' &#9654; ') + (v.aim ? ' <span class="small">(mission)</span>' : '');   // the next stops (to the mission's city when aimed: src/aim.js)
+    $('hubRoute').innerHTML = v.route.join(' &#9654; ') + (v.aim ? ' <span class="small">(mission)</span>' : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     const path = routeFor(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
-    const pick = name => { sfx.flap(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
+    const pick = name => { this.globeUsed(); sfx.flap(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
+    const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it
+    hint.textContent = v.worldChoice ? 'Drag to spin. Tap a dot to choose.' : 'Drag the world to spin it.';
     this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, lit: linksFor(s),
+      onUse: () => this.globeUsed(),
       cross: ready ? { from: city(ready.from), to: city(ready.to), onTap: () => this.showCrossingSheet(ready) } : null });   // R-A: the ready crossing's arc and its breathing ring (tap: the sheet)
     this.hubWords = v.words;
   }

@@ -4,10 +4,10 @@
 export const SHEET_WORDS = 60;
 export const wordCount = s => String(s || '').trim().split(/\s+/).filter(Boolean).length;
 
-// opts: { eyebrow, title, body | html, pic (url), action: { label, onTap }, ok: 'OK' }. Returns the close function.
+// opts: { eyebrow, title, body | html, pic (url), action: { label, onTap }, ok: 'OK', onClose }. Returns the close function.
 export function showSheet(opts = {}) {
   let el = document.getElementById('sheet');
-  if (el) el.remove();
+  if (el) { if (el.__onClose) el.__onClose(); el.remove(); }   // (a sheet replaced by another still tells its owner: R-B's route sheet hands #tJourney back)
   el = document.createElement('section');
   el.id = 'sheet'; el.className = 'overlay top sheet-wrap';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -20,7 +20,8 @@ export function showSheet(opts = {}) {
     + (opts.action ? `<button class="btn go sheet-action" type="button">${esc(opts.action.label)}</button>` : '')
     + `<button class="btn sheet-ok${opts.action ? '' : ' go'}" type="button">${esc(opts.ok || 'OK')}</button></div></div>`;
   document.body.appendChild(el);
-  const close = () => { el.remove(); };
+  el.__onClose = opts.onClose || null;
+  const close = () => { const f = el.__onClose; el.__onClose = null; el.remove(); if (f) f(); };
   el.querySelector('.sheet-ok').onclick = close;
   el.onclick = e => { if (e.target === el) close(); };   // a tap outside the card
   const a = el.querySelector('.sheet-action');

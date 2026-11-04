@@ -700,10 +700,15 @@ h2.sub { margin-top: -4px; }
 .rc-row.must { flex-wrap: wrap; }
 .hub-next .next-pic { flex: 0 0 100%; max-width: 100px; margin: 2px auto 0; }   /* 100 px (53 tall): the first-hour lead row must leave TAKE OFF on a 320x568 screen (measured) */
 .hub-world { position: relative; text-align: center; }
-.hub-globe { width: min(100%, 34vh); height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
+.hub-globe-wrap { position: relative; width: min(100%, 34vh); margin: 0 auto; }
+.hub-hint { position: absolute; left: 4px; right: 4px; bottom: 6px; margin: 0; padding: 2px 4px; font-size: 7px; line-height: 1.5; color: #fff; background: rgba(27, 27, 47, .72); text-align: center; pointer-events: none; }   /* R-B: the globe's caption, gone after the first spin or dot tap */
+.hub-globe { width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; display: block; margin: 0 auto; }
 .hub-spin { position: absolute; top: 42%; background: rgba(26,26,46,.55); color: #fff; border: 0; font-size: 14px; padding: 8px 6px; cursor: pointer; }
 #hubSpinL { left: 0; } #hubSpinR { right: 0; }
 .hub-route { margin: 2px 0 0; font-size: 8px; }
+.chip.hub-route { display: flex; justify-content: center; margin: 4px auto 0; text-align: center; }   /* R-B: the route line is a 40 px chip: it opens the route sheet */
+.route-sheet { max-height: calc(100vh - 170px); overflow-y: auto; text-align: left; }
+.route-sheet #jGlobe { display: none; }
 .hub-route small { display: block; opacity: .7; }
 #title.hub .hub-skip { display: flex; justify-content: center; text-align: center; border: 0; background: transparent; color: var(--muted); text-decoration: underline; }   /* a quiet option under the route, not a rival to TAKE OFF (the screenshot, R3): still a 40 px target */   /* 'Skip mission route this trip' (src/aim.js): the shared .chip, a 40 px tap target, centred under the route */
 .hub-back { position: fixed; left: 6px; top: 6px; z-index: 30; font-size: 8px; }

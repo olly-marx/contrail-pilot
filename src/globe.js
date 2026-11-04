@@ -171,7 +171,7 @@ function getIslands() { return islands || (islands = ISLANDS); }
 // never a drag; anything that moved further is a drag and never picks. The picture is redrawn only when it changes: at one
 // sample a pixel while it moves, five once it settles. Returns { frame(), nudge(dx), destroy() }.
 export const TAP_PX = 6, TAP_MS = 400;
-export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null, cross = null } = {}) {
+export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null, cross = null, onUse = null } = {}) {
   let f = frameRoute(cross ? [...(path.length ? path : [CITIES[0]]), cross.from, cross.to] : (path.length ? path : [CITIES[0]]));   // (a ready crossing is framed too: its destination must be on the globe)
   let phase = 0, pulse = cross ? setInterval(() => { phase ^= 1; redraw(1); }, 700) : 0;
   canvas.width = canvas.height = SIZE;
@@ -199,7 +199,7 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null
   const onMove = ev => {
     if (!down || ev.pointerId !== down.id) return;
     if (!down.moved && Math.hypot(ev.clientX - down.x0, ev.clientY - down.y0) < TAP_PX) return;   // still a tap so far
-    if (!down.moved) { down.moved = true; down.x = down.x0; down.y = down.y0; canvas.style.cursor = 'grabbing'; }
+    if (!down.moved) { down.moved = true; down.x = down.x0; down.y = down.y0; canvas.style.cursor = 'grabbing'; if (onUse) onUse(); }   // (the first drag: the hint can go)
     const k = scale(), dx = (ev.clientX - down.x) * k, dy = (ev.clientY - down.y) * k, now = performance.now(), dt = Math.max(1, now - down.t);
     f = turn(f, dx, dy, R()); down.vx = dx / dt * 16; down.vy = dy / dt * 16; down.x = ev.clientX; down.y = ev.clientY; down.t = now;
     redraw(1);
