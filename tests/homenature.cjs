@@ -18,8 +18,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
         fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } });
     await p.goto(URL); await ready(p); await p.waitForTimeout(800);
     await p.click('#tabNature'); await p.waitForTimeout(800);
-    const on = await p.evaluate(() => (document.querySelector('#wRegions .btn.on') || {}).textContent || '');
-    const ukTab = await p.evaluate(() => { const b = document.querySelector('#wRegions [data-region="woodland"]'); return b ? !b.disabled : false; });
+    const on = await p.evaluate(() => (document.getElementById('wLandName') || {}).textContent || '');
+    const ukTab = await p.evaluate(() => { return !!document.querySelector('#wRegions [data-region="woodland"]'); });
     if (area !== 'weurope' && !been && ukTab) fails.push(`${city}: the UK tab is open to a player who never flew there`);
     rows.push(`${city}: ${on.trim()}`);
     if (!on.includes(want) || errs.length) fails.push(`${city}: NATURE opens on "${on.trim()}", want "${want}"${errs.length ? ` (errors: ${errs})` : ''}`);
@@ -35,7 +35,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
         tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-boards', 'r-bonus', 'nature-lead'], fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } });
     await p.goto(URL); await ready(p); await p.waitForTimeout(800);
     await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(900);   // R3: UP NEXT's lead row (the tree parcels) leads to NATURE
-    const st = await p.evaluate(() => ({ on: (document.querySelector('#wRegions .btn.on') || {}).textContent || '', card: !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]') }));
+    const st = await p.evaluate(() => ({ on: (document.getElementById('wLandName') || {}).textContent || '', card: !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]') }));
     let lit = null; for (let i = 0; i < 30; i++) { lit = await p.evaluate(() => { const t = document.getElementById('tour'); if (t.hidden) return null; const r = t.querySelector('.tring').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, text: t.querySelector('.tbubble p').textContent }; }); if (lit && /parcels/i.test(lit.text)) break; await p.waitForTimeout(150); }
     if (lit) { await p.mouse.click(lit.x, lit.y); await p.waitForTimeout(700); }
     const got = await p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).levels || {}).trees || 0);

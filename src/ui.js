@@ -322,7 +322,7 @@ export class UI {
     if (tab === 'missions') return this.showMissions();
     if (tab === 'nature') { if (this.tour) this.tour.markDone('nature-lead'); this.showOnly('nature');
       if (this.wild && parcelsWanted(this.save)) this.wild.region = this.wild.home() || 'woodland';   // L5 waits for parcels: open on the tab that sells them (the home land's)
-      if (this.wild) { this.wild.rowNew = null; this.wild.render(); }   // a new visit: last visit's dots are gone; the land's own render marks it seen (R6)
+      if (this.wild) { this.wild.rowNew = null; this.wild.hintOn = false; this.wild.render(); }   // a new visit: last visit's dots are gone; the land's own render marks it seen (R6)
       if (this.tour) this.tour.maybe('nature'); return; }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }
     if (tab === 'boards') { this.showOnly('boards'); if (FEATURES.season2) { showRecords(this.save, { onSeen: () => this.refreshDots(), toast: (t, b) => this.toast(t, b, 'good', 6) }); this.refreshDots(); return; }

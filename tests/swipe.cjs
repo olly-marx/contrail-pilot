@@ -128,7 +128,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const pin0 = await p.evaluate(() => { const s = document.getElementById('wScene').getBoundingClientRect(); return Math.round(s.top); });
   await p.evaluate(() => { document.getElementById('nature').scrollTop = 700; }); await p.waitForTimeout(300);
   const pin1 = await p.evaluate(() => { const s = document.getElementById('wScene').getBoundingClientRect(), n = document.getElementById('nature'), at = document.elementFromPoint(window.innerWidth / 2, 2);
-    return { top: Math.round(s.top), bottom: Math.round(s.bottom), scrolled: n.scrollTop, edge: at && !!at.closest('.wpin'), tabsTop: Math.round(document.getElementById('wRegions').getBoundingClientRect().top) }; });
+    return { top: Math.round(s.top), bottom: Math.round(s.bottom), scrolled: n.scrollTop, edge: at && !!at.closest('.wpin'), tabsTop: Math.round(document.getElementById('wLandNav').getBoundingClientRect().top) }; });
   check(pin1.scrolled > 300, `the NATURE page scrolled (${pin1.scrolled})`);
   check(pin1.top >= 0 && pin1.top < 60 && pin1.tabsTop >= 0 && pin1.tabsTop < 40 && pin1.bottom > 60, `the tabs and the picture stay pinned at the top while the lists scroll: ${JSON.stringify(pin1)} (was ${pin0})`);
   check(pin1.edge === true, 'nothing scrolls past ABOVE the pinned block');

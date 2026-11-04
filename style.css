@@ -519,10 +519,6 @@ h2.sub { margin-top: -4px; }
 #nature .panel { display: flex; flex-direction: column; }
 .wpin { position: sticky; top: -12px; z-index: 6;   /* -12px: the overlay's own padding, so nothing scrolls past ABOVE the pinned block */ display: grid; gap: 6px; padding: 8px 0; background: var(--paper); box-shadow: 0 4px 0 -1px rgba(27, 27, 47, .25); }
 @media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }
-.wregions { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto; padding-bottom: 2px; }
-.wregions .btn { flex: 0 0 auto; }
-.wregions .btn { font-size: 8px; padding: 4px 6px; }
-.wregions .btn small { font-size: 6px; opacity: .7; }
 .wscene { position: relative; width: 100%; aspect-ratio: 288 / 120; overflow: hidden; border: 3px solid var(--ink); box-sizing: content-box;
   background: #8ed3ef no-repeat center / 100% 100%; image-rendering: pixelated; }
 .wscene .w-critter { position: absolute; transform: scale(2); transform-origin: bottom center; image-rendering: pixelated; }
@@ -969,8 +965,6 @@ h2.sub { margin-top: -4px; }
 
 /* ---------- R6: NATURE (UX plan C4). The land tabs scroll with an edge fade (a tab is never cut by a hard edge), a dot on a land with news; the
    meter has an (i); the intro / NEXT HERE box / headings are gone; NEXT is the one primary; the locked tier is one line. ---------- */
-.wregions { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 22px), transparent 100%); padding-left: 12px; padding-right: 22px; }
-.wregions .btn { position: relative; }
 .wpin #wMeter { display: flex; align-items: center; gap: 6px; }
 .wpin #wMeter .meter { flex: 1; min-width: 0; }
 .w-i { flex: none; min-width: var(--tap); }
@@ -984,3 +978,24 @@ h2.sub { margin-top: -4px; }
 .rowc > .rowc-info { grid-area: 2 / 2; align-self: end; justify-self: end; position: relative; z-index: 1; min-width: 28px; font-size: 8px; padding: 3px 6px; }
 .rowc.tour-info .rowc-tap, .rowc.tour-info .rowc-price { pointer-events: none; }
 .rowc.tour-price .rowc-info, .rowc.tour-only .rowc-info { pointer-events: none; }
+
+/* ---------- NATURE land nav (2026-11-04): '‹ Temperate woodland 1 / 6 ›', 40 px arrows, one dot per OPENED land, a first-visit ghost swipe. The arrows are CSS
+   chevrons (the pixel font has no reliable arrow glyph). ---------- */
+.wlandnav { display: flex; align-items: center; gap: 4px; }
+.wl-mid { flex: 1; min-width: 0; text-align: center; }
+.wl-name { display: block; font-size: 10px; line-height: 1.3; }
+.wl-pos { white-space: nowrap; color: var(--muted); margin-left: 4px; }
+.wl-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 0; margin-top: 2px; }
+.wl-dots.single { display: none; }
+.wl-dot { position: relative; width: 22px; height: 18px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+.wl-dot::before { content: ''; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; background: #b9b19c; border: 2px solid var(--ink); border-radius: 50%; box-sizing: content-box; }
+.wl-dot.on::before { background: var(--ink); }
+.wl-dot .dot { top: 0; right: 2px; }
+.wl-arrow { position: relative; flex: none; width: var(--tap); height: var(--tap); padding: 0; background: #d8d4c8; border: 0; cursor: pointer; box-shadow: 0 -3px 0 0 var(--ink), 0 3px 0 0 var(--ink), -3px 0 0 0 var(--ink), 3px 0 0 0 var(--ink); }
+.wl-arrow[disabled] { opacity: .35; cursor: default; }
+.wl-chev { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -8px; border: solid var(--ink); border-width: 3px 3px 0 0; transform: rotate(45deg); }
+.wl-chev.prev { margin-left: -2px; transform: rotate(-135deg); }
+.wl-hint { margin: 2px 0 0; text-align: center; color: var(--green-dark); }
+#wScene.hint-swipe { animation: wlhint 2.8s ease-in-out 1; }
+@keyframes wlhint { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-26px); } 30% { transform: translateX(0); } 50% { transform: translateX(-26px); } 65% { transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) { #wScene.hint-swipe { animation: none; } }

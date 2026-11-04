@@ -22,21 +22,24 @@ const KEY = 'contrailPilot.v2';
     return p;
   };
   const get = p => p.evaluate(k => JSON.parse(localStorage.getItem(k)), KEY);
-  const tab = (p, r) => p.evaluate(r => { const e = document.querySelector(`[data-region="${r}"]`); return e && { off: e.disabled, text: e.textContent.trim() }; }, r);
+  const tab = (p, r) => p.evaluate(r => { const e = document.querySelector(`#wRegions [data-region="${r}"]`); return e ? { open: true } : null; }, r);   // (the land nav: a dot per OPENED land; a locked land has none)
   const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], tours: ['*'], landings: 9, priceVersion: 2, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // a save from after the eras reset (src/fleet.js)
 
   // 1. Never been anywhere but London: only the UK tab opens.
   let p = await open({ ...base, seeds: 500, crystals: 50, visited: ['LONDON'] });
   await p.click('#tabNature'); await p.waitForTimeout(300);
-  check(!(await tab(p, 'woodland')).off && (await tab(p, 'mediterranean')).off, `only the UK is open before travelling: ${JSON.stringify(await tab(p, 'mediterranean'))}`);
+  check(!!(await tab(p, 'woodland')) && !(await tab(p, 'mediterranean')), `only the UK is open before travelling: ${JSON.stringify(await tab(p, 'mediterranean'))}`);
   await p.close();
 
   // 2. Been to Rome: the Mediterranean opens; the desert and the savanna say "fly there".
   p = await open({ ...base, seeds: 500, crystals: 50, visited: ['LONDON', 'PARIS', 'BERLIN', 'ROME'], habitat: { woodland: ['deadwood'] } });
   await p.click('#tabNature'); await p.waitForTimeout(300);
   const med = await tab(p, 'mediterranean'), des = await tab(p, 'desert'), sav = await tab(p, 'savanna');
-  check(!med.off && des.off && /fly there/.test(des.text) && sav.off && /fly there/.test(sav.text), `tabs: ${JSON.stringify({ med, des, sav })}`);
-  await p.click('[data-region="mediterranean"]'); await p.waitForTimeout(300);
+  check(!!med && !des && !sav, `lands: ${JSON.stringify({ med, des, sav })}`);
+  await p.click('#wMeter [data-minfo]'); await p.waitForTimeout(200);
+  check(/more lands: fly there to open them/.test(await p.evaluate(() => (document.getElementById('sheet') || {}).textContent || '')), 'the meter (i) says how many more lands there are: fly there to open them');
+  await p.click('#sheet .sheet-ok').catch(() => {}); await p.waitForTimeout(150);
+  await p.click('#wRegions [data-region="mediterranean"]'); await p.waitForTimeout(300);
 
   // 2b. Any airport of a region opens it (src/cities.js), not only the old 16-city loop: NAIROBI opens the savanna.
   const nb = await p.evaluate(async () => { const w = await import('./src/wild.js'); return [w.discovered({ visited: ['NAIROBI'] }, 'savanna'), w.discovered({ visited: ['NAIROBI'] }, 'rainforest')]; });

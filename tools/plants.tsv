@@ -340,6 +340,9 @@ naturefresh	src/wild.js	s/ \&\& markSeen(s, natureScope(this.region), fo)) this.
 naturefresh	src/wild.js	s/ \&\& id !== this.region \&\& dl\[natureScope(id)\] ?/ \&\& false ?/	no dot on a land tab with news
 naturefresh	src/wild.js	s/^    this.renderNext();/    \/\/ this.renderNext();/	the NEXT line is never drawn
 fitscreen	index.html	s/<div id="wNextLine"><\/div>/<h3>Habitat projects<\/h3><p class="small">Things people really do to help nature. Each one helps life come back, and new animals may appear on your flights! Plant trees as you fly over a land and finish its projects to raise its biodiversity.<\/p><div id="wNextLine"><\/div>/	the NATURE intro paragraph and heading are back: the first card falls below the tab bar at 320x568
-fitscreen	style.css	s/^\.wregions { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: auto;/.wregions { display: flex; flex-wrap: nowrap; gap: 4px; overflow-x: visible;/	a fixed-width land tab row (no scroll): the tabs run past the screen side
 naturefresh	src/wild.js	s/b.onclick = e => { this.toolId = null; if (this.field) this.field.clearGhosts(); go(e); };/b.onclick = e => { go(e); };/	the planting preview survives the buy (the ghost trees stay in the land)
 naturefresh	src/wild.js	s/this.toolId = this.toolId === id ? null : id; this.previewId = null;/this.toolId = null; this.previewId = null;/	tapping a planting card draws no ghost trees
+natureland	src/wild.js	s/\$('wPrevLand').hidden = !many; \$('wNextLand').hidden = !many;/\$('wPrevLand').hidden = true; \$('wNextLand').hidden = true;/	the arrows are missing when 2+ lands are open
+natureland	src/wild.js	s/if (first) { s.tours/if (false) { s.tours/	the first visit never says swipe or tap
+natureland	src/wild.js	s/\${newDir(at + 1, openIds.length) ? '<i class="dot"><\/i>' : ''}/${false ? '<i class="dot"><\/i>' : ''}/	no dot on the arrow toward a newly opened land
+natureland	src/wild.js	s/const ids = Object.keys(REGION_NAMES), openIds = ids.filter(id => discovered(s, id))/const ids = Object.keys(REGION_NAMES), openIds = ids.slice()/	the locked lands are shown as dots too (the 14-tab problem)

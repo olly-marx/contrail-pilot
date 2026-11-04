@@ -71,7 +71,11 @@
   <section id="nature" class="overlay screen" hidden>
     <div class="panel wide">
       <div class="hangar-head"><h2>NATURE</h2><span class="treebank"><i class="seedicon"></i><b id="wSeeds">0</b><i class="crysicon"></i><b id="wCrystals">0</b></span></div>
-      <div class="wpin"><div id="wRegions" class="wregions" data-scrollrow></div>
+      <div class="wpin"><div id="wLandNav" class="wlandnav">
+        <button id="wPrevLand" class="wl-arrow" type="button" aria-label="Previous land" hidden></button>
+        <div class="wl-mid"><b id="wLandName" class="wl-name"></b><div id="wRegions" class="wl-dots"></div></div>
+        <button id="wNextLand" class="wl-arrow" type="button" aria-label="Next land" hidden></button></div>
+      <p id="wLandHint" class="small wl-hint" hidden></p>
       <div id="wScene" class="wscene"></div>
       <div id="wMeter"></div>
       <div id="wStrip" class="wstrip" hidden></div></div>   <!-- the preview strip (DESIGN-HANGAR-NATURE §4): pinned under the land, beside its ghost -->

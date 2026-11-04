@@ -70,19 +70,27 @@ export class WildScreen {
     const sc = natureScope(this.region); this.rowNew[sc] = this.rowNew[sc] || new Set(); (fr[sc] || []).forEach(k => this.rowNew[sc].add(k));
     const isNew = key => !!(this.rowNew[sc] && this.rowNew[sc].has(key));
     this.isNew = isNew;
-    $('wRegions').innerHTML = Object.entries(REGION_NAMES).map(([id, name]) => {
-      const open = discovered(s, id);
-      return `<button class="btn ${id === this.region ? 'on' : ''}" type="button" data-region="${id}" ${open ? '' : 'disabled'}
-        title="${open ? '' : 'Fly there to discover it'}">${esc(name)}${open ? '' : ' <small>fly there</small>'}${open && id !== this.region && dl[natureScope(id)] ? '<i class="dot"></i>' : ''}</button>`;
-    }).join('');
-    const cur = $('wRegions').querySelector('.on'); if (cur) $('wRegions').scrollLeft = Math.max(0, cur.offsetLeft - 24);   // the land you are on is the first thing in view
-    $('wRegions').querySelectorAll('[data-region]:not([disabled])').forEach(b => b.onclick = () => {
-      if (b.dataset.region === this.region) return;
-      sfx.flap(); this.region = b.dataset.region; this.openTiers = []; this.toolId = null; this.render();
-    });
-    // Swipe sideways to change region (0.11.0): the next / previous region tab that is open (src/swipe.js).
-    const goRegion = d => { const open = [...$('wRegions').querySelectorAll('[data-region]:not([disabled])')], i = open.findIndex(b => b.dataset.region === this.region) + d; if (i >= 0 && i < open.length) open[i].click(); };
-    onSwipe($('nature'), { next: () => goRegion(1), prev: () => goRegion(-1) });
+    // The land nav (the user, 2026-11-04: 'the tab row and swiping the picture were unclear'): a title row '‹  Temperate woodland  1 / 6  ›' with 40 px arrows and one
+    // dot per land you have OPENED (the locked lands are not shown: the meter's (i) says how many more there are). The dots stay `[data-region]` buttons (tests and
+    // tools address a land by them). A tap alternative to swiping; a dot on an arrow / a dot when another land has news (src/fresh.js).
+    const ids = Object.keys(REGION_NAMES), openIds = ids.filter(id => discovered(s, id)), at = openIds.indexOf(this.region), many = openIds.length >= 2;
+    const newDir = (from, to) => openIds.slice(from, to).some(id => id !== this.region && dl[natureScope(id)]);
+    $('wLandName').innerHTML = `${esc(REGION_NAMES[this.region])}${many ? ` <span class="small wl-pos">${at + 1} / ${openIds.length}</span>` : ''}`;
+    $('wRegions').classList.toggle('single', !many);
+    $('wRegions').innerHTML = openIds.map(id => `<button class="wl-dot ${id === this.region ? 'on' : ''}" type="button" data-region="${id}" aria-label="${esc(REGION_NAMES[id])}" title="${esc(REGION_NAMES[id])}">${id !== this.region && dl[natureScope(id)] ? '<i class="dot"></i>' : ''}</button>`).join('');
+    $('wPrevLand').hidden = !many; $('wNextLand').hidden = !many;
+    $('wPrevLand').disabled = at <= 0; $('wNextLand').disabled = at >= openIds.length - 1;
+    $('wPrevLand').innerHTML = `<i class="wl-chev prev"></i>${newDir(0, at) ? '<i class="dot"></i>' : ''}`; $('wNextLand').innerHTML = `<i class="wl-chev"></i>${newDir(at + 1, openIds.length) ? '<i class="dot"></i>' : ''}`;
+    const goLand = to => { if (!to || to === this.region) return; sfx.flap(); this.region = to; this.openTiers = []; this.toolId = null; this.hintOn = false; this.render(); };
+    $('wPrevLand').onclick = () => goLand(openIds[at - 1]); $('wNextLand').onclick = () => goLand(openIds[at + 1]);
+    $('wRegions').querySelectorAll('[data-region]').forEach(b => b.onclick = () => goLand(b.dataset.region));
+    // First visit ONLY (save.tours 'nature-swipe'; a save with tours ['*'] is past all hints): two beats of a ghost swipe on the picture and one line of words.
+    const tours = s.tours || [], first = many && !tours.includes('*') && !tours.includes('nature-swipe');
+    if (first) { s.tours = [...tours, 'nature-swipe']; writeSave(s); this.hintOn = true; }
+    $('wLandHint').hidden = !(many && this.hintOn); $('wLandHint').textContent = 'Swipe the picture or tap the arrows to visit your other lands.';
+    $('wScene').classList.toggle('hint-swipe', !!(many && this.hintOn));
+    // Swipe sideways to change land (0.11.0): the next / previous open land (src/swipe.js).
+    onSwipe($('nature'), { next: () => goLand(openIds[at + 1]), prev: () => goLand(openIds[at - 1]) });
     // The meter, with an (i) that holds what used to be the intro paragraph and the NEXT HERE box (R6: the page says one thing, NEXT).
     $('wMeter').innerHTML = meterHTML(s, this.bio(), this.region) + '<button class="btn hp-info w-i" type="button" data-minfo aria-label="How this land works">i</button>';
     $('wMeter').querySelector('[data-minfo]').onclick = () => this.landSheet();
@@ -164,7 +172,7 @@ export class WildScreen {
   landSheet() {
     const n = nextHere(this.save, this.region), bar = (h, k) => `${Math.min(h, k)}/${k}`;
     showSheet({ eyebrow: 'NATURE', title: REGION_NAMES[this.region], html: `<p>Projects from ${esc(REGION_SOURCE[this.region])}. <b>Raise it:</b> plant this land's trees as you fly over it, and finish its projects. More life appears below you.</p>`
-      + [n.tree && `<p><b>${esc(n.tree.name)}</b>: ${esc(n.tree.rule.toLowerCase())} ${bar(n.tree.have, n.tree.need)}</p>`,
+      + `<p class="small">${Object.keys(REGION_NAMES).filter(id => !discovered(this.save, id)).length} more lands: fly there to open them.</p>` + [n.tree && `<p><b>${esc(n.tree.name)}</b>: ${esc(n.tree.rule.toLowerCase())} ${bar(n.tree.have, n.tree.need)}</p>`,
         n.tier && `<p><b>Tier ${n.tier.tier}</b>: biodiversity ${bar(n.tier.have, n.tier.need)}</p>`,
         n.animal && `<p><b>${esc(n.animal.name)}</b>: ${n.animal.ready ? 'out there now, look out on your flights!' : 'not back yet: see the projects'}</p>`].filter(Boolean).join('') });
   }
