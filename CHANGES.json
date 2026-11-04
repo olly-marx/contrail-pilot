@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-04-globe-route-chip",
+    "version": "0.30.1",
+    "date": "2026-11-04",
+    "level": "major",
+    "notes": [
+      "The globe now tells you it can spin and that you can tap a dot to choose your way.",
+      "The line under it is a big button that opens a list of ways to fly."
+    ]
+  },
+  {
     "id": "2026-11-04-crossing-moment",
     "version": "0.30.0",
     "date": "2026-11-04",
