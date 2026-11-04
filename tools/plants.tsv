@@ -351,3 +351,10 @@ crossingview	src/crossingview.js	s/save.crossingTold = \[...new Set(\[...(save.c
 crossingview	src/crossingview.js	s/(s.told ? s.kmText : `NEW ${s.kmText}`)/`NEW ${s.kmText}`/	the NEW word never goes away
 crossingview	src/nextup.js	s/ \&\& crossing.nearest \&\& !lead) out.push/ \&\& false \&\& !lead) out.push/	a near crossing adds no line to UP NEXT
 crossingview	src/crossingview.js	s/nearestLine = s => (s.nearest ? `Cross: \${s.nearest.line}` : '');/nearestLine = s => (s.nearest ? `Crossing to ${s.to}: ${s.nearest.line}` : '');/	the nearest line over 24 characters
+crossingmoment	src/ui.js	s/    if (!momentDue(cs)) return;/    return;/	the crossing sheet never appears (a moment nobody sees)
+crossingmoment	src/crossingview.js	s/save.crossingTold = \[...new Set(\[...(save.crossingTold || \[\]), id\])\]; return save.crossingTold;/return save.crossingTold || [];/	the sheet returns every time (never marked told)
+crossingmoment	src/ui.js	s/if (n.key === 'lead:cross' \&\& ready) this.showCrossingSheet(ready);/if (n.key === 'lead:cross' \&\& ready) this.flyCrossing(ready);/	a row tap starts the 6,500 km flight at once (no sheet)
+crossingmoment	src/ui.js	s/if (\$('dFly')) \$('dFly').hidden = !(cs \&\& cs.ready);/if ($('dFly')) $('dFly').hidden = true;/	the HOME tab dot never lights
+crossingmoment	src/globe.js	s/if (cross \&\& cross.onTap \&\& markHit(ev)) { cross.onTap(); return; }//	a tap on the globe's ring does nothing
+crossingmoment	src/missionsview.js	s/v.crossing = cs ? {/v.crossing = false ? {/	MISSIONS shows no crossing conditions
+crossingmoment	src/wild.js	s/    this.ui.maybeCrossingSheet \&\& this.ui.maybeCrossingSheet();//	a NATURE project that completes the last condition announces nothing
