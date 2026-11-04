@@ -93,7 +93,7 @@ export const parcelsWanted = s => isSeason2(s) && (s.missionsDone || []).include
 export class UI {
   constructor(save, { onStart, onSchool }) {
     this.fleet = new FleetHangar(this); this.sfx = sfx;   // the plane side's hangar (src/hangar.js)
-    this.save = save;
+    this.save = save; this.crossingAuto = new Set();   // (the crossing ids whose sheet has opened by itself this page load)
     this.migrated = migrateClaims(save); if (this.migrated) writeSave(save);   // R8: prizes an older save never claimed are paid once, then a toast on the first menu
     this.onStart = onStart;
     this.onSchool = onSchool;
@@ -421,20 +421,24 @@ export class UI {
   // The crossing moment (R-A, research/ROUTE-PLANNING.md "audit"): ONE calm sheet the first time a crossing is ready, on whatever screen the player sees next
   // (the results card after a flight, HOME or NATURE after a project). FLY THE CROSSING is also the confirm before any crossing flight starts.
   showCrossingSheet(cs) {
-    const s = this.save, t = sheetText(cs);
-    if (!(s.crossingTold || []).includes(cs.id)) { markTold(s, cs.id); writeSave(s); this.refreshDots(); }
-    showSheet({ eyebrow: t.eyebrow, title: t.title, body: t.body, ok: t.later, action: { label: t.go, onTap: () => this.flyCrossing(cs) } });
+    if (this.inCrossingSheet) return;   // (refreshDots below can come back here: never inside itself)
+    this.inCrossingSheet = true;
+    try {
+      const s = this.save, t = sheetText(cs);
+      if (!(s.crossingTold || []).includes(cs.id)) { markTold(s, cs.id); writeSave(s); this.refreshDots(); }
+      showSheet({ eyebrow: t.eyebrow, title: t.title, body: t.body, ok: t.later, action: { label: t.go, onTap: () => this.flyCrossing(cs) } });
+    } finally { this.inCrossingSheet = false; }
   }
   flyCrossing(cs) { const s = this.save; s.flyCrossing = cs.crossing; writeSave(s); this.start(); }
   maybeCrossingSheet() {
     const s = this.save;
     if (!FEATURES.season2 || !isSeason2(s) || !s.tutorialDone) return;
     const cs = crossingState(s, { unlock: S2_UNLOCK });
-    if (!momentDue(cs)) return;
+    if (!momentDue(cs) || this.crossingAuto.has(cs.id)) return;   // (crossingAuto: the sheet opens by itself at most once per page load, even if the told mark could not be saved)
     // Only on a menu screen that is showing and idle: not in flight, not mid-reveal, not under a sheet, a tour step, a payoff or an era welcome.
     const shown = document.querySelector('.overlay.screen:not([hidden])');
     if (!shown || ($('repriced') && !$('repriced').hidden) || ($('startChoice') && !$('startChoice').hidden) || $('sheet') || ($('results').classList.contains('revealing')) || (this.tour && this.tour.el && !this.tour.el.hidden) || (this.fleet && this.fleet.paying) || document.querySelector('.era-card, #payoff:not([hidden]), #ending')) return;
-    this.showCrossingSheet(cs);
+    this.crossingAuto.add(cs.id); this.showCrossingSheet(cs);
   }
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).

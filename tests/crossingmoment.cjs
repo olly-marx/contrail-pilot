@@ -34,7 +34,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const sh = await sheet(p);
     check(sh && /A NEW WAY OPENS/.test(sh) && /STOCKHOLM is within reach!/.test(sh) && /6,500 km/.test(sh), `${tag}: the crossing sheet never appeared (or has the wrong words) after the last condition was met in NATURE: ${sh}`);
     if (!sh) { await p.close(); continue; }   // nothing below can be asked of a sheet that is not there: fail by NAME, not by a timeout
-    const a = await sv(); check(a.told && a.told.join() === 'warsaw-stockholm' && !a.fly, `${tag}: it is marked told and NO flight has started: ${JSON.stringify(a)}`);
+    const a = await sv(); check(a.told && a.told.join() === 'warsaw-stockholm' && !a.fly, `${tag}: ${a.fly ? 'a flight started' : 'the told mark was not saved (crossingTold is ' + JSON.stringify(a.told) + ')'}: the sheet must mark it told and start NO flight`);
     // 3. LATER closes it, and it never comes back.
     await p.click('#sheet .sheet-ok'); await p.waitForTimeout(300);
     await p.evaluate(() => { game.registry.get('ui').persist(); game.registry.get('ui').refreshDots(); }); await p.waitForTimeout(400);
