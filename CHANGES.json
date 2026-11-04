@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-04-nature-land-nav",
+    "version": "0.29.1",
+    "date": "2026-11-04",
+    "level": "major",
+    "notes": [
+      "On the nature screen, the land you are looking at has its name on top, with arrows to visit your other lands. One little dot shows each land you have opened.",
+      "You can still swipe the picture to change land. The first time, the picture slides sideways to show you how.",
+      "A red dot on an arrow means there is something new in a land that way.",
+      "Lands you have not found yet are hidden. Tap the little i to see how many more there are."
+    ]
+  },
+  {
     "id": "2026-11-03-online-back",
     "version": "0.29.0",
     "date": "2026-11-03",
