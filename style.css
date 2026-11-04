@@ -515,7 +515,7 @@ h2.sub { margin-top: -4px; }
 /* NATURE screen (src/wild.js) */
 /* NATURE (0.11.0, the user: "the wild area stays at the top of the screen always"): the region tabs and the wild-area picture are pinned
    while the lists scroll under them. The panel is a flex column here (a grid item cannot stick beyond its own row; same 12px gap). On
-   phones under 760px tall the picture is narrower (70%): about 190px pinned in all, so a 600px phone still has about 340px of list. */
+   phones under 760px tall the picture is narrower (70%): about 210px pinned in all at 320x568 with the land nav (measured 2026-11-04; the gate is that the first price stays above the tab bar, tests/fitscreen.cjs), so a 600px phone still has about 340px of list. */
 #nature .panel { display: flex; flex-direction: column; }
 .wpin { position: sticky; top: -12px; z-index: 6;   /* -12px: the overlay's own padding, so nothing scrolls past ABOVE the pinned block */ display: grid; gap: 6px; padding: 8px 0; background: var(--paper); box-shadow: 0 4px 0 -1px rgba(27, 27, 47, .25); }
 @media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }
@@ -523,7 +523,7 @@ h2.sub { margin-top: -4px; }
   background: #8ed3ef no-repeat center / 100% 100%; image-rendering: pixelated; }
 .wscene .w-critter { position: absolute; transform: scale(2); transform-origin: bottom center; image-rendering: pixelated; }
 .wscene .w-critter.fly { transform-origin: center; }
-.wscene .w-empty { position: absolute; inset: 30px 10px auto; text-align: center; color: #1b1b2f; background: rgba(255,255,255,.7); padding: 4px; }
+.wscene .w-empty { position: absolute; inset: 6px 8px auto; font-size: 7px; line-height: 1.5; text-align: center; color: #1b1b2f; background: rgba(255,255,255,.7); padding: 4px; }   /* the 'Bare land' note: 7 px, from the top (at 9 px / 1.9 and 30 px down it ran out of a 320 px phone's 115 px picture and its last words were cut) */
 .w-chain { font-size: 8px; color: #1e7a3c; margin-top: 2px; }
 .w-done { font-weight: bold; color: #1e7a3c; }
 .wfound { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }

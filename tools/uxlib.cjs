@@ -71,6 +71,8 @@ function measure(spec) {
   for (const e of all) if (hasText(e)) {
     // A DECLARED scrolling row ([data-scrollrow], overflow-x auto|scroll: NATURE's land tabs, with their edge fade): a label scrolled out or half out of view is the
     // row doing its job, not cut text. The tab you are ON must still be whole (the plan: 'every label fully visible or fully scrolled out').
+    // A DECLARED clipping box ([data-cliptext], NATURE's picture): text inside it must stay inside it (its note once ran out of the bottom at 320 x 568 and its last words were cut).
+    const ct = e.closest('[data-cliptext]'); if (ct && e !== ct) { const x = extent(e), c = ct.getBoundingClientRect(); if (x.bottom > c.bottom + 1 || x.right > c.right + 1 || x.top < c.top - 1 || x.left < c.left - 1) { clippedList.push(label(e)); continue; } }
     const sr = e.closest('[data-scrollrow]'); if (sr && e !== sr && /auto|scroll/.test(getComputedStyle(sr).overflowX) && !e.closest('.on')) continue;
     const cs = getComputedStyle(e), hides = cs.overflowX !== 'visible' || cs.overflowY !== 'visible';
     const x = extent(e);
@@ -104,7 +106,11 @@ async function views(p, key, S) {
   else if (key === 'nature') { await go('nature'); await p.waitForTimeout(800); await m('nature/as opened');
     for (const r of ['bush', 'woodland', 'mediterranean']) {
       await p.evaluate(r => { const ui = game.registry.get('ui'), w = ui.wild || ui.nature; const t = document.querySelector(`#wRegions [data-region="${r}"]`); if (t) t.click(); if (w) { w.bio = () => 100; w.openTiers = [1, 2, 3]; w.renderProjects && w.renderProjects(); } }, r);
-      await m(`nature/${r} (tiers open)`); } }
+      await m(`nature/${r} (tiers open)`); }
+    // An EMPTY land (nothing funded, no animal found): the picture's 'Bare land' note shows, and it must fit the picture at every size.
+    await p.evaluate(() => { const ui = game.registry.get('ui'), s = ui.save; window.__keep = { h: s.habitat, f: s.found }; s.habitat = {}; s.found = {}; const w = ui.wild || ui.nature; if (w) { w.bio = () => 0; w.previewId = null; w.render(); } });
+    await m('nature/empty land');
+    await p.evaluate(() => { const ui = game.registry.get('ui'), s = ui.save, w = ui.wild || ui.nature; s.habitat = window.__keep.h; s.found = window.__keep.f; if (w) { delete w.bio; w.render(); } }); }
   return out;
 }
 
