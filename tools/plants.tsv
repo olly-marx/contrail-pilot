@@ -358,3 +358,8 @@ crossingmoment	src/ui.js	s/if (n.key === 'lead:cross' \&\& ready) this.showCross
 crossingmoment	src/ui.js	s/if (\$('dFly')) \$('dFly').hidden = !(cs \&\& cs.ready);/if ($('dFly')) $('dFly').hidden = true;/	the HOME tab dot never lights
 crossingmoment	src/globe.js	s/if (cross \&\& cross.onTap \&\& markHit(ev)) { cross.onTap(); return; }//	a tap on the globe's ring does nothing
 crossingmoment	src/missionsview.js	s/v.crossing = cs ? {/v.crossing = false ? {/	MISSIONS shows no crossing conditions
+routechip	src/ui.js	s/    \$('hubRoute').onclick = () => this.openRouteSheet();/    $('hubRoute').onclick = () => { sfx.flap(); $('title').classList.toggle('world'); };/	the route chip still pushes the old panel into the page (no sheet)
+routechip	src/ui.js	s/onClose: () => { home.insertBefore(j, next); j.style.display = ''; this.renderHub(); } });/onClose: () => {} });/	the route panel is never handed back (it breaks the second open)
+routechip	src/ui.js	s/if ((s.tours || \[\]).some(t => t === 'globe-hint' || t === '\*')) return; s.tours = \[...(s.tours || \[\]), 'globe-hint']; writeSave(s);/return;/	the caption never goes away
+routechip	src/ui.js	s/hint.hidden = !s.tutorialDone ||/hint.hidden = true ||/	the caption never shows
+routechip	src/globe.js	s/ if (onUse) onUse(); }   \/\/ (the first drag: the hint can go)/ }/	a drag on the globe does not remove the caption

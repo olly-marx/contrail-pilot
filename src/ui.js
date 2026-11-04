@@ -223,7 +223,7 @@ export class UI {
   openRouteSheet() {
     sfx.flap(); this.renderJourney();
     const j = $('tJourney'), home = j.parentNode, next = j.nextSibling;
-    showSheet({ eyebrow: 'YOUR ROUTE', title: 'Which way?', ok: 'CLOSE', html: '<div id="routeSheetBody" class="route-sheet"></div>', onClose: () => { home.insertBefore(j, next); j.style.display = ''; } });
+    showSheet({ eyebrow: 'YOUR ROUTE', title: 'Which way?', ok: 'CLOSE', html: '<div id="routeSheetBody" class="route-sheet"></div>', onClose: () => { home.insertBefore(j, next); j.style.display = ''; this.renderHub(); } });   // (a way chosen in the sheet shows on HOME's chip and globe)
     $('routeSheetBody').appendChild(j); j.style.display = 'block';
   }
 

@@ -47,3 +47,4 @@ group nature-r6 | src/wild.js src/fresh.js | naturefresh
 ci-only | onrails375
 group nature-land | src/wild.js index.html style.css | natureland regions homenature swipe
 group crossing-moment | src/crossingview.js src/globe.js | crossingmoment hubscreen skiptrip
+group route-chip | src/globe.js src/sheet.js | routechip hubscreen
