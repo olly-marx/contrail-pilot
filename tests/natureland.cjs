@@ -8,6 +8,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  const tap = (p, sel) => p.click(sel, { timeout: 3000 }).catch(() => fails.push(`cannot tap ${sel} (it is missing or hidden)`));   // a missing arrow is a clean failure, not a 30 s crash
   const T = ['hangar', 'name', 'r-boards', 'r-bonus', 'r-free', 'r-nature', 'r-parcels', 'r-res1', 'r-res2', 'r-school', 'r-systems', 'r-takeoff1', 'r-takeoff2', 'nature-lead', 'nature'];   // every other hint done (the rails stay out of the way); NOT 'nature-swipe'
   const mk = async (vw, vh, extra) => {
     const p = await b.newPage({ viewport: { width: vw, height: vh } }); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
@@ -41,13 +42,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(s.dots.length === 3 && s.locked === 0 && !s.dots.includes('savanna'), `${W}: one dot per OPENED land, none for the locked ones: ${s.dots}`);
     check(/Swipe the picture or tap the arrows/.test(s.hint) && s.ghost, `${W}: the first visit says swipe or tap, and the picture shows it (${JSON.stringify({ h: s.hint, g: s.ghost })})`);
     check((s.tours || []).includes('nature-swipe'), `${W}: the hint is recorded as seen: ${s.tours}`);
-    await p.click('#wNextLand'); await p.waitForTimeout(500);
+    await tap(p, '#wNextLand'); await p.waitForTimeout(500);
     s = await S(p);
     check(/2 \/ 3/.test(s.name) && s.on === s.dots[1] && !s.prevOff && s.hint === '', `${W}: tapping the next arrow opens the next land and the hint goes (${s.name.trim()})`);
-    await p.click('#wNextLand'); await p.waitForTimeout(500);
+    await tap(p, '#wNextLand'); await p.waitForTimeout(500);
     s = await S(p);
     check(/3 \/ 3/.test(s.name) && s.nextOff, `${W}: the last land has no next (${s.name.trim()}, next disabled ${s.nextOff})`);
-    await p.click('#wPrevLand'); await p.waitForTimeout(400); await p.click(`#wRegions [data-region="${s.dots[0]}"]`); await p.waitForTimeout(400);
+    await tap(p, '#wPrevLand'); await p.waitForTimeout(400); await tap(p, `#wRegions [data-region="${s.dots[0]}"]`); await p.waitForTimeout(400);
     s = await S(p);
     check(/1 \/ 3/.test(s.name), `${W}: a tap on a dot goes straight to that land (${s.name.trim()})`);
     // a second visit: no hint again
@@ -65,7 +66,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   s = await S(p);
   check(s.dots.length === 3, `a third land is open (${s.dots})`);
   check(s.dotNext && !s.dotPrev, `the NEW land has a dot on the arrow that leads to it (next ${s.dotNext}, prev ${s.dotPrev})`);
-  await p.click('#wNextLand'); await p.waitForTimeout(400); await p.click('#wNextLand'); await p.waitForTimeout(400);
+  await tap(p, '#wNextLand'); await p.waitForTimeout(400); await tap(p, '#wNextLand'); await p.waitForTimeout(400);
   await p.evaluate(() => { const ui = game.registry.get('ui'); ui.go('fly'); ui.go('nature'); }); await p.waitForTimeout(500);
   s = await S(p);
   check(!s.dotNext && !s.dotPrev, `once the land has been visited the arrow dots are gone (${JSON.stringify({ n: s.dotNext, p: s.dotPrev })})`);
