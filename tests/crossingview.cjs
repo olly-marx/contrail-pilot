@@ -28,6 +28,8 @@
   // 3. UP NEXT.
   const near = N.nextUp(s1, { crossing: c1, limit: 3 });
   check(near.some(r => r.key === 'cross:progress' && r.right === '' && /^Cross: nature/.test(r.short)), `a near crossing adds one quiet line: ${JSON.stringify(near.map(r => r.short))}`);
+  const teach = { ...s1, missionsDone: ['L1'] }, early = N.nextUp(teach, { crossing: c1, limit: 3 });   // the lessons are not done: the quiet line waits
+  check(!early.some(r => r.key === 'cross:progress'), `while lessons remain UP NEXT shows no crossing line: ${JSON.stringify(early.map(r => r.key))}`);
   const fresh = { ...c2, told: false }, told = { ...c2, told: true };
   const rd = N.nextUp(s1, { crossing: fresh, crossingReady: 'WARSAW to STOCKHOLM', limit: 3 }), rt = N.nextUp(s1, { crossing: told, crossingReady: 'WARSAW to STOCKHOLM', limit: 3 });
   check(rd[0].key === 'lead:cross' && rd[0].short === 'Cross to STOCKHOLM' && rd[0].right === 'NEW 6,500km' && rd[0].lead, `a ready crossing LEADS, NEW + the distance: ${JSON.stringify(rd[0])}`);
