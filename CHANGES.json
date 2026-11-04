@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-04-crossing-moment",
+    "version": "0.30.0",
+    "date": "2026-11-04",
+    "level": "major",
+    "notes": [
+      "A new way across the sea opens! A pop-up tells you when a far-away city is ready to fly to.",
+      "Tap the glowing ring on the globe, or the gold row on HOME, to see it again.",
+      "MISSIONS now shows what you still need to cross, tick by tick.",
+      "A dot on the FLY button tells you when a crossing is ready. You choose when to go."
+    ]
+  },
+  {
     "id": "2026-11-04-nature-land-nav",
     "version": "0.29.1",
     "date": "2026-11-04",
