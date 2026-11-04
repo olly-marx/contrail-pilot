@@ -32,7 +32,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(!!fund, `${tag}: NATURE offers a project to fund`);
     if (fund) { await fund.click(); await p.waitForTimeout(900); }
     const sh = await sheet(p);
-    check(sh && /A NEW WAY OPENS/.test(sh) && /STOCKHOLM is within reach!/.test(sh) && /6,500 km/.test(sh), `${tag}: the crossing sheet never appeared (or has the wrong words) after the last condition was met in NATURE: ${sh}`);
+    const loop = p.errs.some(e => /call stack/i.test(e));   // a markTold that marks nothing makes showCrossingSheet -> refreshDots -> maybeCrossingSheet call itself
+    check(sh && /A NEW WAY OPENS/.test(sh) && /STOCKHOLM is within reach!/.test(sh) && /6,500 km/.test(sh), `${tag}: ${loop ? 'the sheet re-opens itself in a loop (the moment is never marked told): ' + p.errs[0] : 'the crossing sheet never appeared (or has the wrong words) after the last condition was met in NATURE: ' + sh}`);
     if (!sh) { await p.close(); continue; }   // nothing below can be asked of a sheet that is not there: fail by NAME, not by a timeout
     const a = await sv(); check(a.told && a.told.join() === 'warsaw-stockholm' && !a.fly, `${tag}: ${a.fly ? 'a flight started' : 'the told mark was not saved (crossingTold is ' + JSON.stringify(a.told) + ')'}: the sheet must mark it told and start NO flight`);
     // 3. LATER closes it, and it never comes back.

@@ -363,3 +363,4 @@ routechip	src/ui.js	s/onClose: () => { home.insertBefore(j, next); j.style.displ
 routechip	src/ui.js	s/if ((s.tours || \[\]).some(t => t === 'globe-hint' || t === '\*')) return; s.tours = \[...(s.tours || \[\]), 'globe-hint']; writeSave(s);/return;/	the caption never goes away
 routechip	src/ui.js	s/hint.hidden = !s.tutorialDone ||/hint.hidden = true ||/	the caption never shows
 routechip	src/globe.js	s/ if (onUse) onUse(); }   \/\/ (the first drag: the hint can go)/ }/	a drag on the globe does not remove the caption
+crossingmoment	src/crossingview.js	s/(s.told ? s.kmText : `NEW ${s.kmText}`)/s.kmText/	the row never says NEW before the sheet is seen
