@@ -31,6 +31,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.click('#hubRoute'); await p.waitForTimeout(500);
     const open = await p.evaluate(() => ({ sheet: (document.getElementById('sheet') || {}).innerText, ways: document.querySelectorAll('#routeSheetBody [data-way]').length, sh: document.getElementById('title').scrollHeight, st: document.getElementById('title').scrollTop, cross: !!document.querySelector('#routeSheetBody #jCross') || true }));
     check(open.sheet && /Which way\?/.test(open.sheet) && open.ways >= 3 && open.sh === before.sh && open.st === before.st, `${tag}: the chip opens the route sheet with the way buttons and nothing is pushed: ${JSON.stringify([open.ways, before, open.sh, open.st])}`);
+    if (!open.ways) { await p.close(); continue; }   // no way buttons: the sheet did not open (named above), nothing below can be asked of it
     // 4. choose a way: saved, the sheet stays; close: HOME shows it; the panel can open again.
     const way = await p.evaluate(() => { const bs = [...document.querySelectorAll('#routeSheetBody [data-way]')]; const b = bs.find(x => !x.classList.contains('on')) || bs[0]; return b.dataset.way; });
     await p.click(`#routeSheetBody [data-way="${way}"]`); await p.waitForTimeout(300);
