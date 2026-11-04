@@ -11,6 +11,7 @@ import * as M2 from './missions2.js';
 import { CITY_TEMPLATES } from './aim.js';
 import { linksFor, wayTo } from './route.js';
 import { lineById } from './upgrades.js';
+import { rightText, nearestLine } from './crossingview.js';
 
 export const SHORT_MAX = 24;
 export const ROW_MAX = 29;   // short + right column on ONE line at 320 px (an 8 px row with 12 px padding holds ~31 characters: measured, R1)
@@ -18,7 +19,7 @@ export const ROW_MAX = 29;   // short + right column on ONE line at 320 px (an 8
 export const canAffordParcels = save => { const l = lineById('trees').levels[0]; return (save.seeds || 0) >= l.cost && (save.crystals || 0) >= (l.crystals || 0); };
 const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 // The right-hand column of a row, ONE source for HOME and the results: the hop, the stops, or "today" (never a sentence). <= 9 characters.
-export const rightOf = n => (n.where === 'hangar' ? 'HANGAR ›' : n.where === 'nature' ? 'NATURE ›' : n.where === 'missions' ? 'CLAIM ›' : n.stops ? plural(n.stops, 'stop') : n.daily ? 'today' : '');
+export const rightOf = n => ('right' in n ? n.right : n.where === 'hangar' ? 'HANGAR ›' : n.where === 'nature' ? 'NATURE ›' : n.where === 'missions' ? 'CLAIM ›' : n.stops ? plural(n.stops, 'stop') : n.daily ? 'today' : '');
 export const clip = (t, n = SHORT_MAX) => { t = String(t || ''); if (t.length <= n) return t; const c = t.slice(0, n - 1), sp = c.lastIndexOf(' '); return (sp > 8 ? c.slice(0, sp) : c).replace(/[ ,]+$/, '') + '…'; };
 
 // The tab a mission's row leads to: a purchase (system) -> the hangar; a project -> NATURE; everything else is a flight.
@@ -36,20 +37,23 @@ function stopsFor(save, m) {
 export const fitRow = o => ({ ...o, short: clip(o.short, Math.min(SHORT_MAX, ROW_MAX - rightOf(o).length)) });
 export const itemOf = (save, m) => fitRow({ key: m.key, short: shortOf(m), full: m.title, where: whereOf(m), ...(stopsFor(save, m) ? { stops: stopsFor(save, m) } : {}), ...(m.daily ? { daily: true } : {}) });
 
-export function leadOf(save, crossingReady = null) {
+export function leadOf(save, crossingReady = null, crossing = null) {
   if (!M2.isSeason2(save)) return null;   // (the screens decide whether to show it: HOME hides the strip until tutorialDone, as hub.js's chain always did)
   const mid = (M2.next(save) || {}).key;
+  if (crossing && crossing.ready) return { key: 'lead:cross', short: clip(`Cross to ${crossing.to}`), full: `Crossing ready: ${crossing.from} to ${crossing.to}`, where: 'fly', right: rightText(crossing), cross: true, lead: true };   // (R-A: NEW + the distance; a tap opens the sheet, never starts a flight)
   if (crossingReady) return { key: 'lead:cross', short: clip(`Cross to ${String(crossingReady).split(' to ').pop()}`), full: `Crossing ready: ${crossingReady}`, where: 'fly', lead: true };
   if (save.freeUpgrade && M2.revealed(save, 'hangar')) return { key: 'lead:free', short: 'Pick your free part', full: 'Open the hangar: free upgrade!', where: 'hangar', pic: 'assets/ui/lesson-hangar.png', lead: true };
   if (mid === 'L5' && !((save.levels || {}).trees)) return { key: 'lead:parcels', short: !save.freeParcelsGiven ? 'Free tree parcels' : 'Buy tree parcels', full: !save.freeParcelsGiven ? 'Free tree parcels in NATURE!' : 'Buy tree parcels in NATURE first', where: 'nature', pic: 'assets/ui/lesson-nature.png', lead: true };
   return null;
 }
 
-export function nextUp(save, { crossingReady = null, limit = 3 } = {}) {
+export function nextUp(save, { crossingReady = null, crossing = null, limit = 3 } = {}) {
   if (!M2.isSeason2(save)) return [];
-  const out = [], lead = leadOf(save, crossingReady), vis = M2.visible(save), daily = M2.lessonsLeft(save).length ? [] : M2.dailyVisible(save);
+  const out = [], lead = leadOf(save, crossingReady, crossing), vis = M2.visible(save), daily = M2.lessonsLeft(save).length ? [] : M2.dailyVisible(save);
   if (lead) out.push(lead);
   if (vis[0]) out.push(itemOf(save, vis[0]));
+  // R-A: while a crossing is near but not ready, ONE quiet line says which condition is nearest (tap: where to do it).
+  if (crossing && !crossing.ready && crossing.nearest && !lead) out.push({ key: 'cross:progress', short: clip(nearestLine(crossing)), full: `${crossing.to} needs: ${crossing.conds.filter(x => !x.done).map(x => `${x.label} (${x.status})`).join(', ')}`, where: crossing.nearest.where, right: '', cross: true });
   if (daily[0]) out.push(itemOf(save, daily[0]));
   for (const m of vis.slice(1)) { if (out.length >= limit) break; out.push(itemOf(save, m)); }
   return out.filter((x, i, a) => a.findIndex(y => y.key === x.key) === i).slice(0, limit);

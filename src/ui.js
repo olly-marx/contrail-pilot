@@ -51,6 +51,7 @@ import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp } from './nextup.js';
+import { crossingState, crossingById, momentDue, markTold, sheetText } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
@@ -185,7 +186,7 @@ export class UI {
     const pick = name => { sfx.flap(); this.save.heading = name; writeSave(this.save); this.renderJourney(); };
     // Season 2: fly a crossing (the flight's rules read save.flyCrossing; GameScene clears it when the flight ends).
     document.querySelectorAll('#jCross [data-cross]').forEach(b => b.onclick = () => {
-      sfx.flap(); s.flyCrossing = crossingsNow(s).find(c => c.id === b.dataset.cross); writeSave(s); this.start(); });
+      sfx.flap(); const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.showCrossingSheet(cs); });   // (R-A: the sheet confirms before the flight)
     drawGlobe($('jGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: pick, lit: FEATURES.season2 ? linksFor(s) : null });
     $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => pick(b.dataset.way));
   }
@@ -232,8 +233,8 @@ export class UI {
 
   renderHub() {
     const s = this.save;
-    const ready = s.tutorialDone ? crossingsNow(s).find(c => offerCheck(c, offerCtx(s, c)).offered || S2_UNLOCK) : null;
-    const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null });
+    const cs = crossingState(s, { unlock: S2_UNLOCK }), ready = cs && cs.ready ? cs : null;   // (R-A: src/crossingview.js: the state, the 3 conditions, told once)
+    const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null, crossing: cs });
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
     // UP NEXT (R3, research/UX-MASTER-PLAN.md C2): the SAME rows as the results card (src/nextup.js is the one source). A lead row (the free part,
     // NATURE's tree parcels) carries its lesson picture and leads where it says; a city mission says how many stops away it is. The tiles are gone:
@@ -244,7 +245,7 @@ export class UI {
     const rows = v.up[0] && v.up[0].pic ? v.up.slice(0, 2) : v.up;   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
     $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${rows.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
     const act = n => { sfx.flap();
-      if (n.key === 'lead:cross' && ready) { s.flyCrossing = ready; writeSave(s); this.start(); }
+      if (n.key === 'lead:cross' && ready) this.showCrossingSheet(ready);   // (R-A: a 6,500 km flight never starts from a row tap: the sheet is the confirm)
       else if (n.where === 'hangar' || n.where === 'nature' || n.where === 'missions') this.go(n.where);
       else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); };
     $('hubNext').querySelectorAll('.rc-row').forEach(b => b.onclick = e => { e.stopPropagation(); act(v.up[+b.dataset.i]); });
@@ -258,7 +259,8 @@ export class UI {
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     const path = routeFor(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
     const pick = name => { sfx.flap(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
-    this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, lit: linksFor(s) });
+    this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, lit: linksFor(s),
+      cross: ready ? { from: city(ready.from), to: city(ready.to), onTap: () => this.showCrossingSheet(ready) } : null });   // R-A: the ready crossing's arc and its breathing ring (tap: the sheet)
     this.hubWords = v.words;
   }
 
@@ -297,6 +299,7 @@ export class UI {
       + group('OPEN', v.open.map(r => rowHTML(r)))
       + group('TODAY', v.today.rows.map(r => rowHTML(r, 'daily')), v.today.streak ? ` <span class="small">(streak +${v.today.streak})</span>` : '')
       + (v.comingUp ? `<p class="label">COMING UP</p><p class="m-coming">${esc(v.comingUp)}</p>` : '')
+      + (v.crossing ? `<p class="label">${esc(v.crossing.title.toUpperCase())}</p><div class="m-cross">${v.crossing.rows.map(r => `<p class="m-tick${r.done ? ' done' : ''}"><span>${esc(r.label)}</span><b>${esc(r.status)}</b></p>`).join('')}${v.crossing.ready ? '<button id="mCross" class="chip m-gold" type="button">FLY THE CROSSING</button>' : ''}</div>` : '')
       + group('STEADY', v.steady.map(r => rowHTML({ ...r, star: false }, 'steady')), saving(s) ? '' : ' <span class="small">(1 seed each)</span>')
       + (v.done.count ? `<button id="mDone" class="chip m-done" type="button">DONE ${v.done.count} ›</button>` : '');
     // Tap a row: its sheet (the full title, the how, the prize) with the one action it has: AIM HERE (a city mission), or the hop to HANGAR / NATURE.
@@ -307,6 +310,7 @@ export class UI {
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
       showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds.` : ''}`, action }); });
     $('mInfo').onclick = () => { sfx.flap(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
+    if ($('mCross')) $('mCross').onclick = () => { sfx.flap(); const cs = crossingState(s, { unlock: S2_UNLOCK }); if (cs && cs.ready) this.showCrossingSheet(cs); };
     if ($('mDone')) $('mDone').onclick = () => { sfx.flap(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
     if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
@@ -409,8 +413,29 @@ export class UI {
     $('tNew').hidden = !free; $('tNew').textContent = 'FREE!';
     for (const [id, k] of [['dHangar', 'hangar'], ['dNature', 'nature'], ['dBoards', 'boards'], ['dMissions', 'missions']]) { const e = $(id); if (e) e.hidden = !d[k]; }
     $('tabHangar').classList.toggle('glow', free || !!d.hangar);   // something to spend: the bar's HANGAR glows
+    const cs = crossingState(this.save, { unlock: S2_UNLOCK }); if ($('dFly')) $('dFly').hidden = !(cs && cs.ready);   // R-A: HOME's dot while a crossing is ready to fly
+    this.maybeCrossingSheet();   // and its one-time sheet, on whatever menu screen is showing (a save that completed the last condition)
   }
   hasNew() { return !!this.save.freeUpgrade || !!this.freshDots().hangar; }   // (the bar's HANGAR tag and glow)
+
+  // The crossing moment (R-A, research/ROUTE-PLANNING.md "audit"): ONE calm sheet the first time a crossing is ready, on whatever screen the player sees next
+  // (the results card after a flight, HOME or NATURE after a project). FLY THE CROSSING is also the confirm before any crossing flight starts.
+  showCrossingSheet(cs) {
+    const s = this.save, t = sheetText(cs);
+    if (!(s.crossingTold || []).includes(cs.id)) { markTold(s, cs.id); writeSave(s); this.refreshDots(); }
+    showSheet({ eyebrow: t.eyebrow, title: t.title, body: t.body, ok: t.later, action: { label: t.go, onTap: () => this.flyCrossing(cs) } });
+  }
+  flyCrossing(cs) { const s = this.save; s.flyCrossing = cs.crossing; writeSave(s); this.start(); }
+  maybeCrossingSheet() {
+    const s = this.save;
+    if (!FEATURES.season2 || !isSeason2(s) || !s.tutorialDone) return;
+    const cs = crossingState(s, { unlock: S2_UNLOCK });
+    if (!momentDue(cs)) return;
+    // Only on a menu screen that is showing and idle: not in flight, not mid-reveal, not under a sheet, a tour step, a payoff or an era welcome.
+    const shown = document.querySelector('.overlay.screen:not([hidden])');
+    if (!shown || ($('repriced') && !$('repriced').hidden) || ($('startChoice') && !$('startChoice').hidden) || $('sheet') || ($('results').classList.contains('revealing')) || (this.tour && this.tour.el && !this.tour.el.hidden) || (this.fleet && this.fleet.paying) || document.querySelector('.era-card, #payoff:not([hidden]), #ending')) return;
+    this.showCrossingSheet(cs);
+  }
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).
   crossingReadyText() {
@@ -432,7 +457,7 @@ export class UI {
       r.crossing.landed ? 'Your crossing is done. Fly on from here!' : 'Improve your plane, your nature and your contrail skill, and try again.', r.crossing.landed ? 'good' : '', 6);
     const s = this.save, paid = sumPrizes(r.rewards);   // R8: these were PAID at the bank (RULES.bankFlight); this is what the card shows
     if (paid.seeds || paid.crystals) this.renderBank(paid);
-    const v = this.resultView = resultsView(r, s, { paid, lead, next: nextUp(s, { crossingReady: this.crossingReadyText(), limit: NEXT_ROWS }) });
+    const v = this.resultView = resultsView(r, s, { paid, lead, next: nextUp(s, { crossingReady: this.crossingReadyText(), crossing: crossingState(s, { unlock: S2_UNLOCK }), limit: NEXT_ROWS }) });
     const steps = [...document.querySelectorAll('#results .step')];
     steps.forEach(el => el.classList.remove('in'));
     this.skipReveal = false;
@@ -475,7 +500,8 @@ export class UI {
     $('rEarth').onclick = () => showSheet({ eyebrow: 'THE EARTH', title: v.earth.warm.split(' ')[0] + ' and ' + v.earth.cool.split(' ')[0].toLowerCase(),
       html: `<div class="earth-bars rc-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>` });
     $('rNextRows').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.next[+b.dataset.i]; sfx.flap();
-      if (n.where === 'hangar' || n.where === 'nature') this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); });
+      if (n.key === 'lead:cross') { const cs = crossingState(this.save, { unlock: S2_UNLOCK }); if (cs && cs.ready) return this.showCrossingSheet(cs); }
+      if (n.where === 'hangar' || n.where === 'nature' || (n.where === 'missions' && n.cross)) this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : n.cross ? 'CROSSING' : 'UP NEXT', title: n.short, body: n.full }); });
     const chipSheet = c => { const w = c.kind === 'animal' ? WILDLIFE.find(x => x.id === c.id) : null;
       showSheet({ eyebrow: c.kind === 'animal' ? 'NEW ANIMAL' : c.kind === 'badge' ? 'NEW BADGE' : 'A FIRST', title: c.full, pic: w ? animalPortrait(w) : c.kind === 'badge' ? medal(c.id, c.tier) : '', body: c.body,
         action: c.kind === 'animal' ? { label: 'SEE IT IN NATURE', onTap: () => this.go('nature') } : null }); };
@@ -498,6 +524,7 @@ export class UI {
       await showEraWelcome(ERAS.findIndex(e => e.name === r.eraOpened));
       return this.showHangar();
     }
+    this.maybeCrossingSheet();   // R-A: the crossing moment, if this flight completed the last condition
     if (this.tour && (!r.school || FEATURES.season2)) this.tour.maybe('results');   // season 2: the rails start on the school-done card
   }
 

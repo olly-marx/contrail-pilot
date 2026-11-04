@@ -295,6 +295,7 @@ export class WildScreen {
     document.querySelectorAll(`#wProjects [data-pline="${id}"] .w-webpic`).forEach(b => b.classList.add('w-flash'));
     // Who might come now? (only animals that are drawn can turn up in flight)
     const now = this.animals().filter(w => w.sprite && canAppear(s, w.id, r) && !this.found(w.id) && w.c.needs.includes(id));
+    this.ui.maybeCrossingSheet && this.ui.maybeCrossingSheet();   // R-A: a project can complete the last crossing condition (nature): the one-time sheet, right here
     if (now.length) this.ui.toast(`${p.name}: done!`, `Look out on your flights for: ${now.map(w => w.name).join(', ')}!`, 'good', 4);
   }
 

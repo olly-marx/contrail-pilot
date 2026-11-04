@@ -6,6 +6,7 @@ import * as M2 from './missions2.js';
 import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
 import { nextUp, itemOf, clip, rightOf } from './nextup.js';
 import { CITY_TEMPLATES } from './aim.js';
+import { crossingState, ticksTitle } from './crossingview.js';
 
 export const HOW_MAX = 20;       // a row's second line (the "how"): MEASURED at 320 px, the prize shares it (a 28-character how wrapped every row to 70 px)
 export const NAME_MAX = 24;      // a row's name (nextup.SHORT_MAX)
@@ -97,6 +98,11 @@ export function missionsView(save) {
   v.today = { rows: daily.map(m => row(save, itemOf(save, m), vis)), streak: M2.streakBonus(save) };
   // 5. COMING UP: the next tier as ONE line with its opener and the count; at tier 3 the crossing trial's stars. Nothing further ahead (surprise stays).
   v.comingUp = teach ? null : tierNow < 3 ? `Tier ${tierNow + 1} · after 3 of tier ${tierNow} (${Math.min(doneInTier, 3)}/3)` : !M2.gateDone(save, a) ? `Crossing trial: ${stars}/${M2.GATE_STARS} stars` : null;
+  // 5b. CROSSING (R-A): the crossing that is near or ready, with its 3 conditions as ticks (the user: "I knew it was coming" and still had to hunt). It replaces the
+  //     tier-3 "Crossing trial" line, which was one of those conditions.
+  const cs = crossingState(save);
+  v.crossing = cs ? { title: ticksTitle(cs), id: cs.id, ready: cs.ready, rows: cs.conds.map(c => ({ label: c.label, status: c.status, done: c.done })) } : null;
+  if (cs && v.comingUp && /^Crossing trial/.test(v.comingUp)) v.comingUp = null;
   // 6. STEADY: the cumulative goals with progress.
   v.steady = M2.steadyVisible(save, a).map(m => ({ key: m.key, short: clip(m.def.short(m.target, {}), NAME_MAX), full: m.title, icon: ICONS[m.def.id], how: `${m.progress.toLocaleString('en')} / ${m.target.toLocaleString('en')}`,
     frac: m.target ? Math.min(1, m.progress / m.target) : 0, prize: m.prize.seeds }));

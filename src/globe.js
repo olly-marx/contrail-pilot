@@ -85,7 +85,7 @@ export function project(f, lat, lon) {
 // ---------- drawing ----------
 // Draw the globe seen through frame `f`. `path` = city objects ahead (here first). `quality` 1 = one sample per pixel (while
 // dragging), 2 = five (still): the edges of small islands and coasts come out cleaner.
-export function paint(canvas, f, path, quality = 2, ways = [], lit = null) {
+export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross = null, phase = 0) {
   const g = canvas.getContext('2d'), S = canvas.width, R = S / 2 - 1, c0 = S / 2, Z = f.zoom || 1;
   const img = g.createImageData(S, S), px = img.data, landAt = new Uint8Array(S * S), rgb = new Uint8Array(S * S * 3), inDisc = new Uint8Array(S * S);
   const off = quality > 1 ? [[0, 0], [0.3, 0.3], [-0.3, 0.3], [0.3, -0.3], [-0.3, -0.3]] : [[0, 0]];
@@ -154,6 +154,12 @@ export function paint(canvas, f, path, quality = 2, ways = [], lit = null) {
   for (const k of path.slice(1)) { const q = to(k.lat, k.lon); if (q) { g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - 3, q[1] - 3, 6, 6); g.fillStyle = '#ffd34d'; g.fillRect(q[0] - 2, q[1] - 2, 4, 4); } }
   // The other ways you could choose: their first airport as a light square (tap it to go that way).
   for (const w of ways) { if (path[1] && w.name === path[1].name) continue; const q = to(w.lat, w.lon); if (q) { g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - 3, q[1] - 3, 6, 6); g.fillStyle = '#eaf6ff'; g.fillRect(q[0] - 2, q[1] - 2, 4, 4); } }
+  // R-A: a crossing that is ready (cross = { from, to }): its arc in light blue (dashed) and a ring round its destination that breathes (phase 0 / 1), tap it for the sheet.
+  if (cross) {
+    for (let t = 0, i = 0; t <= 1.0001; t += 0.015, i++) { if (i % 2) continue; const p = along(cross.from, cross.to, t), q = to(p.lat, p.lon); if (q) { g.fillStyle = '#bfeaff'; g.fillRect(q[0] - 1, q[1] - 1, 2, 2); } }
+    const d = to(cross.to.lat, cross.to.lon);
+    if (d) { const r = 4 + phase; g.fillStyle = '#1b1b2f'; g.fillRect(d[0] - r - 1, d[1] - r - 1, 2 * r + 2, 2 * r + 2); g.fillStyle = '#bfeaff'; g.fillRect(d[0] - r, d[1] - r, 2 * r, 2 * r); g.fillStyle = '#1b1b2f'; g.fillRect(d[0] - r + 2, d[1] - r + 2, 2 * r - 4, 2 * r - 4); g.fillStyle = '#ffd34d'; g.fillRect(d[0] - 1, d[1] - 1, 3, 3); }
+  }
   const h = path[0] && to(path[0].lat, path[0].lon);
   if (h) { g.fillStyle = '#1b1b2f'; g.fillRect(h[0] - 4, h[1] - 4, 8, 8); g.fillStyle = '#ff5a4d'; g.fillRect(h[0] - 3, h[1] - 3, 6, 6); }   // you are here
   return { dots };
@@ -165,14 +171,15 @@ function getIslands() { return islands || (islands = ISLANDS); }
 // never a drag; anything that moved further is a drag and never picks. The picture is redrawn only when it changes: at one
 // sample a pixel while it moves, five once it settles. Returns { frame(), nudge(dx), destroy() }.
 export const TAP_PX = 6, TAP_MS = 400;
-export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null } = {}) {
-  let f = frameRoute(path.length ? path : [CITIES[0]]);
+export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null, cross = null } = {}) {
+  let f = frameRoute(cross ? [...(path.length ? path : [CITIES[0]]), cross.from, cross.to] : (path.length ? path : [CITIES[0]]));   // (a ready crossing is framed too: its destination must be on the globe)
+  let phase = 0, pulse = cross ? setInterval(() => { phase ^= 1; redraw(1); }, 700) : 0;
   canvas.width = canvas.height = SIZE;
   canvas.style.touchAction = 'none';   // this canvas only: the page still scrolls everywhere else
   canvas.style.cursor = 'grab';
   let down = null, wantQuality = 1, coast = null, raf = 0, alive = true;
   // One redraw a frame at most, however many events came in; the best quality asked for since the last one.
-  const redraw = q => { wantQuality = Math.max(wantQuality, q); if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (!alive) return; paint(canvas, f, path, wantQuality, ways, lit); wantQuality = 1; }); };
+  const redraw = q => { wantQuality = Math.max(wantQuality, q); if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (!alive) return; paint(canvas, f, path, wantQuality, ways, lit, cross, phase); wantQuality = 1; }); };
   const scale = () => canvas.width / (canvas.getBoundingClientRect().width || canvas.width);   // canvas pixels per screen pixel
   const R = () => canvas.width / 2 - 1;
   const hit = (ev) => {   // the way dot under the finger, if any (within 8 canvas pixels)
@@ -181,6 +188,8 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null
     for (const w of ways) { const q = project(f, w.lat, w.lon); if (!q) continue; const d = Math.hypot(canvas.width / 2 + q[0] * R() - x, canvas.height / 2 + q[1] * R() - y); if (d < bd) { bd = d; best = w; } }
     return best;
   };
+  const markXY = () => { const q = cross && project(f, cross.to.lat, cross.to.lon); return q && [canvas.width / 2 + q[0] * R(), canvas.height / 2 + q[1] * R()]; };
+  const markHit = ev => { const m = markXY(); if (!m) return false; const r = canvas.getBoundingClientRect(), k = scale(); return Math.hypot(m[0] - (ev.clientX - r.left) * k, m[1] - (ev.clientY - r.top) * k) < 11; };
   const onDown = ev => {
     if (ev.pointerType === 'mouse' && ev.button !== 0) return;
     try { canvas.setPointerCapture(ev.pointerId); } catch (e) { /* no such live pointer (a synthetic event): the drag works without capture */ }
@@ -198,7 +207,7 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null
   const onUp = ev => {
     if (!down || ev.pointerId !== down.id) return;
     const d = down; down = null; canvas.style.cursor = 'grab';
-    if (!d.moved && performance.now() - d.t0 <= TAP_MS) { const w = hit(ev); if (w && onPick) onPick(w.name); return; }   // a tap
+    if (!d.moved && performance.now() - d.t0 <= TAP_MS) { if (cross && cross.onTap && markHit(ev)) { cross.onTap(); return; } const w = hit(ev); if (w && onPick) onPick(w.name); return; }   // a tap (the crossing's ring first)
     if (!d.moved) return;   // a long press that did not move: nothing
     coast = { vx: d.vx, vy: d.vy };   // a little coast after the finger lifts
     const step = () => { if (!alive || !coast || down) return; coast.vx *= 0.9; coast.vy *= 0.9;
@@ -209,9 +218,9 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null
   const onCancel = ev => { if (down && ev.pointerId === down.id) { down = null; canvas.style.cursor = 'grab'; redraw(2); } };
   canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onCancel);
-  paint(canvas, f, path, 2, ways, lit);
+  paint(canvas, f, path, 2, ways, lit, cross, phase);
   // nudge(dx): turn by dx canvas pixels, as a drag would (the hub's spin buttons, S2 of PROPOSAL-HOME-MISSIONS.md).
-  return { frame: () => f, nudge(dx) { coast = null; f = turn(f, dx, 0, R()); redraw(2); }, destroy() { alive = false; if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
+  return { frame: () => f, markPos() { const m = markXY(); if (!m) return null; const r = canvas.getBoundingClientRect(), k = scale(); return { x: r.left + m[0] / k, y: r.top + m[1] / k }; }, nudge(dx) { coast = null; f = turn(f, dx, 0, R()); redraw(2); }, destroy() { alive = false; if (pulse) clearInterval(pulse); if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
 }
 
 // The old entry point (src/ui.js): draw the globe for `path`, framed on the route; pass { ways, onPick } to make it live.
