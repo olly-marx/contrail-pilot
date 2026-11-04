@@ -357,4 +357,3 @@ crossingmoment	src/ui.js	s/if (n.key === 'lead:cross' \&\& ready) this.showCross
 crossingmoment	src/ui.js	s/if (\$('dFly')) \$('dFly').hidden = !(cs \&\& cs.ready);/if ($('dFly')) $('dFly').hidden = true;/	the HOME tab dot never lights
 crossingmoment	src/globe.js	s/if (cross \&\& cross.onTap \&\& markHit(ev)) { cross.onTap(); return; }//	a tap on the globe's ring does nothing
 crossingmoment	src/missionsview.js	s/v.crossing = cs ? {/v.crossing = false ? {/	MISSIONS shows no crossing conditions
-crossingmoment	src/wild.js	s/    this.ui.maybeCrossingSheet \&\& this.ui.maybeCrossingSheet();//	a NATURE project that completes the last condition announces nothing
