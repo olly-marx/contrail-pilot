@@ -7,3 +7,10 @@
 {"call":"pixflux init strength25 seed9","usd":0.0073}
 {"call":"pixflux 64x28 strength200 seed31 787 sprite","usd":0.0073}
 {"call":"pixflux 64x28 strength120 seed32 787 sprite","usd":0.0073}
+{"call":"pixflux truss init40 seed41","usd":0.0073}
+{"call":"pixflux truss text palette seed42","usd":0.0073}
+{"call":"pixflux truss highwing seed43","usd":0.0073}
+{"call":"pixflux truss highwing seed44","usd":0.0073}
+{"call":"inpaint_pro_flash 256x112 remove wing+engine from 787 window (clean)","usd":0.0657}
+{"call":"create_image_pro_flash 256x112 truss seed1 style=787 window","usd":0.0657}
+{"call":"pixflux enlarge truss 400x176 init130 seed51","usd":0.0073}
