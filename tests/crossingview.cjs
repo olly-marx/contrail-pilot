@@ -39,6 +39,7 @@
   for (const c of C.CROSSINGS.filter(x => x.kind !== 'lap')) {
     const full = { ...c, from: c.a, to: c.b, opens: 'weurope', km: C.crossingKm(c) }, st = V.stateOf(s0, full), t = V.sheetText(st);
     check(t.title.length <= 34 && T.wordCount(`${t.title} ${t.body}`) <= 60 && st.conds.length >= 2, `${c.id}: the sheet fits (title ${t.title.length}, ${T.wordCount(`${t.title} ${t.body}`)} words)`);
+    const t1 = V.sheetText(st, true); check(T.wordCount(`${t1.title} ${t1.body}`) <= 60 && /no stops/.test(t1.body) && !/no stops/.test(t.body), `${c.id}: the FIRST crossing's sheet says what a crossing is, within 60 words (${T.wordCount(`${t1.title} ${t1.body}`)}), and later sheets do not`);
     check(V.ticksTitle(st).length <= 28 && V.nearestLine(st).length <= 24 && V.rightText(st).length <= 12, `${c.id}: ticks title ${V.ticksTitle(st).length}, nearest line ${V.nearestLine(st).length}, right ${V.rightText(st).length}`);
     const row = N.fitRow({ short: `Cross to ${st.to}`, where: 'fly', right: V.rightText(st) }); check(row.short.length + row.right.length <= N.ROW_MAX, `${c.id}: the lead row fits one line: "${row.short}" + "${row.right}"`);
   }
