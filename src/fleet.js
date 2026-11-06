@@ -444,12 +444,13 @@ export const LOOKS = {
   comet: { art: 'comet', engines: ['intakes', 'reversers'], body: ['pinion', 'oval'], cabin: ['tourist', 'galley'] },
   jumbo: { art: '747', engines: ['jt9d', 'hushkit', 'nextgen'], body: ['upperdeck', 'winglet', 'glass'], cabin: [null, null, 'business'] },
   twin: { art: 'twin', engines: [null, 'giantfan', null, 'blades'], body: ['tail', 'winglet', null, 'riblets'], cabin: [null, null, 'premium', 'glow'] },
-  // The 787: no part art yet (no PixelLab for eras 4-6): its levels show as stat bars (tests/hangar-feedback.cjs).
-  dreamliner: { art: '787', engines: [null, null, null], body: [null, null, null], cabin: [null, null, null], noGadgetArt: true },
+  // The 787 (2026-11): real PixelLab portrait + sprite; hangar layers drawn in code on it (tools/art/make_787_layers.py). The levels with no look
+  // (carbon barrel done, raked tips done...) show as stat bars: lower cabin altitude, electric brakes and business suites have nothing to draw.
+  dreamliner: { art: '787', engines: ['genx', 'chevron', 'trent'], body: ['barrel', 'raked', null], cabin: ['dimmable', null, null], noGadgetArt: true },
   truss: { art: 'truss', engines: [null, null, null], body: [null, null, null], cabin: [null, null, null], noGadgetArt: true },
   hydrogen: { art: 'hydrogen', engines: [null, null, null], body: [null, null, null], cabin: [null, null, null], noGadgetArt: true },
 };
-export const NO_FLIGHT_LOOK = { '747': ['winglet'], twin: ['winglet'] };   // hangar only (too subtle in flight)
+export const NO_FLIGHT_LOOK = { '747': ['winglet'], twin: ['winglet'], '787': ['genx', 'chevron', 'trent', 'barrel', 'raked', 'dimmable'] };   // hangar only (too subtle in flight)
 // Gadget stickers on the plane (decoration, never collision): art name, and where its top-left sits on the
 // 62x27 plane, by era of the level bought (tools/art/make_upgrades.py STICKER_AT).
 export const STICKERS = {
