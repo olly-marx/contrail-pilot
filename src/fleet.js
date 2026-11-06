@@ -447,10 +447,11 @@ export const LOOKS = {
   // The 787 (2026-11): real PixelLab portrait + sprite; hangar layers drawn in code on it (tools/art/make_787_layers.py). The levels with no look
   // (carbon barrel done, raked tips done...) show as stat bars: lower cabin altitude, electric brakes and business suites have nothing to draw.
   dreamliner: { art: '787', engines: ['genx', 'chevron', 'trent'], body: ['barrel', 'raked', null], cabin: ['dimmable', null, null], noGadgetArt: true },
-  truss: { art: 'truss', engines: [null, null, null], body: [null, null, null], cabin: [null, null, null], noGadgetArt: true },
-  hydrogen: { art: 'hydrogen', engines: [null, null, null], body: [null, null, null], cabin: [null, null, null], noGadgetArt: true },
+  truss: { art: 'truss', engines: ['openfan', 'bigfan', 'hybrid'], body: ['fold', 'laminar', null], cabin: [null, null, 'lounge'], noGadgetArt: true },   // real portrait; hangar layers: tools/art/make_future_layers.py
+  hydrogen: { art: 'hydrogen', engines: ['fuelcell', 'supercon', 'ducted'], body: ['tanks', 'laminar', null], cabin: ['panorama', null, null], noGadgetArt: true },   // real portrait; hangar layers: tools/art/make_future_layers.py
 };
-export const NO_FLIGHT_LOOK = { '747': ['winglet'], twin: ['winglet'], '787': ['genx', 'chevron', 'trent', 'barrel', 'raked', 'dimmable'] };   // hangar only (too subtle in flight)
+export const NO_FLIGHT_LOOK = { '747': ['winglet'], twin: ['winglet'], '787': ['genx', 'chevron', 'trent', 'barrel', 'raked', 'dimmable'],
+  truss: ['openfan', 'bigfan', 'hybrid', 'fold', 'laminar', 'lounge'], hydrogen: ['fuelcell', 'supercon', 'ducted', 'tanks', 'laminar', 'panorama'] };   // hangar only (too subtle in flight)
 // Gadget stickers on the plane (decoration, never collision): art name, and where its top-left sits on the
 // 62x27 plane, by era of the level bought (tools/art/make_upgrades.py STICKER_AT).
 export const STICKERS = {
