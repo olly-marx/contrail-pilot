@@ -1,0 +1,9 @@
+{"call":"pixflux 400x176 img2img strength130 seed11 787 portrait trial 1","usd":0.007312,"balance_before":7.97}
+{"call": "pixflux strength70 seed21 (rejected: twin shape)", "usd": 0.0073}
+{"call": "pixflux text-only palette seed5 787 (GOOD shape; stray text)", "usd": 0.0073}
+{"call": "pixflux seed6 bold", "usd": 0.0073}
+{"call": "pixflux seed7 bold", "usd": 0.0073}
+{"call":"pixflux init strength40 seed8","usd":0.0073}
+{"call":"pixflux init strength25 seed9","usd":0.0073}
+{"call":"pixflux 64x28 strength200 seed31 787 sprite","usd":0.0073}
+{"call":"pixflux 64x28 strength120 seed32 787 sprite","usd":0.0073}
