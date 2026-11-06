@@ -14,3 +14,5 @@
 {"call":"inpaint_pro_flash 256x112 remove wing+engine from 787 window (clean)","usd":0.0657}
 {"call":"create_image_pro_flash 256x112 truss seed1 style=787 window","usd":0.0657}
 {"call":"pixflux enlarge truss 400x176 init130 seed51","usd":0.0073}
+{"call":"pro_flash 64x28 truss sprite seed1","usd":0.0365}
+{"call":"pro_flash 64x28 truss sprite seed2","usd":0.0365}
