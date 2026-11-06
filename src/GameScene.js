@@ -1478,6 +1478,7 @@ export class GameScene extends Phaser.Scene {
     const skipThis = isSeason2(this.save) && !this.school && this.airportsSkipped === 0 && (this.save.missionsDone || []).includes('L3') && !(this.save.missionsDone || []).includes('L4');
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
     else if (skipThis && toAirport < AIRPORT.signFrom) this.nextText.setText(`${this.nextAirport.name} ${Math.max(0, toAirport)}m: fly PAST this one!`);
+    else if (this.crossing) this.nextText.setText(toAirport < 300 ? 'Glide down to land!' : '');   // a crossing is a pure flight (the user, 2026-11-06): no km, no metres, no airport count: only the last call
     else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
     else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);   // ATC (eras): the call comes sooner
     else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${km(toAirport)}`);
@@ -1485,7 +1486,8 @@ export class GameScene extends Phaser.Scene {
     else this.nextText.setText('');
     this.fitText(this.nextText, WIDTH - 12);
     // The mission line: what this flight is for.
-    if (isSeason2(this.save)) { const n = this.school ? null : s2Next(this.save);   // season 2 (S3): the NEXT goal (a scene restart keeps fields, so no cache)
+    if (this.crossing) this.missionText.setText('');   // ... and no mission line while crossing
+    else if (isSeason2(this.save)) { const n = this.school ? null : s2Next(this.save);   // season 2 (S3): the NEXT goal (a scene restart keeps fields, so no cache)
       this.missionText.setText(n && this.state !== 'over' ? n.title : ''); }
     else { const mis = this.school ? null : currentMission(this.save);
       this.missionText.setText(mis && this.state !== 'over' ? mis.progress(this) : ''); }

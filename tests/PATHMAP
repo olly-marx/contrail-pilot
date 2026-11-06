@@ -50,3 +50,4 @@ group crossing-moment | src/crossingview.js src/globe.js | crossingmoment hubscr
 group route-chip | src/globe.js src/sheet.js | routechip hubscreen
 group school-icy | src/school.js | schoolicy
 group save-safety | src/save.js src/online.js src/persist.js src/pilot.js src/main.js src/ui.js index.html | savesafe recoversave pilotcode
+group crossing-hud | src/GameScene.js src/sim/rules.js | crossinghud
