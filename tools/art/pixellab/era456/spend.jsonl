@@ -16,3 +16,8 @@
 {"call":"pixflux enlarge truss 400x176 init130 seed51","usd":0.0073}
 {"call":"pro_flash 64x28 truss sprite seed1","usd":0.0365}
 {"call":"pro_flash 64x28 truss sprite seed2","usd":0.0365}
+{"call":"pro_flash 256x112 hydrogen BWB seed1","usd":0.0657}
+{"call":"pro_flash 256x112 hydrogen BWB seed2","usd":0.0657}
+{"call":"pixflux enlarge hydrogen 400x176 init130 seed61","usd":0.0073}
+{"call":"pixflux enlarge hydrogen init230 seed62","usd":0.0073}
+{"call":"pro_flash 64x28 hydrogen sprite seed1","usd":0.0365}
