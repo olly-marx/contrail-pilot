@@ -57,6 +57,12 @@ export class Tour {
   // rings OK and dims the rest, so a child sees ONE thing to tap (the one-target rule; onrails R6).
   payoffOk() { if (this.busy || this.done('r-payoff') || !document.getElementById('payOk')) return; this.run('r-payoff', [{ target: '#payOk', text: tip('rail-payoff-ok'), tap: true }]); }
 
+  // ONE ANNOUNCEMENT PER LANDING (the user, 2026-11-06: nature, pilot, boards and the new lines all arrived at the 3rd landing). The queued announcements (the hangar's new lines, the name,
+  // the map, the records tour) each wait for a landing nobody has been told something at: save.tourToday = the landing number one of them last ran at. The lesson rails are not queued.
+  slot() { return (this.save.tourToday || 0) < (this.save.landings || 0); }
+  stamp() { this.save.tourToday = this.save.landings || 0; writeSave(this.save); }
+  nameDue() { return FEATURES.season2 && !window.CP_PREVIEW && !this.done('name') && !getPilot() && namesOpen() && (this.save.landings || 0) >= 5 && this.slot(); }
+
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
@@ -67,13 +73,13 @@ export class Tour {
     if (where === 'results' && !FEATURES.season2 && !this.done('hangar') && (this.save.flights || 0) >= 1) return this.run('hangar', this.hangarSteps());
     // Season 2: the ON-RAILS onboarding (the user, 2026-10-27: "the ONLY thing they should be able to do is what you want
     // them to do"). Each step: one lit target (the dim layer catches every other tap), scrolled into view, one sentence.
-    if (FEATURES.season2) { const r = this.railsFor(where); if (r) return this.run(r[0], r[1]); }
-    const nameDue = s2name && wantName && (this.save.landings || 0) >= 3;
-    if (where === 'title' && nameDue) return this.run('name', this.nameSteps());
+    if (FEATURES.season2) { const r = this.railsFor(where); if (r) { if (r[0] === 'r-map' || r[0] === 'r-boards') this.stamp(); return this.run(r[0], r[1]); } }
+    const nameDue = s2name && wantName && this.nameDue();
+    if (where === 'title' && nameDue) { this.stamp(); return this.run('name', this.nameSteps()); }
     if (where === 'title' && (this.done('name') || getPilot() || (s2name && !nameDue))) {
       // Several can open at once (3 at the 3rd landing): one walk-through for all of a hangar tab's.
       const fresh = LINES.filter(l => unlocked(this.save, l) && !this.save.shownLines.includes(l.id));
-      if (fresh.length) return this.run(null, this.newSteps(fresh.filter(l => tabOf(l) === tabOf(fresh[0]))));
+      if (fresh.length && (!s2name || ((this.save.landings || 0) >= 4 && this.slot()))) { if (s2name) this.stamp(); return this.run(null, this.newSteps(fresh.filter(l => tabOf(l) === tabOf(fresh[0])))); }
     }
   }
 
@@ -123,7 +129,9 @@ export class Tour {
     // L5 needs tree parcels (free the first time): on NATURE, point at the FREE button (the audit, 2026-10-28).
     if (where === 'nature' && d('L4') && !d('L5') && !((s.levels || {}).trees > 0) && !this.done('r-parcels')) return ['r-parcels', [{ target: '#wTrees [data-buy="trees"]', text: tip('rail-parcels'), tap: true }]];
     // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).
-    if (hub && s2Revealed(s, 'boards') && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true, ready: always }]];
+    // R-map (the user, 2026-11-06: nothing told them the globe is a map): once the world is revealed (L4), from landing 5, one OK step on the globe; the NAME comes first if it is due.
+    if (hub && s2Revealed(s, 'world') && (s.landings || 0) >= 5 && this.slot() && !this.nameDue() && !this.done('r-map')) return ['r-map', [{ target: '#hubGlobe', text: tip('rail-map'), ok: true }]];
+    if (hub && s2Revealed(s, 'boards') && (s.landings || 0) >= 6 && this.slot() && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true, ready: always }]];
     return null;
   }
 

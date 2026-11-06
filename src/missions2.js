@@ -52,7 +52,7 @@ export const LESSONS = [
 export const lessonsLeft = save => (stageOf(save) === 'teach' ? LESSONS.filter(l => !done(save).has(l.id)) : []);
 // A free part waiting ALWAYS reveals the hangar (the user, 2026-10-27, twice: the school landing grants it, but lesson L1
 // - which used to be the only thing revealing the hangar - ignores school flights, and a crash on flight 1 leaves it undone).
-export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === 'hangar' && !!(save.freeUpgrade || save.freeGiven)) || (tile === 'boards' && (save.landings || 0) >= 3)   // once given, it stays (a crash on flight 1 hid it again: firsthour-real.cjs)
+export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === 'hangar' && !!(save.freeUpgrade || save.freeGiven)) || ((tile === 'boards' || tile === 'pilot') && (save.landings || 0) >= 5)   // once given, it stays (a crash on flight 1 hid it again: firsthour-real.cjs)
   || LESSONS.some(l => l.reveals.includes(tile) && done(save).has(l.id));
 
 // Seed prizes x~0.33 on 2026-10-28 (the user: too much currency early; research/BALANCE-EARLY-PRIZES.md): lessons were

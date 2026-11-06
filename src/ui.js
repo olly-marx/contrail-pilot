@@ -400,7 +400,7 @@ export class UI {
     $('tabbar').hidden = !id;
     $('hubBack').hidden = true;   // (the bar's HOME replaces the old floating button)
     if (FEATURES.season2) {
-      const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: hubRevealed(this.save, 'boards'), boards: hubRevealed(this.save, 'boards') };
+      const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: hubRevealed(this.save, 'pilot'), boards: hubRevealed(this.save, 'boards') };
       document.querySelectorAll('#tabbar [data-go]').forEach(b => { b.hidden = !show[b.dataset.go]; });
       $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';
     }
@@ -470,7 +470,7 @@ export class UI {
   refreshDots() {
     const d = this.freshDots(), free = !!this.save.freeUpgrade;
     $('tNew').hidden = !free; $('tNew').textContent = 'FREE!';
-    for (const [id, k] of [['dHangar', 'hangar'], ['dNature', 'nature'], ['dBoards', 'boards'], ['dMissions', 'missions']]) { const e = $(id); if (e) e.hidden = !d[k]; }
+    for (const [id, k] of [['dHangar', 'hangar'], ['dNature', 'nature'], ['dBoards', 'boards'], ['dMissions', 'missions']]) { const e = $(id); if (e) e.hidden = !(d[k] || (k === 'boards' && FEATURES.season2 && hubRevealed(this.save, 'boards') && !(this.save.tours || []).includes('r-boards'))); }   // (BOARDS shows a dot from landing 5 until its tour has run)
     $('tabHangar').classList.toggle('glow', free || !!d.hangar);   // something to spend: the bar's HANGAR glows
     const cs = crossingState(this.save, { unlock: S2_UNLOCK }); if ($('dFly')) $('dFly').hidden = !(cs && cs.ready);   // R-A: HOME's dot while a crossing is ready to fly
     this.maybeCrossingSheet();   // and its one-time sheet, on whatever menu screen is showing (a save that completed the last condition)
@@ -483,7 +483,7 @@ export class UI {
     if (this.inCrossingSheet) return;   // (refreshDots below can come back here: never inside itself)
     this.inCrossingSheet = true;
     try {
-      const s = this.save, t = sheetText(cs);
+      const s = this.save, first = !(s.crossed || []).length && !(s.crossingTold || []).length, t = sheetText(cs, first);   // (the first crossing ever also says what a crossing is)
       if (!(s.crossingTold || []).includes(cs.id)) { markTold(s, cs.id); writeSave(s); this.refreshDots(); }
       showSheet({ eyebrow: t.eyebrow, title: t.title, body: t.body, ok: t.later, action: { label: t.go, onTap: () => this.flyCrossing(cs) } });
     } finally { this.inCrossingSheet = false; }

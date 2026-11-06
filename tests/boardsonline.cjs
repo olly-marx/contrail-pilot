@@ -16,7 +16,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
   const net = { up: true, tooOld: false, boards: [], sent: [], puts: [] };
   const json = (route, status, body) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
   const fleet = { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} };
-  const base = { tutorialDone: true, muted: true, seenTips: ['x-bars', 'records-intro'], tours: ['*'], priceVersion: 2, flights: 6, landings: 3, seeds: 100, fleet, areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', freeGiven: true, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'] };
+  const base = { tutorialDone: true, muted: true, seenTips: ['x-bars', 'records-intro'], tours: ['*'], priceVersion: 2, flights: 6, landings: 5, seeds: 100, fleet, areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', freeGiven: true, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'] };
   const open = async (pilot) => {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
@@ -53,7 +53,7 @@ const UID = '11111111-2222-3333-4444-555555555555';
 
   // 1. A pilot: the ranking of the picked board and period.
   p = await open({ first: 'Ann', word: 'Robin', tag: 11 });
-  check(await p.isVisible('#tabPilot'), 'the PILOT tab is there after the 3rd landing');
+  check(await p.isVisible('#tabPilot'), 'the PILOT tab is there after the 5th landing');
   await p.click('#tabBoards'); await p.waitForTimeout(800);
   check(net.boards.includes('longest/week'), `BOARDS asks for the first card, THIS WEEK: ${net.boards}`);
   const rows = await p.evaluate(() => [...document.querySelectorAll('#bList li')].map(li => li.innerText.replace(/\s+/g, ' ').trim()));

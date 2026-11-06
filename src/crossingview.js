@@ -40,7 +40,8 @@ export const momentDue = state => !!(state && state.ready && !state.told);
 export function markTold(save, id) { save.crossingTold = [...new Set([...(save.crossingTold || []), id])]; return save.crossingTold; }
 
 // The sheet's words (<= 60 words) and the HOME row's right column ("NEW 6,500 km" until the sheet has been seen, then "6,500 km").
-export const sheetText = s => ({ eyebrow: 'A NEW WAY OPENS', title: `${s.to} is within reach!`, body: `A non-stop flight of ${s.kmText}. It opens ${s.opens}. Fly it when you are ready.`, go: 'FLY THE CROSSING', later: 'LATER' });
+export const FIRST_CROSSING = 'A crossing is one long flight with no stops. Distance and missions do not count: just get there.';   // (the first sheet only; the user, 2026-11-06)
+export const sheetText = (s, first = false) => ({ eyebrow: 'A NEW WAY OPENS', title: `${s.to} is within reach!`, body: `A non-stop flight of ${s.kmText}. It opens ${s.opens}. ${first ? FIRST_CROSSING + ' ' : ''}Fly it when you are ready.`, go: 'FLY THE CROSSING', later: 'LATER' });
 export const rightText = s => (s.told ? s.kmText : `NEW ${s.kmText}`).replace(' km', 'km');   // "NEW 6,500km" (11): the row budget is 29
 // The ticks block (MISSIONS) and the nearest-condition line (HOME).
 export const ticksTitle = s => `Crossing to ${s.to}`;

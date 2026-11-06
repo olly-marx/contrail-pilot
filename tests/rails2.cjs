@@ -34,20 +34,30 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   });
 
   // (the poll loops below are bounded by TIME, 30 s, not by a count of 150-250 ms rounds: a loaded machine needs longer, a fast one still breaks at once; 2026-11-03, the L5 loop gave up after 60 rounds in 1 of 3 runs under load)
-  // R14: landing 3.
-  let p = await open(save({ landings: 3 }), { width: 390, height: 844 });
+  // R14: landing 6 (one announcement per landing: NATURE 3, the hangar lines 4, the name and the map 5, the records tour 6).
+  let p = await open(save({ landings: 6 }), { width: 390, height: 844 });
   let a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/R14-boards.png` });
-  check(a.up && /records/i.test(a.text), `R14: at landing 3 the rails point at MY RECORDS ("${a.text}")`);
+  check(a.up && /records/i.test(a.text), `R14: at landing 6 the rails point at MY RECORDS ("${a.text}")`);
   check(a.reach.length === 1 && /tabBoards/.test(a.reach[0] || ''), `R14: exactly ONE thing can be tapped, the BOARDS tab (${a.reach.length}: ${a.reach.join(' / ')})`);
   check(a.inView, 'R14: the target and the sentence are fully on screen');
   if (a.ring) { await p.mouse.click(a.ring.x, a.ring.y); await p.waitForTimeout(800); }
   check(await p.evaluate(() => !document.getElementById('boards').hidden), 'R14: the tap opens MY RECORDS');
   check(await p.evaluate(() => (JSON.parse(localStorage.getItem('contrailPilot.v2')).tours || []).includes('r-boards')), 'R14: the step is remembered (shown once)');
   check(!p.errs.length, `R14 page errors: ${p.errs}`); await p.close();
-  // Not before landing 3.
-  p = await open(save({ landings: 2 }), { width: 390, height: 844 }); await p.waitForTimeout(800);
-  a = await audit(p); check(!(a.up && /records/i.test(a.text)), `R14: no records step before landing 3 ("${a.text}")`); await p.close();
+  // Not before landing 6, and not at a landing something was already announced at (save.tourToday).
+  p = await open(save({ landings: 5 }), { width: 390, height: 844 }); await p.waitForTimeout(800);
+  a = await audit(p); check(!(a.up && /records/i.test(a.text)), `R14: no records step before landing 6 ("${a.text}")`); await p.close();
+  p = await open(save({ landings: 6, tourToday: 6 }), { width: 390, height: 844 }); await p.waitForTimeout(800);
+  a = await audit(p); check(!(a.up && /records/i.test(a.text)), `R14: no records step at a landing that already had an announcement (tourToday 6) ("${a.text}")`); await p.close();
+  // R-map: the world is revealed (L4): at landing 5 one OK step on the globe, never before landing 5.
+  p = await open(save({ landings: 5, missionsDone: ['L1', 'L2', 'L3', 'L4'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 });
+  a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
+  check(a.up && /your world/i.test(a.text), `R-map: at landing 5 with the world revealed the rails explain the globe ("${a.text}")`); await p.close();
+  p = await open(save({ landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 }); await p.waitForTimeout(800);
+  a = await audit(p); check(!(a.up && /your world/i.test(a.text)), `R-map: not before landing 5 ("${a.text}")`);
+  const tabs4 = await p.evaluate(() => ({ pilot: document.getElementById('tabPilot').hidden, boards: document.getElementById('tabBoards').hidden }));
+  check(tabs4.pilot && tabs4.boards, `PILOT and BOARDS are not on the bar before landing 5: ${JSON.stringify(tabs4)}`); await p.close();
 
   // L5 parcels (audit #3): NEXT says the parcels are free; NATURE opens on the tab that sells them even after viewing
   // another land; the rails point at the FREE button (one target); the tap gives them free.

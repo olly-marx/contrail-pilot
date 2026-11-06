@@ -426,3 +426,6 @@ crossingend	src/crossingend.js	s/lost > 0) lines.push/lost > 99999) lines.push/	
 crossingscreens	src/ui.js	s/    else if (r.crossing) return this.showCrossingEnd(r);/    else if (false) return this.showCrossingEnd(r);/	a crossing ends on the normal results card (no own screen)
 crossingscreens	src/ui.js	s/      if (again) { const cs = crossingById/      if (false) { const cs = crossingById/	TRY AGAIN does not fly the crossing again
 crossingend	src/crossingend.js	s/first ? .New missions are open!. :/first ? 'New missions are waiting for you there.' :/	a crossing line over the 26-character budget (a 39-character line)
+rails2	src/tour.js	s/  slot() { return (this.save.tourToday || 0) < (this.save.landings || 0); }/  slot() { return true; }/	a second announcement runs at a landing that already had one (no queue)
+rails2	src/missions2.js	s/(save.landings || 0) >= 5)/(save.landings || 0) >= 3)/	BOARDS and PILOT come back at landing 3
+rails2	src/tour.js	s/ \&\& (s.landings || 0) >= 5 \&\& this.slot() \&\& !this.nameDue() \&\& !this.done('r-map'))/ \&\& this.slot() \&\& !this.nameDue() \&\& !this.done('r-map'))/	the map step is not held back to landing 5
