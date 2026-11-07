@@ -774,3 +774,5 @@ crossreward	src/crossings.js	s/prize: done ? due : null }/prize: due }/	the card
 crossreward	src/missionprize.js	s/  if (!Number.isInteger(e) || e < 0 || e > 4) throw .*$/  if (false) throw new Error('x');/	a non-lap crossing of an unknown era reads as a word
 crossrewardui	src/ui.js	s/<p class="ending-prize">/<p class="ending-prize" style="position:absolute;top:-500px">/	the ending's prize lines exist in the text but sit off the card
 lapbadge	src/sim/rules.js	s/^    this.bankFlight({ landed, reason });/    this.onFinish({ landed, reason, sound }); this.bankFlight({ landed, reason });/	finish() ends the flight (and completes the crossing) before it banks it
+forecastsmooth	src/fleet.js	s/{ reveal: 60, fakes: 0.2, late: 0.25 }/{ reveal: 60 }/	level 1 back to the default 40% fakes / 30% late (worse than nothing)
+forecastsmooth	src/fleet.js	s/{ reveal: 160, fakes: 0.15, late: 0.16 }/{ reveal: 160, fakes: 0.3, late: 0.2 }/	a mid level jumps back up to 30% false alarms
