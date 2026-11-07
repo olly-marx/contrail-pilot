@@ -409,3 +409,4 @@ pilotcode	src/main.js	s/^if (getPilot() \&\& save.pilotNamed === undefined) save
 pilotcode	src/ui.js	s/ || !noteDue(this.save, persisted)//	the storage note shows even when the browser promised
 pilotcode	src/ui.js	s/      this.save.seenTips = \[...(this.save.seenTips || \[\]), PERSIST_TIP\]; writeSave(this.save);//	the storage note shows on every visit
 syncdown	src/online.js	s/\.filter((\[k\]) => !VIEW_FLAGS.includes(k))//	pilotNamed and codeSeen count as unsent changes (opening PILOT blocks the newer online save)
+hangar	src/fleet.js	s/parts: parts.map(part => `assets\/ui\/upgrades\/hangar-${L.art}-${part}.png`)/parts: parts.map(part => `assets\/ui\/upgrades\/gadget-${L.art}-magnet.png`)/	the part pictures are transparent (a diff only): composing them makes the plane vanish

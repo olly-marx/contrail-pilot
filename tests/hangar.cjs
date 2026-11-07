@@ -113,6 +113,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.setViewportSize(vp0); await p.waitForTimeout(200);
   const over390 = await past(vp0.width);
   check(over390.length === 0, `at ${vp0.width} the hangar is drawn past the screen's side: ${over390.join('; ')}`);
+  // A part picture is the WHOLE plane with one part changed (planelook.composeOnto diffs against the base): composing any plane's parts must KEEP the plane
+  // (a transparent-diff layer once made the portrait vanish). For every plane with layers: the composed picture has >= 95% of the base's opaque pixels.
+  const keep = await p.evaluate(async () => { const F = await import('./src/fleet.js'), PL = await import('./src/planelook.js'); const out = [];
+    const alpha = u => new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const x = c.getContext('2d'); x.drawImage(i, 0, 0); let n = 0; const d = x.getImageData(0, 0, c.width, c.height).data; for (let k = 3; k < d.length; k += 4) if (d[k]) n++; res(n); }; i.onerror = () => res(-1); i.src = u; });
+    for (const pl of F.PLANES) { const L = F.LOOKS[pl.id], full = { engines: 3, body: 3, cabin: 3 }; const f = F.lookFiles(pl.id, full, 'hangar'); if (!f.parts.length) continue;
+      const base = await alpha(f.base), got = await alpha(await PL.composedURL(f.base, f.parts, [])); out.push([pl.id, base, got]); }
+    return out; });
+  for (const [id, base, got] of keep) check(base > 1000 && got >= base * 0.95, `${id}: composing every bought part keeps the plane (${got} of ${base} opaque pixels)`);
+  check(keep.length >= 6, `the composing check covers every plane with part art (${keep.length})`);
   // R5: the hangar top (UX plan C5). Sub-tabs directly under the strip and >= 40 px tall; no era chips, no per-tab help sentence, no plane
   // paragraph in the page (it is behind the (i)); the era is ONE line whose tap opens the six eras; a dot on a sub-tab that has news.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
