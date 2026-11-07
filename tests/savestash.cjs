@@ -54,8 +54,8 @@
   const got = S.loadSave();
   check(S.heldReason() && S.isBlank(got), `prepareSave throws, nothing else readable: a blank save, HELD (${S.heldReason()})`);
   check(mem.get(K + '.unreadable') === JSON.stringify({ ...rich(), fleet: { planes: null } }), 'the text that could not be made whole is kept under .unreadable');
-  S.writeSave(got);
-  check(JSON.parse(mem.get(K)).flights === 260, 'HELD: writeSave writes nothing (the main copy is untouched)');
+  S.writeSave(got); S.writeSave(rich(300, 200));   // (a blank AND a save with progress: the blank-save guard alone would stop only the first)
+  check(JSON.parse(mem.get(K)).flights === 260, 'HELD: writeSave writes nothing at all (the main copy is untouched)');
   S.releaseHold(); S.writeSave(got, { allowBlank: true });
   check(JSON.parse(mem.get(K)).flights === 0, 'after releaseHold the explicit blank save is written');
   reset(); mem.set(K, JSON.stringify({ ...rich(), fleet: { planes: null } })); mem.set(K + '.backup', JSON.stringify(rich(50, 40)));

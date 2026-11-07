@@ -23,7 +23,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.click('#hubGear'); await p.waitForTimeout(300);
     const sh = await p.evaluate(() => { const s = document.getElementById('sheet'), c = s && s.querySelector('.sheet'), r = c && c.getBoundingClientRect();
       return { open: !!s, btns: s ? [...s.querySelectorAll('[data-gear]')].map(e => { const q = e.getBoundingClientRect(); return { g: e.dataset.gear, h: Math.round(q.height), w: Math.round(q.width) }; }) : [], top: r && Math.round(r.top), bottom: r && Math.round(r.bottom), vh: innerHeight, credit: s ? /AEIS/.test(s.textContent) : false }; });
-    check(sh.open && sh.btns.map(x => x.g).join() === 'how,school,sound,about,reset', `${tag}: the gear opens the sheet with its 5 buttons: ${JSON.stringify(sh.btns)}`);
+    check(sh.open && sh.btns.map(x => x.g).join() === 'how,school,sound,about,recover,reset', `${tag}: the gear opens the sheet with its 6 buttons (0.31.0: RECOVER AN EARLIER SAVE): ${JSON.stringify(sh.btns)}`);
     check(sh.btns.every(x => x.h >= 40 && x.w >= 40) && sh.top >= 0 && sh.bottom <= sh.vh, `${tag}: every button is a 40 px target and the sheet is on screen: ${JSON.stringify([sh.btns.map(x => x.h), sh.top, sh.bottom, sh.vh])}`);
     check(sh.credit, `${tag}: the credit is in the sheet`);
     // SOUND flips and the sheet stays open.
