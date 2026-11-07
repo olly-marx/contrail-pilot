@@ -27,7 +27,7 @@ r = list(['src/wild.js']); check(['nature', 'wildfield', 'regions', 'onrails', '
 // 3. The heavy onboarding test only for the files that really change lessons or parcels.
 r = list(['src/missions2.js']); check(r.tests.has('postrails') && r.tests.has('onrails') && r.tests.has('walkthrough'), `src/missions2.js -> postrails + onrails + walkthrough: ${[...r.tests].join(' ')}`);
 r = list(['src/upgrades.js']); check(r.tests.has('postrails'), 'src/upgrades.js -> postrails');
-r = list(['src/tour.js']); check(r.tests.has('onrails') && r.tests.has('rails2') && !r.tests.has('postrails'), `src/tour.js -> onrails, rails2, NOT postrails: ${[...r.tests].join(' ')}`);
+r = list(['src/tour.js']); check(r.tests.has('onrails') && r.tests.has('rails2') && r.tests.has('postrails'), `src/tour.js -> onrails, rails2 AND postrails (2026-11-07: a plant in tour.js, 'the systems rail points at the old row markup', fails postrails, so tour.js must select it; lint rule plant_route_problems): ${[...r.tests].join(' ')}`);
 // 4. The harness (shims, the lists, the gate itself) means the WHOLE browser tier.
 r = list(['tests/lib/shipped.js']); check(r.tests.size === browser.length, `tests/lib/shipped.js -> all ${browser.length} browser tests (got ${r.tests.size})`);
 r = list(['tests/PATHMAP']); check(r.tests.size === browser.length, `tests/PATHMAP -> all browser tests (got ${r.tests.size})`);
