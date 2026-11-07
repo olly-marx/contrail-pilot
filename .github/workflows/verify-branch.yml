@@ -19,7 +19,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 40   # was 25 (2026-11-07): a shard's tests need 15-25 min; shard 2 of ci/gap-fix hit the 25 limit and was CANCELLED (no marker)
     strategy:
       fail-fast: false
       matrix:
