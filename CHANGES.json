@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-07-onboarding-one-at-a-time",
+    "version": "0.34.0",
+    "date": "2026-11-07",
+    "level": "minor",
+    "notes": [
+      "New things now arrive one at a time as you play: nature first, then the hangar's new parts, your name and the map, then your records. A short tip explains the map.",
+      "When your three flight systems are on, a small quiet bracket sits at the right edge so you know they are listening; the gate wakes up when a storm gap is coming."
+    ]
+  },
+  {
     "id": "2026-11-07-crossing-screens",
     "version": "0.33.0",
     "date": "2026-11-07",
