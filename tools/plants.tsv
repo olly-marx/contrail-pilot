@@ -425,4 +425,4 @@ crossingend	src/crossingend.js	s/buttons: \[{ id: 'again', label: 'TRY AGAIN' },
 crossingend	src/crossingend.js	s/lost > 0) lines.push/lost > 99999) lines.push/	a crash never says the carried seeds are lost
 crossingscreens	src/ui.js	s/    else if (r.crossing) return this.showCrossingEnd(r);/    else if (false) return this.showCrossingEnd(r);/	a crossing ends on the normal results card (no own screen)
 crossingscreens	src/ui.js	s/      if (again) { const cs = crossingById/      if (false) { const cs = crossingById/	TRY AGAIN does not fly the crossing again
-crossingend	src/crossingend.js	s/first ? .New missions are open!. :/first ? 'New missions are waiting for you there.' :/	a crossing line over the 32-character budget (a 39-character line)
+crossingend	src/crossingend.js	s/first ? .New missions are open!. :/first ? 'New missions are waiting for you there.' :/	a crossing line over the 26-character budget (a 39-character line)
