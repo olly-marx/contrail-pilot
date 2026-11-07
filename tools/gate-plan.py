@@ -76,7 +76,36 @@ def lint():
     for path in tracked():
         if not any(matches(path, g['globs']) for g in groups):
             problems.append(f"tracked file '{path}' matches no group in tests/PATHMAP (declare it)")
+    problems += plant_route_problems(groups, smoke, ci_only, browser)
     return problems
+
+
+def plant_route_problems(groups, smoke, ci_only, browser):
+    """A PLANT is a declared, proven dependence (tools/plants.tsv: a defect in FILE makes TEST fail, shown by tools/prove-plants.sh). If changing FILE does not
+    select TEST, the local gate cannot catch that defect (2026-11-07: 19 such pairs; ci/gap-fix was red while the local gate was green). So every plant row's
+    (file, test) pair on a browser test must be ROUTED: a smoke test, a CI-only test (it runs on every CI run), or named by a group whose globs match FILE."""
+    out, seen = [], set()
+    free = {t.split('@')[0] for t in smoke + ci_only}
+    path = os.path.join(ROOT, 'tools/plants.tsv')
+    if not os.path.exists(path):
+        return out
+    with open(path) as f:
+        for n, raw in enumerate(f, 1):
+            if not raw.strip() or raw.startswith('#'):
+                continue
+            cols = raw.rstrip('\n').split('\t')
+            if len(cols) < 4:
+                continue
+            test = cols[0].split('@')[0]
+            if test not in browser or test in free:
+                continue
+            for fl in cols[1].split(','):
+                if fl in ('', '-') or (test, fl) in seen:
+                    continue
+                seen.add((test, fl))
+                if not any(matches(fl, g['globs']) and (test in {x.split('@')[0] for x in g['tests']} or 'ALL' in g['tests']) for g in groups):
+                    out.append(f"plant tools/plants.tsv:{n} ('{cols[3][:50]}'): a defect in '{fl}' fails '{test}', but changing '{fl}' does not select '{test}' (add it to a tests/PATHMAP group matching '{fl}')")
+    return out
 
 
 def changed_files(base, extra):
