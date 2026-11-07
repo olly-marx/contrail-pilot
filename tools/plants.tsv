@@ -300,7 +300,7 @@ newdot	src/fresh.js	s/'missions': 'pending: R4/'missions': 'TODO R4/	a scope wit
 newdot	src/fresh.js	s/if (missions) for (const k of missions(save)) add('missions', k);/\/\/ (hook removed)/	the missions hook drops its keys
 newdot	src/fresh.js	s/if (save.seenMigrated) return false;/if (save.seen) return false;/	the migration keyed on save.seen: an early markSeen stops it and the other scopes get dots
 newdot	src/records.js	s/  for (const b of beaten) r.beaten.push(/  for (const b of []) r.beaten.push(/	recordFlight no longer writes the beaten keys: BOARDS never lights
-hangarnew	src/ui.js	s/markSeenPrefix(this.save, .nature\/., this.freshOpts())/markSeenPrefix(this.save, "", this.freshOpts())/	opening NATURE marks every scope seen again (the old ui.js:287 bug): the hangar dot is cleared by NATURE
+hangarnew	src/wild.js	s/ \&\& markSeen(s, natureScope(this.region), fo)) this.ui.persist();/ \&\& Object.keys(fr).some(k => markSeen(s, k, fo))) this.ui.persist();/	opening NATURE marks EVERY scope seen (the hangar's too: the old ui.js:287 bug; the call now lives in wild.js render())
 hangarnew	src/hangar.js	s/ \&\& markSeen(s, hangarScope(this.tab))) this.ui.persist();/ \&\& markSeen(s, "hangar\/plane")) this.ui.persist();/	every hangar sub-tab marks only PLANE seen: SYSTEMS and GADGETS keep the tab lit forever
 hangar	style.css	s/^\.ftabs \.btn\.ftab { position: relative; min-height: var(--tap); }/.ftabs .btn.ftab { position: relative; }/	the sub-tabs lose their 40 px minimum (unmeasured: NOT CAUGHT would mean the buttons are tall enough anyway)
 hangar	src/hangar.js	s/k !== this.tab \&\& d\[hangarScope(k)\]/false/	no dot on a sub-tab with news
@@ -337,7 +337,7 @@ missions2	src/missions2.js	s#if (!before.has(m.key)) payPrize(save, m.prize);#if
 missions2	src/missions2.js	s#if (!before.has(m.key)) payPrize(save, m.prize);#if (!before.has(m.key)) { payPrize(save, m.prize); payPrize(save, m.prize); }#	a finished mission is paid twice
 rewards	src/ui.js	s#this.migrated = migrateClaims(save); if (this.migrated) writeSave(save);#this.migrated = null;#	the UI never runs the migration: an older save keeps prizes nobody can claim
 naturefresh	src/wild.js	s/ \&\& markSeen(s, natureScope(this.region), fo)) this.ui.persist();/ \&\& Object.keys(fr).concat([natureScope(this.region)]).some(k => markSeen(s, k, fo))) this.ui.persist();/	showing one land marks EVERY land seen (the old ui.go nature behaviour)
-naturefresh	src/wild.js	s/ \&\& id !== this.region \&\& dl\[natureScope(id)\] ?/ \&\& false ?/	no dot on a land tab with news
+naturefresh	src/wild.js	s/\${id !== this.region \&\& dl\[natureScope(id)\] ?/${false ?/	no dot on a land tab with news
 naturefresh	src/wild.js	s/^    this.renderNext();/    \/\/ this.renderNext();/	the NEXT line is never drawn
 fitscreen	index.html	s/<div id="wNextLine"><\/div>/<h3>Habitat projects<\/h3><p class="small">Things people really do to help nature. Each one helps life come back, and new animals may appear on your flights! Plant trees as you fly over a land and finish its projects to raise its biodiversity.<\/p><div id="wNextLine"><\/div>/	the NATURE intro paragraph and heading are back: the first card falls below the tab bar at 320x568
 naturefresh	src/wild.js	s/b.onclick = e => { this.toolId = null; if (this.field) this.field.clearGhosts(); go(e); };/b.onclick = e => { go(e); };/	the planting preview survives the buy (the ghost trees stay in the land)
