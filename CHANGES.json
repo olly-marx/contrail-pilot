@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-07-pure-crossing",
+    "version": "0.31.1",
+    "date": "2026-11-07",
+    "level": "minor",
+    "notes": [
+      "A crossing is now a pure flight: no distance and no missions while you cross."
+    ]
+  },
+  {
     "id": "2026-11-05-keep-your-game-safe",
     "version": "0.31.0",
     "date": "2026-11-05",
