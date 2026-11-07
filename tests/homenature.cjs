@@ -32,7 +32,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); },
       { areas: [area], homeArea: area, city, visited: [city], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['x-bars'], shownLines: ['trees'], freeGiven: true, freeProjectGiven: true, missionsDone: ['L1', 'L2', 'L3', 'L4'], landings: 5, flights: 6, seeds: 0, crystals: 0, unclaimed: [],
-        tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-boards', 'r-bonus', 'nature-lead'], fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } });
+        tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-boards', 'r-bonus', 'r-map', 'nature-lead'], fleet: { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} } });
     await p.goto(URL); await ready(p); await p.waitForTimeout(800);
     await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(900);   // R3: UP NEXT's lead row (the tree parcels) leads to NATURE
     const st = await p.evaluate(() => ({ on: (document.getElementById('wLandName') || {}).textContent || '', card: !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]') }));
