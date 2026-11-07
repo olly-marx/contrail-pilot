@@ -1,5 +1,5 @@
 """The 787 Dreamliner's hangar upgrade layers, drawn in code on top of the real PixelLab portrait (era 4, 2026-11).
-Each layer is a transparent 400x176 PNG with ONLY the changed pixels (tools/art/make_upgrades.py convention); an ENGINE layer
+Each part picture is the WHOLE 400x176 plane with only that part changed (src/planelook.js composeOnto: a part = the pixels where it differs from the base); an ENGINE layer
 replaces the whole nacelle (src/fleet.js lookParts shows the last engine level's part), a BODY layer adds to the others.
 Run: python3 tools/art/make_787_layers.py  -> assets/ui/upgrades/hangar-787-<part>.png  (parts: genx chevron trent barrel raked dimmable)
 Real facts drawn: GEnx and Trent 1000 are the 787's two engine families; chevrons = the saw-tooth trailing edge of the 787's engine
@@ -70,4 +70,4 @@ if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     for name, fn in [('genx', lambda: nacelle('genx')), ('chevron', lambda: nacelle('chevron')), ('trent', lambda: nacelle('trent')), ('barrel', barrel), ('raked', raked), ('dimmable', dimmable)]:
         im = fn(); n = sum(1 for p in im.getdata() if p[3]); assert n > 20, (name, n)
-        im.save(os.path.join(OUT, f'hangar-787-{name}.png')); print(name, n, 'px')
+        full = BASE.copy(); full.alpha_composite(im); full.save(os.path.join(OUT, f'hangar-787-{name}.png'))   # a PART picture is the WHOLE plane with only that part changed (src/planelook.js composeOnto diffs against the base); print(name, n, 'px')

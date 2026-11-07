@@ -1,5 +1,5 @@
 """Hangar upgrade layers for the 2030s truss-braced wing and the far-future hydrogen blended wing (2026-11), drawn in code on the real
-PixelLab portraits (same convention as make_787_layers.py: transparent 400x176, ONLY changed pixels, drawn only where the plane is).
+PixelLab portraits (same convention as make_787_layers.py: the WHOLE 400x176 plane with only that part changed (planelook.js composeOnto diffs against the base), drawn only where the plane is).
 An ENGINE layer replaces the engine look (fleet.js lookParts shows the last engine level's part); BODY layers add up.
 Run: python3 tools/art/make_future_layers.py -> assets/ui/upgrades/hangar-truss-*.png, hangar-hydrogen-*.png"""
 from PIL import Image
@@ -83,4 +83,4 @@ if __name__ == '__main__':
     for plane, fn in (('truss', truss), ('hydrogen', hydrogen)):
         for part, im in fn().items():
             n = sum(1 for p in im.getdata() if p[3]); assert n > 15, (plane, part, n)
-            im.save(os.path.join(OUT, f'hangar-{plane}-{part}.png')); print(plane, part, n, 'px')
+            full = load(plane).copy(); full.alpha_composite(im); full.save(os.path.join(OUT, f'hangar-{plane}-{part}.png'))   # the WHOLE plane with only that part changed (planelook.js diffs against the base); print(plane, part, n, 'px')
