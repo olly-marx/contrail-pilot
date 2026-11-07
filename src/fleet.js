@@ -35,6 +35,14 @@ const V = { verify: true };
 export const FORECAST = { popPx: 30 };
 // The next-gap hint (PLANE-ERAS-1-3.md section 6), by the LOWEST of the three systems' levels:
 // seconds of warning before a storm gap scrolls on screen, and how bright the gate is. Game values.
+// The next-gap hint's level (index into GAP_HINT) from the three systems' levels (Forecasting, ATC, Ops). It used to be min(F, A, O): nothing at all
+// until ALL THREE had a level ('window detection seems intermittent', the user, 2026-11). Now each system on its own gives a faint hint, and every
+// level above the weakest system's adds a little: level = min + floor(excess / 6), where excess = (F + A + O) - 3 * min; at least 1 once any system has a
+// level; capped at 12. When the three are EQUAL (every balanced save, and the end state 12/12/12) it is exactly min(F, A, O) as before.
+export const gapHintLevel = (F, A, O) => {
+  const m = Math.min(F, A, O), sum = F + A + O;
+  return Math.min(12, Math.max(sum > 0 ? 1 : 0, m + Math.floor((sum - 3 * m) / 6)));
+};
 export const GAP_HINT = { lead: [0, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5, 2.7], alpha: [0, 0.25, 0.32, 0.4, 0.5, 0.6, 0.75, 0.8, 0.85, 0.88, 0.9, 0.92, 0.94] };   // 7-8: the 2010s, 9-10: the 2030s, 11-12: far future
 // Passenger fares: seeds per 1,000 km of a LANDED flight, x the Cabin upgrades (GAME VALUES, est.;
 // tune against measured income ~39 seeds a flight). Bigger planes carry more people.
@@ -280,7 +288,7 @@ export function fleetKit(save) {
     // false patches (`fakes` of those shown) and real ones it missed (`late`). ERA5 skill 0.2-0.4 (CONFIRMED).
     fakes: fc.reveal ? fc.fakes ?? 0.4 : 0, late: fc.reveal ? fc.late ?? 0.3 : 0, nightPatches: fc.nightPatches || 1,
     gaps: atc.gaps || 1, gapTurb: atc.gapTurb || 1, gapBirds: (atc.gapBirds || 1) * (sen.birdChance || 1), airportEarly: !!atc.airportEarly,   // stage 6; gapBirds also has Sensors 11-12 (bird-aware routing)
-    hintLevel: Math.min(f.systems.forecast || 0, f.systems.atc || 0, f.systems.ops || 0),   // next-gap hint (stage 7)
+    hintLevel: gapHintLevel(f.systems.forecast || 0, f.systems.atc || 0, f.systems.ops || 0),   // next-gap hint (stage 7; the smoother rule: gapHintLevel)
     pickup: gad('magnet').pickup || 12,
     perSkip: (gad('hold').perSkip || CARGO.multiplierPerSkip) + add('perSkip'),
     flare: (gad('gear').flare || 1) * mul('flare'),
