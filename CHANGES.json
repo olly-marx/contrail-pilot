@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-07-gap-hint-hydrogen-wing",
+    "version": "0.32.1",
+    "date": "2026-11-07",
+    "level": "minor",
+    "notes": [
+      "With any one of Forecasting, Air traffic control or Fuel & operations you now see a faint gate ahead of a storm gap; the more systems you have, the earlier you see it.",
+      "The hydrogen plane is now called the Hydrogen wing, so its name fits on the hangar picture."
+    ]
+  },
+  {
     "id": "2026-11-07-new-plane-art",
     "version": "0.32.0",
     "date": "2026-11-07",
