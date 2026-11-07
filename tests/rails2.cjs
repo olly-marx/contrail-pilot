@@ -34,8 +34,8 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   });
 
   // (the poll loops below are bounded by TIME, 30 s, not by a count of 150-250 ms rounds: a loaded machine needs longer, a fast one still breaks at once; 2026-11-03, the L5 loop gave up after 60 rounds in 1 of 3 runs under load)
-  // R-map FIRST: the world is revealed (L4) but it is landing 4: no globe step, and PILOT/BOARDS are not on the bar (first, so a map plant that fires early fails HERE by name, not as a crash in a later case).
-  let p = await open(save({ landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 }); await p.waitForTimeout(800);
+  // R-map FIRST: the world is revealed and no lesson is left (L1-L5) but it is landing 4: no globe step, and PILOT/BOARDS are not on the bar (first, so a map plant that fires early fails HERE by name, not as a crash in a later case).
+  let p = await open(save({ landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 }); await p.waitForTimeout(800);
   let a = await audit(p); check(!(a.up && /your world/i.test(a.text)), `R-map: not before landing 5 ("${a.text}")`);
   const tabs4 = await p.evaluate(() => ({ pilot: document.getElementById('tabPilot').hidden, boards: document.getElementById('tabBoards').hidden }));
   check(tabs4.pilot && tabs4.boards, `PILOT and BOARDS are not on the bar before landing 5: ${JSON.stringify(tabs4)}`); await p.close();
