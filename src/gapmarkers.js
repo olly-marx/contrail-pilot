@@ -31,11 +31,11 @@ export function gateFor(st, planeY, speed, lead = 0) {
 }
 
 // The hint's PRESENCE (2026-11-07, the user: "sometimes it just isn't available ... you see it for part of a flight and then it's off"): with the systems on
-// and no gate up, a quiet fixed bracket on the gate's rail says "the hint is running". It carries NO gap information: fixed height (mid-sky), fixed alpha,
+// and no gate up, a quiet fixed bracket on the gate's rail says "the hint is running". It carries NO gap information: fixed height (upper quarter of the sky, away from the heat meter marker), fixed alpha,
 // no pulse, never moves with a column. null = draw nothing (no systems, or a real gate is showing).
 export const PRESENCE = { alpha: 0.3, half: 24, tick: 8 };
 export function presenceFor(lead, anyGate) {
   if (!(lead > 0) || anyGate) return null;
-  const mid = Math.round((HEIGHT - GROUND_H) / 2);
+  const mid = Math.round((HEIGHT - GROUND_H) / 4);
   return { x: GATE_RIGHT - PRESENCE.tick, right: GATE_RIGHT, top: mid - PRESENCE.half, bot: mid + PRESENCE.half, tick: PRESENCE.tick, alpha: PRESENCE.alpha };
 }
