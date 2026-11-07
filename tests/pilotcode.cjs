@@ -25,18 +25,20 @@ const URL = process.env.URL || 'http://localhost:8000/';
     return p;
   };
   const text = (p, sel) => p.evaluate(s => (document.querySelector(s) ? document.querySelector(s).innerText : ''), sel);
+  // A tap that can fail BY NAME: a missing target is a named failure after 4 s, never an uncaught 30 s Playwright timeout (a plant caught only by a crash proves nothing about the reason).
+  const tap = async (p, sel, what) => { try { await p.click(sel, { timeout: 4000 }); return true; } catch (e) { fails.push(`${what}: ${sel} was not there to tap`); return false; } };
   const live = p => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));   // (in the page the season-2 layer adds the s2: prefix itself)
 
   // 1. UP NEXT at landing 10
   let p = await open({ save: { ...base, landings: 10 } });
   check(/Save your pilot code/.test(await text(p, '#hubNext')), `landing 10, named pilot, code never opened: UP NEXT asks (got ${JSON.stringify((await text(p, '#hubNext')).slice(0, 100))})`);
-  await p.click('#hubNext .rc-row:has-text("Save your pilot code")'); await p.waitForTimeout(500);
+  await tap(p, '#hubNext .rc-row:has-text("Save your pilot code")', 'tap the UP NEXT line'); await p.waitForTimeout(500);
   check(await p.evaluate(() => !document.getElementById('pilot').hidden && document.getElementById('pCode').textContent.trim() !== ''), 'a tap on the line opens PILOT with the code');
   check((await live(p)).codeSeen === true, 'showing the code on PILOT marks it seen (codeSeen)');
   check(await p.evaluate(() => { const c = document.getElementById('pCopy'); return !!c && c.offsetParent !== null; }), 'PILOT has a COPY CODE button');
-  await p.click('#pCopy', { timeout: 3000 }).catch(e => fails.push('tap COPY CODE: ' + e.message.slice(0, 60))); await p.waitForTimeout(300);
+  await tap(p, '#pCopy', 'tap COPY CODE on PILOT'); await p.waitForTimeout(300);
   check(!/^COPY CODE$/.test(await text(p, '#pCopy')), `COPY CODE answers (${JSON.stringify(await text(p, '#pCopy'))})`);
-  await p.click('#tabFly'); await p.waitForTimeout(500);
+  await tap(p, '#tabFly', 'back to HOME'); await p.waitForTimeout(500);
   check(!/Save your pilot code/.test(await text(p, '#hubNext')), 'once seen, UP NEXT stops asking');
   await p.close();
   p = await open({ save: { ...base, landings: 9 } });
@@ -48,9 +50,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.evaluate(() => game.registry.get('ui').pilot.codeFirst()); await p.waitForTimeout(400);
   const sheet = await text(p, '#sheet');
   check(/WRITE THIS DOWN/.test(sheet) && sheet.includes(CODE) && /only way to get your game back/.test(sheet), `the first-time sheet: write this down, the code, why: ${JSON.stringify(sheet.slice(0, 160))}`);
-  await p.click('#codeCopy', { timeout: 3000 }).catch(e => fails.push('tap COPY: ' + e.message.slice(0, 60))); await p.waitForTimeout(300);
+  await tap(p, '#codeCopy', 'tap COPY on the first-time sheet'); await p.waitForTimeout(300);
   check(!/^COPY CODE$/.test(await text(p, '#codeCopy')) && !!(await text(p, '#sheet')), 'COPY answers and the sheet stays open');
-  await p.click('#sheet .sheet-ok'); await p.waitForTimeout(200);
+  await tap(p, '#sheet .sheet-ok', 'close the first-time sheet'); await p.waitForTimeout(200);
   await p.evaluate(() => game.registry.get('ui').pilot.codeFirst()); await p.waitForTimeout(400);
   check(!(await text(p, '#sheet')), 'the sheet shows once');
   await p.close();
