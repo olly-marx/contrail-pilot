@@ -470,7 +470,7 @@ export class UI {
   refreshDots() {
     const d = this.freshDots(), free = !!this.save.freeUpgrade;
     $('tNew').hidden = !free; $('tNew').textContent = 'FREE!';
-    for (const [id, k] of [['dHangar', 'hangar'], ['dNature', 'nature'], ['dBoards', 'boards'], ['dMissions', 'missions']]) { const e = $(id); if (e) e.hidden = !(d[k] || (k === 'boards' && FEATURES.season2 && hubRevealed(this.save, 'boards') && !(this.save.tours || []).includes('r-boards'))); }   // (BOARDS shows a dot from landing 5 until its tour has run)
+    for (const [id, k] of [['dHangar', 'hangar'], ['dNature', 'nature'], ['dBoards', 'boards'], ['dMissions', 'missions']]) { const e = $(id); if (e) e.hidden = !(d[k] || (k === 'boards' && FEATURES.season2 && hubRevealed(this.save, 'boards') && !(this.save.tours || []).some(t => t === 'r-boards' || t === '*'))); }   // (BOARDS shows a dot from landing 5 until its tour has run)
     $('tabHangar').classList.toggle('glow', free || !!d.hangar);   // something to spend: the bar's HANGAR glows
     const cs = crossingState(this.save, { unlock: S2_UNLOCK }); if ($('dFly')) $('dFly').hidden = !(cs && cs.ready);   // R-A: HOME's dot while a crossing is ready to fly
     this.maybeCrossingSheet();   // and its one-time sheet, on whatever menu screen is showing (a save that completed the last condition)
