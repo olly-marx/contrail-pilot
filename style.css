@@ -1024,3 +1024,4 @@ h2.sub { margin-top: -4px; }
 .cend-btns { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
 .cend-btns .btn { min-height: 44px; flex: 1 1 0; }
 .cend-btns .btn { line-height: 1.2; padding-top: 6px; padding-bottom: 6px; }
+.crossend .payoff-card p:not(.ending-title):not(.cend-eyebrow) { font-size: 8px; }   /* the pixel font is ~8.2 px a character at 8 px: 277 px of body = 33 characters (the 32 budget); at 10 px only ~27 fit and lines wrapped */
