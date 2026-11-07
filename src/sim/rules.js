@@ -828,7 +828,8 @@ export const RULES = {
     const nextMission = this.school || s2 ? null : currentMission(this.save);
     // (save.city is still the START city here: "here" missions count where the flight began.)
     // S4: the mission fields (src/sim/rules.js countPasses; the sim chat, 86a6a02) go in too, so area missions can read them.
-    const s2Done = !this.school && s2 ? s2Flight(this.save, { ...partial, dodges: this.dodgesTotal, treeIds: [...this.speciesTags],
+    // A CROSSING is a pure flight (the user, 2026-11-06; the sim chat measured this, research/CROSSING-SCORING-SIM.md: mission seeds -1.5..-2.2% of total, no timing change): nothing is scored against missions on it.
+    const s2Done = !this.school && s2 && !this.crossing ? s2Flight(this.save, { ...partial, dodges: this.dodgesTotal, treeIds: [...this.speciesTags],
       cleanGaps: this.cleanGaps || 0, noFlyPassed: this.noFlyPassed || 0, foundIds: [...(this.foundIds || [])] }) : [];
     const s2Next = s2 && !this.school ? s2NextMission(this.save) : null;
     const natureGain = biodiversity(this.save) - (this.bioStart || 0);
