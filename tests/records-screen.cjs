@@ -1,5 +1,5 @@
 // MY RECORDS on screen (src/recordsui.js; the boards for season 2, the user's answers 2026-10-27). The game as shipped, phone size.
-//   1. BOARDS is hidden until the 3rd landing, and there after it;
+//   1. BOARDS is hidden until the 5th landing, and there after it;
 //   2. the screen shows 4 good + 4 oops cards, THIS WEEK / EVER (no 4 periods, no points, no "how points work");
 //   3. the numbers are the player's own (EVER and THIS WEEK differ), a never-happened board shows a dash;
 //   4. NEW RECORD! marks the board just beaten, and is gone the next time the screen is opened;
@@ -24,14 +24,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const tab = p => p.evaluate(() => { const t = document.getElementById('tabBoards'); return !!t && !t.hidden && t.getBoundingClientRect().width > 0; });
 
   // 1. Hidden before the 3rd landing; there after it.
-  let p = await open({ ...base, landings: 2 });
-  check(!(await tab(p)), 'BOARDS is hidden before the 3rd landing');
+  let p = await open({ ...base, landings: 4 });
+  check(!(await tab(p)), 'BOARDS is hidden before the 5th landing');
   await p.close();
   // THIS WEEK is the week of TODAY (the game rolls a save's week over on a new Monday, UTC like ui.js): a fixed '2026-10-26' made this test fail from Monday 2 Nov 2026 on (CI run 165).
   const weekStart = (d => { const x = new Date(`${d}T00:00:00Z`); x.setUTCDate(x.getUTCDate() - ((x.getUTCDay() + 6) % 7)); return x.toISOString().slice(0, 10); })(new Date().toISOString().slice(0, 10));
   const rec = { ever: { longest: 4321, cool: 12, longestCrash: 900, shortest: 150, bird: 2, crashes: 5 }, week: { start: weekStart, longest: 2500, cool: 3, longestCrash: 400, shortest: 400, bird: 1, crashes: 1, kindsBase: [], missionsBase: 5 }, fresh: ['longest', 'shortest'] };
-  p = await open({ ...base, landings: 3, planted: { oak: 2, birch: 1 }, missionsDone: [...base.missionsDone, 'weurope:shade', 'weurope:bring'], records: rec });
-  check(await tab(p), 'BOARDS appears after the 3rd landing');
+  p = await open({ ...base, landings: 5, planted: { oak: 2, birch: 1 }, missionsDone: [...base.missionsDone, 'weurope:shade', 'weurope:bring'], records: rec });
+  check(await tab(p), 'BOARDS appears after the 5th landing');
   // (R9: NEW RECORD! comes from src/fresh.js keys; a record beaten BEFORE the load would be marked seen by the one-time migration, so two records are beaten now, in the session)
   await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.records.beaten = ['record:longest:ever:4321', 'record:shortest:ever:150']; ui.go('fly'); }); await p.waitForTimeout(200);
   await p.click('#tabBoards'); await p.waitForTimeout(500);
