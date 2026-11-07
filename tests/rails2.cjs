@@ -34,9 +34,14 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   });
 
   // (the poll loops below are bounded by TIME, 30 s, not by a count of 150-250 ms rounds: a loaded machine needs longer, a fast one still breaks at once; 2026-11-03, the L5 loop gave up after 60 rounds in 1 of 3 runs under load)
+  // R-map FIRST: the world is revealed (L4) but it is landing 4: no globe step, and PILOT/BOARDS are not on the bar (first, so a map plant that fires early fails HERE by name, not as a crash in a later case).
+  let p = await open(save({ landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 }); await p.waitForTimeout(800);
+  let a = await audit(p); check(!(a.up && /your world/i.test(a.text)), `R-map: not before landing 5 ("${a.text}")`);
+  const tabs4 = await p.evaluate(() => ({ pilot: document.getElementById('tabPilot').hidden, boards: document.getElementById('tabBoards').hidden }));
+  check(tabs4.pilot && tabs4.boards, `PILOT and BOARDS are not on the bar before landing 5: ${JSON.stringify(tabs4)}`); await p.close();
   // R14: landing 6 (one announcement per landing: NATURE 3, the hangar lines 4, the name and the map 5, the records tour 6).
-  let p = await open(save({ landings: 6 }), { width: 390, height: 844 });
-  let a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
+  p = await open(save({ landings: 6 }), { width: 390, height: 844 });
+  a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/R14-boards.png` });
   check(a.up && /records/i.test(a.text), `R14: at landing 6 the rails point at MY RECORDS ("${a.text}")`);
   check(a.reach.length === 1 && /tabBoards/.test(a.reach[0] || ''), `R14: exactly ONE thing can be tapped, the BOARDS tab (${a.reach.length}: ${a.reach.join(' / ')})`);
@@ -54,10 +59,6 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   p = await open(save({ landings: 5, missionsDone: ['L1', 'L2', 'L3', 'L4'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 });
   a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
   check(a.up && /your world/i.test(a.text), `R-map: at landing 5 with the world revealed the rails explain the globe ("${a.text}")`); await p.close();
-  p = await open(save({ landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 }); await p.waitForTimeout(800);
-  a = await audit(p); check(!(a.up && /your world/i.test(a.text)), `R-map: not before landing 5 ("${a.text}")`);
-  const tabs4 = await p.evaluate(() => ({ pilot: document.getElementById('tabPilot').hidden, boards: document.getElementById('tabBoards').hidden }));
-  check(tabs4.pilot && tabs4.boards, `PILOT and BOARDS are not on the bar before landing 5: ${JSON.stringify(tabs4)}`); await p.close();
 
   // L5 parcels (audit #3): NEXT says the parcels are free; NATURE opens on the tab that sells them even after viewing
   // another land; the rails point at the FREE button (one target); the tap gives them free.
