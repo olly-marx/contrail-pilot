@@ -420,3 +420,8 @@ crossingscore	src/sim/rules.js	s/ \&\& s2 \&\& !this.crossing ? s2Flight(/ \&\& 
 gaphint2	src/fleet.js	s/sum > 0 ? 1 : 0/0/	the single-system hint is removed (nothing until all three, as before)
 gaphint2	src/fleet.js	s/Math.min(12, Math.max(/Math.min(11, Math.max(/	the cap is one short: the end state (12/12/12) changes
 gaphint2	src/fleet.js	s/(sum - 3 \* m) \/ 6/(sum - 3 * m) \/ 3/	the levels above the weakest system count double: single systems give too strong a hint
+crossingend	src/crossingend.js	s/title: `WELCOME TO ${city}!`/title: `WELCOME TO ${city}! 6500 km`/	the landing screen shows a distance
+crossingend	src/crossingend.js	s/buttons: \[{ id: 'again', label: 'TRY AGAIN' }, { id: 'home', label: 'HOME' }\]/buttons: [{ id: 'home', label: 'HOME' }]/	the crash screen has no TRY AGAIN
+crossingend	src/crossingend.js	s/lost > 0) lines.push/lost > 99999) lines.push/	a crash never says the carried seeds are lost
+crossingscreens	src/ui.js	s/    else if (r.crossing) return this.showCrossingEnd(r);/    else if (false) return this.showCrossingEnd(r);/	a crossing ends on the normal results card (no own screen)
+crossingscreens	src/ui.js	s/      if (again) { const cs = crossingById/      if (false) { const cs = crossingById/	TRY AGAIN does not fly the crossing again

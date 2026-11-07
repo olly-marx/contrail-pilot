@@ -52,3 +52,4 @@ group school-icy | src/school.js | schoolicy
 group save-safety | src/save.js src/online.js src/persist.js src/pilot.js src/main.js src/ui.js index.html | savesafe recoversave pilotcode
 group crossing-hud | src/GameScene.js src/sim/rules.js | crossinghud
 group gap-hint | src/fleet.js src/gapmarkers.js | gaphint
+group crossing-end | src/crossingend.js src/ui.js src/landmarks.js | crossingscreens crossinghud crossingmoment

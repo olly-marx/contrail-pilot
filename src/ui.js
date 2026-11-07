@@ -53,6 +53,7 @@ import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp } from './nextup.js';
+import { endView } from './crossingend.js';
 import { crossingState, crossingById, momentDue, markTold, sheetText } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
@@ -515,8 +516,7 @@ export class UI {
     this.hideCoach();   // nothing left open from the flight (the user saw a stray OK at the top after landing, 0.13.0)
     // Season 2: a crossing flown (src/crossings.js): the big news first.
     if (r.crossing && r.crossing.kind === 'lap' && r.crossing.landed) this.showEnding();   // the final boss: the game's ending
-    else if (r.crossing) this.toast(r.crossing.landed ? (r.crossing.opens ? `NEW AREA: ${opensName(r.crossing.opens).toUpperCase()}!` : 'YOU MADE IT!') : 'Crossing not made',
-      r.crossing.landed ? 'Your crossing is done. Fly on from here!' : 'Improve your plane, your nature and your contrail skill, and try again.', r.crossing.landed ? 'good' : '', 6);
+    else if (r.crossing) return this.showCrossingEnd(r);   // its OWN landing / crash screen (src/crossingend.js): no results card, no distance, no missions
     const s = this.save, paid = sumPrizes(r.rewards);   // R8: these were PAID at the bank (RULES.bankFlight); this is what the card shows
     if (paid.seeds || paid.crystals) this.renderBank(paid);
     const v = this.resultView = resultsView(r, s, { paid, lead, next: nextUp(s, { crossingReady: this.crossingReadyText(), crossing: crossingState(s, { unlock: S2_UNLOCK }), limit: NEXT_ROWS }) });
@@ -588,6 +588,23 @@ export class UI {
     }
     this.maybeCrossingSheet();   // R-A: the crossing moment, if this flight completed the last condition
     if (this.tour && (!r.school || FEATURES.season2)) this.tour.maybe('results');   // season 2: the rails start on the school-done card
+  }
+
+  // A crossing flight's own ending (src/crossingend.js): the payoff-style full screen. FLY ON / HOME go to HOME; TRY AGAIN flies the same crossing at once (the ending cleared save.flyCrossing).
+  async showCrossingEnd(r) {
+    const s = this.save, v = endView(r, s, { first: (s.crossed || []).length === 1 });
+    let el = document.getElementById('crossEnd');
+    if (!el) { el = document.createElement('div'); el.id = 'crossEnd'; el.className = 'payoff crossend'; document.body.appendChild(el); }
+    const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    el.innerHTML = `<div class="payoff-card"><p class="cend-eyebrow">${esc(v.eyebrow)}</p><p class="ending-title">${esc(v.title)}</p>${v.pic ? `<img class="cend-pic" src="${esc(v.pic)}" alt="">` : ''}${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}<div class="cend-btns">${v.buttons.map((b, i) => `<button class="btn ${i === 0 ? 'go ' : ''}big" type="button" data-end="${b.id}">${esc(b.label)}</button>`).join('')}</div></div>`;
+    el.hidden = false; v.kind === 'landed' ? sfx.buy() : sfx.nope();
+    const leave = async (again) => {
+      el.hidden = true; sfx.flap();
+      if (again) { const cs = crossingById(this.save, r.crossing.id, { unlock: true }); if (cs) return this.flyCrossing(cs); }
+      if (r.eraOpened) { await showEraWelcome(ERAS.findIndex(e => e.name === r.eraOpened)); return this.showHangar(); }
+      this.showTitle();
+    };
+    el.querySelectorAll('[data-end]').forEach(b => { b.onclick = () => leave(b.dataset.end === 'again'); });
   }
 
   // Small pixel Earth for the results, matching the in-game face.
