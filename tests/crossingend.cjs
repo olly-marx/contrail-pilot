@@ -14,8 +14,8 @@
   const crash = (extra = {}) => ({ landed: false, reason: 'Bird strike!\nYou hit a bird.', crystals: 2, cargo: 25, distance: 3100, crossing: { id: 'x', kind: 'frontier', landed: false, opens: 'nordic', to: 'STOCKHOLM' }, ...extra });
   // 1. The landing.
   const v1 = E.endView(land('STOCKHOLM', 'nordic'), save, { first: true });
-  check(v1.kind === 'landed' && v1.eyebrow === 'A NEW WAY OPENED' && v1.title === 'WELCOME TO STOCKHOLM!' && /Nordic & North Atlantic is open to you/.test(v1.lines[0]), `the landing says where you are and what opened: ${text(v1)}`);
-  check(/New missions are waiting there/.test(v1.lines[1]) && !/New missions/.test(E.endView(land('STOCKHOLM', 'nordic'), save, { first: false }).lines.join(' ')), 'the FIRST crossing says new missions wait; later ones do not');
+  check(v1.kind === 'landed' && v1.eyebrow === 'A NEW WAY OPENED' && v1.title === 'WELCOME TO STOCKHOLM!' && v1.lines[0] === 'Nordic & North Atlantic' && /open to you/.test(v1.lines[1]), `the landing says where you are and what opened: ${text(v1)}`);
+  check(/New missions are waiting there/.test(v1.lines.join(' ')) && !/New missions/.test(E.endView(land('STOCKHOLM', 'nordic'), save, { first: false }).lines.join(' ')), 'the FIRST crossing says new missions wait; later ones do not');
   check(v1.buttons.length === 1 && v1.buttons[0].label === 'FLY ON', `one button, FLY ON: ${JSON.stringify(v1.buttons)}`);
   check(v1.pic && fs.existsSync(path.join(__dirname, '..', v1.pic)), `the landing picture exists on disk: ${v1.pic}`);
   // 2. The crash.
@@ -29,7 +29,7 @@
   for (const city of cities) for (const opens of [null, ...Object.keys(A.AREAS)]) {
     const v = E.endView(land(city, opens), save, { first: true }), t = text(v);
     check(!/\bkm\b|\d+\s*m\b|distance|record/i.test(t) && !/\d/.test(t), `${city}/${opens}: a number or a distance in the landing: ${t}`);
-    check(v.title.length <= E.TITLE_MAX && v.lines.every(l => l.length <= E.LINE_MAX), `${city}/${opens}: within budget (title ${v.title.length}, longest line ${Math.max(...v.lines.map(l => l.length))}): ${t}`);
+    check(v.title.length <= E.TITLE_MAX && v.lines.every(l => l.length <= E.LINE_MAX), `${city}/${opens}: within budget (title ${v.title.length}; the budget is 32 at 320 px: longest line ${Math.max(...v.lines.map(l => l.length))}): ${t}`);
   }
   for (const c of [crash(), crash({ crystals: 12 }), crash({ cargo: 0, crystals: 0 })]) { const t = text(E.endView(c, save)); check(!/\bkm\b|distance|record|mission/i.test(t) && E.endView(c, save).lines.every(l => l.length <= E.LINE_MAX), `a crash screen has no distance, record or mission and fits: ${t}`); }
   console.log(fails.length ? `FAIL crossingend:\n - ${fails.join('\n - ')}` : `PASS crossingend: the landing and the crash say what happened and what you keep, with no distance and no mission, for all ${cities.length} crossing cities`);
