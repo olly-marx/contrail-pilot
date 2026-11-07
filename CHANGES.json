@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-07-crossing-screens",
+    "version": "0.33.0",
+    "date": "2026-11-07",
+    "level": "minor",
+    "notes": [
+      "A crossing now ends on its own arrival screen or its own try-again screen."
+    ]
+  },
+  {
     "id": "2026-11-07-gap-hint-hydrogen-wing",
     "version": "0.32.1",
     "date": "2026-11-07",
