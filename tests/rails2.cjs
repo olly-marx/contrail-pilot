@@ -10,7 +10,7 @@ const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHOTS || '';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
-  const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  const fails = [], check = (c, m) => { if (!c) { fails.push(m); console.log(`FAILED CHECK: ${m}`); } };   // (printed at once: a later crash must not hide which assertion failed first)
   if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
   const fleet = { plane: 'comet', planes: { comet: { engines: 1 } }, systems: {}, gadgets: {} };
   const save = x => ({ areas: ['easia'], homeArea: 'easia', city: 'SEOUL', tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['x-bars'], shownLines: [],
