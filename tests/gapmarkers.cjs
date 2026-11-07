@@ -32,6 +32,8 @@
   check(G.presenceFor(0, false) === null, 'no systems: no presence bracket');
   check(G.presenceFor(L, true) === null, 'a real gate is up: no presence bracket');
   check(pa && pa.bot < (C.HEIGHT - C.GROUND_H) / 2, `the bracket sits in the upper half of the sky (rows ${pa && pa.top}..${pa && pa.bot}), clear of mid-sky where the heat meter marker rests`);
+  const sky = C.HEIGHT - C.GROUND_H;   // the real sky height (512 - 48 = 464): the bracket's centre is a quarter down, rows 92..140
+  check(pa && pa.top === Math.round(sky / 4) - 24 && pa.bot === Math.round(sky / 4) + 24, `the bracket is centred a quarter down the real sky (${sky}): rows ${pa && pa.top}..${pa && pa.bot}`);
   check(pa && pa.alpha <= 0.4 && pa.right <= G.GATE_RIGHT && pa.x < pa.right, `quiet (alpha ${pa && pa.alpha}) and left of the meter`);
   // 5. Real flights.
   const gates = systems => {
