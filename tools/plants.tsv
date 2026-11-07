@@ -431,3 +431,4 @@ rails2	src/missions2.js	s/(save.landings || 0) >= 5)/(save.landings || 0) >= 3)/
 rails2	src/tour.js	s/ \&\& (s.landings || 0) >= 5 \&\& this.slot() \&\& !this.nameDue() \&\& !this.done('r-map'))/ \&\& this.slot() \&\& !this.nameDue() \&\& !this.done('r-map'))/	the map step is not held back to landing 5
 crossingview	src/crossingview.js	s/one long flight with no stops\./one long flight./	the first crossing sheet never says what a crossing is
 records-screen	src/ui.js	s/.some(t => t === 'r-boards' || t === '\*'))); }/.some(t => t === 'r-boards'))); }/	the BOARDS dot ignores a save with every tour done
+rails2	src/tour.js	s/ \&\& !s2LessonsLeft(s).length \&\& !s.freeUpgrade \&\& this.slot()/ \&\& this.slot()/	r-map fires over a lesson lead row

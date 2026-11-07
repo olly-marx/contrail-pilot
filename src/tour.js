@@ -7,7 +7,7 @@
 // save.shownLines: upgrade lines already pointed out.
 import { tip } from './tips.js';
 import { FEATURES } from './config.js';
-import { revealed as s2Revealed } from './missions2.js';
+import { revealed as s2Revealed, lessonsLeft as s2LessonsLeft } from './missions2.js';
 // Tab-bar targets and what replaces them on the season 2 hub (nothing: since R3 the tiles are gone and the bar's tabs are the targets; HOME goes back to the hub).
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
@@ -129,8 +129,8 @@ export class Tour {
     // L5 needs tree parcels (free the first time): on NATURE, point at the FREE button (the audit, 2026-10-28).
     if (where === 'nature' && d('L4') && !d('L5') && !((s.levels || {}).trees > 0) && !this.done('r-parcels')) return ['r-parcels', [{ target: '#wTrees [data-buy="trees"]', text: tip('rail-parcels'), tap: true }]];
     // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).
-    // R-map (the user, 2026-11-06: nothing told them the globe is a map): once the world is revealed (L4), from landing 5, one OK step on the globe; the NAME comes first if it is due.
-    if (hub && s2Revealed(s, 'world') && (s.landings || 0) >= 5 && this.slot() && !this.nameDue() && !this.done('r-map')) return ['r-map', [{ target: '#hubGlobe', text: tip('rail-map'), ok: true }]];
+    // R-map (the user, 2026-11-06: nothing told them the globe is a map): once the world is revealed (L4) and NO LESSON LEAD is on HOME (the bubble would hide the very row the player must tap: the free tree at L5), from landing 5, one OK step on the globe; the NAME comes first if it is due.
+    if (hub && s2Revealed(s, 'world') && (s.landings || 0) >= 5 && !s2LessonsLeft(s).length && !s.freeUpgrade && this.slot() && !this.nameDue() && !this.done('r-map')) return ['r-map', [{ target: '#hubGlobe', text: tip('rail-map'), ok: true }]];
     if (hub && s2Revealed(s, 'boards') && (s.landings || 0) >= 6 && this.slot() && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true, ready: always }]];
     return null;
   }

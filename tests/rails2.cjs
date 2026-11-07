@@ -56,9 +56,15 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   p = await open(save({ landings: 6, tourToday: 6 }), { width: 390, height: 844 }); await p.waitForTimeout(800);
   a = await audit(p); check(!(a.up && /records/i.test(a.text)), `R14: no records step at a landing that already had an announcement (tourToday 6) ("${a.text}")`); await p.close();
   // R-map: the world is revealed (L4): at landing 5 one OK step on the globe, never before landing 5.
-  p = await open(save({ landings: 5, missionsDone: ['L1', 'L2', 'L3', 'L4'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 });
+  p = await open(save({ landings: 5, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 });
   a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up) break; await p.waitForTimeout(150); }
-  check(a.up && /your world/i.test(a.text), `R-map: at landing 5 with the world revealed the rails explain the globe ("${a.text}")`); await p.close();
+  check(a.up && /your world/i.test(a.text), `R-map: at landing 5 with the world revealed and no lesson lead on HOME the rails explain the globe ("${a.text}")`); await p.close();
+  // ... but NOT while a lesson LEAD row is on HOME (L5 'plant a tree' left): the bubble would hide the row the player must tap.
+  p = await open(save({ landings: 6, missionsDone: ['L1', 'L2', 'L3', 'L4'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 }); await p.waitForTimeout(1200);
+  a = await audit(p); check(!(a.up && /your world/i.test(a.text)), `R-map: not over a lesson lead row (L5 still to do) ("${a.text}")`); await p.close();
+  // ... and one announcement per landing: the same save at a landing that already had one waits.
+  p = await open(save({ landings: 6, tourToday: 6, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['r-school', 'r-free', 'r-takeoff1', 'r-res1', 'r-takeoff2', 'r-res2', 'r-nature', 'name', 'r-systems', 'r-bonus'] }), { width: 390, height: 844 }); await p.waitForTimeout(1200);
+  a = await audit(p); check(!(a.up && /your world/i.test(a.text)), `R-map: not at a landing that already had an announcement ("${a.text}")`); await p.close();
 
   // L5 parcels (audit #3): NEXT says the parcels are free; NATURE opens on the tab that sells them even after viewing
   // another land; the rails point at the FREE button (one target); the tap gives them free.
