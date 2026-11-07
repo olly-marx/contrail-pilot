@@ -434,4 +434,4 @@ records-screen	src/ui.js	s/.some(t => t === 'r-boards' || t === '\*'))); }/.some
 rails2	src/tour.js	s/ \&\& !s2LessonsLeft(s).length \&\& !s.freeUpgrade \&\& this.slot()/ \&\& this.slot()/	r-map fires over a lesson lead row
 gapmarkers	src/gapmarkers.js	s/if (!(lead > 0) || anyGate) return null;/if (anyGate) return null;/	presence bracket drawn with no systems
 gapmarkers	src/gapmarkers.js	s/if (!(lead > 0) || anyGate) return null;/if (!(lead > 0)) return null;/	presence bracket drawn on top of a real gate
-gapmarkers	src/gapmarkers.js	s/Math.round((HEIGHT - GROUND_H) \/ 2)/Math.round((HEIGHT - GROUND_H) \/ 2 + lead * 10)/	presence bracket height moves with the level (carries information)
+gapmarkers	src/gapmarkers.js	s/Math.round((HEIGHT - GROUND_H) \/ 4)/Math.round((HEIGHT - GROUND_H) \/ 4 + lead * 10)/	presence bracket height moves with the level (carries information)
