@@ -16,7 +16,7 @@ import { routeFor } from './aim.js';
 import { crossingPath, completeCrossing } from './crossings.js';
 import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
-import { gateFor, MARK, GATE_RIGHT } from './gapmarkers.js';
+import { presenceFor, gateFor, MARK, GATE_RIGHT } from './gapmarkers.js';
 import { tip } from './tips.js';
 const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
 import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra, towerKey, stationKey } from './fleet.js';
@@ -1087,6 +1087,11 @@ export class GameScene extends Phaser.Scene {
       } else { g.fillStyle(col, a); g.fillRect(x + 1, m.top - 12, 6, 12); g.fillRect(x + 1, m.bot - 1, 6, 12); }
       g.fillStyle(col, a); g.fillRect(R - 3, m.top, 2, m.bot - m.top);
       if (!first || m.ahead < first.ahead) first = m;
+    }
+    const pr = presenceFor(lead, !!first);   // no gate up: a quiet fixed bracket (no gap information, src/gapmarkers.js)
+    if (pr) {
+      g.fillStyle(edge, pr.alpha); g.fillRect(pr.x, pr.top - 2, pr.tick, 4); g.fillRect(pr.x, pr.bot - 2, pr.tick, 4); g.fillRect(pr.right - 4, pr.top, 4, pr.bot - pr.top);
+      g.fillStyle(0xffd23a, pr.alpha); g.fillRect(pr.x + 1, pr.top - 1, pr.tick - 2, 2); g.fillRect(pr.x + 1, pr.bot - 1, pr.tick - 2, 2); g.fillRect(pr.right - 3, pr.top, 2, pr.bot - pr.top);
     }
     if (first && first.arrow && (!first.blink || Math.floor(this.gameTime / 180) % 2 === 0)) {   // the nearest gate only
       const y = this.plane.y + PLANE.h / 2, ax = GATE_RIGHT - 20, d = first.arrow * 8;

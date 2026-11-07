@@ -26,6 +26,12 @@
   check(G.gateFor(pair(0.3, false, 300, 420), 40, v, L).arrow === 1, 'gap below the plane: arrow down');
   check(G.gateFor(pair(0.3, false, 150, 250), 194, v, L).arrow === 0, 'level with the gap: no arrow');
   check(G.gateFor(pair(0.3, false, 300, 420), 40, v, L).blink && !G.gateFor(pair(0.3, false, 150, 250), 180, v, L).blink, 'a big jump blinks');
+  // 6. Presence (2026-11-07): systems on and no gate up = a fixed bracket that carries no gap information; a gate up or no systems = none.
+  const pa = G.presenceFor(L, false), pb = G.presenceFor(F.GAP_HINT.lead[12], false);
+  check(pa && pb && pa.top === pb.top && pa.bot === pb.bot && pa.x === pb.x && pa.alpha === pb.alpha, 'the presence bracket is the same at every level (no information in it)');
+  check(G.presenceFor(0, false) === null, 'no systems: no presence bracket');
+  check(G.presenceFor(L, true) === null, 'a real gate is up: no presence bracket');
+  check(pa && pa.alpha <= 0.4 && pa.right <= G.GATE_RIGHT && pa.x < pa.right, `quiet (alpha ${pa && pa.alpha}) and left of the meter`);
   // 5. Real flights.
   const gates = systems => {
     const w = createWorld({ autoTakeoff: true, tutorialDone: true, landings: 30, levels: {}, fleet: { plane: 'jumbo', planes: { jumbo: {} }, systems, gadgets: {} } }, 1);

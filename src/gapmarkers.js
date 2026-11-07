@@ -4,7 +4,7 @@
 // height pointing to the gap (blinking for a big jump). It shows only as far ahead as the systems already spawn
 // columns (GAP_HINT.lead), so the sky and its timing are unchanged.
 // Pure functions (no Phaser, no random): tests/gapmarkers.cjs calls them.
-import { WIDTH, PLANE } from './config.js';
+import { WIDTH, HEIGHT, GROUND_H, PLANE } from './config.js';
 
 // The gate's right edge: clear of the heat meter on the right (src/Hud.js: bar at WIDTH - 6 - 8, its tick marks
 // reach 3 px further left), so the two never overlap (seen in the 2026-10-26 screenshots).
@@ -28,4 +28,14 @@ export function gateFor(st, planeY, speed, lead = 0) {
   return { kind: st.noFly ? 'nofly' : 'storm', top, bot, ahead, near: Math.min(1, Math.max(0, 1 - ahead / lead)),
     arrow: Math.abs(dy) < (bot - top) / 2 - PLANE.h ? 0 : Math.sign(dy),   // -1 up, +1 down, 0 already level with it
     blink: Math.abs(dy) > MARK.jumpBlink };
+}
+
+// The hint's PRESENCE (2026-11-07, the user: "sometimes it just isn't available ... you see it for part of a flight and then it's off"): with the systems on
+// and no gate up, a quiet fixed bracket on the gate's rail says "the hint is running". It carries NO gap information: fixed height (mid-sky), fixed alpha,
+// no pulse, never moves with a column. null = draw nothing (no systems, or a real gate is showing).
+export const PRESENCE = { alpha: 0.3, half: 24, tick: 8 };
+export function presenceFor(lead, anyGate) {
+  if (!(lead > 0) || anyGate) return null;
+  const mid = Math.round((HEIGHT - GROUND_H) / 2);
+  return { x: GATE_RIGHT - PRESENCE.tick, right: GATE_RIGHT, top: mid - PRESENCE.half, bot: mid + PRESENCE.half, tick: PRESENCE.tick, alpha: PRESENCE.alpha };
 }
