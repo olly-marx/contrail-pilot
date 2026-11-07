@@ -409,3 +409,6 @@ pilotcode	src/main.js	s/^if (getPilot() \&\& save.pilotNamed === undefined) save
 pilotcode	src/ui.js	s/ || !noteDue(this.save, persisted)//	the storage note shows even when the browser promised
 pilotcode	src/ui.js	s/      this.save.seenTips = \[...(this.save.seenTips || \[\]), PERSIST_TIP\]; writeSave(this.save);//	the storage note shows on every visit
 syncdown	src/online.js	s/\.filter((\[k\]) => !VIEW_FLAGS.includes(k))//	pilotNamed and codeSeen count as unsent changes (opening PILOT blocks the newer online save)
+eraart	src/fleet.js	s/Math.min(s.eras || 3, ERA_IDS.length, levelEra(g\[id\]) + 1)/Math.min(3, levelEra(g[id]) + 1)/	an era-4+ sensor/autopilot still gets the 1990s sticker (the old clamp)
+eraart	src/fleet.js	s/Math.min(12, atc)/Math.min(6, atc)/	towers stop at 6: ATC 7-12 get tower 6
+eraart	src/fleet.js	s/ERA_IDS.length - 1, levelEra(fc)/2, levelEra(fc)/	the ground station stops at the 1990s
