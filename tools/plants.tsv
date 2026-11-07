@@ -412,3 +412,4 @@ syncdown	src/online.js	s/\.filter((\[k\]) => !VIEW_FLAGS.includes(k))//	pilotNam
 crossinghud	src/GameScene.js	s/    else if (this.crossing) this.nextText.setText(toAirport < 300 ? 'Glide down to land!' : '');/    else if (false) this.nextText.setText('');/	a crossing HUD shows the km and metres to the airport
 crossinghud	src/GameScene.js	s/    if (this.crossing) this.missionText.setText('');/    if (false) this.missionText.setText('');/	a crossing HUD shows the mission line
 crossinghud	src/GameScene.js	s/    if (this.crossing) this.drawCrossingBar();/    if (false) this.drawCrossingBar();/	a crossing HUD shows the distance meter again
+crossingscore	src/sim/rules.js	s/ \&\& s2 \&\& !this.crossing ? s2Flight(/ \&\& s2 ? s2Flight(/	scoring on a crossing flight returns (missions are scored and paid on it)
