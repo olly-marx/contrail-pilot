@@ -1,4 +1,4 @@
-// The next-gap hint (eras stage 7, 2026-10-23): with at least level 1 in ALL THREE systems, storm
+// The next-gap hint (eras stage 7, 2026-10-23; since 0.32.1 ANY ONE system gives a faint one, see gaphint2.cjs): with at least level 1 in ALL THREE systems, storm
 // columns are made further ahead (off screen) and a gate glows at the right edge at their gap's
 // height before they scroll in; stronger with the lowest of the three levels. Otherwise: today's game.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/gaphint.cjs
@@ -34,9 +34,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.close();
     return r;
   };
-  const none = await fly({ forecast: 6, atc: 6 });            // two of three: no hint
+  const none = await fly({});                                 // no system at all: no hint (0.32.1: ONE system already gives a faint hint, tests/gaphint2.cjs)
   const full = await fly({ forecast: 6, atc: 6, ops: 6 });
-  check(none.level === 0 && !none.hinted && none.maxX <= 300, `without all three systems: no hint, storms made just off screen: ${JSON.stringify(none)}`);
+  check(none.level === 0 && !none.hinted && none.maxX <= 300, `with no system at all: no hint, storms made just off screen: ${JSON.stringify(none)}`);
   check(full.level === 6 && full.hinted && full.maxX > 340, `all three at 6: storms made well ahead and the gate glows: ${JSON.stringify(full)}`);
   check(!none.errs.length && !full.errs.length, `page errors: ${none.errs} ${full.errs}`);
   console.log({ fails, none, full });
