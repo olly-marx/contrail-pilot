@@ -26,10 +26,10 @@ def nacelle(kind):
     for y in range(119, 149):
         for x in range(277, 323):
             if BASE.getpixel((x, y))[3] == 0: L.putpixel((x, y), (0, 0, 0, 0))
-    if kind == 'genx':   # GE's painted blue band round the cowl, close to the fan
-        for y in range(122, 146):
-            for x in (306, 307, 308):
-                if BASE.getpixel((x, y))[3]: L.putpixel((x, y), (52, 92, 158, 255))
+    if kind == 'genx':   # GE's painted blue band round the cowl, close to the fan: a bold 5 px band with a white edge line
+        for y in range(121, 147):
+            for x, c in ((304, (230, 240, 255, 255)), (305, (40, 120, 235, 255)), (306, (40, 120, 235, 255)), (307, (40, 120, 235, 255)), (308, (40, 120, 235, 255)), (309, (20, 70, 170, 255))):
+                if BASE.getpixel((x, y))[3]: L.putpixel((x, y), c)
     else:                # chevrons: the saw-tooth rear edge of the cowl (teeth point back, left)
         for k in range(6):
             y0 = 122 + 4 * k
@@ -51,11 +51,18 @@ def barrel():   # carbon-fibre fuselage: a dark woven strip under the windows
             if BASE.getpixel((x, y))[3]: L.putpixel((x, y), (46, 52, 70, 255) if (x + y) % 2 else (86, 94, 116, 255))
     return L
 
-def raked():    # the raked (upward-curved) wingtip, on the far wing's tip
+def raked():    # the raked (upward-curved) wingtip, on the far wing's tip: a bold curved tip, black outline, white body, a bright cyan end
     L = blank()
-    tip = [(152, 81), (150, 80), (148, 79), (146, 78), (145, 77), (144, 75), (143, 73), (143, 72)]
-    for x, y in tip:
-        L.putpixel((x, y), BLACK); L.putpixel((x, y + 1), (208, 214, 226, 255)); L.putpixel((x + 1, y + 1), (170, 178, 196, 255))
+    pts = [(153, 82), (150, 80), (147, 77), (145, 73), (144, 68), (143, 63)]
+    dense = []
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        n = max(abs(x1 - x0), abs(y1 - y0), 1)
+        dense += [(round(x0 + (x1 - x0) * k / n), round(y0 + (y1 - y0) * k / n)) for k in range(n)]
+    for x, y in dense:
+        L.putpixel((x - 1, y), BLACK); L.putpixel((x + 2, y), BLACK)
+        L.putpixel((x, y), (236, 240, 248, 255)); L.putpixel((x + 1, y), (236, 240, 248, 255))
+    for x, y in dense[-6:]: L.putpixel((x, y), (40, 200, 235, 255)); L.putpixel((x + 1, y), (40, 200, 235, 255))
+    for x in range(142, 147): L.putpixel((x, 62), BLACK)
     return L
 
 def dimmable():  # electrochromic windows: the dark window squares turn deep blue-violet

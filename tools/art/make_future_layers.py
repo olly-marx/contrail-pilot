@@ -6,6 +6,7 @@ from PIL import Image
 import math, os
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')
 OUT = os.path.join(ROOT, 'assets/ui/upgrades')
+YELLOW = (255, 208, 64, 255)
 CYAN, ICE, GREEN, BLACK = (70, 200, 235, 255), (190, 235, 250, 255), (70, 190, 110, 255), (14, 14, 26, 255)
 
 def load(name): return Image.open(os.path.join(ROOT, f'assets/ui/plane-hangar-{name}.png')).convert('RGBA')
@@ -42,13 +43,16 @@ def truss():
     L = blank(base)                                   # hybrid-electric assist: green electric ring + a green stripe along each pod
     for cx, cy in fans: ring(L, base, cx, cy, 14, GREEN); ring(L, base, cx, cy, 17, ICE); hline(L, base, cx + 12, cx + 24, cy + 9, GREEN); hline(L, base, cx + 12, cx + 24, cy + 10, GREEN)
     out['hybrid'] = L
-    L = blank(base)                                   # folding wingtips: a dark hinge line across the wing near each tip
-    for x in (90, 91, 92, 338, 339, 340):
+    L = blank(base)                                   # folding wingtips: a bold black-and-yellow hinge across the wing near each tip (3 px wide)
+    for x in (88, 89, 90, 91, 336, 337, 338, 339):
         ys = [y for y in range(35, 75) if on(base, x, y)]
-        for y in ys: L.putpixel((x, y), BLACK)
+        for k, y in enumerate(ys): L.putpixel((x, y), YELLOW if (k + (x % 2)) % 2 == 0 else BLACK)
     out['fold'] = L
-    L = blank(base)                                   # laminar-flow skin: a thin bright sheen line along the wing
-    hline(L, base, 100, 340, 54, ICE, 2)
+    L = blank(base)                                   # laminar-flow skin: a bold cyan dashed sheen along the wing (3 rows, 8 px dashes)
+    for x in range(100, 345):
+        if (x // 8) % 2 == 0:
+            for y in range(48, 60):
+                if on(base, x, y) and base.getpixel((x, y))[:3] != BLACK[:3] and sum(base.getpixel((x, y))[:3]) > 300: L.putpixel((x, y), CYAN)
     out['laminar'] = L
     L = blank(base)                                   # window-wall lounge: the cabin windows become one long pale-blue band
     recolour_dark(L, base, (90, 98, 340, 110), ICE)
@@ -67,12 +71,16 @@ def hydrogen():
     L = blank(base)                                   # quieter ducted fans: a soft white ring and a green inner ring
     for cx, cy in fans: ring(L, base, cx, cy, 10, ICE, 2); ring(L, base, cx, cy, 7, GREEN)
     out['ducted'] = L
-    L = blank(base)                                   # insulated hydrogen tanks: a frosty pale-blue band along the back of the body
-    for dy in (0, 1): hline(L, base, 150, 290, 76 + dy, ICE)
-    hline(L, base, 150, 290, 78, CYAN, 3)
+    L = blank(base)                                   # insulated hydrogen tanks: a bold frosty band (5 rows, pale blue with a cyan edge) along the back of the body
+    for y in range(80, 87):
+        for x in range(150, 290):
+            if on(base, x, y) and base.getpixel((x, y))[:3] != BLACK[:3]: L.putpixel((x, y), CYAN if y in (80, 86) else ICE)
     out['tanks'] = L
-    L = blank(base)                                   # laminar flow all over: a thin sheen line along the wing and the nose
-    hline(L, base, 150, 330, 88, ICE, 2)
+    L = blank(base)                                   # laminar flow all over: a bold cyan dashed sheen along the body (3 rows)
+    for x in range(150, 345):
+        if (x // 8) % 2 == 0:
+            for y in range(86, 91):
+                if on(base, x, y) and base.getpixel((x, y))[:3] != BLACK[:3]: L.putpixel((x, y), CYAN)
     out['laminar'] = L
     L = blank(base)                                   # panorama seats: the cabin windows become big pale panels
     recolour_dark(L, base, (255, 92, 372, 101), ICE)

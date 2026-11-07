@@ -178,7 +178,7 @@ export class FleetHangar {
   // The range in the picture caption (the flying plane only): a span so the background estimate can swap it (#hCap).
   capHTML(s) {
     const km = capFor(s, areaOf(s.city) || null);
-    return km ? `<span id="hCap" class="hcap" title="How far your plane and nature can reach">~${km.toLocaleString('en-GB')} km</span>`
+    return km ? `<span id="hCap" class="hcap" title="How far your plane and nature can reach">~${Math.round(km / 1000)}k km</span>`
       : `<span id="hCap" class="hcap working" title="Working out how far your plane can go">${estimating() ? '~ km' : ''}<i class="dots"></i></span>`;
   }
   // NATURE FINANCE (src/finance.js), from the 2010s: the desk's level, today's rate from your nature's health (a bar: fewer
