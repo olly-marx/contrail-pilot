@@ -388,7 +388,7 @@ syncdown	src/online.js	s/ \&\& !!last.json \&\& row.stamp > (last.stamp || 0) \&
 syncdown	src/online.js	s/{ write(SYNC_KEY, { ...read(SYNC_KEY, {}), serverProgress: 0 }); }/{ write(SYNC_KEY, read(SYNC_KEY, {})); }/	a deliberate reset can never upload
 persist	src/persist.js	s/      return (await st.persist()) === true;/      return true;/	persist() false is read as true: the note never shows
 persist	src/persist.js	s/export const noteDue = (save, persisted) => persisted === false \&\&/export const noteDue = (save, persisted) => persisted !== true \&\&/	the note shows when the browser does not say
-persist	src/persist.js	s/PERSIST_FROM_LANDING = 5/PERSIST_FROM_LANDING = 1/	the note comes at landing 1
+persist	src/persist.js	s/PERSIST_FROM_LANDING = 8/PERSIST_FROM_LANDING = 1/	the note comes at landing 1
 persist	src/persist.js	s/ \&\& !(save.seenTips || \[\]).includes(PERSIST_TIP)//	the note shows every time
 persist	src/persist.js	s/  if (asked) return asked;//	the browser is asked on every call
 codeline	src/nextup.js	s/(save.landings || 0) >= CODE_FROM_LANDING/(save.landings || 0) >= 1/	the code line comes at landing 1
@@ -430,3 +430,4 @@ rails2	src/tour.js	s/  slot() { return (this.save.tourToday || 0) < (this.save.l
 rails2	src/missions2.js	s/(save.landings || 0) >= 5)/(save.landings || 0) >= 3)/	BOARDS and PILOT come back at landing 3
 rails2	src/tour.js	s/ \&\& (s.landings || 0) >= 5 \&\& this.slot() \&\& !this.nameDue() \&\& !this.done('r-map'))/ \&\& this.slot() \&\& !this.nameDue() \&\& !this.done('r-map'))/	the map step is not held back to landing 5
 crossingview	src/crossingview.js	s/one long flight with no stops\./one long flight./	the first crossing sheet never says what a crossing is
+records-screen	src/ui.js	s/.some(t => t === 'r-boards' || t === '\*'))); }/.some(t => t === 'r-boards'))); }/	the BOARDS dot ignores a save with every tour done

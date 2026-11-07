@@ -63,7 +63,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // L5 parcels (audit #3): NEXT says the parcels are free; NATURE opens on the tab that sells them even after viewing
   // another land; the rails point at the FREE button (one target); the tap gives them free.
   const l5 = { landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, discovered: { savanna: true, desert: true, steppe: true, rainforest: true } };
-  p = await open(save({ ...l5, shownLines: ['trees'], tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-parcels', 'nature-lead'] }), { width: 390, height: 844 });   // (phase A: every guide seen, to test the tab alone)
+  p = await open(save({ ...l5, shownLines: ['trees'], tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-map', 'r-parcels', 'nature-lead'] }), { width: 390, height: 844 });   // (phase A: every guide seen, to test the tab alone)
   check(/Free tree parcels/.test(await p.evaluate(() => document.getElementById('hubNext').innerText)), `L5: NEXT says the tree parcels are free (${await p.evaluate(() => document.getElementById('hubNext').innerText)})`);
   await p.click('#tabNature'); await p.waitForTimeout(500);
   const other = await p.$('#wRegions [data-region]:not([disabled]):not(.on)');
@@ -72,7 +72,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.click('#tabFly'); await p.waitForTimeout(400); await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(700);
   check(await p.evaluate(() => !document.getElementById('nature').hidden && !document.getElementById('wTrees').hidden && !!document.querySelector('#wTrees [data-buy="trees"]')), 'L5: NEXT opens NATURE on the tab that sells the parcels, after viewing another land');
   await p.close();
-  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'] }), { width: 390, height: 844 });   // (the earlier rails already shown, as in play)
+  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-map'] }), { width: 390, height: 844 });   // (the earlier rails already shown, as in play)
   { let h = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); }   // the hub's 'Something NEW!' lights NATURE: tap what is lit
     if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(600); }
   // A player taps what is lit (the 'NEW: Tree Planting! Tap i' spotlight first, closing its info card) until the parcels step.
@@ -90,7 +90,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // Scrolling under a rails step (the user's live report, 2026-10-28: "I can't scroll down or click the bottom"): on a
   // 375x667 phone, during the parcels step on NATURE, a wheel and a finger drag on the dim layer scroll the screen, and taps
   // still reach only the target.
-  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus'], shownLines: ['trees'] }), { width: 375, height: 667 }, true);   // (a touch phone: the drag is real touch events)
+  p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-map'], shownLines: ['trees'] }), { width: 375, height: 667 }, true);   // (a touch phone: the drag is real touch events)
   { let h = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); } if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(700); }
   for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { const x = await audit(p); if (x.up && /parcels/i.test(x.text)) break; await p.waitForTimeout(150); }
   const sc0 = await p.evaluate(() => document.getElementById('nature').scrollTop);

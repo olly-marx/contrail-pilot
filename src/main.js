@@ -20,7 +20,7 @@ const crash = catchCrashes(() => { const s = window.game && game.scene.getScene(
   return `state ${s.state} | ${Math.round(s.distancePx || 0)} km | next ${s.nextAirport && s.nextAirport.name} | region ${s.regionNow} | ${s.isDay ? 'day' : 'night'} | frozen ${!!s.frozen}`; },
   () => writeSave(save));
 // Ask the browser to keep this site's storage (where supported), so tidy-ups don't clear the save.
-askPersist();   // (src/persist.js: if the browser will not promise, ONE note from landing 5 says to write the pilot code down)
+askPersist();   // (src/persist.js: if the browser will not promise, ONE note from landing 8 says to write the pilot code down)
 if (getPilot() && save.pilotNamed === undefined) save.pilotNamed = true;   // pilots named before 0.31.0: UP NEXT asks them once to save the code
 const moved = migrateHabitat(save);   // old 'rewild' levels -> UK habitat projects (before the re-value: projects are kept as they are)
 if (repriceSave(save) || moved) writeSave(save);   // once, for saves from before the new prices

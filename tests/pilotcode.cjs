@@ -1,7 +1,7 @@
 // The pilot code is hard to miss (src/pilot.js, src/nextup.js, src/persist.js; the user lost a 260-flight save, 2026-11-05 — the code is the only way back).
 //  1. A named pilot who never opened the code: UP NEXT says 'Save your pilot code' from landing 10; a tap opens PILOT, where COPY CODE copies it; then the line is gone.
 //  2. The first time a pilot gets a code, a 'WRITE THIS DOWN' sheet with the code and COPY shows (once).
-//  3. If the browser would not promise to keep the storage (a fake navigator.storage.persist -> false), ONE plain note says so from landing 5; not when it promised.
+//  3. If the browser would not promise to keep the storage (a fake navigator.storage.persist -> false), ONE plain note says so from landing 8; not when it promised.
 // Real taps in the shipped game, supabase blocked (the code is local). Run: python3 -m http.server 8000 & node tests/pilotcode.cjs   (planted defects: tools/plants.tsv)
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
@@ -56,18 +56,18 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.close();
 
   // 3. the storage note
-  p = await open({ save: { ...base, landings: 6 }, pilot: false, persist: false });
+  p = await open({ save: { ...base, landings: 8 }, pilot: false, persist: false });
   const toast = await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden ? t.innerText : ''; });
-  check(/KEEP YOUR GAME SAFE/i.test(toast) && /browser may delete your game/i.test(toast) && /Pick a pilot name/.test(toast), `persist() false at landing 6, no pilot: the note says so and what to do: ${JSON.stringify(toast)}`);
+  check(/KEEP YOUR GAME SAFE/i.test(toast) && /browser may delete your game/i.test(toast) && /Pick a pilot name/.test(toast), `persist() false at landing 8, no pilot: the note says so and what to do: ${JSON.stringify(toast)}`);
   check((await live(p)).seenTips.includes('persist-note'), 'the note is marked seen');
   await p.reload(); await ready(p); await p.waitForTimeout(1500);
   check(!(await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden && /browser may delete/.test(t.innerText); })), 'the note shows once');
   await p.close();
-  p = await open({ save: { ...base, landings: 6 }, pilot: false, persist: true });
+  p = await open({ save: { ...base, landings: 8 }, pilot: false, persist: true });
   check(!(await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden && /browser may delete/.test(t.innerText); })), 'persist() true: no note');
   await p.close();
-  p = await open({ save: { ...base, landings: 3 }, pilot: false, persist: false });
-  check(!(await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden && /browser may delete/.test(t.innerText); })), 'before landing 5: no note');
+  p = await open({ save: { ...base, landings: 7 }, pilot: false, persist: false });
+  check(!(await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden && /browser may delete/.test(t.innerText); })), 'before landing 8: no note');
   await p.close();
 
   await b.close();

@@ -276,7 +276,7 @@ export class UI {
     };
   }
 
-  // From landing 5, if the browser would not promise to keep the game's storage: ONE plain note (src/persist.js).
+  // From landing 8 (after the name, the map and the records have each had their own landing), if the browser would not promise to keep the game's storage: ONE plain note (src/persist.js).
   noteStorage() {
     askPersist().then(persisted => {
       if (this.storageNoted || !noteDue(this.save, persisted) || !$('coach').hidden) return;

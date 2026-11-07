@@ -12,7 +12,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const fleet = { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} };
-  const base = { tutorialDone: true, muted: true, seenTips: ['x-bars', 'persist-note'], tours: ['*'], priceVersion: 2, flights: 6, seeds: 100, fleet, areas: ['weurope'], homeArea: 'weurope', city: 'LONDON', freeGiven: true, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'] };
+  const base = { tutorialDone: true, muted: true, seenTips: ['x-bars'], tours: ['*'], priceVersion: 2, flights: 6, seeds: 100, fleet, areas: ['weurope'], homeArea: 'weurope', city: 'LONDON', freeGiven: true, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'] };
   const open = async save => {
     const p = await b.newPage({ viewport: { width: 390, height: 844 } });
     p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
