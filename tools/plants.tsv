@@ -365,3 +365,46 @@ routechip	src/ui.js	s/hint.hidden = !s.tutorialDone ||/hint.hidden = true ||/	th
 routechip	src/globe.js	s/ if (onUse) onUse(); }   \/\/ (the first drag: the hint can go)/ }/	a drag on the globe does not remove the caption
 crossingmoment	src/crossingview.js	s/(s.told ? s.kmText : `NEW ${s.kmText}`)/s.kmText/	the row never says NEW before the sheet is seen
 schoolicy	src/school.js	s/if (this.inT > 0.6) this.madeDay = true;/if (s.contrails.length > 25) this.madeDay = true;/	the old count rule back: a slow phone never has 26 puffs alive, and the daytime contrail step says missed it for ever
+savestash	src/save.js	s/      if ((a \&\& !isBlank(a)) || (b \&\& !isBlank(b))) return;/      if (false) return;/	a blank save replaces a save with progress
+savestash	src/save.js	s/  if (held) return;   \/\/ see HELD above/  if (false) return;/	a held game still writes over the save it could not read
+savestash	src/save.js	s/    if (top \&\& top.raw === raw) return false;/    if (false) return false;/	the same save is kept twice
+savestash	src/save.js	s/    for (let n = STASH_N; n > 1; n--)/    for (let n = 1; n > 1; n--)/	the safety copies are not shifted: the newest overwrites the only one
+savestash	src/save.js	s/    if (isBlank(o)) return false;/    if (false) return false;/	a blank save is kept as a safety copy (pushing a good one out)
+savestash	src/save.js	s/    stashSave('before going back to an earlier save');//	going back to an earlier save loses the one it replaces
+savestash	src/save.js	s/  stashSave('before a reset');//	a reset deletes the save with no copy
+savestash	src/save.js	s/export const holdWrites = reason => { held = reason || 'unreadable'; };/export const holdWrites = reason => { };/	a save that cannot be read never holds the game
+savestash	src/save.js	s/if (bk \&\& typeof bk === 'object') { try { return prepareSave(bk); }/if (false) { try { return prepareSave(bk); }/	the backup is not tried when the main copy cannot be made whole
+savestash	src/save.js	s/^      keepUnreadable(localStorage.getItem(KEY));/      void 0;/	a save that cannot be made whole is not kept aside
+savestash	src/save.js	s/const STASH_N = 3,/const STASH_N = 5,/	more than the 3 newest safety copies are kept
+savesafe	src/save.js	s/  if (held) return;   \/\/ see HELD above/  if (false) return;/	a held game still writes over the save it could not read
+savesafe	src/save.js	s/export const holdWrites = reason => { held = reason || 'unreadable'; };/export const holdWrites = reason => { };/	a save that cannot be read never holds the game (no card)
+savesafe	src/main.js	s/^ui.showHeldCard();//	the held card is never shown
+savesafe	src/ui.js	s/      if (!\$('heldNew').dataset.sure) { \$('heldNew').dataset.sure = '1'; \$('heldNew').textContent = 'TAP AGAIN: START A NEW GAME'; return; }//	START A NEW GAME needs no second tap
+syncdown	src/online.js	s/    const take = !row ? false : theirs > mine ? true : theirs === mine \&\& !!last.json \&\& row.stamp > (last.stamp || 0) \&\& !unsent;/    const take = !row ? false : (!last.json ? theirs > mine : row.stamp > (last.stamp || 0) \&\& !unsent);/	a later-stamped POORER online save replaces the richer local one (the old rule)
+syncdown	src/online.js	s/      stashSave('replaced by the online save');//	the local save is not kept before the online one replaces it
+syncdown	src/online.js	s/    if (row \&\& mine > theirs) await syncUp(save, { force: true });/    if (false) await syncUp(save, { force: true });/	a richer local save is not put right online
+syncdown	src/online.js	s/  if (!opts.force \&\& last.serverProgress \&\& mine < last.serverProgress \* POORER) return false;/  if (false) return false;/	a poorer save is uploaded over a richer online one
+syncdown	src/online.js	s/ \&\& !!last.json \&\& row.stamp > (last.stamp || 0) \&\& !unsent;/ \&\& true;/	equal progress: the online copy wins even with unsent changes
+syncdown	src/online.js	s/{ write(SYNC_KEY, { ...read(SYNC_KEY, {}), serverProgress: 0 }); }/{ write(SYNC_KEY, read(SYNC_KEY, {})); }/	a deliberate reset can never upload
+persist	src/persist.js	s/      return (await st.persist()) === true;/      return true;/	persist() false is read as true: the note never shows
+persist	src/persist.js	s/export const noteDue = (save, persisted) => persisted === false \&\&/export const noteDue = (save, persisted) => persisted !== true \&\&/	the note shows when the browser does not say
+persist	src/persist.js	s/PERSIST_FROM_LANDING = 5/PERSIST_FROM_LANDING = 1/	the note comes at landing 1
+persist	src/persist.js	s/ \&\& !(save.seenTips || \[\]).includes(PERSIST_TIP)//	the note shows every time
+persist	src/persist.js	s/  if (asked) return asked;//	the browser is asked on every call
+codeline	src/nextup.js	s/(save.landings || 0) >= CODE_FROM_LANDING/(save.landings || 0) >= 1/	the code line comes at landing 1
+codeline	src/nextup.js	s/!!save.pilotNamed \&\& !save.codeSeen/!save.codeSeen/	the code line is shown with no pilot name
+codeline	src/nextup.js	s/ \&\& !save.codeSeen \&\& (save.landings/ \&\& (save.landings/	the code line never goes away
+codeline	src/nextup.js	s/short: 'Save your pilot code'/short: 'Save your pilot code and write it on paper'/	the code line is too long for a row
+recoversave	src/ui.js	s/<button class=\"chip\" type=\"button\" data-gear=\"recover\">RECOVER AN EARLIER SAVE<\/button>//	the Settings sheet has no RECOVER AN EARLIER SAVE
+recoversave	src/ui.js	s/ You can get this game back from Settings: RECOVER AN EARLIER SAVE\.//	the reset confirm does not say it can be recovered
+recoversave	src/ui.js	s/onTap: () => { if (restoreStashed(e.n)) location.reload(); }/onTap: () => { location.reload(); }/	GO BACK TO IT does not go back
+recoversave	src/save.js	s/    stashSave('before going back to an earlier save');//	going back to an earlier save loses the one it replaces
+recoversave	src/save.js	s/  stashSave('before a reset');//	a reset deletes the save with no copy
+pilotcode	src/pilot.js	s/    if (getCode()) this.markCodeSeen();//	showing the code on PILOT does not count as seen
+pilotcode	src/pilot.js	s/    showCodeSheet(code, () => this.markCodeSeen());//	the first-time code sheet never shows
+pilotcode	src/pilot.js	s/ || (this.save.seenTips || \[\]).includes('code-sheet')//	the first-time code sheet shows every time
+pilotcode	src/pilot.js	s/  if (b) b.onclick = () => copyText(code).then(ok => { b.textContent = ok ? 'COPIED!' : 'SELECT AND COPY IT'; });//	the sheet's COPY button does nothing
+pilotcode	index.html	s/<button id=\"pCopy\" class=\"btn tiny\" type=\"button\">COPY CODE<\/button> //	PILOT has no COPY CODE button
+pilotcode	src/main.js	s/^if (getPilot() \&\& save.pilotNamed === undefined) save.pilotNamed = true;//	pilots named before 0.31.0 are never asked to save the code
+pilotcode	src/ui.js	s/ || !noteDue(this.save, persisted)//	the storage note shows even when the browser promised
+pilotcode	src/ui.js	s/      this.save.seenTips = \[...(this.save.seenTips || \[\]), PERSIST_TIP\]; writeSave(this.save);//	the storage note shows on every visit

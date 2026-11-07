@@ -5,7 +5,8 @@ import { repriceSave } from './reprice.js';
 import { migrateHabitat } from './habitats.js';
 import { UI } from './ui.js';
 import { PilotScreens } from './pilot.js';
-import { catchUp, onUpload, syncUp, syncDown, watchSave, ensureCode } from './online.js';
+import { catchUp, onUpload, syncUp, syncDown, watchSave, ensureCode, getPilot } from './online.js';
+import { askPersist } from './persist.js';
 import { UploadBanner } from './uploadbanner.js';
 import { Tour } from './tour.js';
 import { WildScreen } from './wild.js';
@@ -19,7 +20,8 @@ const crash = catchCrashes(() => { const s = window.game && game.scene.getScene(
   return `state ${s.state} | ${Math.round(s.distancePx || 0)} km | next ${s.nextAirport && s.nextAirport.name} | region ${s.regionNow} | ${s.isDay ? 'day' : 'night'} | frozen ${!!s.frozen}`; },
   () => writeSave(save));
 // Ask the browser to keep this site's storage (where supported), so tidy-ups don't clear the save.
-try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) { /* not supported */ }
+askPersist();   // (src/persist.js: if the browser will not promise, ONE note from landing 5 says to write the pilot code down)
+if (getPilot() && save.pilotNamed === undefined) save.pilotNamed = true;   // pilots named before 0.31.0: UP NEXT asks them once to save the code
 const moved = migrateHabitat(save);   // old 'rewild' levels -> UK habitat projects (before the re-value: projects are kept as they are)
 if (repriceSave(save) || moved) writeSave(save);   // once, for saves from before the new prices
 
@@ -48,6 +50,7 @@ const game = new Phaser.Game({
   callbacks: { preBoot: g => { g.registry.set('save', save); g.registry.set('ui', ui); } },
 });
 window.game = game;   // exposed for debugging and automated tests
+ui.showHeldCard();    // a save that could not be read: nothing is written until the player chooses (src/save.js)
 
 ui.showTitle();
 ui.pilot = new PilotScreens(save);

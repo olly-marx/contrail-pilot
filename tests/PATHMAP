@@ -49,3 +49,4 @@ group nature-land | src/wild.js index.html style.css | natureland regions homena
 group crossing-moment | src/crossingview.js src/globe.js | crossingmoment hubscreen skiptrip
 group route-chip | src/globe.js src/sheet.js | routechip hubscreen
 group school-icy | src/school.js | schoolicy
+group save-safety | src/save.js src/online.js src/persist.js src/pilot.js src/main.js src/ui.js index.html | savesafe recoversave pilotcode

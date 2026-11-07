@@ -3,13 +3,14 @@
 // The key below is the PUBLISHABLE key: safe in a web page. Row-level security in
 // supabase/migrations/ decides what it can do (write your own player and flights, read boards).
 import { VERSION } from './version.js';
+import { progressOf, stashSave } from './save.js';
 const SUPABASE_URL = 'https://mkucbsjzbipjaiqzrlkj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_Oa3FSfnjmRu2xL_RmiKOqA_j3tEfgMd';
 const PILOT_KEY = 'contrailPilot.pilot';     // { first, word, tag } once saved online
 const OUTBOX_KEY = 'contrailPilot.outbox';   // flights not sent yet
 const OUTBOX_MAX = 100;                      // flights kept for sending: also the most one send_flights call takes (it was 5 until 0.10.0: a long offline stretch lost flights)
 const CODE_KEY = 'contrailPilot.code';       // this pilot's code (shown on PILOT; brings the pilot back on any device)
-const SYNC_KEY = 'contrailPilot.synced';     // { json, stamp } of the save last uploaded / downloaded
+const SYNC_KEY = 'contrailPilot.synced';     // { json, stamp, serverProgress } of the save last uploaded / downloaded, and how far the ONLINE copy had got then
 
 // Must match public.name_words in the migration.
 export const NAME_WORDS = ['Puffin', 'Swift', 'Falcon', 'Otter', 'Badger', 'Hedgehog', 'Kestrel', 'Beaver',
@@ -179,43 +180,53 @@ export async function ensureCode(fresh = false) {
   } catch (e) { return getCode(); }
 }
 
+// An upload may be refused for being POORER: the online copy had got further than this save (a second device that started again, a save that was lost
+// locally) and it must not be written over. Allowed up to 5% below (rounding, a pilot who deleted a few trees). `force`: the caller knows better.
+const POORER = 0.95;
+// A deliberate reset: the next upload may replace the online copy (it is the player's choice; the old one is still in RECOVER AN EARLIER SAVE and online history).
+export function allowRoughUpload() { write(SYNC_KEY, { ...read(SYNC_KEY, {}), serverProgress: 0 }); }
+
 // Upload the save if it changed since the last upload. Returns true if the server kept it.
-export async function syncUp(save) {
+export async function syncUp(save, opts = {}) {
   if (noOnline()) return false;
   if (!getPilot()) return false;
-  const json = JSON.stringify(save), last = read(SYNC_KEY, {});
-  if (last.json === json) return false;
+  const json = JSON.stringify(save), last = read(SYNC_KEY, {}), mine = progressOf(save);
+  if (last.json === json && !opts.force) return false;
+  if (!opts.force && last.serverProgress && mine < last.serverProgress * POORER) return false;   // never write a poorer save over a richer online one
   try {
     await session();
     const stamp = Math.max(Date.now(), (last.stamp || 0) + 1);
     const { data, error } = await db().rpc('put_save', { save, stamp, client: VERSION });
     if (tooOld(error)) needUpdate();
     if (error) return false;
-    write(SYNC_KEY, { json, stamp });
+    write(SYNC_KEY, { json, stamp, serverProgress: mine });
     return data === true;
   } catch (e) { return false; }
 }
 
-const progress = s => (s.landings || 0) + (s.mission || 0) * 3 + (s.flights || 0) / 10 + Object.values(s.levels || {}).reduce((a, n) => a + n, 0) * 2;
-
-// On opening the game: the online save, if it is newer than this device's and this device has no
-// unsent changes; else this device's changes go up. Returns the save to use instead, or null.
+// On opening the game: the online save replaces this device's only if it has MORE progress (equal: only if newer and nothing here is unsent). The user lost
+// a 260-flight save (2026-11-05): a later-stamped POORER copy must never win. If this device is richer, it goes up. Whatever is replaced is kept first
+// (src/save.js stashSave). Returns the save to use instead, or null.
 export async function syncDown(save) {
   if (noOnline()) return null;
   if (!getPilot()) return null;
-  const last = read(SYNC_KEY, {}), unsent = last.json !== JSON.stringify(save);
+  const last = read(SYNC_KEY, {}), unsent = last.json !== JSON.stringify(save), mine = progressOf(save);
   try {
     await session();
     const { data, error } = await db().rpc('get_save');
     if (error) return null;
-    const row = data && data[0];
-    // A device that never synced keeps whichever save has more progress (first contact never loses any).
-    const firstContact = !last.json && row;
-    if (firstContact ? progress(row.save) > progress(save) : row && row.stamp > (last.stamp || 0) && !unsent) {
-      write(SYNC_KEY, { json: JSON.stringify(row.save), stamp: row.stamp });
+    const row = data && data[0], theirs = row ? progressOf(row.save) : 0;
+    // The save with MORE progress wins, always (the loser is kept: stashSave here, the online history for the other way round). Equal progress: the online copy
+    // wins only if it is newer and nothing here is unsent.
+    const take = !row ? false : theirs > mine ? true : theirs === mine && !!last.json && row.stamp > (last.stamp || 0) && !unsent;
+    if (take) {
+      stashSave('replaced by the online save');
+      write(SYNC_KEY, { json: JSON.stringify(row.save), stamp: row.stamp, serverProgress: theirs });
       return row.save;
     }
-    if (unsent) syncUp(save);
+    if (row) write(SYNC_KEY, { ...last, serverProgress: theirs });   // remember how far the online copy is: syncUp will not write a poorer save over it
+    if (row && mine > theirs) await syncUp(save, { force: true });    // this device is richer (the online one is poorer or older): put it right
+    else if (unsent) await syncUp(save);
     return null;
   } catch (e) { return null; }
 }
@@ -231,7 +242,7 @@ export async function pilotLogin(p, code) {
     if (!r.ok) return { ok: false, why: r.why };
     write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag });
     write(CODE_KEY, code.trim());
-    write(SYNC_KEY, r.save ? { json: JSON.stringify(r.save), stamp: r.stamp } : {});
+    write(SYNC_KEY, r.save ? { json: JSON.stringify(r.save), stamp: r.stamp, serverProgress: progressOf(r.save) } : {});
     return { ok: true, save: r.save || null };
   } catch (e) { return { ok: false, why: 'offline' }; }
 }

@@ -1,6 +1,7 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
 import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, getCode, ensureCode, pilotLogin, outboxSize, onlineOff, namesOpen } from './online.js';
-import { writeSave } from './save.js';
+import { writeSave, stashSave } from './save.js';
+import { showSheet } from './sheet.js';
 import { MISSIONS } from './missions.js';
 import { km } from './config.js';
 import { BOARDS as RECORD_BOARDS } from './records.js';
@@ -74,7 +75,20 @@ export class PilotScreens {
     $('pCodeBox').hidden = !has;
     if (!has) return;
     $('pCode').textContent = getCode() || '...';
-    if (!getCode()) { await ensureCode(); $('pCode').textContent = getCode() || 'No internet: your code will appear here.'; }
+    $('pCopy').hidden = !getCode();
+    $('pCopy').onclick = () => copyText(getCode()).then(ok => { $('pCopy').textContent = ok ? 'COPIED!' : 'SELECT AND COPY IT'; this.markCodeSeen(); });
+    if (!getCode()) { await ensureCode(); $('pCode').textContent = getCode() || 'No internet: your code will appear here.'; $('pCopy').hidden = !getCode(); }
+    if (getCode()) this.markCodeSeen();   // the code was on the PILOT screen: UP NEXT stops asking
+  }
+
+  markCodeSeen() { if (!this.save.codeSeen) { this.save.codeSeen = true; writeSave(this.save); } }
+
+  // The first time a pilot gets a code: a sheet, so it is hard to miss (the user lost a 260-flight save, 2026-11-05, and the code is the only way back).
+  async codeFirst() {
+    const code = await ensureCode();
+    if (!code || (this.save.seenTips || []).includes('*') || (this.save.seenTips || []).includes('code-sheet')) return;
+    this.save.seenTips = [...(this.save.seenTips || []), 'code-sheet']; writeSave(this.save);
+    showCodeSheet(code, () => this.markCodeSeen());
   }
 
   async login() {
@@ -85,6 +99,7 @@ export class PilotScreens {
     const r = await pilotLogin(p, $('lCode').value);
     if (!r.ok) { $('lMsg').textContent = { 'no such pilot': 'No pilot with that name and number.', 'wrong code': 'That code is not right. Check your photo!', 'too many tries': 'Too many tries. Wait an hour and try again.' }[r.why] || 'No internet right now. Try again soon!'; return; }
     if (r.save) {
+      stashSave('before joining another pilot');   // this device's own save stays in RECOVER AN EARLIER SAVE
       const keep = { muted: this.save.muted };
       for (const k of Object.keys(this.save)) delete this.save[k];
       Object.assign(this.save, r.save, keep);
@@ -135,9 +150,11 @@ export class PilotScreens {
     $('pMsg').textContent = 'Saving...';
     const r = await savePilot(this.draft);
     if (r.ok) {
+      this.save.pilotNamed = true; writeSave(this.save);
       this.edit(false);
       this.renderButton();
       this.renderStats();
+      this.codeFirst();
       return;
     }
     $('pMsg').textContent = r.why === 'rude' ? 'Try a different name, please.' : 'No internet right now. Try again soon!';
@@ -184,4 +201,21 @@ export class PilotScreens {
     $('bList').innerHTML = rows.map(r => `<li class="${r.is_me ? 'me' : ''} p${Math.min(r.place, 4)}"><span class="place">${place(Number(r.place))}</span>`
       + `<span class="who"><b>${esc(r.name)}</b><small>#${esc(r.tag)}${r.is_me ? ' (you)' : ''}</small></span><span class="score">${board.fmt(Number(r.score))}</span></li>`).join('');
   }
+}
+
+// Copy text: the clipboard where the browser allows it, else a selected text field (true if it copied).
+export async function copyText(text) {
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch (e) { /* try the old way */ }
+  try {
+    const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select();
+    const ok = document.execCommand && document.execCommand('copy'); t.remove(); return !!ok;
+  } catch (e) { return false; }
+}
+// 'Write this down' sheet with the pilot code and a COPY button (the sheet stays open when COPY is tapped).
+export function showCodeSheet(code, onSeen) {
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  showSheet({ eyebrow: 'WRITE THIS DOWN', title: 'Your pilot code', ok: 'I WROTE IT DOWN', onClose: onSeen,
+    html: `<p class="code" id="codeSheetCode">${esc(code)}</p><p class="small">It is the only way to get your game back on another phone, or after clearing your browser.</p><button id="codeCopy" class="chip" type="button">COPY CODE</button>` });
+  const b = document.getElementById('codeCopy');
+  if (b) b.onclick = () => copyText(code).then(ok => { b.textContent = ok ? 'COPIED!' : 'SELECT AND COPY IT'; });
 }

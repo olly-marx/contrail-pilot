@@ -10,6 +10,9 @@ const KEY = 'contrailPilot.v2';
 // missing or cannot be read, the game loads this one. An unreadable save is kept aside under
 // UNREADABLE, never overwritten. (A browser that wipes ALL of a site's storage wipes both.)
 const BACKUP = KEY + '.backup', UNREADABLE = KEY + '.unreadable';
+// Safety copies (the user lost a 260-flight save, 2026-11-05): before anything REPLACES the local save (the online copy, another pilot's, a reset, a load
+// failure) the current one is kept under replaced-1 (newest) .. replaced-3, and the Settings sheet can bring one back. A blank save is never kept.
+const STASH_N = 3, STASH = n => `${KEY}.replaced-${n}`;
 
 const DEFAULTS = {
   seeds: 0,            // main money: grabbed in the sky, kept only if you land safely (was 'trees')
@@ -44,6 +47,18 @@ const DEFAULTS = {
   priceVersion: 2,     // saves from before the 2026-10-21 price change are re-valued once (src/reprice.js)
 };
 
+// How far a save has got: only things that never go down (seeds are spent, so they are not counted). One number, so two saves can be compared:
+// the online copy never replaces a save with MORE progress, and a blank save never replaces one that has some (src/online.js, writeSave below).
+export function progressOf(s) {
+  if (!s || typeof s !== 'object') return 0;
+  const sum = o => Object.values(o && typeof o === 'object' ? o : {}).reduce((a, n) => a + (Number(n) || 0), 0);
+  const missions = Math.max(Number(s.mission) || 0, Array.isArray(s.missionsDone) ? s.missionsDone.length : 0);
+  const planes = s.fleet && s.fleet.planes ? Math.max(0, Object.keys(s.fleet.planes).length - 1) : 0;   // (the first plane is everyone's: a new save must score 0)
+  return (Number(s.landings) || 0) + (Number(s.flights) || 0) / 10 + missions * 3 + sum(s.levels) * 2 + sum(s.planted) / 2 + planes;
+}
+// Blank: nothing worth keeping (a brand-new player, or the defaults after a failed load). Under 1 point = no landing and fewer than 10 flights.
+export const isBlank = s => progressOf(s) < 1;
+
 function readRaw(key) {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return undefined; }   // undefined: there but unreadable
 }
@@ -64,24 +79,92 @@ export function prepareSave(saved) {
   return s;
 }
 
+// HELD: a save was there but could not be read (or made whole). The game starts a blank save IN MEMORY and writes NOTHING until the player says what to do
+// (src/main.js shows the card: TRY AGAIN, or START A NEW GAME after a second tap). Without it the blank save was written over the main copy AND the backup.
+let held = null;
+export const heldReason = () => held;
+export const holdWrites = reason => { held = reason || 'unreadable'; };
+export const releaseHold = () => { held = null; };
+
+const keepUnreadable = raw => { try { if (raw && !localStorage.getItem(UNREADABLE)) localStorage.setItem(UNREADABLE, raw); } catch (e) {} };
+
 export function loadSave() {
+  const blank = () => ({ ...structuredClone(DEFAULTS), fleet: newFleet() });
   try {
-    let saved = readRaw(KEY);
+    let saved = readRaw(KEY), why = null;
     if (saved === undefined) {   // unreadable: keep it aside, never write over it unseen
-      try { if (!localStorage.getItem(UNREADABLE)) localStorage.setItem(UNREADABLE, localStorage.getItem(KEY)); } catch (e) {}
+      why = 'unreadable'; keepUnreadable(localStorage.getItem(KEY));
     }
-    if (!saved || typeof saved !== 'object') saved = readRaw(BACKUP);
-    return prepareSave(saved);
+    if (!saved || typeof saved !== 'object') {
+      const bk = readRaw(BACKUP);
+      if (bk === undefined) { why = 'unreadable'; keepUnreadable(localStorage.getItem(BACKUP)); }
+      saved = bk;
+    }
+    try { const s = prepareSave(saved); if (saved && typeof saved === 'object') why = null; else if (why) holdWrites(why); return s; }
+    catch (e) {   // the copy parsed but could not be made whole: keep its text, try the other copy
+      keepUnreadable(localStorage.getItem(KEY));
+      const bk = readRaw(BACKUP);
+      if (bk && typeof bk === 'object') { try { return prepareSave(bk); } catch (e2) { /* both bad */ } }
+      holdWrites('unreadable');
+      return blank();
+    }
   } catch (e) {
-    return { ...structuredClone(DEFAULTS), fleet: newFleet() };
+    holdWrites('unreadable');
+    return blank();
   }
 }
 
-export function writeSave(save) {
-  try { const raw = JSON.stringify(save); localStorage.setItem(KEY, raw); localStorage.setItem(BACKUP, raw); } catch (e) { /* private mode: play on without saving */ }
+// opts.allowBlank: the caller MEANS to replace what is there with a blank save (a reset, START A NEW GAME).
+export function writeSave(save, opts = {}) {
+  if (held) return;   // see HELD above
+  try {
+    if (!opts.allowBlank && isBlank(save)) {   // a blank save never replaces one that has progress, in either copy
+      const a = readRaw(KEY), b = readRaw(BACKUP);
+      if ((a && !isBlank(a)) || (b && !isBlank(b))) return;
+    }
+    const raw = JSON.stringify(save); localStorage.setItem(KEY, raw); localStorage.setItem(BACKUP, raw);
+  } catch (e) { /* private mode: play on without saving */ }
+}
+
+// Keep the CURRENT local save (main copy, else the backup) before something replaces it. Newest is replaced-1; the three newest are kept.
+// Skips a blank save and a copy identical to the newest one. Returns true if it kept one.
+export function stashSave(reason) {
+  try {
+    const raw = localStorage.getItem(KEY) || localStorage.getItem(BACKUP);
+    if (!raw) return false;
+    let o; try { o = JSON.parse(raw); } catch (e) { return false; }   // unreadable ones are kept under UNREADABLE
+    if (isBlank(o)) return false;
+    const top = (() => { try { return JSON.parse(localStorage.getItem(STASH(1))); } catch (e) { return null; } })();
+    if (top && top.raw === raw) return false;
+    for (let n = STASH_N; n > 1; n--) { const prev = localStorage.getItem(STASH(n - 1)); if (prev) localStorage.setItem(STASH(n), prev); else localStorage.removeItem(STASH(n)); }
+    localStorage.setItem(STASH(1), JSON.stringify({ at: Date.now(), reason: reason || '', flights: o.flights || 0, landings: o.landings || 0, raw }));
+    return true;
+  } catch (e) { return false; }
+}
+// What the Settings sheet lists: [{ n, at, reason, flights, landings }] newest first.
+export function listStashed() {
+  const out = [];
+  for (let n = 1; n <= STASH_N; n++) {
+    try { const e = JSON.parse(localStorage.getItem(STASH(n))); if (e && e.raw) out.push({ n, at: e.at, reason: e.reason, flights: e.flights, landings: e.landings }); } catch (e) { /* skip */ }
+  }
+  return out;
+}
+// Put safety copy n back as the local save (the current one is kept first). The caller reloads the page. Returns true on success.
+export function restoreStashed(n) {
+  try {
+    const e = JSON.parse(localStorage.getItem(STASH(n)));
+    if (!e || !e.raw) return false;
+    JSON.parse(e.raw);   // it must still be readable
+    stashSave('before going back to an earlier save');
+    localStorage.setItem(KEY, e.raw); localStorage.setItem(BACKUP, e.raw);
+    releaseHold();
+    return true;
+  } catch (e) { return false; }
 }
 
 export function resetSave() {
+  stashSave('before a reset');   // a reset can be undone from Settings: RECOVER AN EARLIER SAVE
   try { localStorage.removeItem(KEY); localStorage.removeItem(BACKUP); } catch (e) {}
+  releaseHold();
   return { ...structuredClone(DEFAULTS), fleet: newFleet() };
 }

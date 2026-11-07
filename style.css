@@ -1011,3 +1011,6 @@ h2.sub { margin-top: -4px; }
 #wScene.hint-swipe { animation: wlhint 2.8s ease-in-out 1; }
 @keyframes wlhint { 0%, 100% { transform: translateX(0); } 15% { transform: translateX(-26px); } 30% { transform: translateX(0); } 50% { transform: translateX(-26px); } 65% { transform: translateX(0); } }
 @media (prefers-reduced-motion: reduce) { #wScene.hint-swipe { animation: none; } }
+
+/* The held-save card (src/ui.js showHeldCard): above the start choice (40) and the loader (200): nothing may hide it. */
+#heldCard { z-index: 300; }

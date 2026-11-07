@@ -43,7 +43,9 @@ import { LINES, FUELS, level, nextLevel, canBuy, buyLevel, fuelChoices, unlocked
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
-import { writeSave, resetSave } from './save.js';
+import { writeSave, resetSave, listStashed, restoreStashed, releaseHold, heldReason } from './save.js';
+import { allowRoughUpload, getPilot } from './online.js';
+import { askPersist, noteDue, noteText, PERSIST_TIP } from './persist.js';
 import { eraBarHTML } from './eras.js';
 import { FleetHangar } from './hangar.js';
 import { dots, markSeen, migrateSeen, defaultLands, hangarScope } from './fresh.js';
@@ -113,8 +115,9 @@ export class UI {
     $('results').addEventListener('pointerdown', () => { this.skipReveal = true; }, true);
     $('iClose').onclick = () => { $('info').hidden = true; };
     $('resetBtn').onclick = () => {
-      if (!confirm('Delete all seeds, ice crystals, upgrades and badges on this device?')) return;
-      Object.assign(this.save, resetSave());
+      if (!confirm('Delete all seeds, ice crystals, upgrades and badges on this device? You can get this game back from Settings: RECOVER AN EARLIER SAVE.')) return;
+      Object.assign(this.save, resetSave());   // (resetSave keeps the current save first)
+      allowRoughUpload();                       // a deliberate reset may replace the online copy
       this.renderHangar();
     };
     this.setupMute();
@@ -235,11 +238,51 @@ export class UI {
     const close = showSheet({ eyebrow: 'MENU', title: 'Settings', ok: 'CLOSE',
       html: `<div class="gear-list"><button class="chip" type="button" data-gear="how">HOW TO PLAY</button><button class="chip" type="button" data-gear="school">FLIGHT SCHOOL</button>`
         + `<button class="chip" type="button" data-gear="sound">SOUND: ${s.muted ? 'OFF' : 'ON'}</button><button class="chip" type="button" data-gear="about">ABOUT US</button>`
-        + `<button class="chip warn" type="button" data-gear="reset">RESET PROGRESS</button></div>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
-    const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), reset: () => $('resetBtn').click() };
+        + `<button class="chip" type="button" data-gear="recover">RECOVER AN EARLIER SAVE</button><button class="chip warn" type="button" data-gear="reset">RESET PROGRESS</button></div>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
+    const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), recover: () => this.openRecover(), reset: () => $('resetBtn').click() };
     document.querySelectorAll('#sheet [data-gear]').forEach(b => b.onclick = () => {
       if (b.dataset.gear === 'sound') { $('muteBtn').click(); b.textContent = `SOUND: ${this.save.muted ? 'OFF' : 'ON'}`; return; }   // the sheet stays open: you hear the change
       close(); act[b.dataset.gear](); });
+  }
+
+  // ---- keeping the save safe (the user lost a 260-flight save, 2026-11-05; src/save.js, src/online.js) ----
+  // Settings > RECOVER AN EARLIER SAVE: the last three games the game kept before something replaced them (the online copy, another pilot, a reset).
+  openRecover() {
+    const list = listStashed(), when = at => new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    const rows = list.map(e => `<button class="chip" type="button" data-restore="${e.n}">${when(e.at)}: ${e.flights} flights, ${e.landings} landings</button>`).join('');
+    showSheet({ eyebrow: 'SETTINGS', title: 'Earlier saves', ok: 'CLOSE',
+      html: rows ? `<p class="small">Pick one to go back to it. Your game now is kept too.</p><div class="gear-list">${rows}</div>` : '<p class="small">Nothing here yet. The game keeps your last three games when something is about to replace one.</p>' });
+    document.querySelectorAll('#sheet [data-restore]').forEach(b => b.onclick = () => {
+      const e = list.find(x => x.n === +b.dataset.restore);
+      showSheet({ eyebrow: 'GO BACK?', title: `${e.flights} flights, ${e.landings} landings`, body: 'Go back to this save? Your game now is kept too, so you can come back to it.', ok: 'CANCEL',
+        action: { label: 'GO BACK TO IT', onTap: () => { if (restoreStashed(e.n)) location.reload(); } } });
+    });
+  }
+
+  // The save was there but could not be read: nothing is written until the player chooses (src/save.js HELD). START A NEW GAME needs a second tap.
+  showHeldCard() {
+    if (!heldReason() || $('heldCard')) return;
+    const el = document.createElement('section');
+    el.id = 'heldCard'; el.className = 'overlay top sheet-wrap';
+    el.innerHTML = '<div class="sheet card" role="dialog"><p class="eyebrow">YOUR SAVE</p><h2 class="sheet-title">We could not read your save</h2>'
+      + '<p class="sheet-body">It is kept safe on this device. Try again first. If it still does not work, you can start a new game: the old save stays kept.</p>'
+      + '<div class="sheet-buttons"><button id="heldRetry" class="btn go" type="button">TRY AGAIN</button><button id="heldNew" class="btn" type="button">START A NEW GAME</button></div></div>';
+    document.body.appendChild(el);
+    $('heldRetry').onclick = () => location.reload();
+    $('heldNew').onclick = () => {
+      if (!$('heldNew').dataset.sure) { $('heldNew').dataset.sure = '1'; $('heldNew').textContent = 'TAP AGAIN: START A NEW GAME'; return; }
+      releaseHold(); writeSave(this.save, { allowBlank: true }); el.remove();
+    };
+  }
+
+  // From landing 5, if the browser would not promise to keep the game's storage: ONE plain note (src/persist.js).
+  noteStorage() {
+    askPersist().then(persisted => {
+      if (this.storageNoted || !noteDue(this.save, persisted) || !$('coach').hidden) return;
+      this.storageNoted = true;
+      this.save.seenTips = [...(this.save.seenTips || []), PERSIST_TIP]; writeSave(this.save);
+      this.toast('KEEP YOUR GAME SAFE', noteText(!!getPilot()), 'bad', 9);
+    });
   }
 
   renderHub() {
@@ -257,7 +300,7 @@ export class UI {
     $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${rows.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
     const act = n => { sfx.flap();
       if (n.key === 'lead:cross' && ready) this.showCrossingSheet(ready);   // (R-A: a 6,500 km flight never starts from a row tap: the sheet is the confirm)
-      else if (n.where === 'hangar' || n.where === 'nature' || n.where === 'missions') this.go(n.where);
+      else if (n.where === 'hangar' || n.where === 'nature' || n.where === 'missions' || n.where === 'pilot') this.go(n.where);
       else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); };
     $('hubNext').querySelectorAll('.rc-row').forEach(b => b.onclick = e => { e.stopPropagation(); act(v.up[+b.dataset.i]); });
     $('hubNext').onclick = () => { if (v.up[0]) act(v.up[0]); };   // a tap on the strip's label or gap = its top row (the old NEXT card was one tap target)
@@ -370,6 +413,7 @@ export class UI {
     // Season 2: a save with no start area chooses it first, as a full screen (S3), before the hub ever shows.
     if (FEATURES.season2 && needsStartChoice(this.save)) { this.askStart().then(() => this.showTitle()); return; }
     if (this.migrated) { const m = this.migrated; this.migrated = null; this.toast('Prizes collected', `+${m.seeds} seeds${m.crystals ? ` and +${m.crystals} ice crystals` : ''} from your finished missions`, 'good', 5); }
+    this.noteStorage();
     $('tTrees').textContent = this.save.seeds;
     $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = km(this.save.bestDistance);
@@ -519,7 +563,7 @@ export class UI {
       html: `<div class="earth-bars rc-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>` });
     $('rNextRows').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.next[+b.dataset.i]; sfx.flap();
       if (n.key === 'lead:cross') { const cs = crossingState(this.save, { unlock: S2_UNLOCK }); if (cs && cs.ready) return this.showCrossingSheet(cs); }
-      if (n.where === 'hangar' || n.where === 'nature' || (n.where === 'missions' && n.cross)) this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : n.cross ? 'CROSSING' : 'UP NEXT', title: n.short, body: n.full }); });
+      if (n.where === 'hangar' || n.where === 'nature' || n.where === 'pilot' || (n.where === 'missions' && n.cross)) this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : n.cross ? 'CROSSING' : 'UP NEXT', title: n.short, body: n.full }); });
     const chipSheet = c => { const w = c.kind === 'animal' ? WILDLIFE.find(x => x.id === c.id) : null;
       showSheet({ eyebrow: c.kind === 'animal' ? 'NEW ANIMAL' : c.kind === 'badge' ? 'NEW BADGE' : 'A FIRST', title: c.full, pic: w ? animalPortrait(w) : c.kind === 'badge' ? medal(c.id, c.tier) : '', body: c.body,
         action: c.kind === 'animal' ? { label: 'SEE IT IN NATURE', onTap: () => this.go('nature') } : null }); };

@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-05-keep-your-game-safe",
+    "version": "0.31.0",
+    "date": "2026-11-05",
+    "level": "major",
+    "notes": [
+      "Your game is safer now! The game keeps your last three games, and you can go back to one in Settings: RECOVER AN EARLIER SAVE.",
+      "Your pilot code is the key to your game on another phone. The game now shows it with a COPY button, and reminds you to write it down.",
+      "Some browsers delete a game when they close. If yours might, the game tells you once, and the best help is your pilot code.",
+      "If the game ever cannot read your save, it keeps it safe and asks you what to do, instead of starting again."
+    ]
+  },
+  {
     "id": "2026-11-04-school-contrail",
     "version": "0.30.2",
     "date": "2026-11-04",

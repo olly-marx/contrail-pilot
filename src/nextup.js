@@ -47,11 +47,16 @@ export function leadOf(save, crossingReady = null, crossing = null) {
   return null;
 }
 
+export const CODE_FROM_LANDING = 10;
+export const codeDue = save => !!save.pilotNamed && !save.codeSeen && (save.landings || 0) >= CODE_FROM_LANDING && !(save.seenTips || []).includes('*');
+
 export function nextUp(save, { crossingReady = null, crossing = null, limit = 3 } = {}) {
   if (!M2.isSeason2(save)) return [];
   const out = [], lead = leadOf(save, crossingReady, crossing), vis = M2.visible(save), daily = M2.lessonsLeft(save).length ? [] : M2.dailyVisible(save);
   if (lead) out.push(lead);
   if (vis[0]) out.push(itemOf(save, vis[0]));
+  // Save-safety (the user lost a 260-flight save, 2026-11-05): from landing 10, a pilot who never opened the code is asked, once per visit, to write it down.
+  if (codeDue(save)) out.push({ key: 'code:save', short: 'Save your pilot code', full: 'Write your pilot code down. It is the only way to get your game back on another phone, or after your browser clears its data. Open PILOT.', where: 'pilot', right: 'PILOT ›' });
   // R-A: while a crossing is near but not ready (and the lessons are done: they come first), ONE quiet line says which condition is nearest (tap: where to do it).
   if (crossing && !crossing.ready && crossing.nearest && !lead && !M2.lessonsLeft(save).length) out.push({ key: 'cross:progress', short: clip(nearestLine(crossing)), full: `${crossing.to} needs: ${crossing.conds.filter(x => !x.done).map(x => `${x.label} (${x.status})`).join(', ')}`, where: crossing.nearest.where, right: '', cross: true });
   if (daily[0]) out.push(itemOf(save, daily[0]));
