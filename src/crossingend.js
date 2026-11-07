@@ -14,7 +14,7 @@ export function endView(r, save, { first = false } = {}) {
   const c = r.crossing || {};
   if (c.landed) {
     const city = r.landedAt || c.to, lm = LANDMARKS[city];
-    const lines = [`${areaName(c.opens)} is open to you.`, first ? 'New missions are waiting there.' : 'New cities are ready to fly to.'];
+    const nm = areaName(c.opens), lines = [`${nm[0].toUpperCase()}${nm.slice(1)} is open to you.`, first ? 'New missions are waiting there.' : 'New cities are ready to fly to.'];
     return { kind: 'landed', eyebrow: 'A NEW WAY OPENED', title: `WELCOME TO ${city}!`, lines, pic: lm ? `assets/${lm.key}.png` : null, buttons: [{ id: 'on', label: 'FLY ON' }] };
   }
   const f = save && save.fleet ? planeById(save.fleet.plane) : null, kept = r.crystals || 0, lost = r.cargo || 0;
