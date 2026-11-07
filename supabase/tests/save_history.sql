@@ -34,7 +34,26 @@ do $$ declare r boolean; begin
   assert (select min(progress) from player_save_history) >= save_progress(pg_temp.sv(110, 220)), 'the 3 kept are the richest';
   assert exists (select 1 from player_save_history where progress = save_progress(pg_temp.sv(300, 600))), 'the richest save ever is still there';
   assert (select count(*) from get_save_history()) = 3, 'get_save_history returns the pilot''s own';
+  -- the richest are kept even when many poorer saves follow (the newest three would be 55, 33, 22 here: the 360 would be lost)
+  perform put_save(pg_temp.sv(50, 50), 9000, '9.9.9');
+  perform put_save(pg_temp.sv(30, 30), 10000, '9.9.9');
+  perform put_save(pg_temp.sv(20, 20), 11000, '9.9.9');
+  perform put_save(pg_temp.sv(10, 10), 12000, '9.9.9');
+  assert (select count(*) from player_save_history) = 3, 'still 3 kept';
+  assert exists (select 1 from player_save_history where progress = save_progress(pg_temp.sv(300, 600))), 'the richest save ever survives many poorer saves after it';
+  assert (select min(progress) from player_save_history) = save_progress(pg_temp.sv(120, 240)), 'the 3 kept are the 3 richest: ' || (select string_agg(progress::text, ',' order by progress desc) from player_save_history);
 end $$;
+-- 2b. an old game is still refused (CP001) and keeps nothing
+update season set min_client = '9.0.0';
+do $$ declare n bigint := (select count(*) from player_save_history); begin
+  begin
+    perform put_save(pg_temp.sv(1, 1), 99999, '1.0.0');
+    assert false, 'an old client must be refused';
+  exception when sqlstate 'CP001' then null; end;
+  assert (select count(*) from player_save_history) = n, 'a refused client keeps nothing';
+  assert put_save(pg_temp.sv(1, 1), 99999, '9.0.0') is not null, 'a current client is accepted';
+end $$;
+update season set min_client = '0.0.0';
 -- 3. nobody else can read the table, and an old client is still refused
 do $$ begin
   assert not has_table_privilege('authenticated', 'public.player_save_history', 'select') and not has_table_privilege('anon', 'public.player_save_history', 'select'), 'the table is closed to the game and to anonymous callers';
