@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-07-new-plane-art",
+    "version": "0.32.0",
+    "date": "2026-11-07",
+    "level": "major",
+    "notes": [
+      "New pictures for the 787, the truss-braced wing and the hydrogen plane: you can see each upgrade on the plane in the hangar.",
+      "Gadgets now show on the new planes too, and the airports get new control towers and weather stations in the later eras."
+    ]
+  },
+  {
     "id": "2026-11-07-pure-crossing",
     "version": "0.31.1",
     "date": "2026-11-07",
