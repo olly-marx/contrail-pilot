@@ -103,7 +103,7 @@ export const PLANES = [
   // hydrogen's making and the climb (a facts check is due before text ships). Art: code-made pale silver.
   // noFlyGapAdd 12: the era step (sim chat, 2026-10-29: bare hydrogen +0 was worse than the full truss from 24k, the pulse and
   // squeeze arriving with it; +12 passes everywhere at s 1.0, and at s 0.9 except 30k by -5 pts, ~1 SE at 80 skies).
-  { id: 'hydrogen', era: 5, name: 'Hydrogen blended wing', co2: 0.32, nightHeat: 0.6, noFlyGapAdd: 12, margin: 'edge4', sprite: 'plane-hydrogen', portrait: 'assets/ui/plane-hangar-hydrogen.png',
+  { id: 'hydrogen', era: 5, name: 'Hydrogen wing', co2: 0.32, nightHeat: 0.6, noFlyGapAdd: 12, margin: 'edge4', sprite: 'plane-hydrogen', portrait: 'assets/ui/plane-hangar-hydrogen.png',
     lines: {
       engines: [L(5, 2600, 'Fuel-cell pods along the wing', { co2: 0.97 }), L(5, 3600, 'Superconducting motors', { co2: 0.94 }),
         L(5, 5000, 'Quieter ducted fans', { takeoff: 0.85 })],
