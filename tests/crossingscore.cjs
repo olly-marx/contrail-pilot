@@ -17,14 +17,14 @@
   };
   // Control: an ordinary landing completes missions and pays them.
   const s1 = base(), w1 = fly(s1), d1 = (w1.result.missions2 && w1.result.missions2.done) || [];
-  check(d1.length >= 1 && s1.missionsDone.length > 5, `CONTROL: an ordinary landing completes a mission (else this test cannot fail): ${JSON.stringify([d1, s1.missionsDone.length])}`);
+  check(d1.length >= 1 && w1.save.missionsDone.length > 5, `CONTROL: an ordinary landing completes a mission (else this test cannot fail): ${JSON.stringify([d1, w1.save.missionsDone.length])}`);   // (the world works on a COPY of the save: read w.save)
   // A crossing flight: the same everything, save.flyCrossing set.
   const s2 = base(), cr = C.available(s2)[0]; s2.flyCrossing = cr;
   check(!!cr, 'the fresh weurope save has a crossing to fly');
   const w2 = fly(s2), d2 = (w2.result.missions2 && w2.result.missions2.done) || [];
   check(!!w2.crossing, 'the world really flew the crossing (w.crossing is set)');
-  check(d2.length === 0 && s2.missionsDone.length === 5, `a crossing flight scores no mission: done ${JSON.stringify(d2)}, missionsDone ${s2.missionsDone.length} (5 before)`);
-  check(s2.seeds <= s1.seeds, `and pays no mission prize (seeds on the crossing ${s2.seeds} <= the ordinary landing ${s1.seeds})`);
+  check(d2.length === 0 && w2.save.missionsDone.length === 5, `a crossing flight scores no mission: done ${JSON.stringify(d2)}, missionsDone ${w2.save.missionsDone.length} (5 before)`);
+  check(w2.save.seeds <= w1.save.seeds, `and pays no mission prize (seeds on the crossing ${w2.save.seeds} <= the ordinary landing ${w1.save.seeds})`);
   console.log(fails.length ? `FAIL crossingscore:\n - ${fails.join('\n - ')}` : 'PASS crossingscore: an ordinary landing completes missions; the same flight as a crossing scores none and pays none');
   process.exit(fails.length ? 1 : 0);
 })();
