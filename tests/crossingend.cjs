@@ -15,13 +15,13 @@
   // 1. The landing.
   const v1 = E.endView(land('STOCKHOLM', 'nordic'), save, { first: true });
   check(v1.kind === 'landed' && v1.eyebrow === 'A NEW WAY OPENED' && v1.title === 'WELCOME TO STOCKHOLM!' && v1.lines[0] === 'Nordic & North Atlantic' && /open to you/.test(v1.lines[1]), `the landing says where you are and what opened: ${text(v1)}`);
-  check(/New missions are waiting there/.test(v1.lines.join(' ')) && !/New missions/.test(E.endView(land('STOCKHOLM', 'nordic'), save, { first: false }).lines.join(' ')), 'the FIRST crossing says new missions wait; later ones do not');
+  check(/New missions are open/.test(v1.lines.join(' ')) && !/New missions/.test(E.endView(land('STOCKHOLM', 'nordic'), save, { first: false }).lines.join(' ')), 'the FIRST crossing says new missions wait; later ones do not');
   check(v1.buttons.length === 1 && v1.buttons[0].label === 'FLY ON', `one button, FLY ON: ${JSON.stringify(v1.buttons)}`);
   check(v1.pic && fs.existsSync(path.join(__dirname, '..', v1.pic)), `the landing picture exists on disk: ${v1.pic}`);
   // 2. The crash.
   const v2 = E.endView(crash(), save), v2b = E.endView(crash({ cargo: 0, crystals: 0 }), save);
   check(v2.kind === 'crash' && v2.title === 'NOT THIS TIME' && v2.buttons.map(b => b.label).join() === 'TRY AGAIN,HOME', `the crash offers TRY AGAIN and HOME: ${text(v2)}`);
-  check(/You keep your 2 ice crystals/.test(v2.lines.join(' ')) && /seeds you carried are lost/i.test(v2.lines.join(' ')), `the crash says what you keep and what was lost: ${v2.lines}`);
+  check(/You keep 2 ice crystals/.test(v2.lines.join(' ')) && /Carried seeds are lost/i.test(v2.lines.join(' ')), `the crash says what you keep and what was lost: ${v2.lines}`);
   check(!/lost/i.test(v2b.lines.join(' ')) && /safe/i.test(v2b.lines.join(' ')), `a crash with nothing carried does not talk about loss: ${v2b.lines}`);
   check(v2.pic && fs.existsSync(path.join(__dirname, '..', v2.pic)), `the crash picture (the plane) exists on disk: ${v2.pic}`);
   // 3 + 4. No distance anywhere, and the budgets, for every crossing's destination (the longest names included).
@@ -29,7 +29,7 @@
   for (const city of cities) for (const opens of [null, ...Object.keys(A.AREAS)]) {
     const v = E.endView(land(city, opens), save, { first: true }), t = text(v);
     check(!/\bkm\b|\d+\s*m\b|distance|record/i.test(t) && !/\d/.test(t), `${city}/${opens}: a number or a distance in the landing: ${t}`);
-    check(v.title.length <= E.TITLE_MAX && v.lines.every(l => l.length <= E.LINE_MAX), `${city}/${opens}: within budget (title ${v.title.length}; the budget is 32 at 320 px: longest line ${Math.max(...v.lines.map(l => l.length))}): ${t}`);
+    check(v.title.length <= E.TITLE_MAX && v.lines.every(l => l.length <= E.LINE_MAX), `${city}/${opens}: within budget (title ${v.title.length}; the budget is 26 at 320 px: longest line ${Math.max(...v.lines.map(l => l.length))}): ${t}`);
   }
   for (const c of [crash(), crash({ crystals: 12 }), crash({ cargo: 0, crystals: 0 })]) { const t = text(E.endView(c, save)); check(!/\bkm\b|distance|record|mission/i.test(t) && E.endView(c, save).lines.every(l => l.length <= E.LINE_MAX), `a crash screen has no distance, record or mission and fits: ${t}`); }
   console.log(fails.length ? `FAIL crossingend:\n - ${fails.join('\n - ')}` : `PASS crossingend: the landing and the crash say what happened and what you keep, with no distance and no mission, for all ${cities.length} crossing cities`);

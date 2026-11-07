@@ -6,7 +6,7 @@ import { LANDMARKS } from './landmarks.js';
 import { planeById } from './fleet.js';
 
 export const TITLE_MAX = 26;   // "WELCOME TO " + the longest city name + "!" (the payoff card is 380 px at most; the title wraps to two lines beyond this)
-export const LINE_MAX = 32;    // a paragraph line of the crossing card at 320 px: MEASURED, a 31-character line wrapped in a 282 px card (~8.2 px a character at 10 px); the card is 94vw now (~277 px of body = 33 characters)
+export const LINE_MAX = 26;    // a paragraph line at 10 px in the 320 px card: MEASURED ~27 characters fit (the pixel font is ~10 px a character at 10 px), so 26. (The 8 px alternative was too small for 7-10 year olds.)
 const areaName = id => (AREAS[id] ? AREAS[id].name : 'the Pacific');
 
 // r: the flight's result (r.crossing = { id, kind, landed, opens, to }, r.landedAt, r.crystals, r.cargo); save: after the flight; first: this was the player's first crossing.
@@ -14,11 +14,11 @@ export function endView(r, save, { first = false } = {}) {
   const c = r.crossing || {};
   if (c.landed) {
     const city = r.landedAt || c.to, lm = LANDMARKS[city];
-    const nm = areaName(c.opens), lines = [`${nm[0].toUpperCase()}${nm.slice(1)}`, 'is open to you!', first ? 'New missions are waiting there.' : 'More cities to fly to!'];
+    const nm = areaName(c.opens), lines = [`${nm[0].toUpperCase()}${nm.slice(1)}`, 'is open to you!', first ? 'New missions are open!' : 'More cities to fly to!'];
     return { kind: 'landed', eyebrow: 'A NEW WAY OPENED', title: `WELCOME TO ${city}!`, lines, pic: lm ? `assets/${lm.key}.png` : null, buttons: [{ id: 'on', label: 'FLY ON' }] };
   }
   const f = save && save.fleet ? planeById(save.fleet.plane) : null, kept = r.crystals || 0, lost = r.cargo || 0;
-  const lines = ['Try again!', kept ? `You keep your ${kept} ice ${kept === 1 ? 'crystal' : 'crystals'}.` : 'Your plane and nature are safe.'];
-  if (lost > 0) lines.push('The seeds you carried are lost.');
+  const lines = ['Try again!', kept ? `You keep ${kept} ice ${kept === 1 ? 'crystal' : 'crystals'}.` : 'Plane and nature are safe.'];
+  if (lost > 0) lines.push('Carried seeds are lost.');
   return { kind: 'crash', eyebrow: 'THE CROSSING', title: 'NOT THIS TIME', lines, pic: f && f.portrait ? f.portrait : null, buttons: [{ id: 'again', label: 'TRY AGAIN' }, { id: 'home', label: 'HOME' }] };
 }
