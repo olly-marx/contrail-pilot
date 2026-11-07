@@ -61,6 +61,10 @@
   setup({ local: same, sync: { save: same, stamp: 200 }, server: { save: { ...same, seeds: 999 }, stamp: 200 } });
   got = await O.syncDown(same);
   check(got === null && !log.includes('put_save'), 'equal progress, not newer: nothing happens');
+  // 5d. flags that only say what this device has shown (codeSeen, pilotNamed) are not unsent changes (tests/onlinesave.cjs found it: opening PILOT made the phone 'unsent')
+  setup({ local: { ...same, codeSeen: true, pilotNamed: true }, sync: { save: same, stamp: 100 }, server: { save: { ...same, seeds: 999 }, stamp: 200 } });
+  got = await O.syncDown({ ...same, codeSeen: true, pilotNamed: true });
+  check(got && got.seeds === 999, 'view-only flags (codeSeen, pilotNamed) are not unsent changes: the newer online copy is still taken');
   // 6. syncUp never writes a poorer save over a richer online one
   const big = rich(260, 188);
   setup({ local: rich(10, 5), sync: { save: big, stamp: 100 }, server: { save: big, stamp: 100 } });

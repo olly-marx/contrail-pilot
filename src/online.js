@@ -139,12 +139,12 @@ export const outboxSize = () => read(OUTBOX_KEY, []).length;
 // listeners, but only when this really is catching up (something failed or went offline before), not after every flight.
 export async function catchUp(atStartup = false) {
   const flights = getPilot() ? outboxSize() : 0;
-  const save = !!(saveRef && getPilot() && read(SYNC_KEY, {}).json !== JSON.stringify(saveRef));
+  const save = !!(saveRef && getPilot() && read(SYNC_KEY, {}).json !== syncJson(saveRef));
   const show = recovering ? (flights > 0 || save) : atStartup && flights > 0;   // opening the game with flights left from offline play counts too
   if (show) say({ type: 'start', flights, save });
   const r = await flush();
   let kept = true;
-  if (!r.stalled && save && saveRef) kept = (await syncUp(saveRef)) || read(SYNC_KEY, {}).json === JSON.stringify(saveRef);
+  if (!r.stalled && save && saveRef) kept = (await syncUp(saveRef)) || read(SYNC_KEY, {}).json === syncJson(saveRef);
   if (show) say(r.stalled || !kept ? { type: 'stalled' } : { type: 'done', flights: r.sent });
   return r;
 }
@@ -180,6 +180,11 @@ export async function ensureCode(fresh = false) {
   } catch (e) { return getCode(); }
 }
 
+// What counts as a change to send: the save WITHOUT the two flags that only say what this device has shown (UP NEXT's pilot-code line). Opening the PILOT tab
+// must not make a device look as if it had unsent changes (then a newer online save at equal progress would not be taken: tests/onlinesave.cjs).
+const VIEW_FLAGS = ['pilotNamed', 'codeSeen'];
+export const syncJson = save => JSON.stringify(Object.fromEntries(Object.entries(save || {}).filter(([k]) => !VIEW_FLAGS.includes(k))));
+
 // An upload may be refused for being POORER: the online copy had got further than this save (a second device that started again, a save that was lost
 // locally) and it must not be written over. Allowed up to 5% below (rounding, a pilot who deleted a few trees). `force`: the caller knows better.
 const POORER = 0.95;
@@ -190,7 +195,7 @@ export function allowRoughUpload() { write(SYNC_KEY, { ...read(SYNC_KEY, {}), se
 export async function syncUp(save, opts = {}) {
   if (noOnline()) return false;
   if (!getPilot()) return false;
-  const json = JSON.stringify(save), last = read(SYNC_KEY, {}), mine = progressOf(save);
+  const json = syncJson(save), last = read(SYNC_KEY, {}), mine = progressOf(save);
   if (last.json === json && !opts.force) return false;
   if (!opts.force && last.serverProgress && mine < last.serverProgress * POORER) return false;   // never write a poorer save over a richer online one
   try {
@@ -210,7 +215,7 @@ export async function syncUp(save, opts = {}) {
 export async function syncDown(save) {
   if (noOnline()) return null;
   if (!getPilot()) return null;
-  const last = read(SYNC_KEY, {}), unsent = last.json !== JSON.stringify(save), mine = progressOf(save);
+  const last = read(SYNC_KEY, {}), unsent = last.json !== syncJson(save), mine = progressOf(save);
   try {
     await session();
     const { data, error } = await db().rpc('get_save');
@@ -221,7 +226,7 @@ export async function syncDown(save) {
     const take = !row ? false : theirs > mine ? true : theirs === mine && !!last.json && row.stamp > (last.stamp || 0) && !unsent;
     if (take) {
       stashSave('replaced by the online save');
-      write(SYNC_KEY, { json: JSON.stringify(row.save), stamp: row.stamp, serverProgress: theirs });
+      write(SYNC_KEY, { json: syncJson(row.save), stamp: row.stamp, serverProgress: theirs });
       return row.save;
     }
     if (row) write(SYNC_KEY, { ...last, serverProgress: theirs });   // remember how far the online copy is: syncUp will not write a poorer save over it
@@ -242,7 +247,7 @@ export async function pilotLogin(p, code) {
     if (!r.ok) return { ok: false, why: r.why };
     write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag });
     write(CODE_KEY, code.trim());
-    write(SYNC_KEY, r.save ? { json: JSON.stringify(r.save), stamp: r.stamp, serverProgress: progressOf(r.save) } : {});
+    write(SYNC_KEY, r.save ? { json: syncJson(r.save), stamp: r.stamp, serverProgress: progressOf(r.save) } : {});
     return { ok: true, save: r.save || null };
   } catch (e) { return { ok: false, why: 'offline' }; }
 }
