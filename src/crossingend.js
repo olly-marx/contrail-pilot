@@ -18,7 +18,7 @@ export function endView(r, save, { first = false } = {}) {
     return { kind: 'landed', eyebrow: 'A NEW WAY OPENED', title: `WELCOME TO ${city}!`, lines, pic: lm ? `assets/${lm.key}.png` : null, buttons: [{ id: 'on', label: 'FLY ON' }] };
   }
   const f = save && save.fleet ? planeById(save.fleet.plane) : null, kept = r.crystals || 0, lost = r.cargo || 0;
-  const lines = ['Crossings are hard. Every try teaches you something.', kept ? `You keep your ${kept} ice ${kept === 1 ? 'crystal' : 'crystals'}.` : 'Your plane and your nature are safe.'];
+  const lines = ['Crossings are hard. You will make it!', kept ? `You keep your ${kept} ice ${kept === 1 ? 'crystal' : 'crystals'}.` : 'Your plane and your nature are safe.'];
   if (lost > 0) lines.push('The seeds you carried are lost.');
   return { kind: 'crash', eyebrow: 'THE CROSSING', title: 'NOT THIS TIME', lines, pic: f && f.portrait ? f.portrait : null, buttons: [{ id: 'again', label: 'TRY AGAIN' }, { id: 'home', label: 'HOME' }] };
 }
