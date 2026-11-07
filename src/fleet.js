@@ -458,10 +458,10 @@ export const STICKERS = {
   magnet: { art: 'magnet', at: [[3, 5], [4, 5], [3, 4]] },
   hold: { art: 'hold', at: [[42, 18], [40, 19], [36, 18]] },
   gear: { art: 'gear', at: [[40, 21], [42, 22], [38, 21]], ground: true },   // gear: shown only when it is down
-  sensors: { art: 'sensor', at: [[56, 12], [57, 11], [50, 15]] },
-  autopilot: { art: 'auto', at: [[30, 7], [46, 3], [30, 8]] },
+  sensors: { art: 'sensor', at: [[56, 12], [57, 11], [50, 15], [50, 15], [50, 15], [50, 15]], eras: 6 },
+  autopilot: { art: 'auto', at: [[30, 7], [46, 3], [30, 8], [30, 8], [30, 8], [30, 8]], eras: 6 },
 };
-const ERA_IDS = ['1950s', '1970s', '1990s'];
+export const ERA_IDS = ['1950s', '1970s', '1990s', '2010s', '2030s', 'future'];   // (the eras of Systems / Gadgets levels: level k is era floor((k-1)/2))
 
 // The parts showing on a plane: [{ line, part }], given its levels ({ engines: 2, ... }).
 export function lookParts(planeId, levels = {}) {
@@ -488,12 +488,16 @@ export const hangarGadgets = (save, planeId) => { const g = fleetOf(save).gadget
 export function stickers(save) {
   const g = fleetOf(save).gadgets;
   return Object.entries(STICKERS).filter(([id]) => g[id]).map(([id, s]) => {
-    const era = Math.min(2, levelEra(g[id])); return { key: `sticker-${s.art}-${ERA_IDS[era]}`, x: s.at[era][0], y: s.at[era][1], ground: !!s.ground };
+    const era = Math.min(s.eras || 3, ERA_IDS.length, levelEra(g[id]) + 1) - 1; return { key: `sticker-${s.art}-${ERA_IDS[era]}`, x: s.at[era][0], y: s.at[era][1], ground: !!s.ground };
   });
 }
 // All in-flight upgrade art keys (GameScene preloads them from assets/upgrades/).
 export const UPGRADE_ART = [
   ...Object.values(LOOKS).flatMap(L => ['engines', 'body', 'cabin'].flatMap(line => L[line].filter(Boolean).filter(part => !(NO_FLIGHT_LOOK[L.art] || []).includes(part)).map(part => `plane-${L.art}-${part}`))),
-  ...Object.values(STICKERS).flatMap(s => ERA_IDS.map(e => `sticker-${s.art}-${e}`)),
-  ...[1, 2, 3, 4, 5, 6].map(n => `tower-${n}`), ...ERA_IDS.map(e => `station-${e}`),
+  ...Object.values(STICKERS).flatMap(s => ERA_IDS.slice(0, s.eras || 3).map(e => `sticker-${s.art}-${e}`)),
+  ...Array.from({ length: 12 }, (_, i) => `tower-${i + 1}`), ...ERA_IDS.map(e => `station-${e}`),
 ];
+
+// The control tower and the ground station for the airports (GameScene): the tower follows the ATC level (1-12), the station the Forecasting level's era.
+export const towerKey = atc => (atc ? `tower-${Math.min(12, atc)}` : 'tower');
+export const stationKey = fc => (fc ? `station-${ERA_IDS[Math.min(ERA_IDS.length - 1, levelEra(fc))]}` : null);

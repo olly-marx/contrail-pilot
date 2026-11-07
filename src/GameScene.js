@@ -19,7 +19,7 @@ import { writeSave } from './save.js';
 import { gateFor, MARK, GATE_RIGHT } from './gapmarkers.js';
 import { tip } from './tips.js';
 const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
-import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra } from './fleet.js';
+import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra, towerKey, stationKey } from './fleet.js';
 import { composeOnto } from './planelook.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
@@ -777,8 +777,8 @@ export class GameScene extends Phaser.Scene {
     // Control tower at the far end.
     // The tower shows your Air traffic control level; a weather station your Forecasting era (art session).
     const sys = fleetOf(this.save).systems, atc = sys.atc || 0, fc = sys.forecast || 0;
-    parts.push(this.add.image(x + AIRPORT.runwayLen - 17, SKY_H, atc ? `tower-${Math.min(6, atc)}` : 'tower').setOrigin(0, 1));
-    if (fc) parts.push(this.add.image(x + AIRPORT.runwayLen - 36, SKY_H, `station-${['1950s', '1970s', '1990s'][Math.min(2, levelEra(fc))]}`).setOrigin(0, 1));
+    parts.push(this.add.image(x + AIRPORT.runwayLen - 17, SKY_H, towerKey(atc)).setOrigin(0, 1));
+    if (fc) parts.push(this.add.image(x + AIRPORT.runwayLen - 36, SKY_H, stationKey(fc)).setOrigin(0, 1));
     parts.push(this.add.text(x + AIRPORT.runwayLen / 2, SKY_H + 8, name,
       { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 0));
     this.runwayLayer.add(parts);
