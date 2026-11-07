@@ -39,7 +39,7 @@
     return n;
   };
   const none = gates({}), two = gates({ forecast: 2, atc: 2 }), all = gates({ forecast: 1, atc: 1, ops: 1 });
-  check(none === 0 && two === 0, `no gates without all three systems (none ${none}, two of three ${two} frames)`);
+  check(none === 0 && two > 0 && two < all * 4, `no systems: no gates (${none}); two systems already give a (fainter, shorter) gate (${two} frames; 2026-11: each system alone gives a hint, fleet.js gapHintLevel)`);
   check(all > 100, `all three systems: gates show (${all} frames)`);
   console.log(fails.length ? `FAIL gapmarkers:\n - ${fails.join('\n - ')}` : `PASS gapmarkers: systems-only gates (${all} frames with all three, 0 without), right timing, kinds, arrows`);
   process.exit(fails.length ? 1 : 0);
