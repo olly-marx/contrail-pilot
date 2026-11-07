@@ -23,7 +23,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   };
   const tab = p => p.evaluate(() => { const t = document.getElementById('tabBoards'); return !!t && !t.hidden && t.getBoundingClientRect().width > 0; });
 
-  // 1. Hidden before the 3rd landing; there after it.
+  // 1. Hidden before the 5th landing; there after it (checks below use 4 and 5).
   let p = await open({ ...base, landings: 4 });
   check(!(await tab(p)), 'BOARDS is hidden before the 5th landing');
   await p.close();
@@ -86,6 +86,6 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(await p.evaluate(() => document.querySelectorAll('#bBadges .badge2 .dot').length) === 0, 'the next visit has no badge dot (it was seen)');
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close(); await b.close();
-  console.log(fails.length ? `FAIL records-screen:\n - ${fails.join('\n - ')}` : 'PASS records-screen: BOARDS after the 3rd landing, 4 good + 4 oops cards, THIS WEEK / EVER, own numbers, NEW RECORD! once, rules on tap');
+  console.log(fails.length ? `FAIL records-screen:\n - ${fails.join('\n - ')}` : 'PASS records-screen: BOARDS after the 5th landing, 4 good + 4 oops cards, THIS WEEK / EVER, own numbers, NEW RECORD! once, rules on tap');
   process.exit(fails.length ? 1 : 0);
 })();
