@@ -285,7 +285,7 @@ export class WildScreen {
     if (!fundProject(s, r, id)) { if (freeOne) { s.seeds -= p.cost; s.crystals -= p.crystals || 0; } sfx.nope(); return; }   // src/nature.js: the same rule the sim engine's player uses
     if (freeOne) s.freeProjectGiven = true;
     this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
-    writeSave(s); sfx.buy();
+    writeSave(s); sfx.grow();
     this.previewId = null;
     this.render();
     // It arrives: the feature drops into the land, the bar fills from where it was, the animals it brings flash.

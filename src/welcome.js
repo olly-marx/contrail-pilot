@@ -41,6 +41,6 @@ export function showEraWelcome(i, { reset = false, bonus = START_BONUS } = {}) {
     </div>`;
   el.hidden = false;
   el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');   // restart the animations
-  sfx.fanfare();
+  sfx.era();
   return new Promise(res => { $('ecOk').onclick = () => { el.hidden = true; sfx.coin(); res(); }; });
 }

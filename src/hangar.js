@@ -167,7 +167,7 @@ export class FleetHangar {
     Promise.race([Promise.all(pics).then(() => part && measure()), new Promise(r => setTimeout(r, 6000))]).then(() => {
       el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)
       if (part && !mark.dataset.done) el.classList.add('nopart');
-      setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
+      setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.reveal && this.ui.sfx.reveal(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
     // Ending the payoff: OK, or leaving the hangar mid-payoff (the plane build's review: it stayed parked until OK).
     this.endPayoff = () => { el.remove(); if (box) box.hidden = false; this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
     $('payOk').onclick = () => { this.ui.sfx.tick(); this.endPayoff();

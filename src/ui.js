@@ -587,7 +587,7 @@ export class UI {
     show(bank); await count($('rGain'), v.bank.seeds, 350, x => `+${x}`);
     if (v.bank.seeds || v.bank.crystals) sfx.coin(); else if (!v.landed) sfx.nope();
     await wait(200);
-    for (const el of rest) { if (el.hidden) continue; show(el); if (el.id === 'rMission' && v.missions && v.missions.fail === undefined) sfx.buy(); if (el.id === 'rEarth') v.earth && v.earth.bars[0][1] > v.earth.bars[2][1] ? sfx.warm() : sfx.cool(); await wait(110); }
+    for (const el of rest) { if (el.hidden) continue; show(el); if (el.id === 'rMission' && v.missions && v.missions.fail === undefined) sfx.done(); if (el.id === 'rChips' && (v.chips || []).some(c => c.kind === 'badge')) sfx.medal(); if (el.id === 'rEarth') v.earth && v.earth.bars[0][1] > v.earth.bars[2][1] ? sfx.warm() : sfx.cool(); await wait(110); }
     $('results').classList.remove('revealing');
     if (r.eraOpened) {   // a new era: the big welcome, then the hangar to see what it brings
       await wait(600);
@@ -605,7 +605,7 @@ export class UI {
     if (!el) { el = document.createElement('div'); el.id = 'crossEnd'; el.className = 'payoff crossend'; document.body.appendChild(el); }
     const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     el.innerHTML = `<div class="payoff-card"><p class="cend-eyebrow">${esc(v.eyebrow)}</p><p class="ending-title">${esc(v.title)}</p>${v.pic ? `<img class="cend-pic" src="${esc(v.pic)}" alt="">` : ''}${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}<div class="cend-btns">${v.buttons.map((b, i) => `<button class="btn ${i === 0 ? 'go ' : ''}big" type="button" data-end="${b.id}">${esc(b.label)}</button>`).join('')}</div></div>`;
-    el.hidden = false; v.kind === 'landed' ? sfx.buy() : sfx.nope();
+    el.hidden = false; v.kind === 'landed' ? sfx.welcome() : sfx.softfail();
     const leave = async (again) => {
       el.hidden = true; sfx.tick();
       if (again) { const cs = crossingById(this.save, r.crossing.id, { unlock: true }); if (cs) return this.flyCrossing(cs); }

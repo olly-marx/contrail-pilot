@@ -87,6 +87,13 @@ export const sfx = {
   buy: () => [659, 784, 988, 1319].forEach((f, i) => tone({ freq: f, dur: 0.1, type: 'triangle', vol: 0.04, delay: i * 0.06 })),
   nope: () => tone({ freq: 220, to: 190, dur: 0.12, vol: 0.05 }),
   dusk: () => [784, 659, 523].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.15 })),
-  fanfare: () => [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone({ freq: f, dur: i === 6 ? 0.5 : 0.16, type: 'triangle', vol: 0.05, delay: i * 0.13 })),   // a new era (src/welcome.js)
+  // Celebration cues (release B). Every one is a short rising figure from one C-major pentatonic family; losses fall and stay soft. Names are the interface (research/SOUND-DESIGN.md).
+  reveal: () => { [659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.28, type: 'triangle', vol: 0.045, delay: i * 0.09 })); noise({ dur: 0.35, vol: 0.03, cutoff: 700 }); },   // a new part arrives on the plane
+  era: () => { [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.12 })); [784, 1047, 1319].forEach(f => tone({ freq: f, dur: 0.7, type: 'triangle', vol: 0.03, delay: 0.55 })); },   // a new era (src/welcome.js; was 'fanfare')
+  grow: () => { [392, 523, 659].forEach((f, i) => tone({ freq: f, dur: 0.22, vol: 0.05, delay: i * 0.1 })); noise({ dur: 0.25, vol: 0.025, cutoff: 1800, delay: 0.05 }); },   // a nature project is funded
+  done: () => [523, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.16, type: 'triangle', vol: 0.045, delay: i * 0.08 })),   // a mission is done
+  medal: () => { tone({ freq: 880, dur: 0.8, vol: 0.05 }); tone({ freq: 1760, dur: 0.5, vol: 0.02 }); tone({ freq: 2217, dur: 0.35, vol: 0.012 }); },   // a badge: one bell strike with a long decay
+  welcome: () => { tone({ freq: 196, to: 262, dur: 0.8, vol: 0.045 }); [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: i === 3 ? 0.55 : 0.2, type: 'triangle', vol: 0.045, delay: i * 0.11 })); },   // a crossing lands
+  softfail: () => [330, 262].forEach((f, i) => tone({ freq: f, to: f * 0.95, dur: 0.26, vol: 0.05, delay: i * 0.2 })),   // a crossing is lost: two falling notes, no buzz
   dawn: () => [523, 659, 784].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.15 })),
 };

@@ -452,3 +452,9 @@ sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap soun
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
+cuesites	src/hangar.js	s/this.ui.sfx.reveal \&\& this.ui.sfx.reveal();/this.ui.sfx.buy \&\& this.ui.sfx.buy();/	the new part arrives with the plain buy sound again (no reveal)
+cuesites	src/welcome.js	s/sfx.era();/sfx.coin();/	the era welcome plays a coin, not the era cue
+cuesites	src/wild.js	s/sfx.grow();/sfx.buy();/	a funded nature project plays the plain buy, not grow
+cuesites	src/ui.js	s/sfx.softfail()/sfx.nope()/	a lost crossing plays the nope buzz again
+cuesites	src/ui.js	s/sfx.medal();/sfx.coin();/	a badge on the results card plays no medal
+sound	src/sound.js	s/done: () => \[523, 784, 1047\]/done: () => [523, 659, 784]/	two cues are the same recipe (done sounds like dawn)

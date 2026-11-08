@@ -53,6 +53,13 @@ const fs = require('fs'), path = require('path');
   check(storm === 'crack', `a storm ends with 'crack' (got ${storm})`);
   check(nofly === 'nofly', `restricted airspace ends with 'nofly' (got ${nofly})`);
   check(bird === 'flutter', `a bird ends with 'flutter' (got ${bird})`);
+  // 4b. the release-B celebration cues exist, and every cue (but the 'crash' alias of 'thud') is its own recipe: tones with their first frequencies.
+  const p1 = ['reveal', 'era', 'grow', 'done', 'medal', 'welcome', 'softfail', 'tick'];
+  check(p1.every(k => names.includes(k)), `the P1 cues exist: ${p1.filter(k => !names.includes(k)).join(', ') || 'all'}`);
+  const sig2 = n => per[n].map(x => x.kind === 'osc' ? `${x.type}${Math.round(x.vals[0])}` : x.kind === 'noise' ? 'n' : '').join(',');
+  const dup = {}; for (const n of names.filter(n => n !== 'crash')) (dup[sig2(n)] = dup[sig2(n)] || []).push(n);
+  const same = Object.values(dup).filter(a => a.length > 1);
+  check(same.length === 0, `every cue is its own recipe (identical: ${same.map(a => a.join('=')).join(' | ')})`);
   // 5. no menu click is the flying flap.
   const bad5 = [];
   for (const f of fs.readdirSync(path.join(__dirname, '../src'))) if (f.endsWith('.js') && f !== 'sound.js') { const t = fs.readFileSync(path.join(__dirname, '../src', f), 'utf8'); if (/sfx\.flap\b/.test(t)) bad5.push(f); }
