@@ -640,7 +640,7 @@ h2.sub { margin-top: -4px; }
 .era-card.go .ec-tag { animation: ec-in 0.4s 1.6s forwards; }
 .era-card.go .ec-note, .era-card.go .ec-list { animation: ec-in 0.4s 2.1s forwards; }
 .era-card.go #ecOk { animation: ec-in 0.4s 2.6s forwards; }
-.era-card.go .ec-confetti i { animation: ec-fall 2.6s 0.4s linear infinite; }
+.era-card.go .ec-confetti i { animation: ec-fall 2.6s 0.4s linear 2; }   /* two falls, then it stops (it used to loop until OK) */
 @keyframes ec-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes ec-stamp { from { opacity: 0; transform: scale(3); } to { opacity: 1; transform: scale(1); } }
 @keyframes ec-taxi { to { left: calc(50% - 93px); } }
@@ -1024,3 +1024,16 @@ h2.sub { margin-top: -4px; }
 .cend-btns { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
 .cend-btns .btn { min-height: 44px; flex: 1 1 0; }
 .cend-btns .btn { line-height: 1.2; padding: 6px 4px; font-size: 12px; white-space: nowrap; }   /* 'TRY AGAIN' on one line at 320 (check) */
+
+/* Reduce motion (research/SOUND-DESIGN.md + CELEBRATION-KIT.md, release A): the celebrations and every looping pulse stand still. The final look is kept (text visible, the plane
+   at the end of its taxi, the payoff zoom as a still enlargement); nothing moves or fades. tests/reducedmotion.cjs: every infinite animation is listed here. */
+@media (prefers-reduced-motion: reduce) {
+  .era-card.go .ec-kicker, .era-card.go .ec-title, .era-card.go .ec-tag, .era-card.go .ec-note, .era-card.go .ec-list, .era-card.go #ecOk { animation: none; opacity: 1; transform: none; }
+  .era-card.go .ec-plane { animation: none; left: calc(50% - 93px); }
+  .era-card.go .ec-confetti i { animation: none; display: none; }
+  .pay-plane, .pay-part { transition: none; }
+  .payoff.arrive .pay-spark { animation: none; display: none; }
+  #results .slam.in, .stamp { animation: none; }
+  .newbest, .coach-tap, .newtag, .btn.glow, .line.pick, .tab.glow:not(.on), .btn.claim, .btn.claim.pulse, .tcaptain, .wf.ghost, .wf.arrive, .w-webpic.w-flash, .fpreview .fpic img.fghost, .hcap.working .dots::after { animation: none; }
+  .hplane .hp-corner, .hplane .hp-preview, #tour .tring, #tour .tfinger { animation: none; }
+}
