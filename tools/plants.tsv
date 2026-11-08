@@ -442,3 +442,4 @@ onlinenote	src/ui.js	s/^    this.toast('YOUR ONLINE GAME WAS NEWER'.*$//	the not
 onlinenote	src/ui.js	s/^    takeOnlineNote();$//	the note is never cleared: it shows on every load
 onlinenote	src/ui.js	s/^    this.noteOnlineReplaced();$//	the note check is never called
 onlinenote	src/ui.js	s/ Your other game is in Settings: RECOVER AN EARLIER SAVE\.//	the note does not say where the other game is
+crossingscreens	src/crossingend.js	s/pic: lm ? `assets\/\${lm.key}.png` : null/pic: lm ? `assets\/\${lm.key}-nope.png` : null/	the landing picture is a file that does not exist (naturalWidth 0 after the wait)

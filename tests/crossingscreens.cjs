@@ -17,7 +17,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.evaluate(async () => { const V = await import('/src/crossingview.js'), cs = V.crossingById(game.registry.get('save'), 'warsaw-stockholm', { unlock: true }); game.registry.get('ui').flyCrossing(cs); });
     await p.waitForFunction(() => { const g = game.scene.getScene('game'); return g && g.crossing && ['takeoff', 'playing'].includes(g.state); }, null, { timeout: 20000 }).catch(() => {});
     return p.evaluate(() => { const g = game.scene.getScene('game'); return !!(g && g.crossing); }); };
-  const end = p => p.waitForFunction(() => { const e = document.getElementById('crossEnd'); return e && !e.hidden; }, null, { timeout: 12000 }).then(() => p.evaluate(() => { const e = document.getElementById('crossEnd'); return { text: e.innerText.replace(/\s+/g, ' '), btns: [...e.querySelectorAll('[data-end]')].map(x => x.textContent), pic: (() => { const i = e.querySelector('.cend-pic'); return i ? i.naturalWidth : -1; })(), results: !document.getElementById('results').hidden, card: (() => { const r = e.querySelector('.payoff-card').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: innerHeight }; })() }; })).catch(() => null);
+  const end = p => p.waitForFunction(() => { const e = document.getElementById('crossEnd'); return e && !e.hidden; }, null, { timeout: 12000 })
+    .then(() => p.waitForFunction(() => { const i = document.querySelector('#crossEnd .cend-pic'); return !i || i.complete; }, null, { timeout: 8000 }).catch(() => {}))   // the picture loads AFTER the card shows: wait for it to finish (a broken one finishes with naturalWidth 0: still a named failure)
+    .then(() => p.evaluate(() => { const e = document.getElementById('crossEnd'); return { text: e.innerText.replace(/\s+/g, ' '), btns: [...e.querySelectorAll('[data-end]')].map(x => x.textContent), pic: (() => { const i = e.querySelector('.cend-pic'); return i ? i.naturalWidth : -1; })(), results: !document.getElementById('results').hidden, card: (() => { const r = e.querySelector('.payoff-card').getBoundingClientRect(); return { top: r.top, bottom: r.bottom, h: innerHeight }; })() }; })).catch(() => null);
   for (const [W, H] of [[375, 667], [320, 568]]) {
     const tag = `${W}x${H}`;
     // LANDING
@@ -31,7 +33,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
       check(!/\bkm\b/i.test(e.text) && !e.results, `${tag}: the landing shows a distance or the results card: ${e.text}, results shown ${e.results}`);
       check(e.pic > 0, `${tag}: the landing picture did not load (naturalWidth ${e.pic})`);
       check(e.card.top >= 0 && e.card.bottom <= e.card.h, `${tag}: the landing card fits the screen (${Math.round(e.card.top)}-${Math.round(e.card.bottom)} of ${e.card.h})`);
-      await p.click('#crossEnd [data-end="on"]'); await p.waitForTimeout(800);
+      await p.click('#crossEnd [data-end="on"]');
+      await p.waitForFunction(() => !document.getElementById('title').hidden && document.getElementById('crossEnd').hidden, null, { timeout: 8000 }).catch(() => {});   // HOME is a condition, not a fixed 800 ms
       const after = await p.evaluate(() => ({ home: !document.getElementById('title').hidden, gone: document.getElementById('crossEnd').hidden, areas: JSON.parse(localStorage.getItem('contrailPilot.v2')).areas }));
       check(after.home && after.gone && after.areas.includes('nordic'), `${tag}: FLY ON goes HOME and the new area is open: ${JSON.stringify(after)}`);
     }
