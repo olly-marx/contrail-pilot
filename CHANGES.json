@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-08-online-game-newer",
+    "version": "0.34.1",
+    "date": "2026-11-08",
+    "level": "minor",
+    "notes": [
+      "If a newer game from your pilot comes down from the internet, the game now tells you, and says where your other game is kept."
+    ]
+  },
+  {
     "id": "2026-11-07-onboarding-one-at-a-time",
     "version": "0.34.0",
     "date": "2026-11-07",
