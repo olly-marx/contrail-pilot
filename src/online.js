@@ -9,6 +9,7 @@ const SUPABASE_KEY = 'sb_publishable_Oa3FSfnjmRu2xL_RmiKOqA_j3tEfgMd';
 const PILOT_KEY = 'contrailPilot.pilot';     // { first, word, tag } once saved online
 const OUTBOX_KEY = 'contrailPilot.outbox';   // flights not sent yet
 const OUTBOX_MAX = 100;                      // flights kept for sending: also the most one send_flights call takes (it was 5 until 0.10.0: a long offline stretch lost flights)
+const NOTE_KEY = 'contrailPilot.onlineNote';   // set when the online copy REPLACED a game on this device at load: the next page load says so, once (ui.js noteOnlineReplaced)
 const CODE_KEY = 'contrailPilot.code';       // this pilot's code (shown on PILOT; brings the pilot back on any device)
 const SYNC_KEY = 'contrailPilot.synced';     // { json, stamp, serverProgress } of the save last uploaded / downloaded, and how far the ONLINE copy had got then
 
@@ -225,16 +226,23 @@ export async function syncDown(save) {
     // wins only if it is newer and nothing here is unsent.
     const take = !row ? false : theirs > mine ? true : theirs === mine && !!last.json && row.stamp > (last.stamp || 0) && !unsent;
     if (take) {
-      stashSave('replaced by the online save');
+      const kept = stashSave('replaced by the online save');
+      if (kept) write(NOTE_KEY, 1);   // a real game was replaced: tell the player after the reload, once
       write(SYNC_KEY, { json: syncJson(row.save), stamp: row.stamp, serverProgress: theirs });
       return row.save;
     }
-    if (row) write(SYNC_KEY, { ...last, serverProgress: theirs });   // remember how far the online copy is: syncUp will not write a poorer save over it
+    // remember how far the online copy is: syncUp will not write a poorer save over it. NO online copy (wiped, or never uploaded): forget the old number,
+    // else a restored or poorer save is refused for ever against a copy that no longer exists (found 2026-11-08 reading the restore design).
+    write(SYNC_KEY, { ...last, serverProgress: row ? theirs : 0 });
     if (row && mine > theirs) await syncUp(save, { force: true });    // this device is richer (the online one is poorer or older): put it right
     else if (unsent) await syncUp(save);
     return null;
   } catch (e) { return null; }
 }
+
+// The one-line note after the online copy replaced a game here (set in syncDown): read once and cleared.
+export function takeOnlineNote() { const v = read(NOTE_KEY, null); if (v) { try { localStorage.removeItem(NOTE_KEY); } catch (e) { /* ignore */ } } return !!v; }
+export const hasOnlineNote = () => !!read(NOTE_KEY, null);
 
 // "I already have a pilot": join this device to it. { ok, save | why: 'no such pilot' | 'too many tries' | 'wrong code' | 'offline' }
 export async function pilotLogin(p, code) {

@@ -381,7 +381,7 @@ savesafe	src/save.js	s/export const holdWrites = reason => { held = reason || 'u
 savesafe	src/main.js	s/^ui.showHeldCard();//	the held card is never shown
 savesafe	src/ui.js	s/      if (!\$('heldNew').dataset.sure) { \$('heldNew').dataset.sure = '1'; \$('heldNew').textContent = 'TAP AGAIN: START A NEW GAME'; return; }//	START A NEW GAME needs no second tap
 syncdown	src/online.js	s/    const take = !row ? false : theirs > mine ? true : theirs === mine \&\& !!last.json \&\& row.stamp > (last.stamp || 0) \&\& !unsent;/    const take = !row ? false : (!last.json ? theirs > mine : row.stamp > (last.stamp || 0) \&\& !unsent);/	a later-stamped POORER online save replaces the richer local one (the old rule)
-syncdown	src/online.js	s/      stashSave('replaced by the online save');//	the local save is not kept before the online one replaces it
+syncdown	src/online.js	s/      const kept = stashSave('replaced by the online save');/      const kept = false;/	the local save is not kept before the online one replaces it
 syncdown	src/online.js	s/    if (row \&\& mine > theirs) await syncUp(save, { force: true });/    if (false) await syncUp(save, { force: true });/	a richer local save is not put right online
 syncdown	src/online.js	s/  if (!opts.force \&\& last.serverProgress \&\& mine < last.serverProgress \* POORER) return false;/  if (false) return false;/	a poorer save is uploaded over a richer online one
 syncdown	src/online.js	s/ \&\& !!last.json \&\& row.stamp > (last.stamp || 0) \&\& !unsent;/ \&\& true;/	equal progress: the online copy wins even with unsent changes
@@ -435,3 +435,10 @@ rails2	src/tour.js	s/ \&\& !s2LessonsLeft(s).length \&\& !s.freeUpgrade \&\& thi
 gapmarkers	src/gapmarkers.js	s/if (!(lead > 0) || anyGate) return null;/if (anyGate) return null;/	presence bracket drawn with no systems
 gapmarkers	src/gapmarkers.js	s/if (!(lead > 0) || anyGate) return null;/if (!(lead > 0)) return null;/	presence bracket drawn on top of a real gate
 gapmarkers	src/gapmarkers.js	s/Math.round((HEIGHT - GROUND_H) \/ 4)/Math.round((HEIGHT - GROUND_H) \/ 4 + lead * 10)/	presence bracket height moves with the level (carries information)
+syncdown	src/online.js	s/serverProgress: row ? theirs : 0 });/serverProgress: row ? theirs : last.serverProgress });/	no online copy: the old online progress is kept, so a poorer save is refused for ever
+syncdown	src/online.js	s/      if (kept) write(NOTE_KEY, 1);.*$/      void kept;/	a game replaced by the online copy is never announced
+syncdown	src/online.js	s/      if (kept) write(NOTE_KEY, 1);/      write(NOTE_KEY, 1);/	a blank device taking the online copy is told a game was replaced
+onlinenote	src/ui.js	s/^    this.toast('YOUR ONLINE GAME WAS NEWER'.*$//	the note is never shown
+onlinenote	src/ui.js	s/^    takeOnlineNote();$//	the note is never cleared: it shows on every load
+onlinenote	src/ui.js	s/^    this.noteOnlineReplaced();$//	the note check is never called
+onlinenote	src/ui.js	s/ Your other game is in Settings: RECOVER AN EARLIER SAVE\.//	the note does not say where the other game is

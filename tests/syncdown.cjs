@@ -35,10 +35,12 @@
   let got = await O.syncDown(rich(50, 30));
   check(got && got.flights === 260, 'first contact, online richer: the online save is used');
   check(stashed().join() === '50', `... and this device's own save is kept first (${stashed()})`);
+  check(O.hasOnlineNote(), 'a game was replaced by the online copy: the player is told after the reload (the note is set)');
   // 2. first contact, this device is richer: it goes up, nothing is replaced
   setup({ local: rich(260, 188), server: { save: rich(50, 30), stamp: 100 } });
   got = await O.syncDown(rich(260, 188));
   check(got === null && row.save.flights === 260, 'first contact, this device richer: it is uploaded, not replaced');
+  check(!O.hasOnlineNote(), 'nothing was replaced here: no note');
   // 3. THE BUG: after the first sync a LATER-stamped POORER online copy must not win
   const mine = rich(260, 188);
   setup({ local: mine, sync: { save: mine, stamp: 100 }, server: { save: rich(40, 30), stamp: 200 } });
@@ -65,6 +67,15 @@
   setup({ local: { ...same, codeSeen: true, pilotNamed: true }, sync: { save: same, stamp: 100 }, server: { save: { ...same, seeds: 999 }, stamp: 200 } });
   got = await O.syncDown({ ...same, codeSeen: true, pilotNamed: true });
   check(got && got.seeds === 999, 'view-only flags (codeSeen, pilotNamed) are not unsent changes: the newer online copy is still taken');
+  // 5e. a NEW device (a blank local save) taking the online copy replaced nothing worth keeping: no note
+  setup({ local: {}, server: { save: rich(260, 188), stamp: 100 } });
+  got = await O.syncDown({});
+  check(got && got.flights === 260 && !O.hasOnlineNote(), 'a blank device taking the online copy is not told that a game was replaced');
+  // 5f. NO online copy (wiped): the old remembered online progress is forgotten, so a poorer save is uploaded (it was refused for ever against a copy that no longer exists)
+  setup({ local: rich(60, 35), sync: { save: rich(260, 188), stamp: 100 }, server: null });
+  got = await O.syncDown(rich(60, 35));
+  check(got === null && row && row.save.flights === 60, `no online copy: the poorer save is uploaded, not refused against a stale number (online now: ${row && row.save.flights})`);
+  check(JSON.parse(mem.get(SYNC)).serverProgress === S.progressOf(rich(60, 35)), 'and the sync record now holds the progress of that save');
   // 6. syncUp never writes a poorer save over a richer online one
   const big = rich(260, 188);
   setup({ local: rich(10, 5), sync: { save: big, stamp: 100 }, server: { save: big, stamp: 100 } });

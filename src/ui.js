@@ -44,7 +44,7 @@ import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js'
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave, listStashed, restoreStashed, releaseHold, heldReason } from './save.js';
-import { allowRoughUpload, getPilot } from './online.js';
+import { allowRoughUpload, getPilot, takeOnlineNote, hasOnlineNote } from './online.js';
 import { askPersist, noteDue, noteText, PERSIST_TIP } from './persist.js';
 import { eraBarHTML } from './eras.js';
 import { FleetHangar } from './hangar.js';
@@ -276,6 +276,13 @@ export class UI {
     };
   }
 
+  // The online copy replaced a game on this device at the last load (src/online.js syncDown): say so ONCE, in plain words, with where the other game is.
+  noteOnlineReplaced() {
+    if (!hasOnlineNote() || !$('coach').hidden || (this.save.seenTips || []).includes('*')) return;   // (the coach is talking: try again at the next title)
+    takeOnlineNote();
+    this.toast('YOUR ONLINE GAME WAS NEWER', 'We kept it. Your other game is in Settings: RECOVER AN EARLIER SAVE.', 'good', 8);
+  }
+
   // From landing 8 (after the name, the map and the records have each had their own landing), if the browser would not promise to keep the game's storage: ONE plain note (src/persist.js).
   noteStorage() {
     askPersist().then(persisted => {
@@ -415,6 +422,7 @@ export class UI {
     if (FEATURES.season2 && needsStartChoice(this.save)) { this.askStart().then(() => this.showTitle()); return; }
     if (this.migrated) { const m = this.migrated; this.migrated = null; this.toast('Prizes collected', `+${m.seeds} seeds${m.crystals ? ` and +${m.crystals} ice crystals` : ''} from your finished missions`, 'good', 5); }
     this.noteStorage();
+    this.noteOnlineReplaced();
     $('tTrees').textContent = this.save.seeds;
     $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = km(this.save.bestDistance);
