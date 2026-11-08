@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-08-soft-sounds",
+    "version": "0.35.0",
+    "date": "2026-11-08",
+    "level": "minor",
+    "notes": [
+      "Menu taps now make a small soft tick instead of the flying blip.",
+      "Crashes no longer all sound like one harsh buzz: the ground is a low thud, a storm a short soft crack, a bird three quick chirps, restricted airspace two falling notes. Everything is quieter and softer.",
+      "If your device asks for reduced motion, celebration screens stand still, and the era welcome confetti now falls twice and stops."
+    ]
+  },
+  {
     "id": "2026-11-08-online-game-newer",
     "version": "0.34.1",
     "date": "2026-11-08",
