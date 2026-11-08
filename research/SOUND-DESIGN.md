@@ -11,7 +11,7 @@ Basis: `src/sound.js` and the call sites on branch presence-x2 (b801708, x2 d4f4
 - `sfx.flap` is the UI click as well (28 sites): tabs, rows, back buttons, the tour.
 - Mute: `save.muted` (src/save.js:46), toggled in the gear menu (ui.js:241) and `setMuted()`; vibration (`buzz`, 6 call sites) is off when muted. `unlockAudio()` is called from the first tap (ui.js:139, 146).
 - Waveforms in use: square (flap, plant, coin, buy, nope, land at 0.04-0.06 gain), sawtooth (warm, overheat, crash, 0.03-0.06), triangle (issr, dusk, dawn, fanfare), sine (heartbeat, cool). `crash` is noise plus a falling sawtooth.
-- Nothing plays for: unlocks, new plane, era card beyond the fanfare, nature project completion (only the generic `buy`), mission done, badges, the crossing screens beyond buy/nope, crash kinds (storm, ground, bird, restricted airspace all play the same `crash`; overheat has its own), the payoff zoom, the title screen, the hub.
+- Nothing plays for: unlocks, the new plane (it arrives with the era card, not by purchase), era card beyond the fanfare, nature project completion (only the generic `buy`), mission done, badges, the crossing screens beyond buy/nope, crash kinds (storm, ground, bird, restricted airspace all play the same `crash`; overheat has its own), the payoff zoom, the title screen, the hub.
 - Weight: the site assets are 13 MB (2,949 png files in assets/), the whole site is about 17 MB per the Coordinator; the service worker precaches the shell and diffs assets-manifest.json by sha1 (sw.js). A new audio file therefore costs download size, loading time on first visit, and a manifest entry.
 
 ## 2. Events that should have a sound, with priority
@@ -25,7 +25,7 @@ P1 = the player misses it today and it carries meaning; P2 = polish; P3 = option
 | Coin / seed / crystal pick-up | coin | keep tone, soften to triangle/sine; pitch steps up on a chain of pick-ups | P2 |
 | Buy a part | buy (4-note square arpeggio) | `buy` stays for small buys | P2 |
 | New part / payoff card arrives | buy again at 170 ms | `reveal`: a rising 3-note bell figure plus a soft whoosh under the zoom; a larger version for a plane | P1 |
-| New plane | payoff card (same as part) | `newplane`: longer reveal (1.2 s) with a low engine-spool swell | P1 |
+| New plane | arrives with the era card (a plane is an era event; `buyFleet` sells plane-LINE parts, systems and gadgets, never a whole plane) | covered by `era`; no separate cue (the earlier `newplane` was dropped, 2026-11-08) | - |
 | Era opens | fanfare (7-note triangle run) | keep the idea; replace with `era` stinger (2 s): chord, rising shimmer; one per era, same melody shifted | P1 |
 | Nature project funded | generic buy | `grow`: gentle rising bell plus a short wind/leaf noise swell | P1 |
 | Nature project done / tier done | none | `bloom`: `grow` plus an extra high note; one per tier | P2 |
@@ -109,3 +109,7 @@ The user decides what ships. The cue names in section 2 are the stable interface
 - Whether any event in section 2 already plays a sound through a path my grep missed (sounds started via other modules). The grep covered `sfx.` and `sfx[`; a `playSound(name)` wrapper exists in GameScene.js:1277.
 - iOS Safari audio format support and the silent-switch behaviour.
 - All tool prices and licences (section 6).
+
+## 9. Status after release B (2026-11-08)
+
+Built (releases A and B, on branches sound-a and sound-b): the sound core, `tick`, four death sounds, reduced motion, and the P1 cues reveal, era, grow, done, medal, welcome, softfail at seven sites. Dropped: `newplane` (a new plane is an era event). Listed, not built (P2, the user listens to A first): `bloom` (a nature tier done), `chirp` (an animal found), `landfall` (crossing sight of land), `best` (new best); the ambience beds (P3); the arcade song (research/ARCADE-SONG.md, no build until the user picks a sketch).

@@ -8,7 +8,7 @@ Basis: style.css, src/ui.js, hangar.js, wild.js, welcome.js, crossingend.js on b
 | Event | What happens now | Where | Sound now |
 |---|---|---|---|
 | New part (payoff card) | card appears; the plane picture fades in from above (`.pay-part`, .6 s); one yellow diamond (`.pay-spark`, `paysparkle` .9 s); after it the plane picture zooms 1.8x onto the changed part (`.payoff.arrive .pay-plane`, by design); bars animate | style.css:765-773, hangar.js:115-173 | `buy` (once, 170 ms in) |
-| New plane | the same payoff card with the FLY THIS button | hangar.js payoff(toFly) | `buy` |
+| New plane | arrives with the era welcome card (a plane is an era event, not a purchase: `buyFleet` sells parts) | welcome.js | `era` (was `fanfare`) |
 | Buy (row) | the row re-renders; a button glow | hangar.js:80-85 | `buy` |
 | Era opens | full card: kicker fades in, title stamps in with overshoot (`ec-stamp`), a small plane taxis across (`ec-taxi` 2.2 s), tag and notes fade in on a 0.1-2.6 s timeline, confetti pieces fall in an INFINITE loop (`ec-confetti i`, `ec-fall` 2.6 s linear infinite) | style.css:637-647, welcome.js | `fanfare`, then `coin` on OK |
 | Crossing landed / crash | the payoff-style card, static: eyebrow, title, a landmark or portrait picture, lines, buttons (`showCrossingEnd`); no animation of its own | ui.js:594, crossingend.js | `buy` / `nope` |
@@ -47,7 +47,7 @@ Use by event:
 
 | Event | Size | Cue | Change |
 |---|---|---|---|
-| New plane | large | newplane | replaces `paysparkle` (keep the zoom) |
+| New plane (era card) | large | era | the era card carries it; no separate plane celebration |
 | New part | medium | reveal | replaces `paysparkle` |
 | Era opens | large | era | keep the existing timeline; swap the infinite confetti for the kit's one-shot burst, which ends |
 | Crossing landed | large | welcome | add the burst around the landmark picture; the title can reuse `ec-stamp` |
