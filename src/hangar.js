@@ -54,9 +54,9 @@ export class FleetHangar {
     const bb = $('hBond'); if (bb) bb.onclick = () => { if (lockBond(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };
     const tb = $('hTrade'); if (tb) tb.onclick = () => { if (trade(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };
     const fb2 = $('hFinBuy'); if (fb2) fb2.onclick = () => { if (buyFinance(s)) { this.ui.persist(); this.ui.sfx.buy(); this.render(); requestAnimationFrame(() => animateBars($('hFleet'))); } else this.ui.sfx.nope(); };
-    el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.flap(); this.render(); });
+    el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.tick(); this.render(); });
     // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS (src/swipe.js).
-    const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.flap(); this.render(); };
+    const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.tick(); this.render(); };
     onSwipe($('hangar'), { next: () => goTab(1), prev: () => goTab(-1) });   // the WHOLE screen (the list is short now: #hFleet alone left a dead area below it on a tall phone)
     const era = $('hNextPlane'); if (era) era.onclick = () => this.eraSheet(s);
     const pinfo = el.querySelector('[data-planeinfo]'); if (pinfo) pinfo.onclick = () => this.planeSheet(s);
@@ -69,10 +69,10 @@ export class FleetHangar {
     // Tap a row = preview it (the user, 2026-10-28: "tap on things and SEE THE EFFECT before purchasing"): the row is
     // marked, the card under the picture shows its bars, and the picture shows the new part ghosted.
     // (screenshots, 2026-10-28: a row tapped low in the list previewed OFF SCREEN at the top; bring the picture + card into view)
-    el.querySelectorAll('[data-ftap]').forEach(b => b.onclick = () => { this.sel = b.dataset.ftap; this.ui.sfx.flap(); this.render();
+    el.querySelectorAll('[data-ftap]').forEach(b => b.onclick = () => { this.sel = b.dataset.ftap; this.ui.sfx.tick(); this.render();
       const pv = $('hFleet').querySelector('.fpreview'); if (pv && pv.scrollIntoView) pv.scrollIntoView({ block: 'start', behavior: 'smooth' }); });
     el.querySelectorAll('[data-pview]').forEach(c => c.onclick = () => { const p = c.dataset.pview; this.preview = p;
-      this.sel = f.planes[p] && f.plane !== p ? `fly:${p}` : null; this.ui.sfx.flap(); this.render(); });
+      this.sel = f.planes[p] && f.plane !== p ? `fly:${p}` : null; this.ui.sfx.tick(); this.render(); });
     el.querySelectorAll('[data-fbuy]').forEach(b => b.onclick = () => {
       const [kind, id] = b.dataset.fbuy.split(':'), free = !!s.freeUpgrade;
       const fb = fleetOf(s), before = lookFiles(fb.plane, JSON.parse(JSON.stringify(fb.planes[fb.plane] || {})), 'hangar');   // the plane BEFORE (the payoff shows it first)
@@ -170,7 +170,7 @@ export class FleetHangar {
       setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.buy && this.ui.sfx.buy(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
     // Ending the payoff: OK, or leaving the hangar mid-payoff (the plane build's review: it stayed parked until OK).
     this.endPayoff = () => { el.remove(); if (box) box.hidden = false; this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
-    $('payOk').onclick = () => { this.ui.sfx.flap(); this.endPayoff();
+    $('payOk').onclick = () => { this.ui.sfx.tick(); this.endPayoff();
       if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }
 

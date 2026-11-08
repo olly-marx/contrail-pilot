@@ -81,7 +81,7 @@ export class WildScreen {
     $('wPrevLand').hidden = !many; $('wNextLand').hidden = !many;
     $('wPrevLand').disabled = at <= 0; $('wNextLand').disabled = at >= openIds.length - 1;
     $('wPrevLand').innerHTML = `<i class="wl-chev prev"></i>${newDir(0, at) ? '<i class="dot"></i>' : ''}`; $('wNextLand').innerHTML = `<i class="wl-chev"></i>${newDir(at + 1, openIds.length) ? '<i class="dot"></i>' : ''}`;
-    const goLand = to => { if (!to || to === this.region) return; sfx.flap(); this.region = to; this.openTiers = []; this.toolId = null; this.hintOn = false; this.render(); };
+    const goLand = to => { if (!to || to === this.region) return; sfx.tick(); this.region = to; this.openTiers = []; this.toolId = null; this.hintOn = false; this.render(); };
     $('wPrevLand').onclick = () => goLand(openIds[at - 1]); $('wNextLand').onclick = () => goLand(openIds[at + 1]);
     $('wRegions').querySelectorAll('[data-region]').forEach(b => b.onclick = () => goLand(b.dataset.region));
     // First visit ONLY (save.tours 'nature-swipe'; a save with tours ['*'] is past all hints): two beats of a ghost swipe on the picture and one line of words.
@@ -117,7 +117,7 @@ export class WildScreen {
     $('wTrees').querySelectorAll('[data-buy]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ui.buy(b.dataset.buy); });
     $('wTrees').querySelectorAll('[data-info]').forEach(b => b.onclick = e => { e.stopPropagation(); this.ui.showInfo(b.dataset.info); });   // the (i) = the line's info (the rails' new-line step taps it)
     // Tap a planting card to PREVIEW it (the user, 2026-11-03: 'the ghost preview can come back'): the trees it would add, ghosted in the land; tap again to put them away.
-    $('wTrees').querySelectorAll('[data-tpreview]').forEach(b => b.onclick = () => { sfx.flap(); const id = b.dataset.tpreview; this.toolId = this.toolId === id ? null : id; this.previewId = null; this.render(); });
+    $('wTrees').querySelectorAll('[data-tpreview]').forEach(b => b.onclick = () => { sfx.tick(); const id = b.dataset.tpreview; this.toolId = this.toolId === id ? null : id; this.previewId = null; this.render(); });
     $('wTrees').querySelectorAll('[data-buy]').forEach(b => { const go = b.onclick; b.onclick = e => { this.toolId = null; if (this.field) this.field.clearGhosts(); go(e); }; });   // a buy ends the preview
     this.renderFound();
     // This land is SHOWING (NATURE visible, not a refresh behind another screen): what it shows is now seen (src/fresh.js).
@@ -139,7 +139,7 @@ export class WildScreen {
     // what parcels planted THERE (save.plantedIn[region], that region's trees: src/nature.js localTree).
     const mine = this.region === 'woodland' ? s.planted : (s.plantedIn || {})[this.region];
     const planted = Object.entries(mine || {}).filter(([, n]) => n > 0);
-    this.field = new Field($('wScene'), this.region, done, planted, found, this.projects.map(p => p.id), id => { sfx.flap(); this.speciesInfo(id); });   // tap an animal: its card
+    this.field = new Field($('wScene'), this.region, done, planted, found, this.projects.map(p => p.id), id => { sfx.tick(); this.speciesInfo(id); });   // tap an animal: its card
     if (!found.length && !done.length) $('wScene').insertAdjacentHTML('beforeend', '<p class="w-empty">Bare land. Start a habitat project, and plant trees on your flights!</p>');
   }
 
@@ -225,8 +225,8 @@ export class WildScreen {
     }).join('') + (next ? `<p class="w-tier w-tier-lock" data-tier-locked="${next.tier}">Tier ${next.tier}: ${esc(next.name)} <span class="small">Biodiversity ${next.needs} to open (now ${Math.floor(bio)})</span></p>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     // Tap a card (not its buttons) to PREVIEW it: ghosted in the land, the bar's gain, the animals it brings highlighted.
-    $('wProjects').querySelectorAll('.project[data-pline] .rowc-tap').forEach(   /* done ones too: their info (regions.cjs found it gone) */b => b.onclick = () => { sfx.flap(); this.preview(b.dataset.preview); });
-    $('wProjects').querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); });   // tap an animal: its card
+    $('wProjects').querySelectorAll('.project[data-pline] .rowc-tap').forEach(   /* done ones too: their info (regions.cjs found it gone) */b => b.onclick = () => { sfx.tick(); this.preview(b.dataset.preview); });
+    $('wProjects').querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.tick(); this.speciesInfo(b.dataset.species); });   // tap an animal: its card
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
     $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
       const t = Number(b.dataset.tierToggle), o = this.openTiers || [];
@@ -275,7 +275,7 @@ export class WildScreen {
       + `<div class="ws-foot"><button class="linkbtn" type="button" data-pinfo="${p.id}">More about it &rsaquo;</button>${row ? row.outerHTML : ''}</div>`;
     el.querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     el.querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
-    el.querySelectorAll('.w-webpic[data-species]').forEach(b => { b.classList.add('w-hi'); b.onclick = () => { sfx.flap(); this.speciesInfo(b.dataset.species); }; });   // the animals it brings, highlighted
+    el.querySelectorAll('.w-webpic[data-species]').forEach(b => { b.classList.add('w-hi'); b.onclick = () => { sfx.tick(); this.speciesInfo(b.dataset.species); }; });   // the animals it brings, highlighted
   }
 
   buy(id) {

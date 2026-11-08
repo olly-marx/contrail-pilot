@@ -105,7 +105,7 @@ export class UI {
     $('goBtn').onclick = () => this.start();
     $('againBtn').onclick = () => { const to = this.resultsLead(); return to ? this.go(to) : this.showTitle(); };   // FLY ON, or where the lesson leads
     $('schoolBtn').onclick = () => this.startSchool();
-    document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.flap(); this.go(b.dataset.go); });
+    document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.tick(); this.go(b.dataset.go); });
     $('hGoBtn').onclick = () => this.start();
     $('hGoTop').onclick = () => { if (this.fleet.paying) this.fleet.endPayoff(); this.start(); };
     $('howBtn').onclick = () => { $('how').hidden = false; };
@@ -187,10 +187,10 @@ export class UI {
       ${FEATURES.season2 ? areaLine(s) + crossingsHTML(s) : ''}
       <p class="small">Times round the Earth: <b>${trips.toFixed(1)}</b> (${km(Math.round(s.flownKm || 0))})</p>`;
     // The way buttons and a tap on a way's dot on the globe do the same thing (the globe also turns when dragged: src/globe.js).
-    const pick = name => { sfx.flap(); this.save.heading = name; writeSave(this.save); this.renderJourney(); };
+    const pick = name => { sfx.tick(); this.save.heading = name; writeSave(this.save); this.renderJourney(); };
     // Season 2: fly a crossing (the flight's rules read save.flyCrossing; GameScene clears it when the flight ends).
     document.querySelectorAll('#jCross [data-cross]').forEach(b => b.onclick = () => {
-      sfx.flap(); const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.showCrossingSheet(cs); });   // (R-A: the sheet confirms before the flight)
+      sfx.tick(); const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.showCrossingSheet(cs); });   // (R-A: the sheet confirms before the flight)
     drawGlobe($('jGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: pick, lit: FEATURES.season2 ? linksFor(s) : null });
     $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => pick(b.dataset.way));
   }
@@ -207,7 +207,7 @@ export class UI {
   setupHub() {
     $('title').classList.add('hub');
     $('hubGear').onclick = () => this.openGear();   // R10 (research/UX-MASTER-PLAN.md C2): ONE gear sheet: how to play, flight school, sound, about, reset, the credit
-    $('hubBack').onclick = () => { sfx.flap(); this.go('fly'); };
+    $('hubBack').onclick = () => { sfx.tick(); this.go('fly'); };
     $('hubSpinL').onclick = () => { this.globeUsed(); this.hubGlobe && this.hubGlobe.nudge(-24); };
     $('hubSpinR').onclick = () => { this.globeUsed(); this.hubGlobe && this.hubGlobe.nudge(24); };
     $('hubRoute').onclick = () => this.openRouteSheet();   // R-B: the route choice and the crossings open as a SHEET (no page push)
@@ -217,7 +217,7 @@ export class UI {
   renderSkip(skip) {
     let b = $('hubSkip');
     if (!b) { b = document.createElement('button'); b.id = 'hubSkip'; b.type = 'button'; b.className = 'chip hubonly hub-skip'; $('hubWorld').after(b);
-      b.onclick = () => { sfx.flap(); toggleSkip(this.save); writeSave(this.save); this.renderHub(); }; }
+      b.onclick = () => { sfx.tick(); toggleSkip(this.save); writeSave(this.save); this.renderHub(); }; }
     b.hidden = !skip; b.textContent = skip === 'on' ? SKIP_TEXT.undo : SKIP_TEXT.skip;
   }
   // R-B: the globe's caption goes away for good after the first spin, drag or dot tap (a save flag in `tours`, like the other one-time hints).
@@ -225,7 +225,7 @@ export class UI {
   // R-B: the route choice and the crossings (the old #tJourney panel behind the route line) as a SHEET: the panel's own node is moved into it (its handlers
   // come along) and handed back when the sheet closes or is replaced (showSheet's onClose), so nothing pushes the page down.
   openRouteSheet() {
-    sfx.flap(); this.renderJourney();
+    sfx.tick(); this.renderJourney();
     const j = $('tJourney'), home = j.parentNode, next = j.nextSibling;
     showSheet({ eyebrow: 'YOUR ROUTE', title: 'Which way?', ok: 'CLOSE', html: '<div id="routeSheetBody" class="route-sheet"></div>', onClose: () => { home.insertBefore(j, next); j.style.display = ''; this.renderHub(); } });   // (a way chosen in the sheet shows on HOME's chip and globe)
     $('routeSheetBody').appendChild(j); j.style.display = 'block';
@@ -234,7 +234,7 @@ export class UI {
   // The gear sheet (R10): the four small buttons, reset and the credit behind one gear, as a sheet (src/sheet.js) with 40 px buttons. The old buttons
   // stay in the page (the classic screens use them, and their handlers are the ones the sheet calls), hidden on HOME.
   openGear() {
-    sfx.flap();
+    sfx.tick();
     const s = this.save, credit = document.querySelector('#title .credit');
     const close = showSheet({ eyebrow: 'MENU', title: 'Settings', ok: 'CLOSE',
       html: `<div class="gear-list"><button class="chip" type="button" data-gear="how">HOW TO PLAY</button><button class="chip" type="button" data-gear="school">FLIGHT SCHOOL</button>`
@@ -306,7 +306,7 @@ export class UI {
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
     const rows = v.up[0] && v.up[0].pic ? v.up.slice(0, 2) : v.up;   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
     $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${rows.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
-    const act = n => { sfx.flap();
+    const act = n => { sfx.tick();
       if (n.key === 'lead:cross' && ready) this.showCrossingSheet(ready);   // (R-A: a 6,500 km flight never starts from a row tap: the sheet is the confirm)
       else if (n.where === 'hangar' || n.where === 'nature' || n.where === 'missions' || n.where === 'pilot') this.go(n.where);
       else showSheet({ eyebrow: n.daily ? 'TODAY' : 'UP NEXT', title: n.short, body: n.full }); };
@@ -320,7 +320,7 @@ export class UI {
     $('hubRoute').innerHTML = v.route.join(' &#9654; ') + (v.aim ? ' <span class="small">(mission)</span>' : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     const path = routeFor(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
-    const pick = name => { this.globeUsed(); sfx.flap(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
+    const pick = name => { this.globeUsed(); sfx.tick(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it
     hint.textContent = v.worldChoice ? 'Drag to spin. Tap a dot to choose.' : 'Drag the world to spin it.';
     this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, lit: linksFor(s),
@@ -369,14 +369,14 @@ export class UI {
       + (v.done.count ? `<button id="mDone" class="chip m-done" type="button">DONE ${v.done.count} ›</button>` : '');
     // Tap a row: its sheet (the full title, the how, the prize) with the one action it has: AIM HERE (a city mission), or the hop to HANGAR / NATURE.
     const all = [v.next, ...v.open, ...v.today.rows, ...v.steady].filter(Boolean);
-    document.querySelectorAll('#mNext [data-mrow], #mList [data-mrow]').forEach(b => b.onclick = () => { const r = all.find(x => x.key === b.dataset.mrow); if (!r) return; sfx.flap();
+    document.querySelectorAll('#mNext [data-mrow], #mList [data-mrow]').forEach(b => b.onclick = () => { const r = all.find(x => x.key === b.dataset.mrow); if (!r) return; sfx.tick();
       const hop = r.where === 'hangar' ? 'HANGAR' : r.where === 'nature' ? 'NATURE' : null;
       const action = r.city ? { label: r.aimed ? 'STOP AIMING' : 'AIM HERE', onTap: () => { s.aimKey = r.aimed ? null : r.key; writeSave(s); this.toast(r.aimed ? 'Back to the first mission' : `Aiming at: ${r.short}`, '', 'good', 3); this.showMissions(); } }
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
       showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds.` : ''}`, action }); });
-    $('mInfo').onclick = () => { sfx.flap(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
-    if ($('mCross')) $('mCross').onclick = () => { sfx.flap(); const cs = crossingState(s, { unlock: S2_UNLOCK }); if (cs && cs.ready) this.showCrossingSheet(cs); };
-    if ($('mDone')) $('mDone').onclick = () => { sfx.flap(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
+    $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
+    if ($('mCross')) $('mCross').onclick = () => { sfx.tick(); const cs = crossingState(s, { unlock: S2_UNLOCK }); if (cs && cs.ready) this.showCrossingSheet(cs); };
+    if ($('mDone')) $('mDone').onclick = () => { sfx.tick(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
     if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
   }
@@ -569,13 +569,13 @@ export class UI {
     $('rMission').onclick = () => showSheet({ eyebrow: mi && mi.fail !== undefined ? 'NOT THIS TIME' : 'MISSIONS DONE', title: mi ? mi.line.replace(/^✓ /, '') : '', body: mi && mi.fail ? mi.fail : (mi ? mi.titles.join('. ') : '') });
     $('rEarth').onclick = () => showSheet({ eyebrow: 'THE EARTH', title: v.earth.warm.split(' ')[0] + ' and ' + v.earth.cool.split(' ')[0].toLowerCase(),
       html: `<div class="earth-bars rc-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>` });
-    $('rNextRows').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.next[+b.dataset.i]; sfx.flap();
+    $('rNextRows').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.next[+b.dataset.i]; sfx.tick();
       if (n.key === 'lead:cross') { const cs = crossingState(this.save, { unlock: S2_UNLOCK }); if (cs && cs.ready) return this.showCrossingSheet(cs); }
       if (n.where === 'hangar' || n.where === 'nature' || n.where === 'pilot' || (n.where === 'missions' && n.cross)) this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : n.cross ? 'CROSSING' : 'UP NEXT', title: n.short, body: n.full }); });
     const chipSheet = c => { const w = c.kind === 'animal' ? WILDLIFE.find(x => x.id === c.id) : null;
       showSheet({ eyebrow: c.kind === 'animal' ? 'NEW ANIMAL' : c.kind === 'badge' ? 'NEW BADGE' : 'A FIRST', title: c.full, pic: w ? animalPortrait(w) : c.kind === 'badge' ? medal(c.id, c.tier) : '', body: c.body,
         action: c.kind === 'animal' ? { label: 'SEE IT IN NATURE', onTap: () => this.go('nature') } : null }); };
-    $('rChips').querySelectorAll('.rc-chip').forEach(b => b.onclick = () => { sfx.flap(); if (b.dataset.more) showSheet({ eyebrow: 'ALSO NEW', title: 'More to see', body: v.allChips.slice(v.chips.length).map(c => c.full).join('. ') }); else chipSheet(v.chips[+b.dataset.i]); });
+    $('rChips').querySelectorAll('.rc-chip').forEach(b => b.onclick = () => { sfx.tick(); if (b.dataset.more) showSheet({ eyebrow: 'ALSO NEW', title: 'More to see', body: v.allChips.slice(v.chips.length).map(c => c.full).join('. ') }); else chipSheet(v.chips[+b.dataset.i]); });
     this.showOnly('results');
     $('results').scrollTop = 0;
     $('results').classList.add('revealing');   // while the card builds, its lines are inert: a tap to SKIP must not open a sheet (CSS: #results.revealing)
@@ -607,7 +607,7 @@ export class UI {
     el.innerHTML = `<div class="payoff-card"><p class="cend-eyebrow">${esc(v.eyebrow)}</p><p class="ending-title">${esc(v.title)}</p>${v.pic ? `<img class="cend-pic" src="${esc(v.pic)}" alt="">` : ''}${v.lines.map(l => `<p>${esc(l)}</p>`).join('')}<div class="cend-btns">${v.buttons.map((b, i) => `<button class="btn ${i === 0 ? 'go ' : ''}big" type="button" data-end="${b.id}">${esc(b.label)}</button>`).join('')}</div></div>`;
     el.hidden = false; v.kind === 'landed' ? sfx.buy() : sfx.nope();
     const leave = async (again) => {
-      el.hidden = true; sfx.flap();
+      el.hidden = true; sfx.tick();
       if (again) { const cs = crossingById(this.save, r.crossing.id, { unlock: true }); if (cs) return this.flyCrossing(cs); }
       if (r.eraOpened) { await showEraWelcome(ERAS.findIndex(e => e.name === r.eraOpened)); return this.showHangar(); }
       this.showTitle();
@@ -811,7 +811,7 @@ export class UI {
       <p class="small">${(s.crossed || []).length} crossings flown. You finished Contrail Pilot!</p>
       <button id="endingOk" class="btn go big" type="button">OK</button></div>`;
     el.hidden = false; sfx.coin && sfx.coin();
-    document.getElementById('endingOk').onclick = () => { sfx.flap(); el.hidden = true; };
+    document.getElementById('endingOk').onclick = () => { sfx.tick(); el.hidden = true; };
   }
   toast(title, body, kind = '', secs = 3.5) {
     if (!$('coach').hidden) return;   // flight school talks instead

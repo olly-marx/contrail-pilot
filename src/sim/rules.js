@@ -717,18 +717,18 @@ export const RULES = {
     if (this.spriteBottom() >= SKY_H) {
       const rw = this.runwayUnder(box);
       if (rw) this.land(rw);
-      else this.finish({ reason: 'You hit the ground!' });
+      else this.finish({ reason: 'You hit the ground!', sound: 'thud' });
       return out;
     }
     // Pixel-accurate: the plane's drawn pixels against the hazard's drawn pixels. Storms forgive a
     // nick (a few pixels); no-fly zones and birds forgive nothing.
     for (const s of this.storms) {
       if (this.hitsStorm(s)) {
-        this.finish({ reason: s.noFly ? 'Restricted airspace!\nFlight stopped.' : 'Storm!\nYou flew into a storm.' });
+        this.finish({ reason: s.noFly ? 'Restricted airspace!\nFlight stopped.' : 'Storm!\nYou flew into a storm.', sound: s.noFly ? 'nofly' : 'crack' });
         return out;
       }
     }
-    if (this.hitBird(box)) this.finish({ reason: 'Bird strike!\nYou hit a bird.' });
+    if (this.hitBird(box)) this.finish({ reason: 'Bird strike!\nYou hit a bird.', sound: 'flutter' });
     return out;
   },
 
