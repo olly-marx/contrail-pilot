@@ -152,7 +152,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania', 'aotearoa', 'patagonia', 'ocean'], homeArea: 'weurope', city: 'AMSTERDAM' });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const more = await p.evaluate(() => ({ card: !!document.getElementById('jMore'), lap: !!document.getElementById('jLap'), text: (document.getElementById('jCross') || {}).textContent || '' }));
-  check(!more.card && more.lap && /AMSTERDAM round the world and home, 40,000 km/.test(more.text), `E: every area open, the far future: THE LAP is listed (from home), no MORE TO COME: ${JSON.stringify(more)}`);
+  check(!more.card && more.lap && /AMSTERDAM round the world and home, non-stop/.test(more.text), `E: every area open, the far future: THE LAP is listed (from home), no MORE TO COME: ${JSON.stringify(more)}`);
   await seed(p, { areas: ['weurope', 'namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania', 'aotearoa', 'patagonia', 'ocean'], homeArea: 'weurope', city: 'AMSTERDAM', crossed: ['lap'], lapDone: true });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const done = await p.evaluate(() => ({ card: !!document.getElementById('jMore'), lap: !!document.getElementById('jLap') }));
