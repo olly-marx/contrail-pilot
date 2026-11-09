@@ -24,7 +24,8 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
     const conn = AudioNode.prototype.connect;
     AudioNode.prototype.connect = function (dest, ...a) { if (dest instanceof AudioDestinationNode) { const c = dest.context; if (!c.__an) { c.__an = c.createAnalyser(); c.__an.fftSize = 2048; c.__buf = new Float32Array(2048); } conn.call(this, c.__an); } return conn.call(this, dest, ...a); };
     window.__peak = (ms) => new Promise(res => { let pk = 0; const t0 = performance.now(); const tick = () => { for (const c of window.__ctxs) if (c.__an) { c.__an.getFloatTimeDomainData(c.__buf); for (const v of c.__buf) pk = Math.max(pk, Math.abs(v)); } if (performance.now() - t0 < ms) setTimeout(tick, 8); else res(pk); }; tick(); });
-    localStorage.clear();
+    localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ musicOff: true }));   // the effect checks run WITHOUT music (the music has its own section below)
+    window.__rms = (ms) => new Promise(res => { let ss = 0, n = 0; const t0 = performance.now(); const tick = () => { for (const c of window.__ctxs) if (c.__an) { c.__an.getFloatTimeDomainData(c.__buf); for (const v of c.__buf) { ss += v * v; n++; } } if (performance.now() - t0 < ms) setTimeout(tick, 8); else res(Math.sqrt(ss / Math.max(1, n))); }; tick(); });
   });
   await p.goto(URL); await ready(p); await p.waitForTimeout(800);
   const pre = await p.evaluate(() => window.__ctxs.filter(c => c.__ours).map(c => c.state));   // only the contexts made by src/sound.js (Phaser makes its own at boot)
@@ -64,6 +65,37 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
   const mu = await p.evaluate(async () => { const m = await import('/src/sound.js'); m.setMuted(true); let pr = window.__peak(500); m.sfx.thud(); const a = await pr; m.setMuted(false); pr = window.__peak(900); m.sfx.thud(); return { a, b: await pr }; });
   check(mu.a < 0.002, `muted: no signal (peak ${mu.a.toFixed(4)})`);
   check(mu.b >= FLOORS.thud, `un-muted again: sound is back (peak ${mu.b.toFixed(4)})`);
+  // ---- MUSIC (release: the five songs): the MUSIC chip turns it on and off and persists; music never masks the cues (a LOUDNESS rule: RMS at the destination); a duck cue dips it ----
+  await p.evaluate(() => { game.registry.get('save').muted = false; });
+  await p.waitForTimeout(2000);
+  const hasMusicChip = !!(await p.$('#sheet [data-gear="music"]')); check(hasMusicChip, 'the Settings sheet has a wired MUSIC chip');
+  if (hasMusicChip) {
+    const silent0 = await p.evaluate(() => window.__rms(500)); check(silent0 < 0.0005, `MUSIC off (the default of this run): silence at the destination (rms ${silent0.toFixed(4)})`);
+    await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(1500);
+    const saved = await p.evaluate(() => ({ off: game.registry.get('save').musicOff, ls: JSON.parse(localStorage.getItem('contrailPilot.v2') || '{}').musicOff, text: (document.querySelector('#sheet [data-gear="music"]') || {}).textContent }));
+    check(saved.off === false && saved.ls === false && /MUSIC: ON/.test(saved.text), `the MUSIC chip turns the music ON and saves it (save.musicOff ${saved.off}, stored ${saved.ls}, chip "${saved.text}")`);
+    const musicRms = Math.max(...[await p.evaluate(() => window.__rms(400)), await p.evaluate(() => window.__rms(400)), await p.evaluate(() => window.__rms(400))]);
+    check(musicRms > 0.0008, `POSITIVE CONTROL: the music plays and reaches the destination (rms ${musicRms.toFixed(4)})`);
+    check(musicRms <= 0.008, `the music is quiet: rms at the destination ${musicRms.toFixed(4)} <= 0.008`);
+    // masking: each cue's own RMS over its own length (music OFF) must be >= 2x (+6 dB) the music's RMS over the same length. Lengths DECLARED here (seconds).
+    const LEN = { tick: 0.06, flap: 0.1, coin: 0.2, thud: 0.4, crack: 0.35, reveal: 0.5, grow: 0.4, done: 0.3, medal: 0.6 };
+    await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(800);   // music off: measure the cues alone
+    const cueRms = {}; for (const [cue, len] of Object.entries(LEN)) { cueRms[cue] = await p.evaluate(async ({ cue, ms }) => { const m = await import('/src/sound.js'); const pr = window.__rms(ms); m.sfx[cue](); return pr; }, { cue, ms: len * 1000 }); await p.waitForTimeout(700); }
+    await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(1500);
+    const weak = Object.entries(LEN).filter(([cue, len]) => cueRms[cue] < 2 * musicRms).map(([cue]) => `${cue} ${cueRms[cue].toFixed(4)}`);
+    check(weak.length === 0, `no cue is masked by the music: every cue's rms >= 2x the music's rms ${musicRms.toFixed(4)} (weak: ${weak.join(', ')})`);
+    // ducking: after a 'duck' cue the music dips
+    const before = await p.evaluate(() => window.__rms(400));
+    await p.evaluate(async () => { (await import('/src/sound.js')).sfx.medal(); }); await p.waitForTimeout(450);
+    const during = await p.evaluate(() => window.__rms(300));
+    check(during <= 0.6 * before + 0.0006, `a duck cue dips the music (rms ${before.toFixed(4)} -> ${during.toFixed(4)} while it rings)`);
+    await p.waitForTimeout(2500);
+    console.log('MUSIC rms', musicRms.toFixed(4), 'cue rms', JSON.stringify(Object.fromEntries(Object.entries(cueRms).map(([k, v]) => [k, +v.toFixed(4)]))), 'duck', before.toFixed(4), '->', during.toFixed(4));
+    // muted: the music stops too
+    await p.evaluate(async () => { game.registry.get('save').muted = true; const m = await import('/src/sound.js'), mu = await import('/src/music.js'); m.setMuted(true); mu.syncMusic(); }); await p.waitForTimeout(900);
+    const mm = await p.evaluate(() => window.__rms(500)); check(mm < 0.0005, `muted: the music is silent too (rms ${mm.toFixed(4)})`);
+    await p.evaluate(async () => { game.registry.get('save').muted = false; const m = await import('/src/sound.js'), mu = await import('/src/music.js'); m.setMuted(false); mu.syncMusic(); });
+  }
   console.log('measured peaks:', JSON.stringify(res), 'muted/un-muted:', JSON.stringify(mu), 'states before click:', JSON.stringify(pre));
   check(errs.length === 0, `no page errors: ${errs.join(' | ').slice(0, 200)}`);
   console.log(fails.length ? 'FAIL audiolive:\n - ' + fails.join('\n - ') : 'PASS audiolive (a real context runs after a real click; tick, thud, reveal, era reach the destination above their floors; mute and un-mute work)');
