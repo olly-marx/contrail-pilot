@@ -8,6 +8,7 @@
 import { tip } from './tips.js';
 import { FEATURES } from './config.js';
 import { revealed as s2Revealed, lessonsLeft as s2LessonsLeft } from './missions2.js';
+import { SUBJECTS } from './railsubjects.js';
 // Tab-bar targets and what replaces them on the season 2 hub (nothing: since R3 the tiles are gone and the bar's tabs are the targets; HOME goes back to the hub).
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
@@ -29,7 +30,7 @@ export class Tour {
     el.id = 'tour';
     el.hidden = true;
     // Four dark panels round a hole: they catch every tap that is not on the target.
-    el.innerHTML = '<div class="tdim" data-d="t"></div><div class="tdim" data-d="b"></div><div class="tdim" data-d="l"></div><div class="tdim" data-d="r"></div>'
+    el.innerHTML = '<svg class="tvis" aria-hidden="true"></svg><div class="tsubjs"></div><div class="tdim" data-d="t"></div><div class="tdim" data-d="b"></div><div class="tdim" data-d="l"></div><div class="tdim" data-d="r"></div>'
       + '<div class="tring"></div><div class="tfinger" hidden><i></i></div><div class="tbubble"><img class="tcaptain" src="assets/ui/captain-point.png" alt=""><div class="tbody"><p></p><button class="btn go" type="button">OK</button></div></div>';   // Captain Contrail points (the user, 2026-10-27)
     document.body.appendChild(el);
     this.el = el;
@@ -185,10 +186,11 @@ export class Tour {
 
   // ---------- running a tour ----------
   async run(id, steps) {
+    const kid = id || 'new';
     this.busy = true;
     this.el.hidden = false;
     for (let i = 0; i < steps.length; i++) {
-      const st = steps[i];
+      const st = steps[i]; st.key = st.key || `${kid}#${i + 1}`;   // (the key the subject is declared under: src/railsubjects.js)
       if (st.skipIf && st.skipIf()) continue;
       if (st.ready && !st.ready()) { id = null; break; }   // its target screen has nothing to act on: do not start (it runs again later)
       if (!await this.step(st)) { id = null; break; }   // its button is gone (e.g. a flight started): stop; it runs again next time
@@ -196,7 +198,7 @@ export class Tour {
       if (st.end) break;
     }
     this.el.hidden = true;
-    this.target = null;
+    this.target = null; this.clearSpot();
     if (id) this.markDone(id);
     this.busy = false;
     // Then whatever screen is showing NOW may have its own step (a rails tap often opens the next screen while this tour
@@ -217,7 +219,7 @@ export class Tour {
     // The target fully on screen first, always (the user's screenshot: the hangar opened half-way down, the target off-screen).
     const vr = t.getBoundingClientRect();
     if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
-    this.target = t; this.side = null;   // (a new step decides its bubble's side afresh)
+    this.target = t; this.side = null; this.curStep = st;   // (a new step decides its bubble's side afresh)
     // One action per step (the one-target audit): a row's own price/BUY sits inside the row's tap area (.rowc-price is
     // absolute over .rowc-tap), so while the step points at the row's tap, that price hides (DESIGN-HANGAR-NATURE).
     const solo = t.classList && t.classList.contains('rowc-tap') && t.closest('.rowc'); if (solo) solo.classList.add('tour-only');
@@ -256,8 +258,17 @@ export class Tour {
     const t = this.target; if (!t) return;
     let sc = t.parentElement; while (sc && sc !== document.body && !(sc.classList.contains('overlay') && sc.scrollHeight > sc.clientHeight)) sc = sc.parentElement;
     if (!sc || sc === document.body) return;
-    const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar && !bar.contains(t) ? bar.getBoundingClientRect().top : innerHeight;
+    const barTop = this.barTopFor(t, innerHeight);
     const r = t.getBoundingClientRect(), bottom = barTop - 12, top = 12;
+    // A step with a SUBJECT: bring target AND subject into the band together when they fit (the 320x568 hangar scrolled the plane picture off the top to show the Engines row).
+    const subs = this.subjectEls();
+    if (subs.length) {
+      const rs = [r, ...subs.map(e => e.getBoundingClientRect())], uTop = Math.min(...rs.map(q => q.top)), uBot = Math.max(...rs.map(q => q.bottom));
+      if (uBot - uTop <= bottom - top - 80) {   // (80 px kept for the compact bubble)
+        if (uTop < top) sc.scrollTop -= top - uTop; else if (uBot > bottom - 80) sc.scrollTop += Math.min(uBot - (bottom - 80), uTop - top);
+        return;
+      }
+    }
     if (r.bottom > bottom) sc.scrollTop += Math.min(r.bottom - bottom, r.top - top);
     else if (r.top < top) sc.scrollTop -= top - r.top;
     else {   // in the band but COVERED (a pinned header, e.g. NATURE's scene: content scrolls under it): bring it to the middle
@@ -272,11 +283,38 @@ export class Tour {
     }
   }
 
+  // Where the tab bar starts, for a target that is not on it: H when the bar is hidden OR COVERED by the screen the target is on (the information card sits over the bar: its OK button at 320x568 was
+  // inside the old 'behind the bar' strip, so its hole was 3 px tall and the button looked dark; found by the pixel check).
+  barTopFor(target, H) {
+    const bar = document.querySelector('.tabbar:not([hidden])'); if (!bar || bar.contains(target)) return H;
+    const r = bar.getBoundingClientRect(), top = document.elementsFromPoint(r.left + r.width / 2, r.top + Math.min(8, r.height / 2)).find(e => !e.closest('#tour'));
+    return top && bar.contains(top) ? r.top : H;
+  }
+
+  // The SUBJECT elements of the current step (src/railsubjects.js): visible ones only, never inside the tour itself.
+  subjectEls() {
+    const st = this.curStep; if (!st || !this.target) return [];
+    const spec = 'subject' in st ? st.subject : SUBJECTS[st.key], list = spec == null ? [] : [].concat(spec), out = [];
+    for (const sel of list) {
+      const el = sel[0] === '^' ? this.target.closest(sel.slice(1)) : [...document.querySelectorAll(sel)].find(e => !e.closest('#tour') && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden');   // (not offsetParent: the pinned hangar dock is position: fixed/sticky and has none)
+      if (el && el !== this.target && !out.includes(el)) out.push(el);   // (a subject may CONTAIN the target: the upgrade card holds its own FREE! button)
+    }
+    return out;
+  }
+  clearSpot() { this.curStep = null; const s = this.el && this.el.querySelector('.tsubjs'); if (s) s.innerHTML = ''; const v = this.el && this.el.querySelector('.tvis'); if (v) v.innerHTML = ''; const b = this.el && this.el.querySelector('.tbubble'); if (b) b.classList.remove('compact'); }
+  // For the tests (tests/lib/spotlight.js): what is lit, where the bubble is.
+  spot() {
+    const r = e => { if (!e) return null; const x = e.getBoundingClientRect(); return { left: x.left, top: x.top, right: x.right, bottom: x.bottom }; };
+    const st = this.curStep, spec = st ? ('subject' in st ? st.subject : SUBJECTS[st.key]) : null;
+    return { key: st && st.key, declared: spec != null, target: r(this.target), subjects: this.subjectEls().map(r), holes: this.holes || [], bubble: r(this.el.querySelector('.tbubble')), compact: this.el.querySelector('.tbubble').classList.contains('compact'),
+      bar: r(document.querySelector('.tabbar:not([hidden])')), W: innerWidth, H: innerHeight };
+  }
+
   // Put the hole, ring, finger and bubble round the target.
   place() {
     if (!this.target || this.el.hidden) return;
     const r = this.target.getBoundingClientRect(), W = innerWidth, H = innerHeight, pad = this.target.closest('.tabbar') ? 1 : 4;   // (the bar's tabs are 2 px apart with 6 showing: a 4 px hole would open onto the next tab)
-    const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar && !bar.contains(this.target) ? bar.getBoundingClientRect().top : H;   // a target sliding behind the tab bar must not open a hole onto its tabs
+    const barTop = this.barTopFor(this.target, H);   // a target sliding behind the tab bar must not open a hole onto its tabs
     const x0 = Math.max(0, r.left - pad), y0 = Math.max(0, Math.min(r.top - pad, barTop - 8)), x1 = Math.min(W, r.right + pad), y1 = Math.min(H, barTop, r.bottom + pad);
     const set = (el, s) => Object.assign(el.style, s);
     const d = k => this.el.querySelector(`[data-d="${k}"]`);
@@ -285,6 +323,14 @@ export class Tour {
     set(d('l'), { left: '0', top: `${y0}px`, width: `${x0}px`, height: `${y1 - y0}px` });
     set(d('r'), { left: `${x1}px`, top: `${y0}px`, width: `${W - x1}px`, height: `${y1 - y0}px` });
     set(this.el.querySelector('.tring'), { left: `${x0}px`, top: `${y0}px`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
+    // The SUBJECT (src/railsubjects.js): lit too (a second, third ... hole in the visual dim), framed, NOT tappable (the four panels above still catch every tap that is not on the target).
+    const subs = this.subjectEls(), holes = [{ x0, y0, x1, y1 }];
+    for (const el of subs) { const q = el.getBoundingClientRect(), hx0 = Math.max(0, q.left - 4), hx1 = Math.min(W, q.right + 4), hy0 = Math.max(0, q.top - 4), hy1 = Math.min(barTop, q.bottom + 4); if (hx1 > hx0 && hy1 > hy0 && (hy1 - hy0) >= 0.5 * (q.bottom - q.top + 8)) holes.push({ x0: hx0, y0: hy0, x1: hx1, y1: hy1, subject: true }); }
+    this.holes = holes;
+    const vis = this.el.querySelector('.tvis'); vis.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    // The dark is ONE rectangle with a MASK: white = dark, black = a hole. (An even-odd path made the OVERLAP of two holes dark again: the target, inside the subject's hole, was dimmed.)
+    vis.innerHTML = `<defs><mask id="tmask"><rect width="${W}" height="${H}" fill="#fff"/>${holes.map(h => `<rect x="${h.x0}" y="${h.y0}" width="${h.x1 - h.x0}" height="${h.y1 - h.y0}" fill="#000"/>`).join('')}</mask></defs><rect width="${W}" height="${H}" fill="rgba(10,10,30,0.62)" mask="url(#tmask)"/>`;
+    this.el.querySelector('.tsubjs').innerHTML = holes.filter(h => h.subject).map(h => `<i class="tsubj" style="left:${h.x0}px;top:${h.y0}px;width:${h.x1 - h.x0}px;height:${h.y1 - h.y0}px"></i>`).join('');
     // The bubble (Captain Contrail + the sentence) goes on the side with more room, then is CLAMPED inside the screen and
     // kept off the target (the user's screenshot, 2026-10-27: the bubble's text was cut off above the page).
     // Measured WITHOUT the target's pulse (a transform: scale), and the side is decided ONCE per step: the user's live bug,
@@ -293,6 +339,22 @@ export class Tour {
     const u0 = Math.max(0, cy - hh - pad), u1 = Math.min(H, barTop, cy + hh + pad), b = this.el.querySelector('.tbubble');
     set(b, { top: '0px', bottom: 'auto' });
     const bh = b.getBoundingClientRect().height, gap = 10;
+    if (subs.length) {   // a step with a SUBJECT: the bubble goes in a FREE band (above, between or below the lit holes), compact (no Captain) if none is tall enough, and covers none of them
+      const free = h => { const occ = holes.map(q => [q.y0 - gap, q.y1 + gap]).sort((a, c) => a[0] - c[0]), out = []; let cur = 4; for (const [a, c] of occ) { if (a > cur) out.push([cur, a]); cur = Math.max(cur, c); } if (barTop - 4 > cur) out.push([cur, barTop - 4]); return out.filter(f => f[1] - f[0] >= h); };
+      b.classList.remove('compact');
+      let h2 = bh, fits = free(h2);
+      if (!fits.length) { b.classList.add('compact'); h2 = b.getBoundingClientRect().height; fits = free(h2); }
+      let pick = null;
+      if (fits.length) {
+        if (this.side == null) this.side = fits.some(f => f[0] >= y1 - 1) ? 'below' : 'above';   // (decided once per step: below the target if any free band is, else above)
+        const onSide = fits.filter(f => (this.side === 'below' ? f[0] >= y1 - 1 : f[1] <= y0 + 1)); const pool = onSide.length ? onSide : fits;
+        pick = pool.sort((a, c) => Math.abs((a[0] + a[1]) / 2 - cy) - Math.abs((c[0] + c[1]) / 2 - cy))[0];
+      }
+      const tt = pick ? (pick[0] >= y1 - 1 || this.side === 'below' ? pick[0] : pick[1] - h2) : Math.max(4, barTop - 4 - h2);   // (no free band at all: the bottom, and the test will say so by name)
+      set(b, { top: `${Math.max(4, Math.min(H - 4 - h2, tt))}px` });
+      const cap2 = this.el.querySelector('.tcaptain'), br2 = b.getBoundingClientRect(); cap2.classList.toggle('left', (x0 + x1) / 2 < br2.left + br2.width / 2);
+      return;
+    }
     if (this.side == null) {
       let below = cy < H / 2;
       const t0 = below ? u1 + gap : u0 - gap - bh;
