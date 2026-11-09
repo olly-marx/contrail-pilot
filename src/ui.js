@@ -236,7 +236,7 @@ export class UI {
   // The gear sheet (R10): the four small buttons, reset and the credit behind one gear, as a sheet (src/sheet.js) with 40 px buttons. The old buttons
   // stay in the page (the classic screens use them, and their handlers are the ones the sheet calls), hidden on HOME.
   openGear() {
-    sfx.flap();
+    sfx.tick();
     const s = this.save, credit = document.querySelector('#title .credit');
     const close = showSheet({ eyebrow: 'MENU', title: 'Settings', ok: 'CLOSE',
       html: `<div class="gear-list"><button class="chip" type="button" data-gear="how">HOW TO PLAY</button><button class="chip" type="button" data-gear="school">FLIGHT SCHOOL</button>`
@@ -246,7 +246,7 @@ export class UI {
   }
   // The second page of Settings (0.37.x: the one sheet had 8 buttons and its CLOSE ran off a 320x568 screen): everything about the saved game.
   openSaved() {
-    sfx.flap();
+    sfx.tick();
     const s = this.save;
     const close = showSheet({ eyebrow: 'SETTINGS', title: 'Your saved game', ok: 'CLOSE',
       html: `<div class="gear-list"><button class="chip" type="button" data-gear="recover">RECOVER AN EARLIER SAVE</button><button class="chip" type="button" data-gear="backup">BACK UP MY GAME</button><button class="chip" type="button" data-gear="restore">RESTORE A BACKUP</button><button class="chip warn" type="button" data-gear="reset">RESET PROGRESS</button></div><p class="small gear-last">${s.lastBackup ? `Last backup: ${s.lastBackup}` : 'Last backup: never'}</p>` });
