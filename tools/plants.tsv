@@ -4,7 +4,7 @@
 # Rules for a plant: it leaves the code parseable; it breaks exactly the rule the test names; `if (false)` not `{}` as an arrow body.
 flight	src/sim/rules.js	s/if (rw) this.land(rw);/if (false) this.land(rw);/	landing disabled
 flight	src/sim/rules.js	s/if (this.heat >= CLIMATE.dangerLine) { this.finish/if (false) { this.finish/	overheat disabled
-flight	src/sim/rules.js	s/else this.finish({ reason: 'You hit the ground!' });/else {}/	ground crash disabled
+flight	src/sim/rules.js	s/else this.finish({ reason: 'You hit the ground!', sound: 'thud' });/else {}/	ground crash disabled
 flight	src/sim/rules.js	s/this.heatTrapped += rate \* dt;/this.heatTrapped += 0;/	night heat zeroed
 flight	src/sim/rules.js	s/this.sunBlocked += -rate \* dt;/this.sunBlocked += 0;/	day sun zeroed
 flight	src/sim/rules.js	s/      if (this.hitsStorm(s)) {/      if (false) {/	storm hit disabled
@@ -22,7 +22,7 @@ crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this
 crystals	src/sim/rules.js	s/this.save.crystals = (this.save.crystals || 0) + this.crystals;/this.save.crystals = (this.save.crystals || 0) + (landed ? this.crystals : 0);/	crystals lost on crash
 sim-flight	src/sim/rules.js	s/if (rw) this.land(rw);/if (false) this.land(rw);/	landing disabled
 sim-flight	src/sim/rules.js	s/if (this.heat >= CLIMATE.dangerLine) { this.finish/if (false) { this.finish/	overheat disabled
-sim-flight	src/sim/rules.js	s/else this.finish({ reason: 'You hit the ground!' });/else {}/	ground crash disabled
+sim-flight	src/sim/rules.js	s/else this.finish({ reason: 'You hit the ground!', sound: 'thud' });/else {}/	ground crash disabled
 sim-flight	src/sim/rules.js	s/this.heatTrapped += rate \* dt;/this.heatTrapped += 0;/	night heat zeroed
 sim-flight	src/sim/rules.js	s/this.sunBlocked += -rate \* dt;/this.sunBlocked += 0;/	day sun zeroed
 sim-flight	src/sim/rules.js	s/      if (this.hitsStorm(s)) {/      if (false) {/	storm hit disabled
@@ -70,7 +70,7 @@ eras	src/eras.js	s/ERA_BASE_MIN = 20;/ERA_BASE_MIN = 30;/	era base minutes chang
 eras	src/eras.js	s/Math.pow(n, 1.5)/Math.pow(n, 2)/	era growth exponent changed
 controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 2, TIP_MIN_TAP = 2;/	a tip goes too early
 controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 20, TIP_MIN_TAP = 2;/	a tip stays too long
-releasegate	tests/PATHMAP	s/ src\/badges.js src\/eras.js src\/statbars.js/ src\/badges.js src\/statbars.js/	a tracked file left unmapped (src/eras.js)
+releasegate	tests/PATHMAP	s/ src\/badges.js src\/eras.js src\/statbars.js/ src\/badges.js src\/statbars.js/	a tracked file left unmapped (src/eras.js) [x2]
 releasegate	tests/PATHMAP	s/ textfit crash$/ textfit/	a smoke test dropped
 releasegate	tests/PATHMAP	s/^group heavy-onboarding | \(.*\) | postrails$/group heavy-onboarding | \1 | NONE/	postrails no longer chosen for lessons/parcels
 releasegate	tests/PATHMAP	s/\(tools\/gate-plan.py\) | ALL$/\1 | NONE/	the harness no longer means the whole tier
@@ -79,7 +79,7 @@ releasegate	tools/gate-plan.py	s/return 2 if unmapped else 0/return 0/	an unmapp
 releasegate	tools/gate-plan.py	s/if path.startswith('tests\/') and path.endswith('.cjs') and/if False and/	a changed test no longer runs itself
 releasegate	tests/PATHMAP	s/^group sim-node-only | \(.*\) | NONE$/group sim-node-only | \1 | flight/	Node-only sim files wrongly pull browser tests
 releasegate	tests/PATHMAP	s/ walkthrough postrails school flightregion/ walkthrough school flightregion/	rules.js no longer pulls postrails
-releasegate	tests/PATHMAP	s/| sim-bank fares flight$/| fares flight/	imports of rules.js no longer pull the contract test
+releasegate	tests/PATHMAP	s/| sim-bank fares flight$/| fares flight/	imports of rules.js no longer pull the contract test [x2]
 releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails twistdraw stripclear foundgate$/| onrails tipqueue l4hint twistdraw stripclear foundgate/	GameScene no longer pulls postrails
 releasegate	tests/PATHMAP	s/ onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school/ onrails rails2 tipqueue l4hint walkthrough school/	the short-phone onrails run dropped
 season2-smoke@PART=Bweurope,Bnamerica,Bsasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B1)
@@ -110,7 +110,7 @@ sim-twists@PLANT=early	-	-	twists ignore their start distance
 boardsonline	src/GameScene.js	s/shade: Math.max(0, this.sunBlocked), heat_trapped/shade: Math.max(0, -this.sunBlocked), heat_trapped/	the shade sent was always 0 (the sign bug)
 boardsonline	src/recordsui.js	s/leaderboard(pick, period)/leaderboard(pick, 'week')/	EVER asks for the week again
 boardsonline	src/online.js	s/{ batch, client: VERSION }/{ batch }/	the client version is not sent
-boardsonline	src/online.js	s/if (tooOld(error)) { needUpdate(); stalled = true; break; }//	an old game is not told to update
+boardsonline	src/online.js	s/if (tooOld(error)) { needUpdate(); stalled = true; break; }//	an old game is not told to update [x2]
 boardsonline	src/recordsui.js	s/if (!getPilot()) {/if (false) {/	no pilot name still asks the boards
 boardsonline	src/GameScene.js	s/ missions_done: this.result.missions2 ? this.result.missions2.done.length : 0,//	missions_done is not sent
 era4-knobs	src/sim/physics.js	s/gapAdd: false/gapAdd: true/	ATC 8 no-fly gap add ignored
@@ -151,7 +151,7 @@ freeparcels	src/upgrades.js	s#&& (save.missionsDone || \[\]).includes('L4') && !
 rails2	src/tour.js	s#if (hub && s2Revealed(s, 'boards')#if (false \&\& s2Revealed(s, 'boards')#	no R14 records step
 rails2	style.css	s/^#results .rcard { gap: 6px;/#results .rcard { gap: 60px;/	the results card is too tall for a small phone: FLY ON is not on screen during the reveal (the R1 form of the old 'skip hint off screen' plant, whose markup R1 removed)
 rails2	src/tour.js	s#el.querySelectorAll('.tdim, .tbubble').forEach(d => {#\[\].forEach(d => {#	no scroll through the rails dim
-bubblestill	src/tour.js	s#    if (this.side == null) {#    this.side = null; if (this.side == null) {#;s#hh = (this.target.offsetHeight || r.height) / 2;#hh = r.height / 2;#	the bubble re-decided per frame, with the pulse
+bubblestill	src/tour.js	s#    if (this.side == null) {#    this.side = null; if (this.side == null) {#;s#hh = (this.target.offsetHeight || r.height) / 2;#hh = r.height / 2;#	the bubble re-decided per frame, with the pulse [x2]
 preview	src/season2.js	s#const store = PREVIEW ? {#const store = false ? {#	preview writes through to the real save
 tipqueue	src/GameScene.js	s#  dropTips() {#  dropTips() { return;#	unshown tips not unmarked
 tipqueue	src/GameScene.js	s#^    dropToast();$#    void 0;#;s#this.stripWatch.observe(coachEl);#void 0;#	the toast stays under the strip
@@ -261,7 +261,7 @@ swupdate	sw.js	s/const keep = new Set(\[CUR, META, await meta('previous')\]);/co
 releasegate	tests/PATHMAP	/^group sw-raw/d	src/updates.js no longer maps to the service-worker tests (the updater could change without swupdate running)
 flightreset	src/sim/rules.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/	the passed-airport sign survives into the next flight (the user's stale header)
 flightreset	src/GameScene.js	s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	the HUD shows a sign about another leg
-routeheader	src/sim/rules.js,src/GameScene.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/;s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	JOINT plant: both halves of the fix removed (no reset, no 'this leg only' guard): the dead flight's sign shows in the next flight
+routeheader	src/sim/rules.js,src/GameScene.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/;s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	JOINT plant: both halves of the fix removed (no reset, no 'this leg only' guard): the dead flight's sign shows in the next flight [x2]
 missionreach	src/aim.js	s/export const ROUTE_AIM = { on: true };/export const ROUTE_AIM = { on: false };/	the route does not aim at mission cities (today's tour)
 artsize	src/fleet.js	s/parts: parts.map(part => `assets\/ui\/upgrades\/hangar-/parts: parts.map(part => `assets\/upgrades\/plane-/	hangar layers pointed at the small flight sprites
 hangar	src/hangar.js	s/${ghosts}<\/div><div class="fpcap">/<\/div>${ghosts}<div class="fpcap">/	the ghosts outside the picture again (sized to the box)
@@ -313,7 +313,7 @@ records-screen	src/recordsui.js	s/if (opts.toast) opts.toast(/if (false) opts.to
 records-screen	src/recordsui.js	s/newBadges.includes(b.id) ?/false ?/	no dot on the new badge
 records-screen	style.css	s/background: #fff; padding: 4px; font-size: 7px; border: 0;/background: #fff; padding: 4px; font-size: 6px; border: 0;/	the badge text back at 6 px (below the 7 px minimum)
 records-screen	src/recordsui.js	s/k !== tab \&\& d\[`boards\/${k}`\]/false/	no dot on the sub-tab that is not showing
-fitscreen	style.css	s/^#hFleet > .ftabs { margin: 0; }//;s/^\.hpreview\.empty { padding: 3px 6px; }//;/^#hFleet \.fplane-row \.rowc-sub { display: none; }/d	the R5 compaction undone (sub-tab margin, empty strip padding, the plane row sub line): the hangar primary falls below the bar at 320x568
+fitscreen	style.css	s/^#hFleet > .ftabs { margin: 0; }//;s/^\.hpreview\.empty { padding: 3px 6px; }//;/^#hFleet \.fplane-row \.rowc-sub { display: none; }/d	the R5 compaction undone (sub-tab margin, empty strip padding, the plane row sub line): the hangar primary falls below the bar at 320x568 [x3]
 swipe	src/hangar.js	s/onSwipe(\$('hangar'), { next: () => goTab(1)/onSwipe(el, { next: () => goTab(1)/	the hangar swipe is bound to the short list again: a flick below it (a tall phone) does nothing
 tours	src/tour.js	s#^    if (id) this.markDone(id);#    if (false) this.markDone(id);#	a finished tour is not remembered (it would come back: 'the name tour ends and is remembered', 'the hangar tour is remembered')
 nextup	src/nextup.js	s#short: clip(o.short, Math.min(SHORT_MAX, ROW_MAX - rightOf(o).length))#short: o.short#	a long title pushes the right column onto a second line (the row budget)
@@ -444,11 +444,11 @@ onlinenote	src/ui.js	s/^    this.noteOnlineReplaced();$//	the note check is neve
 onlinenote	src/ui.js	s/ Your other game is in Settings: RECOVER AN EARLIER SAVE\.//	the note does not say where the other game is
 crossingscreens	src/crossingend.js	s/pic: lm ? `assets\/\${lm.key}.png` : null/pic: lm ? `assets\/\${lm.key}-nope.png` : null/	the landing picture is a file that does not exist (naturalWidth 0 after the wait)
 sound	src/sound.js	s/function gate() { return muted ? null : ac(); }/function gate() { return ac(); }/	muted still creates an AudioContext and nodes (the one muted flag is bypassed)
-sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 });/crack: () => { noise({ dur: 0.3, vol: 0.4, cutoff: 1400 });/;s/g.gain.value = Math.min(vol, NOISE_MAX);/g.gain.value = vol;/	noise louder than 0.1 (the clamp removed and a cue turned up)
+sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 });/crack: () => { noise({ dur: 0.3, vol: 0.4, cutoff: 1400 });/;s/g.gain.value = Math.min(vol, NOISE_MAX);/g.gain.value = vol;/	noise louder than 0.1 (the clamp removed and a cue turned up) [x2]
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x19]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
@@ -470,7 +470,7 @@ backuprestore	src/ui.js	s/      const r = readBackup(\$('bkText').value);/      
 backuprestore	src/ui.js	s/      download: () => { try {/      download: () => { return; try {/	DOWNLOAD A FILE does nothing
 backuprestore	src/ui.js	s/<button class="chip" type="button" data-gear="backup">BACK UP MY GAME<\/button>//	Settings has no BACK UP MY GAME button
 pilotcode	src/pilot.js	s/<p class="small">Or: Settings > BACK UP MY GAME.<\/p>//	the first-time code sheet does not mention BACK UP MY GAME
-pilotcode	src/persist.js	s/ Or tap Settings > BACK UP MY GAME\.//	the storage note does not mention BACK UP MY GAME
+pilotcode	src/persist.js	s/ Or tap Settings > BACK UP MY GAME\.//	the storage note does not mention BACK UP MY GAME [x2]
 restoresync	src/online.js	s/  if (!opts.force \&\& last.serverProgress \&\& mine < last.serverProgress \* POORER) return false;/  if (false) return false;/	an older restored save is uploaded over a richer online copy
 restoresync	src/save.js	s/    stashSave(.before restoring a backup.);//	the restore does not keep the current game first (this test must see it)
 gear	src/ui.js	s/data-gear="saved">YOUR SAVED GAME<\/button><\/div>/data-gear="saved">YOUR SAVED GAME<\/button><button class="chip" type="button" data-gear="how">A<\/button><button class="chip" type="button" data-gear="how">B<\/button><button class="chip" type="button" data-gear="how">C<\/button><button class="chip" type="button" data-gear="how">D<\/button><\/div>/	an extra chip pushes CLOSE off the Settings sheet
@@ -498,3 +498,7 @@ preloadgate	tests/lib/pageshost.js	s/{ root = repo, maxAge = 600 }/{ root = repo
 cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.decide.outputs.deploy == 'true' \&\& github.ref == #if: ${{ needs.decide.outputs.deploy == 'true' \&\& github.ref == #	the deploy job loses !cancelled() (a skipped test job upstream skips the deploy: 0.37.1's first live run)
 cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.deploy.result == 'success' }}#if: ${{ needs.deploy.result == 'success' }}#	the tag job loses !cancelled() (no release tag after a skipped-test deploy)
 cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.decide.outputs.deploy == 'true' \&\& github.ref != #if: ${{ needs.decide.outputs.deploy == 'true' \&\& github.ref != #	the dry-run deploy probe loses !cancelled() (it would no longer mirror the deploy job)
+plantsapply	tests/plantsapply.cjs	s/else if (r.stdout === text) {/else if (false) {/	the checker no longer flags a row that applies to nothing
+plantsapply	tests/plantsapply.cjs	s/if (rowOk \&\& total !== want) out.push/if (false) out.push/	the checker no longer compares the changed-line count with the row's declared [xN]
+plantsapply	tests/plantsapply.cjs	s/if (r.status !== 0) {/if (false) {/	the checker no longer flags a sed expression that sed rejects
+plantsapply	tests/plantsapply.cjs	s/catch (e) { rowOk = false; out.push(/catch (e) { rowOk = false; (/	the checker no longer flags a row whose file does not exist
