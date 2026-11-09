@@ -547,3 +547,7 @@ audiolive	src/ui.js	s#this.save.musicOff = nx === 'off';#this.save.musicOff = fa
 gaphintrestart	src/GameScene.js	s/^    this.gapHintGfx = null;   \/\/ made again.*$//	the gap hint graphics is kept across scene restarts (nothing is drawn from the second flight)
 hangartakeoff	src/ui.js	s/^    if (this.tour \&\& !this.save.freeUpgrade \&\& this.tour.homeRailDue()) return this.go('fly');.*$//	a hangar TAKE OFF starts the flight while a HOME rail is due
 hangartakeoff	src/tour.js	s/homeRailDue() { return !!(FEATURES.season2 \&\& !this.busy \&\&/homeRailDue() { return !!(FEATURES.season2 \&\&/	the hangar's own TAKE OFF rail is redirected to HOME (the flight never starts from it)
+pilotcodeensure	src/online.js	s/    if (error) return getCode();$/    if (error) { write(CODE_KEY, code); return code; }/	a code is kept on the device although set_pilot_code failed
+recoverfirst	src/recoverfirst.js	s/^export const pilotLost = .*$/export const pilotLost = () => false;/	a phone that lost its pilot is never recognised
+recoverfirst	src/online.js	s/^export const rememberFirst = .*$/export const rememberFirst = f => {};/	the first name is never remembered
+recoverfirstui	src/pilot.js	s/^    const lost = !off \&\& !this.chooseNew \&\& pilotLost(this.save, getPilot());.*$/    const lost = false;/	the PILOT tab opens on the empty new-name form again

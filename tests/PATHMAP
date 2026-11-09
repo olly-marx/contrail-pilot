@@ -28,7 +28,7 @@ group engine-core | src/sim/rules.js | flight hazards lanes forest atc forecast 
 group rules-imports | src/season.js src/crossings.js src/arealand.js src/missions2.js src/rewards.js src/badges.js src/nature.js src/landtrees.js src/eras.js src/fleet.js | sim-bank fares flight
 group flight-rules | src/config.js src/crash.js src/gapmarkers.js src/Hud.js src/GameScene.js | flight hazards lanes forest atc forecast collisions margin ponds powerups pickupgates issr-reveal gaphint twilight runway-back controls banners sim-bank sim-masks sim-rng-split
 group game-scene | src/GameScene.js | onrails tipqueue l4hint postrails twistdraw stripclear foundgate
-group menu-map | src/ui.js src/globe.js src/cities.js src/route.js src/network.js src/geo.js src/pilot.js src/swipe.js src/landmask.js src/links.js index.html style.css | globe journey swipe gate features links everyleg flightregion hubscreen tours onrails onrails@VP=375x667 rails2 tipqueue hangartakeoff
+group menu-map | src/ui.js src/recoverfirst.js src/globe.js src/cities.js src/route.js src/network.js src/geo.js src/pilot.js src/swipe.js src/landmask.js src/links.js index.html style.css | globe journey swipe gate features links everyleg flightregion hubscreen tours onrails onrails@VP=375x667 rails2 tipqueue recoverfirstui hangartakeoff
 group art-sound | assets/* vendor/* src/sound.js src/pixellab.js src/landmarks.js | textures projectart badgeart faces landmarks stormart pixelpreview treelayout terrain macrons
 group online | src/online.js src/restore.js src/uploadbanner.js src/newplayer.js src/recordsui.js | online onlinesave offline newplayer boardsonline
 group loader | src/preload.js src/loader.js | preloadgate flagclear loadercount hubscreen hangar nature onrails

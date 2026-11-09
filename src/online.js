@@ -11,6 +11,8 @@ const OUTBOX_KEY = 'contrailPilot.outbox';   // flights not sent yet
 const OUTBOX_MAX = 100;                      // flights kept for sending: also the most one send_flights call takes (it was 5 until 0.10.0: a long offline stretch lost flights)
 const NOTE_KEY = 'contrailPilot.onlineNote';   // set when the online copy REPLACED a game on this device at load: the next page load says so, once (ui.js noteOnlineReplaced)
 const CODE_KEY = 'contrailPilot.code';       // this pilot's code (shown on PILOT; brings the pilot back on any device)
+const FIRST_KEY = 'contrailPilot.firstName';   // the first name of the last pilot this device had or was told about (a restore): pre-fills 'I already have a pilot' (src/recoverfirst.js)
+const RECOVER_KEY = 'contrailPilot.recoverNext';   // set by a restore onto a phone with no pilot: the next page load opens the PILOT tab on 'bring back my pilot'
 const SYNC_KEY = 'contrailPilot.synced';     // { json, stamp, serverProgress } of the save last uploaded / downloaded, and how far the ONLINE copy had got then
 
 // Must match public.name_words in the migration.
@@ -25,6 +27,10 @@ export const randomTag = () => 10 + Math.floor(Math.random() * 90);
 const read = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* private mode */ } };
 export const getPilot = () => read(PILOT_KEY, null);
+export const lastFirst = () => read(FIRST_KEY, '');
+export const rememberFirst = f => { if (typeof f === 'string' && /^[A-Za-z]{2,12}$/.test(f)) write(FIRST_KEY, f); };
+export const setRecoverNext = () => write(RECOVER_KEY, 1);
+export const takeRecoverNext = () => { const v = read(RECOVER_KEY, null); if (v) { try { localStorage.removeItem(RECOVER_KEY); } catch (e) { /* ignore */ } } return !!v; };
 // Online is off ONLY in the tester modes (src/newplayer.js sets window.__CP_NO_ONLINE = true before any module runs; the shipped game never does), and in ?preview=1 (nothing is saved or sent):
 // nothing is queued, sent, retried or announced, and no network is touched.
 const noOnline = () => typeof window !== 'undefined' && (window.__CP_NO_ONLINE === true || window.CP_PREVIEW === true);   // ?preview=1 saves and sends NOTHING
@@ -62,7 +68,7 @@ export async function savePilot(p) {
     let { data, error } = await c.from('players').update(row).eq('id', mine).select('id');
     if (!error && !(data && data.length)) ({ error } = await c.from('players').insert(row));
     if (error) return { ok: false, why: /first_name|check constraint/.test(error.message) ? 'rude' : 'offline' };
-    write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag });
+    write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag }); rememberFirst(p.first);
     flush();
     ensureCode();
     return { ok: true };
@@ -255,7 +261,7 @@ export async function pilotLogin(p, code) {
     if (error || !data || !data[0]) return { ok: false, why: 'offline' };
     const r = data[0];
     if (!r.ok) return { ok: false, why: r.why };
-    write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag });
+    write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag }); rememberFirst(p.first);
     write(CODE_KEY, code.trim());
     write(SYNC_KEY, r.save ? { json: syncJson(r.save), stamp: r.stamp, serverProgress: progressOf(r.save) } : {});
     return { ok: true, save: r.save || null };
