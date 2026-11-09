@@ -458,3 +458,10 @@ cuesites	src/wild.js	s/sfx.grow();/sfx.buy();/	a funded nature project plays the
 cuesites	src/ui.js	s/sfx.softfail()/sfx.nope()/	a lost crossing plays the nope buzz again
 cuesites	src/ui.js	s/sfx.medal();/sfx.coin();/	a badge on the results card plays no medal
 sound	src/sound.js	s/done: () => \[523, 784, 1047\]/done: () => [523, 659, 784]/	two cues are the same recipe (done sounds like dawn)
+backup	src/backup.js	s/  if (check(JSON.stringify(o.save)) !== o.check) return { ok: false, reason: 'check' };//	the checksum is not verified (a cut or edited text restores)
+backup	src/save.js	s/    stashSave('before restoring a backup');//	a restore skips keeping the current game first
+backup	src/save.js	s/      if (!top || top.raw !== cur) return 'not-kept';//	a restore replaces the game even when it could not be kept
+backup	src/backup.js	s/pilot: String(pilot || '').slice(0, 12),/pilot: String(pilot || '').slice(0, 12) + localStorage.getItem('contrailPilot.code'),/	the pilot code goes into the backup
+backup	src/backup.js	s/  if (isBlank(save)) return { ok: false, reason: 'blank' };//	a blank backup is accepted over a real game
+backup	src/backup.js	s/  if (text.length > MAX_BYTES) return { ok: false, reason: 'size' };//	a backup over 1 MB is read
+backup	src/backup.js	s/ || o.v > BACKUP_V//	a backup from a newer format is read
