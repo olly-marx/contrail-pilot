@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-tips-light-subject",
+    "version": "0.39.0",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "The tips that point at a button now also light up the thing they talk about: the plane and its engine card, the next goal, the whole upgrade row. The OK button on the information card is no longer dark on small phones."
+    ]
+  },
+  {
     "id": "2026-11-09-payoff-whole",
     "version": "0.38.2",
     "date": "2026-11-09",
