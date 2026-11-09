@@ -27,7 +27,7 @@ exports.audit = page => page.evaluate(() => {
 // The PIXELS of the target are not darkened (the dark is a mask with a hole there; the first version used an even-odd path and the overlap of the target's hole and the subject's came out dark: nothing in the rects showed it).
 // Two clips of the target's inner area (inset 8 px, clear of the ring): with the tour shown, and with it hidden; the mean absolute difference must be small.
 exports.pixels = async page => {
-  const sp = await page.evaluate(() => { const s = game.registry.get('ui').tour.spot(); return { key: s.key, t: s.target, subs: s.subjects }; });
+  const sp = await page.evaluate(() => { const s = game.registry.get('ui').tour.spot(); return { key: s.key, t: s.target, subjects: s.subjects }; });
   const out = [], boxes = [['target', sp.t], ...sp.subjects.slice(0, 1).map(r => ['subject', r])];
   for (const [what, r] of boxes) {
     if (!r) continue;
@@ -41,7 +41,7 @@ exports.pixels = async page => {
     const mean = await page.evaluate(async ([a, b]) => { const load = u => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = `data:image/png;base64,${u}`; }); const [x, y] = [await load(a), await load(b)];
       const px = i => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const g = c.getContext('2d'); g.drawImage(i, 0, 0); return g.getImageData(0, 0, i.width, i.height).data; }; const P = px(x), Q = px(y); let d = 0; for (let k = 0; k < P.length; k += 4) d += Math.abs(P[k] - Q[k]) + Math.abs(P[k + 1] - Q[k + 1]) + Math.abs(P[k + 2] - Q[k + 2]); return d / (P.length / 4) / 3; }, [A.toString('base64'), B.toString('base64')]);
     if (process.env.SPOT_PIXELS) console.log(`PIX ${sp.key} ${what} ${mean.toFixed(2)}`);   // (SPOT_PIXELS=1 prints every clean difference: the threshold below is set from them)
-    if (mean > 14) out.push(`the ${what} of ${sp.key} is darkened: FAILED (mean pixel difference ${mean.toFixed(1)} with the tour on and off)`);
+    if (mean > (what === 'target' ? 8 : 25)) out.push(`the ${what} of ${sp.key} is darkened: FAILED (mean pixel difference ${mean.toFixed(1)} with the tour on and off; the clean maxima measured at 390x844 are 0.0 for a target and 9.8 for a subject, so 8 and 25)`);
   }
   return out;
 };
