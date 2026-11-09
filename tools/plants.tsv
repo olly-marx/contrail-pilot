@@ -506,4 +506,4 @@ plantsapply	tests/plantsapply.cjs	s/else if (r.stdout === text) {/else if (false
 plantsapply	tests/plantsapply.cjs	s/if (rowOk \&\& total !== want) out.push/if (false) out.push/	the checker no longer compares the changed-line count with the row's declared [xN]
 plantsapply	tests/plantsapply.cjs	s/if (r.status !== 0) {/if (false) {/	the checker no longer flags a sed expression that sed rejects
 plantsapply	tests/plantsapply.cjs	s/catch (e) { rowOk = false; out.push(/catch (e) { rowOk = false; (/	the checker no longer flags a row whose file does not exist
-spotlight	src/tour.js	s/\\"#000\\"/\\"#fff\\"/	the holes of the dark are not holes (the target is darkened)
+spotlight	src/tour.js	s/fill="#000"/fill="#fff"/	the holes of the dark are not holes (the target is darkened)
