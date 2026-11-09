@@ -127,7 +127,7 @@ export class PilotScreens {
     const lost = !off && !this.chooseNew && pilotLost(this.save, getPilot());   // this phone had a pilot and lost it: bring it back FIRST
     $('pLost').hidden = !lost;
     if (lost) { $('pEdit').hidden = true; $('pLogin').hidden = false; if (!$('lFirst').value) $('lFirst').value = lastFirst(); }
-    $('pHave').hidden = lost;
+    $('pHave').hidden = lost; $('pName').hidden = lost;   // (the name line would read '... the ... 11': a draft with a random number)
     $('pOffNote').hidden = !off || names;
     if (off) for (const id of names ? ['pCodeBox', 'pHave', 'pLogin'] : ['pName', 'pEdit', 'pChange', 'pCodeBox', 'pHave', 'pLogin']) $(id).hidden = true;
   }

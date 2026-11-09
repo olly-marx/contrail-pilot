@@ -22,9 +22,9 @@ const seed = named => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMS
   try {
    for (const [W, H] of [[390, 844], [320, 568]]) {
     { const { ctx, p } = await open(true, 'Lola', W, H);   // lost
-      const s = { lost: await vis(p, 'pLost'), login: await vis(p, 'pLogin'), edit: await vis(p, 'pEdit'), have: await vis(p, 'pHave'), first: await p.inputValue('#lFirst') }; log.push(`${W}x${H} lost: ${JSON.stringify(s)}`);
+      const s = { lost: await vis(p, 'pLost'), login: await vis(p, 'pLogin'), name: await vis(p, 'pName'), edit: await vis(p, 'pEdit'), have: await vis(p, 'pHave'), first: await p.inputValue('#lFirst') }; log.push(`${W}x${H} lost: ${JSON.stringify(s)}`);
       if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/lost-${W}.png` });
-      check(s.lost, 'lost pilot: the lost-pilot lines are not shown'); check(s.login, 'lost pilot: the bring-back form is not shown first'); check(!s.edit, 'lost pilot: the NEW-name form is shown first (it must be the second choice)');
+      check(s.lost, 'lost pilot: the lost-pilot lines are not shown'); check(s.login, 'lost pilot: the bring-back form is not shown first'); check(!s.name, "lost pilot: the empty name line ('... the ... 11') is shown"); check(!s.edit, 'lost pilot: the NEW-name form is shown first (it must be the second choice)');
       check(s.first === 'Lola', `lost pilot: the first name is not filled from the last known name (${s.first})`);
       if (!s.lost) { check(false, 'lost pilot: no \'make a new pilot instead\' button to tap (the lost-pilot block is not shown)'); await ctx.close(); continue; }
       await p.click('#pNewInstead'); await p.waitForTimeout(400);
