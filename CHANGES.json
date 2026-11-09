@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-test-sound",
+    "version": "0.37.0",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "Settings has a TEST SOUND button. It plays a tick and a bell and tells you which version of the game you are running, so you can find out whether the game, your browser tab or your device is the one that is silent."
+    ]
+  },
+  {
     "id": "2026-11-09-sounds-louder",
     "version": "0.36.1",
     "date": "2026-11-09",
