@@ -484,7 +484,6 @@ h2.sub { margin-top: -4px; }
 #tour { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
 #tour .tdim { position: fixed; background: transparent; pointer-events: auto; }   /* the four panels only CATCH the taps now: the dark is the .tvis layer below (it can light several holes: the target and the step's SUBJECT) */
 #tour .tvis { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
-#tour .tvis path { fill: rgba(10, 10, 30, 0.62); }
 #tour .tsubjs { position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
 #tour .tsubj { position: fixed; box-sizing: border-box; border: 2px solid #ffe15a; border-radius: 6px; box-shadow: 0 0 0 2px #1b1b2f; pointer-events: none; }
 #tour .tbubble.compact .tcaptain { display: none; }

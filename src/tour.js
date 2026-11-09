@@ -30,7 +30,7 @@ export class Tour {
     el.id = 'tour';
     el.hidden = true;
     // Four dark panels round a hole: they catch every tap that is not on the target.
-    el.innerHTML = '<svg class="tvis" aria-hidden="true"><path fill-rule="evenodd"></path></svg><div class="tsubjs"></div><div class="tdim" data-d="t"></div><div class="tdim" data-d="b"></div><div class="tdim" data-d="l"></div><div class="tdim" data-d="r"></div>'
+    el.innerHTML = '<svg class="tvis" aria-hidden="true"></svg><div class="tsubjs"></div><div class="tdim" data-d="t"></div><div class="tdim" data-d="b"></div><div class="tdim" data-d="l"></div><div class="tdim" data-d="r"></div>'
       + '<div class="tring"></div><div class="tfinger" hidden><i></i></div><div class="tbubble"><img class="tcaptain" src="assets/ui/captain-point.png" alt=""><div class="tbody"><p></p><button class="btn go" type="button">OK</button></div></div>';   // Captain Contrail points (the user, 2026-10-27)
     document.body.appendChild(el);
     this.el = el;
@@ -293,7 +293,7 @@ export class Tour {
     }
     return out;
   }
-  clearSpot() { this.curStep = null; const s = this.el && this.el.querySelector('.tsubjs'); if (s) s.innerHTML = ''; const p = this.el && this.el.querySelector('.tvis path'); if (p) p.setAttribute('d', ''); const b = this.el && this.el.querySelector('.tbubble'); if (b) b.classList.remove('compact'); }
+  clearSpot() { this.curStep = null; const s = this.el && this.el.querySelector('.tsubjs'); if (s) s.innerHTML = ''; const v = this.el && this.el.querySelector('.tvis'); if (v) v.innerHTML = ''; const b = this.el && this.el.querySelector('.tbubble'); if (b) b.classList.remove('compact'); }
   // For the tests (tests/lib/spotlight.js): what is lit, where the bubble is.
   spot() {
     const r = e => { if (!e) return null; const x = e.getBoundingClientRect(); return { left: x.left, top: x.top, right: x.right, bottom: x.bottom }; };
@@ -320,7 +320,8 @@ export class Tour {
     for (const el of subs) { const q = el.getBoundingClientRect(), hx0 = Math.max(0, q.left - 4), hx1 = Math.min(W, q.right + 4), hy0 = Math.max(0, q.top - 4), hy1 = Math.min(barTop, q.bottom + 4); if (hx1 > hx0 && hy1 > hy0 && (hy1 - hy0) >= 0.5 * (q.bottom - q.top + 8)) holes.push({ x0: hx0, y0: hy0, x1: hx1, y1: hy1, subject: true }); }
     this.holes = holes;
     const vis = this.el.querySelector('.tvis'); vis.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    vis.querySelector('path').setAttribute('d', `M0 0H${W}V${H}H0Z` + holes.map(h => `M${h.x0} ${h.y0}H${h.x1}V${h.y1}H${h.x0}Z`).join(''));
+    // The dark is ONE rectangle with a MASK: white = dark, black = a hole. (An even-odd path made the OVERLAP of two holes dark again: the target, inside the subject's hole, was dimmed.)
+    vis.innerHTML = `<defs><mask id="tmask"><rect width="${W}" height="${H}" fill="#fff"/>${holes.map(h => `<rect x="${h.x0}" y="${h.y0}" width="${h.x1 - h.x0}" height="${h.y1 - h.y0}" fill="#000"/>`).join('')}</mask></defs><rect width="${W}" height="${H}" fill="rgba(10,10,30,0.62)" mask="url(#tmask)"/>`;
     this.el.querySelector('.tsubjs').innerHTML = holes.filter(h => h.subject).map(h => `<i class="tsubj" style="left:${h.x0}px;top:${h.y0}px;width:${h.x1 - h.x0}px;height:${h.y1 - h.y0}px"></i>`).join('');
     // The bubble (Captain Contrail + the sentence) goes on the side with more room, then is CLAMPED inside the screen and
     // kept off the target (the user's screenshot, 2026-10-27: the bubble's text was cut off above the page).
