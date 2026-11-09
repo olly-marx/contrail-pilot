@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-next-crossing",
+    "version": "0.43.0",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "Home now shows your next crossing: three ticks for your era, your plane and your nature fill in as you go, with one line on what is missing. A crossing no longer needs trial stars, and it does not matter where you are. Tap the box to see it."
+    ]
+  },
+  {
     "id": "2026-11-09-landing-log",
     "version": "0.42.1",
     "date": "2026-11-09",
