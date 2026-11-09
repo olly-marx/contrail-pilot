@@ -541,6 +541,6 @@ musicplan	src/musicplan.js	s#export const MUSIC_STATES = \['off', 'soft', 'middl
 music	src/music.js	s#g.linearRampToValueAtTime(MUSIC_LEVELS\[levelName\], t + 0.15);#g.linearRampToValueAtTime(g.value, t + 0.15);#	a level change is not applied to the playing music
 audiolive	src/ui.js	s#this.save.musicOff = nx === 'off';#this.save.musicOff = false;#	the MUSIC chip never reaches OFF
 gaphintrestart	src/GameScene.js	s/^    this.gapHintGfx = null;   \/\/ made again.*$//	the gap hint graphics is kept across scene restarts (nothing is drawn from the second flight)
-crossingview	src/crossingview.js	s/line: starsLine(k, stars), bare: true, where/line: `stars ${stars} of ${M2.GATE_STARS}`, where/	the stars line is back to the unnamed "stars N of 2"
+crossingview	src/crossingview.js	s/line: starsLine(k, stars), bare: true, area: k, where/line: `stars ${stars} of ${M2.GATE_STARS}`, area: k, where/	the stars line is back to the unnamed "stars N of 2"
 crossingview	src/crossingview.js	s/samerica: 'S. America'/samerica: 'South America and the Atlantic'/	a long area name overflows the 24-character row
 crossingview	src/nextup.js	s/return n.key === 'contrails' \&\& n.area \&\& n.area !== here ? SHEET_ELSEWHERE : n.where;/return n.where;/	a trial in another area always jumps to MISSIONS (the wrong list)
