@@ -20,6 +20,19 @@
   check(/^Cross: nature \d+ of 30$/.test(V.nearestLine(c1)), `the nearest line: "${V.nearestLine(c1)}"`);
   S.SEASON.offer.rule = '2of3'; const c2 = V.crossingState(s1); S.SEASON.offer.rule = rule0;   // the test lever: "the last condition has just been met"
   check(c2.ready && !c2.told, `2 of 3 met under the 2of3 lever: ready, not told: ${JSON.stringify([c2.ready, c2.told])}`);
+  // 1b. the trial's stars belong to the area the crossing leaves from: when only the trial is missing the quiet line names that area (<= 24 characters, for every area and 0 to 2 stars)
+  { const bio0 = S.SEASON.offer.biodiversity; S.SEASON.offer.biodiversity = 0; const s5 = base(); s5.areaBest = { weurope: 99999 }; const c5 = V.crossingState(s5); S.SEASON.offer.biodiversity = bio0;
+    check(c5.nearest && c5.nearest.key === 'contrails' && V.nearestLine(c5) === 'Stars: W. Europe 0 of 2', `only the trial missing: the line names the area: "${V.nearestLine(c5)}"`);
+    const A = await import('../src/areas.js'); let longest = 0;
+    for (const k of Object.keys(A.AREAS)) for (const n of [0, 1, 2]) { const l = V.starsLine(k, n); longest = Math.max(longest, l.length); check(l.length <= 24 && /^Stars: .+ \d of 2$/.test(l), `the stars line for ${k} (${n}) fits 24 characters: "${l}" (${l.length})`); }
+    check(!/^Cross/.test(V.nearestLine(c5)), 'the stars line is not prefixed "Cross:"'); }
+    // 1c. the tap: in the area the trial belongs to it jumps to MISSIONS; in another area it says where to fly (a sheet, no jump)
+    { const bio1 = S.SEASON.offer.biodiversity; S.SEASON.offer.biodiversity = 0;
+      const here = base(); here.areaBest = { weurope: 99999 }; const away = { ...base(), areaBest: { weurope: 99999 }, city: 'OSLO', visited: ['OSLO'] };
+      const rowOf = s => N.nextUp(s, { crossing: V.crossingState(s), limit: 3 }).find(r => r.key === 'cross:progress');
+      const r1 = rowOf(here), r2 = rowOf(away); S.SEASON.offer.biodiversity = bio1;
+      check(r1 && r1.where === 'missions' && /^Stars: W\. Europe/.test(r1.short), `in the trial's own area the row jumps to MISSIONS: ${JSON.stringify(r1 && [r1.where, r1.short])}`);
+      check(r2 && r2.where === N.SHEET_ELSEWHERE && r2.full === 'Fly to Western Europe to earn these stars.', `in another area the row says where to fly: ${JSON.stringify(r2 && [r2.where, r2.full])}`); }
   // 2. The moment fires once.
   check(V.momentDue(c2) === true, 'the moment is due');
   V.markTold(s1, c2.id); S.SEASON.offer.rule = '2of3'; const c3 = V.crossingState(s1); S.SEASON.offer.rule = rule0;
