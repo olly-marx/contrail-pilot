@@ -465,3 +465,7 @@ backup	src/backup.js	s/pilot: String(pilot || '').slice(0, 12),/pilot: String(pi
 backup	src/backup.js	s/  if (isBlank(save)) return { ok: false, reason: 'blank' };//	a blank backup is accepted over a real game
 backup	src/backup.js	s/  if (text.length > MAX_BYTES) return { ok: false, reason: 'size' };//	a backup over 1 MB is read
 backup	src/backup.js	s/ || o.v > BACKUP_V//	a backup from a newer format is read
+backuprestore	src/ui.js	s/    const res = restoreFromBackup(r.save);/    const res = 'error';/	GO BACK TO IT restores nothing
+backuprestore	src/ui.js	s/      const r = readBackup(\$('bkText').value);/      const r = { ok: false, reason: 'format' };/	the restore sheet refuses every text, even a good backup
+backuprestore	src/ui.js	s/      download: () => { try {/      download: () => { return; try {/	DOWNLOAD A FILE does nothing
+backuprestore	src/ui.js	s/<button class="chip" type="button" data-gear="backup">BACK UP MY GAME<\/button>//	Settings has no BACK UP MY GAME button
