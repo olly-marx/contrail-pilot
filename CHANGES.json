@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-09-three-fixes",
+    "version": "0.41.0",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "If you tap TAKE OFF in the hangar while a tip about the home screen is waiting, the game now takes you to the home screen first so you do not miss it.",
+      "If your phone loses your pilot, the PILOT screen now asks for your old pilot first, so you do not make a second one by mistake.",
+      "When a crossing is waiting on trial stars, the home screen now names the area they belong to, and tapping it tells you where to fly if that area is not the one you are in."
+    ]
+  },
+  {
     "id": "2026-11-09-trees-abroad-count",
     "version": "0.40.1",
     "date": "2026-11-09",
