@@ -273,7 +273,7 @@ missionreach	src/missions2.js	s/ready: f => f.cityB !== f.start, //	a rescue mis
 skipaim	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the next trip would not aim)
 skipaim	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip (initFlight clears it)
 skipaim	src/aim.js	s/save && save.skipAim ? gotoTarget(save) : aimOpen(save)/aimOpen(save)/	the skip does nothing (the route still aims)
-skipaim	src/hub.js	s/skip: aimOpen(save) ? (save.skipAim ? 'on' : 'off') : null,/skip: save.skipAim ? 'on' : 'off',/	the skip button offered with no city mission to aim at
+skipaim	src/hub.js	s/skip: aimOpen(save) \&\& aimOpen(save) !== save.aimCity ? (save.skipAim ? 'on' : 'off') : null,/skip: save.skipAim ? 'on' : 'off',/	the skip button offered with no city mission to aim at
 textbudget2	src/aim.js	s/skip: 'Skip mission route this trip'/skip: 'Skip the mission route this trip'/	the skip chip text over one line at 320 (33 chars)
 skiptrip	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the real landing keeps skipping)
 skiptrip	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip
@@ -351,7 +351,7 @@ crossingview	src/crossingview.js	s/save.crossingTold = \[...new Set(\[...(save.c
 crossingview	src/crossingview.js	s/(s.told ? s.difficulty : `NEW ${s.difficulty}`)/`NEW ${s.difficulty}`/	the NEW word never goes away
 crossingmoment	src/ui.js	s/    if (!momentDue(cs) || this.crossingAuto.has(cs.id)) return;/    return;/	the crossing sheet never appears (a moment nobody sees)
 crossingmoment	src/crossingview.js	s/save.crossingTold = \[...new Set(\[...(save.crossingTold || \[\]), id\])\]; return save.crossingTold;/return save.crossingTold || [];/	the sheet returns every time (never marked told)
-crossingmoment	src/ui.js	s/hc.onclick = () => this.openCrossings(cs); }/hc.onclick = () => this.flyCrossing(cs); }/	a tap on the HOME box starts the crossing flight
+crossingmoment	src/ui.js	s/hc.onclick = () => this.openCrossings(cs);/hc.onclick = () => this.flyCrossing(cs);/	a tap on the HOME box starts the crossing flight
 crossingmoment	src/ui.js	s/if (\$('dFly')) \$('dFly').hidden = !(cs \&\& cs.ready);/if ($('dFly')) $('dFly').hidden = true;/	the HOME tab dot never lights
 crossingmoment	src/globe.js	s/if (cross \&\& cross.onTap \&\& markHit(ev)) { cross.onTap(); return; }//	a tap on the globe's ring does nothing
 crossingmoment	src/missionsview.js	s/v.crossing = cs ? {/v.crossing = false ? {/	MISSIONS shows no crossing conditions
@@ -566,7 +566,7 @@ crossbox	src/crossingview.js	s/const ticks = \[\['Era', 'era'\], \['Plane', 'pla
 crossbox	src/crossingview.js	s/n \&\& n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' }/n \&\& n.where === 'hangar' ? { label: 'NATURE', act: 'nature' }/	an open plane tick sends the player to NATURE
 crossbox	src/crossingview.js	s/: s.nearest ? s.nearest.plain : '';/: s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
 crossboxui	src/ui.js	s/hc.hidden = !box; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
-crossboxui	src/ui.js	s/hc.onclick = () => this.openCrossings(cs); }/hc.onclick = () => {}; }/	a tap on the HOME box does nothing
+crossboxui	src/ui.js	s/hc.onclick = () => this.openCrossings(cs);/hc.onclick = () => {};/	a tap on the HOME box does nothing
 crossboxui	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/);/	the HOME box shows during the lessons
 crossingview	src/nextup.js	s/lead = leadOf(save, boxShown ? null : crossingReady, boxShown ? null : crossing), vis/lead = leadOf(save, crossingReady, crossing), vis/	the ready crossing is repeated as a gold UP NEXT row under the HOME box
 crossboxui	src/ui.js	s/boxShown: boxOn \&\& !!ready });/boxShown: false });/	UP NEXT repeats the ready crossing under the HOME box
