@@ -10,8 +10,8 @@ const seed = named => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMS
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], log = [], check = (c, m) => { if (!c) fails.push(m); };
-  const open = async (named, first) => {
-    const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
+  const open = async (named, first, W, H) => {
+    const ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(([s, f]) => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); if (f) localStorage.setItem('s2:contrailPilot.firstName', JSON.stringify(f)); sessionStorage.setItem('fresh', '1'); } }, [seed(named), first]);
     await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
@@ -20,17 +20,21 @@ const seed = named => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMS
   };
   const vis = (p, id) => p.evaluate(i => { const e = document.getElementById(i); return !!e && !e.hidden && e.getClientRects().length > 0; }, id);
   try {
-    { const { ctx, p } = await open(true, 'Lola');   // lost
-      const s = { lost: await vis(p, 'pLost'), login: await vis(p, 'pLogin'), edit: await vis(p, 'pEdit'), have: await vis(p, 'pHave'), first: await p.inputValue('#lFirst') }; log.push(`lost: ${JSON.stringify(s)}`);
+   for (const [W, H] of [[390, 844], [320, 568]]) {
+    { const { ctx, p } = await open(true, 'Lola', W, H);   // lost
+      const s = { lost: await vis(p, 'pLost'), login: await vis(p, 'pLogin'), edit: await vis(p, 'pEdit'), have: await vis(p, 'pHave'), first: await p.inputValue('#lFirst') }; log.push(`${W}x${H} lost: ${JSON.stringify(s)}`);
+      if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/lost-${W}.png` });
       check(s.lost, 'lost pilot: the lost-pilot lines are not shown'); check(s.login, 'lost pilot: the bring-back form is not shown first'); check(!s.edit, 'lost pilot: the NEW-name form is shown first (it must be the second choice)');
       check(s.first === 'Lola', `lost pilot: the first name is not filled from the last known name (${s.first})`);
       await p.click('#pNewInstead'); await p.waitForTimeout(400);
-      const t = { edit: await vis(p, 'pEdit'), lost: await vis(p, 'pLost') }; log.push(`after 'make a new pilot instead': ${JSON.stringify(t)}`);
+      if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/new-instead-${W}.png` });
+      const t = { edit: await vis(p, 'pEdit'), lost: await vis(p, 'pLost') }; log.push(`${W}x${H} after 'make a new pilot instead': ${JSON.stringify(t)}`);
       check(t.edit && !t.lost, `'make a new pilot instead' does not show the new-name form: ${JSON.stringify(t)}`);
       check(!p.errs.length, `page errors: ${p.errs.join('; ')}`); await ctx.close(); }
-    { const { ctx, p } = await open(false, null);   // control: never had a pilot
-      const s = { lost: await vis(p, 'pLost'), edit: await vis(p, 'pEdit') }; log.push(`control: ${JSON.stringify(s)}`);
+    { const { ctx, p } = await open(false, null, W, H);   // control: never had a pilot
+      const s = { lost: await vis(p, 'pLost'), edit: await vis(p, 'pEdit') }; log.push(`${W}x${H} control: ${JSON.stringify(s)}`);
       check(!s.lost && s.edit, `control: a player who never named a pilot sees the new-name form and no lost-pilot lines: ${JSON.stringify(s)}`); await ctx.close(); }
+   }
   } finally { await b.close(); }
   console.log(log.join('\n'));
   console.log(fails.length ? `FAIL recoverfirstui:\n - ${fails.join('\n - ')}` : 'PASS recoverfirstui: a phone that lost its pilot opens on bring-back first, the new name is the second choice; a player who never had a pilot sees the name form');
