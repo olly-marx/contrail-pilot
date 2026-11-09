@@ -63,12 +63,12 @@
     if (r.noFlyPassed !== nf) fails.push(`seed ${seed}@${skill}: noFlyPassed ${r.noFlyPassed} != ${nf}`);
   }
   // r.touchdown (the real-flight landing log, 2026-11-09; the sim chat's design in research/ICE-CRYSTALS-LANDING-SIM.md): every flight that ends on the ground reports where on the runway (pos, 0 to 1 when it landed), the sink rate,
-  // the approach angle, the Landing gear level and the flare multiplier. The flights here run to the first airport with a pilot that flares onto the runway. A crash into the ground reports the same numbers; a flight that never
+  // the approach angle, the Landing gear level and the flare multiplier. The flights here run to the first airport with a pilot that comes in to land (makePlayer land). A crash into the ground reports the same numbers; a flight that never
   // touches the ground (heat, storms) reports null. PLANT=touchdown must FAIL (the field is dropped).
   const td = { landed: 0, flights: 0 };
-  for (const seed of [1, 2, 3]) {
+  for (const seed of [1, 2, 3, 4, 5, 6]) {
     const save = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, landings: 30, mission: 99, levels: { trees: 0, soil: 0 }, planted: {}, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: { gear: 2 } }, simSeed: seed };
-    const w = createWorld(save, seed), pl = makePlayer({ skill: 0.9, careful: true, budget: 0.5, seed });
+    const w = createWorld(save, seed), pl = makePlayer({ skill: 0.9, careful: true, budget: 0.5, seed, land: () => true });   // (land: the pilot model comes in low and lets the flare put it down, as the sim chat's ld-touch runs do)
     for (let i = 0; i < 3000 && w.state !== 'playing'; i++) w.step(1 / 60);
     for (let i = 0; i < 600000 && !w.result; i++) { if (w.state === 'playing' && pl.wantsFlap(w)) w.applyFlap(); w.step(16.67 / 1000); }
     const r = w.result; if (!r) { fails.push(`landing seed ${seed}: the flight never ended`); continue; }
