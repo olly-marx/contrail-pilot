@@ -2,6 +2,7 @@
 // v2: upgrade lines with levels, tree cargo economy, tutorial flag. v1 saves are not carried over.
 import { migrateMissions } from './missions.js';
 import { migrateBadges } from './badges.js';
+import { treesPlanted } from './treecount.js';
 import { migrateCity } from './route.js';
 import { newFleet, migrateFleet, syncFleet } from './fleet.js';
 
@@ -54,7 +55,7 @@ export function progressOf(s) {
   const sum = o => Object.values(o && typeof o === 'object' ? o : {}).reduce((a, n) => a + (Number(n) || 0), 0);
   const missions = Math.max(Number(s.mission) || 0, Array.isArray(s.missionsDone) ? s.missionsDone.length : 0);
   const planes = s.fleet && s.fleet.planes ? Math.max(0, Object.keys(s.fleet.planes).length - 1) : 0;   // (the first plane is everyone's: a new save must score 0)
-  return (Number(s.landings) || 0) + (Number(s.flights) || 0) / 10 + missions * 3 + sum(s.levels) * 2 + sum(s.planted) / 2 + planes;
+  return (Number(s.landings) || 0) + (Number(s.flights) || 0) / 10 + missions * 3 + sum(s.levels) * 2 + treesPlanted(s) / 2 + planes;
 }
 // Blank: nothing worth keeping (a brand-new player, or the defaults after a failed load). Under 1 point = no landing and fewer than 10 flights.
 export const isBlank = s => progressOf(s) < 1;

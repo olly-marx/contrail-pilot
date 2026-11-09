@@ -512,3 +512,7 @@ hangarpay	style.css	s/#hFleet.paying > :not(#payoff) { display: none; }//	the pu
 hangarpay	src/hangar.js	s/ if (fl) fl.classList.remove('paying');//	the list stays hidden after OK
 hangarpay	src/hangar.js	s/else { this.render(); if (this.ui.tour) setTimeout/else { if (this.ui.tour) setTimeout/	OK shows the OLD list (no fresh render after a prize paid during the display)
 spotlight	src/tour.js	s/fill="#000"/fill="#fff"/	the holes of the dark are not holes (the target is darkened)
+treesplanted	src/treecount.js	s/^export const treesPlanted = .*$/export const treesPlanted = s => !s || typeof s !== 'object' ? 0 : num(s.planted);/	trees planted abroad are not counted (the helper reads save.planted only)
+treesplanted	src/upgrades.js	s/if (u.planted \&\& treesPlanted(save) < u.planted)/if (u.planted \&\& Object.values(save.planted || {}).reduce((a, n) => a + n, 0) < u.planted)/	Soil Patches reads save.planted alone again
+treesplanted	src/badges.js	s/measure: (r, s) => treesPlanted(s) },/measure: (r, s) => sum(s.planted) },/	Forester reads save.planted alone again
+treesplanted	src/badges.js	s/forester: treesPlanted(save),/forester: sum(save.planted),/	the Forester badge bar reads save.planted alone again
