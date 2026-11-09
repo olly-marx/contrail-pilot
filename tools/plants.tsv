@@ -135,7 +135,7 @@ homenature	src/wild.js	s#if (!this.region) this.region = homeRegion(s) || 'woodl
 homenature	src/wild.js	s#const uk = this.region === (homeRegion(s) || 'woodland');#const uk = this.region === 'woodland';#	the planting card UK-only
 onrails	src/hangar.js	s#toFly: false, rails:#toFly: free \&\& !!s.areas, rails:#	the payoff goes to FLY
 onrails	src/tour.js	s#text: tip('rail-free-tap'),#skipIf: () => true, text: tip('rail-free-tap'),#	R5 without the tap-to-see step
-onrails	style.css	s#background: rgba(10, 10, 30, 0.62); pointer-events: auto;#background: rgba(10, 10, 30, 0.62); pointer-events: none;#	the dim lets taps through
+onrails	style.css	s#background: transparent; pointer-events: auto;#background: transparent; pointer-events: none;#	the dim lets taps through
 onrails	src/upgrades.js	s#{ gapTurb: 0 }#{}#	turbulence before L2
 keepvisible	src/tour.js	s#  keepVisible() {#  keepVisible() { return;#	rails targets not kept above the tab bar (moved from onrails 2026-11-02: no onrails step exercises it after the redesign)
 onrails	style.css	s#.payoff.arrive .pay-plane { transform: scale(1.8); }#.payoff.arrive .pay-plane { transform: none; }#	no payoff zoom
