@@ -35,7 +35,7 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'W
       { const { ctx, p } = await open(seed(true), W, H);
         await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 0; game.registry.get('ui').showTitle(); }); await p.waitForTimeout(600);
         // the moment fires by itself on the next screen the player sees (src/ui.js maybeCrossingSheet): the sheet is already open, and the crossing is marked told
-        const m1 = await p.evaluate(() => { const e = document.getElementById('sheet'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', told: (JSON.parse(localStorage.getItem('s2:contrailPilot.v2')).crossingTold || []).join() }; });
+        const m1 = await p.evaluate(() => { const e = document.getElementById('sheet'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', told: (JSON.parse(localStorage.getItem('contrailPilot.v2')).crossingTold || []).join() }; });
         check(/A NEW WAY OPENS/.test(m1.sheet) && m1.told === 'warsaw-stockholm', `${tag} B: the moment sheet did not open by itself or the crossing is not marked told: ${JSON.stringify(m1)}`);
         await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
         const h = await home(p); log.push(`${tag} B: ${JSON.stringify(h)}`);
