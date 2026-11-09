@@ -56,7 +56,7 @@ import { dots, markSeen, migrateSeen, defaultLands, hangarScope } from './fresh.
 import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
-import { nextUp } from './nextup.js';
+import { nextUp, leadOf } from './nextup.js';
 import { endView } from './crossingend.js';
 import { crossingState, crossingById, momentDue, markTold, sheetText, NEED_FAR, routeCrossRest, routeLapRest, endingBody, boxView, screenView } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
@@ -375,7 +375,8 @@ export class UI {
   renderHub() {
     const s = this.save;
     const cs = crossingState(s, { unlock: S2_UNLOCK }), ready = cs && cs.ready ? cs : null;   // (R-A: src/crossingview.js: the state, the 3 conditions, told once)
-    const boxOn = !!(cs && s.tutorialDone && !lessonsLeft(s).length);   // the HOME box (CROSSINGS V2) shows this crossing; a READY one is then not repeated as a gold UP NEXT row
+    const mustDo = leadOf(s);   // a pictured must-do lead row (the free part, the tree parcels): TAKE OFF is locked to it and the first hour shows one new thing at a time, so the box waits (measured: with it HOME was 20 px (390x667) and 26 px (320x568) too tall, tests/fitscreen.cjs)
+    const boxOn = !!(cs && s.tutorialDone && !lessonsLeft(s).length && !(mustDo && mustDo.pic));   // the HOME box (CROSSINGS V2) shows this crossing; a READY one is then not repeated as a gold UP NEXT row
     const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null, crossing: cs, boxShown: boxOn && !!ready });
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
     // UP NEXT (R3, research/UX-MASTER-PLAN.md C2): the SAME rows as the results card (src/nextup.js is the one source). A lead row (the free part,

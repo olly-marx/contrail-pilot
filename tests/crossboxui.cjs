@@ -2,7 +2,7 @@
 //   A. Era and Plane done, Nature open: HOME shows the box (route 'WARSAW > STOCKHOLM', the word Easy, three ticks with the first two filled, the line 'Plant trees. Nature N of 30'); TAKE OFF is still on screen above the bar
 //      (the box must not push it off a 320x568 phone); a tap on the box opens the CROSSINGS screen with the same route and one button, NATURE, which opens NATURE.
 //   B. Nature met too (the lever SEASON.offer.biodiversity = 0): the moment sheet ('A NEW WAY OPENS') opens by itself and marks the crossing told; then the box is gold and says 'Ready!' and its tap opens the screen with CROSS TO STOCKHOLM.
-//   C. Lessons not done: no box (the first hour stays quiet).
+//   C. Lessons not done: no box (the first hour stays quiet).   D. A free part waiting (a pictured must-do lead row, TAKE OFF locked): no box (HOME would scroll: tests/fitscreen.cjs).
 // Plants: tools/plants.tsv, test `crossboxui`. Run: python3 -m http.server 8000 & node tests/crossboxui.cjs
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
@@ -48,6 +48,8 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'W
         const m2 = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? { text: e.innerText.replace(/\s+/g, ' '), btn: (e.querySelector('.sheet-action') || {}).innerText || '' } : null; });
         check(m2 && /WARSAW > STOCKHOLM/.test(m2.text) && /CROSS TO STOCKHOLM/.test(m2.btn), `${tag} B: the tap on a ready, already announced crossing does not open the CROSSINGS screen with CROSS TO STOCKHOLM: ${JSON.stringify(m2)}`);
         await ctx.close(); }
+      { const { ctx, p } = await open({ ...seed(true), freeUpgrade: true }, W, H); const h = await home(p); log.push(`${tag} D: ${JSON.stringify(h)}`);   // a free part is waiting: its pictured lead row and the locked TAKE OFF come first, the box waits (HOME must not scroll)
+        check(!h.shown, `${tag} D: the box shows while a free part is waiting (HOME overflows): ${JSON.stringify(h)}`); await ctx.close(); }
       { const { ctx, p } = await open(seed(false), W, H); const h = await home(p); log.push(`${tag} C: ${JSON.stringify(h)}`);
         check(!h.shown, `${tag} C: the box shows while lessons remain: ${JSON.stringify(h)}`); await ctx.close(); }
     }
