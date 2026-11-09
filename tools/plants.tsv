@@ -518,4 +518,3 @@ music	src/sound.js	s#  tick: 'keep', flap: 'keep',#  flap: 'keep',#	a cue (tick)
 audiolive	src/musicplan.js	s#export const MUSIC_LEVEL = 0.1;#export const MUSIC_LEVEL = 0.4;#	the music is four times too loud (it masks the effects)
 audiolive	src/ui.js	s#data-gear=\"music\">MUSIC: \${s.musicOff#data-gear=\"musicX\">MUSIC: ${s.musicOff#	the MUSIC chip is not wired
 audiolive	src/music.js	s#g.linearRampToValueAtTime(0.25, t + 0.12);#g.linearRampToValueAtTime(1, t + 0.12);#	a duck cue does not dip the music
-music	src/sound.js	s#export function audioBus() { const a = gate();#export function audioBus() { const a = ac();#	the music creates a context while muted (the one muted flag is bypassed)
