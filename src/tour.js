@@ -258,7 +258,7 @@ export class Tour {
     const t = this.target; if (!t) return;
     let sc = t.parentElement; while (sc && sc !== document.body && !(sc.classList.contains('overlay') && sc.scrollHeight > sc.clientHeight)) sc = sc.parentElement;
     if (!sc || sc === document.body) return;
-    const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar && !bar.contains(t) ? bar.getBoundingClientRect().top : innerHeight;
+    const barTop = this.barTopFor(t, innerHeight);
     const r = t.getBoundingClientRect(), bottom = barTop - 12, top = 12;
     // A step with a SUBJECT: bring target AND subject into the band together when they fit (the 320x568 hangar scrolled the plane picture off the top to show the Engines row).
     const subs = this.subjectEls();
@@ -281,6 +281,14 @@ export class Tour {
         sc.scrollTop += r2.top + r2.height / 2 - (floor + bottom) / 2;
       }
     }
+  }
+
+  // Where the tab bar starts, for a target that is not on it: H when the bar is hidden OR COVERED by the screen the target is on (the information card sits over the bar: its OK button at 320x568 was
+  // inside the old 'behind the bar' strip, so its hole was 3 px tall and the button looked dark; found by the pixel check).
+  barTopFor(target, H) {
+    const bar = document.querySelector('.tabbar:not([hidden])'); if (!bar || bar.contains(target)) return H;
+    const r = bar.getBoundingClientRect(), top = document.elementsFromPoint(r.left + r.width / 2, r.top + Math.min(8, r.height / 2)).find(e => !e.closest('#tour'));
+    return top && bar.contains(top) ? r.top : H;
   }
 
   // The SUBJECT elements of the current step (src/railsubjects.js): visible ones only, never inside the tour itself.
@@ -306,7 +314,7 @@ export class Tour {
   place() {
     if (!this.target || this.el.hidden) return;
     const r = this.target.getBoundingClientRect(), W = innerWidth, H = innerHeight, pad = this.target.closest('.tabbar') ? 1 : 4;   // (the bar's tabs are 2 px apart with 6 showing: a 4 px hole would open onto the next tab)
-    const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar && !bar.contains(this.target) ? bar.getBoundingClientRect().top : H;   // a target sliding behind the tab bar must not open a hole onto its tabs
+    const barTop = this.barTopFor(this.target, H);   // a target sliding behind the tab bar must not open a hole onto its tabs
     const x0 = Math.max(0, r.left - pad), y0 = Math.max(0, Math.min(r.top - pad, barTop - 8)), x1 = Math.min(W, r.right + pad), y1 = Math.min(H, barTop, r.bottom + pad);
     const set = (el, s) => Object.assign(el.style, s);
     const d = k => this.el.querySelector(`[data-d="${k}"]`);
