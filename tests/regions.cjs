@@ -57,7 +57,7 @@ const KEY = 'contrailPilot.v2';
   check(meters.med > 0 && meters.des === 0 && meters.uk === (await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(game.registry.get('save')))), `one meter per region: ${JSON.stringify(meters)}`);
   const fill = await p.evaluate(() => document.querySelector('#wMeter .mfill').style.width);
   check(fill === `${meters.med}%`, `the meter shown is the region's own: ${fill} vs ${meters.med}%`);
-  check(!(await p.isVisible('#wTrees')), 'tree upgrades are a UK thing: hidden in other regions');
+  check(await p.isVisible('#wTrees'), 'the planting tools are on every land, not only the home land (the user, 2026-11-09)');
 
   // 4. Who runs it: the name shows; the links only after a grown-up holds the button for 2 s.
   await p.evaluate(() => document.querySelector('[data-pline="olives"] .rowc-tap').click()); await p.waitForTimeout(300);   /* the (i) lives in the preview strip now (DESIGN-HANGAR-NATURE) */

@@ -558,3 +558,4 @@ nocrossingkm	src/crossingview.js	s/body: `A non-stop flight\. How hard:/body: `A
 nocrossingkm	src/crossingview.js	s/export const rightText = s => (s.told ? s.difficulty : `NEW ${s.difficulty}`);/export const rightText = s => (s.told ? `${s.km} km` : `NEW ${s.km} km`);/	the HOME row shows the distance again
 nocrossingkm	src/crossingview.js	s/label: 'Fly farther', line: 'fly farther'/label: `Fly ${Math.round(0.7 * c.km)} km`, line: 'fly farther'/	the condition label names a distance again
 nocrossingkm	src/crossingview.js	s/^export const DIFFICULTY = .*$/export const DIFFICULTY = ['Easy', 'Easy', 'Easy', 'Easy', 'Easy', 'The lap'];/	every crossing is as easy as the first
+toolseverywhere	src/wild.js	s/^    const uk = true;$/    const uk = this.region === (homeRegion(s) || 'woodland');/	the planting tools are on the home land only again
