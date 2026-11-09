@@ -516,3 +516,4 @@ treesplanted	src/treecount.js	s/^export const treesPlanted = .*$/export const tr
 treesplanted	src/upgrades.js	s/if (u.planted \&\& treesPlanted(save) < u.planted)/if (u.planted \&\& Object.values(save.planted || {}).reduce((a, n) => a + n, 0) < u.planted)/	Soil Patches reads save.planted alone again
 treesplanted	src/badges.js	s/measure: (r, s) => treesPlanted(s) },/measure: (r, s) => sum(s.planted) },/	Forester reads save.planted alone again
 treesplanted	src/badges.js	s/forester: treesPlanted(save),/forester: sum(save.planted),/	the Forester badge bar reads save.planted alone again
+gaphintrestart	src/GameScene.js	s/^    this.gapHintGfx = null;   \/\/ made again.*$//	the gap hint graphics is kept across scene restarts (nothing is drawn from the second flight)

@@ -101,6 +101,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     this.save = this.registry.get('save');
     this.ui = this.registry.get('ui');
+    this.gapHintGfx = null;   // made again by drawGapGates in THIS scene: a restart destroys the old display list, and the old graphics object (kept as a field) drew nothing from the second flight on
     this.wildOK0 = null;
     this.dropTips && this.tipQueue && this.dropTips();   // a scene restart keeps fields: no tip carried from the last flight   // decided once per flight (L1 completes on touchdown: no animal on the landing roll of flight 1)
     this.builtWith = JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]);   // scenery depends on upgrades (e.g. meadow flowers)
