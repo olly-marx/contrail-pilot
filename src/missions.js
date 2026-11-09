@@ -36,7 +36,7 @@ export const MISSIONS = [
     fail: r => (r.landed ? 'Fly past one airport before you land.' : 'So close! Land to keep the bonus.') },
   { id: 'plant-tree', icon: 'mi-tree', lesson: 'lesson-plot', title: 'Plant a tree', sub: 'Drop a tree parcel onto brown soil.', needs: { line: 'trees', text: 'Tree parcels (NATURE)' },
     check: r => r.planted >= 1, progress: s => (s.kit.tree ? `Trees planted: ${s.planted}/1` : 'Needs Tree parcels'),
-    fail: () => 'Press DROP a little before the brown soil.' },
+    fail: () => 'Tap SEND A SEED a little before the brown soil.' },
   { id: 'crystals-5', icon: 'mi-crystal', lesson: 'lesson-crystals', title: 'Earn 5 ice crystals in one flight', sub: 'Dodge icy air at night. Radar shows it from further away.',
     check: r => r.crystals >= 5, progress: s => `Ice crystals: ${s.crystals}/5`,
     fail: r => `You earned ${r.crystals}. Dodge icy air at night.` },
