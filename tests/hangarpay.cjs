@@ -1,5 +1,5 @@
 // THE HANGAR PURCHASE DISPLAY HIDES THE LIST (src/hangar.js payoff; the user, 2026-11-09: while the display waits for OK the other items stayed visible and some looked buyable that he could no longer afford).
-// 375x667 and 320x568, real taps. A seeded season-2 save (seeds for Cabin AND Engines; after Cabin the Engines are no longer affordable). Buy Cabin, then:
+// 375x667 and 320x568, real taps. A seeded season-2 save (50 seeds, 7 crystals: Cabin 25/3 is bought; then Engines and Wings at 30/4 are NO LONGER affordable). Buy Cabin, then:
 //   the purchase items are hidden while the purchase display is open;  the header totals match the save;
 //   (the save changes DURING the display: a prize of 1000 seeds) after OK: the items are shown again, from a fresh render, and every buy button's disabled state equals "can you afford it NOW".
 // Plants: tools/plants.tsv, test `hangarpay`. Run: python3 -m http.server 8000 & node tests/hangarpay.cjs
@@ -14,7 +14,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       const tag = `${W}x${H}`, ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
       await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } },
-        { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true, freeUpgrade: false, landings: 8, flights: 9, seeds: 90, crystals: 10, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
+        { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true, freeUpgrade: false, landings: 8, flights: 9, seeds: 50, crystals: 7, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
       await p.goto(URL); await ready(p); await p.waitForTimeout(800);
       await p.evaluate(() => game.registry.get('ui').showHangar()); await p.waitForTimeout(700);
       const cabin = await p.evaluateHandle(() => [...document.querySelectorAll('#hFleet [data-fbuy]')].find(e => /Cabin/.test(e.closest('.rowc').innerText) && !e.disabled) || null);
@@ -33,14 +33,17 @@ const URL = process.env.URL || 'http://localhost:8000/';
       const okShown = await p.waitForFunction(() => { const o = document.getElementById('payOk'); return o && getComputedStyle(o).visibility !== 'hidden' && o.getClientRects().length; }, null, { timeout: 8000 }).then(() => true).catch(() => false);
       check(okShown, `${tag}: the OK button of the purchase display never showed`);
       if (okShown) await p.click('#payOk'); await p.waitForTimeout(600);
-      const after = await p.evaluate(async () => {
-        const F = await import('/src/fleet.js'), s = game.registry.get('save'), rows = [...document.querySelectorAll('#hFleet .rowc')].filter(e => e.getClientRects().length), buys = [...document.querySelectorAll('#hFleet [data-fbuy]')], bad = [];
-        const next = F.nextBuys(s);
-        for (const btn of buys) { const item = next.find(n => `${n.kind}:${n.id}` === btn.dataset.fbuy); if (!item) continue; const should = !!item.open && F.canAfford(s, item); if (btn.disabled === should) bad.push(`${btn.closest('.rowc').innerText.split('\\n')[0]}: ${btn.disabled ? 'looks unaffordable' : 'looks buyable'} but ${should ? 'you can afford it' : `it costs ${item.cost} and you have ${s.seeds}`}`); }
-        return { rows: rows.length, payoff: !!document.getElementById('payoff'), buttons: buys.length, bad };
+      const after = await p.evaluate(() => {
+        const s = game.registry.get('save'), rows = [...document.querySelectorAll('#hFleet .rowc')].filter(e => e.getClientRects().length), buys = [...document.querySelectorAll('#hFleet [data-fbuy]')], bad = []; let compared = 0;
+        for (const btn of buys) {   // the price is on the button itself ("30 4": seeds, crystals); FREE! buttons have none
+          const n = (btn.innerText.match(/\d+/g) || []).map(Number); if (n.length < 2) continue; compared++;
+          const should = n[0] <= s.seeds && n[1] <= (s.crystals || 0);
+          if (btn.disabled === should) bad.push(`${btn.closest('.rowc').innerText.split('\n')[0]}: ${btn.disabled ? 'looks unaffordable' : 'looks buyable'} but it costs ${n[0]} and you have ${s.seeds}`);
+        }
+        return { rows: rows.length, payoff: !!document.getElementById('payoff'), buttons: buys.length, compared, bad };
       });
       check(after.rows > 0 && !after.payoff, `${tag}: after OK the items are shown again (${after.rows} rows, display gone: ${!after.payoff})`);
-      check(after.buttons > 0 && !after.bad.length, `${tag}: after OK every buy button matches what you can afford NOW: ${after.bad.slice(0, 3).join('; ') || (after.buttons ? '' : 'no buy buttons')}`);
+      check(after.compared > 0 && !after.bad.length, `${tag}: after OK every buy button matches what you can afford NOW: ${after.bad.slice(0, 3).join('; ') || (after.compared ? '' : 'no priced buy buttons were compared (the check saw nothing)')}`);
       check(!p.errs.length, `${tag}: no page errors: ${p.errs.slice(0, 2)}`);
       await ctx.close();
     }
