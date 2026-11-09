@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-background-music",
+    "version": "0.40.0",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "The game has background music: five original songs with a beat play one after another, each three times, quietly under the sound effects. Settings has a MUSIC button next to SOUND: tap it to switch between off, soft, middle and loud. It starts on middle. If it is too quiet or too loud for you, tell us."
+    ]
+  },
+  {
     "id": "2026-11-09-gate-every-flight",
     "version": "0.39.2",
     "date": "2026-11-09",

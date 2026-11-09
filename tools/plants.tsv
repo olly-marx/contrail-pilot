@@ -508,6 +508,28 @@ plantsapply	tests/plantsapply.cjs	s/else if (r.stdout === text) {/else if (false
 plantsapply	tests/plantsapply.cjs	s/if (rowOk \&\& total !== want) out.push/if (false) out.push/	the checker no longer compares the changed-line count with the row's declared [xN]
 plantsapply	tests/plantsapply.cjs	s/if (r.status !== 0) {/if (false) {/	the checker no longer flags a sed expression that sed rejects
 plantsapply	tests/plantsapply.cjs	s/catch (e) { rowOk = false; out.push(/catch (e) { rowOk = false; (/	the checker no longer flags a row whose file does not exist
+musicplan	src/musicplan.js	s#const pool = inBag === 0 ? TRACKS.filter(t => t !== history\[history.length - 1\]) :#const pool = inBag === 0 ? TRACKS.slice() :#	a track may repeat at the start of a new bag (the shuffle repeats a song)
+musicplan	src/musicplan.js	s#export const MUSIC_PASSES = 3;#export const MUSIC_PASSES = 1;#	MUSIC_PASSES is 1 (not 'a few')
+musicplan	src/musicdata.js	s#key: 'A major pentatonic (written in C, sounding 3 semitones lower)', bpm: 132,#key: 'A major pentatonic (written in C, sounding 3 semitones lower)', bpm: 112,#	song A's pass is 102 s (too long)
+musicplan	src/musicplan.js	s#export const trackSeconds = song => passSeconds(song) \* MUSIC_PASSES;#export const trackSeconds = song => passSeconds(song);#	a track's time ignores MUSIC_PASSES
+musicplan	src/musicplan.js	s#  if (lo - 12 >= noteNumber(LEAD_MIN)) return up(notes, -12);#  if (lo - 12 >= noteNumber(LEAD_MIN)) return up(notes, -7);#	the A' variation is a fifth down, not an octave
+musicplan	src/musicdata.js	s#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 2'#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 4'#	a note overruns its bar
+music	src/music.js	s#  if (!armed || timer) return;#  if (timer) return;#	music starts before the first tap
+music	src/music.js	s#export function syncMusic() { if (off || isMuted()) stopMusic(); else startMusic(); }#export function syncMusic() { if (off) stopMusic(); else startMusic(); }#	muting does not stop the music
+music	src/music.js	s#export function syncMusic() { if (off || isMuted()) stopMusic(); else startMusic(); }#export function syncMusic() { if (isMuted()) stopMusic(); else startMusic(); }#	music ignores the MUSIC off setting
+music	src/sound.js	s#if (DUCKS\[k\] === 'duck' \&\& !muted \&\& duckHook) duckHook();#if (duckHook) duckHook();#	every cue ducks the music (a flap would pump it)
+music	src/sound.js	s#  tick: 'keep', flap: 'keep',#  flap: 'keep',#	a cue (tick) is not classed in DUCKS
+audiolive	src/musicplan.js	s#export const MUSIC_LEVELS = { soft: 0.03, middle: 0.038, loud: 0.056 };#export const MUSIC_LEVELS = { soft: 0.12, middle: 0.16, loud: 0.24 };#	the music is four times too loud (it masks the effects)
+audiolive	src/ui.js	s#data-gear=\"music\">\${musicChipText(s)}#data-gear=\"musicX\">${musicChipText(s)}#	the MUSIC chip is not wired
+audiolive	src/music.js	s#g.linearRampToValueAtTime(0.25, t + 0.12);#g.linearRampToValueAtTime(1, t + 0.12);#	a duck cue does not dip the music
+musicplan	src/musicdata.js	s#bpm: 140, transpose: -2,#bpm: 140, transpose: 0,#	song D sounds above A5 (its transposition is lost)
+musicplan	src/musicdata.js	s#hat: \[2, 6, 10, 14\], hatVol: 0.012,#hat: [2, 6, 10, 14], hatVol: 0.04,#	song E's tick is louder than the others (it is no longer the quietest)
+musicplan	src/musicplan.js	s#    if (d.kick.includes(s)) out.push#    if (false) out.push#	the kick drum never plays
+musicplan	src/musicplan.js	s#  if (drums \&\& v.drums) {#  if (v.drums) {#	the drums switch is ignored (drums false still plays drums)
+musicplan	src/musicplan.js	s#barNo % 8 === 7#barNo % 8 === 6#	the snare fill lands one bar early
+musicplan	src/musicdata.js	s#drums: { kick: \[0, 8\], kickGhost: \[\], kickVol: 0.1,#drums: { kick: [0, 8], kickGhost: [], kickVol: 0.3,#	song E's kick is the loudest (it is no longer the quiet song)
+musicplan	src/musicdata.js	s#bassVol: 0.1, arp: { every: 2, order: \[0, 1, 2, 1\], duty: 0.25, vol: 0.035 }#bassVol: 0.2, arp: { every: 2, order: [0, 1, 2, 1], duty: 0.25, vol: 0.035 }#	song E's bass is the loudest (it is no longer the quiet song)
+musicplan	src/musicdata.js	s#bassVol: 0.15, arp: { every: 2, order: \[0, 1, 2, 1\], duty: 0.125, vol: 0.05 }#bassVol: 0.12, arp: { every: 2, order: [0, 1, 2, 1], duty: 0.125, vol: 0.05 }#	song A's bass is back at the v3 level (not louder)
 hangarpay	style.css	s/#hFleet.paying > :not(#payoff) { display: none; }//	the purchase display leaves the upgrade list showing
 hangarpay	src/hangar.js	s/ if (fl) fl.classList.remove('paying');//	the list stays hidden after OK
 hangarpay	src/hangar.js	s/else { this.render(); if (this.ui.tour) setTimeout/else { if (this.ui.tour) setTimeout/	OK shows the OLD list (no fresh render after a prize paid during the display)
@@ -516,4 +538,10 @@ treesplanted	src/treecount.js	s/^export const treesPlanted = .*$/export const tr
 treesplanted	src/upgrades.js	s/if (u.planted \&\& treesPlanted(save) < u.planted)/if (u.planted \&\& Object.values(save.planted || {}).reduce((a, n) => a + n, 0) < u.planted)/	Soil Patches reads save.planted alone again
 treesplanted	src/badges.js	s/measure: (r, s) => treesPlanted(s) },/measure: (r, s) => sum(s.planted) },/	Forester reads save.planted alone again
 treesplanted	src/badges.js	s/forester: treesPlanted(save),/forester: sum(save.planted),/	the Forester badge bar reads save.planted alone again
+musicplan	src/musicplan.js	s#export const DEFAULT_MUSIC_LEVEL = 'middle';#export const DEFAULT_MUSIC_LEVEL = 'loud';#	the default music level is loud
+musicplan	src/musicplan.js	s#export const MUSIC_LEVELS = { soft: 0.03, middle: 0.038, loud: 0.056 };#export const MUSIC_LEVELS = { soft: 0.07, middle: 0.04, loud: 0.06 };#	the music levels are not ordered (soft is the loudest)
+musicplan	src/musicplan.js	s#export const musicStateOf = save => (save \&\& save.musicOff) ? 'off' :#export const musicStateOf = save => false ? 'off' :#	a legacy save with musicOff true plays music
+musicplan	src/musicplan.js	s#export const MUSIC_STATES = \['off', 'soft', 'middle', 'loud'\];#export const MUSIC_STATES = ['off', 'soft', 'loud'];#	the MUSIC chip skips MIDDLE
+music	src/music.js	s#g.linearRampToValueAtTime(MUSIC_LEVELS\[levelName\], t + 0.15);#g.linearRampToValueAtTime(g.value, t + 0.15);#	a level change is not applied to the playing music
+audiolive	src/ui.js	s#this.save.musicOff = nx === 'off';#this.save.musicOff = false;#	the MUSIC chip never reaches OFF
 gaphintrestart	src/GameScene.js	s/^    this.gapHintGfx = null;   \/\/ made again.*$//	the gap hint graphics is kept across scene restarts (nothing is drawn from the second flight)

@@ -67,7 +67,7 @@ export function buzz(pattern) {
   try { navigator.vibrate(pattern); } catch (e) {}
 }
 
-export const sfx = {
+const rawSfx = {
   tick: () => tone({ freq: 880, to: 700, dur: 0.035, vol: 0.025 }),   // every menu tap (before: the flying flap sound was reused, 28 sites)
   heartbeat: () => { tone({ freq: 70, to: 50, dur: 0.12, vol: 0.16 }); tone({ freq: 70, to: 50, dur: 0.12, vol: 0.1, delay: 0.18 }); },
   flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle', vol: 0.03 }),   // flying only
@@ -97,3 +97,18 @@ export const sfx = {
   softfail: () => [330, 262].forEach((f, i) => tone({ freq: f, to: f * 0.95, dur: 0.26, vol: 0.05, delay: i * 0.2 })),   // a crossing is lost: two falling notes, no buzz
   dawn: () => [523, 659, 784].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.15 })),
 };
+
+// WHICH CUES DUCK THE MUSIC (declared, not inferred; tests/sound.cjs: every cue must be here). 'duck': every stinger and warning cue: the music dips to a quarter for about 1.5 s.
+// 'keep': the frequent quiet ones (ducking a flap four times a second would pump the music); they are checked by level instead (tests/audiolive.cjs, the masking check).
+export const DUCKS = {
+  tick: 'keep', flap: 'keep', coin: 'keep', cool: 'keep', plant: 'keep', buy: 'keep', land: 'keep', nope: 'keep',
+  heartbeat: 'duck', issr: 'duck', warm: 'duck', thud: 'duck', crack: 'duck', flutter: 'duck', nofly: 'duck', crash: 'duck', overheat: 'duck', dusk: 'duck', dawn: 'duck',
+  reveal: 'duck', era: 'duck', grow: 'duck', done: 'duck', medal: 'duck', welcome: 'duck', softfail: 'duck',
+};
+let duckHook = null;
+export function setDuckHook(f) { duckHook = f; }
+export const sfx = {};
+for (const k of Object.keys(rawSfx)) sfx[k] = (...a) => { if (DUCKS[k] === 'duck' && !muted && duckHook) duckHook(); return rawSfx[k](...a); };
+
+// The music (src/music.js) plays through the SAME gate and master chain as the effects: muted = no context and no node. Returns { ctx, out } or null when muted.
+export function audioBus() { const a = gate(); return a ? { ctx: a, out: out() } : null; }

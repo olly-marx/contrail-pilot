@@ -62,6 +62,8 @@ import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
+import { setMusicOff, setMusicLevel, armMusic, syncMusic } from './music.js';
+import { musicStateOf, nextMusicState, musicChipText } from './musicplan.js';
 
 export const FACTS_BASE = [
   'Contrail means "condensation trail". It is made of tiny bits of ice.',
@@ -241,7 +243,7 @@ export class UI {
     const s = this.save, credit = document.querySelector('#title .credit');
     const close = showSheet({ eyebrow: 'MENU', title: 'Settings', ok: 'CLOSE',
       html: `<div class="gear-list"><button class="chip" type="button" data-gear="how">HOW TO PLAY</button><button class="chip" type="button" data-gear="school">FLIGHT SCHOOL</button>`
-        + `<button class="chip" type="button" data-gear="sound">SOUND: ${s.muted ? 'OFF' : 'ON'}</button><button class="chip" type="button" data-gear="soundtest">TEST SOUND</button><button class="chip" type="button" data-gear="about">ABOUT US</button>`
+        + `<button class="chip" type="button" data-gear="sound">SOUND: ${s.muted ? 'OFF' : 'ON'}</button><button class="chip" type="button" data-gear="music">${musicChipText(s)}</button><button class="chip" type="button" data-gear="soundtest">TEST SOUND</button><button class="chip" type="button" data-gear="about">ABOUT US</button>`
         + `<button class="chip" type="button" data-gear="saved">YOUR SAVED GAME</button></div><p class="small gear-soundmsg" id="gearSoundMsg"></p>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
     this.wireGear(close);
   }
@@ -258,6 +260,7 @@ export class UI {
     const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), saved: () => this.openSaved(), recover: () => this.openRecover(), backup: () => this.openBackup(), restore: () => this.openRestore(), reset: () => $('resetBtn').click() };
     document.querySelectorAll('#sheet [data-gear]').forEach(b => b.onclick = () => {
       if (b.dataset.gear === 'sound') { $('muteBtn').click(); b.textContent = `SOUND: ${this.save.muted ? 'OFF' : 'ON'}`; return; }   // the sheet stays open: you hear the change
+      if (b.dataset.gear === 'music') { const nx = nextMusicState(musicStateOf(this.save)); this.save.musicOff = nx === 'off'; if (nx !== 'off') this.save.musicLevel = nx; writeSave(this.save); setMusicLevel(this.save.musicLevel); setMusicOff(this.save.musicOff); b.textContent = musicChipText(this.save); return; }   // OFF -> SOFT -> MIDDLE -> LOUD -> OFF; the sheet stays open: you hear the change
       if (b.dataset.gear === 'soundtest') return this.testSound();
       close(); act[b.dataset.gear](); });
   }
@@ -864,8 +867,10 @@ export class UI {
 
   setupMute() {
     const btn = $('muteBtn');
-    const apply = () => { setMuted(this.save.muted); btn.textContent = `sound: ${this.save.muted ? 'off' : 'on'}`; };
+    const apply = () => { setMuted(this.save.muted); syncMusic(); btn.textContent = `sound: ${this.save.muted ? 'off' : 'on'}`; };   // (syncMusic: muted stops the music; before the first tap it creates nothing)
     btn.onclick = () => { this.save.muted = !this.save.muted; writeSave(this.save); apply(); };
+    setMusicLevel(this.save.musicLevel); setMusicOff(this.save.musicOff);
+    document.addEventListener('click', () => armMusic(), { once: true, capture: true });   // the FIRST tap arms the music: a context made before a tap starts suspended (src/music.js)
     apply();
   }
 
