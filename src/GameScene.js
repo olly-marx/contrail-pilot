@@ -31,6 +31,7 @@ import { LANDMARKS } from './landmarks.js';
 import { SPECIES, biodiversity, plantGain, hasProject, wildlifeScene, regionSpecies } from './nature.js';
 import { REGION_DATA, REGION_NAMES } from './habitats.js';
 import { treesPlanted } from './treecount.js';
+import { CRYSTAL_WHY } from './tips.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const FONT = 'Pixel, monospace';
@@ -1307,6 +1308,12 @@ export class GameScene extends Phaser.Scene {
     } else this.popup(tx, ty - 8, 'AUTOPILOT!', '#ffe15a');
     this.burst(tx, ty, power === 'saf' ? 0x8dffb0 : 0x8ac8ff, 8);
     sfx.coin();
+  }
+  // A patch passed without paying: one short line, never more than one every 12 s of flight and never over a tip (the user, 2026-11-09: 'explain it and make it clearer'). Words: tests/crystalreason.cjs.
+  onNoCrystal(why) {
+    const text = CRYSTAL_WHY[why]; if (!text || this.explaining || (this.save.seenTips || []).includes('*')) return;
+    if (this.crystalWhyAt != null && this.gameTime - this.crystalWhyAt < 12000) return;
+    this.crystalWhyAt = this.gameTime; this.popup(this.plane.x + 25, this.plane.y - 16, text, '#c9d6e8');
   }
   onCrystals(n, why) {
     sfx.coin();

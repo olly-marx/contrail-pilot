@@ -438,7 +438,7 @@ export function effectText(fx) {
   if (fx.airportEarly) out.push('the "get LOW to land" call comes sooner');
   if (fx.gapBirds) out.push(`${Math.round((1 - fx.gapBirds) * 100)}% fewer bird flocks`);
   if (fx.pickup) out.push(`grab seeds from ${fx.pickup} px`);
-  if (fx.dodge) out.push(`${fx.dodge} crystal${fx.dodge > 1 ? 's' : ''} per dodge, ${fx.perNight} a night`);
+  if (fx.dodge) out.push(`Night clouds you avoid: ${fx.dodge} crystal${fx.dodge > 1 ? 's' : ''} each`);
   if (fx.autoSecs) out.push(`autopilot ${fx.autoSecs} s, found ${Math.round(fx.autoChance * 100)}% of the time`);
   return out.join(', ');
 }

@@ -16,9 +16,9 @@ forest	src/sim/rules.js	s/(stage === 2 ? 1 + oldWood : 1)/1/	old-wood boost remo
 forest	src/sim/physics.js	s/FOREST.power);/0);/	kinds power zeroed
 forest	src/sim/physics.js	s/FOREST.storePower)/0)/	store power zeroed
 crystals	src/sim/rules.js	s/this.earnCrystals(this.kit.dodgeCrystals, /this.earnCrystals(0 * this.kit.dodgeCrystals, /	no dodge crystal
-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay \&\&/if (!i.fake \&\& i.inPath \&\& !i.entered \&\&/	day dodge counts
-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& !i.entered \&\& !this.isDay/	no path needed
-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& i.inPath \&\& !this.isDay/	night contrail counts
+crystals	src/sim/rules.js	s/    if (this.isDay) return 'day';//	day dodge counts
+crystals	src/sim/rules.js	s/    if (!i.inPath) return 'notheading';//	no path needed
+crystals	src/sim/rules.js	s/    if (i.entered) return 'touched';//	night contrail counts
 crystals	src/sim/rules.js	s/this.save.crystals = (this.save.crystals || 0) + this.crystals;/this.save.crystals = (this.save.crystals || 0) + (landed ? this.crystals : 0);/	crystals lost on crash
 sim-flight	src/sim/rules.js	s/if (rw) this.land(rw);/if (false) this.land(rw);/	landing disabled
 sim-flight	src/sim/rules.js	s/if (this.heat >= CLIMATE.dangerLine) { this.finish/if (false) { this.finish/	overheat disabled
@@ -34,9 +34,9 @@ sim-forest	src/sim/rules.js	s/(stage === 2 ? 1 + oldWood : 1)/1/	old-wood boost 
 sim-forest	src/sim/physics.js	s/FOREST.power);/0);/	kinds power zeroed
 sim-forest	src/sim/physics.js	s/FOREST.storePower)/0)/	store power zeroed
 sim-crystals	src/sim/rules.js	s/this.earnCrystals(this.kit.dodgeCrystals, /this.earnCrystals(0 * this.kit.dodgeCrystals, /	no dodge crystal
-sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay \&\&/if (!i.fake \&\& i.inPath \&\& !i.entered \&\&/	day dodge counts
-sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& !i.entered \&\& !this.isDay/	no path needed
-sim-crystals	src/sim/rules.js	s/if (!i.fake \&\& i.inPath \&\& !i.entered \&\& !this.isDay/if (!i.fake \&\& i.inPath \&\& !this.isDay/	night contrail counts
+sim-crystals	src/sim/rules.js	s/    if (this.isDay) return 'day';//	day dodge counts
+sim-crystals	src/sim/rules.js	s/    if (!i.inPath) return 'notheading';//	no path needed
+sim-crystals	src/sim/rules.js	s/    if (i.entered) return 'touched';//	night contrail counts
 sim-crystals	src/sim/rules.js	s/this.save.crystals = (this.save.crystals || 0) + this.crystals;/this.save.crystals = (this.save.crystals || 0) + (landed ? this.crystals : 0);/	crystals lost on crash
 records	src/records.js	s/      c.crashes += 1;/      c.crashes += 0;/	MOST CRASHES not counted
 records	src/records.js	s/if (f.crash === 'bird') c.bird += 1;/if (f.crash) c.bird += 1;/	every crash counts as a bird strike
@@ -572,3 +572,9 @@ crossingview	src/nextup.js	s/lead = leadOf(save, boxShown ? null : crossingReady
 crossboxui	src/ui.js	s/boxShown: boxOn \&\& !!ready });/boxShown: false });/	UP NEXT repeats the ready crossing under the HOME box
 fitscreen	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/ \&\& !lessonsLeft(s).length);/	the HOME box shows while a free part is waiting (HOME scrolls at 390x667 and 320x568)
 crossboxui	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/ \&\& !lessonsLeft(s).length);/	the HOME box shows while a free part is waiting
+crystalreason	src/sim/rules.js	s/if (ahead > 0 \&\& i.x < WIDTH \&\& cy >= i.y/if (ahead > 0 \&\& ahead < 120 \&\& cy >= i.y/	'in your path' counts only the last 120 px again
+crystalreason	src/sim/rules.js	s/    if (i.entered) return 'touched';//	a patch the plane flew into still pays
+crystalreason	src/sim/rules.js	s/    if (this.isDay) return 'day';//	a day patch pays
+crystalreason	src/sim/rules.js	s/    if (i.fake) return 'fake';//	a fake patch pays
+crystalreason	src/sim/rules.js	s/    if (this.nightDodges >= this.kit.dodgesPerNight) return 'limit';.*$//	the nightly cap is ignored
+crystalreason	src/sim/rules.js	s/        } else if (why !== 'quiet') this.onNoCrystal(why);/        }/	an unpaid patch tells nobody why

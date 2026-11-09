@@ -3,6 +3,7 @@
 // stripped, a ${...} value counts as one word); a picture, arrow or the thing itself flashing does the rest. The old
 // long explanation stays as `more`, for the info cards a curious child opens by choice. Callers use tip(id, ...args).
 // Words in a `say` may be a function of values (a city, a tree): the lint calls it with SAMPLE values.
+export const CRYSTAL_WHY = { day: 'It is day', touched: 'You touched it', fake: 'It was a fake', notheading: 'You were not heading into it', limit: "Tonight's limit reached" };   // why a patch paid no crystal (<= 28 characters each; GameScene.onNoCrystal)
 export const TIPS = {
   // ---- flight school (src/school.js) ----
   'school-hold':   { say: 'Hi, I\'m Captain Contrail! Press and HOLD the screen to take off.' },
