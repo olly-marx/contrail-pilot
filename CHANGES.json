@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-hangar-pay-clear",
+    "version": "0.39.1",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "After you buy something in the hangar, the rest of the hangar now hides while the picture of your purchase shows. When you tap OK it comes back with your updated seeds."
+    ]
+  },
+  {
     "id": "2026-11-09-tips-light-subject",
     "version": "0.39.0",
     "date": "2026-11-09",
