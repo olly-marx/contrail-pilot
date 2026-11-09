@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-09-three-more",
+    "version": "0.42.0",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "Crossings no longer show a distance anywhere. They say how hard they are instead: Easy, Medium, Hard, Harder, Very hard, and The lap.",
+      "The planting tools (tree parcels, soil patches, the nursery) are now on every NATURE screen, not only the one for the land you started in.",
+      "The first tree is now walked through: the home screen points at TAKE OFF with your tree seeds on board, the flight shows an arrow on SEND A SEED and the soil tip comes back at every patch until a tree has landed, and the results say when your first tree is planted."
+    ]
+  },
+  {
     "id": "2026-11-09-three-fixes",
     "version": "0.41.0",
     "date": "2026-11-09",
