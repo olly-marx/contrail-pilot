@@ -61,6 +61,33 @@ export function available(save) {
   return out;
 }
 
+// Every crossing with one end open and the other not, WHATEVER its era (crossings of the eras this release has): the HOME box talks about the next one before its era arrives.
+export function upcoming(save) {
+  const open = new Set(unlockedAreas(save));
+  if ((save.areas || []).includes('ocean')) open.add('ocean');
+  const allOthers = Object.keys(AREAS).every(k => open.has(k)), out = [];
+  for (const c of CROSSINGS) {
+    if (c.era > SEASON.maxEra) continue;
+    const [sa, sb] = sides(c);
+    if (c.kind === 'lap') { if (allOthers && !(save.crossed || []).includes(c.id)) { const h = homeCity(save); out.push({ ...c, a: h, b: h, from: h, to: h, km: crossingKm(c) }); } continue; }
+    if (open.has(sa) && !open.has(sb)) out.push({ ...c, from: c.a, to: c.b, opens: sb, km: crossingKm(c) });
+    else if (open.has(sb) && !open.has(sa)) out.push({ ...c, from: c.b, to: c.a, opens: sa, km: crossingKm(c) });
+  }
+  return out;
+}
+
+// READY BY STATUS (the user, 2026-11-09, CROSSINGS V2: 'a crossing becomes available based on status, NOT where you are'): three ticks, none of them about the trial stars or where the player is.
+//   era    the era reached is the crossing's era or later;   nature  the best nature meter over every land the player has opened is at the offer's biodiversity;
+//   plane  planeReady() below: TODAY's rule (the best landed flight from the departure area, or the hangar's estimate, covers 70 percent of the crossing). It is one function so the sim chat's new factor and
+//          pools drop in later without touching the screens.
+export const planeReady = (save, c) => { const k = areaOf(c.from); return Math.max((save.areaBest || {})[k] || 0, k ? capFor(save, k) : 0) >= SEASON.offer.distanceShare * c.km; };
+export const planeProgress = (save, c) => { const k = areaOf(c.from), need = SEASON.offer.distanceShare * c.km; return need ? Math.min(1, Math.max((save.areaBest || {})[k] || 0, k ? capFor(save, k) : 0) / need) : 1; };
+export const natureBest = save => Math.max(0, ...unlockedAreas(save).map(k => bestAreaBio(save, k)));
+export function readiness(save, c) {
+  const era = eraProgress(save).index >= c.era, plane = planeReady(save, c), nb = natureBest(save), nature = nb >= SEASON.offer.biodiversity;
+  return { era, plane, nature, natureHave: Math.round(nb), ready: era && plane && nature };
+}
+
 // The era (index) in which the next crossing you could fly opens, when it is later than yours and this release has it; else null.
 export function laterEra(save) {
   const open = new Set(unlockedAreas(save)), era = eraProgress(save).index;
