@@ -351,7 +351,7 @@ crossingview	src/crossingview.js	s/save.crossingTold = \[...new Set(\[...(save.c
 crossingview	src/crossingview.js	s/(s.told ? s.difficulty : `NEW ${s.difficulty}`)/`NEW ${s.difficulty}`/	the NEW word never goes away
 crossingmoment	src/ui.js	s/    if (!momentDue(cs) || this.crossingAuto.has(cs.id)) return;/    return;/	the crossing sheet never appears (a moment nobody sees)
 crossingmoment	src/crossingview.js	s/save.crossingTold = \[...new Set(\[...(save.crossingTold || \[\]), id\])\]; return save.crossingTold;/return save.crossingTold || [];/	the sheet returns every time (never marked told)
-crossingmoment	src/ui.js	s/if (n.key === 'lead:cross' \&\& ready) this.showCrossingSheet(ready);/if (n.key === 'lead:cross' \&\& ready) this.flyCrossing(ready);/	a row tap starts the 6,500 km flight at once (no sheet)
+crossingmoment	src/ui.js	s/hc.onclick = () => this.openCrossings(cs); }/hc.onclick = () => this.flyCrossing(cs); }/	a tap on the HOME box starts the crossing flight
 crossingmoment	src/ui.js	s/if (\$('dFly')) \$('dFly').hidden = !(cs \&\& cs.ready);/if ($('dFly')) $('dFly').hidden = true;/	the HOME tab dot never lights
 crossingmoment	src/globe.js	s/if (cross \&\& cross.onTap \&\& markHit(ev)) { cross.onTap(); return; }//	a tap on the globe's ring does nothing
 crossingmoment	src/missionsview.js	s/v.crossing = cs ? {/v.crossing = false ? {/	MISSIONS shows no crossing conditions
@@ -360,7 +360,7 @@ routechip	src/ui.js	s/onClose: () => { home.insertBefore(j, next); j.style.displ
 routechip	src/ui.js	s/if ((s.tours || \[\]).some(t => t === 'globe-hint' || t === '\*')) return; s.tours = \[...(s.tours || \[\]), 'globe-hint']; writeSave(s);/return;/	the caption never goes away
 routechip	src/ui.js	s/hint.hidden = !s.tutorialDone ||/hint.hidden = true ||/	the caption never shows
 routechip	src/globe.js	s/ if (onUse) onUse(); }   \/\/ (the first drag: the hint can go)/ }/	a drag on the globe does not remove the caption
-crossingmoment	src/crossingview.js	s/(s.told ? s.difficulty : `NEW ${s.difficulty}`)/s.difficulty/	the row never says NEW before the sheet is seen
+crossingview	src/crossingview.js	s/(s.told ? s.difficulty : `NEW ${s.difficulty}`)/s.difficulty/	the row never says NEW before the sheet is seen
 schoolicy	src/school.js	s/if (this.inT > 0.6) this.madeDay = true;/if (s.contrails.length > 25) this.madeDay = true;/	the old count rule back: a slow phone never has 26 puffs alive, and the daytime contrail step says missed it for ever
 savestash	src/save.js	s/      if ((a \&\& !isBlank(a)) || (b \&\& !isBlank(b))) return;/      if (false) return;/	a blank save replaces a save with progress
 savestash	src/save.js	s/  if (held) return;   \/\/ see HELD above/  if (false) return;/	a held game still writes over the save it could not read

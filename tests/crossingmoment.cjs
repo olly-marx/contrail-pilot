@@ -1,7 +1,7 @@
 // The crossing moment, with REAL taps at 375x667 and 320x568 (R-A of the UX plan; the user's playtest of 0.29.0: "the first crossing was not obvious").
 // A weurope pilot has the flight and the trial done; nature is the last condition. Before: HOME says "Cross: nature 0 of 30", MISSIONS shows the three conditions, no
 // sheet, no dot. THE MOMENT: funding a NATURE project completes the last condition: the one-time sheet appears THERE (no results card involved). LATER closes it and it never
-// returns; HOME leads with "Cross to STOCKHOLM", the HOME tab has a dot, a tap on the row opens the sheet (no flight starts), so does a tap on the globe's ring;
+// returns; the HOME box says Ready! (UP NEXT does not repeat the crossing), the HOME tab has a dot, a tap on the box opens the CROSSINGS screen (no flight starts), so does a tap on the globe's ring;
 // FLY THE CROSSING starts the flight. The other path: a flight's results card shows it after the reveal. (The "last condition met" lever: SEASON.offer.biodiversity.)
 // Run: python3 -m http.server 8000 & node tests/crossingmoment.cjs   (plants in tools/plants.tsv)
 const { chromium } = require('playwright-core');
@@ -40,20 +40,15 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.click('#sheet .sheet-ok'); await p.waitForTimeout(300);
     await p.evaluate(() => { game.registry.get('ui').persist(); game.registry.get('ui').refreshDots(); }); await p.waitForTimeout(400);
     check(!(await sheet(p)), `${tag}: LATER closes it and a later save or screen change does not bring it back`);
-    // 4. HOME: the row leads, NEW is gone (told), the HOME tab has a dot; a row tap opens the sheet, not a flight.
+    // 4. HOME: the NEXT CROSSING box says Ready! and UP NEXT does not repeat the crossing (CROSSINGS V2); the HOME tab has a dot; a tap on the box opens the CROSSINGS screen, not a flight.
     await p.click('#tabFly'); await p.waitForTimeout(500);
-    const home1 = await p.evaluate(() => ({ lead: (document.querySelector('#hubNext .rc-row.must') || {}).innerText, dot: !document.getElementById('dFly').hidden, sheet: !!document.getElementById('sheet') }));
-    check(home1.lead && /Cross to STOCKHOLM/.test(home1.lead) && /Easy/.test(home1.lead) && !home1.sheet, `${tag}: HOME leads with the crossing and how hard it is: ${JSON.stringify(home1)}`);
+    const home1 = await p.evaluate(() => ({ box: (document.getElementById('hubCross') || { innerText: '' }).innerText.replace(/\s+/g, ' ').trim(), up: (document.getElementById('hubNext') || { innerText: '' }).innerText.replace(/\s+/g, ' ').trim(), dot: !document.getElementById('dFly').hidden, sheet: !!document.getElementById('sheet') }));
+    check(/NEXT CROSSING.*STOCKHOLM.*Ready!/.test(home1.box) && !/Cross to STOCKHOLM/.test(home1.up) && !home1.sheet, `${tag}: HOME's box says Ready! and UP NEXT does not repeat the crossing: ${JSON.stringify(home1)}`);
     check(home1.dot, `${tag}: the HOME tab dot (#dFly) is not lit while a crossing is ready: ${JSON.stringify(home1)}`);
-    check(!/NEW/.test(home1.lead || ''), `${tag}: the row still says NEW after the sheet has been seen: ${home1.lead}`);
-    // NEW is on the row until the sheet has been seen: forget the told mark, hold the sheet off with a stand-in #sheet, redraw HOME, read the row, put it back.
-    const fresh = await p.evaluate(() => { const s = game.registry.get('save'), ui = game.registry.get('ui'), was = s.crossingTold, d = document.createElement('div'); d.id = 'sheet'; document.body.appendChild(d);
-      s.crossingTold = []; ui.renderHub(); const row = (document.querySelector('#hubNext .rc-row.must') || {}).innerText || ''; s.crossingTold = was; d.remove(); ui.renderHub(); return row.replace(/\s+/g, ' '); });
-    check(/NEW Easy/.test(fresh), `${tag}: before the sheet has been seen the row should read "NEW Easy": ${fresh}`);
-    await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(400);
+    await p.click('#hubCross'); await p.waitForTimeout(400);
     const b1 = await sv();
-    check(!b1.fly, `${tag}: a flight started on the row tap (it must only open the sheet): ${JSON.stringify(b1)}`);
-    check(!!(await sheet(p)), `${tag}: a tap on the crossing row opened no sheet`);
+    check(!b1.fly, `${tag}: a flight started on the box tap (it must only open the CROSSINGS screen): ${JSON.stringify(b1)}`);
+    check(!!(await sheet(p)), `${tag}: a tap on the box opened no sheet`);
     if (b1.fly || !(await sheet(p))) { await p.close(); continue; }
     await p.click('#sheet .sheet-ok'); await p.waitForTimeout(300);
     // 5. The globe: the ring is on the map and a real tap on it opens the sheet.
