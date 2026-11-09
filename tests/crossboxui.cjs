@@ -1,7 +1,7 @@
 // THE HOME BOX 'NEXT CROSSING' AND THE CROSSINGS SCREEN (src/ui.js renderHub / openCrossings, src/crossingview.js boxView; CROSSINGS V2). Real taps at 390x844 and 320x568, a season 2 save with the lessons done.
 //   A. Era and Plane done, Nature open: HOME shows the box (route 'WARSAW > STOCKHOLM', the word Easy, three ticks with the first two filled, the line 'Plant trees. Nature N of 30'); TAKE OFF is still on screen above the bar
 //      (the box must not push it off a 320x568 phone); a tap on the box opens the CROSSINGS screen with the same route and one button, NATURE, which opens NATURE.
-//   B. Nature met too (the lever SEASON.offer.biodiversity = 0): the box is gold and says 'Ready!'; its first tap opens the moment sheet ('A NEW WAY OPENS') and marks the crossing told; the next tap opens the screen with CROSS TO STOCKHOLM.
+//   B. Nature met too (the lever SEASON.offer.biodiversity = 0): the moment sheet ('A NEW WAY OPENS') opens by itself and marks the crossing told; then the box is gold and says 'Ready!' and its tap opens the screen with CROSS TO STOCKHOLM.
 //   C. Lessons not done: no box (the first hour stays quiet).
 // Plants: tools/plants.tsv, test `crossboxui`. Run: python3 -m http.server 8000 & node tests/crossboxui.cjs
 const { chromium } = require('playwright-core');
@@ -34,15 +34,15 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'W
         check(!p.errs.length, `${tag} A: page errors ${p.errs.join('; ')}`); await ctx.close(); }
       { const { ctx, p } = await open(seed(true), W, H);
         await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 0; game.registry.get('ui').showTitle(); }); await p.waitForTimeout(600);
+        // the moment fires by itself on the next screen the player sees (src/ui.js maybeCrossingSheet): the sheet is already open, and the crossing is marked told
+        const m1 = await p.evaluate(() => { const e = document.getElementById('sheet'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', told: (JSON.parse(localStorage.getItem('s2:contrailPilot.v2')).crossingTold || []).join() }; });
+        check(/A NEW WAY OPENS/.test(m1.sheet) && m1.told === 'warsaw-stockholm', `${tag} B: the moment sheet did not open by itself or the crossing is not marked told: ${JSON.stringify(m1)}`);
+        await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
         const h = await home(p); log.push(`${tag} B: ${JSON.stringify(h)}`);
         check(h.shown && h.gold && /Ready!/.test(h.text) && h.on.join() === 'true,true,true', `${tag} B: a ready crossing is not gold with 'Ready!' and three ticks: ${JSON.stringify(h)}`);
         await p.click('#hubCross'); await p.waitForTimeout(500);
-        const m1 = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? e.innerText.replace(/\s+/g, ' ') : ''; });
-        check(/A NEW WAY OPENS/.test(m1), `${tag} B: the first tap on a ready crossing does not open the moment sheet: ${m1.slice(0, 120)}`);
-        await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); game.registry.get('ui').showTitle(); }); await p.waitForTimeout(400);
-        await p.click('#hubCross'); await p.waitForTimeout(500);
         const m2 = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? { text: e.innerText.replace(/\s+/g, ' '), btn: (e.querySelector('.sheet-action') || {}).innerText || '' } : null; });
-        check(m2 && /WARSAW > STOCKHOLM/.test(m2.text) && /CROSS TO STOCKHOLM/.test(m2.btn), `${tag} B: the second tap does not open the CROSSINGS screen with CROSS TO STOCKHOLM: ${JSON.stringify(m2)}`);
+        check(m2 && /WARSAW > STOCKHOLM/.test(m2.text) && /CROSS TO STOCKHOLM/.test(m2.btn), `${tag} B: the tap on a ready, already announced crossing does not open the CROSSINGS screen with CROSS TO STOCKHOLM: ${JSON.stringify(m2)}`);
         await ctx.close(); }
       { const { ctx, p } = await open(seed(false), W, H); const h = await home(p); log.push(`${tag} C: ${JSON.stringify(h)}`);
         check(!h.shown, `${tag} C: the box shows while lessons remain: ${JSON.stringify(h)}`); await ctx.close(); }
