@@ -1062,3 +1062,4 @@ h2.sub { margin-top: -4px; }
 .hc-tick.on::before { background: var(--gold, #ffd23f); }
 .hub-cross .hc-line { margin: 1px 0 0; font-size: 7px; line-height: 1.3; }
 .hub-cross.ready { background: var(--gold, #ffd23f); }
+@media (max-height: 600px) { .hub-cross { padding: 2px 5px; } .hub-cross .rc-label { margin: 0; } .hub-cross .hc-line { margin: 0; } }   /* 320x568: TAKE OFF must stay above the bar (tests/crossboxui.cjs) */
