@@ -66,3 +66,4 @@ group plants-style-css | style.css | gear skiptrip
 group online-note | src/online.js src/ui.js src/main.js | onlinenote
 group sound-live | src/sound.js | audiolive
 group sound-live-ui | src/ui.js | audiolive
+group spotlight | src/tour.js src/railsubjects.js tests/lib/spotlight.js tests/lib/spotcases.js | spotlight onrails320 onrails
