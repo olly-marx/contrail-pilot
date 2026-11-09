@@ -759,8 +759,11 @@ h2.sub { margin-top: -4px; }
 .payoff-card { position: relative; }
 .pay-frame { width: 100%; overflow: hidden; }
 .pay-plane { position: relative; width: 100%; aspect-ratio: 400 / 176; transition: transform .6s ease-in-out; }
-.payoff.arrive .pay-plane { transform: scale(1.8); }   /* the camera zooms onto the new part (origin = its centre, set in hangar.js) */
-.pay-mark { position: absolute; pointer-events: none; }
+.payoff.arrive .pay-plane { transform: none; }   /* NO zoom (the user: the payoff showed the engines but cut the plane's body off; the hangar planes fill the frame, so ANY zoom crops the plane): the whole plane stays in view and the part is RINGED (#payMark) */
+.pay-mark { position: absolute; pointer-events: none; box-sizing: border-box; border: 2px solid #ffe15a; border-radius: 3px; box-shadow: 0 0 0 2px #1b1b2f, 0 0 8px #fff6b0; opacity: 0; transition: opacity .3s ease-out; }
+.payoff.arrive .pay-mark { opacity: 1; animation: paymark 1.2s ease-in-out infinite; }
+@keyframes paymark { 50% { filter: brightness(1.4); } }   /* (not a transform: rowfit measures rows) */
+.payoff.inbox { scroll-margin-top: 10px; }   /* scrollIntoView puts the picture 10 px under the top edge, not flush with it */
 .pay-label { position: absolute; transform: translate(-50%, -100%); background: #ffe15a; color: #1b1b2f; border: 2px solid #1b1b2f; font-size: 8px; padding: 3px 6px; white-space: nowrap; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 2; }
 .pay-label::after { content: ''; position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); border: 6px solid transparent; border-top-color: #1b1b2f; border-bottom: 0; }
 .payoff.labelled .pay-label { opacity: 1; }
@@ -1038,6 +1041,7 @@ h2.sub { margin-top: -4px; }
   .era-card.go .ec-confetti i { animation: none; display: none; }
   .pay-plane, .pay-part { transition: none; }
   .payoff.arrive .pay-spark { animation: none; display: none; }
+  .payoff.arrive .pay-mark { animation: none; }
   #results .slam.in, .stamp { animation: none; }
   .newbest, .coach-tap, .newtag, .btn.glow, .line.pick, .tab.glow:not(.on), .btn.claim, .btn.claim.pulse, .tcaptain, .wf.ghost, .wf.arrive, .w-webpic.w-flash, .fpreview .fpic img.fghost, .hcap.working .dots::after { animation: none; }
   .hplane .hp-corner, .hplane .hp-preview, #tour .tring, #tour .tfinger { animation: none; }
