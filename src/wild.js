@@ -106,9 +106,9 @@ export class WildScreen {
     const trees = landTrees(s, this.region);
     row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">${t.open && isNew(`tree:${t.slot}`) ? '<i class="dot"></i>' : ''}
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
-    // The planting tools (parcels, soil, nursery): bought once, they work in every land. Shown on the HOME land's tab (the
-    // non-UK starter audit, 2026-10-28: a Melbourne or Lagos player had to visit the UK's tab to get them).
-    const uk = this.region === (homeRegion(s) || 'woodland');
+    // The planting tools (parcels, soil, nursery): bought once, they work in every land, so they are on EVERY land's tab (the user, 2026-11-09: a player who started in Australia could only buy
+    // them on the Australian tab). Before this they were on the HOME land's tab only (2026-10-28: a Melbourne or Lagos player had to visit the UK's tab).
+    const uk = true;
     // Season 2: the planting tools wait for lesson 5 (trees), one new thing at a time (research/FLOW-FIRST-HOUR.md).
     const treesTime = !isSeason2(s) || (s.missionsDone || []).includes('L4');
     $('wTrees').hidden = !uk || !treesTime;
