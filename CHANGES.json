@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-faster-updates",
+    "version": "0.37.1",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: updates now reach the game faster, because the tests are run once instead of twice. Nothing changes for you."
+    ]
+  },
+  {
     "id": "2026-11-09-test-sound",
     "version": "0.37.0",
     "date": "2026-11-09",

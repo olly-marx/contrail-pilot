@@ -467,3 +467,14 @@ audiolive	src/ui.js	s/data-gear=\"soundtest\">TEST SOUND/data-gear=\"soundtestX\
 audiolive	src/ui.js	s/sfx.tick(); setTimeout(() => sfx.medal(), 350); m.innerHTML/m.innerHTML/	TEST SOUND plays no sound (the tick and the bell lines removed)
 audiolive	src/ui.js	s/if (this.save.muted) m.innerHTML = 'Sound is OFF. Tap SOUND.';/if (false) m.innerHTML = '';/	TEST SOUND plays even when the game is muted
 audiolive	src/ui.js	s/    m.innerHTML += `<br>This game is \${VERSION}`;/    /	TEST SOUND does not say which version runs
+cigate	tools/ci-gate.sh	s/^  gate) shift; gate "$@" ;;/  gate) echo skip=true ;;/	the gate always says skip (the marker check removed)
+cigate	tools/ci-gate.sh	s/^  echo "skip=true"; echo "reason=ci-ok/  run "planted"; echo "reason=ci-ok/	the gate never skips (a marker is ignored)
+cigate	tools/ci-gate.sh	s/\[ "$ok_commit" = "$sha" \] || run/[ "${ok_commit:0:7}" = "${sha:0:7}" ] || run/	the marker is compared on 7 characters instead of the full sha
+cigate	tools/ci-gate.sh	s/\[ "$fails" -eq 0 \] || run/true || run/	a ci-fail marker next to a ci-ok marker is ignored
+cigate	tools/ci-gate.sh	s/\[ "$event" = push \] || run/true || run/	a manual dispatch may skip the tests
+cigate	tools/ci-gate.sh	s/\[ "$test_result" = success \] \&\& echo "deploy=true"/true \&\& echo "deploy=true"/	a failed or cancelled test still deploys (the needs/if trap)
+cigate	.github/workflows/deploy.yml	s/ \&\& github.ref == 'refs\/heads\/main' }}$/ }}/	a dry run could deploy (the main-only guard removed)
+cigate	.github/workflows/deploy.yml	s/if: ${{ needs.gate.outputs.skip != 'true' }}/if: ${{ false }}/	the test job never runs, whatever the gate says
+cigate	.github/workflows/verify-branch.yml	s/strict_flaky: true/strict_flaky: false/	the branch run no longer fails a shard on a flaky test
+preloadgate	tests/lib/pageshost.js	s/if (maxAge !== null) h/if (false) h/	the test server sends no Cache-Control (like python3 -m http.server): a fresh checkout makes the browser revalidate every picture
+preloadgate	tests/lib/pageshost.js	s/{ root = repo, maxAge = 600 }/{ root = repo, maxAge = 0 }/	the test server sends max-age=0 (every picture is stale at once)
