@@ -16,7 +16,7 @@ const RES = { landed: true, landedAt: 'PARIS', from: 'LONDON', reason: '', dista
 const CASES = [
   ['r-school', { freeUpgrade: true, landings: 1, flights: 1, missionsDone: [], tours: [] }, 'results', 2],
   ['r-hangar', { freeUpgrade: true, landings: 1, flights: 1, missionsDone: [], tours: ['r-school'] }, 'title', 2],
-  ['r-free', { freeUpgrade: true, landings: 1, flights: 1, missionsDone: [], tours: ['r-school', 'r-hangar'] }, 'hangar', 4],
+  ['r-free', { freeUpgrade: true, landings: 1, flights: 1, missionsDone: [], tours: ['r-school', 'r-hangar'] }, 'hangar', 6],   // 1: tap the Engines row, 2: FREE! (a real purchase), 3: the payoff card's OK (#payOk), 4: the hangar's TAKE OFF
   ['r-takeoff1-hangar', { landings: 1, flights: 1, missionsDone: [], tours: without('r-takeoff1') }, 'hangar', 2],
   ['r-takeoff1-hub', { landings: 1, flights: 1, missionsDone: [], tours: without('r-takeoff1') }, 'title', 2],
   ['r-res1', { missionsDone: ['L1'], landings: 2, tours: without('r-res1') }, 'results', 4],
@@ -56,5 +56,5 @@ const CASES = [
       } catch (e) { log.write(JSON.stringify({ id, W, H, error: String(e).slice(0, 160) }) + '\n'); }
       await ctx.close();
     }
-  } finally { log.end(); await b.close(); }
+  } finally { log.end(); await b.close(); const files = fs.readdirSync(OUT).filter(f => f.endsWith('.png')); console.log(`${files.length} screenshots, ${(files.reduce((a, f) => a + fs.statSync(`${OUT}/${f}`).size, 0) / 1048576).toFixed(1)} MB in ${OUT}`); }
 })();
