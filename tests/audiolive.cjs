@@ -29,6 +29,7 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
   });
   await p.goto(URL); await ready(p); await p.waitForTimeout(800);
   const pre = await p.evaluate(() => window.__ctxs.filter(c => c.__ours).map(c => c.state));   // only the contexts made by src/sound.js (Phaser makes its own at boot)
+  await p.evaluate(async () => { game.registry.get('save').musicOff = true; (await import('/src/music.js')).setMusicOff(true); });   // the effect checks run WITHOUT music (the music has its own section below); a fresh player's save has MUSIC on
   await p.mouse.click(195, 400); await p.waitForTimeout(400);   // a REAL click: the first tap on the page
   await p.evaluate(() => { const ui = game.registry.get('ui'); ui.showTitle && 0; }); 
   const S = await p.evaluate(async () => { const m = await import('/src/sound.js'); (m.sfx.tick || m.sfx.flap)(); await new Promise(r => setTimeout(r, 300)); return window.__ctxs.filter(c => c.__ours).map(c => c.state); });
@@ -56,7 +57,7 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
   check(tp >= FLOORS.tick, `TEST SOUND plays a sound at the real volume (peak ${tp.toFixed(4)}; floor ${FLOORS.tick})`);
   check(/Did you hear it/.test(tm) && /This game is \d+\.\d+\.\d+/.test(tm), `TEST SOUND says what to check and which version runs (text: "${tm.replace(/\s+/g, ' ').slice(0, 120)}")`);
   await p.waitForTimeout(2000);
-  await p.evaluate(async () => { game.registry.get('save').muted = true; (await import('/src/sound.js')).setMuted(true); });
+  await p.evaluate(async () => { game.registry.get('save').muted = true; (await import('/src/sound.js')).setMuted(true); (await import('/src/music.js')).syncMusic(); });
   pr1 = p.evaluate(() => window.__peak(600)); await p.click('#sheet [data-gear="soundtest"]', { timeout: 4000 }); const mp = await pr1, mm = await msgOf();
   check(mp < 0.002 && /Sound is OFF/.test(mm) && /This game is /.test(mm), `muted: TEST SOUND stays silent, says 'Sound is OFF' and the version (peak ${mp.toFixed(4)}, text "${mm.replace(/\s+/g, ' ').slice(0, 80)}")`);
   console.log('TEST SOUND peak', tp.toFixed(4), 'text:', JSON.stringify(tm), '| muted peak', mp.toFixed(4), 'text:', JSON.stringify(mm));

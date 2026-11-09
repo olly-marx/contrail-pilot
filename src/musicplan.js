@@ -5,7 +5,7 @@ export const MUSIC_PASSES = 3;   // times a track plays through before the playl
 export const FORM = ['A', 'A2', 'B', 'B2', 'A', 'A2'];   // 6 sections of 8 bars = 48 bars; A2 / B2 = bars 5-8 an octave up, arpeggio reversed. The loop point (A2 -> A) is seamless.
 export const BAR_STEPS = 16;
 export const CROSSFADE_S = 1;     // seconds of overlap between two tracks
-export const MUSIC_LEVEL = 0.1;   // the music bus gain (full scale = 1): music RMS about 0.006 against effects at 0.01-0.1; tuned by the audiolive masking harness (a loudness rule, not a peak rule)
+export const MUSIC_LEVEL = 0.04;   // the music bus gain (full scale = 1). MEASURED (tests/audiolive.cjs, real Chrome): at 0.1 the music's rms at the destination was 0.0061 and the weakest cues (flap .0053, tick .0059) were NOT 2x louder than it; 0.04 gives rms about 0.0024 and every cue >= 2x. A loudness rule (rms), not a peak rule; the user's ear decides if it is too quiet
 
 const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 export const noteNumber = n => { const m = /^([A-G])(#?)(\d)$/.exec(n); if (!m) throw new Error(`bad note ${n}`); return SEMI[m[1]] + (m[2] ? 1 : 0) + (+m[3] + 1) * 12; };
