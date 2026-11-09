@@ -51,6 +51,7 @@ const seed = extra => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMS
         await p.evaluate(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.landedAt = s.path[1]; s.finish({ landed: true }); });
         await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 15000 }).catch(() => {}); await p.waitForTimeout(1500);
         const c = await rail(p); log.push(`c: ${JSON.stringify(c)}`);
+        log.push(`c state: ${JSON.stringify(await p.evaluate(() => { const ui = game.registry.get('ui'); return { lastPlanted: ui.lastPlanted, trees: JSON.stringify(ui.save.planted), done: (ui.save.tours || []).filter(x => /^r-/.test(x)).join(), resultsShown: !document.getElementById('results').hidden, busy: ui.tour.busy }; }))}`);
         check(c.busy && c.target === 'rEarth' && /first tree is planted/.test(c.text), `c: the results do not say the first tree is planted on the Earth card: ${JSON.stringify(c)}`);
       }
       check(!p.errs.length, `page errors: ${p.errs.join('; ')}`); await ctx.close(); }

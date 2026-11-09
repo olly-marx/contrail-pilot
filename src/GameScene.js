@@ -369,7 +369,8 @@ export class GameScene extends Phaser.Scene {
   closeTip() {
     this.explaining = false; this.ui.hideCoach(); document.getElementById('toast').style.top = ''; if (this.stripWatch) this.stripWatch.disconnect();
     if (this.state !== 'playing') { this.dropTips(); return; }   // the flight ended: unshown tips are unmarked, not lost
-    const q = (this.tipQueue || []).shift();
+    let q = (this.tipQueue || []).shift();
+    while (q && q[2] === 'tree-1' && !this.noTreeYet()) q = (this.tipQueue || []).shift();   // a queued 'soil ahead' strip is dropped once a tree has landed
     if (q) this.time.delayedCall(400, () => { if (!this.explaining && this.state === 'playing') this.showTip(q[0], q[1]); else { this.tipQueue.unshift(q); this.dropTips(); } });
   }
 
