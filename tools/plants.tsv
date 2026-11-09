@@ -572,3 +572,7 @@ crossingview	src/nextup.js	s/lead = leadOf(save, boxShown ? null : crossingReady
 crossboxui	src/ui.js	s/boxShown: boxOn \&\& !!ready });/boxShown: false });/	UP NEXT repeats the ready crossing under the HOME box
 fitscreen	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/ \&\& !lessonsLeft(s).length);/	the HOME box shows while a free part is waiting (HOME scrolls at 390x667 and 320x568)
 crossboxui	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/ \&\& !lessonsLeft(s).length);/	the HOME box shows while a free part is waiting
+crossladder	src/crossingview.js	s/higher = st(sp.higher), exception = st(sp.exception), easier = st(sp.easier);/higher = st([...sp.higher, ...sp.exception, ...sp.easier]), exception = [], easier = [];/	the next crossing is the nearest ready one again (no ladder)
+crossladder	src/crossings.js	s/exception = lower.filter(c => !covered.has(c.opens));/exception = [];/	a lower crossing that is the only way to open an area is dropped
+crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filter(s => s !== pick)/const lower = [].filter(s => s !== pick)/	the screen lists no easier ones
+crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again

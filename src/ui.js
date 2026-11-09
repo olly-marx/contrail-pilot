@@ -587,8 +587,9 @@ export class UI {
     sfx.tick();
     if (cs.ready && !cs.told) return this.showCrossingSheet(cs);
     const v = screenView(cs), esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    showSheet({ eyebrow: v.eyebrow, title: v.route, ok: 'CLOSE', html: `<p><b>${esc(v.word)}</b></p><p class="hc-ticks">${v.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</p><p>${esc(v.line)}</p>`,
+    showSheet({ eyebrow: v.eyebrow, title: v.route, ok: 'CLOSE', html: `<p><b>${esc(v.word)}</b></p><p class="hc-ticks">${v.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</p><p>${esc(v.line)}</p>${v.easier.length ? `<p class="small">an easier one:</p>${v.easier.map(e => `<p><button class="btn tiny" type="button" data-easier="${esc(e.id)}">${esc(e.label)} ${esc(e.word)}${e.ready ? ' (ready)' : ''}</button></p>`).join('')}` : ''}`,
       action: v.button ? { label: v.button.label, onTap: () => (v.button.act === 'cross' ? this.flyCrossing(cs) : this.go(v.button.act)) } : null });
+    document.querySelectorAll('#sheet [data-easier]').forEach(b => b.onclick = () => { const e = (cs.easier || []).find(x => x.id === b.dataset.easier); if (e) this.openCrossings(e.state); });   // 'an easier one': open that crossing's own screen
   }
   flyCrossing(cs) { const s = this.save; s.flyCrossing = cs.crossing; writeSave(s); this.start(); }
   maybeCrossingSheet() {

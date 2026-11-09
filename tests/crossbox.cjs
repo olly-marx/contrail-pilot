@@ -20,7 +20,7 @@ globalThis.SEASON2 = true;
       check(b.ticks.map(t => t.label).join('|') === 'Era|Plane|Nature' && b.ticks.map(t => t.done).join() === want.join(), `${tag}: the box ticks are Era, Plane, Nature and say what is done: ${JSON.stringify(b.ticks)}`);
       check(b.route.length <= 28 && b.line.length <= 28 && b.title === 'NEXT CROSSING' && /Easy|Medium|Hard|Harder|Very hard|The lap/.test(b.word), `${tag}: route ${b.route.length}, line ${b.line.length}, word "${b.word}"`);
       for (const [k, v] of Object.entries({ route: b.route, line: b.line, word: b.word, button: s.button ? s.button.label : '' })) check(!bad(v), `${tag} ${k}: a distance or a long number reaches the player: "${v}"`);
-      if (st.ready) check(b.line === 'Ready!' && b.where === 'sheet' && s.button && s.button.act === 'cross' && s.button.label === `CROSS TO ${cc.to}`, `${tag}: ready: line "${b.line}", where ${b.where}, button ${JSON.stringify(s.button)}`);
+      if (st.ready) check(b.line === 'Ready! Tap to cross.' && b.where === 'sheet' && s.button && s.button.act === 'cross' && s.button.label === `CROSS TO ${cc.to}`, `${tag}: ready: line "${b.line}", where ${b.where}, button ${JSON.stringify(s.button)}`);
       else {
         const open = st.nearest.key;
         check(b.line === st.nearest.plain && !/Ready/.test(b.line), `${tag}: the plain line names the open tick: "${b.line}"`);
