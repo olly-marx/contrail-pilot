@@ -10,6 +10,8 @@ smoke | season2-smoke@PART=A,C,E,F,G season2-smoke@PART=D season2-smoke@PART=Bwe
 group docs-tools | research/* *.md CHANGES.json .gitignore .nojekyll *.png supabase/* .github/* tools/* src/version.js | NONE
 group harness | tests/lib/* tests/BROWSER tests/PATHMAP tests/GATE tests/DEEP tools/test.sh tools/gate.sh tools/gate-plan.py | ALL
 group tests-themselves | tests/*.cjs tests/*.json | NONE
+# ci-gate files: the Node-tier test cigate covers them; the proof of a workflow change is the ci-dry/* dry runs (RELEASING.md)
+group ci-gate | tools/ci-gate.sh tools/durations.sh tests/DURATIONS.tsv .github/workflows/* | NONE
 group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/hub.js src/upgrades.js src/startchoice.js src/school.js src/rewards.js src/wild.js | onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school rewards missions tours bubblestill firsthour-real missionlanes pilotpreview keepvisible
 group aimed-route | src/aim.js src/hub.js src/route.js | skiptrip
 group results-card | src/resultscard.js src/nextup.js src/ui.js src/tour.js src/tips.js | rewards missions wildfield eras school progression firsthour-real biodiversity fares rails2
