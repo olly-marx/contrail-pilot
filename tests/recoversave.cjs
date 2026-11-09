@@ -22,8 +22,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const stash = n => p.evaluate(n => { const v = localStorage.getItem(`contrailPilot.v2.replaced-${n}`); return v && JSON.parse(v); }, 1);
   const sheetText = () => p.evaluate(() => { const s = document.getElementById('sheet'); return s ? s.innerText : ''; });
 
-  await p.click('#hubGear'); await p.waitForTimeout(300);
-  check(/RECOVER AN EARLIER SAVE/.test(await sheetText()), 'the gear sheet has RECOVER AN EARLIER SAVE');
+  await p.click('#hubGear'); await p.waitForTimeout(300); await p.click('#sheet [data-gear="saved"]'); await p.waitForTimeout(250);
+  check(/RECOVER AN EARLIER SAVE/.test(await sheetText()), 'YOUR SAVED GAME (Settings, second page) has RECOVER AN EARLIER SAVE');
   await p.click('#sheet [data-gear="recover"]'); await p.waitForTimeout(300);
   const list = await sheetText();
   check(/123 flights, 77 landings/.test(list) && /Nov/.test(list), `the entry lists the kept save in plain words (date, flights, landings): ${JSON.stringify(list.slice(0, 120))}`);
@@ -32,7 +32,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(/Go back to this save\?/.test(await sheetText()) && /kept too/.test(await sheetText()), 'a tap asks to confirm and says the game now is kept too');
   await p.click('#sheet .sheet-ok'); await p.waitForTimeout(200);   // CANCEL
   check((await main()).seeds === 100, 'CANCEL changes nothing');
-  await p.click('#hubGear'); await p.click('#sheet [data-gear="recover"]'); await p.click('#sheet [data-restore="1"]'); await p.waitForTimeout(200);
+  await p.click('#hubGear'); await p.click('#sheet [data-gear="saved"]'); await p.waitForTimeout(250); await p.click('#sheet [data-gear="recover"]'); await p.click('#sheet [data-restore="1"]'); await p.waitForTimeout(200);
   await Promise.all([p.waitForEvent('load'), p.click('#sheet .sheet-action')]);
   await ready(p); await p.waitForTimeout(700);
   const back = await main(), kept = await stash(1);
@@ -42,7 +42,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // RESET PROGRESS: the confirm says it can be recovered; the save is kept
   let msg = '';
   p.once('dialog', d => { msg = d.message(); d.accept(); });
-  await p.click('#hubGear'); await p.click('#sheet [data-gear="reset"]'); await p.waitForTimeout(500);
+  await p.click('#hubGear'); await p.click('#sheet [data-gear="saved"]'); await p.waitForTimeout(250); await p.click('#sheet [data-gear="reset"]'); await p.waitForTimeout(500);
   check(/RECOVER AN EARLIER SAVE/.test(msg), `the reset confirm says the game can be recovered: ${JSON.stringify(msg)}`);
   const afterReset = await stash(1);
   check(afterReset && afterReset.flights === 123 && ((await main()) || {}).flights !== 123, `a reset keeps the save it deletes: ${JSON.stringify(afterReset && afterReset.flights)}`);

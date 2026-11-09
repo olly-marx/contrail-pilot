@@ -23,5 +23,5 @@ export const PERSIST_TIP = 'persist-note', PERSIST_FROM_LANDING = 8;
 export const noteDue = (save, persisted) => persisted === false && (save.landings || 0) >= PERSIST_FROM_LANDING
   && !(save.seenTips || []).includes(PERSIST_TIP) && !(save.seenTips || []).includes('*');
 export const noteText = named => named
-  ? 'Your browser may delete your game when it closes. Write your pilot code down (PILOT tab): it brings your game back.'
-  : 'Your browser may delete your game when it closes. Pick a pilot name in PILOT: it gives you a code that brings your game back.';
+  ? 'Your browser may delete your game when it closes. Write your pilot code down (PILOT tab): it brings your game back. Or tap Settings > BACK UP MY GAME.'
+  : 'Your browser may delete your game when it closes. Pick a pilot name in PILOT: it gives you a code that brings your game back. Or tap Settings > BACK UP MY GAME.';

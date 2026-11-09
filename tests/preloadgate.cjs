@@ -4,16 +4,21 @@
 //      (the idle fetch of tier 2; its fetch() carries an X-Preload header); a request from any other script, or from the page's own <img>/CSS, fails with its URL.
 //   3. The WHOLE flight (a new player's is flight school), until it lands or crashes: the scene declares it (loading.flying) and the loader starts no fetch while it is on;
 //      timeline kept in the page (every loader fetch, and a 50 ms sample of the flag / scene state / school / bottom bar). Tier-2 work is still queued, so a loader that ignored the flight would fetch.
-// PLANTS: tools/plants.tsv, test `preloadgate` (each must FAIL this test). Run: python3 -m http.server 8000 & node tests/preloadgate.cjs
+// PLANTS: tools/plants.tsv, test `preloadgate` (each must FAIL this test). Run: node tests/preloadgate.cjs   (it starts its own server; URL is ignored)
 const { chromium } = require('playwright-core');
 require('./lib/shipped.js');
 const { ready } = require('./lib/ready.js');
-const URL = process.env.URL || 'http://localhost:8000/';
+const { serve } = require('./lib/pageshost.js');   // its OWN server, answering like GitHub Pages (Cache-Control: max-age=600): see tests/lib/pageshost.js
+let URL;
 
 (async () => {
+  const site = await serve(); URL = site.url;
   // (the online sync is refused by name resolution, NOT page.route: Playwright switches the HTTP cache off for a routed page, and this test is about the cache)
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome', args: ['--host-resolver-rules=MAP mkucbsjzbipjaiqzrlkj.supabase.co 127.0.0.1:1'] });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  // The test's precondition, by name (2026-11-09): without Cache-Control a fresh checkout makes the browser revalidate every picture the loader fetched.
+  const idx = await fetch(URL + 'index.html'), cc = idx.headers.get('cache-control') || '';
+  check(/max-age=[1-9]/.test(cc), `the test server answers like GitHub Pages (Cache-Control: max-age, got '${cc}'): without it a fresh checkout makes the browser revalidate every picture and this test counts them as tap-time fetches`);
   const run = async (save, label) => {
     const ctx = await b.newContext({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
     const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
@@ -93,7 +98,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     fleet: { plane: 'jumbo', planes: { comet: {}, jumbo: {} }, systems: {}, gadgets: { magnet: 2 } } };
   await run({ ...base, tutorialDone: true }, 'a returning pilot');
   await run({ muted: true, tutorialDone: false }, 'a new player');
-  await b.close();
+  await b.close(); await site.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
   console.log('PASS preloadgate (the loading screen is gone and never covers TAKE OFF / flight school; no file under assets/ fetched on a tap or at take-off except by the idle loader)');
 })();

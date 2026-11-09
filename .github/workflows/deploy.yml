@@ -4,7 +4,7 @@ name: Test and deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'ci-dry/**']   # ci-dry/*: a DRY RUN of this very file (nothing deployed, nothing tagged): tools/ci-gate.sh dry-check asserts the expectation in the branch name
   workflow_dispatch:
 
 permissions:
@@ -13,36 +13,79 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  # a dry run must never cancel, or be cancelled by, a real main run
+  group: ${{ github.ref == 'refs/heads/main' && 'pages' || format('dry-{0}', github.ref) }}
   cancel-in-progress: true
 
 jobs:
-  # 4 machines side by side (2026-10-22: one machine took 12-15 min). tools/test.sh runs every test
-  # in its shard, retries a failure once (passing on retry = a FLAKY warning, not a failure) and
-  # prints one summary. fail-fast off: every shard reports, so one run shows everything wrong.
-  test:
+  # 2026-11-09 (user: "these deploys are WAY too slow"): the branch run (verify-branch.yml) already ran this exact commit's tests. If its
+  # marker tag ci-ok-<sha7> points at exactly github.sha, the matrix is skipped. tools/ci-gate.sh is FAIL CLOSED: any doubt, error or odd
+  # input means the tests run as before. A manual dispatch always runs the tests. research/CI-FAST-DESIGN.md has the safety argument.
+  gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 40   # was 25 (2026-11-07): a shard needs 15-25 min now (0.32.0's deploy took 24, a branch run's shard 2 hit the 25 limit and was CANCELLED); a cancelled test job leaves the live site stuck on the old version
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
+    timeout-minutes: 5
+    outputs:
+      skip: ${{ steps.g.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install test driver
-        run: npm i --no-save playwright-core@1
-      - name: Serve the game
-        run: python3 -m http.server 8000 >/dev/null 2>&1 &
-      - name: Run tests (shard ${{ matrix.shard }} of 4)
+      - id: g
+        run: tools/ci-gate.sh gate "$GITHUB_SHA" "${{ github.event_name }}" | tee -a "$GITHUB_OUTPUT"
+
+  test:
+    needs: gate
+    if: ${{ needs.gate.outputs.skip != 'true' }}
+    uses: ./.github/workflows/tests.yml
+    with:
+      dry: ${{ github.ref != 'refs/heads/main' }}   # strict_flaky stays off here, as before: main's retry-once rule is unchanged
+
+  # The one place that says whether the deploy may run (a skipped dependency skips its dependents by default; a failed or cancelled test never deploys).
+  decide:
+    needs: [gate, test]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      deploy: ${{ steps.d.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: d
         env:
-          CHROME: /usr/bin/google-chrome
-        run: tools/test.sh --shard ${{ matrix.shard }}/4
+          GATE_RESULT: ${{ needs.gate.result }}
+          SKIP: ${{ needs.gate.outputs.skip }}
+          TEST_RESULT: ${{ needs.test.result }}
+        run: tools/ci-gate.sh decide "$GATE_RESULT" "$SKIP" "$TEST_RESULT" | tee -a "$GITHUB_OUTPUT"
+
+  # Dry runs only: the SAME needs/if shape as `deploy` minus the ref clause (tests/cigate.cjs asserts the two conditions are identical apart from that clause), an echo instead of a
+  # deploy. It makes a dry run exercise the transitive-skip trap that a real deploy job hides behind its main-only guard.
+  deploy-probe:
+    needs: decide
+    if: ${{ !cancelled() && needs.decide.outputs.deploy == 'true' && github.ref != 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          echo "DRY: the deploy job would run here"
+
+  # A dry run (ci-dry/<skip|run>-*) checks the gate against the expectation in its own branch name; red = the gate or the wiring is wrong.
+  dry-check:
+    needs: [gate, test, decide, deploy-probe]
+    if: ${{ !cancelled() && github.ref != 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          SKIP: ${{ needs.gate.outputs.skip }}
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY: ${{ needs.decide.outputs.deploy }}
+          PROBE: ${{ needs.deploy-probe.result }}
+        run: tools/ci-gate.sh dry-check "$GITHUB_REF_NAME" "$SKIP" "$TEST_RESULT" "$DEPLOY" "$PROBE"
 
   deploy:
-    needs: test
+    needs: decide
+    # !cancelled() is REQUIRED: the implicit success() of a job `if` also looks at ANCESTOR jobs, and `test` is skipped when the gate skipped the matrix; without a status
+    # function every job downstream of a skipped job is skipped too (0.37.1's first live run deployed nothing because of this). tests/cigate.cjs asserts it.
+    if: ${{ !cancelled() && needs.decide.outputs.deploy == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -64,6 +107,7 @@ jobs:
   # leaves the live game alone. A version that already has a tag is left as it is (a deploy of a non-release commit).
   tag:
     needs: deploy
+    if: ${{ !cancelled() && needs.deploy.result == 'success' }}   # (same reason as deploy: test may be skipped upstream)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

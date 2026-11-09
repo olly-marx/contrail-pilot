@@ -49,7 +49,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   p = await open({ save: { ...base, landings: 3, pilotNamed: true, codeSeen: true } });
   await p.evaluate(() => game.registry.get('ui').pilot.codeFirst()); await p.waitForTimeout(400);
   const sheet = await text(p, '#sheet');
-  check(/WRITE THIS DOWN/.test(sheet) && sheet.includes(CODE) && /only way to get your game back/.test(sheet), `the first-time sheet: write this down, the code, why: ${JSON.stringify(sheet.slice(0, 160))}`);
+  check(/WRITE THIS DOWN/.test(sheet) && sheet.includes(CODE) && /brings your game back on another phone/.test(sheet) && /BACK UP MY GAME/.test(sheet), `the first-time sheet: write this down, the code, why: ${JSON.stringify(sheet.slice(0, 160))}`);
   await tap(p, '#codeCopy', 'tap COPY on the first-time sheet'); await p.waitForTimeout(300);
   check(!/^COPY CODE$/.test(await text(p, '#codeCopy')) && !!(await text(p, '#sheet')), 'COPY answers and the sheet stays open');
   await tap(p, '#sheet .sheet-ok', 'close the first-time sheet'); await p.waitForTimeout(200);
@@ -60,7 +60,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // 3. the storage note
   p = await open({ save: { ...base, landings: 8 }, pilot: false, persist: false });
   const toast = await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden ? t.innerText : ''; });
-  check(/KEEP YOUR GAME SAFE/i.test(toast) && /browser may delete your game/i.test(toast) && /Pick a pilot name/.test(toast), `persist() false at landing 8, no pilot: the note says so and what to do: ${JSON.stringify(toast)}`);
+  check(/KEEP YOUR GAME SAFE/i.test(toast) && /browser may delete your game/i.test(toast) && /Pick a pilot name/.test(toast) && /BACK UP MY GAME/.test(toast), `persist() false at landing 8, no pilot: the note says so and what to do: ${JSON.stringify(toast)}`);
   check((await live(p)).seenTips.includes('persist-note'), 'the note is marked seen');
   await p.reload(); await ready(p); await p.waitForTimeout(1500);
   check(!(await p.evaluate(() => { const t = document.getElementById('toast'); return t && !t.hidden && /browser may delete/.test(t.innerText); })), 'the note shows once');

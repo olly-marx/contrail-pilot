@@ -43,6 +43,8 @@ lessonfallback
 freeparcels
 railwords
 releasegate
+cigate
+plantsapply
 sim-hazards
 audiocrash
 sim-hint
@@ -87,3 +89,5 @@ sound
 reducedmotion
 cuesites
 railsubjects
+backup
+restoresync

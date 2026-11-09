@@ -162,6 +162,23 @@ export function restoreStashed(n) {
   } catch (e) { return false; }
 }
 
+// Put a READ and MIGRATED backup (src/backup.js readBackup) in as the local save. The current game is kept FIRST (the three rolling safety copies): if it has progress and
+// the copy did not take, NOTHING is replaced ('not-kept'). The caller reloads the page. Returns 'ok' | 'not-kept' | 'error'.
+export function restoreFromBackup(save) {
+  try {
+    const cur = localStorage.getItem(KEY) || localStorage.getItem(BACKUP);
+    let curObj = null; try { curObj = cur ? JSON.parse(cur) : null; } catch (e) { curObj = null; }
+    stashSave('before restoring a backup');
+    if (cur && curObj && !isBlank(curObj)) {
+      let top = null; try { top = JSON.parse(localStorage.getItem(STASH(1))); } catch (e) { top = null; }
+      if (!top || top.raw !== cur) return 'not-kept';
+    }
+    const raw = JSON.stringify(save); localStorage.setItem(KEY, raw); localStorage.setItem(BACKUP, raw);
+    releaseHold();
+    return 'ok';
+  } catch (e) { return 'error'; }
+}
+
 export function resetSave() {
   stashSave('before a reset');   // a reset can be undone from Settings: RECOVER AN EARLIER SAVE
   try { localStorage.removeItem(KEY); localStorage.removeItem(BACKUP); } catch (e) {}

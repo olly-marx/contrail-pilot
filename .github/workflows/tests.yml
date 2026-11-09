@@ -1,0 +1,57 @@
+# The test matrix, ONE copy (user decision 2026-11-09, research/CI-FAST-DESIGN.md): verify-branch.yml and deploy.yml both call it, so a
+# `ci-ok-<sha7>` marker means exactly what the deploy's own tests would have meant. The shard count is the length of the matrix list
+# (${{ strategy.job-total }}); tools/test.sh balances the shards by tests/DURATIONS.tsv (seconds per test on a runner; tools/durations.sh).
+name: Tests (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      strict_flaky:
+        description: 'fail a shard when any test passed only on its retry (the branch run: yes; main: no, as before)'
+        type: boolean
+        default: false
+      dry:
+        description: 'dry run (a ci-dry/* branch): print what each shard would do, run nothing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40   # to 25 once the slowest shard is measured under ~12 min (a separate small commit after the first clean runs)
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - name: Dry run (nothing is tested)
+        if: ${{ inputs.dry }}
+        run: |
+          echo "DRY: shard ${{ matrix.shard }} of ${{ strategy.job-total }} would run its tests"
+      - uses: actions/checkout@v4
+        if: ${{ !inputs.dry }}
+      - uses: actions/setup-node@v4
+        if: ${{ !inputs.dry }}
+        with:
+          node-version: 22
+      - name: Install test driver
+        if: ${{ !inputs.dry }}
+        run: npm i --no-save playwright-core@1
+      - name: Serve the game
+        if: ${{ !inputs.dry }}
+        run: python3 -m http.server 8000 >/dev/null 2>&1 &
+      - name: Run tests (shard ${{ matrix.shard }} of ${{ strategy.job-total }}; strict_flaky=${{ inputs.strict_flaky }})
+        if: ${{ !inputs.dry }}
+        env:
+          CHROME: /usr/bin/google-chrome
+          STRICT_FLAKY: ${{ inputs.strict_flaky }}
+        run: |
+          set -o pipefail
+          tools/test.sh --shard ${{ matrix.shard }}/${{ strategy.job-total }} 2>&1 | tee /tmp/shard.out
+          if [ "$STRICT_FLAKY" = true ] && grep -q '^flaky (passed on retry)' /tmp/shard.out; then
+            echo "::error title=Flaky test: a verify run allows none::$(grep '^flaky (passed on retry)' /tmp/shard.out)"
+            exit 1
+          fi

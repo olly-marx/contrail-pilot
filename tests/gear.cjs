@@ -10,7 +10,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const fleet = { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} };
-  for (const [W, H] of [[390, 667], [320, 568]]) {
+  for (const [W, H] of [[390, 667], [375, 667], [320, 568]]) {
     const tag = `${W}x${H}`, p = await b.newPage({ viewport: { width: W, height: H }, hasTouch: true });
     const errs = []; p.on('pageerror', e => errs.push(String(e))); let asked = 0; p.on('dialog', d => { asked++; d.dismiss(); });
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
@@ -20,10 +20,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const saveNow = () => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
     check(await p.evaluate(() => !!document.getElementById('hubGear') && document.getElementById('hubGear').offsetParent !== null), `${tag}: HOME has the gear`);
     check(await p.evaluate(() => !document.querySelector('#title .buttons') || document.querySelector('#title .buttons').offsetParent === null), `${tag}: the four small buttons are not on HOME any more`);
-    await p.click('#hubGear'); await p.waitForTimeout(300);
+    await p.click('#hubGear');
+    const open1 = await p.waitForSelector('#sheet', { timeout: 1500 }).then(() => true).catch(() => false);   // the sheet BEFORE any other tap: a missing sheet fails here, by name, in under 2 s
+    check(open1, `${tag}: one gear opens one sheet (#sheet present within 1.5 s of tapping the gear)`);
+    if (!open1) { await p.close(); continue; }
+    await p.waitForTimeout(300);
     const sh = await p.evaluate(() => { const s = document.getElementById('sheet'), c = s && s.querySelector('.sheet'), r = c && c.getBoundingClientRect();
       return { open: !!s, btns: s ? [...s.querySelectorAll('[data-gear]')].map(e => { const q = e.getBoundingClientRect(); return { g: e.dataset.gear, h: Math.round(q.height), w: Math.round(q.width) }; }) : [], top: r && Math.round(r.top), bottom: r && Math.round(r.bottom), vh: innerHeight, credit: s ? /AEIS/.test(s.textContent) : false }; });
-    check(sh.open && sh.btns.map(x => x.g).join() === 'how,school,sound,soundtest,about,recover,reset', `${tag}: the gear opens the sheet with its 7 buttons (0.31.0: RECOVER AN EARLIER SAVE; 0.37.0: TEST SOUND): ${JSON.stringify(sh.btns)}`);
+    check(sh.open && sh.btns.map(x => x.g).join() === 'how,school,sound,soundtest,about,saved', `${tag}: the gear opens the sheet with its 6 buttons (how, school, sound, TEST SOUND, about, YOUR SAVED GAME): ${JSON.stringify(sh.btns)}`);
+    const closeOn = () => p.evaluate(() => { const o = document.querySelector('#sheet .sheet-ok'), c = document.querySelector('#sheet .sheet'), r = o && o.getBoundingClientRect(), k = c && c.getBoundingClientRect(); return { closeVisible: !!r && r.top >= 0 && r.bottom <= innerHeight && r.height > 0, cardInside: !!k && k.top >= 0 && k.bottom <= innerHeight, scrolls: !!c && c.scrollHeight > c.clientHeight + 1 }; });
+    const c1 = await closeOn(); check(c1.closeVisible && c1.cardInside && !c1.scrolls, `${tag}: CLOSE visible on Settings page 1 (the card fits, no scrolling): ${JSON.stringify(c1)}`);
     check(sh.btns.every(x => x.h >= 40 && x.w >= 40) && sh.top >= 0 && sh.bottom <= sh.vh, `${tag}: every button is a 40 px target and the sheet is on screen: ${JSON.stringify([sh.btns.map(x => x.h), sh.top, sh.bottom, sh.vh])}`);
     check(sh.credit, `${tag}: the credit is in the sheet`);
     // SOUND flips and the sheet stays open.
@@ -40,12 +46,20 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.evaluate(() => { window.__school = 0; game.registry.get('ui').startSchool = () => { window.__school++; }; });
     await p.click('#hubGear'); await p.click('#sheet [data-gear="school"]'); await p.waitForTimeout(250);
     check(await p.evaluate(() => window.__school === 1 && !document.getElementById('sheet')), `${tag}: FLIGHT SCHOOL starts the school and the sheet closes`);
-    const seeds = (await saveNow()).seeds; await p.click('#hubGear'); await p.click('#sheet [data-gear="reset"]'); await p.waitForTimeout(300);
+    const seeds = (await saveNow()).seeds; await p.click('#hubGear'); await p.click('#sheet [data-gear="saved"]');
+    const open2 = await p.waitForSelector('#sheet [data-gear="reset"]', { timeout: 1500 }).then(() => true).catch(() => false);
+    check(open2, `${tag}: YOUR SAVED GAME opens page 2 (its RESET PROGRESS chip within 1.5 s)`);
+    if (!open2) { await p.close(); continue; }
+    await p.waitForTimeout(300);
+    const sv = await p.evaluate(() => { const s = document.getElementById('sheet'); return { g: s ? [...s.querySelectorAll('[data-gear]')].map(e => e.dataset.gear).join() : '', h: s ? [...s.querySelectorAll('[data-gear]')].map(e => Math.round(e.getBoundingClientRect().height)) : [] }; });
+    check(sv.g === 'recover,backup,restore,reset' && sv.h.every(x => x >= 40), `${tag}: YOUR SAVED GAME has recover, backup, restore, reset (40 px targets): ${JSON.stringify(sv)}`);
+    const c2 = await closeOn(); check(c2.closeVisible && c2.cardInside && !c2.scrolls, `${tag}: CLOSE visible on Settings page 2 (YOUR SAVED GAME; the card fits, no scrolling): ${JSON.stringify(c2)}`);
+    await p.click('#sheet [data-gear="reset"]'); await p.waitForTimeout(300);
     check(asked === 1 && (await saveNow()).seeds === seeds, `${tag}: RESET asks first (cancelled: nothing lost): asked ${asked}, seeds ${seeds} -> ${(await saveNow()).seeds}`);
     check(!errs.length, `${tag}: no page errors: ${errs.slice(0, 2)}`);
     await p.close();
   }
   await b.close();
-  console.log(fails.length ? `FAIL gear:\n - ${fails.join('\n - ')}` : 'PASS gear: at 390x667 and 320x568 one gear opens one sheet with how to play, flight school, sound, about, reset and the credit');
+  console.log(fails.length ? `FAIL gear:\n - ${fails.join('\n - ')}` : 'PASS gear: at 390, 375 and 320 the gear opens two pages (how, school, sound, about, YOUR SAVED GAME; recover, backup, restore, reset), each with CLOSE on screen');
   process.exit(fails.length ? 1 : 0);
 })();
