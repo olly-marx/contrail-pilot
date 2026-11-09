@@ -19,14 +19,15 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'W
     await p.goto(URL); await ready(p); await p.waitForTimeout(1200); return { ctx, p };
   };
   const home = p => p.evaluate(() => { const h = document.getElementById('hubCross'), g = document.getElementById('goBtn').getBoundingClientRect(), tb = document.getElementById('tabbar'), tr = tb ? tb.getBoundingClientRect() : { top: innerHeight };
-    return { shown: !h.hidden && h.getClientRects().length > 0, text: h.innerText.replace(/\s+/g, ' ').trim(), on: [...h.querySelectorAll('.hc-tick')].map(e => e.classList.contains('on')), gold: h.classList.contains('ready'), goVisible: g.height > 0 && g.bottom <= tr.top + 1 && g.bottom <= innerHeight }; });
+    const r = e => { const q = e.getBoundingClientRect(); return [Math.round(q.top), Math.round(q.bottom)]; }; return { rects: { box: r(h), go: r(document.getElementById('goBtn')), barTop: Math.round(tr.top), innerH: innerHeight, overflow: Math.round(g.bottom - tr.top) }, shown: !h.hidden && h.getClientRects().length > 0, text: h.innerText.replace(/\s+/g, ' ').trim(), on: [...h.querySelectorAll('.hc-tick')].map(e => e.classList.contains('on')), gold: h.classList.contains('ready'), goVisible: g.height > 0 && g.bottom <= tr.top + 1 && g.bottom <= innerHeight }; });
   try {
     for (const [W, H] of [[390, 844], [320, 568]]) {
       const tag = `${W}x${H}`;
-      { const { ctx, p } = await open(seed(true), W, H); const h = await home(p); log.push(`${tag} A: ${JSON.stringify(h)}`);
+      { const { ctx, p } = await open(seed(true), W, H); const h = await home(p); log.push(`${tag} A: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-A-${W}.png` });
         check(h.shown && /NEXT CROSSING/.test(h.text) && /WARSAW > STOCKHOLM/.test(h.text) && /Easy/.test(h.text), `${tag} A: the box is not on HOME with the route and the word: ${JSON.stringify(h)}`);
         check(h.on.join() === 'true,true,false' && /Plant trees\. Nature \d+ of 30/.test(h.text), `${tag} A: the ticks or the plain line are wrong: ${JSON.stringify([h.on, h.text])}`);
         check(h.goVisible, `${tag} A: TAKE OFF is not fully on screen above the bar with the box showing`);
+        if (!h.shown) { await ctx.close(); continue; }   // (no box to tap: the checks above already failed; a tap would only time out)
         await p.click('#hubCross'); await p.waitForTimeout(500);
         const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? { text: e.innerText.replace(/\s+/g, ' ').trim(), btn: (e.querySelector('.sheet-action') || {}).innerText || '' } : null; });
         check(sh && /WARSAW > STOCKHOLM/.test(sh.text) && sh.btn.trim() === 'NATURE', `${tag} A: the CROSSINGS screen is wrong: ${JSON.stringify(sh)}`);
@@ -38,8 +39,9 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'W
         const m1 = await p.evaluate(() => { const e = document.getElementById('sheet'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', told: (JSON.parse(localStorage.getItem('contrailPilot.v2')).crossingTold || []).join() }; });
         check(/A NEW WAY OPENS/.test(m1.sheet) && m1.told === 'warsaw-stockholm', `${tag} B: the moment sheet did not open by itself or the crossing is not marked told: ${JSON.stringify(m1)}`);
         await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
-        const h = await home(p); log.push(`${tag} B: ${JSON.stringify(h)}`);
+        const h = await home(p); log.push(`${tag} B: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-B-${W}.png` });
         check(h.shown && h.gold && /Ready!/.test(h.text) && h.on.join() === 'true,true,true', `${tag} B: a ready crossing is not gold with 'Ready!' and three ticks: ${JSON.stringify(h)}`);
+        if (!h.shown) { await ctx.close(); continue; }
         await p.click('#hubCross'); await p.waitForTimeout(500);
         const m2 = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? { text: e.innerText.replace(/\s+/g, ' '), btn: (e.querySelector('.sheet-action') || {}).innerText || '' } : null; });
         check(m2 && /WARSAW > STOCKHOLM/.test(m2.text) && /CROSS TO STOCKHOLM/.test(m2.btn), `${tag} B: the tap on a ready, already announced crossing does not open the CROSSINGS screen with CROSS TO STOCKHOLM: ${JSON.stringify(m2)}`);
