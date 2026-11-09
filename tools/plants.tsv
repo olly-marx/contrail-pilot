@@ -458,3 +458,8 @@ cuesites	src/wild.js	s/sfx.grow();/sfx.buy();/	a funded nature project plays the
 cuesites	src/ui.js	s/sfx.softfail()/sfx.nope()/	a lost crossing plays the nope buzz again
 cuesites	src/ui.js	s/sfx.medal();/sfx.coin();/	a badge on the results card plays no medal
 sound	src/sound.js	s/done: () => \[523, 784, 1047\]/done: () => [523, 659, 784]/	two cues are the same recipe (done sounds like dawn)
+audiolive	src/sound.js	s/if (ctx.state !== 'running') {/if (false) {/	the context is never resumed (a suspended context stays silent)
+audiolive	src/sound.js	s/g.gain.value = 1;/g.gain.value = 0;/	the master gain is 0 (silence)
+audiolive	src/sound.js	s/cp.connect(ctx.destination); bus = g;/bus = g;/	the master chain is not connected to the speakers
+audiolive	src/sound.js	s/g.gain.value = 1;/g.gain.value = 0.3;/	the master is far too quiet (the cues would be inaudible on a laptop)
+audiolive	src/sound.js	s/export function setMuted(m) { muted = m; }/export function setMuted(m) { muted = m; if (!m) ac(); }/	un-muting at page load creates the context before any tap
