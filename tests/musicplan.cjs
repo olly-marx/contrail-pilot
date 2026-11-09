@@ -52,8 +52,8 @@
   check(P.DEFAULT_MUSIC_LEVEL === 'middle' && P.musicStateOf({}) === 'middle' && P.musicStateOf({ musicOff: false }) === 'middle', `a save without a level starts on MIDDLE (default ${P.DEFAULT_MUSIC_LEVEL}, empty save ${P.musicStateOf({})})`);
   check(P.musicStateOf({ musicOff: true }) === 'off' && P.musicStateOf({ musicOff: true, musicLevel: 'loud' }) === 'off', 'a legacy save with musicOff true stays OFF (whatever level it holds)');
   check(P.musicStateOf({ musicOff: false, musicLevel: 'soft' }) === 'soft' && P.musicStateOf({ musicOff: false, musicLevel: 'nonsense' }) === 'middle', 'a saved level is kept; an unknown one falls back to MIDDLE');
-  const cyc = []; let st = 'off'; for (let i = 0; i < 5; i++) { st = P.nextMusicState(st); cyc.push(st); }
-  check(cyc.join() === 'soft,middle,loud,off,soft', `the MUSIC chip cycles OFF -> SOFT -> MIDDLE -> LOUD -> OFF (${cyc.join(' > ')})`);
+  const chipCycle = []; let st = 'off'; for (let i = 0; i < 5; i++) { st = P.nextMusicState(st); chipCycle.push(st); }
+  check(chipCycle.join() === 'soft,middle,loud,off,soft', `the MUSIC chip cycles OFF -> SOFT -> MIDDLE -> LOUD -> OFF (${chipCycle.join(' > ')})`);
   check(P.musicChipText({ musicLevel: 'loud' }) === 'MUSIC: LOUD' && P.musicChipText({ musicOff: true }) === 'MUSIC: OFF' && P.musicChipText({}) === 'MUSIC: MIDDLE', 'the chip text names the state (MUSIC: OFF / SOFT / MIDDLE / LOUD)');
   // 4. the shuffle bag, seeded.
   const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
