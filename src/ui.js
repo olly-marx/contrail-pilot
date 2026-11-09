@@ -386,7 +386,7 @@ export class UI {
     if (box) { hc.innerHTML = `<p class="rc-label">${esc(box.title)}</p><div class="hc-route"><span>${esc(box.route)}</span><b>${esc(box.word)}</b></div><div class="hc-ticks">${box.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</div><p class="hc-line">${esc(box.line)}</p>`; hc.onclick = () => this.openCrossings(cs); }
     $('hubNext').hidden = !v.up.length || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
-    const rows = (v.up[0] && v.up[0].pic) || box ? v.up.slice(0, 2) : v.up;   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
+    const rows = box ? v.up.slice(0, 2) : v.up[0] && v.up[0].pic ? v.up.slice(0, 2) : v.up;   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
     $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${rows.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
     const act = n => { sfx.tick();
       if (n.key === 'lead:cross' && ready) this.showCrossingSheet(ready);   // (R-A: a 6,500 km flight never starts from a row tap: the sheet is the confirm)
