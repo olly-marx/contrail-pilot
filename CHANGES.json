@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-payoff-whole",
+    "version": "0.38.2",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "The new-part screen now shows your whole plane, with the new part circled, instead of zooming in so far that the plane was cut off."
+    ]
+  },
+  {
     "id": "2026-11-09-plants-check",
     "version": "0.38.1",
     "date": "2026-11-09",
