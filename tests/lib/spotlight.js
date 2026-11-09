@@ -40,6 +40,7 @@ exports.pixels = async page => {
     // (decoded in the page: a canvas reads both PNGs; no PNG library is needed in Node)
     const mean = await page.evaluate(async ([a, b]) => { const load = u => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = `data:image/png;base64,${u}`; }); const [x, y] = [await load(a), await load(b)];
       const px = i => { const c = document.createElement('canvas'); c.width = i.width; c.height = i.height; const g = c.getContext('2d'); g.drawImage(i, 0, 0); return g.getImageData(0, 0, i.width, i.height).data; }; const P = px(x), Q = px(y); let d = 0; for (let k = 0; k < P.length; k += 4) d += Math.abs(P[k] - Q[k]) + Math.abs(P[k + 1] - Q[k + 1]) + Math.abs(P[k + 2] - Q[k + 2]); return d / (P.length / 4) / 3; }, [A.toString('base64'), B.toString('base64')]);
+    if (process.env.SPOT_PIXELS) console.log(`PIX ${sp.key} ${what} ${mean.toFixed(2)}`);   // (SPOT_PIXELS=1 prints every clean difference: the threshold below is set from them)
     if (mean > 14) out.push(`the ${what} of ${sp.key} is darkened: FAILED (mean pixel difference ${mean.toFixed(1)} with the tour on and off)`);
   }
   return out;
