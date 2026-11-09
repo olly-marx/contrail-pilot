@@ -122,12 +122,12 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   c = await card({ nordic: 9999 });
   check(!/data-cross/.test(c), 'D: a long flight from another area does not count');
   c = await card({ weurope: 4550 }, STARS.slice(1, 2));
-  check(!/data-cross/.test(c) && /starred missions/.test(c), `D: 1 of the 3 starred missions is not offered (any 2 of 3): ${c.slice(0, 200)}`);
+  check(/data-cross="warsaw-stockholm"/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 4,550 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
   c = await card({ weurope: 4550 });
   check(/data-cross="warsaw-stockholm"/.test(c), `D: 4,550 km + biodiversity 30 + the 3 starred: the crossing is offered: ${c.slice(0, 200)}`);
   const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', areaBest: { weurope: 9999 }, missionsDone: STARS });
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); })();
-  check(!/data-cross/.test(noTrees) && /biodiversity/.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
+  check(!/data-cross/.test(noTrees) && /nature 30/.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
   await card({ weurope: 4550 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', crossing: document.getElementById('hubNext').classList.contains('crossing') }));

@@ -5,7 +5,7 @@ import { routeFor, toggleSkip, SKIP_TEXT } from './aim.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
-import { available as crossingsNow, offerCheck, offerCtx, moreToCome, laterEra } from './crossings.js';
+import { available as crossingsNow, readiness, moreToCome, laterEra } from './crossings.js';
 import { SEASON } from './season.js';
 // Season 2 debug (?s2unlock=1, preview only): every available crossing can be flown, skipping the offer gates (M3 tryout).
 const S2_UNLOCK = typeof location !== 'undefined' && new URLSearchParams(location.search).get('s2unlock') === '1';
@@ -18,8 +18,8 @@ const crossingsHTML = s => {
   const list = crossingsNow(s);
   if (!list.length) { const le = laterEra(s); if (le !== null) return `<div id="jCross"><p class="small" id="jLater"><b>NEXT CROSSING</b><br>New crossings open in ${ERAS[le].name}. Keep flying to get there!</p></div>`; }
   if (!list.length) return moreToCome(s) ? '<div id="jCross"><p class="small" id="jMore"><b>MORE TO COME!</b><br>You have flown every crossing there is for now. Faster planes and the far oceans are on their way.</p></div>' : '';
-  return `<div id="jCross">${list.map(c => { const ctx = offerCtx(s, c), o = offerCheck(c, ctx), go = o.offered || S2_UNLOCK;
-    const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: NEED_FAR, nature: `biodiversity ${SEASON.offer.biodiversity} here (now ${ctx.bio})`, contrails: 'the 3 starred missions here' })[k]);
+  return `<div id="jCross">${list.map(c => { const rd = readiness(s, c), go = rd.ready || S2_UNLOCK;
+    const needs = [!rd.era && 'a later era', !rd.plane && NEED_FAR, !rd.nature && `nature ${SEASON.offer.biodiversity} (now ${rd.natureHave})`].filter(Boolean);
     const head = c.kind === 'lap' ? `<b id="jLap">THE LAP OF THE EARTH</b>${routeLapRest(c)}`   // the final boss (M4)
       : `<b>CROSSING: ${c.from} &gt; ${c.to}</b>${routeCrossRest(c)}`;
     return `<p class="small">${head}<br>
@@ -58,7 +58,7 @@ import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp } from './nextup.js';
 import { endView } from './crossingend.js';
-import { crossingState, crossingById, momentDue, markTold, sheetText, NEED_FAR, routeCrossRest, routeLapRest, endingBody } from './crossingview.js';
+import { crossingState, crossingById, momentDue, markTold, sheetText, NEED_FAR, routeCrossRest, routeLapRest, endingBody, boxView, screenView } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
@@ -381,9 +381,13 @@ export class UI {
     // NATURE's tree parcels) carries its lesson picture and leads where it says; a city mission says how many stops away it is. The tiles are gone:
     // the bottom bar is the navigation (its dots and the FREE! tag come from fresh.js and refreshDots).
     const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    // THE HOME BOX (CROSSINGS V2): the next crossing with its three ticks; not while lessons remain (the same rule as the quiet line it replaces).
+    const box = cs && s.tutorialDone && !lessonsLeft(s).length ? boxView(cs) : null, hc = $('hubCross');
+    hc.hidden = !box; hc.classList.toggle('ready', !!(box && box.ready));
+    if (box) { hc.innerHTML = `<p class="rc-label">${esc(box.title)}</p><div class="hc-route"><span>${esc(box.route)}</span><b>${esc(box.word)}</b></div><div class="hc-ticks">${box.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</div><p class="hc-line">${esc(box.line)}</p>`; hc.onclick = () => this.openCrossings(cs); }
     $('hubNext').hidden = !v.up.length || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
-    const rows = v.up[0] && v.up[0].pic ? v.up.slice(0, 2) : v.up;   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
+    const rows = box ? v.up.slice(0, window.innerHeight <= 600 ? 1 : 2) : v.up[0] && v.up[0].pic ? v.up.slice(0, 2) : v.up;   // (the box takes the room of two rows: a short phone keeps one)   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
     $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${rows.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
     const act = n => { sfx.tick();
       if (n.key === 'lead:cross' && ready) this.showCrossingSheet(ready);   // (R-A: a 6,500 km flight never starts from a row tap: the sheet is the confirm)
@@ -454,7 +458,7 @@ export class UI {
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
       showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds.` : ''}`, action }); });
     $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
-    if ($('mCross')) $('mCross').onclick = () => { sfx.tick(); const cs = crossingState(s, { unlock: S2_UNLOCK }); if (cs && cs.ready) this.showCrossingSheet(cs); };
+    if ($('mCross')) $('mCross').onclick = () => { const cs = crossingState(s, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); };
     if ($('mDone')) $('mDone').onclick = () => { sfx.tick(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
     if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
@@ -575,6 +579,15 @@ export class UI {
       showSheet({ eyebrow: t.eyebrow, title: t.title, body: t.body, ok: t.later, action: { label: t.go, onTap: () => this.flyCrossing(cs) } });
     } finally { this.inCrossingSheet = false; }
   }
+  // The CROSSINGS screen (CROSSINGS V2): the same ticks as the HOME box, one plain line, one button (HANGAR / NATURE where the open tick is fixed, CROSS TO <city> when ready). The first time a crossing is ready the
+  // moment sheet comes instead (it marks the crossing told). Step 2 keeps the old rule that the flight starts from anywhere; GO TO the departure airport is the next step.
+  openCrossings(cs) {
+    sfx.tick();
+    if (cs.ready && !cs.told) return this.showCrossingSheet(cs);
+    const v = screenView(cs), esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    showSheet({ eyebrow: v.eyebrow, title: v.route, ok: 'CLOSE', html: `<p><b>${esc(v.word)}</b></p><p class="hc-ticks">${v.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</p><p>${esc(v.line)}</p>`,
+      action: v.button ? { label: v.button.label, onTap: () => (v.button.act === 'cross' ? this.flyCrossing(cs) : this.go(v.button.act)) } : null });
+  }
   flyCrossing(cs) { const s = this.save; s.flyCrossing = cs.crossing; writeSave(s); this.start(); }
   maybeCrossingSheet() {
     const s = this.save;
@@ -589,7 +602,7 @@ export class UI {
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).
   crossingReadyText() {
-    const s = this.save, c = s.tutorialDone ? crossingsNow(s).find(x => offerCheck(x, offerCtx(s, x)).offered || S2_UNLOCK) : null;
+    const s = this.save, c = s.tutorialDone ? crossingsNow(s).find(x => readiness(s, x).ready || S2_UNLOCK) : null;
     return c ? `${c.from} to ${c.to}` : null;
   }
 

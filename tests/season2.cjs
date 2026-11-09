@@ -102,7 +102,7 @@ const KEY = 'contrailPilot.v2';
   c2 = await cardNow({ nordic: 9999 });
   check(!/data-cross="warsaw-stockholm"/.test(c2), 'a long flight from another area does not count');
   c2 = await cardNow({ weurope: 4550 }, ['weurope:shade10']);
-  check(!/data-cross="warsaw-stockholm"/.test(c2) && /starred missions/.test(c2), `1 of the 3 starred missions is not enough (any 2 of 3), the card says so: ${c2.slice(0, 200)}`);
+  check(/data-cross="warsaw-stockholm"/.test(c2), `the trial stars are no longer a gate (CROSSINGS V2): 4,550 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c2.slice(0, 200)}`);
   c2 = await cardNow({ weurope: 4550 });
   check(/data-cross="warsaw-stockholm"/.test(c2), `4,550 km (70%) + biodiversity 30 + the 3 starred: the crossing is offered: ${c2.slice(0, 200)}`);
   await seed2e({}); await p.goto(URL); await ready(p);

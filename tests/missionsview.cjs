@@ -41,7 +41,7 @@ const fs = require('fs'), path = require('path');
   check(v2.done.count === 8 && v2.done.names.every(n => n.length <= V.NAME_MAX), `DONE is a count (5 lessons + 3): ${v2.done.count}`);
   // Tier 3 and the gate.
   const d3 = [...d2.missionsDone, 'weurope:chain', 'weurope:dodge', 'weurope:rescue'], v3 = V.missionsView(withDay(base(d3)));
-  check(/^Tier 3 · \d\/6 done · stars 0\/2$/.test(v3.tierLine) && v3.comingUp === null && v3.crossing && v3.crossing.rows.some(r => r.label === 'Trial stars' && r.status === '0 of 2'), `tier 3: the trial stars are a tick of the CROSSING block now (R-A), not a COMING UP line: ${JSON.stringify([v3.tierLine, v3.comingUp, v3.crossing])}`);
+  check(/^Tier 3 · \d\/6 done · stars 0\/2$/.test(v3.tierLine) && v3.comingUp === null && v3.crossing && v3.crossing.rows.map(r => r.label).join('|') === 'Era|Plane|Nature 30', `tier 3: the CROSSING block has the three ticks Era, Plane, Nature (CROSSINGS V2; the trial stars are no longer a gate), not a COMING UP line: ${JSON.stringify([v3.tierLine, v3.comingUp, v3.crossing])}`);
   const v4 = V.missionsView(withDay(base([...d3, 'weurope:night', 'weurope:shade10'])));
   check(v4.comingUp === null && /stars 2\/2/.test(v4.tierLine), `the gate done: nothing further ahead: ${JSON.stringify([v4.tierLine, v4.comingUp])}`);
   // Every area mission done: no pinned NEXT (a daily is never pinned), nothing open, the dailies still under TODAY.
