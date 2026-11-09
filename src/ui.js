@@ -46,7 +46,7 @@ import { LINKS } from './links.js';
 import { writeSave, resetSave, listStashed, restoreStashed, releaseHold, heldReason, restoreFromBackup, progressOf } from './save.js';
 import { copyText } from './pilot.js';
 import { makeBackup, backupText, tooBigToShare, fileName, readBackup, refusalLines, compareLines, onlineWarns, ONLINE_WARNING, SHARE_TEXT } from './backup.js';
-import { allowRoughUpload, getPilot, takeOnlineNote, hasOnlineNote, onlineProgress } from './online.js';
+import { allowRoughUpload, getPilot, rememberFirst, setRecoverNext, takeOnlineNote, hasOnlineNote, onlineProgress } from './online.js';
 import { askPersist, noteDue, noteText, PERSIST_TIP } from './persist.js';
 import { eraBarHTML } from './eras.js';
 import { FleetHangar } from './hangar.js';
@@ -304,7 +304,7 @@ export class UI {
   }
   applyBackup(r) {
     const res = restoreFromBackup(r.save);
-    if (res === 'ok') return location.reload();
+    if (res === 'ok') { if (!getPilot() && r.save && r.save.pilotNamed === true) { rememberFirst(r.pilot); setRecoverNext(); }   /* a restore keeps the save, never the pilot: ask for the old pilot first */ return location.reload(); }
     this.toast('NOT CHANGED', res === 'not-kept' ? 'Your game now could not be kept first, so nothing was replaced.' : 'That did not work. Nothing was changed.', 'bad', 6);
   }
 

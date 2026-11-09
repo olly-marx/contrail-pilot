@@ -5,7 +5,8 @@ import { repriceSave } from './reprice.js';
 import { migrateHabitat } from './habitats.js';
 import { UI } from './ui.js';
 import { PilotScreens } from './pilot.js';
-import { catchUp, onUpload, syncUp, syncDown, watchSave, ensureCode, getPilot } from './online.js';
+import { catchUp, onUpload, syncUp, syncDown, watchSave, ensureCode, getPilot, takeRecoverNext } from './online.js';
+import { pilotLost } from './recoverfirst.js';
 import { askPersist } from './persist.js';
 import { UploadBanner } from './uploadbanner.js';
 import { Tour } from './tour.js';
@@ -56,6 +57,7 @@ ui.showTitle();
 ui.pilot = new PilotScreens(save);
 ui.wild = new WildScreen(ui);   // the NATURE screen (src/wild.js)
 ui.tour = new Tour(ui);   // "tap here" tutorials (src/tour.js)
+if (takeRecoverNext() && pilotLost(save, getPilot())) ui.go('pilot');   // after a restore onto a phone with no pilot: 'bring back my pilot' first (src/recoverfirst.js)
 ui.tour.maybe('title');
 const uploadBanner = new UploadBanner(() => { const s = game.scene.getScene('game'); return !!s && ['takeoff', 'playing', 'landing'].includes(s.state); });
 onUpload(ev => uploadBanner.handle(ev));   // "Back online! Uploading..." (never mid-flight)

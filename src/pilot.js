@@ -1,5 +1,6 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
-import { NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, getCode, ensureCode, pilotLogin, outboxSize, onlineOff, namesOpen } from './online.js';
+import { pilotLost } from './recoverfirst.js';
+import { lastFirst, NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, getCode, ensureCode, pilotLogin, outboxSize, onlineOff, namesOpen } from './online.js';
 import { writeSave, stashSave } from './save.js';
 import { showSheet } from './sheet.js';
 import { MISSIONS } from './missions.js';
@@ -63,6 +64,7 @@ export class PilotScreens {
   setupCode() {
     $('lWord').innerHTML = '<option value="">word</option>' + NAME_WORDS.map(w => `<option>${w}</option>`).join('');
     $('pHave').onclick = () => { $('pLogin').hidden = !$('pLogin').hidden; };
+    $('pNewInstead').onclick = () => { this.chooseNew = true; this.showPilot(); };   // a new pilot is the second, explicit choice (src/recoverfirst.js)
     $('pNewCode').onclick = async () => {
       if (!confirm('Get a new pilot code? Your old code will stop working.')) return;
       $('pCode').textContent = '...'; await ensureCode(true); this.renderCode();
@@ -122,6 +124,10 @@ export class PilotScreens {
     // Season 2 is offline by design: no name form, no code, no login (they would only say 'No internet right now').
     // In ?preview=1 the NAME form stays (local only; codes and login stay hidden).
     const off = onlineOff(), names = namesOpen();
+    const lost = !off && !this.chooseNew && pilotLost(this.save, getPilot());   // this phone had a pilot and lost it: bring it back FIRST
+    $('pLost').hidden = !lost;
+    if (lost) { $('pEdit').hidden = true; $('pLogin').hidden = false; if (!$('lFirst').value) $('lFirst').value = lastFirst(); }
+    $('pHave').hidden = lost;
     $('pOffNote').hidden = !off || names;
     if (off) for (const id of names ? ['pCodeBox', 'pHave', 'pLogin'] : ['pName', 'pEdit', 'pChange', 'pCodeBox', 'pHave', 'pLogin']) $(id).hidden = true;
   }

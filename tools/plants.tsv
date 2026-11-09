@@ -542,3 +542,6 @@ music	src/music.js	s#g.linearRampToValueAtTime(MUSIC_LEVELS\[levelName\], t + 0.
 audiolive	src/ui.js	s#this.save.musicOff = nx === 'off';#this.save.musicOff = false;#	the MUSIC chip never reaches OFF
 gaphintrestart	src/GameScene.js	s/^    this.gapHintGfx = null;   \/\/ made again.*$//	the gap hint graphics is kept across scene restarts (nothing is drawn from the second flight)
 pilotcodeensure	src/online.js	s/    if (error) return getCode();$/    if (error) { write(CODE_KEY, code); return code; }/	a code is kept on the device although set_pilot_code failed
+recoverfirst	src/recoverfirst.js	s/^export const pilotLost = .*$/export const pilotLost = () => false;/	a phone that lost its pilot is never recognised
+recoverfirst	src/online.js	s/^export const rememberFirst = .*$/export const rememberFirst = f => {};/	the first name is never remembered
+recoverfirstui	src/pilot.js	s/^    const lost = !off \&\& !this.chooseNew \&\& pilotLost(this.save, getPilot());.*$/    const lost = false;/	the PILOT tab opens on the empty new-name form again
