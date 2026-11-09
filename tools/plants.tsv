@@ -563,3 +563,7 @@ plantrail	src/GameScene.js	s/ \&\& this.noTreeYet()) this.explainAgain(/ \&\& fa
 plantrail	src/GameScene.js	s/if (showDrop \&\& soilSoon \&\& this.noTreeYet() \&\& !this.school/if (false \&\& !this.school/	no arrow over SEND A SEED
 plantrail	src/tour.js	s/ \&\& treesPlanted(s) === 0 \&\& !this.done('r-plant1')/ \&\& false \&\& !this.done('r-plant1')/	HOME never lights TAKE OFF for the first tree
 plantrail	src/tour.js	s/if (res \&\& (this.ui.lastPlanted || 0) > 0 \&\& treesPlanted(s) === this.ui.lastPlanted/if (false \&\& treesPlanted(s) === this.ui.lastPlanted/	the results never say the first tree is planted
+sim-result-fields@GATE=1+PLANT=touchdown	-	-	the landing log's touchdown field is dropped from the result
+landlog	src/landlog.js	s/\.slice(-LANDLOG_MAX)/.slice(-1000)/	the landing log keeps more than the newest 100
+landlog	src/ui.js	s/if (r\.touchdown \&\& !r\.school) recordTouchdown(r\.touchdown);/if (false) recordTouchdown(r.touchdown);/	the results never record the touchdown
+landlogui	src/pilot.js	s/^    $('pLandCopy').onclick = () => {.*$/    $('pLandCopy').onclick = () => {};/	the COPY LANDING NUMBERS button does nothing

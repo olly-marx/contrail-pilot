@@ -77,3 +77,4 @@ group music | src/music.js src/musicdata.js src/musicengine.js src/musicplan.js 
 group gap-hint-restart | src/GameScene.js src/gapmarkers.js | gaphintrestart gaphint
 group tools-everywhere | src/wild.js | toolseverywhere regions
 group plant-rail | src/GameScene.js src/tour.js src/tips.js src/railsubjects.js | plantrail
+group landlog-ui | src/landlog.js src/pilot.js | landlogui

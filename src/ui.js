@@ -42,6 +42,7 @@ import { animalPortrait } from './animalart.js';
 import { LINES, FUELS, level, nextLevel, canBuy, buyLevel, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById, freeParcels } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { treesPlanted } from './treecount.js';
+import { recordTouchdown } from './landlog.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave, listStashed, restoreStashed, releaseHold, heldReason, restoreFromBackup, progressOf } from './save.js';
@@ -596,6 +597,7 @@ export class UI {
   // tests/resultscard.cjs); this draws it, reveals it in a short beat (a tap skips) and wires the sheets behind its lines. The prizes were already PAID
   // at the bank (R8: RULES.bankFlight); the prize line shows what they were worth.
   async showResults(r) {
+    if (r.touchdown && !r.school) recordTouchdown(r.touchdown);   // the real-flight landing log: this device only (src/landlog.js)
     this.lastPlanted = r.planted || 0;   // trees planted this flight (the first-tree rail's words)
     this.lastGrab = r.earned && r.earned[0] ? r.earned[0].n : 0;   // seeds grabbed this flight (the rails' R9a words depend on it)
     const lead = this.resultsLead();   // season 2: the one place the lesson leads next (research/FLOW-FIRST-HOUR.md)

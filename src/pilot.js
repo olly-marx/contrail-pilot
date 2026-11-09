@@ -1,5 +1,6 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
 import { pilotLost } from './recoverfirst.js';
+import { landingText, landingCount } from './landlog.js';
 import { lastFirst, NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, getCode, ensureCode, pilotLogin, outboxSize, onlineOff, namesOpen } from './online.js';
 import { writeSave, stashSave } from './save.js';
 import { showSheet } from './sheet.js';
@@ -64,6 +65,7 @@ export class PilotScreens {
   setupCode() {
     $('lWord').innerHTML = '<option value="">word</option>' + NAME_WORDS.map(w => `<option>${w}</option>`).join('');
     $('pHave').onclick = () => { $('pLogin').hidden = !$('pLogin').hidden; };
+    $('pLandCopy').onclick = () => { const n = landingCount(); if (!n) { $('pLandMsg').textContent = 'No landings yet.'; return; } copyText(landingText()).then(ok => { $('pLandMsg').textContent = ok ? `Copied ${n} landings.` : 'Could not copy.'; }); };   // for a grown-up: plain numbers to paste to the developers (src/landlog.js)
     $('pNewInstead').onclick = () => { this.chooseNew = true; this.showPilot(); };   // a new pilot is the second, explicit choice (src/recoverfirst.js)
     $('pNewCode').onclick = async () => {
       if (!confirm('Get a new pilot code? Your old code will stop working.')) return;

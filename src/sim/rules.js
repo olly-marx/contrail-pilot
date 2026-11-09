@@ -20,7 +20,7 @@ import { loadout, FUELS } from '../upgrades.js';
 // no-fly zone counts when the nose reaches it (a crash in it counts too); trees = treeIds left empty.
 // Planted defects for tests/sim-twists.cjs (each must FAIL it): still = no twist ever moves; early = twists ignore `from`.
 export const TWIST_PLANTS = { still: false, early: false };
-export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false };
+export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false, touchdown: false };
 import { recordFlight } from '../records.js';
 import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
@@ -123,6 +123,7 @@ export const RULES = {
     this.feedback = { amount: 0, timer: 0 };
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.planted = 0;
+    this.touchdown = null;             // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
     this.forestFullSaid = false;
     this.landStored = 0;               // ...and rewilded land
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
@@ -208,6 +209,15 @@ export const RULES = {
     // Home is landable when the route loops back to it (a 3-city area's 3rd stop: the sim chat, 2026-10-28, beginners crashed
     // on a drawn home runway); only a DEPARTURE runway (at or behind the start, worldX <= 0) is never 'landed' on.
     return this.runways.find(r => r.x <= box.x && box.x + box.w <= r.x + AIRPORT.runwayLen && !(r.name === this.homeName && r.worldX <= 0));
+  },
+  // The tiny real-flight landing log (the sim chat's design, research/ICE-CRYSTALS-LANDING-SIM.md): the numbers of the ground contact, so overrun and hard-landing limits can be chosen on real play.
+  // pos: 0 = the runway's start, 1 = the last usable pixel (outside 0-1 or null when it missed); sink px/s; angle degrees; the Landing gear level and the flare multiplier. No random draws, no state change
+  // (the school never gets here: it returns above). Goes to result.touchdown; src/landlog.js keeps the last 100 on this device only.
+  noteTouchdown(box, rw) {
+    if (FIELD_PLANTS.touchdown) return;
+    const r = rw || this.runways.find(q => q.x <= box.x + box.w && box.x <= q.x + AIRPORT.runwayLen) || null, vy = this.plane.vy || 0, v = this.speed || 0;
+    this.touchdown = { pos: r ? Math.round(100 * (box.x - r.x) / (AIRPORT.runwayLen - box.w)) / 100 : null, sink: Math.round(vy), angle: v > 0 ? Math.round(10 * Math.atan(vy / v) * 180 / Math.PI) / 10 : 0,
+      gear: ((this.save.fleet || {}).gadgets || {}).gear || 0, flare: Math.round(100 * (this.kit.flare || 1)) / 100, landed: !!rw };
   },
   // The k-th airport ahead of the start city (0 = the next one), at worldX `from` + that leg.
   airportAhead(k, from = 0) {
@@ -716,6 +726,7 @@ export const RULES = {
     if (this.heat >= CLIMATE.dangerLine) { this.finish({ reason: 'The planet got too hot!\nFlight grounded.', sound: 'overheat' }); return out; }
     if (this.spriteBottom() >= SKY_H) {
       const rw = this.runwayUnder(box);
+      this.noteTouchdown(box, rw);
       if (rw) this.land(rw);
       else this.finish({ reason: 'You hit the ground!', sound: 'thud' });
       return out;
@@ -864,7 +875,7 @@ export const RULES = {
       missions2: s2 ? { done: s2Done.map(d => d.title), next: s2Next ? s2Next.title : null } : null,
       // Mission fields (PROPOSAL-HOME-MISSIONS): trees planted this flight ('land:id', UK bare), clean storm gaps, no-fly
       // zones passed. Animals found: foundIds above (the game's 'seen' hook fills it; [] in Node).
-      treeIds: FIELD_PLANTS.trees ? [] : [...this.speciesTags], cleanGaps: this.school ? 0 : this.cleanGaps, noFlyPassed: this.school ? 0 : this.noFlyPassed,
+      touchdown: this.touchdown, treeIds: FIELD_PLANTS.trees ? [] : [...this.speciesTags], cleanGaps: this.school ? 0 : this.cleanGaps, noFlyPassed: this.school ? 0 : this.noFlyPassed,
       mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, natureGains, bio: biodiversity(this.save),
     };
     this.bank = { m, missionDone, lap, crash, gained };
