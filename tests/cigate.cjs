@@ -85,18 +85,24 @@ const D = [
 ];
 for (const [args, want, msg] of D) check(decide(...args) === want, `decide ${args.join(' ')}: ${msg} (got '${decide(...args)}')`);
 
-// 10. dry-check: a ci-dry branch asserts its own expectation; a wrong gate turns the dry run red.
-check(dry('ci-dry/skip-a', 'true', 'skipped', 'true').status === 0, 'dry-check: ci-dry/skip-* with the tests skipped and a deploy passes');
-check(dry('ci-dry/skip-a', 'false', 'success', 'true').status !== 0, 'dry-check: ci-dry/skip-* where the tests ran FAILS (a gate that does not skip is wrong)');
-check(dry('ci-dry/run-a', 'false', 'success', 'true').status === 0, 'dry-check: ci-dry/run-* where the tests ran passes');
-check(dry('ci-dry/run-a', 'true', 'skipped', 'true').status !== 0, 'dry-check: ci-dry/run-* where the tests were skipped FAILS (no marker must run the tests)');
-check(dry('ci-dry/other', 'false', 'success', 'true').status !== 0, 'dry-check: a ci-dry branch with no declared expectation FAILS');
+// 10. dry-check: a ci-dry branch asserts its own expectation; a wrong gate or a skipped deploy probe (the transitive-skip trap) turns the dry run red.
+check(dry('ci-dry/skip-a', 'true', 'skipped', 'true', 'success').status === 0, 'dry-check: ci-dry/skip-* with the tests skipped, a deploy and the probe run passes');
+check(dry('ci-dry/skip-a', 'true', 'skipped', 'true', 'skipped').status !== 0, 'dry-check: a SKIPPED deploy probe after skipped tests FAILS (the transitive-skip trap: the deploy would not run)');
+check(dry('ci-dry/skip-a', 'false', 'success', 'true', 'success').status !== 0, 'dry-check: ci-dry/skip-* where the tests ran FAILS (a gate that does not skip is wrong)');
+check(dry('ci-dry/run-a', 'false', 'success', 'true', 'success').status === 0, 'dry-check: ci-dry/run-* where the tests ran passes');
+check(dry('ci-dry/run-a', 'true', 'skipped', 'true', 'success').status !== 0, 'dry-check: ci-dry/run-* where the tests were skipped FAILS (no marker must run the tests)');
+check(dry('ci-dry/other', 'false', 'success', 'true', 'success').status !== 0, 'dry-check: a ci-dry branch with no declared expectation FAILS');
 
 // 11. The workflow wiring (static: the real proof is the dry runs on ci-dry/* branches, see RELEASING.md).
 const deploy = fs.readFileSync(path.join(root, '.github/workflows/deploy.yml'), 'utf8');
 const verify = fs.readFileSync(path.join(root, '.github/workflows/verify-branch.yml'), 'utf8');
 const tests = fs.readFileSync(path.join(root, '.github/workflows/tests.yml'), 'utf8');
-check(/needs:\s*decide\s*\n\s*if:.*needs\.decide\.outputs\.deploy == 'true'/.test(deploy), 'the deploy job needs decide and runs only when decide said deploy=true');
+const ifOf = (text, job) => { const m = text.match(new RegExp('\\n  ' + job + ':\\n(?:(?!\\n  [a-z-]+:\\n)[\\s\\S])*?\\n    if: (.*)')); return m ? m[1].replace(/\s+#.*$/, '').trim() : ''; };
+const deployIf = ifOf(deploy, 'deploy'), tagIf = ifOf(deploy, 'tag'), probeIf = ifOf(deploy, 'deploy-probe');
+check(/needs:\s*decide\s*\n/.test(deploy.split('\n  deploy:\n')[1] || '') && /needs\.decide\.outputs\.deploy == 'true'/.test(deployIf), 'the deploy job needs decide and runs only when decide said deploy=true');
+check(/^\$\{\{ !cancelled\(\) &&/.test(deployIf), `the deploy job's if starts with !cancelled(): a skipped ancestor (the test job) would otherwise skip the deploy (got: ${deployIf})`);
+check(/^\$\{\{ !cancelled\(\) &&/.test(tagIf) && /needs\.deploy\.result == 'success'/.test(tagIf), `the tag job's if starts with !cancelled() and needs the deploy to have succeeded (got: ${tagIf})`);
+check(probeIf !== '' && probeIf.replace("github.ref != 'refs/heads/main'", "github.ref == 'refs/heads/main'") === deployIf, `the dry-run deploy probe has the same condition as the deploy job apart from the ref clause (probe: ${probeIf} | deploy: ${deployIf})`);
 check(/github\.ref == 'refs\/heads\/main'/.test(deploy.split('\n  deploy:\n')[1] || ''), 'the deploy job runs only on refs/heads/main (a dry run never deploys)');
 check(/test:\s*\n\s*needs:\s*gate\s*\n\s*if:.*needs\.gate\.outputs\.skip != 'true'/.test(deploy), 'the test job runs unless the gate said skip=true');
 check(/uses:\s*\.\/\.github\/workflows\/tests\.yml/.test(deploy) && /uses:\s*\.\/\.github\/workflows\/tests\.yml/.test(verify), 'deploy.yml and verify-branch.yml call the same tests.yml');

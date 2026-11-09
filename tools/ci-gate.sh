@@ -3,7 +3,7 @@
 # passed this exact commit. FAIL CLOSED: every doubt, error or odd input prints skip=false (the tests run); nothing here can fail the job.
 #   tools/ci-gate.sh gate <full-sha> <event>                   prints skip=true|false and reason=...  (lines for $GITHUB_OUTPUT)
 #   tools/ci-gate.sh decide <gate-result> <skip> <test-result> prints deploy=true|false: may the deploy job run?
-#   tools/ci-gate.sh dry-check <branch> <skip> <test-result> <deploy>   a dry run (a ci-dry/* branch) asserts its own expectation; exit 1 if wrong
+#   tools/ci-gate.sh dry-check <branch> <skip> <test-result> <deploy> <probe-result>   a dry run (a ci-dry/* branch) asserts its own expectation; exit 1 if wrong
 # ORIGIN=<remote or path> overrides `origin` (tests/cigate.cjs uses a throwaway bare repo).
 # SKIP needs ALL of: event is push; the sha is a full 40-hex sha; exactly one ref refs/tags/ci-ok-<sha7> whose commit (peeled if annotated) EQUALS
 # the full sha; no refs/tags/ci-fail-<sha7>; the ls-remote call succeeded. The marker is written only by verify-branch.yml's `report` job after
@@ -39,15 +39,15 @@ decide() {
   else echo "deploy=false"; fi
 }
 
-# ci-dry/skip-*: a marker exists, so the tests must be skipped and the deploy would run. ci-dry/run-*: no marker, so the tests must run (in the dry run they just echo).
+# ci-dry/skip-*: a marker exists, so the tests must be skipped and the deploy would run (the probe job stands in for the deploy job: it must have RUN after the skipped test job). ci-dry/run-*: no marker, so the tests must run (in the dry run they just echo).
 dry_check() {
-  local branch=${1:-} skip=${2:-} test_result=${3:-} deploy=${4:-} want
+  local branch=${1:-} skip=${2:-} test_result=${3:-} deploy=${4:-} probe=${5:-} want
   case "$branch" in
-    ci-dry/skip-*) want="skip=true test=skipped deploy=true" ;;
-    ci-dry/run-*)  want="skip=false test=success deploy=true" ;;
+    ci-dry/skip-*) want="skip=true test=skipped deploy=true probe=success" ;;
+    ci-dry/run-*)  want="skip=false test=success deploy=true probe=success" ;;
     *) echo "DRY-CHECK: branch '$branch' declares no expectation (use ci-dry/skip-* or ci-dry/run-*)"; return 1 ;;
   esac
-  got="skip=$skip test=$test_result deploy=$deploy"
+  got="skip=$skip test=$test_result deploy=$deploy probe=$probe"
   if [ "$got" = "$want" ]; then echo "DRY-CHECK ok: $got"; else echo "DRY-CHECK FAIL: wanted [$want] got [$got]"; return 1; fi
 }
 
