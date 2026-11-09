@@ -30,6 +30,7 @@ import { animalDir, animalPortrait } from './animalart.js';
 import { LANDMARKS } from './landmarks.js';
 import { SPECIES, biodiversity, plantGain, hasProject, wildlifeScene, regionSpecies } from './nature.js';
 import { REGION_DATA, REGION_NAMES } from './habitats.js';
+import { treesPlanted } from './treecount.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const FONT = 'Pixel, monospace';
@@ -207,6 +208,7 @@ export class GameScene extends Phaser.Scene {
     this.dropBg = this.add.rectangle(bx, by, 64, 32, 0x4caf50).setOrigin(0).setStrokeStyle(2, 0x1b1b2f);
     this.dropLabel = this.add.text(bx + 32, by + 16, 'DROP', { ...font, fontSize: '8px', strokeThickness: 3, align: 'center', lineSpacing: 3 }).setOrigin(0.5);
     this.dropLabel.setFontSize(7);
+    this.dropArrowGfx = this.add.graphics().setDepth(this.dropBg.depth + 1);   // the first-tree arrow over the button (made in THIS scene: a restart destroys the old display list)
     this.setDropVisible(false);
     // CLEAN (Ops 8+, eras 4-6): hold it at night to fly through icy air with no contrail, for kit.cleanSecs a night
     // (src/sim/rules.js cleanHeld / cleanLeft). Next to DROP, in the ground strip; the bar under it is the night's meter.
@@ -326,6 +328,15 @@ export class GameScene extends Phaser.Scene {
     this.tipQueue = [];
   }
 
+  // The first tree (the user, 2026-11-09): no tree planted yet, in any land (src/treecount.js), this flight or before.
+  noTreeYet() { return treesPlanted(this.save) === 0 && !this.planted; }
+  // The same strip again, each time soil comes into range, until a tree has landed (explain shows a tip once). Never in school or the automated tests ('*').
+  explainAgain(html, pic = null) {
+    if (this.school || this.state !== 'playing' || (this.save.seenTips || []).includes('*')) return false;
+    if (this.explaining) { (this.tipQueue = this.tipQueue || []).push([html, pic, 'tree-1']); return true; }   // another tip is up: this one waits its turn (the strip must not be lost to it)
+    this.showTip(html, pic);
+    return true;
+  }
   explain(id, html, pic = null) {
     if (this.school) return false;
     const seen = this.save.seenTips;
@@ -358,7 +369,8 @@ export class GameScene extends Phaser.Scene {
   closeTip() {
     this.explaining = false; this.ui.hideCoach(); document.getElementById('toast').style.top = ''; if (this.stripWatch) this.stripWatch.disconnect();
     if (this.state !== 'playing') { this.dropTips(); return; }   // the flight ended: unshown tips are unmarked, not lost
-    const q = (this.tipQueue || []).shift();
+    let q = (this.tipQueue || []).shift();
+    while (q && q[2] === 'tree-1' && !this.noTreeYet()) q = (this.tipQueue || []).shift();   // a queued 'soil ahead' strip is dropped once a tree has landed
     if (q) this.time.delayedCall(400, () => { if (!this.explaining && this.state === 'playing') this.showTip(q[0], q[1]); else { this.tipQueue.unshift(q); this.dropTips(); } });
   }
 
@@ -822,7 +834,7 @@ export class GameScene extends Phaser.Scene {
     parts.push(marker);
     this.plotLayer.add(parts);
     pl.parts = parts; pl.marker = marker;
-    if (this.parcels > 0) this.time.delayedCall(900, () => this.explain('tree-1', tip('tree-1'), 'lesson-plot'));
+    if (this.parcels > 0) this.time.delayedCall(900, () => { if (!this.explain('tree-1', tip('tree-1'), 'lesson-plot') && this.noTreeYet()) this.explainAgain(tip('tree-1'), 'lesson-plot'); });   // (until the first tree lands: 2026-11-09, 'it doesn't show you how to plant a tree')
   }
 
   drawAim() {
@@ -1510,6 +1522,8 @@ export class GameScene extends Phaser.Scene {
     this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? 'drop on soil!' : '') : '');
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow);   // nothing to plant on (0.10.7)
     this.setDropVisible(showDrop);
+    this.dropArrowGfx.clear();   // a bobbing arrow on SEND A SEED while soil is ahead and no tree has landed yet (not in school or the automated tests)
+    if (showDrop && soilSoon && this.noTreeYet() && !this.school && !(this.save.seenTips || []).includes('*')) { const d = this.dropBox, y = d.y - 6 + Math.sin(this.time.now / 180) * 3, cx = d.x + d.w / 2; this.dropArrowGfx.fillStyle(0xffe15a, 1).fillTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y).lineStyle(1, 0x1b1b2f, 1).strokeTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y); }
     if (showDrop) this.fitText(this.dropLabel.setText(`SEND A\nSEED x${this.parcels}`), this.dropBox.w - 8, 7);   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
     this.cargoText.setText(`${this.cargo}`);
     this.crysText.setText(`${this.crystals}`);
@@ -1535,6 +1549,7 @@ export class GameScene extends Phaser.Scene {
     this.hintText.setText('');
     this.parcelText.setText('');
     this.setDropVisible(false);
+    this.dropArrowGfx.clear();
     this.aimGfx.clear();
     this.autoText.setVisible(false);
     if (!landed) {

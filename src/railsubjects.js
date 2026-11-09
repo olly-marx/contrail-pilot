@@ -4,7 +4,7 @@
 // target's closest ancestor matching it. A selector that is not on the current screen is simply skipped (r-takeoff1 exists on HOME and in the hangar: its subjects list both).
 // tests/railsubjects.cjs (Node) checks that every step of every tour has an entry here; tests/spotlight.cjs (browser) checks the spotlight of each step on the real screen.
 export const COUNTS = {   // tour id -> how many steps it has (the number of entries it must declare)
-  'r-school': 1, 'r-hangar': 1, 'r-free': 2, 'r-takeoff1': 1, 'r-res1': 3, 'r-takeoff2': 1, 'r-res2': 1, 'r-nature': 5, 'r-bonus': 1, 'r-systems': 3, 'r-parcels': 1, 'r-map': 1, 'r-boards': 1, 'r-payoff': 1,
+  'r-school': 1, 'r-hangar': 1, 'r-free': 2, 'r-takeoff1': 1, 'r-res1': 3, 'r-takeoff2': 1, 'r-res2': 1, 'r-nature': 5, 'r-bonus': 1, 'r-systems': 3, 'r-parcels': 1, 'r-plant1': 1, 'r-plant2': 1, 'r-map': 1, 'r-boards': 1, 'r-payoff': 1,
   name: 10, new: 3,
 };
 export const SUBJECTS = {
@@ -23,6 +23,8 @@ export const SUBJECTS = {
   'r-bonus#1': null,
   'r-systems#1': null, 'r-systems#2': null,
   'r-systems#3': '^.rowc',                         // the whole Forecasting row (name, price), not only its small description
+  'r-plant1#1': '#hubNext .rc-row',                // the lesson row 'Plant a tree'
+  'r-plant2#1': null,                              // the Earth card: its Nature bar is the thing the tree changes
   'r-parcels#1': '^.rowc',                         // the tree parcels' row (picture, name)
   'r-map#1': null, 'r-boards#1': null,
   'r-payoff#1': '.pay-frame',                      // the plane and the new part on it

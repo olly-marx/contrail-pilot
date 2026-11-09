@@ -27,7 +27,7 @@ export const TIPS = {
   'school-low':    { say: 'Get <b>low</b> just before the runway!' },
 
   // ---- first-flight coach cards (explain: one-off, never freeze the game after school) ----
-  'tree-1':     { say: 'Brown soil is where trees grow. Press <b>DROP</b> just before you reach it.', more: 'Brown soil = a place to plant a tree! Press DROP a little before you reach it: parcels float down AND forwards.' },
+  'tree-1':     { say: 'Brown soil ahead! Tap <b>SEND A SEED</b> before it. It drifts forward, so tap early.', more: 'Brown soil = a place to plant a tree! Press DROP a little before you reach it: parcels float down AND forwards.' },
   'tree-2':     { say: 'Your tree soaks up CO2 as it grows. Bigger trees soak up more.', more: 'Your tree takes CO2 out of the air as it grows. Bigger trees take a bit more. But trees are slow! A cleaner plane and smart contrails help the Earth faster.' },
   'tree-3':     { say: 'Different kinds of tree bring much more wildlife than lots of one kind.', more: 'Your Biodiversity meter shows how full of life your land is. Different kinds of trees bring much more wildlife than lots of the same kind.' },
   'x-first-animal': { say: 'A wild animal! Nature projects and trees bring them back here.' },
@@ -70,6 +70,8 @@ export const TIPS = {
   'rail-map':          { say: 'Your world! Drag to spin it. Tap a dot to choose.' },
   'rail-free-tap':     { say: 'Tap here to see your new jet engines.' },
   'rail-takeoff-h':    { say: 'Now take off and try them!' },
+  'rail-plant':        { say: 'Your tree seeds are on board. Tap TAKE OFF to plant them.' },
+  'rail-planted':      { say: 'Your first tree is planted! It grows and cleans the air.' },
   'rail-parcels':      { say: 'Your first tree parcels are FREE. Take them, then drop trees on brown soil!' },
   'rail-free':         { say: 'Cleaner engines: less CO2, a cooler Earth. Tap FREE!' },
   'rail-payoff':       { say: 'Look: shiny new jet engines!' },

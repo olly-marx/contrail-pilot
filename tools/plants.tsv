@@ -559,3 +559,7 @@ nocrossingkm	src/crossingview.js	s/export const rightText = s => (s.told ? s.dif
 nocrossingkm	src/crossingview.js	s/label: 'Fly farther', line: 'fly farther'/label: `Fly ${Math.round(0.7 * c.km)} km`, line: 'fly farther'/	the condition label names a distance again
 nocrossingkm	src/crossingview.js	s/^export const DIFFICULTY = .*$/export const DIFFICULTY = ['Easy', 'Easy', 'Easy', 'Easy', 'Easy', 'The lap'];/	every crossing is as easy as the first
 toolseverywhere	src/wild.js	s/^    const uk = true;$/    const uk = this.region === (homeRegion(s) || 'woodland');/	the planting tools are on the home land only again
+plantrail	src/GameScene.js	s/ \&\& this.noTreeYet()) this.explainAgain(/ \&\& false) this.explainAgain(/	the soil tip is shown once only (it never comes back until a tree lands)
+plantrail	src/GameScene.js	s/if (showDrop \&\& soilSoon \&\& this.noTreeYet() \&\& !this.school/if (false \&\& !this.school/	no arrow over SEND A SEED
+plantrail	src/tour.js	s/ \&\& treesPlanted(s) === 0 \&\& !this.done('r-plant1')/ \&\& false \&\& !this.done('r-plant1')/	HOME never lights TAKE OFF for the first tree
+plantrail	src/tour.js	s/if (res \&\& (this.ui.lastPlanted || 0) > 0 \&\& treesPlanted(s) === this.ui.lastPlanted/if (false \&\& treesPlanted(s) === this.ui.lastPlanted/	the results never say the first tree is planted

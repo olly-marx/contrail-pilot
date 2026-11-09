@@ -596,6 +596,7 @@ export class UI {
   // tests/resultscard.cjs); this draws it, reveals it in a short beat (a tap skips) and wires the sheets behind its lines. The prizes were already PAID
   // at the bank (R8: RULES.bankFlight); the prize line shows what they were worth.
   async showResults(r) {
+    this.lastPlanted = r.planted || 0;   // trees planted this flight (the first-tree rail's words)
     this.lastGrab = r.earned && r.earned[0] ? r.earned[0].n : 0;   // seeds grabbed this flight (the rails' R9a words depend on it)
     const lead = this.resultsLead();   // season 2: the one place the lesson leads next (research/FLOW-FIRST-HOUR.md)
     $('againBtn').textContent = lead === 'hangar' ? 'OPEN THE HANGAR' : lead === 'nature' ? 'OPEN NATURE' : 'FLY ON';

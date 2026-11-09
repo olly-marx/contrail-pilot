@@ -77,7 +77,8 @@ const FROM = PART === 'B' ? 7 : 3, TO = PART === 'A' ? 6 : 10;
       if (await p.isVisible('#tabFly')) { await p.click('#tabFly'); await p.waitForTimeout(500); } await settle();
     }
     await shot(`hub-before-flight-${f}`);
-    await p.click('#goBtn'); await p.waitForTimeout(400);
+    if (await screen() === 'title') await p.click('#goBtn');   // (the first-tree rail lights TAKE OFF and settle() taps it: the flight may already have started)
+    await p.waitForTimeout(400);
     const t0 = Date.now();
     while (Date.now() - t0 < 240000) {
       const v = await look();
