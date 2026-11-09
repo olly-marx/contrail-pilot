@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-soft-cues",
+    "version": "0.36.0",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "New soft sounds for the good moments: a bell figure when a new part arrives on your plane, a bright run when an era opens, a growing chime when a nature project is funded, a three-note rise when a mission is done, a bell strike for a badge, and a rising welcome (or two soft falling notes) when a crossing ends."
+    ]
+  },
+  {
     "id": "2026-11-08-soft-sounds",
     "version": "0.35.0",
     "date": "2026-11-08",
