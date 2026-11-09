@@ -15,7 +15,7 @@ globalThis.SEASON2 = true;
     for (let mask = 0; mask < 8; mask++) {
       const st = V.stateOf(base, cc), want = [!!(mask & 1), !!(mask & 2), !!(mask & 4)];   // era, plane, nature
       st.conds.forEach((x, i) => { x.done = want[i]; x.frac = want[i] ? 1 : 0; }); st.ready = want.every(Boolean); st.nearest = st.conds.find(x => !x.done) || null;
-      const variants = st.ready ? [{ dep: false, hops: 3 }, { dep: true, hops: null }, { dep: false, hops: 9 }] : [{ dep: false, hops: null }];
+      const variants = st.ready ? [{ dep: false, hops: 3 }, { dep: true, hops: null }, { dep: false, hops: 9 }, { dep: false, hops: null }] : [{ dep: false, hops: null }];
       for (const vr of variants) {
         st.atDeparture = vr.dep; st.hops = vr.hops; const b = V.boxView(st), s = V.screenView(st); n++;
         const tag = `${c.id} ${want.map(x => (x ? 'x' : '.')).join('')}${st.ready ? (vr.dep ? ' at-airport' : ` hops${vr.hops}`) : ''}`;
@@ -23,6 +23,7 @@ globalThis.SEASON2 = true;
         check(b.route.length <= 28 && b.line.length <= 28 && b.title === 'NEXT CROSSING' && /Easy|Medium|Hard|Harder|Very hard|The lap/.test(b.word), `${tag}: route ${b.route.length}, line ${b.line.length}, word "${b.word}"`);
         for (const [k, v] of Object.entries({ route: b.route, line: b.line, word: b.word, button: s.button ? s.button.label : '', link: s.link || '' })) check(!bad(v), `${tag} ${k}: a distance or a long number reaches the player: "${v}"`);
         if (st.ready && vr.dep) check(b.line === 'Ready! You are here.' && b.where === 'sheet' && b.dots === 0 && s.button && s.button.act === 'cross' && s.button.label === `CROSS TO ${cc.to}` && s.link === 'fly normally', `${tag}: at the airport: line "${b.line}", where ${b.where}, button ${JSON.stringify(s.button)}, link ${s.link}`);
+        else if (st.ready && vr.hops === null) check(b.line === 'Ready!' && b.where === 'sheet' && b.dots === 0 && s.button && s.button.act === 'cross', `${tag}: ready from an unreachable departure: line "${b.line}", where ${b.where}, button ${JSON.stringify(s.button)}`);
         else if (st.ready) check(b.line === `Ready! Go to ${cc.from}` && b.where === 'goto' && b.dots === Math.min(vr.hops, 6) && b.moreDots === (vr.hops > 6) && s.button && s.button.act === 'goto' && s.button.label === `GO TO ${cc.from}` && s.link === null, `${tag}: ready elsewhere: line "${b.line}", where ${b.where}, dots ${b.dots}${b.moreDots ? '+' : ''}, button ${JSON.stringify(s.button)}`);
         else {
           const open = st.nearest.key;

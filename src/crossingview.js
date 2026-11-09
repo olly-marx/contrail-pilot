@@ -62,12 +62,13 @@ export const endingBody = city => `From ${city} all the way round and back home.
 export const boxView = s => {
   const ticks = [['Era', 'era'], ['Plane', 'plane'], ['Nature', 'nature']].map(([label, key]) => ({ label, done: !!(s.conds.find(c => c.key === key) || {}).done }));
   // Ready: at the departure airport 'Ready! You are here.', elsewhere 'Ready! Go to <city>' with one dot per hop left (at most 6, then 'more'); a GO TO already set shows 'on' (the player may stop it).
-  const elsewhere = s.ready && !s.atDeparture, line = s.ready ? (s.atDeparture ? 'Ready! You are here.' : `Ready! Go to ${s.from}`) : s.nearest ? s.nearest.plain : '';
-  const hops = elsewhere && Number.isFinite(s.hops) ? s.hops : 0;
-  return { title: 'NEXT CROSSING', route: `${s.from} > ${s.to}`, word: s.difficulty, ticks, line, ready: !!s.ready, where: s.ready ? (s.atDeparture ? 'sheet' : 'goto') : s.nearest ? s.nearest.where : 'fly', id: s.id,
+  // (A departure the open network cannot reach, e.g. the stepping stones HONOLULU and NADI, has no way to go to: it says plain 'Ready!' and crosses from where the player is, as before.)
+  const elsewhere = s.ready && !s.atDeparture && Number.isFinite(s.hops), line = s.ready ? (s.atDeparture ? 'Ready! You are here.' : elsewhere ? `Ready! Go to ${s.from}` : 'Ready!') : s.nearest ? s.nearest.plain : '';
+  const hops = elsewhere ? s.hops : 0;
+  return { title: 'NEXT CROSSING', route: `${s.from} > ${s.to}`, word: s.difficulty, ticks, line, ready: !!s.ready, where: s.ready ? (elsewhere ? 'goto' : 'sheet') : s.nearest ? s.nearest.where : 'fly', id: s.id,
     dots: Math.min(hops, 6), moreDots: hops > 6, aimOn: !!(elsewhere && s.aimOn), city: s.from, atDeparture: !!s.atDeparture };
 };
 export const screenView = s => {
-  const b = boxView(s), n = s.nearest, button = s.ready ? (s.atDeparture ? { label: `CROSS TO ${s.to}`, act: 'cross' } : { label: `GO TO ${s.from}`, act: 'goto' }) : n && n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' } : n && n.where === 'nature' ? { label: 'NATURE', act: 'nature' } : null;
+  const b = boxView(s), n = s.nearest, button = s.ready ? (b.where === 'goto' ? { label: `GO TO ${s.from}`, act: 'goto' } : { label: `CROSS TO ${s.to}`, act: 'cross' }) : n && n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' } : n && n.where === 'nature' ? { label: 'NATURE', act: 'nature' } : null;
   return { ...b, eyebrow: 'NEXT CROSSING', opens: s.opens, button, link: s.ready && s.atDeparture ? 'fly normally' : null };
 };
