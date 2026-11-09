@@ -260,6 +260,15 @@ export class Tour {
     if (!sc || sc === document.body) return;
     const bar = document.querySelector('.tabbar:not([hidden])'), barTop = bar && !bar.contains(t) ? bar.getBoundingClientRect().top : innerHeight;
     const r = t.getBoundingClientRect(), bottom = barTop - 12, top = 12;
+    // A step with a SUBJECT: bring target AND subject into the band together when they fit (the 320x568 hangar scrolled the plane picture off the top to show the Engines row).
+    const subs = this.subjectEls();
+    if (subs.length) {
+      const rs = [r, ...subs.map(e => e.getBoundingClientRect())], uTop = Math.min(...rs.map(q => q.top)), uBot = Math.max(...rs.map(q => q.bottom));
+      if (uBot - uTop <= bottom - top - 80) {   // (80 px kept for the compact bubble)
+        if (uTop < top) sc.scrollTop -= top - uTop; else if (uBot > bottom - 80) sc.scrollTop += Math.min(uBot - (bottom - 80), uTop - top);
+        return;
+      }
+    }
     if (r.bottom > bottom) sc.scrollTop += Math.min(r.bottom - bottom, r.top - top);
     else if (r.top < top) sc.scrollTop -= top - r.top;
     else {   // in the band but COVERED (a pinned header, e.g. NATURE's scene: content scrolls under it): bring it to the middle
