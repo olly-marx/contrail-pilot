@@ -578,3 +578,6 @@ crystalreason	src/sim/rules.js	s/    if (this.isDay) return 'day';//	a day patch
 crystalreason	src/sim/rules.js	s/    if (i.fake) return 'fake';//	a fake patch pays
 crystalreason	src/sim/rules.js	s/    if (this.nightDodges >= this.kit.dodgesPerNight) return 'limit';.*$//	the nightly cap is ignored
 crystalreason	src/sim/rules.js	s/        } else if (why !== 'quiet') this.onNoCrystal(why);/        }/	an unpaid patch tells nobody why
+crystalpopup	src/GameScene.js	s/this.crystalWhyAt = this.gameTime; this.popup(this.plane.x + 25, this.plane.y - 16, text, '#c9d6e8');/this.crystalWhyAt = this.gameTime;/	a missed cloud shows no line
+crystalpopup	src/GameScene.js	s/if (!text || this.explaining || /if (!text || /	the line is shown over a tip
+crystalpopup	src/GameScene.js	s/    if (this.crystalWhyAt != null \&\& this.gameTime - this.crystalWhyAt < 12000) return;//	a line for every missed cloud (no 12 s limit)
