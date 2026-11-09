@@ -504,3 +504,14 @@ plantsapply	tests/plantsapply.cjs	s/else if (r.stdout === text) {/else if (false
 plantsapply	tests/plantsapply.cjs	s/if (rowOk \&\& total !== want) out.push/if (false) out.push/	the checker no longer compares the changed-line count with the row's declared [xN]
 plantsapply	tests/plantsapply.cjs	s/if (r.status !== 0) {/if (false) {/	the checker no longer flags a sed expression that sed rejects
 plantsapply	tests/plantsapply.cjs	s/catch (e) { rowOk = false; out.push(/catch (e) { rowOk = false; (/	the checker no longer flags a row whose file does not exist
+musicplan	src/musicplan.js	s#const pool = inBag === 0 ? TRACKS.filter(t => t !== history\[history.length - 1\]) :#const pool = inBag === 0 ? TRACKS.slice() :#	a track may repeat at the start of a new bag (the shuffle repeats a song)
+musicplan	src/musicplan.js	s#export const MUSIC_PASSES = 3;#export const MUSIC_PASSES = 1;#	MUSIC_PASSES is 1 (not 'a few')
+musicplan	src/musicdata.js	s#name: 'Bright Morning', key: 'C major pentatonic', bpm: 132,#name: 'Bright Morning', key: 'C major pentatonic', bpm: 112,#	song A's pass is 102 s (too long)
+musicplan	src/musicplan.js	s#export const trackSeconds = song => passSeconds(song) \* MUSIC_PASSES;#export const trackSeconds = song => passSeconds(song);#	a track's time ignores MUSIC_PASSES
+musicplan	src/musicplan.js	s#if (prime \&\& i >= 4) notes = up(notes, 12);#if (prime \&\& i >= 4) notes = up(notes, 7);#	the A' variation is a fifth up, not an octave
+musicplan	src/musicdata.js	s#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 2'#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 4'#	a note overruns its bar
+music	src/music.js	s#  if (!armed || timer || off || isMuted()) return;#  if (timer || off || isMuted()) return;#	music starts before the first tap
+music	src/music.js	s#  if (!armed || timer || off || isMuted()) return;#  if (!armed || timer || off) return;#	music plays while the game is muted
+music	src/music.js	s#  if (!armed || timer || off || isMuted()) return;#  if (!armed || timer || isMuted()) return;#	music ignores the MUSIC off setting
+music	src/sound.js	s#if (DUCKS\[k\] === 'duck' \&\& !muted \&\& duckHook) duckHook();#if (duckHook) duckHook();#	every cue ducks the music (a flap would pump it)
+music	src/sound.js	s#  tick: 'keep', flap: 'keep',#  flap: 'keep',#	a cue (tick) is not classed in DUCKS
