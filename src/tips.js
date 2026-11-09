@@ -27,7 +27,7 @@ export const TIPS = {
   'school-low':    { say: 'Get <b>low</b> just before the runway!' },
 
   // ---- first-flight coach cards (explain: one-off, never freeze the game after school) ----
-  'tree-1':     { say: 'Brown soil ahead! Tap <b>SEND A SEED</b> before it. It drifts forward, so tap early.', more: 'Brown soil = a place to plant a tree! Press DROP a little before you reach it: parcels float down AND forwards.' },
+  'tree-1':     { say: 'Brown soil ahead! Tap <b>SEND A SEED</b> before it. It drifts forward, so tap early.', more: 'Brown soil = a place to plant a tree! Tap SEND A SEED a little before you reach it: parcels float down AND forwards.' },
   'tree-2':     { say: 'Your tree soaks up CO2 as it grows. Bigger trees soak up more.', more: 'Your tree takes CO2 out of the air as it grows. Bigger trees take a bit more. But trees are slow! A cleaner plane and smart contrails help the Earth faster.' },
   'tree-3':     { say: 'Different kinds of tree bring much more wildlife than lots of one kind.', more: 'Your Biodiversity meter shows how full of life your land is. Different kinds of trees bring much more wildlife than lots of the same kind.' },
   'x-first-animal': { say: 'A wild animal! Nature projects and trees bring them back here.' },
