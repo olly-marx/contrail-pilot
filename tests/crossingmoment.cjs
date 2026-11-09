@@ -24,7 +24,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(home0.rows.some(r => /Cross: nature 0 of 30/.test(r)) && !home0.dot && !(await sheet(p)), `${tag}: before the moment HOME says which condition is nearest, no dot, no sheet: ${JSON.stringify(home0)}`);
     await p.click('#tabMissions'); await p.waitForTimeout(500);
     const ticks = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent.trim()).find(t => /^CROSSING TO/.test(t)), rows: [...document.querySelectorAll('#mList .m-tick')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) }));
-    check(ticks.label === 'CROSSING TO STOCKHOLM' && ticks.rows.length === 3 && /Fly 4,550 km.*done/.test(ticks.rows[0]) && /Nature 30.*0/.test(ticks.rows[1]) && /Trial stars.*done/.test(ticks.rows[2]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
+    check(ticks.label === 'CROSSING TO STOCKHOLM' && ticks.rows.length === 3 && /Fly farther.*done/.test(ticks.rows[0]) && /Nature 30.*0/.test(ticks.rows[1]) && /Trial stars.*done/.test(ticks.rows[2]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
     // 2. THE MOMENT, in NATURE: funding a project completes the last condition.
     await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 1; });   // the lever: nature is "met" by the next project
     await p.click('#tabNature'); await p.waitForTimeout(700);
@@ -33,7 +33,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     if (fund) { await fund.click(); await p.waitForTimeout(900); }
     const sh = await sheet(p);
     const loop = p.errs.some(e => /call stack/i.test(e));   // a markTold that marks nothing makes showCrossingSheet -> refreshDots -> maybeCrossingSheet call itself
-    check(sh && /A NEW WAY OPENS/.test(sh) && /STOCKHOLM is within reach!/.test(sh) && /6,500 km/.test(sh), `${tag}: ${loop ? 'the sheet re-opens itself in a loop (the moment is never marked told): ' + p.errs[0] : 'the crossing sheet never appeared (or has the wrong words) after the last condition was met in NATURE: ' + sh}`);
+    check(sh && /A NEW WAY OPENS/.test(sh) && /STOCKHOLM is within reach!/.test(sh) && /How hard: Easy/.test(sh), `${tag}: ${loop ? 'the sheet re-opens itself in a loop (the moment is never marked told): ' + p.errs[0] : 'the crossing sheet never appeared (or has the wrong words) after the last condition was met in NATURE: ' + sh}`);
     if (!sh) { await p.close(); continue; }   // nothing below can be asked of a sheet that is not there: fail by NAME, not by a timeout
     const a = await sv(); check(a.told && a.told.join() === 'warsaw-stockholm' && !a.fly, `${tag}: ${a.fly ? 'a flight started' : 'the told mark was not saved (crossingTold is ' + JSON.stringify(a.told) + ')'}: the sheet must mark it told and start NO flight`);
     // 3. LATER closes it, and it never comes back.
@@ -43,13 +43,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
     // 4. HOME: the row leads, NEW is gone (told), the HOME tab has a dot; a row tap opens the sheet, not a flight.
     await p.click('#tabFly'); await p.waitForTimeout(500);
     const home1 = await p.evaluate(() => ({ lead: (document.querySelector('#hubNext .rc-row.must') || {}).innerText, dot: !document.getElementById('dFly').hidden, sheet: !!document.getElementById('sheet') }));
-    check(home1.lead && /Cross to STOCKHOLM/.test(home1.lead) && /6,500km/.test(home1.lead) && !home1.sheet, `${tag}: HOME leads with the crossing and its distance: ${JSON.stringify(home1)}`);
+    check(home1.lead && /Cross to STOCKHOLM/.test(home1.lead) && /Easy/.test(home1.lead) && !home1.sheet, `${tag}: HOME leads with the crossing and how hard it is: ${JSON.stringify(home1)}`);
     check(home1.dot, `${tag}: the HOME tab dot (#dFly) is not lit while a crossing is ready: ${JSON.stringify(home1)}`);
     check(!/NEW/.test(home1.lead || ''), `${tag}: the row still says NEW after the sheet has been seen: ${home1.lead}`);
     // NEW is on the row until the sheet has been seen: forget the told mark, hold the sheet off with a stand-in #sheet, redraw HOME, read the row, put it back.
     const fresh = await p.evaluate(() => { const s = game.registry.get('save'), ui = game.registry.get('ui'), was = s.crossingTold, d = document.createElement('div'); d.id = 'sheet'; document.body.appendChild(d);
       s.crossingTold = []; ui.renderHub(); const row = (document.querySelector('#hubNext .rc-row.must') || {}).innerText || ''; s.crossingTold = was; d.remove(); ui.renderHub(); return row.replace(/\s+/g, ' '); });
-    check(/NEW 6,500km/.test(fresh), `${tag}: before the sheet has been seen the row should read "NEW 6,500km": ${fresh}`);
+    check(/NEW Easy/.test(fresh), `${tag}: before the sheet has been seen the row should read "NEW Easy": ${fresh}`);
     await p.click('#hubNext .rc-row.must'); await p.waitForTimeout(400);
     const b1 = await sv();
     check(!b1.fly, `${tag}: a flight started on the row tap (it must only open the sheet): ${JSON.stringify(b1)}`);

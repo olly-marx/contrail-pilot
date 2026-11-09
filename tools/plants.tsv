@@ -554,3 +554,7 @@ recoverfirstui	src/pilot.js	s/^    const lost = !off \&\& !this.chooseNew \&\& p
 crossingview	src/crossingview.js	s/line: starsLine(k, stars), bare: true, area: k, where/line: `stars ${stars} of ${M2.GATE_STARS}`, area: k, where/	the stars line is back to the unnamed "stars N of 2"
 crossingview	src/crossingview.js	s/samerica: 'S. America'/samerica: 'South America and the Atlantic'/	a long area name overflows the 24-character row
 crossingview	src/nextup.js	s/return n.key === 'contrails' \&\& n.area \&\& n.area !== here ? SHEET_ELSEWHERE : n.where;/return n.where;/	a trial in another area always jumps to MISSIONS (the wrong list)
+nocrossingkm	src/crossingview.js	s/body: `A non-stop flight\. How hard:/body: `A non-stop flight of ${s.km} km. How hard:/	the sheet says the crossing's distance again
+nocrossingkm	src/crossingview.js	s/export const rightText = s => (s.told ? s.difficulty : `NEW ${s.difficulty}`);/export const rightText = s => (s.told ? `${s.km} km` : `NEW ${s.km} km`);/	the HOME row shows the distance again
+nocrossingkm	src/crossingview.js	s/label: 'Fly farther', line: 'fly farther'/label: `Fly ${Math.round(0.7 * c.km)} km`, line: 'fly farther'/	the condition label names a distance again
+nocrossingkm	src/crossingview.js	s/^export const DIFFICULTY = .*$/export const DIFFICULTY = ['Easy', 'Easy', 'Easy', 'Easy', 'Easy', 'The lap'];/	every crossing is as easy as the first

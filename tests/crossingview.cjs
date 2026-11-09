@@ -1,7 +1,7 @@
 // The crossing as data (src/crossingview.js; R-A of the UX plan, the user's playtest of 0.29.0). No browser. Checks, on DECLARED saves:
 //   1. the three conditions, their words and their order; which one is NEAREST; "ready" follows src/crossings.js offerCheck (rule 'all3', or '2of3' as a test lever);
 //   2. the one-time moment: due when ready and not told, markTold keeps it told (a save field, survives), nothing is due twice;
-//   3. UP NEXT: a near crossing adds ONE quiet line ("Cross: nature 22 of 30"), a ready one LEADS with "Cross to X" and "NEW 6,500km" (then "6,500km" once told); every row fits one line;
+//   3. UP NEXT: a near crossing adds ONE quiet line ("Cross: nature 22 of 30"), a ready one LEADS with "Cross to X" and "NEW Easy" (then "Easy" once told); every row fits one line;
 //   4. every crossing in the game has a sheet title / body / ticks title / nearest line within budget, with the longest city names.
 // Run: node tests/crossingview.cjs   (plants in tools/plants.tsv)
 (async () => {
@@ -13,7 +13,7 @@
   // 1. The conditions.
   const s0 = base(), c0 = V.crossingState(s0);
   check(c0 && c0.id === 'warsaw-stockholm' && c0.to === 'STOCKHOLM' && c0.km === 6500 && !c0.ready, `a fresh weurope pilot: the first crossing is near, not ready: ${JSON.stringify(c0 && [c0.id, c0.ready])}`);
-  check(c0.conds.map(x => x.label).join('|') === 'Fly 4,550 km|Nature 30|Trial stars', `the three conditions, in order: ${c0.conds.map(x => x.label)}`);
+  check(c0.conds.map(x => x.label).join('|') === 'Fly farther|Nature 30|Trial stars', `the three conditions, in order: ${c0.conds.map(x => x.label)}`);
   const s1 = base(); s1.areaBest = { weurope: 99999 }; s1.missionsDone = [...s1.missionsDone, 'weurope:night', 'weurope:shade10'];
   const c1 = V.crossingState(s1);
   check(c1.conds.filter(x => x.done).map(x => x.key).join() === 'capability,contrails' && c1.nearest && c1.nearest.key === 'nature' && !c1.ready, `flight + trial done, nature left: nearest is nature, not ready: ${JSON.stringify(c1.conds.map(x => [x.key, x.done]))}`);
@@ -45,8 +45,8 @@
   check(!early.some(r => r.key === 'cross:progress'), `while lessons remain UP NEXT shows no crossing line: ${JSON.stringify(early.map(r => r.key))}`);
   const fresh = { ...c2, told: false }, told = { ...c2, told: true };
   const rd = N.nextUp(s1, { crossing: fresh, crossingReady: 'WARSAW to STOCKHOLM', limit: 3 }), rt = N.nextUp(s1, { crossing: told, crossingReady: 'WARSAW to STOCKHOLM', limit: 3 });
-  check(rd[0].key === 'lead:cross' && rd[0].short === 'Cross to STOCKHOLM' && rd[0].right === 'NEW 6,500km' && rd[0].lead, `a ready crossing LEADS, NEW + the distance: ${JSON.stringify(rd[0])}`);
-  check(rt[0].right === '6,500km' && !rt.some(r => r.key === 'cross:progress') && rd.filter(r => r.lead).length === 1, `once told the NEW goes; only one lead: ${JSON.stringify([rt[0].right, rd.map(r => r.key)])}`);
+  check(rd[0].key === 'lead:cross' && rd[0].short === 'Cross to STOCKHOLM' && rd[0].right === 'NEW Easy' && rd[0].lead, `a ready crossing LEADS, NEW + how hard: ${JSON.stringify(rd[0])}`);
+  check(rt[0].right === 'Easy' && !rt.some(r => r.key === 'cross:progress') && rd.filter(r => r.lead).length === 1, `once told the NEW goes; only one lead: ${JSON.stringify([rt[0].right, rd.map(r => r.key)])}`);
   for (const r of [...near, ...rd, ...rt]) check(r.short.length + N.rightOf(r).length <= N.ROW_MAX, `row "${r.short}" + "${N.rightOf(r)}" fits one line (${N.ROW_MAX})`);
   // 4. Every crossing, longest names.
   for (const c of C.CROSSINGS.filter(x => x.kind !== 'lap')) {
