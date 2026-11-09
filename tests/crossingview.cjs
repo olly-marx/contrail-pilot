@@ -2,7 +2,7 @@
 //   1. the three conditions, their words and their order; which one is NEAREST; "ready" follows src/crossings.js offerCheck (rule 'all3', or '2of3' as a test lever);
 //   2. the one-time moment: due when ready and not told, markTold keeps it told (a save field, survives), nothing is due twice;
 //   3. UP NEXT: a near crossing adds ONE quiet line ("Cross: nature 22 of 30"), a ready one LEADS with "Cross to X" and "NEW Easy" (then "Easy" once told); every row fits one line;
-//   4. every crossing in the game has a sheet title / body / ticks title / nearest line within budget, with the longest city names.
+//   4. every crossing in the game has a sheet title / body / ticks title / route and plain line within budget, with the longest city names.
 // Run: node tests/crossingview.cjs   (plants in tools/plants.tsv)
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
@@ -17,7 +17,7 @@
   const s1 = base(); s1.areaBest = { weurope: 99999 };
   const c1 = V.crossingState(s1);
   check(c1.conds.filter(x => x.done).map(x => x.key).join() === 'era,plane' && c1.nearest && c1.nearest.key === 'nature' && !c1.ready, `era + plane done, nature left: nearest is nature, not ready: ${JSON.stringify(c1.conds.map(x => [x.key, x.done]))}`);
-  check(/^Cross: nature \d+ of 30$/.test(V.nearestLine(c1)), `the nearest line: "${V.nearestLine(c1)}"`);
+  check(/^Plant trees\. Nature \d+ of 30$/.test(V.boxView(c1).line), `the box's plain line: "${V.boxView(c1).line}"`);
   const bio0 = S.SEASON.offer.biodiversity; S.SEASON.offer.biodiversity = 0; const c2 = V.crossingState(s1); S.SEASON.offer.biodiversity = bio0;   // the test lever: "the last tick has just been met"
   check(c2.ready && !c2.told, `era + plane + nature: ready, not told, with NO trial stars in the save: ${JSON.stringify([c2.ready, c2.told])}`);
   // 1b. a crossing of a later era: the Era tick is open and the plain line says so; where the player is does not matter (the same state from another city)
@@ -31,7 +31,7 @@
   V.markTold(s1, c2.id); check(s1.crossingTold.length === 1, 'markTold is idempotent');
   // 3. UP NEXT.
   const near = N.nextUp(s1, { crossing: c1, limit: 3 });
-  check(near.some(r => r.key === 'cross:progress' && r.right === '' && /^Cross: nature/.test(r.short)), `a near crossing adds one quiet line: ${JSON.stringify(near.map(r => r.short))}`);
+  check(!near.some(r => r.key === 'cross:progress'), `UP NEXT has no quiet crossing line any more (the HOME box replaced it): ${JSON.stringify(near.map(r => r.short))}`);
   const teach = { ...s1, missionsDone: ['L1'] }, early = N.nextUp(teach, { crossing: c1, limit: 3 });   // the lessons are not done: the quiet line waits
   check(!early.some(r => r.key === 'cross:progress'), `while lessons remain UP NEXT shows no crossing line: ${JSON.stringify(early.map(r => r.key))}`);
   const fresh = { ...c2, told: false }, told = { ...c2, told: true };
@@ -44,7 +44,7 @@
     const full = { ...c, from: c.a, to: c.b, opens: 'weurope', km: C.crossingKm(c) }, st = V.stateOf(s0, full), t = V.sheetText(st);
     check(t.title.length <= 34 && T.wordCount(`${t.title} ${t.body}`) <= 60 && st.conds.length >= 2, `${c.id}: the sheet fits (title ${t.title.length}, ${T.wordCount(`${t.title} ${t.body}`)} words)`);
     const t1 = V.sheetText(st, true); check(T.wordCount(`${t1.title} ${t1.body}`) <= 60 && /no stops/.test(t1.body) && !/no stops/.test(t.body), `${c.id}: the FIRST crossing's sheet says what a crossing is, within 60 words (${T.wordCount(`${t1.title} ${t1.body}`)}), and later sheets do not`);
-    check(V.ticksTitle(st).length <= 28 && V.nearestLine(st).length <= 24 && V.rightText(st).length <= 13, `${c.id}: ticks title ${V.ticksTitle(st).length}, nearest line ${V.nearestLine(st).length}, right ${V.rightText(st).length}`);
+    check(V.ticksTitle(st).length <= 28 && V.rightText(st).length <= 13, `${c.id}: ticks title ${V.ticksTitle(st).length}, right ${V.rightText(st).length}`);
     const row = N.fitRow({ short: `Cross to ${st.to}`, where: 'fly', right: V.rightText(st) }); check(row.short.length + row.right.length <= N.ROW_MAX, `${c.id}: the lead row fits one line: "${row.short}" + "${row.right}"`);
   }
   console.log(fails.length ? `FAIL crossingview:\n - ${fails.join('\n - ')}` : `PASS crossingview: 3 conditions, nearest, the moment once and only once, UP NEXT rows, and the sheet and rows of all ${C.CROSSINGS.length - 1} crossings within budget`);

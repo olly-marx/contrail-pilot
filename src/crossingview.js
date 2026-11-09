@@ -45,9 +45,8 @@ export function markTold(save, id) { save.crossingTold = [...new Set([...(save.c
 export const FIRST_CROSSING = 'A crossing is one long flight with no stops. Missions do not count: just get there.';   // (the first sheet only; the user, 2026-11-06)
 export const sheetText = (s, first = false) => ({ eyebrow: 'A NEW WAY OPENS', title: `${s.to} is within reach!`, body: `A non-stop flight. How hard: ${s.difficulty}. It opens ${s.opens}. ${first ? FIRST_CROSSING + ' ' : ''}Fly it when you are ready.`, go: 'FLY THE CROSSING', later: 'LATER' });
 export const rightText = s => (s.told ? s.difficulty : `NEW ${s.difficulty}`);   // "NEW Easy": the row budget is 29 (fitRow shortens the left side)
-// The ticks block (MISSIONS) and the nearest-condition line (HOME).
+// The ticks block (MISSIONS).
 export const ticksTitle = s => `Crossing to ${s.to}`;
-export const nearestLine = s => (s.nearest ? (s.nearest.bare ? s.nearest.line : `Cross: ${s.nearest.line}`) : '');   // (<= 24: HOME's UP NEXT row)
 // The route sheet's crossing lines and the ending card (src/ui.js): no distance anywhere.
 export const routeCrossRest = c => `, non-stop, ${difficultyOf(c)}${c.opens ? ` (opens ${openName(c.opens)})` : ''}`;
 export const routeLapRest = c => `: from ${c.from} round the world and home, non-stop`;

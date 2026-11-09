@@ -11,7 +11,7 @@ import * as M2 from './missions2.js';
 import { CITY_TEMPLATES } from './aim.js';
 import { linksFor, wayTo } from './route.js';
 import { lineById } from './upgrades.js';
-import { rightText, nearestLine } from './crossingview.js';
+import { rightText } from './crossingview.js';
 
 export const SHORT_MAX = 24;
 export const ROW_MAX = 29;   // short + right column on ONE line at 320 px (an 8 px row with 12 px padding holds ~31 characters: measured, R1)
@@ -57,8 +57,6 @@ export function nextUp(save, { crossingReady = null, crossing = null, limit = 3 
   if (vis[0]) out.push(itemOf(save, vis[0]));
   // Save-safety (the user lost a 260-flight save, 2026-11-05): from landing 10, a pilot who never opened the code is asked, once per visit, to write it down.
   if (codeDue(save)) out.push({ key: 'code:save', short: 'Save your pilot code', full: 'Write your pilot code down. It is the only way to get your game back on another phone, or after your browser clears its data. Open PILOT.', where: 'pilot', right: 'PILOT ›' });
-  // R-A: while a crossing is near but not ready (and the lessons are done: they come first), ONE quiet line says which condition is nearest (tap: where to do it).
-  if (crossing && !crossing.ready && crossing.nearest && !lead && !M2.lessonsLeft(save).length) out.push({ key: 'cross:progress', short: clip(nearestLine(crossing)), full: `${crossing.to} needs: ${crossing.conds.filter(x => !x.done).map(x => `${x.label} (${x.status})`).join(', ')}`, where: crossing.nearest.where, right: '', cross: true });
   if (daily[0]) out.push(itemOf(save, daily[0]));
   for (const m of vis.slice(1)) { if (out.length >= limit) break; out.push(itemOf(save, m)); }
   return out.filter((x, i, a) => a.findIndex(y => y.key === x.key) === i).slice(0, limit);

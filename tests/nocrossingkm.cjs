@@ -12,7 +12,7 @@ globalThis.SEASON2 = true;
   for (const c of C.CROSSINGS) {
     const cc = { ...c, from: c.a || 'LONDON', to: c.b || 'LONDON', km: C.crossingKm(c), opens: 'africa' }, st = V.stateOf(base(), cc);
     check(st, `${c.id}: no state could be built`); if (!st) continue;
-    const texts = { sheet: Object.values(V.sheetText(st, false)).join(' | '), first: Object.values(V.sheetText(st, true)).join(' | '), right: V.rightText(st), rightTold: V.rightText({ ...st, told: true }), nearest: V.nearestLine(st), route: V.routeCrossRest(cc), lap: V.routeLapRest(cc),
+    const texts = { sheet: Object.values(V.sheetText(st, false)).join(' | '), first: Object.values(V.sheetText(st, true)).join(' | '), right: V.rightText(st), rightTold: V.rightText({ ...st, told: true }), route: V.routeCrossRest(cc), lap: V.routeLapRest(cc),
       conds: st.conds.map(x => `${x.label} | ${x.line} | ${x.status}`).join(' || '), ticks: V.ticksTitle(st) };
     for (const [k, v] of Object.entries(texts)) { scanned++; check(!bad(v), `${c.id} ${k}: a distance reaches the player: "${v}"`); }
     check(/Easy|Medium|Hard|Harder|Very hard|The lap/.test(texts.sheet), `${c.id}: the sheet does not say how hard it is: "${texts.sheet}"`);
