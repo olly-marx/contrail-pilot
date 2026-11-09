@@ -215,7 +215,7 @@ export async function copyText(text) {
 export function showCodeSheet(code, onSeen) {
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   showSheet({ eyebrow: 'WRITE THIS DOWN', title: 'Your pilot code', ok: 'I WROTE IT DOWN', onClose: onSeen,
-    html: `<p class="code" id="codeSheetCode">${esc(code)}</p><p class="small">It is the only way to get your game back on another phone, or after clearing your browser.</p><button id="codeCopy" class="chip" type="button">COPY CODE</button>` });
+    html: `<p class="code" id="codeSheetCode">${esc(code)}</p><p class="small">It brings your game back on another phone, or after clearing your browser.</p><p class="small">Or: Settings > BACK UP MY GAME.</p><button id="codeCopy" class="chip" type="button">COPY CODE</button>` });
   const b = document.getElementById('codeCopy');
   if (b) b.onclick = () => copyText(code).then(ok => { b.textContent = ok ? 'COPIED!' : 'SELECT AND COPY IT'; });
 }

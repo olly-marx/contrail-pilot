@@ -469,3 +469,5 @@ backuprestore	src/ui.js	s/    const res = restoreFromBackup(r.save);/    const r
 backuprestore	src/ui.js	s/      const r = readBackup(\$('bkText').value);/      const r = { ok: false, reason: 'format' };/	the restore sheet refuses every text, even a good backup
 backuprestore	src/ui.js	s/      download: () => { try {/      download: () => { return; try {/	DOWNLOAD A FILE does nothing
 backuprestore	src/ui.js	s/<button class="chip" type="button" data-gear="backup">BACK UP MY GAME<\/button>//	Settings has no BACK UP MY GAME button
+pilotcode	src/pilot.js	s/<p class="small">Or: Settings > BACK UP MY GAME.<\/p>//	the first-time code sheet does not mention BACK UP MY GAME
+pilotcode	src/persist.js	s/ Or tap Settings > BACK UP MY GAME\.//	the storage note does not mention BACK UP MY GAME
