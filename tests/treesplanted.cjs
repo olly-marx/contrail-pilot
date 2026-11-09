@@ -27,6 +27,12 @@
   check(T.treesPlanted(five) === 5, `UK + two lands add up: ${T.treesPlanted(five)}`);
   check(tier(five) === 1, `5 trees across lands earn Forester bronze (tier ${B.tierOf(five, 'forester')})`);
   check(B.progressOf(five, forester).value === 5, `the badge bar counts all lands: ${B.progressOf(five, forester).value}`);
+  // 4. the save-vs-save score (src/save.js progressOf; online.js pushes only if score >= 0.95 x the last stored one)
+  const S = await import('../src/save.js');
+  const base = { landings: 6, flights: 10, levels: {}, missionsDone: [], planted: {}, plantedIn: {} }, withAbroad = { ...base, plantedIn: { X: { id: 40 } } };
+  check(S.progressOf(withAbroad) > S.progressOf(base), `abroad trees raise the score: ${S.progressOf(withAbroad)} vs ${S.progressOf(base)}`);
+  check(!(S.progressOf(withAbroad) < S.progressOf(base) * 0.95), 'the 95% push guard cannot refuse a save once its stored score was the old one (without the trees)');
+  check(S.progressOf({ ...base, planted: { oak: 40 } }) === S.progressOf(withAbroad), 'a tree counts the same abroad as in the UK');
   check(T.treesPlanted(null) === 0 && T.treesPlanted({ plantedIn: 'x', planted: [1, 2] }) >= 0, 'bad shapes do not throw');
   console.log(fails.length ? `FAIL treesplanted:\n - ${fails.join('\n - ')}` : 'PASS treesplanted: trees planted abroad unlock Soil Patches and count for Forester (UK control first)');
   process.exit(fails.length ? 1 : 0);
