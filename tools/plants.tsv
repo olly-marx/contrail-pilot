@@ -564,7 +564,7 @@ landlogui	src/pilot.js	s/^    $('pLandCopy').onclick = () => {.*$/    $('pLandCo
 crossbox	src/crossingview.js	s/route: `\${s.from} > \${s.to}`, word: s.difficulty/route: `${s.from} > ${s.to} (${s.km} km)`, word: s.difficulty/	the box shows the crossing's distance again
 crossbox	src/crossingview.js	s/const ticks = \[\['Era', 'era'\], \['Plane', 'plane'\], \['Nature', 'nature'\]\]/const ticks = [['Era', 'era'], ['Nature', 'nature'], ['Plane', 'plane']]/	the box ticks are in the wrong order
 crossbox	src/crossingview.js	s/n \&\& n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' }/n \&\& n.where === 'hangar' ? { label: 'NATURE', act: 'nature' }/	an open plane tick sends the player to NATURE
-crossbox	src/crossingview.js	s/const line = s.ready ? 'Ready!' : s.nearest ? s.nearest.plain : '';/const line = s.ready ? 'Ready!' : s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
+crossbox	src/crossingview.js	s/const line = s.ready ? 'Ready! Tap to cross.' : s.nearest ? s.nearest.plain : '';/const line = s.ready ? 'Ready! Tap to cross.' : s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
 crossboxui	src/ui.js	s/hc.hidden = !box; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
 crossboxui	src/ui.js	s/hc.onclick = () => this.openCrossings(cs); }/hc.onclick = () => {}; }/	a tap on the HOME box does nothing
 crossboxui	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/);/	the HOME box shows during the lessons
