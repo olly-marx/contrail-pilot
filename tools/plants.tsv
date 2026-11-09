@@ -272,7 +272,7 @@ textbudget2	src/habitat/bush.js	s/row: 'Fox and cat control'/row: 'Fox and cat c
 missionreach	src/missions2.js	s/ready: f => f.cityB !== f.start, //	a rescue mission offered with no target but where you start (the 3-city Patagonia case)
 skipaim	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the next trip would not aim)
 skipaim	src/sim/rules.js	s/^  initFlight() {$/  initFlight() { this.save.skipAim = false;/	a crash retry loses the player's skip (initFlight clears it)
-skipaim	src/aim.js	s/save && save.skipAim ? null : aimOpen(save)/aimOpen(save)/	the skip does nothing (the route still aims)
+skipaim	src/aim.js	s/save && save.skipAim ? gotoTarget(save) : aimOpen(save)/aimOpen(save)/	the skip does nothing (the route still aims)
 skipaim	src/hub.js	s/skip: aimOpen(save) ? (save.skipAim ? 'on' : 'off') : null,/skip: save.skipAim ? 'on' : 'off',/	the skip button offered with no city mission to aim at
 textbudget2	src/aim.js	s/skip: 'Skip mission route this trip'/skip: 'Skip the mission route this trip'/	the skip chip text over one line at 320 (33 chars)
 skiptrip	src/sim/rules.js	s/ this.save.heading = null; this.save.skipAim = false; }/ this.save.heading = null; }/	a landing leaves the skip set (the real landing keeps skipping)
@@ -564,7 +564,7 @@ landlogui	src/pilot.js	s/^    $('pLandCopy').onclick = () => {.*$/    $('pLandCo
 crossbox	src/crossingview.js	s/route: `\${s.from} > \${s.to}`, word: s.difficulty/route: `${s.from} > ${s.to} (${s.km} km)`, word: s.difficulty/	the box shows the crossing's distance again
 crossbox	src/crossingview.js	s/const ticks = \[\['Era', 'era'\], \['Plane', 'plane'\], \['Nature', 'nature'\]\]/const ticks = [['Era', 'era'], ['Nature', 'nature'], ['Plane', 'plane']]/	the box ticks are in the wrong order
 crossbox	src/crossingview.js	s/n \&\& n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' }/n \&\& n.where === 'hangar' ? { label: 'NATURE', act: 'nature' }/	an open plane tick sends the player to NATURE
-crossbox	src/crossingview.js	s/const line = s.ready ? 'Ready!' : s.nearest ? s.nearest.plain : '';/const line = s.ready ? 'Ready!' : s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
+crossbox	src/crossingview.js	s/: s.nearest ? s.nearest.plain : '';/: s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
 crossboxui	src/ui.js	s/hc.hidden = !box; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
 crossboxui	src/ui.js	s/hc.onclick = () => this.openCrossings(cs); }/hc.onclick = () => {}; }/	a tap on the HOME box does nothing
 crossboxui	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/);/	the HOME box shows during the lessons
@@ -576,3 +576,5 @@ gotoaim	src/aim.js	s/  const g = gotoTarget(save, L); if (g) return g;   \/\/ th
 gotoaim	src/aim.js	s/export const aimTarget = save => (save \&\& save.skipAim ? gotoTarget(save) : aimOpen(save));/export const aimTarget = save => (save \&\& save.skipAim ? null : aimOpen(save));/	the per-trip skip drops the GO TO
 gotoaim	src/aim.js	s/if (save \&\& save.aimCity \&\& save.aimCity === save.city) { delete save.aimCity; return true; } return false; };/return false; };/	arrival never clears the GO TO
 gotoaim	src/aim.js	s/pathTo(save.city, t, linksFor(save)).length - 1 : 0; };/Math.min(3, pathTo(save.city, t, linksFor(save)).length - 1) : 0; };/	the hop count is capped at 3 (the missions' limit)
+crossbox	src/crossingview.js	s/dots: Math.min(hops, 6), moreDots: hops > 6,/dots: hops, moreDots: false,/	the hop dots are not capped at 6
+crossbox	src/crossingview.js	s/(s.atDeparture ? { label: `CROSS TO ${s.to}`, act: 'cross' } : { label: `GO TO ${s.from}`, act: 'goto' })/{ label: `CROSS TO ${s.to}`, act: 'cross' }/	a ready crossing away from its airport offers CROSS TO instead of GO TO
