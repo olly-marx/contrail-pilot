@@ -520,7 +520,7 @@ music	src/music.js	s#export function syncMusic() { if (off || isMuted()) stopMus
 music	src/sound.js	s#if (DUCKS\[k\] === 'duck' \&\& !muted \&\& duckHook) duckHook();#if (duckHook) duckHook();#	every cue ducks the music (a flap would pump it)
 music	src/sound.js	s#  tick: 'keep', flap: 'keep',#  flap: 'keep',#	a cue (tick) is not classed in DUCKS
 audiolive	src/musicplan.js	s#export const MUSIC_LEVELS = { soft: 0.031, middle: 0.042, loud: 0.0625 };#export const MUSIC_LEVELS = { soft: 0.124, middle: 0.168, loud: 0.25 };#	the music is four times too loud (it masks the effects)
-audiolive	src/ui.js	s#data-gear=\"music\">MUSIC: \${s.musicOff#data-gear=\"musicX\">MUSIC: ${s.musicOff#	the MUSIC chip is not wired
+audiolive	src/ui.js	s#data-gear=\"music\">\${musicChipText(s)}#data-gear=\"musicX\">${musicChipText(s)}#	the MUSIC chip is not wired
 audiolive	src/music.js	s#g.linearRampToValueAtTime(0.25, t + 0.12);#g.linearRampToValueAtTime(1, t + 0.12);#	a duck cue does not dip the music
 musicplan	src/musicdata.js	s#bpm: 140, transpose: -2,#bpm: 140, transpose: 0,#	song D sounds above A5 (its transposition is lost)
 musicplan	src/musicdata.js	s#hat: \[2, 6, 10, 14\], hatVol: 0.012,#hat: [2, 6, 10, 14], hatVol: 0.04,#	song E's tick is louder than the others (it is no longer the quietest)
