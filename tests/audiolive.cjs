@@ -48,6 +48,9 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
   const msgOf = () => p.evaluate(() => (document.getElementById('gearSoundMsg') || {}).textContent || '');
   await p.click('#startChoice [data-area="aotearoa"]', { timeout: 3000 }).catch(() => {}); await p.click('#startChoice [data-city="AUCKLAND"]', { timeout: 3000 }).catch(() => {}); await p.waitForTimeout(1200);   // (a fresh player must choose a start first)
   await p.evaluate(() => { const t = document.getElementById('tour'); if (t) t.remove(); const ui = game.registry.get('ui'); if (ui.tour) ui.tour.busy = true; ui.openGear(); }); await p.waitForTimeout(400);   // (a fresh player's tour overlay would intercept the tap)
+  const hasChip = !!(await p.$('#sheet [data-gear="soundtest"]'));
+  check(hasChip, 'the Settings sheet has a wired TEST SOUND chip');
+  if (!hasChip) { console.log('FAIL audiolive:\n - ' + fails.join('\n - ')); await b.close(); B = null; clearTimeout(T); process.exit(1); }
   let pr1 = p.evaluate(() => window.__peak(900)); await p.click('#sheet [data-gear="soundtest"]', { timeout: 4000 }); const tp = await pr1, tm = await msgOf();
   check(tp >= FLOORS.tick, `TEST SOUND plays a sound at the real volume (peak ${tp.toFixed(4)}; floor ${FLOORS.tick})`);
   check(/Did you hear it/.test(tm) && /This game is \d+\.\d+\.\d+/.test(tm), `TEST SOUND says what to check and which version runs (text: "${tm.replace(/\s+/g, ' ').slice(0, 120)}")`);
