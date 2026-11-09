@@ -19,7 +19,8 @@ const up = (notes, semis) => notes.map(x => ({ ...x, n: noteName(noteNumber(x.n)
 
 // One song -> its 48 bars: [{ chord, notes: [{s, n, l}], arpOrder }]. A2 / B2: bars 5-8 (index 4-7) an octave up, arpeggio order reversed.
 // A2 / B2 bars 5-8: an octave DOWN when the lead stays at or above LEAD_MIN, else an octave up when it stays at or below LEAD_MAX, else unchanged (the arpeggio is reversed in any case).
-function variation(notes, transpose) {
+function variation(notes, transpose, mode) {
+  if (mode === 'up') return up(notes, 12);   // a song may keep the original octave-UP second halves (song.variation = 'up': C, until the user picks); it is exempt from the lead range
   const nums = notes.map(x => noteNumber(x.n) + transpose), lo = Math.min(...nums), hi = Math.max(...nums);
   if (lo - 12 >= noteNumber(LEAD_MIN)) return up(notes, -12);
   if (hi + 12 <= noteNumber(LEAD_MAX)) return up(notes, 12);
@@ -31,7 +32,7 @@ export function expandSong(song) {
     const prime = name.endsWith('2'), sec = song.sections[name[0]];
     sec.chords.forEach((chord, i) => {
       let notes = parseBar(sec.melody[i]);
-      if (prime && i >= 4) notes = variation(notes, tr);
+      if (prime && i >= 4) notes = variation(notes, tr, song.variation);
       bars.push({ chord, notes, arpOrder: prime ? song.voices.arp.order.slice().reverse() : song.voices.arp.order });
     });
   }

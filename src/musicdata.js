@@ -21,7 +21,7 @@ export const SONGS = {
         '0 D5 8,8 E5 4,12 G5 4', '0 A5 4,4 G5 4,8 E5 4,12 D5 4', '0 B4 4,4 E5 4,8 D5 4,12 B4 4', '0 G4 8,8 E5 8'] },
       B: { chords: ['C', 'G', 'D', 'Em', 'C', 'G', 'D', 'D'], melody: ['0 E5 8,8 D5 4,12 B4 4', '0 G5 4,4 E5 4,8 D5 8', '0 A4 4,4 D5 4,8 E5 8', '0 B4 8,8 G4 8',
         '0 E5 4,4 G5 4,8 A5 8', '0 B5 4,4 A5 4,8 G5 8', '0 A5 4,4 E5 4,8 D5 8', '0 D5 8,8 E5 4,12 D5 4'] } } },
-  C: { name: 'Tailwind', key: 'C major pentatonic (A minor feel)', bpm: 136, transpose: 0,
+  C: { name: 'Tailwind', key: 'C major pentatonic (A minor feel)', bpm: 136, transpose: 0, variation: 'up',
     voices: { bass: [[0, 0, 2], [2, 0, 2], [4, 0, 2], [6, 0, 2], [8, 0, 2], [10, 0, 2], [12, 0, 2], [14, 7, 2]], arp: { every: 4, order: [2, 1, 0, 1], duty: 0.125, vol: 0.035 }, hat: [2, 6, 10, 14], lead: { duty: 0.25, vol: 0.085 } },
     sections: {
       A: { chords: ['Am', 'F', 'C', 'G', 'Am', 'F', 'C', 'G'], melody: ['0 A4 2,2 C5 2,4 E5 4,8 E5 2,10 D5 2,12 C5 4', '0 C5 2,2 A4 2,4 C5 4,8 A4 2,10 G4 2,12 A4 4', '0 E5 2,2 G5 2,4 E5 4,8 D5 2,10 E5 2,12 G5 4', '0 D5 2,2 E5 2,4 D5 4,8 G4 2,10 A4 2,12 D5 4',

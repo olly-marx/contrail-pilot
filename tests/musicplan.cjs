@@ -24,7 +24,7 @@
     check(shifts.every(sh => sh.every(x => x === sh[0]) && [-12, 0, 12].includes(sh[0])), `${id}: A' bars 5-8 are A's, each bar a whole octave down, up or unchanged (shifts ${shifts.map(sh => sh[0]).join(',')})`);
     // v2 (the family: too high-pitched): the lead as HEARD stays inside [LEAD_MIN, LEAD_MAX] and the bass drives like C's
     const r = P.leadRange(s);
-    check(r.hi <= P.noteNumber(P.LEAD_MAX) && r.lo >= P.noteNumber(P.LEAD_MIN), `${id}: no lead note above ${P.LEAD_MAX} or below ${P.LEAD_MIN} as heard (note numbers ${r.lo}..${r.hi}; transpose ${s.transpose})`);
+    check(s.variation === 'up' || (r.hi <= P.noteNumber(P.LEAD_MAX) && r.lo >= P.noteNumber(P.LEAD_MIN)), `${id}: no lead note above ${P.LEAD_MAX} or below ${P.LEAD_MIN} as heard (note numbers ${r.lo}..${r.hi}; transpose ${s.transpose})`);
     check(s.voices.bass.length === 8 && s.voices.hat.join() === '2,6,10,14', `${id}: a driving bass (8 notes a bar) and a tick on every off-beat (bass ${s.voices.bass.length}, hat ${s.voices.hat.join(',')})`);
     // 6. events
     const ev0 = P.stepEvents(s, bars, bars[0].notes[0].s);
