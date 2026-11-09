@@ -11,8 +11,8 @@ export const musicPlaying = () => !!timer;
 export function setMusicOff(v) { off = !!v; syncMusic(); }
 // The FIRST TAP arms the music (a context made before a tap starts suspended: src/sound.js); until then nothing is created, whatever the settings say.
 export function armMusic() { armed = true; syncMusic(); }
-export function startMusic() {
-  if (!armed || timer || off || isMuted()) return;
+function startMusic() {   // (not exported: every start goes through syncMusic, the one place that checks MUSIC off and the mute flag; audioBus is the second, independent mute guard)
+  if (!armed || timer) return;
   const b = audioBus(); if (!b) return;
   ctx = b.ctx;
   level = ctx.createGain(); level.gain.value = MUSIC_LEVEL; duckNode = ctx.createGain(); duckNode.connect(level); level.connect(b.out);
