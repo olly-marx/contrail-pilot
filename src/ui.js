@@ -43,8 +43,10 @@ import { LINES, FUELS, level, nextLevel, canBuy, buyLevel, fuelChoices, unlocked
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
-import { writeSave, resetSave, listStashed, restoreStashed, releaseHold, heldReason } from './save.js';
-import { allowRoughUpload, getPilot, takeOnlineNote, hasOnlineNote } from './online.js';
+import { writeSave, resetSave, listStashed, restoreStashed, releaseHold, heldReason, restoreFromBackup, progressOf } from './save.js';
+import { copyText } from './pilot.js';
+import { makeBackup, backupText, tooBigToShare, fileName, readBackup, refusalLines, compareLines, onlineWarns, ONLINE_WARNING, SHARE_TEXT } from './backup.js';
+import { allowRoughUpload, getPilot, takeOnlineNote, hasOnlineNote, onlineProgress } from './online.js';
 import { askPersist, noteDue, noteText, PERSIST_TIP } from './persist.js';
 import { eraBarHTML } from './eras.js';
 import { FleetHangar } from './hangar.js';
@@ -239,12 +241,68 @@ export class UI {
     const close = showSheet({ eyebrow: 'MENU', title: 'Settings', ok: 'CLOSE',
       html: `<div class="gear-list"><button class="chip" type="button" data-gear="how">HOW TO PLAY</button><button class="chip" type="button" data-gear="school">FLIGHT SCHOOL</button>`
         + `<button class="chip" type="button" data-gear="sound">SOUND: ${s.muted ? 'OFF' : 'ON'}</button><button class="chip" type="button" data-gear="soundtest">TEST SOUND</button><button class="chip" type="button" data-gear="about">ABOUT US</button>`
-        + `<button class="chip" type="button" data-gear="recover">RECOVER AN EARLIER SAVE</button><button class="chip warn" type="button" data-gear="reset">RESET PROGRESS</button></div><p class="small gear-soundmsg" id="gearSoundMsg"></p>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
-    const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), recover: () => this.openRecover(), reset: () => $('resetBtn').click() };
+        + `<button class="chip" type="button" data-gear="saved">YOUR SAVED GAME</button></div><p class="small gear-soundmsg" id="gearSoundMsg"></p>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
+    this.wireGear(close);
+  }
+  // The second page of Settings (0.37.x: the one sheet had 8 buttons and its CLOSE ran off a 320x568 screen): everything about the saved game.
+  openSaved() {
+    sfx.tick();
+    const s = this.save;
+    const close = showSheet({ eyebrow: 'SETTINGS', title: 'Your saved game', ok: 'CLOSE',
+      html: `<div class="gear-list"><button class="chip" type="button" data-gear="recover">RECOVER AN EARLIER SAVE</button><button class="chip" type="button" data-gear="backup">BACK UP MY GAME</button><button class="chip" type="button" data-gear="restore">RESTORE A BACKUP</button><button class="chip warn" type="button" data-gear="reset">RESET PROGRESS</button></div><p class="small gear-last">${s.lastBackup ? `Last backup: ${s.lastBackup}` : 'Last backup: never'}</p>` });
+    this.wireGear(close);
+  }
+  // The taps of both Settings pages (the old buttons stay in the page: the classic screens use them, and their handlers are the ones called here).
+  wireGear(close) {
+    const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), saved: () => this.openSaved(), recover: () => this.openRecover(), backup: () => this.openBackup(), restore: () => this.openRestore(), reset: () => $('resetBtn').click() };
     document.querySelectorAll('#sheet [data-gear]').forEach(b => b.onclick = () => {
       if (b.dataset.gear === 'sound') { $('muteBtn').click(); b.textContent = `SOUND: ${this.save.muted ? 'OFF' : 'ON'}`; return; }   // the sheet stays open: you hear the change
       if (b.dataset.gear === 'soundtest') return this.testSound();
       close(); act[b.dataset.gear](); });
+  }
+
+  // ---- BACK UP MY GAME (research/BACKUP-MY-GAME.md; src/backup.js holds the format and the words) ----
+  markBackup() { this.save.lastBackup = new Date().toISOString().slice(0, 10); writeSave(this.save); }
+  openBackup() {
+    const s = this.save, pilot = (getPilot() || {}).first || '', text = backupText(makeBackup(s, { game: window.__CP_VERSION || 'unknown', pilot }));
+    const canShare = typeof navigator !== 'undefined' && !!navigator.share;
+    showSheet({ eyebrow: 'KEEP IT SAFE', title: 'Back up my game', ok: 'CLOSE',
+      html: `<p class="small">Your game lives in this browser only. A backup is a small file only you keep.</p>${tooBigToShare(text) ? '<p class="small">This backup is big.</p>' : ''}<div class="gear-list">${canShare ? '<button class="chip" type="button" data-bk="share">SHARE MY BACKUP</button>' : ''}<button class="chip" type="button" data-bk="download">DOWNLOAD A FILE</button><button class="chip" type="button" data-bk="copy">COPY AS TEXT</button></div><p id="bkNote" class="small"></p>` });
+    const note = t => { const e = $('bkNote'); if (e) e.textContent = t; };
+    const done = t => { this.markBackup(); note(t); };
+    const act = {
+      share: async () => {
+        try {
+          const file = typeof File !== 'undefined' ? new File([text], fileName(pilot), { type: 'application/json' }) : null;
+          if (file && navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], ...SHARE_TEXT }); else await navigator.share({ ...SHARE_TEXT, text });
+          done('Shared. Keep it safe!');
+        } catch (e) { if (!e || e.name !== 'AbortError') note('That did not work. Try COPY.'); }
+      },
+      download: () => { try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = fileName(pilot); document.body.appendChild(a); a.click(); a.remove(); done('Saved. Keep the file safe!'); } catch (e) { note('That did not work. Try COPY.'); } },
+      copy: async () => { if (await copyText(text)) done('Copied! Paste it in a note.'); else note('That did not work.'); },
+    };
+    document.querySelectorAll('#sheet [data-bk]').forEach(b => b.onclick = () => act[b.dataset.bk]());
+  }
+  openRestore() {
+    showSheet({ eyebrow: 'SETTINGS', title: 'Restore a backup', ok: 'CLOSE',
+      html: `<p class="small">Paste your backup here, or choose the file.</p><textarea id="bkText" class="bk-text" rows="4" spellcheck="false" aria-label="Paste your backup here"></textarea><input id="bkFile" type="file" accept=".json,.txt,application/json,text/plain" hidden><div class="gear-list"><button class="chip" type="button" data-bk="file">CHOOSE A FILE</button><button class="chip" type="button" data-bk="check">CHECK IT</button></div><p id="bkNote" class="small"></p>` });
+    const note = lines => { const e = $('bkNote'); if (e) e.innerHTML = lines.map(l => String(l).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))).join('<br>'); };
+    const check = () => {
+      const r = readBackup($('bkText').value);
+      if (!r.ok) return note(refusalLines(r.reason));
+      const when = r.made ? new Date(r.made).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '';
+      const warn = onlineWarns({ pilot: getPilot(), onlineProgress: onlineProgress(), backupProgress: r.summary.progress });
+      showSheet({ eyebrow: 'GO BACK?', title: 'Found a backup', ok: 'CANCEL',
+        html: `${compareLines(r.summary, { flights: this.save.flights || 0, seeds: Math.round(this.save.seeds || 0), progress: progressOf(this.save) }, when).map(l => `<p class="small bk-line">${l}</p>`).join('')}<p class="small">Your game now is kept too.</p>${warn ? `<p class="small bk-warn">${ONLINE_WARNING}</p>` : ''}`,
+        action: { label: 'GO BACK TO IT', onTap: () => this.applyBackup(r) } });
+    };
+    $('bkFile').onchange = () => { const f = $('bkFile').files && $('bkFile').files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { $('bkText').value = String(rd.result || ''); check(); }; rd.onerror = () => note(['That did not work.']); rd.readAsText(f); };
+    document.querySelectorAll('#sheet [data-bk]').forEach(b => b.onclick = () => (b.dataset.bk === 'file' ? $('bkFile').click() : check()));
+  }
+  applyBackup(r) {
+    const res = restoreFromBackup(r.save);
+    if (res === 'ok') return location.reload();
+    this.toast('NOT CHANGED', res === 'not-kept' ? 'Your game now could not be kept first, so nothing was replaced.' : 'That did not work. Nothing was changed.', 'bad', 6);
   }
 
   // TEST SOUND (Settings): a tick, then a bell, at the real volume, so a player who hears nothing can tell the game from the tab or the device (research/SOUND-DESIGN.md; the user heard

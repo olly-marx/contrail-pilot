@@ -190,6 +190,8 @@ export const syncJson = save => JSON.stringify(Object.fromEntries(Object.entries
 // locally) and it must not be written over. Allowed up to 5% below (rounding, a pilot who deleted a few trees). `force`: the caller knows better.
 const POORER = 0.95;
 // A deliberate reset: the next upload may replace the online copy (it is the player's choice; the old one is still in RECOVER AN EARLIER SAVE and online history).
+// How far the ONLINE copy had got when this device last synced (0: no online copy known). Read by the backup card (src/backup.js onlineWarns).
+export const onlineProgress = () => read(SYNC_KEY, {}).serverProgress || 0;
 export function allowRoughUpload() { write(SYNC_KEY, { ...read(SYNC_KEY, {}), serverProgress: 0 }); }
 
 // Upload the save if it changed since the last upload. Returns true if the server kept it.

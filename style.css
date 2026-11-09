@@ -1041,3 +1041,6 @@ h2.sub { margin-top: -4px; }
   .newbest, .coach-tap, .newtag, .btn.glow, .line.pick, .tab.glow:not(.on), .btn.claim, .btn.claim.pulse, .tcaptain, .wf.ghost, .wf.arrive, .w-webpic.w-flash, .fpreview .fpic img.fghost, .hcap.working .dots::after { animation: none; }
   .hplane .hp-corner, .hplane .hp-preview, #tour .tring, #tour .tfinger { animation: none; }
 }
+/* BACK UP MY GAME (src/ui.js openBackup / openRestore) */
+.bk-text { width: 100%; box-sizing: border-box; min-height: 84px; font: 8px/1.4 monospace; padding: 6px; border: 2px solid #1b1b2f; background: #fff; color: #1b1b2f; resize: vertical; }
+.bk-line { margin: 2px 0; } .bk-warn { color: #b02a1a; margin-top: 8px; } .gear-last { text-align: center; margin: 8px 0 0; }

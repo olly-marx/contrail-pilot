@@ -66,6 +66,8 @@ group plants-ui-js | src/ui.js | missionlanes routechip skiptrip
 group plants-wild-js | src/wild.js | hangarnew preloadgate rowfit
 group plants-style-css | style.css | gear skiptrip
 group online-note | src/online.js src/ui.js src/main.js | onlinenote
+group backup | src/backup.js src/save.js | backuprestore
+group backup-ui | src/ui.js | backuprestore
 group sound-live | src/sound.js | audiolive
 group sound-live-ui | src/ui.js | audiolive
 group payoff-full | src/hangar.js style.css | payofffull

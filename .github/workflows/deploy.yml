@@ -55,9 +55,20 @@ jobs:
           TEST_RESULT: ${{ needs.test.result }}
         run: tools/ci-gate.sh decide "$GATE_RESULT" "$SKIP" "$TEST_RESULT" | tee -a "$GITHUB_OUTPUT"
 
+  # Dry runs only: the SAME needs/if shape as `deploy` minus the ref clause (tests/cigate.cjs asserts the two conditions are identical apart from that clause), an echo instead of a
+  # deploy. It makes a dry run exercise the transitive-skip trap that a real deploy job hides behind its main-only guard.
+  deploy-probe:
+    needs: decide
+    if: ${{ !cancelled() && needs.decide.outputs.deploy == 'true' && github.ref != 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          echo "DRY: the deploy job would run here"
+
   # A dry run (ci-dry/<skip|run>-*) checks the gate against the expectation in its own branch name; red = the gate or the wiring is wrong.
   dry-check:
-    needs: [gate, test, decide]
+    needs: [gate, test, decide, deploy-probe]
     if: ${{ !cancelled() && github.ref != 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -67,11 +78,14 @@ jobs:
           SKIP: ${{ needs.gate.outputs.skip }}
           TEST_RESULT: ${{ needs.test.result }}
           DEPLOY: ${{ needs.decide.outputs.deploy }}
-        run: tools/ci-gate.sh dry-check "$GITHUB_REF_NAME" "$SKIP" "$TEST_RESULT" "$DEPLOY"
+          PROBE: ${{ needs.deploy-probe.result }}
+        run: tools/ci-gate.sh dry-check "$GITHUB_REF_NAME" "$SKIP" "$TEST_RESULT" "$DEPLOY" "$PROBE"
 
   deploy:
     needs: decide
-    if: ${{ needs.decide.outputs.deploy == 'true' && github.ref == 'refs/heads/main' }}
+    # !cancelled() is REQUIRED: the implicit success() of a job `if` also looks at ANCESTOR jobs, and `test` is skipped when the gate skipped the matrix; without a status
+    # function every job downstream of a skipped job is skipped too (0.37.1's first live run deployed nothing because of this). tests/cigate.cjs asserts it.
+    if: ${{ !cancelled() && needs.decide.outputs.deploy == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
@@ -93,6 +107,7 @@ jobs:
   # leaves the live game alone. A version that already has a tag is left as it is (a deploy of a non-release commit).
   tag:
     needs: deploy
+    if: ${{ !cancelled() && needs.deploy.result == 'success' }}   # (same reason as deploy: test may be skipped upstream)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

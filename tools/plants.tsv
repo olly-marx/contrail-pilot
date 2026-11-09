@@ -458,6 +458,23 @@ cuesites	src/wild.js	s/sfx.grow();/sfx.buy();/	a funded nature project plays the
 cuesites	src/ui.js	s/sfx.softfail()/sfx.nope()/	a lost crossing plays the nope buzz again
 cuesites	src/ui.js	s/sfx.medal();/sfx.coin();/	a badge on the results card plays no medal
 sound	src/sound.js	s/done: () => \[523, 784, 1047\]/done: () => [523, 659, 784]/	two cues are the same recipe (done sounds like dawn)
+backup	src/backup.js	s/  if (check(JSON.stringify(o.save)) !== o.check) return { ok: false, reason: 'check' };//	the checksum is not verified (a cut or edited text restores)
+backup	src/save.js	s/    stashSave('before restoring a backup');//	a restore skips keeping the current game first
+backup	src/save.js	s/      if (!top || top.raw !== cur) return 'not-kept';//	a restore replaces the game even when it could not be kept
+backup	src/backup.js	s/pilot: String(pilot || '').slice(0, 12),/pilot: String(pilot || '').slice(0, 12) + localStorage.getItem('contrailPilot.code'),/	the pilot code goes into the backup
+backup	src/backup.js	s/  if (isBlank(save)) return { ok: false, reason: 'blank' };//	a blank backup is accepted over a real game
+backup	src/backup.js	s/  if (text.length > MAX_BYTES) return { ok: false, reason: 'size' };//	a backup over 1 MB is read
+backup	src/backup.js	s/ || o.v > BACKUP_V//	a backup from a newer format is read
+backuprestore	src/ui.js	s/    const res = restoreFromBackup(r.save);/    const res = 'error';/	GO BACK TO IT restores nothing
+backuprestore	src/ui.js	s/      const r = readBackup(\$('bkText').value);/      const r = { ok: false, reason: 'format' };/	the restore sheet refuses every text, even a good backup
+backuprestore	src/ui.js	s/      download: () => { try {/      download: () => { return; try {/	DOWNLOAD A FILE does nothing
+backuprestore	src/ui.js	s/<button class="chip" type="button" data-gear="backup">BACK UP MY GAME<\/button>//	Settings has no BACK UP MY GAME button
+pilotcode	src/pilot.js	s/<p class="small">Or: Settings > BACK UP MY GAME.<\/p>//	the first-time code sheet does not mention BACK UP MY GAME
+pilotcode	src/persist.js	s/ Or tap Settings > BACK UP MY GAME\.//	the storage note does not mention BACK UP MY GAME
+restoresync	src/online.js	s/  if (!opts.force \&\& last.serverProgress \&\& mine < last.serverProgress \* POORER) return false;/  if (false) return false;/	an older restored save is uploaded over a richer online copy
+restoresync	src/save.js	s/    stashSave(.before restoring a backup.);//	the restore does not keep the current game first (this test must see it)
+gear	src/ui.js	s/data-gear="saved">YOUR SAVED GAME<\/button><\/div>/data-gear="saved">YOUR SAVED GAME<\/button><button class="chip" type="button" data-gear="how">A<\/button><button class="chip" type="button" data-gear="how">B<\/button><button class="chip" type="button" data-gear="how">C<\/button><button class="chip" type="button" data-gear="how">D<\/button><\/div>/	an extra chip pushes CLOSE off the Settings sheet
+gear	src/ui.js	s/saved: () => this.openSaved(), //	YOUR SAVED GAME opens nothing (no page 2)
 audiolive	src/sound.js	s/if (ctx.state !== 'running') {/if (false) {/	the context is never resumed (a suspended context stays silent)
 audiolive	src/sound.js	s/g.gain.value = 1;/g.gain.value = 0;/	the master gain is 0 (silence)
 audiolive	src/sound.js	s/cp.connect(ctx.destination); bus = g;/bus = g;/	the master chain is not connected to the speakers
@@ -480,3 +497,6 @@ preloadgate	tests/lib/pageshost.js	s/if (maxAge !== null) h/if (false) h/	the te
 preloadgate	tests/lib/pageshost.js	s/{ root = repo, maxAge = 600 }/{ root = repo, maxAge = 0 }/	the test server sends max-age=0 (every picture is stale at once)
 payofffull	style.css	s#.payoff.arrive .pay-plane { transform: none; }#.payoff.arrive .pay-plane { transform: scale(1.8); }#	the payoff zoom is back (it crops the plane's body)
 payofffull	style.css	s#.payoff.arrive .pay-mark { opacity: 1; animation: paymark 1.2s ease-in-out infinite; }#.payoff.arrive .pay-mark { opacity: 0; }#	the new part is no longer ringed
+cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.decide.outputs.deploy == 'true' \&\& github.ref == #if: ${{ needs.decide.outputs.deploy == 'true' \&\& github.ref == #	the deploy job loses !cancelled() (a skipped test job upstream skips the deploy: 0.37.1's first live run)
+cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.deploy.result == 'success' }}#if: ${{ needs.deploy.result == 'success' }}#	the tag job loses !cancelled() (no release tag after a skipped-test deploy)
+cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.decide.outputs.deploy == 'true' \&\& github.ref != #if: ${{ needs.decide.outputs.deploy == 'true' \&\& github.ref != #	the dry-run deploy probe loses !cancelled() (it would no longer mirror the deploy job)
