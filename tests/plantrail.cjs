@@ -8,7 +8,7 @@ const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const TOURS = ['name', 'r-school', 'r-free', 'r-payoff', 'r-res1', 'r-takeoff2', 'nature-lead', 'r-res2', 'r-nature', 'r-systems', 'r-bonus', 'r-parcels', 'r-boards', 'nature-swipe', 'globe-hint', 'r-map'];
-const seed = extra => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', city: 'AMSTERDAM', visited: ['AMSTERDAM'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['tree-1', 'x-bars', 'airport', 'takeoff'], tours: TOURS,
+const seed = extra => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', city: 'AMSTERDAM', visited: ['AMSTERDAM'], tutorialDone: true, autoTakeoff: true, muted: true, priceVersion: 2, seenTips: ['tree-1', 'x-bars', 'airport', 'takeoff'], tours: TOURS,
   freeGiven: true, freeProjectGiven: true, freeUpgrade: false, landings: 6, flights: 8, seeds: 40, crystals: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], levels: { trees: 1 }, planted: {}, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} }, ...extra });
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
