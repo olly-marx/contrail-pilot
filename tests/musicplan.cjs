@@ -25,15 +25,23 @@
     // v2 (the family: too high-pitched): the lead as HEARD stays inside [LEAD_MIN, LEAD_MAX] and the bass drives like C's
     const r = P.leadRange(s);
     check(s.variation === 'up' || (r.hi <= P.noteNumber(P.LEAD_MAX) && r.lo >= P.noteNumber(P.LEAD_MIN)), `${id}: no lead note above ${P.LEAD_MAX} or below ${P.LEAD_MIN} as heard (note numbers ${r.lo}..${r.hi}; transpose ${s.transpose})`);
-    check(s.voices.bass.length === 8 && s.voices.hat.join() === '2,6,10,14', `${id}: a driving bass (8 notes a bar) and a tick on every off-beat (bass ${s.voices.bass.length}, hat ${s.voices.hat.join(',')})`);
+    check(s.voices.bass.length === 8 && s.voices.drums && s.voices.drums.hat.join() === '2,6,10,14', `${id}: a driving bass (8 notes a bar) and a hat on every off-beat (bass ${s.voices.bass.length}, hat ${s.voices.drums && s.voices.drums.hat.join(',')})`);
     // 6. events
     const ev0 = P.stepEvents(s, bars, bars[0].notes[0].s);
     check(ev0.some(e => e.kind === 'lead' && Math.abs(e.f - P.noteFreq(bars[0].notes[0].n) * Math.pow(2, (s.transpose || 0) / 12)) < 1e-6), `${id}: the first lead note is played on its step`);
-    const hats = []; for (let st = 0; st < 16; st++) if (P.stepEvents(s, bars, st).some(e => e.kind === 'hat')) hats.push(st);
-    check(JSON.stringify(hats) === JSON.stringify(s.voices.hat), `${id}: hats only on the declared steps (${hats.join(',')})`);
+    // the BEAT: each drum is played on exactly its declared steps (bar 1, no fill), the drums switch is separate (drums: false = none), the fill is in the last bar of a section only
+    const on = k => { const r = []; for (let st = 0; st < 16; st++) if (P.stepEvents(s, bars, st).some(e => e.kind === k)) r.push(st); return r; }, d = s.voices.drums;
+    check(JSON.stringify(on('hat')) === JSON.stringify(d.hat), `${id}: hats only on the declared steps (${on('hat').join(',')})`);
+    check(JSON.stringify(on('kick')) === JSON.stringify([...d.kick, ...(d.kickGhost || [])].sort((a, b) => a - b)), `${id}: kicks (and ghost kicks) only on the declared steps (${on('kick').join(',')})`);
+    check(JSON.stringify(on('snare')) === JSON.stringify(d.snare.slice().sort((a, b) => a - b)), `${id}: snares only on the declared steps in an ordinary bar (${on('snare').join(',')})`);
+    const noDrums = []; for (let st = 0; st < 16; st++) if (P.stepEvents(s, bars, st, { drums: false }).some(e => ['kick', 'snare', 'hat'].includes(e.kind))) noDrums.push(st);
+    check(noDrums.length === 0, `${id}: the drums switch is separate: drums false plays no drum at all (found on steps ${noDrums.join(',')})`);
+    if (d.fill && d.fill.snare && d.fill.snare.length) { const fillSteps = []; for (let st = 0; st < 16; st++) if (P.stepEvents(s, bars, 7 * 16 + st).some(e => e.kind === 'snare')) fillSteps.push(st); check(d.fill.snare.every(x => fillSteps.includes(x)), `${id}: the last bar of a section carries its snare fill (steps ${fillSteps.join(',')})`); }
   }
-  const hv = id => D.SONGS[id].voices.hatVol || 0.025;
+  const hv = id => D.SONGS[id].voices.drums.hatVol, kv = id => D.SONGS[id].voices.drums.kickVol;
   check(hv('E') < hv('B') && hv('B') < hv('A') && hv('E') === Math.min(...ids.map(hv)), `E keeps the quietest tick (hat volume A ${hv('A')}, B ${hv('B')}, D ${hv('D')}, E ${hv('E')})`);
+  check(kv('E') === Math.min(...ids.map(kv)) && D.SONGS.E.voices.drums.snare.length === 0, `E keeps the quietest beat: the softest kick (${kv('E')}) and no snare`);
+  check(['C', 'D'].every(id => D.SONGS[id].voices.drums.kick.join() === '0,4,8,12' && D.SONGS[id].voices.drums.snare.join() === '4,12'), 'C and D: four-on-the-floor kick (0,4,8,12) and a clap on 2 and 4 (4,12)');
   check(P.MUSIC_PASSES >= 2 && P.MUSIC_PASSES <= 4 && Number.isInteger(P.MUSIC_PASSES), `MUSIC_PASSES is the declared repeat count (${P.MUSIC_PASSES})`);
   const cyc = P.cycleSeconds(); check(cyc > 15 * 60 && cyc < 30 * 60, `a full cycle of five lasts ${(cyc / 60).toFixed(1)} min (15-30)`);
   // 4. the shuffle bag, seeded.

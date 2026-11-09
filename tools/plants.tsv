@@ -520,3 +520,7 @@ audiolive	src/ui.js	s#data-gear=\"music\">MUSIC: \${s.musicOff#data-gear=\"music
 audiolive	src/music.js	s#g.linearRampToValueAtTime(0.25, t + 0.12);#g.linearRampToValueAtTime(1, t + 0.12);#	a duck cue does not dip the music
 musicplan	src/musicdata.js	s#bpm: 140, transpose: -2,#bpm: 140, transpose: 0,#	song D sounds above A5 (its transposition is lost)
 musicplan	src/musicdata.js	s#hat: \[2, 6, 10, 14\], hatVol: 0.012,#hat: [2, 6, 10, 14], hatVol: 0.04,#	song E's tick is louder than the others (it is no longer the quietest)
+musicplan	src/musicplan.js	s#    if (d.kick.includes(s)) out.push#    if (false) out.push#	the kick drum never plays
+musicplan	src/musicplan.js	s#stepEvents(song, bars, stepIndex, { drums = DRUMS_ON } = {}) {#stepEvents(song, bars, stepIndex, { drums = true } = {}) {#	the drums switch is ignored (drums false still plays drums)
+musicplan	src/musicplan.js	s#barNo % 8 === 7#barNo % 8 === 6#	the snare fill lands one bar early
+musicplan	src/musicdata.js	s#drums: { kick: \[0, 8\], kickGhost: \[\], kickVol: 0.1,#drums: { kick: [0, 8], kickGhost: [], kickVol: 0.3,#	song E's kick is the loudest (it is no longer the quiet song)

@@ -16,7 +16,7 @@ const html = `<!doctype html>
   label { display: block; margin: 8px 0; } input[type=range] { width: 100%; }
 </style></head><body>
 <h1>Contrail Pilot: the five songs</h1>
-<p class="note">Made in this page with Web Audio (no sound files, works offline); the code is the game's own music code. Each song plays its LONG form once (about 80-90 seconds): A, then A again a little higher, then a new B part, B higher, then A twice more. In the game each song repeats a few times, then the next one starts. Nobody on the team has heard these: they are drafts for your ears.</p>
+<p class="note">Made in this page with Web Audio (no sound files, works offline); the code is the game's own music code. These versions have a BEAT (kick, snare and hi-hat, synthesized chip drums: not a studio kick). Each song plays its LONG form once (about 80-90 seconds): A, then A again a little higher, then a new B part, B higher, then A twice more. In the game each song repeats a few times, then the next one starts. Nobody on the team has heard these: they are drafts for your ears.</p>
 <label>Volume <input id="vol" type="range" min="0" max="100" value="70"></label>
 <div id="cards"></div>
 <div class="card"><h2>Playlist</h2><small>The five songs in a random order, each once (a shuffle: the same song never plays twice in a row), with a one second crossfade. In the game each song plays three times before the next.</small>
