@@ -10,9 +10,9 @@ export const COUNTS = {   // tour id -> how many steps it has (the number of ent
 export const SUBJECTS = {
   'r-school#1': '#rNextRows .rc-row',              // the UP NEXT lead row that says "a free part"
   'r-hangar#1': null,
-  'r-free#1': '#hPlane',                           // the Engines row (target) and the plane where the new engines will show
-  'r-free#2': ['#hPreview', '#hPlane'],            // the engine upgrade's card (name, CO2 bar) and the plane
-  'r-takeoff1#1': ['#hubNext .rc-row', '#hPlane'], // HOME: the goal "Land at X" (UP NEXT); the hangar: the plane with its new engines
+  'r-free#1': '.fpreview',                           // the Engines row (target) and the big plane picture (.fpreview) where the new engines will show
+  'r-free#2': ['#hPreview', '.fpreview'],            // the engine upgrade's card (name, CO2 bar) and the plane
+  'r-takeoff1#1': ['#hubNext .rc-row', '.fpreview'], // HOME: the goal "Land at X" (UP NEXT); the hangar: the plane with its new engines
   'r-res1#1': null, 'r-res1#2': null,
   'r-res1#3': '#rNextRows .rc-row',                // the next goal
   'r-takeoff2#1': '#hubNext .rc-row',              // the lesson row "Icy air in daytime"

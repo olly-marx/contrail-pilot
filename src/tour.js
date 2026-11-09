@@ -321,12 +321,18 @@ export class Tour {
     const u0 = Math.max(0, cy - hh - pad), u1 = Math.min(H, barTop, cy + hh + pad), b = this.el.querySelector('.tbubble');
     set(b, { top: '0px', bottom: 'auto' });
     const bh = b.getBoundingClientRect().height, gap = 10;
-    if (subs.length) {   // a step with a SUBJECT: the bubble goes above ALL the lit holes or below ALL of them, compact (no Captain) if neither side has room, and covers none of them
-      const lo = Math.min(...holes.map(h => h.y0)), hi = Math.max(...holes.map(h => h.y1)), roomA = lo - gap - 4, roomB = barTop - 4 - (hi + gap);
+    if (subs.length) {   // a step with a SUBJECT: the bubble goes in a FREE band (above, between or below the lit holes), compact (no Captain) if none is tall enough, and covers none of them
+      const free = h => { const occ = holes.map(q => [q.y0 - gap, q.y1 + gap]).sort((a, c) => a[0] - c[0]), out = []; let cur = 4; for (const [a, c] of occ) { if (a > cur) out.push([cur, a]); cur = Math.max(cur, c); } if (barTop - 4 > cur) out.push([cur, barTop - 4]); return out.filter(f => f[1] - f[0] >= h); };
       b.classList.remove('compact');
-      if (this.side == null) this.side = roomA >= bh && roomB >= bh ? (cy < H / 2 ? 'below' : 'above') : roomB >= bh ? 'below' : roomA >= bh ? 'above' : (roomB >= roomA ? 'below' : 'above');
-      let h2 = bh; if ((this.side === 'below' ? roomB : roomA) < bh) { b.classList.add('compact'); h2 = b.getBoundingClientRect().height; }
-      const tt = this.side === 'below' ? hi + gap : lo - gap - h2;
+      let h2 = bh, fits = free(h2);
+      if (!fits.length) { b.classList.add('compact'); h2 = b.getBoundingClientRect().height; fits = free(h2); }
+      let pick = null;
+      if (fits.length) {
+        if (this.side == null) this.side = fits.some(f => f[0] >= y1 - 1) ? 'below' : 'above';   // (decided once per step: below the target if any free band is, else above)
+        const onSide = fits.filter(f => (this.side === 'below' ? f[0] >= y1 - 1 : f[1] <= y0 + 1)); const pool = onSide.length ? onSide : fits;
+        pick = pool.sort((a, c) => Math.abs((a[0] + a[1]) / 2 - cy) - Math.abs((c[0] + c[1]) / 2 - cy))[0];
+      }
+      const tt = pick ? (pick[0] >= y1 - 1 || this.side === 'below' ? pick[0] : pick[1] - h2) : Math.max(4, barTop - 4 - h2);   // (no free band at all: the bottom, and the test will say so by name)
       set(b, { top: `${Math.max(4, Math.min(H - 4 - h2, tt))}px` });
       const cap2 = this.el.querySelector('.tcaptain'), br2 = b.getBoundingClientRect(); cap2.classList.toggle('left', (x0 + x1) / 2 < br2.left + br2.width / 2);
       return;

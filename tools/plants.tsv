@@ -468,6 +468,6 @@ audiolive	src/ui.js	s/sfx.tick(); setTimeout(() => sfx.medal(), 350); m.innerHTM
 audiolive	src/ui.js	s/if (this.save.muted) m.innerHTML = 'Sound is OFF. Tap SOUND.';/if (false) m.innerHTML = '';/	TEST SOUND plays even when the game is muted
 audiolive	src/ui.js	s/    m.innerHTML += `<br>This game is \${VERSION}`;/    /	TEST SOUND does not say which version runs
 railsubjects	src/railsubjects.js	s/  'r-free#2': \['#hPreview', '#hPlane'\],.*//	a step has no declared subject (the engine upgrade's)
-spotlight	src/tour.js	s/hy1 > hy0) holes.push(/hy1 > hy0 \&\& false) holes.push(/	the subject is not lit (the hole is the target only)
-spotlight	src/tour.js	s/      const tt = this.side === 'below' ? hi + gap : lo - gap - h2;/      const tt = 130;/	the bubble sits over the subject
+spotlight	src/tour.js	s/ \&\& (hy1 - hy0) >= 0.5 \* (q.bottom - q.top + 8)) holes.push(/ \&\& false) holes.push(/	the subject is not lit (the hole is the target only)
+spotlight	src/tour.js	s/Math.min(H - 4 - h2, tt))/Math.min(H - 4 - h2, 130))/	the bubble sits over the subject
 spotlight	src/tour.js	s/    set(d('t'), { left: '0', top: '0', width: `\${W}px`, height: `\${y0}px` });/    set(d('t'), { left: '0', top: '0', width: `${W}px`, height: '0px' });/	the top catcher panel is gone (taps on the subject above the target reach the page)
