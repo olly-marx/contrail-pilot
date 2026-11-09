@@ -4,6 +4,7 @@
 // until earned. Every tier earned is PAID the moment the flight is banked (R8; src/rewards.js addPrizes). Art: assets/ui/badge-<id>-<tier>.png (tools/art/make_badges.py).
 import { LAP_KM } from './route.js';
 import { CLIMATE } from './config.js';
+import { treesPlanted } from './treecount.js';
 
 const sum = o => Object.values(o || {}).reduce((a, n) => a + n, 0);
 const found = save => Object.keys(save.found || {}).length;   // Wild Area species found: save.found is id -> time (GameScene.seen)
@@ -49,7 +50,7 @@ export const BADGES = [
   { id: 'golden', name: 'Golden Touch', theme: 'seeds', tiers: T3(2, 5, 10), unit: 'golden seeds in one flight',
     measure: r => r.goldens || 0 },
   { id: 'forester', name: 'Forester', theme: 'nature', tiers: T3(5, 25, 100), unit: 'trees planted',
-    measure: (r, s) => sum(s.planted) },
+    measure: (r, s) => treesPlanted(s) },
   { id: 'naturalist', name: 'Naturalist', theme: 'nature', tiers: T3(5, 12, 23), unit: 'kinds of wildlife found',
     measure: (r, s) => found(s) },
   { id: 'rewilder', name: 'Rewilder', theme: 'nature', tiers: T3(3, 7, 11), unit: 'habitat projects done',
@@ -102,7 +103,7 @@ export function earnBadges(save, r) {
 // Progress towards the next tier, for the badge grid: { tier, next goal or null, value }.
 export function progressOf(save, b) {
   const t = tierOf(save, b.id), next = b.tiers[t];
-  const totals = { frequent: save.landings || 0, coolplanet: save.coolLandings || 0, forester: sum(save.planted), naturalist: found(save),
+  const totals = { frequent: save.landings || 0, coolplanet: save.coolLandings || 0, forester: treesPlanted(save), naturalist: found(save),
     rewilder: projects(save), globetrotter: (save.visited || []).length,
     distance: Math.round((save.totals || {}).km || 0), collector: (save.totals || {}).seeds || 0, threader: (save.totals || {}).gaps || 0 };
   return { tier: t, goal: next ? next.goal : null, value: b.id in totals ? totals[b.id] : null };

@@ -1,5 +1,6 @@
 import { CLIMATE, CONTRAIL, ISSR, PARCEL, CARGO, CRYSTALS, cz } from './config.js';
 import { SPECIES, biodiversity } from './nature.js';
+import { treesPlanted } from './treecount.js';
 import { RETIRED_LINES, fleetKit } from './fleet.js';
 
 // Each upgrade line has levels bought in order. Costs are in seeds (+ ice crystals).
@@ -236,7 +237,7 @@ export function unlocked(save, line) {
   const u = line.unlock;
   if (!u) return true;
   if (u.landings && (save.landings || 0) < u.landings) return false;
-  if (u.planted && Object.values(save.planted || {}).reduce((a, n) => a + n, 0) < u.planted) return false;
+  if (u.planted && treesPlanted(save) < u.planted) return false;
   return true;
 }
 // A branch: is the line it grows from at the level it needs? (Separate from `unlock` above.)
