@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-plants-check",
+    "version": "0.38.1",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: the tests that check the tests are checked too, and the test timings were refreshed so updates stay fast. Nothing changes for you."
+    ]
+  },
+  {
     "id": "2026-11-09-backup-my-game",
     "version": "0.38.0",
     "date": "2026-11-09",
