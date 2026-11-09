@@ -482,7 +482,12 @@ h2.sub { margin-top: -4px; }
 
 /* "Tap here" tutorials (src/tour.js): dark panels round a hole, a ring, a bouncing pointer, a bubble. */
 #tour { position: fixed; inset: 0; z-index: 60; pointer-events: none; }
-#tour .tdim { position: fixed; background: rgba(10, 10, 30, 0.62); pointer-events: auto; }
+#tour .tdim { position: fixed; background: transparent; pointer-events: auto; }   /* the four panels only CATCH the taps now: the dark is the .tvis layer below (it can light several holes: the target and the step's SUBJECT) */
+#tour .tvis { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+#tour .tsubjs { position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+#tour .tsubj { position: fixed; box-sizing: border-box; border: 2px solid #ffe15a; border-radius: 6px; box-shadow: 0 0 0 2px #1b1b2f; pointer-events: none; }
+#tour .tbubble.compact .tcaptain { display: none; }
+#tour .tbubble.compact { padding: 6px 8px; }
 #tour .tring { position: fixed; box-sizing: border-box; border: 3px solid #ffe15a; border-radius: 6px; box-shadow: 0 0 0 3px #1b1b2f, 0 0 14px #ffe15a; animation: tourPulse 1s ease-in-out infinite; }
 #tour .tfinger { position: fixed; width: 32px; height: 32px; animation: tourBob 0.7s ease-in-out infinite; }
 #tour .tfinger i { display: block; width: 32px; height: 32px; background: url('assets/ui/tour-finger.png') no-repeat; image-rendering: pixelated; }
@@ -1044,3 +1049,5 @@ h2.sub { margin-top: -4px; }
 /* BACK UP MY GAME (src/ui.js openBackup / openRestore) */
 .bk-text { width: 100%; box-sizing: border-box; min-height: 84px; font: 8px/1.4 monospace; padding: 6px; border: 2px solid #1b1b2f; background: #fff; color: #1b1b2f; resize: vertical; }
 .bk-line { margin: 2px 0; } .bk-warn { color: #b02a1a; margin-top: 8px; } .gear-last { text-align: center; margin: 8px 0 0; }
+/* The hangar purchase display (src/hangar.js payoff): while it is open the rest of the hangar list is hidden; OK shows it again from a fresh render. */
+#hFleet.paying > :not(#payoff) { display: none; }
