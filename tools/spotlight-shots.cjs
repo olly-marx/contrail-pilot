@@ -11,7 +11,8 @@ const { base, CASES, RES } = require('../tests/lib/spotcases.js');
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const log = fs.createWriteStream(`${OUT}/steps.jsonl`, { flags: 'a' });
   try {
-    for (const [W, H] of sizes) for (const [id, over, screen, max] of CASES) {
+    const only = process.env.SHOT_CASES ? process.env.SHOT_CASES.split(',') : null;   // (SHOT_CASES=newlines: a few steps, not the whole set)
+    for (const [W, H] of sizes) for (const [id, over, screen, max] of CASES.filter(c => !only || only.includes(c[0]))) {
       const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: false }), p = await ctx.newPage();
       await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, { ...base, ...over });
