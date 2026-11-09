@@ -49,7 +49,7 @@ export function markTold(save, id) { save.crossingTold = [...new Set([...(save.c
 
 // The sheet's words (<= 60 words) and the HOME row's right column ("NEW Easy" until the sheet has been seen, then "Easy").
 export const FIRST_CROSSING = 'A crossing is one long flight with no stops. Missions do not count: just get there.';   // (the first sheet only; the user, 2026-11-06)
-export sheetText = (s, first = false) => ({ eyebrow: 'A NEW WAY OPENS', title: `${s.to} is within reach!`, body: `A non-stop flight. How hard: ${s.difficulty}. It opens ${s.opens}. ${first ? FIRST_CROSSING + ' ' : ''}Fly it when you are ready.`, go: 'FLY THE CROSSING', later: 'LATER' });
+export const sheetText = (s, first = false) => ({ eyebrow: 'A NEW WAY OPENS', title: `${s.to} is within reach!`, body: `A non-stop flight. How hard: ${s.difficulty}. It opens ${s.opens}. ${first ? FIRST_CROSSING + ' ' : ''}Fly it when you are ready.`, go: 'FLY THE CROSSING', later: 'LATER' });
 export const rightText = s => (s.told ? s.difficulty : `NEW ${s.difficulty}`);   // "NEW Easy": the row budget is 29 (fitRow shortens the left side)
 // The ticks block (MISSIONS) and the nearest-condition line (HOME).
 export const ticksTitle = s => `Crossing to ${s.to}`;
