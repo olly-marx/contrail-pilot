@@ -16,12 +16,13 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
       await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
       await p.evaluate(() => game.registry.get('ui').go('pilot')); await p.waitForTimeout(700);
       await p.evaluate(() => document.getElementById('pLandCopy').scrollIntoView({ block: 'center' }));
+      await p.evaluate(() => navigator.clipboard.writeText('(untouched)'));   // the clipboard is shared by the pages of one browser: start from a known text
       await p.click('#pLandCopy'); await p.waitForTimeout(600);
       const msg = await p.evaluate(() => document.getElementById('pLandMsg').textContent), clip = await p.evaluate(() => navigator.clipboard.readText().catch(() => '')); log.push(`${rows.length} rows: "${msg}", clipboard ${JSON.stringify(clip.slice(0, 80))}`);
       if (rows.length) {
         check(msg === 'Copied 3 landings.', `the message after the tap: "${msg}"`);
         check(/^contrail pilot landing numbers v1/.test(clip) && clip.split('\n').length === 4 && /0\.62 85 6\.1 2 1\.2 1/.test(clip), `the clipboard holds the log as plain text: ${JSON.stringify(clip)}`);
-      } else check(msg === 'No landings yet.' && !/landing numbers/.test(clip), `an empty log says so and copies nothing: "${msg}"`);
+      } else check(msg === 'No landings yet.' && clip === '(untouched)', `an empty log says so and copies nothing: "${msg}"`);
       check(!p.errs.length, `page errors: ${p.errs.join('; ')}`); await ctx.close();
     }
   } finally { await b.close(); }
