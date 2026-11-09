@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-trees-abroad-count",
+    "version": "0.40.1",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "Trees you planted in other countries now count: Soil Patches unlocks, and the Forester badge counts them."
+    ]
+  },
+  {
     "id": "2026-11-09-background-music",
     "version": "0.40.0",
     "date": "2026-11-09",
