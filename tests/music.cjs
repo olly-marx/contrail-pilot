@@ -6,7 +6,7 @@
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   let contexts = 0, nodes = 0, duckRamps = 0; const clock = { t: 0 };
   const param = () => ({ value: 1, setValueAtTime() {}, cancelScheduledValues() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime(v) { if (Math.abs(v - 0.25) < 1e-9) duckRamps++; } });
-  const node = () => { nodes++; return { gain: param(), frequency: param(), connect(n) { return n; }, disconnect() {}, start() {}, stop() {}, setPeriodicWave() {}, type: '' }; };
+  const node = () => { nodes++; return { gain: param(), frequency: param(), Q: param(), connect(n) { return n; }, disconnect() {}, start() {}, stop() {}, setPeriodicWave() {}, type: '' }; };
   class FakeAC { constructor() { contexts++; this.state = 'running'; this.sampleRate = 8000; this.destination = {}; }
     get currentTime() { return clock.t; }
     resume() { return Promise.resolve(); } suspend() { return Promise.resolve(); }
