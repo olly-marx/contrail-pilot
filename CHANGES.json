@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-09-harder-crossing",
+    "version": "0.43.1",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "The next crossing is always a harder one than the last (easier ones wait under an easier one).",
+      "A crossing no longer asks you to upgrade your plane when you only need a longer flight, and a long flight from any land counts.",
+      "The home crossing box now says Tap to cross: you can start a crossing from anywhere."
+    ]
+  },
+  {
     "id": "2026-11-09-next-crossing",
     "version": "0.43.0",
     "date": "2026-11-09",
