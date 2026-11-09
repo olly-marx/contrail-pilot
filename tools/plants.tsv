@@ -551,15 +551,16 @@ pilotcodeensure	src/online.js	s/    if (error) return getCode();$/    if (error)
 recoverfirst	src/recoverfirst.js	s/^export const pilotLost = .*$/export const pilotLost = () => false;/	a phone that lost its pilot is never recognised
 recoverfirst	src/online.js	s/^export const rememberFirst = .*$/export const rememberFirst = f => {};/	the first name is never remembered
 recoverfirstui	src/pilot.js	s/^    const lost = !off \&\& !this.chooseNew \&\& pilotLost(this.save, getPilot());.*$/    const lost = false;/	the PILOT tab opens on the empty new-name form again
-crossingview	src/crossingview.js	s/line: starsLine(k, stars), bare: true, area: k, where/line: `stars ${stars} of ${M2.GATE_STARS}`, area: k, where/	the stars line is back to the unnamed "stars N of 2"
-crossingview	src/crossingview.js	s/samerica: 'S. America'/samerica: 'South America and the Atlantic'/	a long area name overflows the 24-character row
-crossingview	src/nextup.js	s/return n.key === 'contrails' \&\& n.area \&\& n.area !== here ? SHEET_ELSEWHERE : n.where;/return n.where;/	a trial in another area always jumps to MISSIONS (the wrong list)
 nocrossingkm	src/crossingview.js	s/body: `A non-stop flight\. How hard:/body: `A non-stop flight of ${s.km} km. How hard:/	the sheet says the crossing's distance again
 nocrossingkm	src/crossingview.js	s/export const rightText = s => (s.told ? s.difficulty : `NEW ${s.difficulty}`);/export const rightText = s => (s.told ? `${s.km} km` : `NEW ${s.km} km`);/	the HOME row shows the distance again
-nocrossingkm	src/crossingview.js	s/label: 'Fly farther', line: 'fly farther'/label: `Fly ${Math.round(0.7 * c.km)} km`, line: 'fly farther'/	the condition label names a distance again
+nocrossingkm	src/crossingview.js	s/label: 'Plane', line: 'a better plane'/label: `Fly ${Math.round(0.7 * c.km)} km`, line: 'a better plane'/	the plane tick names a distance again
 nocrossingkm	src/crossingview.js	s/^export const DIFFICULTY = .*$/export const DIFFICULTY = ['Easy', 'Easy', 'Easy', 'Easy', 'Easy', 'The lap'];/	every crossing is as easy as the first
 toolseverywhere	src/wild.js	s/^    const uk = true;$/    const uk = this.region === (homeRegion(s) || 'woodland');/	the planting tools are on the home land only again
 plantrail	src/GameScene.js	s/ \&\& this.noTreeYet()) this.explainAgain(/ \&\& false) this.explainAgain(/	the soil tip is shown once only (it never comes back until a tree lands)
 plantrail	src/GameScene.js	s/if (showDrop \&\& soilSoon \&\& this.noTreeYet() \&\& !this.school/if (false \&\& !this.school/	no arrow over SEND A SEED
 plantrail	src/tour.js	s/ \&\& treesPlanted(s) === 0 \&\& !this.done('r-plant1')/ \&\& false \&\& !this.done('r-plant1')/	HOME never lights TAKE OFF for the first tree
 plantrail	src/tour.js	s/if (res \&\& (this.ui.lastPlanted || 0) > 0 \&\& treesPlanted(s) === this.ui.lastPlanted/if (false \&\& treesPlanted(s) === this.ui.lastPlanted/	the results never say the first tree is planted
+crossbox	src/crossingview.js	s/route: `\${s.from} > \${s.to}`, word: s.difficulty/route: `${s.from} > ${s.to} (${s.km} km)`, word: s.difficulty/	the box shows the crossing's distance again
+crossbox	src/crossingview.js	s/const ticks = \[\['Era', 'era'\], \['Plane', 'plane'\], \['Nature', 'nature'\]\]/const ticks = [['Era', 'era'], ['Nature', 'nature'], ['Plane', 'plane']]/	the box ticks are in the wrong order
+crossbox	src/crossingview.js	s/n \&\& n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' }/n \&\& n.where === 'hangar' ? { label: 'NATURE', act: 'nature' }/	an open plane tick sends the player to NATURE
+crossbox	src/crossingview.js	s/const line = s.ready ? 'Ready!' : s.nearest ? s.nearest.plain : '';/const line = s.ready ? 'Ready!' : s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance

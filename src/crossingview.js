@@ -19,7 +19,7 @@ export function stateOf(save, c, { unlock = false } = {}) {
   const rd = readiness(save, c), pp = planeProgress(save, c), need = SEASON.offer.biodiversity;
   const conds = [
     { key: 'era', label: 'Era', line: 'a later era', plain: 'A later era brings it.', where: 'fly', done: rd.era, frac: rd.era ? 1 : 0, status: rd.era ? 'done' : 'later' },
-    { key: 'plane', label: 'Plane', line: 'upgrade your plane', plain: 'Upgrade your plane.', where: 'hangar', done: rd.plane, frac: pp, status: rd.plane ? 'done' : (pp >= 0.75 ? 'nearly' : 'not yet') },
+    { key: 'plane', label: 'Plane', line: 'a better plane', plain: 'Upgrade your plane.', where: 'hangar', done: rd.plane, frac: pp, status: rd.plane ? 'done' : (pp >= 0.75 ? 'nearly' : 'not yet') },
     { key: 'nature', label: `Nature ${need}`, line: `nature ${rd.natureHave} of ${need}`, plain: `Plant trees. Nature ${rd.natureHave} of ${need}`, where: 'nature', done: rd.nature, frac: Math.min(1, rd.natureHave / need), status: rd.nature ? 'done' : `${rd.natureHave}` },
   ];
   const open = conds.filter(x => !x.done), nearest = open.slice().sort((a, b) => b.frac - a.frac)[0] || null;

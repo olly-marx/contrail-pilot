@@ -24,7 +24,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(home0.rows.some(r => /Cross: nature 0 of 30/.test(r)) && !home0.dot && !(await sheet(p)), `${tag}: before the moment HOME says which condition is nearest, no dot, no sheet: ${JSON.stringify(home0)}`);
     await p.click('#tabMissions'); await p.waitForTimeout(500);
     const ticks = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent.trim()).find(t => /^CROSSING TO/.test(t)), rows: [...document.querySelectorAll('#mList .m-tick')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) }));
-    check(ticks.label === 'CROSSING TO STOCKHOLM' && ticks.rows.length === 3 && /Fly farther.*done/.test(ticks.rows[0]) && /Nature 30.*0/.test(ticks.rows[1]) && /Trial stars.*done/.test(ticks.rows[2]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
+    check(ticks.label === 'CROSSING TO STOCKHOLM' && ticks.rows.length === 3 && /Era.*done/.test(ticks.rows[0]) && /Plane.*done/.test(ticks.rows[1]) && /Nature 30.*0/.test(ticks.rows[2]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
     // 2. THE MOMENT, in NATURE: funding a project completes the last condition.
     await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 1; });   // the lever: nature is "met" by the next project
     await p.click('#tabNature'); await p.waitForTimeout(700);
