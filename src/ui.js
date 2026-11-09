@@ -375,14 +375,15 @@ export class UI {
   renderHub() {
     const s = this.save;
     const cs = crossingState(s, { unlock: S2_UNLOCK }), ready = cs && cs.ready ? cs : null;   // (R-A: src/crossingview.js: the state, the 3 conditions, told once)
-    const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null, crossing: cs });
+    const boxOn = !!(cs && s.tutorialDone && !lessonsLeft(s).length);   // the HOME box (CROSSINGS V2) shows this crossing; a READY one is then not repeated as a gold UP NEXT row
+    const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null, crossing: cs, boxShown: boxOn && !!ready });
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
     // UP NEXT (R3, research/UX-MASTER-PLAN.md C2): the SAME rows as the results card (src/nextup.js is the one source). A lead row (the free part,
     // NATURE's tree parcels) carries its lesson picture and leads where it says; a city mission says how many stops away it is. The tiles are gone:
     // the bottom bar is the navigation (its dots and the FREE! tag come from fresh.js and refreshDots).
     const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     // THE HOME BOX (CROSSINGS V2): the next crossing with its three ticks; not while lessons remain (the same rule as the quiet line it replaces).
-    const box = cs && s.tutorialDone && !lessonsLeft(s).length ? boxView(cs) : null, hc = $('hubCross');
+    const box = boxOn ? boxView(cs) : null, hc = $('hubCross');
     hc.hidden = !box; hc.classList.toggle('ready', !!(box && box.ready));
     if (box) { hc.innerHTML = `<p class="rc-label">${esc(box.title)}</p><div class="hc-route"><span>${esc(box.route)}</span><b>${esc(box.word)}</b></div><div class="hc-ticks">${box.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</div><p class="hc-line">${esc(box.line)}</p>`; hc.onclick = () => this.openCrossings(cs); }
     $('hubNext').hidden = !v.up.length || !s.tutorialDone;

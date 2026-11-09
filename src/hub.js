@@ -22,9 +22,9 @@ export const FREE_NEXT = 'Open the hangar: free upgrade!';   // the user: a free
 //   skip: null (no city mission to aim at) | 'off' (the route aims) | 'on' (the player skipped this trip: src/aim.js)
 //   route: the next stops: [from, to] (the first hop), or up to the mission's city when the route aims at one (src/aim.js); aim: that city
 export const UP_ROWS = 3;
-export function hubView(save, { crossingReady = null, crossing = null } = {}) {
+export function hubView(save, { crossingReady = null, crossing = null, boxShown = false } = {}) {
   const s2 = M2.isSeason2(save), path = routeFor(save, 4), aim = aimTarget(save);
-  const up = s2 ? nextUp(save, { crossingReady, crossing, limit: UP_ROWS }).map(n => ({ ...n, right: rightOf(n) })) : [];
+  const up = s2 ? nextUp(save, { crossingReady, crossing, limit: UP_ROWS, boxShown }).map(n => ({ ...n, right: rightOf(n) })) : [];
   const f = up[0], m = s2 ? null : currentMission(save);
   const next = s2
     ? (!f ? null : f.key === 'lead:cross' ? { title: `Crossing ready: ${crossingReady}`, crossing: true } : f.key === 'lead:free' ? { title: FREE_NEXT, hangar: true }

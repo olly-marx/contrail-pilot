@@ -40,6 +40,8 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'W
         check(/A NEW WAY OPENS/.test(m1.sheet) && m1.told === 'warsaw-stockholm', `${tag} B: the moment sheet did not open by itself or the crossing is not marked told: ${JSON.stringify(m1)}`);
         await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
         const h = await home(p); log.push(`${tag} B: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-B-${W}.png` });
+        const upn = await p.evaluate(() => (document.getElementById('hubNext') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
+        check(!/Cross to STOCKHOLM/.test(upn), `${tag} B: UP NEXT repeats the ready crossing under the box: ${upn}`);
         check(h.shown && h.gold && /Ready!/.test(h.text) && h.on.join() === 'true,true,true', `${tag} B: a ready crossing is not gold with 'Ready!' and three ticks: ${JSON.stringify(h)}`);
         if (!h.shown) { await ctx.close(); continue; }
         await p.click('#hubCross'); await p.waitForTimeout(500);

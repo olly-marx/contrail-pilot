@@ -50,9 +50,9 @@ export function leadOf(save, crossingReady = null, crossing = null) {
 export const CODE_FROM_LANDING = 10;
 export const codeDue = save => !!save.pilotNamed && !save.codeSeen && (save.landings || 0) >= CODE_FROM_LANDING && !(save.seenTips || []).includes('*');
 
-export function nextUp(save, { crossingReady = null, crossing = null, limit = 3 } = {}) {
+export function nextUp(save, { crossingReady = null, crossing = null, limit = 3, boxShown = false } = {}) {   // boxShown: HOME's NEXT CROSSING box already says the ready crossing, so UP NEXT does not repeat it
   if (!M2.isSeason2(save)) return [];
-  const out = [], lead = leadOf(save, crossingReady, crossing), vis = M2.visible(save), daily = M2.lessonsLeft(save).length ? [] : M2.dailyVisible(save);
+  const out = [], lead = leadOf(save, boxShown ? null : crossingReady, boxShown ? null : crossing), vis = M2.visible(save), daily = M2.lessonsLeft(save).length ? [] : M2.dailyVisible(save);
   if (lead) out.push(lead);
   if (vis[0]) out.push(itemOf(save, vis[0]));
   // Save-safety (the user lost a 260-flight save, 2026-11-05): from landing 10, a pilot who never opened the code is asked, once per visit, to write it down.

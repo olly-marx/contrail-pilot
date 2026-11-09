@@ -568,3 +568,5 @@ crossbox	src/crossingview.js	s/const line = s.ready ? 'Ready!' : s.nearest ? s.n
 crossboxui	src/ui.js	s/hc.hidden = !box; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
 crossboxui	src/ui.js	s/hc.onclick = () => this.openCrossings(cs); }/hc.onclick = () => {}; }/	a tap on the HOME box does nothing
 crossboxui	src/ui.js	s/const box = cs \&\& s.tutorialDone \&\& !lessonsLeft(s).length ? boxView(cs) : null/const box = cs \&\& s.tutorialDone ? boxView(cs) : null/	the HOME box shows during the lessons
+crossingview	src/nextup.js	s/lead = leadOf(save, boxShown ? null : crossingReady, boxShown ? null : crossing), vis/lead = leadOf(save, crossingReady, crossing), vis/	the ready crossing is repeated as a gold UP NEXT row under the HOME box
+crossboxui	src/ui.js	s/boxShown: boxOn \&\& !!ready });/boxShown: false });/	UP NEXT repeats the ready crossing under the HOME box

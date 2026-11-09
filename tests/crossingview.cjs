@@ -38,6 +38,9 @@
   const rd = N.nextUp(s1, { crossing: fresh, crossingReady: 'WARSAW to STOCKHOLM', limit: 3 }), rt = N.nextUp(s1, { crossing: told, crossingReady: 'WARSAW to STOCKHOLM', limit: 3 });
   check(rd[0].key === 'lead:cross' && rd[0].short === 'Cross to STOCKHOLM' && rd[0].right === 'NEW Easy' && rd[0].lead, `a ready crossing LEADS, NEW + how hard: ${JSON.stringify(rd[0])}`);
   check(rt[0].right === 'Easy' && !rt.some(r => r.key === 'cross:progress') && rd.filter(r => r.lead).length === 1, `once told the NEW goes; only one lead: ${JSON.stringify([rt[0].right, rd.map(r => r.key)])}`);
+  const boxed = N.nextUp(s1, { crossing: fresh, crossingReady: 'WARSAW to STOCKHOLM', limit: 3, boxShown: true });
+  check(!boxed.some(r => r.key === 'lead:cross' || /Cross to/.test(r.short)), `with the HOME box showing the ready crossing UP NEXT does not repeat it as a gold row: ${JSON.stringify(boxed.map(r => r.short))}`);
+  check(rd[0].key === 'lead:cross', 'without the box (the results card) a ready crossing still leads UP NEXT');
   for (const r of [...near, ...rd, ...rt]) check(r.short.length + N.rightOf(r).length <= N.ROW_MAX, `row "${r.short}" + "${N.rightOf(r)}" fits one line (${N.ROW_MAX})`);
   // 4. Every crossing, longest names.
   for (const c of C.CROSSINGS.filter(x => x.kind !== 'lap')) {
