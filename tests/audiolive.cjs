@@ -76,7 +76,8 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
     const silent0 = await p.evaluate(() => window.__rms(500)); check(silent0 < 0.0005, `MUSIC off (the start of this run): silence at the destination (rms ${silent0.toFixed(4)})`);
     // the cues alone (music off), each over its own length (seconds, declared here)
     const LEN = { tick: 0.06, flap: 0.1, coin: 0.2, thud: 0.4, crack: 0.35, reveal: 0.5, grow: 0.4, done: 0.3, medal: 0.6 };
-    const cueRms = {}; for (const [cue, len] of Object.entries(LEN)) { cueRms[cue] = await p.evaluate(async ({ cue, ms }) => { const m = await import('/src/sound.js'); const pr = window.__rms(ms); m.sfx[cue](); return pr; }, { cue, ms: len * 1000 }); await p.waitForTimeout(700); }
+    // (the analyser is sampled every 8 ms, so a short cue's window can miss part of it: take the MAX of three plays, which approaches the cue's true rms)
+    const cueRms = {}; for (const [cue, len] of Object.entries(LEN)) { cueRms[cue] = 0; for (let k = 0; k < 3; k++) { cueRms[cue] = Math.max(cueRms[cue], await p.evaluate(async ({ cue, ms }) => { const m = await import('/src/sound.js'); const pr = window.__rms(ms); m.sfx[cue](); return pr; }, { cue, ms: len * 1000 })); await p.waitForTimeout(500); } }
     await p.evaluate(async () => { (await import('/src/music.js')).setTrackRng(() => 0.7); });   // the same loud song every run (track D: nextTrack draws index 3 of 5)
     const REQ = { soft: 2, middle: 1.5, loud: 1.0 }, music = {}, order = ['soft', 'middle', 'loud'];
     for (const lvl of order) {
