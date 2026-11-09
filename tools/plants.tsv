@@ -572,3 +572,7 @@ crossingview	src/nextup.js	s/lead = leadOf(save, boxShown ? null : crossingReady
 crossboxui	src/ui.js	s/boxShown: boxOn \&\& !!ready });/boxShown: false });/	UP NEXT repeats the ready crossing under the HOME box
 fitscreen	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/ \&\& !lessonsLeft(s).length);/	the HOME box shows while a free part is waiting (HOME scrolls at 390x667 and 320x568)
 crossboxui	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/ \&\& !lessonsLeft(s).length);/	the HOME box shows while a free part is waiting
+gotoaim	src/aim.js	s/  const g = gotoTarget(save, L); if (g) return g;   \/\/ the player's GO TO first/  \/\/ (GO TO ignored)/	the aim ignores the player's GO TO
+gotoaim	src/aim.js	s/export const aimTarget = save => (save \&\& save.skipAim ? gotoTarget(save) : aimOpen(save));/export const aimTarget = save => (save \&\& save.skipAim ? null : aimOpen(save));/	the per-trip skip drops the GO TO
+gotoaim	src/aim.js	s/if (save \&\& save.aimCity \&\& save.aimCity === save.city) { delete save.aimCity; return true; } return false; };/return false; };/	arrival never clears the GO TO
+gotoaim	src/aim.js	s/pathTo(save.city, t, linksFor(save)).length - 1 : 0; };/Math.min(3, pathTo(save.city, t, linksFor(save)).length - 1) : 0; };/	the hop count is capped at 3 (the missions' limit)
