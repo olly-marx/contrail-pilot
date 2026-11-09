@@ -22,7 +22,7 @@ export function stateOf(save, c, { unlock = false } = {}) {
   const conds = [
     { key: 'capability', label: `Fly ${fmt(needKm)} km`, line: `fly ${fmt(needKm)} km`, where: 'fly', done: !!chk.need.capability, frac: needKm ? Math.min(1, ctx.capabilityKm / needKm) : 1, status: chk.need.capability ? 'done' : `${fmt(ctx.capabilityKm)} km` },
     { key: 'nature', label: `Nature ${SEASON.offer.biodiversity}`, line: `nature ${Math.round(ctx.bio)} of ${SEASON.offer.biodiversity}`, where: 'nature', done: !!chk.need.nature, frac: Math.min(1, ctx.bio / SEASON.offer.biodiversity), status: chk.need.nature ? 'done' : `${Math.round(ctx.bio)}` },
-    ...(chk.need.contrails !== undefined ? [{ key: 'contrails', label: 'Trial stars', line: starsLine(k, stars), bare: true, where: 'missions', done: !!chk.need.contrails, frac: Math.min(1, stars / M2.GATE_STARS), status: chk.need.contrails ? 'done' : `${stars} of ${M2.GATE_STARS}` }] : []),
+    ...(chk.need.contrails !== undefined ? [{ key: 'contrails', label: 'Trial stars', line: starsLine(k, stars), bare: true, area: k, where: 'missions', done: !!chk.need.contrails, frac: Math.min(1, stars / M2.GATE_STARS), status: chk.need.contrails ? 'done' : `${stars} of ${M2.GATE_STARS}` }] : []),
   ];
   const open = conds.filter(x => !x.done), nearest = open.slice().sort((a, b) => b.frac - a.frac)[0] || null;
   return { id: c.id, from: c.from, to: c.to, km: c.km, kmText: `${fmt(c.km)} km`, opens: c.opens ? openName(c.opens) : 'the next area', ready: chk.offered || !!unlock,
