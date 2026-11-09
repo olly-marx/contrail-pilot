@@ -348,7 +348,7 @@ natureland	src/wild.js	s/\${newDir(at + 1, openIds.length) ? '<i class="dot"><\/
 natureland	src/wild.js	s/const ids = Object.keys(REGION_NAMES), openIds = ids.filter(id => discovered(s, id))/const ids = Object.keys(REGION_NAMES), openIds = ids.slice()/	the locked lands are shown as dots too (the 14-tab problem)
 fitscreen	style.css	s/inset: 6px 8px auto; font-size: 7px; line-height: 1.5;/inset: 30px 10px auto;/	the 'Bare land' note back at 30 px down in 9 px type: its last words run out of the picture at 320 x 568
 crossingview	src/crossingview.js	s/save.crossingTold = \[...new Set(\[...(save.crossingTold || \[\]), id\])\]; return save.crossingTold;/return save.crossingTold || [];/	the moment is never marked told (it would fire every time)
-crossingview	src/crossingview.js	s/(s.told ? s.kmText : `NEW ${s.kmText}`)/`NEW ${s.kmText}`/	the NEW word never goes away
+crossingview	src/crossingview.js	s/(s.told ? s.difficulty : `NEW ${s.difficulty}`)/`NEW ${s.difficulty}`/	the NEW word never goes away
 crossingview	src/nextup.js	s/ \&\& crossing.nearest \&\& !lead \&\& !M2.lessonsLeft/ \&\& false \&\& !lead \&\& !M2.lessonsLeft/	a near crossing adds no line to UP NEXT
 crossingview	src/nextup.js	s/ \&\& !lead \&\& !M2.lessonsLeft(save).length) out.push/ \&\& !lead) out.push/	a near crossing shows in UP NEXT during the lessons
 crossingview	src/crossingview.js	s/: `Cross: \${s.nearest.line}`) : '');/: `Crossing to ${s.to}: ${s.nearest.line}`) : '');/	the nearest line over 24 characters
@@ -363,7 +363,7 @@ routechip	src/ui.js	s/onClose: () => { home.insertBefore(j, next); j.style.displ
 routechip	src/ui.js	s/if ((s.tours || \[\]).some(t => t === 'globe-hint' || t === '\*')) return; s.tours = \[...(s.tours || \[\]), 'globe-hint']; writeSave(s);/return;/	the caption never goes away
 routechip	src/ui.js	s/hint.hidden = !s.tutorialDone ||/hint.hidden = true ||/	the caption never shows
 routechip	src/globe.js	s/ if (onUse) onUse(); }   \/\/ (the first drag: the hint can go)/ }/	a drag on the globe does not remove the caption
-crossingmoment	src/crossingview.js	s/(s.told ? s.kmText : `NEW ${s.kmText}`)/s.kmText/	the row never says NEW before the sheet is seen
+crossingmoment	src/crossingview.js	s/(s.told ? s.difficulty : `NEW ${s.difficulty}`)/s.difficulty/	the row never says NEW before the sheet is seen
 schoolicy	src/school.js	s/if (this.inT > 0.6) this.madeDay = true;/if (s.contrails.length > 25) this.madeDay = true;/	the old count rule back: a slow phone never has 26 puffs alive, and the daytime contrail step says missed it for ever
 savestash	src/save.js	s/      if ((a \&\& !isBlank(a)) || (b \&\& !isBlank(b))) return;/      if (false) return;/	a blank save replaces a save with progress
 savestash	src/save.js	s/  if (held) return;   \/\/ see HELD above/  if (false) return;/	a held game still writes over the save it could not read
@@ -554,3 +554,7 @@ recoverfirstui	src/pilot.js	s/^    const lost = !off \&\& !this.chooseNew \&\& p
 crossingview	src/crossingview.js	s/line: starsLine(k, stars), bare: true, area: k, where/line: `stars ${stars} of ${M2.GATE_STARS}`, area: k, where/	the stars line is back to the unnamed "stars N of 2"
 crossingview	src/crossingview.js	s/samerica: 'S. America'/samerica: 'South America and the Atlantic'/	a long area name overflows the 24-character row
 crossingview	src/nextup.js	s/return n.key === 'contrails' \&\& n.area \&\& n.area !== here ? SHEET_ELSEWHERE : n.where;/return n.where;/	a trial in another area always jumps to MISSIONS (the wrong list)
+nocrossingkm	src/crossingview.js	s/body: `A non-stop flight\. How hard:/body: `A non-stop flight of ${s.km} km. How hard:/	the sheet says the crossing's distance again
+nocrossingkm	src/crossingview.js	s/export const rightText = s => (s.told ? s.difficulty : `NEW ${s.difficulty}`);/export const rightText = s => (s.told ? `${s.km} km` : `NEW ${s.km} km`);/	the HOME row shows the distance again
+nocrossingkm	src/crossingview.js	s/label: 'Fly farther', line: 'fly farther'/label: `Fly ${Math.round(0.7 * c.km)} km`, line: 'fly farther'/	the condition label names a distance again
+nocrossingkm	src/crossingview.js	s/^export const DIFFICULTY = .*$/export const DIFFICULTY = ['Easy', 'Easy', 'Easy', 'Easy', 'Easy', 'The lap'];/	every crossing is as easy as the first

@@ -13,6 +13,10 @@ const fmt = n => Math.round(n).toLocaleString('en-GB');
 // Short names so the whole line fits HOME's 24-character row: 'Stars: N. America 1 of 2' is the longest.
 export const AREA_SHORT = { weurope: 'W. Europe', namerica: 'N. America', sasia: 'S. Asia', africa: 'Africa', samerica: 'S. America', easia: 'E. Asia', mideast: 'Mid East', nordic: 'Nordic', oceania: 'Australia', aotearoa: 'Aotearoa', patagonia: 'Patagonia' };
 export const starsLine = (k, stars) => `Stars: ${AREA_SHORT[k] || (AREAS[k] ? AREAS[k].name : k)} ${stars} of ${M2.GATE_STARS}`;
+// HOW HARD a crossing is, as a word (the user, 2026-11-09: 'there should NEVER be any numbers there; the distance should be the difficulty'). The ladder follows the eras: every crossing is harder than the one before.
+export const DIFFICULTY = ['Easy', 'Medium', 'Hard', 'Harder', 'Very hard', 'The lap'];
+export const difficultyOf = c => DIFFICULTY[Math.min(DIFFICULTY.length - 1, c.kind === 'lap' ? DIFFICULTY.length - 1 : Math.max(0, c.era || 0))];
+export const NEED_FAR = 'a longer landed flight from here';
 const openName = id => (AREAS[id] ? AREAS[id].name : 'the Pacific');
 
 // state of ONE crossing: { id, from, to, km, kmText, opens, ready, told, conds: [{ key, label, status, done, frac, where }], nearest }
@@ -20,12 +24,12 @@ export function stateOf(save, c, { unlock = false } = {}) {
   const ctx = offerCtx(save, c), chk = offerCheck(c, ctx), k = areaOf(c.from);
   const needKm = Math.round(SEASON.offer.distanceShare * c.km), stars = k ? M2.starsDone(save, k) : 0;
   const conds = [
-    { key: 'capability', label: `Fly ${fmt(needKm)} km`, line: `fly ${fmt(needKm)} km`, where: 'fly', done: !!chk.need.capability, frac: needKm ? Math.min(1, ctx.capabilityKm / needKm) : 1, status: chk.need.capability ? 'done' : `${fmt(ctx.capabilityKm)} km` },
+    { key: 'capability', label: 'Fly farther', line: 'fly farther', where: 'fly', done: !!chk.need.capability, frac: needKm ? Math.min(1, ctx.capabilityKm / needKm) : 1, status: chk.need.capability ? 'done' : (needKm && ctx.capabilityKm / needKm >= 0.75 ? 'nearly' : 'not yet') },
     { key: 'nature', label: `Nature ${SEASON.offer.biodiversity}`, line: `nature ${Math.round(ctx.bio)} of ${SEASON.offer.biodiversity}`, where: 'nature', done: !!chk.need.nature, frac: Math.min(1, ctx.bio / SEASON.offer.biodiversity), status: chk.need.nature ? 'done' : `${Math.round(ctx.bio)}` },
     ...(chk.need.contrails !== undefined ? [{ key: 'contrails', label: 'Trial stars', line: starsLine(k, stars), bare: true, area: k, where: 'missions', done: !!chk.need.contrails, frac: Math.min(1, stars / M2.GATE_STARS), status: chk.need.contrails ? 'done' : `${stars} of ${M2.GATE_STARS}` }] : []),
   ];
   const open = conds.filter(x => !x.done), nearest = open.slice().sort((a, b) => b.frac - a.frac)[0] || null;
-  return { id: c.id, from: c.from, to: c.to, km: c.km, kmText: `${fmt(c.km)} km`, opens: c.opens ? openName(c.opens) : 'the next area', ready: chk.offered || !!unlock,
+  return { id: c.id, from: c.from, to: c.to, km: c.km, difficulty: difficultyOf(c), opens: c.opens ? openName(c.opens) : 'the next area', ready: chk.offered || !!unlock,
     told: (save.crossingTold || []).includes(c.id), conds, nearest, crossing: c };
 }
 
@@ -43,10 +47,14 @@ export const crossingById = (save, id, opts = {}) => { const c = available(save)
 export const momentDue = state => !!(state && state.ready && !state.told);
 export function markTold(save, id) { save.crossingTold = [...new Set([...(save.crossingTold || []), id])]; return save.crossingTold; }
 
-// The sheet's words (<= 60 words) and the HOME row's right column ("NEW 6,500 km" until the sheet has been seen, then "6,500 km").
-export const FIRST_CROSSING = 'A crossing is one long flight with no stops. Distance and missions do not count: just get there.';   // (the first sheet only; the user, 2026-11-06)
-export const sheetText = (s, first = false) => ({ eyebrow: 'A NEW WAY OPENS', title: `${s.to} is within reach!`, body: `A non-stop flight of ${s.kmText}. It opens ${s.opens}. ${first ? FIRST_CROSSING + ' ' : ''}Fly it when you are ready.`, go: 'FLY THE CROSSING', later: 'LATER' });
-export const rightText = s => (s.told ? s.kmText : `NEW ${s.kmText}`).replace(' km', 'km');   // "NEW 6,500km" (11): the row budget is 29
+// The sheet's words (<= 60 words) and the HOME row's right column ("NEW Easy" until the sheet has been seen, then "Easy").
+export const FIRST_CROSSING = 'A crossing is one long flight with no stops. Missions do not count: just get there.';   // (the first sheet only; the user, 2026-11-06)
+export const sheetText = (s, first = false) => ({ eyebrow: 'A NEW WAY OPENS', title: `${s.to} is within reach!`, body: `A non-stop flight. How hard: ${s.difficulty}. It opens ${s.opens}. ${first ? FIRST_CROSSING + ' ' : ''}Fly it when you are ready.`, go: 'FLY THE CROSSING', later: 'LATER' });
+export const rightText = s => (s.told ? s.difficulty : `NEW ${s.difficulty}`);   // "NEW Easy": the row budget is 29 (fitRow shortens the left side)
 // The ticks block (MISSIONS) and the nearest-condition line (HOME).
 export const ticksTitle = s => `Crossing to ${s.to}`;
 export const nearestLine = s => (s.nearest ? (s.nearest.bare ? s.nearest.line : `Cross: ${s.nearest.line}`) : '');   // (<= 24: HOME's UP NEXT row)
+// The route sheet's crossing lines and the ending card (src/ui.js): no distance anywhere.
+export const routeCrossRest = c => `, non-stop, ${difficultyOf(c)}${c.opens ? ` (opens ${openName(c.opens)})` : ''}`;
+export const routeLapRest = c => `: from ${c.from} round the world and home, non-stop`;
+export const endingBody = city => `From ${city} all the way round and back home. Every area open, and the sky still cool behind you.`;

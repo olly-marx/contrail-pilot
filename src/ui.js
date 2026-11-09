@@ -19,9 +19,9 @@ const crossingsHTML = s => {
   if (!list.length) { const le = laterEra(s); if (le !== null) return `<div id="jCross"><p class="small" id="jLater"><b>NEXT CROSSING</b><br>New crossings open in ${ERAS[le].name}. Keep flying to get there!</p></div>`; }
   if (!list.length) return moreToCome(s) ? '<div id="jCross"><p class="small" id="jMore"><b>MORE TO COME!</b><br>You have flown every crossing there is for now. Faster planes and the far oceans are on their way.</p></div>' : '';
   return `<div id="jCross">${list.map(c => { const ctx = offerCtx(s, c), o = offerCheck(c, ctx), go = o.offered || S2_UNLOCK;
-    const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: `a landed flight of ${km(Math.round(SEASON.offer.distanceShare * c.km))} from here (best so far ${km(ctx.capabilityKm)})`, nature: `biodiversity ${SEASON.offer.biodiversity} here (now ${ctx.bio})`, contrails: 'the 3 starred missions here' })[k]);
-    const head = c.kind === 'lap' ? `<b id="jLap">THE LAP OF THE EARTH</b>: from ${c.from} round the world and home, ${km(c.km)} non-stop`   // the final boss (M4)
-      : `<b>CROSSING: ${c.from} &gt; ${c.to}</b>, ${km(c.km)} non-stop${c.opens ? ` (opens ${opensName(c.opens)})` : ''}`;
+    const needs = Object.entries(o.need).filter(([, v]) => !v).map(([k]) => ({ capability: NEED_FAR, nature: `biodiversity ${SEASON.offer.biodiversity} here (now ${ctx.bio})`, contrails: 'the 3 starred missions here' })[k]);
+    const head = c.kind === 'lap' ? `<b id="jLap">THE LAP OF THE EARTH</b>${routeLapRest(c)}`   // the final boss (M4)
+      : `<b>CROSSING: ${c.from} &gt; ${c.to}</b>${routeCrossRest(c)}`;
     return `<p class="small">${head}<br>
       ${go ? `<button class="btn go" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : `Needs: ${needs.join(', ')}`}</p>`; }).join('')}</div>`;
 };
@@ -57,7 +57,7 @@ import { showSheet } from './sheet.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp } from './nextup.js';
 import { endView } from './crossingend.js';
-import { crossingState, crossingById, momentDue, markTold, sheetText } from './crossingview.js';
+import { crossingState, crossingById, momentDue, markTold, sheetText, NEED_FAR, routeCrossRest, routeLapRest, endingBody } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
@@ -883,11 +883,11 @@ export class UI {
   // ---------- in-flight tips ----------
   // The game's ending (M4, the final boss = a lap of the Earth, home to home): one card, then on with the game.
   showEnding() {
-    const s = this.save, km = (SEASON.crossingKm.final || 0).toLocaleString('en-GB');
+    const s = this.save;
     let el = document.getElementById('ending');
     if (!el) { el = document.createElement('div'); el.id = 'ending'; el.className = 'payoff ending'; document.body.appendChild(el); }
     el.innerHTML = `<div class="payoff-card"><p class="ending-title">YOU FLEW AROUND THE WORLD!</p>
-      <p>${km} km, from ${s.city} back home. Every area open, and the sky still cool behind you.</p>
+      <p>${endingBody(s.city)}</p>
       <p class="small">${(s.crossed || []).length} crossings flown. You finished Contrail Pilot!</p>
       <button id="endingOk" class="btn go big" type="button">OK</button></div>`;
     el.hidden = false; sfx.coin && sfx.coin();
