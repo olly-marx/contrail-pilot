@@ -1040,3 +1040,5 @@ h2.sub { margin-top: -4px; }
 /* BACK UP MY GAME (src/ui.js openBackup / openRestore) */
 .bk-text { width: 100%; box-sizing: border-box; min-height: 84px; font: 8px/1.4 monospace; padding: 6px; border: 2px solid #1b1b2f; background: #fff; color: #1b1b2f; resize: vertical; }
 .bk-line { margin: 2px 0; } .bk-warn { color: #b02a1a; margin-top: 8px; } .gear-last { text-align: center; margin: 8px 0 0; }
+/* The hangar purchase display (src/hangar.js payoff): while it is open the rest of the hangar list is hidden; OK shows it again from a fresh render. */
+#hFleet.paying > :not(#payoff) { display: none; }

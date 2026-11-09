@@ -70,3 +70,4 @@ group backup | src/backup.js src/save.js | backuprestore
 group backup-ui | src/ui.js | backuprestore
 group sound-live | src/sound.js | audiolive
 group sound-live-ui | src/ui.js | audiolive
+group hangar-pay | src/hangar.js style.css | hangarpay hubscreen onrails320

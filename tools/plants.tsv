@@ -502,3 +502,6 @@ plantsapply	tests/plantsapply.cjs	s/else if (r.stdout === text) {/else if (false
 plantsapply	tests/plantsapply.cjs	s/if (rowOk \&\& total !== want) out.push/if (false) out.push/	the checker no longer compares the changed-line count with the row's declared [xN]
 plantsapply	tests/plantsapply.cjs	s/if (r.status !== 0) {/if (false) {/	the checker no longer flags a sed expression that sed rejects
 plantsapply	tests/plantsapply.cjs	s/catch (e) { rowOk = false; out.push(/catch (e) { rowOk = false; (/	the checker no longer flags a row whose file does not exist
+hangarpay	style.css	s/#hFleet.paying > :not(#payoff) { display: none; }//	the purchase display leaves the upgrade list showing
+hangarpay	src/hangar.js	s/ if (fl) fl.classList.remove('paying');//	the list stays hidden after OK
+hangarpay	src/hangar.js	s/else { this.render(); if (this.ui.tour) setTimeout/else { if (this.ui.tour) setTimeout/	OK shows the OLD list (no fresh render after a prize paid during the display)

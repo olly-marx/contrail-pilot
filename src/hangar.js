@@ -124,6 +124,7 @@ export class FleetHangar {
     const el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff inbox';
     if (box) { box.hidden = true; box.insertAdjacentElement('afterend', el); } else document.body.appendChild(el);
     this.paying = true;
+    const fleetEl = $('hFleet'); if (fleetEl) fleetEl.classList.add('paying');   // the upgrade list below the display is HIDDEN until OK (the user, 2026-11-09: it stayed visible, some rows looked buyable); OK shows it from a fresh render
     el.innerHTML = `<div class="payoff-card"><div class="pay-frame"><div class="pay-plane"><img id="payBefore" alt="">${added.map(p => `<img class="pay-part" src="${p}" alt="">`).join('')}<i class="pay-spark"></i><b id="payMark" class="pay-mark"></b></div></div>
       <span id="payLabel" class="pay-label">${rails || !name ? tip('rail-payoff-label') : `NEW: ${name}!`}</span>
       ${bars.length ? `<div class="pay-bars">${statBarsHTML(bars)}</div>` : ''}
@@ -169,7 +170,7 @@ export class FleetHangar {
       if (part && !mark.dataset.done) el.classList.add('nopart');
       setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.reveal && this.ui.sfx.reveal(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
     // Ending the payoff: OK, or leaving the hangar mid-payoff (the plane build's review: it stayed parked until OK).
-    this.endPayoff = () => { el.remove(); if (box) box.hidden = false; this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
+    this.endPayoff = () => { el.remove(); if (box) box.hidden = false; const fl = $('hFleet'); if (fl) fl.classList.remove('paying'); this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
     $('payOk').onclick = () => { this.ui.sfx.tick(); this.endPayoff();
       if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }
