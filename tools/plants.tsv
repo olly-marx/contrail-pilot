@@ -506,9 +506,9 @@ plantsapply	tests/plantsapply.cjs	s/if (r.status !== 0) {/if (false) {/	the chec
 plantsapply	tests/plantsapply.cjs	s/catch (e) { rowOk = false; out.push(/catch (e) { rowOk = false; (/	the checker no longer flags a row whose file does not exist
 musicplan	src/musicplan.js	s#const pool = inBag === 0 ? TRACKS.filter(t => t !== history\[history.length - 1\]) :#const pool = inBag === 0 ? TRACKS.slice() :#	a track may repeat at the start of a new bag (the shuffle repeats a song)
 musicplan	src/musicplan.js	s#export const MUSIC_PASSES = 3;#export const MUSIC_PASSES = 1;#	MUSIC_PASSES is 1 (not 'a few')
-musicplan	src/musicdata.js	s#name: 'Bright Morning', key: 'C major pentatonic', bpm: 132,#name: 'Bright Morning', key: 'C major pentatonic', bpm: 112,#	song A's pass is 102 s (too long)
+musicplan	src/musicdata.js	s#key: 'A major pentatonic (written in C, sounding 3 semitones lower)', bpm: 132,#key: 'A major pentatonic (written in C, sounding 3 semitones lower)', bpm: 112,#	song A's pass is 102 s (too long)
 musicplan	src/musicplan.js	s#export const trackSeconds = song => passSeconds(song) \* MUSIC_PASSES;#export const trackSeconds = song => passSeconds(song);#	a track's time ignores MUSIC_PASSES
-musicplan	src/musicplan.js	s#if (prime \&\& i >= 4) notes = up(notes, 12);#if (prime \&\& i >= 4) notes = up(notes, 7);#	the A' variation is a fifth up, not an octave
+musicplan	src/musicplan.js	s#  if (lo - 12 >= noteNumber(LEAD_MIN)) return up(notes, -12);#  if (lo - 12 >= noteNumber(LEAD_MIN)) return up(notes, -7);#	the A' variation is a fifth down, not an octave
 musicplan	src/musicdata.js	s#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 2'#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 4'#	a note overruns its bar
 music	src/music.js	s#  if (!armed || timer) return;#  if (timer) return;#	music starts before the first tap
 music	src/music.js	s#export function syncMusic() { if (off || isMuted()) stopMusic(); else startMusic(); }#export function syncMusic() { if (off) stopMusic(); else startMusic(); }#	muting does not stop the music
@@ -518,3 +518,5 @@ music	src/sound.js	s#  tick: 'keep', flap: 'keep',#  flap: 'keep',#	a cue (tick)
 audiolive	src/musicplan.js	s#export const MUSIC_LEVEL = 0.035;#export const MUSIC_LEVEL = 0.14;#	the music is four times too loud (it masks the effects)
 audiolive	src/ui.js	s#data-gear=\"music\">MUSIC: \${s.musicOff#data-gear=\"musicX\">MUSIC: ${s.musicOff#	the MUSIC chip is not wired
 audiolive	src/music.js	s#g.linearRampToValueAtTime(0.25, t + 0.12);#g.linearRampToValueAtTime(1, t + 0.12);#	a duck cue does not dip the music
+musicplan	src/musicdata.js	s#bpm: 140, transpose: -2,#bpm: 140, transpose: 0,#	song D sounds above A5 (its transposition is lost)
+musicplan	src/musicdata.js	s#hat: \[2, 6, 10, 14\], hatVol: 0.012,#hat: [2, 6, 10, 14], hatVol: 0.04,#	song E's tick is louder than the others (it is no longer the quietest)

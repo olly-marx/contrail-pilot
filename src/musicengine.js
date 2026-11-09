@@ -31,16 +31,16 @@ export class Player {
     g.gain.setValueAtTime(e.vol, t + Math.max(0.011, len * 0.7)); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
     o.connect(g); g.connect(this.gain); o.start(t); o.stop(t + len + 0.02); this.nodes += 2;
   }
-  hat(t) {
+  hat(t, vol = 0.025) {
     const c = this.ctx, n = Math.floor(c.sampleRate * 0.03), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
     for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
     const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-    f.type = 'highpass'; f.frequency.value = 6000; g.gain.value = 0.025; s.buffer = b; s.connect(f); f.connect(g); g.connect(this.gain); s.start(t); this.nodes += 3;
+    f.type = 'highpass'; f.frequency.value = 6000; g.gain.value = vol; s.buffer = b; s.connect(f); f.connect(g); g.connect(this.gain); s.start(t); this.nodes += 3;
   }
   // Schedule every step that falls in the next 120 ms. Returns false when the track has no more steps to schedule.
   tick() {
     while (this.step < this.total && this.next < this.ctx.currentTime + 0.12) {
-      for (const e of stepEvents(this.song, this.bars, this.step)) { if (e.kind === 'hat') this.hat(this.next); else this.voice(e, this.next); }
+      for (const e of stepEvents(this.song, this.bars, this.step)) { if (e.kind === 'hat') this.hat(this.next, e.vol); else this.voice(e, this.next); }
       this.step++; this.next += this.sl;
     }
     return this.step < this.total;

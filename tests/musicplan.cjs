@@ -20,13 +20,20 @@
     // 5. variations: A2 bars 1-4 equal A; bars 5-8 an octave up (semitone number + 12).
     const A = bars.slice(0, 8), A2 = bars.slice(8, 16);
     check(A.slice(0, 4).every((b, i) => JSON.stringify(b.notes) === JSON.stringify(A2[i].notes)), `${id}: A' bars 1-4 are A's`);
-    check(A.slice(4).every((b, i) => b.notes.every((n, k) => P.noteNumber(A2[i + 4].notes[k].n) === P.noteNumber(n.n) + 12)), `${id}: A' bars 5-8 are A's an octave up`);
+    const shifts = A.slice(4).map((b, i) => A2[i + 4].notes.map((n, k) => P.noteNumber(n.n) - P.noteNumber(b.notes[k].n)));
+    check(shifts.every(sh => sh.every(x => x === sh[0]) && [-12, 0, 12].includes(sh[0])), `${id}: A' bars 5-8 are A's, each bar a whole octave down, up or unchanged (shifts ${shifts.map(sh => sh[0]).join(',')})`);
+    // v2 (the family: too high-pitched): the lead as HEARD stays inside [LEAD_MIN, LEAD_MAX] and the bass drives like C's
+    const r = P.leadRange(s);
+    check(r.hi <= P.noteNumber(P.LEAD_MAX) && r.lo >= P.noteNumber(P.LEAD_MIN), `${id}: no lead note above ${P.LEAD_MAX} or below ${P.LEAD_MIN} as heard (note numbers ${r.lo}..${r.hi}; transpose ${s.transpose})`);
+    check(s.voices.bass.length === 8 && s.voices.hat.join() === '2,6,10,14', `${id}: a driving bass (8 notes a bar) and a tick on every off-beat (bass ${s.voices.bass.length}, hat ${s.voices.hat.join(',')})`);
     // 6. events
     const ev0 = P.stepEvents(s, bars, bars[0].notes[0].s);
-    check(ev0.some(e => e.kind === 'lead' && Math.abs(e.f - P.noteFreq(bars[0].notes[0].n)) < 1e-6), `${id}: the first lead note is played on its step`);
+    check(ev0.some(e => e.kind === 'lead' && Math.abs(e.f - P.noteFreq(bars[0].notes[0].n) * Math.pow(2, (s.transpose || 0) / 12)) < 1e-6), `${id}: the first lead note is played on its step`);
     const hats = []; for (let st = 0; st < 16; st++) if (P.stepEvents(s, bars, st).some(e => e.kind === 'hat')) hats.push(st);
     check(JSON.stringify(hats) === JSON.stringify(s.voices.hat), `${id}: hats only on the declared steps (${hats.join(',')})`);
   }
+  const hv = id => D.SONGS[id].voices.hatVol || 0.025;
+  check(hv('E') < hv('B') && hv('B') < hv('A') && hv('E') === Math.min(...ids.map(hv)), `E keeps the quietest tick (hat volume A ${hv('A')}, B ${hv('B')}, D ${hv('D')}, E ${hv('E')})`);
   check(P.MUSIC_PASSES >= 2 && P.MUSIC_PASSES <= 4 && Number.isInteger(P.MUSIC_PASSES), `MUSIC_PASSES is the declared repeat count (${P.MUSIC_PASSES})`);
   const cyc = P.cycleSeconds(); check(cyc > 15 * 60 && cyc < 30 * 60, `a full cycle of five lasts ${(cyc / 60).toFixed(1)} min (15-30)`);
   // 4. the shuffle bag, seeded.
