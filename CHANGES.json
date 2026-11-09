@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-gate-every-flight",
+    "version": "0.39.2",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "The forecast gate now shows on every flight, not only the first one after you open the game."
+    ]
+  },
+  {
     "id": "2026-11-09-hangar-pay-clear",
     "version": "0.39.1",
     "date": "2026-11-09",

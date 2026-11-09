@@ -74,3 +74,4 @@ group hangar-pay | src/hangar.js style.css | hangarpay hubscreen onrails320
 group spotlight | src/tour.js src/railsubjects.js tests/lib/spotlight.js tests/lib/spotcases.js | spotlight onrails320 onrails
 group payoff-full | src/hangar.js style.css | payofffull
 group music | src/music.js src/musicdata.js src/musicengine.js src/musicplan.js | audiolive
+group gap-hint-restart | src/GameScene.js src/gapmarkers.js | gaphintrestart gaphint

@@ -540,3 +540,4 @@ musicplan	src/musicplan.js	s#export const musicStateOf = save => (save \&\& save
 musicplan	src/musicplan.js	s#export const MUSIC_STATES = \['off', 'soft', 'middle', 'loud'\];#export const MUSIC_STATES = ['off', 'soft', 'loud'];#	the MUSIC chip skips MIDDLE
 music	src/music.js	s#g.linearRampToValueAtTime(MUSIC_LEVELS\[levelName\], t + 0.15);#g.linearRampToValueAtTime(g.value, t + 0.15);#	a level change is not applied to the playing music
 audiolive	src/ui.js	s#this.save.musicOff = nx === 'off';#this.save.musicOff = false;#	the MUSIC chip never reaches OFF
+gaphintrestart	src/GameScene.js	s/^    this.gapHintGfx = null;   \/\/ made again.*$//	the gap hint graphics is kept across scene restarts (nothing is drawn from the second flight)
