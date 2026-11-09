@@ -41,7 +41,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const before = await store();
     // 3. a corrupt text is refused and changes nothing
     await settings(); await p.click('#sheet [data-gear="restore"]'); await p.waitForTimeout(400);
-    await p.fill('#bkText', text.replace('"flights":44', '"flights":45')); await p.click('#sheet [data-bk="check"]'); await p.waitForTimeout(300);
+    { const i = text.lastIndexOf('"flights":44'); await p.fill('#bkText', text.slice(0, i) + '"flights":45' + text.slice(i + '"flights":44'.length)); }   /* the LAST one, inside the sealed save: the header's summary is not sealed */ await p.click('#sheet [data-bk="check"]'); await p.waitForTimeout(300);
     t = await sheetText(); const mid = await store();
     check(/cut\s*short or changed/.test(t) && JSON.stringify(mid.cur) === JSON.stringify(before.cur) && !mid.r1, `${tag}: a corrupt text is refused ("looks cut short or changed") and storage is unchanged: ${t.slice(-80)}`);
     // 4. a good backup: the card, then GO BACK TO IT
