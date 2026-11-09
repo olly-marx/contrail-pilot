@@ -3,7 +3,7 @@
 // The walk advances like a player: the OK button, else a real tap at the ring's centre. Plants: tools/plants.tsv, test `spotlight`.
 // Run: python3 -m http.server 8000 & node tests/spotlight.cjs   (run onrails320 FIRST on any change to src/tour.js)
 const { chromium } = require('playwright-core');
-const { ready } = require('./lib/ready.js'), { base, CASES, RES } = require('./lib/spotcases.js'), { audit } = require('./lib/spotlight.js');
+const { ready } = require('./lib/ready.js'), { base, CASES, RES } = require('./lib/spotcases.js'), { audit, pixels } = require('./lib/spotlight.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
@@ -22,6 +22,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
           if (!up) { if (n === 1) fails.push(`${W}x${H} ${id}: no tour step appeared (the case's screen did not start its tour)`); break; }
           await p.waitForTimeout(700);
           for (const prob of await audit(p)) fails.push(`${W}x${H} ${id}: ${prob}`);
+          for (const prob of await pixels(p)) fails.push(`${W}x${H} ${id}: ${prob}`);
           seen.add(await p.evaluate(() => game.registry.get('ui').tour.spot().key));
           if (id === 'name' && n >= 2) break;
           const info = await p.evaluate(() => { const t = document.getElementById('tour'), r = t.querySelector('.tring').getBoundingClientRect(), ok = t.querySelector('.tbubble .btn'); return { ring: [r.left, r.top, r.right, r.bottom], okShown: !!ok && !ok.hidden }; });

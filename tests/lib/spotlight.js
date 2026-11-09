@@ -23,3 +23,23 @@ exports.audit = page => page.evaluate(() => {
   }
   return out;
 });
+
+// The PIXELS of the target are not darkened (the dark is a mask with a hole there; the first version used an even-odd path and the overlap of the target's hole and the subject's came out dark: nothing in the rects showed it).
+// Two clips of the target's inner area (inset 8 px, clear of the ring): with the tour shown, and with it hidden; the mean absolute difference must be small.
+exports.pixels = async page => {
+  const { PNG } = require('pngjs'), sp = await page.evaluate(() => { const s = game.registry.get('ui').tour.spot(); return { key: s.key, t: s.target, subs: s.subjects }; });
+  const out = [], boxes = [['target', sp.t], ...sp.subjects.slice(0, 1).map(r => ['subject', r])];
+  for (const [what, r] of boxes) {
+    if (!r) continue;
+    const clip = { x: Math.round(r.left + 8), y: Math.round(r.top + 8), width: Math.round(r.right - r.left - 16), height: Math.round(r.bottom - r.top - 16) };
+    if (clip.width < 4 || clip.height < 4) continue;
+    const A = PNG.sync.read(await page.screenshot({ clip }));
+    await page.evaluate(() => { document.getElementById('tour').style.visibility = 'hidden'; }); await page.waitForTimeout(60);
+    const B = PNG.sync.read(await page.screenshot({ clip }));
+    await page.evaluate(() => { document.getElementById('tour').style.visibility = ''; });
+    let d = 0; for (let i = 0; i < A.data.length; i += 4) d += Math.abs(A.data[i] - B.data[i]) + Math.abs(A.data[i + 1] - B.data[i + 1]) + Math.abs(A.data[i + 2] - B.data[i + 2]);
+    const mean = d / (A.data.length / 4) / 3;
+    if (mean > 14) out.push(`the ${what} of ${sp.key} is darkened: FAILED (mean pixel difference ${mean.toFixed(1)} with the tour on and off)`);
+  }
+  return out;
+};
