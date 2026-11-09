@@ -68,3 +68,4 @@ group plants-style-css | style.css | gear skiptrip
 group online-note | src/online.js src/ui.js src/main.js | onlinenote
 group sound-live | src/sound.js | audiolive
 group sound-live-ui | src/ui.js | audiolive
+group payoff-full | src/hangar.js style.css | payofffull
