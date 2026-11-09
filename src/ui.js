@@ -240,8 +240,8 @@ export class UI {
     const s = this.save, credit = document.querySelector('#title .credit');
     const close = showSheet({ eyebrow: 'MENU', title: 'Settings', ok: 'CLOSE',
       html: `<div class="gear-list"><button class="chip" type="button" data-gear="how">HOW TO PLAY</button><button class="chip" type="button" data-gear="school">FLIGHT SCHOOL</button>`
-        + `<button class="chip" type="button" data-gear="sound">SOUND: ${s.muted ? 'OFF' : 'ON'}</button><button class="chip" type="button" data-gear="about">ABOUT US</button>`
-        + `<button class="chip" type="button" data-gear="saved">YOUR SAVED GAME</button></div>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
+        + `<button class="chip" type="button" data-gear="sound">SOUND: ${s.muted ? 'OFF' : 'ON'}</button><button class="chip" type="button" data-gear="soundtest">TEST SOUND</button><button class="chip" type="button" data-gear="about">ABOUT US</button>`
+        + `<button class="chip" type="button" data-gear="saved">YOUR SAVED GAME</button></div><p class="small gear-soundmsg" id="gearSoundMsg"></p>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
     this.wireGear(close);
   }
   // The second page of Settings (0.37.x: the one sheet had 8 buttons and its CLOSE ran off a 320x568 screen): everything about the saved game.
@@ -257,6 +257,7 @@ export class UI {
     const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), saved: () => this.openSaved(), recover: () => this.openRecover(), backup: () => this.openBackup(), restore: () => this.openRestore(), reset: () => $('resetBtn').click() };
     document.querySelectorAll('#sheet [data-gear]').forEach(b => b.onclick = () => {
       if (b.dataset.gear === 'sound') { $('muteBtn').click(); b.textContent = `SOUND: ${this.save.muted ? 'OFF' : 'ON'}`; return; }   // the sheet stays open: you hear the change
+      if (b.dataset.gear === 'soundtest') return this.testSound();
       close(); act[b.dataset.gear](); });
   }
 
@@ -302,6 +303,15 @@ export class UI {
     const res = restoreFromBackup(r.save);
     if (res === 'ok') return location.reload();
     this.toast('NOT CHANGED', res === 'not-kept' ? 'Your game now could not be kept first, so nothing was replaced.' : 'That did not work. Nothing was changed.', 'bad', 6);
+  }
+
+  // TEST SOUND (Settings): a tick, then a bell, at the real volume, so a player who hears nothing can tell the game from the tab or the device (research/SOUND-DESIGN.md; the user heard
+  // nothing after 0.35.0). Lines are <= 28 characters (the 320 px sheet). The third line says which build this page is running.
+  testSound() {
+    const m = $('gearSoundMsg'); if (!m) return;
+    if (this.save.muted) m.innerHTML = 'Sound is OFF. Tap SOUND.';
+    else { sfx.tick(); setTimeout(() => sfx.medal(), 350); m.innerHTML = 'Did you hear it? No?<br>Turn up your device, or<br>unmute this tab.'; }
+    m.innerHTML += `<br>This game is ${VERSION}`;
   }
 
   // ---- keeping the save safe (the user lost a 260-flight save, 2026-11-05; src/save.js, src/online.js) ----

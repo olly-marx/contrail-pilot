@@ -12,11 +12,11 @@ function ac() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     ctx = new AC();
-    // master chain: gain -> low-pass (takes the buzz off any tone) -> compressor (an overlap cannot clip) -> speakers. Built defensively: a browser
+    // master chain (gain 1: the cues' own gains are the levels, measured against the 0.34 sounds in tests/audiolive.cjs): gain -> low-pass (takes the buzz off any tone) -> compressor (an overlap cannot clip) -> speakers. Built defensively: a browser
     // (or a test double) that lacks a piece simply plays straight to the destination.
     try {
       const g = ctx.createGain(), lp = ctx.createBiquadFilter(), cp = ctx.createDynamicsCompressor();
-      g.gain.value = 0.6; lp.type = 'lowpass'; lp.frequency.value = 3200;
+      g.gain.value = 1; lp.type = 'lowpass'; lp.frequency.value = 3200;
       g.connect(lp); lp.connect(cp); cp.connect(ctx.destination); bus = g;
     } catch (e) { bus = null; }
   }
@@ -27,7 +27,7 @@ function ac() {
 function gate() { return muted ? null : ac(); }
 const out = () => bus || ctx.destination;
 
-export function setMuted(m) { muted = m; if (!m) ac(); }   // (un-muting is a tap: a fine moment to create the context)
+export function setMuted(m) { muted = m; }   // (never creates a context: setupMute() calls this at PAGE LOAD, and a context made before a tap starts suspended. The first cue after a tap creates it.)
 export function isMuted() { return muted; }
 // Browsers only allow audio after a user gesture; call this from the first tap. Muted: nothing is created.
 export function unlockAudio() { gate(); }
@@ -89,11 +89,11 @@ export const sfx = {
   dusk: () => [784, 659, 523].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.15 })),
   // Celebration cues (release B). Every one is a short rising figure from one C-major pentatonic family; losses fall and stay soft. Names are the interface (research/SOUND-DESIGN.md).
   reveal: () => { [659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.28, type: 'triangle', vol: 0.045, delay: i * 0.09 })); noise({ dur: 0.35, vol: 0.03, cutoff: 700 }); },   // a new part arrives on the plane
-  era: () => { [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.12 })); [784, 1047, 1319].forEach(f => tone({ freq: f, dur: 0.7, type: 'triangle', vol: 0.03, delay: 0.55 })); },   // a new era (src/welcome.js; was 'fanfare')
+  era: () => { [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.12 })); [784, 1047, 1319].forEach(f => tone({ freq: f, dur: 0.7, type: 'triangle', vol: 0.02, delay: 0.55 })); },   // a new era (src/welcome.js; was 'fanfare')
   grow: () => { [392, 523, 659].forEach((f, i) => tone({ freq: f, dur: 0.22, vol: 0.05, delay: i * 0.1 })); noise({ dur: 0.25, vol: 0.025, cutoff: 1800, delay: 0.05 }); },   // a nature project is funded
   done: () => [523, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.16, type: 'triangle', vol: 0.045, delay: i * 0.08 })),   // a mission is done
-  medal: () => { tone({ freq: 880, dur: 0.8, vol: 0.05 }); tone({ freq: 1760, dur: 0.5, vol: 0.02 }); tone({ freq: 2217, dur: 0.35, vol: 0.012 }); },   // a badge: one bell strike with a long decay
-  welcome: () => { tone({ freq: 196, to: 262, dur: 0.8, vol: 0.045 }); [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: i === 3 ? 0.55 : 0.2, type: 'triangle', vol: 0.045, delay: i * 0.11 })); },   // a crossing lands
+  medal: () => { tone({ freq: 880, dur: 0.8, vol: 0.035 }); tone({ freq: 1760, dur: 0.5, vol: 0.015 }); tone({ freq: 2217, dur: 0.35, vol: 0.01 }); },   // a badge: one bell strike with a long decay
+  welcome: () => { tone({ freq: 196, to: 262, dur: 0.8, vol: 0.03 }); [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: i === 3 ? 0.55 : 0.2, type: 'triangle', vol: 0.045, delay: i * 0.11 })); },   // a crossing lands
   softfail: () => [330, 262].forEach((f, i) => tone({ freq: f, to: f * 0.95, dur: 0.26, vol: 0.05, delay: i * 0.2 })),   // a crossing is lost: two falling notes, no buzz
   dawn: () => [523, 659, 784].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.15 })),
 };
