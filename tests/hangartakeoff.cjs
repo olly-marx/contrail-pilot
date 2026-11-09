@@ -28,7 +28,7 @@ const seed = (missionsDone, tours) => ({ areas: ['weurope'], homeArea: 'weurope'
   try {
     for (const btn of ['#hGoTop', '#hGoBtn']) {   // A
       const { ctx, p } = await open(seed(['L1'], [...DONE, 'r-takeoff2'])); await toHangar(p, 'r-takeoff2');
-      const before = await state(p); check(before.hangar && !before.flying, `A ${btn}: the case does not reach the hangar: ${JSON.stringify(before)}`);
+      const before = await state(p); log.push(`A ${btn} before the tap (tour state): ${JSON.stringify(before)}`); check(before.hangar && !before.flying, `A ${btn}: the case does not reach the hangar: ${JSON.stringify(before)}`);
       await p.evaluate(sel => document.querySelector(sel).scrollIntoView({ block: 'center' }), btn); await p.click(btn); await p.waitForTimeout(1500);
       const a = await state(p); log.push(`A ${btn}: ${JSON.stringify(a)}`);
       check(!a.flying, `A ${btn}: TAKE OFF in the hangar started a flight while a HOME rail (r-takeoff2) was due`);
