@@ -132,7 +132,7 @@ hangar-feedback	src/statbars.js	s/  if (r.then === r.now) return 'same';//	a no-
 starterfill	src/startchoice.js	s#save\.visited = \[name\];#void 0;#	no visited reset at the start choice
 starterfill	src/missions2.js	s#c !== city && c !== home)#c !== city)#	the home city can be a mission target
 homenature	src/wild.js	s#if (!this.region) this.region = homeRegion(s) || 'woodland';#if (!this.region) this.region = 'woodland';#	NATURE opens on the UK, not home
-homenature	src/wild.js	s#const uk = this.region === (homeRegion(s) || 'woodland');#const uk = this.region === 'woodland';#	the planting card UK-only
+homenature	src/wild.js	s#^    const uk = true;$#    const uk = this.region === 'woodland';#	the planting card UK-only
 onrails	src/hangar.js	s#toFly: false, rails:#toFly: free \&\& !!s.areas, rails:#	the payoff goes to FLY
 onrails	src/tour.js	s#text: tip('rail-free-tap'),#skipIf: () => true, text: tip('rail-free-tap'),#	R5 without the tap-to-see step
 onrails	style.css	s#background: transparent; pointer-events: auto;#background: transparent; pointer-events: none;#	the dim lets taps through
