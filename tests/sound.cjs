@@ -22,7 +22,7 @@ const fs = require('fs'), path = require('path');
   for (const n of names) S.sfx[n](); S.buzz([100]);
   check(contexts === 0 && nodes.length === 0 && vibrations === 0, `MUTED: no AudioContext, no node, no vibration (contexts ${contexts}, nodes ${nodes.length}, vibrations ${vibrations})`);
   // 2. positive control + 3. never harsh, per cue.
-  S.setMuted(false);
+  S.setMuted(false); S.unlockAudio();   // (the master chain's own gain node is made here, so no cue is charged with it)
   const per = {};
   for (const n of names) { const from = nodes.length; S.sfx[n](); per[n] = nodes.slice(from); }
   check(contexts === 1, `un-muted: one context is created (${contexts})`);
