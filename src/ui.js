@@ -41,6 +41,7 @@ import { animalPortrait } from './animalart.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, FUELS, level, nextLevel, canBuy, buyLevel, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById, freeParcels } from './upgrades.js';
 import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
+import { treesPlanted } from './treecount.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
 import { writeSave, resetSave, listStashed, restoreStashed, releaseHold, heldReason, restoreFromBackup, progressOf } from './save.js';
@@ -507,7 +508,7 @@ export class UI {
     this.refreshDots();
     // The meter of the land you take off from (each land has its own).
     const startRegion = (city(this.save.city) || {}).region || 'woodland', startBio = biodiversity(this.save, startRegion);
-    const any = Object.values(this.save.planted || {}).some(n => n > 0) || startBio > 0;
+    const any = treesPlanted(this.save) > 0 || startBio > 0;
     $('tMeter').innerHTML = any && REGION_NAMES[startRegion] ? meterHTML(this.save, startBio, startRegion) : '';
     this.renderMission();
     $('tEra').innerHTML = this.save.tutorialDone ? eraBarHTML(this.save) : '';   // era progress (src/eras.js)
