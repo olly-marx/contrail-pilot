@@ -695,6 +695,7 @@ h2.sub { margin-top: -4px; }
 #title.hub #hubTop { display: flex; justify-content: space-between; align-items: center; order: 0; }
 #title.hub #hubWorld { order: 1; }
 #title.hub .hub-skip { order: 2; }
+#title.hub #hubCross { order: 3; }
 #title.hub #hubNext { order: 3; }
 #title.hub #goBtn { order: 4; }
 #title.hub #tChallenges { order: 5; }
@@ -1051,3 +1052,13 @@ h2.sub { margin-top: -4px; }
 .bk-line { margin: 2px 0; } .bk-warn { color: #b02a1a; margin-top: 8px; } .gear-last { text-align: center; margin: 8px 0 0; }
 /* The hangar purchase display (src/hangar.js payoff): while it is open the rest of the hangar list is hidden; OK shows it again from a fresh render. */
 #hFleet.paying > :not(#payoff) { display: none; }
+/* CROSSINGS V2 (research/DESIGN-CROSSINGS-V2.md): the HOME box 'NEXT CROSSING' (src/crossingview.js boxView): the route and how hard, three ticks that fill in, one plain line. No distance. */
+.hub-cross { text-align: left; border: 2px solid var(--ink, #1b1b2f); border-radius: 4px; padding: 3px 6px; box-sizing: border-box; width: 100%; background: rgba(255,255,255,0.55); cursor: pointer; }
+.hub-cross .rc-label { margin: 0 0 1px; text-align: left; }
+.hub-cross .hc-route { display: flex; justify-content: space-between; gap: 6px; font-size: 8px; line-height: 1.3; }
+.hub-cross .hc-route b { color: var(--muted); font-weight: normal; white-space: nowrap; }
+.hc-ticks { display: flex; gap: 8px; font-size: 7px; line-height: 1.5; }
+.hc-tick::before { content: ''; display: inline-block; width: 6px; height: 6px; border: 1px solid var(--ink, #1b1b2f); margin-right: 3px; vertical-align: -1px; background: transparent; }
+.hc-tick.on::before { background: var(--gold, #ffd23f); }
+.hub-cross .hc-line { margin: 1px 0 0; font-size: 7px; line-height: 1.3; }
+.hub-cross.ready { background: var(--gold, #ffd23f); }
