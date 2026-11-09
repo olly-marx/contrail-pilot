@@ -9,7 +9,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], seen = new Set();
   try {
-    for (const [W, H] of [[390, 844], [320, 568]]) for (const [id, over, screen, max] of CASES) {
+    const only = process.env.SPOT_CASES ? process.env.SPOT_CASES.split(',') : null, sizes = (process.env.SPOT_SIZES || '390x844,320x568').split(',').map(z => z.split('x').map(Number));   // (SPOT_CASES / SPOT_SIZES: a fast run for a plant; the default is everything)
+    for (const [W, H] of sizes) for (const [id, over, screen, max] of CASES.filter(c => !only || only.includes(c[0]))) {
       const ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
       await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, { ...base, ...over });
@@ -32,7 +33,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       await ctx.close();
     }
   } finally { await b.close(); }
-  for (const k of ['r-free#1', 'r-free#2', 'r-takeoff1#1', 'r-res1#3', 'r-nature#3', 'r-systems#3', 'r-parcels#1', 'new#2', 'new#3', 'r-payoff#1']) if (!seen.has(k)) fails.push(`step ${k} was never reached by the walk (a case no longer gets there)`);
+  if (!process.env.SPOT_CASES) for (const k of ['r-free#1', 'r-free#2', 'r-takeoff1#1', 'r-res1#3', 'r-nature#3', 'r-systems#3', 'r-parcels#1', 'new#2', 'new#3', 'r-payoff#1']) if (!seen.has(k)) fails.push(`step ${k} was never reached by the walk (a case no longer gets there)`);
   console.log(fails.length ? `FAIL spotlight:\n - ${fails.join('\n - ')}` : `PASS spotlight: ${seen.size} steps at 390x844 and 320x568: every subject is lit, the bubble covers neither the target nor the subject, only the target is tappable`);
   process.exit(fails.length ? 1 : 0);
 })();
