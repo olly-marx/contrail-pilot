@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-backup-my-game",
+    "version": "0.38.0",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "You can now back up your game as a small file, and restore it later, from Settings > YOUR SAVED GAME. Settings has two pages so every button fits on a small phone."
+    ]
+  },
+  {
     "id": "2026-11-09-faster-updates-fix",
     "version": "0.37.2",
     "date": "2026-11-09",
