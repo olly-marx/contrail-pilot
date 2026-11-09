@@ -513,3 +513,5 @@ hangarpay	src/hangar.js	s/ if (fl) fl.classList.remove('paying');//	the list sta
 hangarpay	src/hangar.js	s/else { this.render(); if (this.ui.tour) setTimeout/else { if (this.ui.tour) setTimeout/	OK shows the OLD list (no fresh render after a prize paid during the display)
 spotlight	src/tour.js	s/fill="#000"/fill="#fff"/	the holes of the dark are not holes (the target is darkened)
 gaphintrestart	src/GameScene.js	s/^    this.gapHintGfx = null;   \/\/ made again.*$//	the gap hint graphics is kept across scene restarts (nothing is drawn from the second flight)
+hangartakeoff	src/ui.js	s/^    if (this.tour \&\& !this.save.freeUpgrade \&\& this.tour.homeRailDue()) return this.go('fly');.*$//	a hangar TAKE OFF starts the flight while a HOME rail is due
+hangartakeoff	src/tour.js	s/homeRailDue() { return !!(FEATURES.season2 \&\& !this.busy \&\&/homeRailDue() { return !!(FEATURES.season2 \&\&/	the hangar's own TAKE OFF rail is redirected to HOME (the flight never starts from it)

@@ -51,6 +51,10 @@ export class Tour {
 
   off() { return this.save.seenTips.includes('*') || (this.save.tours || []).includes('*'); }   // '*': automated tests
   done(id) { return (this.save.tours || []).includes(id); }
+  // A TAKE OFF tapped in the hangar while a rails step is due on HOME (its #goBtn): the player goes to the FLY screen, where that step starts, and the
+  // flight waits for the HOME button (the user, 2026-11-09: tapping TAKE OFF from the hangar skipped the HOME rails). Not while a rails step runs: the hangar's
+  // own TAKE OFF step (r-takeoff1) taps this very button and must start the flight. Only HOME rails count; NATURE's wait for a visit to NATURE.
+  homeRailDue() { return !!(FEATURES.season2 && !this.busy && !this.off() && this.save.tutorialDone && this.railsFor('title')); }
   markDone(id) { this.save.tours = [...new Set([...(this.save.tours || []), id])]; writeSave(this.save); }
 
   // Called when the menu shows, and when the results have finished. Starts at most one tour.

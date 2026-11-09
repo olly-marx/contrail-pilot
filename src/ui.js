@@ -108,8 +108,8 @@ export class UI {
     $('againBtn').onclick = () => { const to = this.resultsLead(); return to ? this.go(to) : this.showTitle(); };   // FLY ON, or where the lesson leads
     $('schoolBtn').onclick = () => this.startSchool();
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.tick(); this.go(b.dataset.go); });
-    $('hGoBtn').onclick = () => this.start();
-    $('hGoTop').onclick = () => { if (this.fleet.paying) this.fleet.endPayoff(); this.start(); };
+    $('hGoBtn').onclick = () => this.startFromHangar();
+    $('hGoTop').onclick = () => { if (this.fleet.paying) this.fleet.endPayoff(); this.startFromHangar(); };
     $('howBtn').onclick = () => { $('how').hidden = false; };
     $('howClose').onclick = () => { $('how').hidden = true; };
     $('aboutBtn').onclick = () => { $('aboutVersion').textContent = `Contrail Pilot v${VERSION}`; $('about').hidden = false; };
@@ -134,6 +134,12 @@ export class UI {
   }
 
   // First play goes through flight school.
+  // TAKE OFF in the hangar: when a rails step is due on HOME the player is taken to the FLY screen (it starts there) and the flight waits for HOME's button.
+  startFromHangar() {
+    if (this.tour && !this.save.freeUpgrade && this.tour.homeRailDue()) return this.go('fly');   // (the free part first: start() keeps the player in the hangar)
+    return this.start();
+  }
+
   start() {
     if (FEATURES.season2 && this.save.freeUpgrade && hubRevealed(this.save, 'hangar') && this.save.tutorialDone) return this.go('hangar');   // locked: the free part first
     if (FEATURES.season2 && needsStartChoice(this.save)) return this.askStart().then(() => this.start());   // season 2: choose your start first
