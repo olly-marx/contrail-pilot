@@ -41,6 +41,8 @@
   const hv = id => D.SONGS[id].voices.drums.hatVol, kv = id => D.SONGS[id].voices.drums.kickVol;
   check(hv('E') < hv('B') && hv('B') < hv('A') && hv('E') === Math.min(...ids.map(hv)), `E keeps the quietest tick (hat volume A ${hv('A')}, B ${hv('B')}, D ${hv('D')}, E ${hv('E')})`);
   check(kv('E') === Math.min(...ids.map(kv)) && D.SONGS.E.voices.drums.snare.length === 0, `E keeps the quietest beat: the softest kick (${kv('E')}) and no snare`);
+  const bv = id => D.SONGS[id].voices.bassVol || 0.12;
+  check(bv('E') === Math.min(...ids.map(bv)) && bv('B') < bv('A') && bv('A') === bv('C') && bv('C') === bv('D') && bv('C') >= 0.15, `the bass: E stays the quietest, B below A, C and D (bass volume A ${bv('A')}, B ${bv('B')}, C ${bv('C')}, D ${bv('D')}, E ${bv('E')}; C at least .15 = 25 percent over v3)`);
   check(['C', 'D'].every(id => D.SONGS[id].voices.drums.kick.join() === '0,4,8,12' && D.SONGS[id].voices.drums.snare.join() === '4,12'), 'C and D: four-on-the-floor kick (0,4,8,12) and a clap on 2 and 4 (4,12)');
   check(P.MUSIC_PASSES >= 2 && P.MUSIC_PASSES <= 4 && Number.isInteger(P.MUSIC_PASSES), `MUSIC_PASSES is the declared repeat count (${P.MUSIC_PASSES})`);
   const cyc = P.cycleSeconds(); check(cyc > 15 * 60 && cyc < 30 * 60, `a full cycle of five lasts ${(cyc / 60).toFixed(1)} min (15-30)`);

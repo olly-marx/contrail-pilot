@@ -524,3 +524,5 @@ musicplan	src/musicplan.js	s#    if (d.kick.includes(s)) out.push#    if (false)
 musicplan	src/musicplan.js	s#  if (drums \&\& v.drums) {#  if (v.drums) {#	the drums switch is ignored (drums false still plays drums)
 musicplan	src/musicplan.js	s#barNo % 8 === 7#barNo % 8 === 6#	the snare fill lands one bar early
 musicplan	src/musicdata.js	s#drums: { kick: \[0, 8\], kickGhost: \[\], kickVol: 0.1,#drums: { kick: [0, 8], kickGhost: [], kickVol: 0.3,#	song E's kick is the loudest (it is no longer the quiet song)
+musicplan	src/musicdata.js	s#bassVol: 0.1, arp: { every: 2, order: \[0, 1, 2, 1\], duty: 0.25, vol: 0.035 }#bassVol: 0.2, arp: { every: 2, order: [0, 1, 2, 1], duty: 0.25, vol: 0.035 }#	song E's bass is the loudest (it is no longer the quiet song)
+musicplan	src/musicdata.js	s#bassVol: 0.15, arp: { every: 2, order: \[0, 1, 2, 1\], duty: 0.125, vol: 0.05 }#bassVol: 0.12, arp: { every: 2, order: [0, 1, 2, 1], duty: 0.125, vol: 0.05 }#	song A's bass is back at the v3 level (not louder)
