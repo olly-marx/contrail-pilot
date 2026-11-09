@@ -280,8 +280,7 @@ export class Tour {
     const spec = 'subject' in st ? st.subject : SUBJECTS[st.key], list = spec == null ? [] : [].concat(spec), out = [];
     for (const sel of list) {
       const el = sel[0] === '^' ? this.target.closest(sel.slice(1)) : [...document.querySelectorAll(sel)].find(e => !e.closest('#tour') && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden');   // (not offsetParent: the pinned hangar dock is position: fixed/sticky and has none)
-      if (el && el !== this.target && !el.contains(this.target) && !out.includes(el)) out.push(el);
-      else if (el && el.contains(this.target) && sel[0] === '^') out.push(el);   // the target's own row: the row is the subject (the row contains the target button)
+      if (el && el !== this.target && !out.includes(el)) out.push(el);   // (a subject may CONTAIN the target: the upgrade card holds its own FREE! button)
     }
     return out;
   }
