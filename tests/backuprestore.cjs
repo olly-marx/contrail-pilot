@@ -11,6 +11,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  try {
   for (const [W, H] of [[375, 667], [320, 568]]) {
     const tag = `${W}x${H}`, ctx = await b.newContext({ viewport: { width: W, height: H }, acceptDownloads: true }), p = await ctx.newPage();
     p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
@@ -25,12 +26,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
     // 1. Settings
     await settings(); let t = await sheetText();
     check(/BACK UP MY GAME/.test(t) && /RESTORE A BACKUP/.test(t) && /Last backup: never/.test(t), `${tag}: Settings shows BACK UP MY GAME, RESTORE A BACKUP and "Last backup: never": ${t.slice(0, 160)}`);
+    if (!(await p.$('#sheet [data-gear="backup"]')) || !(await p.$('#sheet [data-gear="restore"]'))) { await ctx.close(); continue; }   // (named above: nothing below can be asked of a missing button)
     // 2. download
     await p.click('#sheet [data-gear="backup"]'); await p.waitForTimeout(400);
     const [dl] = await Promise.all([p.waitForEvent('download', { timeout: 8000 }).catch(() => null), p.click('#sheet [data-bk="download"]').catch(() => null)]);
     check(!!dl, `${tag}: DOWNLOAD A FILE never produced a download`);
     let text = '';
     if (dl) { text = fs.readFileSync(await dl.path(), 'utf8'); check(/^contrail-pilot-backup-player-\d{4}-\d\d-\d\d\.json$/.test(dl.suggestedFilename()), `${tag}: the file name: ${dl.suggestedFilename()}`); }
+    if (!dl) { await ctx.close(); continue; }
     let o = null; try { o = JSON.parse(text); } catch (e) { /* checked below */ }
     check(o && o.format === 'contrail-pilot-backup' && o.save && o.save.flights === 44 && !/zzz secret code/.test(text), `${tag}: the file is a backup of this game (44 flights) and holds no pilot code: ${text.slice(0, 80)}`);
     await p.click('#sheet .sheet-ok').catch(() => {}); await p.waitForTimeout(300); await settings(); t = await sheetText();
@@ -48,13 +51,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.fill('#bkText', text); await p.click('#sheet [data-bk="check"]'); await p.waitForTimeout(400);
     t = await sheetText();
     check(/Found a backup/.test(t) && /Backup: 44 flights/.test(t) && /Now: 7 flights/.test(t) && /Your game now is kept too/.test(t), `${tag}: the card shows the backup beside the game now: ${t.slice(0, 200)}`);
+    if (!/Found a backup/.test(t)) { await ctx.close(); continue; }   // (named above: a good backup was refused or never checked)
     await p.click('#sheet .sheet-action'); await p.waitForFunction(() => document.readyState === 'complete' && !!window.game, null, { timeout: 15000 }).catch(() => {}); await ready(p); await p.waitForTimeout(800);
     const after = await store();
     check(after.cur && after.cur.flights === 44 && after.r1 && JSON.parse(after.r1.raw).flights === 7, `${tag}: after GO BACK the backup is live (44 flights) and the game it replaced (7 flights) is the newest safety copy: ${JSON.stringify([after.cur && after.cur.flights, after.r1 && JSON.parse(after.r1.raw).flights])}`);
     check(!p.errs.length, `${tag}: no page errors: ${p.errs.slice(0, 2)}`);
     await ctx.close();
   }
-  await b.close();
+  } finally { await b.close(); }
   console.log(fails.length ? `FAIL backuprestore:\n - ${fails.join('\n - ')}` : 'PASS backuprestore: Settings offers BACK UP / RESTORE; a download is a backup without the pilot code; a corrupt text changes nothing; GO BACK keeps the game it replaces');
   process.exit(fails.length ? 1 : 0);
 })();
