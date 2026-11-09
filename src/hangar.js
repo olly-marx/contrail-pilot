@@ -134,7 +134,7 @@ export class FleetHangar {
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));
     composedURL(files.base, old, gadOld).then(u => { const img = $('payBefore'); if (img) img.src = u; }).catch(() => {});
     // Where the new part is: each part layer is a whole repainted plane, so the part = the pixels that CHANGE when the
-    // layer goes on (before vs after). Their box becomes a marker inside the picture (it zooms with it).
+    // layer goes on (before vs after). Their box becomes a RING inside the picture (#payMark; the plane is never zoomed or cropped).
     const part = el.querySelector('.pay-part'), mark = $('payMark'), plane = el.querySelector('.pay-plane'), beforeImg = $('payBefore');
     const measure = () => { if (!part || !part.naturalWidth || !beforeImg.naturalWidth || mark.dataset.done) return; mark.dataset.done = '1';
       const w = part.naturalWidth, h = part.naturalHeight, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d', { willReadFrequently: true });
@@ -144,7 +144,7 @@ export class FleetHangar {
       if (x1 < 0) return;
       const pct = (v, n) => `${(100 * v / n).toFixed(2)}%`;
       Object.assign(mark.style, { left: pct(x0, w), top: pct(y0, h), width: pct(x1 - x0 + 1, w), height: pct(y1 - y0 + 1, h) });
-      plane.style.transformOrigin = `${pct((x0 + x1) / 2, w)} ${pct((y0 + y1) / 2, h)}`; };
+      const sp = el.querySelector('.pay-spark'); if (sp) { sp.style.left = pct((x0 + x1) / 2, w); sp.style.top = pct((y0 + y1) / 2, h); } };   // the sparkle sits ON the part (there is no zoom any more: the whole plane stays in view)
     // A picture that FAILS to load (the user's iPhone, 2026-11-01: Safari's blue '?' icon on 'Tourist class: fitted!', the payoff
     // waiting out its 6 s and showing the broken layer) is hidden and counts as done: never a broken icon, no 6 s wait.
     const hideBroken = img => { if (!img.naturalWidth) { img.style.display = 'none'; img.dataset.broken = '1'; } };
@@ -168,7 +168,7 @@ export class FleetHangar {
     Promise.race([Promise.all(pics).then(() => part && measure()), new Promise(r => setTimeout(r, 6000))]).then(() => {
       el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)
       if (part && !mark.dataset.done) el.classList.add('nopart');
-      setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.reveal && this.ui.sfx.reveal(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives, the camera zooms onto it, then the label
+      setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.reveal && this.ui.sfx.reveal(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives (ringed, sparkle on it; no zoom), then the label
     // Ending the payoff: OK, or leaving the hangar mid-payoff (the plane build's review: it stayed parked until OK).
     this.endPayoff = () => { el.remove(); if (box) box.hidden = false; const fl = $('hFleet'); if (fl) fl.classList.remove('paying'); this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
     $('payOk').onclick = () => { this.ui.sfx.tick(); this.endPayoff();

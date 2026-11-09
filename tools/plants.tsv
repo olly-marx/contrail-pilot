@@ -138,7 +138,7 @@ onrails	src/tour.js	s#text: tip('rail-free-tap'),#skipIf: () => true, text: tip(
 onrails	style.css	s#background: rgba(10, 10, 30, 0.62); pointer-events: auto;#background: rgba(10, 10, 30, 0.62); pointer-events: none;#	the dim lets taps through
 onrails	src/upgrades.js	s#{ gapTurb: 0 }#{}#	turbulence before L2
 keepvisible	src/tour.js	s#  keepVisible() {#  keepVisible() { return;#	rails targets not kept above the tab bar (moved from onrails 2026-11-02: no onrails step exercises it after the redesign)
-onrails	style.css	s#.payoff.arrive .pay-plane { transform: scale(1.8); }#.payoff.arrive .pay-plane { transform: none; }#	no payoff zoom
+onrails	style.css	s#.payoff.arrive .pay-plane { transform: none; }#.payoff.arrive .pay-plane { transform: scale(1.8); }#	the payoff zoom is back (it crops the plane's body)
 onrails	src/hangar.js	s#lab.style.left = `${Math.round(x)}px`;#lab.style.left = `${Math.round(x) + 140}px`;#	payoff label off the part
 onrails	src/hangar.js	s#) > 60) {#) > -1) {#	payoff part = the whole picture
 onrails	src/sim/rules.js	s#pw, h).entered = true;#pw, h);#	the L2 lesson patch hidden
@@ -495,6 +495,8 @@ cigate	.github/workflows/deploy.yml	s/if: ${{ needs.gate.outputs.skip != 'true' 
 cigate	.github/workflows/verify-branch.yml	s/strict_flaky: true/strict_flaky: false/	the branch run no longer fails a shard on a flaky test
 preloadgate	tests/lib/pageshost.js	s/if (maxAge !== null) h/if (false) h/	the test server sends no Cache-Control (like python3 -m http.server): a fresh checkout makes the browser revalidate every picture
 preloadgate	tests/lib/pageshost.js	s/{ root = repo, maxAge = 600 }/{ root = repo, maxAge = 0 }/	the test server sends max-age=0 (every picture is stale at once)
+payofffull	style.css	s#.payoff.arrive .pay-plane { transform: none; }#.payoff.arrive .pay-plane { transform: scale(1.8); }#	the payoff zoom is back (it crops the plane's body)
+payofffull	style.css	s#.payoff.arrive .pay-mark { opacity: 1; animation: paymark 1.2s ease-in-out infinite; }#.payoff.arrive .pay-mark { opacity: 0; }#	the new part is no longer ringed
 cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.decide.outputs.deploy == 'true' \&\& github.ref == #if: ${{ needs.decide.outputs.deploy == 'true' \&\& github.ref == #	the deploy job loses !cancelled() (a skipped test job upstream skips the deploy: 0.37.1's first live run)
 cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.deploy.result == 'success' }}#if: ${{ needs.deploy.result == 'success' }}#	the tag job loses !cancelled() (no release tag after a skipped-test deploy)
 cigate	.github/workflows/deploy.yml	s#if: ${{ !cancelled() \&\& needs.decide.outputs.deploy == 'true' \&\& github.ref != #if: ${{ needs.decide.outputs.deploy == 'true' \&\& github.ref != #	the dry-run deploy probe loses !cancelled() (it would no longer mirror the deploy job)
