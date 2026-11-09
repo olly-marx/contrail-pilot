@@ -44,12 +44,13 @@ const seed = extra => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMS
         });
         check(two.strip, 'b: the second patch of soil shows no strip (the tip must come back until a tree has landed)');
         const three = await p.evaluate(async () => {   // a tree lands: no arrow, no strip
-          const s = game.scene.getScene('game'); s.closeTip(); s.planted = 1; s.save.planted = { oak: 1 }; await new Promise(r => setTimeout(r, 400)); s.showPlot({ x: 1200 }); await new Promise(r => setTimeout(r, 1800));
+          const s = game.scene.getScene('game'); s.planted = 1; s.save.planted = { oak: 1 }; s.closeTip();   /* (the tree first: a queued soil strip must then be dropped) */ await new Promise(r => setTimeout(r, 400)); s.showPlot({ x: 1200 }); await new Promise(r => setTimeout(r, 1800));
           const a = s.dropArrowGfx; return { strip: !document.getElementById('coach').hidden && /SEND A SEED/.test(document.getElementById('coach').innerText), arrow: !!(a && a.commandBuffer && a.commandBuffer.length) };
         });
         check(!three.strip && !three.arrow, `b: after a tree has landed the arrow or the strip is still shown: ${JSON.stringify(three)}`);
         await p.evaluate(() => { const s = game.scene.getScene('game'); s.graceUntil = 0; s.landedAt = s.path[1]; s.finish({ landed: true }); });
-        await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 15000 }).catch(() => {}); await p.waitForTimeout(1500);
+        await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 15000 }).catch(() => {});
+        await p.waitForFunction(() => { const u = game.registry.get('ui'); return u.tour && u.tour.busy; }, null, { timeout: 9000 }).catch(() => {});   // (the results reveal takes about 2 s before the rails look)
         const c = await rail(p); log.push(`c: ${JSON.stringify(c)}`);
         log.push(`c state: ${JSON.stringify(await p.evaluate(() => { const ui = game.registry.get('ui'); return { lastPlanted: ui.lastPlanted, trees: JSON.stringify(ui.save.planted), done: (ui.save.tours || []).filter(x => /^r-/.test(x)).join(), resultsShown: !document.getElementById('results').hidden, busy: ui.tour.busy }; }))}`);
         check(c.busy && c.target === 'rEarth' && /first tree is planted/.test(c.text), `c: the results do not say the first tree is planted on the Earth card: ${JSON.stringify(c)}`);
