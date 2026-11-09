@@ -12,7 +12,7 @@ export const CROSSFADE_S = 1;     // seconds of overlap between two tracks
 //   soft   = 2x  (the strict rule): 0.031, music rms about 0.0027, 17.4 dB under the page
 //   middle = 1.5x (the DEFAULT):    0.042, music rms about 0.0036, 14.9 dB under the page
 //   loud   = 1.0x:                  0.0625, music rms about 0.0054, 11.4 dB under the page
-export const MUSIC_LEVELS = { soft: 0.031, middle: 0.042, loud: 0.0625 };
+export const MUSIC_LEVELS = { soft: 0.03, middle: 0.04, loud: 0.06 };
 export const DEFAULT_MUSIC_LEVEL = 'middle';
 export const MUSIC_STATES = ['off', 'soft', 'middle', 'loud'];   // the order the MUSIC chip cycles in
 // The chip's state from a save: an OLD save with musicOff true stays OFF; one without musicLevel is MIDDLE.
