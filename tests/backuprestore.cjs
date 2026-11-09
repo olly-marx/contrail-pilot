@@ -22,7 +22,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.goto(URL); await ready(p); await p.waitForTimeout(800);
     const store = () => p.evaluate(() => ({ cur: JSON.parse(localStorage.getItem('contrailPilot.v2') || 'null'), r1: JSON.parse(localStorage.getItem('contrailPilot.v2.replaced-1') || 'null') }));
     const sheetText = () => p.evaluate(() => { const e = document.getElementById('sheet'); return e ? e.innerText.replace(/\s+/g, ' ') : ''; });
-    const settings = async () => { await p.click('#hubGear'); await p.waitForTimeout(400); };
+    const settings = async () => { await p.click('#hubGear'); await p.waitForTimeout(400); await p.click('#sheet [data-gear="saved"]'); await p.waitForTimeout(400); };   // (Settings page 2: YOUR SAVED GAME)
     // 1. Settings
     await settings(); let t = await sheetText();
     check(/BACK UP MY GAME/.test(t) && /RESTORE A BACKUP/.test(t) && /Last backup: never/.test(t), `${tag}: Settings shows BACK UP MY GAME, RESTORE A BACKUP and "Last backup: never": ${t.slice(0, 160)}`);

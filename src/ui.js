@@ -236,13 +236,25 @@ export class UI {
   // The gear sheet (R10): the four small buttons, reset and the credit behind one gear, as a sheet (src/sheet.js) with 40 px buttons. The old buttons
   // stay in the page (the classic screens use them, and their handlers are the ones the sheet calls), hidden on HOME.
   openGear() {
-    sfx.tick();
+    sfx.flap();
     const s = this.save, credit = document.querySelector('#title .credit');
     const close = showSheet({ eyebrow: 'MENU', title: 'Settings', ok: 'CLOSE',
       html: `<div class="gear-list"><button class="chip" type="button" data-gear="how">HOW TO PLAY</button><button class="chip" type="button" data-gear="school">FLIGHT SCHOOL</button>`
         + `<button class="chip" type="button" data-gear="sound">SOUND: ${s.muted ? 'OFF' : 'ON'}</button><button class="chip" type="button" data-gear="about">ABOUT US</button>`
-        + `<button class="chip" type="button" data-gear="recover">RECOVER AN EARLIER SAVE</button><button class="chip" type="button" data-gear="backup">BACK UP MY GAME</button><button class="chip" type="button" data-gear="restore">RESTORE A BACKUP</button><button class="chip warn" type="button" data-gear="reset">RESET PROGRESS</button></div><p class="small gear-last">${s.lastBackup ? `Last backup: ${s.lastBackup}` : 'Last backup: never'}</p>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
-    const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), recover: () => this.openRecover(), backup: () => this.openBackup(), restore: () => this.openRestore(), reset: () => $('resetBtn').click() };
+        + `<button class="chip" type="button" data-gear="saved">YOUR SAVED GAME</button></div>${credit ? `<p class="small gear-credit">${credit.innerHTML}</p>` : ''}` });
+    this.wireGear(close);
+  }
+  // The second page of Settings (0.37.x: the one sheet had 8 buttons and its CLOSE ran off a 320x568 screen): everything about the saved game.
+  openSaved() {
+    sfx.flap();
+    const s = this.save;
+    const close = showSheet({ eyebrow: 'SETTINGS', title: 'Your saved game', ok: 'CLOSE',
+      html: `<div class="gear-list"><button class="chip" type="button" data-gear="recover">RECOVER AN EARLIER SAVE</button><button class="chip" type="button" data-gear="backup">BACK UP MY GAME</button><button class="chip" type="button" data-gear="restore">RESTORE A BACKUP</button><button class="chip warn" type="button" data-gear="reset">RESET PROGRESS</button></div><p class="small gear-last">${s.lastBackup ? `Last backup: ${s.lastBackup}` : 'Last backup: never'}</p>` });
+    this.wireGear(close);
+  }
+  // The taps of both Settings pages (the old buttons stay in the page: the classic screens use them, and their handlers are the ones called here).
+  wireGear(close) {
+    const act = { how: () => $('howBtn').click(), school: () => $('schoolBtn').click(), about: () => $('aboutBtn').click(), saved: () => this.openSaved(), recover: () => this.openRecover(), backup: () => this.openBackup(), restore: () => this.openRestore(), reset: () => $('resetBtn').click() };
     document.querySelectorAll('#sheet [data-gear]').forEach(b => b.onclick = () => {
       if (b.dataset.gear === 'sound') { $('muteBtn').click(); b.textContent = `SOUND: ${this.save.muted ? 'OFF' : 'ON'}`; return; }   // the sheet stays open: you hear the change
       close(); act[b.dataset.gear](); });
