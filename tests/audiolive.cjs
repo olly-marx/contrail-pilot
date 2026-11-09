@@ -44,6 +44,17 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
   for (const cue of Object.keys(FLOORS)) { res[cue] = await p.evaluate(async (cue) => { const m = await import('/src/sound.js'); const pr = window.__peak(900); m.sfx[cue](); return pr; }, cue); }
   for (const [cue, floor] of Object.entries(FLOORS)) check(res[cue] >= floor, `'${cue}' reaches the destination with peak ${res[cue].toFixed(4)} (floor ${floor}; 0 = silence)`);
   // muted: silence; un-muted again: sound again (the recovery path)
+  // TEST SOUND in the Settings sheet: a real tap plays a sound at the real volume and says which build runs; muted, it plays nothing and says so
+  const msgOf = () => p.evaluate(() => (document.getElementById('gearSoundMsg') || {}).textContent || '');
+  await p.evaluate(() => game.registry.get('ui').openGear()); await p.waitForTimeout(400);
+  let pr1 = p.evaluate(() => window.__peak(900)); await p.click('#sheet [data-gear="soundtest"]', { timeout: 4000 }); const tp = await pr1, tm = await msgOf();
+  check(tp >= FLOORS.tick, `TEST SOUND plays a sound at the real volume (peak ${tp.toFixed(4)}; floor ${FLOORS.tick})`);
+  check(/Did you hear it/.test(tm) && /This game is \d+\.\d+\.\d+/.test(tm), `TEST SOUND says what to check and which version runs (text: "${tm.replace(/\s+/g, ' ').slice(0, 120)}")`);
+  await p.waitForTimeout(2000);
+  await p.evaluate(async () => { game.registry.get('save').muted = true; (await import('/src/sound.js')).setMuted(true); });
+  pr1 = p.evaluate(() => window.__peak(600)); await p.click('#sheet [data-gear="soundtest"]', { timeout: 4000 }); const mp = await pr1, mm = await msgOf();
+  check(mp < 0.002 && /Sound is OFF/.test(mm) && /This game is /.test(mm), `muted: TEST SOUND stays silent, says 'Sound is OFF' and the version (peak ${mp.toFixed(4)}, text "${mm.replace(/\s+/g, ' ').slice(0, 80)}")`);
+  await p.evaluate(async () => { game.registry.get('save').muted = false; (await import('/src/sound.js')).setMuted(false); });
   await p.waitForTimeout(2000);   // let the last cue ring out (era lasts about 1.3 s)
   const mu = await p.evaluate(async () => { const m = await import('/src/sound.js'); m.setMuted(true); let pr = window.__peak(500); m.sfx.thud(); const a = await pr; m.setMuted(false); pr = window.__peak(900); m.sfx.thud(); return { a, b: await pr }; });
   check(mu.a < 0.002, `muted: no signal (peak ${mu.a.toFixed(4)})`);
