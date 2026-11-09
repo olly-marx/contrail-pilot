@@ -87,7 +87,8 @@ function measure(spec) {
   return { scrollHeight: R.scrollHeight, clientHeight: R.clientHeight, scrollTop: R.scrollTop, barTop: Math.round(barTop), vh: innerHeight, boxes: leaves.length,
     primTop: pr ? Math.round(pr.getBoundingClientRect().top) : null, primBottom: pr ? Math.round(pr.getBoundingClientRect().bottom) : null,
     firstTop: fc ? Math.round(fc.getBoundingClientRect().top) : null, firstBottom: fc ? Math.round(fc.getBoundingClientRect().bottom) : null,
-    overlaps: overlapList, clipped: clippedList, small: smallList, smallTaps: taps };
+    overlaps: overlapList, clipped: clippedList, small: smallList, smallTaps: taps,
+    blocks: spec.root === '#title' ? [...R.children, ...document.querySelectorAll('#hubUpRows > *')].filter(vis).map(c => { const q = c.getBoundingClientRect(); return `${c.id || (c.className && String(c.className).split(' ')[0]) || c.tagName} ${Math.round(q.top)}-${Math.round(q.bottom)}`; }) : null };   // (FITDUMP=1 prints these: where HOME's height goes)
 }
 
 // Open a screen by its SCREENS key (a real tap on the bar where there is one); returns the list of [name, spec-extra] views to measure.
@@ -97,7 +98,7 @@ async function views(p, key, S) {
   if (key === 'results') { for (const k of ['rich', 'seven', 'animalbadge', 'plain', 'crash', 'first', 'school']) { await showVariant(p, k); await m(`results/${k}`); } }
   else if (key === 'home') { await go('fly'); await m('home');
     // R3: a free part waiting is a lead row with its lesson picture and a locked TAKE OFF: it must fit too (the 320x568 overflow was found by hand, not by this gate)
-    await p.evaluate(() => { game.registry.get('save').freeUpgrade = true; game.registry.get('ui').go('fly'); }); await m('home/free part');
+    await p.evaluate(() => { game.registry.get('save').freeUpgrade = true; game.registry.get('ui').go('fly'); }); await m('home/free part'); if (process.env.FITSHOT) await p.screenshot({ path: `${process.env.FITSHOT}/home-free-${p.viewportSize().width}.png` });
     await p.evaluate(() => { game.registry.get('save').freeUpgrade = false; game.registry.get('ui').go('fly'); }); }
   else if (key === 'missions') { await go('missions'); await m('missions'); }
   else if (key === 'boards') { await go('boards'); await m('boards'); }
@@ -125,6 +126,7 @@ async function runGate({ which, check, url, chrome }) {
     const p = await openPage(b, W, H, url);
     for (const key of Object.keys(SCREENS)) {
       const vs = await views(p, key, SCREENS);
+      if (process.env.FITDUMP && key === 'home') for (const v of vs) console.log(`DUMP ${W}x${H} ${v.name}: scroll ${v.m.scrollHeight}/${v.m.clientHeight}, bar ${v.m.barTop}, primary ${v.m.primTop}-${v.m.primBottom}: ${(v.m.blocks || []).join(' | ')}`);
       for (const v of vs) { measured += v.m.boxes; for (const pr of check(v.m, SCREENS[key], W, H)) (bad[key] = bad[key] || []).push(`${W}x${H} ${v.name}: ${pr}`); }
       if (!vs.length) fails.push(`${W}x${H} ${key}: no view could be opened`);
     }
