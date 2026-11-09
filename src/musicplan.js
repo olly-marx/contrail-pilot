@@ -7,7 +7,7 @@ export const BAR_STEPS = 16;
 export const DRUMS_ON = true;   // the beat (voices.drums): a separate switch from the MUSIC chip for the tests (a Player takes { drums }), but the chip turns the whole music off, drums included
 export const LEAD_MAX = 'A5', LEAD_MIN = 'E3';   // the lead's range AS HEARD (after transpose): nothing above A5 (880 Hz: the family found the songs high-pitched), nothing below E3
 export const CROSSFADE_S = 1;     // seconds of overlap between two tracks
-export const MUSIC_LEVEL = 0.035;   // the music bus gain (full scale = 1). MEASURED (tests/audiolive.cjs, real Chrome): at 0.1 the music rms at the destination was 0.0061 and at 0.04 0.0029, against the weakest cue (flap 0.0056): not yet 2x; 0.035 gives about 0.0025 and every cue >= 2x. A loudness rule (rms), not a peak rule; the user's ear decides if it is too quiet
+export const MUSIC_LEVEL = 0.03;   // the music bus gain (full scale = 1): the STRICT rule (every cue >= 2x the music's rms), MEASURED for the final songs with drums and the louder bass (tests/audiolive.cjs, real Chrome, song D): at 0.035 music rms 0.0030 against flap 0.0054 = 1.79x; strict 2x = 0.0312 (rounded down to 0.03), 1.5x = 0.0417, 1.0x = 0.0625. dB against the tailnet page (rms 0.020 at its master 0.245): strict -17.4, 1.5x -14.9, 1.0x -11.4. A loudness rule (rms), not a peak rule
 
 const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 export const noteNumber = n => { const m = /^([A-G])(#?)(\d)$/.exec(n); if (!m) throw new Error(`bad note ${n}`); return SEMI[m[1]] + (m[2] ? 1 : 0) + (+m[3] + 1) * 12; };

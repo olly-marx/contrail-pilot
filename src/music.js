@@ -9,6 +9,9 @@ let drumsOn = true, armed = false, off = false, timer = null, ctx = null, level 
 export const musicPlaying = () => !!timer;
 
 // The beat is a separate switch from MUSIC for the tests (the harness can hear the music with and without drums); the MUSIC chip still turns everything off. New tracks use it.
+// Test hook: the function nextTrack draws with (the harness picks a fixed loud song so its level measurement is repeatable). Default Math.random.
+let trackRng = Math.random;
+export function setTrackRng(f) { trackRng = f || Math.random; }
 export function setDrums(v) { drumsOn = !!v; }
 export function setMusicOff(v) { off = !!v; syncMusic(); }
 // The FIRST TAP arms the music (a context made before a tap starts suspended: src/sound.js); until then nothing is created, whatever the settings say.
@@ -18,7 +21,7 @@ function startMusic() {   // (not exported: every start goes through syncMusic, 
   const b = audioBus(); if (!b) return;
   ctx = b.ctx;
   level = ctx.createGain(); level.gain.value = MUSIC_LEVEL; duckNode = ctx.createGain(); duckNode.connect(level); level.connect(b.out);
-  const id = nextTrack(hist, Math.random); hist.push(id);
+  const id = nextTrack(hist, trackRng); hist.push(id);
   cur = new Player(ctx, duckNode, SONGS[id], { drums: drumsOn }); cur.fade(0, 1, ctx.currentTime, CROSSFADE_S);
   timer = setInterval(pump, 25);
 }
@@ -44,7 +47,7 @@ function pump() {
   if (ctx.state !== 'running') ctx.resume().catch(() => {});   // (a backgrounded app: try again quietly)
   cur.tick(); if (nxt) nxt.tick();
   if (!nxt && ctx.currentTime >= cur.endTime - CROSSFADE_S) {   // the next track starts one crossfade before this one ends
-    const id = nextTrack(hist, Math.random); hist.push(id);
+    const id = nextTrack(hist, trackRng); hist.push(id);
     nxt = new Player(ctx, duckNode, SONGS[id], { startAt: cur.endTime - CROSSFADE_S, drums: drumsOn });
     nxt.fade(0, 1, cur.endTime - CROSSFADE_S, CROSSFADE_S); cur.fade(1, 0, cur.endTime - CROSSFADE_S, CROSSFADE_S);
   }
