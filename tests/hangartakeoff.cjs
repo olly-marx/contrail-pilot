@@ -20,12 +20,14 @@ const seed = (missionsDone, tours) => ({ areas: ['weurope'], homeArea: 'weurope'
     await p.goto(URL); await ready(p); await p.waitForTimeout(1200);
     return { ctx, p };
   };
-  const toHangar = async p => { await p.evaluate(() => { const t = game.registry.get('ui').tour; game.registry.get('ui').showHangar(); }); await p.waitForTimeout(900); };
+  // The page loads with the HOME rail already DONE (so none runs and blocks the hangar); then that step is taken out of the save's tours, as if the player had left for the hangar before HOME showed it (the real path:
+  // results -> HANGAR tab -> TAKE OFF). A rail running at load would cover the hangar and a real player could not tap the tab either.
+  const toHangar = async (p, undo) => { await p.evaluate(u => { const ui = game.registry.get('ui'); if (u) ui.save.tours = ui.save.tours.filter(x => x !== u); ui.showHangar(); }, undo || null); await p.waitForTimeout(900); };
   const state = p => p.evaluate(() => { const ui = game.registry.get('ui'), g = game.scene.getScene('game'); return { title: !document.getElementById('title').hidden, hangar: !document.getElementById('hangar').hidden,
     flying: !!(g && g.sys.isActive() && g.nextAirport && ['takeoff', 'playing'].includes(g.state)), busy: !!(ui.tour && ui.tour.busy), target: ui.tour && ui.tour.target ? ui.tour.target.id : null }; });
   try {
     for (const btn of ['#hGoTop', '#hGoBtn']) {   // A
-      const { ctx, p } = await open(seed(['L1'], DONE)); await toHangar(p);
+      const { ctx, p } = await open(seed(['L1'], [...DONE, 'r-takeoff2'])); await toHangar(p, 'r-takeoff2');
       const before = await state(p); check(before.hangar && !before.flying, `A ${btn}: the case does not reach the hangar: ${JSON.stringify(before)}`);
       await p.evaluate(sel => document.querySelector(sel).scrollIntoView({ block: 'center' }), btn); await p.click(btn); await p.waitForTimeout(1500);
       const a = await state(p); log.push(`A ${btn}: ${JSON.stringify(a)}`);
@@ -35,13 +37,13 @@ const seed = (missionsDone, tours) => ({ areas: ['weurope'], homeArea: 'weurope'
       if (a.title) { await p.click('#goBtn'); await started(p); const f = await state(p); check(f.flying, `A ${btn}: TAKE OFF on HOME did not start the flight`); }
       check(!p.errs.length, `A ${btn}: page errors ${p.errs.join('; ')}`); await ctx.close();
     }
-    { const { ctx, p } = await open(seed(['L1'], [...DONE, 'r-takeoff2'])); await toHangar(p);   // B: the control
+    { const { ctx, p } = await open(seed(['L1'], [...DONE, 'r-takeoff2'])); await toHangar(p);   // B: the control (r-takeoff2 stays done)
       await p.click('#hGoTop'); await started(p); const c = await state(p); log.push(`B: ${JSON.stringify(c)}`);
       check(c.flying, `B control: with no HOME rail due, TAKE OFF in the hangar does not start the flight (${JSON.stringify(c)})`); await ctx.close(); }
-    { const { ctx, p } = await open(seed([], ['r-school', 'r-free', 'r-payoff'])); await toHangar(p);   // C: the hangar's own rail
+    { const { ctx, p } = await open(seed([], ['r-school', 'r-free', 'r-payoff', 'r-takeoff1'])); await toHangar(p, 'r-takeoff1');   // C: the hangar's own rail
       const lit = await p.waitForFunction(() => { const ui = game.registry.get('ui'); return ui.tour && ui.tour.busy && ui.tour.target && ui.tour.target.id === 'hGoTop'; }, null, { timeout: 6000 }).then(() => true).catch(() => false);
       check(lit, 'C: the hangar rail r-takeoff1 does not light #hGoTop (the case does not reach the check)');
-      if (lit) { await p.click('#hGoTop'); await started(p); const c = await state(p); log.push(`C: ${JSON.stringify(c)}`); check(c.flying, `C: the hangar's own TAKE OFF step no longer starts the flight (${JSON.stringify(c)})`); }
+      if (lit) { await p.evaluate(() => document.getElementById('hGoTop').click()); await started(p);   /* (the tour's captain picture can lie over the button: the rail's own tap is the click event) */ const c = await state(p); log.push(`C: ${JSON.stringify(c)}`); check(c.flying, `C: the hangar's own TAKE OFF step no longer starts the flight (${JSON.stringify(c)})`); }
       await ctx.close(); }
   } finally { await b.close(); }
   console.log(log.join('\n'));
