@@ -66,38 +66,44 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
   const mu = await p.evaluate(async () => { const m = await import('/src/sound.js'); m.setMuted(true); let pr = window.__peak(500); m.sfx.thud(); const a = await pr; m.setMuted(false); pr = window.__peak(900); m.sfx.thud(); return { a, b: await pr }; });
   check(mu.a < 0.002, `muted: no signal (peak ${mu.a.toFixed(4)})`);
   check(mu.b >= FLOORS.thud, `un-muted again: sound is back (peak ${mu.b.toFixed(4)})`);
-  // ---- MUSIC (release: the five songs): the MUSIC chip turns it on and off and persists; music never masks the cues (a LOUDNESS rule: RMS at the destination); a duck cue dips it ----
+  // ---- MUSIC (the five songs): ONE chip cycles OFF -> SOFT -> MIDDLE -> LOUD -> OFF and saves it; at each level the cues must stand above the music (a LOUDNESS rule, rms at the destination): soft >= 2x, middle >= 1.5x,
+  // loud >= 1.0x; the music never louder than rms 0.008; the levels are ordered; a duck cue dips it; muted silences it. The music is song D every run (setTrackRng) so the numbers repeat. ----
   await p.evaluate(() => { game.registry.get('save').muted = false; });
   await p.waitForTimeout(2000);
   const hasMusicChip = !!(await p.$('#sheet [data-gear="music"]')); check(hasMusicChip, 'the Settings sheet has a wired MUSIC chip');
   if (hasMusicChip) {
-    const silent0 = await p.evaluate(() => window.__rms(500)); check(silent0 < 0.0005, `MUSIC off (the default of this run): silence at the destination (rms ${silent0.toFixed(4)})`);
-    await p.evaluate(async () => { (await import('/src/music.js')).setTrackRng(() => 0.7); });   // the same loud song every run (track D: nextTrack draws index 3 of 5)
-    await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(1500);
-    const saved = await p.evaluate(() => ({ off: game.registry.get('save').musicOff, ls: JSON.parse(localStorage.getItem('contrailPilot.v2') || '{}').musicOff, text: (document.querySelector('#sheet [data-gear="music"]') || {}).textContent }));
-    check(saved.off === false && saved.ls === false && /MUSIC: ON/.test(saved.text), `the MUSIC chip turns the music ON and saves it (save.musicOff ${saved.off}, stored ${saved.ls}, chip "${saved.text}")`);
-    const musicRms = Math.max(...[await p.evaluate(() => window.__rms(400)), await p.evaluate(() => window.__rms(400)), await p.evaluate(() => window.__rms(400))]);
-    check(musicRms > 0.0008, `POSITIVE CONTROL: the music plays and reaches the destination (rms ${musicRms.toFixed(4)})`);
-    check(musicRms <= 0.008, `the music is quiet: rms at the destination ${musicRms.toFixed(4)} <= 0.008`);
-    // masking: each cue's own RMS over its own length (music OFF) must be >= 2x (+6 dB) the music's RMS over the same length. Lengths DECLARED here (seconds).
+    const chipState = () => p.evaluate(() => ({ off: game.registry.get('save').musicOff, level: game.registry.get('save').musicLevel, ls: JSON.parse(localStorage.getItem('contrailPilot.v2') || '{}'), text: (document.querySelector('#sheet [data-gear="music"]') || {}).textContent }));
+    const silent0 = await p.evaluate(() => window.__rms(500)); check(silent0 < 0.0005, `MUSIC off (the start of this run): silence at the destination (rms ${silent0.toFixed(4)})`);
+    // the cues alone (music off), each over its own length (seconds, declared here)
     const LEN = { tick: 0.06, flap: 0.1, coin: 0.2, thud: 0.4, crack: 0.35, reveal: 0.5, grow: 0.4, done: 0.3, medal: 0.6 };
-    await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(800);   // music off: measure the cues alone
     const cueRms = {}; for (const [cue, len] of Object.entries(LEN)) { cueRms[cue] = await p.evaluate(async ({ cue, ms }) => { const m = await import('/src/sound.js'); const pr = window.__rms(ms); m.sfx[cue](); return pr; }, { cue, ms: len * 1000 }); await p.waitForTimeout(700); }
-    await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(1500);
-    const weak = Object.entries(LEN).filter(([cue, len]) => cueRms[cue] < 2 * musicRms).map(([cue]) => `${cue} ${cueRms[cue].toFixed(4)}`);
-    check(weak.length === 0, `no cue is masked by the music: every cue's rms >= 2x the music's rms ${musicRms.toFixed(4)} (weak: ${weak.join(', ')})`);
-    // ducking: after a 'duck' cue the music dips
-    const before = await p.evaluate(() => window.__rms(400));
-    await p.evaluate(async () => { (await import('/src/sound.js')).sfx.medal(); }); await p.waitForTimeout(450);
-    const during = await p.evaluate(() => window.__rms(300));
-    check(during <= 0.6 * before + 0.0006, `a duck cue dips the music (rms ${before.toFixed(4)} -> ${during.toFixed(4)} while it rings)`);
-    await p.waitForTimeout(2500);
-    // THE LEVEL IS A USER DECISION: print the music rms and the level (MUSIC_LEVEL) that keeps the weakest cue at 2x, 1.5x and 1.0x the music, each in dB against the tailnet page (the page's rms for song D is 0.020 at its master 0.245). A gain scales rms linearly, so the levels are computed from this one measurement.
-    const L0 = await p.evaluate(async () => (await import('/src/musicplan.js')).MUSIC_LEVEL), weakest = Math.min(...Object.values(cueRms)), weakName = Object.keys(cueRms).find(k => cueRms[k] === weakest);
-    const row = R => { const L = L0 * weakest / (R * musicRms), m = musicRms * L / L0; return `${R}x: MUSIC_LEVEL ${L.toFixed(4)} (music rms ${m.toFixed(4)}, ${(20 * Math.log10(m / 0.020)).toFixed(1)} dB vs the page)`; };
-    console.log(`LEVELS (song D, MUSIC_LEVEL now ${L0}, music rms ${musicRms.toFixed(4)}, weakest cue ${weakName} ${weakest.toFixed(4)}, ratio ${(weakest / musicRms).toFixed(2)}x; now ${(20 * Math.log10(musicRms / 0.020)).toFixed(1)} dB vs the page):\n   ${[2, 1.5, 1].map(row).join('\n   ')}`);
-    console.log('MUSIC rms', musicRms.toFixed(4), 'cue rms', JSON.stringify(Object.fromEntries(Object.entries(cueRms).map(([k, v]) => [k, +v.toFixed(4)]))), 'duck', before.toFixed(4), '->', during.toFixed(4));
-    // muted: the music stops too
+    await p.evaluate(async () => { (await import('/src/music.js')).setTrackRng(() => 0.7); });   // the same loud song every run (track D: nextTrack draws index 3 of 5)
+    const REQ = { soft: 2, middle: 1.5, loud: 1.0 }, music = {}, order = ['soft', 'middle', 'loud'];
+    for (const lvl of order) {
+      await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(1500);
+      const st = await chipState();
+      check(st.off === false && st.level === lvl && st.ls.musicOff === false && st.ls.musicLevel === lvl && st.text === `MUSIC: ${lvl.toUpperCase()}`, `the MUSIC chip cycles to ${lvl.toUpperCase()} and saves it (save ${st.off}/${st.level}, stored ${st.ls.musicOff}/${st.ls.musicLevel}, chip "${st.text}")`);
+      music[lvl] = Math.max(await p.evaluate(() => window.__rms(400)), await p.evaluate(() => window.__rms(400)), await p.evaluate(() => window.__rms(400)));
+      check(music[lvl] > 0.0008, `POSITIVE CONTROL at ${lvl}: the music plays and reaches the destination (rms ${music[lvl].toFixed(4)})`);
+      check(music[lvl] <= 0.008, `${lvl}: the music is not loud: rms at the destination ${music[lvl].toFixed(4)} <= 0.008`);
+      const weak = Object.keys(LEN).filter(cue => cueRms[cue] < REQ[lvl] * music[lvl]).map(cue => `${cue} ${cueRms[cue].toFixed(4)}`);
+      check(weak.length === 0, `${lvl.toUpperCase()}: every cue's rms >= ${REQ[lvl]}x the music's rms ${music[lvl].toFixed(4)} (weak: ${weak.join(', ')})`);
+      if (lvl === 'middle') {   // ducking at the default level
+        const before = await p.evaluate(() => window.__rms(400));
+        await p.evaluate(async () => { (await import('/src/sound.js')).sfx.medal(); }); await p.waitForTimeout(450);
+        const during = await p.evaluate(() => window.__rms(300));
+        check(during <= 0.6 * before + 0.0006, `a duck cue dips the music (rms ${before.toFixed(4)} -> ${during.toFixed(4)} while it rings)`);
+        await p.waitForTimeout(2500);
+      }
+    }
+    check(music.soft < music.middle && music.middle < music.loud, `the levels are ordered by loudness: soft ${music.soft.toFixed(4)} < middle ${music.middle.toFixed(4)} < loud ${music.loud.toFixed(4)}`);
+    const page = 0.020, dB = m => (20 * Math.log10(m / page)).toFixed(1);   // the tailnet page's music rms for song D is 0.020 at its master 0.245
+    console.log(`MUSIC LEVELS (song D): soft rms ${music.soft.toFixed(4)} (${dB(music.soft)} dB vs the page) | middle ${music.middle.toFixed(4)} (${dB(music.middle)} dB) | loud ${music.loud.toFixed(4)} (${dB(music.loud)} dB); weakest cue ${Object.entries(cueRms).sort((a, b) => a[1] - b[1])[0].join(' ')}; cue rms ${JSON.stringify(Object.fromEntries(Object.entries(cueRms).map(([k, v]) => [k, +v.toFixed(4)])))}`);
+    await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(900);   // LOUD -> OFF
+    const off = await chipState(); const offRms = await p.evaluate(() => window.__rms(500));
+    check(off.off === true && off.ls.musicOff === true && off.text === 'MUSIC: OFF' && offRms < 0.0005, `the MUSIC chip cycles back to OFF, saves it and the music stops (save ${off.off}, chip "${off.text}", rms ${offRms.toFixed(4)})`);
+    // muted: the music is silent too (turn it on again at MIDDLE first: OFF -> SOFT -> MIDDLE)
+    await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(1200);
     await p.evaluate(async () => { game.registry.get('save').muted = true; const m = await import('/src/sound.js'), mu = await import('/src/music.js'); m.setMuted(true); mu.syncMusic(); }); await p.waitForTimeout(900);
     const mm = await p.evaluate(() => window.__rms(500)); check(mm < 0.0005, `muted: the music is silent too (rms ${mm.toFixed(4)})`);
     await p.evaluate(async () => { game.registry.get('save').muted = false; const m = await import('/src/sound.js'), mu = await import('/src/music.js'); m.setMuted(false); mu.syncMusic(); });

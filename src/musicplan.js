@@ -7,7 +7,18 @@ export const BAR_STEPS = 16;
 export const DRUMS_ON = true;   // the beat (voices.drums): a separate switch from the MUSIC chip for the tests (a Player takes { drums }), but the chip turns the whole music off, drums included
 export const LEAD_MAX = 'A5', LEAD_MIN = 'E3';   // the lead's range AS HEARD (after transpose): nothing above A5 (880 Hz: the family found the songs high-pitched), nothing below E3
 export const CROSSFADE_S = 1;     // seconds of overlap between two tracks
-export const MUSIC_LEVEL = 0.03;   // the music bus gain (full scale = 1): the STRICT rule (every cue >= 2x the music's rms), MEASURED for the final songs with drums and the louder bass (tests/audiolive.cjs, real Chrome, song D): at 0.035 music rms 0.0030 against flap 0.0054 = 1.79x; strict 2x = 0.0312 (rounded down to 0.03), 1.5x = 0.0417, 1.0x = 0.0625. dB against the tailnet page (rms 0.020 at its master 0.245): strict -17.4, 1.5x -14.9, 1.0x -11.4. A loudness rule (rms), not a peak rule
+// THE LEVELS (the user: "middle by default but with a setting to be louder or softer"), the music bus gain (full scale = 1), MEASURED for the final songs with drums and the louder bass (tests/audiolive.cjs,
+// real Chrome, song D; music rms is linear in the gain). Each level is defined by how far the weakest cue (flap, tick) stands above the music's rms; dB are against the tailnet page (rms 0.020 at its master 0.245):
+//   soft   = 2x  (the strict rule): 0.031, music rms about 0.0027, 17.4 dB under the page
+//   middle = 1.5x (the DEFAULT):    0.042, music rms about 0.0036, 14.9 dB under the page
+//   loud   = 1.0x:                  0.0625, music rms about 0.0054, 11.4 dB under the page
+export const MUSIC_LEVELS = { soft: 0.031, middle: 0.042, loud: 0.0625 };
+export const DEFAULT_MUSIC_LEVEL = 'middle';
+export const MUSIC_STATES = ['off', 'soft', 'middle', 'loud'];   // the order the MUSIC chip cycles in
+// The chip's state from a save: an OLD save with musicOff true stays OFF; one without musicLevel is MIDDLE.
+export const musicStateOf = save => (save && save.musicOff) ? 'off' : (MUSIC_LEVELS[save && save.musicLevel] ? save.musicLevel : DEFAULT_MUSIC_LEVEL);
+export const nextMusicState = state => MUSIC_STATES[(MUSIC_STATES.indexOf(state) + 1) % MUSIC_STATES.length];
+export const musicChipText = save => `MUSIC: ${musicStateOf(save).toUpperCase()}`;
 
 const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 export const noteNumber = n => { const m = /^([A-G])(#?)(\d)$/.exec(n); if (!m) throw new Error(`bad note ${n}`); return SEMI[m[1]] + (m[2] ? 1 : 0) + (+m[3] + 1) * 12; };

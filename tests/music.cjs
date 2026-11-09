@@ -4,8 +4,8 @@
 // 7. every sound cue is classed in DUCKS (duck or keep). Plants: tools/plants.tsv (test music).
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  let contexts = 0, nodes = 0, duckRamps = 0; const clock = { t: 0 };
-  const param = () => ({ value: 1, setValueAtTime() {}, cancelScheduledValues() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime(v) { if (Math.abs(v - 0.25) < 1e-9) duckRamps++; } });
+  let contexts = 0, nodes = 0, duckRamps = 0, levelRamps = []; const clock = { t: 0 };
+  const param = () => ({ value: 1, setValueAtTime() {}, cancelScheduledValues() {}, exponentialRampToValueAtTime() {}, linearRampToValueAtTime(v) { if (Math.abs(v - 0.25) < 1e-9) duckRamps++; else if (v > 0.02 && v < 0.1) levelRamps.push(v); } });
   const node = () => { nodes++; return { gain: param(), frequency: param(), Q: param(), connect(n) { return n; }, disconnect() {}, start() {}, stop() {}, setPeriodicWave() {}, type: '' }; };
   class FakeAC { constructor() { contexts++; this.state = 'running'; this.sampleRate = 8000; this.destination = {}; }
     get currentTime() { return clock.t; }
@@ -30,6 +30,11 @@
   // 6. ducking (before muting: the music is playing)
   const r0 = duckRamps; S.sfx.tick(); const r1 = duckRamps; S.sfx.thud(); const r2 = duckRamps;
   check(r1 === r0 && r2 > r1, `a 'keep' cue (tick) does not duck the music, a 'duck' cue (thud) ramps it to 0.25 (ramps ${r0} -> ${r1} -> ${r2})`);
+  // the level applies at once: MIDDLE is the default; setMusicLevel('loud') ramps the music's gain to the loud value with no restart
+  const P = await import('../src/musicplan.js'), startedNodes = nodes;
+  levelRamps = []; M.setMusicLevel('loud');
+  check(levelRamps.length > 0 && levelRamps[levelRamps.length - 1] === P.MUSIC_LEVELS.loud && M.musicPlaying() && nodes === startedNodes, `a level change applies at once: the gain ramps to ${P.MUSIC_LEVELS.loud} (ramps ${levelRamps.join(',')}), the music keeps playing (no restart)`);
+  M.setMusicLevel('middle');
   // 5. mute stops it
   S.setMuted(true); M.syncMusic();
   check(!M.musicPlaying(), 'muting stops the music');

@@ -44,6 +44,7 @@ const DEFAULTS = {
   // mission list and badges once (missions.js migrateMissions, badges.js migrateBadges).
   fleet: null,         // the plane side since the eras (src/fleet.js): planes owned, systems, gadgets. Set below.
   muted: false,
+  musicLevel: 'middle', // the MUSIC chip's level: 'soft' | 'middle' | 'loud' (src/musicplan.js MUSIC_LEVELS); musicOff true = OFF (an old save with musicOff true stays off). Game-only: tests/sim-bank.cjs VIEW_ONLY
   musicOff: false,     // the MUSIC chip in Settings (src/music.js); the one `muted` flag still wins. A game-only field: tests/sim-bank.cjs VIEW_ONLY
   priceVersion: 2,     // saves from before the 2026-10-21 price change are re-valued once (src/reprice.js)
 };

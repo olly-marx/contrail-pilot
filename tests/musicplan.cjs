@@ -46,6 +46,15 @@
   check(['C', 'D'].every(id => D.SONGS[id].voices.drums.kick.join() === '0,4,8,12' && D.SONGS[id].voices.drums.snare.join() === '4,12'), 'C and D: four-on-the-floor kick (0,4,8,12) and a clap on 2 and 4 (4,12)');
   check(P.MUSIC_PASSES >= 2 && P.MUSIC_PASSES <= 4 && Number.isInteger(P.MUSIC_PASSES), `MUSIC_PASSES is the declared repeat count (${P.MUSIC_PASSES})`);
   const cyc = P.cycleSeconds(); check(cyc > 15 * 60 && cyc < 30 * 60, `a full cycle of five lasts ${(cyc / 60).toFixed(1)} min (15-30)`);
+  // THE LEVELS (the user: middle by default, softer or louder by a setting): ordered, middle is the default, the chip cycles OFF -> SOFT -> MIDDLE -> LOUD -> OFF, an old save stays as it was
+  const lv = P.MUSIC_LEVELS;
+  check(lv.soft > 0 && lv.soft < lv.middle && lv.middle < lv.loud && lv.loud <= 0.1, `the three levels are ordered soft < middle < loud (${lv.soft} < ${lv.middle} < ${lv.loud}) and the loudest is at most 0.1`);
+  check(P.DEFAULT_MUSIC_LEVEL === 'middle' && P.musicStateOf({}) === 'middle' && P.musicStateOf({ musicOff: false }) === 'middle', `a save without a level starts on MIDDLE (default ${P.DEFAULT_MUSIC_LEVEL}, empty save ${P.musicStateOf({})})`);
+  check(P.musicStateOf({ musicOff: true }) === 'off' && P.musicStateOf({ musicOff: true, musicLevel: 'loud' }) === 'off', 'a legacy save with musicOff true stays OFF (whatever level it holds)');
+  check(P.musicStateOf({ musicOff: false, musicLevel: 'soft' }) === 'soft' && P.musicStateOf({ musicOff: false, musicLevel: 'nonsense' }) === 'middle', 'a saved level is kept; an unknown one falls back to MIDDLE');
+  const cyc = []; let st = 'off'; for (let i = 0; i < 5; i++) { st = P.nextMusicState(st); cyc.push(st); }
+  check(cyc.join() === 'soft,middle,loud,off,soft', `the MUSIC chip cycles OFF -> SOFT -> MIDDLE -> LOUD -> OFF (${cyc.join(' > ')})`);
+  check(P.musicChipText({ musicLevel: 'loud' }) === 'MUSIC: LOUD' && P.musicChipText({ musicOff: true }) === 'MUSIC: OFF' && P.musicChipText({}) === 'MUSIC: MIDDLE', 'the chip text names the state (MUSIC: OFF / SOFT / MIDDLE / LOUD)');
   // 4. the shuffle bag, seeded.
   const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const play = seed => { const rng = mulberry(seed), h = []; for (let i = 0; i < 10000; i++) h.push(P.nextTrack(h, rng)); return h; };

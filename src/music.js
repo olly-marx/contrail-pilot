@@ -3,9 +3,9 @@
 // (nextTrack: a shuffle bag, never the same track twice in a row) with a CROSSFADE_S overlap. Effects that carry a warning or a reward duck the music (src/sound.js DUCKS).
 import { audioBus, isMuted, setDuckHook } from './sound.js';
 import { SONGS, Player } from './musicengine.js';
-import { nextTrack, CROSSFADE_S, MUSIC_LEVEL } from './musicplan.js';
+import { nextTrack, CROSSFADE_S, MUSIC_LEVELS, DEFAULT_MUSIC_LEVEL } from './musicplan.js';
 
-let drumsOn = true, armed = false, off = false, timer = null, ctx = null, level = null, duckNode = null, cur = null, nxt = null, hist = [];
+let levelName = DEFAULT_MUSIC_LEVEL, drumsOn = true, armed = false, off = false, timer = null, ctx = null, level = null, duckNode = null, cur = null, nxt = null, hist = [];
 export const musicPlaying = () => !!timer;
 
 // The beat is a separate switch from MUSIC for the tests (the harness can hear the music with and without drums); the MUSIC chip still turns everything off. New tracks use it.
@@ -13,6 +13,11 @@ export const musicPlaying = () => !!timer;
 let trackRng = Math.random;
 export function setTrackRng(f) { trackRng = f || Math.random; }
 export function setDrums(v) { drumsOn = !!v; }
+// The level (soft / middle / loud) applies at once: a short ramp on the music's gain, no restart.
+export function setMusicLevel(name) {
+  levelName = MUSIC_LEVELS[name] ? name : DEFAULT_MUSIC_LEVEL;
+  if (level) { const g = level.gain, t = ctx.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(MUSIC_LEVELS[levelName], t + 0.15); }
+}
 export function setMusicOff(v) { off = !!v; syncMusic(); }
 // The FIRST TAP arms the music (a context made before a tap starts suspended: src/sound.js); until then nothing is created, whatever the settings say.
 export function armMusic() { armed = true; syncMusic(); }
@@ -20,7 +25,7 @@ function startMusic() {   // (not exported: every start goes through syncMusic, 
   if (!armed || timer) return;
   const b = audioBus(); if (!b) return;
   ctx = b.ctx;
-  level = ctx.createGain(); level.gain.value = MUSIC_LEVEL; duckNode = ctx.createGain(); duckNode.connect(level); level.connect(b.out);
+  level = ctx.createGain(); level.gain.value = MUSIC_LEVELS[levelName]; duckNode = ctx.createGain(); duckNode.connect(level); level.connect(b.out);
   const id = nextTrack(hist, trackRng); hist.push(id);
   cur = new Player(ctx, duckNode, SONGS[id], { drums: drumsOn }); cur.fade(0, 1, ctx.currentTime, CROSSFADE_S);
   timer = setInterval(pump, 25);

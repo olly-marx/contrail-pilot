@@ -519,7 +519,7 @@ music	src/music.js	s#export function syncMusic() { if (off || isMuted()) stopMus
 music	src/music.js	s#export function syncMusic() { if (off || isMuted()) stopMusic(); else startMusic(); }#export function syncMusic() { if (isMuted()) stopMusic(); else startMusic(); }#	music ignores the MUSIC off setting
 music	src/sound.js	s#if (DUCKS\[k\] === 'duck' \&\& !muted \&\& duckHook) duckHook();#if (duckHook) duckHook();#	every cue ducks the music (a flap would pump it)
 music	src/sound.js	s#  tick: 'keep', flap: 'keep',#  flap: 'keep',#	a cue (tick) is not classed in DUCKS
-audiolive	src/musicplan.js	s#export const MUSIC_LEVEL = 0.03;#export const MUSIC_LEVEL = 0.12;#	the music is four times too loud (it masks the effects)
+audiolive	src/musicplan.js	s#export const MUSIC_LEVELS = { soft: 0.031, middle: 0.042, loud: 0.0625 };#export const MUSIC_LEVELS = { soft: 0.124, middle: 0.168, loud: 0.25 };#	the music is four times too loud (it masks the effects)
 audiolive	src/ui.js	s#data-gear=\"music\">MUSIC: \${s.musicOff#data-gear=\"musicX\">MUSIC: ${s.musicOff#	the MUSIC chip is not wired
 audiolive	src/music.js	s#g.linearRampToValueAtTime(0.25, t + 0.12);#g.linearRampToValueAtTime(1, t + 0.12);#	a duck cue does not dip the music
 musicplan	src/musicdata.js	s#bpm: 140, transpose: -2,#bpm: 140, transpose: 0,#	song D sounds above A5 (its transposition is lost)
@@ -534,3 +534,9 @@ hangarpay	style.css	s/#hFleet.paying > :not(#payoff) { display: none; }//	the pu
 hangarpay	src/hangar.js	s/ if (fl) fl.classList.remove('paying');//	the list stays hidden after OK
 hangarpay	src/hangar.js	s/else { this.render(); if (this.ui.tour) setTimeout/else { if (this.ui.tour) setTimeout/	OK shows the OLD list (no fresh render after a prize paid during the display)
 spotlight	src/tour.js	s/fill="#000"/fill="#fff"/	the holes of the dark are not holes (the target is darkened)
+musicplan	src/musicplan.js	s#export const DEFAULT_MUSIC_LEVEL = 'middle';#export const DEFAULT_MUSIC_LEVEL = 'loud';#	the default music level is loud
+musicplan	src/musicplan.js	s#export const MUSIC_LEVELS = { soft: 0.031, middle: 0.042, loud: 0.0625 };#export const MUSIC_LEVELS = { soft: 0.07, middle: 0.042, loud: 0.0625 };#	the music levels are not ordered (soft is the loudest)
+musicplan	src/musicplan.js	s#export const musicStateOf = save => (save \&\& save.musicOff) ? 'off' :#export const musicStateOf = save => false ? 'off' :#	a legacy save with musicOff true plays music
+musicplan	src/musicplan.js	s#export const MUSIC_STATES = \['off', 'soft', 'middle', 'loud'\];#export const MUSIC_STATES = ['off', 'soft', 'loud'];#	the MUSIC chip skips MIDDLE
+music	src/music.js	s#g.linearRampToValueAtTime(MUSIC_LEVELS\[levelName\], t + 0.15);#g.linearRampToValueAtTime(g.value, t + 0.15);#	a level change is not applied to the playing music
+audiolive	src/ui.js	s#this.save.musicOff = nx === 'off';#this.save.musicOff = false;#	the MUSIC chip never reaches OFF
