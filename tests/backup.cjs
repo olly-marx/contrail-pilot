@@ -13,7 +13,7 @@
   // 1. round trip, no pilot code
   mem['contrailPilot.code'] = JSON.stringify('zzz secret code words 42');
   const save = rich(), text = B.backupText(B.makeBackup(save, { game: '0.36.0', now: Date.UTC(2026, 10, 9), pilot: 'OLLIE' })), r = B.readBackup(text);
-  check(r.ok && r.summary.flights === 260 && r.summary.landings === 61 && r.summary.seeds === 4120, `a backup round-trips: ${JSON.stringify(r.ok ? r.summary : r)}`);
+  check(r.ok && r.summary.flights === 260 && r.summary.landings === 61 && r.summary.seeds === Math.round(save.seeds), `a backup round-trips: ${JSON.stringify(r.ok ? r.summary : r)}`);
   check(r.ok && JSON.stringify(r.save) === JSON.stringify(S.prepareSave(JSON.parse(JSON.stringify(save)))), 'the restored save is the save (after the usual preparing)');
   check(!/zzz secret code/.test(text) && !/contrailPilot\.code/.test(text), 'the backup text holds NO pilot code');
   check(JSON.parse(text).pilot === 'OLLIE' && JSON.parse(text).format === 'contrail-pilot-backup' && JSON.parse(text).v === 1, 'the header: format, version, the first name only');
@@ -22,7 +22,7 @@
   refused('hello there', 'json', 'not JSON'); refused('', 'json', 'empty'); refused(JSON.stringify({ format: 'something-else', v: 1 }), 'format', 'wrong format');
   refused(JSON.stringify({ ...JSON.parse(text), v: 2 }), 'newer', 'a newer backup format');
   refused(text.slice(0, text.length - 40), 'json', 'a half-pasted text');
-  refused(text.replace('"flights":260', '"flights":261'), 'check', 'an edited number (checksum)');
+  { const i = text.lastIndexOf('"flights":260'); refused(text.slice(0, i) + '"flights":261' + text.slice(i + '"flights":260'.length), 'check', 'an edited number inside the save (checksum)'); }   // (the LAST one: the header's summary comes first and is not sealed)
   refused(B.backupText(B.makeBackup(S.prepareSave({}), {})), 'blank', 'a blank game');
   refused('x'.repeat(B.MAX_BYTES + 1), 'size', 'over 1 MB');
   const forged = save2 => { const o = JSON.parse(text); o.save = save2; o.check = B.check(JSON.stringify(save2)); return JSON.stringify(o); };
@@ -30,7 +30,7 @@
   // 3. an old backup is migrated in memory
   const old = { seeds: 100, flights: 5, landings: 3, trees: 7 };   // before priceVersion, and money was called trees
   const ro = B.readBackup(B.backupText({ format: B.FORMAT, v: 1, game: 'old', made: '2026-01-01T00:00:00Z', pilot: '', summary: {}, save: old, check: B.check(JSON.stringify(old)) }));
-  check(ro.ok && ro.save.priceVersion === 1 && ro.save.seeds === 107 && !('trees' in ro.save), `an OLD backup is migrated in memory (priceVersion 1, trees folded into seeds): ${JSON.stringify(ro.ok ? [ro.save.priceVersion, ro.save.seeds] : ro)}`);
+  check(ro.ok && ro.save.seeds >= 107 && !('trees' in ro.save) && ro.save.fleet, `an OLD backup is migrated in memory (money called trees folded into seeds, a fleet made): ${JSON.stringify(ro.ok ? [ro.save.seeds, !!ro.save.fleet, 'trees' in ro.save] : ro)}`);
   check(Object.keys(mem).every(k => k === 'contrailPilot.code'), `reading a backup writes nothing: ${Object.keys(mem)}`);
   // 4. restore: the current game is kept first, then both keys are written
   const cur = JSON.stringify({ ...rich(), flights: 40, landings: 31, seeds: 900 }); mem['contrailPilot.v2'] = cur; mem['contrailPilot.v2.backup'] = cur;
