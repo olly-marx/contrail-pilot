@@ -17,7 +17,7 @@ exports.audit = page => page.evaluate(() => {
     for (const [x, y] of pts) {
       if (x < 0 || y < 0 || x > sp.W || y > sp.H) continue;
       const top = document.elementsFromPoint(x, y)[0], t = sp.target;
-      const inTarget = t && x >= t.left && x <= t.right && y >= t.top && y <= t.bottom;
+      const inTarget = t && x >= t.left - 6 && x <= t.right + 6 && y >= t.top - 6 && y <= t.bottom + 6;   // (the hole is the target plus 4 px: a tap in that rim reaches the page by design)
       if (!inTarget && !(top && top.closest && top.closest('#tour'))) { out.push(`only the target of ${key} is tappable: FAILED (a tap at ${Math.round(x)},${Math.round(y)} would reach ${top && (top.id || top.className || top.tagName)})`); break; }
     }
   }

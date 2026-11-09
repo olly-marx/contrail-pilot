@@ -29,5 +29,5 @@ export const SUBJECTS = {
   'name#1': null, 'name#2': null, 'name#3': null, 'name#4': null, 'name#5': null, 'name#6': null, 'name#7': null, 'name#8': null, 'name#9': null, 'name#10': null,
   'new#1': null,
   'new#2': '^.rowc',                               // the NEW line's row (its picture and name), not only its (i)
-  'new#3': ['#iName', '#iWhat'],                   // the information card's title and its first paragraph
+  'new#3': ['#iWhat', '#iWhy'],                    // the information card's two paragraphs (its title scrolls off a 320x568 screen)
 };

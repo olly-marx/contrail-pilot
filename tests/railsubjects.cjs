@@ -15,7 +15,7 @@
     const at = src.indexOf(`return ['${id}', [`), body = src.slice(at, src.indexOf(']]', at)), n = (body.match(/target:/g) || []).length;
     check(COUNTS[id] === n, `rails tour ${id}: tour.js has ${n} steps, the table says ${COUNTS[id]}`);
   }
-  const nameBody = src.slice(src.indexOf('  nameSteps() {'), src.indexOf('  newSteps(lines) {')), nn = (nameBody.match(/target:/g) || []).length;
+  const ns = src.indexOf('  nameSteps() {'), nameBody = src.slice(ns, src.indexOf('\n  }\n', ns)), nn = (nameBody.match(/target:/g) || []).length;
   check(COUNTS.name === nn, `the name tour has ${nn} steps in tour.js, the table says ${COUNTS.name}`);
   const newBody = src.slice(src.indexOf('  newSteps(lines) {'), src.indexOf('  // ---------- running a tour')), nw = (newBody.match(/target:/g) || []).length;
   check(COUNTS.new === nw, `the new-line tour has ${nw} steps in tour.js, the table says ${COUNTS.new}`);

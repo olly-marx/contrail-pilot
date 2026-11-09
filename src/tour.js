@@ -279,7 +279,7 @@ export class Tour {
     const st = this.curStep; if (!st || !this.target) return [];
     const spec = 'subject' in st ? st.subject : SUBJECTS[st.key], list = spec == null ? [] : [].concat(spec), out = [];
     for (const sel of list) {
-      const el = sel[0] === '^' ? this.target.closest(sel.slice(1)) : [...document.querySelectorAll(sel)].find(e => !e.closest('#tour') && e.getClientRects().length && e.offsetParent !== null);
+      const el = sel[0] === '^' ? this.target.closest(sel.slice(1)) : [...document.querySelectorAll(sel)].find(e => !e.closest('#tour') && e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden');   // (not offsetParent: the pinned hangar dock is position: fixed/sticky and has none)
       if (el && el !== this.target && !el.contains(this.target) && !out.includes(el)) out.push(el);
       else if (el && el.contains(this.target) && sel[0] === '^') out.push(el);   // the target's own row: the row is the subject (the row contains the target button)
     }
@@ -309,7 +309,7 @@ export class Tour {
     set(this.el.querySelector('.tring'), { left: `${x0}px`, top: `${y0}px`, width: `${x1 - x0}px`, height: `${y1 - y0}px` });
     // The SUBJECT (src/railsubjects.js): lit too (a second, third ... hole in the visual dim), framed, NOT tappable (the four panels above still catch every tap that is not on the target).
     const subs = this.subjectEls(), holes = [{ x0, y0, x1, y1 }];
-    for (const el of subs) { const q = el.getBoundingClientRect(), hx0 = Math.max(0, q.left - 4), hx1 = Math.min(W, q.right + 4), hy0 = Math.max(0, q.top - 4), hy1 = Math.min(barTop, q.bottom + 4); if (hx1 > hx0 && hy1 > hy0) holes.push({ x0: hx0, y0: hy0, x1: hx1, y1: hy1, subject: true }); }
+    for (const el of subs) { const q = el.getBoundingClientRect(), hx0 = Math.max(0, q.left - 4), hx1 = Math.min(W, q.right + 4), hy0 = Math.max(0, q.top - 4), hy1 = Math.min(barTop, q.bottom + 4); if (hx1 > hx0 && hy1 > hy0 && (hy1 - hy0) >= 0.5 * (q.bottom - q.top + 8)) holes.push({ x0: hx0, y0: hy0, x1: hx1, y1: hy1, subject: true }); }
     this.holes = holes;
     const vis = this.el.querySelector('.tvis'); vis.setAttribute('viewBox', `0 0 ${W} ${H}`);
     vis.querySelector('path').setAttribute('d', `M0 0H${W}V${H}H0Z` + holes.map(h => `M${h.x0} ${h.y0}H${h.x1}V${h.y1}H${h.x0}Z`).join(''));
