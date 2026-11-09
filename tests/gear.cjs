@@ -20,7 +20,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const saveNow = () => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
     check(await p.evaluate(() => !!document.getElementById('hubGear') && document.getElementById('hubGear').offsetParent !== null), `${tag}: HOME has the gear`);
     check(await p.evaluate(() => !document.querySelector('#title .buttons') || document.querySelector('#title .buttons').offsetParent === null), `${tag}: the four small buttons are not on HOME any more`);
-    await p.click('#hubGear'); await p.waitForTimeout(300);
+    await p.click('#hubGear');
+    const open1 = await p.waitForSelector('#sheet', { timeout: 1500 }).then(() => true).catch(() => false);   // the sheet BEFORE any other tap: a missing sheet fails here, by name, in under 2 s
+    check(open1, `${tag}: one gear opens one sheet (#sheet present within 1.5 s of tapping the gear)`);
+    if (!open1) { await p.close(); continue; }
+    await p.waitForTimeout(300);
     const sh = await p.evaluate(() => { const s = document.getElementById('sheet'), c = s && s.querySelector('.sheet'), r = c && c.getBoundingClientRect();
       return { open: !!s, btns: s ? [...s.querySelectorAll('[data-gear]')].map(e => { const q = e.getBoundingClientRect(); return { g: e.dataset.gear, h: Math.round(q.height), w: Math.round(q.width) }; }) : [], top: r && Math.round(r.top), bottom: r && Math.round(r.bottom), vh: innerHeight, credit: s ? /AEIS/.test(s.textContent) : false }; });
     check(sh.open && sh.btns.map(x => x.g).join() === 'how,school,sound,about,saved', `${tag}: the gear opens the sheet with its 5 buttons (how, school, sound, about, YOUR SAVED GAME): ${JSON.stringify(sh.btns)}`);
@@ -42,7 +46,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.evaluate(() => { window.__school = 0; game.registry.get('ui').startSchool = () => { window.__school++; }; });
     await p.click('#hubGear'); await p.click('#sheet [data-gear="school"]'); await p.waitForTimeout(250);
     check(await p.evaluate(() => window.__school === 1 && !document.getElementById('sheet')), `${tag}: FLIGHT SCHOOL starts the school and the sheet closes`);
-    const seeds = (await saveNow()).seeds; await p.click('#hubGear'); await p.click('#sheet [data-gear="saved"]'); await p.waitForTimeout(300);
+    const seeds = (await saveNow()).seeds; await p.click('#hubGear'); await p.click('#sheet [data-gear="saved"]');
+    const open2 = await p.waitForSelector('#sheet [data-gear="reset"]', { timeout: 1500 }).then(() => true).catch(() => false);
+    check(open2, `${tag}: YOUR SAVED GAME opens page 2 (its RESET PROGRESS chip within 1.5 s)`);
+    if (!open2) { await p.close(); continue; }
+    await p.waitForTimeout(300);
     const sv = await p.evaluate(() => { const s = document.getElementById('sheet'); return { g: s ? [...s.querySelectorAll('[data-gear]')].map(e => e.dataset.gear).join() : '', h: s ? [...s.querySelectorAll('[data-gear]')].map(e => Math.round(e.getBoundingClientRect().height)) : [] }; });
     check(sv.g === 'recover,backup,restore,reset' && sv.h.every(x => x >= 40), `${tag}: YOUR SAVED GAME has recover, backup, restore, reset (40 px targets): ${JSON.stringify(sv)}`);
     const c2 = await closeOn(); check(c2.closeVisible && c2.cardInside && !c2.scrolls, `${tag}: CLOSE visible on Settings page 2 (YOUR SAVED GAME; the card fits, no scrolling): ${JSON.stringify(c2)}`);
