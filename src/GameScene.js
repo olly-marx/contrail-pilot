@@ -332,7 +332,8 @@ export class GameScene extends Phaser.Scene {
   noTreeYet() { return treesPlanted(this.save) === 0 && !this.planted; }
   // The same strip again, each time soil comes into range, until a tree has landed (explain shows a tip once). Never in school or the automated tests ('*').
   explainAgain(html, pic = null) {
-    if (this.school || this.state !== 'playing' || this.explaining || (this.save.seenTips || []).includes('*')) return false;
+    if (this.school || this.state !== 'playing' || (this.save.seenTips || []).includes('*')) return false;
+    if (this.explaining) { (this.tipQueue = this.tipQueue || []).push([html, pic, 'tree-1']); return true; }   // another tip is up: this one waits its turn (the strip must not be lost to it)
     this.showTip(html, pic);
     return true;
   }

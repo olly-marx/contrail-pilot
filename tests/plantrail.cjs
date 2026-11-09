@@ -30,7 +30,7 @@ const seed = extra => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMS
       check(flying, 'a: tapping the lit TAKE OFF did not start the flight');
       if (flying) {
         const one = await p.evaluate(async () => {
-          const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.hitsStorm = () => false; s.hitBird = () => false; s.parcels = Math.max(s.parcels, 3); s.distancePx = 1e6;
+          const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.hitsStorm = () => false; s.hitBird = () => false; s.parcels = Math.max(s.parcels, 3); s.distancePx = 1000; s.closeTip(); s.tipQueue = [];   // (a real distance: a huge one throws in the leg maths)
           s.showPlot({ x: 400 }); await new Promise(r => setTimeout(r, 1800));
           const strip = document.getElementById('coach'), arrow = s.dropArrowGfx;
           return { strip: !strip.hidden && /SEND A SEED/.test(strip.innerText), text: strip.innerText, arrow: !!(arrow && arrow.commandBuffer && arrow.commandBuffer.length), noTree: s.noTreeYet() };
