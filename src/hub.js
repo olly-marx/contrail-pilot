@@ -33,5 +33,5 @@ export function hubView(save, { crossingReady = null, crossing = null, boxShown 
   // The next stops, up to the mission's city when the route aims at one ("LONDON > PARIS > BERLIN (mission)"), else the first hop.
   const at = aim ? path.indexOf(aim) : -1, route = path.slice(0, at > 0 ? Math.min(at + 1, 4) : 2);
   const words = (s2 ? up.reduce((a, r) => a + wordCount(`${r.short} ${r.right}`), 0) : wordCount(next ? next.title : '')) + wordCount(route.join(' ')) + wordCount('TAKE OFF');
-  return { next, up, route, aim: at > 0 && at <= 3 ? aim : null, skip: aimOpen(save) ? (save.skipAim ? 'on' : 'off') : null, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
+  return { next, up, route, aim: at > 0 && at <= 3 ? aim : null, skip: aimOpen(save) && aimOpen(save) !== save.aimCity ? (save.skipAim ? 'on' : 'off') : null, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
 }

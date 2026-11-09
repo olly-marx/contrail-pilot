@@ -79,3 +79,4 @@ group tools-everywhere | src/wild.js | toolseverywhere regions
 group plant-rail | src/GameScene.js src/tour.js src/tips.js src/railsubjects.js | plantrail
 group landlog-ui | src/landlog.js src/pilot.js | landlogui
 group cross-box | src/crossingview.js src/crossings.js src/ui.js style.css index.html | crossboxui hubscreen taptargets crossingmoment
+group cross-goto | src/aim.js src/crossingview.js src/ui.js src/hub.js style.css index.html | crossgoto crossboxui hubscreen

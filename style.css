@@ -698,6 +698,7 @@ h2.sub { margin-top: -4px; }
 #title.hub #hubCross { order: 3; }
 #title.hub #hubNext { order: 3; }
 #title.hub #goBtn { order: 4; }
+#title.hub #hubFly { order: 4; }
 #title.hub #tChallenges { order: 5; }
 /* R3: HOME's UP NEXT strip: the results card's rows (.rc-row, R1) in a plain block; a lead row (the free part, NATURE's parcels) is gold and carries its lesson picture */
 .hub-next { padding: 0; text-align: left; }
@@ -1063,3 +1064,10 @@ h2.sub { margin-top: -4px; }
 .hub-cross .hc-line { margin: 1px 0 0; font-size: 7px; line-height: 1.3; }
 .hub-cross.ready { background: var(--gold, #ffd23f); }
 @media (max-height: 600px) { .hub-cross { padding: 2px 5px; } .hub-cross .rc-label { margin: 0; } .hub-cross .hc-line { margin: 0; } }   /* 320x568: TAKE OFF must stay above the bar (tests/crossboxui.cjs) */
+/* GO TO (CROSSINGS V2 step 3): the hop dots and the GO TO / stop button in the HOME box, and the small 'fly normally' link under CROSS TO. */
+.hc-go { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 1px; }
+.hc-dots { display: inline-flex; gap: 2px; align-items: center; font-size: 7px; }
+.hc-dot { display: inline-block; width: 5px; height: 5px; background: var(--ink, #1b1b2f); }
+.hub-cross .btn.tiny { padding: 1px 6px; font-size: 7px; min-height: 0; }
+#hubFly { align-self: center; margin-top: 1px; }
+@media (max-height: 600px) { .hub-cross .hc-go { margin-top: 0; } }

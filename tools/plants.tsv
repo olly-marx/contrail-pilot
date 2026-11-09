@@ -580,3 +580,7 @@ crossbox	src/crossingview.js	s/dots: Math.min(hops, 6), moreDots: hops > 6,/dots
 crossbox	src/crossingview.js	s/(b.where === 'goto' ? { label: `GO TO ${s.from}`, act: 'goto' } : { label: `CROSS TO ${s.to}`, act: 'cross' })/{ label: `CROSS TO ${s.to}`, act: 'cross' }/	a ready crossing away from its airport offers CROSS TO instead of GO TO
 gotoreach	src/route.js	s/^export const linksFor = save => (SEASON2_ON ? linksOf(citiesOf(unlockedAreas(save))) : WORLD);/export const linksFor = save => (SEASON2_ON ? linksOf(citiesOf(unlockedAreas(save).slice(0, 1))) : WORLD);/	only the first open area is in the network
 gotoreach	src/areas.js	s/oceania: { name: 'Australia', starter: true, start: 'MELBOURNE', cities: \['SYDNEY', /oceania: { name: 'Australia', starter: true, start: 'MELBOURNE', cities: [/	a departure airport (Sydney) is missing from the network
+crossgoto	src/ui.js	s/setGoto(s, box.city); writeSave(s); this.showTitle(); };/writeSave(s); this.showTitle(); };/	GO TO sets no aim
+crossgoto	src/ui.js	s/  if (arrivedGoto(s)) writeSave(s);/  if (false) writeSave(s);/	the aim never clears on arrival
+crossgoto	src/ui.js	s/    if (this.hubCs) \$('goBtn').textContent = `CROSS TO ${cs.to}`;/    if (false) $('goBtn').textContent = 'TAKE OFF';/	the big button never says CROSS TO at the airport
+crossgoto	src/ui.js	s/\$('hubFly').hidden = !this.hubCs; \$('hubFly').onclick = () => this.start();/$('hubFly').hidden = true; $('hubFly').onclick = () => this.start();/	no 'fly normally' link at the airport

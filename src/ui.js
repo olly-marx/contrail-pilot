@@ -1,7 +1,7 @@
 import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
-import { routeFor, toggleSkip, SKIP_TEXT } from './aim.js';
+import { routeFor, toggleSkip, SKIP_TEXT, setGoto, clearGoto, arrivedGoto } from './aim.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
@@ -108,7 +108,7 @@ export class UI {
     this.onSchool = onSchool;
     this.toastTimer = null;
 
-    $('goBtn').onclick = () => this.start();
+    $('goBtn').onclick = () => (this.hubCs ? this.openCrossings(this.hubCs) : this.start());
     $('againBtn').onclick = () => { const to = this.resultsLead(); return to ? this.go(to) : this.showTitle(); };   // FLY ON, or where the lesson leads
     $('schoolBtn').onclick = () => this.startSchool();
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.tick(); this.go(b.dataset.go); });
@@ -376,6 +376,7 @@ export class UI {
     const s = this.save;
     const cs = crossingState(s, { unlock: S2_UNLOCK }), ready = cs && cs.ready ? cs : null;   // (R-A: src/crossingview.js: the state, the 3 conditions, told once)
     const mustDo = leadOf(s);   // a pictured must-do lead row (the free part, the tree parcels): TAKE OFF is locked to it and the first hour shows one new thing at a time, so the box waits (measured: with it HOME was 20 px (390x667) and 26 px (320x568) too tall, tests/fitscreen.cjs)
+    if (arrivedGoto(s)) writeSave(s);   // GO TO: the player is at the city it aimed for
     const boxOn = !!(cs && s.tutorialDone && !lessonsLeft(s).length && !(mustDo && mustDo.pic));   // the HOME box (CROSSINGS V2) shows this crossing; a READY one is then not repeated as a gold UP NEXT row
     const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null, crossing: cs, boxShown: boxOn && !!ready });
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
@@ -386,7 +387,8 @@ export class UI {
     // THE HOME BOX (CROSSINGS V2): the next crossing with its three ticks; not while lessons remain (the same rule as the quiet line it replaces).
     const box = boxOn ? boxView(cs) : null, hc = $('hubCross');
     hc.hidden = !box; hc.classList.toggle('ready', !!(box && box.ready));
-    if (box) { hc.innerHTML = `<p class="rc-label">${esc(box.title)}</p><div class="hc-route"><span>${esc(box.route)}</span><b>${esc(box.word)}</b></div><div class="hc-ticks">${box.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</div><p class="hc-line">${esc(box.line)}</p>`; hc.onclick = () => this.openCrossings(cs); }
+    if (box) { hc.innerHTML = `<p class="rc-label">${esc(box.title)}</p><div class="hc-route"><span>${esc(box.route)}</span><b>${esc(box.word)}</b></div><div class="hc-ticks">${box.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</div><p class="hc-line">${esc(box.line)}</p>${box.where === 'goto' ? `<div class="hc-go"><span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(box.dots)}${box.moreDots ? '+' : ''}</span>${box.aimOn ? '<button id="hcStop" class="btn tiny" type="button">stop</button>' : `<button id="hcGo" class="btn tiny go" type="button">GO TO ${esc(box.city)}</button>`}</div>` : ''}`; hc.onclick = () => this.openCrossings(cs);
+      const stop = $('hcStop'), go = $('hcGo'); if (stop) stop.onclick = e => { e.stopPropagation(); sfx.tick(); clearGoto(s); writeSave(s); this.showTitle(); }; if (go) go.onclick = e => { e.stopPropagation(); sfx.tick(); setGoto(s, box.city); writeSave(s); this.showTitle(); }; }
     $('hubNext').hidden = !v.up.length || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
     const rows = box ? v.up.slice(0, window.innerHeight <= 600 ? 1 : 2) : v.up[0] && v.up[0].pic ? v.up.slice(0, 2) : v.up;   // (the box takes the room of two rows: a short phone keeps one)   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
@@ -401,8 +403,12 @@ export class UI {
     // The user, 2026-10-27: TAKE OFF is LOCKED until the free part is picked (nothing else made them find the hangar).
     $('goBtn').classList.toggle('locked', !!toHangar); $('goBtn').disabled = !!toHangar;
     $('goBtn').textContent = toHangar ? 'PICK YOUR FREE PART FIRST' : s.tutorialDone ? 'TAKE OFF' : 'START';
+    // At the departure airport of a READY crossing the big button crosses (it opens the CROSSINGS screen: a long flight is confirmed there) and a small link flies normally (CROSSINGS V2 step 3).
+    this.hubCs = box && cs.ready && cs.atDeparture && !toHangar ? cs : null;
+    if (this.hubCs) $('goBtn').textContent = `CROSS TO ${cs.to}`;
+    $('hubFly').hidden = !this.hubCs; $('hubFly').onclick = () => this.start();
     this.renderSkip(v.skip);
-    $('hubRoute').innerHTML = v.route.join(' &#9654; ') + (v.aim ? ' <span class="small">(mission)</span>' : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
+    $('hubRoute').innerHTML = v.route.join(' &#9654; ') + (v.aim ? ` <span class="small">(${this.save.aimCity && v.aim === this.save.aimCity ? 'go to' : 'mission'})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     const path = routeFor(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
     const pick = name => { this.globeUsed(); sfx.tick(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
@@ -588,7 +594,7 @@ export class UI {
     if (cs.ready && !cs.told) return this.showCrossingSheet(cs);
     const v = screenView(cs), esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     showSheet({ eyebrow: v.eyebrow, title: v.route, ok: 'CLOSE', html: `<p><b>${esc(v.word)}</b></p><p class="hc-ticks">${v.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</p><p>${esc(v.line)}</p>`,
-      action: v.button ? { label: v.button.label, onTap: () => (v.button.act === 'cross' ? this.flyCrossing(cs) : this.go(v.button.act)) } : null });
+      action: v.button ? { label: v.button.label, onTap: () => (v.button.act === 'cross' ? this.flyCrossing(cs) : v.button.act === 'goto' ? (setGoto(this.save, cs.from), writeSave(this.save), this.showTitle()) : this.go(v.button.act)) } : null });
   }
   flyCrossing(cs) { const s = this.save; s.flyCrossing = cs.crossing; writeSave(s); this.start(); }
   maybeCrossingSheet() {
