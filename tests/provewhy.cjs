@@ -5,7 +5,7 @@ const why = s => execFileSync('bash', [sh], { input: s }).toString().replace(/\n
 const fails = [], check = (c, m) => { if (!c) fails.push(m); };
 const own = why('FAIL crystals:\n - a night dodge pays 1 crystal: {"crystals":0}\n - second line\n');
 check(own === 'a night dodge pays 1 crystal: {"crystals":0}', `the first '- ' line is shown, not the header: ${JSON.stringify(own)}`);
-const crash = why("Error: Cannot find module 'playwright-core'\n    at x\n");
+const crash = why("Error: Cannot find module 'some-module'\n    at x\n");
 check(/Cannot find module/.test(crash), `a crash without a '- ' line shows the Error line: ${JSON.stringify(crash)}`);
 check(why('all fine\n') === '', 'a passing output shows nothing');
 check(why('FAIL x:\n - ' + 'z'.repeat(300) + '\n').length === 110, 'a long line is cut at 110 characters');
