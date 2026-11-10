@@ -658,3 +658,15 @@ targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = 
 targetbanner-ui	src/GameScene.js	s/const city = gotoTarget(this\.save); if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
 targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
 citytap	style.css	s/^#title\.hub \.hub-card { display: flex; }.*$//	the card's buttons stack under its text again (the row is 75 px high)
+lapbadge	src/badges.js	s/(s\.lapDone || r\.lapLanded ? 1 : 0)/1/	Lap Complete for every flight
+lapbadge	src/badges.js	s/(s\.lapDone || r\.lapLanded ? 1 : 0)/0/	Lap Complete never
+lapbadge	src/badges.js	s/(s\.lapDone || r\.lapLanded ? 1 : 0)/(s.lapDone ? 1 : 0)/	Lap Complete arrives one flight late (the lap flight itself does not earn it)
+lapbadge	src/badges.js	s/(s\.lapDone || r\.lapLanded ? 1 : 0)/(s.lapDone || r.lapLanded || (s.crossed || []).length > 0 ? 1 : 0)/	any crossing earns Lap Complete
+lapbadge	src/badges.js	s/tiers: ONE(1, 10, 4), unit: 'complete the lap/tiers: ONE(2, 10, 4), unit: 'complete the lap/	Lap Complete needs two laps
+lapbadge	src/sim/rules.js	s/lapLanded: !!(landed \&\& this\.crossing \&\& this\.crossing\.kind === 'lap' \&\& this\.save\.city === this\.crossing\.to), //	the bank no longer tells the badge that the lap flight landed home
+goldtrail	src/goldtrail.js	s/save \&\& save\.lapDone ? GOLD : PLAIN/true ? GOLD : PLAIN/	every contrail is gold
+goldtrail	src/goldtrail.js	s/save \&\& save\.lapDone ? GOLD : PLAIN/false ? GOLD : PLAIN/	the lap never turns the contrail gold
+goldtrail	src/sim/rules.js	s/this\.totalCo2 += this\.co2Rate \* dt;/this.totalCo2 += this.co2Rate * dt * (this.save.lapDone ? 1.01 : 1);/	the golden trail changes the CO2 of the flight
+goldtrail	src/sim/rules.js	s/^import { addPrizes } from '\.\.\/rewards\.js';/import { addPrizes } from '..\/rewards.js'; import { trailColour } from '..\/goldtrail.js';/	the sim engine imports the trail colour
+goldtrail-ui	src/GameScene.js	s/trailColour(this\.save)).setOrigin(0);/COLOURS.contrail).setOrigin(0);/	the lap never turns the drawn contrail gold
+goldtrail-ui	src/GameScene.js	s/trailColour(this\.save)).setOrigin(0);/trailColour({ lapDone: true })).setOrigin(0);/	every pilot gets the golden contrail

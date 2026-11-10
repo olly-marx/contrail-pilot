@@ -13,6 +13,7 @@ import { sendFlight } from './online.js';
 import { loading, tripLands } from './loader.js';
 import { flightPath, city, HOME, schoolSave } from './route.js';
 import { routeFor, gotoTarget } from './aim.js';
+import { trailColour } from './goldtrail.js';
 import { bannerText, isLit } from './targetbanner.js';
 import { crossingState } from './crossingview.js';
 import { crossingPath, completeCrossing } from './crossings.js';
@@ -1138,7 +1139,7 @@ export class GameScene extends Phaser.Scene {
 
   showContrail(c) {
     const s = CONTRAIL.size;
-    c.view = this.add.rectangle(c.x, c.y, s, s, COLOURS.contrail).setOrigin(0);
+    c.view = this.add.rectangle(c.x, c.y, s, s, trailColour(this.save)).setOrigin(0);   // (gold after the lap: src/goldtrail.js, cosmetic only)
     this.contrailLayer.add(c.view);
   }
 
@@ -1412,7 +1413,7 @@ export class GameScene extends Phaser.Scene {
   drawRays(time) {
     const g = this.rayGfx, ground = this.groundFx;
     g.clear(); ground.clear();
-    for (const c of this.blockers) if (c.view.active) c.view.setFillStyle(COLOURS.contrail);
+    for (const c of this.blockers) if (c.view.active) c.view.setFillStyle(trailColour(this.save));
     this.blockers = [];
     if (!this.rays || this.rays.strength <= 0) return;
     const { isDay, strength, cols } = this.rays, S = CONTRAIL.size;
