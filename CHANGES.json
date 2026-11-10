@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-10-go-there",
+    "version": "0.48.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "Missions no longer steer your flight by themselves: your open mission's city is no longer chosen for you, so tap GO THERE on a mission to fly to its city. If you had tapped AIM HERE before, that city stays your destination. The skip button is gone."
+    ]
+  },
+  {
     "id": "2026-11-10-next-city",
     "version": "0.47.0",
     "date": "2026-11-10",
