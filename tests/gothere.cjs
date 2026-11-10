@@ -1,6 +1,7 @@
 // THE SILENT MISSION AIM IS RETIRED (ROUTING V2 step 3, src/aim.js, src/hub.js, src/missionsview.js; the user, 2026-11-09). Plain Node. An open city mission no longer steers a flight by itself: aimTarget is only the player's destination (save.aimCity: GO TO,
 // a mission row's GO THERE, a tapped city); with none the default destination flies (src/destination.js). HOME's view has no skip chip any more. An old save's 'AIM HERE' (save.aimKey) becomes a standing destination if its mission still names a city and
-// nothing else is set, and the per-trip skip (save.skipAim) is dropped, once. The mission row whose city is the destination says so. Plants: tools/plants.tsv, test `gothere`. Run: node tests/gothere.cjs
+// nothing else is set, and the per-trip skip (save.skipAim) is dropped, once. A FLIGHT ALREADY IN PROGRESS is not touched: a flight lives only in the running page (a reload ends it), the save is migrated only when HOME is drawn (src/ui.js renderHub), and until then an old aimKey steers nothing
+// (section 4b: aimTarget ignores it), so there is no half-migrated flight; the crash-retry that used to keep skipAim now flies the default path. The mission row whose city is the destination says so. Plants: tools/plants.tsv, test `gothere`. Run: node tests/gothere.cjs
 globalThis.SEASON2 = true;
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
@@ -28,6 +29,9 @@ globalThis.SEASON2 = true;
     const again = JSON.stringify(s); check(A.migrateAim(s) === false && JSON.stringify(s) === again, 'the migration runs once (idempotent)');
     const keep = { ...base(), aimKey: m.key, aimCity: 'PARIS' }; A.migrateAim(keep); check(keep.aimCity === 'PARIS' && !('aimKey' in keep), 'a destination already set is kept');
     const stale = { ...base(), aimKey: 'weurope:no-such-mission', skipAim: false }; A.migrateAim(stale); check(!('aimCity' in stale) && !('aimKey' in stale) && !('skipAim' in stale), 'a stale AIM HERE key gives no destination and is dropped'); }
+  // 4b. before HOME has migrated a save, an old aimKey / skipAim changes nothing about the route (no half-migrated flight): the flight follows the default path
+  { const m = M.visible(s0).find(x => x.def && A.CITY_TEMPLATES[x.def.id]), old = { ...base(), aimKey: m.key, skipAim: true };
+    check(A.aimTarget(old) === null && JSON.stringify(A.routeFor(old, 8)) === JSON.stringify(R.flightPath(old, 8)) && JSON.stringify(A.routeFor(old, 8)) === JSON.stringify(A.routeFor(base(), 8)), 'an old save with aimKey and skipAim, not yet migrated, flies the same default path as a save without them'); }
   // 5. the retired names are gone from the module
   check(!('toggleSkip' in A) && !('SKIP_TEXT' in A), 'toggleSkip and SKIP_TEXT are gone from src/aim.js');
   console.log(fails.length ? `FAIL gothere:\n - ${fails.slice(0, 10).join('\n - ')}${fails.length > 10 ? `\n ... ${fails.length - 10} more` : ''}` : 'PASS gothere: an open city mission no longer steers a flight, GO THERE sets the destination and the row says so, HOME has no skip chip, an old AIM HERE becomes a destination once and the skip is dropped');
