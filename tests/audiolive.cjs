@@ -107,6 +107,7 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
         const before2 = await p.evaluate(() => window.__rms(400));   // a cue with depth 1 (coin) leaves the music alone
         await p.evaluate(async () => { (await import('/src/sound.js')).sfx.coin(); }); await p.waitForTimeout(260);
         const during2 = await p.evaluate(() => window.__rms(300));
+        console.log(`DUCK (middle): warm (depth ${dw}) music rms ${before.toFixed(5)} -> ${during.toFixed(5)} = ${(during / before).toFixed(2)} of before (allowed <= ${(dw + 0.15).toFixed(2)}); coin (depth 1) ${before2.toFixed(5)} -> ${during2.toFixed(5)} = ${(during2 / before2).toFixed(2)} of before (needs >= 0.9)`);
         check(during2 >= 0.9 * before2 - 0.0006, `a cue that needs no duck does not dip the music: rms ${before2.toFixed(4)} -> ${during2.toFixed(4)}`);
         await p.waitForTimeout(800);
       }
