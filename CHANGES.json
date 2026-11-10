@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-10-flying-to",
+    "version": "0.49.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "When you fly to a chosen city, the top of the screen now says \"Flying to PARIS\" (for a crossing, \"Flying to WARSAW to cross\"), and the airport lights up as you approach it."
+    ]
+  },
+  {
     "id": "2026-11-10-go-there",
     "version": "0.48.0",
     "date": "2026-11-10",
