@@ -12,7 +12,9 @@ import { Hud } from './Hud.js';
 import { sendFlight } from './online.js';
 import { loading, tripLands } from './loader.js';
 import { flightPath, city, HOME, schoolSave } from './route.js';
-import { routeFor } from './aim.js';
+import { routeFor, gotoTarget } from './aim.js';
+import { bannerText, isLit } from './targetbanner.js';
+import { crossingState } from './crossingview.js';
 import { crossingPath, completeCrossing } from './crossings.js';
 import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
@@ -397,6 +399,17 @@ export class GameScene extends Phaser.Scene {
     // A tip bubble: only a tap ON it closes it, and not before TIP_MIN_TAP s; a tap on the game just flies (returns false).
     if (this.explaining) { if (fromBubble && this.time.now - this.tipAt >= TIP_MIN_TAP * 1000) this.closeTip(); return false; }
     return !!(this.school && this.school.onTap());
+  }
+
+  // The city the flight is heading for: a crossing flight's arrival, else the player's destination (save.aimCity), none in flight school.
+  targetCity() { return this.crossing ? this.crossing.to : this.school ? null : gotoTarget(this.save); }
+  // The top text while a destination is set: 'Flying to SAPPORO' or '... to cross' for a ready crossing's departure; null otherwise (a crossing flight keeps its empty mission line).
+  bannerNow() {
+    if (this.school || this.crossing || this.state === 'over') return null;
+    const city = gotoTarget(this.save); if (!city) return null;
+    const key = `${city}|${(this.save.crossed || []).length}`;
+    if (this._tbKey !== key) { this._tbKey = key; const cs = crossingState(this.save); this._tbCross = !!(cs && cs.ready && cs.from === city); }
+    return bannerText({ city, crossFrom: this._tbCross, landed: this.state === 'landing' || this.landedAt === city });
   }
 
   setDropVisible(v) { this.dropBg.setVisible(v); this.dropLabel.setVisible(v); this.dropShown = v; }
@@ -1239,6 +1252,14 @@ export class GameScene extends Phaser.Scene {
     const follow = (r, x) => { const d = x - r.viewX; if (d) for (const p of r.parts) p.x += d; r.viewX = x; };
     for (const s of this.storms) follow(s, s.rects[0].x);
     for (const rw of this.runways) follow(rw, rw.x);
+    // THE LIGHT-UP (src/targetbanner.js, research/TARGET-BANNER-PLAN.md): the airport the flight is heading for (the player's destination, or a crossing flight's arrival) glows gold from when its runway is on screen until the plane passes it or lands.
+    { const tgt = this.targetCity(), pulse = Math.floor(time / 350) % 2, over = this.state === 'landing' || this.state === 'over';
+      for (const rw of this.runways) {
+        const lit = isLit(tgt, rw.name, this.distancePx > rw.worldX + AIRPORT.runwayLen, over);
+        rw.lit = lit;
+        if (rw.strip) rw.strip.setTint(lit ? 0xffe15a : 0xffffff).setAlpha(lit && !pulse ? 0.6 : 1);
+        const label = rw.parts && rw.parts[rw.parts.length - 1]; if (label && label.setColor) label.setColor(lit ? '#ffe15a' : '#ffffff');
+      } }
     const bob = Math.round(Math.sin(this.gameTime / 180) * 2);
     for (const pl of this.plots) { follow(pl, pl.x); pl.marker.setVisible(!pl.used && this.parcels > 0).setY(SKY_H - 18 + bob); }
     for (const i of this.issrs) {
@@ -1513,12 +1534,12 @@ export class GameScene extends Phaser.Scene {
     // The mission line: what this flight is for.
     if (this.crossing) this.missionText.setText('');   // ... and no mission line while crossing
     else if (isSeason2(this.save)) { const n = this.school ? null : s2Next(this.save);   // season 2 (S3): the NEXT goal (a scene restart keeps fields, so no cache)
-      this.missionText.setText(n && this.state !== 'over' ? n.title : ''); }
+      this.missionText.setText(this.bannerNow() || (n && this.state !== 'over' ? n.title : '')); }   // (the banner replaces the mission title while a destination is set: src/targetbanner.js)
     else { const mis = this.school ? null : currentMission(this.save);
       this.missionText.setText(mis && this.state !== 'over' ? mis.progress(this) : ''); }
     // The "Next: <city>" line sits UNDER the mission line, however many lines that wraps to (a player saw two HUD lines
     // drawn over each other: season 2 mission titles wrap to 2 lines, the next line was fixed at y 58).
-    this.nextText.y = this.missionText.text ? this.missionText.y + this.missionText.height + 1 : this.missionText.y;
+    this.nextText.y = this.missionText.text ? this.missionText.y + this.missionText.height + (this.missionText.text.includes('\n') ? 5 : 1) : this.missionText.y;   // (a two-line banner, 'Flying to X' + its condition, gets a clear 5 px gap above this line)
 
     if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! shade: cooler' : 'ICY AIR! heat trapped!');
     else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');

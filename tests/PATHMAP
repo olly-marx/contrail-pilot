@@ -84,3 +84,4 @@ group crystal-popup | src/GameScene.js src/sim/rules.js src/tips.js | crystalpop
 group city-tap | src/pickcity.js src/globe.js src/ui.js src/tips.js style.css | citytap routechip hubscreen
 group next-chip | src/destination.js src/route.js src/aim.js src/ui.js src/hub.js style.css | nextchip routechip crossgoto hubscreen citytap
 group route-map | src/globe.js src/pickcity.js src/ui.js src/missionsview.js | routeonmap citytap
+group target-banner | src/targetbanner.js src/GameScene.js src/aim.js | targetbanner-ui plantrail textfit

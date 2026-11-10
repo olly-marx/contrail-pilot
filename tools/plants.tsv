@@ -648,3 +648,13 @@ routeonmap	src/ui.js	s/names = \[dest, \.\.\.way\.slice(1, -1)\.slice(0, 5)\]/na
 routeonmap	src/ui.js	s/this\.hubGlobe\.setPath(way\.map(city)); this\.drawRouteLabels(way); }/this.hubGlobe.setPath(way.map(city)); }/	the tapped city gets no name
 routeonmap	src/ui.js	s/globeUsed() { this\.clearRouteLabels(); /globeUsed() { /	spinning the globe leaves the names where they were
 routeonmap	src/ui.js	s/closeCityRow() { this\.clearRouteLabels(); /closeCityRow() { /	closing the card leaves the names
+targetbanner	src/targetbanner.js	s/if (!city || landed) return null;/if (!city) return null;/	a banner is still shown after landing at the destination
+targetbanner	src/targetbanner.js	s/\${crossFrom ? ' to cross' : ''}/${''}/	the crossing departure says no 'to cross'
+targetbanner	src/targetbanner.js	s/return cond ? `\${first}\\n\${cond}` : first;/return first;/	the mission's condition is lost from the banner
+targetbanner	src/targetbanner.js	s/!!target \&\& name === target \&\& !passed/!!target \&\& !passed/	every airport lights, not only the target
+targetbanner	src/targetbanner.js	s/ \&\& !passed \&\& !landed;/ \&\& !landed;/	the airport stays lit after the plane has passed it
+targetbanner-ui	src/GameScene.js	s/this\.missionText\.setText(this\.bannerNow() || (n \&\& this\.state !== 'over' ? n\.title : ''));/this.missionText.setText((n \&\& this.state !== 'over' ? n.title : ''));/	the mission title is not replaced by the banner
+targetbanner-ui	src/GameScene.js	s/rw\.lit = lit;/rw.lit = false;/	the target runway is never lit
+targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = isLit(rw.name, rw.name,/	every runway is lit
+targetbanner-ui	src/GameScene.js	s/const city = gotoTarget(this\.save); if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
+targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
