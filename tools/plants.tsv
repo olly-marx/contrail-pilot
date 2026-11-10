@@ -445,7 +445,7 @@ sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 })
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x20]
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x21]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
@@ -598,6 +598,16 @@ crossladder	src/crossings.js	s/exception = lower.filter(c => !covered.has(c.open
 crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filter(s => s !== pick)/const lower = [].filter(s => s !== pick)/	the screen lists no easier ones
 crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
+pickcity	src/pickcity.js	s/  if (area \&\& !unlockedAreas(save)\.includes(area)) {/  if (false) {/	a closed-area city is treated like an open one
+pickcity	src/pickcity.js	s/const stops = path\.length - 1;/const stops = path.length;/	the stops count is one too many
+pickcity	src/pickcity.js	s/dots: Math\.min(stops, MAX_DOTS), moreDots: stops > MAX_DOTS/dots: stops, moreDots: false/	the dots are not capped at six
+pickcity	src/pickcity.js	s/if (e < bd) { bd = e; best = d; }/if (e < r \&\& !best) { bd = e; best = d; }/	the tap picks the first dot in range, not the nearest
+pickcity	src/pickcity.js	s/split \&\& !(save\.crossed || \[\])\.includes('patagonia') ? 'The Patagonia crossing flies there\.' : 'No flight route there yet\.'/'No flight route there yet.'/	the Patagonia card does not name its crossing
+citytap	src/ui.js	s/ onCity: v\.worldChoice ? name => this\.showCityCard(name) : null,//	a tap on a city opens no card
+citytap	src/ui.js	s/setGoto(s, card\.name); delete s\.heading; writeSave(s); this\.start();/delete s.heading; writeSave(s); this.start();/	FLY sets no aim
+citytap	src/ui.js	s/canFly = card\.canFly \&\& !locked;/canFly = true;/	a closed or no-route city offers FLY
+pickcity	src/pickcity.js	s/LADDER\.indexOf(a\.id) - LADDER\.indexOf(b\.id)/CROSSINGS.indexOf(a) - CROSSINGS.indexOf(b)/	the closed card names the first crossing in the list, not the first on the ladder
+citytap	style.css	s/^\.city-card \.hc-dot { width: 8px; height: 8px; }/.city-card .hc-dot { width: 5px; height: 5px; }/	the stop dots are tiny again
 music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
 hubscreen	src/ui.js	s/^ *\/\/ The first tab keeps its label FLY .*$/      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';/	the HOME word is written into the news dot again
 groves	src/groves.js	s/const n = whole(n0); if (!n) continue;/const n = whole(n0); if (!n || land !== 'woodland') continue;/	the migration drops every land but the UK

@@ -55,6 +55,7 @@ import { FleetHangar } from './hangar.js';
 import { dots, markSeen, migrateSeen, defaultLands, hangarScope } from './fresh.js';
 import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
+import { cityCard } from './pickcity.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp, leadOf } from './nextup.js';
 import { endView } from './crossingend.js';
@@ -413,8 +414,8 @@ export class UI {
     const path = routeFor(s, 5), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
     const pick = name => { this.globeUsed(); sfx.tick(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it
-    hint.textContent = v.worldChoice ? 'Drag to spin. Tap a dot to choose.' : 'Drag the world to spin it.';
-    this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, lit: linksFor(s),
+    hint.textContent = v.worldChoice ? 'Spin it. Tap a city to fly.' : 'Drag the world to spin it.';
+    this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, onCity: v.worldChoice ? name => this.showCityCard(name) : null, lit: linksFor(s),
       onUse: () => this.globeUsed(),
       cross: ready ? { from: city(ready.from), to: city(ready.to), onTap: () => this.showCrossingSheet(ready) } : null });   // R-A: the ready crossing's arc and its breathing ring (tap: the sheet)
     this.hubWords = v.words;
@@ -589,6 +590,16 @@ export class UI {
   }
   // The CROSSINGS screen (CROSSINGS V2): the same ticks as the HOME box, one plain line, one button (HANGAR / NATURE where the open tick is fixed, CROSS TO <city> when ready). The first time a crossing is ready the
   // moment sheet comes instead (it marks the crossing told). Step 2 keeps the old rule that the flight starts from anywhere; GO TO the departure airport is the next step.
+  // TAP ANY CITY (ROUTING V2 step 1, src/pickcity.js): the card names the city and its stops, then FLY sets the standing aim (save.aimCity, the same field as GO TO) and starts the flight; a closed or no-route city shows its one line and no FLY.
+  showCityCard(name) {
+    const s = this.save, card = cityCard(s, name); if (!card) return;
+    sfx.tick(); this.globeUsed();
+    const locked = !!$('goBtn').disabled, canFly = card.canFly && !locked;   // (TAKE OFF is locked while the free part is waiting: FLY must not get round that)
+    const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const dots = card.dots ? `<span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(card.dots)}${card.moreDots ? ' +' : ''}</span> ` : '';
+    showSheet({ eyebrow: 'FLY TO', title: card.name, ok: 'CLOSE', html: `<p class="city-card">${dots}${esc(locked && card.canFly ? 'Pick your free part first.' : card.line)}</p>`,
+      action: canFly ? { label: 'FLY', onTap: () => { setGoto(s, card.name); delete s.heading; writeSave(s); this.start(); } } : null });
+  }
   openCrossings(cs) {
     sfx.tick();
     if (cs.ready && !cs.told) return this.showCrossingSheet(cs);

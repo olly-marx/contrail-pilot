@@ -68,7 +68,7 @@ export const TIPS = {
   'rail-school':       { say: 'You landed! Your first upgrade is FREE. Open the hangar!' },
   'rail-hangar':       { say: 'Your first upgrade is FREE. Open the hangar!' },
   'rail-boards':       { say: 'Your records! Beat your best.' },
-  'rail-map':          { say: 'Your world! Drag to spin it. Tap a dot to choose.' },
+  'rail-map':          { say: 'Your world! Drag to spin it. Tap a city to fly there.' },
   'rail-free-tap':     { say: 'Tap here to see your new jet engines.' },
   'rail-takeoff-h':    { say: 'Now take off and try them!' },
   'rail-plant':        { say: 'Your tree seeds are on board. Tap TAKE OFF to plant them.' },

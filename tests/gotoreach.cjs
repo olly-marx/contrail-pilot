@@ -25,6 +25,9 @@ globalThis.SEASON2 = true;
       }
     }
   }
+  // PATAGONIA IS AN ISLAND UNTIL SOUTH AMERICA OPENS (measured 2026-11-10): with Patagonia open and samerica closed no city of the rest of the world reaches it and the reverse; opening samerica (the Patagonia crossing) links PUERTO MADRYN, PUNTA ARENAS and BALMACEDA to BUENOS AIRES and SANTIAGO by the ordinary nearest-neighbour rule, so NO declared bridge is needed.
+  const allA = Object.keys(A.AREAS), openS = { areas: allA, tutorialDone: true, homeArea: 'weurope', city: 'LONDON' }, closedS = { ...openS, areas: allA.filter(k => k !== 'samerica') };
+  check(R.pathTo('PUNTA ARENAS', 'LONDON', R.linksFor(openS)) && !R.pathTo('PUNTA ARENAS', 'LONDON', R.linksFor(closedS)) && !R.pathTo('LONDON', 'PUNTA ARENAS', R.linksFor(closedS)), 'Patagonia reaches the world when samerica is open and is an island when it is closed');
   check(JSON.stringify([...gaps].sort()) === JSON.stringify(KNOWN.slice().sort()), `the stepping-stone gaps are exactly ${JSON.stringify(KNOWN)}: found ${JSON.stringify([...gaps].sort())}`);
   check(JSON.stringify([...isoSeen].sort()) === JSON.stringify(ISO), `the Patagonia-isolation gaps are exactly ${JSON.stringify(ISO)}: found ${JSON.stringify([...isoSeen].sort())}`);
   check(routes > 1000 && states > 40, `power: ${routes} routes in ${states} states (a sweep that checks nothing proves nothing)`);
