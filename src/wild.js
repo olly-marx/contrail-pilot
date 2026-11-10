@@ -9,6 +9,7 @@ import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf, level, nextLevel, unlocked, unlockText, needsMoreNature, canBuy, freeParcels } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject } from './nature.js';
+import { treeBook } from './groves.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
 import { CITIES, S2_CITIES } from './cities.js';
 import { AREAS } from './areas.js';
@@ -137,7 +138,7 @@ export class WildScreen {
     const found = this.animals().filter(w => w.sprite && this.found(w.id));
     // Only trees that suit this land (the user, 2026-10-24): the UK shows its own plantings; another region shows
     // what parcels planted THERE (save.plantedIn[region], that region's trees: src/nature.js localTree).
-    const mine = this.region === 'woodland' ? s.planted : (s.plantedIn || {})[this.region];
+    const mine = treeBook(s, this.region);
     const planted = Object.entries(mine || {}).filter(([, n]) => n > 0);
     this.field = new Field($('wScene'), this.region, done, planted, found, this.projects.map(p => p.id), id => { sfx.tick(); this.speciesInfo(id); });   // tap an animal: its card
     if (!found.length && !done.length) $('wScene').insertAdjacentHTML('beforeend', '<p class="w-empty">Bare land. Start a habitat project, and plant trees on your flights!</p>');

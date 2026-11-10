@@ -3,6 +3,7 @@
 import { migrateMissions } from './missions.js';
 import { migrateBadges } from './badges.js';
 import { treesPlanted } from './treecount.js';
+import { ensureGroves } from './groves.js';
 import { migrateCity } from './route.js';
 import { newFleet, migrateFleet, syncFleet } from './fleet.js';
 
@@ -76,6 +77,7 @@ export function prepareSave(saved) {
   migrateMissions(s);   // 2026-10-22: missions became lessons, badges became tiered achievements
   migrateBadges(s);
   migrateCity(s);       // 2026-10-22: the city became a name in a world network of ~100
+  ensureGroves(s);      // 2026-11-10: one tree record for every land (src/groves.js); the old planted / plantedIn are folded in, nothing is lost
   delete s.challenges;
   if (!saved.fleet) migrateFleet(s);   // 2026-10-23: the eras reset (plane side only)
   syncFleet(s);

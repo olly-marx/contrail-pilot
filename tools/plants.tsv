@@ -600,3 +600,9 @@ crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reach
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
 music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
 hubscreen	src/ui.js	s/^ *\/\/ The first tab keeps its label FLY .*$/      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';/	the HOME word is written into the news dot again
+groves	src/groves.js	s/const n = whole(n0); if (!n) continue;/const n = whole(n0); if (!n || land !== 'woodland') continue;/	the migration drops every land but the UK
+groves	src/groves.js	s/save\.planted\[id\] = c\.planted;/;/	plantTree no longer mirrors the UK's old key
+groves	src/groves.js	s/save\.plantedIn\[land\]\[id\] = c\.planted;/;/	plantTree no longer mirrors another land's old key
+groves	src/groves.js	s/if (x\.planted < n) {/if (x.planted > n) {/	the smaller count wins when an older save disagrees
+groves	src/groves.js	s/Object\.values(groveView(save))\.reduce(/Object.values({ woodland: groveView(save).woodland || {} }).reduce(/	the total counts only the UK's trees
+groves	src/groves.js	s/c\.planted += 1; c\.grown += 1;/c.planted += 1;/	a planted tree is not counted as grown
