@@ -98,17 +98,21 @@ const rawSfx = {
   dawn: () => [523, 659, 784].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.15 })),
 };
 
-// WHICH CUES DUCK THE MUSIC (declared, not inferred; tests/sound.cjs: every cue must be here). 'duck': every stinger and warning cue: the music dips to a quarter for about 1.5 s.
-// 'keep': the frequent quiet ones (ducking a flap four times a second would pump the music); they are checked by level instead (tests/audiolive.cjs, the masking check).
+// HOW FAR EACH CUE DUCKS THE MUSIC (a depth per cue: the music's gain goes to this value for about a second; 1 = no duck). DECLARED, not inferred (tests/music.cjs: every cue must have a number in (0, 1]).
+// THE PRINCIPLE (the user: the music "doesn't have to get softer AS MUCH"): a cue must stand K times as far above the music as the quietest ordinary cue, the TICK, does (the levels already guarantee the tick its margin).
+// Loudest-read rms of each cue, measured live (2026-11-10, ~/contrail-research/duck-measure-report.txt; tick 0.01051): depth d = min(1, cue / (K x tick)), K = 3, then rounded: d >= 0.85 -> 1 (no duck), 0.65-0.85 -> 0.7, below 0.65 -> 0.5.
+// The loud cues need none (heartbeat 8.2x the tick, thud 9.6x, crack 4.2x, reveal 2.9x, grow 3.5x, medal 3.7x, welcome 3.6x, softfail 3.6x, era 2.7x -> d 0.89, reveal d 0.96); the quiet ones dip it: warm 0.49 -> 0.5, flutter 0.53 -> 0.5,
+// issr 0.64 -> 0.7, overheat 0.71, done 0.80, nofly 0.84, dusk 0.84, dawn 0.84 -> 0.7. The frequent quiet cues (tick, flap, coin, cool, plant, buy, land, nope) never duck: ducking a flap four times a second would pump the music; they are checked by level instead.
+export const DUCK_K = 3;
 export const DUCKS = {
-  tick: 'keep', flap: 'keep', coin: 'keep', cool: 'keep', plant: 'keep', buy: 'keep', land: 'keep', nope: 'keep',
-  heartbeat: 'duck', issr: 'duck', warm: 'duck', thud: 'duck', crack: 'duck', flutter: 'duck', nofly: 'duck', crash: 'duck', overheat: 'duck', dusk: 'duck', dawn: 'duck',
-  reveal: 'duck', era: 'duck', grow: 'duck', done: 'duck', medal: 'duck', welcome: 'duck', softfail: 'duck',
+  tick: 1, flap: 1, coin: 1, cool: 1, plant: 1, buy: 1, land: 1, nope: 1,
+  heartbeat: 1, issr: 0.7, warm: 0.5, thud: 1, crack: 1, flutter: 0.5, nofly: 0.7, crash: 1, overheat: 0.7, dusk: 0.7, dawn: 0.7,
+  reveal: 1, era: 1, grow: 1, done: 0.7, medal: 1, welcome: 1, softfail: 1,
 };
 let duckHook = null;
 export function setDuckHook(f) { duckHook = f; }
 export const sfx = {};
-for (const k of Object.keys(rawSfx)) sfx[k] = (...a) => { if (DUCKS[k] === 'duck' && !muted && duckHook) duckHook(); return rawSfx[k](...a); };
+for (const k of Object.keys(rawSfx)) sfx[k] = (...a) => { if (DUCKS[k] < 1 && !muted && duckHook) duckHook(DUCKS[k]); return rawSfx[k](...a); };
 
 // The music (src/music.js) plays through the SAME gate and master chain as the effects: muted = no context and no node. Returns { ctx, out } or null when muted.
 export function audioBus() { const a = gate(); return a ? { ctx: a, out: out() } : null; }

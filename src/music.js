@@ -38,11 +38,11 @@ export function stopMusic() {
 }
 // Call after the mute flag or the MUSIC setting changes (a tap): starts or stops to match.
 export function syncMusic() { if (off || isMuted()) stopMusic(); else startMusic(); }
-// A warning or a reward cue: the music dips to a quarter for about 1.5 s, then comes back.
-export function duckMusic() {
+// A quiet warning or reward cue (src/sound.js DUCKS says how far): the music's gain goes to `depth` in 0.1 s, holds 0.5 s, comes back in 0.5 s (1.1 s in all).
+export function duckMusic(depth = 0.5) {
   if (!duckNode) return;
   const g = duckNode.gain, t = ctx.currentTime;
-  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0.25, t + 0.12); g.setValueAtTime(0.25, t + 1.3); g.linearRampToValueAtTime(1, t + 1.8);
+  g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(depth, t + 0.1); g.setValueAtTime(depth, t + 0.6); g.linearRampToValueAtTime(1, t + 1.1);
 }
 setDuckHook(duckMusic);
 

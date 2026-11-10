@@ -514,11 +514,11 @@ musicplan	src/musicdata.js	s#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 2'#'0 D5 4,4 E5
 music	src/music.js	s#  if (!armed || timer) return;#  if (timer) return;#	music starts before the first tap
 music	src/music.js	s#export function syncMusic() { if (off || isMuted()) stopMusic(); else startMusic(); }#export function syncMusic() { if (off) stopMusic(); else startMusic(); }#	muting does not stop the music
 music	src/music.js	s#export function syncMusic() { if (off || isMuted()) stopMusic(); else startMusic(); }#export function syncMusic() { if (isMuted()) stopMusic(); else startMusic(); }#	music ignores the MUSIC off setting
-music	src/sound.js	s#if (DUCKS\[k\] === 'duck' \&\& !muted \&\& duckHook) duckHook();#if (duckHook) duckHook();#	every cue ducks the music (a flap would pump it)
-music	src/sound.js	s#  tick: 'keep', flap: 'keep',#  flap: 'keep',#	a cue (tick) is not classed in DUCKS
+music	src/sound.js	s#if (DUCKS\[k\] < 1 \&\& !muted \&\& duckHook) duckHook(DUCKS\[k\]);#if (duckHook) duckHook(0.5);#	every cue ducks the music (a flap would pump it)
+music	src/sound.js	s#  tick: 1, flap: 1,#  flap: 1,#	a cue (tick) is not classed in DUCKS
 audiolive	src/musicplan.js	s#export const MUSIC_LEVELS = { soft: 0.03, middle: 0.038, loud: 0.056 };#export const MUSIC_LEVELS = { soft: 0.12, middle: 0.16, loud: 0.24 };#	the music is four times too loud (it masks the effects)
 audiolive	src/ui.js	s#data-gear=\"music\">\${musicChipText(s)}#data-gear=\"musicX\">${musicChipText(s)}#	the MUSIC chip is not wired
-audiolive	src/music.js	s#g.linearRampToValueAtTime(0.25, t + 0.12);#g.linearRampToValueAtTime(1, t + 0.12);#	a duck cue does not dip the music
+audiolive	src/music.js	s#g.linearRampToValueAtTime(depth, t + 0.1);#g.linearRampToValueAtTime(1, t + 0.1);#	a duck cue does not dip the music
 musicplan	src/musicdata.js	s#bpm: 140, transpose: -2,#bpm: 140, transpose: 0,#	song D sounds above A5 (its transposition is lost)
 musicplan	src/musicdata.js	s#hat: \[2, 6, 10, 14\], hatVol: 0.012,#hat: [2, 6, 10, 14], hatVol: 0.04,#	song E's tick is louder than the others (it is no longer the quietest)
 musicplan	src/musicplan.js	s#    if (d.kick.includes(s)) out.push#    if (false) out.push#	the kick drum never plays
@@ -598,3 +598,4 @@ crossladder	src/crossings.js	s/exception = lower.filter(c => !covered.has(c.open
 crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filter(s => s !== pick)/const lower = [].filter(s => s !== pick)/	the screen lists no easier ones
 crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
+music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
