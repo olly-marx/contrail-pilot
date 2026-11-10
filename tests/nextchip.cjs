@@ -14,6 +14,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
     for (const [W, H] of [[390, 844], [320, 568]]) {
       const tag = `${W}x${H}`, ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
       await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
+      try {
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed);
       await p.goto(URL); await ready(p);
       await p.waitForFunction(() => { const b = document.getElementById('hubRoute'); return !!b && b.offsetParent !== null; }, null, { timeout: 15000 }).catch(() => null);
@@ -62,6 +63,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       const c2 = await chip(); log.push(`${tag} F: ${JSON.stringify(c2)}`);
       check(/▶/.test(c2.text) && !/^Next:/.test(c2.text), `${tag} F: with every city visited the chip keeps the route line: ${JSON.stringify(c2)}`);
       check(!p.errs.length, `${tag} page errors: ${p.errs}`);
+      } catch (e) { check(false, `${tag}: an exception stopped the run after the checks above: ${String(e).split('\n')[0].slice(0, 140)}`); }
       await ctx.close();
     }
   } finally { await b.close(); }

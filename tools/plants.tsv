@@ -621,7 +621,7 @@ nextchip	src/ui.js	s/DEFAULT_DEST\.on \&\& !v\.aim ? defaultTargetFrom/DEFAULT_D
 nextchip	src/ui.js	s/ \&\& DEFAULT_DEST\.on ? this\.openDestinationSheet()/ \&\& false ? this.openDestinationSheet()/	the chip opens the old 'Which way?' sheet
 nextchip	src/ui.js	s/this\.toast('Tap a city on the globe\.', '', 'good', 3);//	CHANGE says nothing
 nextchip	src/ui.js	s/action: t \&\& !locked ? { label: 'FLY'/action: false ? { label: 'FLY'/	the FLY TO sheet offers no FLY
-nextchip	src/ui.js	s/\${chosen ? ' <button class="btn tiny" id="dsStop"/${false ? ' <button class="btn tiny" id="dsStop"/	a chosen destination offers no STOP
+nextchip	src/ui.js	s/\${chosen ? '<button class="chip" id="dsStop"/${false ? '<button class="chip" id="dsStop"/	a chosen destination offers no STOP
 groves	src/groves.js	s/const n = whole(n0); if (!n) continue;/const n = whole(n0); if (!n || land !== 'woodland') continue;/	the migration drops every land but the UK
 groves	src/groves.js	s/save\.planted\[id\] = c\.planted;/;/	plantTree no longer mirrors the UK's old key
 groves	src/groves.js	s/save\.plantedIn\[land\]\[id\] = c\.planted;/;/	plantTree no longer mirrors another land's old key
