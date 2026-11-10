@@ -30,14 +30,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const before = await p.evaluate(() => { const R = document.getElementById('title'); return { sh: R.scrollHeight, st: R.scrollTop }; });
     await p.click('#hubRoute'); await p.waitForTimeout(500);
     const open = await p.evaluate(() => ({ sheet: (document.getElementById('sheet') || {}).innerText, change: !!document.getElementById('dsChange'), sh: document.getElementById('title').scrollHeight, st: document.getElementById('title').scrollTop }));
-    check(open.sheet && /NEXT/.test(open.sheet) && open.change && open.sh === before.sh && open.st === before.st, `${tag}: the chip opens the FLY TO sheet (NEXT, CHANGE) and nothing is pushed: ${JSON.stringify([open.change, before, open.sh, open.st])}`);
+    check(open.sheet && /NEXT|MISSION/.test(open.sheet) && open.change && open.sh === before.sh && open.st === before.st, `${tag}: the chip opens the FLY TO sheet (NEXT, CHANGE) and nothing is pushed: ${JSON.stringify([open.change, before, open.sh, open.st])}`);
     if (!open.change) { await p.close(); continue; }   // the sheet did not open (named above), nothing below can be asked of it
     // 4. close: HOME's chip still names the next city; the sheet can open again.
     await p.click('#sheet .sheet-ok'); await p.waitForTimeout(400);
     const closed = await p.evaluate(() => ({ chip: document.getElementById('hubRoute').textContent, sheet: !!document.getElementById('sheet') }));
-    check(!closed.sheet && /^Next:/.test(closed.chip.trim()), `${tag}: closing leaves HOME's chip naming the next city: ${JSON.stringify(closed)}`);
+    check(!closed.sheet && /Next:|▶/.test(closed.chip), `${tag}: closing leaves HOME's chip naming where the flight goes: ${JSON.stringify(closed)}`);
     await p.click('#hubRoute'); await p.waitForTimeout(300);
-    check(!!(await sheet(p)) && /NEXT/.test(await sheet(p)), `${tag}: the FLY TO sheet opens a second time`);
+    check(!!(await sheet(p)) && /NEXT|MISSION/.test(await sheet(p)), `${tag}: the FLY TO sheet opens a second time`);
     check(!p.errs.length, `${tag}: no page errors: ${p.errs.slice(0, 2)}`);
     await p.close();
     // 2b. a DRAG on the globe removes the caption too.

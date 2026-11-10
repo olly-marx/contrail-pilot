@@ -631,3 +631,4 @@ groves	src/groves.js	s/c\.planted += 1; c\.grown += 1;/c.planted += 1;/	a plante
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ Puffin Swift Falcon Otter 4\x36 A phone that has lost its pilot/	a pilot-code-shaped string is written into a comment
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ L\x6fla A phone that has lost its pilot/	a tester's first name is written into a comment
 secretscan	tests/secretscan.cjs	/file: 'tests\/pilotcode.cjs'/d	the allow-list entry for the pilotcode fixture is removed
+nextchip	src/ui.js	s/t = aim || defaultTargetFrom(/t = defaultTargetFrom(/	the sheet names the default, not the mission the flight is aimed at
