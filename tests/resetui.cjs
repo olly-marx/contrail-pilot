@@ -38,14 +38,14 @@ const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code
       await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
       let confirmText = ''; p.on('dialog', d => { confirmText = d.message(); d.accept(); });
       const rich = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'PARIS', visited: ['LONDON', 'PARIS'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true,
-        flights: 44, landings: 30, seeds: 777, missionsDone: ['L1', 'L2'], badgeTiers: { lap: 1 }, discovered: { desert: true, savanna: true }, records: { beaten: { a: 1 } }, pilotNamed: true,
+        flights: 44, landings: 30, seeds: 777, missionsDone: ['L1', 'L2'], badgeTiers: { lap: 1 }, discovered: { desert: true, savanna: true }, records: { beaten: ['record:longest:week:5'] }, pilotNamed: true,
         fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { sessionStorage.setItem('fresh', 1); localStorage.clear();
         localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s));
         const fake = { pilot: { first: 'Testy', word: 'Puffin', tag: 11 }, code: 'FAKE-CODE-0000', firstName: 'Testy', auth: { fake: true }, synced: { json: '{}', stamp: 1, serverProgress: 99 }, outbox: [{ fake: 1 }], onlineNote: 1, recoverNext: 1, landlog: [[1, 2, 3, 4, 5, 1]] };
         for (const [k, v] of Object.entries(fake)) localStorage.setItem('s2:contrailPilot.' + k, JSON.stringify(v)); } }, rich);
       await p.goto(URL); await ready(p); await p.waitForTimeout(800);
-      const keys = () => p.evaluate(() => { const o = {}; for (const k of Object.keys(localStorage)) if (k.startsWith('s2:contrailPilot.')) o[k.slice(17)] = localStorage.getItem(k); return o; });
+      const keys = () => p.evaluate(names => { const o = {}; for (const n of names) { const v = localStorage.getItem('contrailPilot.' + n); if (v !== null) o[n] = v; } return o; }, [...DEVICE, 'v2']);   // (the page's localStorage is the season-2 store: it adds the s2: prefix itself)
       const base = fails.length;
       const lands = async () => { await p.evaluate(() => game.registry.get('ui').go('nature')); await p.waitForTimeout(700); return p.evaluate(() => [...document.querySelectorAll('#wRegions [data-region]')].map(e => e.dataset.region)); };
       let stage = 'start';
