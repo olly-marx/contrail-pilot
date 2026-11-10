@@ -1,7 +1,7 @@
 import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
-import { routeFor, toggleSkip, SKIP_TEXT, setGoto, clearGoto, arrivedGoto, gotoTarget } from './aim.js';
+import { routeFor, toggleSkip, SKIP_TEXT, setGoto, clearGoto, arrivedGoto, gotoTarget, aimTarget } from './aim.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
@@ -241,10 +241,10 @@ export class UI {
   // ROUTING V2 step 2: after the tutorial the route chip opens the FLY TO sheet (where the next flight goes, its stops, CHANGE, FLY, and STOP when the player chose it); the old 'Which way?' sheet stays for the tutorial and the classic game.
   openDestinationSheet() {
     sfx.tick();
-    const s = this.save, chosen = gotoTarget(s), t = chosen || defaultTargetFrom(linksFor(s), s.city, s.visited), card = t ? cityCard(s, t) : null;
+    const s = this.save, chosen = gotoTarget(s), aim = aimTarget(s), t = aim || defaultTargetFrom(linksFor(s), s.city, s.visited), card = t ? cityCard(s, t) : null;   // (the flight's real destination: the player's choice, else a mission's aim until step 3 retires it, else the default)
     const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const locked = !!$('goBtn').disabled, dots = card && card.dots ? `<span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(card.dots)}${card.moreDots ? ' +' : ''}</span> ` : '';
-    const close = showSheet({ eyebrow: chosen ? 'GOING TO' : 'NEXT', title: t || 'Nowhere yet', ok: 'CLOSE',
+    const close = showSheet({ eyebrow: chosen ? 'GOING TO' : aim ? 'MISSION' : 'NEXT', title: t || 'Nowhere yet', ok: 'CLOSE',
       html: `<p class="city-card">${dots}${esc(locked ? 'Pick your free part first.' : card ? card.line : 'No city to fly to.')}</p><p><button class="btn tiny" id="dsChange" type="button">CHANGE</button>${chosen ? ' <button class="btn tiny" id="dsStop" type="button">STOP</button>' : ''}</p>`,
       action: t && !locked ? { label: 'FLY', onTap: () => this.start() } : null });
     if ($('dsChange')) $('dsChange').onclick = () => { close(); this.toast('Tap a city on the globe.', '', 'good', 3); };
