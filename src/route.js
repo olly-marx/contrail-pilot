@@ -7,6 +7,7 @@
 import { CITIES } from './cities.js';
 import { LINKS, city, bearing, choices, legGameKm, linksOf } from './network.js';
 import { SEASON2_ON } from './cities.js';
+import { DEFAULT_DEST, defaultChain } from './destination.js';
 import { AREAS, unlockedAreas, citiesOf } from './areas.js';
 import { realKm } from './geo.js';
 export { realKm };
@@ -84,6 +85,9 @@ export function flightPath(save, count = 60) {
   const LINKS = linksFor(save);
   const name = typeof save.city === 'number' ? OLD_LOOP[save.city] : save.city;   // (a save not migrated yet)
   const here = city(name) && LINKS[name] ? name : SEASON2_ON ? AREAS[unlockedAreas(save)[0]].start : HOME;
+  // ROUTING V2 step 2 (src/destination.js): after the tutorial, with no destination chosen, the flight goes to the NEAREST UNVISITED city, through the hops; the tutorial, flight school and the classic game keep the old tour below.
+  // (a save whose city is not in the network keeps the old path: never default a missing city to HOME)
+  if (SEASON2_ON && save.tutorialDone && DEFAULT_DEST.on && city(name) && LINKS[name]) return defaultChain(LINKS, save.visited, count, pathTo, [here], (p, n) => (p.length >= 2 ? continueTour(p, n, LINKS) : tourPath(p[0], choices(p[0], LINKS)[0].name, n, LINKS)));
   const opts = choices(here, LINKS).map(o => o.name);
   const first = here === HOME && !save.tutorialDone ? FIRST_HOP : opts.includes(save.heading) ? save.heading : opts[0];
   return tourPath(here, first, count, LINKS);

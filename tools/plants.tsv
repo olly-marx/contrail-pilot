@@ -610,3 +610,10 @@ pickcity	src/pickcity.js	s/LADDER\.indexOf(a\.id) - LADDER\.indexOf(b\.id)/CROSS
 citytap	style.css	s/^\.city-card \.hc-dot { width: 8px; height: 8px; }/.city-card .hc-dot { width: 5px; height: 5px; }/	the stop dots are tiny again
 music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
 hubscreen	src/ui.js	s/^ *\/\/ The first tab keeps its label FLY .*$/      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';/	the HOME word is written into the news dot again
+routeall	src/destination.js	s/for (const c of level) for (const n of L\[c\] || \[\]) {/for (const c of level) for (const n of [...(L[c] || [])].reverse()) {/	ties go to the last neighbour in link order
+routeall	src/destination.js	s/if (!visited\.has(n)) return n;/if (true) return n;/	a visited city can be the default
+routeall	src/destination.js	s/for (const c of way\.slice(1)) { path\.push(c); }/path.push(way[way.length - 1]);/	the path jumps to the target instead of flying through the hops
+routeall	src/destination.js	s/return tour ? tour(path, count) : path\.slice(0, count + 1);/return path.slice(0, count + 1);/	all visited: the path stops instead of carrying on with the old tour
+routeall	src/route.js	s/ \&\& city(name) \&\& LINKS\[name\]) return defaultChain/) return defaultChain/	a save with no city gets the default path
+routeall	src/route.js	s/save\.tutorialDone \&\& DEFAULT_DEST\.on \&\& city/DEFAULT_DEST.on \&\& city/	the tutorial gets the default destination
+routeall	src/route.js	s/ \&\& DEFAULT_DEST\.on \&\& city(name)/ \&\& city(name)/	the sim's A/B switch does nothing

@@ -6,6 +6,8 @@
 import { visible } from './missions2.js';
 import { flightPath, continueTour, pathTo, wayTo, linksFor, MAX_LEGS } from './route.js';
 import { choices } from './network.js';
+import { DEFAULT_DEST, defaultChain, defaultTargetFrom } from './destination.js';
+import { SEASON2_ON } from './cities.js';
 
 export const ROUTE_AIM = { on: true };   // shipping state: on
 export { MAX_LEGS };                     // a city mission's target is at most 3 stops away (route.js; fillFor offers only those)
@@ -68,7 +70,7 @@ export function routeTo(save, target, tid = null, count = 60) {
   const way = save.heading && opts.includes(save.heading) && save.heading !== target
     ? (p => p && [here, ...p])(pathTo(save.heading, target, L)) : wayTo(here, target, L, tid === 'route');   // (route.js wayTo: round when an airport must be passed)
   if (!way) return flightPath(save, count);
-  return continueTour(way, count, L);
+  return SEASON2_ON && save.tutorialDone && DEFAULT_DEST.on ? defaultChain(L, save.visited, count, pathTo, way, (p, n) => continueTour(p, n, L)) : continueTour(way, count, L);   // (after an aimed way, the default destination chain: src/destination.js)
 }
 
 // What every path builder in the game uses (hub, menu, loader, GameScene, the rules): the aimed route, or today's tour.
