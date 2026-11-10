@@ -501,7 +501,7 @@ export class UI {
     if (FEATURES.season2) {
       const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: hubRevealed(this.save, 'pilot'), boards: hubRevealed(this.save, 'boards') };
       document.querySelectorAll('#tabbar [data-go]').forEach(b => { b.hidden = !show[b.dataset.go]; });
-      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';
+      // The first tab keeps its label FLY (the user, 2026-11-10). Do NOT write 'HOME' into the tab's last child: that is the news dot #dFly, and the word bled out of it at the tab's corner.
     }
     if (id !== 'title') $('title').classList.remove('menu', 'world');
     const on = { title: 'fly', results: 'fly', hangar: 'hangar', nature: 'nature', pilot: 'pilot', boards: 'boards', missions: 'missions' }[id];

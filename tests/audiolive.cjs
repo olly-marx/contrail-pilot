@@ -74,7 +74,7 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
   check(mu.a < 0.002, `muted: no signal (peak ${mu.a.toFixed(4)})`);
   check(mu.b >= FLOORS.thud, `un-muted again: sound is back (peak ${mu.b.toFixed(4)})`);
   // ---- MUSIC (the five songs): ONE chip cycles OFF -> SOFT -> MIDDLE -> LOUD -> OFF and saves it; at each level the cues must stand above the music (a LOUDNESS rule, rms at the destination): soft >= 2x, middle >= 1.5x,
-  // loud >= 1.0x; the music never louder than rms 0.008; the levels are ordered; a duck cue dips it; muted silences it. The music is song D every run (setTrackRng) so the numbers repeat. ----
+  // loud >= 1.0x; the music never louder than rms 0.008; the levels are ordered; a quiet warning dips it to its declared depth and a cue that needs no duck does not; muted silences it. The music is song D every run (setTrackRng) so the numbers repeat. ----
   await p.evaluate(() => { game.registry.get('save').muted = false; });
   await p.waitForTimeout(2000);
   const hasMusicChip = !!(await p.$('#sheet [data-gear="music"]')); check(hasMusicChip, 'the Settings sheet has a wired MUSIC chip');
@@ -99,10 +99,17 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
       check(weak.length === 0, `${lvl.toUpperCase()}: every cue's rms >= ${REQ[lvl]}x the music's rms ${music[lvl].toFixed(4)} (weak: ${weak.join(', ')})`);
       if (lvl === 'middle') {   // ducking at the default level
         const before = await p.evaluate(() => window.__rms(400));
-        await p.evaluate(async () => { (await import('/src/sound.js')).sfx.medal(); }); await p.waitForTimeout(450);
+        await p.evaluate(async () => { (await import('/src/sound.js')).sfx.warm(); }); await p.waitForTimeout(170);   // warm (depth 0.5) is over after 0.14 s: the music alone is measured while it is held at 0.5
         const during = await p.evaluate(() => window.__rms(300));
-        check(during <= 0.6 * before + 0.0006, `a duck cue dips the music (rms ${before.toFixed(4)} -> ${during.toFixed(4)} while it rings)`);
+        const dw = await p.evaluate(async () => (await import('/src/sound.js')).DUCKS.warm);   // the declared depth of the quietest-warning class (K = 3, src/sound.js)
+        check(during <= (dw + 0.15) * before + 0.0006, `a duck cue dips the music to its declared depth ${dw} (+0.15 allowance): rms ${before.toFixed(4)} -> ${during.toFixed(4)} while it is held`);
         await p.waitForTimeout(2500);
+        const before2 = await p.evaluate(() => window.__rms(400));   // a cue with depth 1 (coin) leaves the music alone
+        await p.evaluate(async () => { (await import('/src/sound.js')).sfx.coin(); }); await p.waitForTimeout(260);
+        const during2 = await p.evaluate(() => window.__rms(300));
+        console.log(`DUCK (middle): warm (depth ${dw}) music rms ${before.toFixed(5)} -> ${during.toFixed(5)} = ${(during / before).toFixed(2)} of before (allowed <= ${(dw + 0.15).toFixed(2)}); coin (depth 1) ${before2.toFixed(5)} -> ${during2.toFixed(5)} = ${(during2 / before2).toFixed(2)} of before (needs >= 0.9)`);
+        check(during2 >= 0.9 * before2 - 0.0006, `a cue that needs no duck does not dip the music: rms ${before2.toFixed(4)} -> ${during2.toFixed(4)}`);
+        await p.waitForTimeout(800);
       }
     }
     check(music.soft < music.middle && music.middle < music.loud, `the levels are ordered by loudness: soft ${music.soft.toFixed(4)} < middle ${music.middle.toFixed(4)} < loud ${music.loud.toFixed(4)}`);

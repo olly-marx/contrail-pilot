@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-10-music-duck-tabhome",
+    "version": "0.45.1",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "The music no longer dips as much when other sounds play: only the quiet warning sounds lower it, and only a little.",
+      "The first tab no longer shows a stray HOME word in its red dot."
+    ]
+  },
+  {
     "id": "2026-11-10-go-to-crossing",
     "version": "0.45.0",
     "date": "2026-11-10",
