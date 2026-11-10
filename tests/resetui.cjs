@@ -28,7 +28,22 @@ async function diag(p, tag, stage) {
   } catch (e) { console.log(`DIAG ${tag} failed: ${e}`); }
 }
 const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code', 'firstName', 'auth', 'synced'];
+// The rich save is built by the game's own code from prepareSave(null), changing only fields whose shape was read in their ensure()/migrate code
+// (a hand-made records.beaten object made NATURE throw and the crash card cover the page: the first two runs of this test, 2026-11-10).
+let richSave = null;
+async function loadRich() {
+  const { prepareSave } = await import('../src/save.js'), { recordFlight } = await import('../src/records.js'), { plantTree } = await import('../src/groves.js');
+  richSave = () => {
+    const s = prepareSave(null);
+    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'PARIS', visited: ['LONDON', 'PARIS'], tutorialDone: true, muted: true, seenTips: ['*'], tours: ['*'], freeGiven: true,
+      flights: 44, landings: 30, seeds: 777, missionsDone: ['L1', 'L2'], badgeTiers: { lap: 1 }, discovered: { desert: 1762800000000, savanna: 1762800000000 }, pilotNamed: true });
+    recordFlight(s, { landed: true, distance: 5000, shade: 3 }); recordFlight(s, { landed: false, distance: 200, crash: 'bird' });   // save.records, as a flight writes it
+    plantTree(s, 'woodland', 'oak');                                                                                                   // save.groves, planted
+    return JSON.parse(JSON.stringify(s));
+  };
+}
 (async () => {
+  await loadRich();
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   try {
@@ -37,9 +52,7 @@ const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code
       p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
       await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
       let confirmText = ''; p.on('dialog', d => { confirmText = d.message(); d.accept(); });
-      const rich = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'PARIS', visited: ['LONDON', 'PARIS'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true,
-        flights: 44, landings: 30, seeds: 777, missionsDone: ['L1', 'L2'], badgeTiers: { lap: 1 }, discovered: { desert: true, savanna: true }, records: { beaten: ['record:longest:week:5'] }, pilotNamed: true,
-        fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
+      const rich = richSave();
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { sessionStorage.setItem('fresh', 1); localStorage.clear();
         localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s));
         const fake = { pilot: { first: 'Testy', word: 'Puffin', tag: 11 }, code: 'FAKE-CODE-0000', firstName: 'Testy', auth: { fake: true }, synced: { json: '{}', stamp: 1, serverProgress: 99 }, outbox: [{ fake: 1 }], onlineNote: 1, recoverNext: 1, landlog: [[1, 2, 3, 4, 5, 1]] };
@@ -55,6 +68,10 @@ const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code
       const before = await keys(), landsBefore = await lands();
       check(DEVICE.every(k => k in before) && landsBefore.length > 1, `${tag}: control: the rich save has the nine device keys and more than one land in NATURE (keys ${DEVICE.filter(k => !(k in before))}, lands ${landsBefore})`);
       if (fails.length > base) { await diag(p, tag, 'control red'); await ctx.close(); continue; }   // (a red control: say why, go no further)
+      await p.evaluate(() => game.registry.get('ui').go('pilot')); await p.waitForTimeout(500);
+      const bad = await p.evaluate(() => !!document.getElementById('crashCard'));
+      check(!bad && p.errs.length === 0, `${tag}: THE FIXTURE: the seeded save opens NATURE and PILOT without a page error and without the crash card ("Oops, the game got stuck"): errors ${p.errs}, crash card ${bad}`);
+      if (fails.length > base) { await diag(p, tag, 'fixture red'); await ctx.close(); continue; }
       // 1. RESET PROGRESS
       stage = 'tap the gear, then YOUR SAVED GAME, then RESET PROGRESS (real clicks)';
       await p.evaluate(() => { window.__oldPage = 1; });
