@@ -14,7 +14,8 @@ export function groveView(save) {
   if (isObj(save) && isObj(save.groves)) {
     for (const [land, L] of Object.entries(save.groves)) if (isObj(L)) for (const [id, c] of Object.entries(L)) {
       if (!isObj(c)) continue;
-      const x = cellOf(land, id); x.planted = whole(c.planted); x.grown = Math.min(x.planted, whole(c.grown)); x.saplings = Array.isArray(c.saplings) ? c.saplings.slice() : [];
+      const x = cellOf(land, id), sap = (Array.isArray(c.saplings) ? c.saplings : []).filter(isObj).map(s => ({ points: whole(s.points), fresh: !!s.fresh }));
+      x.saplings = sap; x.grown = whole(c.grown); x.planted = Math.max(whole(c.planted), x.grown + sap.length);   // planted = grown + still growing
     }
   }
   const fold = (land, book) => {
@@ -40,8 +41,35 @@ export function ensureGroves(save) { if (!isObj(save)) return null; save.groves 
 // One tree planted in this land (the tree's own id in that land). Writes the groves and mirrors the old keys. Returns the new count of that kind.
 export function plantTree(save, land, id) {
   const g = ensureGroves(save), L = g[land] || (g[land] = {}), c = L[id] || (L[id] = { planted: 0, grown: 0, saplings: [] });
-  c.planted += 1; c.grown += 1;   // (step 1: a planted tree counts as grown at once; the nursery makes it a sapling in step 2)
+  c.planted += 1; c.saplings.push({ points: 0, fresh: true });   // (step 2: a planted tree is a SAPLING; it is grown after the nursery's flights, growGroves)
   if (land === 'woodland') { if (!isObj(save.planted)) save.planted = {}; save.planted[id] = c.planted; }
   else { if (!isObj(save.plantedIn)) save.plantedIn = {}; if (!isObj(save.plantedIn[land])) save.plantedIn[land] = {}; save.plantedIn[land][id] = c.planted; }
   return c.planted;
+}
+
+// ---- TREES V2 step 2: saplings and the nursery (research/DESIGN-TREES-V2.md section B) ----
+// A tree grows one point for every flight banked AFTER the one that planted it (landed or crashed; a sapling never dies), and is grown when it has `need` points: 10 with no nursery, 8 with the Tree Nursery's
+// first level, 6 with its second (the hangar line's two levels: kit.grow 1, 0.7, 0.5). The planting flight's own point is not counted: a tree planted in flight f is grown at the end of flight f + need.
+export const NURSERY_NEED = [10, 8, 6];
+export const needFromGrow = grow => (grow <= 0.5 ? NURSERY_NEED[2] : grow <= 0.7 ? NURSERY_NEED[1] : NURSERY_NEED[0]);
+// Trees fully grown in a land by kind: { id: n }. The scenery and the NATURE picture show these only.
+export const grownBook = (save, land) => Object.fromEntries(Object.entries(groveView(save)[land] || {}).filter(([, c]) => c.grown > 0).map(([id, c]) => [id, c.grown]));
+// One banked flight: every sapling that was not planted in THIS flight gets a point; those with `need` points become grown. Returns how many grew up.
+export function growGroves(save, need) {
+  const g = ensureGroves(save); let up = 0;
+  for (const L of Object.values(g)) for (const c of Object.values(L)) {
+    const keep = [];
+    for (const s of c.saplings) {
+      if (s.fresh) { keep.push({ points: s.points, fresh: false }); continue; }
+      const p = s.points + 1;
+      if (p >= need) { c.grown += 1; up += 1; } else keep.push({ points: p, fresh: false });
+    }
+    c.saplings = keep;
+  }
+  return up;
+}
+// What the nursery is doing in a land: how many saplings are growing and in how many more flights the next one is grown (null when none).
+export function nurseryStatus(save, land, need) {
+  const cells = Object.values(groveView(save)[land] || {}), saps = cells.flatMap(c => c.saplings);
+  return { growing: saps.length, nextIn: saps.length ? Math.max(1, Math.min(...saps.map(s => need - s.points))) : null };
 }

@@ -6,7 +6,7 @@ import { tip } from '../tips.js';
 import { GAP_HINT, FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
-import { treeBook, plantTree } from '../groves.js';
+import { treeBook, plantTree, growGroves, needFromGrow } from '../groves.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
 import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as s2LessonsLeft } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
@@ -870,6 +870,7 @@ export const RULES = {
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save
     this.save.seeds += gained;
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
+    if (!this.school) growGroves(this.save, needFromGrow(this.kit.grow));   // every banked flight, landed or crashed, grows the saplings planted in EARLIER flights one point (src/groves.js)
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
     // Missions and badges are PAID here, the moment the flight is banked (R8; src/rewards.js addPrizes + src/missions2.js finish pay straight into the bank).
