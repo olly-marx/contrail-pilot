@@ -33,6 +33,8 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       await openChip();
       const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return { text: e ? e.innerText.replace(/\s+/g, ' ').trim() : '', change: !!document.getElementById('dsChange'), fly: !!(e && [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim()))), stop: !!document.getElementById('dsStop') }; });
       log.push(`${tag} B: ${JSON.stringify(sh)}`);
+      const cbox = await p.evaluate(() => { const b = document.getElementById('dsChange'), r = b && b.getBoundingClientRect(); return r ? [Math.round(r.width), Math.round(r.height)] : null; });
+      check(cbox && cbox[0] >= 40 && cbox[1] >= 40, `${tag} B: CHANGE is a real button, at least 40 x 40 px (not a 7 px link): ${JSON.stringify(cbox)}`);
       check(new RegExp(`NEXT.*${exp.t}.*\\d stops?`).test(sh.text) && sh.change && sh.fly && !sh.stop, `${tag} B: the sheet must show NEXT, ${exp.t}, its stops, CHANGE and FLY (no STOP): ${JSON.stringify(sh)}`);
       // C. CHANGE
       await p.click('#dsChange', { timeout: 4000 }).catch(() => check(false, `${tag} C: the sheet has no CHANGE button`)); await p.waitForTimeout(400);

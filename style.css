@@ -1074,3 +1074,4 @@ h2.sub { margin-top: -4px; }
 .city-card { display: flex; align-items: center; gap: 6px; font-size: 8px; }   /* TAP ANY CITY card (ROUTING V2 step 1): the stop dots weigh as much as the text (8 px squares) */
 .city-card .hc-dots { gap: 3px; font-size: 8px; }
 .city-card .hc-dot { width: 8px; height: 8px; }
+.ds-actions { display: flex; gap: 8px; margin: 6px 0 0; }   /* the FLY TO sheet's CHANGE / STOP: real 40 px buttons (.chip), not 7 px links */

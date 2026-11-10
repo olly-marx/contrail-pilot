@@ -245,7 +245,7 @@ export class UI {
     const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const locked = !!$('goBtn').disabled, dots = card && card.dots ? `<span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(card.dots)}${card.moreDots ? ' +' : ''}</span> ` : '';
     const close = showSheet({ eyebrow: chosen ? 'GOING TO' : aim ? 'MISSION' : 'NEXT', title: t || 'Nowhere yet', ok: 'CLOSE',
-      html: `<p class="city-card">${dots}${esc(locked ? 'Pick your free part first.' : card ? card.line : 'No city to fly to.')}</p><p><button class="btn tiny" id="dsChange" type="button">CHANGE</button>${chosen ? ' <button class="btn tiny" id="dsStop" type="button">STOP</button>' : ''}</p>`,
+      html: `<p class="city-card">${dots}${esc(locked ? 'Pick your free part first.' : card ? card.line : 'No city to fly to.')}</p><p class="ds-actions"><button class="chip" id="dsChange" type="button">CHANGE</button>${chosen ? '<button class="chip" id="dsStop" type="button">STOP</button>' : ''}</p>`,
       action: t && !locked ? { label: 'FLY', onTap: () => this.start() } : null });
     if ($('dsChange')) $('dsChange').onclick = () => { close(); this.toast('Tap a city on the globe.', '', 'good', 3); };
     if ($('dsStop')) $('dsStop').onclick = () => { close(); clearGoto(s); writeSave(s); this.renderHub(); };
