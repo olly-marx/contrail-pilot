@@ -10,6 +10,7 @@ globalThis.SEASON2 = true;
     for (const c of CT.CITIES) {
       const card = P.cityCard(save, c.name), way = P.routeOf(save, c.name);
       if (card.state !== 'ok') { none++; check(way === null, `${k}/${c.name}: a card that cannot fly has no route: ${JSON.stringify(way)}`); continue; }
+      if (!way) { check(false, `${k}/${c.name}: a card that can fly has a route (it is null)`); continue; }
       routes++; longest = Math.max(longest, way.length);
       check(way[0] === save.city && way[way.length - 1] === c.name && way.length === card.stops + 1, `${k}/${c.name}: the route begins here, ends at the city and has stops + 1 cities: ${way} (stops ${card.stops})`);
       check(way.every((x, i) => !i || L[way[i - 1]].includes(x)), `${k}/${c.name}: every step is a link: ${way}`);
