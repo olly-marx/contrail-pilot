@@ -1,5 +1,5 @@
 // R-B of the UX plan (the user's playtest of 0.29.0: "the map is interactive, but that is not clear"): at 375x667 and 320x568, REAL taps.
-//   1. the globe has a caption ("Drag to spin. Tap a dot to choose.") inside its picture until it has been used; HOME still fits;
+//   1. the globe has a caption ("Spin it. Tap a city to fly.") inside its picture until it has been used; HOME still fits;
 //   2. the first spin (the arrow, or a drag on the globe) removes it for good (a save flag);
 //   3. the route line is a 40 px CHIP with an arrow; a tap opens the route sheet ("Which way?": the way buttons, the area, the crossings) and does NOT push the page down;
 //   4. a way chosen in the sheet is saved, the sheet stays open, and HOME's chip shows it when the sheet closes; the panel is handed back (it can open again).
@@ -18,7 +18,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     // 1. the caption, and HOME still fits.
     const h0 = await p.evaluate(() => { const h = document.getElementById('hubHint'), g = document.getElementById('hubGlobe').getBoundingClientRect(), r = h.getBoundingClientRect(), R = document.getElementById('title'), c = document.getElementById('hubRoute').getBoundingClientRect(), go = document.getElementById('goBtn').getBoundingClientRect(), bar = document.getElementById('tabbar').getBoundingClientRect();
       return { shown: !h.hidden && r.height > 0, text: h.textContent, inGlobe: r.top >= g.top && r.bottom <= g.bottom + 1 && r.left >= g.left - 1 && r.right <= g.right + 1, chipH: Math.round(c.height), chipText: document.getElementById('hubRoute').textContent, tag: document.getElementById('hubRoute').tagName, fits: R.scrollHeight <= R.clientHeight, goBottom: Math.round(go.bottom), barTop: Math.round(bar.top) }; });
-    check(h0.shown && /Tap a dot to choose/.test(h0.text) && h0.inGlobe, `${tag}: the globe's caption shows inside its picture: ${JSON.stringify(h0)}`);
+    check(h0.shown && /Tap a city to fly/.test(h0.text) && h0.inGlobe, `${tag}: the globe's caption shows inside its picture: ${JSON.stringify(h0)}`);
     check(h0.tag === 'BUTTON' && h0.chipH >= 40 && /›/.test(h0.chipText), `${tag}: the route line is a 40 px chip with an arrow: ${JSON.stringify([h0.tag, h0.chipH, h0.chipText])}`);
     check(h0.fits && h0.goBottom <= h0.barTop, `${tag}: HOME does not scroll and TAKE OFF is above the bar with the caption and the chip (fits ${h0.fits}; TAKE OFF ${h0.goBottom} vs bar ${h0.barTop})`);
     // 2. the first spin removes it for good.

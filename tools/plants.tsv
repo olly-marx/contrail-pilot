@@ -605,3 +605,6 @@ pickcity	src/pickcity.js	s/const stops = path\.length - 1;/const stops = path.le
 pickcity	src/pickcity.js	s/dots: Math\.min(stops, MAX_DOTS), moreDots: stops > MAX_DOTS/dots: stops, moreDots: false/	the dots are not capped at six
 pickcity	src/pickcity.js	s/if (e < bd) { bd = e; best = d; }/if (e < r \&\& !best) { bd = e; best = d; }/	the tap picks the first dot in range, not the nearest
 pickcity	src/pickcity.js	s/split \&\& !(save\.crossed || \[\])\.includes('patagonia') ? 'The Patagonia crossing flies there\.' : 'No flight route there yet\.'/'No flight route there yet.'/	the Patagonia card does not name its crossing
+citytap	src/ui.js	s/ onCity: v\.worldChoice ? name => this\.showCityCard(name) : null,//	a tap on a city opens no card
+citytap	src/ui.js	s/setGoto(s, card\.name); delete s\.heading; writeSave(s); this\.start();/delete s.heading; writeSave(s); this.start();/	FLY sets no aim
+citytap	src/ui.js	s/canFly = card\.canFly \&\& !locked,/canFly = true,/	a closed or no-route city offers FLY
