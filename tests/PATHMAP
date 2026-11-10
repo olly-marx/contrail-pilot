@@ -82,3 +82,4 @@ group cross-box | src/crossingview.js src/crossings.js src/ui.js style.css index
 group cross-goto | src/aim.js src/crossingview.js src/ui.js src/hub.js style.css index.html | crossgoto crossboxui hubscreen
 group crystal-popup | src/GameScene.js src/sim/rules.js src/tips.js | crystalpopup
 group city-tap | src/pickcity.js src/globe.js src/ui.js src/tips.js style.css | citytap routechip hubscreen
+group next-chip | src/destination.js src/route.js src/aim.js src/ui.js src/hub.js style.css | nextchip routechip crossgoto hubscreen citytap

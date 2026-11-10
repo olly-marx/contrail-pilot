@@ -250,8 +250,8 @@ export class UI {
     if ($('dsChange')) $('dsChange').onclick = () => { close(); this.toast('Tap a city on the globe.', '', 'good', 3); };
     if ($('dsStop')) $('dsStop').onclick = () => { close(); clearGoto(s); writeSave(s); this.renderHub(); };
   }
-  openRouteSheet() {
-    if (isSeason2(this.save) && this.save.tutorialDone && DEFAULT_DEST.on) return this.openDestinationSheet();
+  openRouteSheet() { return isSeason2(this.save) && this.save.tutorialDone && DEFAULT_DEST.on ? this.openDestinationSheet() : this.openJourneySheet(); }
+  openJourneySheet() {   // the old 'Which way?' sheet: the way buttons, the area and the crossings (the tutorial, the classic game, and the tests that fly a crossing from it)
     sfx.tick(); this.renderJourney();
     const j = $('tJourney'), home = j.parentNode, next = j.nextSibling;
     showSheet({ eyebrow: 'YOUR ROUTE', title: 'Which way?', ok: 'CLOSE', html: '<div id="routeSheetBody" class="route-sheet"></div>', onClose: () => { home.insertBefore(j, next); j.style.display = ''; this.renderHub(); } });   // (a way chosen in the sheet shows on HOME's chip and globe)

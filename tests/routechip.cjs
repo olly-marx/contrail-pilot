@@ -1,7 +1,7 @@
 // R-B of the UX plan (the user's playtest of 0.29.0: "the map is interactive, but that is not clear"): at 375x667 and 320x568, REAL taps.
 //   1. the globe has a caption ("Spin it. Tap a city to fly.") inside its picture until it has been used; HOME still fits;
 //   2. the first spin (the arrow, or a drag on the globe) removes it for good (a save flag);
-//   3. the route line is a 40 px CHIP with an arrow; a tap opens the route sheet ("Which way?": the way buttons, the area, the crossings) and does NOT push the page down;
+//   3. the route line is a 40 px CHIP with an arrow; a tap opens the FLY TO sheet (NEXT, the city, CHANGE, FLY; ROUTING V2 step 2) and does NOT push the page down;
 //   4. a way chosen in the sheet is saved, the sheet stays open, and HOME's chip shows it when the sheet closes; the panel is handed back (it can open again).
 // Run: python3 -m http.server 8000 & node tests/routechip.cjs   (plants in tools/plants.tsv)
 const { chromium } = require('playwright-core');
@@ -26,22 +26,18 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const h1 = await p.evaluate(() => ({ hidden: document.getElementById('hubHint').hidden, saved: (JSON.parse(localStorage.getItem('contrailPilot.v2')).tours || []).includes('globe-hint') }));
     await home(p); await p.waitForTimeout(300);
     check(h1.hidden && h1.saved && await p.evaluate(() => document.getElementById('hubHint').hidden), `${tag}: the first spin removes the caption for good: ${JSON.stringify(h1)}`);
-    // 3. the chip opens the route sheet; the page does not move.
+    // 3. the chip opens the FLY TO sheet (ROUTING V2 step 2: after the tutorial the route chip names the default destination; the old 'Which way?' sheet is for the tutorial and the classic game); the page does not move.
     const before = await p.evaluate(() => { const R = document.getElementById('title'); return { sh: R.scrollHeight, st: R.scrollTop }; });
     await p.click('#hubRoute'); await p.waitForTimeout(500);
-    const open = await p.evaluate(() => ({ sheet: (document.getElementById('sheet') || {}).innerText, ways: document.querySelectorAll('#routeSheetBody [data-way]').length, sh: document.getElementById('title').scrollHeight, st: document.getElementById('title').scrollTop, cross: !!document.querySelector('#routeSheetBody #jCross') || true }));
-    check(open.sheet && /Which way\?/.test(open.sheet) && open.ways >= 3 && open.sh === before.sh && open.st === before.st, `${tag}: the chip opens the route sheet with the way buttons and nothing is pushed: ${JSON.stringify([open.ways, before, open.sh, open.st])}`);
-    if (!open.ways) { await p.close(); continue; }   // no way buttons: the sheet did not open (named above), nothing below can be asked of it
-    // 4. choose a way: saved, the sheet stays; close: HOME shows it; the panel can open again.
-    const way = await p.evaluate(() => { const bs = [...document.querySelectorAll('#routeSheetBody [data-way]')]; const b = bs.find(x => !x.classList.contains('on')) || bs[0]; return b.dataset.way; });
-    await p.click(`#routeSheetBody [data-way="${way}"]`); await p.waitForTimeout(300);
-    const chosen = await p.evaluate(() => ({ heading: JSON.parse(localStorage.getItem('contrailPilot.v2')).heading, open: !!document.getElementById('sheet') }));
-    check(chosen.heading === way && chosen.open, `${tag}: a way chosen in the sheet is saved and the sheet stays open: ${JSON.stringify([way, chosen])}`);
+    const open = await p.evaluate(() => ({ sheet: (document.getElementById('sheet') || {}).innerText, change: !!document.getElementById('dsChange'), sh: document.getElementById('title').scrollHeight, st: document.getElementById('title').scrollTop }));
+    check(open.sheet && /NEXT/.test(open.sheet) && open.change && open.sh === before.sh && open.st === before.st, `${tag}: the chip opens the FLY TO sheet (NEXT, CHANGE) and nothing is pushed: ${JSON.stringify([open.change, before, open.sh, open.st])}`);
+    if (!open.change) { await p.close(); continue; }   // the sheet did not open (named above), nothing below can be asked of it
+    // 4. close: HOME's chip still names the next city; the sheet can open again.
     await p.click('#sheet .sheet-ok'); await p.waitForTimeout(400);
-    const closed = await p.evaluate(() => ({ chip: document.getElementById('hubRoute').textContent, back: !!document.querySelector('#title #tJourney'), sheet: !!document.getElementById('sheet') }));
-    check(!closed.sheet && closed.back && closed.chip.toUpperCase().includes(way.toUpperCase()), `${tag}: closing hands the panel back and HOME's chip shows the way: ${JSON.stringify(closed)}`);
+    const closed = await p.evaluate(() => ({ chip: document.getElementById('hubRoute').textContent, sheet: !!document.getElementById('sheet') }));
+    check(!closed.sheet && /^Next:/.test(closed.chip.trim()), `${tag}: closing leaves HOME's chip naming the next city: ${JSON.stringify(closed)}`);
     await p.click('#hubRoute'); await p.waitForTimeout(300);
-    check(!!(await sheet(p)) && /Which way\?/.test(await sheet(p)), `${tag}: the route sheet opens a second time`);
+    check(!!(await sheet(p)) && /NEXT/.test(await sheet(p)), `${tag}: the FLY TO sheet opens a second time`);
     check(!p.errs.length, `${tag}: no page errors: ${p.errs.slice(0, 2)}`);
     await p.close();
     // 2b. a DRAG on the globe removes the caption too.

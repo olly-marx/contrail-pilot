@@ -134,7 +134,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   check(nextCard.crossing && /Cross to/i.test(nextCard.text), `D: the hub's UP NEXT leads with the ready crossing (R3: "Cross to <city>"): ${JSON.stringify(nextCard)}`);
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
   if (await p.$('#sheet')) await p.click('#sheet .sheet-ok');   // (R-A: a ready crossing announces itself once, on HOME: LATER, then the route panel)
-  if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.click('#hubRoute');
+  if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.evaluate(() => game.registry.get('ui').openJourneySheet());   // (the route chip now opens the FLY TO sheet; the crossing buttons live in the journey sheet)
   const btn = await p.$('#jCross [data-cross="warsaw-stockholm"]');
   check(!!btn, 'D: the FLY THE CROSSING button is there');
   if (btn) {
