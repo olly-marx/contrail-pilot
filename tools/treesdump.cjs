@@ -22,7 +22,7 @@ async function dump(dir, files) {
         scene: N.wildlifeScene(save, land).treeKinds,
       };
     }
-    out[`${i}:${path.basename(f)}`] = r;
+    out[`save${i}`] = r;
   });
   return out;
 }
