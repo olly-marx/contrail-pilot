@@ -4,7 +4,7 @@
 //  0. control: a plain default save wiped is a new player (prepareSave(null)).
 //  1. a rich save (nature, missions, badges, ...) wiped is a new player, key for key, and has none of the stale keys.
 //  2. the blank save is what is stored (main and backup), and a later writeSave of the live object writes no stale key back.
-//  3. the device keys of the old game (outbox, notes, landing log) are cleared; the pilot identity (pilot, code, firstName) is kept.
+//  3. the device keys of the old game (outbox, notes, landing log), the pilot identity (pilot, code, firstName, auth) and the sync stamp are all cleared (a FULL reset, the user 2026-11-10).
 //  4. the save that was wiped is still in the safety copies.
 // Run: node tests/resetwipe.cjs   (proved by planted defects: tools/plants.tsv, test resetwipe)
 const assert = require('assert');
@@ -42,15 +42,16 @@ const assert = require('assert');
   // 3. device keys
   mem.clear(); S.releaseHold();
   const l3 = rich(); S.writeSave(l3);
-  for (const k of ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code', 'firstName']) mem.set('contrailPilot.' + k, '"old"');
+  for (const k of ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code', 'firstName', 'auth', 'synced']) mem.set('contrailPilot.' + k, '"old"');
   S.wipeSave(l3);
   for (const k of ['outbox', 'onlineNote', 'recoverNext', 'landlog']) check(!mem.has('contrailPilot.' + k), `the device key ${k} of the old game is cleared`);
-  for (const k of ['pilot', 'code', 'firstName']) check(mem.has('contrailPilot.' + k), `the pilot identity key ${k} is kept`);
+  for (const k of ['pilot', 'code', 'firstName', 'auth']) check(!mem.has('contrailPilot.' + k), `the pilot identity key ${k} is cleared`);
+  check(!mem.has('contrailPilot.synced'), 'the sync stamp (synced) is cleared');
 
   // 4. recoverable
   const kept = S.listStashed();
   check(kept.length === 1 && kept[0].reason === 'before a reset', 'the wiped save is kept in the safety copies');
 
-  console.log(fails.length ? `FAIL resetwipe:\n - ${fails.join('\n - ')}` : 'PASS resetwipe: reset leaves a brand-new player in every key (nature, missions, badges included), clears the old game\'s device keys, keeps the pilot identity and a safety copy');
+  console.log(fails.length ? `FAIL resetwipe:\n - ${fails.join('\n - ')}` : 'PASS resetwipe: reset leaves a brand-new player in every key (nature, missions, badges included), clears the old game\'s device keys, the pilot identity and the sync stamp, and keeps a safety copy');
   process.exit(fails.length ? 1 : 0);
 })();

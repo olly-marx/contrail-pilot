@@ -661,5 +661,6 @@ citytap	style.css	s/^#title\.hub \.hub-card { display: flex; }.*$//	the card's b
 resetwipe	src/save.js	s/  for (const k of Object.keys(live)) delete live\[k\];//	reset assigns over the live save and leaves discovered, missionsDone and badgeTiers on it
 resetwipe	src/save.js	s/  try { for (const k of RESET_KEYS) localStorage.removeItem(k); } catch (e) {}//	reset leaves the old game's outbox, notes and landing log
 resetwipe	src/save.js	s/  writeSave(live, { allowBlank: true });//	reset does not store the blank save
-resetwipe	src/save.js	s/export const RESET_KEYS = \[/export const RESET_KEYS = ['contrailPilot.pilot', /	reset clears the online pilot identity
+resetwipe	src/save.js	s/ 'contrailPilot.pilot', 'contrailPilot.code',//	reset keeps the online pilot and its code
 resetwipe	src/save.js	s/  stashSave('before a reset');//	reset (wipeSave) keeps no safety copy
+resetwipe	src/save.js	s/, 'contrailPilot.synced'\]/]/	reset keeps the old pilot's sync stamp
