@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-10-lap-complete",
+    "version": "0.51.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "Finishing the lap now earns the Lap Complete badge and turns your contrail gold. If you have already flown the lap, you get them on your next flight."
+    ]
+  },
+  {
     "id": "2026-11-10-route-on-map",
     "version": "0.50.0",
     "date": "2026-11-10",
