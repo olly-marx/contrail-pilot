@@ -658,3 +658,4 @@ targetbanner-ui	src/GameScene.js	s/rw\.lit = lit;/rw.lit = false;/	the target ru
 targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = isLit(rw.name, rw.name,/	every runway is lit
 targetbanner-ui	src/GameScene.js	s/const city = gotoTarget(this\.save); if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
 targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
+citytap	style.css	s/^#title\.hub \.hub-card { display: flex; }.*$//	the card's buttons stack under its text again (the row is 75 px high)

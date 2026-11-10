@@ -26,7 +26,8 @@ const seed = { areas: ['weurope', 'mideast', 'africa', 'sasia', 'easia'], homeAr
         check(dot && dot.bright >= 4, `${tag} D: a city is a 2 x 2 pixel dot or bigger (a 1 pixel dot has 1 to 2 bright pixels): ${JSON.stringify(dot)}`);
         // A. the farthest visible city that is 2 or more stops away
         const target = await p.evaluate(async () => { const g = document.getElementById('hubGlobe').__globe, R = await import('/src/route.js'), P = await import('/src/pickcity.js'), s = game.registry.get('ui').save; let best = null;
-          for (const c of R.ROUTE) { const q = g.cityPos(c.name), w = P.routeOf(s, c.name); if (q && w && w.length >= 3 && (!best || w.length > best.n)) best = { name: c.name, x: q.x, y: q.y, n: w.length, way: w }; } return best; });
+          const cr = document.getElementById('hubGlobe').getBoundingClientRect();   /* (probe: cityPos is the raw projection; a city near the limb can be beyond the canvas and cannot be tapped) */
+          for (const c of R.ROUTE) { const q = g.cityPos(c.name), w = P.routeOf(s, c.name); if (q && q.x >= cr.left + 8 && q.x <= cr.right - 8 && q.y >= cr.top + 8 && q.y <= cr.bottom - 8 && w && w.length >= 3 && (!best || w.length > best.n)) best = { name: c.name, x: q.x, y: q.y, n: w.length, way: w }; } return best; });
         check(!!target, `${tag} A: no visible city 2 or more stops away to tap`);
         if (target) {
           await p.mouse.click(target.x, target.y); await p.waitForTimeout(500);

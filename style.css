@@ -1076,6 +1076,7 @@ h2.sub { margin-top: -4px; }
 /* ROUTE ON THE MAP R2: the tapped city's card is one row in the route chip's slot (no modal over the globe) */
 .chip.hub-route[hidden], .hub-card[hidden] { display: none; }
 .hub-card { display: flex; align-items: center; gap: 6px; margin: 4px auto 0; padding: 2px 6px; width: 100%; max-width: 288px; min-height: 40px; box-sizing: border-box; border: 2px solid var(--ink); background: #fff; font-size: 8px; text-align: left; }
+#title.hub .hub-card { display: flex; }   /* (probe 2026-11-10: '#title.hub .hubonly { display: block }' beat '.hub-card { display: flex }', so the buttons stacked under the text and the card was 75 px high) */
 .hub-card .cc-main { flex: 1; min-width: 0; }
 .hub-card .cc-name { display: flex; align-items: center; gap: 4px; font-size: 9px; }
 .hub-card .cc-line { margin: 1px 0 0; font-size: 7px; line-height: 1.25; }
