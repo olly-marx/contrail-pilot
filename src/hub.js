@@ -3,7 +3,7 @@
 // are gone: the bottom bar is the navigation (its tabs appear by `revealed`, below). What the hub shows is decided here, without the DOM, so
 // tests/hub.cjs can check it: at most HUB_WORDS words, UP NEXT = nextUp, the route aimed at the mission's city.
 import { current as currentMission, MISSIONS } from './missions.js';
-import { routeFor, aimTarget } from './aim.js';
+import { routeFor, aimTarget, steerOf } from './aim.js';
 import { wordCount } from './tips.js';
 import * as M2 from './missions2.js';
 import { nextUp, rightOf } from './nextup.js';
@@ -32,5 +32,5 @@ export function hubView(save, { crossingReady = null, crossing = null, boxShown 
   // The next stops, up to the mission's city when the route aims at one ("LONDON > PARIS > BERLIN (mission)"), else the first hop.
   const at = aim ? path.indexOf(aim) : -1, route = path.slice(0, at > 0 ? Math.min(at + 1, 4) : 2);
   const words = (s2 ? up.reduce((a, r) => a + wordCount(`${r.short} ${r.right}`), 0) : wordCount(next ? next.title : '')) + wordCount(route.join(' ')) + wordCount('TAKE OFF');
-  return { next, up, route, aim: at > 0 && at <= 3 ? aim : null, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
+  return { next, up, route, aim: at > 0 && at <= 3 ? aim : null, steer: steerOf(save), worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
 }

@@ -19,6 +19,7 @@ import { onSwipe } from './swipe.js';
 import { landTrees, countText } from './landtrees.js';
 import { broughtBack } from './weboflife.js';
 import { isSeason2 } from './missions2.js';
+import { stayLandLeft } from './aim.js';
 import { nextHere } from './nexthere.js';
 import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
@@ -107,6 +108,13 @@ export class WildScreen {
     const trees = landTrees(s, this.region);
     row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">${t.open && isNew(`tree:${t.slot}`) ? '<i class="dot"></i>' : ''}
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
+    // EXPLORE HERE (research/ROUTE-DEFAULT-MISSION-PLAN.md): explore only the cities of THIS land until each is visited (save.routeMode 'explore' + save.stayLand). Hidden when the land has no open city left to visit.
+    let eh = $('wExploreHere');
+    if (!eh) { eh = document.createElement('button'); eh.id = 'wExploreHere'; eh.type = 'button'; eh.className = 'chip'; row.after(eh); }
+    const here = s.tutorialDone && s.stayLand === this.region && s.routeMode === 'explore', left = stayLandLeft(s, this.region);
+    eh.hidden = !s.tutorialDone || !isSeason2(s) || !(left || here);
+    eh.textContent = here ? 'EXPLORING HERE: STOP' : 'EXPLORE HERE';
+    eh.onclick = () => { sfx.tick(); if (here) { s.stayLand = null; s.routeMode = 'mission'; } else { s.stayLand = this.region; s.routeMode = 'explore'; } writeSave(s); this.ui.toast(here ? 'Back to your mission.' : `Exploring ${REGION_NAMES[this.region]}.`, '', 'good', 3); this.render(); };
     // The planting tools (parcels, soil, nursery): bought once, they work in every land, so they are on EVERY land's tab (the user, 2026-11-09: a player who started in Australia could only buy
     // them on the Australian tab). Before this they were on the HOME land's tab only (2026-10-28: a Melbourne or Lagos player had to visit the UK's tab).
     const uk = true;

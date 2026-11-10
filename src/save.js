@@ -30,6 +30,8 @@ const DEFAULTS = {
   freeUpgrade: false,  // true after the first landing until the free upgrade is picked
   freeGiven: false,
   landings: 0,
+  routeMode: 'mission',   // ROUTE DEFAULT (src/aim.js steerOf): 'mission' = the flight heads for the active city mission's city by default; 'explore' = the nearest unvisited city (EXPLORE on the FLY TO sheet)
+  stayLand: null,        // EXPLORE HERE on a land's NATURE page: explore only the cities of this land (cleared when it is done)
   planted: {},         // species id -> trees planted, all flights (drives the Biodiversity meter)
   city: 'LONDON',      // the journey: the city you are in (src/route.js); flights start there. (An index before 2026-10-22.)
   heading: null,       // the first city of the direction chosen before take-off (one of route.js choices)

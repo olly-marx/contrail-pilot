@@ -601,7 +601,7 @@ citytap	style.css	s/^\.hub-card \.hc-dot { width: 6px; height: 6px; }/.hub-card 
 music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
 hubscreen	src/ui.js	s/^ *\/\/ The first tab keeps its label FLY .*$/      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';/	the HOME word is written into the news dot again
 routeall	src/destination.js	s/for (const c of level) for (const n of L\[c\] || \[\]) {/for (const c of level) for (const n of [...(L[c] || [])].reverse()) {/	ties go to the last neighbour in link order
-routeall	src/destination.js	s/if (!visited\.has(n)) return n;/if (true) return n;/	a visited city can be the default
+routeall	src/destination.js	s/if (!visited\.has(n) \&\& (!accept || accept(n))) return n;/if (true) return n;/	a visited city can be the default
 routeall	src/destination.js	s/for (const c of way\.slice(1)) { path\.push(c); }/path.push(way[way.length - 1]);/	the path jumps to the target instead of flying through the hops
 routeall	src/destination.js	s/return tour ? tour(path, count) : path\.slice(0, count + 1);/return path.slice(0, count + 1);/	all visited: the path stops instead of carrying on with the old tour
 routeall	src/route.js	s/ \&\& city(name) \&\& LINKS\[name\]) return defaultChain/) return defaultChain/	a save with no city gets the default path
@@ -658,3 +658,8 @@ targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = 
 targetbanner-ui	src/GameScene.js	s/const city = gotoTarget(this\.save); if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
 targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
 citytap	style.css	s/^#title\.hub \.hub-card { display: flex; }.*$//	the card's buttons stack under its text again (the row is 75 px high)
+steer	src/aim.js	s/if (STEER\.mission \&\& mode === 'mission') {/if (false) {/	a mission open and nothing chosen no longer steers to the mission city
+steer	src/aim.js	s/const mode = routeMode(save);/const mode = 'mission';/	EXPLORE is ignored: the mission still steers
+steer	src/aim.js	s/export const routeMode = save => (save \&\& save\.routeMode === 'explore' ? 'explore' : 'mission');/export const routeMode = save => 'explore';/	the mode is always explore (the mission is never the default)
+steer	src/aim.js	s/const g = gotoTarget(save, L); if (g) return { city: g, why: 'chosen' };//	a chosen destination no longer beats the mission
+steer	src/aim.js	s/c => landOf(c) === save\.stayLand/c => true/	EXPLORE HERE leaves the land
