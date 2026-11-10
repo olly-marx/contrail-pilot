@@ -6,7 +6,7 @@
 // lengths, not real ones (network.js legGameKm: 1,800-2,600 game km).
 import { CITIES } from './cities.js';
 import { LINKS, city, bearing, choices, legGameKm, linksOf } from './network.js';
-import { SEASON2_ON, CROSSING_BRIDGES } from './cities.js';
+import { SEASON2_ON } from './cities.js';
 import { AREAS, unlockedAreas, citiesOf } from './areas.js';
 import { realKm } from './geo.js';
 export { realKm };
@@ -89,7 +89,7 @@ export function flightPath(save, count = 60) {
   return tourPath(here, first, count, LINKS);
 }
 // The network a save flies in: the world, or (season 2) only its unlocked areas.
-export const linksFor = save => (SEASON2_ON ? linksOf(citiesOf(unlockedAreas(save)), ((save && save.crossed) || []).flatMap(id => CROSSING_BRIDGES[id] || [])) : WORLD);   // (a flown crossing can add a bridge: cities.js CROSSING_BRIDGES)
+export const linksFor = save => (SEASON2_ON ? linksOf(citiesOf(unlockedAreas(save))) : WORLD);
 // Game km of the leg from city a to city b (names).
 export const legBetween = (a, b) => legGameKm(realKm(city(a), city(b)));
 export { city, choices };

@@ -33,10 +33,10 @@ globalThis.SEASON2 = true;
   let most = null; for (const c of CT.CITIES) { const d = P.cityCard(all, c.name); if (d.state === 'ok' && (!most || d.stops > most.stops)) most = d; }
   check(most && most.stops > 6 && most.moreDots === true && most.dots === 6, `the longest way shows six dots and a plus: ${JSON.stringify(most)}`);
   // 4. Patagonia: before its crossing there is no route and the card says which crossing flies there; after it, an ordinary route
-  const before = { ...all, crossed: [] };
+  const before = { ...all, areas: all.areas.filter(k => k !== 'samerica'), crossed: [] };   // Patagonia open, South America (the Patagonia crossing) not yet
   const pb = P.cityCard(before, 'PUNTA ARENAS'), pa = P.cityCard(all, 'PUNTA ARENAS');
-  check(pb.state === 'noroute' && pb.line === 'The Patagonia crossing flies there.' && !pb.canFly, `Patagonia before its crossing: ${JSON.stringify(pb)}`);
-  check(pa.state === 'ok' && pa.canFly && pa.stops >= 3, `Patagonia after its crossing is an ordinary route: ${JSON.stringify(pa)}`);
+  check(pb.state === 'noroute' && pb.line === 'The Patagonia crossing flies there.' && !pb.canFly, `Patagonia while samerica is closed: ${JSON.stringify(pb)}`);
+  check(pa.state === 'ok' && pa.canFly && pa.stops >= 3, `Patagonia once South America is open is an ordinary route: ${JSON.stringify(pa)}`);
   // 5. a city that does not exist is not a card
   check(P.cityCard(all, 'ATLANTIS') === null, 'an unknown city gives no card');
   // 6. the tap picks the NEAREST dot within the radius, and nothing beyond it

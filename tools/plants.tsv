@@ -445,7 +445,7 @@ sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 })
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x20]
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x21]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
@@ -598,8 +598,6 @@ crossladder	src/crossings.js	s/exception = lower.filter(c => !covered.has(c.open
 crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filter(s => s !== pick)/const lower = [].filter(s => s !== pick)/	the screen lists no easier ones
 crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
-gotoreach	src/route.js	s/((save \&\& save\.crossed) || \[\])\.flatMap(id => CROSSING_BRIDGES\[id\] || \[\])/Object.values(CROSSING_BRIDGES).flat()/	the Patagonia bridge exists before the crossing is flown
-gotoreach	src/route.js	s/((save \&\& save\.crossed) || \[\])\.flatMap(id => CROSSING_BRIDGES\[id\] || \[\])/[]/	the Patagonia bridge never appears after the crossing
 pickcity	src/pickcity.js	s/  if (area \&\& !unlockedAreas(save)\.includes(area)) {/  if (false) {/	a closed-area city is treated like an open one
 pickcity	src/pickcity.js	s/const stops = path\.length - 1;/const stops = path.length;/	the stops count is one too many
 pickcity	src/pickcity.js	s/dots: Math\.min(stops, MAX_DOTS), moreDots: stops > MAX_DOTS/dots: stops, moreDots: false/	the dots are not capped at six
