@@ -22,6 +22,9 @@ const seed = lap => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDO
         log.push(`${label}: ${JSON.stringify(got)}`);
         check(!!got, `${label}: no contrail was drawn within 20 s of flying (the fixture failed, nothing to colour-check)`);
         if (got) check(got.fills.length === 1 && got.fills[0] === want, `${label}: every contrail rectangle is ${want.toString(16)} (${lap ? 'gold, the pilot has flown the lap' : 'white, no lap yet'}): ${got.fills.map(x => x.toString(16))} of ${got.n}`);
+        // a contrail that was blocking a ray (tinted cool or warm) goes back to the pilot's colour in the next drawRays (GameScene ~1416). Forced cheaply: no rays, the first live contrail listed as the blocker, then drawRays.
+        const back = await p.evaluate(() => { const s = game.scene.getScene('game'), c = (s.contrails || []).find(x => x.view && x.view.active); if (!c) return null; const keep = s.rays; s.rays = null; s.blockers = [c]; c.view.setFillStyle(0x123456); s.drawRays(0); const fill = c.view.fillColor; s.rays = keep; return fill; });
+        check(back === want, `${label}: a contrail that stopped blocking a ray goes back to the pilot's colour (${want.toString(16)}): ${back === null ? 'no live contrail' : back.toString(16)}`);
         check(!p.errs.length, `${label}: page errors: ${p.errs}`);
       } catch (e) { check(false, `${label}: an exception stopped the run: ${String(e).split('\n')[0].slice(0, 140)}`); }
       await ctx.close();

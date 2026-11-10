@@ -670,3 +670,4 @@ goldtrail	src/sim/rules.js	s/this\.totalCo2 += this\.co2Rate \* dt;/this.totalCo
 goldtrail	src/sim/rules.js	s/^import { addPrizes } from '\.\.\/rewards\.js';/import { addPrizes } from '..\/rewards.js'; import { trailColour } from '..\/goldtrail.js';/	the sim engine imports the trail colour
 goldtrail-ui	src/GameScene.js	s/trailColour(this\.save)).setOrigin(0);/COLOURS.contrail).setOrigin(0);/	the lap never turns the drawn contrail gold
 goldtrail-ui	src/GameScene.js	s/trailColour(this\.save)).setOrigin(0);/trailColour({ lapDone: true })).setOrigin(0);/	every pilot gets the golden contrail
+goldtrail-ui	src/GameScene.js	s/c\.view\.setFillStyle(trailColour(this\.save));/c.view.setFillStyle(COLOURS.contrail);/	a contrail that stopped blocking a ray goes back to plain white
