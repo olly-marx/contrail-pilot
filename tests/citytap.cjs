@@ -25,8 +25,10 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
         check(new RegExp(`${target.name}.*(Direct|\\d airports?)`).test(card.text) && card.fly && card.inside, `${tag} A: the tap on ${target.name} did not open the card with its name, its stops and a FLY button on screen: ${JSON.stringify(card)}`);
         check(/about [\d,]+ km/.test(card.text) && !/%|range|capability/i.test(card.text), `${tag} A: the row says the trip as one flight in game km (about N km) and never a percentage or the word range: ${card.text}`);
         const dot = await p.evaluate(() => { const d = document.querySelector('#hubCard .hc-dot'); const r = d && d.getBoundingClientRect(); return r ? [Math.round(r.width), Math.round(r.height)] : null; });
-        const rowBox = await p.evaluate(() => { const c = document.getElementById('hubCard').getBoundingClientRect(), g = document.getElementById('hubGlobe').getBoundingClientRect(); return { rowTop: Math.round(c.top), globeBottom: Math.round(g.bottom), h: Math.round(c.height) }; });
-        check(rowBox.rowTop >= rowBox.globeBottom - 1 && rowBox.h <= 70, `${tag} A: the card is a row UNDER the globe (never over it) and at most 70 px high: ${JSON.stringify(rowBox)}`);
+        const rowBox = await p.evaluate(() => { if (!document.getElementById('hubCard')) return null; const c = document.getElementById('hubCard').getBoundingClientRect(), g = document.getElementById('hubGlobe').getBoundingClientRect(); return { rowTop: Math.round(c.top), globeBottom: Math.round(g.bottom), h: Math.round(c.height) }; });
+        check(!!rowBox && rowBox.rowTop >= rowBox.globeBottom - 1 && rowBox.h <= 70, `${tag} A: the card is a row UNDER the globe (never over it) and at most 70 px high: ${JSON.stringify(rowBox)}`);
+        const chipGone = await p.evaluate(() => document.getElementById('hubRoute').hidden === true);
+        check(chipGone, `${tag} A: the route chip is replaced by the card row while the card is open (one row in the chip's slot, never both)`);
         check(dot && dot[0] >= 6 && dot[1] >= 6, `${tag} A: the stop dots are as heavy as the text (6 px squares or more): ${JSON.stringify(dot)}`);
         // B. FLY sets the aim and starts the flight
         if (card.fly) await p.evaluate(() => { const e = document.getElementById('hubCard'); e.querySelector('#ccFly').click(); });   // (no FLY: the named check above already failed)

@@ -647,7 +647,6 @@ routeonmap	src/globe.js	s/g\.fillRect(dx, dy, 2, 2); dots\.push/g.fillRect(dx, d
 routeonmap	src/ui.js	s/names = \[dest, \.\.\.way\.slice(1, -1)\.slice(0, 5)\]/names = [dest, ...way.slice(1, -1)]/	the route names are not limited
 routeonmap	src/ui.js	s/this\.hubGlobe\.setPath(way\.map(city)); this\.drawRouteLabels(way); }/this.hubGlobe.setPath(way.map(city)); }/	the tapped city gets no name
 routeonmap	src/ui.js	s/globeUsed() { this\.clearRouteLabels(); /globeUsed() { /	spinning the globe leaves the names where they were
-routeonmap	src/ui.js	s/closeCityRow() { this\.clearRouteLabels(); /closeCityRow() { /	closing the card leaves the names
 targetbanner	src/targetbanner.js	s/if (!city || landed) return null;/if (!city) return null;/	a banner is still shown after landing at the destination
 targetbanner	src/targetbanner.js	s/\${crossFrom ? ' to cross' : ''}/${''}/	the crossing departure says no 'to cross'
 targetbanner	src/targetbanner.js	s/return cond ? `\${first}\\n\${cond}` : first;/return first;/	the mission's condition is lost from the banner
