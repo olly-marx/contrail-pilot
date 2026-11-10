@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-10-go-to-crossing",
+    "version": "0.45.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "When a crossing is ready somewhere else, the home box says Go to <city> with a GO TO button and counts the stops; the game steers your flights there. At the airport it says Tap to cross."
+    ]
+  },
+  {
     "id": "2026-11-10-night-dodge",
     "version": "0.44.0",
     "date": "2026-11-10",
