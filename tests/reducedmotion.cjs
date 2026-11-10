@@ -17,7 +17,7 @@ check(inf.length >= 10, `POSITIVE CONTROL: the scan finds the looping animations
 check(loose.length === 0, `every looping animation is stilled under reduce motion; NOT stilled: ${loose.join(' | ')}`);
 const conf = plain.filter(r => /ec-confetti/.test(r.head) && /animation/.test(r.body));
 check(conf.length > 0 && conf.every(r => !/infinite/.test(r.body)), 'the era confetti is not an infinite loop (it stops)');
-const celebrations = ['.era-card.go .ec-kicker', '.era-card.go .ec-title', '.era-card.go .ec-plane', '.era-card.go .ec-confetti i', '.era-card.go #ecOk', '.pay-plane', '.pay-part', '.payoff.arrive .pay-spark', '#results .slam.in', '.stamp', '.wf.arrive', '.w-webpic.w-flash'];
+const celebrations = ['.cel-layer', '.cel-layer i', '.cel-push', '.era-card.go .ec-kicker', '.era-card.go .ec-title', '.era-card.go .ec-plane', '.era-card.go .ec-confetti i', '.era-card.go #ecOk', '.pay-plane', '.pay-part', '.payoff.arrive .pay-spark', '#results .slam.in', '.stamp', '.wf.arrive', '.w-webpic.w-flash'];
 const missing = celebrations.filter(s => !stilled.has(s));
 check(missing.length === 0, `every celebration is listed under reduce motion; MISSING: ${missing.join(' | ')}`);
 console.log(fails.length ? 'FAIL reducedmotion:\n - ' + fails.join('\n - ') : `PASS reducedmotion (${inf.length} looping animations and ${celebrations.length} celebration pieces all stilled under reduced motion; the confetti stops)`);

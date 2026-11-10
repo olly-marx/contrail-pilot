@@ -1075,3 +1075,15 @@ h2.sub { margin-top: -4px; }
 .city-card .hc-dots { gap: 3px; font-size: 8px; }
 .city-card .hc-dot { width: 8px; height: 8px; }
 .ds-actions { display: flex; gap: 8px; margin: 6px 0 0; }   /* the FLY TO sheet's CHANGE / STOP: real 40 px buttons (.chip), not 7 px links */
+
+/* The celebration kit (src/celebrate.js, research/CELEBRATION-KIT.md): a layer of pixel sparkles over a card, one-shot, transform and opacity only, never in the way of a tap. */
+.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }
+.cel-layer i { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; background: var(--c, #ffe15a); opacity: 0; animation: cel-pop .9s steps(6) var(--d, 0s) forwards; }
+@keyframes cel-pop { 0% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(var(--x, 0px), var(--y, 0px)); } }
+.cel-push { animation: cel-push .35s ease-out; }
+@keyframes cel-push { 0% { transform: scale(.94); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+.cel-still { outline: 3px solid #ffe15a; outline-offset: -3px; }   /* reduced motion: no motion, a still gold edge for a second */
+@media (prefers-reduced-motion: reduce) {
+  .cel-layer { display: none; }
+  .cel-layer i, .cel-push { animation: none; }
+}

@@ -633,3 +633,10 @@ secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ L\x6
 secretscan	tests/secretscan.cjs	/file: 'tests\/pilotcode.cjs'/d	the allow-list entry for the pilotcode fixture is removed
 nextchip	src/ui.js	s/t = aim || defaultTargetFrom(/t = defaultTargetFrom(/	the sheet names the default, not the mission the flight is aimed at
 nextchip	src/ui.js	s/class="chip" id="dsChange"/class="btn tiny" id="dsChange"/	CHANGE is a 7 px link again
+celebrate	src/celebrate.js	s#large: { particles: 24,#large: { particles: 40,#	a large burst makes 40 sparkles (over the cap)
+celebrate	src/celebrate.js	s#reduced ? { particles: 0, push: false, still: true, settleMs: 1000 }#reduced ? { particles: 8, push: false, still: true, settleMs: 1000 }#	reduced motion still makes sparkles
+celebrate	src/celebrate.js	s#host.dataset.celebrated === '1')#false)#	a second celebration of the same host replays
+celebrate	src/celebrate.js	s#if (cue \&\& deps.sfx \&\& typeof deps.sfx\[cue\] === 'function') deps.sfx\[cue\]();#if (false) deps.sfx[cue]();#	the kit plays no cue
+celebrate	src/celebrate.js	s#  'nature-funded': { size: 'small', cue: 'grow' },#  'nature-funded': { size: 'small', cue: 'grow' }, 'crossing-lost': { size: 'large', cue: 'softfail' },#	a lost crossing is celebrated
+celebrate	style.css	s#.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }#.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: auto; z-index: 3; }#	the sparkle layer takes taps
+celebrate	style.css	s#  .cel-layer { display: none; }#  .cel-layerX { display: none; }#	reduce motion no longer hides the sparkle layer
