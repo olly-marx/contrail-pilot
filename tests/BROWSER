@@ -111,7 +111,6 @@ routeheader
 fitscreen
 overlap
 taptargets
-skiptrip
 onrails320
 gear
 naturefresh
@@ -141,3 +140,4 @@ crossgoto
 crystalpopup
 citytap
 nextchip
+missiongo

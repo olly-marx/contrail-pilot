@@ -115,12 +115,12 @@ export function missionsView(save) {
   function row(save, n, visList) {
     const m = visList.concat(M2.dailyVisible(save)).find(x => x.key === n.key), def = m && m.def, id = def ? def.id : null;
     const hazard = id === 'hazard' ? HAZARD_HOW[stage] : null, lesson = id && /^L\d$/.test(id) ? `Lesson ${id.slice(1)} of ${M2.LESSONS.length}` : null;
-    const city = !!(id && CITY_TEMPLATES[id]);
+    const city = !!(id && CITY_TEMPLATES[id]), cityName = city && m && m.fill ? CITY_TEMPLATES[id](m.fill, save) : null;   // (the city the mission names: GO THERE sets it as the destination)
     const stopsText = n.stops ? `${n.stops} ${n.stops === 1 ? 'stop' : 'stops'} away` : null;
     const how = n.lead ? 'Do this first' : stopsText || lesson || hazard || (def && def.id && (m.daily && !HOW[id] ? DAILY_HOW : HOW[id])) || (n.daily ? DAILY_HOW : '');
-    const tip = n.lead ? n.full : n.stops ? `${stopsText} on your route. Tap AIM HERE to fly there first.` : lesson ? `${lesson}: ${n.full}.` : hazard ? `${hazard}.` : (m && m.daily ? (TIP[id] || 'Today only: any flight that does it.') : TIP[id]) || '';
+    const tip = n.lead ? n.full : n.stops ? `${stopsText} on your route. Tap GO THERE to fly there.` : lesson ? `${lesson}: ${n.full}.` : hazard ? `${hazard}.` : (m && m.daily ? (TIP[id] || 'Today only: any flight that does it.') : TIP[id]) || '';
     return { key: n.key, short: n.short, full: n.full, how: clip(how, HOW_MAX), tip, icon: ICONS[id] || (n.where === 'hangar' ? 'mi32-gear' : n.where === 'nature' ? 'mi32-natureproj' : 'mi32-seedbag'), prize: m ? m.prize.seeds : 0, star: !!(m && m.star),
-      where: n.where, lead: !!n.lead, city, aimed: !!(city && save.aimKey === n.key), daily: !!n.daily, right: rightOf(n) };
+      where: n.where, lead: !!n.lead, city, cityName, aimed: !!(cityName && save.aimCity === cityName), daily: !!n.daily, right: rightOf(n) };
   }
 }
 

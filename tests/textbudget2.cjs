@@ -20,8 +20,6 @@
       items: () => levels.map(({ where, lv }) => ({ where, text: `Next: ${F.shortName(lv)}` })) },
     { id: 'effect-text', limit: 33, why: 'the preview strip fact line is 33 chars at 8 px (UX plan C0)', enforce: false, from: 'R5',
       items: () => levels.map(({ where, lv }) => ({ where, text: F.effectText(lv) })).filter(x => x.text) },
-    { id: 'skip-button', limit: 29, why: 'the HOME skip chip is one line of 29 chars at 320 (9 px Pixel, 264 px of text)', enforce: true, from: 'R3a',
-      items: () => Object.entries(AIM.SKIP_TEXT).map(([k, text]) => ({ where: `SKIP_TEXT.${k}`, text })) },
   ];
   let counted = 0;
   for (const r of RULES) {

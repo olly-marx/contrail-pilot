@@ -1,7 +1,7 @@
 import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
-import { routeFor, toggleSkip, SKIP_TEXT, setGoto, clearGoto, arrivedGoto, gotoTarget, aimTarget } from './aim.js';
+import { routeFor, setGoto, clearGoto, arrivedGoto, gotoTarget, migrateAim } from './aim.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
@@ -226,14 +226,6 @@ export class UI {
     $('hubSpinR').onclick = () => { this.globeUsed(); this.hubGlobe && this.hubGlobe.nudge(24); };
     $('hubRoute').onclick = () => this.openRouteSheet();   // R-B: the route choice and the crossings open as a SHEET (no page push)
   }
-  // 'Skip the mission route this trip' (src/aim.js): a button under HOME's route line, shown only while a city mission is open (v.skip).
-  // It flies the normal tour for this trip; the mission stays open; a landing clears it (rules.js), a crash keeps it.
-  renderSkip(skip) {
-    let b = $('hubSkip');
-    if (!b) { b = document.createElement('button'); b.id = 'hubSkip'; b.type = 'button'; b.className = 'chip hubonly hub-skip'; $('hubWorld').after(b);
-      b.onclick = () => { sfx.tick(); toggleSkip(this.save); writeSave(this.save); this.renderHub(); }; }
-    b.hidden = !skip; b.textContent = skip === 'on' ? SKIP_TEXT.undo : SKIP_TEXT.skip;
-  }
   // R-B: the globe's caption goes away for good after the first spin, drag or dot tap (a save flag in `tours`, like the other one-time hints).
   globeUsed() { const s = this.save; if ((s.tours || []).some(t => t === 'globe-hint' || t === '*')) return; s.tours = [...(s.tours || []), 'globe-hint']; writeSave(s); const h = $('hubHint'); if (h) h.hidden = true; }
   // R-B: the route choice and the crossings (the old #tJourney panel behind the route line) as a SHEET: the panel's own node is moved into it (its handlers
@@ -241,10 +233,10 @@ export class UI {
   // ROUTING V2 step 2: after the tutorial the route chip opens the FLY TO sheet (where the next flight goes, its stops, CHANGE, FLY, and STOP when the player chose it); the old 'Which way?' sheet stays for the tutorial and the classic game.
   openDestinationSheet() {
     sfx.tick();
-    const s = this.save, chosen = gotoTarget(s), aim = aimTarget(s), t = aim || defaultTargetFrom(linksFor(s), s.city, s.visited), card = t ? cityCard(s, t) : null;   // (the flight's real destination: the player's choice, else a mission's aim until step 3 retires it, else the default)
+    const s = this.save, chosen = gotoTarget(s), t = chosen || defaultTargetFrom(linksFor(s), s.city, s.visited), card = t ? cityCard(s, t) : null;   // (the flight's real destination: the player's choice, else the default)
     const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const locked = !!$('goBtn').disabled, dots = card && card.dots ? `<span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(card.dots)}${card.moreDots ? ' +' : ''}</span> ` : '';
-    const close = showSheet({ eyebrow: chosen ? 'GOING TO' : aim ? 'MISSION' : 'NEXT', title: t || 'Nowhere yet', ok: 'CLOSE',
+    const close = showSheet({ eyebrow: chosen ? 'GOING TO' : 'NEXT', title: t || 'Nowhere yet', ok: 'CLOSE',
       html: `<p class="city-card">${dots}${esc(locked ? 'Pick your free part first.' : card ? card.line : 'No city to fly to.')}</p><p class="ds-actions"><button class="chip" id="dsChange" type="button">CHANGE</button>${chosen ? '<button class="chip" id="dsStop" type="button">STOP</button>' : ''}</p>`,
       action: t && !locked ? { label: 'FLY', onTap: () => this.start() } : null });
     if ($('dsChange')) $('dsChange').onclick = () => { close(); this.toast('Tap a city on the globe.', '', 'good', 3); };
@@ -422,8 +414,8 @@ export class UI {
     this.hubCs = box && cs.ready && cs.atDeparture && !toHangar ? cs : null;
     if (this.hubCs) $('goBtn').textContent = `CROSS TO ${cs.to}`;
     $('hubFly').hidden = !this.hubCs; $('hubFly').onclick = () => this.start();
-    this.renderSkip(v.skip);
     // ROUTING V2 step 2: with nothing chosen (no GO TO, no mission aim) the chip names the default destination, 'Next: PARIS' (src/destination.js); a chosen destination keeps the route line.
+    if (migrateAim(s)) writeSave(s);   // (an old 'AIM HERE' becomes a destination; the skip is dropped: src/aim.js)
     const dflt = s.tutorialDone && isSeason2(s) && DEFAULT_DEST.on && !v.aim ? defaultTargetFrom(linksFor(s), s.city, s.visited) : null;
     $('hubRoute').innerHTML = dflt ? `Next: ${esc(dflt)} <span class="small">change</span> &#8250;` : v.route.join(' &#9654; ') + (v.aim ? ` <span class="small">(${this.save.aimCity && v.aim === this.save.aimCity ? 'go to' : 'mission'})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
@@ -475,11 +467,11 @@ export class UI {
       + (v.crossing ? `<p class="label">${esc(v.crossing.title.toUpperCase())}</p><div class="m-cross">${v.crossing.rows.map(r => `<p class="m-tick${r.done ? ' done' : ''}"><span>${esc(r.label)}</span><b>${esc(r.status)}</b></p>`).join('')}${v.crossing.ready ? '<button id="mCross" class="chip m-gold" type="button">FLY THE CROSSING</button>' : ''}</div>` : '')
       + group('STEADY', v.steady.map(r => rowHTML({ ...r, star: false }, 'steady')), saving(s) ? '' : ' <span class="small">(1 seed each)</span>')
       + (v.done.count ? `<button id="mDone" class="chip m-done" type="button">DONE ${v.done.count} ›</button>` : '');
-    // Tap a row: its sheet (the full title, the how, the prize) with the one action it has: AIM HERE (a city mission), or the hop to HANGAR / NATURE.
+    // Tap a row: its sheet (the full title, the how, the prize) with the one action it has: GO THERE (a city mission), or the hop to HANGAR / NATURE.
     const all = [v.next, ...v.open, ...v.today.rows, ...v.steady].filter(Boolean);
     document.querySelectorAll('#mNext [data-mrow], #mList [data-mrow]').forEach(b => b.onclick = () => { const r = all.find(x => x.key === b.dataset.mrow); if (!r) return; sfx.tick();
       const hop = r.where === 'hangar' ? 'HANGAR' : r.where === 'nature' ? 'NATURE' : null;
-      const action = r.city ? { label: r.aimed ? 'STOP AIMING' : 'AIM HERE', onTap: () => { s.aimKey = r.aimed ? null : r.key; writeSave(s); this.toast(r.aimed ? 'Back to the first mission' : `Aiming at: ${r.short}`, '', 'good', 3); this.showMissions(); } }
+      const action = r.city && r.cityName ? { label: r.aimed ? 'STOP GOING' : 'GO THERE', onTap: () => { if (r.aimed) clearGoto(s); else setGoto(s, r.cityName); writeSave(s); this.toast(r.aimed ? 'Back to the suggested city' : `Going to ${r.cityName}`, '', 'good', 3); this.showMissions(); } }   // ROUTING V2 step 3: the mission's city becomes the destination (the same field as GO TO and a tapped city)
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
       showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds.` : ''}`, action }); });
     $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };

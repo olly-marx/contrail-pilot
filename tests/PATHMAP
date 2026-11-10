@@ -13,7 +13,7 @@ group tests-themselves | tests/*.cjs tests/*.json | NONE
 # ci-gate files: the Node-tier test cigate covers them; the proof of a workflow change is the ci-dry/* dry runs (RELEASING.md)
 group ci-gate | tools/ci-gate.sh tools/durations.sh tests/DURATIONS.tsv .github/workflows/* | NONE
 group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/hub.js src/upgrades.js src/startchoice.js src/school.js src/rewards.js src/wild.js | plantrail hangartakeoff onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school rewards missions tours bubblestill firsthour-real missionlanes pilotpreview keepvisible
-group aimed-route | src/aim.js src/hub.js src/route.js | skiptrip
+group aimed-route | src/aim.js src/hub.js src/route.js | missiongo nextchip
 group results-card | src/resultscard.js src/nextup.js src/ui.js src/tour.js src/tips.js | rewards missions wildfield eras school progression firsthour-real biodiversity fares rails2
 group heavy-onboarding | src/missions2.js src/upgrades.js src/hub.js src/wild.js | postrails
 group records | src/records.js src/recordsui.js | records-screen
@@ -48,7 +48,7 @@ group gear-sheet | src/ui.js | gear
 group nature-r6 | src/wild.js src/fresh.js | naturefresh
 ci-only | onrails375
 group nature-land | src/wild.js index.html style.css | natureland regions homenature swipe
-group crossing-moment | src/crossingview.js src/globe.js | crossingmoment hubscreen skiptrip
+group crossing-moment | src/crossingview.js src/globe.js | crossingmoment hubscreen
 group route-chip | src/globe.js src/sheet.js | routechip hubscreen
 group school-icy | src/school.js | schoolicy
 group save-safety | src/save.js src/online.js src/persist.js src/pilot.js src/main.js src/ui.js index.html | savesafe recoversave pilotcode
@@ -59,12 +59,12 @@ group plants-GameScene-js | src/GameScene.js | boardsonline flagclear preloadgat
 group plants-steppe-js | src/habitat/steppe.js | rowfit
 group plants-missionsview-js | src/missionsview.js | crossingmoment
 group plants-pilot-js | src/pilot.js | pilotpreview
-group plants-rules-js | src/sim/rules.js | skiptrip
+group plants-rules-js | src/sim/rules.js | missiongo
 group plants-tips-js | src/tips.js | payoffdraw
 group plants-tour-js | src/tour.js | postrails
-group plants-ui-js | src/ui.js | missionlanes routechip skiptrip
+group plants-ui-js | src/ui.js | missionlanes routechip missiongo
 group plants-wild-js | src/wild.js | hangarnew preloadgate rowfit
-group plants-style-css | style.css | gear skiptrip
+group plants-style-css | style.css | gear
 group online-note | src/online.js src/ui.js src/main.js | onlinenote
 group backup | src/backup.js src/save.js | backuprestore
 group backup-ui | src/ui.js | backuprestore

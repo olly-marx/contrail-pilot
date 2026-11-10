@@ -864,7 +864,7 @@ export const RULES = {
     if (!this.school) this.save.flightSeconds = (this.save.flightSeconds || 0) + (this.flySeconds || 0);   // crashes count too
     const eraOpened = !this.school && eraProgress(this.save).index > eraBefore ? eraProgress(this.save).era.name : null;
     const newPlane = eraOpened ? syncFleet(this.save, { fly: true }) : null;   // a new era's plane joins the fleet
-    if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; this.save.skipAim = false; }   // choose a new direction from here
+    if (landed && !this.school) { this.save.city = this.landedAt; this.save.heading = null; }   // choose a new direction from here
     const newRecord = landed && !this.school && m > this.save.bestDistance;
     if (newRecord) this.save.bestDistance = m;
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save

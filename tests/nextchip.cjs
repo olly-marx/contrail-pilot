@@ -21,11 +21,9 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       const closeSheet = () => p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); });
       const openChip = async () => { await closeSheet(); await p.click('#hubRoute', { timeout: 5000 }).catch(() => check(false, `${tag}: the route chip could not be tapped`)); await p.waitForTimeout(400); };
       const chip = () => p.evaluate(() => { const e = document.getElementById('hubRoute'), r = e.getBoundingClientRect(); return { text: e.innerText.replace(/\s+/g, ' ').trim(), inside: r.left >= 0 && r.right <= innerWidth + 1 && r.top >= 0 && r.bottom <= innerHeight + 1, h: Math.round(r.height) }; });
-      // G. an open city mission still aims the flight (step 3 retires that): the chip keeps the route line and the sheet says MISSION with the mission's city, never a different default
-      const g0 = await chip(); await openChip(); const gs = await p.evaluate(() => (document.getElementById('sheet') || { innerText: '' }).innerText.replace(/\s+/g, ' ')); await closeSheet();
-      log.push(`${tag} G: ${JSON.stringify([g0.text, gs])}`);
-      check(/\(mission\)/.test(g0.text) && /^MISSION/.test(gs) && gs.includes(g0.text.split('▶')[1].trim().split(' ')[0]), `${tag} G: with a mission aim the chip keeps the route line and the sheet says MISSION and the same city: ${JSON.stringify([g0.text, gs])}`);
-      await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.skipAim = true; ui.showTitle(); }); await p.waitForTimeout(600);   // the player skips the mission route: now nothing is chosen
+      // G. an open city mission (the seed has 'Land at PARIS' open) no longer steers the flight (ROUTING V2 step 3): the chip names the default 'Next: <city>', never '(mission)'
+      const g0 = await chip(); log.push(`${tag} G: ${JSON.stringify(g0)}`);
+      check(/^Next:/.test(g0.text) && !/\(mission\)/.test(g0.text), `${tag} G: with a city mission open and no destination chosen the chip still names the default city: ${JSON.stringify(g0)}`);
       const exp = await p.evaluate(async () => { const D = await import('/src/destination.js'), R = await import('/src/route.js'), s = game.registry.get('ui').save, L = R.linksFor(s), t = D.defaultTargetFrom(L, s.city, s.visited), way = t && R.pathTo(s.city, t, L); return { t, hops: way ? way.length - 1 : 0, linked: !!t && L[s.city].includes(t) || (way && way.length > 2) }; });
       check(!!exp.t, `${tag}: no default destination from LONDON in the test save`);
       const c0 = await chip(); log.push(`${tag} A: ${JSON.stringify(c0)}`);

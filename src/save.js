@@ -33,8 +33,6 @@ const DEFAULTS = {
   planted: {},         // species id -> trees planted, all flights (drives the Biodiversity meter)
   city: 'LONDON',      // the journey: the city you are in (src/route.js); flights start there. (An index before 2026-10-22.)
   heading: null,       // the first city of the direction chosen before take-off (one of route.js choices)
-  aimKey: null,        // 'AIM HERE' (the MISSIONS screen, src/aim.js): the key of the city mission the route aims at; null = the first open one
-  skipAim: false,      // 'Skip the mission route this trip' (src/aim.js): kept by a crash, cleared by the next landing (rules.js, with heading)
   flightSeconds: 0,    // real seconds flown, take-off to landing or crash (src/eras.js: eras open by flying time)
   flownKm: 0,          // every km flown (not flight school): "times round the Earth" = flownKm / EARTH_KM
   laps: 0,             // laps of the old 16-city loop (before 2026-10-22); kept, and counted into flownKm once

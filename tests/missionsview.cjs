@@ -2,7 +2,7 @@
 //   1. every mission has a pictogram that exists, a "how" line <= 20 characters (the prize shares it at 320 px) and a sheet TIP <= 12 words, a generic DONE name <= 24, and the (i) sheet is <= 60 words;
 //   2. the tier line and the COMING UP line are right at each stage (lessons, tier 1, 2 and 3, the gate done) and never show anything further ahead;
 //   3. NEXT is nextUp's top row (one source), OPEN does not repeat it, the dailies and steady rows follow the save;
-//   4. AIM HERE: save.aimKey makes the route aim at THAT city mission (src/aim.js), a stale key falls back to the first;
+//   4. GO THERE: a mission row's button sets save.aimCity (the row whose city is the destination is marked aimed; an open mission no longer steers a flight by itself);
 //   5. the fresh keys for the MISSIONS dot stay while they exist (derived from the save, never "once").
 // Run: node tests/missionsview.cjs   (plants in tools/plants.tsv)
 const fs = require('fs'), path = require('path');
@@ -48,16 +48,17 @@ const fs = require('fs'), path = require('path');
   const alld = withDay(base()); for (let i = 0; i < 10 && M.visible(alld).length; i++) alld.missionsDone = [...alld.missionsDone, ...M.visible(alld).map(m => m.key)];
   const va = V.missionsView(alld);
   check(va.next === null && va.open.length === 0 && va.today.rows.length >= 1, `all area missions done: no pinned NEXT, nothing open, the dailies under TODAY: ${JSON.stringify([va.next && va.next.key, va.open.length, va.today.rows.length])}`);
-  // 4. AIM HERE.
+  // 4. GO THERE (ROUTING V2 step 3: the mission row's button sets the destination; the silent mission aim is retired).
   const aimSave = withDay(base([...M.LESSONS.map(x => x.id), 'weurope:shade', 'weurope:plant-tree', 'weurope:bring']));
   const first = A.aimOpen(aimSave), rescue = M.visible(aimSave).find(m => m.def.id === 'rescue'), want = rescue && A.CITY_TEMPLATES.rescue(rescue.fill, aimSave);
   check(!!rescue && !!want && !!first && want !== first, `the test has two different city missions to choose between (first ${first}, rescue ${want})`);
-  aimSave.aimKey = rescue && rescue.key;
-  check(A.aimOpen(aimSave) === want, `AIM HERE: aimKey aims the route at THAT mission's city (${A.aimOpen(aimSave)} vs ${want})`);
-  const av = V.missionsView(aimSave), ar = [av.next, ...av.open].find(r => r.key === aimSave.aimKey);
-  check(ar && ar.city && ar.aimed, `the aimed row says so: ${JSON.stringify(ar && [ar.key, ar.city, ar.aimed])}`);
-  aimSave.aimKey = 'weurope:no-such-mission';
-  check(A.aimOpen(aimSave) === first, `a stale aimKey falls back to the first city mission (${A.aimOpen(aimSave)} vs ${first})`);
+  check(A.aimTarget(aimSave) === null, `an open city mission no longer steers the flight: ${A.aimTarget(aimSave)}`);
+  aimSave.aimCity = want;   // the player tapped GO THERE on the rescue mission
+  const av = V.missionsView(aimSave), rows = [av.next, ...av.open].filter(Boolean), ar = rows.find(r => r.key === rescue.key);
+  check(ar && ar.city && ar.cityName === want && ar.aimed, `the row whose city is the destination says so: ${JSON.stringify(ar && [ar.key, ar.city, ar.cityName, ar.aimed])}`);
+  check(rows.filter(r => r.aimed).length === 1, `only that row is marked: ${rows.filter(r => r.aimed).map(r => r.key)}`);
+  aimSave.aimCity = 'NOWHERE';
+  check(![av.next, ...V.missionsView(aimSave).open].filter(Boolean).some(r => r.aimed), 'a destination that is no mission\'s city marks no row');
   const sys = [v2.next, ...v2.open].find(r => r.key === 'weurope:system');
   check(sys && sys.where === 'hangar' && sys.city === false, `a purchase mission leads to the HANGAR and cannot be aimed: ${JSON.stringify(sys && [sys.where, sys.city])}`);
   // 5. Fresh keys.

@@ -3,7 +3,7 @@
 // are gone: the bottom bar is the navigation (its tabs appear by `revealed`, below). What the hub shows is decided here, without the DOM, so
 // tests/hub.cjs can check it: at most HUB_WORDS words, UP NEXT = nextUp, the route aimed at the mission's city.
 import { current as currentMission, MISSIONS } from './missions.js';
-import { routeFor, aimTarget, aimOpen } from './aim.js';
+import { routeFor, aimTarget } from './aim.js';
 import { wordCount } from './tips.js';
 import * as M2 from './missions2.js';
 import { nextUp, rightOf } from './nextup.js';
@@ -19,7 +19,6 @@ export const FREE_NEXT = 'Open the hangar: free upgrade!';   // the user: a free
 // What the hub shows: { next, up, route, aim, skip, worldChoice, words, missionsLeft }.
 //   up:    the UP NEXT rows (src/nextup.js: a must-do lead, the first open mission, the first undone daily; season 2 only): [{ key, short, full, where, stops?, daily?, lead?, pic?, right }]
 //   next:  the TOP row as the hub's lock logic reads it: { title, id?, hangar?, nature?, claims?, crossing? } (a free part waiting locks TAKE OFF), or null
-//   skip: null (no city mission to aim at) | 'off' (the route aims) | 'on' (the player skipped this trip: src/aim.js)
 //   route: the next stops: [from, to] (the first hop), or up to the mission's city when the route aims at one (src/aim.js); aim: that city
 export const UP_ROWS = 3;
 export function hubView(save, { crossingReady = null, crossing = null, boxShown = false } = {}) {
@@ -33,5 +32,5 @@ export function hubView(save, { crossingReady = null, crossing = null, boxShown 
   // The next stops, up to the mission's city when the route aims at one ("LONDON > PARIS > BERLIN (mission)"), else the first hop.
   const at = aim ? path.indexOf(aim) : -1, route = path.slice(0, at > 0 ? Math.min(at + 1, 4) : 2);
   const words = (s2 ? up.reduce((a, r) => a + wordCount(`${r.short} ${r.right}`), 0) : wordCount(next ? next.title : '')) + wordCount(route.join(' ')) + wordCount('TAKE OFF');
-  return { next, up, route, aim: at > 0 && at <= 3 ? aim : null, skip: aimOpen(save) && aimOpen(save) !== save.aimCity ? (save.skipAim ? 'on' : 'off') : null, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
+  return { next, up, route, aim: at > 0 && at <= 3 ? aim : null, worldChoice: revealed(save, 'world'), words, missionsLeft: s2 ? M2.visible(save).length : MISSIONS.length - done(save).size };
 }

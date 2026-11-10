@@ -43,9 +43,9 @@ export function aimOpen(save) {
   const L = linksFor(save);
   if (!L[save.city]) return null;
   const g = gotoTarget(save, L); if (g) return g;   // the player's GO TO first
-  // The player's own choice first (R4: 'AIM HERE' on the MISSIONS screen sets save.aimKey to a mission key), then the first open city mission.
-  const list = visible(save), chosen = save.aimKey && list.find(m => m.key === save.aimKey);
-  for (const m of chosen ? [chosen, ...list.filter(x => x !== chosen)] : list) {
+  // The first open city mission (ROUTING V2 step 3: this NO LONGER steers a flight; the player taps GO THERE on a mission row, which sets save.aimCity; aimOpen only says which city the first open mission names).
+  const list = visible(save);
+  for (const m of list) {
     const pick = m.def && CITY_TEMPLATES[m.def.id];
     if (!pick || !m.fill) continue;
     const t = pick(m.fill, save);
@@ -53,12 +53,17 @@ export function aimOpen(save) {
   }
   return null;
 }
-// The per-trip choice (the sim chat's spec, research/BALANCE-AIMED-ROUTE.md; the Coordinator, 2026-11-02): 'Skip the mission route this trip'
-// flies the normal tour while the mission stays OPEN. save.skipAim is kept by a crash and cleared by the next landing (rules.js, beside
-// save.heading), so aimTarget is aimOpen unless the player skipped. The button words are data (tests/textbudget2.cjs: <= 29 chars at 320).
-export const SKIP_TEXT = { skip: 'Skip mission route this trip', undo: 'Mission route skipped: undo' };
-export const aimTarget = save => (save && save.skipAim ? gotoTarget(save) : aimOpen(save));
-export const toggleSkip = save => { save.skipAim = !save.skipAim; return save.skipAim; };
+// ROUTING V2 step 3 (2026-11-10): the silent mission aim and the per-trip skip are RETIRED. A flight is steered only by a destination the player chose (save.aimCity: GO TO, a mission's GO THERE, a tapped city) or, with none, by the default destination
+// (src/destination.js). The aim of a flight is therefore exactly the player's GO TO.
+export const aimTarget = save => gotoTarget(save);
+// Old saves: an 'AIM HERE' choice (save.aimKey) becomes a standing destination if its mission still names a city and nothing else is set; the per-trip skip (save.skipAim) is dropped. Idempotent.
+export function migrateAim(save) {
+  if (!save || typeof save !== 'object') return false;
+  const had = 'aimKey' in save || 'skipAim' in save;
+  if (save.aimKey && !save.aimCity) { const m = visible(save).find(x => x.key === save.aimKey), pick = m && m.def && CITY_TEMPLATES[m.def.id], c = pick && m.fill ? pick(m.fill, save) : null; if (c && c !== save.city) save.aimCity = c; }
+  delete save.aimKey; delete save.skipAim;
+  return had;
+}
 const templateOf = (save, target) => { for (const m of visible(save)) { const pick = m.def && CITY_TEMPLATES[m.def.id]; if (pick && m.fill && pick(m.fill, save) === target) return m.def.id; } return null; };
 
 // The path from the save's city to `target` (then the normal tour). A heading the player CHOSE on the world map is kept: the
