@@ -5,6 +5,9 @@ import { treesOpen, TREE_CAP } from './landtrees.js';
 import { localTree, UK_SLOTS } from './nature.js';
 import { treeBook } from './groves.js';
 
+// THE SIM'S A/B SWITCH (research M-T6; flippable in Node like ROUTE_AIM.on): on = this order (shipping state); off = the old turns through the open kinds (speciesIdx % open.length).
+export const DROP_ORDER = { on: true };
+
 // pending: { treeId: n } parcels released this flight in this land that have not landed (or missed) yet.
 export function nextTree(save, land, pending = {}) {
   const book = treeBook(save, land);
