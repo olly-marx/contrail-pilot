@@ -17,8 +17,8 @@ const seed = lap => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDO
         await p.goto(URL); await ready(p); await p.waitForTimeout(800);
         await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 0; game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
         await p.evaluate(() => game.registry.get('ui').start()); await started(p).catch(() => null);
-        // fly: keep the plane up and look for the first drawn contrail (poll, up to 20 s)
-        const got = await p.waitForFunction(() => { const s = game.scene.getScene('game'); if (!s || s.state !== 'playing') return false; if (s.plane.y > 200 && s.plane.vy > -40) s.applyFlap(); const c = (s.contrails || []).find(x => x.view && x.view.active); return c ? { fill: c.view.fillColor, n: s.contrails.length } : false; }, null, { timeout: 20000, polling: 100 }).then(h => h.jsonValue()).catch(() => null);
+        // fly: a contrail forms only inside icy air (ISSR), so a patch is put round the plane; keep the plane up and look for the first drawn contrail (poll, up to 20 s)
+        const got = await p.waitForFunction(() => { const s = game.scene.getScene('game'); if (!s || s.state !== 'playing') return false; if (s.plane.y > 200 && s.plane.vy > -40) s.applyFlap(); if (!s.__gtIssr) { s.__gtIssr = true; s.addIssrAt(s.plane.x - 150, Math.max(10, s.plane.y - 70), 300, 140); }   /* (a contrail forms only inside icy air: put a patch round the plane) */ const c = (s.contrails || []).find(x => x.view && x.view.active); return c ? { fill: c.view.fillColor, n: s.contrails.length } : false; }, null, { timeout: 20000, polling: 100 }).then(h => h.jsonValue()).catch(() => null);
         log.push(`${label}: ${JSON.stringify(got)}`);
         check(!!got, `${label}: no contrail was drawn within 20 s of flying (the fixture failed, nothing to colour-check)`);
         if (got) check(got.fill === want, `${label}: the contrail rectangles are ${want.toString(16)} (${lap ? 'gold, the pilot has flown the lap' : 'white, no lap yet'}): ${got.fill.toString(16)}`);
