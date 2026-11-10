@@ -7,6 +7,7 @@ layer: the hangar's 'composing keeps >= 95 percent opaque pixels' check proves i
 Run: python3 tools/art/make_livery.py [--out DIR] [--install]
   default: writes the 12 pictures, two contact sheets (base | livery, nearest-neighbour enlarged: the thing to LOOK at) and provenance.json to ~/shots-art/livery/ (NOT into the repo);
   --install: also copies the 12 pictures to assets/upgrades/plane-<art>-livery.png and assets/ui/upgrades/hangar-<art>-livery.png (a later, separate step).
+The anchors are DECLARED in tools/art/livery-anchors.tsv (nothing is searched for; the old automatic search only prints a suggestion).
 Exit status 1 if any picture breaks its budget (14 changed pixels on a sprite, 500 on a portrait) or paints outside the base's drawn pixels.
 """
 import argparse
@@ -163,30 +164,52 @@ def paint(base, spots, colours, px):
     return out, painted, skipped
 
 
-def make(base, kind, art):
+def load_anchors(path=None):
+    """The DECLARED anchors (tools/art/livery-anchors.tsv): {(art, kind): dict}. Nothing is searched for: a missing row is an error."""
+    path = path or os.path.join(HERE, 'livery-anchors.tsv')
+    table = {}
+    for line in open(path):
+        if not line.strip() or line.startswith('#'):
+            continue
+        art, kind, gx, gy, gr, sx0, sx1, sy0, sy1 = line.rstrip('\n').split('\t')
+        table[(art, kind)] = dict(gx=int(gx), gy=int(gy), gr=int(gr), sx0=int(sx0), sx1=int(sx1), sy0=int(sy0), sy1=int(sy1))
+    return table
+
+
+def make(base, kind, art, decl):
+    """Paint the livery at the DECLARED anchors. Returns (picture, info, problems): every check that can fail is listed in problems, none is repaired by searching."""
     px = drawn(base)
-    a = anchors(base, kind, art)
-    g, (cx, cy) = a['globe'], a['globe_centre']
+    body = main_body(px)
+    problems = []
+    g = globe_sprite() if kind == 'sprite' else globe_portrait(decl['gr'])
+    if kind == 'sprite' and decl['gr'] != 1:
+        problems.append(f'{art} {kind}: a sprite globe is the fixed 3x3 glyph (gr must be 1, got {decl["gr"]})')
+    if kind == 'portrait' and not 4 <= decl['gr'] <= 7:
+        problems.append(f'{art} {kind}: globe radius {decl["gr"]} is outside 4..7')
+    cx, cy = decl['gx'], decl['gy']
     globe = [((cx + dx, cy + dy), c) for (dx, dy), c in g.items()]
-    nx = a['nose_x']
-    widths = (1,) if kind == 'sprite' else (6, 5, 4)
-    for wd in widths:   # the stripe: the widest band that keeps the picture inside its budget
-        band = [nx - 3] if kind == 'sprite' else list(range(nx - 34, nx - 34 + wd))
-        stripe = [((x, y), GOLD) for x in band for y in fuselage_rows(px, x, a['fmid'], a['hf'])
-                  if luminance(base.getpixel((x, y))) >= (60 if kind == 'sprite' else 90)]   # the dark outline and the windows stay
-        if len(globe) + len(stripe) <= BUDGET[kind]:
-            break
+    globe_outside = sum(1 for (p, _) in globe if p not in body)
+    cells = [(x, y) for x in range(decl['sx0'], decl['sx1'] + 1) for y in range(decl['sy0'], decl['sy1'] + 1)]
+    stripe_off = [c for c in cells if c not in body]   # a declared stripe cell that is not a drawn pixel of the plane: the anchor is off the fuselage
+    if stripe_off:
+        problems.append(f'{art} {kind}: {len(stripe_off)} of {len(cells)} declared stripe cells are not on the plane (first {stripe_off[0]})')
+    lim = 60 if kind == 'sprite' else 90
+    stripe = [(c, GOLD) for c in cells if c in body and luminance(base.getpixel(c)) >= lim]   # the dark outline and the windows stay
     spots, cols = [p for p, _ in globe + stripe], [c for _, c in globe + stripe]
     n_globe = len(globe)
     out, painted, skipped = paint(base, spots, cols, px)
     diff = [(x, y) for y in range(base.size[1]) for x in range(base.size[0]) if out.getpixel((x, y)) != base.getpixel((x, y))]
-    changed = len(diff)
-    globe_outside = sum(1 for (x, y) in spots[:n_globe] if (x, y) not in px)   # zero allowed
     stripe_changed = sum(1 for (x, y) in spots[n_globe:] if (x, y) in px and out.getpixel((x, y))[:3] != base.getpixel((x, y))[:3])
+    if cells and stripe_changed * 2 < len(cells):
+        problems.append(f'{art} {kind}: only {stripe_changed} of {len(cells)} declared stripe cells took the gold (the stripe is mostly outline or window)')
     bbox = (min(p[0] for p in diff), min(p[1] for p in diff), max(p[0] for p in diff), max(p[1] for p in diff)) if diff else None
-    a = {k: v for k, v in a.items() if k != 'globe'}
-    return out, {'anchors': a, 'globe_centre': (cx, cy), 'glyph_pixels': len(g), 'stripe_columns': band, 'painted': painted, 'skipped_outside_the_plane': skipped,
-                 'globe_outside_the_plane': globe_outside, 'stripe_changed': stripe_changed, 'changed_bbox': bbox, 'changed': changed}
+    try:   # the automatic search is only a SUGGESTION, printed for comparison; it never changes what is painted
+        sug = anchors(base, kind, art)
+        suggestion = {'globe_centre': sug['globe_centre'], 'nose_x': sug['nose_x'], 'how': sug['how']}
+    except Exception as e:   # a failed suggestion is not a failed picture
+        suggestion = {'error': str(e)}
+    return out, {'declared': decl, 'globe_centre': (cx, cy), 'glyph_pixels': len(g), 'stripe_cells': len(cells), 'painted': painted, 'skipped_outside_the_plane': skipped,
+                 'globe_outside_the_plane': globe_outside, 'stripe_changed': stripe_changed, 'changed_bbox': bbox, 'changed': len(diff), 'suggestion': suggestion}, problems
 
 
 def contact_sheet(rows, scale, path):
@@ -208,6 +231,7 @@ def main():
     ap.add_argument('--install', action='store_true')
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
+    table = load_anchors()
     prov, bad, sheets = {}, [], {'sprite': [], 'portrait': []}
     for art, (spr, por) in PLANES.items():
         for kind, rel in (('sprite', spr), ('portrait', por)):
@@ -215,7 +239,10 @@ def main():
             want = (62, 27) if kind == 'sprite' else (400, 176)
             if base.size != want:
                 bad.append(f'{art} {kind}: base is {base.size}, expected {want}'); continue
-            out, info = make(base, kind, art)
+            if (art, kind) not in table:
+                bad.append(f'{art} {kind}: no declared anchor row in livery-anchors.tsv'); continue
+            out, info, probs = make(base, kind, art, table[(art, kind)])
+            bad += probs
             name = f'plane-{art}-livery.png' if kind == 'sprite' else f'hangar-{art}-livery.png'
             out.save(os.path.join(args.out, name))
             prov[name] = info
@@ -236,7 +263,7 @@ def main():
     with open(os.path.join(args.out, 'provenance.json'), 'w') as f:
         json.dump(prov, f, indent=1, default=list)
     for name, info in prov.items():
-        print(f'{name:28s} changed {info["changed"]:4d} (stripe {info["stripe_changed"]:3d})  globe {info["glyph_pixels"]:3d} px, outside the plane {info["globe_outside_the_plane"]}  anchor {info["anchors"]["how"]:10s} globe at {info["globe_centre"]}  nose x {info["anchors"]["nose_x"]}  changed box {info["changed_bbox"]}')
+        print(f'{name:28s} changed {info["changed"]:4d}/{BUDGET["sprite" if name.startswith("plane") else "portrait"]}  stripe {info["stripe_changed"]:3d}/{info["stripe_cells"]:3d}  globe {info["glyph_pixels"]:3d} px at {info["globe_centre"]} outside {info["globe_outside_the_plane"]}  box {info["changed_bbox"]}  (suggested globe {info["suggestion"].get("globe_centre")}, nose {info["suggestion"].get("nose_x")})')
     if bad:
         print('PROBLEMS:\n - ' + '\n - '.join(bad))
         sys.exit(1)
