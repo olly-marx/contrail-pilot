@@ -5,11 +5,11 @@ globalThis.SEASON2 = true;
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const A = await import('../src/aim.js'), R = await import('../src/route.js'), AR = await import('../src/areas.js');
-  const base = () => ({ fuel: 'kerosene', priceVersion: 2, tutorialDone: true, areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: {}, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
+  const base = () => ({ fuel: 'kerosene', priceVersion: 2, tutorialDone: true, areas: ['weurope', 'mideast'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: {}, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   const s = base(), L = R.linksFor(s);
-  // the farthest city of the area from LONDON: the target must be 4 or more hops away (the 3-stop cap is the missions', not the aim's)
-  let far = null, hops = 0; for (const c of AR.AREAS.weurope.cities) { const p = R.pathTo('LONDON', c, L); if (p && p.length - 1 > hops) { hops = p.length - 1; far = c; } }
-  check(hops >= 4, `fixture: a city 4 or more hops from LONDON exists in Western Europe (${far}: ${hops})`);
+  // the farthest city of the two open areas (Western Europe alone has none 4 hops away since the ladder release; DUBAI is 6) from LONDON: the target must be 4 or more hops away (the 3-stop cap is the missions', not the aim's)
+  let far = null, hops = 0; for (const c of [...AR.AREAS.weurope.cities, ...AR.AREAS.mideast.cities]) { const p = R.pathTo('LONDON', c, L); if (p && p.length - 1 > hops) { hops = p.length - 1; far = c; } }
+  check(hops >= 4, `fixture: a city 4 or more hops from LONDON exists in Western Europe + Middle East (${far}: ${hops})`);
   check(A.gotoTarget(s) === null && A.gotoHops(s) === 0, 'no GO TO set: no target, 0 hops');
   A.setGoto(s, far);
   check(A.gotoTarget(s) === far && A.aimOpen(s) === far && A.aimTarget(s) === far, `a GO TO ${hops} hops away is the aim (no stop limit): ${[A.gotoTarget(s), A.aimOpen(s), A.aimTarget(s)]}`);
