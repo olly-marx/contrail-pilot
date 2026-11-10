@@ -66,7 +66,9 @@ async function loadRich() {
       // 0. control
       stage = 'control: read keys and open NATURE';
       const before = await keys(), landsBefore = await lands();
-      check(DEVICE.every(k => k in before) && landsBefore.length > 1, `${tag}: control: the rich save has the nine device keys and more than one land in NATURE (keys ${DEVICE.filter(k => !(k in before))}, lands ${landsBefore})`);
+      // (the game itself consumes recoverNext at load, main.js takeRecoverNext, and drops a fake auth session: both are written again below, just before the tap)
+      const SEEDED = DEVICE.filter(k => !['recoverNext', 'auth'].includes(k));
+      check(SEEDED.every(k => k in before) && landsBefore.length > 1, `${tag}: control: the rich save has its device keys and more than one land in NATURE (keys missing ${SEEDED.filter(k => !(k in before))}, lands ${landsBefore})`);
       if (fails.length > base) { await diag(p, tag, 'control red'); await ctx.close(); continue; }   // (a red control: say why, go no further)
       await p.evaluate(() => game.registry.get('ui').go('pilot')); await p.waitForTimeout(500);
       const bad = await p.evaluate(() => !!document.getElementById('crashCard'));
@@ -74,7 +76,7 @@ async function loadRich() {
       if (fails.length > base) { await diag(p, tag, 'fixture red'); await ctx.close(); continue; }
       // 1. RESET PROGRESS
       stage = 'tap the gear, then YOUR SAVED GAME, then RESET PROGRESS (real clicks)';
-      await p.evaluate(() => { window.__oldPage = 1; });
+      await p.evaluate(() => { window.__oldPage = 1; localStorage.setItem('contrailPilot.recoverNext', '1'); localStorage.setItem('contrailPilot.auth', '{"fake":true}'); });   // (the nine keys are all there when RESET is tapped)
       await p.click('#hubGear').catch(() => {}); await p.waitForTimeout(400);
       await p.click('#sheet [data-gear="saved"]').catch(() => {}); await p.waitForTimeout(400);
       const resetTap = await p.$('#sheet [data-gear="reset"]');
