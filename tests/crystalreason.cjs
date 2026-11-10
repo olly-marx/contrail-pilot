@@ -20,7 +20,7 @@
       const gap = i.x - (w.plane.x + 50);
       if (mode === 'dive' && gap < 40) py = y + h / 2 + 4;
       if (mode === 'early' && gap < farX - 70) py = y + h / 2 + 40;   // out of the patch's height while it is still far
-      w.plane.y = py; w.plane.vy = 0; w.heat = 0; w.clock = clock;
+      w.plane.y = py; w.plane.vy = 0; w.heat = 0; w.clock = clock; if (capUsed) w.nightDodges = w.kit.dodgesPerNight;   // the night start resets the count, so hold it used up
       w.step(DT);
     }
     return { crystals: w.crystals, reasons, contrails: most };
