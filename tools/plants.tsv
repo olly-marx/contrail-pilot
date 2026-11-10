@@ -787,4 +787,3 @@ droporder	src/droporder.js	s/c\.n < TREE_CAP/true/	a kind at its cap of 9 is sti
 droporder	src/droporder.js	s/(c\.n < a\.n ? c : a)/(c.n <= a.n ? c : a)/	a tie goes to the last slot, not the first
 droporder	src/sim/rules.js	s/const lid = localTree(kind, region)\.id; this\.dropped\[lid\] = Math\.max(0, (this\.dropped\[lid\] || 0) - 1);//	a landed parcel stays pending for ever
 droporder	src/sim/rules.js	s/const kind = this\.treeKind();/const kind = this.treeKind() || 'spruce';/	a full grove still lets the tree go
-droporder	src/droporder.js	s/if (DROP_ORDER\.natives) {/if (false) {/	the natives-first tuning arm does nothing
