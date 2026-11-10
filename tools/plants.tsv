@@ -618,7 +618,7 @@ routeall	src/route.js	s/ \&\& city(name) \&\& LINKS\[name\]) return defaultChain
 routeall	src/route.js	s/save\.tutorialDone \&\& DEFAULT_DEST\.on \&\& city/DEFAULT_DEST.on \&\& city/	the tutorial gets the default destination
 routeall	src/route.js	s/ \&\& DEFAULT_DEST\.on \&\& city(name)/ \&\& city(name)/	the sim's A/B switch does nothing
 nextchip	src/ui.js	s/DEFAULT_DEST\.on \&\& !v\.aim ? defaultTargetFrom/DEFAULT_DEST.on \&\& false ? defaultTargetFrom/	the chip never names the default destination
-nextchip	src/ui.js	s/ \&\& DEFAULT_DEST\.on) return this\.openDestinationSheet();/ \&\& false) return this.openDestinationSheet();/	the chip opens the old 'Which way?' sheet
+nextchip	src/ui.js	s/ \&\& DEFAULT_DEST\.on ? this\.openDestinationSheet()/ \&\& false ? this.openDestinationSheet()/	the chip opens the old 'Which way?' sheet
 nextchip	src/ui.js	s/this\.toast('Tap a city on the globe\.', '', 'good', 3);//	CHANGE says nothing
 nextchip	src/ui.js	s/action: t \&\& !locked ? { label: 'FLY'/action: false ? { label: 'FLY'/	the FLY TO sheet offers no FLY
 nextchip	src/ui.js	s/\${chosen ? ' <button class="btn tiny" id="dsStop"/${false ? ' <button class="btn tiny" id="dsStop"/	a chosen destination offers no STOP
