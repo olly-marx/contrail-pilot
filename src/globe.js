@@ -5,6 +5,7 @@
 import { LAND_W, LAND_H, LAND_RLE, ISLANDS } from './landmask.js';
 import { regionAt, along } from './geo.js';
 import { CITIES } from './cities.js';
+import { nearestDot } from './pickcity.js';
 
 export const SIZE = 128;   // the canvas is SIZE x SIZE pixels (the page scales it, never smooths it)
 const LAND = { woodland: [94, 154, 74], mediterranean: [154, 168, 90], desert: [217, 181, 106], monsoon: [63, 138, 82], eastasia: [111, 163, 106],
@@ -171,7 +172,8 @@ function getIslands() { return islands || (islands = ISLANDS); }
 // never a drag; anything that moved further is a drag and never picks. The picture is redrawn only when it changes: at one
 // sample a pixel while it moves, five once it settles. Returns { frame(), nudge(dx), destroy() }.
 export const TAP_PX = 6, TAP_MS = 400;
-export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null, cross = null, onUse = null } = {}) {
+export const CITY_PX = 11;   // canvas pixels: a finger's width on the globe (a canvas pixel is about two screen pixels)
+export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = null, lit = null, cross = null, onUse = null } = {}) {
   let f = frameRoute(cross ? [...(path.length ? path : [CITIES[0]]), cross.from, cross.to] : (path.length ? path : [CITIES[0]]));   // (a ready crossing is framed too: its destination must be on the globe)
   let phase = 0, pulse = cross ? setInterval(() => { phase ^= 1; redraw(1); }, 700) : 0;
   canvas.width = canvas.height = SIZE;
@@ -190,6 +192,10 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null
   };
   const markXY = () => { const q = cross && project(f, cross.to.lat, cross.to.lon); return q && [canvas.width / 2 + q[0] * R(), canvas.height / 2 + q[1] * R()]; };
   const markHit = ev => { const m = markXY(); if (!m) return false; const r = canvas.getBoundingClientRect(), k = scale(); return Math.hypot(m[0] - (ev.clientX - r.left) * k, m[1] - (ev.clientY - r.top) * k) < 11; };
+  // TAP ANY CITY (src/pickcity.js, ROUTING V2 step 1): every city on the visible side is a tap target; the NEAREST one within CITY_PX canvas pixels of the finger wins (a tap never picks the first in a list).
+  const tapXY = ev => { const r = canvas.getBoundingClientRect(), k = scale(); return [(ev.clientX - r.left) * k, (ev.clientY - r.top) * k]; };
+  const cityDots = () => CITIES.map(c => { const q = project(f, c.lat, c.lon); return q && { name: c.name, x: canvas.width / 2 + q[0] * R(), y: canvas.height / 2 + q[1] * R() }; }).filter(Boolean);
+  const cityAt = ev => { const [x, y] = tapXY(ev), d = nearestDot(cityDots(), x, y, CITY_PX); return d && d.name; };
   const onDown = ev => {
     if (ev.pointerType === 'mouse' && ev.button !== 0) return;
     try { canvas.setPointerCapture(ev.pointerId); } catch (e) { /* no such live pointer (a synthetic event): the drag works without capture */ }
@@ -207,7 +213,7 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null
   const onUp = ev => {
     if (!down || ev.pointerId !== down.id) return;
     const d = down; down = null; canvas.style.cursor = 'grab';
-    if (!d.moved && performance.now() - d.t0 <= TAP_MS) { if (cross && cross.onTap && markHit(ev)) { cross.onTap(); return; } const w = hit(ev); if (w && onPick) onPick(w.name); return; }   // a tap (the crossing's ring first)
+    if (!d.moved && performance.now() - d.t0 <= TAP_MS) { if (cross && cross.onTap && markHit(ev)) { cross.onTap(); return; } if (onCity) { const nm = cityAt(ev); if (nm) onCity(nm); return; } const w = hit(ev); if (w && onPick) onPick(w.name); return; }   // a tap (the crossing's ring first, then the nearest city when the tap-any-city card is wired, else the old first-step dots)
     if (!d.moved) return;   // a long press that did not move: nothing
     coast = { vx: d.vx, vy: d.vy };   // a little coast after the finger lifts
     const step = () => { if (!alive || !coast || down) return; coast.vx *= 0.9; coast.vy *= 0.9;
@@ -220,7 +226,7 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, lit = null
   canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onCancel);
   paint(canvas, f, path, 2, ways, lit, cross, phase);
   // nudge(dx): turn by dx canvas pixels, as a drag would (the hub's spin buttons, S2 of PROPOSAL-HOME-MISSIONS.md).
-  return { frame: () => f, markPos() { const m = markXY(); if (!m) return null; const r = canvas.getBoundingClientRect(), k = scale(); return { x: r.left + m[0] / k, y: r.top + m[1] / k }; }, nudge(dx) { coast = null; f = turn(f, dx, 0, R()); redraw(2); }, destroy() { alive = false; if (pulse) clearInterval(pulse); if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
+  return { frame: () => f, cityPos(name) { const c = CITIES.find(x => x.name === name), q = c && project(f, c.lat, c.lon); if (!q) return null; const r = canvas.getBoundingClientRect(), k = scale(); return { x: r.left + (canvas.width / 2 + q[0] * R()) / k, y: r.top + (canvas.height / 2 + q[1] * R()) / k }; }, markPos() { const m = markXY(); if (!m) return null; const r = canvas.getBoundingClientRect(), k = scale(); return { x: r.left + m[0] / k, y: r.top + m[1] / k }; }, nudge(dx) { coast = null; f = turn(f, dx, 0, R()); redraw(2); }, destroy() { alive = false; if (pulse) clearInterval(pulse); if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
 }
 
 // The old entry point (src/ui.js): draw the globe for `path`, framed on the route; pass { ways, onPick } to make it live.
