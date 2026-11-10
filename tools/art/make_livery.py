@@ -28,6 +28,7 @@ PLANES = {
     'hydrogen': ('assets/plane-hydrogen.png', 'assets/ui/plane-hangar-hydrogen.png'),
 }
 BUDGET = {'sprite': 14, 'portrait': 500}
+REAR = {'hydrogen': 0.16}   # the share of the width that counts as 'the tail end' (default 0.30; the blended wing's engines sit further back than a fin would)
 GOLD = (255, 208, 64, 255)
 OCEAN, OCEAN_DARK, OCEAN_LIGHT, LAND = (40, 110, 200, 255), (24, 64, 140, 255), (160, 214, 244, 255), (60, 200, 120, 255)
 
@@ -88,24 +89,46 @@ def globe_portrait(r=7):
     return g
 
 
-def anchors(base):
-    """Where the livery goes, found from the base picture: the body's box, the tail fin column and top, the nose column. The plane faces RIGHT."""
-    body = main_body(drawn(base))
+def anchors(base, kind, art):
+    """Where the livery goes, found from the base picture (the plane faces RIGHT): the body's box, the globe's centre inside the tail fin, the nose column of the FUSELAGE (not a wing tip that reaches further)."""
+    px = drawn(base)
+    body = main_body(px)
     xs, ys = [p[0] for p in body], [p[1] for p in body]
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
     w, h = x1 - x0 + 1, y1 - y0 + 1
-    mid = (y0 + y1) / 2.0
-    rear = [p for p in body if p[0] <= x0 + 0.30 * w]
-    fin = [p for p in rear if p[1] < mid - 0.15 * h]   # drawn pixels in the rear 30 percent that are well above the fuselage centre line
-    if fin:
-        fx = sorted(p[0] for p in fin)[len(fin) // 2]
-        top = min(p[1] for p in fin if abs(p[0] - fx) <= 2)
-        how = 'fin'
-    else:   # no fin (the blended wing): the highest drawn point of the rear third
-        top = min(p[1] for p in rear)
-        fx = sorted(p[0] for p in rear if p[1] <= top + 1)[0] + 2
-        how = 'rear top edge'
-    return {'body': (x0, y0, x1, y1), 'fin_x': fx, 'fin_top': top, 'nose_x': x1, 'how': how}
+    mid = int(round((y0 + y1) / 2.0))
+    r = 1 if kind == 'sprite' else 7
+    need = 4 if kind == 'sprite' else 2 * r + 3          # the fin must be this many pixels wide at the globe's top row
+    rear_to = x0 + REAR.get(art, 0.30) * w
+    cx = cy = None
+    for y in range(y0, mid):                              # walk down from the top: the first row where the tail end is wide enough for the globe
+        row = [x for (x, yy) in body if yy == y and x <= rear_to]
+        if row and max(row) - min(row) + 1 >= need:
+            cx, cy = (min(row) + max(row)) // 2, y + r + (1 if kind == 'sprite' else 2)
+            break
+    how = 'fin'
+    if cx is None:                                        # no row wide enough: the widest tail-end row above the centre line
+        best = max(range(y0, mid), key=lambda y: len([1 for (x, yy) in body if yy == y and x <= rear_to]))
+        row = [x for (x, yy) in body if yy == best and x <= rear_to]
+        cx, cy, how = (min(row) + max(row)) // 2, best + r + 1, 'widest tail-end row'
+    # the fuselage's nose: scan right from the centre line: the last drawn pixel of the run that contains (x, mid)
+    nose = x0
+    for x in range(x0, x1 + 1):
+        if (x, mid) in body:
+            nose = x
+    return {'body': (x0, y0, x1, y1), 'mid': mid, 'globe_centre': (cx, cy), 'nose_x': nose, 'how': how}
+
+
+def fuselage_rows(px, x, mid):
+    """The rows of the contiguous drawn run through (x, mid): the fuselage's cross-section at that column (a wing above or below it is a different run)."""
+    if (x, mid) not in px:
+        return []
+    top = bot = mid
+    while (x, top - 1) in px:
+        top -= 1
+    while (x, bot + 1) in px:
+        bot += 1
+    return list(range(top, bot + 1))
 
 
 def paint(base, spots, colours, px):
@@ -121,22 +144,22 @@ def paint(base, spots, colours, px):
     return out, painted, skipped
 
 
-def make(base, kind):
+def make(base, kind, art):
     px = drawn(base)
-    a = anchors(base)
-    _, y0, x1, y1 = a['body']
+    a = anchors(base, kind, art)
     spots, cols = [], []
     # 1. the globe on the tail fin
     g = globe_sprite() if kind == 'sprite' else globe_portrait()
     r = 1 if kind == 'sprite' else 7
-    cx, cy = a['fin_x'], a['fin_top'] + r + (1 if kind == 'sprite' else 3)
+    cx, cy = a['globe_centre']
     for (dx, dy), c in g.items():
         spots.append((cx + dx, cy + dy)); cols.append(c)
     # 2. the gold stripe just behind the nose: a column (sprite: 1 px) or a 6 px band (portrait) of the body's light pixels (the dark outline and the windows stay)
-    band = [x1 - 3] if kind == 'sprite' else list(range(x1 - 34, x1 - 28))
+    nx = a['nose_x']
+    band = [nx - 3] if kind == 'sprite' else list(range(nx - 34, nx - 28))
     for x in band:
-        for y in range(y0, y1 + 1):
-            if (x, y) in px and (kind == 'sprite' or luminance(base.getpixel((x, y))) >= 90):
+        for y in fuselage_rows(px, x, a['mid']):
+            if luminance(base.getpixel((x, y))) >= (60 if kind == 'sprite' else 90):   # the dark outline and the windows stay
                 spots.append((x, y)); cols.append(GOLD)
     out, painted, skipped = paint(base, spots, cols, px)
     changed = sum(1 for y in range(base.size[1]) for x in range(base.size[0]) if out.getpixel((x, y)) != base.getpixel((x, y)))
@@ -169,7 +192,7 @@ def main():
             want = (62, 27) if kind == 'sprite' else (400, 176)
             if base.size != want:
                 bad.append(f'{art} {kind}: base is {base.size}, expected {want}'); continue
-            out, info = make(base, kind)
+            out, info = make(base, kind, art)
             name = f'plane-{art}-livery.png' if kind == 'sprite' else f'hangar-{art}-livery.png'
             out.save(os.path.join(args.out, name))
             prov[name] = info
