@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-10-reset-new-player",
+    "version": "0.52.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "Reset now starts a brand-new player: nature, missions, badges and your pilot name and code are cleared too. The game you had is kept under Settings: RECOVER AN EARLIER SAVE."
+    ]
+  },
+  {
     "id": "2026-11-10-lap-complete",
     "version": "0.51.0",
     "date": "2026-11-10",
