@@ -154,6 +154,7 @@ def make(base, kind, art):
     cx, cy = a['globe_centre']
     for (dx, dy), c in g.items():
         spots.append((cx + dx, cy + dy)); cols.append(c)
+    n_globe = len(spots)
     # 2. the gold stripe just behind the nose: a column (sprite: 1 px) or a 6 px band (portrait) of the body's light pixels (the dark outline and the windows stay)
     nx = a['nose_x']
     band = [nx - 3] if kind == 'sprite' else list(range(nx - 34, nx - 28))
@@ -162,8 +163,13 @@ def make(base, kind, art):
             if luminance(base.getpixel((x, y))) >= (60 if kind == 'sprite' else 90):   # the dark outline and the windows stay
                 spots.append((x, y)); cols.append(GOLD)
     out, painted, skipped = paint(base, spots, cols, px)
-    changed = sum(1 for y in range(base.size[1]) for x in range(base.size[0]) if out.getpixel((x, y)) != base.getpixel((x, y)))
-    return out, {'anchors': a, 'globe_centre': (cx, cy), 'glyph_pixels': len(g), 'stripe_columns': band, 'painted': painted, 'skipped_outside_the_plane': skipped, 'changed': changed}
+    diff = [(x, y) for y in range(base.size[1]) for x in range(base.size[0]) if out.getpixel((x, y)) != base.getpixel((x, y))]
+    changed = len(diff)
+    globe_outside = sum(1 for (x, y) in spots[:n_globe] if (x, y) not in px)   # zero allowed
+    stripe_changed = sum(1 for (x, y) in spots[n_globe:] if (x, y) in px and out.getpixel((x, y))[:3] != base.getpixel((x, y))[:3])
+    bbox = (min(p[0] for p in diff), min(p[1] for p in diff), max(p[0] for p in diff), max(p[1] for p in diff)) if diff else None
+    return out, {'anchors': a, 'globe_centre': (cx, cy), 'glyph_pixels': len(g), 'stripe_columns': band, 'painted': painted, 'skipped_outside_the_plane': skipped,
+                 'globe_outside_the_plane': globe_outside, 'stripe_changed': stripe_changed, 'changed_bbox': bbox, 'changed': changed}
 
 
 def contact_sheet(rows, scale, path):
@@ -199,6 +205,8 @@ def main():
             sheets[kind].append((art, base, out))
             if info['changed'] > BUDGET[kind]:
                 bad.append(f'{name}: {info["changed"]} changed pixels, budget {BUDGET[kind]}')
+            if info['globe_outside_the_plane']:
+                bad.append(f'{name}: {info["globe_outside_the_plane"]} GLOBE pixels lie outside the drawn plane (zero allowed)')
             if info['skipped_outside_the_plane']:
                 bad.append(f'{name}: {info["skipped_outside_the_plane"]} glyph pixels fell outside the drawn plane (anchor wrong: look at the sheet)')
             if info['changed'] == 0:
@@ -211,7 +219,7 @@ def main():
     with open(os.path.join(args.out, 'provenance.json'), 'w') as f:
         json.dump(prov, f, indent=1, default=list)
     for name, info in prov.items():
-        print(f'{name:28s} changed {info["changed"]:4d}  glyph {info["glyph_pixels"]:3d}  anchor {info["anchors"]["how"]:14s} globe at {info["globe_centre"]}')
+        print(f'{name:28s} changed {info["changed"]:4d} (stripe {info["stripe_changed"]:3d})  globe {info["glyph_pixels"]:3d} px, outside the plane {info["globe_outside_the_plane"]}  anchor {info["anchors"]["how"]:10s} globe at {info["globe_centre"]}  nose x {info["anchors"]["nose_x"]}  changed box {info["changed_bbox"]}')
     if bad:
         print('PROBLEMS:\n - ' + '\n - '.join(bad))
         sys.exit(1)
