@@ -18,7 +18,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
     const flying = await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s && s.state === 'playing'; }, null, { timeout: 25000 }).then(() => true).catch(() => false);
     check(flying, 'the flight did not start'); if (!flying) throw new Error('no flight');
     const r = await p.evaluate(async () => {
-      const s = game.scene.getScene('game'), shown = [], orig = s.popup.bind(s); s.popup = (x, y, text, c) => { shown.push(text); return orig(x, y, text, c); };
+      const s = game.scene.getScene('game'), shown = [], orig = s.popup.bind(s); s.popup = (x, y, text, c) => { if (!/^NEW ANIMAL/.test(text)) shown.push(text); return orig(x, y, text, c); };
       s.graceUntil = 1e12; s.hitsStorm = () => false; s.hitBird = () => false; s.explain = () => false; s.storms.forEach(st => st.rects.forEach(rr => { rr.x = -999; })); s.storms = []; s.nextStormAt = s.nextIssrAt = s.nextTurbAt = s.nextBirdsAt = 1e9; s.issrs = [];
       const hold = setInterval(() => { s.plane.y = 250; s.plane.vy = 0; s.clock = 19; s.heat = 0; }, 16), wait = ms => new Promise(r => setTimeout(r, ms));
       const patch = async () => { s.addIssrAt(s.plane.x + 160, 250 - 60 - 25, 120, 60); await wait(5500); };   // 25 px above the plane: never lines up
