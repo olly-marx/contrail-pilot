@@ -13,7 +13,9 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed);
-    await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
+    await p.goto(URL); await ready(p);
+    const homeUp = await p.waitForFunction(() => { const b = document.getElementById('goBtn'); return !!b && b.offsetParent !== null && !b.disabled; }, null, { timeout: 15000 }).then(() => true).catch(() => false);   // (polls HOME: no fixed wait)
+    check(homeUp, 'HOME never showed an enabled TAKE OFF'); if (!homeUp) throw new Error('no HOME');
     await p.click('#goBtn');
     const flying = await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s && s.state === 'playing'; }, null, { timeout: 25000 }).then(() => true).catch(() => false);
     check(flying, 'the flight did not start'); if (!flying) throw new Error('no flight');
