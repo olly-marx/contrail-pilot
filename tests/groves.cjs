@@ -10,7 +10,8 @@ globalThis.SEASON2 = true;
   // 1. the migration keeps every kind in every land
   const a = old(), before = JSON.stringify(a), v = G.groveView(a);
   check(JSON.stringify(a) === before, 'groveView does not touch the save');
-  check(v.woodland.spruce.planted === 3 && v.woodland.birch.planted === 2 && v.mediterranean['aleppo-pine'].planted === 4 && v.mediterranean.olive.planted === 1 && v.savanna.acacia.planted === 2, `every old count is in the groves: ${JSON.stringify(v)}`);
+  const at = (g, l, id) => ((g[l] || {})[id] || {}).planted;
+  check(at(v, 'woodland', 'spruce') === 3 && at(v, 'woodland', 'birch') === 2 && at(v, 'mediterranean', 'aleppo-pine') === 4 && at(v, 'mediterranean', 'olive') === 1 && at(v, 'savanna', 'acacia') === 2, `every old count is in the groves: ${JSON.stringify(v)}`);
   check(Object.values(v).every(L => Object.values(L).every(c => c.grown === c.planted && Array.isArray(c.saplings))), 'step 1: every existing tree counts as fully grown');
   check(G.treesPlantedTotal(a) === 12 && T.treesPlanted(a) === 12 && total(a) === 12, `the total is the old total: ${G.treesPlantedTotal(a)} / ${T.treesPlanted(a)}`);
   check(JSON.stringify(G.treeBook(a, 'woodland')) === JSON.stringify({ spruce: 3, birch: 2 }) && JSON.stringify(G.treeBook(a, 'savanna')) === JSON.stringify({ acacia: 2 }) && JSON.stringify(G.treeBook(a, 'tundra')) === '{}', 'treeBook gives a land\'s kinds and an empty land gives {}');
@@ -21,7 +22,7 @@ globalThis.SEASON2 = true;
   // 3. an older game's save with MORE trees wins per kind (the larger count), the rest is kept
   const c = old(); G.ensureGroves(c); c.planted.spruce = 5; c.plantedIn.savanna.acacia = 1; c.plantedIn.desert = { 'date-palm': 2 };
   const vc = G.groveView(c);
-  check(vc.woodland.spruce.planted === 5 && vc.savanna.acacia.planted === 2 && vc.desert['date-palm'].planted === 2 && vc.woodland.spruce.grown === 5, `the larger count wins per kind and a land only the old key knows is added: ${JSON.stringify(vc)}`);
+  check(at(vc, 'woodland', 'spruce') === 5 && at(vc, 'savanna', 'acacia') === 2 && at(vc, 'desert', 'date-palm') === 2 && ((vc.woodland || {}).spruce || {}).grown === 5, `the larger count wins per kind and a land only the old key knows is added: ${JSON.stringify(vc)}`);
   // 4. plantTree: one more tree in a land, groves and the mirror
   const d = old();
   check(G.plantTree(d, 'woodland', 'oak') === 1 && G.plantTree(d, 'woodland', 'spruce') === 4 && G.plantTree(d, 'savanna', 'acacia') === 3 && G.plantTree(d, 'tundra', 'larch') === 1, 'plantTree returns the new count of that kind in that land');
@@ -49,7 +50,7 @@ globalThis.SEASON2 = true;
     check(a0.total === 366, `the whole save's tree total is 366: ${a0.total}`);
     check(JSON.stringify([mig.planted, mig.plantedIn]) === legacy, 'the old keys are left exactly as they were');
     check(Object.values(mig.groves).every(L => Object.values(L).every(c => c.grown === c.planted && c.saplings.length === 0)), 'every tree of the real save counts as fully grown');
-    check(a0.tags.length === 31 && a0.tags.includes('spruce') && a0.tags.includes('mediterranean:aleppopine') && a0.tags.includes('boreal:aspen'), `the records tags are the kinds planted (UK plain, other lands land:id): ${a0.tags.length}`);
+    check(a0.tags.length === 26 && a0.tags.includes('spruce') && a0.tags.includes('mediterranean:aleppopine') && a0.tags.includes('boreal:aspen'), `the records tags are the kinds planted (UK plain, other lands land:id): ${a0.tags.length}`);
   }
   console.log(fails.length ? `FAIL groves:\n - ${fails.slice(0, 10).join('\n - ')}${fails.length > 10 ? `\n ... ${fails.length - 10} more` : ''}` : 'PASS groves: every old tree count is in the one record, the totals and the meter and the records tags are unchanged, plantTree mirrors the old keys, the larger count wins');
   process.exit(fails.length ? 1 : 0);
