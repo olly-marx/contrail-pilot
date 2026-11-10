@@ -8,6 +8,25 @@
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
+const fs = require('fs');
+const SHOTS = process.env.SHOTS || '/home/ojm/contrail-research/resetui-shots';
+// What the page shows right now: so a red step says in one run whether the fixture or the product is wrong (screenshot + visible state + the element covering the tab's centre).
+async function diag(p, tag, stage) {
+  try {
+    fs.mkdirSync(SHOTS, { recursive: true });
+    const f = `${SHOTS}/${tag}-${stage.replace(/\W+/g, '_')}.png`; await p.screenshot({ path: f }).catch(() => {});
+    const st = await p.evaluate(() => {
+      const vis = e => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return !e.hidden && cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
+      const o = { screens: [...document.querySelectorAll('section.screen, .overlay, #sheet, #coach, #title')].filter(e => vis(e)).map(e => e.id || e.className), tabbarHidden: !!(document.getElementById('tabbar') || {}).hidden };
+      o.tabs = [...document.querySelectorAll('#tabbar [data-go]')].map(e => `${e.dataset.go}:${e.hidden ? 'hidden-attr' : vis(e) ? 'visible' : 'not-rendered'}`);
+      const t = document.getElementById('tabNature'); if (t) { const r = t.getBoundingClientRect(), c = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); o.tabNatureRect = [r.x, r.y, r.width, r.height].map(Math.round); o.coveredBy = c ? (c.id || c.className || c.tagName) : null; }
+      const g = document.getElementById('hubGear'); o.hubGear = g ? (vis(g) ? 'visible' : 'not visible') : 'missing';
+      o.sheet = (document.getElementById('sheet') || {}).innerText ? document.getElementById('sheet').innerText.replace(/\s+/g, ' ').slice(0, 120) : '';
+      return o;
+    }).catch(e => ({ evalError: String(e) }));
+    console.log(`DIAG ${tag} at step "${stage}": ${JSON.stringify(st)}  screenshot ${f}`);
+  } catch (e) { console.log(`DIAG ${tag} failed: ${e}`); }
+}
 const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code', 'firstName', 'auth', 'synced'];
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
@@ -27,21 +46,28 @@ const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code
         for (const [k, v] of Object.entries(fake)) localStorage.setItem('s2:contrailPilot.' + k, JSON.stringify(v)); } }, rich);
       await p.goto(URL); await ready(p); await p.waitForTimeout(800);
       const keys = () => p.evaluate(() => { const o = {}; for (const k of Object.keys(localStorage)) if (k.startsWith('s2:contrailPilot.')) o[k.slice(17)] = localStorage.getItem(k); return o; });
+      const base = fails.length;
       const lands = async () => { await p.evaluate(() => game.registry.get('ui').go('nature')); await p.waitForTimeout(700); return p.evaluate(() => [...document.querySelectorAll('#wRegions [data-region]')].map(e => e.dataset.region)); };
+      let stage = 'start';
+      try {
       // 0. control
+      stage = 'control: read keys and open NATURE';
       const before = await keys(), landsBefore = await lands();
       check(DEVICE.every(k => k in before) && landsBefore.length > 1, `${tag}: control: the rich save has the nine device keys and more than one land in NATURE (keys ${DEVICE.filter(k => !(k in before))}, lands ${landsBefore})`);
+      if (fails.length > base) { await diag(p, tag, 'control red'); await ctx.close(); continue; }   // (a red control: say why, go no further)
       // 1. RESET PROGRESS
+      stage = 'tap the gear, then YOUR SAVED GAME, then RESET PROGRESS (real clicks)';
       await p.evaluate(() => { window.__oldPage = 1; });
       await p.click('#hubGear').catch(() => {}); await p.waitForTimeout(400);
       await p.click('#sheet [data-gear="saved"]').catch(() => {}); await p.waitForTimeout(400);
       const resetTap = await p.$('#sheet [data-gear="reset"]');
       check(!!resetTap, `${tag}: Settings > Your saved game has a RESET PROGRESS button`);
-      if (!resetTap) { await ctx.close(); continue; }
+      if (!resetTap) { await diag(p, tag, 'no RESET button'); await ctx.close(); continue; }
       await Promise.all([p.waitForEvent('load', { timeout: 15000 }).catch(() => null), resetTap.click()]);
       await ready(p); await p.waitForTimeout(800);
       check(/pilot name and code/.test(confirmText) && /nature/.test(confirmText), `${tag}: the confirm text names nature and the pilot name and code: ${confirmText.slice(0, 120)}`);
       check(!(await p.evaluate(() => window.__oldPage)), `${tag}: RESET reloads the page`);
+      stage = 'after the reload: read the keys';
       // 2. AFTER the reload
       const after = await keys(), left = DEVICE.filter(k => k in after);
       check(left.length === 0, `${tag}: after the reload none of the nine device keys is stored (left: ${left})`);
@@ -49,12 +75,15 @@ const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code
       check(sv.flights === 0 && sv.landings === 0 && sv.seeds === 0 && !sv.pilotNamed && !(sv.discovered && Object.keys(sv.discovered).length) && !(sv.missionsDone && sv.missionsDone.length) && !(sv.badgeTiers && Object.keys(sv.badgeTiers).length) && !sv.records,
         `${tag}: after the reload the saved game is a new player's (flights ${sv.flights}, seeds ${sv.seeds}, discovered ${JSON.stringify(sv.discovered)}, missionsDone ${JSON.stringify(sv.missionsDone)}, badgeTiers ${JSON.stringify(sv.badgeTiers)}, records ${JSON.stringify(sv.records)})`);
       // 3. PILOT and NATURE
+      stage = 'open PILOT and NATURE';
       await p.evaluate(() => game.registry.get('ui').go('pilot')); await p.waitForTimeout(700);
       const pil = await p.evaluate(() => { const v = id => { const e = document.getElementById(id); return !!e && !e.hidden && e.offsetParent !== null; }; const t = document.getElementById('pLost'); return { lostShown: v('pLost'), text: document.getElementById('pilot') ? document.getElementById('pilot').innerText.replace(/\s+/g, ' ').slice(0, 200) : '' }; });
       check(!pil.lostShown && !/lost its pilot/i.test(pil.text), `${tag}: PILOT does not say this phone has lost its pilot: ${pil.text}`);
       const landsAfter = await lands();
       check(landsAfter.length === 1, `${tag}: NATURE shows only the home land after the reset (lands: ${landsAfter})`);
       check(p.errs.length === 0, `${tag}: no page errors: ${p.errs}`);
+      } catch (e) { fails.push(`${tag}: exception at step "${stage}": ${String(e).split('\n')[0]}`); await diag(p, tag, stage); }
+      if (fails.length > base) await diag(p, tag, 'end (' + stage + ')');
       await ctx.close();
     }
   } catch (e) { fails.push('exception: ' + e); }
