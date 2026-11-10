@@ -27,6 +27,10 @@ async function diag(p, tag, stage) {
     console.log(`DIAG ${tag} at step "${stage}": ${JSON.stringify(st)}  screenshot ${f}`);
   } catch (e) { console.log(`DIAG ${tag} failed: ${e}`); }
 }
+// The fake device keys (no real pilot code or token). A key counts as SURVIVING a reset only if it still holds exactly this seeded text: a key the game writes
+// itself after the reload (the Supabase client may write contrailPilot.auth again) holds other text and is only reported as a NOTE, never a failure.
+const FAKE = { pilot: { first: 'Testy', word: 'Puffin', tag: 11 }, code: 'FAKE-CODE-0000', firstName: 'Testy', auth: { fake: true }, synced: { json: '{}', stamp: 1, serverProgress: 99 }, outbox: [{ fake: 1 }], onlineNote: 1, recoverNext: 1, landlog: [[1, 2, 3, 4, 5, 1]] };
+const SEEDTEXT = Object.fromEntries(Object.entries(FAKE).map(([k, v]) => [k, JSON.stringify(v)]));
 const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code', 'firstName', 'auth', 'synced'];
 // The rich save is built by the game's own code from prepareSave(null), changing only fields whose shape was read in their ensure()/migrate code
 // (a hand-made records.beaten object made NATURE throw and the crash card cover the page: the first two runs of this test, 2026-11-10).
@@ -53,10 +57,9 @@ async function loadRich() {
       await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
       let confirmText = ''; p.on('dialog', d => { confirmText = d.message(); d.accept(); });
       const rich = richSave();
-      await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { sessionStorage.setItem('fresh', 1); localStorage.clear();
+      await p.addInitScript(({ s, fake }) => { if (!sessionStorage.getItem('fresh')) { sessionStorage.setItem('fresh', 1); localStorage.clear();
         localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s));
-        const fake = { pilot: { first: 'Testy', word: 'Puffin', tag: 11 }, code: 'FAKE-CODE-0000', firstName: 'Testy', auth: { fake: true }, synced: { json: '{}', stamp: 1, serverProgress: 99 }, outbox: [{ fake: 1 }], onlineNote: 1, recoverNext: 1, landlog: [[1, 2, 3, 4, 5, 1]] };
-        for (const [k, v] of Object.entries(fake)) localStorage.setItem('s2:contrailPilot.' + k, JSON.stringify(v)); } }, rich);
+        for (const [k, v] of Object.entries(fake)) localStorage.setItem('s2:contrailPilot.' + k, JSON.stringify(v)); } }, { s: rich, fake: FAKE });
       await p.goto(URL); await ready(p); await p.waitForTimeout(800);
       const keys = () => p.evaluate(names => { const o = {}; for (const n of names) { const v = localStorage.getItem('contrailPilot.' + n); if (v !== null) o[n] = v; } return o; }, [...DEVICE, 'v2']);   // (the page's localStorage is the season-2 store: it adds the s2: prefix itself)
       const base = fails.length;
@@ -66,7 +69,8 @@ async function loadRich() {
       // 0. control
       stage = 'control: read keys and open NATURE';
       const before = await keys(), landsBefore = await lands();
-      // (the game itself consumes recoverNext at load, main.js takeRecoverNext, and drops a fake auth session: both are written again below, just before the tap)
+      // (load-time effects on the seeded keys: recoverNext is consumed by main.js:60 takeRecoverNext; auth is dropped/replaced by the Supabase client (online.js:44, storageKey 'contrailPilot.auth');
+      //  onlineNote is only taken by ui.js:366 when seenTips lacks '*' (the seed has it); outbox/synced/pilot/code/firstName/landlog are not touched without a network (online.js flush 113, syncUp 206, syncDown 225). Both consumed keys are written again just before the tap.)
       const SEEDED = DEVICE.filter(k => !['recoverNext', 'auth'].includes(k));
       check(SEEDED.every(k => k in before) && landsBefore.length > 1, `${tag}: control: the rich save has its device keys and more than one land in NATURE (keys missing ${SEEDED.filter(k => !(k in before))}, lands ${landsBefore})`);
       if (fails.length > base) { await diag(p, tag, 'control red'); await ctx.close(); continue; }   // (a red control: say why, go no further)
@@ -77,8 +81,9 @@ async function loadRich() {
       // 1. RESET PROGRESS
       stage = 'tap the gear, then YOUR SAVED GAME, then RESET PROGRESS (real clicks)';
       await p.evaluate(() => { window.__oldPage = 1; localStorage.setItem('contrailPilot.recoverNext', '1'); localStorage.setItem('contrailPilot.auth', '{"fake":true}'); });   // (the nine keys are all there when RESET is tapped)
-      await p.click('#hubGear').catch(() => {}); await p.waitForTimeout(400);
-      await p.click('#sheet [data-gear="saved"]').catch(() => {}); await p.waitForTimeout(400);
+      await p.evaluate(() => game.registry.get('ui').go('fly')); await p.waitForTimeout(600);   // the gear (#hubGear) lives on the title hub (ui.js showTitle; tests/backuprestore.cjs taps it there), not on PILOT or NATURE
+      await p.click('#hubGear'); await p.waitForTimeout(400);
+      await p.click('#sheet [data-gear="saved"]'); await p.waitForTimeout(400);
       const resetTap = await p.$('#sheet [data-gear="reset"]');
       check(!!resetTap, `${tag}: Settings > Your saved game has a RESET PROGRESS button`);
       if (!resetTap) { await diag(p, tag, 'no RESET button'); await ctx.close(); continue; }
@@ -88,15 +93,25 @@ async function loadRich() {
       check(!(await p.evaluate(() => window.__oldPage)), `${tag}: RESET reloads the page`);
       stage = 'after the reload: read the keys';
       // 2. AFTER the reload
-      const after = await keys(), left = DEVICE.filter(k => k in after);
-      check(left.length === 0, `${tag}: after the reload none of the nine device keys is stored (left: ${left})`);
+      const after = await keys(), left = DEVICE.filter(k => after[k] === SEEDTEXT[k]), rewritten = DEVICE.filter(k => k in after && after[k] !== SEEDTEXT[k]);
+      check(left.length === 0, `${tag}: after the reload none of the nine seeded device keys is still stored with its seeded text (left: ${left})`);
+      if (rewritten.length) console.log(`NOTE ${tag}: the game wrote these keys itself after the reload (not the seeded text, so not counted as surviving): ${rewritten.map(k => k + '=' + String(after[k]).slice(0, 60))}`);
       const sv = JSON.parse(after['v2'] || 'null') || {};
-      check(sv.flights === 0 && sv.landings === 0 && sv.seeds === 0 && !sv.pilotNamed && !(sv.discovered && Object.keys(sv.discovered).length) && !(sv.missionsDone && sv.missionsDone.length) && !(sv.badgeTiers && Object.keys(sv.badgeTiers).length) && !sv.records,
-        `${tag}: after the reload the saved game is a new player's (flights ${sv.flights}, seeds ${sv.seeds}, discovered ${JSON.stringify(sv.discovered)}, missionsDone ${JSON.stringify(sv.missionsDone)}, badgeTiers ${JSON.stringify(sv.badgeTiers)}, records ${JSON.stringify(sv.records)})`);
+      // Each expectation about the reloaded save, with the source of why the game leaves it alone at load:
+      //  flights/landings/seeds 0: DEFAULTS (save.js); pilotNamed unset: main.js:25 sets it only when a pilot exists (the pilot keys are gone);
+      //  discovered: GameScene.js:556-565 writes a land only by FLYING into it, never at load; missionsDone/badgeTiers: migrateMissions/migrateBadges give a new player [] / {} (missions.js, badges.js:127);
+      //  records: records.js ensure() runs only when a flight is recorded or BOARDS is opened (neither happens here); groves/planted: ensureGroves(prepareSave) of a new save has no planted tree.
+      const noKeys = (o, ks) => !o || typeof o !== 'object' || ks.every(k => !(k in o));
+      check(sv.flights === 0 && sv.landings === 0 && sv.seeds === 0 && !sv.pilotNamed, `${tag}: after the reload the saved game has the new-player numbers (flights ${sv.flights}, landings ${sv.landings}, seeds ${sv.seeds}, pilotNamed ${sv.pilotNamed})`);
+      check(noKeys(sv.discovered, ['desert', 'savanna']), `${tag}: after the reload the lands flown over are gone (discovered ${JSON.stringify(sv.discovered)})`);
+      check(!(sv.missionsDone || []).includes('L1') && !(sv.missionsDone || []).includes('L2') && noKeys(sv.badgeTiers, ['lap']), `${tag}: after the reload the missions and badges are gone (missionsDone ${JSON.stringify(sv.missionsDone)}, badgeTiers ${JSON.stringify(sv.badgeTiers)})`);
+      check(!sv.records || (!(sv.records.ever || {}).longest && !(sv.records.beaten || []).length), `${tag}: after the reload the records are gone (${JSON.stringify(sv.records)})`);
+      check(!/"planted":[1-9]/.test(JSON.stringify(sv.groves || {})) && !(sv.planted && sv.planted.oak), `${tag}: after the reload no tree is planted (groves ${JSON.stringify(sv.groves)}, planted ${JSON.stringify(sv.planted)})`);
       // 3. PILOT and NATURE
       stage = 'open PILOT and NATURE';
       await p.evaluate(() => game.registry.get('ui').go('pilot')); await p.waitForTimeout(700);
-      const pil = await p.evaluate(() => { const v = id => { const e = document.getElementById(id); return !!e && !e.hidden && e.offsetParent !== null; }; const t = document.getElementById('pLost'); return { lostShown: v('pLost'), text: document.getElementById('pilot') ? document.getElementById('pilot').innerText.replace(/\s+/g, ' ').slice(0, 200) : '' }; });
+      const pil = await p.evaluate(() => { const v = id => { const e = document.getElementById(id); return !!e && !e.hidden && e.offsetParent !== null; }; return { lostShown: v('pLost'), editShown: v('pEdit'), text: document.getElementById('pilot') ? document.getElementById('pilot').innerText.replace(/\s+/g, ' ').slice(0, 200) : '' }; });
+      console.log(`NOTE ${tag}: PILOT after the reset: lost-pilot lines ${pil.lostShown ? 'SHOWN' : 'hidden'}, name form ${pil.editShown ? 'shown' : 'not shown'}`);
       check(!pil.lostShown && !/lost its pilot/i.test(pil.text), `${tag}: PILOT does not say this phone has lost its pilot: ${pil.text}`);
       const landsAfter = await lands();
       check(landsAfter.length === 1, `${tag}: NATURE shows only the home land after the reset (lands: ${landsAfter})`);
