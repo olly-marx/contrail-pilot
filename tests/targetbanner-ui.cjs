@@ -30,6 +30,11 @@ const seed = aim => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDO
             const lit = await p.waitForFunction(() => { const s = game.scene.getScene('game'), rw = s.runways.find(r => r.name === 'AMSTERDAM'); return rw ? { lit: rw.lit, others: s.runways.filter(r => r.name !== 'AMSTERDAM').map(r => r.lit) } : false; }, null, { timeout: 8000 }).then(h => h.jsonValue()).catch(() => null);
             log.push(`${tag} lit: ${JSON.stringify(lit)}`);
             check(lit && lit.lit === true && lit.others.every(x => x === false), `${tag} B: the target runway must be lit and no other: ${JSON.stringify(lit)}`);
+            // the runway on screen is NOT the target any more: it must go out (a lit-everywhere bug cannot hide behind runways that are already passed)
+            await p.evaluate(() => { game.scene.getScene('game').save.aimCity = 'PARIS'; });
+            const notTarget = await p.waitForFunction(() => { const s = game.scene.getScene('game'), rw = s.runways.find(r => r.name === 'AMSTERDAM'); return !!rw && rw.lit === false; }, null, { timeout: 5000 }).then(() => true).catch(() => false);
+            check(notTarget, `${tag} B: a runway that is not the destination must not be lit (the target is PARIS, AMSTERDAM is on screen)`);
+            await p.evaluate(() => { game.scene.getScene('game').save.aimCity = 'AMSTERDAM'; });
             await p.evaluate(() => { const s = game.scene.getScene('game'), rw = s.runways.find(r => r.name === 'AMSTERDAM'); s.distancePx = rw.worldX + 400; });
             const out = await p.waitForFunction(() => { const s = game.scene.getScene('game'), rw = s.runways.find(r => r.name === 'AMSTERDAM'); return rw && rw.lit === false; }, null, { timeout: 5000 }).then(() => true).catch(() => false);
             check(out, `${tag} B: the runway must go out once the plane has passed it`);
