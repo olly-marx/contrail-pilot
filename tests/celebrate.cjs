@@ -32,6 +32,8 @@ const fs = require('fs'), path = require('path');
   // 5. reduced motion
   const q = run('large', { reduced: true });
   check(q.host.children.length === 0 && !q.host.classList.contains('cel-push') && q.host.classList.contains('cel-still') && q.played.length === 1, `reduced motion: no sparkles, no push, the cue still plays, a still outline (layers ${q.host.children.length}, cues ${q.played.length})`);
+  const rp = K.celebrationPlan('large', { reduced: true }), np = K.celebrationPlan('large');
+  check(rp.particles === 0 && rp.push === false && rp.still === true && np.particles === 24 && np.push === true && np.still === false, `the plan for reduced motion has no sparkles and no push, a still outline (reduced ${JSON.stringify(rp)}; normal ${np.particles} sparkles)`);
   // 6. the declared events
   const ev = Object.entries(K.CELEBRATIONS);
   const noCue = ev.filter(([, c]) => typeof S.sfx[c.cue] !== 'function' || !K.SIZES[c.size]).map(([k]) => k);
