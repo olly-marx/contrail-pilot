@@ -17,7 +17,7 @@ globalThis.SEASON2 = true;
   check(B.bannerText({ city: 'SAPPORO', crossFrom: true, mission: m('chain', { cityB: 'TOKYO' }) }) === 'Flying to SAPPORO to cross\nthen TOKYO', 'a crossing departure that is also a mission city shows both');
   // the budgets: every city, the longest line and the second line
   let longest = 0;
-  for (const c of CT.CITIES) { for (const t of [B.bannerText({ city: c.name, crossFrom: true, mission: m('chain', { cityB: c.name }) })]) { const [a, b2] = t.split('\n'); longest = Math.max(longest, a.length, b2.length); check(a.length <= B.TEXT_MAX && b2.length <= B.TEXT_MAX, `${c.name}: a banner line is over ${B.TEXT_MAX} characters: "${a}" / "${b2}"`); } }
+  for (const c of CT.CITIES) { for (const t of [B.bannerText({ city: c.name, crossFrom: true, mission: m('chain', { cityB: c.name }) })]) { const [a, b2 = ''] = t.split('\n'); check(b2 !== '', `${c.name}: a chain mission keeps its second line (the mission's condition)`); longest = Math.max(longest, a.length, b2.length); check(a.length <= B.TEXT_MAX && b2.length <= B.TEXT_MAX, `${c.name}: a banner line is over ${B.TEXT_MAX} characters: "${a}" / "${b2}"`); } }
   check(longest >= 25 && longest <= B.TEXT_MAX, `power: the longest banner line is ${longest} characters (budget ${B.TEXT_MAX})`);
   // the lit rule: only the target, only until passed or landed
   check(B.isLit('PARIS', 'PARIS', false, false) === true, 'the target runway on screen is lit');
