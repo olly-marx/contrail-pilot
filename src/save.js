@@ -188,3 +188,20 @@ export function resetSave() {
   releaseHold();
   return { ...structuredClone(DEFAULTS), fleet: newFleet() };
 }
+
+// Per-player localStorage keys outside the save that a reset clears (flights of the old game waiting to be sent, the one-time notes, the landing log).
+// NOT cleared, on purpose: the online pilot identity (pilot, code, firstName, auth) and the sync stamp (online.js allowRoughUpload sets it). Clearing the
+// code would cut the way back to the old online pilot.
+export const RESET_KEYS = ['contrailPilot.outbox', 'contrailPilot.onlineNote', 'contrailPilot.recoverNext', 'contrailPilot.landlog'];
+
+// RESET: the LIVE save object becomes a brand-new player's, key for key. Keys that are not in DEFAULTS (discovered, missionsDone, badgeTiers, records, ...)
+// are deleted from the live object: Object.assign(live, resetSave()) left them in place and the next writeSave wrote them straight back.
+// The blank save is written at once (allowBlank) so a reload finds it.
+export function wipeSave(live) {
+  const fresh = resetSave();
+  for (const k of Object.keys(live)) delete live[k];
+  Object.assign(live, fresh);
+  try { for (const k of RESET_KEYS) localStorage.removeItem(k); } catch (e) {}
+  writeSave(live, { allowBlank: true });
+  return live;
+}

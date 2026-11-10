@@ -658,3 +658,8 @@ targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = 
 targetbanner-ui	src/GameScene.js	s/const city = gotoTarget(this\.save); if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
 targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
 citytap	style.css	s/^#title\.hub \.hub-card { display: flex; }.*$//	the card's buttons stack under its text again (the row is 75 px high)
+resetwipe	src/save.js	s/  for (const k of Object.keys(live)) delete live\[k\];//	reset assigns over the live save and leaves discovered, missionsDone and badgeTiers on it
+resetwipe	src/save.js	s/  try { for (const k of RESET_KEYS) localStorage.removeItem(k); } catch (e) {}//	reset leaves the old game's outbox, notes and landing log
+resetwipe	src/save.js	s/  writeSave(live, { allowBlank: true });//	reset does not store the blank save
+resetwipe	src/save.js	s/export const RESET_KEYS = \[/export const RESET_KEYS = ['contrailPilot.pilot', /	reset clears the online pilot identity
+resetwipe	src/save.js	s/  stashSave('before a reset');//	reset (wipeSave) keeps no safety copy
