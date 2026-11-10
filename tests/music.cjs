@@ -1,7 +1,7 @@
 // The music WRAPPER (src/music.js) against a recording AudioContext double: plain Node, ~1 s. NOBODY has listened: this holds what a machine can hold.
 // 1. before the first tap (not armed) nothing is created, whatever the settings say; 2. MUTED: arming creates no context and no node; 3. MUSIC OFF: the same; 4. POSITIVE CONTROL: armed, un-muted,
 // MUSIC on: a context and nodes appear and the music plays (else 1-3 prove nothing); 5. muting stops it; 6. a cue with depth < 1 (warm) ramps the music's gain to its depth, a cue with depth 1 (tick, medal, thud' cue (tick) does not;
-// 7. every sound cue is classed in DUCKS (duck or keep). Plants: tools/plants.tsv (test music).
+// 7. every sound cue has a duck depth in DUCKS (a number in (0, 1]). Plants: tools/plants.tsv (test music).
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   let contexts = 0, nodes = 0, duckRamps = 0, lastDuck = 0, levelRamps = []; const clock = { t: 0 };
