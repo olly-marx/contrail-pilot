@@ -6,14 +6,16 @@ import { localTree, UK_SLOTS } from './nature.js';
 import { treeBook } from './groves.js';
 
 // THE SIM'S A/B SWITCH (research M-T6; flippable in Node like ROUTE_AIM.on): on = this order (shipping state); off = the old turns through the open kinds (speciesIdx % open.length).
-export const DROP_ORDER = { on: true };
+export const DROP_ORDER = { on: true, natives: false };   // natives: the tuning arm (M-T6 option b): the plantation kind (slot 0) waits until every open native kind has 3 trees
 
 // pending: { treeId: n } parcels released this flight in this land that have not landed (or missed) yet.
 export function nextTree(save, land, pending = {}) {
   const book = treeBook(save, land);
   const cand = treesOpen(save, land).map(slot => { const t = localTree(UK_SLOTS[slot], land); return { slot, id: t.id, name: t.name, n: (book[t.id] || 0) + (pending[t.id] || 0) }; });
   const room = cand.filter(c => c.n < TREE_CAP);
-  return room.length ? room.reduce((a, c) => (c.n < a.n ? c : a)) : null;
+  let pool = room;
+  if (DROP_ORDER.natives) { const nat = room.filter(c => c.slot > 0); if (nat.length && nat.some(c => c.n < 3)) pool = nat; }   // natives first until each has 3
+  return pool.length ? pool.reduce((a, c) => (c.n < a.n ? c : a)) : null;
 }
 // The word on the button: the first word of the tree's name, upper case, at most 8 letters ('Next: OAK').
 export const shortName = name => String(name || '').split(' ')[0].toUpperCase().slice(0, 8);

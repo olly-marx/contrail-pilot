@@ -26,6 +26,12 @@ globalThis.SEASON2 = true;
   { const s = base(); G.plantTree(s, 'woodland', idOf(open[0])); const n = D.nextTree(s, 'woodland'); check(n.slot !== open[0], `a sapling counts toward its kind: ${JSON.stringify(n)}`); }
   // 6. every open kind at the cap: the grove is full
   { const s = base(); for (const sl of open) for (let i = 0; i < 9; i++) G.plantTree(s, 'woodland', idOf(sl)); check(D.nextTree(s, 'woodland') === null, 'every open kind at 9: the grove is full (null)'); }
+  // 6b. the tuning arm (DROP_ORDER.natives, M-T6 option b): the plantation kind (slot 0) waits until every open native has 3 trees
+  { D.DROP_ORDER.natives = true; try {
+      const s = base(), pending = {}, seq = []; for (let i = 0; i < 3 * (open.length - 1) + 3; i++) { const n = D.nextTree(s, 'woodland', pending); seq.push(n.slot); pending[n.id] = (pending[n.id] || 0) + 1; }
+      const first = seq.slice(0, 3 * (open.length - 1));
+      check(first.every(sl => sl !== open[0]) && seq.slice(3 * (open.length - 1)).includes(open[0]), `natives first: no plantation kind in the first ${first.length} drops, then it joins: ${seq}`);
+    } finally { D.DROP_ORDER.natives = false; } }
   // 7. deterministic, and the same in another land (its own tree names)
   check(JSON.stringify(D.nextTree(s0, 'woodland')) === JSON.stringify(D.nextTree(base(), 'woodland')), 'the same save gives the same answer (no random numbers)');
   { const s = base(), n = D.nextTree(s, 'savanna'); check(n && N.localTree(N.UK_SLOTS[n.slot], 'savanna').id === n.id && n.n === 0, `another land names its own tree: ${JSON.stringify(n)}`); }
