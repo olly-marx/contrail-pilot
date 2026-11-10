@@ -677,3 +677,6 @@ goldtrail	src/sim/rules.js	s/^import { addPrizes } from '\.\.\/rewards\.js';/imp
 goldtrail-ui	src/GameScene.js	s/trailColour(this\.save)).setOrigin(0);/COLOURS.contrail).setOrigin(0);/	the lap never turns the drawn contrail gold
 goldtrail-ui	src/GameScene.js	s/trailColour(this\.save)).setOrigin(0);/trailColour({ lapDone: true })).setOrigin(0);/	every pilot gets the golden contrail
 goldtrail-ui	src/GameScene.js	s/c\.view\.setFillStyle(trailColour(this\.save));/c.view.setFillStyle(COLOURS.contrail);/	a contrail that stopped blocking a ray goes back to plain white
+resetui	src/save.js	s/  for (const k of Object.keys(live)) delete live\[k\];//	reset leaves discovered, missionsDone and badgeTiers on the live save (in the browser)
+resetui	src/save.js	s/ 'contrailPilot.firstName',//	reset keeps the first name of the old pilot (in the browser)
+resetui	src/ui.js	s/      location.reload(); .*$//	reset does not reload the page
