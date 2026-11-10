@@ -32,9 +32,10 @@ const seed = aim => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDO
             log.push(`${tag} lit: ${JSON.stringify(lit)}`);
             check(lit && lit.lit === true && lit.others.every(x => x === false), `${tag} B: the target runway must be lit and no other: ${JSON.stringify(lit)}`);
             // the runway on screen is NOT the target any more: it must go out (a lit-everywhere bug cannot hide behind runways that are already passed)
+            // (probe 17:12Z: the plane keeps flying, so a lit flag that is false later may be 'passed' or 'landing', not 'not the destination'. Hold the plane 100 px short of the runway while asking.)
             await p.evaluate(() => { game.scene.getScene('game').save.aimCity = 'PARIS'; });
-            const notTarget = await p.waitForFunction(() => { const s = game.scene.getScene('game'), rw = s.runways.find(r => r.name === 'AMSTERDAM'); return !!rw && rw.lit === false; }, null, { timeout: 5000 }).then(() => true).catch(() => false);
-            check(notTarget, `${tag} B: a runway that is not the destination must not be lit (the target is PARIS, AMSTERDAM is on screen)`);
+            const notTarget = await p.waitForFunction(() => { const s = game.scene.getScene('game'), rw = s.runways.find(r => r.name === 'AMSTERDAM'); if (!rw) return false; s.distancePx = rw.worldX - 100; return s.state === 'playing' && rw.lit === false; }, null, { timeout: 5000, polling: 100 }).then(() => true).catch(() => false);
+            check(notTarget, `${tag} B: a runway that is not the destination must not be lit while the plane is short of it and flying (the target is PARIS, AMSTERDAM is on screen)`);
             await p.evaluate(() => { game.scene.getScene('game').save.aimCity = 'AMSTERDAM'; });
             await p.evaluate(() => { const s = game.scene.getScene('game'), rw = s.runways.find(r => r.name === 'AMSTERDAM'); s.distancePx = rw.worldX + 400; });
             const out = await p.waitForFunction(() => { const s = game.scene.getScene('game'), rw = s.runways.find(r => r.name === 'AMSTERDAM'); return rw && rw.lit === false; }, null, { timeout: 5000 }).then(() => true).catch(() => false);
