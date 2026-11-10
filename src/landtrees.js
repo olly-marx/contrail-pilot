@@ -2,6 +2,7 @@
 // Slot 0, the plantation tree, is open from the start; each native slot opens with that land's own nature.
 // The hangar no longer sells tree kinds: it keeps the planting tools (parcels, soil patches, nursery).
 import { REGION_TREES } from './habitat/trees.js';
+import { treeBook } from './groves.js';
 import { isSeason2 } from './missions2.js';
 import { AREAS } from './areas.js';
 import { city } from './route.js';
@@ -47,7 +48,7 @@ export const slotKind = slot => UK_SLOTS[slot];
 export const TREE_CAP = 9;   // points level off at 9 of a kind (nature.js speciesPoints: 6 x sqrt(9) = 18, 2 x sqrt(9) = 6)
 export function landTrees(save, land) {
   if (!hasTrees(land)) return [];
-  const open = treesOpen(save, land), book = land === 'woodland' ? save.planted || {} : (save.plantedIn || {})[land] || {};
+  const open = treesOpen(save, land), book = treeBook(save, land);
   return UK_SLOTS.map((kind, slot) => {
     const t = localTree(kind, land), n = book[t.id] || 0;
     return { slot, id: t.id, name: t.name, fact: t.fact, open: open.includes(slot), n, cap: TREE_CAP, full: n >= TREE_CAP, rule: OPENS[slot] && OPENS[slot].text };

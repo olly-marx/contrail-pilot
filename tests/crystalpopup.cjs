@@ -13,22 +13,31 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed);
-    await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
+    await p.goto(URL); await ready(p);
+    const homeUp = await p.waitForFunction(() => { const b = document.getElementById('goBtn'); return !!b && b.offsetParent !== null && !b.disabled; }, null, { timeout: 15000 }).then(() => true).catch(() => false);   // (polls HOME: no fixed wait)
+    check(homeUp, 'HOME never showed an enabled TAKE OFF'); if (!homeUp) throw new Error('no HOME');
     await p.click('#goBtn');
     const flying = await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s && s.state === 'playing'; }, null, { timeout: 25000 }).then(() => true).catch(() => false);
     check(flying, 'the flight did not start'); if (!flying) throw new Error('no flight');
     const r = await p.evaluate(async () => {
-      const s = game.scene.getScene('game'), shown = [], orig = s.popup.bind(s); s.popup = (x, y, text, c) => { if (!/^NEW ANIMAL/.test(text)) shown.push(text); return orig(x, y, text, c); };
+      const WHY = Object.values((await import('/src/tips.js')).CRYSTAL_WHY), s = game.scene.getScene('game'), shown = [], orig = s.popup.bind(s);
+      s.popup = (x, y, text, c) => { if (WHY.includes(text)) shown.push(text); return orig(x, y, text, c); };   // only the REASON lines are counted: a '+1 seed' pickup or an animal popup is not what this test is about (a seed pickup landing in the window made it flaky)
       s.graceUntil = 1e12; s.hitsStorm = () => false; s.hitBird = () => false; s.explain = () => false; s.storms.forEach(st => st.rects.forEach(rr => { rr.x = -999; })); s.storms = []; s.nextStormAt = s.nextIssrAt = s.nextTurbAt = s.nextBirdsAt = 1e9; s.issrs = [];
       const hold = setInterval(() => { s.plane.y = 250; s.plane.vy = 0; s.clock = 19; s.heat = 0; }, 16), wait = ms => new Promise(r => setTimeout(r, ms));
-      const patch = async () => { s.addIssrAt(s.plane.x + 160, 250 - 60 - 25, 120, 60); await wait(5500); };   // 25 px above the plane: never lines up
+      // Poll the game, never a fixed wall-clock wait: a patch is done when it has left the screen behind the plane (a named failure if it never does within the bound), then 600 ms of GAME time pass so its reason line can show.
+      const until = async (cond, bound) => { const t0 = performance.now(); while (!cond()) { if (performance.now() - t0 > bound) return false; await wait(25); } return true; };
+      let late = false;
+      const patch = async () => { const i = s.addIssrAt(s.plane.x + 160, 250 - 60 - 25, 120, 60);   // 25 px above the plane: never lines up
+        if (!await until(() => !s.issrs.includes(i) || i.x + (i.width || 120) < s.plane.x - 20, 20000)) late = true;
+        const g0 = s.gameTime; if (!await until(() => s.gameTime - g0 >= 600, 5000)) late = true; };
       await patch(); const first = shown.slice();
       await patch(); const second = shown.slice();
       s.gameTime += 13000; await patch(); const third = shown.slice();
       s.explaining = true; s.gameTime += 13000; const before = shown.length; s.onNoCrystal('notheading'); const tipNew = shown.length - before; s.explaining = false;   // the sim does not step while a tip is up, so the hook is called directly: past the 12 s limit, only the tip guard can stop the line
-      clearInterval(hold); return { first, second, third, tipNew };
+      clearInterval(hold); return { first, second, third, tipNew, late };
     });
     log.push(JSON.stringify(r));
+    check(!r.late, `a patch did not leave the screen (or the game clock did not advance) within its bound: ${JSON.stringify(r)}`);
     const L = 'You were not heading into it';
     check(r.first.length === 1 && r.first[0] === L, `a missed cloud shows ONE reason line: ${JSON.stringify(r.first)}`);
     check(r.second.length === 1, `a second cloud right after shows nothing (one per 12 s): ${JSON.stringify(r.second)}`);

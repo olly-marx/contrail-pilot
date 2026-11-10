@@ -1,5 +1,5 @@
-// THE PILOT CODE AND THE OUTBOX (src/online.js ensureCode / sendFlight), against a stub Supabase in plain Node. Lola's code 'Cloud Navigator Bumblebee Hare 46' appeared long after her first flights, and her
-// pilot has no save or flights online (2026-11-09). What the code says: a code is written on the device ONLY after set_pilot_code succeeded; a failing call leaves no code and the next startup tries again;
+// THE PILOT CODE AND THE OUTBOX (src/online.js ensureCode / sendFlight), against a stub Supabase in plain Node. A tester's code appeared long after the first flights, and that
+// pilot had no save or flights online (2026-11-09). What the code says: a code is written on the device ONLY after set_pilot_code succeeded; a failing call leaves no code and the next startup tries again;
 // the code is four NAME_WORDS and a number 10-99, sent as one string; the server stores sha256(lower(code)). The outbox keeps the last 100 flights.
 //   1. positive control: a named pilot with no code + a working server gets a code (shape, the same string sent, the hash the server stores);  2. no pilot: no call;  3. set_pilot_code fails ('no pilot yet'):
 //   no code on the device, then the next call after the server works creates it;  4. an existing code is kept (no second call);  5. 150 flights sent while the server fails: the outbox holds 100, the newest.
@@ -23,7 +23,7 @@ const crypto = require('crypto');
   // 2. no pilot: nothing is called
   await O.ensureCode(); check(!srv.calls.length && !mem[KEY], `no pilot: no server call and no code (calls ${JSON.stringify(srv.calls)}, code ${mem[KEY]})`);
   // 1. the control
-  mem['contrailPilot.pilot'] = JSON.stringify({ first: 'Lola', word: 'Puffin', tag: 23 });
+  mem['contrailPilot.pilot'] = JSON.stringify({ first: 'Tester', word: 'Puffin', tag: 23 });
   const code = await O.ensureCode();
   check(shapeOk(code), `control: the code is four NAME_WORDS and a number 10-99: ${code}`);
   check(srv.sent === code && JSON.parse(mem[KEY]) === code, `control: the server got the same string the device keeps (sent ${srv.sent}, kept ${mem[KEY]})`);

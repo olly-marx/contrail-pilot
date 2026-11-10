@@ -1,5 +1,6 @@
 // "My pilot" (name + profile) and "Leaderboard" screens. Pop-ups over the title, like About.
 import { pilotLost } from './recoverfirst.js';
+import { treeBook } from './groves.js';
 import { landingText, landingCount } from './landlog.js';
 import { lastFirst, NAME_WORDS, pilotName, firstNameShapeOk, randomTag, getPilot, savePilot, leaderboard, getCode, ensureCode, pilotLogin, outboxSize, onlineOff, namesOpen } from './online.js';
 import { writeSave, stashSave } from './save.js';
@@ -170,7 +171,7 @@ export class PilotScreens {
   }
 
   async renderStats() {
-    const s = this.save, kinds = Object.values(s.planted || {}).filter(n => n > 0).length;
+    const s = this.save, kinds = Object.values(treeBook(s, 'woodland')).filter(n => n > 0).length;
     const row = (k, v) => `<span>${k}</span><b>${v}</b>`;
     const local = row('Longest landed flight', km(s.bestDistance)) + row('Safe landings', s.landings || 0)
       + row('Kinds of tree planted', kinds) + row('Missions done', `${Math.min(s.mission || 0, MISSIONS.length)} / ${MISSIONS.length}`);

@@ -622,3 +622,12 @@ nextchip	src/ui.js	s/ \&\& DEFAULT_DEST\.on ? this\.openDestinationSheet()/ \&\&
 nextchip	src/ui.js	s/this\.toast('Tap a city on the globe\.', '', 'good', 3);//	CHANGE says nothing
 nextchip	src/ui.js	s/action: t \&\& !locked ? { label: 'FLY'/action: false ? { label: 'FLY'/	the FLY TO sheet offers no FLY
 nextchip	src/ui.js	s/\${chosen ? ' <button class="btn tiny" id="dsStop"/${false ? ' <button class="btn tiny" id="dsStop"/	a chosen destination offers no STOP
+groves	src/groves.js	s/const n = whole(n0); if (!n) continue;/const n = whole(n0); if (!n || land !== 'woodland') continue;/	the migration drops every land but the UK
+groves	src/groves.js	s/save\.planted\[id\] = c\.planted;/;/	plantTree no longer mirrors the UK's old key
+groves	src/groves.js	s/save\.plantedIn\[land\]\[id\] = c\.planted;/;/	plantTree no longer mirrors another land's old key
+groves	src/groves.js	s/if (x\.planted < n) {/if (x.planted < n \&\& x.planted === 0) {/	the smaller count wins when an older save disagrees
+groves	src/groves.js	s/Object\.values(groveView(save))\.reduce(/Object.values({ woodland: groveView(save).woodland || {} }).reduce(/	the total counts only the UK's trees
+groves	src/groves.js	s/c\.planted += 1; c\.grown += 1;/c.planted += 1;/	a planted tree is not counted as grown
+secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ Puffin Swift Falcon Otter 4\x36 A phone that has lost its pilot/	a pilot-code-shaped string is written into a comment
+secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ L\x6fla A phone that has lost its pilot/	a tester's first name is written into a comment
+secretscan	tests/secretscan.cjs	/file: 'tests\/pilotcode.cjs'/d	the allow-list entry for the pilotcode fixture is removed

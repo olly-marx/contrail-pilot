@@ -2,6 +2,7 @@ import { cz } from './config.js';
 import { UK_PROJECTS, UK_SPECIES, RARITY, REGION_DATA } from './habitats.js';
 import { WILDLIFE } from './wildlife.js';
 import { REGION_TREES } from './habitat/trees.js';
+import { treeBook, groveWith } from './groves.js';
 // Nature: tree species, rewilding projects and the Biodiversity meter (barren land to rainforest).
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
 // native kind is a big boost; more of the same kind adds less and less.
@@ -66,7 +67,7 @@ export function localTree(kind, region) {
   const t = list.find(x => x.slot === slot);
   return { id: t.id, name: t.name, native: t.slot > 0, fact: t.fact, uk: false };   // (native: worth a fact pop-up)
 }
-const plantedHere = (save, region) => region === 'woodland' ? save.planted || {} : ((save.plantedIn || {})[region] || {});
+const plantedHere = (save, region) => treeBook(save, region);   // one record for every land (src/groves.js)
 // Slot 0 is the plantation tree (rows of one kind: few animals), scored low like spruce, even where it is
 // native (Aleppo pine, Chinese fir, loblolly pine...); slots 1-4 score like the UK natives.
 const nativeHere = (region, id) => region === 'woodland' ? SPECIES[id] && SPECIES[id].native : ((REGION_TREES[region] || []).find(t => t.id === id) || { slot: 0 }).slot > 0;
@@ -77,7 +78,7 @@ const pointsHere = (region, id, n) => !n ? 0 : nativeHere(region, id) ? Math.min
 export function biodiversity(save, region = 'woodland') {
   let b = 0;
   if (region === 'woodland') {
-    for (const [id, n] of Object.entries(save.planted || {})) b += speciesPoints(id, n);
+    for (const [id, n] of Object.entries(treeBook(save, 'woodland'))) b += speciesPoints(id, n);
     for (const p of projectsDone(save)) b += p.bio;
     return Math.min(100, Math.round(b * 100 / RAW_MAX()));
   }
@@ -97,11 +98,11 @@ export const worldBiodiversity = save => Math.round(Object.keys(REGION_DATA).red
 export function plantGainHere(save, region, id) {
   if (region === 'woodland') return plantGain(save, id);
   const n = plantedHere(save, region)[id] || 0, before = biodiversity(save, region);
-  const s2 = { ...save, plantedIn: { ...(save.plantedIn || {}), [region]: { ...plantedHere(save, region), [id]: n + 1 } } };
+  const s2 = { ...save, groves: groveWith(save, region, id, n + 1) };
   return biodiversity(s2, region) - before;
 }
 export function plantGain(save, id) {
-  const n = (save.planted || {})[id] || 0;
+  const n = treeBook(save, 'woodland')[id] || 0;
   return (speciesPoints(id, n + 1) - speciesPoints(id, n)) * 100 / RAW_MAX();
 }
 

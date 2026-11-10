@@ -1,6 +1,6 @@
 // Badges, missions and prizes (2026-10-22 rework): every badge awards on a flight that meets it and
 // not on a near miss; tiers stack and never repeat; prizes are paid at once (R8: no CLAIM); old
-// saves convert without free prizes; mission 1 can't be stuck behind you (Lola flew past PARIS);
+// saves convert without free prizes; mission 1 can't be stuck behind you (a tester flew past PARIS);
 // the HUD mission line stays on screen; the landing multiplier is a clean 1-decimal number.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/badges.cjs
 const { chromium } = require('playwright-core');
@@ -93,9 +93,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(JSON.stringify(mig.done) === '["land","seeds-5","shade-10","clean-night","pass-1"]' && mig.n === 5, `old mission 5 converts: ${JSON.stringify(mig)}`);
   check(mig.tiers.zerocarbon === 1 && mig.tiers.sunshield === 1 && mig.tiers.frequent === 1 && mig.tiers.globetrotter === 1 && !mig.unclaimed, `old badges convert unpaid: ${JSON.stringify(mig)}`);
 
-  // 4. Lola's bug: fly past PARIS and land in BERLIN on the first flight: mission 1 still done.
-  const lola = await p.evaluate(async () => { const { MISSIONS } = await import('./src/missions.js'); return MISSIONS[0].check({ landed: true, landedAt: 'BERLIN', airportsSkipped: 1 }, {}); });
-  check(lola === true, 'mission 1 must be done by landing at ANY airport (flying past PARIS cannot strand you)');
+  // 4. The tester's bug: fly past PARIS and land in BERLIN on the first flight: mission 1 still done.
+  const pastParis = await p.evaluate(async () => { const { MISSIONS } = await import('./src/missions.js'); return MISSIONS[0].check({ landed: true, landedAt: 'BERLIN', airportsSkipped: 1 }, {}); });
+  check(pastParis === true, 'mission 1 must be done by landing at ANY airport (flying past PARIS cannot strand you)');
 
   // 5. In flight: the multiplier is a clean number, and the mission line never spills off screen.
   await p.click('#goBtn'); await started(p);

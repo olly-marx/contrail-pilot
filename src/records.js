@@ -8,6 +8,7 @@
 // KINDS and MISSIONS are not counted here: they are read from the save (planted / plantedIn, missionsDone). Their THIS WEEK number is
 // "now minus what you had when the week began" (kindsBase, missionsBase).
 import { km } from './config.js';
+import { groveView } from './groves.js';
 
 const n = v => Number(v).toLocaleString('en-GB');
 export const BOARDS = [
@@ -34,8 +35,7 @@ const ensure = save => {
 // The kinds of tree a save has planted: UK kinds bare, other lands' as 'land:id' (the same tags the boards use).
 export function treeTags(save) {
   const tags = [];
-  for (const [id, c] of Object.entries(save.planted || {})) if (c > 0) tags.push(id);
-  for (const [land, book] of Object.entries(save.plantedIn || {})) for (const [id, c] of Object.entries(book || {})) if (c > 0) tags.push(`${land}:${id}`);
+  for (const [land, book] of Object.entries(groveView(save))) for (const [id, c] of Object.entries(book)) if (c.planted > 0) tags.push(land === 'woodland' ? id : `${land}:${id}`);   // (the UK's kinds are plain ids, every other land's are land:id: the records' tags are unchanged)
   return tags;
 }
 

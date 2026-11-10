@@ -1,4 +1,4 @@
-// The season 2 hub on screen (S2 of research/PROPOSAL-HOME-MISSIONS.md): the bottom bar (back since Lola, 2026-10-27), a BIG world you can spin, NEXT and
+// The season 2 hub on screen (S2 of research/PROPOSAL-HOME-MISSIONS.md): the bottom bar (back since a tester asked, 2026-10-27), a BIG world you can spin, NEXT and
 // TAKE OFF, tiles that open their screen with a HOME button back. Phone size.
 // Run: python3 -m http.server 8000 & node tests/hubscreen.cjs   (proved by planted defects)
 const { chromium } = require('playwright-core');
@@ -46,7 +46,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(nudged.want === nudged.got, `nudge turns by dx and stops the coast: want ${nudged.want.slice(0, 60)} got ${nudged.got.slice(0, 60)}`);
   // 3. A bar tab opens its screen; HOME comes back.
   await p.click('#tabHangar'); await p.waitForTimeout(400);   // R3: the bar's tab (the tiles are gone)
-  // The bottom bar is back on every menu screen (Lola, 2026-10-27), showing only what is revealed: after lesson 1,
+  // The bottom bar is back on every menu screen (a tester, 2026-10-27), showing only what is revealed: after lesson 1,
   // HOME, MISSIONS and HANGAR; not NATURE (lesson 2), PILOT or BOARDS (they come with the 3rd landing).
   const inH = await p.evaluate(() => ({ hangar: !document.getElementById('hangar').hidden, bar: !document.getElementById('tabbar').hidden,
     tabs: [...document.querySelectorAll('#tabbar [data-go]')].filter(b => !b.hidden).map(b => b.dataset.go) }));

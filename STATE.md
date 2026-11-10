@@ -107,7 +107,7 @@ Three systems, each with one job. Code: `src/missions.js`, `src/badges.js`, `src
   airport, land with 5 seeds, make 10 shade, a night with no contrail, fly past an airport then land,
   plant a tree, 5 ice crystals, make your plane cleaner, reach CAIRO (or beyond), turbulence, 3 kinds of
   tree, a habitat project, round the world. No mission names a city that can end up behind you
-  (Lola flew past PARIS on her first flight and the old "Land in PARIS" stranded her). Done missions
+  (a tester flew past PARIS on a first flight and the old "Land in PARIS" stranded her). Done missions
   are `save.missionsDone` (ids); `save.mission` is now the COUNT done (pilot.js, restore.js read it).
 - **Badges = achievements.** 22 (`src/badges.js`), 12 tiered bronze/silver/gold, 7 secret ("???" until
   earned: Oops!, Bird Strike, Told Off, Meltdown, Close Call, Lucky 7, Seed Dodger). Each measures one
@@ -228,7 +228,7 @@ the advanced autopilot (see items 5 below).
   exists (add REGIONS entries). Australia = desert, Patagonia = plains, NZ = woodland for now (part B to decide).
   Tests: tests/geo.cjs, tests/flightregion.cjs.
 - HOTFIX 6606db1 (2026-10-22): ef68aeb froze flights over the SEA on saves with a UK project (iPhone reports from the
-  user and Lola): natureCooling(save,'ocean') threw every frame (REGION_DATA has no 'ocean'). nature.js now treats regions
+  user and a tester): natureCooling(save,'ocean') threw every frame (REGION_DATA has no 'ocean'). nature.js now treats regions
   with no data as empty; tests/flightregion.cjs flies over the sea WITH UK projects (fails on the old code). Lesson: test
   saves with no projects skip the land-cooling path (landFull is true at 0 projects).
 - PART B (routing) DONE + LIVE 2026-10-22 (c9d5a12, CI green, 43/43): src/cities.js (104 airports, BRIDGES), src/network.js
@@ -283,7 +283,7 @@ the advanced autopilot (see items 5 below).
   left; one job at a time. ~1p/generation on paid plans (third-party reviews, unverified). The user's plan: keep our generator
   for the small in-flight/wild-area sprites (lightweight); PixelLab for a future TAP-AN-ANIMAL detailed close-up (~240-300
   generations) and for the art session's plane redesign (older planes, non-silly upgrade parts). Waiting on: a paid plan.
-- PACING DATA for the plane design (read-only query, 2026-10-23; 525 flights, 9 players, mostly the user/Lola/testers): flights
+- PACING DATA for the plane design (read-only query, 2026-10-23; 525 flights, 9 players, mostly the user and testers): flights
   per active day median 29 (p75 47); landed 20.4%; sky seeds per landed flight median 20 (flights 1-20), 25 (21-50), 81 (51+).
   The flights table stores no seeds and no duration.
 - NATURE tabs open from ANY airport of a region (src/cities.js) or flying over it (save.discovered).

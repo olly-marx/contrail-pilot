@@ -19,7 +19,7 @@ globalThis.SEASON2 = true;
   check(fs.existsSync(fixture), 'tests/fixtures/ladder-save.json is missing: this test needs it (it does not skip)');
   const saves = [];
   if (fs.existsSync(fixture)) saves.push(['fixture', S.prepareSave(JSON.parse(fs.readFileSync(fixture, 'utf8')))]);
-  const extra = process.env.LOLA || require('os').homedir() + '/contrail-research/lola-backup-2026-11-09.json';
+  const extra = process.env.TESTER_BACKUP || require('os').homedir() + '/contrail-research/tester-backup-2026-11-09.json';
   if (fs.existsSync(extra)) { const r = B.readBackup(fs.readFileSync(extra, 'utf8')); check(r.ok, 'EXTRA (local only): the full backup reads'); if (r.ok) saves.push(['EXTRA full backup (local only)', r.save]); }
   for (const [label, save] of saves) {
   const top = C.topRung(save), na = C.rungOf('north-atlantic');

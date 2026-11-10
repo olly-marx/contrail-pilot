@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-10-trees-privacy",
+    "version": "0.46.1",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "Behind the scenes: all lands now keep their trees in one place, the project no longer carries a tester's name, and a check keeps secrets out of it. Nothing changes for you."
+    ]
+  },
+  {
     "id": "2026-11-10-tap-any-city",
     "version": "0.46.0",
     "date": "2026-11-10",

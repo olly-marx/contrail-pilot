@@ -162,7 +162,7 @@ badges pay ~7,700 seeds once. Seeds are scarce; crystals pile up.
 Prices: set from the measured income below so each era's first jet and gadgets are affordable when its flying time is reached (section 8).
 
 ### Measured play (2026-10-23, read-only aggregate of public.flights by the game session)
-525 flights, 9 players (mostly the user, Lola and testers in the first 3 days: NOT festival behaviour).
+525 flights, 9 players (mostly the user and testers in the first 3 days: NOT festival behaviour).
 Seeds are not stored: "sky seeds" are the restore.js estimate from distance (0.42d + 0.847d^2, d in 1000 km,
 landed only), excluding mission, badge and city prizes. Duration is not stored: legs of 1,800-2,600 km take
 ~14-20 s, so a 5,000-8,000 km flight is ~40-70 s.

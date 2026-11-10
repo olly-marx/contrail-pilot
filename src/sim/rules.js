@@ -6,6 +6,7 @@ import { tip } from '../tips.js';
 import { GAP_HINT, FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
+import { treeBook, plantTree } from '../groves.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
 import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as s2LessonsLeft } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
@@ -1184,10 +1185,9 @@ export const RULES = {
     this.speciesPlanted.add(here.id);   // kinds = SPECIES (local ids), not UK slots (PROPOSAL-TREES.md §4)
     this.speciesTags.add(here.uk ? here.id : `${region}:${here.id}`);   // ids repeat across lands (oak, acacia...): each land's counts on its own
     // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
-    // Counted where it grows: UK trees in save.planted, other regions' in save.plantedIn[region].
-    const book = here.uk ? this.save.planted : ((this.save.plantedIn = this.save.plantedIn || {})[region] = (this.save.plantedIn[region] || {}));
-    const first = !(book[here.id] > 0);
-    book[here.id] = (book[here.id] || 0) + 1;
+    // Counted where it grows, in the one record for every land (src/groves.js; the UK is the land 'woodland').
+    const land = here.uk ? 'woodland' : region, first = !(treeBook(this.save, land)[here.id] > 0);
+    plantTree(this.save, land, here.id);
     this.showTree(tree, plot, here, first);
   },
 
