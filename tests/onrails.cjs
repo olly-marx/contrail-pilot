@@ -122,10 +122,10 @@ const [W, H] = (process.env.VP || '390x844').split('x').map(Number);   // VP=375
     const scale = new DOMMatrix(getComputedStyle(plane).transform).a;
     return { op: part ? +getComputedStyle(part).opacity : null, okShown: !!ok && getComputedStyle(ok).visibility !== 'hidden', text: document.getElementById('payText').textContent,
       label: lab.textContent, labelOn: +getComputedStyle(lab).opacity > 0.9, scale: +scale.toFixed(2), mark: { l: Math.round(m.left), t: Math.round(m.top), r: Math.round(m.right), b: Math.round(m.bottom) },
-      points: m.width > 2 && tip.x >= m.left && tip.x <= m.right && tip.y >= m.top - 2 && tip.y <= m.bottom + 2, inFrame, small, labelInCard }; });
+      points: m.width > 2 && Math.abs(tip.x - (m.left + m.right) / 2) <= l.width / 2 + 2 && l.top >= fr.bottom - 1, inFrame, small, labelInCard }; });
   await shot('R6b-payoff-after');
   check(pay1.op > 0.9 && pay1.okShown && /jet engines|cleaner/i.test(pay1.text), `R6: then the new part arrives on the plane, with the sentence and OK (${JSON.stringify(pay1)})`);
-  check(pay1.scale === 1 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points && pay1.inFrame && pay1.small && pay1.labelInCard, `R6: the plane stays WHOLE (scale 1, no zoom: the zoom cropped its body) with the new part ringed (its box in view and small: the part, not the plane) and the label, inside the card, points INTO it (${JSON.stringify(pay1)})`);
+  check(pay1.scale === 1 && pay1.labelOn && /NEW/.test(pay1.label) && pay1.points && pay1.inFrame && pay1.small && pay1.labelInCard, `R6: the plane stays WHOLE (scale 1, no zoom: the zoom cropped its body) with the new part ringed (its box in view and small: the part, not the plane) and the label, inside the card BELOW the picture and under the ring (it no longer covers the plane) (${JSON.stringify(pay1)})`);
   await step('R6-payoff', /new part/i, () => { const po = document.getElementById('payoff'); return (!po || po.hidden) && !document.getElementById('hangar').hidden; }   /* (stage 2 removes it) */);   /* stage 2: the tour rings OK (the page is live) */   // (stays in the hangar: the user)
   await step('R7-takeoff', /take off/i, () => document.getElementById('hangar').hidden, { screen: 'hangar' });   // (the hangar's own TAKE OFF)
   // R8-R9: flight 1, then the seeds, the mission's prize, and the wildlife hint.

@@ -633,3 +633,4 @@ secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ L\x6
 secretscan	tests/secretscan.cjs	/file: 'tests\/pilotcode.cjs'/d	the allow-list entry for the pilotcode fixture is removed
 nextchip	src/ui.js	s/t = aim || defaultTargetFrom(/t = defaultTargetFrom(/	the sheet names the default, not the mission the flight is aimed at
 nextchip	src/ui.js	s/class="chip" id="dsChange"/class="btn tiny" id="dsChange"/	CHANGE is a 7 px link again
+payofffull	src/hangar.js	s#lab.style.top = `${Math.round(c.height + 6)}px`;#lab.style.top = `${Math.round(m.top - c.top - 6)}px`;#	the payoff label is back over the plane

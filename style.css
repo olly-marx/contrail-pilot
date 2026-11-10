@@ -921,6 +921,7 @@ h2.sub { margin-top: -4px; }
 .payoff.inbox .pay-bars { margin: 6px 0 0; }
 .payoff.inbox #payText { margin: 6px 0 4px; }
 .payoff.inbox .pay-label { z-index: 2; }
+.payoff.inbox:not(.nopart) .pay-frame { margin-bottom: 30px; }   /* the row under the picture where the label sits (not over the plane) */
 
 /* The loading screen (src/loader.js): night sky, a pixel plane drawing a contrail as files arrive. Above everything; pointer-events none the moment it is done. */
 .loader { position: fixed; inset: 0; z-index: 200; background: #10142b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; transition: opacity .35s; }
