@@ -1101,3 +1101,4 @@ h2.sub { margin-top: -4px; }
   .cel-layer { display: none; }
   .cel-layer i, .cel-push { animation: none; }
 }
+.w-nursery { margin: 2px 0 4px; font-size: 8px; text-align: center; }   /* the nursery line under a land's trees (TREES V2 step 2) */

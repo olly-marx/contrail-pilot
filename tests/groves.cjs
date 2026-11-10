@@ -27,7 +27,7 @@ globalThis.SEASON2 = true;
   const d = old();
   check(G.plantTree(d, 'woodland', 'oak') === 1 && G.plantTree(d, 'woodland', 'spruce') === 4 && G.plantTree(d, 'savanna', 'acacia') === 3 && G.plantTree(d, 'tundra', 'larch') === 1, 'plantTree returns the new count of that kind in that land');
   check(d.planted.oak === 1 && d.planted.spruce === 4 && d.plantedIn.savanna.acacia === 3 && d.plantedIn.tundra.larch === 1, `the old keys mirror the groves: ${JSON.stringify([d.planted, d.plantedIn])}`);
-  check(d.groves.woodland.spruce.planted === 4 && d.groves.woodland.spruce.grown === 4 && T.treesPlanted(d) === 16, `the groves hold the same: total ${T.treesPlanted(d)} (want 16)`);
+  check(d.groves.woodland.spruce.planted === 4 && d.groves.woodland.spruce.grown === 3 && d.groves.woodland.spruce.saplings.length === 1 && T.treesPlanted(d) === 16, `a planted tree is a SAPLING (the 3 old ones stay grown): ${JSON.stringify(d.groves.woodland.spruce)}, total ${T.treesPlanted(d)} (want 16)`);
   // 5. nothing else of a save is touched and bad data does not throw
   check(G.treesPlantedTotal(null) === 0 && G.treesPlantedTotal({}) === 0 && G.treesPlantedTotal({ planted: 'x', plantedIn: [1], groves: 5 }) === 0 && T.treesPlanted(undefined) === 0, 'a missing or malformed record counts as zero trees and does not throw');
   // 6. the readers that used the old keys give the same answers: the meter, the plant gain, the records tags

@@ -774,3 +774,10 @@ crossreward	src/crossings.js	s/prize: done ? due : null }/prize: due }/	the card
 crossreward	src/missionprize.js	s/  if (!Number.isInteger(e) || e < 0 || e > 4) throw .*$/  if (false) throw new Error('x');/	a non-lap crossing of an unknown era reads as a word
 crossrewardui	src/ui.js	s/<p class="ending-prize">/<p class="ending-prize" style="position:absolute;top:-500px">/	the ending's prize lines exist in the text but sit off the card
 lapbadge	src/sim/rules.js	s/^    this.bankFlight({ landed, reason });/    this.onFinish({ landed, reason, sound }); this.bankFlight({ landed, reason });/	finish() ends the flight (and completes the crossing) before it banks it
+groves	src/groves.js	s/c\.planted += 1; c\.saplings\.push({ points: 0, fresh: true });/c.planted += 1; c.grown += 1;/	a planted tree counts as grown at once (no sapling)
+nursery	src/groves.js	s/if (s\.fresh) { keep\.push/if (s.fresh \&\& false) { keep.push/	the planting flight gives a sapling its first point
+nursery	src/groves.js	s/if (p >= need) { c\.grown += 1; up += 1; }/if (p >= NURSERY_NEED[0]) { c.grown += 1; up += 1; }/	the nursery's need is ignored (always 10)
+nursery	src/groves.js	s/grow <= 0\.5 ? NURSERY_NEED\[2\]/grow <= 0.5 ? NURSERY_NEED[0]/	the second nursery level grows no faster
+nursery	src/groves.js	s/{ c\.grown += 1; up += 1; } else keep\.push/{ up += 1; } else keep.push/	a sapling that grows up is lost
+nursery	src/sim/rules.js	s/if (!this\.school) growGroves(/if (false) growGroves(/	banking a flight grows no sapling
+nursery	src/nature.js	s/const book = grownBook(save, region), base/const book = plantedHere(save, region), base/	the scenery shows saplings as grown trees
