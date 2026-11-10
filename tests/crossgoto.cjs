@@ -26,7 +26,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       await p.click('#hcGo'); await p.waitForTimeout(600);
       const a1 = await read(); log.push(`${tag} A1: ${JSON.stringify(a1)}`);
       check(a1.aim === 'WARSAW' && a1.stop && !a1.go && /go to/.test(a1.route) && a1.goOk, `${tag} A: GO TO WARSAW did not set the aim or show 'stop' and (go to): ${JSON.stringify(a1)}`);
-      await p.click('#hcStop'); await p.waitForTimeout(500); const a2 = await read();
+      await p.click('#hcStop', { timeout: 4000 }).catch(() => check(false, `${tag} A: the box has no stop button after GO TO (GO TO set no aim)`)); await p.waitForTimeout(500); const a2 = await read();
       check(a2.aim === null && a2.go && !a2.stop, `${tag} A: stop did not clear the aim: ${JSON.stringify(a2)}`);
       await p.click('#hcGo'); await p.waitForTimeout(500);
       await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.city = 'WARSAW'; ui.showTitle(); }); await p.waitForTimeout(700);   // the player lands in WARSAW
@@ -35,7 +35,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       await p.click('#goBtn'); await p.waitForTimeout(500);
       const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', fly: (JSON.parse(localStorage.getItem('contrailPilot.v2')).flyCrossing || null) }; });
       check(/WARSAW > STOCKHOLM/.test(sh.sheet) && /CROSS TO STOCKHOLM/.test(sh.sheet) && !sh.fly, `${tag} B: the big button must open the CROSSINGS screen and start no flight: ${JSON.stringify(sh)}`);
-      await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); }); await p.click('#hubFly'); await started(p);
+      await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); }); await p.click('#hubFly', { timeout: 4000 }).catch(() => check(false, `${tag} B: there is no 'fly normally' link to tap at the airport`)); await started(p);
       const fl = await p.evaluate(() => ({ crossing: !!game.scene.getScene('game').crossing, state: game.scene.getScene('game').state }));
       check(!fl.crossing && ['takeoff', 'playing'].includes(fl.state), `${tag} B: 'fly normally' did not start an ordinary flight: ${JSON.stringify(fl)}`);
       check(!p.errs.length, `${tag}: page errors ${p.errs.join('; ')}`); await ctx.close();
