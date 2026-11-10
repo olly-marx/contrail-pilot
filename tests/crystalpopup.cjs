@@ -25,15 +25,15 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
       await patch(); const first = shown.slice();
       await patch(); const second = shown.slice();
       s.gameTime += 13000; await patch(); const third = shown.slice();
-      s.explaining = true; s.gameTime += 13000; await patch(); const tip = shown.slice(); s.explaining = false;
-      clearInterval(hold); return { first, second, third, tip };
+      s.explaining = true; s.gameTime += 13000; const before = shown.length; s.onNoCrystal('notheading'); const tipNew = shown.length - before; s.explaining = false;   // the sim does not step while a tip is up, so the hook is called directly: past the 12 s limit, only the tip guard can stop the line
+      clearInterval(hold); return { first, second, third, tipNew };
     });
     log.push(JSON.stringify(r));
     const L = 'You were not heading into it';
     check(r.first.length === 1 && r.first[0] === L, `a missed cloud shows ONE reason line: ${JSON.stringify(r.first)}`);
     check(r.second.length === 1, `a second cloud right after shows nothing (one per 12 s): ${JSON.stringify(r.second)}`);
     check(r.third.length === 2 && r.third[1] === L, `after 13 s of flight the next cloud shows its line again: ${JSON.stringify(r.third)}`);
-    check(r.tip.length === 2, `no line is shown over a tip: ${JSON.stringify(r.tip)}`);
+    check(r.tipNew === 0, `no line is shown over a tip (new lines while a tip is up, 13 s after the last line): ${JSON.stringify(r)}`);
     check(!p.errs.length, `page errors: ${p.errs.join('; ')}`); await ctx.close();
   } finally { await b.close(); }
   console.log(log.join('\n'));
