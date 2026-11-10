@@ -219,6 +219,17 @@ export const RULES = {
     this.touchdown = { pos: r ? Math.round(100 * (box.x - r.x) / (AIRPORT.runwayLen - box.w)) / 100 : null, sink: Math.round(vy), angle: v > 0 ? Math.round(10 * Math.atan(vy / v) * 180 / Math.PI) / 10 : 0,
       gear: ((this.save.fleet || {}).gadgets || {}).gear || 0, flare: Math.round(100 * (this.kit.flare || 1)) / 100, landed: !!rw };
   },
+  // Why a patch that has just passed the plane did NOT pay a crystal: null = it pays; 'quiet' = nobody needs telling (school, not playing); else 'fake', 'day', 'touched' (the plane went into it), 'notheading' (the plane's height never
+  // lined up with it while it was on screen), 'limit' (tonight's cap, kit.dodgesPerNight, is used up). Reads state only: no random draws, no state change.
+  crystalReason(i) {
+    if (this.school || this.state !== 'playing') return 'quiet';
+    if (i.fake) return 'fake';
+    if (this.isDay) return 'day';
+    if (i.entered) return 'touched';
+    if (!i.inPath) return 'notheading';
+    if (this.nightDodges >= this.kit.dodgesPerNight) return 'limit';   // Weather Forecast: more per night
+    return null;
+  },
   // The k-th airport ahead of the start city (0 = the next one), at worldX `from` + that leg.
   airportAhead(k, from = 0) {
     return { worldX: from + this.legKm(k), name: this.path[k + 1], spawned: false };
@@ -678,16 +689,17 @@ export const RULES = {
       if (inside) { inIssr = true; i.entered = true; }
       if (i.popped) P.fadePopped(this, i); else i.alpha = this.issrAlpha(i, box, inside);
       if (i.fake && !i.popped && this.nearPx(i, box) < FORECAST.popPx) this.popFake(i);
-      // In your path: level with the plane while it was coming up ahead, so you had to climb or dive.
+      // In your path (the user, 2026-11-09, widened from 'within 120 px'): at ANY moment while the patch is on screen ahead of the plane, the plane's CURRENT height would hit it if it stayed level, so you had to climb or dive.
       const ahead = i.x - (box.x + box.w), cy = box.y + box.h / 2;
-      if (ahead > 0 && ahead < 120 && cy >= i.y && cy <= i.y + i.height) i.inPath = true;
-      // Dodged: icy air that was in your path at night, passed without making a contrail.
+      if (ahead > 0 && i.x < WIDTH && cy >= i.y && cy <= i.y + i.height) i.inPath = true;
+      // Dodged: icy air that was in your path at night, passed without making a contrail (crystalReason below says why not, when it was not paid).
       if (!i.scored && i.x + i.width < box.x) {
         i.scored = true;
-        if (!i.fake && i.inPath && !i.entered && !this.isDay && this.state === 'playing' && !this.school && this.nightDodges < this.kit.dodgesPerNight) {   // Weather Forecast: more per night
+        const why = this.crystalReason(i);
+        if (!why) {
           this.nightDodges++; this.dodgesTotal++;
           this.earnCrystals(this.kit.dodgeCrystals, 'dodged icy air!');   // Crystal Lens: more per dodge
-        }
+        } else if (why !== 'quiet') this.onNoCrystal(why);
       }
     }
     this.updateTokens(dt, box);

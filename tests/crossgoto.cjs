@@ -1,6 +1,6 @@
 // GO TO AND CROSS TO ON HOME (src/ui.js renderHub / openCrossings, src/aim.js; CROSSINGS V2 step 3). Real taps at 390x844 and 320x568, a season 2 save in LONDON with the Warsaw-Stockholm crossing ready (the lever
 // SEASON.offer.biodiversity = 0): A. away from the departure airport the box says 'Ready! Go to WARSAW' with hop dots and a GO TO WARSAW button, TAKE OFF stays TAKE OFF; the tap sets the aim (save.aimCity), the box then
-// offers 'stop', the route line says (go to); stop clears it. B. at the airport (the player lands in WARSAW: the aim clears itself) the box says 'Ready! You are here.', the big button reads CROSS TO STOCKHOLM, a small
+// offers 'stop', the route line says (go to); stop clears it. B. at the airport (the player lands in WARSAW: the aim clears itself) the box says 'Ready! Tap to cross.', the big button reads CROSS TO STOCKHOLM, a small
 // 'fly normally' link shows, TAKE OFF's place is still above the bar, a tap on the big button opens the CROSSINGS screen (no flight starts), and 'fly normally' starts an ordinary flight.
 // Plants: tools/plants.tsv, test `crossgoto`. Run: python3 -m http.server 8000 & node tests/crossgoto.cjs
 const { chromium } = require('playwright-core');
@@ -31,7 +31,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       await p.click('#hcGo'); await p.waitForTimeout(500);
       await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.city = 'WARSAW'; ui.showTitle(); }); await p.waitForTimeout(700);   // the player lands in WARSAW
       const b0 = await read(); log.push(`${tag} B0: ${JSON.stringify(b0)}`);
-      check(b0.aim === null && /Ready! You are here\./.test(b0.box) && b0.dots === 0 && b0.btn === 'CROSS TO STOCKHOLM' && b0.fly && b0.goOk, `${tag} B: at the airport: ${JSON.stringify(b0)}`);
+      check(b0.aim === null && /Ready! Tap to cross\./.test(b0.box) && b0.dots === 0 && b0.btn === 'CROSS TO STOCKHOLM' && b0.fly && b0.goOk, `${tag} B: at the airport: ${JSON.stringify(b0)}`);
       await p.click('#goBtn'); await p.waitForTimeout(500);
       const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', fly: (JSON.parse(localStorage.getItem('contrailPilot.v2')).flyCrossing || null) }; });
       check(/WARSAW > STOCKHOLM/.test(sh.sheet) && /CROSS TO STOCKHOLM/.test(sh.sheet) && !sh.fly, `${tag} B: the big button must open the CROSSINGS screen and start no flight: ${JSON.stringify(sh)}`);

@@ -1,7 +1,7 @@
 // EVERY READY CROSSING'S DEPARTURE AIRPORT CAN BE REACHED (CROSSINGS V2 step 3; like tests/missionreach.cjs). GO TO sends the player to a crossing's departure city over the open network (src/route.js linksFor: the cities of the
 // opened areas plus the declared bridges). For every crossing and every state it can be offered in (the area it leaves from open alone, and with every other area open except the one it opens), a route must exist from EVERY city of
 // the open areas to the departure city. Plain Node. KNOWN GAPS, declared and asserted (a fix must flip them): a crossing that leaves from a stepping stone (HONOLULU, NADI) when the Pacific is open: the stones belong to no area, so
-// they are not in the network; the game then says plain 'Ready!' and the crossing starts where the player is (src/crossingview.js boxView). Plants: tools/plants.tsv, test `gotoreach`. Run: node tests/gotoreach.cjs
+// they are not in the network; the game then says 'Ready! Tap to cross.' and the crossing starts where the player is (src/crossingview.js boxView). Plants: tools/plants.tsv, test `gotoreach`. Run: node tests/gotoreach.cjs
 globalThis.SEASON2 = true;
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };

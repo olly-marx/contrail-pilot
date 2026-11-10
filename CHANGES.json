@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-11-10-night-dodge",
+    "version": "0.44.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "A night cloud now counts as dodged if the plane lines up with it anywhere on the screen and you then steer away; the Sensors card says Night clouds you avoid: N crystals each; and a short line tells you why a cloud paid no crystal. Night-dodge missions and the dodge badge come a little sooner.",
+      "Because dodging counts more often, you earn about 1.3 times as many crystals from night clouds, and your night-dodge progress, missions and badge grow faster."
+    ]
+  },
+  {
+    "id": "2026-11-09-harder-crossing",
+    "version": "0.43.1",
+    "date": "2026-11-09",
+    "level": "minor",
+    "notes": [
+      "The next crossing is always a harder one than the last (easier ones wait under an easier one).",
+      "A crossing no longer asks you to upgrade your plane when you only need a longer flight, and a long flight from any land counts.",
+      "The home crossing box now says Tap to cross: you can start a crossing from anywhere."
+    ]
+  },
+  {
     "id": "2026-11-09-next-crossing",
     "version": "0.43.0",
     "date": "2026-11-09",
