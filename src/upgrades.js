@@ -195,12 +195,12 @@ export const LINES = [
   {
     id: 'nursery', name: 'Tree Nursery', group: 'Trees', tree: 'Nature', requires: { line: 'trees', level: 2 },
     levels: [
-      { cost: 140, crystals: 18, name: 'Tree nursery', short: 'Your trees grow up faster.', grow: 0.7 },
-      { cost: 450, crystals: 56, name: 'Big nursery', short: 'Trees grow up twice as fast!', grow: 0.5 },
+      { cost: 140, crystals: 18, name: 'Tree nursery', short: 'Trees grow up in 8 flights.', grow: 0.7 },   // (no nursery: 10 flights; src/groves.js NURSERY_NEED)
+      { cost: 450, crystals: 56, name: 'Big nursery', short: 'Trees grow up in 6 flights.', grow: 0.5 },
     ],
     info: {
-      what: 'A tree nursery grows young trees until they are strong enough to plant out.',
-      why: 'Older, stronger young trees grow up faster, so they start taking in more CO2 sooner.',
+      what: 'The trees you drop start small and grow up in the nursery. Every flight you finish, landed or not, makes them grow a little.',
+      why: 'Only grown trees are seen in the wild. A faster nursery shows your trees sooner.',
       fact: 'Some trees are grown from seeds collected from old trees nearby, so they suit the local land.',
       links: ['citizenzoo'],
     },
