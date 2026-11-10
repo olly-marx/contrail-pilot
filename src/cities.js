@@ -152,6 +152,9 @@ export const SEASON2_ON = globalThis.SEASON2 === true;   // (globalThis = window
 export const CITIES = SEASON2_ON ? [...BASE_CITIES, ...S2_CITIES] : BASE_CITIES;
 // Season 2 only: the Silk Road (3,028 km, over the 2,600 km link limit; research/STORY-ANY-START.md).
 export const S2_BRIDGES = [['TASHKENT', 'ULAANBAATAR']];
+// Bridges that exist only AFTER a crossing has been flown (save.crossed, src/route.js linksFor): Patagonia has no ordinary flight link to the rest of the world until its crossing is done
+// (the user, 2026-11-10; tests/gotoreach.cjs measured the gap: five crossings' departures were unreachable from there). Declared, not inferred.
+export const CROSSING_BRIDGES = { patagonia: [['PUERTO MADRYN', 'BUENOS AIRES']] };
 export const BRIDGES = [
   ['LONDON', 'REYKJAVIK'], ['REYKJAVIK', 'NEW YORK'], ['REYKJAVIK', 'IQALUIT'], ['LISBON', 'NEW YORK'],
   ['TOKYO', 'ANCHORAGE'], ['SAPPORO', 'ANCHORAGE'], ['LOS ANGELES', 'HONOLULU'], ['HONOLULU', 'NADI'], ['HONOLULU', 'TOKYO'],

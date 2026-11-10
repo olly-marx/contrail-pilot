@@ -37,9 +37,9 @@ export const LINKS = linksAmong(CITIES, SEASON2_ON ? [...BRIDGES, ...S2_BRIDGES]
 // (research/AREA-BALANCE.md measured it that way). Pure and cached per set; passed around as data, never swapped
 // into a global (the Node engine flies many saves in one process: sim chat's condition).
 const areaNets = new Map();
-export function linksOf(names) {
-  const key = [...names].sort().join('|');
-  if (!areaNets.has(key)) areaNets.set(key, linksAmong(CITIES.filter(c => names.includes(c.name)), [...BRIDGES, ...S2_BRIDGES]));
+export function linksOf(names, extra = []) {
+  const key = [...names].sort().join('|') + (extra.length ? '#' + extra.map(p => p.join('>')).sort().join('|') : '');   // (extra: bridges a flown crossing adds, cities.js CROSSING_BRIDGES)
+  if (!areaNets.has(key)) areaNets.set(key, linksAmong(CITIES.filter(c => names.includes(c.name)), [...BRIDGES, ...S2_BRIDGES, ...extra]));
   return areaNets.get(key);
 }
 

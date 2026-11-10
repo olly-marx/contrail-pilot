@@ -598,3 +598,5 @@ crossladder	src/crossings.js	s/exception = lower.filter(c => !covered.has(c.open
 crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filter(s => s !== pick)/const lower = [].filter(s => s !== pick)/	the screen lists no easier ones
 crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
+gotoreach	src/route.js	s/((save \&\& save\.crossed) || \[\])\.flatMap(id => CROSSING_BRIDGES\[id\] || \[\])/Object.values(CROSSING_BRIDGES).flat()/	the Patagonia bridge exists before the crossing is flown
+gotoreach	src/route.js	s/((save \&\& save\.crossed) || \[\])\.flatMap(id => CROSSING_BRIDGES\[id\] || \[\])/[]/	the Patagonia bridge never appears after the crossing
