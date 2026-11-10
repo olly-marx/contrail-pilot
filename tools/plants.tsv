@@ -599,3 +599,4 @@ crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filt
 crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
 music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
+hubscreen	src/ui.js	s/^ *\/\/ The first tab keeps its label FLY .*$/      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';/	the HOME word is written into the news dot again

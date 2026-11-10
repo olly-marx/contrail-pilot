@@ -55,6 +55,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(inH.hangar && inH.bar && inH.tabs.join() === 'fly,missions,hangar,pilot,boards', `the hangar shows the bottom bar with the revealed tabs only (BOARDS appears after the 3rd landing: this save has 5; PILOT comes with it): ${JSON.stringify(inH)}`);
   await p.click('#tabFly'); await p.waitForTimeout(300);
   check(await p.evaluate(() => !document.getElementById('title').hidden && !document.getElementById('tabbar').hidden), 'HOME (on the bar) goes back to the hub, the bar stays');
+  const lab = await p.evaluate(() => ({ tab: document.getElementById('tabFly').innerText.trim(), dot: document.getElementById('dFly').textContent }));
+  check(lab.tab === 'FLY' && lab.dot === '', `the first tab says FLY and its news dot holds no text (the word HOME once sat in the dot and bled out of the tab's corner): ${JSON.stringify(lab)}`);
   check(!p.errs.length, `page errors: ${p.errs}`);
   await p.close();
   // 4. Brand new (no lesson done): none of the lesson-revealed tabs.
