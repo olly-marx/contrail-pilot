@@ -607,7 +607,7 @@ routeall	src/destination.js	s/return tour ? tour(path, count) : path\.slice(0, c
 routeall	src/route.js	s/ \&\& city(name) \&\& LINKS\[name\]) return defaultChain/) return defaultChain/	a save with no city gets the default path
 routeall	src/route.js	s/save\.tutorialDone \&\& DEFAULT_DEST\.on \&\& city/DEFAULT_DEST.on \&\& city/	the tutorial gets the default destination
 routeall	src/route.js	s/ \&\& DEFAULT_DEST\.on \&\& city(name)/ \&\& city(name)/	the sim's A/B switch does nothing
-nextchip	src/ui.js	s/DEFAULT_DEST\.on \&\& !v\.aim ? defaultTargetFrom/DEFAULT_DEST.on \&\& false ? defaultTargetFrom/	the chip never names the default destination
+nextchip	src/ui.js	s/DEFAULT_DEST\.on \&\& !v\.aim ? steerOf/DEFAULT_DEST.on \&\& false ? steerOf/	the chip never names the default destination
 nextchip	src/ui.js	s/ \&\& DEFAULT_DEST\.on ? this\.openDestinationSheet()/ \&\& false ? this.openDestinationSheet()/	the chip opens the old 'Which way?' sheet
 nextchip	src/ui.js	s/this\.toast('Tap a city on the globe\.', '', 'good', 3);//	CHANGE says nothing
 nextchip	src/ui.js	s/action: t \&\& !locked ? { label: 'FLY'/action: false ? { label: 'FLY'/	the FLY TO sheet offers no FLY
@@ -663,3 +663,7 @@ steer	src/aim.js	s/const mode = routeMode(save);/const mode = 'mission';/	EXPLOR
 steer	src/aim.js	s/export const routeMode = save => (save \&\& save\.routeMode === 'explore' ? 'explore' : 'mission');/export const routeMode = save => 'explore';/	the mode is always explore (the mission is never the default)
 steer	src/aim.js	s/const g = gotoTarget(save, L); if (g) return { city: g, why: 'chosen' };//	a chosen destination no longer beats the mission
 steer	src/aim.js	s/c => landOf(c) === save\.stayLand/c => true/	EXPLORE HERE leaves the land
+missionsteer	src/ui.js	s/const word = dflt ? (dflt\.why === 'mission' ? 'Mission' : /const word = dflt ? (false ? 'Mission' : /	the chip never says Mission
+missionsteer	src/ui.js	s/s\.routeMode = m; if (m === 'mission') s\.stayLand = null;/if (m === 'mission') s.stayLand = null;/	the EXPLORE chip does not switch the mode
+missionsteer	src/ui.js	s/hasMission = !!activeMission(s)/hasMission = false/	the sheet has no MISSION chip
+missionsteer	src/GameScene.js	s/st\.why === 'chosen' || st\.why === 'mission' ? st\.city : null/st.why === 'chosen' ? st.city : null/	the banner does not show for the mission steer
