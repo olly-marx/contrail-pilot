@@ -1,8 +1,8 @@
 // Every city mission can be reached on the route (the user, 2026-11-02: "a mission says fly to Berlin but Berlin is never
-// reachable"; research/ROUTE-BUGS.md). The route AIMS at an open city mission (src/aim.js): the shortest way there, then the
-// normal tour. For EVERY season-2 starter area x EVERY start city in it x EVERY city template (declared below):
+// reachable"; research/ROUTE-BUGS.md). A city mission's GO THERE (ROUTING V2 step 3; it used to be the silent aim) sets the destination to its city (src/aim.js): the shortest way there, then the
+// default destination. For EVERY season-2 starter area x EVERY start city in it x EVERY city template (declared below):
 //   the mission's city is at most MAX_LEGS stops along routeTo(save, target) (and at least 2 for 'route', which must pass an
-//   airport); a chain's second city likewise from its first. Plus the wiring: aimTarget picks the first open city mission and
+//   airport); a chain's second city likewise from its first. Plus the wiring: an open mission does not steer by itself, GO THERE makes aimTarget its city and
 //   routeFor flies routeTo for it.
 // AIM=off measures TODAY's tour (the aim switched off): it reports how many targets are out of reach, and fails (that is the
 // point: run it once red on today's behaviour). Run: node tests/missionreach.cjs   (proved by planted defects)
@@ -36,12 +36,16 @@ globalThis.SEASON2 = true;
           if (j < 1 || j > AIM.MAX_LEGS) far.push(`${a} ${f.city} chain(2nd) -> ${t2} at stop ${j}`);
         }
       }
-      // The wiring, once per start: the aim is the first open city mission's city, and routeFor flies the aimed route.
-      const aim = AIM.aimTarget(save), first = M.visible(save).find(m => AIM.CITY_TEMPLATES[m.def.id]);
+      // The wiring, once per start (ROUTING V2 step 3): an open city mission no longer steers a flight by itself; the mission row's GO THERE sets the destination (save.aimCity) to its city and routeFor then flies the aimed route.
+      const first = M.visible(save).find(m => AIM.CITY_TEMPLATES[m.def.id]);
       if (AIM.ROUTE_AIM.on && first) {
         const want = AIM.CITY_TEMPLATES[first.def.id](first.fill, save);
-        check(aim === (want === c ? aim : want), `${a} ${c}: aimTarget is the first open city mission's city (${aim} vs ${want})`);
-        if (aim) check(AIM.routeFor(save, 12).join() === AIM.routeTo(save, aim, first.def.id, 12).join(), `${a} ${c}: routeFor flies the aimed route`);
+        check(AIM.aimTarget(save) === null, `${a} ${c}: an open city mission does not steer by itself (${AIM.aimTarget(save)})`);
+        if (want && want !== c) {
+          const go = { ...save }; AIM.setGoto(go, want);
+          check(AIM.aimTarget(go) === want, `${a} ${c}: GO THERE sets the mission's city as the aim (${AIM.aimTarget(go)} vs ${want})`);
+          check(AIM.routeFor(go, 12).join() === AIM.routeTo(go, want, first.def.id, 12).join(), `${a} ${c}: routeFor flies the aimed route to it`);
+        }
       }
     }
   }

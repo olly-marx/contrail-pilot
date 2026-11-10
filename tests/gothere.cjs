@@ -6,7 +6,7 @@ globalThis.SEASON2 = true;
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const A = await import('../src/aim.js'), M = await import('../src/missions2.js'), R = await import('../src/route.js'), H = await import('../src/hub.js'), V = await import('../src/missionsview.js');
-  const base = () => ({ fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'],
+  const base = () => ({ levels: {}, fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'],
     missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   const s0 = base(), open = A.aimOpen(s0);
   check(!!open && open !== 'LONDON', `power: a city mission is open and names a city (${open})`);
