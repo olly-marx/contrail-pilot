@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-10-next-city",
+    "version": "0.47.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "After the tutorial, when there is no open city mission and no destination chosen, the game now suggests the nearest city you have not visited (\"Next: PARIS\"); tap CHANGE or any city to go somewhere else."
+    ]
+  },
+  {
     "id": "2026-11-10-trees-privacy",
     "version": "0.46.1",
     "date": "2026-11-10",
