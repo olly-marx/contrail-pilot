@@ -600,3 +600,8 @@ crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reach
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
 gotoreach	src/route.js	s/((save \&\& save\.crossed) || \[\])\.flatMap(id => CROSSING_BRIDGES\[id\] || \[\])/Object.values(CROSSING_BRIDGES).flat()/	the Patagonia bridge exists before the crossing is flown
 gotoreach	src/route.js	s/((save \&\& save\.crossed) || \[\])\.flatMap(id => CROSSING_BRIDGES\[id\] || \[\])/[]/	the Patagonia bridge never appears after the crossing
+pickcity	src/pickcity.js	s/  if (area \&\& !unlockedAreas(save)\.includes(area)) {/  if (false) {/	a closed-area city is treated like an open one
+pickcity	src/pickcity.js	s/const stops = path\.length - 1;/const stops = path.length;/	the stops count is one too many
+pickcity	src/pickcity.js	s/dots: Math\.min(stops, MAX_DOTS), moreDots: stops > MAX_DOTS/dots: stops, moreDots: false/	the dots are not capped at six
+pickcity	src/pickcity.js	s/if (e < bd) { bd = e; best = d; }/if (e < r \&\& !best) { bd = e; best = d; }/	the tap picks the first dot in range, not the nearest
+pickcity	src/pickcity.js	s/split \&\& !(save\.crossed || \[\])\.includes('patagonia') ? 'The Patagonia crossing flies there\.' : 'No flight route there yet\.'/'No flight route there yet.'/	the Patagonia card does not name its crossing
