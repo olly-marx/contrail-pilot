@@ -630,3 +630,10 @@ gothere	src/hub.js	s/, worldChoice: revealed/, skip: null, worldChoice: revealed
 missiongo	src/ui.js	s/label: r\.aimed ? 'STOP GOING' : 'GO THERE'/label: r.aimed ? 'STOP GOING' : 'AIM HERE'/	the mission sheet says AIM HERE again
 missiongo	src/ui.js	s/if (r\.aimed) clearGoto(s); else setGoto(s, r\.cityName);/if (r.aimed) clearGoto(s);/	GO THERE sets no destination
 missiongo	src/ui.js	s/if (r\.aimed) clearGoto(s); else setGoto/if (false) clearGoto(s); else setGoto/	STOP GOING clears nothing
+routeline	src/pickcity.js	s/return pathTo(save\.city, name, linksFor(save));/return pathTo(save.city, name, linksFor(save)).slice(0, -1);/	the route stops one city short of the tapped city
+routeline	src/pickcity.js	s/if (!c || c\.state !== 'ok') return null;/if (!c) return null;/	a city that cannot be flown to gets a route
+routeline	src/pickcity.js	s/return pathTo(save\.city, name, linksFor(save));/return pathTo(save.homeCity || 'LONDON', name, linksFor(save));/	the route starts at the home city, not where the player is
+routeonmap	src/ui.js	s/if (way \&\& this\.hubGlobe \&\& this\.hubGlobe\.setPath)/if (false)/	a tap draws no route on the globe
+routeonmap	src/ui.js	s/onClose: () => { if (this\.hubGlobe) this\.renderHub(); },/onClose: () => {},/	closing the card leaves the tapped route on the globe
+routeonmap	src/ui.js	s/Math\.max(5, gotoTarget(s) ? gotoHops(s) : 0)/5/	a far destination is cut at 5 cities on HOME
+routeonmap	src/globe.js	s/setPath(p) { path = p \&\& p\.length ? p : \[CITIES\[0\]\]; /setPath(p) { /	setPath keeps the old path

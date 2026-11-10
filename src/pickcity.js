@@ -41,6 +41,13 @@ export function cityCard(save, name) {
   return card('ok', `${stops} stop${stops === 1 ? '' : 's'}`, { stops, dots: Math.min(stops, MAX_DOTS), moreDots: stops > MAX_DOTS });
 }
 
+// The whole way to a tapped city, for the globe's gold line: [the player's city, ..., the city] over the open network, or null (here, closed area, no route). Pure.
+export function routeOf(save, name) {
+  const c = cityCard(save, name);
+  if (!c || c.state !== 'ok') return null;
+  return pathTo(save.city, name, linksFor(save));
+}
+
 // The tap rule: the NEAREST dot within r canvas pixels of the finger (a tap picks the nearest city within a finger's width, never the first in the list). dots: [{ name, x, y }].
 export function nearestDot(dots, x, y, r) {
   let best = null, bd = r;
