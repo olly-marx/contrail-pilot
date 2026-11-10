@@ -680,3 +680,4 @@ goldtrail-ui	src/GameScene.js	s/c\.view\.setFillStyle(trailColour(this\.save));/
 resetui	src/save.js	s/  for (const k of Object.keys(live)) delete live\[k\];//	reset leaves discovered, missionsDone and badgeTiers on the live save (in the browser)
 resetui	src/save.js	s/ 'contrailPilot.firstName',//	reset keeps the first name of the old pilot (in the browser)
 resetui	src/ui.js	s/      location.reload(); .*$//	reset does not reload the page
+resetui	src/ui.js	s/ Write your pilot code down first if you want to come back to your online pilot\.//	the reset confirm does not tell the player to write the pilot code down first

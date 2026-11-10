@@ -89,7 +89,7 @@ async function loadRich() {
       if (!resetTap) { await diag(p, tag, 'no RESET button'); await ctx.close(); continue; }
       await Promise.all([p.waitForEvent('load', { timeout: 15000 }).catch(() => null), resetTap.click()]);
       await ready(p); await p.waitForTimeout(800);
-      check(/pilot name and code/.test(confirmText) && /nature/.test(confirmText), `${tag}: the confirm text names nature and the pilot name and code: ${confirmText.slice(0, 120)}`);
+      check(/pilot name and code/.test(confirmText) && /nature/.test(confirmText) && /Write your pilot code down first if you want to come back to your online pilot\./.test(confirmText), `${tag}: the confirm text names nature, the pilot name and code, and says to write the pilot code down first: ${confirmText.slice(0, 400)}`);
       check(!(await p.evaluate(() => window.__oldPage)), `${tag}: RESET reloads the page`);
       stage = 'after the reload: read the keys';
       // 2. AFTER the reload
