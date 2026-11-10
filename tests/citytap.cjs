@@ -20,24 +20,26 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
       check(!!target, `${tag} A: the HOME globe shows none of the nearby cities to tap (the globe is not live or the route choice is closed): ${JSON.stringify(target)}`);
       if (target) {
         await p.mouse.click(target.x, target.y); await p.waitForTimeout(500);
-        const card = await p.evaluate(() => { const e = document.getElementById('sheet'); const r = e && e.getBoundingClientRect(); const fly = e && [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim())); return { text: e ? e.innerText.replace(/\s+/g, ' ').trim() : '', fly: !!fly, inside: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 }; });
+        const card = await p.evaluate(() => { const e = document.getElementById('hubCard'); const r = e && e.getBoundingClientRect(); const fly = e && e.querySelector('#ccFly'); return { text: e ? e.innerText.replace(/\s+/g, ' ').trim() : '', fly: !!fly, inside: !!r && r.top >= 0 && r.bottom <= innerHeight + 1 && r.left >= 0 && r.right <= innerWidth + 1 }; });
         log.push(`${tag} A: ${JSON.stringify(card)}`);
-        check(new RegExp(`FLY TO.*${target.name}.*\\d stops?`).test(card.text) && card.fly && card.inside, `${tag} A: the tap on ${target.name} did not open the card with its name, its stops and a FLY button on screen: ${JSON.stringify(card)}`);
-        check(!/\bkm\b|\d{3,}/.test(card.text), `${tag} A: a distance reaches the player: ${card.text}`);
-        const dot = await p.evaluate(() => { const d = document.querySelector('#sheet .hc-dot'); const r = d && d.getBoundingClientRect(); return r ? [Math.round(r.width), Math.round(r.height)] : null; });
-        check(dot && dot[0] >= 8 && dot[1] >= 8, `${tag} A: the stop dots are as heavy as the text (8 px squares): ${JSON.stringify(dot)}`);
+        check(new RegExp(`${target.name}.*(Direct|\\d airports?)`).test(card.text) && card.fly && card.inside, `${tag} A: the tap on ${target.name} did not open the card with its name, its stops and a FLY button on screen: ${JSON.stringify(card)}`);
+        check(/about [\d,]+ km/.test(card.text) && !/%|range|capability/i.test(card.text), `${tag} A: the row says the trip as one flight in game km (about N km) and never a percentage or the word range: ${card.text}`);
+        const dot = await p.evaluate(() => { const d = document.querySelector('#hubCard .hc-dot'); const r = d && d.getBoundingClientRect(); return r ? [Math.round(r.width), Math.round(r.height)] : null; });
+        const rowBox = await p.evaluate(() => { const c = document.getElementById('hubCard').getBoundingClientRect(), g = document.getElementById('hubGlobe').getBoundingClientRect(); return { rowTop: Math.round(c.top), globeBottom: Math.round(g.bottom), h: Math.round(c.height) }; });
+        check(rowBox.rowTop >= rowBox.globeBottom - 1 && rowBox.h <= 70, `${tag} A: the card is a row UNDER the globe (never over it) and at most 70 px high: ${JSON.stringify(rowBox)}`);
+        check(dot && dot[0] >= 6 && dot[1] >= 6, `${tag} A: the stop dots are as heavy as the text (6 px squares or more): ${JSON.stringify(dot)}`);
         // B. FLY sets the aim and starts the flight
-        if (card.fly) await p.evaluate(() => { const e = document.getElementById('sheet'); [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim())).click(); });   // (no FLY: the named check above already failed)
+        if (card.fly) await p.evaluate(() => { const e = document.getElementById('hubCard'); e.querySelector('#ccFly').click(); });   // (no FLY: the named check above already failed)
         await started(p).catch(() => null);
         const fl = await p.evaluate(() => ({ aim: JSON.parse(localStorage.getItem('s2:contrailPilot.v2') || localStorage.getItem('contrailPilot.v2') || '{}').aimCity || null, state: game.scene.getScene('game').state }));
         check(fl.aim === target.name && ['takeoff', 'playing'].includes(fl.state), `${tag} B: FLY did not set the aim to ${target.name} and start the flight: ${JSON.stringify(fl)}`);
       }
       // C and D on a fresh title screen
       await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
-      const sheet = nm => p.evaluate(n => { game.registry.get('ui').showCityCard(n); const e = document.getElementById('sheet'); return { text: e ? e.innerText.replace(/\s+/g, ' ').trim() : '', fly: !!(e && [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim()))) }; }, nm);
+      const sheet = nm => p.evaluate(n => { game.registry.get('ui').showCityCard(n); const e = document.getElementById('hubCard'); return { text: e ? e.innerText.replace(/\s+/g, ' ').trim() : '', fly: !!(e && e.querySelector('#ccFly')) }; }, nm);
       const closed = await sheet('SYDNEY'); log.push(`${tag} C: ${JSON.stringify(closed)}`);
       check(/Opens with the Tasman crossing/.test(closed.text) && !closed.fly, `${tag} C: a closed-area city must say 'Opens with the Tasman crossing' (the first on the ladder that opens Oceania) and offer no FLY: ${JSON.stringify(closed)}`);
-      await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); });
+      await p.evaluate(() => { const e = document.getElementById('hubCard'); if (e) e.remove(); });
       const here = await sheet('AMSTERDAM'); log.push(`${tag} D: ${JSON.stringify(here)}`);
       check(/You are here/.test(here.text) && !here.fly, `${tag} D: your own city must say 'You are here.' and offer no FLY: ${JSON.stringify(here)}`);
       check(!p.errs.length, `${tag} page errors: ${p.errs}`);

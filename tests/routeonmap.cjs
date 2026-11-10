@@ -24,12 +24,14 @@ const seed = { areas: ['weurope', 'mideast', 'africa', 'sasia', 'easia'], homeAr
         check(!!target, `${tag} A: no visible city 2 or more stops away to tap`);
         if (target) {
           await p.mouse.click(target.x, target.y); await p.waitForTimeout(500);
-          const shown = await p.evaluate(() => ({ drawn: document.getElementById('hubGlobe').__globe.routePath(), sheet: !!document.getElementById('sheet') }));
+          const shown = await p.evaluate(() => ({ drawn: document.getElementById('hubGlobe').__globe.routePath(), sheet: !!document.getElementById('hubCard') && !document.getElementById('hubCard').hidden }));
           log.push(`${tag} A: ${JSON.stringify([target.name, target.way, shown])}`);
-          const tapped = await p.evaluate(({ x, y }) => document.getElementById('sheet') ? document.getElementById('sheet').innerText.replace(/\s+/g, ' ') : '', target);
+          const tapped = await p.evaluate(() => document.getElementById('hubCard') ? document.getElementById('hubCard').innerText.replace(/\s+/g, ' ') : '');
           check(shown.sheet && JSON.stringify(shown.drawn) === JSON.stringify(target.way), `${tag} A: tapping ${target.name} must draw its whole route on the globe: drawn ${JSON.stringify(shown.drawn)} vs ${JSON.stringify(target.way)} (card: ${tapped.slice(0, 60)})`);
+          const fitBox = await p.evaluate(() => { const g = document.getElementById('goBtn').getBoundingClientRect(), tb = document.getElementById('tabbar').getBoundingClientRect(), c = document.getElementById('hubCard').getBoundingClientRect(), gl = document.getElementById('hubGlobe').getBoundingClientRect(); return { goBottom: Math.round(g.bottom), barTop: Math.round(tb.top), rowTop: Math.round(c.top), globeBottom: Math.round(gl.bottom), rowH: Math.round(c.height), noSheet: !document.getElementById('sheet') }; });
+          check(fitBox.goBottom <= fitBox.barTop + 1 && fitBox.rowTop >= fitBox.globeBottom - 1 && fitBox.noSheet, `${tag} A: with the row open TAKE OFF is still above the bar, the row is under the globe and no modal covers the globe: ${JSON.stringify(fitBox)}`);
           // B. closing puts the flight's own route back
-          await p.click('#sheet .sheet-ok', { timeout: 5000 }).catch(() => check(false, `${tag} B: the card has no close button`)); await p.waitForTimeout(500);
+          await p.click('#ccX', { timeout: 5000 }).catch(() => check(false, `${tag} B: the card has no close button`)); await p.waitForTimeout(500);
           const back = await p.evaluate(() => document.getElementById('hubGlobe').__globe.routePath());
           check(JSON.stringify(back) === JSON.stringify(flightPath), `${tag} B: closing the card must put the flight's route back: ${JSON.stringify(back)} vs ${JSON.stringify(flightPath)}`);
         }

@@ -1073,3 +1073,11 @@ h2.sub { margin-top: -4px; }
 .city-card .hc-dots { gap: 3px; font-size: 8px; }
 .city-card .hc-dot { width: 8px; height: 8px; }
 .ds-actions { display: flex; gap: 8px; margin: 6px 0 0; }   /* the FLY TO sheet's CHANGE / STOP: real 40 px buttons (.chip), not 7 px links */
+/* ROUTE ON THE MAP R2: the tapped city's card is one row in the route chip's slot (no modal over the globe) */
+.chip.hub-route[hidden], .hub-card[hidden] { display: none; }
+.hub-card { display: flex; align-items: center; gap: 6px; margin: 4px auto 0; padding: 2px 6px; width: 100%; max-width: 288px; min-height: 40px; box-sizing: border-box; border: 2px solid var(--ink); background: #fff; font-size: 8px; text-align: left; }
+.hub-card .cc-main { flex: 1; min-width: 0; }
+.hub-card .cc-name { display: flex; align-items: center; gap: 4px; font-size: 9px; }
+.hub-card .cc-line { margin: 1px 0 0; font-size: 7px; line-height: 1.25; }
+.hub-card .cc-btns { display: flex; gap: 6px; flex: none; }
+.hub-card .hc-dot { width: 6px; height: 6px; }

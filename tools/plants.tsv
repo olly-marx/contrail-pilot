@@ -597,7 +597,7 @@ citytap	src/ui.js	s/ onCity: v\.worldChoice ? name => this\.showCityCard(name) :
 citytap	src/ui.js	s/setGoto(s, card\.name); delete s\.heading; writeSave(s); this\.start();/delete s.heading; writeSave(s); this.start();/	FLY sets no aim
 citytap	src/ui.js	s/canFly = card\.canFly \&\& !locked;/canFly = true;/	a closed or no-route city offers FLY
 pickcity	src/pickcity.js	s/LADDER\.indexOf(a\.id) - LADDER\.indexOf(b\.id)/CROSSINGS.indexOf(a) - CROSSINGS.indexOf(b)/	the closed card names the first crossing in the list, not the first on the ladder
-citytap	style.css	s/^\.city-card \.hc-dot { width: 8px; height: 8px; }/.city-card .hc-dot { width: 5px; height: 5px; }/	the stop dots are tiny again
+citytap	style.css	s/^\.hub-card \.hc-dot { width: 6px; height: 6px; }/.hub-card .hc-dot { width: 3px; height: 3px; }/	the stop dots are tiny again
 music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
 hubscreen	src/ui.js	s/^ *\/\/ The first tab keeps its label FLY .*$/      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';/	the HOME word is written into the news dot again
 routeall	src/destination.js	s/for (const c of level) for (const n of L\[c\] || \[\]) {/for (const c of level) for (const n of [...(L[c] || [])].reverse()) {/	ties go to the last neighbour in link order
@@ -634,6 +634,12 @@ routeline	src/pickcity.js	s/return pathTo(save\.city, name, linksFor(save));/ret
 routeline	src/pickcity.js	s/if (!c || c\.state !== 'ok') return null;/if (!c) return null;/	a city that cannot be flown to gets a route
 routeline	src/pickcity.js	s/return pathTo(save\.city, name, linksFor(save));/return pathTo(save.homeCity || 'LONDON', name, linksFor(save));/	the route starts at the home city, not where the player is
 routeonmap	src/ui.js	s/if (way \&\& this\.hubGlobe \&\& this\.hubGlobe\.setPath)/if (false)/	a tap draws no route on the globe
-routeonmap	src/ui.js	s/onClose: () => { if (this\.hubGlobe) this\.renderHub(); },/onClose: () => {},/	closing the card leaves the tapped route on the globe
+routeonmap	src/ui.js	s/if (\$('hubRoute')) \$('hubRoute')\.hidden = false; if (this\.hubGlobe) this\.renderHub(); }/if ($('hubRoute')) $('hubRoute').hidden = false; }/	closing the card leaves the tapped route on the globe
 routeonmap	src/ui.js	s/Math\.max(5, gotoTarget(s) ? gotoHops(s) : 0)/5/	a far destination is cut at 5 cities on HOME
 routeonmap	src/globe.js	s/setPath(p) { path = p \&\& p\.length ? p : \[CITIES\[0\]\]; /setPath(p) { /	setPath keeps the old path
+routeline	src/pickcity.js	s/const airports = way\.length - 2,/const airports = way.length - 1,/	the airports count is one too many
+routeline	src/pickcity.js	s/km = roundKm(routeKm(way)),/km = routeKm(way),/	the trip km is not rounded to 100
+routeline	src/pickcity.js	s/const verdict = reach > 0 \&\& routeKm(way) > reach ?/const verdict = true ?/	the verdict is always shown
+routeline	src/pickcity.js	s/const verdict = reach > 0 \&\& routeKm(way) > reach ?/const verdict = routeKm(way) > reach ?/	a verdict is shown when the reach is unknown
+routeline	src/pickcity.js	s/Math\.max(Number(capFor(save, areaOf(save\.city))) || 0, Number(save\.bestDistance) || 0)/Math.min(Number(capFor(save, areaOf(save.city))) || 0, Number(save.bestDistance) || 0)/	the reach uses the smaller of the estimate and the best flight
+citytap	src/ui.js	s/\$('hubRoute')\.hidden = true; row\.hidden = false;/row.hidden = false;/	the route chip stays when the city row opens

@@ -55,7 +55,7 @@ import { FleetHangar } from './hangar.js';
 import { dots, markSeen, migrateSeen, defaultLands, hangarScope } from './fresh.js';
 import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
-import { cityCard, routeOf } from './pickcity.js';
+import { cityCard, routeOf, tripLine } from './pickcity.js';
 import { DEFAULT_DEST, defaultTargetFrom } from './destination.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp, leadOf } from './nextup.js';
@@ -419,6 +419,7 @@ export class UI {
     const dflt = s.tutorialDone && isSeason2(s) && DEFAULT_DEST.on && !v.aim ? defaultTargetFrom(linksFor(s), s.city, s.visited) : null;
     $('hubRoute').innerHTML = dflt ? `Next: ${esc(dflt)} <span class="small">change</span> &#8250;` : v.route.join(' &#9654; ') + (v.aim ? ` <span class="small">(${this.save.aimCity && v.aim === this.save.aimCity ? 'go to' : 'mission'})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
+    if ($('hubCard')) $('hubCard').hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false;   // (the tapped city's row goes with any redraw: closeCityRow redraws on purpose)
     const path = routeFor(s, Math.max(5, gotoTarget(s) ? gotoHops(s) : 0)), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
     const pick = name => { this.globeUsed(); sfx.tick(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it
@@ -604,12 +605,17 @@ export class UI {
     sfx.tick(); this.globeUsed();
     const locked = !!$('goBtn').disabled, canFly = card.canFly && !locked;   // (TAKE OFF is locked while the free part is waiting: FLY must not get round that)
     const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    const dots = card.dots ? `<span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(card.dots)}${card.moreDots ? ' +' : ''}</span> ` : '';
-    // ROUTE ON THE MAP (R1): the tapped city's whole way is drawn on the globe that is already there, in its gold line; closing the card puts the flight's own route back.
+    const dots = card.dots ? `<span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(card.dots)}${card.moreDots ? ' +' : ''}</span>` : '';
+    // ROUTE ON THE MAP (R1): the tapped city's whole way is drawn on the globe that is already there, in its gold line. R2: the card is ONE ROW in the route chip's slot under the globe (no modal over the globe); the x puts the flight's own route back.
     const way = routeOf(s, name); if (way && this.hubGlobe && this.hubGlobe.setPath) this.hubGlobe.setPath(way.map(city));
-    showSheet({ eyebrow: 'FLY TO', title: card.name, ok: 'CLOSE', onClose: () => { if (this.hubGlobe) this.renderHub(); }, html: `<p class="city-card">${dots}${esc(locked && card.canFly ? 'Pick your free part first.' : card.line)}</p>`,
-      action: canFly ? { label: 'FLY', onTap: () => { setGoto(s, card.name); delete s.heading; writeSave(s); this.start(); } } : null });
+    const trip = tripLine(s, name), line = locked && card.canFly ? 'Pick your free part first.' : trip ? `${trip.line}${trip.verdict ? ` ${trip.verdict}` : ''}` : card.line;
+    let row = $('hubCard'); if (!row) { row = document.createElement('div'); row.id = 'hubCard'; row.className = 'hubonly hub-card'; $('hubRoute').after(row); }
+    row.innerHTML = `<div class="cc-main"><div class="cc-name"><b>${esc(card.name)}</b> ${dots}</div><p class="cc-line">${esc(line)}</p></div><div class="cc-btns">${canFly ? '<button class="chip" id="ccFly" type="button">FLY</button>' : ''}<button class="chip" id="ccX" type="button" aria-label="Close">X</button></div>`;
+    $('hubRoute').hidden = true; row.hidden = false;
+    $('ccX').onclick = () => { sfx.tick(); this.closeCityRow(); };
+    if ($('ccFly')) $('ccFly').onclick = () => { sfx.tick(); setGoto(s, card.name); delete s.heading; writeSave(s); this.start(); };
   }
+  closeCityRow() { const row = $('hubCard'); if (row) row.hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false; if (this.hubGlobe) this.renderHub(); }
   openCrossings(cs) {
     sfx.tick();
     if (cs.ready && !cs.told) return this.showCrossingSheet(cs);

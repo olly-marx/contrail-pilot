@@ -3,7 +3,8 @@
 // FLY sets the player's standing aim (save.aimCity, src/aim.js setGoto), the same field GO TO uses, and the flights steer there by the shortest way over the open network. No distances anywhere.
 import { AREAS, areaOf, unlockedAreas } from './areas.js';
 import { CROSSINGS, LADDER, sides } from './crossings.js';
-import { linksFor, pathTo } from './route.js';
+import { linksFor, pathTo, legBetween } from './route.js';
+import { capFor } from './capability.js';
 import { city } from './network.js';
 
 // Plain names of the crossings for the line 'Opens with the <name> crossing' (declared, one per crossing: tests/pickcity.cjs checks there is one for each).
@@ -46,6 +47,20 @@ export function routeOf(save, name) {
   const c = cityCard(save, name);
   if (!c || c.state !== 'ok') return null;
   return pathTo(save.city, name, linksFor(save));
+}
+
+// HOW FAR (the user, 2026-11-10; research/ROUTE-ON-MAP-PLAN.md section 4): the airports the route passes and the trip as ONE flight in game km (the unit of the flights the player already reads), rounded to 100.
+// routeKm: the sum of the route's legs (legBetween: the engine flies exactly these lengths). reachKm: the larger of the plane's capability estimate and the longest landed flight (the 'take the larger' rule the crossings use);
+// 0 when neither is known: then no verdict is given (a player who has never landed a flight is told only the figure). Never a percentage, never the words range or capability, never a crossing's number.
+export const routeKm = path => path.slice(1).reduce((a, c, i) => a + legBetween(path[i], c), 0);
+export const roundKm = km => Math.round(km / 100) * 100;
+export const reachKm = save => Math.max(Number(capFor(save, areaOf(save.city))) || 0, Number(save.bestDistance) || 0);
+export function tripLine(save, name) {
+  const way = routeOf(save, name); if (!way) return null;
+  const airports = way.length - 2, km = roundKm(routeKm(way)), reach = reachKm(save);
+  const first = airports === 0 ? 'Direct' : `${airports} airport${airports === 1 ? '' : 's'} on the way`;
+  const verdict = reach > 0 && routeKm(way) > reach ? 'More than one flight: stops help.' : null;
+  return { airports, km, reach, verdict, line: `${first}, about ${km.toLocaleString('en-GB')} km.` };
 }
 
 // The tap rule: the NEAREST dot within r canvas pixels of the finger (a tap picks the nearest city within a finger's width, never the first in the list). dots: [{ name, x, y }].

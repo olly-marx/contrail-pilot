@@ -23,6 +23,20 @@ globalThis.SEASON2 = true;
   const all = { areas: Object.keys(A.AREAS), tutorialDone: true, homeArea: 'weurope', city: 'LONDON', crossed: ['patagonia'] }; let far = 0;
   for (const c of CT.CITIES) { const w = P.routeOf(all, c.name); if (w) far = Math.max(far, w.length - 1); }
   check(far >= 7, `with every area open some city is 7 or more stops away (the globe route must not be cut at 5): ${far}`);
+  // HOW FAR (ROUTE ON THE MAP R2): airports passed, the trip as one flight in game km rounded to 100, the verdict only when the reach is known and exceeded
+  const R2 = await import('../src/route.js'), base = { areas: ['weurope', 'mideast', 'africa', 'sasia', 'easia'], tutorialDone: true, homeArea: 'weurope', city: 'LONDON' }, LB = R2.linksFor(base);
+  let trips = 0, verdicts = 0;
+  for (const c of CT.CITIES) {
+    const way = P.routeOf(base, c.name); if (!way) continue; trips++;
+    const raw = way.slice(1).reduce((a, x, i) => a + R2.legBetween(way[i], x), 0), t = P.tripLine(base, c.name);
+    check(t.airports === way.length - 2 && P.routeKm(way) === raw && t.km === Math.round(raw / 100) * 100 && t.km % 100 === 0, `LONDON>${c.name}: airports ${t.airports} (want ${way.length - 2}), km ${t.km} (want ${Math.round(raw / 100) * 100})`);
+    check(t.verdict === null && !/%|range|capability/i.test(t.line) && t.line.length <= 48 && /about [\d,]+ km\./.test(t.line), `LONDON>${c.name}: with no reach known there is no verdict and the line is plain and short: "${t.line}"`);
+    const tall = P.tripLine({ ...base, bestDistance: raw - 1 }, c.name), within = P.tripLine({ ...base, bestDistance: raw + 1 }, c.name);
+    check(tall.verdict === 'More than one flight: stops help.' && within.verdict === null, `LONDON>${c.name}: the verdict appears exactly when the trip is longer than the best landed flight (${raw}): ${tall.verdict} / ${within.verdict}`); if (tall.verdict) verdicts++;
+  }
+  check(trips > 60 && verdicts > 60, `power: ${trips} trips, ${verdicts} with a verdict`);
+  check(P.reachKm({ ...base, bestDistance: 4550 }) === 4550 && P.reachKm(base) === 0, 'reach is the longest landed flight, and 0 when nothing is known');
+  { const direct = Object.keys(LB).map(n => ['LONDON', ...LB['LONDON']]).length && P.tripLine(base, LB['LONDON'][0]); check(direct && direct.airports === 0 && /^Direct, about/.test(direct.line), `a neighbour is 'Direct': ${direct && direct.line}`); }
   console.log(fails.length ? `FAIL routeline:\n - ${fails.slice(0, 10).join('\n - ')}${fails.length > 10 ? `\n ... ${fails.length - 10} more` : ''}` : `PASS routeline: ${routes} routes in 10 area states begin here, end at the tapped city, are shortest, linked and inside the open network; cards that cannot fly have none; the longest is ${far} stops`);
   process.exit(fails.length ? 1 : 0);
 })();
