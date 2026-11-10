@@ -24,6 +24,8 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
         log.push(`${tag} A: ${JSON.stringify(card)}`);
         check(new RegExp(`FLY TO.*${target.name}.*\\d stops?`).test(card.text) && card.fly && card.inside, `${tag} A: the tap on ${target.name} did not open the card with its name, its stops and a FLY button on screen: ${JSON.stringify(card)}`);
         check(!/\bkm\b|\d{3,}/.test(card.text), `${tag} A: a distance reaches the player: ${card.text}`);
+        const dot = await p.evaluate(() => { const d = document.querySelector('#sheet .hc-dot'); const r = d && d.getBoundingClientRect(); return r ? [Math.round(r.width), Math.round(r.height)] : null; });
+        check(dot && dot[0] >= 8 && dot[1] >= 8, `${tag} A: the stop dots are as heavy as the text (8 px squares): ${JSON.stringify(dot)}`);
         // B. FLY sets the aim and starts the flight
         if (card.fly) await p.evaluate(() => { const e = document.getElementById('sheet'); [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim())).click(); });   // (no FLY: the named check above already failed)
         await started(p).catch(() => null);
@@ -34,7 +36,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
       await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
       const sheet = nm => p.evaluate(n => { game.registry.get('ui').showCityCard(n); const e = document.getElementById('sheet'); return { text: e ? e.innerText.replace(/\s+/g, ' ').trim() : '', fly: !!(e && [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim()))) }; }, nm);
       const closed = await sheet('SYDNEY'); log.push(`${tag} C: ${JSON.stringify(closed)}`);
-      check(/Opens with the (Timor Sea|Tasman) crossing/.test(closed.text) && !closed.fly, `${tag} C: a closed-area city must say 'Opens with the <a crossing that touches its land> crossing' and offer no FLY: ${JSON.stringify(closed)}`);   // (Oceania's crossings: Timor Sea and Tasman; the card names the first in the list)
+      check(/Opens with the Tasman crossing/.test(closed.text) && !closed.fly, `${tag} C: a closed-area city must say 'Opens with the Tasman crossing' (the first on the ladder that opens Oceania) and offer no FLY: ${JSON.stringify(closed)}`);
       await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); });
       const here = await sheet('AMSTERDAM'); log.push(`${tag} D: ${JSON.stringify(here)}`);
       check(/You are here/.test(here.text) && !here.fly, `${tag} D: your own city must say 'You are here.' and offer no FLY: ${JSON.stringify(here)}`);

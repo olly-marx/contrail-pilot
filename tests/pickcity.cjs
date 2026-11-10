@@ -37,6 +37,9 @@ globalThis.SEASON2 = true;
   const pb = P.cityCard(before, 'PUNTA ARENAS'), pa = P.cityCard(all, 'PUNTA ARENAS');
   check(pb.state === 'noroute' && pb.line === 'The Patagonia crossing flies there.' && !pb.canFly, `Patagonia while samerica is closed: ${JSON.stringify(pb)}`);
   check(pa.state === 'ok' && pa.canFly && pa.stops >= 3, `Patagonia once South America is open is an ordinary route: ${JSON.stringify(pa)}`);
+  // 4b. the closed card names the FIRST crossing on the ladder (the one the player meets first): Sydney from Western Europe is the Tasman crossing, which precedes the Timor Sea one
+  const sy = P.cityCard({ areas: ['weurope'], tutorialDone: true, homeArea: 'weurope', city: 'LONDON' }, 'SYDNEY');
+  check(sy.state === 'closed' && sy.crossing === 'tasman' && sy.line === 'Opens with the Tasman crossing' && C.LADDER.indexOf('tasman') < C.LADDER.indexOf('jakarta-darwin'), `Sydney names the first crossing on the ladder (Tasman): ${JSON.stringify(sy)}`);
   // 5. a city that does not exist is not a card
   check(P.cityCard(all, 'ATLANTIS') === null, 'an unknown city gives no card');
   // 6. the tap picks the NEAREST dot within the radius, and nothing beyond it

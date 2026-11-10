@@ -2,7 +2,7 @@
 // Pure: no DOM, no clock, no random numbers. src/ui.js shows the card; src/globe.js uses nearestDot for the tap. A tap on the globe shows the city's NAME and its STOPS, then FLY;
 // FLY sets the player's standing aim (save.aimCity, src/aim.js setGoto), the same field GO TO uses, and the flights steer there by the shortest way over the open network. No distances anywhere.
 import { AREAS, areaOf, unlockedAreas } from './areas.js';
-import { CROSSINGS, sides } from './crossings.js';
+import { CROSSINGS, LADDER, sides } from './crossings.js';
 import { linksFor, pathTo } from './route.js';
 import { city } from './network.js';
 
@@ -15,11 +15,11 @@ export const CROSSING_NAMES = {
 };
 export const MAX_DOTS = 6;   // the dots show at most six stops, then a plus (the HOME box does the same)
 
-// The crossing that opens an area: one of its crossings whose OTHER end is already open, else its lowest-era crossing. null if it has none.
+// The crossing that opens an area: one of its crossings whose OTHER end is already open, else the first of its crossings on the ladder. null if it has none.
 export function openerOf(save, area) {
   const open = unlockedAreas(save), cs = CROSSINGS.filter(c => c.kind !== 'lap' && sides(c).includes(area));
   const next = cs.filter(c => open.includes(sides(c).find(s => s !== area)));
-  return (next.length ? next : cs).slice().sort((a, b) => a.era - b.era || CROSSINGS.indexOf(a) - CROSSINGS.indexOf(b))[0] || null;
+  return (next.length ? next : cs).slice().sort((a, b) => LADDER.indexOf(a.id) - LADDER.indexOf(b.id))[0] || null;   // the FIRST on the ladder: the one the player will meet first (src/crossings.js LADDER)
 }
 
 // What a tap on a city shows. state: 'here' | 'closed' | 'noroute' | 'ok' (only 'ok' can FLY).

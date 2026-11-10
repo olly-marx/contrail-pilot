@@ -606,3 +606,5 @@ pickcity	src/pickcity.js	s/split \&\& !(save\.crossed || \[\])\.includes('patago
 citytap	src/ui.js	s/ onCity: v\.worldChoice ? name => this\.showCityCard(name) : null,//	a tap on a city opens no card
 citytap	src/ui.js	s/setGoto(s, card\.name); delete s\.heading; writeSave(s); this\.start();/delete s.heading; writeSave(s); this.start();/	FLY sets no aim
 citytap	src/ui.js	s/canFly = card\.canFly \&\& !locked;/canFly = true;/	a closed or no-route city offers FLY
+pickcity	src/pickcity.js	s/LADDER\.indexOf(a\.id) - LADDER\.indexOf(b\.id)/CROSSINGS.indexOf(a) - CROSSINGS.indexOf(b)/	the closed card names the first crossing in the list, not the first on the ladder
+citytap	style.css	s/^\.city-card \.hc-dot { width: 8px; height: 8px; }/.city-card .hc-dot { width: 5px; height: 5px; }/	the stop dots are tiny again

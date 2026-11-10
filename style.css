@@ -1071,3 +1071,6 @@ h2.sub { margin-top: -4px; }
 .hub-cross .btn.tiny { padding: 1px 6px; font-size: 7px; min-height: 0; }
 #hubFly { align-self: center; margin-top: 1px; }
 @media (max-height: 600px) { .hub-cross .hc-go { margin-top: 0; } }
+.city-card { display: flex; align-items: center; gap: 6px; font-size: 8px; }   /* TAP ANY CITY card (ROUTING V2 step 1): the stop dots weigh as much as the text (8 px squares) */
+.city-card .hc-dots { gap: 3px; font-size: 8px; }
+.city-card .hc-dot { width: 8px; height: 8px; }
