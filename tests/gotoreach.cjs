@@ -21,7 +21,7 @@ globalThis.SEASON2 = true;
         const offered = C.upcoming(save).find(x => x.id === c.id);
         if (!offered) continue;
         if (!L[offered.from]) { gaps.add(offered.from); continue; }
-        for (const k of areas) for (const city of A.AREAS[k].cities) { if (pat(city) !== pat(offered.from)) { isoSeen.add(c.id); continue; } routes++; check(R.pathTo(city, offered.from, L), `${c.id}: no route from ${city} to its departure ${offered.from} with ${areas.length} area(s) open`); }
+        for (const k of areas) for (const city of A.AREAS[k].cities) { const r = R.pathTo(city, offered.from, L); if (!r && pat(city) !== pat(offered.from)) { isoSeen.add(c.id); continue; } routes++; check(r, `${c.id}: no route from ${city} to its departure ${offered.from} with ${areas.length} area(s) open`); }
       }
     }
   }
