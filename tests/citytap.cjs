@@ -1,6 +1,6 @@
 // TAP ANY CITY ON HOME (src/pickcity.js, src/globe.js onCity, src/ui.js showCityCard; ROUTING V2 step 1). Real taps at 390x844 and 320x568, a season 2 save in AMSTERDAM with the route choice open:
 // A. a tap on a city dot opens the card with its name and 'N stop(s)' and a FLY button; B. FLY sets the aim (save.aimCity), clears the first-step heading and starts a flight; C. a city in a closed area (SYDNEY)
-// shows 'Opens with the Tasman crossing' and NO FLY; D. your own city says 'You are here.' and no FLY; the card fits on screen. Plants: tools/plants.tsv, test `citytap`. Run: python3 -m http.server 8000 & node tests/citytap.cjs
+// shows 'Opens with the ... crossing' and NO FLY; D. your own city says 'You are here.' and no FLY; the card fits on screen. Plants: tools/plants.tsv, test `citytap`. Run: python3 -m http.server 8000 & node tests/citytap.cjs
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
@@ -25,7 +25,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
         check(new RegExp(`FLY TO.*${target.name}.*\\d stops?`).test(card.text) && card.fly && card.inside, `${tag} A: the tap on ${target.name} did not open the card with its name, its stops and a FLY button on screen: ${JSON.stringify(card)}`);
         check(!/\bkm\b|\d{3,}/.test(card.text), `${tag} A: a distance reaches the player: ${card.text}`);
         // B. FLY sets the aim and starts the flight
-        await p.evaluate(() => { const e = document.getElementById('sheet'); [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim())).click(); });
+        if (card.fly) await p.evaluate(() => { const e = document.getElementById('sheet'); [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim())).click(); });   // (no FLY: the named check above already failed)
         await started(p).catch(() => null);
         const fl = await p.evaluate(() => ({ aim: JSON.parse(localStorage.getItem('s2:contrailPilot.v2') || localStorage.getItem('contrailPilot.v2') || '{}').aimCity || null, state: game.scene.getScene('game').state }));
         check(fl.aim === target.name && ['takeoff', 'playing'].includes(fl.state), `${tag} B: FLY did not set the aim to ${target.name} and start the flight: ${JSON.stringify(fl)}`);
@@ -34,7 +34,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
       await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
       const sheet = nm => p.evaluate(n => { game.registry.get('ui').showCityCard(n); const e = document.getElementById('sheet'); return { text: e ? e.innerText.replace(/\s+/g, ' ').trim() : '', fly: !!(e && [...e.querySelectorAll('button')].find(x => /^FLY$/i.test(x.innerText.trim()))) }; }, nm);
       const closed = await sheet('SYDNEY'); log.push(`${tag} C: ${JSON.stringify(closed)}`);
-      check(/Opens with the Tasman crossing/.test(closed.text) && !closed.fly, `${tag} C: a closed-area city must say 'Opens with the Tasman crossing' and offer no FLY: ${JSON.stringify(closed)}`);
+      check(/Opens with the (Timor Sea|Tasman) crossing/.test(closed.text) && !closed.fly, `${tag} C: a closed-area city must say 'Opens with the <a crossing that touches its land> crossing' and offer no FLY: ${JSON.stringify(closed)}`);   // (Oceania's crossings: Timor Sea and Tasman; the card names the first in the list)
       await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); });
       const here = await sheet('AMSTERDAM'); log.push(`${tag} D: ${JSON.stringify(here)}`);
       check(/You are here/.test(here.text) && !here.fly, `${tag} D: your own city must say 'You are here.' and offer no FLY: ${JSON.stringify(here)}`);
