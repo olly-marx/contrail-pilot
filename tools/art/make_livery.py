@@ -88,7 +88,7 @@ def globe_portrait(r=7):
     return g
 
 
-def anchors(base, kind):
+def anchors(base):
     """Where the livery goes, found from the base picture: the body's box, the tail fin column and top, the nose column. The plane faces RIGHT."""
     body = main_body(drawn(base))
     xs, ys = [p[0] for p in body], [p[1] for p in body]
@@ -123,8 +123,8 @@ def paint(base, spots, colours, px):
 
 def make(base, kind):
     px = drawn(base)
-    a = anchors(base, kind)
-    x0, y0, x1, y1 = a['body']
+    a = anchors(base)
+    _, y0, x1, y1 = a['body']
     spots, cols = [], []
     # 1. the globe on the tail fin
     g = globe_sprite() if kind == 'sprite' else globe_portrait()
@@ -147,7 +147,7 @@ def contact_sheet(rows, scale, path):
     """Each row: the base and the livery side by side on a grey ground, enlarged nearest-neighbour."""
     w, h = rows[0][1].size
     pad = 6
-    sheet = Image.new('RGBA', (2 * w * scale + 3 * pad, len(rows) * (h * scale + pad) + pad), (96, 108, 128, 255))
+    sheet = Image.new('RGBA', (2 * w * scale + 3 * pad, len(rows) * (h * scale + pad) + pad), (96, 108, 128, 255))  # type: ignore[arg-type]
     for i, (_, base, liv) in enumerate(rows):
         y = pad + i * (h * scale + pad)
         for j, im in enumerate((base, liv)):
