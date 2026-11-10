@@ -5,8 +5,9 @@ import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARC
 import { tip } from '../tips.js';
 import { GAP_HINT, FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
-import { treesOpen, slotKind } from '../landtrees.js';
+import { slotKind } from '../landtrees.js';
 import { treeBook, plantTree, growGroves, needFromGrow } from '../groves.js';
+import { nextTree } from '../droporder.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
 import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as s2LessonsLeft } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
@@ -86,6 +87,7 @@ export const RULES = {
     this.nextPlotAt = PARCEL.firstAt;
     this.treeFeedback = 0;
     this.speciesIdx = 0;
+    this.dropped = {};               // parcels released this flight that have not landed yet, by tree id (src/droporder.js: the next kind is the one with the fewest trees)
     this.decor = [];                 // ponds etc. scrolling on the ground
     this.nextDecorAt = 500;
     this.storks = [];
@@ -240,10 +242,11 @@ export const RULES = {
   // Parcels take turns through the kinds of tree you own, so variety comes naturally.
   // Each land's own open trees (src/landtrees.js), taken in turn so a flight mixes kinds. The UK slot kind is
   // returned: growth and cooling use its SPECIES row; localTree() names the land's own tree.
-  treeKind() {
-    const open = treesOpen(this.save, this.regionNow || 'woodland');
-    return slotKind(open.length ? open[this.speciesIdx % open.length] : 0);
+  treeKind() {   // TREES V2 step 3: the kind with the fewest trees among the land's open ones (src/droporder.js); null = the grove is full here
+    const n = nextTree(this.save, this.regionNow || 'woodland', this.dropped);
+    return n ? slotKind(n.slot) : null;
   },
+  nextTreeInfo() { return nextTree(this.save, this.regionNow || 'woodland', this.dropped); },
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
   // drop them before you reach a soil plot. This works out which bit of ground (in today's screen
   // position) one would land on if dropped now. The ground keeps scrolling while it falls, so
@@ -1170,6 +1173,7 @@ export const RULES = {
   },
 
   parcelLanded(x, kind, region = this.regionNow || 'woodland') {
+    const lid = localTree(kind, region).id; this.dropped[lid] = Math.max(0, (this.dropped[lid] || 0) - 1);   // it has landed (or missed): no longer pending
     const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
     if (!plot) {
       const onRunway = this.runways.some(r => x >= r.x && x <= r.x + AIRPORT.runwayLen);
@@ -1201,8 +1205,15 @@ export const RULES = {
       if (!this.saidNoSoil) { this.saidNoSoil = true; this.popup(this.plane.x + 20, this.plane.y - 12, this.regionNow === 'ocean' ? 'No land to plant on!' : 'Nothing grows on the ice!', '#cfe6ff'); }
       return;
     }
+    const kind = this.treeKind();
+    if (!kind) {   // every open kind is at its cap here: the grove is full, the tree is kept for another land
+      this.playSound('nope');
+      if (!this.saidGroveFull) { this.saidGroveFull = true; this.popup(this.plane.x + 20, this.plane.y - 12, 'Grove full here!', '#cfe6ff'); }
+      return;
+    }
     this.parcels--;
-    const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: this.treeKind(), region: this.regionNow || 'woodland' };   // a record; the crate is .view
+    const region = this.regionNow || 'woodland', tid = localTree(kind, region).id; this.dropped[tid] = (this.dropped[tid] || 0) + 1;
+    const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind, region };   // a record; the crate is .view
     this.parcelsFalling.push(p);
     this.showParcel(p);
     this.speciesIdx++;

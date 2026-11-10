@@ -781,3 +781,9 @@ nursery	src/groves.js	s/grow <= 0\.5 ? NURSERY_NEED\[2\]/grow <= 0.5 ? NURSERY_N
 nursery	src/groves.js	s/{ c\.grown += 1; up += 1; } else keep\.push/{ up += 1; } else keep.push/	a sapling that grows up is lost
 nursery	src/sim/rules.js	s/if (!this\.school) growGroves(/if (false) growGroves(/	banking a flight grows no sapling
 nursery	src/nature.js	s/const book = grownBook(save, region), base/const book = plantedHere(save, region), base/	the scenery shows saplings as grown trees
+droporder	src/droporder.js	s/room\.reduce((a, c) => (c\.n < a\.n ? c : a))/room.reduce((a, c) => (c.n > a.n ? c : a))/	the most planted kind is chosen, not the fewest
+droporder	src/droporder.js	s/(pending\[t\.id\] || 0)/0/	the parcels released but not landed are not counted
+droporder	src/droporder.js	s/c\.n < TREE_CAP/true/	a kind at its cap of 9 is still chosen
+droporder	src/droporder.js	s/(c\.n < a\.n ? c : a)/(c.n <= a.n ? c : a)/	a tie goes to the last slot, not the first
+droporder	src/sim/rules.js	s/const lid = localTree(kind, region)\.id; this\.dropped\[lid\] = Math\.max(0, (this\.dropped\[lid\] || 0) - 1);//	a landed parcel stays pending for ever
+droporder	src/sim/rules.js	s/const kind = this\.treeKind();/const kind = this.treeKind() || 'spruce';/	a full grove still lets the tree go
