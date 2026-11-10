@@ -630,3 +630,12 @@ gothere	src/hub.js	s/, worldChoice: revealed/, skip: null, worldChoice: revealed
 missiongo	src/ui.js	s/label: r\.aimed ? 'STOP GOING' : 'GO THERE'/label: r.aimed ? 'STOP GOING' : 'AIM HERE'/	the mission sheet says AIM HERE again
 missiongo	src/ui.js	s/if (r\.aimed) clearGoto(s); else setGoto(s, r\.cityName);/if (r.aimed) clearGoto(s);/	GO THERE sets no destination
 missiongo	src/ui.js	s/if (r\.aimed) clearGoto(s); else setGoto/if (false) clearGoto(s); else setGoto/	STOP GOING clears nothing
+targetbanner	src/targetbanner.js	s/if (!city || landed) return null;/if (!city) return null;/	a banner is still shown after landing at the destination
+targetbanner	src/targetbanner.js	s/\${crossFrom ? ' to cross' : ''}/${''}/	the crossing departure says no 'to cross'
+targetbanner	src/targetbanner.js	s/return cond ? `\${first}\\n\${cond}` : first;/return first;/	the mission's condition is lost from the banner
+targetbanner	src/targetbanner.js	s/!!target \&\& name === target \&\& !passed/!!target \&\& !passed/	every airport lights, not only the target
+targetbanner	src/targetbanner.js	s/ \&\& !passed \&\& !landed;/ \&\& !landed;/	the airport stays lit after the plane has passed it
+targetbanner-ui	src/GameScene.js	s/this\.missionText\.setText(this\.bannerNow() || (n \&\& this\.state !== 'over' ? n\.title : ''));/this.missionText.setText((n \&\& this.state !== 'over' ? n.title : ''));/	the mission title is not replaced by the banner
+targetbanner-ui	src/GameScene.js	s/rw\.lit = lit;/rw.lit = false;/	the target runway is never lit
+targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = isLit(rw.name, rw.name,/	every runway is lit
+targetbanner-ui	src/GameScene.js	s/const city = gotoTarget(this\.save); if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
