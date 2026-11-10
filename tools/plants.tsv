@@ -639,3 +639,4 @@ targetbanner-ui	src/GameScene.js	s/this\.missionText\.setText(this\.bannerNow() 
 targetbanner-ui	src/GameScene.js	s/rw\.lit = lit;/rw.lit = false;/	the target runway is never lit
 targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = isLit(rw.name, rw.name,/	every runway is lit
 targetbanner-ui	src/GameScene.js	s/const city = gotoTarget(this\.save); if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
+targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
