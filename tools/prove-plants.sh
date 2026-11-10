@@ -17,7 +17,7 @@ while IFS=$'\t' read -r test file expr label; do
     if [ -n "${DRY:-}" ]; then echo "applies      $test / $label (env plant)"; continue; fi
     s=$(date +%s.%N); out=$(env $ev timeout "${LIMIT:-200}" node "tests/$base.cjs" 2>&1); rc=$?; e=$(date +%s.%N); t=$(awk -v a="$s" -v b="$e" 'BEGIN { printf "%.0f", b - a }')
     if [ $rc -eq 0 ]; then echo "NOT CAUGHT   $test / $label (${t}s): the test still PASSES"; missed=1
-    else echo "caught       $test / $label (${t}s): $(printf '%s\n' "$out" | grep -iE 'FAIL|^ *- |Error' | head -n 1 | cut -c1-110)"; fi
+    else echo "caught       $test / $label (${t}s): $(printf '%s\n' "$out" | tools/plant-why.sh)"; fi
     continue
   fi
   # `file` may be a comma list (a JOINT plant: a fix that lives in two files, each half is covered by the other, so only both together bring the bug back): the same sed script is run on
@@ -38,7 +38,7 @@ while IFS=$'\t' read -r test file expr label; do
   restore
   t=$(awk -v a="$s" -v b="$e" 'BEGIN { printf "%.0f", b - a }')
   if [ $rc -eq 0 ]; then echo "NOT CAUGHT   $test / $label (${t}s): the test still PASSES"; missed=1
-  else echo "caught       $test / $label (${t}s): $(printf '%s\n' "$out" | grep -iE 'FAIL|^ *- |Error' | head -n 1 | cut -c1-110)"; fi
+  else echo "caught       $test / $label (${t}s): $(printf '%s\n' "$out" | tools/plant-why.sh)"; fi
 done < tools/plants.tsv
 [ "$n" -gt 0 ] || { echo "plants: NONE declared for: ${*:-(any)} in tools/plants.tsv (a missing declaration is a failure, not a pass)"; exit 1; }
 if [ -n "${DRY:-}" ]; then verb="checked (DRY, no test run)"; ok="all apply"; else verb="run"; ok="all caught"; fi

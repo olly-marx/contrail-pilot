@@ -597,3 +597,4 @@ crossladder	src/crossingview.js	s/higher = st(sp.higher), exception = st(sp.exce
 crossladder	src/crossings.js	s/exception = lower.filter(c => !covered.has(c.opens));/exception = [];/	a lower crossing that is the only way to open an area is dropped
 crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filter(s => s !== pick)/const lower = [].filter(s => s !== pick)/	the screen lists no easier ones
 crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again
+provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
