@@ -1081,3 +1081,7 @@ h2.sub { margin-top: -4px; }
 .hub-card .cc-line { margin: 1px 0 0; font-size: 7px; line-height: 1.25; }
 .hub-card .cc-btns { display: flex; gap: 6px; flex: none; }
 .hub-card .hc-dot { width: 6px; height: 6px; }
+/* ROUTE ON THE MAP R3: names beside the tapped city and the airports on its way, over the globe */
+.hub-labels { position: absolute; inset: 0; pointer-events: none; }
+.globe-label { position: absolute; font-size: 7px; line-height: 1; white-space: nowrap; color: #fff; text-shadow: 1px 0 #1b1b2f, -1px 0 #1b1b2f, 0 1px #1b1b2f, 0 -1px #1b1b2f; }
+.globe-label.dest { color: #ffd34d; }

@@ -141,7 +141,7 @@ export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross
     }
     // Season 2: an airport outside your unlocked areas (`lit`: their network, src/route.js linksFor) is a dim dot.
     g.fillStyle = !lit || k.name in lit ? 'rgba(255,255,255,0.9)' : 'rgba(40,40,60,0.75)';
-    g.fillRect(dx, dy, 1, 1); dots.push({ name: k.name, x: dx, y: dy, onLand: on });
+    g.fillRect(dx, dy, 2, 2); dots.push({ name: k.name, x: dx, y: dy, onLand: on });
   }
   // The way ahead: gold, drawn in whole pixels (no smoothing), a square at each airport.
   g.fillStyle = '#ffd34d';

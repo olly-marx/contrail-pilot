@@ -18,6 +18,12 @@ const seed = { areas: ['weurope', 'mideast', 'africa', 'sasia', 'easia'], homeAr
         await p.goto(URL); await ready(p);
         await p.waitForFunction(() => !!document.getElementById('hubGlobe') && !!document.getElementById('hubGlobe').__globe, null, { timeout: 15000 }).catch(() => null);
         const flightPath = await p.evaluate(() => document.getElementById('hubGlobe').__globe.routePath());
+        // D. every city is a real dot: 2 x 2 canvas pixels or more (a city that is not on the route and not next door)
+        const dot = await p.evaluate(async () => { const cv = document.getElementById('hubGlobe'), g = cv.__globe, R = await import('/src/route.js'), s = game.registry.get('ui').save, L = R.linksFor(s), path = g.routePath(); let pick = null;
+          for (const c of R.ROUTE) { if (path.includes(c.name) || !(c.name in L) || (L[path[0]] || []).includes(c.name)) continue; const q = g.cityPos(c.name); if (q) { pick = { name: c.name, q }; break; } }
+          if (!pick) return null; const r = cv.getBoundingClientRect(), k = cv.width / r.width, cx = Math.round((pick.q.x - r.left) * k), cy = Math.round((pick.q.y - r.top) * k), d = cv.getContext('2d').getImageData(cx - 2, cy - 2, 5, 5).data;
+          let bright = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 225 && d[i + 1] > 225 && d[i + 2] > 225) bright++; return { name: pick.name, bright }; });
+        check(dot && dot.bright >= 4, `${tag} D: a city is a 2 x 2 pixel dot or bigger (a 1 pixel dot has 1 to 2 bright pixels): ${JSON.stringify(dot)}`);
         // A. the farthest visible city that is 2 or more stops away
         const target = await p.evaluate(async () => { const g = document.getElementById('hubGlobe').__globe, R = await import('/src/route.js'), P = await import('/src/pickcity.js'), s = game.registry.get('ui').save; let best = null;
           for (const c of R.ROUTE) { const q = g.cityPos(c.name), w = P.routeOf(s, c.name); if (q && w && w.length >= 3 && (!best || w.length > best.n)) best = { name: c.name, x: q.x, y: q.y, n: w.length, way: w }; } return best; });
@@ -30,9 +36,17 @@ const seed = { areas: ['weurope', 'mideast', 'africa', 'sasia', 'easia'], homeAr
           check(shown.sheet && JSON.stringify(shown.drawn) === JSON.stringify(target.way), `${tag} A: tapping ${target.name} must draw its whole route on the globe: drawn ${JSON.stringify(shown.drawn)} vs ${JSON.stringify(target.way)} (card: ${tapped.slice(0, 60)})`);
           const fitBox = await p.evaluate(() => { const g = document.getElementById('goBtn').getBoundingClientRect(), tb = document.getElementById('tabbar').getBoundingClientRect(), c = document.getElementById('hubCard').getBoundingClientRect(), gl = document.getElementById('hubGlobe').getBoundingClientRect(); return { goBottom: Math.round(g.bottom), barTop: Math.round(tb.top), rowTop: Math.round(c.top), globeBottom: Math.round(gl.bottom), rowH: Math.round(c.height), noSheet: !document.getElementById('sheet') }; });
           check(fitBox.goBottom <= fitBox.barTop + 1 && fitBox.rowTop >= fitBox.globeBottom - 1 && fitBox.noSheet, `${tag} A: with the row open TAKE OFF is still above the bar, the row is under the globe and no modal covers the globe: ${JSON.stringify(fitBox)}`);
+          // R3: the tapped city and the airports on its way are named beside their dots (the destination first, at most 6 names, inside the globe)
+          const labels = await p.evaluate(() => { const wr = document.querySelector('.hub-globe-wrap').getBoundingClientRect(); return [...document.querySelectorAll('#hubLabels .globe-label')].map(e => { const r = e.getBoundingClientRect(); return { t: e.textContent, dest: e.classList.contains('dest'), inside: r.left >= wr.left - 1 && r.right <= wr.right + 1 && r.top >= wr.top - 1 && r.bottom <= wr.bottom + 1 }; }); });
+          log.push(`${tag} labels: ${JSON.stringify(labels)}`);
+          check(labels.length >= 1 && labels.length <= 6 && labels.some(l => l.dest && l.t === target.name) && labels.every(l => l.inside), `${tag} R3: the tapped city is labelled (and at most 6 names, all inside the globe): ${JSON.stringify(labels)}`);
+          check(labels.slice(1).every(l => target.way.includes(l.t) && l.t !== target.name), `${tag} R3: the other names are airports on the route: ${JSON.stringify(labels)}`);
+          await p.click('#hubSpinR', { timeout: 5000 }).catch(() => null); await p.waitForTimeout(300);
+          check((await p.evaluate(() => document.querySelectorAll('#hubLabels .globe-label').length)) === 0, `${tag} R3: spinning the globe clears the names (the picture moves, the names would not)`);
           // B. closing puts the flight's own route back
           await p.click('#ccX', { timeout: 5000 }).catch(() => check(false, `${tag} B: the card has no close button`)); await p.waitForTimeout(500);
           const back = await p.evaluate(() => document.getElementById('hubGlobe').__globe.routePath());
+          check((await p.evaluate(() => document.querySelectorAll('#hubLabels .globe-label').length)) === 0, `${tag} B: no names are left after closing`);
           check(JSON.stringify(back) === JSON.stringify(flightPath), `${tag} B: closing the card must put the flight's route back: ${JSON.stringify(back)} vs ${JSON.stringify(flightPath)}`);
         }
         // C. a destination 7 or more stops away keeps its whole route on HOME

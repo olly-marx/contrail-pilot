@@ -227,7 +227,7 @@ export class UI {
     $('hubRoute').onclick = () => this.openRouteSheet();   // R-B: the route choice and the crossings open as a SHEET (no page push)
   }
   // R-B: the globe's caption goes away for good after the first spin, drag or dot tap (a save flag in `tours`, like the other one-time hints).
-  globeUsed() { const s = this.save; if ((s.tours || []).some(t => t === 'globe-hint' || t === '*')) return; s.tours = [...(s.tours || []), 'globe-hint']; writeSave(s); const h = $('hubHint'); if (h) h.hidden = true; }
+  globeUsed() { this.clearRouteLabels(); const s = this.save; if ((s.tours || []).some(t => t === 'globe-hint' || t === '*')) return; s.tours = [...(s.tours || []), 'globe-hint']; writeSave(s); const h = $('hubHint'); if (h) h.hidden = true; }
   // R-B: the route choice and the crossings (the old #tJourney panel behind the route line) as a SHEET: the panel's own node is moved into it (its handlers
   // come along) and handed back when the sheet closes or is replaced (showSheet's onClose), so nothing pushes the page down.
   // ROUTING V2 step 2: after the tutorial the route chip opens the FLY TO sheet (where the next flight goes, its stops, CHANGE, FLY, and STOP when the player chose it); the old 'Which way?' sheet stays for the tutorial and the classic game.
@@ -419,7 +419,7 @@ export class UI {
     const dflt = s.tutorialDone && isSeason2(s) && DEFAULT_DEST.on && !v.aim ? defaultTargetFrom(linksFor(s), s.city, s.visited) : null;
     $('hubRoute').innerHTML = dflt ? `Next: ${esc(dflt)} <span class="small">change</span> &#8250;` : v.route.join(' &#9654; ') + (v.aim ? ` <span class="small">(${this.save.aimCity && v.aim === this.save.aimCity ? 'go to' : 'mission'})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
-    if ($('hubCard')) $('hubCard').hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false;   // (the tapped city's row goes with any redraw: closeCityRow redraws on purpose)
+    this.clearRouteLabels(); if ($('hubCard')) $('hubCard').hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false;   // (the tapped city's row goes with any redraw: closeCityRow redraws on purpose)
     const path = routeFor(s, Math.max(5, gotoTarget(s) ? gotoHops(s) : 0)), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
     const pick = name => { this.globeUsed(); sfx.tick(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it
@@ -607,7 +607,7 @@ export class UI {
     const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const dots = card.dots ? `<span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(card.dots)}${card.moreDots ? ' +' : ''}</span>` : '';
     // ROUTE ON THE MAP (R1): the tapped city's whole way is drawn on the globe that is already there, in its gold line. R2: the card is ONE ROW in the route chip's slot under the globe (no modal over the globe); the x puts the flight's own route back.
-    const way = routeOf(s, name); if (way && this.hubGlobe && this.hubGlobe.setPath) this.hubGlobe.setPath(way.map(city));
+    const way = routeOf(s, name); if (way && this.hubGlobe && this.hubGlobe.setPath) { this.hubGlobe.setPath(way.map(city)); this.drawRouteLabels(way); }
     const trip = tripLine(s, name), line = locked && card.canFly ? 'Pick your free part first.' : trip ? `${trip.line}${trip.verdict ? ` ${trip.verdict}` : ''}` : card.line;
     let row = $('hubCard'); if (!row) { row = document.createElement('div'); row.id = 'hubCard'; row.className = 'hubonly hub-card'; $('hubRoute').after(row); }
     row.innerHTML = `<div class="cc-main"><div class="cc-name"><b>${esc(card.name)}</b> ${dots}</div><p class="cc-line">${esc(line)}</p></div><div class="cc-btns">${canFly ? '<button class="chip" id="ccFly" type="button">FLY</button>' : ''}<button class="chip" id="ccX" type="button" aria-label="Close">X</button></div>`;
@@ -615,7 +615,25 @@ export class UI {
     $('ccX').onclick = () => { sfx.tick(); this.closeCityRow(); };
     if ($('ccFly')) $('ccFly').onclick = () => { sfx.tick(); setGoto(s, card.name); delete s.heading; writeSave(s); this.start(); };
   }
-  closeCityRow() { const row = $('hubCard'); if (row) row.hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false; if (this.hubGlobe) this.renderHub(); }
+  // ROUTE ON THE MAP R3: the tapped city and up to 5 airports on its way get a name beside their dot (DOM text over the canvas: crisp at 7 px; the canvas is only 128 px wide). The destination is always kept and drawn first;
+  // an airport whose label would overlap another or leave the globe is dropped. Any drag or spin of the globe clears them (globeUsed): the picture moves, the labels would not.
+  clearRouteLabels() { const l = $('hubLabels'); if (l) l.innerHTML = ''; }
+  drawRouteLabels(way) {
+    const g = this.hubGlobe, wrap = document.querySelector('.hub-globe-wrap'); if (!g || !g.cityPos || !wrap || !way || way.length < 2) return;
+    let box = $('hubLabels'); if (!box) { box = document.createElement('div'); box.id = 'hubLabels'; box.className = 'hub-labels'; wrap.appendChild(box); }
+    box.innerHTML = '';
+    const wr = wrap.getBoundingClientRect(), dest = way[way.length - 1], names = [dest, ...way.slice(1, -1).slice(0, 5)], placed = [];
+    for (const nm of names) {
+      const q = g.cityPos(nm); if (!q) continue;
+      const x = q.x - wr.left, y = q.y - wr.top, el = document.createElement('span'); el.className = `globe-label${nm === dest ? ' dest' : ''}`; el.textContent = nm; box.appendChild(el);
+      const w = el.offsetWidth, h = el.offsetHeight; let left = x > wr.width / 2 ? x - 5 - w : x + 5; const top = Math.max(0, Math.min(y - h / 2, wr.height - h));
+      if (nm === dest) left = Math.max(0, Math.min(left, wr.width - w));
+      const r = { l: left, t: top, r: left + w, b: top + h };
+      if (nm !== dest && (placed.some(p => r.l < p.r && r.r > p.l && r.t < p.b && r.b > p.t) || r.l < 0 || r.r > wr.width)) { el.remove(); continue; }
+      el.style.left = `${Math.round(left)}px`; el.style.top = `${Math.round(top)}px`; placed.push(r);
+    }
+  }
+  closeCityRow() { this.clearRouteLabels(); const row = $('hubCard'); if (row) row.hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false; if (this.hubGlobe) this.renderHub(); }
   openCrossings(cs) {
     sfx.tick();
     if (cs.ready && !cs.told) return this.showCrossingSheet(cs);

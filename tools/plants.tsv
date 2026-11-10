@@ -643,3 +643,8 @@ routeline	src/pickcity.js	s/const verdict = reach > 0 \&\& routeKm(way) > reach 
 routeline	src/pickcity.js	s/const verdict = reach > 0 \&\& routeKm(way) > reach ?/const verdict = routeKm(way) > reach ?/	a verdict is shown when the reach is unknown
 routeline	src/pickcity.js	s/Math\.max(Number(capFor(save, areaOf(save\.city))) || 0, Number(save\.bestDistance) || 0)/Math.min(Number(capFor(save, areaOf(save.city))) || 0, Number(save.bestDistance) || 0)/	the reach uses the smaller of the estimate and the best flight
 citytap	src/ui.js	s/\$('hubRoute')\.hidden = true; row\.hidden = false;/row.hidden = false;/	the route chip stays when the city row opens
+routeonmap	src/globe.js	s/g\.fillRect(dx, dy, 2, 2); dots\.push/g.fillRect(dx, dy, 1, 1); dots.push/	the city dots are 1 pixel again
+routeonmap	src/ui.js	s/names = \[dest, \.\.\.way\.slice(1, -1)\.slice(0, 5)\]/names = [dest, ...way.slice(1, -1)]/	the route names are not limited
+routeonmap	src/ui.js	s/this\.hubGlobe\.setPath(way\.map(city)); this\.drawRouteLabels(way); }/this.hubGlobe.setPath(way.map(city)); }/	the tapped city gets no name
+routeonmap	src/ui.js	s/globeUsed() { this\.clearRouteLabels(); /globeUsed() { /	spinning the globe leaves the names where they were
+routeonmap	src/ui.js	s/closeCityRow() { this\.clearRouteLabels(); /closeCityRow() { /	closing the card leaves the names
