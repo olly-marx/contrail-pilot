@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-10-tap-any-city",
+    "version": "0.46.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "You can tap any city on the globe to see how many stops it is and fly there. The game steers each flight toward it."
+    ]
+  },
+  {
     "id": "2026-11-10-music-duck-tabhome",
     "version": "0.45.1",
     "date": "2026-11-10",
