@@ -564,7 +564,7 @@ landlogui	src/pilot.js	s/^    $('pLandCopy').onclick = () => {.*$/    $('pLandCo
 crossbox	src/crossingview.js	s/route: `\${s.from} > \${s.to}`, word: s.difficulty/route: `${s.from} > ${s.to} (${s.km} km)`, word: s.difficulty/	the box shows the crossing's distance again
 crossbox	src/crossingview.js	s/const ticks = \[\['Era', 'era'\], \['Plane', 'plane'\], \['Nature', 'nature'\]\]/const ticks = [['Era', 'era'], ['Nature', 'nature'], ['Plane', 'plane']]/	the box ticks are in the wrong order
 crossbox	src/crossingview.js	s/n \&\& n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' }/n \&\& n.where === 'hangar' ? { label: 'NATURE', act: 'nature' }/	an open plane tick sends the player to NATURE
-crossbox	src/crossingview.js	s/const line = s.ready ? 'Ready!' : s.nearest ? s.nearest.plain : '';/const line = s.ready ? 'Ready!' : s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
+crossbox	src/crossingview.js	s/const line = s.ready ? 'Ready! Tap to cross.' : s.nearest ? s.nearest.plain : '';/const line = s.ready ? 'Ready! Tap to cross.' : s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
 crossboxui	src/ui.js	s/hc.hidden = !box; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
 crossboxui	src/ui.js	s/hc.onclick = () => this.openCrossings(cs); }/hc.onclick = () => {}; }/	a tap on the HOME box does nothing
 crossboxui	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/);/	the HOME box shows during the lessons
@@ -581,3 +581,7 @@ crystalreason	src/sim/rules.js	s/        } else if (why !== 'quiet') this.onNoCr
 crystalpopup	src/GameScene.js	s/this.crystalWhyAt = this.gameTime; this.popup(this.plane.x + 25, this.plane.y - 16, text, '#c9d6e8');/this.crystalWhyAt = this.gameTime;/	a missed cloud shows no line
 crystalpopup	src/GameScene.js	s/if (!text || this.explaining || /if (!text || /	the line is shown over a tip
 crystalpopup	src/GameScene.js	s/    if (this.crystalWhyAt != null \&\& this.gameTime - this.crystalWhyAt < 12000) return;//	a line for every missed cloud (no 12 s limit)
+crossladder	src/crossingview.js	s/higher = st(sp.higher), exception = st(sp.exception), easier = st(sp.easier);/higher = st([...sp.higher, ...sp.exception, ...sp.easier]), exception = [], easier = [];/	the next crossing is the nearest ready one again (no ladder)
+crossladder	src/crossings.js	s/exception = lower.filter(c => !covered.has(c.opens));/exception = [];/	a lower crossing that is the only way to open an area is dropped
+crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filter(s => s !== pick)/const lower = [].filter(s => s !== pick)/	the screen lists no easier ones
+crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again

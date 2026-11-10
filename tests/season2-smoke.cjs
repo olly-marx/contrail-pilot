@@ -5,7 +5,7 @@
 //      (not London > Paris), the first hop is the next airport, the plane takes off, no page errors
 //   C  the tabs: HANGAR, NATURE, PILOT, BOARDS and back to FLY open with content and without errors
 //   D  the offer card with the gate met through a seeded save (areaBest + planted trees): 4,549 km not offered, another
-//      area's flight does not count, 4,550 km + biodiversity 30 offered; a crossing flight starts (Stockholm 6,500 km on)
+//      area's flight counts too (0.43.1), 4,550 km + biodiversity 30 offered; a crossing flight starts (Stockholm 6,500 km on)
 //   E  every area open and the last era (far future, the era 6 release): THE LAP is listed, no MORE TO COME; after the lap, neither
 //   G  a tap before the scene exists (the 0.12.2 iPhone crash): startSchool/startFlight restart instead of throwing
 //   F  nothing to fly yet in an early era: the card says when the next crossing opens, not silence
@@ -120,7 +120,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   let c = await card({ weurope: 4549 });
   check(/WARSAW &gt; STOCKHOLM/.test(c) && /Needs:/.test(c) && !/data-cross/.test(c), `D: 4,549 km (just under 70%) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
   c = await card({ nordic: 9999 });
-  check(!/data-cross/.test(c), 'D: a long flight from another area does not count');
+  check(/data-cross="warsaw-stockholm"/.test(c), 'D: a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
   c = await card({ weurope: 4550 }, STARS.slice(1, 2));
   check(/data-cross="warsaw-stockholm"/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 4,550 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
   c = await card({ weurope: 4550 });

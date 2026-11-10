@@ -3,6 +3,10 @@
 // the game's context may exist but is not 'running' (the browser's rule, so this test is a real policy test); 2. after the click ctx.state === 'running'; 3. a tap on the context's destination
 // (every node that connects to it also feeds an AnalyserNode) shows a non-zero peak for tick, thud, reveal, era, with a declared FLOOR per cue (peak amplitude at the destination);
 // 4. muted + un-muted again recovers. Floors are declared below with their reason, not inferred. Run: python3 -m http.server 8000 & node tests/audiolive.cjs   (plants: tools/plants.tsv)
+// WHY THE CUE LOUDNESS IS THE LOUDEST 43 ms READ (decided on the principle, not on the outcome): the loudness of a BRIEF cue (a 70 ms flap, a 35 ms tick) is its short-term loudness, the loudest ~43 ms: the 2048 samples one AnalyserNode read sees at 48 kHz.
+// A mean over the polling window averages in the silence around the cue and depends on how many reads the 8 ms timer lands inside it (CI measured the flap at 0.0050-0.0051, local 0.0053-0.0056). The music is steady, so its mean rms is its short-term loudness.
+// It is measured LIVE through the game's real master chain, not rendered offline: an offline render of the flap through a fresh copy of the chain peaked at 0.011 against 0.029 for the bare tone and about 0.03-0.04 live: the DynamicsCompressor's gain depends on its
+// history, so only the live chain says what the player hears (measured in the 'margin proof' turns, 2026-11-10). Both numbers are printed: LOUDEST READ (the rule) and MEAN (the old estimate).
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
@@ -26,6 +30,9 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
     window.__peak = (ms) => new Promise(res => { let pk = 0; const t0 = performance.now(); const tick = () => { for (const c of window.__ctxs) if (c.__an) { c.__an.getFloatTimeDomainData(c.__buf); for (const v of c.__buf) pk = Math.max(pk, Math.abs(v)); } if (performance.now() - t0 < ms) setTimeout(tick, 8); else res(pk); }; tick(); });
     localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ musicOff: true }));   // the effect checks run WITHOUT music (the music has its own section below)
     window.__rms = (ms) => new Promise(res => { let ss = 0, n = 0; const t0 = performance.now(); const tick = () => { for (const c of window.__ctxs) if (c.__an) { c.__an.getFloatTimeDomainData(c.__buf); for (const v of c.__buf) { ss += v * v; n++; } } if (performance.now() - t0 < ms) setTimeout(tick, 8); else res(Math.sqrt(ss / Math.max(1, n))); }; tick(); });
+    // The LOUDEST READ: the highest rms of any single analyser read (2048 samples = 43 ms at 48 kHz) during the window. For a brief cue this is its short-term loudness, independent of how many reads the 8 ms polling lands inside it
+    // (the mean over the window, __rms, moved 0.0050-0.0056 for the flap between runs and machines).
+    window.__rmsmax = (ms) => new Promise(res => { let mx = 0; const t0 = performance.now(); const tick = () => { for (const c of window.__ctxs) if (c.__an) { c.__an.getFloatTimeDomainData(c.__buf); let ss = 0; for (const v of c.__buf) ss += v * v; mx = Math.max(mx, Math.sqrt(ss / c.__buf.length)); } if (performance.now() - t0 < ms) setTimeout(tick, 4); else res(mx); }; tick(); });
   });
   await p.goto(URL); await ready(p); await p.waitForTimeout(800);
   const pre = await p.evaluate(() => window.__ctxs.filter(c => c.__ours).map(c => c.state));   // only the contexts made by src/sound.js (Phaser makes its own at boot)
@@ -76,8 +83,9 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
     const silent0 = await p.evaluate(() => window.__rms(500)); check(silent0 < 0.0005, `MUSIC off (the start of this run): silence at the destination (rms ${silent0.toFixed(4)})`);
     // the cues alone (music off), each over its own length (seconds, declared here)
     const LEN = { tick: 0.06, flap: 0.1, coin: 0.2, thud: 0.4, crack: 0.35, reveal: 0.5, grow: 0.4, done: 0.3, medal: 0.6 };
-    // (the analyser is sampled every 8 ms, so a short cue's window can miss part of it: take the MAX of three plays, which approaches the cue's true rms)
-    const cueRms = {}; for (const [cue, len] of Object.entries(LEN)) { cueRms[cue] = 0; for (let k = 0; k < 3; k++) { cueRms[cue] = Math.max(cueRms[cue], await p.evaluate(async ({ cue, ms }) => { const m = await import('/src/sound.js'); const pr = window.__rms(ms); m.sfx[cue](); return pr; }, { cue, ms: len * 1000 })); await p.waitForTimeout(500); } }
+    // each cue alone (music off): the LOUDEST READ over its own length, best of 2 plays (the rule); the MEAN of one play is printed beside it
+    const cueRms = {}, cueLive = {};
+    for (const [cue, len] of Object.entries(LEN)) { cueRms[cue] = 0; for (let k = 0; k < 2; k++) { const [mx, mean] = await p.evaluate(async ({ cue, ms }) => { const m = await import('/src/sound.js'); const a = window.__rmsmax(ms), b = window.__rms(ms); m.sfx[cue](); return [await a, await b]; }, { cue, ms: len * 1000 }); cueRms[cue] = Math.max(cueRms[cue], mx); cueLive[cue] = mean; await p.waitForTimeout(450); } }
     await p.evaluate(async () => { (await import('/src/music.js')).setTrackRng(() => 0.7); });   // the same loud song every run (track D: nextTrack draws index 3 of 5)
     const REQ = { soft: 2, middle: 1.5, loud: 1.0 }, music = {}, order = ['soft', 'middle', 'loud'];
     for (const lvl of order) {
@@ -99,7 +107,7 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
     }
     check(music.soft < music.middle && music.middle < music.loud, `the levels are ordered by loudness: soft ${music.soft.toFixed(4)} < middle ${music.middle.toFixed(4)} < loud ${music.loud.toFixed(4)}`);
     const page = 0.020, dB = m => (20 * Math.log10(m / page)).toFixed(1);   // the tailnet page's music rms for song D is 0.020 at its master 0.245
-    console.log(`MUSIC LEVELS (song D): soft rms ${music.soft.toFixed(4)} (${dB(music.soft)} dB vs the page) | middle ${music.middle.toFixed(4)} (${dB(music.middle)} dB) | loud ${music.loud.toFixed(4)} (${dB(music.loud)} dB); weakest cue ${Object.entries(cueRms).sort((a, b) => a[1] - b[1])[0].join(' ')}; cue rms ${JSON.stringify(Object.fromEntries(Object.entries(cueRms).map(([k, v]) => [k, +v.toFixed(4)])))}`);
+    console.log(`MUSIC LEVELS (song D): soft rms ${music.soft.toFixed(4)} (${dB(music.soft)} dB vs the page) | middle ${music.middle.toFixed(4)} (${dB(music.middle)} dB) | loud ${music.loud.toFixed(4)} (${dB(music.loud)} dB); weakest cue ${Object.entries(cueRms).sort((a, b) => a[1] - b[1])[0].join(' ')}; cue LOUDEST-READ rms ${JSON.stringify(Object.fromEntries(Object.entries(cueRms).map(([k, v]) => [k, +v.toFixed(5)])))}; MEAN (old estimate, last play) ${JSON.stringify(Object.fromEntries(Object.entries(cueLive).map(([k, v]) => [k, +v.toFixed(4)])))}; ratios flap/music soft ${(cueRms.flap / music.soft).toFixed(2)} middle ${(cueRms.flap / music.middle).toFixed(2)} loud ${(cueRms.flap / music.loud).toFixed(2)}`);
     await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(900);   // LOUD -> OFF
     const off = await chipState(); const offRms = await p.evaluate(() => window.__rms(500));
     check(off.off === true && off.ls.musicOff === true && off.text === 'MUSIC: OFF' && offRms < 0.0005, `the MUSIC chip cycles back to OFF, saves it and the music stops (save ${off.off}, chip "${off.text}", rms ${offRms.toFixed(4)})`);

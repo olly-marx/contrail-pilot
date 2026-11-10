@@ -38,6 +38,12 @@ export const CROSSINGS = [
   { id: 'lap', era: 5, kind: 'lap' },   // from = to = your home city (save.homeArea's start), filled in by available()
 ];
 export const crossingById = id => CROSSINGS.find(c => c.id === id);
+// THE LADDER (CROSSINGS V2: 'crossings should always get harder'): every crossing's rung, DECLARED, by era and then the real length of the leg (great circle of its two airports); the lap is the last rung. The game lengths
+// are unchanged: this is only the ORDER. The next crossing offered is always above the highest rung already crossed (candidates below).
+export const LADDER = ['hanoi-hongkong', 'warsaw-stockholm', 'khartoum-addis', 'patagonia', 'tasman', 'mexico-panama', 'jakarta-darwin', 'mediterranean', 'arabian-sea', 'caribbean', 'silk-road', 'reykjavik-newyork', 'north-atlantic',
+  'singapore-perth', 'north-pacific', 'south-atlantic', 'indian-ocean', 'pacific-islands', 'honolulu-tokyo', 'nadi-auckland', 'auckland-santiago', 'lap'];
+export const rungOf = c => LADDER.indexOf(typeof c === 'string' ? c : c.id);
+export const topRung = save => Math.max(-1, ...(save.crossed || []).map(id => LADDER.indexOf(id)));
 export const crossingKm = c => (c.kind === 'lap' ? SEASON.crossingKm.final : SEASON.crossingKm[c.era + 1]);
 // The two areas a crossing joins ('ocean' for Honolulu/Nadi, which belong to no area).
 export const sides = c => [areaOf(c.a) || 'ocean', areaOf(c.b) || 'ocean'];
@@ -80,8 +86,11 @@ export function upcoming(save) {
 //   era    the era reached is the crossing's era or later;   nature  the best nature meter over every land the player has opened is at the offer's biodiversity;
 //   plane  planeReady() below: TODAY's rule (the best landed flight from the departure area, or the hangar's estimate, covers 70 percent of the crossing). It is one function so the sim chat's new factor and
 //          pools drop in later without touching the screens.
-export const planeReady = (save, c) => { const k = areaOf(c.from); return Math.max((save.areaBest || {})[k] || 0, k ? capFor(save, k) : 0) >= SEASON.offer.distanceShare * c.km; };
-export const planeProgress = (save, c) => { const k = areaOf(c.from), need = SEASON.offer.distanceShare * c.km; return need ? Math.min(1, Math.max((save.areaBest || {})[k] || 0, k ? capFor(save, k) : 0) / need) : 1; };
+// The plane's reach, FROM ANY AREA (the user, 2026-11-09: 'status, not location'; a pilot was told to upgrade a plane that only needed a longer landed flight from another land): the best landed flight
+// from any area, the longest landed flight of all (save.bestDistance: a flown crossing counts), or the hangar's estimate for the area the player is in. Today's 70 percent rule otherwise.
+const reachKm = save => Math.max(0, save.bestDistance || 0, ...Object.values(save.areaBest || {}), capFor(save, areaOf(save.city) || '') || 0);
+export const planeReady = (save, c) => reachKm(save) >= SEASON.offer.distanceShare * c.km;
+export const planeProgress = (save, c) => { const need = SEASON.offer.distanceShare * c.km; return need ? Math.min(1, reachKm(save) / need) : 1; };
 export const natureBest = save => Math.max(0, ...unlockedAreas(save).map(k => bestAreaBio(save, k)));
 export function readiness(save, c) {
   const era = eraProgress(save).index >= c.era, plane = planeReady(save, c), nb = natureBest(save), nature = nb >= SEASON.offer.biodiversity;
@@ -148,4 +157,14 @@ export function crossingPath(c, count = 60) {
   const k = areaOf(c.to), there = k ? AREAS[k].cities : OCEAN_STONES;   // the lap: home -> home (40,000 km), then on round home
   const L = linksOf([...new Set([c.to, ...there])]), way = choices(c.to, L)[0];
   return [c.from, ...(way ? tourPath(c.to, way.name, count, L) : [c.to])];
+}
+
+// WHICH crossings are the next ones (the 'only harder' rule; the user, 2026-11-09: he and a finished player were offered an easy and a medium after crossing several times). From every one-end-open crossing (upcoming):
+//   higher     the rung is above the highest rung already crossed: these are the next ones;
+//   exception  a LOWER crossing that is the only way to open an area no higher crossing opens (it must stay reachable, e.g. the Patagonia crossing);
+//   easier     every other lower one: kept under 'an easier one', never offered as the next goal.
+export function ladderSplit(save) {
+  const all = upcoming(save), top = topRung(save), higher = all.filter(c => rungOf(c) > top), lower = all.filter(c => rungOf(c) <= top);
+  const covered = new Set(higher.map(c => c.opens)), exception = lower.filter(c => !covered.has(c.opens));
+  return { higher, exception, easier: lower.filter(c => !exception.includes(c)) };
 }
