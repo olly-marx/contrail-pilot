@@ -27,7 +27,7 @@ const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code
         for (const [k, v] of Object.entries(fake)) localStorage.setItem('s2:contrailPilot.' + k, JSON.stringify(v)); } }, rich);
       await p.goto(URL); await ready(p); await p.waitForTimeout(800);
       const keys = () => p.evaluate(() => { const o = {}; for (const k of Object.keys(localStorage)) if (k.startsWith('s2:contrailPilot.')) o[k.slice(17)] = localStorage.getItem(k); return o; });
-      const lands = async () => { await p.click('#tabNature'); await p.waitForTimeout(700); return p.evaluate(() => [...document.querySelectorAll('#wRegions [data-region]')].map(e => e.dataset.region)); };
+      const lands = async () => { await p.evaluate(() => game.registry.get('ui').go('nature')); await p.waitForTimeout(700); return p.evaluate(() => [...document.querySelectorAll('#wRegions [data-region]')].map(e => e.dataset.region)); };
       // 0. control
       const before = await keys(), landsBefore = await lands();
       check(DEVICE.every(k => k in before) && landsBefore.length > 1, `${tag}: control: the rich save has the nine device keys and more than one land in NATURE (keys ${DEVICE.filter(k => !(k in before))}, lands ${landsBefore})`);
@@ -49,7 +49,7 @@ const DEVICE = ['outbox', 'onlineNote', 'recoverNext', 'landlog', 'pilot', 'code
       check(sv.flights === 0 && sv.landings === 0 && sv.seeds === 0 && !sv.pilotNamed && !(sv.discovered && Object.keys(sv.discovered).length) && !(sv.missionsDone && sv.missionsDone.length) && !(sv.badgeTiers && Object.keys(sv.badgeTiers).length) && !sv.records,
         `${tag}: after the reload the saved game is a new player's (flights ${sv.flights}, seeds ${sv.seeds}, discovered ${JSON.stringify(sv.discovered)}, missionsDone ${JSON.stringify(sv.missionsDone)}, badgeTiers ${JSON.stringify(sv.badgeTiers)}, records ${JSON.stringify(sv.records)})`);
       // 3. PILOT and NATURE
-      await p.click('#tabPilot').catch(() => {}); await p.waitForTimeout(700);
+      await p.evaluate(() => game.registry.get('ui').go('pilot')); await p.waitForTimeout(700);
       const pil = await p.evaluate(() => { const v = id => { const e = document.getElementById(id); return !!e && !e.hidden && e.offsetParent !== null; }; const t = document.getElementById('pLost'); return { lostShown: v('pLost'), text: document.getElementById('pilot') ? document.getElementById('pilot').innerText.replace(/\s+/g, ' ').slice(0, 200) : '' }; });
       check(!pil.lostShown && !/lost its pilot/i.test(pil.text), `${tag}: PILOT does not say this phone has lost its pilot: ${pil.text}`);
       const landsAfter = await lands();
