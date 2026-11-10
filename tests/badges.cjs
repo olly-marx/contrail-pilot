@@ -43,6 +43,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       meltdown: [[{ landed: false }, { crashes: { overheat: 1 } }], [{ landed: false }, { crashes: { ground: 1 } }]],
       closecall: [[{ heat: 149 }], [{ heat: 148 }]], lucky7: [[{ cargo: 7 }], [{ cargo: 8 }]],
       seeddodger: [[{ cargo: 0, distance: 2000 }], [{ cargo: 0, distance: 1999 }]],
+      lap: [[{ lapLanded: true }], [{}]],
     };
     // The 3 cumulative badges (distance, collector, threader) are earned from the save's lifetime totals, not from one flight's numbers: tests/cumbadges.cjs (Node, plants) covers them.
     const CUMULATIVE = ['distance', 'collector', 'threader'];

@@ -187,6 +187,14 @@ def icon_worldflight(p, cx, cy):
     p.px(cx + 6, cy - 1, C['ink']); p.px(cx + 5, cy - 2, C['ink'])
 
 
+def icon_lap(p, cx, cy):
+    paste(p, A / 'face-ok-0.png', cx, cy + 1, 11, 11)
+    for a in range(0, 360, 20):                                     # a full ring round it: the lap is closed
+        x = cx + round(6.5 * math.cos(math.radians(a))); y = cy + 1 + round(3 * math.sin(math.radians(a)))
+        p.px(x, y, C['white'])
+    p.px(cx + 6, cy + 1, C['ink']); p.px(cx - 6, cy + 1, C['ink'])
+
+
 def icon_oops(p, cx, cy):
     plane_icon(p, cx, cy)
     for x, y in ((-6, -4), (5, -5), (-3, 5), (6, 3)):
@@ -247,7 +255,7 @@ BADGES = {
     'zerocarbon': ('climate', 1, icon_zerocarbon),
     'seedhunter': ('seeds', 3, icon_seedhunter), 'golden': ('seeds', 3, icon_golden),
     'forester': ('nature', 3, icon_forester), 'naturalist': ('nature', 3, icon_naturalist), 'rewilder': ('nature', 3, icon_rewilder),
-    'globetrotter': ('explorer', 3, icon_globetrotter), 'worldflight': ('explorer', 1, icon_worldflight),
+    'globetrotter': ('explorer', 3, icon_globetrotter), 'worldflight': ('explorer', 1, icon_worldflight), 'lap': ('explorer', 1, icon_lap),
     'oops': ('secret', 1, icon_oops), 'birdstrike': ('secret', 1, icon_birdstrike), 'toldoff': ('secret', 1, icon_toldoff),
     'meltdown': ('secret', 1, icon_meltdown), 'closecall': ('secret', 1, icon_closecall), 'lucky7': ('secret', 1, icon_lucky7),
     'seeddodger': ('secret', 1, icon_seeddodger),
