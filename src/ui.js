@@ -494,7 +494,7 @@ export class UI {
   showOnly(id) {
     for (const s of ['title', 'results', 'hangar', 'nature', 'pilot', 'boards', 'missions']) $(s).hidden = s !== id;
     for (const s of ['how', 'about', 'info', 'scoreInfo', 'wInfo']) $(s).hidden = true;
-    // The bottom bar on every menu screen (players missed it when the S2 hub removed it: Lola, 2026-10-27). Season 2:
+    // The bottom bar on every menu screen (players missed it when the S2 hub removed it: a tester, 2026-10-27). Season 2:
     // HOME / MISSIONS / HANGAR / NATURE, each only once revealed; PILOT and BOARDS come with the 3rd landing. No bar while flying.
     $('tabbar').hidden = !id;
     $('hubBack').hidden = true;   // (the bar's HOME replaces the old floating button)

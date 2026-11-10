@@ -1,5 +1,5 @@
 // Missions check (2026-10-22: missions are the lessons): the title shows the current mission;
-// landing at an airport completes mission 1 and moves on, even past PARIS (Lola flew past it); a
+// landing at an airport completes mission 1 and moves on, even past PARIS (a tester flew past it); a
 // crash doesn't; the mission line shows during a flight; passing an airport shows a "Passed X.
 // Next: Y" sign; a mission that needs an upgrade says so; a bird crash earns the secret badge.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/missions.cjs
@@ -57,7 +57,7 @@ const KEY = 'contrailPilot.v2';
   const rm = await p.textContent('#rMission');
   check(/✓/.test(rm) && /Land/.test(rm), `results show mission 1 done on one line (R1; the next mission is the season-2 UP NEXT): ${rm}`);
 
-  // 3b. Lola's flight: past PARIS, landed in BERLIN. Mission 1 is done anyway (it was stuck before).
+  // 3b. The tester's flight: past PARIS, landed in BERLIN. Mission 1 is done anyway (it was stuck before).
   await setSave({ ...base, mission: 0 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#goBtn'); await flying(); await calm();
   await scene(() => { const s = game.scene.getScene('game'); s.airportIndex = 1; s.airportsSkipped = 1; s.heat = 0; s.nextAirport = { ...s.airportAhead(1), worldX: s.distancePx + 250 }; });   // BERLIN, just ahead

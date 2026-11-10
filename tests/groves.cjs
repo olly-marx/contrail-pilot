@@ -37,14 +37,14 @@ globalThis.SEASON2 = true;
   check(N.biodiversity(f, 'woodland') === bioOld && N.biodiversity(f, 'mediterranean') === bioMed, `the biodiversity meter is the same after the migration: ${N.biodiversity(f, 'woodland')} vs ${bioOld}`);
   check(JSON.stringify(RC.treeTags(f).sort()) === JSON.stringify(['birch', 'mediterranean:aleppo-pine', 'spruce']), `the records tags are unchanged (UK kinds plain, other lands land:id): ${RC.treeTags(f)}`);
   check(N.plantGainHere(f, 'mediterranean', 'aleppo-pine') > 0 && N.plantGain(f, 'oak') > 0, 'what one more tree adds is still worked out');
-  // 7. A REAL PLAYER'S SAVE (an anonymous copy of the user's tester's: tests/fixtures/lola-trees-save.json, trees, habitat and areas only): every count, the meter and the records tags are IDENTICAL before and after the migration, and equal the old keys' own numbers.
-  const fs = require('fs'), path = require('path'), file = path.join(__dirname, 'fixtures', 'lola-trees-save.json');
-  check(fs.existsSync(file), 'the fixture tests/fixtures/lola-trees-save.json is missing (a test that skips itself where its fixture is missing cannot fail)');
+  // 7. A REAL PLAYER'S SAVE (an anonymous copy of the user's tester's: tests/fixtures/trees-save.json, trees, habitat and areas only): every count, the meter and the records tags are IDENTICAL before and after the migration, and equal the old keys' own numbers.
+  const fs = require('fs'), path = require('path'), file = path.join(__dirname, 'fixtures', 'trees-save.json');
+  check(fs.existsSync(file), 'the fixture tests/fixtures/trees-save.json is missing (a test that skips itself where its fixture is missing cannot fail)');
   if (fs.existsSync(file)) {
-    const lola = JSON.parse(fs.readFileSync(file, 'utf8')), legacy = JSON.stringify([lola.planted, lola.plantedIn]);
+    const real = JSON.parse(fs.readFileSync(file, 'utf8')), legacy = JSON.stringify([real.planted, real.plantedIn]);
     const WANT = { woodland: 74, mediterranean: 102, tundra: 7, boreal: 43, plains: 63, desert: 52, rainforest: 25 };   // the old keys' sums, worked out by hand from the fixture
     const snap = s => ({ lands: Object.fromEntries(Object.keys(WANT).map(l => [l, G.treeBook(s, l)])), total: T.treesPlanted(s), meters: Object.fromEntries(Object.keys(WANT).map(l => [l, N.biodiversity(s, l)])), tags: RC.treeTags(s).sort() });
-    const b0 = snap(lola), mig = JSON.parse(JSON.stringify(lola)); G.ensureGroves(mig); const a0 = snap(mig), a1 = snap(JSON.parse(JSON.stringify(mig)));
+    const b0 = snap(real), mig = JSON.parse(JSON.stringify(real)); G.ensureGroves(mig); const a0 = snap(mig), a1 = snap(JSON.parse(JSON.stringify(mig)));
     check(JSON.stringify(b0) === JSON.stringify(a0) && JSON.stringify(a0) === JSON.stringify(a1), `the real save counts the same before and after the migration (and after a save round trip): ${JSON.stringify(b0.meters)} vs ${JSON.stringify(a0.meters)}`);
     for (const [land, want] of Object.entries(WANT)) check(Object.values(a0.lands[land]).reduce((x, n) => x + n, 0) === want, `${land}: ${Object.values(a0.lands[land]).reduce((x, n) => x + n, 0)} trees (the old keys say ${want})`);
     check(a0.total === 366, `the whole save's tree total is 366: ${a0.total}`);

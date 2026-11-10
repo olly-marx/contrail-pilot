@@ -1,6 +1,6 @@
 // MEASUREMENT (Node, no browser): load a BACK UP MY GAME file through the real restore path (src/backup.js readBackup + prepareSave) and print, for every crossing that leaves an area,
 // the three offer conditions (capability, nature, trial stars) from src/crossings.js offerCtx / offerCheck and which crossings available() lists. Not in the gate.
-// Run: node tools/lolacross.cjs <backup.json>
+// Run: node tools/crossbackup.cjs <backup.json>
 globalThis.SEASON2 = true;
 (async () => {
   const mem = {}; globalThis.localStorage = { getItem: k => (k in mem ? mem[k] : null), setItem: (k, v) => { mem[k] = String(v); }, removeItem: k => { delete mem[k]; } };
