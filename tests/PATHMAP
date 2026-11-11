@@ -87,6 +87,7 @@ group route-map | src/globe.js src/pickcity.js src/ui.js src/missionsview.js | r
 group target-banner | src/targetbanner.js src/GameScene.js src/aim.js | missionsteer targetbanner-ui plantrail textfit
 group gold-trail | src/goldtrail.js src/GameScene.js | goldtrail-ui
 group livery | src/livery.js src/fleet.js src/hangar.js src/GameScene.js tools/art/make_livery.py tools/art/livery-anchors.tsv | hangar looks preloadgate
+group celebrate | src/celebrate.js | NONE
 group hud-clear | src/hudclear.js src/ui.js src/GameScene.js style.css | hudclear tipqueue stripclear
 group badgefont-test | tests/badgefont.cjs | badgefont
 group hudclear-test | tests/hudclear.cjs | hudclear

@@ -27,7 +27,7 @@ export const SUBJECTS = {
   'r-plant2#1': null,                              // the Earth card: its Nature bar is the thing the tree changes
   'r-parcels#1': '^.rowc',                         // the tree parcels' row (picture, name)
   'r-map#1': null, 'r-boards#1': null,
-  'r-payoff#1': '.pay-frame',                      // the plane and the new part on it
+  'r-payoff#1': ['.pay-frame', '#payLabel'],       // the plane and the new part on it, and the caption under it (the label sits in its own row below the picture)
   'name#1': null, 'name#2': null, 'name#3': null, 'name#4': null, 'name#5': null, 'name#6': null, 'name#7': null, 'name#8': null, 'name#9': null, 'name#10': null,
   'new#1': null,
   'new#2': '^.rowc',                               // the NEW line's row (its picture and name), not only its (i)

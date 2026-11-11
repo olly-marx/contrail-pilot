@@ -223,7 +223,7 @@ hangar	src/hangar.js	s/<span class="era-row"><span class="era-track">/<span><spa
 onrails	src/tour.js	s/if (solo) solo.classList.add('tour-only');/if (false) solo.classList.add('tour-only');/	a row step shows its price too (two things to tap)
 hangar	src/hangar.js	s/    if (this.paying) { this.renderLater = true; return; }/    if (false) { this.renderLater = true; return; }/	a re-render wipes the in-box payoff
 hangar	style.css	s/^\.payoff\.inbox { position: relative; inset: auto;/.payoff.inbox { position: fixed; inset: 0;/	the payoff is an overlay again
-payoffdraw	src/hangar.js	s/card = el.querySelector('.pay-frame'); if (!lab/card = el.querySelector('#payOk'); if (!lab/	the label is placed down by the words and OK (the stage-1 flaw)
+payofffull	src/hangar.js	s/card = el.querySelector('.pay-frame'); if (!lab/card = el.querySelector('#payOk'); if (!lab/	the label is placed down by the words and OK (the stage-1 flaw)
 hangar	src/ui.js	s/    if (tab !== 'hangar' \&\& this.fleet \&\& this.fleet.paying) this.fleet.endPayoff();/    if (false) this.fleet.endPayoff();/	a payoff stays parked when you leave the hangar
 postrails	src/tour.js	s|target: '#hFleet .rowc .rowc-sub'|target: '#hFleet .line .next'|	the systems rail points at the old row markup (it re-runs on every return HOME)
 onrails	src/hangar.js	s/      if (rails \&\& this.ui.tour) this.ui.tour.payoffOk(); };/      if (false) this.ui.tour.payoffOk(); };/	the rails payoff leaves the whole live page tappable (no OK ring)
@@ -689,6 +689,14 @@ resetui	src/save.js	s/  for (const k of Object.keys(live)) delete live\[k\];//	r
 resetui	src/save.js	s/ 'contrailPilot.firstName',//	reset keeps the first name of the old pilot (in the browser)
 resetui	src/ui.js	s/      location.reload(); .*$//	reset does not reload the page
 resetui	src/ui.js	s/ Write your pilot code down first if you want to come back to your online pilot\.//	the reset confirm does not tell the player to write the pilot code down first
+payofffull	src/hangar.js	s#lab.style.top = `${Math.round(c.height + 6)}px`;#lab.style.top = `${Math.round(m.top - c.top - 6)}px`;#	the payoff label is back over the plane
+celebrate	src/celebrate.js	s#large: { particles: 24,#large: { particles: 40,#	a large burst makes 40 sparkles (over the cap)
+celebrate	src/celebrate.js	s#reduced ? { particles: 0, push: false, still: true, settleMs: 1000 }#reduced ? { particles: 8, push: false, still: true, settleMs: 1000 }#	reduced motion still makes sparkles
+celebrate	src/celebrate.js	s#host.dataset.celebrated === '1')#false)#	a second celebration of the same host replays
+celebrate	src/celebrate.js	s#if (cue \&\& deps.sfx \&\& typeof deps.sfx\[cue\] === 'function') deps.sfx\[cue\]();#if (false) deps.sfx[cue]();#	the kit plays no cue
+celebrate	src/celebrate.js	s#  'nature-funded': { size: 'small', cue: 'grow' },#  'nature-funded': { size: 'small', cue: 'grow' }, 'crossing-lost': { size: 'large', cue: 'softfail' },#	a lost crossing is celebrated
+celebrate	style.css	s#.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }#.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: auto; z-index: 3; }#	the sparkle layer takes taps
+celebrate	style.css	s#  .cel-layer { display: none; }#  .cel-layerX { display: none; }#	reduce motion no longer hides the sparkle layer
 steerchip	src/steerchip.js	s/  if (on \&\& st \&\& st.city \&\& st.why !== 'chosen') return/  if (on \&\& st \&\& st.city \&\& st.why !== 'chosen' \&\& !v.aim) return/	a mission 1-3 airports away reads the route form again
 steerchip	src/steerchip.js	s/st.why === 'explore' ? 'Explore' : 'Next'/st.why === 'explore' ? 'Next' : 'Next'/	EXPLORE reads Next instead of Explore
 exploreland	src/wild.js	s/else { s.stayLand = this.region; s.routeMode = 'explore'; }/else { s.routeMode = 'explore'; }/	EXPLORE HERE does not keep the flight in the land

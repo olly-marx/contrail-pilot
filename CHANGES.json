@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-11-truss-name-payoff-label",
+    "version": "0.55.0",
+    "date": "2026-11-11",
+    "level": "minor",
+    "notes": [
+      "The era-4 plane is now called Truss wing.",
+      "On the new-part screen the name of the part sits below the plane picture, not over it."
+    ]
+  },
+  {
     "id": "2026-11-11-hud-clear-badge-text",
     "version": "0.54.0",
     "date": "2026-11-11",
