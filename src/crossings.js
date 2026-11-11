@@ -12,6 +12,8 @@ import { tourPath } from './route.js';
 import { gateDone } from './missions2.js';
 import { capFor } from './capability.js';
 import { bestAreaBio } from './arealand.js';
+import { crossingReward, crossingWord } from './missionprize.js';
+import { payPrize } from './rewards.js';
 
 export const CROSSINGS = [
   { id: 'warsaw-stockholm', a: 'WARSAW', b: 'STOCKHOLM', era: 0, kind: 'frontier' },
@@ -138,12 +140,18 @@ export function offerCheck(c, ctx) {
   return { need, offered: SEASON.offer.rule === '2of3' && n === 3 ? met >= 2 : met === n };
 }
 
-// Landing a crossing: the area on the far side opens (and the ocean stepping stones count as 'ocean').
+// The prize a landed crossing pays: { seeds, crystals } by its difficulty word (src/missionprize.js crossingReward), or null when the crossing is already in save.crossed (paid once only; no back-pay).
+export const crossingPrizeDue = (save, c) => ((save.crossed || []).includes(c.id) ? null : crossingReward(crossingWord(c)));
+// Landing a crossing: the area on the far side opens (and the ocean stepping stones count as 'ocean'), and the prize is paid ONCE. The sim calls this too (src/sim/progression.js), so the game and the sim pay the same.
+// Nothing here on a crash: the callers only come here after a landing. The lap pays only when you land back home.
 export function completeCrossing(save, c) {
+  const due = crossingPrizeDue(save, c);
   if (c.kind === 'lap') {   // the lap counts only when you land back HOME (the rules already moved save.city there)
     if (save.city !== c.to) return false;
+    if (due) payPrize(save, due);
     save.crossed = [...new Set([...(save.crossed || []), c.id])]; save.lapDone = true; return true;
   }
+  if (due) payPrize(save, due);
   save.crossed = [...new Set([...(save.crossed || []), c.id])];
   const [sa, sb] = sides(c), open = new Set(save.areas || []);
   for (const s of [sa, sb]) open.add(s);

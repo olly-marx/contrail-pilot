@@ -33,6 +33,11 @@ export function missionPrize(kind, k = 1, plane = null) {
 
 // The crossing prize by difficulty word (the full scale; paid once, in completeCrossing, only when the crossing is not yet in save.crossed: release C wires it; no back-pay).
 export const CROSSING_PRIZE = { Easy: [100, 12], Medium: [200, 25], Hard: [400, 50], Harder: [700, 87], 'Very hard': [1100, 137], 'The lap': [2000, 250] };
+// HOW HARD a crossing is, as a word (the ONE list: src/crossingview.js DIFFICULTY and difficultyOf are these two). The ladder follows the eras; the lap is the last.
+export const CROSSING_WORDS = ['Easy', 'Medium', 'Hard', 'Harder', 'Very hard', 'The lap'];
+export const crossingWord = c => CROSSING_WORDS[Math.min(CROSSING_WORDS.length - 1, c.kind === 'lap' ? CROSSING_WORDS.length - 1 : Math.max(0, c.era || 0))];
+// The words the screens use for a prize: 'Prize: 400 seeds' (the CROSSINGS screen, the HOME box), '+400 seeds' / '+50 ice crystals' (the landing card).
+export const prizeText = r => `Prize: ${r.seeds} seeds`;
 export function crossingReward(word) {
   const b = Object.prototype.hasOwnProperty.call(CROSSING_PRIZE, word) ? CROSSING_PRIZE[word] : null;
   if (!b) throw new Error(`crossingReward: unknown difficulty word '${word}'`);

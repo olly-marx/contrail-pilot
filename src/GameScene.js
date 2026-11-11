@@ -16,7 +16,7 @@ import { routeFor, gotoTarget, steerOf } from './aim.js';
 import { trailColour } from './goldtrail.js';
 import { bannerText, isLit } from './targetbanner.js';
 import { crossingState } from './crossingview.js';
-import { crossingPath, completeCrossing } from './crossings.js';
+import { crossingPath, completeCrossing, crossingPrizeDue } from './crossings.js';
 import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
 import { presenceFor, gateFor, MARK, GATE_RIGHT } from './gapmarkers.js';
@@ -1608,8 +1608,8 @@ export class GameScene extends Phaser.Scene {
       lap, crash, missions_done: this.result.missions2 ? this.result.missions2.done.length : 0,
     });
     if (this.crossing) {   // season 2: landing the crossing (at the gateway or beyond) opens the area; either way it is over
-      const done = landed && completeCrossing(this.save, this.crossing);   // (the lap: only when you land back home)
-      this.result.crossing = { id: this.crossing.id, kind: this.crossing.kind, landed: !!done, opens: this.crossing.opens, to: this.crossing.to };
+      const due = landed ? crossingPrizeDue(this.save, this.crossing) : null, done = landed && completeCrossing(this.save, this.crossing);   // (the lap: only when you land back home; the prize is paid inside completeCrossing, once)
+      this.result.crossing = { id: this.crossing.id, kind: this.crossing.kind, landed: !!done, opens: this.crossing.opens, to: this.crossing.to, prize: done ? due : null };
       delete this.save.flyCrossing;
       writeSave(this.save);
     }

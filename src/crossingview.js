@@ -7,11 +7,12 @@ import { pathTo, linksFor } from './route.js';
 import { SEASON } from './season.js';
 import { AREAS } from './areas.js';
 import * as M2 from './missions2.js';
+import { CROSSING_WORDS, crossingWord, crossingReward, prizeText } from './missionprize.js';
 
 const fmt = n => Math.round(n).toLocaleString('en-GB');
 // HOW HARD a crossing is, as a word (the user, 2026-11-09: 'there should NEVER be any numbers there; the distance should be the difficulty'). The ladder follows the eras: every crossing is harder than the one before.
-export const DIFFICULTY = ['Easy', 'Medium', 'Hard', 'Harder', 'Very hard', 'The lap'];
-export const difficultyOf = c => DIFFICULTY[Math.min(DIFFICULTY.length - 1, c.kind === 'lap' ? DIFFICULTY.length - 1 : Math.max(0, c.era || 0))];
+export const DIFFICULTY = CROSSING_WORDS;   // (src/missionprize.js: the word and the prize come from the same list)
+export const difficultyOf = crossingWord;
 export const NEED_FAR = 'a longer landed flight';   // (not 'from here': the plane tick counts a flight from ANY area)
 const openName = id => (AREAS[id] ? AREAS[id].name : 'the Pacific');
 
@@ -28,7 +29,7 @@ export function stateOf(save, c, { unlock = false } = {}) {
   // (the shortest way over the open network, src/aim.js GO TO); hops is null when no way is known.
   const atDeparture = save.city === c.from; let hops = null;
   if (!atDeparture) { try { const p = pathTo(save.city, c.from, linksFor(save)); hops = p ? p.length - 1 : null; } catch (e) { hops = null; } }
-  return { atDeparture, hops, aimOn: !!save.aimCity && save.aimCity === c.from && !atDeparture, id: c.id, from: c.from, to: c.to, km: c.km, difficulty: difficultyOf(c), opens: c.opens ? openName(c.opens) : 'the next area', ready: rd.ready || !!unlock,
+  return { atDeparture, hops, aimOn: !!save.aimCity && save.aimCity === c.from && !atDeparture, id: c.id, from: c.from, to: c.to, km: c.km, difficulty: difficultyOf(c), prize: crossingReward(difficultyOf(c)), opens: c.opens ? openName(c.opens) : 'the next area', ready: rd.ready || !!unlock,
     told: (save.crossingTold || []).includes(c.id), conds, nearest, crossing: c };
 }
 
@@ -71,7 +72,7 @@ export const boxView = s => {
   // (A departure the open network cannot reach, e.g. the stepping stones HONOLULU and NADI, has no way to go to: it says 'Ready! Tap to cross.' and crosses from where the player is, as before.)
   const elsewhere = s.ready && !s.atDeparture && Number.isFinite(s.hops), line = s.ready ? (elsewhere ? `Ready! Go to ${s.from}` : 'Ready! Tap to cross.') : s.nearest ? s.nearest.plain : '';
   const hops = elsewhere ? s.hops : 0;
-  return { title: 'NEXT CROSSING', route: `${s.from} > ${s.to}`, word: s.difficulty, ticks, line, ready: !!s.ready, where: s.ready ? (elsewhere ? 'goto' : 'sheet') : s.nearest ? s.nearest.where : 'fly', id: s.id,
+  return { title: 'NEXT CROSSING', route: `${s.from} > ${s.to}`, word: s.difficulty, prize: prizeText(s.prize), ticks, line, ready: !!s.ready, where: s.ready ? (elsewhere ? 'goto' : 'sheet') : s.nearest ? s.nearest.where : 'fly', id: s.id,
     dots: Math.min(hops, 6), moreDots: hops > 6, aimOn: !!(elsewhere && s.aimOn), city: s.from, atDeparture: !!s.atDeparture };
 };
 export const screenView = s => {

@@ -93,3 +93,4 @@ group badgefont-test | tests/badgefont.cjs | badgefont
 group hudclear-test | tests/hudclear.cjs | hudclear
 group needs-ui | src/missionplan.js src/missionsview.js src/ui.js src/wild.js src/missions2.js | needsmark-ui missiongo streakui
 group mission-pay | src/missionprize.js src/missionplan.js src/missions2.js src/aim.js src/targetbanner.js | missionscreen missiongo needsmark-ui streakui
+group cross-reward | src/crossings.js src/crossingend.js src/crossingview.js src/missionprize.js src/ui.js style.css | crossrewardui crossboxui crossingscreens

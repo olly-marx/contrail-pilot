@@ -1,6 +1,6 @@
 // The two screens a CROSSING flight ends on (release 2 of the crossing-as-a-pure-experience plan; the user's playtest of 0.30.2: "its OWN landing screen and its OWN crash
 // screen, like when you get a new plane"; research/CROSSING-EXPERIENCE.md). Pure: no DOM, no clock, no random numbers. src/ui.js showCrossingEnd draws it; tests/crossingend.cjs holds
-// its budgets and meaning. NO distance anywhere (no km, no metres, no record), no missions, no seeds count: a crossing is a pure flight.
+// its budgets and meaning. NO distance anywhere (no km, no metres, no record), no missions, no seeds TOTAL: a crossing is a pure flight; since release C the landing card names the one-time crossing prize (+N seeds, +N ice crystals).
 import { AREAS } from './areas.js';
 import { LANDMARKS } from './landmarks.js';
 import { planeById } from './fleet.js';
@@ -15,6 +15,7 @@ export function endView(r, save, { first = false } = {}) {
   if (c.landed) {
     const city = r.landedAt || c.to, lm = LANDMARKS[city];
     const nm = areaName(c.opens), lines = [`${nm[0].toUpperCase()}${nm.slice(1)}`, 'is open to you!', first ? 'New missions are open!' : 'More cities to fly to!'];
+    if (c.prize) lines.push(`+${c.prize.seeds} seeds`, `+${c.prize.crystals} ice crystals`);   // the crossing prize (src/missionprize.js), paid once
     return { kind: 'landed', eyebrow: 'A NEW WAY OPENED', title: `WELCOME TO ${city}!`, lines, pic: lm ? `assets/${lm.key}.png` : null, buttons: [{ id: 'on', label: 'FLY ON' }] };
   }
   const f = save && save.fleet ? planeById(save.fleet.plane) : null, kept = r.crystals || 0, lost = r.cargo || 0;
