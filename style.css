@@ -780,7 +780,7 @@ h2.sub { margin-top: -4px; }
 .payoff-card p { font-size: 10px; margin: 8px 0; }
 @keyframes payzoom { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
 /* In-flight teaching strip (tappable tips): small, never over the plane (top, or bottom when the plane is high) */
-.coach.tappable { top: 6px; bottom: auto; transform: translateX(-50%); max-height: 20vh; overflow: hidden; padding: 4px 6px; }
+.coach.tappable { top: calc(var(--hud-bottom, 0px) + 6px); bottom: auto; transform: translateX(-50%); max-height: 20vh; overflow: hidden; padding: 4px 6px; }
 .coach.tappable.strip-low { top: auto; bottom: 6px; }
 .coach.tappable .coach-pic { width: 64px; max-height: 40px; object-fit: contain; float: left; margin: 0 6px 0 0; }
 .coach.tappable .coach-face { width: 24px; height: 24px; background-size: 24px 24px; }

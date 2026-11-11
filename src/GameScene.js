@@ -21,6 +21,7 @@ import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
 import { presenceFor, gateFor, MARK, GATE_RIGHT } from './gapmarkers.js';
 import { tip } from './tips.js';
+import { applyHudVar, toastTopCss } from './hudclear.js';
 const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
 import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra, towerKey, stationKey } from './fleet.js';
 import { composeOnto } from './planelook.js';
@@ -359,6 +360,7 @@ export class GameScene extends Phaser.Scene {
     this.explaining = true;   // a bubble is up (NOT frozen)
     this.tipAt = this.time.now;
     // A small strip, never over the plane: at the top, or at the bottom when the plane is high (the user, 2026-10-27).
+    applyHudVar(this.game.canvas);   // the strip opens BELOW the HUD text (banner + next-airport line): src/hudclear.js, style.css .coach.tappable
     this.ui.coach(html, false, false, false, pic);
     document.getElementById('coach').classList.toggle('strip-low', this.plane.y < HEIGHT * 0.4);
     // A toast already up (dusk, SAF, a token) drops below a top strip instead of sitting under it (the audit, 2026-10-28).
@@ -371,7 +373,7 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(TIP_MAX * 1000, () => { if (this.tipSerial === mine && this.explaining) this.closeTip(); });
   }
   closeTip() {
-    this.explaining = false; this.ui.hideCoach(); document.getElementById('toast').style.top = ''; if (this.stripWatch) this.stripWatch.disconnect();
+    this.explaining = false; this.ui.hideCoach(); document.getElementById('toast').style.top = toastTopCss(); if (this.stripWatch) this.stripWatch.disconnect();
     if (this.state !== 'playing') { this.dropTips(); return; }   // the flight ended: unshown tips are unmarked, not lost
     let q = (this.tipQueue || []).shift();
     while (q && q[2] === 'tree-1' && !this.noTreeYet()) q = (this.tipQueue || []).shift();   // a queued 'soil ahead' strip is dropped once a tree has landed
@@ -1218,7 +1220,7 @@ export class GameScene extends Phaser.Scene {
     if (!(cr.left < r && l < cr.right && cr.top < b && t < cr.bottom)) return;
     const low = !coach.classList.contains('strip-low');
     coach.classList.toggle('strip-low', low);
-    document.getElementById('toast').style.top = '';
+    document.getElementById('toast').style.top = toastTopCss();
     if (!low && this.dropToast) this.dropToast();
   }
 
