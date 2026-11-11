@@ -47,7 +47,7 @@ group missions-screen | src/missionsview.js | missionscreen missionlanes walkthr
 group gear-sheet | src/ui.js | gear
 group nature-r6 | src/wild.js src/fresh.js | naturefresh
 ci-only | onrails375
-group nature-land | src/wild.js index.html style.css | natureland regions homenature swipe
+group nature-land | src/wild.js index.html style.css | natureland regions homenature swipe exploreland
 group crossing-moment | src/crossingview.js src/globe.js | crossingmoment hubscreen
 group route-chip | src/globe.js src/sheet.js | routechip hubscreen
 group school-icy | src/school.js | schoolicy
@@ -82,7 +82,7 @@ group cross-box | src/crossingview.js src/crossings.js src/ui.js style.css index
 group cross-goto | src/aim.js src/crossingview.js src/ui.js src/hub.js style.css index.html | crossgoto crossboxui hubscreen
 group crystal-popup | src/GameScene.js src/sim/rules.js src/tips.js | crystalpopup
 group city-tap | src/pickcity.js src/globe.js src/ui.js src/tips.js style.css | citytap routechip hubscreen
-group next-chip | src/destination.js src/route.js src/aim.js src/ui.js src/hub.js style.css | missionsteer nextchip routechip crossgoto hubscreen citytap
+group next-chip | src/destination.js src/route.js src/aim.js src/ui.js src/hub.js src/steerchip.js style.css | missionsteer nextchip routechip crossgoto hubscreen citytap
 group route-map | src/globe.js src/pickcity.js src/ui.js src/missionsview.js | routeonmap citytap
 group target-banner | src/targetbanner.js src/GameScene.js src/aim.js | missionsteer targetbanner-ui plantrail textfit
 group gold-trail | src/goldtrail.js src/GameScene.js | goldtrail-ui

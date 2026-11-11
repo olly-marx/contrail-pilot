@@ -57,6 +57,7 @@ import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { cityCard, routeOf, tripLine } from './pickcity.js';
 import { DEFAULT_DEST, defaultTargetFrom } from './destination.js';
+import { chipView } from './steerchip.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp, leadOf } from './nextup.js';
 import { endView } from './crossingend.js';
@@ -420,9 +421,8 @@ export class UI {
     // ROUTING V2 step 2: with nothing chosen (no GO TO, no mission aim) the chip names the default destination, 'Next: PARIS' (src/destination.js); a chosen destination keeps the route line.
     if (migrateAim(s)) writeSave(s);   // (an old 'AIM HERE' becomes a destination; the skip is dropped: src/aim.js)
     if (s.stayLand && s.tutorialDone && !stayLandLeft(s)) { this.toast('Done here: every city in this land is visited.', '', 'good', 3); s.stayLand = null; writeSave(s); }   // (EXPLORE HERE ends by itself)
-    const stv = s.tutorialDone && isSeason2(s) && DEFAULT_DEST.on && !v.aim ? steerOf(s) : null, dflt = stv && stv.city ? stv : null;
-    const word = dflt ? (dflt.why === 'mission' ? 'Mission' : dflt.why === 'explore' ? 'Explore' : 'Next') : '';
-    $('hubRoute').innerHTML = dflt ? `${word}: ${esc(dflt.city)} &#8250;` : v.route.join(' &#9654; ') + (v.aim ? ` <span class="small">(${this.save.aimCity && v.aim === this.save.aimCity ? 'go to' : 'mission'})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
+    const chip = chipView({ ...v, steer: steerOf(s) }, s, !!(s.tutorialDone && isSeason2(s) && DEFAULT_DEST.on));
+    $('hubRoute').innerHTML = chip.kind === 'word' ? `${chip.word}: ${esc(chip.city)} &#8250;` : chip.route.join(' &#9654; ') + (chip.tag ? ` <span class="small">(${chip.tag})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something; src/steerchip.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     this.clearRouteLabels(); if ($('hubCard')) $('hubCard').hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false;   // (the tapped city's row goes with any redraw: closeCityRow redraws on purpose)
     const path = routeFor(s, Math.max(5, gotoTarget(s) ? gotoHops(s) : 0)), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];

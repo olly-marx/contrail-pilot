@@ -690,3 +690,8 @@ resetui	src/save.js	s/  for (const k of Object.keys(live)) delete live\[k\];//	r
 resetui	src/save.js	s/ 'contrailPilot.firstName',//	reset keeps the first name of the old pilot (in the browser)
 resetui	src/ui.js	s/      location.reload(); .*$//	reset does not reload the page
 resetui	src/ui.js	s/ Write your pilot code down first if you want to come back to your online pilot\.//	the reset confirm does not tell the player to write the pilot code down first
+steerchip	src/steerchip.js	s/  if (on \&\& st \&\& st.city \&\& st.why !== 'chosen') return/  if (on \&\& st \&\& st.city \&\& st.why !== 'chosen' \&\& !v.aim) return/	a mission 1-3 airports away reads the route form again
+steerchip	src/steerchip.js	s/st.why === 'explore' ? 'Explore' : 'Next'/st.why === 'explore' ? 'Next' : 'Next'/	EXPLORE reads Next instead of Explore
+exploreland	src/wild.js	s/else { s.stayLand = this.region; s.routeMode = 'explore'; }/else { s.routeMode = 'explore'; }/	EXPLORE HERE does not keep the flight in the land
+exploreland	src/wild.js	s/if (here) { s.stayLand = null; s.routeMode = 'mission'; }/if (here) { s.stayLand = null; }/	STOP does not return to the mission
+exploreland	src/wild.js	s/ || !(left || here);/ || false;/	EXPLORE HERE shows when the land has nothing left to visit
