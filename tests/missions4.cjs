@@ -32,6 +32,8 @@
     kinds3: [{}, { treeIds: ['spruce', 'birch', 'oak'].slice(0, fill(save({})).kinds) }, { treeIds: [...['spruce', 'birch', 'oak'].slice(0, fill(save({})).kinds - 1), 'savanna:baobab'] }],   // f.kinds kinds of THIS land (the kinds open, 2..3; UK ids bare); the near miss is one short + another land's
     route: [{}, { landedAt: f.cityC, airportsSkipped: 1 }, { landedAt: f.cityC, airportsSkipped: 0 }],
     golden: [{}, { goldens: 1 }, { goldens: 0 }],
+    streak2: [{ missionStreak: { 'weurope:streak2': 1 } }, { landed: true, distance: 3200 }, { landed: true, distance: 3000 }],   // one long landing already, a second long one finishes it; a shorter landing resets the row
+    streak3: [{ missionStreak: { 'weurope:streak3': 2 } }, { landed: true, distance: 3200 }, { landed: true, distance: 3000 }],
   };
   const SAVES = {
     project: [{ habitat: { woodland: ['deadwood'] } }, {}],

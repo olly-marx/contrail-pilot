@@ -57,14 +57,14 @@ export const ICONS = {
 export const HOW = {
   shade: 'Icy air by day', 'plant-tree': 'Plant it in flight', 'clean-gaps': 'No scrapes', bring: 'Land with seeds', project: 'In NATURE',
   chain: 'Both, in order', dodge: 'Icy patches, night', rescue: 'Plant, then land', spot: 'Fly over it', system: 'In HANGAR: SYSTEMS',
-  night: 'Clean night, land', shade10: 'Shade, then land', kinds3: 'Different trees', route: 'Fly past an airport', golden: 'Grab it, land', tier: 'Finish in NATURE',
+  night: 'Clean night, land', shade10: 'Shade, then land', kinds3: 'Different trees', route: 'Fly past an airport', golden: 'Grab it, land', tier: 'Finish in NATURE', streak2: 'In a row', streak3: 'In a row',
   'e-km': 'Crash counts too', 'e-seeds': 'Crash counts too', 'e-gaps': 'Crash counts too',
 };
 export const TIP = {
   shade: 'Fly through icy air by day to shade the Earth.', 'plant-tree': 'Plant it on your flight, in the right land.', 'clean-gaps': 'Fly through the storm gaps with no scrapes, in one flight.',
   bring: 'Land with the seeds you picked up on board.', project: 'In NATURE, fund any habitat project.', chain: 'Land at both cities, in that order.', dodge: 'On a night flight, steer clear of icy patches.',
   rescue: 'Plant the trees first, then land at the city.', spot: 'Fly over the animal to find it from the air.', system: 'In the HANGAR, open SYSTEMS and buy a helper.', night: 'Land after a whole night with no contrail.',
-  shade10: 'Make a lot of shade, then land.', kinds3: 'Plant different kinds of tree in one flight.', route: 'Fly past an airport, and land at the city.', golden: 'Grab a golden seed, then land.', tier: 'Finish every project of a tier in NATURE.',
+  shade10: 'Make a lot of shade, then land.', kinds3: 'Plant different kinds of tree in one flight.', route: 'Fly past an airport, and land at the city.', golden: 'Grab a golden seed, then land.', streak2: 'Land two long flights in a row.', streak3: 'Land three long flights in a row.', tier: 'Finish every project of a tier in NATURE.',
   'e-km': 'Any flight counts, even a crash.', 'e-seeds': 'Any flight counts, even a crash.', 'e-gaps': 'Any flight counts, even a crash.',
 };
 const HAZARD_HOW = { teach: 'Fly on, then land', challenge: 'Avoid the red zones', mastery: '10 clean, in a row' };
@@ -75,7 +75,7 @@ export const DONE_NAME = {
   'land-city': 'Landed at a city', shade: 'Shaded the Earth', 'plant-tree': 'Planted a tree', 'clean-gaps': 'Clean storm gaps', bring: 'Brought seeds home', project: 'Funded a project',
   chain: 'Two cities in a row', dodge: 'Dodged icy patches', rescue: 'Planted, then landed', spot: 'Spotted an animal', hazard: 'Flew the hazard', system: 'Bought a system',
   night: 'A clean night', shade10: 'Lots of shade', kinds3: 'Many kinds of tree', route: 'Flew nonstop', golden: 'Found a golden seed', tier: 'Finished a tier',
-  streak2: 'Two long flights in a row', streak3: 'Three long flights in a row',
+  streak2: 'Two long flights', streak3: 'Three long flights',
 };
 export const INFO = { title: 'How missions work', body: 'Finish any 3 missions of a tier to open the next one. Tier 3 is the crossing trial: do any 2 of its 3 stars to cross to a new area. Daily missions change every day, and steady goals count everything you fly.' };
 
