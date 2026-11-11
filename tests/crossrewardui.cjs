@@ -17,7 +17,8 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   let shotsOk = true; try { if (!fs.existsSync(SHOTS)) fs.mkdirSync(SHOTS); } catch (e) { shotsOk = false; console.log(`NOTE: screenshots off, cannot make ${SHOTS}: ${e.code || e}`); }   // (not recursive: that can loop on an uncreatable path)
-  const shot = (p, name) => (shotsOk ? p.screenshot({ path: `${SHOTS}/${name}` }).catch(() => {}) : Promise.resolve());
+  const snap = p => (shotsOk ? p.screenshot().catch(() => null) : Promise.resolve(null));   // the picture is TAKEN at the moment checked and WRITTEN after the checks: a failing run (a plant!) writes FAIL-<name>, so it never overwrites the shot of a passing run
+  const keep = (buf, name) => { if (shotsOk && buf) try { fs.writeFileSync(`${SHOTS}/${fails.length ? 'FAIL-' : ''}${name}`, buf); } catch (e) { /* no shot */ } };
   const open = async (W, H) => {
     const ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
@@ -29,19 +30,21 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city
       const tag = `${W}x${H}`;
       { const { ctx, p } = await open(W, H); let stage = 'HOME';
         try {
+          let bufScreen = null;
           const h = await p.evaluate(() => { const bx = document.getElementById('hubCross'), g = document.getElementById('goBtn').getBoundingClientRect(), tb = document.getElementById('tabbar'), tr = tb ? tb.getBoundingClientRect() : { top: innerHeight }, r = bx.getBoundingClientRect();
             return { shown: !bx.hidden && bx.getClientRects().length > 0, text: bx.innerText.replace(/\s+/g, ' ').trim(), goVisible: g.bottom <= tr.top + 1 && g.top >= 0, inside: r.left >= 0 && r.right <= innerWidth }; });
-          await shot(p, `${tag}-home-box.png`);
+          const bufHome = await snap(p);
           check(h.shown, `${tag}: FIXTURE: the NEXT CROSSING box is not on HOME: ${JSON.stringify(h)}`);
           if (h.shown) {
             check(/Easy/.test(h.text) && /Prize: 100 seeds/.test(h.text) && h.inside, `${tag} A: the HOME box does not say 'Prize: 100 seeds' next to Easy inside the screen: ${JSON.stringify(h)}`);
             check(h.goVisible, `${tag} A: TAKE OFF is not fully on screen above the bar with the prize showing`);
             stage = 'tap box'; await p.click('#hubCross'); await p.waitForTimeout(500);
             const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? e.innerText.replace(/\s+/g, ' ').trim() : null; });
-            await shot(p, `${tag}-crossings-screen.png`);
+            bufScreen = await snap(p);
             check(!!sh && /WARSAW > STOCKHOLM/.test(sh) && /Prize: 100 seeds/.test(sh), `${tag} B: the CROSSINGS screen does not say 'Prize: 100 seeds': ${JSON.stringify(sh)}`);
           }
           check(!p.errs.length, `${tag}: page errors (home) ${p.errs.slice(0, 2)}`);
+          keep(bufHome, `${tag}-home-box.png`); keep(bufScreen, `${tag}-crossings-screen.png`);
         } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); }
         await ctx.close(); }
       { const { ctx, p } = await open(W, H); let stage = 'start the crossing';
@@ -51,23 +54,29 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city
           const before = await p.evaluate(() => { const s = game.registry.get('save'); return { seeds: s.seeds || 0, crystals: s.crystals || 0 }; });
           stage = 'land'; await p.evaluate(() => { const g = game.scene.getScene('game'); g.graceUntil = 0; g.landedAt = g.path[1]; g.finish({ landed: true }); });
           await p.waitForFunction(() => { const e = document.getElementById('crossEnd'); return e && !e.hidden; }, null, { timeout: 12000 });
-          await p.waitForTimeout(600); await shot(p, `${tag}-landing-card.png`);
+          await p.waitForTimeout(600); const bufLand = await snap(p);
           const e = await p.evaluate(() => { const el = document.getElementById('crossEnd'), c = el.querySelector('.payoff-card').getBoundingClientRect(), s = JSON.parse(localStorage.getItem('contrailPilot.v2')); return { text: el.innerText.replace(/\s+/g, ' '), top: c.top, bottom: c.bottom, h: innerHeight, seeds: s.seeds || 0, crystals: s.crystals || 0 }; });
           check(/\+100 seeds/.test(e.text) && /\+12 ice crystals/.test(e.text), `${tag} C: the landing card does not say '+100 seeds' and '+12 ice crystals': ${e.text}`);
           check(e.top >= 0 && e.bottom <= e.h, `${tag} C: the landing card does not fit the screen (${Math.round(e.top)}-${Math.round(e.bottom)} of ${e.h})`);
           check(e.seeds >= before.seeds + 100 && e.crystals >= before.crystals + 12, `${tag} C: the bank did not get the prize: before ${JSON.stringify(before)}, after ${e.seeds}/${e.crystals}`);
           check(!p.errs.length, `${tag}: page errors (landing) ${p.errs.slice(0, 2)}`);
+          keep(bufLand, `${tag}-landing-card.png`);
         } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); }
         await ctx.close(); }
       { const { ctx, p } = await open(W, H); let stage = 'the ending';
         try {
           await p.evaluate(() => game.registry.get('ui').showResults({ landed: true, landedAt: 'WARSAW', distance: 900, earned: [], rewards: [], breakdown: { co2: 0, night: 0, sun: 0, trees: 0 }, heat: 0, crystals: 0, planted: 0, missions2: { done: [], next: null }, school: false,
             crossing: { id: 'lap', kind: 'lap', landed: true, to: 'WARSAW', prize: { seeds: 2000, crystals: 250 } } }));
-          await p.waitForTimeout(800); await shot(p, `${tag}-ending.png`);
+          await p.waitForTimeout(800); const bufEnd = await snap(p);
           const e = await p.evaluate(() => { const el = document.getElementById('ending'); if (!el || el.hidden) return null; const c = el.querySelector('.payoff-card').getBoundingClientRect(); return { text: el.innerText.replace(/\s+/g, ' '), top: c.top, bottom: c.bottom, h: innerHeight }; });
           check(!!e && /\+2,000 seeds/.test(e.text) && /\+250 ice crystals/.test(e.text), `${tag} D: the ending screen does not say '+2,000 seeds' and '+250 ice crystals': ${JSON.stringify(e)}`);
+          const vis = await p.evaluate(() => { const el = document.getElementById('ending'), pz = el && el.querySelector('.ending-prize'); if (!pz) return { found: false };
+            const card = el.querySelector('.payoff-card').getBoundingClientRect(), r = pz.getBoundingClientRect(), cs = getComputedStyle(pz), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+            return { found: true, shown: cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > 0 && r.width > 0 && r.height > 0, inside: r.top >= card.top && r.bottom <= card.bottom && r.left >= card.left && r.right <= card.right, onTop: !!hit && pz.contains(hit), text: pz.innerText.replace(/\s+/g, ' ') }; });
+          check(vis.found && vis.shown && vis.inside && vis.onTop && /\+2,000 seeds/.test(vis.text) && /\+250 ice crystals/.test(vis.text), `${tag} D: the two prize lines are not VISIBLE inside the ending card (shown, inside the card, not under another element): ${JSON.stringify(vis)}`);
           check(!e || (e.top >= 0 && e.bottom <= e.h), `${tag} D: the ending card does not fit the screen (${e && Math.round(e.top)}-${e && Math.round(e.bottom)} of ${e && e.h})`);
           check(!p.errs.length, `${tag}: page errors (ending) ${p.errs.slice(0, 2)}`);
+          keep(bufEnd, `${tag}-ending.png`);
         } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); }
         await ctx.close(); }
     }

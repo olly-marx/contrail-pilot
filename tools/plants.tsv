@@ -772,3 +772,4 @@ crossrewardui	src/ui.js	s/showEnding(prize = null) {/showEnding(prize = null) { 
 crossreward	src/missionprize.js	s/export const prizeLines = p => \[`+${p.seeds.toLocaleString('en-GB')} seeds`/export const prizeLines = p => [`+${p.seeds} seeds`/	the card lines lose the thousands comma
 crossreward	src/crossings.js	s/prize: done ? due : null }/prize: due }/	the card shows the prize from the landing, not from the completion
 crossreward	src/missionprize.js	s/  if (!Number.isInteger(e) || e < 0 || e > 4) throw .*$/  if (false) throw new Error('x');/	a non-lap crossing of an unknown era reads as a word
+crossrewardui	src/ui.js	s/<p class="ending-prize">/<p class="ending-prize" style="position:absolute;top:-500px">/	the ending's prize lines exist in the text but sit off the card
