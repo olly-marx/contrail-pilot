@@ -45,7 +45,9 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   // 3. Missions: 1 -> its name, 2+ -> the count; the seeds they paid on the right. The sheet lists them. (Season 1: the one mission's outcome.)
   if (r.missions2) {
     const n = missionTitles.length;
-    v.missions = n ? { line: n === 1 ? `✓ ${clip(missionTitles[0], 20)}` : `✓ ${n} missions done`, seeds: prizeSeeds, titles: missionTitles } : null;
+    // 'Row broken' (release B): a flight that broke a streak row (save.streakBroken, set by missions2.onFlight) says so when no mission was done on it; the 'notyet' style, no done sound.
+    v.missions = n ? { line: n === 1 ? `✓ ${clip(missionTitles[0], 20)}` : `✓ ${n} missions done`, seeds: prizeSeeds, titles: missionTitles }
+      : (save && save.streakBroken > 0 ? { line: 'Row broken: start again', seeds: 0, titles: ['Your row of long flights was broken. Start again!'], fail: 'row' } : null);
   } else if (r.mission) {
     v.missions = r.mission.done ? { line: `✓ ${clip(r.mission.title, 24)}`, seeds: prizeSeeds, titles: [r.mission.title] } : { line: `Not this time: ${clip(r.mission.title, 14)}`, seeds: 0, titles: [r.mission.title], fail: r.mission.fail || '' };
   } else v.missions = null;

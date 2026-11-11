@@ -7,6 +7,7 @@ import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
 import { nextUp, itemOf, clip, rightOf } from './nextup.js';
 import { CITY_TEMPLATES } from './aim.js';
 import { crossingState, ticksTitle } from './crossingview.js';
+import { kmWords } from './missionplan.js';
 
 export const HOW_MAX = 20;       // a row's second line (the "how"): MEASURED at 320 px, the prize shares it (a 28-character how wrapped every row to 70 px)
 export const NAME_MAX = 24;      // a row's name (nextup.SHORT_MAX)
@@ -35,6 +36,8 @@ export const ICONS = {
   route: 'mi32-nonstop',
   golden: 'mi32-goldenseed',
   tier: 'mi32-flag',
+  streak2: 'mi32-roadkm',
+  streak3: 'mi32-roadkm',
   'd-seeds': 'mi32-seedbag',
   'd-shade': 'mi32-shade',
   'd-gaps': 'mi32-stormgap',
@@ -72,6 +75,7 @@ export const DONE_NAME = {
   'land-city': 'Landed at a city', shade: 'Shaded the Earth', 'plant-tree': 'Planted a tree', 'clean-gaps': 'Clean storm gaps', bring: 'Brought seeds home', project: 'Funded a project',
   chain: 'Two cities in a row', dodge: 'Dodged icy patches', rescue: 'Planted, then landed', spot: 'Spotted an animal', hazard: 'Flew the hazard', system: 'Bought a system',
   night: 'A clean night', shade10: 'Lots of shade', kinds3: 'Many kinds of tree', route: 'Flew nonstop', golden: 'Found a golden seed', tier: 'Finished a tier',
+  streak2: 'Two long flights in a row', streak3: 'Three long flights in a row',
 };
 export const INFO = { title: 'How missions work', body: 'Finish any 3 missions of a tier to open the next one. Tier 3 is the crossing trial: do any 2 of its 3 stars to cross to a new area. Daily missions change every day, and steady goals count everything you fly.' };
 
@@ -122,9 +126,10 @@ export function missionsView(save) {
     const chainOn = id === 'chain' && m && m.fill && m.fill.cityC && m.fill.rule === 'new', stretchOn = id === 'route' && m && m.fill && m.fill.stretch;
     const legs = chainOn ? [m.fill.city, m.fill.cityB, m.fill.cityC] : null, legsDone = chainOn ? Math.min(3, (save.missionProgress || {})[m.key] || 0) : 0;
     const how0 = n.lead ? 'Do this first' : stopsText || lesson || hazard || (def && def.id && (m.daily && !HOW[id] ? DAILY_HOW : HOW[id])) || (n.daily ? DAILY_HOW : '');
-    const how = n.lead ? how0 : need ? need.text : chainOn ? `${legsDone} of 3 cities` : stretchOn ? 'One flight, no stops' : how0;
+    const streakOn = (id === 'streak2' || id === 'streak3') && m && m.fill && m.fill.D;   // release B: 'Land 2 long flights', the count in a row
+    const how = n.lead ? how0 : need ? need.text : chainOn ? `${legsDone} of 3 cities` : stretchOn ? 'One flight, no stops' : streakOn ? `${m.fill.count} of ${m.fill.N} in a row` : how0;
     const tip0 = n.lead ? n.full : n.stops ? `${stopsText}. Tap GO THERE to fly there.` : lesson ? `${lesson}: ${n.full}.` : hazard ? `${hazard}.` : (m && m.daily ? (TIP[id] || 'Today only: any flight that does it.') : TIP[id]) || '';
-    const tip = n.lead ? tip0 : need ? `* You need: ${need.name} (${need.parcels} trees per flight). ${tip0}` : chainOn ? `Land at ${legs[0]}, ${legs[1]}, then ${legs[2]}. Next: ${legs[Math.min(2, legsDone)]}.${n.stops ? ` ${stopsText}.` : ''}` : stretchOn ? `Fly to ${m.fill.cityC} in one flight${n.stops ? `: ${stopsText}` : ''}. Skip every airport on the way, then land.` : tip0;
+    const tip = n.lead ? tip0 : streakOn ? `Land ${m.fill.N} flights in a row, each about ${kmWords(m.fill.D)} or more. ${m.fill.count} of ${m.fill.N} so far. A crash or a shorter landing starts the row again.` : need ? `* You need: ${need.name} (${need.parcels} trees per flight). ${tip0}` : chainOn ? `Land at ${legs[0]}, ${legs[1]}, then ${legs[2]}. Next: ${legs[Math.min(2, legsDone)]}.${n.stops ? ` ${stopsText}.` : ''}` : stretchOn ? `Fly to ${m.fill.cityC} in one flight${n.stops ? `: ${stopsText}` : ''}. Skip every airport on the way, then land.` : tip0;
     return { key: n.key, short: need ? `${clip(n.short, NAME_MAX - 1)}*` : n.short, full: n.full, how: clip(how, HOW_MAX), tip, needs: need ? { line: need.line, name: need.name, parcels: need.parcels, tab: need.tab } : null, prizeC: m ? m.prize.crystals || 0 : 0, icon: ICONS[id] || (n.where === 'hangar' ? 'mi32-gear' : n.where === 'nature' ? 'mi32-natureproj' : 'mi32-seedbag'), prize: m ? m.prize.seeds : 0, star: !!(m && m.star),
       where: n.where, lead: !!n.lead, city, cityName, aimed: !!(cityName && save.aimCity === cityName), daily: !!n.daily, right: rightOf(n) };
   }

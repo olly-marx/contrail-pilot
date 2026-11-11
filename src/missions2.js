@@ -17,7 +17,7 @@ import { fleetOf } from './fleet.js';
 import { payPrize } from './rewards.js';
 import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 import { missionPrize, kindOf } from './missionprize.js';
-import { CITY_IDS, ownFill, entryFor, needsOf, stopsOf } from './missionplan.js';
+import { CITY_IDS, ownFill, entryFor, needsOf, stopsOf, STREAK_IDS, STREAK_N, streakD, planeIdOf, ownStreak, kmWords } from './missionplan.js';
 
 // A season 2 save: save.areas is written only by season 2 (the start choice, src/startchoice.js, and crossings), so it is
 // the declared marker; classic saves keep the 13 classic missions (src/missions.js) for the classic tests.
@@ -86,6 +86,9 @@ export const TEMPLATES = [
   { id: 'spot', short: f => `Spot a ${f.animalName}`, tier: 2, prize: 15, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
   { id: 'hazard', short: f => HAZARD[f.stage].short, tier: 2, prize: 15, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
   { id: 'system', short: () => 'Buy a helper system', tier: 2, prize: 15, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
+  // release B: 'Land 2 long flights' (EXTRA: rescue stays). A long flight = a landing of at least f.D game km (src/missionplan.js D_TABLE, stored in save.missionDist when first shown); the count is
+  // save.missionStreak[key] (advanceStreaks: +1 per long landing, back to 0 by a crash or a shorter landing); the pay is src/missionprize.js.
+  { id: 'streak2', short: () => 'Land 2 long flights', tier: 2, prize: 16, title: f => `Land 2 flights in a row, each about ${kmWords(f.D)} or more`, flight: (r, s, f) => ((s.missionStreak || {})[f.key] || 0) >= f.N },
   // tier 3: the crossing trial (star = the gate)
   { id: 'night', short: () => 'A whole clean night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', short: f => `Make ${10 * f.k} shade, land`, tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
@@ -97,6 +100,8 @@ export const TEMPLATES = [
     flight: (r, s, f) => (f.stretch ? stretchDone(r, s, f) : r.landedAt === f.cityC && r.airportsSkipped >= 1) },
   { id: 'golden', short: () => 'Find a golden seed', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
   { id: 'tier', short: () => 'Finish a project tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
+  // release B: 'Land 3 long flights' (EXTRA: golden stays), the same rule with a row of three.
+  { id: 'streak3', short: () => 'Land 3 long flights', tier: 3, prize: 31, title: f => `Land 3 flights in a row, each about ${kmWords(f.D)} or more`, flight: (r, s, f) => ((s.missionStreak || {})[f.key] || 0) >= f.N },
 ];
 // The hazard each stage meets (turbulence from 2,000 km; no-fly zones from 8,000 km; long clean runs for masters).
 const HAZARD = {
@@ -151,7 +156,7 @@ export function visible(save, startCity = save.city) {
   if (left.length) { const l = left[0]; return [{ key: l.id, title: l.title, tier: 0, star: false, kind: 'flight', prize: l.prize, def: l }]; }
   const a = areaOf(startCity) || area(save), f = fillFor(save, a, startCity);
   // A city mission has its OWN fill: the cities stored in save.missionCities when it was first shown, else what the rules name now (src/missionplan.js). Pure: nothing is stored here.
-  return TEMPLATES.filter(t => tierOpen(save, a, t.tier) && !done(save).has(key(a, t))).map(t => ({ t, own: CITY_IDS.includes(t.id) ? ownFill(save, a, startCity, t.id, f, key(a, t)) : f }))
+  return TEMPLATES.filter(t => tierOpen(save, a, t.tier) && !done(save).has(key(a, t))).map(t => ({ t, own: CITY_IDS.includes(t.id) ? ownFill(save, a, startCity, t.id, f, key(a, t)) : STREAK_IDS.includes(t.id) ? ownStreak(save, key(a, t), t.id, f) : f }))
     .filter(({ t, own }) => !t.ready || t.ready(own)).map(({ t, own }) => ({
       key: key(a, t), title: t.title(own), tier: t.tier, star: !!t.star, kind: t.kind || 'flight',
       prize: missionPrize(kindOf(t.id), f.k), def: t, fill: own }));
@@ -173,6 +178,23 @@ export function assignMissionCities(save, startCity = save.city) {
     if (t.ready && !t.ready({ ...f, ...o, rule })) continue;   // not offered from here: nothing to store
     stored[k] = e; changed = true;
   }
+  if (assignMissionDist(save, startCity)) changed = true;   // (the streak missions' distance, stored the same way)
+  return changed;
+}
+// Store the distance D (and N) of every OPEN streak mission that has none yet, by the plane flown NOW (fixed until completed: a later plane never changes it). Idempotent; mutates the save.
+export function assignMissionDist(save, startCity = save.city) {
+  if (!isSeason2(save) || lessonsLeft(save).length) return false;
+  const a = areaOf(startCity) || area(save);
+  let changed = false;
+  for (const t of TEMPLATES) {
+    if (!STREAK_IDS.includes(t.id)) continue;
+    const k = key(a, t);
+    if (done(save).has(k) || !tierOpen(save, a, t.tier)) continue;
+    const dist = save.missionDist = save.missionDist || {};
+    if (dist[k]) continue;
+    dist[k] = { D: streakD(save), N: STREAK_N[t.id], plane: planeIdOf(save), at: save.flights || 0 };
+    changed = true;
+  }
   return changed;
 }
 export const next = save => visible(save)[0] || null;
@@ -180,7 +202,7 @@ export const next = save => visible(save)[0] || null;
 function finish(save, list) {
   const before = new Set(save.missionsDone || []);
   save.missionsDone = [...new Set([...(save.missionsDone || []), ...list.map(m => m.key)])];
-  for (const m of list) { if (save.missionCities) delete save.missionCities[m.key]; if (save.missionProgress) delete save.missionProgress[m.key]; }   // a finished mission's cities and progress are dropped
+  for (const m of list) { if (save.missionCities) delete save.missionCities[m.key]; if (save.missionProgress) delete save.missionProgress[m.key]; if (save.missionDist) delete save.missionDist[m.key]; if (save.missionStreak) delete save.missionStreak[m.key]; }   // a finished mission's cities and progress are dropped
   for (const m of list) if (!before.has(m.key)) payPrize(save, m.prize);   // R8: a mission pays the moment it is done (a flight: at the bank; a purchase or a project: at the buy)
   return list;
 }
@@ -192,6 +214,8 @@ export function onFlight(save, r) {
   // rewards.js, because only this call gets cleanGaps; it runs before addPrizes in the same flight (src/sim/rules.js).
   const tot = save.totals = save.totals || { km: 0, seeds: 0, gaps: 0 };
   tot.km += r.distance || 0; tot.seeds += Math.max(0, r.cargo || 0); tot.gaps += r.cleanGaps || 0;
+  assignMissionDist(save);   // (the streak missions' D is stored before the count runs: a crash counts too)
+  advanceStreaks(save, r);
   const firsts = FIRSTS.filter(x => !done(save).has(`first:${x.id}`) && x.when(r)).map(x => ({ key: `first:${x.id}`, title: x.title, prize: { seeds: 0, crystals: 1 } }));
   // The rails never stall (the user, 2026-10-28; L2 first on 2026-10-27): any lesson after L1 missed on 2 flights (landed
   // or not) counts as taught. A per-lesson count (save.lessonMisses; the old save.l2Misses is carried over). L5 counts a
@@ -216,6 +240,19 @@ export function onFlight(save, r) {
   return finish(save, taught([...firsts, ...steady, ...due, ...daily]));
 }
 
+// STREAKS (release B): every flight (a crash too) moves each open streak mission: a LANDING of at least its stored D km adds one; anything else (a crash, a landing that was shorter) sets it back to 0.
+// save.streakBroken = how many rows that flight broke (read by the results card: 'Row broken'); chains, cities and every other mission are never reset by a crash.
+function advanceStreaks(save, r) {
+  const dist = save.missionDist;
+  if (!dist || !Object.keys(dist).length) { if (save.streakBroken) save.streakBroken = 0; return; }
+  const st = save.missionStreak = save.missionStreak || {};
+  save.streakBroken = 0;
+  for (const [k, e] of Object.entries(dist)) {
+    const had = st[k] || 0;
+    if (r.landed && (r.distance || 0) >= e.D) st[k] = had + 1;
+    else { if (had > 0) save.streakBroken++; st[k] = 0; }
+  }
+}
 // A landing at the next leg of an open (new-rule) chain moves it on; any other landing, and a crash, changes nothing (no punishment in chains).
 function advanceChains(save, r, startCity) {
   if (!r.landed) return;

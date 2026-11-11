@@ -12,6 +12,7 @@ import { AREAS, unlockedAreas, citiesOf } from './areas.js';
 import { linksFor, pathTo, legBetween } from './route.js';
 import { capFor } from './capability.js';
 import { LINES } from './upgrades.js';
+import { fleetOf } from './fleet.js';
 
 // DECLARED, not inferred (the sim chat's reach table, M-CITY v3, confirmed 2026-11-11): the starter areas whose OWN network offers fewer than 3 stops: Oceania 2, East Asia 2, Patagonia 1.
 // There the stretch is always the floor (the farthest city, so 'median 1 flight, 0 stuck' as the sim measured). Read only by tests/missionplan.cjs.
@@ -101,6 +102,22 @@ export function ownFill(save, a, startCity, id, f, key) {
   own.key = key;
   if (id === 'chain') own.progress = Math.min(2, (save.missionProgress || {})[key] || 0);
   return own;
+}
+
+// ---------- the streaks (release B): 'Land 2 / 3 long flights in a row' ----------
+// A LONG flight is a landing of at least D game km; D = 0.3 x the plane's reach estimate, from a DECLARED table by the plane flown when the mission is first shown (stored: save.missionDist[key],
+// so a later plane never changes a mission already shown). Only the Comet's value is backed by a measurement (the child's landing rate at 3,100 km is 0.55, sim chat M-DIST); the rest follow 0.3 x the
+// per-plane estimates of the sim chat's plan (research BLOCK1-HARDER-MISSIONS-LEVERS.md 8.1). TODO-SIM: the sim chat to confirm or replace the table after its per-plane sweep.
+export const D_TABLE = { comet: 3100, jumbo: 3900, twin: 4500, dreamliner: 5100, truss: 4500, hydrogen: 6900 };
+export const STREAK_N = { streak2: 2, streak3: 3 };
+export const STREAK_IDS = Object.keys(STREAK_N);
+export const planeIdOf = save => ((fleetOf(save) || {}).plane) || 'comet';
+export const streakD = save => D_TABLE[planeIdOf(save)] || D_TABLE.comet;
+export const kmWords = d => `${(Math.round(d / 100) * 100).toLocaleString('en')} km`;   // game km rounded to 100, as the route card does
+// The fill of a streak mission: the stored D and N if it was shown before, else what the table says now (pure: nothing is stored here); count = the long flights in a row so far.
+export function ownStreak(save, key, id, f) {
+  const e = (save.missionDist || {})[key], N = e ? e.N : STREAK_N[id];
+  return { ...f, key, D: e ? e.D : streakD(save), N, count: Math.min(N, (save.missionStreak || {})[key] || 0) };
 }
 
 // ---------- the asterisk: what a planting mission needs ----------

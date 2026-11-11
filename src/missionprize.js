@@ -20,7 +20,9 @@ export const PRIZE_KIND = { 'land-city': 'land2', route: 'stretch' };
 export const kindOf = templateId => PRIZE_KIND[templateId] || templateId;
 // The ladder of each release, by tier (for the tier-total check in tests/missionprize.cjs).
 export const LADDER_A = { 1: ['land2', 'shade', 'plant-tree', 'clean-gaps', 'bring', 'project'], 2: ['chain', 'rescue', 'dodge', 'spot', 'hazard', 'system'], 3: ['stretch', 'golden', 'night', 'shade10', 'kinds3', 'tier'] };
-export const LADDER_B = { 1: LADDER_A[1], 2: ['chain', 'streak2', 'dodge', 'spot', 'hazard', 'system'], 3: ['stretch', 'streak3', 'night', 'shade10', 'kinds3', 'tier'] };
+// Release B: the streaks are EXTRA missions (the user, 2026-11-11): rescue and golden STAY, streak2 and streak3 are new template ids. The sim chat re-balances the table for one more kind per tier;
+// TODO-SIM: until its numbers arrive the streak rows keep the sim's A.8 values (16 + 1 crystal, 31 + 2) and tests/missionprize.cjs does NOT assert the tier totals of this ladder.
+export const LADDER_B = { 1: LADDER_A[1], 2: [...LADDER_A[2], 'streak2'], 3: [...LADDER_A[3], 'streak3'] };
 
 // { seeds, crystals } for a mission kind at stage factor k. `plane` is reserved and ignored in this version (the effort of the distance kinds at later planes is not measured).
 export function missionPrize(kind, k = 1, plane = null) {

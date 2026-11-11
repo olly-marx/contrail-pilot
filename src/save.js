@@ -69,7 +69,7 @@ function readRaw(key) {
 
 // A brand-new player's save. `missionCities` is {} (not in DEFAULTS: a shared object would leak between saves): a save WITHOUT it is an old one, whose open city missions keep the
 // city they show today when the missions are first stored (src/missions2.js assignMissionCities).
-const blankSave = () => ({ ...structuredClone(DEFAULTS), fleet: newFleet(), missionCities: {} });
+const blankSave = () => ({ ...structuredClone(DEFAULTS), fleet: newFleet(), missionCities: {}, missionDist: {}, missionStreak: {} });   // (missionDist / missionStreak: the streak missions' stored distance and long flights in a row; an old save creates them when its first streak mission is shown)
 
 // A stored save made whole: defaults filled in and old saves brought up to date. Pure (no storage), so the
 // sim engine (src/sim/world.js) prepares a save exactly as the game does. A missing save: a new player.
