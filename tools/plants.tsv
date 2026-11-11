@@ -695,3 +695,4 @@ steerchip	src/steerchip.js	s/st.why === 'explore' ? 'Explore' : 'Next'/st.why ==
 exploreland	src/wild.js	s/else { s.stayLand = this.region; s.routeMode = 'explore'; }/else { s.routeMode = 'explore'; }/	EXPLORE HERE does not keep the flight in the land
 exploreland	src/wild.js	s/if (here) { s.stayLand = null; s.routeMode = 'mission'; }/if (here) { s.stayLand = null; }/	STOP does not return to the mission
 exploreland	src/wild.js	s/ || !(left || here);/ || false;/	EXPLORE HERE shows when the land has nothing left to visit
+targetbanner-ui	src/GameScene.js	s/st.why === 'chosen' || st.why === 'mission' ? st.city : null; if/st.why === 'chosen' ? st.city : null; if/	the banner never shows for the mission steer
