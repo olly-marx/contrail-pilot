@@ -63,7 +63,7 @@ export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === '
 const stretchDone = (r, s, f) => {
   if (r.landedAt !== f.cityC) return false;
   const n = stopsOf(linksFor(s), s.city, f.cityC);
-  return n >= f.stretch.stops && (r.airportsSkipped || 0) >= n - 1;
+  return n >= Math.min(3, f.stretch.stops) && (r.airportsSkipped || 0) >= n - 1;   // (3 at most: a 4-stop mission stays completable from a nearer start; the spec and the sim use 3)
 };
 // ---------- the area ladder (templates; f = the fill for this area and stage) ----------
 // Prizes: seeds only (crystals stay a skill reward), ~700 per area in the teach stage, x the stage factor.
@@ -77,10 +77,10 @@ export const TEMPLATES = [
   { id: 'project', short: () => 'Fund a nature project', tier: 1, prize: 10, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
   // tier 2: combine it
   // chain (release A): THREE legs A, B, C (src/missionplan.js chain3; a revisit is allowed); progress = save.missionProgress[key] (legs landed, in order; a crash or another landing changes nothing).
-  // An OLD chain in progress (rule 'old', two cities) keeps its old test (save.prevLanded). The pay is src/missionprize.js (the `prize` field of a template is no longer read).
-  { id: 'chain', short: f => `Visit ${f.city} + ${f.cityC && f.rule !== 'old' ? 2 : 1}`, tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city,
-    title: f => (f.cityC && f.rule !== 'old' ? `Land at ${f.city}, ${f.cityB}, then ${f.cityC}` : `Land at ${f.city}, then ${f.cityB}`),
-    flight: (r, s, f) => (f.cityC && f.rule !== 'old' ? ((s.missionProgress || {})[f.key] || 0) >= 3 : r.landedAt === f.cityB && s.prevLanded === f.city) },
+  // A chain with rule 'new' is the three-leg one; anything else (rule 'old', or a bare fillFor) is the old two-city chain and keeps its old test (save.prevLanded). The pay is src/missionprize.js (the `prize` field of a template is no longer read).
+  { id: 'chain', short: f => `Visit ${f.city} + ${f.cityC && f.rule === 'new' ? 2 : 1}`, tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city,
+    title: f => (f.cityC && f.rule === 'new' ? `Land at ${f.city}, ${f.cityB}, then ${f.cityC}` : `Land at ${f.city}, then ${f.cityB}`),
+    flight: (r, s, f) => (f.cityC && f.rule === 'new' ? ((s.missionProgress || {})[f.key] || 0) >= 3 : r.landedAt === f.cityB && s.prevLanded === f.city) },
   { id: 'dodge', short: f => `Dodge ${3 * f.k} icy patches`, tier: 2, prize: 15, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
   { id: 'rescue', short: f => `${f.cityB} + ${2 * f.k} trees`, tier: 2, prize: 15, needs: (f, s) => needsOf('rescue', f, s), ready: f => f.cityB !== f.start, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
   { id: 'spot', short: f => `Spot a ${f.animalName}`, tier: 2, prize: 15, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
@@ -90,8 +90,8 @@ export const TEMPLATES = [
   { id: 'night', short: () => 'A whole clean night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', short: f => `Make ${10 * f.k} shade, land`, tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
   { id: 'kinds3', short: f => `Plant ${f.kinds} kinds in one go`, tier: 3, star: true, prize: 20, needs: (f, s) => needsOf('kinds3', f, s), title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
-  // route (release A): where the area's own network offers 3+ stops it is the STRETCH (f.stretch: 'Fly to <CITY> in one flight': land there, the flight's own start at least as far as the stored
-  // stop count, every airport on the way flown past); in a small area with no other area open it stays 'Nonstop to <CITY>' (src/missionplan.js stretchOK; release B gives those areas streak3).
+  // route (release A): the STRETCH (f.stretch: 'Fly to <CITY> in one flight': land there, the flight's own start at least min(3, the stored stop count) away, every airport on the way flown past); the floor
+  // makes it the farthest city in the small areas too (src/missionplan.js stretchFor). An OLD 'Nonstop to <CITY>' (no f.stretch) keeps its rule.
   { id: 'route', short: f => (f.stretch ? `${f.cityC} in one go` : `Nonstop to ${f.cityC}`), tier: 3, prize: 15, ready: f => f.cityC !== f.start,
     title: f => (f.stretch ? `Fly to ${f.cityC} in one flight` : `Fly to ${f.cityC} without stopping`),
     flight: (r, s, f) => (f.stretch ? stretchDone(r, s, f) : r.landedAt === f.cityC && r.airportsSkipped >= 1) },
@@ -220,7 +220,7 @@ export function onFlight(save, r) {
 function advanceChains(save, r, startCity) {
   if (!r.landed) return;
   for (const m of visible(save, startCity)) {
-    if (!m.def || m.def.id !== 'chain' || m.fill.rule === 'old' || !m.fill.cityC) continue;
+    if (!m.def || m.def.id !== 'chain' || m.fill.rule !== 'new' || !m.fill.cityC) continue;
     const p = save.missionProgress = save.missionProgress || {}, n = Math.min(2, p[m.key] || 0);
     if (r.landedAt === [m.fill.city, m.fill.cityB, m.fill.cityC][n]) p[m.key] = n + 1;
   }

@@ -92,7 +92,7 @@ export function shop(save, region) {
 
 export function progression({ careful = true, skill = LEARNING, flights = 100, seed = 1, tiers = [7000, 9000, 11000, 14000, 17000],
   every = 10, maxSkip = 3, capSeeds = [1, 2, 3], start = {}, beforeFlight = null, useHint = false, chaseGate = false, pursue = false } = {}) {
-  let save = { tutorialDone: true, muted: true, seenTips: ['*'], landings: 0, ...start };
+  let save = { tutorialDone: true, muted: true, seenTips: ['*'], landings: 0, missionCities: {}, ...start };   // (missionCities {}: a new player's save: the first city missions are stored by the NEW rules, not as an old save's)
   const rnd = makeRng(seed * 7919 + 13), rows = [], events = [];
   let tier = 0, cap = null, eraWas = 0;
   for (let n = 1; n <= flights; n++) {

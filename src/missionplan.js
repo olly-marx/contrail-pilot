@@ -2,8 +2,8 @@
 // Pure: no DOM, no clock, no random numbers (ties by list order). The rules, by template id (the ids stay, so old save.missionsDone keys stay valid):
 //   land-city  tier 1  the nearest UNVISITED city that is at least 2 stops away (visited ones after them); fallback: at least 1 stop
 //   chain      tier 2  three legs A, B, C: A at least 2 stops from the start, B at least 2 from A, C at least 2 from B; a revisit is allowed, never the city just left
-//   route      tier 3  the STRETCH where the area's own network offers 3+ stops: the candidate with the longest route that is at most 0.90 x reach and at least 3 stops;
-//                      floor: the FARTHEST candidate (at least 2 stops); no reach information: 3 stops. In a small area (SMALL_AREAS) with no other area open, `route` stays 'Nonstop to <CITY>'.
+//   route      tier 3  the STRETCH: the candidate with the longest route that is at most 0.90 x reach and at least 3 stops; no reach information: 3 stops;
+//                      FLOOR (everywhere nothing qualifies, always in the small areas of SMALL_AREAS): the FARTHEST candidate (most stops, then the longer route, then list order). An old 'Nonstop to <CITY>' keeps its rule.
 //   rescue     tier 2  unchanged rule (frozen once shown); the planting needs get the asterisk
 // Candidates: any city of an OPENED area, never the home city, never the city the leg starts from.
 // STORED: the first time a city mission is shown its cities are written to save.missionCities[key] and never change until the mission is done (fixed until completed). A save
@@ -13,8 +13,8 @@ import { linksFor, pathTo, legBetween } from './route.js';
 import { capFor } from './capability.js';
 import { LINES } from './upgrades.js';
 
-// DECLARED, not inferred: the areas whose OWN network offers fewer than 3 stops (the sim chat's M-CITY v3: Oceania 2, East Asia 2, Patagonia 1). Used only while that area is the only one open.
-// TODO-SIM: the sim chat to confirm the table (and that no other starter area is small).
+// DECLARED, not inferred (the sim chat's reach table, M-CITY v3, confirmed 2026-11-11): the starter areas whose OWN network offers fewer than 3 stops: Oceania 2, East Asia 2, Patagonia 1.
+// There the stretch is always the floor (the farthest city, so 'median 1 flight, 0 stuck' as the sim measured). Read only by tests/missionplan.cjs.
 export const SMALL_AREAS = { oceania: 2, easia: 2, patagonia: 1 };
 export const CITY_IDS = ['land-city', 'chain', 'rescue', 'route'];
 
@@ -46,20 +46,21 @@ export const farCity = (save, L, from, exclude = []) => nearestWith(save, L, fro
 export function chain3(save, L, from) {
   const A = farCity(save, L, from); if (!A) return null;
   const B = farCity(save, L, A, [A]); if (!B) return null;
-  const C = farCity(save, L, B, [B]); if (!C) return null;
+  const C = farCity(save, L, B, [B, A]) || farCity(save, L, B, [B]); if (!C) return null;   // C is not A when anything else is left (at store time A and B are not yet visited, so A would often be the nearest): no ping-pong; a 3-city area falls back to A
   return { city: A, cityB: B, cityC: C };
 }
 
-export const stretchOK = (save, a) => !(unlockedAreas(save).length === 1 && Object.prototype.hasOwnProperty.call(SMALL_AREAS, a));
 export function stretchFor(save, L, from, a) {
   const reach = Math.max(capFor(save, a) || 0, save.bestDistance || 0), cap = 0.9 * reach;
-  const list = candidates(save, from).map((c, i) => ({ c, i, n: stopsOf(L, from, c) })).filter(x => Number.isFinite(x.n) && x.n >= 2);
-  if (!list.length) return null;
-  for (const x of list) x.km = routeKm(L, from, x.c);
+  const all = candidates(save, from).map((c, i) => ({ c, i, n: stopsOf(L, from, c) })).filter(x => Number.isFinite(x.n) && x.n >= 1);
+  if (!all.length) return null;
+  for (const x of all) x.km = routeKm(L, from, x.c);
+  const far = all.filter(x => x.n >= 3);
   let pick = null;
-  if (reach > 0) { const within = list.filter(x => x.n >= 3 && x.km <= cap); if (within.length) pick = within.slice().sort((p, q) => q.km - p.km || p.i - q.i)[0]; }
-  else pick = list.filter(x => x.n === 3).sort((p, q) => p.i - q.i)[0] || null;   // no reach information: 3 stops
-  if (!pick) pick = list.slice().sort((p, q) => q.n - p.n || p.i - q.i)[0];        // the floor: the farthest candidate
+  if (reach > 0) { const within = far.filter(x => x.km <= cap); if (within.length) pick = within.slice().sort((p, q) => q.km - p.km || p.i - q.i)[0]; }
+  else pick = far.filter(x => x.n === 3).sort((p, q) => p.i - q.i)[0] || null;   // no reach information: 3 stops
+  // THE FLOOR (also the small areas: Oceania, East Asia, Patagonia, where nothing is 3 stops away): the FARTHEST candidate (most stops), then the longer route, then list order.
+  if (!pick) pick = all.slice().sort((p, q) => q.n - p.n || q.km - p.km || p.i - q.i)[0];
   return { city: pick.c, stops: pick.n, km: pick.km };
 }
 
@@ -68,7 +69,7 @@ export function newRule(save, a, startCity, id) {
   const L = linksFor(save);
   if (id === 'land-city') { const c = farCity(save, L, startCity); return c ? { city: c } : null; }
   if (id === 'chain') return chain3(save, L, startCity);
-  if (id === 'route') { if (!stretchOK(save, a)) return null; const s = stretchFor(save, L, startCity, a); return s ? { cityC: s.city, stretch: { stops: s.stops, km: s.km } } : null; }
+  if (id === 'route') { const s = stretchFor(save, L, startCity, a); return s ? { cityC: s.city, stretch: { stops: s.stops, km: s.km } } : null; }
   return null;   // rescue: the old rule, frozen by oldRule
 }
 // What today's fill names for this template (the city the player sees now); frozen for old saves and where the new rule names nothing.
@@ -89,7 +90,8 @@ export function ownFill(save, a, startCity, id, f, key) {
   const st = (save.missionCities || {})[key];
   let own;
   if (st) { const { rule, from, at, ...o } = st; own = { ...f, ...o, rule }; }
-  else { const nw = newRule(save, a, startCity, id); own = nw ? { ...f, ...nw, rule: 'new' } : { ...f, ...oldRule(id, f), rule: 'old' }; }
+  else { const nw = save.missionCities == null ? null : newRule(save, a, startCity, id);   // an OLD save (no save.missionCities yet) shows today's cities until they are stored: never the new rule
+    own = nw ? { ...f, ...nw, rule: 'new' } : { ...f, ...oldRule(id, f), rule: 'old' }; }
   own.key = key;
   if (id === 'chain') own.progress = Math.min(2, (save.missionProgress || {})[key] || 0);
   return own;

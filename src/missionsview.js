@@ -119,7 +119,7 @@ export function missionsView(save) {
     const stopsText = n.stops ? `${n.stops} ${n.stops === 1 ? 'stop' : 'stops'} away` : null;
     // The asterisk (release A): a mission whose planting needs a Tree Planting level the player lacks says so (src/missionplan.js needsOf); chain and stretch show their own progress words.
     const need = m && def && def.needs ? def.needs(m.fill, save) : null;
-    const chainOn = id === 'chain' && m && m.fill && m.fill.cityC && m.fill.rule !== 'old', stretchOn = id === 'route' && m && m.fill && m.fill.stretch;
+    const chainOn = id === 'chain' && m && m.fill && m.fill.cityC && m.fill.rule === 'new', stretchOn = id === 'route' && m && m.fill && m.fill.stretch;
     const legs = chainOn ? [m.fill.city, m.fill.cityB, m.fill.cityC] : null, legsDone = chainOn ? Math.min(3, (save.missionProgress || {})[m.key] || 0) : 0;
     const how0 = n.lead ? 'Do this first' : stopsText || lesson || hazard || (def && def.id && (m.daily && !HOW[id] ? DAILY_HOW : HOW[id])) || (n.daily ? DAILY_HOW : '');
     const how = n.lead ? how0 : need ? need.text : chainOn ? `${legsDone} of 3 cities` : stretchOn ? 'One flight, no stops' : how0;

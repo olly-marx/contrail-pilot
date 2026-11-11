@@ -709,7 +709,7 @@ missionplan	src/missionplan.js	s/nearestWith(save, L, from, 2, exclude) ||/neare
 missionplan	src/missionplan.js	s/return { city: A, cityB: B, cityC: C };/return { city: A, cityB: B };/	the chain has two legs again
 missionplan	src/missions2.js	s/if (stored\[k\] || done(save).has(k) ||/if (done(save).has(k) ||/	the stored cities are overwritten every time (they change under the player)
 missionplan	src/missionplan.js	s/const nw = legacy ? null : newRule(/const nw = newRule(/	an old save is given the new rule's cities (they change under the player)
-missionplan	src/missionplan.js	s/x.n >= 3 \&\& x.km <= cap/x.n >= 3/	the stretch ignores the 0.90 x reach cap
+missionplan	src/missionplan.js	s/const within = far.filter(x => x.km <= cap);/const within = far;/	the stretch ignores the 0.90 x reach cap
 missionplan	src/missions2.js	s/^    if (r.landedAt === \[m.fill.city, m.fill.cityB, m.fill.cityC\]\[n\]) p\[m.key\] = n + 1;/    p[m.key] = n + 1;/	the chain moves on at ANY landing
 missionplan	src/missions2.js	s/if (save.missionCities) delete save.missionCities\[m.key\]; //	a finished mission keeps its stored cities
 needsmark	src/missionplan.js	s/return i < 0 ? lv.length : i + 1;/return i < 0 ? lv.length : i;/	the parcels-to-level table is off by one
@@ -723,3 +723,9 @@ needsmark-ui	src/missionsview.js	s/short: need ? [^:]* : n.short,/short: n.short
 needsmark-ui	src/ui.js	s/onTap: () => this.goToLine(r.needs.line) }/onTap: () => this.go(r.needs.tab) }/	the sheet's button goes to the tab, not to the upgrade's row
 needsmark-ui	src/ui.js	s/const tab = tabOf(line) === 'nature' ? 'nature' : 'hangar';/const tab = 'hangar';/	the jump to an upgrade always opens the HANGAR
 needsmark-ui	src/missionplan.js	s/if (((save.levels || {}).trees || 0) >= lv) return null;/if (((save.levels || {}).trees || 0) >= 99) return null;/	the marker stays after the upgrade is bought
+missionplan	src/missionplan.js	s/farCity(save, L, B, \[B, A\]) || farCity/farCity(save, L, B, [B]) || farCity/	the chain's third leg may be the first city again (ping-pong)
+missionplan	src/missions2.js	s/n >= Math.min(3, f.stretch.stops)/n >= f.stretch.stops/	a stretch stored with 4 stops cannot be completed from a nearer start
+missionplan	src/missionplan.js	s/const nw = save.missionCities == null ? null : newRule(/const nw = newRule(/	an old save shows the NEW rule's cities until they are stored (they flip)
+missionplan	src/missionplan.js	s/filter(x => Number.isFinite(x.n) \&\& x.n >= 1);/filter(x => Number.isFinite(x.n) \&\& x.n >= 2);/	the stretch's floor needs 2 stops (a 1-stop area has no stretch)
+missionplan	src/missionplan.js	s/q.n - p.n || q.km - p.km || p.i - q.i/q.n - p.n || p.i - q.i/	the floor's ties go to list order, not to the longer route
+missionplan	src/sim/progression.js	s/ missionCities: {}, \.\.\.start/ ...start/	the sim's start save has no missionCities (its first city is stored as an old save's)

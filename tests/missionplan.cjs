@@ -3,11 +3,12 @@
 //   FIXTURE  the seeded save offers land-city, chain and route; (before line 5) the old and the new rule name different cities, else the migration check would be blind
 //   1. land-city names a city at least 2 stops away
 //   2. chain names THREE cities: stops from the start / from A / from B each at least 2, B is not A, C is not B, the title names all three
-//   3. the stretch (route): at least 3 stops, within 0.90 x reach when such a city exists; no reach information: 3 stops; a small area alone keeps 'without stopping'
+//   3. the stretch (route): at least 3 stops, within 0.90 x reach when such a city exists; no reach information: 3 stops
 //   4. FIXED UNTIL COMPLETED: assignMissionCities stores the cities and a second call changes nothing; the stored cities survive a visit and a move
 //   5. OLD SAVES: a save without save.missionCities keeps the city it shows today (rule 'old'); a new save stores rule 'new'
 //   6. a finished mission's cities are dropped and its prize is paid once
-//   8. every starter area and start city names real, reachable cities for each city mission
+//   8-10. every starter area and start city: real reachable cities; no chain ping-pong (C is not A); the stretch is real everywhere (small areas: the farthest city, ties to the longer route)
+//   11. B: a stretch stored with 4 stops is completable from 3 stops away; C: an OLD save shows the same cities before and after they are stored; E: the sim's start save carries missionCities {}
 //   7. the chain moves on only by landing at its next leg, in order; another landing and a crash change nothing; the third leg finishes it and pays 18 seeds
 globalThis.SEASON2 = true;
 (async () => {
@@ -41,9 +42,6 @@ globalThis.SEASON2 = true;
   check(!!rr && !!rr.fill.stretch && rr.fill.stretch.stops >= 3 && rkm <= 0.9 * reach, `the stretch is at least 3 stops and within 0.90 x reach (${reach}): ${rr && rr.fill.cityC} ${rkm} km, ${rr && rr.fill.stretch && rr.fill.stretch.stops} stops`);
   check(!!rr && /in one flight/.test(rr.title), `the stretch title says 'in one flight': ${rr && rr.title}`);
   check(!!rt.fill.stretch && rt.fill.stretch.stops === 3, `with no reach information the stretch is 3 stops: ${JSON.stringify(rt.fill.stretch)}`);
-  const so = mk({ areas: ['oceania'], homeArea: 'oceania', homeCity: 'MELBOURNE', city: 'MELBOURNE', visited: ['MELBOURNE'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'oceania:shade', 'oceania:plant-tree', 'oceania:clean-gaps', 'oceania:dodge', 'oceania:spot', 'oceania:hazard'] });
-  const ro = M2.visible(so, 'MELBOURNE').find(m => m.def.id === 'route');
-  check(!ro || (!ro.fill.stretch && /without stopping/.test(ro.title)), `a small area alone (Oceania) keeps 'without stopping': ${ro && ro.title}`);
   // 4
   const s4 = mk(); const changed1 = M2.assignMissionCities(s4), snap = JSON.stringify(s4.missionCities), changed2 = M2.assignMissionCities(s4);
   check(changed1 === true && Object.keys(s4.missionCities).length >= 3 && changed2 === false && JSON.stringify(s4.missionCities) === snap, `assignMissionCities stores the cities and is idempotent: first ${changed1}, second ${changed2}, ${Object.keys(s4.missionCities)}`);
@@ -79,8 +77,9 @@ globalThis.SEASON2 = true;
   const d7 = land(s7, c7.cityC);
   check(d7.some(m => m.key === k7) && s7.missionsDone.includes(k7) && (s7.seeds || 0) - seeds7 >= 18 && !s7.missionProgress[k7], `landing at C finishes the chain and pays: done ${d7.map(m => m.key)}, seeds +${(s7.seeds || 0) - seeds7}`);
 
-  // 8. every starter area, every start city: each city mission names real cities (the declared fallbacks leave nothing undefined)
-  const A = await import('../src/areas.js'), bad8 = [];
+  // 8-10. every starter area, every start city: real reachable cities (8); no chain ping-pong (A: leg C is not leg A when another city is left); the stretch is a real mission in EVERY area, small ones too (D),
+  //       and its floor is the farthest city, ties to the longer route then list order (G)
+  const A = await import('../src/areas.js'), bad8 = [], badA = [], badD = [], badG = [];
   for (const [a, area] of Object.entries(A.AREAS)) {
     if (!area.starter) continue;
     for (const c of area.cities) {
@@ -88,11 +87,40 @@ globalThis.SEASON2 = true;
       const fl = M2.fillFor(sv, a, c), LL = R.linksFor(sv);
       for (const id of ['land-city', 'chain', 'route']) {
         const o = P.ownFill(sv, a, c, id, fl, `${a}:${id}`), names = id === 'land-city' ? [o.city] : id === 'chain' ? [o.city, o.cityB, o.cityC] : [o.cityC];
-        if (names.some(n => !n || !R.cityIndex || P.stopsOf(LL, c, n) === Infinity) && !(o.rule === 'old' && id === 'chain' && !o.cityC)) bad8.push(`${a} from ${c}: ${id} -> ${JSON.stringify(names)}`);
+        if (names.some(n => !n || P.stopsOf(LL, c, n) === Infinity)) bad8.push(`${a} from ${c}: ${id} -> ${JSON.stringify(names)}`);
+        if (id === 'chain' && o.rule === 'new' && o.cityC === o.city && P.farCity(sv, LL, o.cityB, [o.cityB, o.city])) badA.push(`${a} from ${c}: ${JSON.stringify(names)}`);
+        if (id === 'route') {
+          if (!o.stretch || o.stretch.stops < 1 || o.rule !== 'new') badD.push(`${a} from ${c}: ${JSON.stringify([o.cityC, o.stretch, o.rule])}`);
+          else if (P.SMALL_AREAS[a] !== undefined) {   // a small area alone: always the floor
+            const all = P.candidates(sv, c).map((x, i) => ({ x, i, n: P.stopsOf(LL, c, x), km: P.routeKm(LL, c, x) })).filter(y => Number.isFinite(y.n) && y.n >= 1).sort((p, q) => q.n - p.n || q.km - p.km || p.i - q.i);
+            if (all.length && all[0].x !== o.cityC) badG.push(`${a} from ${c}: floor ${all[0].x} (${all[0].n} stops, ${all[0].km} km), got ${o.cityC}`);
+          }
+        }
       }
     }
   }
-  check(bad8.length === 0, `every starter area and start city gets real, reachable cities for land-city, chain (or the old two-city chain) and route: ${bad8.slice(0, 5).join('; ')}${bad8.length > 5 ? ` (+${bad8.length - 5})` : ''}`);
+  check(bad8.length === 0, `every starter area and start city gets real, reachable cities for land-city, chain and route: ${bad8.slice(0, 5).join('; ')}${bad8.length > 5 ? ` (+${bad8.length - 5})` : ''}`);
+  check(badA.length === 0, `the chain never ping-pongs (leg C is not leg A while another city is left): ${badA.slice(0, 4).join('; ')}${badA.length > 4 ? ` (+${badA.length - 4})` : ''}`);
+  check(badD.length === 0, `the stretch is a real mission in every starter area and start, the small ones too (Oceania, East Asia, Patagonia): ${badD.slice(0, 4).join('; ')}${badD.length > 4 ? ` (+${badD.length - 4})` : ''}`);
+  check(badG.length === 0, `in a small area the stretch is the FARTHEST city, ties to the longer route, then list order: ${badG.slice(0, 3).join('; ')}`);
+  // B. a stretch stored with 4 stops stays completable from a start 3 stops away (the spec and the sim use 3)
+  const Ls = R.linksFor(s0); let pair = null;
+  for (const x of P.candidates(s0, 'LONDON')) { const y = P.candidates(s0, x).find(c => P.stopsOf(Ls, c, x) === 3); if (y) { pair = [y, x]; break; } }
+  const routeDef = M2.TEMPLATES.find(t => t.id === 'route');
+  check(!!pair && routeDef.flight({ landed: true, landedAt: pair[1], airportsSkipped: 2 }, { ...s0, city: pair[0] }, { cityC: pair[1], stretch: { stops: 4, km: 9999 }, key: 'k' }) === true, `a stretch stored with 4 stops is completable from a start 3 stops away (${pair}): needs min(3, stops)`);
+  // C. an OLD save shows the same cities before and after they are stored (no flip to the new rule)
+  const fs = require('fs'), path = require('path');
+  const sv0 = S.prepareSave(JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'postrails-after6.json'), 'utf8')));
+  sv0.missionsDone = [...new Set([...(sv0.missionsDone || []), 'L5'])];
+  const cityView = x => JSON.stringify(M2.visible(x).filter(m => ['land-city', 'chain', 'rescue', 'route'].includes(m.def.id)).map(m => [m.key, m.fill.city, m.fill.cityB, m.fill.cityC]));
+  const legacyBefore = cityView(sv0);
+  check(sv0.missionCities == null && JSON.parse(legacyBefore).length >= 1, `FIXTURE: the old save (tests/fixtures/postrails-after6.json) has no missionCities and offers a city mission: ${legacyBefore.slice(0, 120)}`);
+  const legacyBeforeMk = (() => { const o = mk(); delete o.missionCities; return o; })(), lbm = cityView(legacyBeforeMk);
+  M2.assignMissionCities(sv0); M2.assignMissionCities(legacyBeforeMk);
+  check(cityView(sv0) === legacyBefore && cityView(legacyBeforeMk) === lbm, `an old save shows the same cities before and after they are stored: ${legacyBefore.slice(0, 100)} -> ${cityView(sv0).slice(0, 100)}`);
+  // E. the sim's start save carries missionCities {} (else its first land-city is stored as an OLD save's)
+  const prog = fs.readFileSync(path.join(__dirname, '..', 'src', 'sim', 'progression.js'), 'utf8');
+  check(/let save = \{[^\n]*missionCities: \{\}[^\n]*\.\.\.start/.test(prog), "the progression sim's start save carries missionCities: {} (src/sim/progression.js)");
 
   console.log(fails.length ? `FAIL missionplan:\n - ${fails.join('\n - ')}` : 'PASS missionplan: land2, three-leg chain with revisits, the stretch, cities fixed until completed, old saves keep what they show, chain progress by landing in order');
   process.exit(fails.length ? 1 : 0);

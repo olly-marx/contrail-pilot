@@ -17,7 +17,7 @@ export { MAX_LEGS };                     // a city mission's target is at most 3
 export const CITY_TEMPLATES = {
   'land-city': (f) => f.city,
   // chain: the NEXT leg of three (src/missionplan.js; progress = save.missionProgress[key]); an old two-city chain (rule 'old') keeps save.prevLanded.
-  chain: (f, s) => (f.rule === 'old' || !f.cityC ? (s.prevLanded === f.city ? f.cityB : f.city) : [f.city, f.cityB, f.cityC][Math.min(2, (s.missionProgress || {})[f.key] || 0)]),
+  chain: (f, s) => (f.rule !== 'new' || !f.cityC ? (s.prevLanded === f.city ? f.cityB : f.city) : [f.city, f.cityB, f.cityC][Math.min(2, (s.missionProgress || {})[f.key] || 0)]),
   rescue: (f) => f.cityB,
   route: (f) => f.cityC,
 };
