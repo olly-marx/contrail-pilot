@@ -418,7 +418,6 @@ export class GameScene extends Phaser.Scene {
     return bannerText({ city, crossFrom: this._tbCross, mission: st.why === 'mission' ? st.mission : null, landed: this.state === 'landing' || this.landedAt === city });
   }
 
-  setDropVisible(v) { this.dropBg.setVisible(v); this.dropLabel.setVisible(v); this.dropShown = v; }
   setDropVisible(v) { this.dropBg.setVisible(v); this.dropLabel.setVisible(v); if (!v) this.nextTreeText.setText(''); this.dropShown = v; }
 
   onTap(p) {
