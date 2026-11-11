@@ -270,7 +270,10 @@ export class Tour {
     const r = t.getBoundingClientRect(), bottom = barTop - 12, top = 12;
     // A step with a SUBJECT: bring target AND subject into the band together when they fit (the 320x568 hangar scrolled the plane picture off the top to show the Engines row).
     const subs = this.subjectEls();
-    if (subs.length) {
+    // A target under a PINNED block (NATURE's land, the hangar dock) is "in the band" by its numbers but cannot be tapped: the subject branch below used to RETURN for it before the covered check was reached
+    // (measured 2026-11-11, tests/rparcels.cjs 'under the land': the Tree Planting buy button sat under the pinned land, the guide's ring on it, no tap could reach it). So a pinned cover skips the subject branch.
+    const hit = document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).find(e => !e.closest('#tour')), pinned = !!hit && hit !== t && !t.contains(hit) && !!hit.closest('.wpin, .hp-dock');
+    if (subs.length && !pinned) {
       const rs = [r, ...subs.map(e => e.getBoundingClientRect())], uTop = Math.min(...rs.map(q => q.top)), uBot = Math.max(...rs.map(q => q.bottom));
       if (uBot - uTop <= bottom - top - 80) {   // (80 px kept for the compact bubble)
         if (uTop < top) sc.scrollTop -= top - uTop; else if (uBot > bottom - 80) sc.scrollTop += Math.min(uBot - (bottom - 80), uTop - top);

@@ -777,3 +777,4 @@ lapbadge	src/sim/rules.js	s/^    this.bankFlight({ landed, reason });/    this.o
 rparcels	src/tour.js	s/    const r = t.getBoundingClientRect(), bottom = barTop - 12, top = 12;/    const r = t.getBoundingClientRect(), bottom = innerHeight, top = 12;/	a guided target may sit behind the tab bar (the band ignores the bar)
 rparcels	src/tour.js	s/      if (top1 \&\& top1 !== t \&\& !t.contains(top1)) {/      if (false) {/	a guided target stays under the pinned land (no uncovering)
 rparcels	src/tour.js	s/      set(b, { top: `${Math.max(4, Math.min(H - 4 - h2, tt))}px` });/      set(b, { top: `${Math.round(cy - h2 \/ 2)}px` });/	the guide bubble sits on the target
+rparcels	src/tour.js	s/    if (subs.length \&\& !pinned) {/    if (subs.length) {/	a subject step ignores a pinned cover (the measured 1b fault)
