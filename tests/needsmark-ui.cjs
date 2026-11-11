@@ -8,12 +8,16 @@
 // Run: python3 -m http.server 8000 & node tests/needsmark-ui.cjs   (plants: tools/plants.tsv, test needsmark-ui)
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
+const fs = require('fs'), os = require('os'), path = require('path');
+const SHOTS = process.env.SHOTS || path.join(os.tmpdir(), 'needsmark-shots');   // (not under /home: a CI runner has no such directory)
 const URL = process.env.URL || 'http://localhost:8000/';
 const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, autoTakeoff: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true,
   freeUpgrade: false, landings: 12, flights: 20, seeds: 500, crystals: 50, levels: {}, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  let shotsOk = true; try { if (!fs.existsSync(SHOTS)) fs.mkdirSync(SHOTS); } catch (e) { shotsOk = false; console.log(`NOTE: screenshots off, cannot make ${SHOTS}: ${e.code || e}`); }   // (not recursive: that can loop on an uncreatable path)
+  const shot = (p, name) => (shotsOk ? p.screenshot({ path: `${SHOTS}/${name}` }).catch(() => {}) : Promise.resolve());
   try {
     for (const [W, H] of [[390, 844], [320, 568]]) {
       const tag = `${W}x${H}`, ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
@@ -29,12 +33,14 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
         let r0 = await rowInfo();
         check(!!r0, `${tag}: FIXTURE: the plant-tree row is on the MISSIONS screen`);
         if (!r0) { await ctx.close(); continue; }
+        await shot(p, `${tag}-missions-asterisk.png`);
         check(/\*$/.test(r0.name) && r0.how === 'Needs 2 parcels', `${tag}: the row shows the asterisk and 'Needs 2 parcels': ${JSON.stringify(r0)}`);
         stage = 'tap the row'; await p.click(rowSel); await p.waitForTimeout(400);
         const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? { text: e.innerText.replace(/\s+/g, ' '), action: (e.querySelector('.sheet-action') || {}).textContent || null } : null; });
         check(!!sh && /\* You need: Tree parcels/.test(sh.text) && sh.action === 'GO TO NATURE', `${tag}: the sheet says '* You need: Tree parcels' and offers GO TO NATURE: ${JSON.stringify(sh)}`);
         stage = 'tap GO TO NATURE'; await p.click('#sheet .sheet-action').catch(() => {}); await p.waitForTimeout(700);
         const nat = await p.evaluate(() => { const e = document.querySelector('[data-line="trees"]'); if (!e) return null; const r = e.getBoundingClientRect(); return { previewing: e.classList.contains('previewing'), onScreen: r.bottom > 0 && r.top < innerHeight, natureShown: !!document.querySelector('#nature') && !document.getElementById('nature').hidden }; });
+        await shot(p, `${tag}-nature-after-tap.png`);
         check(!!nat && nat.natureShown && nat.previewing && nat.onScreen, `${tag}: GO TO NATURE shows NATURE with the Tree Planting row selected and on screen: ${JSON.stringify(nat)}`);
         stage = 'own Tree Planting'; await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.levels = { ...(ui.save.levels || {}), trees: 1 }; });
         await open(); const r1 = await rowInfo();
