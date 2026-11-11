@@ -30,7 +30,7 @@ const fs = require('fs'), path = require('path');
   { const rules = fs.readFileSync(path.join(__dirname, '../src/sim/rules.js'), 'utf8'), gs = fs.readFileSync(path.join(__dirname, '../src/GameScene.js'), 'utf8');
     const iBank = rules.indexOf('this.bankFlight({ landed, reason });'), iLap = rules.indexOf("lapLanded: !!(landed && this.crossing && this.crossing.kind === 'lap' && this.save.city === this.crossing.to)");
     check(iLap > 0 && rules.indexOf('addPrizes(this.save', rules.indexOf('bankFlight({ landed = false')) < iLap, 'bankFlight passes lapLanded (a landed lap flight home) into addPrizes, which pays the badge at the bank');
-    check(iBank > 0 && gs.indexOf('completeCrossing(this.save, this.crossing)') > 0, 'power: finish() banks the flight and GameScene.onFinish completes the crossing afterwards (that is why lapDone is not set at the bank)'); }
+    check(iBank > 0 && gs.indexOf('finishCrossing(this.save, this.crossing, landed)') > 0, 'power: finish() banks the flight and GameScene.onFinish completes the crossing afterwards (that is why lapDone is not set at the bank)'); }
   if (fails.length) { console.log('FAIL lapbadge:'); fails.forEach(f => console.log(' - ' + f)); process.exit(1); }
   console.log('PASS lapbadge: Lap Complete (10 seeds + 4 crystals) arrives on the lap flight itself, once; an old lapDone save gets it on its next flight, paid once; no other crossing earns it; the bank-before-completeCrossing order is pinned');
 })().catch(e => { console.log('FAIL lapbadge:\n - ' + e.stack); process.exit(1); });
