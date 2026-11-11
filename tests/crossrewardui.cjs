@@ -4,6 +4,7 @@
 //   A. the HOME box says 'Prize: 100 seeds' next to the word Easy, and TAKE OFF is still on screen above the bar (the longer right cell must not push it off a short phone)
 //   B. a tap on the box opens the CROSSINGS screen, and it says 'Prize: 100 seeds' too
 //   C. a landed crossing's own card says '+100 seeds' and '+12 ice crystals', fits the screen, and the bank got the 100 seeds and 12 crystals
+//   D. the lap landed (the ENDING screen, src/ui.js showEnding) says '+2,000 seeds' and '+250 ice crystals', and fits the screen
 // Screenshots: SHOTS, else <tmpdir>/crossrewardui-shots. Run: python3 -m http.server 8000 & node tests/crossrewardui.cjs   (plants: tools/plants.tsv, test crossrewardui)
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
@@ -56,6 +57,17 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city
           check(e.top >= 0 && e.bottom <= e.h, `${tag} C: the landing card does not fit the screen (${Math.round(e.top)}-${Math.round(e.bottom)} of ${e.h})`);
           check(e.seeds >= before.seeds + 100 && e.crystals >= before.crystals + 12, `${tag} C: the bank did not get the prize: before ${JSON.stringify(before)}, after ${e.seeds}/${e.crystals}`);
           check(!p.errs.length, `${tag}: page errors (landing) ${p.errs.slice(0, 2)}`);
+        } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); }
+        await ctx.close(); }
+      { const { ctx, p } = await open(W, H); let stage = 'the ending';
+        try {
+          await p.evaluate(() => game.registry.get('ui').showResults({ landed: true, landedAt: 'WARSAW', distance: 900, earned: [], rewards: [], breakdown: { co2: 0, night: 0, sun: 0, trees: 0 }, heat: 0, crystals: 0, planted: 0, missions2: { done: [], next: null }, school: false,
+            crossing: { id: 'lap', kind: 'lap', landed: true, to: 'WARSAW', prize: { seeds: 2000, crystals: 250 } } }));
+          await p.waitForTimeout(800); await shot(p, `${tag}-ending.png`);
+          const e = await p.evaluate(() => { const el = document.getElementById('ending'); if (!el || el.hidden) return null; const c = el.querySelector('.payoff-card').getBoundingClientRect(); return { text: el.innerText.replace(/\s+/g, ' '), top: c.top, bottom: c.bottom, h: innerHeight }; });
+          check(!!e && /\+2,000 seeds/.test(e.text) && /\+250 ice crystals/.test(e.text), `${tag} D: the ending screen does not say '+2,000 seeds' and '+250 ice crystals': ${JSON.stringify(e)}`);
+          check(!e || (e.top >= 0 && e.bottom <= e.h), `${tag} D: the ending card does not fit the screen (${e && Math.round(e.top)}-${e && Math.round(e.bottom)} of ${e && e.h})`);
+          check(!p.errs.length, `${tag}: page errors (ending) ${p.errs.slice(0, 2)}`);
         } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); }
         await ctx.close(); }
     }

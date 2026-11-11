@@ -62,6 +62,7 @@ import { toastTopCss } from './hudclear.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp, leadOf } from './nextup.js';
 import { endView } from './crossingend.js';
+import { prizeLines } from './missionprize.js';
 import { crossingState, crossingById, momentDue, markTold, sheetText, NEED_FAR, routeCrossRest, routeLapRest, endingBody, boxView, screenView } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
@@ -691,7 +692,7 @@ export class UI {
     $('againBtn').textContent = lead === 'hangar' ? 'OPEN THE HANGAR' : lead === 'nature' ? 'OPEN NATURE' : 'FLY ON';
     this.hideCoach();   // nothing left open from the flight (the user saw a stray OK at the top after landing, 0.13.0)
     // Season 2: a crossing flown (src/crossings.js): the big news first.
-    if (r.crossing && r.crossing.kind === 'lap' && r.crossing.landed) this.showEnding();   // the final boss: the game's ending
+    if (r.crossing && r.crossing.kind === 'lap' && r.crossing.landed) this.showEnding(r.crossing.prize);   // the final boss: the game's ending
     else if (r.crossing) return this.showCrossingEnd(r);   // its OWN landing / crash screen (src/crossingend.js): no results card, no distance, no missions
     const s = this.save, paid = sumPrizes(r.rewards);   // R8: these were PAID at the bank (RULES.bankFlight); this is what the card shows
     if (paid.seeds || paid.crystals) this.renderBank(paid);
@@ -972,12 +973,13 @@ export class UI {
 
   // ---------- in-flight tips ----------
   // The game's ending (M4, the final boss = a lap of the Earth, home to home): one card, then on with the game.
-  showEnding() {
+  showEnding(prize = null) {   // prize: the lap's crossing prize { seeds, crystals } (src/missionprize.js; null when it was not paid)
     const s = this.save;
     let el = document.getElementById('ending');
     if (!el) { el = document.createElement('div'); el.id = 'ending'; el.className = 'payoff ending'; document.body.appendChild(el); }
     el.innerHTML = `<div class="payoff-card"><p class="ending-title">YOU FLEW AROUND THE WORLD!</p>
       <p>${endingBody(s.city)}</p>
+      ${prize ? `<p class="ending-prize">${prizeLines(prize).join('<br>')}</p>` : ''}
       <p class="small">${(s.crossed || []).length} crossings flown. You finished Contrail Pilot!</p>
       <button id="endingOk" class="btn go big" type="button">OK</button></div>`;
     el.hidden = false; sfx.coin && sfx.coin();

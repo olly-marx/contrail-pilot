@@ -4,6 +4,7 @@
 import { AREAS } from './areas.js';
 import { LANDMARKS } from './landmarks.js';
 import { planeById } from './fleet.js';
+import { prizeLines } from './missionprize.js';
 
 export const TITLE_MAX = 26;   // "WELCOME TO " + the longest city name + "!" (the payoff card is 380 px at most; the title wraps to two lines beyond this)
 export const LINE_MAX = 26;    // a paragraph line at 10 px in the 320 px card: MEASURED ~27 characters fit (the pixel font is ~10 px a character at 10 px), so 26. (The 8 px alternative was too small for 7-10 year olds.)
@@ -15,7 +16,7 @@ export function endView(r, save, { first = false } = {}) {
   if (c.landed) {
     const city = r.landedAt || c.to, lm = LANDMARKS[city];
     const nm = areaName(c.opens), lines = [`${nm[0].toUpperCase()}${nm.slice(1)}`, 'is open to you!', first ? 'New missions are open!' : 'More cities to fly to!'];
-    if (c.prize) lines.push(`+${c.prize.seeds} seeds`, `+${c.prize.crystals} ice crystals`);   // the crossing prize (src/missionprize.js), paid once
+    if (c.prize) lines.push(...prizeLines(c.prize));   // the crossing prize (src/missionprize.js), paid once
     return { kind: 'landed', eyebrow: 'A NEW WAY OPENED', title: `WELCOME TO ${city}!`, lines, pic: lm ? `assets/${lm.key}.png` : null, buttons: [{ id: 'on', label: 'FLY ON' }] };
   }
   const f = save && save.fleet ? planeById(save.fleet.plane) : null, kept = r.crystals || 0, lost = r.cargo || 0;

@@ -762,9 +762,11 @@ crossreward	src/crossings.js	s/^  if (due) payPrize(save, due);$/  if (false) pa
 crossreward	src/crossings.js	s/export const crossingPrizeDue = (save, c) => ((save.crossed || \[\]).includes(c.id) ? null : /export const crossingPrizeDue = (save, c) => (false ? null : /	a crossing already crossed pays again (back-pay)
 crossreward	src/crossings.js	s/    if (save.city !== c.to) return false;/    if (save.city !== c.to) { if (due) payPrize(save, due); return false; }/	the lap pays even when not landed at home
 crossreward	src/missionprize.js	s/Harder: \[700, 87\]/Harder: [700, 88]/	a crossing word pays one crystal more (the sum moves)
-crossreward	src/crossingend.js	s/    if (c.prize) lines.push(.*$/    if (false) lines.push(`+${c.prize.seeds} seeds`, `+${c.prize.crystals} ice crystals`);/	the landing card names no prize
+crossreward	src/crossingend.js	s/    if (c.prize) lines.push(.*$/    if (false) lines.push(...prizeLines(c.prize));/	the landing card names no prize
 crossreward	src/crossingview.js	s/word: s.difficulty, prize: prizeText(s.prize), ticks,/word: s.difficulty, prize: prizeText({ seeds: 1 }), ticks,/	the box shows a prize that is not the one paid
 crossrewardui	src/ui.js	s/ <span class=[^>]*hc-prize[^>]*>${esc(box.prize)}<\/span>//	the HOME box shows no prize
 crossrewardui	src/ui.js	s/ <span class=[^>]*cs-prize[^>]*>${esc(v.prize)}<\/span>//	the CROSSINGS screen shows no prize
-crossrewardui	src/crossingend.js	s/    if (c.prize) lines.push(.*$/    if (false) lines.push(`+${c.prize.seeds} seeds`, `+${c.prize.crystals} ice crystals`);/	the landing card names no prize
+crossrewardui	src/crossingend.js	s/    if (c.prize) lines.push(.*$/    if (false) lines.push(...prizeLines(c.prize));/	the landing card names no prize
 crossrewardui	src/crossings.js	s/^  if (due) payPrize(save, due);$/  if (false) payPrize(save, due);/	the landing pays nothing into the bank
+crossrewardui	src/ui.js	s/showEnding(prize = null) {/showEnding(prize = null) { prize = null;/	the lap's ending shows no prize
+crossreward	src/missionprize.js	s/export const prizeLines = p => \[`+${p.seeds.toLocaleString('en-GB')} seeds`/export const prizeLines = p => [`+${p.seeds} seeds`/	the card lines lose the thousands comma

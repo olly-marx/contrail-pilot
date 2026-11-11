@@ -37,6 +37,8 @@ export const CROSSING_PRIZE = { Easy: [100, 12], Medium: [200, 25], Hard: [400, 
 export const CROSSING_WORDS = ['Easy', 'Medium', 'Hard', 'Harder', 'Very hard', 'The lap'];
 export const crossingWord = c => CROSSING_WORDS[Math.min(CROSSING_WORDS.length - 1, c.kind === 'lap' ? CROSSING_WORDS.length - 1 : Math.max(0, c.era || 0))];
 // The words the screens use for a prize: 'Prize: 400 seeds' (the CROSSINGS screen, the HOME box), '+400 seeds' / '+50 ice crystals' (the landing card).
+// The two card lines of a paid crossing prize ('+100 seeds', '+12 ice crystals'; thousands with a comma): the landing card (src/crossingend.js) and the ending (src/ui.js showEnding).
+export const prizeLines = p => [`+${p.seeds.toLocaleString('en-GB')} seeds`, `+${p.crystals.toLocaleString('en-GB')} ice crystals`];
 export const prizeText = r => `Prize: ${r.seeds} seeds`;
 export function crossingReward(word) {
   const b = Object.prototype.hasOwnProperty.call(CROSSING_PRIZE, word) ? CROSSING_PRIZE[word] : null;

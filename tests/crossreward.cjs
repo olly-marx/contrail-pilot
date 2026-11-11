@@ -7,6 +7,7 @@
 //   4. the lap pays only when it is landed back HOME (the player is elsewhere: nothing, not marked crossed); landed at home it pays 2,000 seeds and 250 crystals
 //   5. a crash pays nothing: the scene never calls completeCrossing on a crash, so crossingPrizeDue is only read after a landing (GameScene: `due = landed ? ... : null`); here: no call, bank unchanged, and the landing card has no prize lines
 //   6. the prize shown is the prize paid: stateOf(...).prize and boxView(...).prize ('Prize: 100 seeds') equal what completeCrossing adds
+//   8. the lap's two card lines read '+2,000 seeds' and '+250 ice crystals' (the ending screen shows them: tests/crossrewardui.cjs D)
 //   7. the landing card (endView) says '+100 seeds' and '+12 ice crystals' for a paid first crossing, and nothing for an unpaid one
 globalThis.SEASON2 = true;
 (async () => {
@@ -43,6 +44,8 @@ globalThis.SEASON2 = true;
   const landed = (prize) => E.endView({ landedAt: c0.to, crossing: { id: c0.id, kind: 'long', landed: true, opens: 'weurope', to: c0.to, prize } }, mk(), { first: false }).lines.join(' | ');
   const withP = landed(want), noP = landed(null);
   check(withP.includes(`+${want.seeds} seeds`) && withP.includes(`+${want.crystals} ice crystals`) && !/\+\d/.test(noP), `the landing card shows the paid prize and nothing when unpaid: '${withP}' / '${noP}'`);
+  const pl = Z.prizeLines(Z.crossingReward('The lap'));
+  check(pl.join(' | ') === '+2,000 seeds | +250 ice crystals', `the lap's card lines: ${pl}`);
   console.log(fails.length ? `FAIL crossreward:\n - ${fails.join('\n - ')}` : 'PASS crossreward: 22 crossings pay 9,100 / 1,132, paid once on landing, no back-pay, lap only at home, nothing on a crash, shown = paid, the landing card names it');
   process.exit(fails.length ? 1 : 0);
 })();
