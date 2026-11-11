@@ -32,9 +32,9 @@ globalThis.SEASON2 = true;
   check(D0 === 3100 && s0.missionDist[K2].D === 3100 && s0.missionDist[K3].D === 3100 && sj.missionDist[K2].D === 3900, `D by plane: the Comet's D is 3,100 and stays after a plane change, a mission first shown with the jumbo stores 3,900: ${JSON.stringify([D0, s0.missionDist[K2].D, sj.missionDist[K2] && sj.missionDist[K2].D])}`);
   // 2
   const s2 = mk(); land(s2, 3200);
-  check(cnt(s2, K2) === 1 && cnt(s2, K3) === 1, `a long landing adds one: ${JSON.stringify(s2.missionStreak)}`);
+  check(cnt(s2, K3) === 1, `a long landing adds one (counted on Land 3, so that finishing Land 2 early is caught by line 4 only): ${JSON.stringify(s2.missionStreak)}`);
   land(s2, 3000);
-  check(cnt(s2, K2) === 0 && cnt(s2, K3) === 0, `a landing shorter than D sets the count back to 0: ${JSON.stringify(s2.missionStreak)}`);
+  check(cnt(s2, K3) === 0, `a landing shorter than D sets the count back to 0 (on Land 3): ${JSON.stringify(s2.missionStreak)}`);
   // 3
   const s3 = mk(); land(s3, 3300); crash(s3, 3500);
   check(cnt(s3, K2) === 0 && s3.streakBroken === 2, `a crash (even one that flew farther than D) sets the count back to 0 and counts the broken rows: ${JSON.stringify([s3.missionStreak, s3.streakBroken])}`);
