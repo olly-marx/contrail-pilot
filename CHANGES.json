@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-11-long-flight-streaks",
+    "version": "0.58.0",
+    "date": "2026-11-11",
+    "level": "minor",
+    "notes": [
+      "New missions: land two (later three) long flights in a row. A crash or a short landing starts the count again; the mission shows how far along you are. They pay extra seeds and an ice crystal."
+    ]
+  },
+  {
     "id": "2026-11-11-harder-city-missions",
     "version": "0.57.0",
     "date": "2026-11-11",
