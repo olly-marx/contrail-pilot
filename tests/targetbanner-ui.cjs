@@ -4,17 +4,17 @@
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
-const seed = aim => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, autoTakeoff: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true,
+const seed = (aim, label) => ({ routeMode: label === 'C' ? 'explore' : 'mission',   /* C: EXPLORE is chosen, so the mission is not the steer (src/aim.js steerOf); M: the default steer is the open mission */ areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, autoTakeoff: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true,
   freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, areaBest: { weurope: 99999 }, crossingTold: ['warsaw-stockholm'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], aimCity: aim || undefined, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], log = [], check = (c, m) => { if (!c) fails.push(m); };
   try {
     for (const [W, H] of [[390, 844], [320, 568]]) {
-      for (const [label, aim] of [['A', 'AMSTERDAM'], ['C', null], ['D', 'WARSAW'], ['S', 'PARIS']]) {
+      for (const [label, aim] of [['A', 'AMSTERDAM'], ['C', null], ['M', null], ['D', 'WARSAW'], ['S', 'PARIS']]) {
         const tag = `${W}x${H} ${label}`, ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
         await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
-        await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed(aim));
+        await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed(aim, label));
         try {
           await p.goto(URL); await ready(p); await p.waitForTimeout(800);
           await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 0; game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
@@ -46,8 +46,10 @@ const seed = aim => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDO
             const gap = await p.waitForFunction(() => { const s = game.scene.getScene('game'); if (!s.nextText.text || s.missionText.text.indexOf('\n') < 0) return false; return { next: s.nextText.text, gap: Math.round((s.nextText.getBounds().top - s.missionText.getBounds().bottom) * 10) / 10 }; }, null, { timeout: 8000 }).then(h => h.jsonValue()).catch(() => null);
             log.push(`${tag} S gap: ${JSON.stringify(gap)}`);
             check(gap && gap.gap >= 2, `${tag} S: the banner's second line must end at least 2 px above the next-airport line: ${JSON.stringify(gap)}`);
+          } else if (label === 'M') {
+            check(top === 'Flying to PARIS', `${tag}: with an open city mission, nothing chosen and no EXPLORE, the top text is the mission banner 'Flying to PARIS': ${JSON.stringify(top)}`);
           } else if (label === 'C') {
-            check(top && !/^Flying to/.test(top), `${tag}: with no destination the top text is the mission title, not a banner: ${JSON.stringify(top)}`);
+            check(top && !/^Flying to/.test(top), `${tag}: with EXPLORE chosen and no destination the top text is the mission title, not a banner: ${JSON.stringify(top)}`);
           } else {
             check(top === 'Flying to WARSAW to cross', `${tag} D: a ready crossing's departure must say 'Flying to WARSAW to cross': ${JSON.stringify(top)}`);
             const crossT = await p.evaluate(() => { const s = game.scene.getScene('game'); const keep = s.crossing; s.crossing = { to: 'STOCKHOLM' }; const t = s.targetCity(); s.crossing = keep; return t; });

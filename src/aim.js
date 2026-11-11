@@ -5,8 +5,8 @@
 // The sim chat's hooks: ROUTE_AIM.on (an A/B switch flippable in Node) and aimTarget(save) (the SAME choice routeFor uses).
 import { visible } from './missions2.js';
 import { flightPath, continueTour, pathTo, wayTo, linksFor, MAX_LEGS } from './route.js';
-import { choices } from './network.js';
-import { DEFAULT_DEST, defaultChain, defaultTargetFrom } from './destination.js';
+import { choices, city as cityOf } from './network.js';
+import { DEFAULT_DEST, defaultChain, defaultTargetFrom, nearestUnvisited } from './destination.js';
 import { SEASON2_ON } from './cities.js';
 
 export const ROUTE_AIM = { on: true };   // shipping state: on
@@ -38,6 +38,39 @@ export const gotoHops = save => { const t = gotoTarget(save); return t ? pathTo(
 export const setGoto = (save, city) => { save.aimCity = city; return save.aimCity; };
 export const clearGoto = save => { delete save.aimCity; };
 export const arrivedGoto = save => { if (save && save.aimCity && save.aimCity === save.city) { delete save.aimCity; return true; } return false; };
+// ROUTE DEFAULT = THE ACTIVE MISSION UNLESS EXPLORE IS CHOSEN (research/ROUTE-DEFAULT-MISSION-PLAN.md; the user, 2026-11-10). The flight's steer, in this order:
+//   1. 'chosen'  the destination the player set (save.aimCity: GO TO, a tapped city, a mission's GO THERE);
+//   2. 'mission' the ACTIVE city mission's city: the FIRST open city mission in the MISSIONS screen's order (activeMission), unless the player chose EXPLORE (save.routeMode);
+//   3. 'explore' / 'nearest' the nearest unvisited city (src/destination.js): in EXPLORE mode (restricted to one land by save.stayLand, EXPLORE HERE on NATURE), or when no city mission is open.
+// It is VISIBLE (the chip says 'Mission: PARIS' / 'Explore: AMSTERDAM' / 'Next: AMSTERDAM', the FLY TO sheet says MISSION / EXPLORING / NEXT) and ONE switch (save.routeMode), not the hidden aimKey plus a skip chip that 0.48.0 retired.
+// STEER.mission = false is the sim's A/B switch: exactly 0.48.0 (only a chosen destination steers).
+export const STEER = { mission: true };
+export const routeMode = save => (save && save.routeMode === 'explore' ? 'explore' : 'mission');
+export function activeMission(save) {
+  if (!ROUTE_AIM.on || !save || !save.tutorialDone || save.flyCrossing) return null;
+  const L = linksFor(save); if (!L[save.city]) return null;
+  for (const m of visible(save)) {
+    const pick = m.def && CITY_TEMPLATES[m.def.id]; if (!pick || !m.fill) continue;
+    const t = pick(m.fill, save);
+    if (t && t !== save.city && pathTo(save.city, t, L)) return { city: t, mission: m };
+  }
+  return null;
+}
+const landOf = name => { const c = cityOf(name); return c ? c.region : null; };
+// Cities of a land that are open, reachable and not visited yet (EXPLORE HERE counts them; 'Done here' when none).
+export const stayLandLeft = (save, land = save && save.stayLand) => { if (!save || !land) return 0; const L = linksFor(save); if (!L[save.city]) return 0; const seen = new Set([...(save.visited || []), save.city]); return Object.keys(L).filter(c => landOf(c) === land && !seen.has(c) && pathTo(save.city, c, L)).length; };
+export function steerOf(save) {
+  const none = { city: null, why: null };
+  if (!save || !save.tutorialDone || save.flyCrossing) return none;
+  const L = linksFor(save); if (!L[save.city]) return none;
+  const g = gotoTarget(save, L); if (g) return { city: g, why: 'chosen' };
+  const mode = routeMode(save);
+  if (STEER.mission && mode === 'mission') { const a = activeMission(save); if (a) return { city: a.city, why: 'mission', mission: a.mission }; }
+  const seen = new Set([...(save.visited || []), save.city]);
+  if (mode === 'explore' && save.stayLand) { const t = nearestUnvisited(L, save.city, seen, c => landOf(c) === save.stayLand); if (t) return { city: t, why: 'explore', land: save.stayLand }; }
+  const t = nearestUnvisited(L, save.city, seen);
+  return t ? { city: t, why: mode === 'explore' ? 'explore' : 'nearest' } : none;
+}
 export function aimOpen(save) {
   if (!ROUTE_AIM.on || !save || !save.tutorialDone || save.flyCrossing) return null;
   const L = linksFor(save);
@@ -80,6 +113,7 @@ export function routeTo(save, target, tid = null, count = 60) {
 
 // What every path builder in the game uses (hub, menu, loader, GameScene, the rules): the aimed route, or today's tour.
 export function routeFor(save, count = 60) {
-  const t = aimTarget(save);   // (null before the tutorial is done, and for flight school's save)
-  return t ? routeTo(save, t, templateOf(save, t), count) : flightPath(save, count);
+  const st = STEER.mission ? steerOf(save) : (t => ({ city: t, why: t ? 'chosen' : null }))(aimTarget(save));   // (null before the tutorial is done, and for flight school's save)
+  if (st.city && (st.why === 'chosen' || st.why === 'mission' || (st.why === 'explore' && st.land))) return routeTo(save, st.city, templateOf(save, st.city), count);
+  return flightPath(save, count);
 }

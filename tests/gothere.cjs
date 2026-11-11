@@ -6,6 +6,7 @@ globalThis.SEASON2 = true;
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const A = await import('../src/aim.js'), M = await import('../src/missions2.js'), R = await import('../src/route.js'), H = await import('../src/hub.js'), V = await import('../src/missionsview.js');
+  A.STEER.mission = false;   // this test is the 0.48.0 rule (only a chosen destination steers); tests/steer.cjs covers the mission default
   const base = () => ({ levels: {}, fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'],
     missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   const s0 = base(), open = A.aimOpen(s0);

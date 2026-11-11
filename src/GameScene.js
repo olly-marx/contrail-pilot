@@ -12,7 +12,7 @@ import { Hud } from './Hud.js';
 import { sendFlight } from './online.js';
 import { loading, tripLands } from './loader.js';
 import { flightPath, city, HOME, schoolSave } from './route.js';
-import { routeFor, gotoTarget } from './aim.js';
+import { routeFor, gotoTarget, steerOf } from './aim.js';
 import { trailColour } from './goldtrail.js';
 import { bannerText, isLit } from './targetbanner.js';
 import { crossingState } from './crossingview.js';
@@ -403,14 +403,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   // The city the flight is heading for: a crossing flight's arrival, else the player's destination (save.aimCity), none in flight school.
-  targetCity() { return this.crossing ? this.crossing.to : this.school ? null : gotoTarget(this.save); }
+  targetCity() { return this.crossing ? this.crossing.to : this.school ? null : steerOf(this.save).city; }   // (the steer: the chosen destination, else the active mission's city, else the nearest unvisited: src/aim.js)
   // The top text while a destination is set: 'Flying to SAPPORO' or '... to cross' for a ready crossing's departure; null otherwise (a crossing flight keeps its empty mission line).
   bannerNow() {
     if (this.school || this.crossing || this.state === 'over') return null;
-    const city = gotoTarget(this.save); if (!city) return null;
+    const st = steerOf(this.save), city = st.why === 'chosen' || st.why === 'mission' ? st.city : null; if (!city) return null;   // (the banner for a destination or a mission; the default 'nearest' only lights up)
     const key = `${city}|${(this.save.crossed || []).length}`;
     if (this._tbKey !== key) { this._tbKey = key; const cs = crossingState(this.save); this._tbCross = !!(cs && cs.ready && cs.from === city); }
-    return bannerText({ city, crossFrom: this._tbCross, landed: this.state === 'landing' || this.landedAt === city });
+    return bannerText({ city, crossFrom: this._tbCross, mission: st.why === 'mission' ? st.mission : null, landed: this.state === 'landing' || this.landedAt === city });
   }
 
   setDropVisible(v) { this.dropBg.setVisible(v); this.dropLabel.setVisible(v); this.dropShown = v; }

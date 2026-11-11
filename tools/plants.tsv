@@ -346,7 +346,6 @@ crossingmoment	src/ui.js	s/if (\$('dFly')) \$('dFly').hidden = !(cs \&\& cs.read
 crossingmoment	src/globe.js	s/if (cross \&\& cross.onTap \&\& markHit(ev)) { cross.onTap(); return; }//	a tap on the globe's ring does nothing
 crossingmoment	src/missionsview.js	s/v.crossing = cs ? {/v.crossing = false ? {/	MISSIONS shows no crossing conditions
 routechip	src/ui.js	s/    \$('hubRoute').onclick = () => this.openRouteSheet();/    $('hubRoute').onclick = () => { sfx.flap(); $('title').classList.toggle('world'); };/	the route chip still pushes the old panel into the page (no sheet)
-routechip	src/ui.js	s/onClose: () => { home.insertBefore(j, next); j.style.display = ''; this.renderHub(); } });/onClose: () => {} });/	the route panel is never handed back (it breaks the second open)
 routechip	src/ui.js	s/if ((s.tours || \[\]).some(t => t === 'globe-hint' || t === '\*')) return; s.tours = \[...(s.tours || \[\]), 'globe-hint']; writeSave(s);/return;/	the caption never goes away
 routechip	src/ui.js	s/hint.hidden = !s.tutorialDone ||/hint.hidden = true ||/	the caption never shows
 routechip	src/globe.js	s/ if (onUse) onUse(); }   \/\/ (the first drag: the hint can go)/ }/	a drag on the globe does not remove the caption
@@ -601,13 +600,13 @@ citytap	style.css	s/^\.hub-card \.hc-dot { width: 6px; height: 6px; }/.hub-card 
 music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
 hubscreen	src/ui.js	s/^ *\/\/ The first tab keeps its label FLY .*$/      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';/	the HOME word is written into the news dot again
 routeall	src/destination.js	s/for (const c of level) for (const n of L\[c\] || \[\]) {/for (const c of level) for (const n of [...(L[c] || [])].reverse()) {/	ties go to the last neighbour in link order
-routeall	src/destination.js	s/if (!visited\.has(n)) return n;/if (true) return n;/	a visited city can be the default
+routeall	src/destination.js	s/if (!visited\.has(n) \&\& (!accept || accept(n))) return n;/if (true) return n;/	a visited city can be the default
 routeall	src/destination.js	s/for (const c of way\.slice(1)) { path\.push(c); }/path.push(way[way.length - 1]);/	the path jumps to the target instead of flying through the hops
 routeall	src/destination.js	s/return tour ? tour(path, count) : path\.slice(0, count + 1);/return path.slice(0, count + 1);/	all visited: the path stops instead of carrying on with the old tour
 routeall	src/route.js	s/ \&\& city(name) \&\& LINKS\[name\]) return defaultChain/) return defaultChain/	a save with no city gets the default path
 routeall	src/route.js	s/save\.tutorialDone \&\& DEFAULT_DEST\.on \&\& city/DEFAULT_DEST.on \&\& city/	the tutorial gets the default destination
 routeall	src/route.js	s/ \&\& DEFAULT_DEST\.on \&\& city(name)/ \&\& city(name)/	the sim's A/B switch does nothing
-nextchip	src/ui.js	s/DEFAULT_DEST\.on \&\& !v\.aim ? defaultTargetFrom/DEFAULT_DEST.on \&\& false ? defaultTargetFrom/	the chip never names the default destination
+nextchip	src/steerchip.js	s/  if (on \&\& st \&\& st.city \&\& st.why !== 'chosen') return/  if (false \&\& st \&\& st.city \&\& st.why !== 'chosen') return/	the chip never names the default destination
 nextchip	src/ui.js	s/ \&\& DEFAULT_DEST\.on ? this\.openDestinationSheet()/ \&\& false ? this.openDestinationSheet()/	the chip opens the old 'Which way?' sheet
 nextchip	src/ui.js	s/this\.toast('Tap a city on the globe\.', '', 'good', 3);//	CHANGE says nothing
 nextchip	src/ui.js	s/action: t \&\& !locked ? { label: 'FLY'/action: false ? { label: 'FLY'/	the FLY TO sheet offers no FLY
@@ -655,9 +654,18 @@ targetbanner	src/targetbanner.js	s/ \&\& !passed \&\& !landed;/ \&\& !landed;/	t
 targetbanner-ui	src/GameScene.js	s/this\.missionText\.setText(this\.bannerNow() || (n \&\& this\.state !== 'over' ? n\.title : ''));/this.missionText.setText((n \&\& this.state !== 'over' ? n.title : ''));/	the mission title is not replaced by the banner
 targetbanner-ui	src/GameScene.js	s/rw\.lit = lit;/rw.lit = false;/	the target runway is never lit
 targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = isLit(rw.name, rw.name,/	every runway is lit
-targetbanner-ui	src/GameScene.js	s/const city = gotoTarget(this\.save); if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
+targetbanner-ui	src/GameScene.js	s/, city = st.why === 'chosen' || st.why === 'mission' ? st.city : null; if (!city) return null;/, city = 'AMSTERDAM';/	the banner names a city even with no destination
 targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
 citytap	style.css	s/^#title\.hub \.hub-card { display: flex; }.*$//	the card's buttons stack under its text again (the row is 75 px high)
+steer	src/aim.js	s/if (STEER\.mission \&\& mode === 'mission') {/if (false) {/	a mission open and nothing chosen no longer steers to the mission city
+steer	src/aim.js	s/const mode = routeMode(save);/const mode = 'mission';/	EXPLORE is ignored: the mission still steers
+steer	src/aim.js	s/export const routeMode = save => (save \&\& save\.routeMode === 'explore' ? 'explore' : 'mission');/export const routeMode = save => 'explore';/	the mode is always explore (the mission is never the default)
+steer	src/aim.js	s/const g = gotoTarget(save, L); if (g) return { city: g, why: 'chosen' };//	a chosen destination no longer beats the mission
+steer	src/aim.js	s/c => landOf(c) === save\.stayLand/c => true/	EXPLORE HERE leaves the land
+missionsteer	src/steerchip.js	s/word: st\.why === 'mission' ? 'Mission' :/word: false ? 'Mission' :/	the chip never says Mission
+missionsteer	src/ui.js	s/s\.routeMode = m; if (m === 'mission') s\.stayLand = null;/if (m === 'mission') s.stayLand = null;/	the EXPLORE chip does not switch the mode
+missionsteer	src/ui.js	s/hasMission = !!activeMission(s)/hasMission = false/	the sheet has no MISSION chip
+missionsteer	src/GameScene.js	s/st\.why === 'chosen' || st\.why === 'mission' ? st\.city : null/st.why === 'chosen' ? st.city : null/	the banner does not show for the mission steer
 resetwipe	src/save.js	s/  for (const k of Object.keys(live)) delete live\[k\];//	reset assigns over the live save and leaves discovered, missionsDone and badgeTiers on it
 resetwipe	src/save.js	s/  try { for (const k of RESET_KEYS) localStorage.removeItem(k); } catch (e) {}//	reset leaves the old game's outbox, notes and landing log
 resetwipe	src/save.js	s/  writeSave(live, { allowBlank: true });//	reset does not store the blank save
@@ -689,3 +697,9 @@ celebrate	src/celebrate.js	s#if (cue \&\& deps.sfx \&\& typeof deps.sfx\[cue\] =
 celebrate	src/celebrate.js	s#  'nature-funded': { size: 'small', cue: 'grow' },#  'nature-funded': { size: 'small', cue: 'grow' }, 'crossing-lost': { size: 'large', cue: 'softfail' },#	a lost crossing is celebrated
 celebrate	style.css	s#.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }#.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: auto; z-index: 3; }#	the sparkle layer takes taps
 celebrate	style.css	s#  .cel-layer { display: none; }#  .cel-layerX { display: none; }#	reduce motion no longer hides the sparkle layer
+steerchip	src/steerchip.js	s/  if (on \&\& st \&\& st.city \&\& st.why !== 'chosen') return/  if (on \&\& st \&\& st.city \&\& st.why !== 'chosen' \&\& !v.aim) return/	a mission 1-3 airports away reads the route form again
+steerchip	src/steerchip.js	s/st.why === 'explore' ? 'Explore' : 'Next'/st.why === 'explore' ? 'Next' : 'Next'/	EXPLORE reads Next instead of Explore
+exploreland	src/wild.js	s/else { s.stayLand = this.region; s.routeMode = 'explore'; }/else { s.routeMode = 'explore'; }/	EXPLORE HERE does not keep the flight in the land
+exploreland	src/wild.js	s/if (here) { s.stayLand = null; s.routeMode = 'mission'; }/if (here) { s.stayLand = null; }/	STOP does not return to the mission
+exploreland	src/wild.js	s/ || !(left || here);/ || false;/	EXPLORE HERE shows when the land has nothing left to visit
+targetbanner-ui	src/GameScene.js	s/st.why === 'chosen' || st.why === 'mission' ? st.city : null; if/st.why === 'chosen' ? st.city : null; if/	the banner never shows for the mission steer

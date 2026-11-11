@@ -5,7 +5,7 @@
 export const DEFAULT_DEST = { on: true };
 
 // The nearest city of the network that is not in `visited`: [first found in breadth-first order from `from`], or null (nothing unvisited is reachable).
-export function nearestUnvisited(L, from, visited) {
+export function nearestUnvisited(L, from, visited, accept = null) {   // accept: an optional filter on the city (STAY IN A BIOME: only cities of one land)
   if (!L[from]) return null;
   const seen = new Set([from]); let level = [from];
   while (level.length) {
@@ -13,7 +13,7 @@ export function nearestUnvisited(L, from, visited) {
     for (const c of level) for (const n of L[c] || []) {
       if (seen.has(n)) continue;
       seen.add(n);
-      if (!visited.has(n)) return n;
+      if (!visited.has(n) && (!accept || accept(n))) return n;
       next.push(n);
     }
     level = next;

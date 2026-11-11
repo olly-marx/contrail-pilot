@@ -1,7 +1,7 @@
 import { FEATURES, km, CLIMATE, FOREST } from './config.js';
 import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
-import { routeFor, setGoto, clearGoto, arrivedGoto, gotoTarget, gotoHops, migrateAim } from './aim.js';
+import { routeFor, setGoto, clearGoto, arrivedGoto, gotoTarget, gotoHops, migrateAim, steerOf, activeMission, routeMode, stayLandLeft } from './aim.js';
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
@@ -57,6 +57,7 @@ import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
 import { cityCard, routeOf, tripLine } from './pickcity.js';
 import { DEFAULT_DEST, defaultTargetFrom } from './destination.js';
+import { chipView } from './steerchip.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp, leadOf } from './nextup.js';
 import { endView } from './crossingend.js';
@@ -232,12 +233,16 @@ export class UI {
   // ROUTING V2 step 2: after the tutorial the route chip opens the FLY TO sheet (where the next flight goes, its stops, CHANGE, FLY, and STOP when the player chose it); the old 'Which way?' sheet stays for the tutorial and the classic game.
   openDestinationSheet() {
     sfx.tick();
-    const s = this.save, chosen = gotoTarget(s), t = chosen || defaultTargetFrom(linksFor(s), s.city, s.visited), card = t ? cityCard(s, t) : null;   // (the flight's real destination: the player's choice, else the default)
+    const s = this.save, st = steerOf(s), chosen = st.why === 'chosen' ? st.city : null, t = st.city, card = t ? cityCard(s, t) : null;   // (the flight's real destination: the player's choice, else the mission's city, else the nearest unvisited)
+    const eyebrow = { chosen: 'GOING TO', mission: 'MISSION', explore: 'EXPLORING', nearest: 'NEXT' }[st.why] || 'NEXT', hasMission = !!activeMission(s), mode = routeMode(s);
     const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const locked = !!$('goBtn').disabled, dots = card && card.dots ? `<span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(card.dots)}${card.moreDots ? ' +' : ''}</span> ` : '';
-    const close = showSheet({ eyebrow: chosen ? 'GOING TO' : 'NEXT', title: t || 'Nowhere yet', ok: 'CLOSE',
-      html: `<p class="city-card">${dots}${esc(locked ? 'Pick your free part first.' : card ? card.line : 'No city to fly to.')}</p><p class="ds-actions"><button class="chip" id="dsChange" type="button">CHANGE</button>${chosen ? '<button class="chip" id="dsStop" type="button">STOP</button>' : ''}</p>`,
+    const close = showSheet({ eyebrow, title: t || 'Nowhere yet', ok: 'CLOSE',
+      html: `<p class="city-card">${dots}${esc(locked ? 'Pick your free part first.' : card ? card.line : 'No city to fly to.')}</p><p class="ds-actions">${hasMission ? `<button class="chip${mode === 'mission' ? ' on' : ''}" id="dsMission" type="button">MISSION</button>` : ''}<button class="chip${mode === 'explore' ? ' on' : ''}" id="dsExplore" type="button">EXPLORE</button></p><p class="ds-actions"><button class="chip" id="dsChange" type="button">CHANGE</button>${chosen ? '<button class="chip" id="dsStop" type="button">STOP</button>' : ''}</p>`,
       action: t && !locked ? { label: 'FLY', onTap: () => this.start() } : null });
+    const setMode = m => { close(); s.routeMode = m; if (m === 'mission') s.stayLand = null; writeSave(s); this.toast(m === 'mission' ? 'Heading for your mission.' : 'Exploring: nearest city you have not visited.', '', 'good', 3); this.renderHub(); };
+    if ($('dsMission')) $('dsMission').onclick = () => setMode('mission');
+    if ($('dsExplore')) $('dsExplore').onclick = () => setMode('explore');
     if ($('dsChange')) $('dsChange').onclick = () => { close(); this.toast('Tap a city on the globe.', '', 'good', 3); };
     if ($('dsStop')) $('dsStop').onclick = () => { close(); clearGoto(s); writeSave(s); this.renderHub(); };
   }
@@ -415,8 +420,9 @@ export class UI {
     $('hubFly').hidden = !this.hubCs; $('hubFly').onclick = () => this.start();
     // ROUTING V2 step 2: with nothing chosen (no GO TO, no mission aim) the chip names the default destination, 'Next: PARIS' (src/destination.js); a chosen destination keeps the route line.
     if (migrateAim(s)) writeSave(s);   // (an old 'AIM HERE' becomes a destination; the skip is dropped: src/aim.js)
-    const dflt = s.tutorialDone && isSeason2(s) && DEFAULT_DEST.on && !v.aim ? defaultTargetFrom(linksFor(s), s.city, s.visited) : null;
-    $('hubRoute').innerHTML = dflt ? `Next: ${esc(dflt)} <span class="small">change</span> &#8250;` : v.route.join(' &#9654; ') + (v.aim ? ` <span class="small">(${this.save.aimCity && v.aim === this.save.aimCity ? 'go to' : 'mission'})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something)   // the next stops (to the mission's city when aimed: src/aim.js)
+    if (s.stayLand && s.tutorialDone && !stayLandLeft(s)) { this.toast('Done here: every city in this land is visited.', '', 'good', 3); s.stayLand = null; writeSave(s); }   // (EXPLORE HERE ends by itself)
+    const chip = chipView({ ...v, steer: steerOf(s) }, s, !!(s.tutorialDone && isSeason2(s) && DEFAULT_DEST.on));
+    $('hubRoute').innerHTML = chip.kind === 'word' ? `${chip.word}: ${esc(chip.city)} &#8250;` : chip.route.join(' &#9654; ') + (chip.tag ? ` <span class="small">(${chip.tag})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something; src/steerchip.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     this.clearRouteLabels(); if ($('hubCard')) $('hubCard').hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false;   // (the tapped city's row goes with any redraw: closeCityRow redraws on purpose)
     const path = routeFor(s, Math.max(5, gotoTarget(s) ? gotoHops(s) : 0)), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
