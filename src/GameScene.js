@@ -1208,6 +1208,15 @@ export class GameScene extends Phaser.Scene {
     const { dx, inIssr, over } = this.step(dt);   // the flight's rules (src/sim/rules.js): data only
     this.syncViews(dt, dx, inIssr, over);
     if (this.explaining && !this.school) this.keepStripClear();
+    this.tidyToast();
+  }
+  // A toast that opened BEFORE the flight began (the 'keep your game safe' note opens at the title, 9 s) was placed at the stylesheet's 16 % and then sat on the banner: while it is up
+  // (and no top strip owns its place: dropToast), it follows the HUD rule every frame (src/hudclear.js; tests/hudclear.cjs found it at 390x844, first-time seed).
+  tidyToast() {
+    const t = document.getElementById('toast'), c = document.getElementById('coach');
+    if (!t || t.hidden || !c || !c.hidden) return;
+    const want = toastTopCss();
+    if (t.style.top !== want) t.style.top = want;
   }
   // The strip's side was chosen once, from the plane's height when it opened (showTip), and the plane flew on under it: on a slow
   // phone the 0.21.0 gate saw it cover the plane for 25 frames. Every frame while a tip is up: if the plane (with a margin) is

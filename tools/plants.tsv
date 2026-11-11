@@ -702,3 +702,4 @@ badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/
 badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 300px) { .badge2 { font-size: 8px; } }/	the 8 px badge text reaches the 320 phone (cards spill)
 badgefont	style.css	s/^\.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr))/.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr))/	the badge cards are too narrow for their text
 badgefont	style.css	s/^.tab { position: relative; font-family: 'Pixel', monospace; font-size: 7px;/.tab { position: relative; font-family: 'Pixel', monospace; font-size: 8px;/	the tab bar is drawn at 8 px
+hudclear	src/GameScene.js	s/^    this\.tidyToast();$//	a toast that opened before take-off stays at 16 percent and covers the banner
