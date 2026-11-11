@@ -1,0 +1,26 @@
+# DECLARED anchors for the flight-size livery VARIANTS (tools/art/make_livery.py --variant NAME; research LIVERY-VARIANTS-PLAN.md). SPRITES only (62x27, planes face RIGHT, (0,0) = top-left).
+# FIRST DRAFT, written at the desk from the 6x contact sheet by eye, NOT checked against pixels: the script FAILS (prints every glyph/band cell that is off the drawn plane) and is corrected by editing this table, never by searching.
+#   gx gy  = the centre of the globe (g5 = 5x5 with cut corners, rows gy-2..gy+2; body = the 3x3 glyph), '-' = none
+#   bx0..bx1, by0..by1 = the band's cells (inclusive), '-' = none; bcol = gold | navy (the twin's fin is already gold, so its band is navy)
+# A plane with no row for a variant is skipped (the body variant is only tried where the fuselage is deep enough below the windows).
+# art	variant	gx	gy	bx0	bx1	by0	by1	bcol
+comet	g5	10	13	-	-	-	-	-
+747	g5	8	11	-	-	-	-	-
+twin	g5	8	10	-	-	-	-	-
+787	g5	10	13	-	-	-	-	-
+truss	g5	9	10	-	-	-	-	-
+hydrogen	g5	6	11	-	-	-	-	-
+comet	band	-	-	9	12	9	10	gold
+747	band	-	-	6	9	7	8	gold
+twin	band	-	-	6	9	6	7	navy
+787	band	-	-	8	11	9	10	gold
+truss	band	-	-	7	10	6	7	gold
+hydrogen	band	-	-	4	7	7	8	gold
+747	body	44	18	-	-	-	-	-
+787	body	44	18	-	-	-	-	-
+comet	g5band	10	13	9	12	8	9	gold
+747	g5band	8	11	6	9	6	7	gold
+twin	g5band	8	10	6	9	5	6	navy
+787	g5band	10	13	8	11	8	9	gold
+truss	g5band	9	10	7	10	5	6	gold
+hydrogen	g5band	6	11	4	7	6	7	gold

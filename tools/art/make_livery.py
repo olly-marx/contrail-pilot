@@ -176,18 +176,20 @@ def load_anchors(path=None):
     return table
 
 
-def make(base, kind, art, decl):
-    """Paint the livery at the DECLARED anchors. Returns (picture, info, problems): every check that can fail is listed in problems, none is repaired by searching."""
+def make(base, kind, art, decl, glyph=None, extra=()):
+    """Paint the livery at the DECLARED anchors. Returns (picture, info, problems): every check that can fail is listed in problems, none is repaired by searching.
+    glyph / extra are for the VARIANTS only (--variant): glyph replaces the globe ({} = no globe), extra = [((x, y), colour)] more declared cells (the tail band); both None / () = today's output."""
     px = drawn(base)
     body = main_body(px)
     problems = []
-    g = globe_sprite() if kind == 'sprite' else globe_portrait(decl['gr'])
-    if kind == 'sprite' and decl['gr'] != 1:
+    g = glyph if glyph is not None else (globe_sprite() if kind == 'sprite' else globe_portrait(decl['gr']))
+    if kind == 'sprite' and decl['gr'] != 1 and glyph is None:
         problems.append(f'{art} {kind}: a sprite globe is the fixed 3x3 glyph (gr must be 1, got {decl["gr"]})')
     if kind == 'portrait' and not 4 <= decl['gr'] <= 7:
         problems.append(f'{art} {kind}: globe radius {decl["gr"]} is outside 4..7')
     cx, cy = decl['gx'], decl['gy']
     globe = [((cx + dx, cy + dy), c) for (dx, dy), c in g.items()]
+    globe = globe + [(p, c) for p, c in extra]   # (the band cells count as globe cells: any of them off the plane is a PROBLEM, never repaired)
     globe_outside = sum(1 for (p, _) in globe if p not in body)
     cells = [(x, y) for x in range(decl['sx0'], decl['sx1'] + 1) for y in range(decl['sy0'], decl['sy1'] + 1)]
     stripe_off = [c for c in cells if c not in body]   # a declared stripe cell that is not a drawn pixel of the plane: the anchor is off the fuselage
@@ -212,6 +214,78 @@ def make(base, kind, art, decl):
                  'globe_outside_the_plane': globe_outside, 'stripe_changed': stripe_changed, 'changed_bbox': bbox, 'changed': len(diff), 'suggestion': suggestion}, problems
 
 
+NAVY = (24, 40, 96, 255)
+VARIANTS = ('base', 'g5', 'band', 'body', 'g5band')
+VARIANT_BUDGET = {'g5': 24, 'band': 18, 'body': 14, 'g5band': 30}   # changed pixels per SPRITE, per variant (base keeps BUDGET)
+
+
+def globe_sprite5():
+    """5x5: a dark rim, ocean, one green continent, a light highlight top-left. {(dx, dy): colour}; the corners are cut so it reads round (21 pixels)."""
+    g = {}
+    for dy in range(-2, 3):
+        for dx in range(-2, 3):
+            if abs(dx) == 2 and abs(dy) == 2:
+                continue
+            if max(abs(dx), abs(dy)) == 2:
+                c = OCEAN_DARK
+            elif (dx, dy) in ((0, 0), (1, 0), (0, 1), (-1, 1)):
+                c = LAND
+            elif (dx, dy) == (-1, -1):
+                c = OCEAN_LIGHT
+            else:
+                c = OCEAN
+            g[(dx, dy)] = c
+    return g
+
+
+def load_variants(path=None):
+    """The DECLARED variant anchors (tools/art/livery-variants.tsv): {(art, variant): dict}. Columns: art, variant, gx, gy (globe centre, - for none), bx0, bx1, by0, by1 (band cells, - for none), bcol (gold|navy|-).
+    A plane with no row for a variant is SKIPPED and listed (not a failure); a declared row that does not fit the plane is a PROBLEM."""
+    path = path or os.path.join(HERE, 'livery-variants.tsv')
+    table = {}
+    for line in open(path):
+        if not line.strip() or line.startswith('#'):
+            continue
+        art, var, gx, gy, bx0, bx1, by0, by1, bcol = line.rstrip('\n').split('\t')
+        num = lambda s: None if s == '-' else int(s)
+        table[(art, var)] = dict(gx=num(gx), gy=num(gy), bx0=num(bx0), bx1=num(bx1), by0=num(by0), by1=num(by1), bcol=bcol)
+    return table
+
+
+def make_variant(base, art, variant, decl, vrow):
+    """A flight-size variant of the livery sprite: the base's stripe plus (g5) a 5x5 globe, (band) a 2-row band across the fin, (body) the 3x3 globe on the fuselage, (g5band) both."""
+    glyph, extra = None, []
+    if variant in ('g5', 'g5band'):
+        glyph = globe_sprite5()
+    elif variant == 'band':
+        glyph = {}
+    if variant in ('band', 'g5band') and vrow['bx0'] is not None:
+        col = NAVY if vrow['bcol'] == 'navy' else GOLD
+        extra = [((x, y), col) for x in range(vrow['bx0'], vrow['bx1'] + 1) for y in range(vrow['by0'], vrow['by1'] + 1)]
+    d = dict(decl)
+    if vrow['gx'] is not None:
+        d['gx'], d['gy'] = vrow['gx'], vrow['gy']
+    return make(base, 'sprite', art, d, glyph=glyph, extra=extra)
+
+
+def compare_sheets(dirs, outdir):
+    """dirs = directories holding plane-<art>-livery.png (a variant run each; the first is normally base). Writes compare-sprites-6x.png (rows = planes, columns = the unchanged plane then each directory's livery, nearest-neighbour 6x)
+    and compare-sprites-1x.png (the same at the REAL flight size, 1x and 3x side by side: the 1x row decides). Background = the contact sheets' grey (the game's sky colour was not looked up)."""
+    names = ['plane'] + [os.path.basename(os.path.normpath(d)) for d in dirs]
+    for scale, fname in ((6, 'compare-sprites-6x.png'), (1, 'compare-sprites-1x.png')):
+        w, h, pad = 62 * scale, 27 * scale, max(6, 6 * scale // 2)
+        cols = len(dirs) + 1
+        sheet = Image.new('RGBA', (cols * (w + pad) + pad, len(PLANES) * (h + pad) + pad), (96, 108, 128, 255))
+        for i, (art, (spr, _)) in enumerate(PLANES.items()):
+            ims = [Image.open(os.path.join(ROOT, spr)).convert('RGBA')] + [Image.open(os.path.join(d, f'plane-{art}-livery.png')).convert('RGBA') if os.path.exists(os.path.join(d, f'plane-{art}-livery.png')) else None for d in dirs]
+            for j, im in enumerate(ims):
+                if im is None:   # a variant with no declared row for this plane: its cell stays empty, the columns stay aligned
+                    continue
+                sheet.alpha_composite(im.resize((w, h), Image.NEAREST) if scale > 1 else im, (pad + j * (w + pad), pad + i * (h + pad)))
+        sheet.save(os.path.join(outdir, fname))
+    return names
+
+
 def contact_sheet(rows, scale, path):
     """Each row: the base and the livery side by side on a grey ground, enlarged nearest-neighbour."""
     w, h = rows[0][1].size
@@ -229,9 +303,44 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=os.path.expanduser('~/shots-art/livery'))
     ap.add_argument('--install', action='store_true')
+    ap.add_argument('--variant', choices=VARIANTS, default=None, help='flight-size variants (sprites only, written to --out; never installed): base, g5, band, body, g5band')
+    ap.add_argument('--compare', nargs='+', default=None, metavar='DIR', help='write compare-sprites-6x.png and compare-sprites-1x.png from these variant directories (first = base) into --out')
     args = ap.parse_args()
     os.makedirs(args.out, exist_ok=True)
+    if args.compare:
+        print('compare columns: ' + ', '.join(compare_sheets(args.compare, args.out)))
+        return
     table = load_anchors()
+    if args.variant and args.variant != 'base':
+        if args.install:
+            sys.exit('--install is for the base run only: copy a winning variant by hand (declared, looked at), not by flag')
+        vt, prov, bad, skipped = load_variants(), {}, [], []
+        for art, (spr, _) in PLANES.items():
+            vrow = vt.get((art, args.variant))
+            if vrow is None:
+                skipped.append(art); continue
+            base = Image.open(os.path.join(ROOT, spr)).convert('RGBA')
+            if base.size != (62, 27):
+                bad.append(f'{art} sprite: base is {base.size}, expected (62, 27)'); continue
+            out, info, probs = make_variant(base, art, args.variant, table[(art, 'sprite')], vrow)
+            bad += probs
+            name = f'plane-{art}-livery.png'
+            out.save(os.path.join(args.out, name))
+            prov[name] = info
+            if info['changed'] > VARIANT_BUDGET[args.variant]:
+                bad.append(f'{name}: {info["changed"]} changed pixels, budget {VARIANT_BUDGET[args.variant]} ({args.variant})')
+            if info['globe_outside_the_plane'] or info['skipped_outside_the_plane']:
+                bad.append(f'{name}: {info["globe_outside_the_plane"]} glyph/band cells outside the drawn plane (declared row in livery-variants.tsv is wrong)')
+            print(f'{name:28s} {args.variant:7s} changed {info["changed"]:3d}/{VARIANT_BUDGET[args.variant]}  glyph {info["glyph_pixels"]} px + band at {info["globe_centre"]}  outside {info["globe_outside_the_plane"]}  box {info["changed_bbox"]}')
+        with open(os.path.join(args.out, 'provenance.json'), 'w') as f:
+            json.dump(prov, f, indent=1, default=list)
+        if skipped:
+            print(f'no declared row for variant {args.variant}: skipped {", ".join(skipped)}')
+        if bad:
+            print('PROBLEMS:\n - ' + '\n - '.join(bad))
+            sys.exit(1)
+        print(f'ok: {len(prov)} sprites for variant {args.variant} in {args.out}')
+        return
     prov, bad, sheets = {}, [], {'sprite': [], 'portrait': []}
     for art, (spr, por) in PLANES.items():
         for kind, rel in (('sprite', spr), ('portrait', por)):
