@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-11-harder-city-missions",
+    "version": "0.57.0",
+    "date": "2026-11-11",
+    "level": "minor",
+    "notes": [
+      "City missions now send you farther and keep their cities until you finish them: a three-city chain, and a one-flight stretch. Missions that need Tree Planting you do not have yet show a star and take you there. Mission prizes now follow how hard the mission is; you earn the same seeds in total."
+    ]
+  },
+  {
     "id": "2026-11-11-lap-livery",
     "version": "0.56.0",
     "date": "2026-11-11",
