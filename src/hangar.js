@@ -152,12 +152,12 @@ export class FleetHangar {
       img.addEventListener('load', r, { once: true }); img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true }); });
     if (part) Promise.all([whenLoaded(part), whenLoaded(beforeImg)]).then(measure);
     // The label arrow, placed over the part once the zoom has settled (the user, 2026-10-28: the payoff must not be flat).
-    const label = () => { const lab = $('payLabel'), card = el.querySelector('.pay-frame'); if (!lab || !el.isConnected) return;   // placed inside the picture frame
+    // The label sits in its own row BELOW the picture frame, under the ring (the user: at 320 the label lay over the middle of the plane's body). The row is reserved in CSS (.payoff.inbox:not(.nopart) .pay-frame margin-bottom).
+    const label = () => { const lab = $('payLabel'), card = el.querySelector('.pay-frame'); if (!lab || !el.isConnected) return;
       const m = mark.getBoundingClientRect(), c = card.getBoundingClientRect();
       const x = Math.max(lab.offsetWidth / 2 + 4, Math.min(c.width - lab.offsetWidth / 2 - 4, m.left + m.width / 2 - c.left));
-      const above = m.top - c.top - 6 >= lab.offsetHeight + 4;   // room above the part inside the card? else below it, arrow up
-      lab.classList.toggle('below', !above);
-      lab.style.left = `${Math.round(x)}px`; lab.style.top = `${Math.round(above ? m.top - c.top - 6 : m.bottom - c.top + 6)}px`; el.classList.add('labelled'); };
+      lab.classList.add('below');   // the arrow points up at the picture, where the ring is
+      lab.style.left = `${Math.round(x)}px`; lab.style.top = `${Math.round(c.height + 6)}px`; el.classList.add('labelled'); };
     // No part (a system, or a level with no new look): the bars ARE the payoff - they move with the sparkle, then OK.
     // (the user's playtest, 2026-10-29, live on a phone: the pictures were still loading when the timeline ran, so the frame
     // stayed EMPTY and the label, placed on an unmeasured marker, floated above the card.) Now the show starts only once both
