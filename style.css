@@ -563,6 +563,7 @@ h2.sub { margin-top: -4px; }
 .badge2 img { width: 64px; height: 64px; image-rendering: pixelated; }
 #bBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
 .badge2 b { font-size: 7px; color: inherit; }
+@media (min-width: 341px) { .badge2 { font-size: 8px; } }   /* the text under a badge name ('Bronze: ...') at 8 px on phones wider than 340 px: Press Start 2P is drawn for multiples of 8, at 7 px the B read 'Dronze'. NOT at 320: there 'Bumpy Ride' would spill 7 px (tests/badgefont.cjs; the user chose to keep small phones as they were, like the tab bar). The names stay 7 px. */
 /* NATURE tiers and rarity (src/wild.js, 2026-10-22) */
 .w-tier { margin: 8px 0 2px; font-weight: bold; color: #1e7a3c; }
 .line.project.locked { opacity: .75; background: #ece8dc; }

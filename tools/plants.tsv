@@ -698,3 +698,7 @@ targetbanner-ui	src/GameScene.js	s/st.why === 'chosen' || st.why === 'mission' ?
 hudclear	src/ui.js	s/^    t\.style\.top = toastTopCss();.*$//	the toast is placed at 16 percent of the page again (it covers the HUD text on a tall phone)
 hudclear	style.css	s/top: calc(var(--hud-bottom, 0px) + 6px); bottom: auto;/top: 6px; bottom: auto;/	the coach strip opens at y 6 again (it covers the HUD text on a small phone)
 hudclear	src/GameScene.js	s/const dropToast = () => { if (this\.explaining \&\& toastEl/const dropToast = () => { if (false \&\& toastEl/	a toast already up is not moved below a strip that opens (they stack on each other)
+badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 341px) { .badge2 { font-size: 7px; } }/	the badge text is 7 px again on wide phones (Bronze reads Dronze)
+badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 300px) { .badge2 { font-size: 8px; } }/	the 8 px badge text reaches the 320 phone (cards spill)
+badgefont	style.css	s/minmax(84px, 1fr)/minmax(40px, 1fr)/	the badge cards are too narrow for their text
+badgefont	style.css	s/^.tab { position: relative; font-family: 'Pixel', monospace; font-size: 7px;/.tab { position: relative; font-family: 'Pixel', monospace; font-size: 8px;/	the tab bar is drawn at 8 px
