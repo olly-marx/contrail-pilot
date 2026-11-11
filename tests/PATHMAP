@@ -90,3 +90,4 @@ group hud-clear | src/hudclear.js src/ui.js src/GameScene.js style.css | hudclea
 group badgefont-test | tests/badgefont.cjs | badgefont
 group hudclear-test | tests/hudclear.cjs | hudclear
 group needs-ui | src/missionplan.js src/missionsview.js src/ui.js src/wild.js src/missions2.js | needsmark-ui missiongo
+group mission-pay | src/missionprize.js src/missionplan.js src/missions2.js src/aim.js src/targetbanner.js | missionscreen missiongo needsmark-ui

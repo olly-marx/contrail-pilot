@@ -35,7 +35,7 @@ globalThis.SEASON2 = true;
   // 3
   const cand = P.candidates(s0, 'LONDON').map(c => ({ c, n: st('LONDON', c), km: P.routeKm(L, 'LONDON', c) })).filter(x => Number.isFinite(x.n) && x.n >= 3).sort((a, b) => a.km - b.km);
   check(cand.length >= 2 && cand[0].km < cand[cand.length - 1].km, `FIXTURE: weurope offers at least two cities 3+ stops away with different route lengths (${cand.length})`);
-  const reach = Math.ceil(((cand[0].km + cand[cand.length - 1].km) / 2) / 0.9);   // the cap (0.9 x reach) falls between the shortest and the longest
+  const reach = cand.length ? Math.ceil(((cand[0].km + cand[cand.length - 1].km) / 2) / 0.9) : 0;   // the cap (0.9 x reach) falls between the shortest and the longest
   const sr = mk({ bestDistance: reach }), rr = find(sr, 'route');
   const rkm = rr && rr.fill.stretch ? P.routeKm(R.linksFor(sr), 'LONDON', rr.fill.cityC) : Infinity;
   check(!!rr && !!rr.fill.stretch && rr.fill.stretch.stops >= 3 && rkm <= 0.9 * reach, `the stretch is at least 3 stops and within 0.90 x reach (${reach}): ${rr && rr.fill.cityC} ${rkm} km, ${rr && rr.fill.stretch && rr.fill.stretch.stops} stops`);
