@@ -1,6 +1,6 @@
 // A teaching strip never sits over the plane, even on a slow phone (the 0.21.0 gate: onrails@375x667 once saw a strip cover the
 // plane for 25 frames). The strip's side was chosen once, at open (GameScene.showTip); now keepStripClear re-checks it every frame.
-// Here, with the CPU throttled 6x: a tip opens with the plane low (strip at the TOP), then the plane climbs into the top band and
+// Here, with the CPU throttled 6x: a tip opens with the plane low (strip at the TOP), then the plane climbs into the strip's band (just under the HUD text, src/hudclear.js) and
 // stays there; then it dives to the bottom. The strip must get out of the way (at most 3 covered frames per move) and not flicker.
 // Run: python3 -m http.server 8000 & node tests/stripclear.cjs   (proved by planted defects)
 const { chromium } = require('playwright-core');
@@ -30,7 +30,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const out = { startLow, frames: 0, covered: [0, 0], flips: 0 }; let last = startLow, phase = 0; const t0 = performance.now();
     const tick = () => {
       const t = performance.now() - t0; phase = t < 2500 ? 0 : 1;
-      s.plane.y = phase === 0 ? 40 : 440; s.plane.vy = 0; s.closeTip = s.closeTip; if (!s.explaining) { done({ ...out, closed: true }); return; }
+      s.plane.y = phase === 0 ? 120 : 440;   /* (120: inside the strip's band, which opens BELOW the HUD text since src/hudclear.js: it was 40 when the strip opened at y 6) */ s.plane.vy = 0; s.closeTip = s.closeTip; if (!s.explaining) { done({ ...out, closed: true }); return; }
       const k = cv.getBoundingClientRect(), sx = k.width / 288, sy = k.height / 512, cr = coach.getBoundingClientRect();
       const pr = { l: k.left + s.plane.x * sx, t: k.top + (s.plane.y - 8) * sy, r: k.left + (s.plane.x + 58) * sx, b: k.top + (s.plane.y + 22) * sy };
       if (!coach.hidden && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom) out.covered[phase]++;

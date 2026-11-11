@@ -58,6 +58,7 @@ import { showSheet } from './sheet.js';
 import { cityCard, routeOf, tripLine } from './pickcity.js';
 import { DEFAULT_DEST, defaultTargetFrom } from './destination.js';
 import { chipView } from './steerchip.js';
+import { toastTopCss } from './hudclear.js';
 import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp, leadOf } from './nextup.js';
 import { endView } from './crossingend.js';
@@ -980,6 +981,7 @@ export class UI {
     this.toastAt = now;
     const t = $('toast');
     t.className = `toast ${kind}`;
+    t.style.top = toastTopCss();   // in a flight the toast sits BELOW the HUD text (banner + next-airport line), not at 16 % of the page (src/hudclear.js)
     t.innerHTML = `<b>${title}</b>${body}`;
     t.hidden = false;
     clearTimeout(this.toastTimer);
