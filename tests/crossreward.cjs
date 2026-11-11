@@ -8,6 +8,8 @@
 //   5. a crash pays nothing: the scene never calls completeCrossing on a crash, so crossingPrizeDue is only read after a landing (GameScene: `due = landed ? ... : null`); here: no call, bank unchanged, and the landing card has no prize lines
 //   6. the prize shown is the prize paid: stateOf(...).prize and boxView(...).prize ('Prize: 100 seeds') equal what completeCrossing adds
 //   8. the lap's two card lines read '+2,000 seeds' and '+250 ice crystals' (the ending screen shows them: tests/crossrewardui.cjs D)
+//   9. a lap landed AWAY from home shows no prize and pays nothing (finishCrossing, used by GameScene.finish); landed at home it shows the prize it paid
+//  10. crossingWord throws for a non-lap crossing whose era is not 0 to 4 (era 5 used to read 'The lap': 2,000 seeds)
 //   7. the landing card (endView) says '+100 seeds' and '+12 ice crystals' for a paid first crossing, and nothing for an unpaid one
 globalThis.SEASON2 = true;
 (async () => {
@@ -46,6 +48,10 @@ globalThis.SEASON2 = true;
   check(withP.includes(`+${want.seeds} seeds`) && withP.includes(`+${want.crystals} ice crystals`) && !/\+\d/.test(noP), `the landing card shows the paid prize and nothing when unpaid: '${withP}' / '${noP}'`);
   const pl = Z.prizeLines(Z.crossingReward('The lap'));
   check(pl.join(' | ') === '+2,000 seeds | +250 ice crystals', `the lap's card lines: ${pl}`);
+  const sa = mk({ city: 'PARIS' }), fa = C.finishCrossing(sa, lc, true), sh = mk({ city: 'LONDON' }), fh = C.finishCrossing(sh, lc, true);
+  check(fa.landed === false && fa.prize === null && sa.seeds === 10 && fh.landed === true && fh.prize && fh.prize.seeds === 2000 && sh.seeds === 2010, `a lap landed away shows no prize and pays nothing; at home it shows the prize it paid: away ${JSON.stringify(fa)} bank ${sa.seeds}, home ${JSON.stringify(fh)} bank ${sh.seeds}`);
+  const thr = c => { try { Z.crossingWord(c); return false; } catch (e) { return true; } };
+  check(thr({ id: 'x', kind: 'long', era: 5 }) && thr({ id: 'x', kind: 'long' }) && thr({ id: 'x', kind: 'long', era: -1 }) && !thr({ id: 'x', kind: 'lap' }) && Z.crossingWord({ kind: 'long', era: 4 }) === 'Very hard', 'crossingWord throws for an unknown era of a non-lap crossing, and still names era 4 and the lap');
   console.log(fails.length ? `FAIL crossreward:\n - ${fails.join('\n - ')}` : 'PASS crossreward: 22 crossings pay 9,100 / 1,132, paid once on landing, no back-pay, lap only at home, nothing on a crash, shown = paid, the landing card names it');
   process.exit(fails.length ? 1 : 0);
 })();

@@ -35,7 +35,12 @@ export function missionPrize(kind, k = 1, plane = null) {
 export const CROSSING_PRIZE = { Easy: [100, 12], Medium: [200, 25], Hard: [400, 50], Harder: [700, 87], 'Very hard': [1100, 137], 'The lap': [2000, 250] };
 // HOW HARD a crossing is, as a word (the ONE list: src/crossingview.js DIFFICULTY and difficultyOf are these two). The ladder follows the eras; the lap is the last.
 export const CROSSING_WORDS = ['Easy', 'Medium', 'Hard', 'Harder', 'Very hard', 'The lap'];
-export const crossingWord = c => CROSSING_WORDS[Math.min(CROSSING_WORDS.length - 1, c.kind === 'lap' ? CROSSING_WORDS.length - 1 : Math.max(0, c.era || 0))];
+export const crossingWord = c => {
+  if (c.kind === 'lap') return 'The lap';
+  const e = c.era;
+  if (!Number.isInteger(e) || e < 0 || e > 4) throw new Error(`crossingWord: unknown era '${e}' for crossing '${c.id}' (a crossing's era is 0 to 4; only the lap is 'The lap')`);
+  return CROSSING_WORDS[e];
+};
 // The words the screens use for a prize: 'Prize: 400 seeds' (the CROSSINGS screen, the HOME box), '+400 seeds' / '+50 ice crystals' (the landing card).
 // The two card lines of a paid crossing prize ('+100 seeds', '+12 ice crystals'; thousands with a comma): the landing card (src/crossingend.js) and the ending (src/ui.js showEnding).
 export const prizeLines = p => [`+${p.seeds.toLocaleString('en-GB')} seeds`, `+${p.crystals.toLocaleString('en-GB')} ice crystals`];

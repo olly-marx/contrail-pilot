@@ -142,6 +142,11 @@ export function offerCheck(c, ctx) {
 
 // The prize a landed crossing pays: { seeds, crystals } by its difficulty word (src/missionprize.js crossingReward), or null when the crossing is already in save.crossed (paid once only; no back-pay).
 export const crossingPrizeDue = (save, c) => ((save.crossed || []).includes(c.id) ? null : crossingReward(crossingWord(c)));
+// What a FINISHED crossing flight puts in result.crossing (GameScene.finish calls this; tests/crossreward.cjs reads it): landed = the crossing was completed (the lap: only at home), prize = what was paid, shown only when it was.
+export function finishCrossing(save, c, landed) {
+  const due = landed ? crossingPrizeDue(save, c) : null, done = landed && completeCrossing(save, c);
+  return { id: c.id, kind: c.kind, landed: !!done, opens: c.opens, to: c.to, prize: done ? due : null };
+}
 // Landing a crossing: the area on the far side opens (and the ocean stepping stones count as 'ocean'), and the prize is paid ONCE. The sim calls this too (src/sim/progression.js), so the game and the sim pay the same.
 // Nothing here on a crash: the callers only come here after a landing. The lap pays only when you land back home.
 export function completeCrossing(save, c) {
