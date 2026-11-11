@@ -695,3 +695,11 @@ exploreland	src/wild.js	s/else { s.stayLand = this.region; s.routeMode = 'explor
 exploreland	src/wild.js	s/if (here) { s.stayLand = null; s.routeMode = 'mission'; }/if (here) { s.stayLand = null; }/	STOP does not return to the mission
 exploreland	src/wild.js	s/ || !(left || here);/ || false;/	EXPLORE HERE shows when the land has nothing left to visit
 targetbanner-ui	src/GameScene.js	s/st.why === 'chosen' || st.why === 'mission' ? st.city : null; if/st.why === 'chosen' ? st.city : null; if/	the banner never shows for the mission steer
+liverylook	src/livery.js	s/!!(save \&\& save\.lapDone)/true/	every pilot gets the livery
+liverylook	src/livery.js	s/!!(save \&\& save\.lapDone)/false/	the lap never gives the livery
+liverylook	src/fleet.js	s/  if (livery) parts\.push('livery');/  if (livery) parts.unshift('livery');/	the livery is painted under the other parts
+liverylook	src/fleet.js	s/L\.art}-livery`),   \/\/ the lap livery/L.art}-liverx`),   \/\/ the lap livery/	the flight livery is not preloaded
+liverylook	src/hangar.js	s/lookFiles(id, f\.planes\[id\], 'hangar', liveryOn(s))/lookFiles(id, f.planes[id], 'hangar')/	the payoff picture after a purchase drops the livery
+liverylook	src/hangar.js	s/lookFiles(planeId, fn\.planes\[planeId\], 'hangar', liveryOn(s))/lookFiles(planeId, fn.planes[planeId], 'hangar')/	the preview of a purchase drops the livery
+liverylook	src/GameScene.js	s/'flight', liveryOn(this\.save))/'flight')/	the flying plane never wears the livery
+liverylook	src/sim/rules.js	s/^import { addPrizes } from '\.\.\/rewards\.js';/import { addPrizes } from '..\/rewards.js'; import { liveryOn } from '..\/livery.js';/	the sim engine imports the livery
