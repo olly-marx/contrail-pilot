@@ -695,3 +695,6 @@ exploreland	src/wild.js	s/else { s.stayLand = this.region; s.routeMode = 'explor
 exploreland	src/wild.js	s/if (here) { s.stayLand = null; s.routeMode = 'mission'; }/if (here) { s.stayLand = null; }/	STOP does not return to the mission
 exploreland	src/wild.js	s/ || !(left || here);/ || false;/	EXPLORE HERE shows when the land has nothing left to visit
 targetbanner-ui	src/GameScene.js	s/st.why === 'chosen' || st.why === 'mission' ? st.city : null; if/st.why === 'chosen' ? st.city : null; if/	the banner never shows for the mission steer
+badgefont	style.css	s/.badge2 b { font-size: 8px;/.badge2 b { font-size: 7px;/	the badge labels are drawn at 7 px again (Bronze reads Dronze)
+badgefont	style.css	s/^.tab { position: relative; font-family: 'Pixel', monospace; font-size: 8px;/.tab { position: relative; font-family: 'Pixel', monospace; font-size: 7px;/	the tab bar is drawn at 7 px again (BOARDS reads DOARDS)
+badgefont	style.css	s/@media (max-width: 340px) { .tab { font-size: 8px; } }/@media (max-width: 340px) { .tab { font-size: 6px; } }/	the tab bar is drawn at 6 px on a 320 phone

@@ -426,12 +426,12 @@ h2.sub { margin-top: -4px; }
   display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; padding: 6px 3px calc(6px + env(safe-area-inset-bottom));   /* one row for however many tabs show (6 with PILOT, 0.20.0) */
   background: var(--ink, #1b1b2f); box-sizing: border-box; }
 .tabbar[hidden] { display: none; }
-.tab { position: relative; font-family: 'Pixel', monospace; font-size: 7px; color: #d8d4c8; background: transparent; border: 0;
+.tab { position: relative; font-family: 'Pixel', monospace; font-size: 8px; color: #d8d4c8; background: transparent; border: 0;
   padding: 6px 0 4px; cursor: pointer; display: grid; justify-items: center; gap: 4px; min-height: 48px; }
 .tab.on { background: #d8d4c8; color: var(--ink, #1b1b2f); }
 .tab { min-width: 0; }
 .tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }   /* a long pilot name on the PILOT tab is cut, not spilled */
-@media (max-width: 340px) { .tab { font-size: 6px; } }
+@media (max-width: 340px) { .tab { font-size: 8px; } }
 .tab .newtag { position: absolute; top: -6px; right: 0; }
 .ti { width: 16px; height: 16px; display: block; background: currentColor;
   -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
@@ -558,11 +558,11 @@ h2.sub { margin-top: -4px; }
 .new-badge { display: flex; align-items: center; gap: 6px; justify-content: center; font-size: 8px; margin: 2px 0; }
 .new-badge img { width: 32px; height: 32px; image-rendering: pixelated; }
 .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 4px; margin: 2px 0 8px; }
-.badge2 { position: relative; display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 7px; border: 0; font-family: inherit; cursor: pointer; text-align: center; color: var(--muted); opacity: .75; }
+.badge2 { position: relative; display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 8px; border: 0; font-family: inherit; cursor: pointer; text-align: center; color: var(--muted); opacity: .75; }
 .badge2.got { opacity: 1; color: inherit; }
 .badge2 img { width: 64px; height: 64px; image-rendering: pixelated; }
 #bBadges.badges { display: block; }   /* theme labels + grids, not the old badge cards' grid */
-.badge2 b { font-size: 7px; color: inherit; }
+.badge2 b { font-size: 8px; color: inherit; }   /* 8 px, not 7: Press Start 2P is drawn for multiples of 8; at 7 px the B of Bronze lost a row and read Dronze (tests/badgefont.cjs) */
 /* NATURE tiers and rarity (src/wild.js, 2026-10-22) */
 .w-tier { margin: 8px 0 2px; font-weight: bold; color: #1e7a3c; }
 .line.project.locked { opacity: .75; background: #ece8dc; }
