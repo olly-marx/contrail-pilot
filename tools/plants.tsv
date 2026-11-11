@@ -655,7 +655,7 @@ targetbanner	src/targetbanner.js	s/ \&\& !passed \&\& !landed;/ \&\& !landed;/	t
 targetbanner-ui	src/GameScene.js	s/this\.missionText\.setText(this\.bannerNow() || (n \&\& this\.state !== 'over' ? n\.title : ''));/this.missionText.setText((n \&\& this.state !== 'over' ? n.title : ''));/	the mission title is not replaced by the banner
 targetbanner-ui	src/GameScene.js	s/rw\.lit = lit;/rw.lit = false;/	the target runway is never lit
 targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = isLit(rw.name, rw.name,/	every runway is lit
-targetbanner-ui	src/GameScene.js	s/const city = st.why === 'chosen' || st.why === 'mission' ? st.city : null; if (!city) return null;/const city = 'AMSTERDAM';/	the banner names a city even with no destination
+targetbanner-ui	src/GameScene.js	s/, city = st.why === 'chosen' || st.why === 'mission' ? st.city : null; if (!city) return null;/, city = 'AMSTERDAM';/	the banner names a city even with no destination
 targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
 citytap	style.css	s/^#title\.hub \.hub-card { display: flex; }.*$//	the card's buttons stack under its text again (the row is 75 px high)
 steer	src/aim.js	s/if (STEER\.mission \&\& mode === 'mission') {/if (false) {/	a mission open and nothing chosen no longer steers to the mission city
