@@ -558,6 +558,7 @@ h2.sub { margin-top: -4px; }
 .new-badge { display: flex; align-items: center; gap: 6px; justify-content: center; font-size: 8px; margin: 2px 0; }
 .new-badge img { width: 32px; height: 32px; image-rendering: pixelated; }
 .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 4px; margin: 2px 0 8px; }
+@media (max-width: 340px) { .badge-grid { grid-template-columns: repeat(2, 1fr); } }   /* 320 wide: 3 cards of 85 px were too narrow for 'Globetrotter' at 8 px (96 px of text): two wider cards (tests/badgefont.cjs) */
 .badge2 { position: relative; display: grid; justify-items: center; gap: 2px; background: #fff; padding: 4px; font-size: 8px; border: 0; font-family: inherit; cursor: pointer; text-align: center; color: var(--muted); opacity: .75; }
 .badge2.got { opacity: 1; color: inherit; }
 .badge2 img { width: 64px; height: 64px; image-rendering: pixelated; }
