@@ -87,7 +87,7 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
     const cueRms = {}, cueLive = {};
     for (const [cue, len] of Object.entries(LEN)) { cueRms[cue] = 0; for (let k = 0; k < 2; k++) { const [mx, mean] = await p.evaluate(async ({ cue, ms }) => { const m = await import('/src/sound.js'); const a = window.__rmsmax(ms), b = window.__rms(ms); m.sfx[cue](); return [await a, await b]; }, { cue, ms: len * 1000 }); cueRms[cue] = Math.max(cueRms[cue], mx); cueLive[cue] = mean; await p.waitForTimeout(450); } }
     await p.evaluate(async () => { (await import('/src/music.js')).setTrackRng(() => 0.7); });   // the same loud song every run (track D: nextTrack draws index 3 of 5)
-    const REQ = { soft: 2, middle: 1.5, loud: 1.0 }, music = {}, order = ['soft', 'middle', 'loud'];
+    const REQ = { soft: 2, middle: 1.5, loud: 1.0 }, music = {}, order = ['soft', 'middle', 'loud'], CROSSFADE_GUARD_S = 5, musicT0 = Date.now();   // musicT0: the music's measurement window starts here (OFF -> SOFT is the first tap of the loop)
     for (const lvl of order) {
       await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(1500);
       const st = await chipState();
@@ -115,6 +115,10 @@ let B = null; const T = setTimeout(() => { console.log('GLOBAL TIMEOUT'); proces
     check(music.soft < music.middle && music.middle < music.loud, `the levels are ordered by loudness: soft ${music.soft.toFixed(4)} < middle ${music.middle.toFixed(4)} < loud ${music.loud.toFixed(4)}`);
     const page = 0.020, dB = m => (20 * Math.log10(m / page)).toFixed(1);   // the tailnet page's music rms for song D is 0.020 at its master 0.245
     console.log(`MUSIC LEVELS (song D): soft rms ${music.soft.toFixed(4)} (${dB(music.soft)} dB vs the page) | middle ${music.middle.toFixed(4)} (${dB(music.middle)} dB) | loud ${music.loud.toFixed(4)} (${dB(music.loud)} dB); weakest cue ${Object.entries(cueRms).sort((a, b) => a[1] - b[1])[0].join(' ')}; cue LOUDEST-READ rms ${JSON.stringify(Object.fromEntries(Object.entries(cueRms).map(([k, v]) => [k, +v.toFixed(5)])))}; MEAN (old estimate, last play) ${JSON.stringify(Object.fromEntries(Object.entries(cueLive).map(([k, v]) => [k, +v.toFixed(4)])))}; ratios flap/music soft ${(cueRms.flap / music.soft).toFixed(2)} middle ${(cueRms.flap / music.middle).toFixed(2)} loud ${(cueRms.flap / music.loud).toFixed(2)}`);
+    const musicWindowS = (Date.now() - musicT0) / 1000;   // one continuous ON period (the level changes never restart the music), measured at the LOUD -> OFF tap
+    { const P = await import('../src/musicplan.js'), D = await import('../src/musicdata.js'), shortest = Math.min(...D.TRACKS.map(t => P.trackSeconds(D.SONGS[t])));   // MUSIC_PASSES 1 (2026-11-11): a track is 82-90 s; a window longer than the shortest would let the crossfade into a second track enter the reading
+      console.log(`MUSIC WINDOW: ${musicWindowS.toFixed(1)} s of continuous music in this run (shortest track ${shortest.toFixed(1)} s)`);
+      check(musicWindowS < shortest - CROSSFADE_GUARD_S, `the music's measurement window (${musicWindowS.toFixed(1)} s) is shorter than the shortest track (${shortest.toFixed(1)} s) less ${CROSSFADE_GUARD_S} s: no crossfade into a second track enters the reading`); }
     await p.click('#sheet [data-gear="music"]', { timeout: 4000 }); await p.waitForTimeout(900);   // LOUD -> OFF
     const off = await chipState(); const offRms = await p.evaluate(() => window.__rms(500));
     check(off.off === true && off.ls.musicOff === true && off.text === 'MUSIC: OFF' && offRms < 0.0005, `the MUSIC chip cycles back to OFF, saves it and the music stops (save ${off.off}, chip "${off.text}", rms ${offRms.toFixed(4)})`);
