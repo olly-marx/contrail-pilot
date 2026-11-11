@@ -682,3 +682,10 @@ resetui	src/save.js	s/ 'contrailPilot.firstName',//	reset keeps the first name o
 resetui	src/ui.js	s/      location.reload(); .*$//	reset does not reload the page
 resetui	src/ui.js	s/ Write your pilot code down first if you want to come back to your online pilot\.//	the reset confirm does not tell the player to write the pilot code down first
 payofffull	src/hangar.js	s#lab.style.top = `${Math.round(c.height + 6)}px`;#lab.style.top = `${Math.round(m.top - c.top - 6)}px`;#	the payoff label is back over the plane
+celebrate	src/celebrate.js	s#large: { particles: 24,#large: { particles: 40,#	a large burst makes 40 sparkles (over the cap)
+celebrate	src/celebrate.js	s#reduced ? { particles: 0, push: false, still: true, settleMs: 1000 }#reduced ? { particles: 8, push: false, still: true, settleMs: 1000 }#	reduced motion still makes sparkles
+celebrate	src/celebrate.js	s#host.dataset.celebrated === '1')#false)#	a second celebration of the same host replays
+celebrate	src/celebrate.js	s#if (cue \&\& deps.sfx \&\& typeof deps.sfx\[cue\] === 'function') deps.sfx\[cue\]();#if (false) deps.sfx[cue]();#	the kit plays no cue
+celebrate	src/celebrate.js	s#  'nature-funded': { size: 'small', cue: 'grow' },#  'nature-funded': { size: 'small', cue: 'grow' }, 'crossing-lost': { size: 'large', cue: 'softfail' },#	a lost crossing is celebrated
+celebrate	style.css	s#.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }#.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: auto; z-index: 3; }#	the sparkle layer takes taps
+celebrate	style.css	s#  .cel-layer { display: none; }#  .cel-layerX { display: none; }#	reduce motion no longer hides the sparkle layer

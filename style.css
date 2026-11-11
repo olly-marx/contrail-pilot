@@ -1087,3 +1087,15 @@ h2.sub { margin-top: -4px; }
 .hub-labels { position: absolute; inset: 0; pointer-events: none; }
 .globe-label { position: absolute; font-size: 7px; line-height: 1; white-space: nowrap; color: #fff; text-shadow: 1px 0 #1b1b2f, -1px 0 #1b1b2f, 0 1px #1b1b2f, 0 -1px #1b1b2f; }
 .globe-label.dest { color: #ffd34d; }
+
+/* The celebration kit (src/celebrate.js, research/CELEBRATION-KIT.md): a layer of pixel sparkles over a card, one-shot, transform and opacity only, never in the way of a tap. */
+.cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }
+.cel-layer i { position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; background: var(--c, #ffe15a); opacity: 0; animation: cel-pop .9s steps(6) var(--d, 0s) forwards; }
+@keyframes cel-pop { 0% { opacity: 1; transform: translate(0, 0); } 100% { opacity: 0; transform: translate(var(--x, 0px), var(--y, 0px)); } }
+.cel-push { animation: cel-push .35s ease-out; }
+@keyframes cel-push { 0% { transform: scale(.94); } 60% { transform: scale(1.04); } 100% { transform: scale(1); } }
+.cel-still { outline: 3px solid #ffe15a; outline-offset: -3px; }   /* reduced motion: no motion, a still gold edge for a second */
+@media (prefers-reduced-motion: reduce) {
+  .cel-layer { display: none; }
+  .cel-layer i, .cel-push { animation: none; }
+}
