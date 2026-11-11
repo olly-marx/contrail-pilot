@@ -757,3 +757,4 @@ missionprize	src/missionprize.js	s/streak2: \[14, 1\]/streak2: [15, 1]/	streak2 
 streakui	src/missionsview.js	s/`${m.fill.count} of ${m.fill.N} in a row`/`${m.fill.N} in a row`/	the row loses its count
 streakui	src/missionsview.js	s/A crash or a shorter landing starts the row again\./Good luck./	the sheet loses the crash rule
 streakui	src/missionplan.js	s/comet: 3100,/comet: 3200,/	the Comet D differs from the sheet's figure
+missionstreak	src/missions2.js	s/    if (!k.startsWith(`${a}:`)) continue;.*$/    if (false) continue;/	the area filter is removed (a flight in another area counts for every streak)

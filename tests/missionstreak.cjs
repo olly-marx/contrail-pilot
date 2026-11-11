@@ -1,6 +1,7 @@
 // RELEASE B: the streak missions 'Land 2 long flights' / 'Land 3 long flights' (src/missionplan.js D_TABLE, STREAK_N, ownStreak; src/missions2.js advanceStreaks, assignMissionDist; src/resultscard.js 'Row broken').
 // Plain Node, no browser. A LONG flight = a landing of at least D game km (the Comet's D is 3,100), D stored when the mission is first shown. Named lines, in order:
 //   FIXTURE  both streak missions are offered in a new-player save with tiers 1 to 3 open, with count 0
+//   0. a flight that starts in ANOTHER area leaves a streak untouched (area-scoped streaks)
 //   1. D by plane: the Comet's D is 3,100 and is STORED when first shown; a later plane does not change it; a mission first shown with the jumbo stores 3,900
 //   2. a long landing adds one; a landing SHORTER than D sets the count back to 0
 //   3. a CRASH (even one that flew farther than D) sets the count back to 0, and save.streakBroken counts the rows that flight broke
@@ -24,6 +25,10 @@ globalThis.SEASON2 = true;
   const s0 = mk(), a2 = find(s0, 'streak2'), a3 = find(s0, 'streak3');
   check(!!a2 && !!a3 && a2.fill.N === 2 && a3.fill.N === 3 && a2.fill.count === 0 && a3.fill.count === 0, `FIXTURE: both streak missions are offered with count 0: ${JSON.stringify([a2 && a2.fill.N, a3 && a3.fill.N, a2 && a2.fill.count])}`);
   if (!a2 || !a3) { console.log(`FAIL missionstreak:\n - ${fails.join('\n - ')}`); process.exit(1); }
+  // 0 (first line to see the plant 'the area filter is removed'): a flight that STARTS in another area leaves a weurope streak untouched (area of a flight = areaOf(save.city), the start city, src/missions2.js advanceStreaks)
+  { const A = await import('../src/areas.js'), other = Object.keys(A.AREAS).find(x => x !== 'weurope' && (A.AREAS[x] || {}).start), sx = mk(); land(sx, 3300);
+    const before = JSON.stringify(sx.missionStreak); sx.city = A.AREAS[other].start; crash(sx, 5000); land(sx, 100); sx.city = 'LONDON';
+    check(!!other && JSON.stringify(sx.missionStreak) === before && !sx.streakBroken, `a flight in another area leaves a streak untouched: before ${before}, after ${JSON.stringify(sx.missionStreak)} (other area ${other})`); }
   // 1
   M2.assignMissionCities(s0);
   const D0 = s0.missionDist && s0.missionDist[K2] && s0.missionDist[K2].D;

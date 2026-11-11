@@ -247,7 +247,9 @@ function advanceStreaks(save, r) {
   if (!dist || !Object.keys(dist).length) { if (save.streakBroken) save.streakBroken = 0; return; }
   const st = save.missionStreak = save.missionStreak || {};
   save.streakBroken = 0;
+  const a = area(save);   // the flight's area = the area of its START city (save.city is still the start city when onFlight runs; same rule as assignMissionDist)
   for (const [k, e] of Object.entries(dist)) {
+    if (!k.startsWith(`${a}:`)) continue;   // AREA-SCOPED (A.9.3): a flight elsewhere leaves this streak untouched
     const had = st[k] || 0;
     if (r.landed && (r.distance || 0) >= e.D) st[k] = had + 1;
     else { if (had > 0) save.streakBroken++; st[k] = 0; }
