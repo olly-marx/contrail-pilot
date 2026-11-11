@@ -35,7 +35,7 @@ group loader | src/preload.js src/loader.js | preloadgate flagclear loadercount 
 group service-worker | sw.js manifest.webmanifest src/swreg.js | swoffline swupdate swkill
 group sw-raw | sw.js src/updates.js src/swreg.js tests/lib/rawchrome.js tests/lib/sitehost.js tests/lib/swpage.js | swupdate swoffline swkill
 group route-header | src/GameScene.js src/sim/rules.js | routeheader
-group ux-fit | src/ui.js index.html style.css src/screens.js src/sheet.js tools/uxlib.cjs | fitscreen overlap taptargets rowfit hangar nature
+group ux-fit | src/ui.js index.html style.css src/screens.js src/sheet.js tools/uxlib.cjs | fitscreen badgefont overlap taptargets rowfit hangar nature
 group ux-rows | src/hangar.js src/wild.js | overlap
 group rules-imports | src/aim.js | sim-bank fares flight
 group ux-fit | src/resultscard.js src/nextup.js | fitscreen overlap taptargets rowfit hangar nature
@@ -87,3 +87,6 @@ group route-map | src/globe.js src/pickcity.js src/ui.js src/missionsview.js | r
 group target-banner | src/targetbanner.js src/GameScene.js src/aim.js | missionsteer targetbanner-ui plantrail textfit
 group gold-trail | src/goldtrail.js src/GameScene.js | goldtrail-ui
 group livery | src/livery.js src/fleet.js src/hangar.js src/GameScene.js tools/art/make_livery.py tools/art/livery-anchors.tsv | liverylook
+group hud-clear | src/hudclear.js src/ui.js src/GameScene.js style.css | hudclear tipqueue stripclear
+group badgefont-test | tests/badgefont.cjs | badgefont
+group hudclear-test | tests/hudclear.cjs | hudclear

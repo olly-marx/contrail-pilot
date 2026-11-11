@@ -703,3 +703,13 @@ liverylook	src/hangar.js	s/lookFiles(id, f\.planes\[id\], 'hangar', liveryOn(s))
 liverylook	src/hangar.js	s/lookFiles(planeId, fn\.planes\[planeId\], 'hangar', liveryOn(s))/lookFiles(planeId, fn.planes[planeId], 'hangar')/	the preview of a purchase drops the livery
 liverylook	src/GameScene.js	s/'flight', liveryOn(this\.save))/'flight')/	the flying plane never wears the livery
 liverylook	src/sim/rules.js	s/^import { addPrizes } from '\.\.\/rewards\.js';/import { addPrizes } from '..\/rewards.js'; import { liveryOn } from '..\/livery.js';/	the sim engine imports the livery
+hudclear	src/hudclear.js	s/  return y > 0 ? `${y + 6}px` : '';/  return '';/	the toast is placed at 16 percent of the page again (toastTopCss never moves it below the HUD text)
+hudclear	style.css	s/top: calc(var(--hud-bottom, 0px) + 6px); bottom: auto;/top: 6px; bottom: auto;/	the coach strip opens at y 6 again (it covers the HUD text on a small phone)
+hudclear	src/GameScene.js	s/const dropToast = () => { if (this\.explaining \&\& toastEl/const dropToast = () => { if (false \&\& toastEl/	a toast already up is not moved below a strip that opens (they stack on each other)
+badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 341px) { .badge2 { font-size: 7px; } }/	the badge text is 7 px again on wide phones (Bronze reads Dronze)
+badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 300px) { .badge2 { font-size: 8px; } }/	the 8 px badge text reaches the 320 phone (cards spill)
+badgefont	style.css	s/^\.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr))/.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr))/	the badge cards are too narrow for their text
+badgefont	style.css	s/^.tab { position: relative; font-family: 'Pixel', monospace; font-size: 7px;/.tab { position: relative; font-family: 'Pixel', monospace; font-size: 8px;/	the tab bar is drawn at 8 px
+hudclear	src/GameScene.js	s/^    this\.tidyToast();$//	a toast that opened before take-off stays at 16 percent and covers the banner
+hudclear	tests/hudclear.cjs	s#path.join(os.tmpdir(), 'hudclear-shots')#'/home/ojm/contrail-research/hudclear-shots'#	the screenshots default is a path under /home again (a CI runner cannot make it)
+badgefont	tests/badgefont.cjs	s#path.join(os.tmpdir(), 'badgefont-shots')#'/home/ojm/contrail-research/badgefont-shots'#	the screenshots default is a path under /home again (a CI runner cannot make it)
