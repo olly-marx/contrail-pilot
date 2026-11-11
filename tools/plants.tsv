@@ -703,3 +703,5 @@ badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/
 badgefont	style.css	s/^\.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr))/.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr))/	the badge cards are too narrow for their text
 badgefont	style.css	s/^.tab { position: relative; font-family: 'Pixel', monospace; font-size: 7px;/.tab { position: relative; font-family: 'Pixel', monospace; font-size: 8px;/	the tab bar is drawn at 8 px
 hudclear	src/GameScene.js	s/^    this\.tidyToast();$//	a toast that opened before take-off stays at 16 percent and covers the banner
+hudclear	tests/hudclear.cjs	s#path.join(os.tmpdir(), 'hudclear-shots')#'/home/ojm/contrail-research/hudclear-shots'#	the screenshots default is a path under /home again (a CI runner cannot make it)
+badgefont	tests/badgefont.cjs	s#path.join(os.tmpdir(), 'badgefont-shots')#'/home/ojm/contrail-research/badgefont-shots'#	the screenshots default is a path under /home again (a CI runner cannot make it)

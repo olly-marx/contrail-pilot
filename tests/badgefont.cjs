@@ -8,18 +8,21 @@
 //  2. the badge names (.badge2 b) are not drawn smaller than 7 px.
 //  3. no card spills more than on main by more than 2 px (per card name).
 //  4. the tab bar is unchanged: 7 px at 390, 6 px at 320 (pinned only so the card change cannot drag it along).
-// Screenshots go to ~/contrail-research/badgefont-shots/. Run: python3 -m http.server 8000 & node tests/badgefont.cjs   (plants: tools/plants.tsv, test badgefont)
+// Screenshots go to $SHOTS, default <tmpdir>/badgefont-shots (skipped, not failed, when the directory cannot be made). Run: python3 -m http.server 8000 & node tests/badgefont.cjs   (plants: tools/plants.tsv, test badgefont)
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
-const SHOTS = process.env.SHOTS || '/home/ojm/contrail-research/badgefont-shots';
+const os = require('os'), path = require('path');
+const SHOTS = process.env.SHOTS || path.join(os.tmpdir(), 'badgefont-shots');   // (not under /home: a CI runner has no such directory; the branch run found it, 2026-11-11)
 const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, autoTakeoff: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true,
   freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
 (async () => {
-  fs.mkdirSync(SHOTS, { recursive: true });
+  let shotsOk = true; try { fs.mkdirSync(SHOTS, { recursive: true }); } catch (e) { shotsOk = false; console.log(`NOTE: screenshots off, cannot make ${SHOTS}: ${e.code || e}`); }   // (a screenshot is a courtesy: never a failure)
+  const shot = (p, name) => (shotsOk ? p.screenshot({ path: `${SHOTS}/${name}` }).catch(() => {}) : Promise.resolve());
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  check(!!process.env.SHOTS || !SHOTS.startsWith('/home/'), `THE SCREENSHOTS DIRECTORY: the default (${SHOTS}) is not under /home: a CI runner has no such directory (the branch run of 0.54.0 failed with EACCES on it)`);
   try {
     for (const [W, H] of [[390, 844], [320, 568]]) {
       const tag = `${W}x${H}`, ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
@@ -41,7 +44,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
           return { tabs, cards, base };
         });
         check(m.tabs.length >= 5 && m.cards.length > 0, `${tag}: FIXTURE: BOARDS shows badge cards and at least 5 tabs (tabs ${m.tabs.length}, cards ${m.cards.length})`);
-        if (fails.length) { await p.screenshot({ path: `${SHOTS}/${tag}-fixture-red.png` }); await ctx.close(); continue; }
+        if (fails.length) { await shot(p, `${tag}-fixture-red.png`); await ctx.close(); continue; }
         const wideScreen = W > 340, textNow = [...new Set(m.cards.map(x => x.sfs))], bronze = m.cards.find(x => !x.got && /^Bronze:/.test(x.text));
         if (wideScreen) check(textNow.length === 1 && textNow[0] === 8, `${tag}: above 340 px wide the badge text (.badge2 span, 'Bronze: ...') is drawn at 8 px: ${JSON.stringify(textNow)}`);
         else check(textNow.length === 1 && textNow[0] === 7, `${tag}: at 320 the badge text is unchanged, 7 px: ${JSON.stringify(textNow)}`);
@@ -53,10 +56,10 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
         const want = W <= 340 ? 6 : 7, tabsChanged = m.tabs.filter(x => x.fs !== want);
         check(tabsChanged.length === 0, `${tag}: the tab bar is unchanged (${want} px): ${JSON.stringify(tabsChanged.map(x => [x.t, x.fs]))}`);
         console.log(`MEASURE ${tag}: ${m.cards.length} cards, names at ${[...new Set(m.cards.map(x => x.bfs))]} px, text at ${[...new Set(m.cards.map(x => x.sfs))]} px, spill now ${JSON.stringify(m.cards.filter(x => x.spill > 0).map(x => [x.name, x.spill]))} / on main ${JSON.stringify(Object.entries(m.base).filter(([, v]) => v > 0))}; tabs at ${[...new Set(m.tabs.map(x => x.fs))]} px`);
-        await p.screenshot({ path: `${SHOTS}/${tag}-boards.png` });
+        await shot(p, `${tag}-boards.png`);
         await p.evaluate(() => { const g = document.querySelector('.badge-grid'); if (g) g.scrollIntoView({ block: 'center' }); }); await p.waitForTimeout(300);
-        await p.screenshot({ path: `${SHOTS}/${tag}-badge-grid.png` });
-      } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); await p.screenshot({ path: `${SHOTS}/${tag}-exception.png` }).catch(() => {}); }
+        await shot(p, `${tag}-badge-grid.png`);
+      } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); await shot(p, `${tag}-exception.png`); }
       await ctx.close();
     }
   } catch (e) { fails.push('exception: ' + e); }

@@ -7,18 +7,21 @@
 //   2. the coach strip never covers them.
 //   3. the toast and the coach strip never cover each other (dropToast).
 // 320x568, 390x844, 375x667; the first-time seed (tips unseen) and the tips-off seed (['*']; the 'Airport ahead' card ignores '*', it is shown once per save: src/ui.js tipOnce).
-// The run stops at the first width/seed that fails (a flight is about 25 s). Screenshots: ~/contrail-research/hudclear-shots/. Run: python3 -m http.server 8000 & node tests/hudclear.cjs   (plants: tools/plants.tsv, test hudclear)
+// The run stops at the first width/seed that fails (a flight is about 25 s). Screenshots: $SHOTS, default <tmpdir>/hudclear-shots (skipped, not failed, when the directory cannot be made). Run: python3 -m http.server 8000 & node tests/hudclear.cjs   (plants: tools/plants.tsv, test hudclear)
 const { chromium } = require('playwright-core');
 const fs = require('fs');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
-const SHOTS = process.env.SHOTS || '/home/ojm/contrail-research/hudclear-shots';
+const os = require('os'), path = require('path');
+const SHOTS = process.env.SHOTS || path.join(os.tmpdir(), 'hudclear-shots');   // (not under /home: a CI runner has no such directory; the branch run found it, 2026-11-11)
 const base = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, autoTakeoff: true, muted: true, priceVersion: 2, tours: ['*'], freeGiven: true, freeProjectGiven: true,
   freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
 (async () => {
-  fs.mkdirSync(SHOTS, { recursive: true });
+  let shotsOk = true; try { fs.mkdirSync(SHOTS, { recursive: true }); } catch (e) { shotsOk = false; console.log(`NOTE: screenshots off, cannot make ${SHOTS}: ${e.code || e}`); }   // (a screenshot is a courtesy: never a failure)
+  const shot = (p, name) => (shotsOk ? p.screenshot({ path: `${SHOTS}/${name}` }).catch(() => {}) : Promise.resolve());
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
+  check(!!process.env.SHOTS || !SHOTS.startsWith('/home/'), `THE SCREENSHOTS DIRECTORY: the default (${SHOTS}) is not under /home: a CI runner has no such directory (the branch run of 0.54.0 failed with EACCES on it)`);
   try {
     for (const [W, H, label, seenTips] of [[320, 568, 'firsttime', []], [320, 568, 'tipsoff', ['*']], [390, 844, 'tipsoff', ['*']], [390, 844, 'firsttime', []], [375, 667, 'firsttime', []], [375, 667, 'tipsoff', ['*']]]) {
       if (fails.length) break;   // (a flight is about 25 s: the first failure ends the run)
@@ -49,8 +52,8 @@ const base = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
           if (tOn > 4) { seen.toastOnHud++; seen.worst.toast = seen.worst.toast || { px2: Math.round(tOn), toast: r.toast && Object.values(r.toast).map(Math.round), hud: hud.map(h => Object.values(h).map(Math.round)) }; }
           if (cOn > 4) { seen.coachOnHud++; seen.worst.coach = seen.worst.coach || { px2: Math.round(cOn), coach: r.coach && Object.values(r.coach).map(Math.round), hud: hud.map(h => Object.values(h).map(Math.round)) }; }
           if (tc > 4) { seen.toastOnCoach++; seen.worst.both = seen.worst.both || { px2: Math.round(tc), toast: Object.values(r.toast).map(Math.round), coach: Object.values(r.coach).map(Math.round) }; }
-          if (!seen.firstShot && (tOn > 4 || cOn > 4 || tc > 4)) { seen.firstShot = true; await p.screenshot({ path: `${SHOTS}/${W}-${label}-overlap.png` }); }
-          if (!seen.firstShot && !seen.shotCard && (r.toast || r.coach) && hud.length) { seen.shotCard = true; await p.screenshot({ path: `${SHOTS}/${W}-${label}-cards.png` }); }
+          if (!seen.firstShot && (tOn > 4 || cOn > 4 || tc > 4)) { seen.firstShot = true; await shot(p, `${W}-${label}-overlap.png`); }
+          if (!seen.firstShot && !seen.shotCard && (r.toast || r.coach) && hud.length) { seen.shotCard = true; await shot(p, `${W}-${label}-cards.png`); }
           if (r.state === 'over') { result = r.result; break; }
           if (r.tap) await p.mouse.click(Math.round(W / 2), Math.round(H / 2));
           await p.waitForTimeout(60);
