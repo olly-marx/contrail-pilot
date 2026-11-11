@@ -58,7 +58,7 @@ const base = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
           if (r.tap) await p.mouse.click(Math.round(W / 2), Math.round(H / 2));
           await p.waitForTimeout(60);
         }
-        console.log(`FLIGHT ${tag}: result ${JSON.stringify(result)}, ${seen.frames} samples, toast on screen ${seen.toast}, coach strip ${seen.coach}, together with a HUD line ${seen.together}`);
+        console.log(`FLIGHT ${tag}: result ${JSON.stringify(result)}, ${seen.frames} samples, toast on screen ${seen.toast}, coach strip ${seen.coach}, together with a HUD line ${seen.together}; samples ON the HUD: toast ${seen.toastOnHud} (allowed 2), strip ${seen.coachOnHud} (0), toast on strip ${seen.toastOnCoach} (0)`);
         check(result && result.landed && seen.together > 0, `${tag}: FIXTURE: the flight landed and a card and a HUD line were on screen together (result ${JSON.stringify(result)}, toast samples ${seen.toast}, coach samples ${seen.coach}, together ${seen.together})`);
         check(seen.toastOnHud <= 2, `${tag}: the toast never covers the banner or the next-airport line (more than 2 samples, about 150 ms: a toast that opens at the title, e.g. the keep-your-game-safe note, is on the HUD for at most the frame before the first flight update moves it, src/GameScene.js tidyToast): ${seen.toastOnHud} samples, first ${JSON.stringify(seen.worst.toast)}`);
         check(seen.coachOnHud === 0, `${tag}: the coach strip never covers the banner or the next-airport line: ${seen.coachOnHud} samples, first ${JSON.stringify(seen.worst.coach)}`);
