@@ -1,7 +1,7 @@
 // The music PLAN: pure functions, no Web Audio, no DOM (tests/musicplan.cjs holds them; src/musicengine.js plays the result).
 import { SONGS, CHORDS, ROOTS, TRACKS } from './musicdata.js';
 
-export const MUSIC_PASSES = 3;   // times a track plays through before the playlist moves on (the user: "repeat a few times"). ONE constant: every duration below is computed from it.
+export const MUSIC_PASSES = 1;   // times a track plays through before the playlist moves on (the user, 2026-11-11: ONE play each, so a session hears the five in turn; it was 3, "repeat a few times", until 0.59.0). ONE constant: every duration below is computed from it.
 export const FORM = ['A', 'A2', 'B', 'B2', 'A', 'A2'];   // 6 sections of 8 bars = 48 bars; A2 / B2 = bars 5-8 an octave up, arpeggio reversed. The loop point (A2 -> A) is seamless.
 export const BAR_STEPS = 16;
 export const DRUMS_ON = true;   // the beat (voices.drums): a separate switch from the MUSIC chip for the tests (a Player takes { drums }), but the chip turns the whole music off, drums included
