@@ -713,3 +713,4 @@ badgefont	style.css	s/^.tab { position: relative; font-family: 'Pixel', monospac
 hudclear	src/GameScene.js	s/^    this\.tidyToast();$//	a toast that opened before take-off stays at 16 percent and covers the banner
 hudclear	tests/hudclear.cjs	s#path.join(os.tmpdir(), 'hudclear-shots')#'/home/ojm/contrail-research/hudclear-shots'#	the screenshots default is a path under /home again (a CI runner cannot make it)
 badgefont	tests/badgefont.cjs	s#path.join(os.tmpdir(), 'badgefont-shots')#'/home/ojm/contrail-research/badgefont-shots'#	the screenshots default is a path under /home again (a CI runner cannot make it)
+liverylook	tests/liverylook.cjs	s/comet: .51d1ce8e14f25526/comet: '00000000000000000/	a flight sprite is not the declared g5 one (a regenerated or run-4 picture)

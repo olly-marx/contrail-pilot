@@ -24,6 +24,14 @@ const png = f => { const b = fs.readFileSync(R(f)); return b.slice(1, 4).toStrin
     }
     check(F.UPGRADE_ART.includes(`plane-${art}-livery`), `${p.id}: the flight livery is preloaded (UPGRADE_ART)`);
   }
+  // (6) the six flight sprites ARE the g5 variant (the user's pick, 2026-11-11): a DECLARED sha-256 per plane, so a later `make_livery.py --install` or a copied-back run-4 sprite cannot silently swap the variant.
+  // To change the look on purpose: regenerate, look at it, and update these six hashes in the same commit.
+  const G5 = { comet: '51d1ce8e14f25526d3eb77d175867d2e1067fdbe6a90f1bf618955700a2844e2', '747': '18ce719d52be3077d26280d4b4a16679052fcdb51c39f1430751e215bbbf681b', twin: '31443acd604a47a54900bcb08e26da0ec57aab5725db028b4d6cf8a7c7f21014',
+    '787': '29e57ab5445267fd6425fe3b42445fd1a7e5d9fa0244f5c08ad4d0f955c6ea79', truss: '2455011f7da120ed839458f651201d0505aae911e4bd0f990c646c82d14b7714', hydrogen: 'd119eec82ed62d2e707a7fa9ff807c25361d198d96915686d8a755928495dcb9' };
+  for (const [art, want] of Object.entries(G5)) {
+    const f = `assets/upgrades/plane-${art}-livery.png`, got = fs.existsSync(R(f)) ? require('crypto').createHash('sha256').update(fs.readFileSync(R(f))).digest('hex') : 'missing';
+    check(got === want, `${f} is not the g5 sprite (sha-256 ${got.slice(0, 12)}, declared ${want.slice(0, 12)}): the variant was swapped or regenerated`);
+  }
   const src = f => fs.readFileSync(R(f), 'utf8');
   check((src('src/hangar.js').match(/lookFiles\([^;]*?'hangar'(, liveryOn\(s\))?\)/g) || []).filter(x => !/liveryOn/.test(x)).length === 0, 'every hangar lookFiles call passes liveryOn(s) (the payoff before and after must agree)');
   check(/lookFiles\(f\.plane, f\.planes\[f\.plane\] \|\| \{\}, 'flight', liveryOn\(this\.save\)\)/.test(src('src/GameScene.js')), 'GameScene.planeLookKey passes liveryOn(this.save)');
