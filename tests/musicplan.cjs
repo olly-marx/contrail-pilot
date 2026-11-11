@@ -1,5 +1,5 @@
 // The music PLAN (src/musicdata.js, src/musicplan.js): pure, plain Node, ~0.3 s. 1. every song's form is 48 bars of valid notes: every note parses, no bar overruns its 16 steps, every chord
-// has tones and a root; 2. one pass lasts 75-90 s at the song's own bpm (the user: "slightly longer before it repeats"); 3. a track = MUSIC_PASSES passes, computed from the ONE constant;
+// has tones and a root; 2. one pass lasts 75-90 s at the song's own bpm (the user: "slightly longer before it repeats"); 3. a track = MUSIC_PASSES passes (1: each song plays once, the user 2026-11-11), computed from the ONE constant;
 // 4. nextTrack is a shuffle bag: no immediate repeat over 10,000 draws, every aligned five has all five, deterministic for a seed; 5. the variations A2/B2 differ from A/B only in bars 5-8,
 // an octave up; 6. stepEvents puts a lead note on the step it says and a hat only where declared. Plants: tools/plants.tsv (test musicplan).
 (async () => {
@@ -44,8 +44,8 @@
   const bv = id => D.SONGS[id].voices.bassVol || 0.12;
   check(bv('E') === Math.min(...ids.map(bv)) && bv('B') < bv('A') && bv('A') === bv('C') && bv('C') === bv('D') && bv('C') >= 0.15, `the bass: E stays the quietest, B below A, C and D (bass volume A ${bv('A')}, B ${bv('B')}, C ${bv('C')}, D ${bv('D')}, E ${bv('E')}; C at least .15 = 25 percent over v3)`);
   check(['C', 'D'].every(id => D.SONGS[id].voices.drums.kick.join() === '0,4,8,12' && D.SONGS[id].voices.drums.snare.join() === '4,12'), 'C and D: four-on-the-floor kick (0,4,8,12) and a clap on 2 and 4 (4,12)');
-  check(P.MUSIC_PASSES >= 2 && P.MUSIC_PASSES <= 4 && Number.isInteger(P.MUSIC_PASSES), `MUSIC_PASSES is the declared repeat count (${P.MUSIC_PASSES})`);
-  const cyc = P.cycleSeconds(); check(cyc > 15 * 60 && cyc < 30 * 60, `a full cycle of five lasts ${(cyc / 60).toFixed(1)} min (15-30)`);
+  check(P.MUSIC_PASSES === 1, `each song plays ONCE before the next (the user, 2026-11-11): MUSIC_PASSES is 1, not ${P.MUSIC_PASSES}`);
+  const cyc = P.cycleSeconds(); check(cyc > 5 * 60 && cyc < 10 * 60, `a full cycle of five lasts ${(cyc / 60).toFixed(1)} min (5-10: one play each)`);
   // THE LEVELS (the user: middle by default, softer or louder by a setting): ordered, middle is the default, the chip cycles OFF -> SOFT -> MIDDLE -> LOUD -> OFF, an old save stays as it was
   const lv = P.MUSIC_LEVELS;
   check(lv.soft > 0 && lv.soft < lv.middle && lv.middle < lv.loud && lv.loud <= 0.1, `the three levels are ordered soft < middle < loud (${lv.soft} < ${lv.middle} < ${lv.loud}) and the loudest is at most 0.1`);

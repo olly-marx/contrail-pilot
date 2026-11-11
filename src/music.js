@@ -1,5 +1,5 @@
 // Background music for every scene: ONE playlist of five original songs (src/musicdata.js), played by the engine (src/musicengine.js) through the SAME gate and master chain as the effects
-// (src/sound.js audioBus): muted, or MUSIC off, = no context and no node. Nothing starts before the first tap. Each track plays MUSIC_PASSES times (src/musicplan.js), then the next one
+// (src/sound.js audioBus): muted, or MUSIC off, = no context and no node. Nothing starts before the first tap. Each track plays MUSIC_PASSES times (src/musicplan.js; 1 = once), then the next one
 // (nextTrack: a shuffle bag, never the same track twice in a row) with a CROSSFADE_S overlap. Effects that carry a warning or a reward duck the music (src/sound.js DUCKS).
 import { audioBus, isMuted, setDuckHook } from './sound.js';
 import { SONGS, Player } from './musicengine.js';

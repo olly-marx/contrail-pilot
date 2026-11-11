@@ -495,9 +495,9 @@ plantsapply	tests/plantsapply.cjs	s/if (rowOk \&\& total !== want) out.push/if (
 plantsapply	tests/plantsapply.cjs	s/if (r.status !== 0) {/if (false) {/	the checker no longer flags a sed expression that sed rejects
 plantsapply	tests/plantsapply.cjs	s/catch (e) { rowOk = false; out.push(/catch (e) { rowOk = false; (/	the checker no longer flags a row whose file does not exist
 musicplan	src/musicplan.js	s#const pool = inBag === 0 ? TRACKS.filter(t => t !== history\[history.length - 1\]) :#const pool = inBag === 0 ? TRACKS.slice() :#	a track may repeat at the start of a new bag (the shuffle repeats a song)
-musicplan	src/musicplan.js	s#export const MUSIC_PASSES = 3;#export const MUSIC_PASSES = 1;#	MUSIC_PASSES is 1 (not 'a few')
+musicplan	src/musicplan.js	s#export const MUSIC_PASSES = 1;#export const MUSIC_PASSES = 3;#	MUSIC_PASSES is 3 again (the user ordered one play each)
 musicplan	src/musicdata.js	s#key: 'A major pentatonic (written in C, sounding 3 semitones lower)', bpm: 132,#key: 'A major pentatonic (written in C, sounding 3 semitones lower)', bpm: 112,#	song A's pass is 102 s (too long)
-musicplan	src/musicplan.js	s#export const trackSeconds = song => passSeconds(song) \* MUSIC_PASSES;#export const trackSeconds = song => passSeconds(song);#	a track's time ignores MUSIC_PASSES
+musicplan	src/musicplan.js	s#export const trackSeconds = song => passSeconds(song) \* MUSIC_PASSES;#export const trackSeconds = song => passSeconds(song) * 2;#	a track's time is two passes, not MUSIC_PASSES (row re-aimed 2026-11-11: with MUSIC_PASSES 1 the old plant, dropping the factor, changed nothing)
 musicplan	src/musicplan.js	s#  if (lo - 12 >= noteNumber(LEAD_MIN)) return up(notes, -12);#  if (lo - 12 >= noteNumber(LEAD_MIN)) return up(notes, -7);#	the A' variation is a fifth down, not an octave
 musicplan	src/musicdata.js	s#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 2'#'0 D5 4,4 E5 4,8 G5 4,12 D5 2,14 E5 4'#	a note overruns its bar
 music	src/music.js	s#  if (!armed || timer) return;#  if (timer) return;#	music starts before the first tap
@@ -778,3 +778,4 @@ rparcels	src/tour.js	s/ else if (uBot > bottom - 80) sc.scrollTop += Math.min(uB
 rparcels	src/tour.js	s/      if (top1 \&\& top1 !== t \&\& !t.contains(top1)) {/      if (false) {/	a guided target stays under the pinned land (no uncovering)
 rparcels	src/tour.js	s/      set(b, { top: `${Math.max(4, Math.min(H - 4 - h2, tt))}px` });/      set(b, { top: `${Math.round(cy - h2 \/ 2)}px` });/	the guide bubble sits on the target
 rparcels	src/tour.js	s/    if (subs.length \&\& !pinned) {/    if (subs.length) {/	a subject step ignores a pinned cover (the measured 1b fault)
+audiolive	tests/audiolive.cjs	s/musicWindowS < shortest - CROSSFADE_GUARD_S/musicWindowS > shortest - CROSSFADE_GUARD_S/	the music window is no longer checked against the shortest track
