@@ -45,10 +45,10 @@ import { treesPlanted } from './treecount.js';
 import { recordTouchdown } from './landlog.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
 import { LINKS } from './links.js';
-import { writeSave, resetSave, listStashed, restoreStashed, releaseHold, heldReason, restoreFromBackup, progressOf } from './save.js';
+import { writeSave, wipeSave, listStashed, restoreStashed, releaseHold, heldReason, restoreFromBackup, progressOf } from './save.js';
 import { copyText } from './pilot.js';
 import { makeBackup, backupText, tooBigToShare, fileName, readBackup, refusalLines, compareLines, onlineWarns, ONLINE_WARNING, SHARE_TEXT } from './backup.js';
-import { allowRoughUpload, getPilot, rememberFirst, setRecoverNext, takeOnlineNote, hasOnlineNote, onlineProgress } from './online.js';
+import { getPilot, rememberFirst, setRecoverNext, takeOnlineNote, hasOnlineNote, onlineProgress } from './online.js';
 import { askPersist, noteDue, noteText, PERSIST_TIP } from './persist.js';
 import { eraBarHTML } from './eras.js';
 import { FleetHangar } from './hangar.js';
@@ -124,10 +124,9 @@ export class UI {
     $('results').addEventListener('pointerdown', () => { this.skipReveal = true; }, true);
     $('iClose').onclick = () => { $('info').hidden = true; };
     $('resetBtn').onclick = () => {
-      if (!confirm('Delete all seeds, ice crystals, upgrades and badges on this device? You can get this game back from Settings: RECOVER AN EARLIER SAVE.')) return;
-      Object.assign(this.save, resetSave());   // (resetSave keeps the current save first)
-      allowRoughUpload();                       // a deliberate reset may replace the online copy
-      this.renderHangar();
+      if (!confirm('Delete all seeds, ice crystals, upgrades, badges, missions, nature (lands, trees and animals) and your pilot name and code on this device? You can get this game back from Settings: RECOVER AN EARLIER SAVE. Write your pilot code down first if you want to come back to your online pilot.')) return;
+      wipeSave(this.save);                      // (keeps the current save first; the live object ends up a brand-new player's, key for key)
+      location.reload();                        // the screens (NATURE, boards, fleet) hold their own copies: a fresh page is the sure way to drop them
     };
     this.setupMute();
     // Feature switches: hide whole sections whose feature is off (see FEATURES in config.js).

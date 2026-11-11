@@ -1,5 +1,32 @@
 [
   {
+    "id": "2026-11-10-reset-new-player",
+    "version": "0.52.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "Reset now starts a brand-new player: nature, missions, badges and your pilot name and code are cleared too. The game you had is kept under Settings: RECOVER AN EARLIER SAVE."
+    ]
+  },
+  {
+    "id": "2026-11-10-lap-complete",
+    "version": "0.51.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "Finishing the lap now earns the Lap Complete badge and turns your contrail gold. If you have already flown the lap, you get them on your next flight."
+    ]
+  },
+  {
+    "id": "2026-11-10-route-on-map",
+    "version": "0.50.0",
+    "date": "2026-11-10",
+    "level": "minor",
+    "notes": [
+      "Tap a city on the map and its whole route is drawn on the globe. The card is a row under the globe saying how many airports are on the way and about how far. Cities are bigger dots and the airports on the route are named. The mission sheet no longer says \"on your route\"."
+    ]
+  },
+  {
     "id": "2026-11-10-flying-to",
     "version": "0.49.0",
     "date": "2026-11-10",

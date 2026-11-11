@@ -59,6 +59,10 @@ export const BADGES = [
     measure: (r, s) => (s.visited || []).length },
   { id: 'worldflight', name: 'Round the World in One Flight', theme: 'explorer', tiers: ONE(1, 600, 30), unit: 'fly all the way round the world without landing, then land',
     measure: r => (r.landed && r.distance >= LAP_KM ? 1 : 0) },
+  // LAP COMPLETE (research/LAP-REWARDS-SPEC.md, the user 2026-11-10): land back home after the lap crossing. History-based: a save whose lapDone is already true gets it on its NEXT flight (paid once, by the tier).
+  // r.lapLanded is set by RULES.bankFlight (the badge is paid at the bank, which runs BEFORE GameScene.onFinish calls completeCrossing, so save.lapDone is not set yet on the lap flight itself).
+  { id: 'lap', name: 'Lap Complete', theme: 'explorer', tiers: ONE(1, 10, 4), unit: 'complete the lap and land back home',
+    measure: (r, s) => (s.lapDone || r.lapLanded ? 1 : 0) },
   // Secret: each needs something the game really records (checked in tests/badges.cjs).
   { id: 'oops', name: 'Oops!', theme: 'secret', secret: true, tiers: SECRET, unit: 'crash for the first time',
     measure: (r, s) => (sum(s.crashes) > 0 ? 1 : 0) },
