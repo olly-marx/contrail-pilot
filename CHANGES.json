@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-11-mission-steer",
+    "version": "0.53.0",
+    "date": "2026-11-11",
+    "level": "minor",
+    "notes": [
+      "Your flight now heads for your open mission's city by default (the top button says \"Mission: PARIS\"). This partly reverses 0.48.0, where the default was the nearest city. Tap EXPLORE to go to the nearest city you have not visited instead; it stays on until you tap MISSION again, also after EXPLORE HERE says Done here. Tap any city to go there."
+    ]
+  },
+  {
     "id": "2026-11-10-reset-new-player",
     "version": "0.52.0",
     "date": "2026-11-10",
