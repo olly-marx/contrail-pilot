@@ -87,7 +87,10 @@ globalThis.SEASON2 = true;
       const fl = M2.fillFor(sv, a, c), LL = R.linksFor(sv);
       for (const id of ['land-city', 'chain', 'route']) {
         const o = P.ownFill(sv, a, c, id, fl, `${a}:${id}`), names = id === 'land-city' ? [o.city] : id === 'chain' ? [o.city, o.cityB, o.cityC] : [o.cityC];
-        if (names.some(n => !n || (n !== c && P.stopsOf(LL, c, n) === Infinity))) bad8.push(`${a} from ${c}: ${id} -> ${JSON.stringify(names)}`);
+        if (id === 'chain') {   // each leg is reachable from the PREVIOUS leg (start -> A -> B -> C), at least 1 stop; a leg may be the start city itself (a revisit) but never the city just left
+          const legs = [c, ...names];
+          for (let i = 1; i < legs.length; i++) { const n = legs[i] ? P.stopsOf(LL, legs[i - 1], legs[i]) : NaN; if (!(Number.isFinite(n) && n >= 1)) { bad8.push(`${a} from ${c}: chain leg ${i} ${legs[i - 1]} -> ${legs[i]} (${n} stops)`); break; } }
+        } else if (names.some(n => !n || P.stopsOf(LL, c, n) === Infinity)) bad8.push(`${a} from ${c}: ${id} -> ${JSON.stringify(names)}`);
         if (id === 'chain' && o.rule === 'new' && o.cityC === o.city && P.farCity(sv, LL, o.cityB, [o.cityB, o.city])) badA.push(`${a} from ${c}: ${JSON.stringify(names)}`);
         if (id === 'route') {
           if (!o.stretch || o.stretch.stops < 1 || o.rule !== 'new') badD.push(`${a} from ${c}: ${JSON.stringify([o.cityC, o.stretch, o.rule])}`);
