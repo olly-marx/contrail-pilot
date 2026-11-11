@@ -482,9 +482,10 @@ export function lookParts(planeId, levels = {}) {
   return out;
 }
 // Art file names for a plane's look: { base, parts } for 'flight' or 'hangar'.
-export function lookFiles(planeId, levels, where = 'flight') {
+export function lookFiles(planeId, levels, where = 'flight', livery = false) {   // livery = liveryOn(save) (src/livery.js): the lap livery is the LAST part, so it paints over the others
   const L = LOOKS[planeId], p = planeById(planeId);
   const parts = lookParts(planeId, levels).map(x => x.part).filter(part => where === 'hangar' || !(NO_FLIGHT_LOOK[L.art] || []).includes(part));
+  if (livery) parts.push('livery');
   return where === 'flight'
     ? { base: p.sprite, parts: parts.map(part => `plane-${L.art}-${part}`) }
     : { base: p.portrait, parts: parts.map(part => `assets/ui/upgrades/hangar-${L.art}-${part}.png`) };
@@ -502,6 +503,7 @@ export function stickers(save) {
 // All in-flight upgrade art keys (GameScene preloads them from assets/upgrades/).
 export const UPGRADE_ART = [
   ...Object.values(LOOKS).flatMap(L => ['engines', 'body', 'cabin'].flatMap(line => L[line].filter(Boolean).filter(part => !(NO_FLIGHT_LOOK[L.art] || []).includes(part)).map(part => `plane-${L.art}-${part}`))),
+  ...Object.values(LOOKS).map(L => `plane-${L.art}-livery`),   // the lap livery (src/livery.js)
   ...Object.values(STICKERS).flatMap(s => ERA_IDS.slice(0, s.eras || 3).map(e => `sticker-${s.art}-${e}`)),
   ...Array.from({ length: 12 }, (_, i) => `tower-${i + 1}`), ...ERA_IDS.map(e => `station-${e}`),
 ];

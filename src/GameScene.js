@@ -24,6 +24,7 @@ import { tip } from './tips.js';
 import { applyHudVar, toastTopCss } from './hudclear.js';
 const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
 import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra, towerKey, stationKey } from './fleet.js';
+import { liveryOn } from './livery.js';
 import { composeOnto } from './planelook.js';
 import { sfx, buzz } from './sound.js';
 import { current as currentMission, MISSIONS } from './missions.js';
@@ -1158,7 +1159,7 @@ export class GameScene extends Phaser.Scene {
   // The plane's picture with its bought parts layered on (src/planelook.js): a canvas texture made once
   // per scene. No parts: the plane's own sprite.
   planeLookKey() {
-    const f = fleetOf(this.save), files = lookFiles(f.plane, f.planes[f.plane] || {}, 'flight');
+    const f = fleetOf(this.save), files = lookFiles(f.plane, f.planes[f.plane] || {}, 'flight', liveryOn(this.save));
     if (!files.parts.length || !files.parts.every(k => this.textures.exists(k))) return files.base;
     if (this.textures.exists('plane-look')) this.textures.remove('plane-look');
     const base = this.textures.get(files.base).getSourceImage(), tex = this.textures.createCanvas('plane-look', base.width, base.height);

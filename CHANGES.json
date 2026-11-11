@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-11-lap-livery",
+    "version": "0.56.0",
+    "date": "2026-11-11",
+    "level": "minor",
+    "notes": [
+      "Fly the lap and every one of your planes gets a special paint job: a little Earth on the tail and a gold stripe."
+    ]
+  },
+  {
     "id": "2026-11-11-truss-name-payoff-label",
     "version": "0.55.0",
     "date": "2026-11-11",

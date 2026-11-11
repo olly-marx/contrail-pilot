@@ -8,6 +8,7 @@ import { ERAS, eraProgress } from './eras.js';
 import { tip } from './tips.js';
 import { LINE_INFO, levelCard } from './fleetfacts.js';
 import { composedURL } from './planelook.js';
+import { liveryOn } from './livery.js';
 import { onSwipe } from './swipe.js';
 import { lookFiles, hangarGadgets, previewBars, withNext, shortName } from './fleet.js';
 import { statBarsHTML, animateBars } from './statbars.js';
@@ -65,7 +66,7 @@ export class FleetHangar {
     el.querySelectorAll('[data-fly]').forEach(b => b.onclick = e => { e.stopPropagation(); if (choosePlane(s, b.dataset.fly)) { this.preview = b.dataset.fly; this.ui.persist(); this.ui.sfx.coin(); this.render(); } });
     // The big picture with the plane's bought parts layered on (src/planelook.js); drawn when ready.
     const pv = el.querySelector('.fpreview img'), f = fleetOf(s), pid = pv && pv.dataset.plane;
-    if (pid && f.planes[pid]) { const files = lookFiles(pid, f.planes[pid], 'hangar'); composedURL(files.base, files.parts, hangarGadgets(s, pid)).then(u => { if (pv.isConnected) pv.src = u; }).catch(() => {}); }
+    if (pid && f.planes[pid]) { const files = lookFiles(pid, f.planes[pid], 'hangar', liveryOn(s)); composedURL(files.base, files.parts, hangarGadgets(s, pid)).then(u => { if (pv.isConnected) pv.src = u; }).catch(() => {}); }
     // Tap a row = preview it (the user, 2026-10-28: "tap on things and SEE THE EFFECT before purchasing"): the row is
     // marked, the card under the picture shows its bars, and the picture shows the new part ghosted.
     // (screenshots, 2026-10-28: a row tapped low in the list previewed OFF SCREEN at the top; bring the picture + card into view)
@@ -75,7 +76,7 @@ export class FleetHangar {
       this.sel = f.planes[p] && f.plane !== p ? `fly:${p}` : null; this.ui.sfx.tick(); this.render(); });
     el.querySelectorAll('[data-fbuy]').forEach(b => b.onclick = () => {
       const [kind, id] = b.dataset.fbuy.split(':'), free = !!s.freeUpgrade;
-      const fb = fleetOf(s), before = lookFiles(fb.plane, JSON.parse(JSON.stringify(fb.planes[fb.plane] || {})), 'hangar');   // the plane BEFORE (the payoff shows it first)
+      const fb = fleetOf(s), before = lookFiles(fb.plane, JSON.parse(JSON.stringify(fb.planes[fb.plane] || {})), 'hangar', liveryOn(s));   // the plane BEFORE (the payoff shows it first)
       const bars = previewBars(s, kind, id), gadBefore = hangarGadgets(s, fb.plane), item = this.itemOf(s, kind, id);
       if (!buyFleet(s, kind, id, { free })) { this.ui.sfx.nope(); return; }
       this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
@@ -113,7 +114,7 @@ export class FleetHangar {
   // first free part (the tutorial's words: rails); every purchase stays in the hangar, the rails' next step is TAKE OFF there. A system has no part: no zoom,
   // the bars are the payoff.
   payoff(before, { bars = [], gadBefore, name, toFly = true, rails = toFly } = {}) {
-    const s = this.ui.save, f = fleetOf(s), id = f.plane, files = lookFiles(id, f.planes[id], 'hangar');
+    const s = this.ui.save, f = fleetOf(s), id = f.plane, files = lookFiles(id, f.planes[id], 'hangar', liveryOn(s));
     const gadNow = hangarGadgets(s, id), gadOld = gadBefore || gadNow;
     const added = files.parts.filter(p => !(before ? before.parts : files.parts.slice(0, -1)).includes(p)).concat(gadNow.filter(g => !gadOld.includes(g)));
     // Stage 2 (DESIGN-HANGAR-NATURE, the user's pick): the payoff happens IN the plane box. The box (.fpreview) steps aside and
@@ -209,7 +210,7 @@ export class FleetHangar {
     if (!this.sel) return [];
     const [kind, id] = this.sel.split(/:(.*)/s), f = fleetOf(s);
     if (kind === 'fly' || planeId !== f.plane || !this.itemOf(s, kind, id)) return [];
-    const n = withNext(s, kind, id), fn = fleetOf(n), a = lookFiles(planeId, f.planes[planeId], 'hangar'), b = lookFiles(planeId, fn.planes[planeId], 'hangar');
+    const n = withNext(s, kind, id), fn = fleetOf(n), a = lookFiles(planeId, f.planes[planeId], 'hangar', liveryOn(s)), b = lookFiles(planeId, fn.planes[planeId], 'hangar', liveryOn(s));
     const ga = hangarGadgets(s, planeId);
     return b.parts.filter(p => !a.parts.includes(p)).concat(hangarGadgets(n, planeId).filter(g => !ga.includes(g)));
   }
