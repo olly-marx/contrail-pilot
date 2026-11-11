@@ -787,3 +787,7 @@ droporder	src/droporder.js	s/c\.n < TREE_CAP/true/	a kind at its cap of 9 is sti
 droporder	src/droporder.js	s/(c\.n < a\.n ? c : a)/(c.n <= a.n ? c : a)/	a tie goes to the last slot, not the first
 droporder	src/sim/rules.js	s/const lid = localTree(kind, region)\.id; this\.dropped\[lid\] = Math\.max(0, (this\.dropped\[lid\] || 0) - 1);//	a landed parcel stays pending for ever
 droporder	src/sim/rules.js	s/const kind = this\.treeKind();/const kind = this.treeKind() || 'spruce';/	a full grove still lets the tree go
+droporder	src/droporder.js	s/room.find(c => c.tag === prefer)/cand.find(c => c.tag === prefer)/	the preference ignores the cap of 9 per kind
+droporder	src/droporder.js	s/DROP_ORDER.preferMission \&\& prefer ?/prefer ?/	the preferMission switch is ignored
+droporder	src/sim/rules.js	s/this.preferTag = DROP_ORDER.preferMission \&\& isSeason2(this.save) \&\& !this.school ? missionTag(this.save) : null;/this.preferTag = null;/	the world never reads the open mission kind
+droporder	src/droporder.js	s/  if (want) return want;/  if (false) return want;/	the mission kind is never preferred

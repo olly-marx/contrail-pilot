@@ -44,6 +44,29 @@ globalThis.SEASON2 = true;
     check(Object.values(w.dropped).reduce((a, n) => a + n, 0) === 1, `a landed parcel is no longer pending: ${JSON.stringify(w.dropped)}`);
     for (const sl of open) for (let i = 0; i < 9; i++) G.plantTree(w.save, 'woodland', idOf(sl)); w.dropped = {}; const before = w.parcels; w.dropParcel();
     check(w.parcels === before && w.parcelsFalling.length === 2, `a full grove keeps the tree: parcels ${w.parcels} (was ${before})`); }
+  // 9. THE MISSION'S KIND (the user, 2026-11-11; src/droporder.js missionTag, DROP_ORDER.preferMission; the sim's second arm, research M-T7b): a preferred tag wins over fewest-first while its kind has room
+  { const s = base(); for (let i = 0; i < 3; i++) G.plantTree(s, 'woodland', idOf(open[0]));   // open[0] has the MOST trees, so fewest-first alone would not pick it
+    const tag0 = idOf(open[0]), n = D.nextTree(s, 'woodland', {}, tag0), m = D.nextTree(s, 'woodland', {});
+    check(m.slot !== open[0] && n.slot === open[0], `a preferred kind wins over fewest-first (without the preference: slot ${m.slot}; with it: slot ${n.slot}, wanted ${open[0]})`);
+    check(D.nextTree(s, 'woodland', {}, 'savanna:baobab').slot === m.slot, 'a tag that is not one of this land\'s open kinds changes nothing'); }
+  // 10. the cap of 9 still wins over the preference
+  { const s = base(); for (let i = 0; i < 9; i++) G.plantTree(s, 'woodland', idOf(open[0]));
+    const n = D.nextTree(s, 'woodland', {}, idOf(open[0])); check(n && n.slot !== open[0], `a preferred kind at its cap of 9 is NOT chosen: ${JSON.stringify(n)}`); }
+  // 11. the sim's switch: preferMission off = fewest-first only
+  { const s = base(); for (let i = 0; i < 3; i++) G.plantTree(s, 'woodland', idOf(open[0])); D.DROP_ORDER.preferMission = false;
+    const n = D.nextTree(s, 'woodland', {}, idOf(open[0])); D.DROP_ORDER.preferMission = true; check(n.slot !== open[0], `DROP_ORDER.preferMission = false ignores the preference: ${JSON.stringify(n)}`); }
+  // 12. the engine: with a 'Plant a <tree>' mission open the first drop is that kind (the tag is read once at the start of the flight)
+  { const W = await import('../src/sim/world.js'), Sv = await import('../src/save.js');
+    const save = Object.assign(Sv.prepareSave(null), { ...base(), city: 'LONDON', homeCity: 'LONDON', visited: ['LONDON'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} }, levels: { trees: 3 } });
+    const tag = D.missionTag(save);
+    check(!!tag, `power: a save with the lessons done has an open plant-tree mission with a tree tag: '${tag}'`);
+    if (tag) { for (let i = 0; i < 3; i++) for (const sl of open) if (idOf(sl) !== tag) G.plantTree(save, 'woodland', idOf(sl));   // every OTHER kind has 3 trees; the mission's kind has none: fewest-first would pick it anyway, so give it MORE
+      for (let i = 0; i < 5; i++) G.plantTree(save, 'woodland', tag);
+      const w = W.createWorld(save, 1); for (let i = 0; i < 4000 && w.state !== 'playing'; i++) w.step(1 / 60);
+      w.frozen = false; w.regionNow = 'woodland'; w.parcels = 4; w.dropParcel();
+      const got = w.parcelsFalling[0] && w.parcelsFalling[0].kind;
+      check(w.preferTag === tag && !!got, `the world read the mission's tag at the start of the flight (preferTag '${w.preferTag}', wanted '${tag}')`);
+      check(!!got && N.localTree(got, 'woodland').id === tag, `the first drop plants the mission's kind although the other kinds have fewer trees: dropped '${got && N.localTree(got, 'woodland').id}', wanted '${tag}'`); } }
   console.log(fails.length ? `FAIL droporder:\n - ${fails.slice(0, 10).join('\n - ')}${fails.length > 10 ? `\n ... ${fails.length - 10} more` : ''}` : 'PASS droporder: the next tree is the open kind with the fewest trees (saplings and pending parcels counted), a full kind is skipped, a tie goes to the lowest slot, a full grove is null; the engine plants different kinds in a row and keeps the tree in a full grove');
   process.exit(fails.length ? 1 : 0);
 })();

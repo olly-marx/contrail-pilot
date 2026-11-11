@@ -7,7 +7,7 @@ import { GAP_HINT, FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
 import { treeBook, plantTree, growGroves, needFromGrow } from '../groves.js';
-import { nextTree, DROP_ORDER } from '../droporder.js';
+import { nextTree, DROP_ORDER, missionTag } from '../droporder.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
 import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as s2LessonsLeft } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
@@ -87,6 +87,7 @@ export const RULES = {
     this.nextPlotAt = PARCEL.firstAt;
     this.treeFeedback = 0;
     this.speciesIdx = 0;
+    this.preferTag = DROP_ORDER.preferMission && isSeason2(this.save) && !this.school ? missionTag(this.save) : null;   // the open plant-tree mission's kind (src/droporder.js), read once per flight
     this.dropped = {};               // parcels released this flight that have not landed yet, by tree id (src/droporder.js: the next kind is the one with the fewest trees)
     this.decor = [];                 // ponds etc. scrolling on the ground
     this.nextDecorAt = 500;
@@ -244,10 +245,10 @@ export const RULES = {
   // returned: growth and cooling use its SPECIES row; localTree() names the land's own tree.
   treeKind() {   // TREES V2 step 3: the kind with the fewest trees among the land's open ones (src/droporder.js); null = the grove is full here
     if (!DROP_ORDER.on) { const open = treesOpen(this.save, this.regionNow || 'woodland'); return slotKind(open.length ? open[this.speciesIdx % open.length] : 0); }   // the old order (the sim's A/B arm)
-    const n = nextTree(this.save, this.regionNow || 'woodland', this.dropped);
+    const n = nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag);
     return n ? slotKind(n.slot) : null;
   },
-  nextTreeInfo() { return !DROP_ORDER.on ? null : nextTree(this.save, this.regionNow || 'woodland', this.dropped); },
+  nextTreeInfo() { return !DROP_ORDER.on ? null : nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag); },
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
   // drop them before you reach a soil plot. This works out which bit of ground (in today's screen
   // position) one would land on if dropped now. The ground keeps scrolling while it falls, so
