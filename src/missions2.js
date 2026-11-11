@@ -88,7 +88,7 @@ export const TEMPLATES = [
   { id: 'system', short: () => 'Buy a helper system', tier: 2, prize: 15, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
   // release B: 'Land 2 long flights' (EXTRA: rescue stays). A long flight = a landing of at least f.D game km (src/missionplan.js D_TABLE, stored in save.missionDist when first shown); the count is
   // save.missionStreak[key] (advanceStreaks: +1 per long landing, back to 0 by a crash or a shorter landing); the pay is src/missionprize.js.
-  { id: 'streak2', short: () => 'Land 2 long flights', tier: 2, prize: 16, title: f => `Land 2 flights in a row, each about ${kmWords(f.D)} or more`, flight: (r, s, f) => ((s.missionStreak || {})[f.key] || 0) >= f.N },
+  { id: 'streak2', short: () => 'Land 2 long flights', tier: 2, prize: 14, title: f => `Land 2 flights in a row, each about ${kmWords(f.D)} or more`, flight: (r, s, f) => ((s.missionStreak || {})[f.key] || 0) >= f.N },
   // tier 3: the crossing trial (star = the gate)
   { id: 'night', short: () => 'A whole clean night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', short: f => `Make ${10 * f.k} shade, land`, tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
@@ -101,7 +101,7 @@ export const TEMPLATES = [
   { id: 'golden', short: () => 'Find a golden seed', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
   { id: 'tier', short: () => 'Finish a project tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
   // release B: 'Land 3 long flights' (EXTRA: golden stays), the same rule with a row of three.
-  { id: 'streak3', short: () => 'Land 3 long flights', tier: 3, prize: 31, title: f => `Land 3 flights in a row, each about ${kmWords(f.D)} or more`, flight: (r, s, f) => ((s.missionStreak || {})[f.key] || 0) >= f.N },
+  { id: 'streak3', short: () => 'Land 3 long flights', tier: 3, prize: 29, title: f => `Land 3 flights in a row, each about ${kmWords(f.D)} or more`, flight: (r, s, f) => ((s.missionStreak || {})[f.key] || 0) >= f.N },
 ];
 // The hazard each stage meets (turbulence from 2,000 km; no-fly zones from 8,000 km; long clean runs for masters).
 const HAZARD = {

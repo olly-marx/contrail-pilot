@@ -37,11 +37,11 @@ const fs = require('fs'), path = require('path');
   check(JSON.stringify(V.missionsView(t1)) === JSON.stringify(v1), 'the view is pure: the same save gives the same view');
   // Tier 2 (3 of tier 1 done; the city mission is left open).
   const d2 = base([...M.LESSONS.map(x => x.id), 'weurope:shade', 'weurope:plant-tree', 'weurope:bring']), t2 = withDay(d2), v2 = V.missionsView(t2);
-  check(v2.tierLine === 'Tier 2 · 0/6 done' && v2.comingUp === 'Tier 3 · after 3 of tier 2 (0/3)', `tier 2: ${JSON.stringify([v2.tierLine, v2.comingUp])}`);
+  check(v2.tierLine === 'Tier 2 · 0/7 done' && v2.comingUp === 'Tier 3 · after 3 of tier 2 (0/3)', `tier 2: ${JSON.stringify([v2.tierLine, v2.comingUp])}`);
   check(v2.done.count === 8 && v2.done.names.every(n => n.length <= V.NAME_MAX), `DONE is a count (5 lessons + 3): ${v2.done.count}`);
   // Tier 3 and the gate.
   const d3 = [...d2.missionsDone, 'weurope:chain', 'weurope:dodge', 'weurope:rescue'], v3 = V.missionsView(withDay(base(d3)));
-  check(/^Tier 3 · \d\/6 done · stars 0\/2$/.test(v3.tierLine) && v3.comingUp === null && v3.crossing && v3.crossing.rows.map(r => r.label).join('|') === 'Era|Plane|Nature 30', `tier 3: the CROSSING block has the three ticks Era, Plane, Nature (CROSSINGS V2; the trial stars are no longer a gate), not a COMING UP line: ${JSON.stringify([v3.tierLine, v3.comingUp, v3.crossing])}`);
+  check(/^Tier 3 · \d\/7 done · stars 0\/2$/.test(v3.tierLine) && v3.comingUp === null && v3.crossing && v3.crossing.rows.map(r => r.label).join('|') === 'Era|Plane|Nature 30', `tier 3: the CROSSING block has the three ticks Era, Plane, Nature (CROSSINGS V2; the trial stars are no longer a gate), not a COMING UP line: ${JSON.stringify([v3.tierLine, v3.comingUp, v3.crossing])}`);
   const v4 = V.missionsView(withDay(base([...d3, 'weurope:night', 'weurope:shade10'])));
   check(v4.comingUp === null && /stars 2\/2/.test(v4.tierLine), `the gate done: nothing further ahead: ${JSON.stringify([v4.tierLine, v4.comingUp])}`);
   // Every area mission done: no pinned NEXT (a daily is never pinned), nothing open, the dailies still under TODAY.

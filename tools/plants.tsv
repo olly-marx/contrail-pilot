@@ -747,3 +747,13 @@ missionplan	src/missionplan.js	s/q.n - p.n || q.km - p.km || p.i - q.i/q.n - p.n
 missionplan	src/sim/progression.js	s/ missionCities: {}, \.\.\.start/ ...start/	the sim's start save has no missionCities (its first city is stored as an old save's)
 missionplan	src/missionplan.js	s/^  for (const k of ALL_CITY_FIELDS) if (!CITY_FIELDS\[id\].includes(k)) delete own\[k\];.*$//	a mission keeps the city fields of the other templates (a moving city)
 liverylook	tests/liverylook.cjs	s/comet: .51d1ce8e14f25526/comet: '00000000000000000/	a flight sprite is not the declared g5 one (a regenerated or run-4 picture)
+missionstreak	src/missions2.js	s/(r.distance || 0) >= e.D/(r.distance || 0) > 0/	a landing shorter than D counts as long
+missionstreak	src/missions2.js	s/else { if (had > 0) save.streakBroken++; st\[k\] = 0; }/else if (r.landed) { if (had > 0) save.streakBroken++; st[k] = 0; }/	a crash does not reset the streak
+missionstreak	src/missions2.js	s/    if (dist\[k\]) continue;/    if (false) continue;/	D is recomputed from the plane flown now, never stored
+missionstreak	src/missions2.js	s/\(id: 'streak2'.*\)>= f\.N }/\1>= f.N - 1 }/	Land 2 is done one landing early
+missionstreak	src/missionplan.js	s/comet: 3100,/comet: 3101,/	the Comet D table value is off by one
+missionstreak	src/resultscard.js	s/Row broken: start again/Row broken/	the results card line loses its wording
+missionprize	src/missionprize.js	s/streak2: \[14, 1\]/streak2: [15, 1]/	streak2 pays one seed more (tier 2 total moves)
+streakui	src/missionsview.js	s/`${m.fill.count} of ${m.fill.N} in a row`/`${m.fill.N} in a row`/	the row loses its count
+streakui	src/missionsview.js	s/A crash or a shorter landing starts the row again\./Good luck./	the sheet loses the crash rule
+streakui	src/missionplan.js	s/comet: 3100,/comet: 3200,/	the Comet D differs from the sheet's figure
