@@ -5,11 +5,11 @@ export const TEXT_MAX = 40;   // the longest line: 'Flying to ANTANANARIVO to cr
 // The condition of a mission that must stay visible next to the banner (null: the city is the whole mission). m: { def: { id }, fill }.
 export function conditionOf(m) {
   const id = m && m.def && m.def.id, f = (m && m.fill) || {};
-  if (id === 'chain' && f.cityB) return `then ${f.cityB}`;
+  if (id === 'chain' && f.cityB) { if (!f.cityC || f.rule === 'old') return `then ${f.cityB}`; const legs = [f.city, f.cityB, f.cityC], next = legs[(f.progress || 0) + 1]; return next ? `then ${next}` : null; }   // three legs: what comes AFTER the leg being flown
   if (id === 'rescue') return f.cityB ? `and plant ${2 * (f.k || 1)} trees` : null;
   if (id === 'landclean') return `with ${3 * (f.k || 1)} clean gaps`;
   if (id === 'stretch') return 'in one flight';
-  if (id === 'route') return 'without stopping';
+  if (id === 'route') return f.stretch ? 'in one flight' : 'without stopping';
   return null;
 }
 // The banner text, or null (no target, or the plane has landed there). { city, crossFrom: true when the city is the departure of a ready crossing, mission: the steering mission or null, landed: this flight has landed at the city }

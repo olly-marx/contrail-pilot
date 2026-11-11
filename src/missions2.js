@@ -16,6 +16,8 @@ import { city, linksFor, wayTo, MAX_LEGS } from './route.js';
 import { fleetOf } from './fleet.js';
 import { payPrize } from './rewards.js';
 import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
+import { missionPrize, kindOf } from './missionprize.js';
+import { CITY_IDS, ownFill, entryFor, needsOf, stopsOf } from './missionplan.js';
 
 // A season 2 save: save.areas is written only by season 2 (the start choice, src/startchoice.js, and crossings), so it is
 // the declared marker; classic saves keep the 13 classic missions (src/missions.js) for the classic tests.
@@ -57,28 +59,42 @@ export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === '
 
 // Seed prizes x~0.33 on 2026-10-28 (the user: too much currency early; research/BALANCE-EARLY-PRIZES.md): lessons were
 // 60/60/70/70/70, tiers 30/50/60/40. Crystal prizes unchanged.
+// The stretch's check: landed at the city; the flight's own start (save.city, still the start when the flight is banked) is at least as far as the stored stop count, and every airport on the way was passed.
+const stretchDone = (r, s, f) => {
+  if (r.landedAt !== f.cityC) return false;
+  const n = stopsOf(linksFor(s), s.city, f.cityC);
+  return n >= f.stretch.stops && (r.airportsSkipped || 0) >= n - 1;
+};
 // ---------- the area ladder (templates; f = the fill for this area and stage) ----------
 // Prizes: seeds only (crystals stay a skill reward), ~700 per area in the teach stage, x the stage factor.
 export const TEMPLATES = [
   // tier 1: try it (one mechanic each)
   { id: 'land-city', short: f => `Land at ${f.city}`, tier: 1, prize: 10, ready: f => f.city !== f.start, title: f => `Land at ${f.city}`, flight: (r, s, f) => r.landedAt === f.city },
   { id: 'shade', short: f => `Shade ${5 * f.k} times`, tier: 1, prize: 10, title: f => `Shade the Earth ${5 * f.k} times here`, flight: (r, s, f) => f.here && r.sunBlocked >= 5 * f.k },
-  { id: 'plant-tree', short: f => `Plant a ${f.treeName}`, tier: 1, prize: 10, title: f => `Plant a ${f.treeName} in ${f.landName}`, flight: (r, s, f) => (r.treeIds || []).includes(f.treeTag) },
+  { id: 'plant-tree', short: f => `Plant a ${f.treeName}`, tier: 1, prize: 10, needs: (f, s) => needsOf('plant-tree', f, s), title: f => `Plant a ${f.treeName} in ${f.landName}`, flight: (r, s, f) => (r.treeIds || []).includes(f.treeTag) },
   { id: 'clean-gaps', short: f => `${3 * f.k} clean storm gaps`, tier: 1, prize: 10, title: f => `Fly ${3 * f.k} storm gaps without a scrape`, flight: (r, s, f) => (r.cleanGaps || 0) >= 3 * f.k },
   { id: 'bring', short: f => `Bring home ${10 * f.k} seeds`, tier: 1, prize: 10, title: f => `Bring home ${10 * f.k} seeds`, flight: (r, s, f) => r.cargo >= 10 * f.k },
   { id: 'project', short: () => 'Fund a nature project', tier: 1, prize: 10, kind: 'save', title: () => 'Fund a nature project here', save: (s, f) => projectsDone(s, f.land).length >= 1 },
   // tier 2: combine it
-  { id: 'chain', short: f => `Visit ${f.city} + 1`, tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city, title: f => `Land at ${f.city}, then ${f.cityB}`, flight: (r, s, f) => r.landedAt === f.cityB && s.prevLanded === f.city },
+  // chain (release A): THREE legs A, B, C (src/missionplan.js chain3; a revisit is allowed); progress = save.missionProgress[key] (legs landed, in order; a crash or another landing changes nothing).
+  // An OLD chain in progress (rule 'old', two cities) keeps its old test (save.prevLanded). The pay is src/missionprize.js (the `prize` field of a template is no longer read).
+  { id: 'chain', short: f => `Visit ${f.city} + ${f.cityC && f.rule !== 'old' ? 2 : 1}`, tier: 2, prize: 15, ready: f => f.city !== f.start && f.cityB !== f.city,
+    title: f => (f.cityC && f.rule !== 'old' ? `Land at ${f.city}, ${f.cityB}, then ${f.cityC}` : `Land at ${f.city}, then ${f.cityB}`),
+    flight: (r, s, f) => (f.cityC && f.rule !== 'old' ? ((s.missionProgress || {})[f.key] || 0) >= 3 : r.landedAt === f.cityB && s.prevLanded === f.city) },
   { id: 'dodge', short: f => `Dodge ${3 * f.k} icy patches`, tier: 2, prize: 15, title: f => `Dodge ${3 * f.k} icy patches at night`, flight: (r, s, f) => (r.dodges || 0) >= 3 * f.k },
-  { id: 'rescue', short: f => `${f.cityB} + ${2 * f.k} trees`, tier: 2, prize: 15, ready: f => f.cityB !== f.start, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
+  { id: 'rescue', short: f => `${f.cityB} + ${2 * f.k} trees`, tier: 2, prize: 15, needs: (f, s) => needsOf('rescue', f, s), ready: f => f.cityB !== f.start, title: f => `Plant ${2 * f.k} trees, then land at ${f.cityB}`, flight: (r, s, f) => r.planted >= 2 * f.k && r.landedAt === f.cityB },
   { id: 'spot', short: f => `Spot a ${f.animalName}`, tier: 2, prize: 15, ready: f => !!f.animal, title: f => `Spot a ${f.animalName} from the air`, flight: (r, s, f) => !!f.animal && (r.foundIds || []).includes(f.animal) },   // offered once an animal CAN appear here
   { id: 'hazard', short: f => HAZARD[f.stage].short, tier: 2, prize: 15, title: f => HAZARD[f.stage].title, flight: (r, s, f) => HAZARD[f.stage].check(r) },
   { id: 'system', short: () => 'Buy a helper system', tier: 2, prize: 15, kind: 'save', title: f => `Buy a helper system (level ${f.k})`, save: (s, f) => Object.values(fleetOf(s).systems || {}).some(v => v >= f.k) },
   // tier 3: the crossing trial (star = the gate)
   { id: 'night', short: () => 'A whole clean night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', short: f => `Make ${10 * f.k} shade, land`, tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
-  { id: 'kinds3', short: f => `Plant ${f.kinds} kinds in one go`, tier: 3, star: true, prize: 20, title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
-  { id: 'route', short: f => `Nonstop to ${f.cityC}`, tier: 3, prize: 15, ready: f => f.cityC !== f.start, title: f => `Fly to ${f.cityC} without stopping`, flight: (r, s, f) => r.landedAt === f.cityC && r.airportsSkipped >= 1 },
+  { id: 'kinds3', short: f => `Plant ${f.kinds} kinds in one go`, tier: 3, star: true, prize: 20, needs: (f, s) => needsOf('kinds3', f, s), title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
+  // route (release A): where the area's own network offers 3+ stops it is the STRETCH (f.stretch: 'Fly to <CITY> in one flight': land there, the flight's own start at least as far as the stored
+  // stop count, every airport on the way flown past); in a small area with no other area open it stays 'Nonstop to <CITY>' (src/missionplan.js stretchOK; release B gives those areas streak3).
+  { id: 'route', short: f => (f.stretch ? `${f.cityC} in one go` : `Nonstop to ${f.cityC}`), tier: 3, prize: 15, ready: f => f.cityC !== f.start,
+    title: f => (f.stretch ? `Fly to ${f.cityC} in one flight` : `Fly to ${f.cityC} without stopping`),
+    flight: (r, s, f) => (f.stretch ? stretchDone(r, s, f) : r.landedAt === f.cityC && r.airportsSkipped >= 1) },
   { id: 'golden', short: () => 'Find a golden seed', tier: 3, prize: 15, title: () => 'Find a golden seed and land', flight: (r, s, f) => (r.goldens || 0) >= 1 },
   { id: 'tier', short: () => 'Finish a project tier', tier: 3, prize: 15, kind: 'save', title: () => 'Finish a tier of nature projects here', save: (s, f) => tierFinished(s, f.land) },
 ];
@@ -134,15 +150,37 @@ export function visible(save, startCity = save.city) {
   const left = lessonsLeft(save);
   if (left.length) { const l = left[0]; return [{ key: l.id, title: l.title, tier: 0, star: false, kind: 'flight', prize: l.prize, def: l }]; }
   const a = areaOf(startCity) || area(save), f = fillFor(save, a, startCity);
-  return TEMPLATES.filter(t => tierOpen(save, a, t.tier) && !done(save).has(key(a, t)) && (!t.ready || t.ready(f))).map(t => ({
-    key: key(a, t), title: t.title(f), tier: t.tier, star: !!t.star, kind: t.kind || 'flight',
-    prize: { seeds: t.prize * f.k, crystals: 0 }, def: t, fill: f }));
+  // A city mission has its OWN fill: the cities stored in save.missionCities when it was first shown, else what the rules name now (src/missionplan.js). Pure: nothing is stored here.
+  return TEMPLATES.filter(t => tierOpen(save, a, t.tier) && !done(save).has(key(a, t))).map(t => ({ t, own: CITY_IDS.includes(t.id) ? ownFill(save, a, startCity, t.id, f, key(a, t)) : f }))
+    .filter(({ t, own }) => !t.ready || t.ready(own)).map(({ t, own }) => ({
+      key: key(a, t), title: t.title(own), tier: t.tier, star: !!t.star, kind: t.kind || 'flight',
+      prize: missionPrize(kindOf(t.id), f.k), def: t, fill: own }));
+}
+// Store the cities of every OPEN city mission that has none yet (fixed until completed). Idempotent; mutates the save (call it where missions are shown and at the start of onFlight).
+// An old save (no save.missionCities) keeps the cities it shows today (rule 'old'); everything shown after that uses the new rules. Returns true when the save changed.
+export function assignMissionCities(save, startCity = save.city) {
+  if (!isSeason2(save) || lessonsLeft(save).length) return false;
+  const legacy = save.missionCities == null;
+  const stored = save.missionCities = save.missionCities || {};
+  let changed = legacy;
+  const a = areaOf(startCity) || area(save), f = fillFor(save, a, startCity);
+  for (const t of TEMPLATES) {
+    if (!CITY_IDS.includes(t.id)) continue;
+    const k = key(a, t);
+    if (stored[k] || done(save).has(k) || !tierOpen(save, a, t.tier)) continue;
+    const e = entryFor(save, a, startCity, t.id, f, legacy);
+    const { rule, from, at, ...o } = e;
+    if (t.ready && !t.ready({ ...f, ...o, rule })) continue;   // not offered from here: nothing to store
+    stored[k] = e; changed = true;
+  }
+  return changed;
 }
 export const next = save => visible(save)[0] || null;
 
 function finish(save, list) {
   const before = new Set(save.missionsDone || []);
   save.missionsDone = [...new Set([...(save.missionsDone || []), ...list.map(m => m.key)])];
+  for (const m of list) { if (save.missionCities) delete save.missionCities[m.key]; if (save.missionProgress) delete save.missionProgress[m.key]; }   // a finished mission's cities and progress are dropped
   for (const m of list) if (!before.has(m.key)) payPrize(save, m.prize);   // R8: a mission pays the moment it is done (a flight: at the bank; a purchase or a project: at the buy)
   return list;
 }
@@ -170,10 +208,22 @@ export function onFlight(save, r) {
   const easyDaily = dailyVisible(save).filter(d => d.easy && d.def.flight(r, save, d.fill) === true);
   if (!r.landed) return finish(save, taught([...firsts, ...steady, ...easyDaily]));
   const startCity = save.city;
+  assignMissionCities(save, startCity);   // (idempotent: the game stored them when HOME drew them; the sim, which never draws HOME, stores them here)
+  advanceChains(save, r, startCity);
   const due = visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true));
   const daily = dailyVisible(save).filter(d => d.def.flight(r, save, d.fill) === true);
   save.prevLanded = r.landedAt;   // for "land at A, then B" (read on the NEXT flight)
   return finish(save, taught([...firsts, ...steady, ...due, ...daily]));
+}
+
+// A landing at the next leg of an open (new-rule) chain moves it on; any other landing, and a crash, changes nothing (no punishment in chains).
+function advanceChains(save, r, startCity) {
+  if (!r.landed) return;
+  for (const m of visible(save, startCity)) {
+    if (!m.def || m.def.id !== 'chain' || m.fill.rule === 'old' || !m.fill.cityC) continue;
+    const p = save.missionProgress = save.missionProgress || {}, n = Math.min(2, p[m.key] || 0);
+    if (r.landedAt === [m.fill.city, m.fill.cityB, m.fill.cityC][n]) p[m.key] = n + 1;
+  }
 }
 
 // ---------- Firsts: one-off funny cards (1 crystal), never in the list; they pop on the results ----------
@@ -193,7 +243,7 @@ export const DAILY_POOL = [
   { id: 'd-shade', short: f => `Shade ${3 * f.k} times`, prize: 10, title: f => `Shade the Earth ${3 * f.k} times`, flight: (r, s, f) => r.sunBlocked >= 3 * f.k },
   { id: 'd-gaps', short: f => `${5 * f.k} clean storm gaps`, prize: 15, title: f => `Fly ${5 * f.k} clean storm gaps`, flight: (r, s, f) => (r.cleanGaps || 0) >= 5 * f.k },
   { id: 'd-skip', short: () => 'Skip an airport, land', prize: 20, title: () => 'Skip an airport, then land', flight: r => r.airportsSkipped >= 1 },
-  { id: 'd-plant', short: f => `Plant ${f.k + 1} trees`, prize: 15, title: f => `Plant ${f.k + 1} trees`, flight: (r, s, f) => r.planted >= f.k + 1 },
+  { id: 'd-plant', short: f => `Plant ${f.k + 1} trees`, prize: 15, needs: (f, s) => needsOf('d-plant', f, s), title: f => `Plant ${f.k + 1} trees`, flight: (r, s, f) => r.planted >= f.k + 1 },
   { id: 'd-night', short: () => 'Dodge icy air at night', prize: 20, title: () => 'Dodge an icy patch at night', flight: r => (r.dodges || 0) >= 1 },
 ];
 const hash = str => [...str].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);

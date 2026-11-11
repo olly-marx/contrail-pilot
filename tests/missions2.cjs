@@ -59,7 +59,7 @@
   check(!L.OPENS[4].ok({ ...s, missionsDone: s.missionsDone.filter(k => k !== 'weurope:kinds3') }, 'woodland'), 'and not without it');
   // 9. Prizes.
   const openNow = M.visible({ ...base(), missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'] });
-  check(openNow.length > 0 && openNow.every(m => m.prize.crystals === 0 && m.prize.seeds > 0), `area prizes are seeds only (${openNow.length} open missions)`);
+  check(openNow.length > 0 && openNow.every(m => m.prize.seeds > 0 && (m.prize.crystals === 0 || m.def.id === 'route')), `area prizes are seeds, and a crystal only on the stretch (src/missionprize.js: ${openNow.length} open missions)`);
   // 10b. A free part waiting reveals the hangar by ITSELF (the user's live bug, 2026-10-27): the school landing grants it,
   // but no lesson is done yet (school flights don't count), and a crash on flight 1 leaves L1 undone too.
   const afterSchool = { ...base(), missionsDone: [], freeUpgrade: true, freeGiven: true };

@@ -705,3 +705,21 @@ badgefont	style.css	s/^.tab { position: relative; font-family: 'Pixel', monospac
 hudclear	src/GameScene.js	s/^    this\.tidyToast();$//	a toast that opened before take-off stays at 16 percent and covers the banner
 hudclear	tests/hudclear.cjs	s#path.join(os.tmpdir(), 'hudclear-shots')#'/home/ojm/contrail-research/hudclear-shots'#	the screenshots default is a path under /home again (a CI runner cannot make it)
 badgefont	tests/badgefont.cjs	s#path.join(os.tmpdir(), 'badgefont-shots')#'/home/ojm/contrail-research/badgefont-shots'#	the screenshots default is a path under /home again (a CI runner cannot make it)
+missionplan	src/missionplan.js	s/nearestWith(save, L, from, 2, exclude) ||/nearestWith(save, L, from, 1, exclude) ||/	a city mission asks for one stop again instead of two
+missionplan	src/missionplan.js	s/return { city: A, cityB: B, cityC: C };/return { city: A, cityB: B };/	the chain has two legs again
+missionplan	src/missions2.js	s/if (stored\[k\] || done(save).has(k) ||/if (done(save).has(k) ||/	the stored cities are overwritten every time (they change under the player)
+missionplan	src/missionplan.js	s/const nw = legacy ? null : newRule(/const nw = newRule(/	an old save is given the new rule's cities (they change under the player)
+missionplan	src/missionplan.js	s/x.n >= 3 \&\& x.km <= cap/x.n >= 3/	the stretch ignores the 0.90 x reach cap
+missionplan	src/missions2.js	s/^    if (r.landedAt === \[m.fill.city, m.fill.cityB, m.fill.cityC\]\[n\]) p\[m.key\] = n + 1;/    p[m.key] = n + 1;/	the chain moves on at ANY landing
+missionplan	src/missions2.js	s/if (save.missionCities) delete save.missionCities\[m.key\]; //	a finished mission keeps its stored cities
+needsmark	src/missionplan.js	s/return i < 0 ? lv.length : i + 1;/return i < 0 ? lv.length : i;/	the parcels-to-level table is off by one
+needsmark	src/missionplan.js	s/if (((save.levels || {}).trees || 0) >= lv) return null;/if (((save.levels || {}).trees || 0) > lv) return null;/	the marker stays when the player owns exactly the level
+needsmark	src/missionsview.js	s/const need = m \&\& def \&\& def.needs ? def.needs(m.fill, save) : null;/const need = null;/	the row never shows the asterisk
+missionprize	src/missionprize.js	s/shade: \[10, 0\], 'plant-tree'/shade: [11, 0], 'plant-tree'/	a tier-1 kind pays one seed more (the tier total moves)
+missionprize	src/missionprize.js	s/'Very hard': \[1100, 137\]/'Very hard': [1101, 137]/	a crossing word pays one seed more
+missionprize	src/missionprize.js	s/  if (!b) throw new Error(.missionPrize: unknown mission kind .*$/  if (!b) return { seeds: 0, crystals: 0 };/	an unknown mission kind pays nothing instead of throwing
+missionprize	src/missions2.js	s/prize: missionPrize(kindOf(t.id), f.k), def: t, fill: own/prize: { seeds: t.prize * f.k, crystals: 0 }, def: t, fill: own/	the prize shown is the old flat one, not the table's
+needsmark-ui	src/missionsview.js	s/short: need ? [^:]* : n.short,/short: n.short,/	the row never shows the asterisk
+needsmark-ui	src/ui.js	s/onTap: () => this.goToLine(r.needs.line) }/onTap: () => this.go(r.needs.tab) }/	the sheet's button goes to the tab, not to the upgrade's row
+needsmark-ui	src/ui.js	s/const tab = tabOf(line) === 'nature' ? 'nature' : 'hangar';/const tab = 'hangar';/	the jump to an upgrade always opens the HANGAR
+needsmark-ui	src/missionplan.js	s/if (((save.levels || {}).trees || 0) >= lv) return null;/if (((save.levels || {}).trees || 0) >= 99) return null;/	the marker stays after the upgrade is bought

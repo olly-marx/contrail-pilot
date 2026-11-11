@@ -32,7 +32,7 @@ import { drawGlobe } from './globe.js';
 import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
-import { isSeason2, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus, saving } from './missions2.js';
+import { isSeason2, assignMissionCities, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus, saving } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, migrateClaims, sumPrizes } from './rewards.js';
 import { medal, tierName, nearBadges } from './badges.js';
@@ -421,6 +421,7 @@ export class UI {
     $('hubFly').hidden = !this.hubCs; $('hubFly').onclick = () => this.start();
     // ROUTING V2 step 2: with nothing chosen (no GO TO, no mission aim) the chip names the default destination, 'Next: PARIS' (src/destination.js); a chosen destination keeps the route line.
     if (migrateAim(s)) writeSave(s);   // (an old 'AIM HERE' becomes a destination; the skip is dropped: src/aim.js)
+    if (assignMissionCities(s)) writeSave(s);   // (HOME shows the mission's city: it is stored the first time it is shown)
     if (s.stayLand && s.tutorialDone && !stayLandLeft(s)) { this.toast('Done here: every city in this land is visited.', '', 'good', 3); s.stayLand = null; writeSave(s); }   // (EXPLORE HERE ends by itself)
     const chip = chipView({ ...v, steer: steerOf(s) }, s, !!(s.tutorialDone && isSeason2(s) && DEFAULT_DEST.on));
     $('hubRoute').innerHTML = chip.kind === 'word' ? `${chip.word}: ${esc(chip.city)} &#8250;` : chip.route.join(' &#9654; ') + (chip.tag ? ` <span class="small">(${chip.tag})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something; src/steerchip.js)
@@ -460,6 +461,7 @@ export class UI {
     const s = this.save;
     if (FEATURES.season2 && isSeason2(s)) setDaily(s, new Date().toISOString().slice(0, 10));   /* (the browser check: MISSIONS opened before the menu had set today) */
     // R4 (research/UX-MASTER-PLAN.md C3): NEXT pinned, then OPEN / TODAY / COMING UP / STEADY, DONE as a count. The data is src/missionsview.js.
+    if (assignMissionCities(s)) writeSave(s);   // the cities of the missions shown are STORED when they are first shown (fixed until completed): src/missions2.js
     const v = this.missionsV = missionsView(s);
     const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const rowHTML = (r, cls = '') => `<div class="rowc goal ${cls}${r.star ? ' star' : ''}${r.aimed ? ' aimed' : ''}"><button class="rowc-tap" type="button" data-mrow="${esc(r.key)}"><span class="rowc-slot"><i class="mi ${r.icon}"></i></span><span class="rowc-top"><span class="rowc-name">${esc(r.short)}</span></span><span class="rowc-sub"><span class="m-how">${esc(r.aimed ? 'AIMED' : r.how)}</span>${r.prize ? `<b class="rowc-prize">+${r.prize}<i class="seedicon"></i></b>` : ''}</span></button></div>`;
@@ -478,9 +480,10 @@ export class UI {
     const all = [v.next, ...v.open, ...v.today.rows, ...v.steady].filter(Boolean);
     document.querySelectorAll('#mNext [data-mrow], #mList [data-mrow]').forEach(b => b.onclick = () => { const r = all.find(x => x.key === b.dataset.mrow); if (!r) return; sfx.tick();
       const hop = r.where === 'hangar' ? 'HANGAR' : r.where === 'nature' ? 'NATURE' : null;
-      const action = r.city && r.cityName ? { label: r.aimed ? 'STOP GOING' : 'GO THERE', onTap: () => { if (r.aimed) clearGoto(s); else setGoto(s, r.cityName); writeSave(s); this.toast(r.aimed ? 'Back to the suggested city' : `Going to ${r.cityName}`, '', 'good', 3); this.showMissions(); } }   // ROUTING V2 step 3: the mission's city becomes the destination (the same field as GO TO and a tapped city)
+      const action = r.needs ? { label: `GO TO ${r.needs.tab === 'nature' ? 'NATURE' : 'HANGAR'}`, onTap: () => this.goToLine(r.needs.line) }   // (a mission that needs an upgrade: straight to that upgrade)
+        : r.city && r.cityName ? { label: r.aimed ? 'STOP GOING' : 'GO THERE', onTap: () => { if (r.aimed) clearGoto(s); else setGoto(s, r.cityName); writeSave(s); this.toast(r.aimed ? 'Back to the suggested city' : `Going to ${r.cityName}`, '', 'good', 3); this.showMissions(); } }   // ROUTING V2 step 3: the mission's city becomes the destination (the same field as GO TO and a tapped city)
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
-      showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds.` : ''}`, action }); });
+      showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds${r.prizeC ? ` and +${r.prizeC} ice crystal${r.prizeC > 1 ? 's' : ''}` : ''}.` : ''}`, action }); });
     $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
     if ($('mCross')) $('mCross').onclick = () => { const cs = crossingState(s, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); };
     if ($('mDone')) $('mDone').onclick = () => { sfx.tick(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
@@ -491,6 +494,17 @@ export class UI {
   // ---------- navigation ----------
   // One screen at a time, chosen from the bar along the bottom. Pop-ups (how to play, about,
   // info, points) close on any move. `this.pilot` (PilotScreens) renders PILOT and BOARDS.
+  // A mission that NEEDS an upgrade (the asterisk, src/missionplan.js needsOf) takes the player straight to that upgrade: the tab that sells it, the row previewed (NATURE: wild.toolId, the same as tapping the
+  // row's picture) or marked (HANGAR: hFocus), and scrolled into view. lineId is a src/upgrades.js LINES id.
+  goToLine(lineId) {
+    const line = lineById(lineId);
+    if (!line) return;
+    const tab = tabOf(line) === 'nature' ? 'nature' : 'hangar';
+    if (tab === 'hangar') this.hFocus = lineId;
+    this.go(tab);
+    if (tab === 'nature' && this.wild) { this.wild.toolId = lineId; this.wild.render(); }
+    setTimeout(() => { const el = document.querySelector(`[data-line="${lineId}"]`); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center' }); }, 60);
+  }
   go(tab) {
     if (tab !== 'hangar' && this.fleet && this.fleet.paying) this.fleet.endPayoff();   // leaving mid-payoff: it ends (no parked payoff)
     if (tab === 'fly') return this.showTitle();

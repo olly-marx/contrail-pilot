@@ -117,9 +117,15 @@ export function missionsView(save) {
     const hazard = id === 'hazard' ? HAZARD_HOW[stage] : null, lesson = id && /^L\d$/.test(id) ? `Lesson ${id.slice(1)} of ${M2.LESSONS.length}` : null;
     const city = !!(id && CITY_TEMPLATES[id]), cityName = city && m && m.fill ? CITY_TEMPLATES[id](m.fill, save) : null;   // (the city the mission names: GO THERE sets it as the destination)
     const stopsText = n.stops ? `${n.stops} ${n.stops === 1 ? 'stop' : 'stops'} away` : null;
-    const how = n.lead ? 'Do this first' : stopsText || lesson || hazard || (def && def.id && (m.daily && !HOW[id] ? DAILY_HOW : HOW[id])) || (n.daily ? DAILY_HOW : '');
-    const tip = n.lead ? n.full : n.stops ? `${stopsText}. Tap GO THERE to fly there.` : lesson ? `${lesson}: ${n.full}.` : hazard ? `${hazard}.` : (m && m.daily ? (TIP[id] || 'Today only: any flight that does it.') : TIP[id]) || '';
-    return { key: n.key, short: n.short, full: n.full, how: clip(how, HOW_MAX), tip, icon: ICONS[id] || (n.where === 'hangar' ? 'mi32-gear' : n.where === 'nature' ? 'mi32-natureproj' : 'mi32-seedbag'), prize: m ? m.prize.seeds : 0, star: !!(m && m.star),
+    // The asterisk (release A): a mission whose planting needs a Tree Planting level the player lacks says so (src/missionplan.js needsOf); chain and stretch show their own progress words.
+    const need = m && def && def.needs ? def.needs(m.fill, save) : null;
+    const chainOn = id === 'chain' && m && m.fill && m.fill.cityC && m.fill.rule !== 'old', stretchOn = id === 'route' && m && m.fill && m.fill.stretch;
+    const legs = chainOn ? [m.fill.city, m.fill.cityB, m.fill.cityC] : null, legsDone = chainOn ? Math.min(3, (save.missionProgress || {})[m.key] || 0) : 0;
+    const how0 = n.lead ? 'Do this first' : stopsText || lesson || hazard || (def && def.id && (m.daily && !HOW[id] ? DAILY_HOW : HOW[id])) || (n.daily ? DAILY_HOW : '');
+    const how = n.lead ? how0 : need ? need.text : chainOn ? `${legsDone} of 3 cities` : stretchOn ? 'One flight, no stops' : how0;
+    const tip0 = n.lead ? n.full : n.stops ? `${stopsText}. Tap GO THERE to fly there.` : lesson ? `${lesson}: ${n.full}.` : hazard ? `${hazard}.` : (m && m.daily ? (TIP[id] || 'Today only: any flight that does it.') : TIP[id]) || '';
+    const tip = n.lead ? tip0 : need ? `* You need: ${need.name} (${need.parcels} trees per flight). ${tip0}` : chainOn ? `Land at ${legs[0]}, ${legs[1]}, then ${legs[2]}. Next: ${legs[Math.min(2, legsDone)]}.${n.stops ? ` ${stopsText}.` : ''}` : stretchOn ? `Fly to ${m.fill.cityC} in one flight${n.stops ? `: ${stopsText}` : ''}. Skip every airport on the way, then land.` : tip0;
+    return { key: n.key, short: need ? `${clip(n.short, NAME_MAX - 1)}*` : n.short, full: n.full, how: clip(how, HOW_MAX), tip, needs: need ? { line: need.line, name: need.name, parcels: need.parcels, tab: need.tab } : null, prizeC: m ? m.prize.crystals || 0 : 0, icon: ICONS[id] || (n.where === 'hangar' ? 'mi32-gear' : n.where === 'nature' ? 'mi32-natureproj' : 'mi32-seedbag'), prize: m ? m.prize.seeds : 0, star: !!(m && m.star),
       where: n.where, lead: !!n.lead, city, cityName, aimed: !!(cityName && save.aimCity === cityName), daily: !!n.daily, right: rightOf(n) };
   }
 }

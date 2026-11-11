@@ -67,10 +67,14 @@ function readRaw(key) {
   try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; } catch (e) { return undefined; }   // undefined: there but unreadable
 }
 
+// A brand-new player's save. `missionCities` is {} (not in DEFAULTS: a shared object would leak between saves): a save WITHOUT it is an old one, whose open city missions keep the
+// city they show today when the missions are first stored (src/missions2.js assignMissionCities).
+const blankSave = () => ({ ...structuredClone(DEFAULTS), fleet: newFleet(), missionCities: {} });
+
 // A stored save made whole: defaults filled in and old saves brought up to date. Pure (no storage), so the
 // sim engine (src/sim/world.js) prepares a save exactly as the game does. A missing save: a new player.
 export function prepareSave(saved) {
-  if (!saved || typeof saved !== 'object') return { ...structuredClone(DEFAULTS), fleet: newFleet() };
+  if (!saved || typeof saved !== 'object') return blankSave();
   const s = { ...DEFAULTS, ...saved };
   if (!('priceVersion' in saved)) s.priceVersion = 1;   // from before the price change: re-valued once (src/reprice.js)
   if ('trees' in s) { s.seeds = (s.seeds || 0) + s.trees; delete s.trees; }   // money was called 'trees' before 2026-10-16
@@ -94,7 +98,7 @@ export const releaseHold = () => { held = null; };
 const keepUnreadable = raw => { try { if (raw && !localStorage.getItem(UNREADABLE)) localStorage.setItem(UNREADABLE, raw); } catch (e) {} };
 
 export function loadSave() {
-  const blank = () => ({ ...structuredClone(DEFAULTS), fleet: newFleet() });
+  const blank = () => (blankSave());
   try {
     let saved = readRaw(KEY), why = null;
     if (saved === undefined) {   // unreadable: keep it aside, never write over it unseen
@@ -188,7 +192,7 @@ export function resetSave() {
   stashSave('before a reset');   // a reset can be undone from Settings: RECOVER AN EARLIER SAVE
   try { localStorage.removeItem(KEY); localStorage.removeItem(BACKUP); } catch (e) {}
   releaseHold();
-  return { ...structuredClone(DEFAULTS), fleet: newFleet() };
+  return blankSave();
 }
 
 // Per-player localStorage keys outside the save that a FULL reset clears (the user, 2026-11-10): the old game's unsent flights, one-time notes and landing log, AND the

@@ -89,3 +89,4 @@ group gold-trail | src/goldtrail.js src/GameScene.js | goldtrail-ui
 group hud-clear | src/hudclear.js src/ui.js src/GameScene.js style.css | hudclear tipqueue stripclear
 group badgefont-test | tests/badgefont.cjs | badgefont
 group hudclear-test | tests/hudclear.cjs | hudclear
+group needs-ui | src/missionplan.js src/missionsview.js src/ui.js src/wild.js src/missions2.js | needsmark-ui missiongo
