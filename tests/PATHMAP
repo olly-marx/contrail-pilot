@@ -12,7 +12,7 @@ group harness | tests/lib/* tests/BROWSER tests/PATHMAP tests/GATE tests/DEEP to
 group tests-themselves | tests/*.cjs tests/*.json | NONE
 # ci-gate files: the Node-tier test cigate covers them; the proof of a workflow change is the ci-dry/* dry runs (RELEASING.md)
 group ci-gate | tools/ci-gate.sh tools/durations.sh tests/DURATIONS.tsv .github/workflows/* | NONE
-group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/hub.js src/upgrades.js src/startchoice.js src/school.js src/rewards.js src/wild.js | plantrail hangartakeoff onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school rewards missions tours bubblestill firsthour-real missionlanes pilotpreview keepvisible
+group onboarding | src/tour.js src/tips.js src/missions2.js src/missions.js src/hub.js src/upgrades.js src/startchoice.js src/school.js src/rewards.js src/wild.js | plantrail hangartakeoff onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school rewards missions tours bubblestill firsthour-real missionlanes pilotpreview keepvisible rparcels
 group aimed-route | src/aim.js src/hub.js src/route.js | missiongo nextchip
 group results-card | src/resultscard.js src/nextup.js src/ui.js src/tour.js src/tips.js | rewards missions wildfield eras school progression firsthour-real biodiversity fares rails2
 group heavy-onboarding | src/missions2.js src/upgrades.js src/hub.js src/wild.js | postrails
@@ -71,7 +71,7 @@ group backup-ui | src/ui.js | backuprestore resetui
 group sound-live | src/sound.js | audiolive
 group sound-live-ui | src/ui.js | audiolive
 group hangar-pay | src/hangar.js style.css | hangarpay hubscreen onrails320
-group spotlight | src/tour.js src/railsubjects.js tests/lib/spotlight.js tests/lib/spotcases.js | spotlight onrails320 onrails
+group spotlight | src/tour.js src/railsubjects.js tests/lib/spotlight.js tests/lib/spotcases.js | spotlight onrails320 onrails rparcels
 group payoff-full | src/hangar.js style.css | payofffull
 group music | src/music.js src/musicdata.js src/musicengine.js src/musicplan.js | audiolive
 group gap-hint-restart | src/GameScene.js src/gapmarkers.js | gaphintrestart gaphint
