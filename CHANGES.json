@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-11-crossing-prizes",
+    "version": "0.59.0",
+    "date": "2026-11-11",
+    "level": "minor",
+    "notes": [
+      "Every crossing now pays seeds and ice crystals, more for the harder ones, and The lap pays the most. It is paid once, when you land the crossing."
+    ]
+  },
+  {
     "id": "2026-11-11-long-flight-streaks",
     "version": "0.58.0",
     "date": "2026-11-11",
