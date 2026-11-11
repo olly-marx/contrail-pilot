@@ -13,7 +13,7 @@ const SHOTS = process.env.SHOTS || require('path').join(require('os').tmpdir(), 
 // What the page shows right now: so a red step says in one run whether the fixture or the product is wrong (screenshot + visible state + the element covering the tab's centre).
 async function diag(p, tag, stage) {
   try {
-    fs.mkdirSync(SHOTS, { recursive: true });
+    if (!fs.existsSync(SHOTS)) fs.mkdirSync(SHOTS);   // (not recursive: that loops for ever on an uncreatable path under /proc)
     const f = `${SHOTS}/${tag}-${stage.replace(/\W+/g, '_')}.png`; await p.screenshot({ path: f }).catch(() => {});
     const st = await p.evaluate(() => {
       const vis = e => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return !e.hidden && cs.display !== 'none' && cs.visibility !== 'hidden' && r.width > 0 && r.height > 0; };
