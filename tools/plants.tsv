@@ -681,3 +681,4 @@ resetui	src/save.js	s/  for (const k of Object.keys(live)) delete live\[k\];//	r
 resetui	src/save.js	s/ 'contrailPilot.firstName',//	reset keeps the first name of the old pilot (in the browser)
 resetui	src/ui.js	s/      location.reload(); .*$//	reset does not reload the page
 resetui	src/ui.js	s/ Write your pilot code down first if you want to come back to your online pilot\.//	the reset confirm does not tell the player to write the pilot code down first
+payofffull	src/hangar.js	s#lab.style.top = `${Math.round(c.height + 6)}px`;#lab.style.top = `${Math.round(m.top - c.top - 6)}px`;#	the payoff label is back over the plane
