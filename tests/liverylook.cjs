@@ -1,6 +1,8 @@
 // THE LAP LIVERY (src/livery.js, src/fleet.js lookFiles, src/hangar.js, src/GameScene.js planeLookKey; tools/art/make_livery.py). Plain Node, nothing run in a browser.
 // (1) liveryOn: true only for a save with lapDone. (2) lookFiles puts the livery LAST, for flight and hangar, only when asked, for all six planes, and never adds it to a plane with no lap. (3) every picture exists with the right size
 // (62x27 flight, 400x176 hangar) and UPGRADE_ART preloads the six flight ones. (4) each call site passes liveryOn: the payoff 'before' and 'after' must both carry it, or a purchase would flash the livery off. (5) the sim engine never imports it.
+// PICTURES (provenance): the six flight sprites assets/upgrades/plane-<art>-livery.png are the g5 variant (5x5 globe on the tail + the gold stripe; the user's pick, 2026-11-11), written by
+// `make_livery.py --variant g5` at tools/art/make_livery.py 553902a into ~/shots-art/livery-var/g5/ (not in the repo) and copied here by cp; the six hangar portraits are run 4 (425b02f). Check: 62x27 / 400x176 only; no screenshots.
 // Run: node tests/liverylook.cjs     Plants: tools/plants.tsv, test `liverylook`.
 const fs = require('fs'), path = require('path');
 const R = f => path.join(__dirname, '..', f);

@@ -216,7 +216,7 @@ def make(base, kind, art, decl, glyph=None, extra=()):
 
 NAVY = (24, 40, 96, 255)
 VARIANTS = ('base', 'g5', 'band', 'body', 'g5band')
-VARIANT_BUDGET = {'g5': 24, 'band': 18, 'body': 14, 'g5band': 30}   # changed pixels per SPRITE, per variant (base keeps BUDGET)
+VARIANT_BUDGET = {'g5': 28, 'band': 18, 'body': 14, 'g5band': 30}   # changed pixels per SPRITE, per variant (base keeps BUDGET)
 
 
 def globe_sprite5():
