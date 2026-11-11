@@ -24,7 +24,8 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       let stage = 'load';
       try {
         await p.goto(URL); await ready(p); await p.waitForTimeout(800);
-        stage = 'open BOARDS'; await p.evaluate(() => game.registry.get('ui').go('boards')); await p.waitForTimeout(900);
+        stage = 'open BOARDS, then the BADGES sub-tab (a real tap; src/recordsui.js subtabs: RECORDS / BADGES)'; await p.evaluate(() => game.registry.get('ui').go('boards')); await p.waitForTimeout(900);
+        await p.click('#bSubtabs [data-btab="badges"]'); await p.waitForTimeout(500);
         const m = await p.evaluate(() => {
           const vis = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return !e.hidden && cs.display !== 'none' && r.width > 0 && r.height > 0; };
           const tabs = [...document.querySelectorAll('#tabbar .tab')].filter(vis).map(e => ({ t: e.innerText.trim() || e.textContent.trim(), fs: parseFloat(getComputedStyle(e).fontSize), sw: e.scrollWidth, cw: e.clientWidth, spanOver: [...e.querySelectorAll('span')].some(s => s.scrollWidth > s.clientWidth + 1) }));
