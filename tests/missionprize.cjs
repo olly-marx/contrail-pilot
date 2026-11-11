@@ -17,10 +17,11 @@ globalThis.SEASON2 = true;
   let threwKind = false, threwWord = false; try { Z.missionPrize('nope', 1); } catch (e) { threwKind = true; } try { Z.crossingReward('Nope'); } catch (e) { threwWord = true; }
   check(sum[0] === 9100 && sum[1] === 1132 && threwKind && threwWord, `22 crossings pay 9,100 seeds and 1,132 crystals, and an unknown kind or word throws: ${sum}, threw ${threwKind}/${threwWord}`);
   // 4: shown = paid
-  const s = S.prepareSave(null); Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: {}, flights: 20, landings: 12 });
+  const s = S.prepareSave(null); Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:shade', 'weurope:plant-tree', 'weurope:clean-gaps', 'weurope:dodge', 'weurope:spot', 'weurope:hazard'], levels: {}, flights: 20, landings: 12 });   // tiers 1 to 3 open: the old flat pay equalled the table only in tier 1, so a tier-1-only fixture could not tell them apart (the first prove-plants run)
   const vis = M2.visible(s), bad = vis.filter(m => { const want = Z.missionPrize(Z.kindOf(m.def.id), m.fill.k); return m.prize.seeds !== want.seeds || m.prize.crystals !== want.crystals; });
   check(vis.length > 0 && bad.length === 0, `the prize shown on every visible mission is missionPrize(kind, k): ${vis.length} missions, off: ${bad.map(m => m.def.id)}`);
   const lc = vis.find(m => m.def.id === 'land-city'), seeds0 = s.seeds || 0;
+  check(vis.some(m => m.def.id === 'chain') && vis.some(m => m.def.id === 'route') && !!lc, `FIXTURE: land-city, chain and route are all offered: ${vis.map(m => m.def.id)}`);
   M2.onFlight(s, { landed: true, landedAt: lc.fill.city, distance: 100, airportsSkipped: 0, cargo: 0, planted: 0, sunBlocked: 0, cleanGaps: 0 });
   check((s.seeds || 0) - seeds0 === lc.prize.seeds, `finishing land-city banks exactly the prize shown (${lc.prize.seeds}): +${(s.seeds || 0) - seeds0}`);
   console.log(fails.length ? `FAIL missionprize:\n - ${fails.join('\n - ')}` : 'PASS missionprize: tier totals stay 60 / 90 / 105, pay follows effort inside a tier, the crossing scale sums to 9,100 seeds, the prize shown is the prize paid');
