@@ -1,0 +1,19 @@
+# DECLARED anchors for the lap livery (tools/art/make_livery.py reads this; nothing is searched for or inferred).
+# Written at the desk by looking at the twelve base pictures, enlarged. Planes face RIGHT. Pixel coordinates, (0,0) = top-left.
+#   gx gy  = the centre of the globe, gr = its radius (portrait 4..7; a sprite's globe is the fixed 3x3 glyph, so gr is 1)
+#   sx0..sx1 = the stripe's columns, sy0..sy1 = its rows (inclusive); only pixels that are light enough (the dark outline and the windows stay) are painted gold
+# The script FAILS if any globe pixel or any declared stripe cell is not a drawn pixel of the plane's body, if too few stripe cells take the gold, or if a picture goes over its budget (14 sprite, 500 portrait).
+# Hydrogen: the blended wing's own fin is about 12 px wide, so its globe sits on the aft body just in front of it. Twin sprite: NO stripe (sx0 > sx1 declares none): the plane's own gold bar at x=55 already is the nose stripe. Twin portrait: stripe on the white part only. Globes: comet and 787 sprites sit on plain fin colour, the twin portrait globe is left of the white logo.
+# art	kind	gx	gy	gr	sx0	sx1	sy0	sy1
+comet	sprite	10	13	1	51	51	14	20
+comet	portrait	48	46	7	328	331	96	147
+747	sprite	7	10	1	52	52	15	20
+747	portrait	52	46	7	322	325	80	135
+twin	sprite	7	9	1	1	0	0	0
+twin	portrait	52	66	7	353	356	92	126
+787	sprite	9	12	1	53	53	14	20
+787	portrait	60	55	7	362	365	92	122
+truss	sprite	8	9	1	51	51	18	22
+truss	portrait	40	58	7	354	357	92	126
+hydrogen	sprite	5	10	1	51	51	14	19
+hydrogen	portrait	66	92	7	356	359	91	105
