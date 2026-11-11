@@ -1,9 +1,10 @@
 // The pixel font is drawn for multiples of 8 px. At 7 px the B of 'Bronze' on a locked badge card lost a row and read 'Dronze' (the user, 2026-11-10; style.css .badge2).
-// The user's decision (2026-11-11): the BADGE CARDS' words go to 8 px; the TAB BAR stays as it was (7 px, 6 px on a 320 phone: 'DOARDS' stays on small phones, no rename; at 8 px MISSIONS collided with HANGAR).
+// The user's decision (2026-11-11), applied by the Coordinator after the measurement: the text on the BADGE CARDS goes to 8 px on phones WIDER THAN 340 px only; a 320 phone stays exactly as it was ('Dronze' stays there: at 8 px 'Bumpy Ride' spilled 7 px and 'Globetrotter' 15 px);
+// the TAB BAR stays as it was (7 px, 6 px on a 320 phone: 'DOARDS' stays on small phones, no rename; at 8 px MISSIONS collided with HANGAR).
 // The overflow rule: a card may spill no more than it does on main (the old CSS, put back here as a style tag for the baseline) plus 2 px; an 8 px size must not make cards spill that did not.
 // Real page, 390x844 and 320x568, season 2, BOARDS > BADGES (a real tap on the sub-tab). Checks, in order:
 //  FIXTURE: the BADGES page shows badge cards and the tab bar shows at least 5 tabs.
-//  1. the badge text under the name (.badge2 span, where a locked card says 'Bronze: ...') is drawn at 8 px or more, and a locked many-tier card does read 'Bronze: ...'.
+//  1. above 340 px wide the badge text under the name (.badge2 span, where a locked card says 'Bronze: ...') is drawn at 8 px; at 340 px or less it is unchanged (7 px); a locked many-tier card does read 'Bronze: ...'.
 //  2. the badge names (.badge2 b) are not drawn smaller than 7 px.
 //  3. no card spills more than on main by more than 2 px (per card name).
 //  4. the tab bar is unchanged: 7 px at 390, 6 px at 320 (pinned only so the card change cannot drag it along).
@@ -41,8 +42,9 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
         });
         check(m.tabs.length >= 5 && m.cards.length > 0, `${tag}: FIXTURE: BOARDS shows badge cards and at least 5 tabs (tabs ${m.tabs.length}, cards ${m.cards.length})`);
         if (fails.length) { await p.screenshot({ path: `${SHOTS}/${tag}-fixture-red.png` }); await ctx.close(); continue; }
-        const smallS = m.cards.filter(x => x.sfs < 8), bronze = m.cards.find(x => !x.got && /^Bronze:/.test(x.text));
-        check(smallS.length === 0, `${tag}: the badge text (.badge2 span, 'Bronze: ...') is drawn at 8 px or more: ${JSON.stringify(smallS.slice(0, 3).map(x => [x.text.slice(0, 20), x.sfs]))}`);
+        const wideScreen = W > 340, textNow = [...new Set(m.cards.map(x => x.sfs))], bronze = m.cards.find(x => !x.got && /^Bronze:/.test(x.text));
+        if (wideScreen) check(textNow.length === 1 && textNow[0] === 8, `${tag}: above 340 px wide the badge text (.badge2 span, 'Bronze: ...') is drawn at 8 px: ${JSON.stringify(textNow)}`);
+        else check(textNow.length === 1 && textNow[0] === 7, `${tag}: at 320 the badge text is unchanged, 7 px: ${JSON.stringify(textNow)}`);
         check(!!bronze, `${tag}: a locked many-tier badge card reads 'Bronze: ...': ${JSON.stringify(m.cards.filter(x => !x.got).slice(0, 3).map(x => x.text.slice(0, 24)))}`);
         const smallB = m.cards.filter(x => x.bfs < 7);
         check(smallB.length === 0, `${tag}: the badge names (.badge2 b) are not drawn smaller than 7 px: ${JSON.stringify(smallB.slice(0, 3).map(x => [x.name, x.bfs]))}`);
@@ -59,6 +61,6 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
     }
   } catch (e) { fails.push('exception: ' + e); }
   await b.close();
-  console.log(fails.length ? `FAIL badgefont:\n - ${fails.join('\n - ')}` : 'PASS badgefont: the badge text is drawn at 8 px, a locked card reads Bronze, no card spills more than on main, the tab bar is unchanged (390 and 320 wide)');
+  console.log(fails.length ? `FAIL badgefont:\n - ${fails.join('\n - ')}` : 'PASS badgefont: the badge text is 8 px above 340 px wide and unchanged at 320, a locked card reads Bronze, no card spills more than on main, the tab bar is unchanged');
   process.exit(fails.length ? 1 : 0);
 })();
