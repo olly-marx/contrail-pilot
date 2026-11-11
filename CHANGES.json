@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-11-hud-clear-badge-text",
+    "version": "0.54.0",
+    "date": "2026-11-11",
+    "level": "minor",
+    "notes": [
+      "The tip and message cards no longer cover the \"Flying to ...\" banner and the line with the next airport.",
+      "The Bronze, Silver and Gold words on locked badge cards are easier to read on most phones."
+    ]
+  },
+  {
     "id": "2026-11-11-mission-steer",
     "version": "0.53.0",
     "date": "2026-11-11",
