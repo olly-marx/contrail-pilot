@@ -97,6 +97,7 @@ export function ownFill(save, a, startCity, id, f, key) {
   else { const nw = save.missionCities == null ? null : newRule(save, a, startCity, id);   // an OLD save (no save.missionCities yet) shows today's cities until they are stored: never the new rule
     own = nw ? { ...f, ...nw, rule: 'new' } : { ...f, ...oldRule(id, f), rule: 'old' }; }
   for (const k of ALL_CITY_FIELDS) if (!CITY_FIELDS[id].includes(k)) delete own[k];   // only the city fields this template owns
+  if (id === 'chain' && own.rule !== 'new') delete own.cityC;   // the old two-city chain has no third leg (the shared fill's cityC is where the player stands NOW)
   own.key = key;
   if (id === 'chain') own.progress = Math.min(2, (save.missionProgress || {})[key] || 0);
   return own;
