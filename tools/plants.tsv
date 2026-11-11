@@ -695,6 +695,6 @@ exploreland	src/wild.js	s/else { s.stayLand = this.region; s.routeMode = 'explor
 exploreland	src/wild.js	s/if (here) { s.stayLand = null; s.routeMode = 'mission'; }/if (here) { s.stayLand = null; }/	STOP does not return to the mission
 exploreland	src/wild.js	s/ || !(left || here);/ || false;/	EXPLORE HERE shows when the land has nothing left to visit
 targetbanner-ui	src/GameScene.js	s/st.why === 'chosen' || st.why === 'mission' ? st.city : null; if/st.why === 'chosen' ? st.city : null; if/	the banner never shows for the mission steer
-badgefont	style.css	s/^.badge2 b { font-size: 8px;/.badge2 b { font-size: 7px;/	the badge names are drawn at 7 px again
 badgefont	style.css	s/padding: 4px; font-size: 8px; border: 0;/padding: 4px; font-size: 7px; border: 0;/	the badge text (Bronze: ...) is drawn at 7 px again (Bronze reads Dronze)
 badgefont	style.css	s/minmax(84px, 1fr)/minmax(40px, 1fr)/	the badge cards are too narrow for their text
+badgefont	style.css	s/^.tab { position: relative; font-family: 'Pixel', monospace; font-size: 7px;/.tab { position: relative; font-family: 'Pixel', monospace; font-size: 8px;/	the tab bar is drawn at 8 px
