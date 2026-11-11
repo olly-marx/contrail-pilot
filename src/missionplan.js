@@ -17,6 +17,10 @@ import { LINES } from './upgrades.js';
 // There the stretch is always the floor (the farthest city, so 'median 1 flight, 0 stuck' as the sim measured). Read only by tests/missionplan.cjs.
 export const SMALL_AREAS = { oceania: 2, easia: 2, patagonia: 1 };
 export const CITY_IDS = ['land-city', 'chain', 'rescue', 'route'];
+// THE FIELD MAP, declared once (the tests and the sim chat's analyzer read the same table): the city fields each city template OWNS. A mission's fill carries only these (plus the non-city fields: k, stage, key, rule, progress, ...);
+// the other city fields of the shared fill (where the player stands NOW) would show a moving city to any reader that picked the wrong one.
+export const CITY_FIELDS = { 'land-city': ['city'], chain: ['city', 'cityB', 'cityC'], rescue: ['cityB'], route: ['cityC', 'stretch'] };
+export const ALL_CITY_FIELDS = ['city', 'cityB', 'cityC', 'stretch'];
 
 export const stopsOf = (L, a, b) => {
   if (!a || !b || a === b || !L[a] || !L[b]) return Infinity;
@@ -92,6 +96,7 @@ export function ownFill(save, a, startCity, id, f, key) {
   if (st) { const { rule, from, at, ...o } = st; own = { ...f, ...o, rule }; }
   else { const nw = save.missionCities == null ? null : newRule(save, a, startCity, id);   // an OLD save (no save.missionCities yet) shows today's cities until they are stored: never the new rule
     own = nw ? { ...f, ...nw, rule: 'new' } : { ...f, ...oldRule(id, f), rule: 'old' }; }
+  for (const k of ALL_CITY_FIELDS) if (!CITY_FIELDS[id].includes(k)) delete own[k];   // only the city fields this template owns
   own.key = key;
   if (id === 'chain') own.progress = Math.min(2, (save.missionProgress || {})[key] || 0);
   return own;

@@ -737,3 +737,4 @@ missionplan	src/missionplan.js	s/const nw = save.missionCities == null ? null : 
 missionplan	src/missionplan.js	s/filter(x => Number.isFinite(x.n) \&\& x.n >= 1);/filter(x => Number.isFinite(x.n) \&\& x.n >= 2);/	the stretch's floor needs 2 stops (a 1-stop area has no stretch)
 missionplan	src/missionplan.js	s/q.n - p.n || q.km - p.km || p.i - q.i/q.n - p.n || p.i - q.i/	the floor's ties go to list order, not to the longer route
 missionplan	src/sim/progression.js	s/ missionCities: {}, \.\.\.start/ ...start/	the sim's start save has no missionCities (its first city is stored as an old save's)
+missionplan	src/missionplan.js	s/^  for (const k of ALL_CITY_FIELDS) if (!CITY_FIELDS\[id\].includes(k)) delete own\[k\];.*$//	a mission keeps the city fields of the other templates (a moving city)

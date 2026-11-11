@@ -4,6 +4,7 @@
 //   1. land-city names a city at least 2 stops away
 //   2. chain names THREE cities: stops from the start / from A / from B each at least 2, B is not A, C is not B, the title names all three
 //   3. the stretch (route): at least 3 stops, within 0.90 x reach when such a city exists; no reach information: 3 stops
+//   3b. a stored mission carries only the city fields its template uses (the declared map P.CITY_FIELDS)
 //   4. FIXED UNTIL COMPLETED: assignMissionCities stores the cities and a second call changes nothing; the stored cities survive a visit and a move
 //   5. OLD SAVES: a save without save.missionCities keeps the city it shows today (rule 'old'); a new save stores rule 'new'
 //   6. a finished mission's cities are dropped and its prize is paid once
@@ -42,6 +43,11 @@ globalThis.SEASON2 = true;
   check(!!rr && !!rr.fill.stretch && rr.fill.stretch.stops >= 3 && rkm <= 0.9 * reach, `the stretch is at least 3 stops and within 0.90 x reach (${reach}): ${rr && rr.fill.cityC} ${rkm} km, ${rr && rr.fill.stretch && rr.fill.stretch.stops} stops`);
   check(!!rr && /in one flight/.test(rr.title), `the stretch title says 'in one flight': ${rr && rr.title}`);
   check(!!rt.fill.stretch && rt.fill.stretch.stops === 3, `with no reach information the stretch is 3 stops: ${JSON.stringify(rt.fill.stretch)}`);
+  // 3b. a stored/derived mission carries only the city fields its template owns (P.CITY_FIELDS): no moving city of another template
+  const stray = M2.visible(s0).filter(m => P.CITY_FIELDS[m.def.id]).flatMap(m => Object.keys(m.fill).filter(k => P.ALL_CITY_FIELDS.includes(k) && !P.CITY_FIELDS[m.def.id].includes(k)).map(k => `${m.def.id}.${k}`));
+  const sNew = mk(); M2.assignMissionCities(sNew);
+  const strayStored = Object.entries(sNew.missionCities).flatMap(([k, e]) => Object.keys(e).filter(f => P.ALL_CITY_FIELDS.includes(f) && !P.CITY_FIELDS[k.split(':')[1]].includes(f)).map(f => `${k}.${f}`));
+  check(stray.length === 0 && strayStored.length === 0, `a stored mission carries only the city fields its template uses: stray in the fill ${JSON.stringify(stray)}, in the stored entries ${JSON.stringify(strayStored)}`);
   // 4
   const s4 = mk(); const changed1 = M2.assignMissionCities(s4), snap = JSON.stringify(s4.missionCities), changed2 = M2.assignMissionCities(s4);
   check(changed1 === true && Object.keys(s4.missionCities).length >= 3 && changed2 === false && JSON.stringify(s4.missionCities) === snap, `assignMissionCities stores the cities and is idempotent: first ${changed1}, second ${changed2}, ${Object.keys(s4.missionCities)}`);
