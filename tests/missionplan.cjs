@@ -87,7 +87,7 @@ globalThis.SEASON2 = true;
       const fl = M2.fillFor(sv, a, c), LL = R.linksFor(sv);
       for (const id of ['land-city', 'chain', 'route']) {
         const o = P.ownFill(sv, a, c, id, fl, `${a}:${id}`), names = id === 'land-city' ? [o.city] : id === 'chain' ? [o.city, o.cityB, o.cityC] : [o.cityC];
-        if (names.some(n => !n || P.stopsOf(LL, c, n) === Infinity)) bad8.push(`${a} from ${c}: ${id} -> ${JSON.stringify(names)}`);
+        if (names.some(n => !n || (n !== c && P.stopsOf(LL, c, n) === Infinity))) bad8.push(`${a} from ${c}: ${id} -> ${JSON.stringify(names)}`);
         if (id === 'chain' && o.rule === 'new' && o.cityC === o.city && P.farCity(sv, LL, o.cityB, [o.cityB, o.city])) badA.push(`${a} from ${c}: ${JSON.stringify(names)}`);
         if (id === 'route') {
           if (!o.stretch || o.stretch.stops < 1 || o.rule !== 'new') badD.push(`${a} from ${c}: ${JSON.stringify([o.cityC, o.stretch, o.rule])}`);
