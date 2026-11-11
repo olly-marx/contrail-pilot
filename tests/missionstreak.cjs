@@ -30,6 +30,12 @@ globalThis.SEASON2 = true;
   s0.fleet = { ...s0.fleet, plane: 'jumbo', planes: { ...(s0.fleet.planes || {}), jumbo: {} } }; M2.assignMissionCities(s0);
   const sj = mk(); sj.fleet = { ...sj.fleet, plane: 'jumbo', planes: { ...(sj.fleet.planes || {}), jumbo: {} } }; M2.assignMissionCities(sj);
   check(D0 === 3100 && s0.missionDist[K2].D === 3100 && s0.missionDist[K3].D === 3100 && sj.missionDist[K2].D === 3900, `D by plane: the Comet's D is 3,100 and stays after a plane change, a mission first shown with the jumbo stores 3,900: ${JSON.stringify([D0, s0.missionDist[K2].D, sj.missionDist[K2] && sj.missionDist[K2].D])}`);
+  // 4 (run first among the counting lines: the plant 'Land 2 done one landing early' must fail HERE, by its own line)
+  const s4 = mk(), c0 = s4.crystals || 0; M2.assignMissionCities(s4); const seeds0 = s4.seeds || 0;
+  land(s4, 3200); const d2 = land(s4, 3400);
+  check(d2.some(m => m.key === K2) && s4.missionsDone.includes(K2) && !s4.missionsDone.includes(K3) && (s4.seeds || 0) - seeds0 >= Z.missionPrize('streak2', 1).seeds && !s4.missionDist[K2] && !(K2 in (s4.missionStreak || {})), `two long landings finish Land 2 and pay (once), entries dropped: done ${d2.map(m => m.key)}, seeds +${(s4.seeds || 0) - seeds0}, crystals +${(s4.crystals || 0) - c0}`);
+  const d3 = land(s4, 3500);
+  check(d3.some(m => m.key === K3) && s4.missionsDone.includes(K3), `the third long landing finishes Land 3: ${d3.map(m => m.key)}`);
   // 2
   const s2 = mk(); land(s2, 3200);
   check(cnt(s2, K3) === 1, `a long landing adds one (counted on Land 3, so that finishing Land 2 early is caught by line 4 only): ${JSON.stringify(s2.missionStreak)}`);
@@ -40,12 +46,6 @@ globalThis.SEASON2 = true;
   check(cnt(s3, K2) === 0 && s3.streakBroken === 2, `a crash (even one that flew farther than D) sets the count back to 0 and counts the broken rows: ${JSON.stringify([s3.missionStreak, s3.streakBroken])}`);
   land(s3, 3300);
   check(s3.streakBroken === 0 && cnt(s3, K2) === 1, `a flight that breaks nothing leaves streakBroken at 0: ${s3.streakBroken}`);
-  // 4
-  const s4 = mk(), c0 = s4.crystals || 0; M2.assignMissionCities(s4); const seeds0 = s4.seeds || 0;
-  land(s4, 3200); const d2 = land(s4, 3400);
-  check(d2.some(m => m.key === K2) && s4.missionsDone.includes(K2) && !s4.missionsDone.includes(K3) && (s4.seeds || 0) - seeds0 >= Z.missionPrize('streak2', 1).seeds && !s4.missionDist[K2] && !(K2 in (s4.missionStreak || {})), `two long landings finish Land 2 and pay (once), entries dropped: done ${d2.map(m => m.key)}, seeds +${(s4.seeds || 0) - seeds0}, crystals +${(s4.crystals || 0) - c0}`);
-  const d3 = land(s4, 3500);
-  check(d3.some(m => m.key === K3) && s4.missionsDone.includes(K3), `the third long landing finishes Land 3: ${d3.map(m => m.key)}`);
   // 5
   const s5 = mk(); M2.assignMissionCities(s5); const ch = find(s5, 'chain').fill;
   land(s5, 3300); land(s5, 500, ch.city);   // a short landing at the chain's first city: streak back to 0, chain at 1
