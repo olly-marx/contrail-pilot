@@ -38,6 +38,7 @@ import { REGION_DATA, REGION_NAMES } from './habitats.js';
 import { treesPlanted } from './treecount.js';
 import { CRYSTAL_WHY } from './tips.js';
 import { shortName } from './droporder.js';
+const NEXT_LABEL_W = 110;   // the widest 'Next: <TREE>' label above the PLANT button, game px: it grows to the LEFT of the button's right edge (tests/textfit.cjs checks every tree name)
 
 const SKY_H = HEIGHT - GROUND_H;
 const FONT = 'Pixel, monospace';
@@ -215,7 +216,7 @@ export class GameScene extends Phaser.Scene {
     this.dropBg = this.add.rectangle(bx, by, 64, 32, 0x4caf50).setOrigin(0).setStrokeStyle(2, 0x1b1b2f);
     this.dropLabel = this.add.text(bx + 32, by + 16, 'DROP', { ...font, fontSize: '8px', strokeThickness: 3, align: 'center', lineSpacing: 3 }).setOrigin(0.5);
     this.dropLabel.setFontSize(7);
-    this.nextTreeText = this.add.text(bx + 32, by - 3, '', { ...font, fontSize: '7px', strokeThickness: 3, color: '#ffe9a8' }).setOrigin(0.5, 1);   // 'Next: OAK' (src/droporder.js): the tree the next drop will plant
+    this.nextTreeText = this.add.text(bx + 64, by - 3, '', { ...font, fontSize: '7px', strokeThickness: 3, color: '#ffe9a8' }).setOrigin(1, 1);   // right-aligned to the button's right edge and fitted (a centred 'Next: SPRUCE' ran off the right edge of the screen at 320: the Coordinator's shot, 2026-11-12)   // 'Next: OAK' (src/droporder.js): the tree the next drop will plant
     this.dropArrowGfx = this.add.graphics().setDepth(this.dropBg.depth + 1);   // the first-tree arrow over the button (made in THIS scene: a restart destroys the old display list)
     this.setDropVisible(false);
     // CLEAN (Ops 8+, eras 4-6): hold it at night to fly through icy air with no contrail, for kit.cleanSecs a night
@@ -1567,7 +1568,7 @@ export class GameScene extends Phaser.Scene {
     this.setDropVisible(showDrop);
     this.dropArrowGfx.clear();   // a bobbing arrow on PLANT while soil is ahead and no tree has landed yet (not in school or the automated tests)
     if (showDrop && soilSoon && this.noTreeYet() && !this.school && !(this.save.seenTips || []).includes('*')) { const d = this.dropBox, y = d.y - 6 + Math.sin(this.time.now / 180) * 3, cx = d.x + d.w / 2; this.dropArrowGfx.fillStyle(0xffe15a, 1).fillTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y).lineStyle(1, 0x1b1b2f, 1).strokeTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y); }
-    if (showDrop) { this.fitText(this.dropLabel.setText(`PLANT\nx${this.parcels}`), this.dropBox.w - 8, 7); const nx = this.nextTreeInfo(); this.nextTreeText.setText(nx ? `Next: ${shortName(nx.name)}` : 'Grove full here'); }   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
+    if (showDrop) { this.fitText(this.dropLabel.setText(`PLANT\nx${this.parcels}`), this.dropBox.w - 8, 7); const nx = this.nextTreeInfo(); this.fitText(this.nextTreeText.setText(nx ? `Next: ${shortName(nx.name)}` : 'Grove full here'), NEXT_LABEL_W, 7); }   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
     this.cargoText.setText(`${this.cargo}`);
     this.crysText.setText(`${this.crystals}`);
     this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');

@@ -34,11 +34,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
       // 3. the DROP button label
       s.parcels = 12; s.kit.tree = s.kit.tree || { parcels: 12 }; s.state = 'playing'; s.regionNow = 'woodland'; s.updateTexts(false);
       out.drop = { text: s.dropLabel.text, w: s.dropLabel.width, h: s.dropLabel.height, box: s.dropBox, shown: s.dropShown };
+      // 3b. the 'Next: <TREE>' label above the PLANT button, for every tree name of every land (it must stay on the screen)
+      const { REGION_TREES } = await import('./src/habitat/trees.js'), { shortName } = await import('./src/droporder.js'), names = [...new Set(Object.values(REGION_TREES).flat().map(t => t.name))];
+      out.next = names.concat(['Grove full']).map(n => { s.nextTreeInfo = () => (n === 'Grove full' ? null : { name: n }); s.updateTexts(false); const b = s.nextTreeText.getBounds(); return { n, text: s.nextTreeText.text, left: b.x, right: b.x + b.width }; });
       out.W = W; out.canvas = (() => { const r = document.querySelector('canvas').getBoundingClientRect(); return { w: r.width, vw: innerWidth }; })();
       return out;
     });
     const tag = `${width}px`;
     check(m.canvas.w <= width + 1, `${tag}: the canvas is ${m.canvas.w} px wide`);
+    m.next.forEach(q => check(q.left >= 0 && q.right <= m.W && q.text.length > 0, `${tag}: the label above the PLANT button for "${q.n}" ("${q.text}") spans ${Math.round(q.left)}..${Math.round(q.right)} of ${m.W}`));
+    check(m.next.length >= 20 && m.next.some(q => /^Next: /.test(q.text)), `${tag}: power: ${m.next.length} labels measured (every tree name of every land plus the full grove) and they say 'Next: ...'`);
     m.airport.forEach((a, i) => check(a.w <= m.W - 8, `${tag}: airport call ${i} "${a.text}" is ${Math.round(a.w)} game-px wide, the screen is ${m.W}`));
     check(m.airport.every(a => a.text), `${tag}: every form of the airport call must have text: ${JSON.stringify(m.airport.map(a => a.text))}`);
     m.banners.forEach(bn => { bn.widths.forEach((w, i) => check(w <= bn.box - 6, `${tag}: banner ${bn.r} text "${bn.texts[i]}" is ${Math.round(w)} wide in a ${bn.box} box`));

@@ -803,3 +803,4 @@ treelineui	src/ui.js	s/this.grownToastDue = (r.treesGrown || 0) > 0 \&\& /this.g
 treewords	src/resultscard.js	s/v.treeNames = v.trees \&\& planted \&\& names ? clip(names, LINE_MAX) : '';/v.treeNames = '';/	the second line (the kinds) is never given
 treewords	src/resultscard.js	s/? clip(names, LINE_MAX) : /? names : /	a long list of kinds is not clipped to the row
 treelineui	style.css	s/^\.rc-trees \.rc-treenames { flex: none; font-size: 7px;/.rc-trees .rc-treenames { display: none; flex: none; font-size: 7px;/	the kinds line is hidden by the stylesheet
+textfit	src/GameScene.js	s/text(bx + 64, by - 3/text(bx + 32, by - 3/;s/\.setOrigin(1, 1);   \/\/ right-aligned/.setOrigin(0.5, 1);   \/\/ right-aligned/	the Next label is centred on the button again and runs off the right edge
