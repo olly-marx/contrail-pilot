@@ -11,6 +11,7 @@ import { composedURL } from './planelook.js';
 import { liveryOn } from './livery.js';
 import { onSwipe } from './swipe.js';
 import { lookFiles, hangarGadgets, previewBars, withNext, shortName } from './fleet.js';
+import { levelCard, ALL_DONE } from './upgradetext.js';
 import { statBarsHTML, animateBars } from './statbars.js';
 import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
@@ -226,9 +227,19 @@ export class FleetHangar {
     // The strip (DESIGN-HANGAR-NATURE): the FULL name, what it does, the bars, and the (i) 'More about it' (moved off the rows).
     const info = item.kind === 'fly' ? '' : `<button class="btn hp-info" data-finfo="${item.kind}:${item.id}" type="button">i More about it</button>`;
     return `<div id="hPreview" class="hpreview"><p class="hp-name"><b>${item.name}</b>${item.level ? ` <span class="small">level ${item.level}</span>` : ''}</p>`
-      + (item.kind === 'fly' ? '' : `<p class="small hp-what">${effectText(item)}</p>`)
+      + (item.kind === 'fly' ? '' : this.levelBarHTML(s, item))
       + (bars.length ? statBarsHTML(bars) : `<p class="small">${tip('hangar-looks')}</p>`)
       + (item.kind !== 'fly' && item.open && !ok ? `<p class="small need">${needText(s, item)}</p>` : '') + `<div class="hp-buy">${info}${btn}</div></div>`;
+  }
+
+  // THE UPGRADE BAR (BLOCK2-PLAN item 4, DESIGN-UPGRADE-BAR.md part B): one segment per level of the tapped line, filled up to yours, then 'Now: what your level does' and 'Next: the name and effect of the next level'.
+  // The words come from src/upgradetext.js levelCard (one table for the shop, the bar and the tests). A line whose card is unknown falls back to the old one-line effect text.
+  levelBarHTML(s, item) {
+    const c = levelCard(s, item.kind, item.id);
+    if (!c) return `<p class="small hp-what">${effectText(item)}</p>`;
+    const segs = Array.from({ length: c.count }, (_, i) => `<i class="${i < c.have ? 'on' : ''}"></i>`).join('');
+    return `<div class="lvbar" role="img" aria-label="level ${c.have} of ${c.count}">${segs}</div>`
+      + `<p class="small hp-now">Now: ${c.now}</p>` + `<p class="small hp-next">${c.next ? `Next: ${c.next}` : ALL_DONE}</p>`;
   }
 
   // The big picture at the top (400 x 176, the art session's hangar portrait): the plane you fly, or

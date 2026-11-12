@@ -775,3 +775,11 @@ crossreward	src/missionprize.js	s/  if (!Number.isInteger(e) || e < 0 || e > 4) 
 crossrewardui	src/ui.js	s/<p class="ending-prize">/<p class="ending-prize" style="position:absolute;top:-500px">/	the ending's prize lines exist in the text but sit off the card
 lapbadge	src/sim/rules.js	s/^    this.bankFlight({ landed, reason });/    this.onFinish({ landed, reason, sound }); this.bankFlight({ landed, reason });/	finish() ends the flight (and completes the crossing) before it banks it
 audiolive	tests/audiolive.cjs	s/musicWindowS < shortest - CROSSFADE_GUARD_S/musicWindowS > shortest - CROSSFADE_GUARD_S/	the music window is no longer checked against the shortest track
+upgradetext	src/upgradetext.js	s/now: cur ? say(cur) : NOTHING_YET/now: nxt ? say(nxt) : NOTHING_YET/	Now describes the next level
+upgradetext	src/upgradetext.js	s/max = have >= count,/max = have > count,/	the last level is not recognised as the last
+upgradetext	src/upgradetext.js	s/seeds: nxt.cost || 0/seeds: (nxt.cost || 0) + 1/	the price shown is one seed over the level's own
+upgradetext	src/upgradetext.js	s/\[line\]) || 0, title:/[line]) || 1, title:/	a plane line nobody has bought reads as level 1
+upgradetext	src/upgradetext.js	s/effectText(lv) || lv.name || ''/effectText(lv) || ''/	a level with no effect text has no words
+barui	src/hangar.js	s/const segs = Array.from({ length: c.count }, (_, i) => `<i class="${i < c.have ? .on. : ..}"><\/i>`).join(..);/const segs = "";/	the bar has no segments
+barui	src/hangar.js	s/`<p class="small hp-now">Now: ${c.now}<\/p>`/`<p class="small hp-now">Now: ${c.next}<\/p>`/	Now shows the next level's words
+barui	style.css	s/^\.lvbar { display: flex; gap: 2px; margin: 4px 0 3px; }/.lvbar { display: flex; gap: 2px; margin: 4px 0 3px; width: 400px; }/	the bar is wider than a phone screen
