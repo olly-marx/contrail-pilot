@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-12-guide-scroll-parcels",
+    "version": "0.61.0",
+    "date": "2026-11-12",
+    "level": "minor",
+    "notes": [
+      "The guide that shows you where to buy Tree Planting now always scrolls the button into view, even if the land picture was covering it."
+    ]
+  },
+  {
     "id": "2026-11-11-songs-once",
     "version": "0.60.0",
     "date": "2026-11-11",
