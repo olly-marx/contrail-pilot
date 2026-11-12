@@ -42,7 +42,7 @@
   const kinds = [];
   for (const region of ['savanna', 'mediterranean']) {
     w.regionNow = region;
-    for (let i = 0; i < 6; i++) { const k = w.treeKind(); kinds.push([region, k]); w.speciesIdx++; }
+    for (let i = 0; i < 6; i++) { const k = w.treeKind(); kinds.push([region, k]); const id = N.localTree(k, region).id; w.dropped[id] = (w.dropped[id] || 0) + 1; w.speciesIdx++; }   // (TREES V2 step 3: the order is fewest first, with the parcels released but not landed counted, src/droporder.js: each drop is registered as pending so the open kinds take turns, as the old speciesIdx turns did)
   }
   const slots = (r) => [...new Set(kinds.filter(k => k[0] === r).map(k => N.UK_SLOTS.indexOf(k[1])))].sort();
   check(eq(slots('savanna'), [0, 1]), `savanna parcels cycle its open trees 0 and 1 (${slots('savanna')})`);
