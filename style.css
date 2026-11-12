@@ -904,6 +904,12 @@ h2.sub { margin-top: -4px; }
 .hp-buy { gap: 8px; align-items: center; }
 .hp-info { font-size: 8px; padding: 6px 8px; }
 .hp-what { margin: 0 0 4px; }
+/* THE UPGRADE BAR (BLOCK2-PLAN item 4): a segmented bar, one segment per level, filled up to yours, then Now / Next */
+.lvbar { display: flex; gap: 2px; margin: 4px 0 3px; }
+.lvbar i { flex: 1; height: 7px; background: #e4e4ee; border: 1px solid var(--ink); box-sizing: border-box; }
+.lvbar i.on { background: #4caf50; }
+.hp-now, .hp-next { margin: 0 0 2px; line-height: 1.3; }
+.hp-now { color: var(--muted); }
 .nextplane { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
 .payoff.atbox { align-items: flex-start; justify-content: flex-start; }
 .payoff.atbox .payoff-card { box-sizing: border-box; max-width: none; }
