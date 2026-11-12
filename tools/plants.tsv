@@ -403,9 +403,9 @@ crossinghud	src/GameScene.js	s/    else if (this.crossing) this.nextText.setText
 crossinghud	src/GameScene.js	s/    if (this.crossing) this.missionText.setText('');/    if (false) this.missionText.setText('');/	a crossing HUD shows the mission line
 crossinghud	src/GameScene.js	s/    if (this.crossing) this.drawCrossingBar();/    if (false) this.drawCrossingBar();/	a crossing HUD shows the distance meter again
 crossingscore	src/sim/rules.js	s/ \&\& s2 \&\& !this.crossing ? s2Flight(/ \&\& s2 ? s2Flight(/	scoring on a crossing flight returns (missions are scored and paid on it)
-gaphint2	src/fleet.js	s/sum > 0 ? 1 : 0/0/	the single-system hint is removed (nothing until all three, as before)
-gaphint2	src/fleet.js	s/Math.min(12, Math.max(/Math.min(11, Math.max(/	the cap is one short: the end state (12/12/12) changes
-gaphint2	src/fleet.js	s/(sum - 3 \* m) \/ 6/(sum - 3 * m) \/ 3/	the levels above the weakest system count double: single systems give too strong a hint
+hintlines	src/hintlines.js	s/hintLead: any ? ATC_LEAD\[A\] || ATC_LEAD\[1\] : 0/hintLead: any ? ATC_LEAD[A] : 0/	the first line bought gives no arrow unless it is Air traffic control (row re-aimed 2026-11-11 from gaphint2)
+hintlines	src/hintlines.js	s/2\.4, 2\.5, 2\.5\]/2.4, 2.5, 2.7]/	the warning time is not capped at 2.5 s (row re-aimed 2026-11-11 from gaphint2)
+hintlines	src/hintlines.js	s/GATE_FROM = 3,/GATE_FROM = 1,/	the gate comes from Forecasting 1: the arrow-only phase is gone (row re-aimed 2026-11-11 from gaphint2)
 crossingend	src/crossingend.js	s/title: `WELCOME TO ${city}!`/title: `WELCOME TO ${city}! 6500 km`/	the landing screen shows a distance
 crossingend	src/crossingend.js	s/buttons: \[{ id: 'again', label: 'TRY AGAIN' }, { id: 'home', label: 'HOME' }\]/buttons: [{ id: 'home', label: 'HOME' }]/	the crash screen has no TRY AGAIN
 crossingend	src/crossingend.js	s/lost > 0) lines.push/lost > 99999) lines.push/	a crash never says the carried seeds are lost
@@ -789,3 +789,13 @@ upgradetext	src/upgradetext.js	s/effectText(lv) || lv.name || ''/effectText(lv) 
 barui	src/hangar.js	s/const segs = Array.from({ length: c.count }, (_, i) => `<i class="${i < c.have ? .on. : ..}"><\/i>`).join(..);/const segs = "";/	the bar has no segments
 barui	src/hangar.js	s/`<p class="small hp-now">Now: ${c.now}<\/p>`/`<p class="small hp-now">Now: ${c.next}<\/p>`/	Now shows the next level's words
 barui	style.css	s/^\.lvbar { display: flex; gap: 2px; margin: 4px 0 3px; }/.lvbar { display: flex; gap: 2px; margin: 4px 0 3px; width: 400px; }/	the bar is wider than a phone screen
+hintlines	src/hintlines.js	s/SECOND_GATE_FROM = 10/SECOND_GATE_FROM = 6/	the second gate comes at ATC 6, not 10
+hintlines	src/hintlines.js	s/BOOST_BY_ATC = \[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3\]/BOOST_BY_ATC = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 3]/	the climb boost count starts at ATC 9
+hintlines	src/hintlines.js	s/red: 2, blink: 3/red: 2, blink: 1/	the arrow blinks from Ops 1, not Ops 3
+hintlines	src/hintlines.js	s/FILL_FROM = 4/FILL_FROM = 2/	the gate opening fills in from Forecasting 2, not 4
+hintlines	src/fleet.js	s/export const HINT_CHEAP = 0.6;/export const HINT_CHEAP = 1;/	levels 1 and 2 of the hint lines are not cheaper
+hintlines	src/hintwords.js	s/\['Arrow to the gap', 'Better icy-air view'\]/['Arrow to the gap', 'Better icy-air view and a long extra line']/	a hangar hint line is over 28 characters
+gapmarkers	src/gapmarkers.js	s/if (x < WIDTH - linger \* speed) return null;/if (x < WIDTH) return null;/	the gate never lingers after its column reaches the screen
+gapmarkers	src/gapmarkers.js	s/if (!flags || !flags.icon) return null;/if (!flags) return null;/	the forecast-on icon shows without Ops 5
+gapmarkers	src/gapmarkers.js	s/lit: !!(flags.lit \&\& first)/lit: !!first/	the icon lights without Ops 6
+gapmarkers	src/gapmarkers.js	s/gapSize: flags.size \&\& first/gapSize: first/	the icon shows the gap's size without Ops 10

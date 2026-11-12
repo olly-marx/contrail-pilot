@@ -28,16 +28,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
         for (const st of s.storms) maxX = Math.max(maxX, st.rects[0].x);
         if (s.gapHintGfx && s.gapHintGfx.commandBuffer.length > 0) hinted = true;
       }, 30);
-      setTimeout(() => { clearInterval(t); res({ level: s.kit.hintLevel, maxX: Math.round(maxX), hinted, W: s.scale.width }); }, 6000);
+      setTimeout(() => { clearInterval(t); res({ level: s.kit.hintLead, maxX: Math.round(maxX), hinted, W: s.scale.width }); }, 6000);
     }));
     r.errs = errs;
     await p.close();
     return r;
   };
-  const none = await fly({});                                 // no system at all: no hint (0.32.1: ONE system already gives a faint hint, tests/gaphint2.cjs)
+  const none = await fly({});                                 // no system at all: no hint (one flavour per line since 2026-11-11: any ONE system gives the arrow, tests/hintlines.cjs)
   const full = await fly({ forecast: 6, atc: 6, ops: 6 });
   check(none.level === 0 && !none.hinted && none.maxX <= 300, `with no system at all: no hint, storms made just off screen: ${JSON.stringify(none)}`);
-  check(full.level === 6 && full.hinted && full.maxX > 340, `all three at 6: storms made well ahead and the gate glows: ${JSON.stringify(full)}`);
+  check(full.level === 1.6 && full.hinted && full.maxX > 340, `all three at 6 (ATC 6 = a 1.6 s warning, Forecasting 6 = a gate): storms made well ahead and the gate glows: ${JSON.stringify(full)}`);
   check(!none.errs.length && !full.errs.length, `page errors: ${none.errs} ${full.errs}`);
   console.log({ fails, none, full });
   await b.close();

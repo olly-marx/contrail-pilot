@@ -9,6 +9,7 @@
 // Costs are the spec's unscaled prices x ERA_SCALE (section 7: each era totals ~1.5x its budget);
 // estimates until tuned against measured income. Crystals = seeds / 8.
 import { ISSR, CARGO, CRYSTALS, POWERUPS } from './config.js';
+import { hintFor } from './hintlines.js';
 import { eraProgress } from './eras.js';
 
 export const ERA_SCALE = [0.78, 0.43, 0.41, 0.54, 0.5, 0.46];
@@ -33,17 +34,8 @@ const V = { verify: true };
 // today's game, unchanged.
 // Forecast false patches puff away when the plane is this close (px, game value).
 export const FORECAST = { popPx: 30 };
-// The next-gap hint (PLANE-ERAS-1-3.md section 6), by the LOWEST of the three systems' levels:
-// seconds of warning before a storm gap scrolls on screen, and how bright the gate is. Game values.
-// The next-gap hint's level (index into GAP_HINT) from the three systems' levels (Forecasting, ATC, Ops). It used to be min(F, A, O): nothing at all
-// until ALL THREE had a level ('window detection seems intermittent', the user, 2026-11). Now each system on its own gives a faint hint, and every
-// level above the weakest system's adds a little: level = min + floor(excess / 6), where excess = (F + A + O) - 3 * min; at least 1 once any system has a
-// level; capped at 12. When the three are EQUAL (every balanced save, and the end state 12/12/12) it is exactly min(F, A, O) as before.
-export const gapHintLevel = (F, A, O) => {
-  const m = Math.min(F, A, O), sum = F + A + O;
-  return Math.min(12, Math.max(sum > 0 ? 1 : 0, m + Math.floor((sum - 3 * m) / 6)));
-};
-export const GAP_HINT = { lead: [0, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5, 2.7], alpha: [0, 0.25, 0.32, 0.4, 0.5, 0.6, 0.75, 0.8, 0.85, 0.88, 0.9, 0.92, 0.94] };   // 7-8: the 2010s, 9-10: the 2030s, 11-12: far future
+// The next-gap hint: ONE FLAVOUR PER LINE (2026-11-11; src/hintlines.js holds the tables and the rules; it replaced the single shared hintLevel / gapHintLevel / GAP_HINT).
+// Forecasting = the gate, ATC = the warning time (+ the second gate and the boost count), Fuel & operations = the cues; the kit carries hintLead, hintArrow, hintGate, hintSecond, hintBoost, hintCues.
 // Passenger fares: seeds per 1,000 km of a LANDED flight, x the Cabin upgrades (GAME VALUES, est.;
 // tune against measured income ~39 seeds a flight). Bigger planes carry more people.
 export const FARES = { comet: 2, jumbo: 3, twin: 4, dreamliner: 5, truss: 6, hydrogen: 7 };
@@ -163,6 +155,10 @@ export const SYSTEMS = [
     S(10, 'Hydrogen logistics', { co2: 0.76, takeoff: 0.7, cleanSecs: 12, nightHeat: 0.8 }),
     S(11, 'Contrail-free cruise 3', { co2: 0.74, takeoff: 0.6, cleanSecs: 14, nightHeat: 0.667 })] },   // (0.10.2: CO2 doubled for L1-2, kept rising after)
 ];
+// The first two levels of each hint line (Forecasting, Air traffic control, Fuel & operations) cost x0.6 (the sim chat's weaker-player proposal, GAP-HINT-LEVELS-PLAN.md section 9: level 1 buys the arrow, level 2 the first small
+// step; 25 + 55 seeds become 15 + 33 per line). Applied here, after the table, so the level lines above stay as they are; crystals follow the seeds (1 per 8 seeds, as price()).
+export const HINT_CHEAP = 0.6;
+for (const sys of SYSTEMS) for (const lv of sys.levels.slice(0, 2)) { lv.cost = Math.round(lv.cost * HINT_CHEAP); lv.crystals = Math.round(lv.cost / 8); }
 export const GADGETS = [
   { id: 'magnet', name: 'Magnet', levels: [S(0, 'Horseshoe magnet', { pickup: 16 }), S(1, 'Bigger horseshoe', { pickup: 19 }),
     S(2, 'Electromagnet', { pickup: 22 }), S(3, 'Stronger coil', { pickup: 26 }), S(4, 'Neodymium magnet', { pickup: 30 }, V), S(5, 'Bigger neodymium', { pickup: 34 }, V)] },
@@ -290,7 +286,7 @@ export function fleetKit(save) {
     // false patches (`fakes` of those shown) and real ones it missed (`late`). ERA5 skill 0.2-0.4 (CONFIRMED).
     fakes: fc.reveal ? fc.fakes ?? 0.4 : 0, late: fc.reveal ? fc.late ?? 0.3 : 0, nightPatches: fc.nightPatches || 1,
     gaps: atc.gaps || 1, gapTurb: atc.gapTurb || 1, gapBirds: (atc.gapBirds || 1) * (sen.birdChance || 1), airportEarly: !!atc.airportEarly,   // stage 6; gapBirds also has Sensors 11-12 (bird-aware routing)
-    hintLevel: gapHintLevel(f.systems.forecast || 0, f.systems.atc || 0, f.systems.ops || 0),   // next-gap hint (stage 7; the smoother rule: gapHintLevel)
+    ...hintFor(f.systems.forecast || 0, f.systems.atc || 0, f.systems.ops || 0),   // next-gap hint, one flavour per line (src/hintlines.js): hintLead / hintArrow / hintGate / hintSecond / hintBoost / hintCues
     pickup: gad('magnet').pickup || 12,
     perSkip: (gad('hold').perSkip || CARGO.multiplierPerSkip) + add('perSkip'),
     flare: (gad('gear').flare || 1) * mul('flare'),
@@ -393,7 +389,7 @@ export const STAT_BARS = [
   { id: 'pulseShown', label: 'Storm beat shown', keys: ['pulseShown'], v: k => (k.pulseShown ? 1 : 0), onoff: true, better: 'higher' },
   { id: 'fullAware', label: 'Full situational awareness', keys: ['fullAware'], v: k => (k.fullAware ? 1 : 0), onoff: true, better: 'higher' },
   { id: 'early', label: 'Early landing call', keys: ['airportEarly'], v: k => (k.airportEarly ? 1 : 0), onoff: true, better: 'higher' },
-  { id: 'hint', label: 'Next-gap hint', keys: ['hintLevel'], v: k => k.hintLevel, min: 0, max: 6, better: 'higher' },
+  { id: 'hint', label: 'Warning time', keys: ['hintLead'], v: k => k.hintLead, min: 0, max: 2.5, better: 'higher' },   // the ATC line's warning in seconds (0.5 to 2.5)
   { id: 'fares', label: 'Fares', keys: ['fares'], v: k => k.fares, min: 1, max: 2, better: 'higher' },
   { id: 'skip', label: 'Bonus per airport skipped', keys: ['perSkip'], v: k => k.perSkip, min: 0, max: 1, better: 'higher' },
   { id: 'flare', label: 'Landing window', keys: ['flare'], v: k => k.flare, min: 1, max: 2, better: 'higher' },
