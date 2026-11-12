@@ -799,3 +799,4 @@ gapmarkers	src/gapmarkers.js	s/if (x < WIDTH - linger \* speed) return null;/if 
 gapmarkers	src/gapmarkers.js	s/if (!flags || !flags.icon) return null;/if (!flags) return null;/	the forecast-on icon shows without Ops 5
 gapmarkers	src/gapmarkers.js	s/lit: !!(flags.lit \&\& first)/lit: !!first/	the icon lights without Ops 6
 gapmarkers	src/gapmarkers.js	s/gapSize: flags.size \&\& first/gapSize: first/	the icon shows the gap's size without Ops 10
+upgradetext	src/upgradetext.js	s/if (hw) { card.now = hw.now;/if (false) { card.now = hw.now;/	the hint lines show the level effects instead of the sim chat's words

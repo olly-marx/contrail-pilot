@@ -1,5 +1,6 @@
 // THE WORDS OF EVERY UPGRADE LEVEL (src/upgradetext.js upgradeCard; BLOCK2-PLAN item 4, DESIGN-UPGRADE-BAR.md B3). Plain Node, no browser. For EVERY line of the shop (every plane's Engines / Wings & body / Cabin, every system, every gadget,
 // every nature tool) and for EVERY level n from 0 to the last, the card of a save that owns n levels must say, by named lines:
+//   0. the three hint lines (forecast, atc, ops) use the sim chat's words from src/hintwords.js, not the level effects (wired in block 2)
 //   1. the line is known and has at least one level; its card has a title and 'count' equal to its levels
 //   2. 'Now' at level n is the words of level n ('nothing yet' at 0) and 'Next' is the name and effect of level n + 1: so the bar can never say a different thing from the level it describes
 //   3. the last level has no Next and no price and is 'max'; any other level has a Next and a price equal to the level's own cost and crystals
@@ -9,7 +10,7 @@
 globalThis.SEASON2 = true;
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  const T = await import('../src/upgradetext.js'), F = await import('../src/fleet.js'), S = await import('../src/save.js'), U = await import('../src/upgrades.js');
+  const T = await import('../src/upgradetext.js'), F = await import('../src/fleet.js'), S = await import('../src/save.js'), U = await import('../src/upgrades.js'), H = await import('../src/hintwords.js');
   const withLevel = (kind, id, n) => {
     const s = S.prepareSave(null), f = s.fleet;
     if (kind === 'plane') { const [pid, line] = id.split('.'); s.fleet = { ...f, plane: pid, planes: { ...f.planes, [pid]: { ...(f.planes[pid] || {}), [line]: n } } }; }
@@ -18,6 +19,9 @@ globalThis.SEASON2 = true;
     else s.levels = { ...(s.levels || {}), [id]: n };
     return s;
   };
+  // 0. THE THREE HINT LINES use the sim chat's words (src/hintwords.js), not the level effects: forecast level 0 'No forecast yet' / 'An arrow to the gap'; atc level 3 'Warning 1.0 s early'; ops at its last level has no Next
+  { const fc = T.upgradeCard(withLevel('system', 'forecast', 0), 'system', 'forecast'), at = T.upgradeCard(withLevel('system', 'atc', 3), 'system', 'atc'), op = T.upgradeCard(withLevel('system', 'ops', 12), 'system', 'ops');
+    check(fc.now === 'No forecast yet' && fc.next === 'An arrow to the gap' && at.now === 'Warning 1.0 s early' && op.next === null && op.max === true, `0: the hint lines use src/hintwords.js: forecast 0 '${fc.now}' / '${fc.next}', atc 3 '${at.now}', ops 12 next ${op.next} max ${op.max}`); }
   const lines = T.allLines(), noEffect = [];
   check(lines.length >= 40, `power: the shop has ${lines.length} lines (planes x 3, systems, gadgets, nature tools); fewer than 40 means the table did not load`);
   let cards = 0, maxNow = 0, maxNext = 0;
@@ -27,7 +31,8 @@ globalThis.SEASON2 = true;
     for (let n = 0; n <= c0.count; n++) {
       const c = T.upgradeCard(withLevel(kind, id, n), kind, id); cards++;
       const lvNow = n ? levelOf(kind, id, n - 1) : null, lvNext = n < c0.count ? levelOf(kind, id, n) : null;
-      const sayNow = lvNow ? (kind === 'nature' ? (lvNow.short || lvNow.name) : T.wordsOf(lvNow)) : T.NOTHING_YET, sayNext = lvNext ? (kind === 'nature' ? (lvNext.short || lvNext.name) : T.nextWords(lvNext)) : null;
+      let sayNow = lvNow ? (kind === 'nature' ? (lvNow.short || lvNow.name) : T.wordsOf(lvNow)) : T.NOTHING_YET; let sayNext = lvNext ? (kind === 'nature' ? (lvNext.short || lvNext.name) : T.nextWords(lvNext)) : null;
+      if (kind === 'system' && T.HINT_LINE_IDS.includes(id)) { const hw = H.hintWords(id, n); sayNow = hw.now; sayNext = n === c0.count ? null : hw.next; }   // the gap-hint lines: their words are the sim chat's tables (src/hintwords.js)
       check(c.have === n && c.count === c0.count, `1: ${kind}:${id} at level ${n}: have ${c.have}, count ${c.count}`);
       check(c.now === sayNow && c.next === sayNext, `2: ${kind}:${id} at level ${n}: Now '${c.now}' (want '${sayNow}'), Next '${c.next}' (want '${sayNext}')`);
       if (n === c0.count) check(c.max === true && c.next === null && c.price === null, `3: ${kind}:${id} at its last level (${n}) is not max with no Next and no price: ${JSON.stringify(c)}`);

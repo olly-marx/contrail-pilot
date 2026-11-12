@@ -7,6 +7,8 @@
 import { fleetOf, PLANES, SYSTEMS, GADGETS, PLANE_LINES, planeById, effectText } from './fleet.js';
 import { LINES, level as natureLevel } from './upgrades.js';
 
+import { hintWords } from './hintwords.js';
+export const HINT_LINE_IDS = ['forecast', 'atc', 'ops'];
 export const NOTHING_YET = 'nothing yet';
 export const ALL_DONE = 'All done: the best there is.';
 // The level's effect in plain words, else its name (a level that only changes the picture has no effect text).
@@ -25,8 +27,12 @@ export function upgradeCard(save, kind, id) {
   const L = linesOf(save, kind, id); if (!L) return null;
   const { levels, have } = L, count = levels.length, max = have >= count, cur = have ? levels[have - 1] : null, nxt = max ? null : levels[have];
   const say = lv => (L.nature ? lv.short || lv.name || '' : wordsOf(lv)), sayNext = lv => (L.nature ? lv.short || lv.name || '' : nextWords(lv));
-  return { title: L.title, have, count, max, now: cur ? say(cur) : NOTHING_YET, next: nxt ? sayNext(nxt) : null,
+  const card = { title: L.title, have, count, max, now: cur ? say(cur) : NOTHING_YET, next: nxt ? sayNext(nxt) : null,
     price: nxt ? { seeds: nxt.cost || 0, crystals: nxt.crystals || 0 } : null };
+  // THE THREE HINT LINES (forecast, atc, ops; the gap hint, one flavour per line): their levels carry no effect text for the hint, so the words come from src/hintwords.js (the sim chat's tables, 28 characters a line).
+  const hw = kind === 'system' && HINT_LINE_IDS.includes(id) ? hintWords(id, have) : null;
+  if (hw) { card.now = hw.now; card.next = max ? null : hw.next; }
+  return card;
 }
 
 // Every line of the shop: [kind, id] pairs (for the Node test that checks every level has words).
