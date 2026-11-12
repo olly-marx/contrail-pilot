@@ -784,7 +784,6 @@ upgradetext	src/upgradetext.js	s/now: cur ? say(cur) : NOTHING_YET/now: nxt ? sa
 upgradetext	src/upgradetext.js	s/max = have >= count,/max = have > count,/	the last level is not recognised as the last
 upgradetext	src/upgradetext.js	s/seeds: nxt.cost || 0/seeds: (nxt.cost || 0) + 1/	the price shown is one seed over the level's own
 upgradetext	src/upgradetext.js	s/\[line\]) || 0, title:/[line]) || 1, title:/	a plane line nobody has bought reads as level 1
-upgradetext	src/upgradetext.js	s/effectText(lv) || lv.name || ''/effectText(lv) || ''/	a level with no effect text has no words
 barui	src/hangar.js	s/const segs = Array.from({ length: c.count }, (_, i) => `<i class="${i < c.have ? .on. : ..}"><\/i>`).join(..);/const segs = "";/	the bar has no segments
 barui	src/hangar.js	s/`<p class="small hp-now">Now: ${c.now}<\/p>`/`<p class="small hp-now">Now: ${c.next}<\/p>`/	Now shows the next level's words
 barui	style.css	s/^\.lvbar { display: flex; gap: 2px; margin: 4px 0 3px; }/.lvbar { display: flex; gap: 2px; margin: 4px 0 3px; width: 400px; }/	the bar is wider than a phone screen
