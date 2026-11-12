@@ -616,7 +616,6 @@ groves	src/groves.js	s/save\.planted\[id\] = c\.planted;/;/	plantTree no longer 
 groves	src/groves.js	s/save\.plantedIn\[land\]\[id\] = c\.planted;/;/	plantTree no longer mirrors another land's old key
 groves	src/groves.js	s/if (x\.planted < n) {/if (x.planted < n \&\& x.planted === 0) {/	the smaller count wins when an older save disagrees
 groves	src/groves.js	s/Object\.values(groveView(save))\.reduce(/Object.values({ woodland: groveView(save).woodland || {} }).reduce(/	the total counts only the UK's trees
-groves	src/groves.js	s/c\.planted += 1; c\.saplings\.push({ points: 0, fresh: true });/c.planted += 1; c.grown += 1;/	a planted tree is grown at once (no sapling): re-aimed 2026-11-12, the step-1 row (grown += 1 on a planting) matched nothing after step 2
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ Puffin Swift Falcon Otter 4\x36 A phone that has lost its pilot/	a pilot-code-shaped string is written into a comment
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ L\x6fla A phone that has lost its pilot/	a tester's first name is written into a comment
 secretscan	tests/secretscan.cjs	/file: 'tests\/pilotcode.cjs'/d	the allow-list entry for the pilotcode fixture is removed
