@@ -616,7 +616,7 @@ groves	src/groves.js	s/save\.planted\[id\] = c\.planted;/;/	plantTree no longer 
 groves	src/groves.js	s/save\.plantedIn\[land\]\[id\] = c\.planted;/;/	plantTree no longer mirrors another land's old key
 groves	src/groves.js	s/if (x\.planted < n) {/if (x.planted < n \&\& x.planted === 0) {/	the smaller count wins when an older save disagrees
 groves	src/groves.js	s/Object\.values(groveView(save))\.reduce(/Object.values({ woodland: groveView(save).woodland || {} }).reduce(/	the total counts only the UK's trees
-groves	src/groves.js	s/c\.planted += 1; c\.grown += 1;/c.planted += 1;/	a planted tree is not counted as grown
+groves	src/groves.js	s/c\.planted += 1; c\.saplings\.push({ points: 0, fresh: true });/c.planted += 1; c.grown += 1;/	a planted tree is grown at once (no sapling): re-aimed 2026-11-12, the step-1 row (grown += 1 on a planting) matched nothing after step 2
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ Puffin Swift Falcon Otter 4\x36 A phone that has lost its pilot/	a pilot-code-shaped string is written into a comment
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ L\x6fla A phone that has lost its pilot/	a tester's first name is written into a comment
 secretscan	tests/secretscan.cjs	/file: 'tests\/pilotcode.cjs'/d	the allow-list entry for the pilotcode fixture is removed
@@ -779,7 +779,7 @@ nursery	src/groves.js	s/if (s\.fresh) { keep\.push/if (s.fresh \&\& false) { kee
 nursery	src/groves.js	s/if (p >= need) { c\.grown += 1; up += 1; }/if (p >= NURSERY_NEED[0]) { c.grown += 1; up += 1; }/	the nursery's need is ignored (always 10)
 nursery	src/groves.js	s/grow <= 0\.5 ? NURSERY_NEED\[2\]/grow <= 0.5 ? NURSERY_NEED[0]/	the second nursery level grows no faster
 nursery	src/groves.js	s/{ c\.grown += 1; up += 1; } else keep\.push/{ up += 1; } else keep.push/	a sapling that grows up is lost
-nursery	src/sim/rules.js	s/if (!this\.school) growGroves(/if (false) growGroves(/	banking a flight grows no sapling
+nursery	src/sim/rules.js	s/const treesGrown = !this\.school ? growGroves(/const treesGrown = false ? growGroves(/	banking a flight grows no sapling (re-aimed 2026-11-12: the line now keeps growGroves' return value)
 nursery	src/nature.js	s/const book = grownBook(save, region), base/const book = plantedHere(save, region), base/	the scenery shows saplings as grown trees
 droporder	src/droporder.js	s/room\.reduce((a, c) => (c\.n < a\.n ? c : a))/room.reduce((a, c) => (c.n > a.n ? c : a))/	the most planted kind is chosen, not the fewest
 droporder	src/droporder.js	s/(pending\[t\.id\] || 0)/0/	the parcels released but not landed are not counted
