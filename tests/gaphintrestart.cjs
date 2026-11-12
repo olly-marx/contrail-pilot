@@ -22,13 +22,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
       if (!flying) break;
       const seen = await p.evaluate(async () => {
         const G = await import('/src/gapmarkers.js'), F = await import('/src/fleet.js'), s = game.scene.getScene('game'); s.graceUntil = 1e12; s.hitsStorm = () => false; s.hitBird = () => false;
-        const lead = F.GAP_HINT.lead[s.kit.hintLevel] || 0; let up = false, alive = null, drawn = null;
+        const lead = s.kit.hintLead || 0; let up = false, alive = null, drawn = null;
         for (let i = 0; i < 160 && !(up && drawn !== null); i++) {   // up to ~16 s: wait for a gate to come up, then read the graphics in the same frame
           await new Promise(r => setTimeout(r, 100));
           if (s.plane.y > 250) s.plane.vy = Math.min(s.plane.vy || 0, -40);
           if (s.storms.some(st => G.gateFor(st, s.plane.y, s.speed, lead))) { up = true; const g = s.gapHintGfx; alive = !!(g && g.scene && s.children.exists(g)); drawn = !!(g && g.commandBuffer && g.commandBuffer.length > 0); }
         }
-        return { up, alive, drawn, level: s.kit.hintLevel };
+        return { up, alive, drawn, level: s.kit.hintLead };
       });
       log.push(`flight ${n}: level ${seen.level}, gate up ${seen.up}, graphics alive ${seen.alive}, holds the gate ${seen.drawn}`);
       check(seen.up, `flight ${n}: no gate ever came up in the sky (the flight did not reach a storm: the case does not reach the check)`);

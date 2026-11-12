@@ -1,6 +1,6 @@
 // The gap-flying player can use the next-gap hint (sim engine, 2026-10-27): with useHint, a plane whose kit has a hint
-// (GAP_HINT.lead > 0) plans for a gap whose column is still off-screen; without it, or with no hint, it plans exactly as
-// before. twinFull (hintLevel 6, lead 1.5 s), one 6,000 km flight: the safe band differs on some frames with useHint, and
+// (the kit's hintLead > 0) plans for a gap whose column is still off-screen; without it, or with no hint, it plans exactly as
+// before. twinFull (ATC 6: hintLead 1.6 s), one 6,000 km flight: the safe band differs on some frames with useHint, and
 // never differs for a Comet (no hint). Plain Node. PLANT=blind (the player ignores the hint): must FAIL.
 // Run: node tests/sim-hint.cjs
 (async () => {
@@ -16,14 +16,14 @@
       const ba = a._band(w), bb = b._band(w); if (ba[0] !== bb[0] || ba[1] !== bb[1]) differ++;
       if (a.wantsFlap(w)) w.applyFlap(); b.wantsFlap(w); w.step(16.67 / 1000);
     }
-    return { differ, hint: w.kit.hintLevel };
+    return { differ, hint: w.kit.hintLead };
   };
   const twin = fly({ plane: 'twin', planes: { twin: { engines: 4, body: 4, cabin: 4 } }, systems: { forecast: 6, atc: 6, ops: 6 }, gadgets: { magnet: 6, hold: 6, gear: 6, sensors: 6, autopilot: 6 } });
   const comet = fly({ plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} });
   const fails = [];
-  if (!(twin.hint > 0)) fails.push(`twinFull has no hint (hintLevel ${twin.hint}): the check has no power`);
+  if (!(twin.hint > 0)) fails.push(`twinFull has no hint (hintLead ${twin.hint}): the check has no power`);
   if (!(twin.differ > 0)) fails.push(`twinFull: useHint never changed the plan (0 frames)`);
-  if (comet.differ !== 0) fails.push(`Comet (hintLevel ${comet.hint}): useHint changed the plan on ${comet.differ} frames, want 0`);
+  if (comet.differ !== 0) fails.push(`Comet (hintLead ${comet.hint}): useHint changed the plan on ${comet.differ} frames, want 0`);
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
   console.log(`PASS: useHint plans ahead with a hint (twinFull: ${twin.differ} frames differ) and changes nothing without one (Comet: 0)`);
 })();

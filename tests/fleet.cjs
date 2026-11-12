@@ -20,7 +20,8 @@
   for (const g of [...F.SYSTEMS, ...F.GADGETS]) g.levels.forEach((lv, i) => { tot[F.levelEra(i + 1)] += lv.cost; check(lv.crystals === crys(lv.cost, F.levelEra(i + 1)), `${g.id} ${i + 1}: crystals = seeds / 8 (half from the 2030s)`); });
   for (const p of F.PLANES) for (const [line, l] of Object.entries(p.lines)) l.forEach((lv, i) => check(lv.crystals === crys(lv.cost, p.era), `${p.id}.${line} ${i + 1}: crystals = seeds / 8 (half from the 2030s): ${lv.crystals}`));
   check(F.PLANES.find(p => p.id === 'truss').lines.engines[0].crystals === 50 && F.SYSTEMS[0].levels[8].crystals === 57, 'the 2030s crystal prices are the sim chat\'s (truss engines 1 = 50, level 9 = 57)');
-  tot.forEach((t, e) => check(t / F.ERA_BUDGET[e] >= 1.4 && t / F.ERA_BUDGET[e] <= 1.6, `era ${e} prices total ${t} = ${(t / F.ERA_BUDGET[e]).toFixed(2)}x its budget, want ~1.5x`));
+  // (era 0: 1.3 not 1.4 from 2026-11-11: levels 1 and 2 of the three hint lines cost x0.6, which takes 96 seeds off the 920 of era 0, 1.53x -> 1.37x of its budget)
+  tot.forEach((t, e) => check(t / F.ERA_BUDGET[e] >= (e === 0 ? 1.3 : 1.4) && t / F.ERA_BUDGET[e] <= 1.6, `era ${e} prices total ${t} = ${(t / F.ERA_BUDGET[e]).toFixed(2)}x its budget, want ~1.5x`));
   check(F.START_BONUS === 300, `start bonus 300 seeds (user, 2026-10-23): ${F.START_BONUS}`);
   // The era step (2026-10-29): a bare 787 has its own no-fly help (+8 px, measured), on top of ATC's (a full 787: 8 + 10).
   const k787 = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 6 }, gadgets: {} } }), kFull = F.fleetKit({ fleet: { plane: 'dreamliner', planes: { dreamliner: {} }, systems: { atc: 8 }, gadgets: {} } });
@@ -44,7 +45,7 @@
   const k = F.fleetKit({ fleet: { plane: 'jumbo', planes: { comet: { engines: 2 }, jumbo: { engines: 2, body: 1 } }, systems: { ops: 1, forecast: 3 }, gadgets: { magnet: 2, hold: 1, gear: 2 } } });
   check(near(k.co2, 1.0 * 0.88 * 0.96), `747 CO2 = engines 2 (x0.88, replaces x0.93) x ops 1 (x0.96): ${k.co2}`);
   check(k.pickup === 19 && near(k.perSkip, 0.6) && near(k.flare, 1.2) && k.revealPx === 100, `gadgets and systems apply: ${JSON.stringify(k)}`);
-  check(k.hintLevel === 1, 'each system on its own gives a faint next-gap hint (ops 1 + forecast 3, no ATC: level 1)');
+  check(k.hintLead === 0.5 && k.hintGate === 3 && k.hintCues === 1 && k.hintLevel === undefined, 'one flavour per line: ops 1 + forecast 3, no ATC: a 0.5 s arrow warning, the gate level 3, the cues level 1, no shared hintLevel');
   // Engines: each effect from the newest level that has it (0.11.4): Comet Engines 2 (reversers, flare only)
   // keeps Engines 1's CO2 x0.9.
   const c2 = F.fleetKit({ fleet: { plane: 'comet', planes: { comet: { engines: 2 } }, systems: {}, gadgets: {} } });

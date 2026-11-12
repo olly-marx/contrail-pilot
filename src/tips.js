@@ -44,6 +44,7 @@ export const TIPS = {
 
   // ---- short tips (tipOnce: a toast, title + body, both counted) ----
   bareLand:   { say: land => `${land} is bare land for now. Plant its trees to bring life back!` },
+  gapArrow:   { say: 'Your team points to the next gap: follow the arrow on the right.', more: 'The arrow shows whether the next gap is above or below you. Upgrade Forecasting to see the gap itself as a gate.' },
   gapHint:    { say: 'Your team shows where the next gap is: watch the gate on the right.', more: 'Your forecasters, controllers and dispatchers work together to show where the next gap is. Red stripes: a no-fly zone.' },
   issrDay:    { say: 'A daytime contrail! It shades the ground below and cools the Earth a little.', more: 'This icy air turns exhaust into a cloud. In sunshine it can shade the Earth a little.' },
   issrNight:  { say: 'A night contrail traps heat. Climb or dive out of the icy air!', more: 'No sunlight to block, so it only traps heat.' },

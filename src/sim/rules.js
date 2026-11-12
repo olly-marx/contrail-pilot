@@ -3,7 +3,7 @@
 // exactly this code. `this` is the flight. No Phaser here: drawing and sound go through hooks the world leaves empty.
 import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO } from '../config.js';
 import { tip } from '../tips.js';
-import { GAP_HINT, FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
+import { FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
 import { treeBook, plantTree } from '../groves.js';
@@ -309,7 +309,7 @@ export const RULES = {
 
     // The next-gap hint (eras): with all three systems, storm columns are made `lead` px further
     // ahead (off screen) and their gap glows at the right edge before they scroll in. lead 0 = today.
-    const lead = Math.round(GAP_HINT.lead[this.kit.hintLevel] * this.speed);
+    const lead = Math.round((this.kit.hintLead || 0) * this.speed);   // the kit's hintLead = the ATC line's warning time (src/hintlines.js; 0.5 s once any hint line is bought)
     if (this.distancePx >= this.nextStormAt - WIDTH - lead) {
       const worldX = this.distancePx + (WIDTH + 10 + lead - PLANE.x);
       if (!this.inStormClearZone(worldX)) this.addStormPair(WIDTH + 10 + lead);

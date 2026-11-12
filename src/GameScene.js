@@ -19,11 +19,12 @@ import { crossingState } from './crossingview.js';
 import { crossingPath, finishCrossing } from './crossings.js';
 import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
-import { presenceFor, gateFor, MARK, GATE_RIGHT } from './gapmarkers.js';
+import { gateFor, iconFor, MARK, GATE_RIGHT } from './gapmarkers.js';
+import { hintFlags, URGENT_NEAR } from './hintlines.js';
 import { tip } from './tips.js';
 import { applyHudVar, toastTopCss } from './hudclear.js';
 const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
-import { CONTRAIL_MARGIN, GAP_HINT, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra, towerKey, stationKey } from './fleet.js';
+import { CONTRAIL_MARGIN, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra, towerKey, stationKey } from './fleet.js';
 import { liveryOn } from './livery.js';
 import { composeOnto } from './planelook.js';
 import { sfx, buzz } from './sound.js';
@@ -1080,15 +1081,15 @@ export class GameScene extends Phaser.Scene {
 
   // The next-gap hint: a faint gate at the right edge, at the height of a storm gap still off screen.
   drawGapHint() {
-    const lv = this.kit.hintLevel;
-    if (!lv || this.school) return;
-    if (FEATURES.gapMarkers) return this.drawGapGates(GAP_HINT.lead[lv]);
+    const h = hintFlags(this.kit);   // one flavour per line (src/hintlines.js): ATC = the warning time, Forecasting = the gate, Fuel & operations = the cues
+    if (!h.arrow || this.school) return;
+    if (FEATURES.gapMarkers) return this.drawGapGates(h);
     const g = this.gapHintGfx || (this.gapHintGfx = this.add.graphics().setDepth(50));
     g.clear();
     for (const st of this.storms) {
       const x = st.rects[0].x;
       if (x < WIDTH) continue;   // on screen: no hint needed
-      const top = st.rects[0].height, bot = st.rects[1].y, a = GAP_HINT.alpha[lv] * (0.75 + 0.25 * Math.sin(this.gameTime / 120));
+      const top = st.rects[0].height, bot = st.rects[1].y, a = (h.gateAlpha || 0.25) * (0.75 + 0.25 * Math.sin(this.gameTime / 120));
       g.fillStyle(0xffe15a, a);
       g.fillRect(WIDTH - 4, top, 4, 3); g.fillRect(WIDTH - 4, bot - 3, 4, 3); g.fillRect(WIDTH - 2, top, 2, bot - top);
       if (!this.hintTipped) { this.hintTipped = true; this.ui.tipOnce('gapHint', tip('gapHint'), '', 'good', 4); }
@@ -1101,35 +1102,44 @@ export class GameScene extends Phaser.Scene {
   // Clearer next-gap hint (on by default, ?gapmarkers=off to opt out; research/PROPOSAL-GAP-MARKERS.md): still only with the three systems and
   // as far ahead as they spawn columns, but readable in daylight: a gate with a dark outline, no-fly zones in red and
   // white stripes, and an arrow at the plane's height pointing to the nearest gap. Which gate and when: src/gapmarkers.js.
-  drawGapGates(lead) {
+  // ONE FLAVOUR PER LINE (2026-11-11, src/hintlines.js; h = hintFlags(kit)): the ARROW shows with any hint line (lead = the ATC warning time); the GATE only from Forecasting 3 (opening filled from 4, a centre tick from 5,
+  // brighter with the level, lingering 1 s from 7); the SECOND (smaller) gate from ATC 10; the Ops cues: arrow red when urgent (2), blinking for a big move (3), larger (4), the steady icon (5), lit in range (6),
+  // a tick when a gap enters the window (7), length shows the distance (8), the icon shows the gap's size (10).
+  drawGapGates(h) {
     const g = this.gapHintGfx || (this.gapHintGfx = this.add.graphics().setDepth(50));
     g.clear();
     const pulse = 0.8 + 0.2 * Math.sin(this.gameTime / 120), R = GATE_RIGHT, x = R - 8, edge = MARK.outline;   // left of the heat meter
-    let first = null;
-    for (const st of this.storms) {
-      const m = gateFor(st, this.plane.y, this.speed, lead);
-      if (!m) continue;
-      const a = (0.6 + 0.4 * m.near) * pulse, col = m.kind === 'nofly' ? 0xff4040 : 0xffd23a;
-      g.fillStyle(col, 0.18 * a); g.fillRect(x + 1, m.top, 7, m.bot - m.top);   // the opening, faintly
+    const gates = [];
+    for (const st of this.storms) { const m = gateFor(st, this.plane.y, this.speed, h.lead, h.linger); if (m) { m.st = st; gates.push(m); } }
+    gates.sort((p, q) => p.ahead - q.ahead);
+    const first = gates[0] || null;   // the arrow and the icon follow the nearest gap only
+    if (h.tick) for (const m of gates) if (!m.st.hintTicked) { m.st.hintTicked = true; if (sfx.tick) sfx.tick(); }   // Ops 7: a soft tick the moment a gap enters the window
+    if (h.gate) for (let i = 0; i < gates.length && i < (h.second ? 2 : 1); i++) {
+      const m = gates[i], small = i === 1, ga = h.gateAlpha / 0.94;   // (the second gate: the gap after next, drawn smaller and fainter)
+      const a = (0.6 + 0.4 * m.near) * pulse * ga * (small ? 0.6 : 1), col = m.kind === 'nofly' ? 0xff4040 : 0xffd23a, cap = small ? 8 : 15, w = small ? 6 : 8, gx = small ? x + 2 : x;
+      if (h.fill) { g.fillStyle(col, 0.18 * a); g.fillRect(gx + 1, m.top, w - 1, m.bot - m.top); }   // the opening, filled in from Forecasting 4
       g.fillStyle(edge, 0.85 * a);   // dark outline first: it is what reads against a bright day sky
-      g.fillRect(x, m.top - 13, 8, 15); g.fillRect(x, m.bot - 2, 8, 15); g.fillRect(R - 4, m.top, 4, m.bot - m.top);
+      g.fillRect(gx, m.top - cap + 2, w, cap); g.fillRect(gx, m.bot - 2, w, cap); g.fillRect(R - 4, m.top, 4, m.bot - m.top);
       if (m.kind === 'nofly') {   // striped edges, like the zone itself
-        for (let y = 0; y < 12; y += 4) { g.fillStyle(y % 8 ? 0xffffff : col, a); g.fillRect(x + 1, m.top - 12 + y, 6, 4); g.fillRect(x + 1, m.bot - 1 + y, 6, 4); }
-      } else { g.fillStyle(col, a); g.fillRect(x + 1, m.top - 12, 6, 12); g.fillRect(x + 1, m.bot - 1, 6, 12); }
+        for (let y = 0; y < cap - 3; y += 4) { g.fillStyle(y % 8 ? 0xffffff : col, a); g.fillRect(gx + 1, m.top - cap + 3 + y, w - 2, 4); g.fillRect(gx + 1, m.bot - 1 + y, w - 2, 4); }
+      } else { g.fillStyle(col, a); g.fillRect(gx + 1, m.top - cap + 3, w - 2, cap - 3); g.fillRect(gx + 1, m.bot - 1, w - 2, cap - 3); }
       g.fillStyle(col, a); g.fillRect(R - 3, m.top, 2, m.bot - m.top);
-      if (!first || m.ahead < first.ahead) first = m;
+      if (h.centre && !small) { g.fillStyle(0xffffff, a); g.fillRect(gx - 2, Math.round((m.top + m.bot) / 2) - 1, w + 2, 2); }   // Forecasting 5: a centre tick marks the best height
     }
-    const pr = presenceFor(lead, !!first);   // no gate up: a quiet fixed bracket (no gap information, src/gapmarkers.js)
-    if (pr) {
-      g.fillStyle(edge, pr.alpha); g.fillRect(pr.x, pr.top - 2, pr.tick, 4); g.fillRect(pr.x, pr.bot - 2, pr.tick, 4); g.fillRect(pr.right - 4, pr.top, 4, pr.bot - pr.top);
-      g.fillStyle(0xffd23a, pr.alpha); g.fillRect(pr.x + 1, pr.top - 1, pr.tick - 2, 2); g.fillRect(pr.x + 1, pr.bot - 1, pr.tick - 2, 2); g.fillRect(pr.right - 3, pr.top, 2, pr.bot - pr.top);
+    const ic = iconFor(h, first);   // Ops 5+: the steady 'forecast on' icon (it replaced the presence bracket); lit while a gap is in range, a size bar from Ops 10
+    if (ic) {
+      g.fillStyle(edge, ic.alpha); g.fillRect(ic.x - 1, ic.y - 1, ic.size + 2, ic.size + 2);
+      g.fillStyle(ic.lit ? 0xffd23a : 0x9fb4d0, ic.alpha); g.fillRect(ic.x, ic.y, ic.size, ic.size);
+      g.fillStyle(edge, ic.alpha); g.fillRect(ic.x + 3, ic.y + 3, ic.size - 6, ic.size - 6);
+      if (ic.gapSize) { g.fillStyle(0xffffff, ic.alpha); g.fillRect(ic.x, ic.y + ic.size + 3, ic.gapSize === 'wide' ? ic.size : 4, 2); }
     }
-    if (first && first.arrow && (!first.blink || Math.floor(this.gameTime / 180) % 2 === 0)) {   // the nearest gate only
-      const y = this.plane.y + PLANE.h / 2, ax = GATE_RIGHT - 20, d = first.arrow * 8;
-      g.fillStyle(edge, 0.9); g.fillTriangle(ax - 7, y - first.arrow, ax + 7, y - first.arrow, ax, y + d + first.arrow * 2);
-      g.fillStyle(first.kind === 'nofly' ? 0xff4040 : 0xffd23a, 1); g.fillTriangle(ax - 5, y, ax + 5, y, ax, y + d);
+    if (first && first.arrow && (!(h.blink && first.blink) || Math.floor(this.gameTime / 180) % 2 === 0)) {   // the nearest gate only; blinking is Ops 3
+      const s = h.big ? 1.4 : 1, len = h.length ? Math.max(8, Math.min(30, Math.abs(first.dy) / 8)) : 8, urgent = h.red && first.near >= URGENT_NEAR;
+      const y = this.plane.y + PLANE.h / 2, ax = GATE_RIGHT - 20, d = first.arrow * len * s;
+      g.fillStyle(edge, 0.9); g.fillTriangle(ax - 7 * s, y - first.arrow, ax + 7 * s, y - first.arrow, ax, y + d + first.arrow * 2);
+      g.fillStyle(urgent ? 0xff3030 : first.kind === 'nofly' ? 0xff4040 : 0xffd23a, 1); g.fillTriangle(ax - 5 * s, y, ax + 5 * s, y, ax, y + d);
     }
-    if (first && !this.hintTipped) { this.hintTipped = true; this.ui.tipOnce('gapHint', tip('gapHint'), '', 'good', 4); }
+    if (first && !this.hintTipped) { this.hintTipped = true; const tk = h.gate ? 'gapHint' : 'gapArrow'; this.ui.tipOnce(tk, tip(tk), '', 'good', 4); }   // the arrow tip says 'arrow', the gate tip says 'gate'
   }
 
   enterIssr() {
