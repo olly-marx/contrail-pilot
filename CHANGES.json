@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-12-trees-bar-hints",
+    "version": "0.62.0",
+    "date": "2026-11-12",
+    "level": "minor",
+    "notes": [
+      "Trees now start small. A tree you plant grows up over your next flights (10 flights, fewer with a nursery), and only grown trees show in the wild. The button says PLANT and names the next tree, and a new little tutorial shows how: tap PLANT early, when the cross on the ground turns green. After a flight the results say how many trees you planted and which kinds, and the first tree that grows up gets a message. Trees you do not plant are not saved for the next flight. Each land holds up to 9 trees of each kind; when a kind is full, the next kind is planted.",
+      "When a Plant a tree mission is open, the first tree of each flight is the kind it asks for.",
+      "Forecasting level 1 is no longer worse than nothing: it shows fewer false icy patches, and each level up is better than the one before.",
+      "In the hangar, tap an upgrade to see a bar of its levels, what it does now and what the next level gives.",
+      "The forecast hint now starts as an arrow and grows with each upgrade: the gate comes from Forecasting level 3, the first two levels of each hint upgrade cost less, and the second gate of Air traffic control level 10 shows from the second leg.",
+      "Fixed: after buying an upgrade in NATURE, a guide could stay on screen during the next flight and stop your taps from working."
+    ]
+  },
+  {
     "id": "2026-11-12-guide-scroll-parcels",
     "version": "0.61.0",
     "date": "2026-11-12",
