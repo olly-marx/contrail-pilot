@@ -1114,8 +1114,10 @@ export class GameScene extends Phaser.Scene {
     gates.sort((p, q) => p.ahead - q.ahead);
     const first = gates[0] || null;   // the arrow and the icon follow the nearest gap only
     if (h.tick) for (const m of gates) if (!m.st.hintTicked) { m.st.hintTicked = true; if (sfx.tick) sfx.tick(); }   // Ops 7: a soft tick the moment a gap enters the window
+    let gatesDrawn = 0;
     if (h.gate) for (let i = 0; i < gates.length && i < (h.second ? 2 : 1); i++) {
       const m = gates[i], small = i === 1, ga = h.gateAlpha / 0.94;   // (the second gate: the gap after next, drawn smaller and fainter)
+      gatesDrawn++;
       const a = (0.6 + 0.4 * m.near) * pulse * ga * (small ? 0.6 : 1), col = m.kind === 'nofly' ? 0xff4040 : 0xffd23a, cap = small ? 8 : 15, w = small ? 6 : 8, gx = small ? x + 2 : x;
       if (h.fill) { g.fillStyle(col, 0.18 * a); g.fillRect(gx + 1, m.top, w - 1, m.bot - m.top); }   // the opening, filled in from Forecasting 4
       g.fillStyle(edge, 0.85 * a);   // dark outline first: it is what reads against a bright day sky
@@ -1133,12 +1135,15 @@ export class GameScene extends Phaser.Scene {
       g.fillStyle(edge, ic.alpha); g.fillRect(ic.x + 3, ic.y + 3, ic.size - 6, ic.size - 6);
       if (ic.gapSize) { g.fillStyle(0xffffff, ic.alpha); g.fillRect(ic.x, ic.y + ic.size + 3, ic.gapSize === 'wide' ? ic.size : 4, 2); }
     }
+    let arrowDrawn = false, urgentDrawn = false;
     if (first && first.arrow && (!(h.blink && first.blink) || Math.floor(this.gameTime / 180) % 2 === 0)) {   // the nearest gate only; blinking is Ops 3
       const s = h.big ? 1.4 : 1, len = h.length ? Math.max(8, Math.min(30, Math.abs(first.dy) / 8)) : 8, urgent = h.red && first.near >= URGENT_NEAR;
+      arrowDrawn = true; urgentDrawn = urgent;
       const y = this.plane.y + PLANE.h / 2, ax = GATE_RIGHT - 20, d = first.arrow * len * s;
       g.fillStyle(edge, 0.9); g.fillTriangle(ax - 7 * s, y - first.arrow, ax + 7 * s, y - first.arrow, ax, y + d + first.arrow * 2);
       g.fillStyle(urgent ? 0xff3030 : first.kind === 'nofly' ? 0xff4040 : 0xffd23a, 1); g.fillTriangle(ax - 5 * s, y, ax + 5 * s, y, ax, y + d);
     }
+    this.hintDrawn = { inRange: gates.length, gates: gatesDrawn, arrow: arrowDrawn, red: urgentDrawn, icon: !!ic, lit: !!(ic && ic.lit), size: ic ? ic.gapSize : null };   // what this frame drew (tests/hintdraw.cjs reads it)
     if (first && !this.hintTipped) { this.hintTipped = true; const tk = h.gate ? 'gapHint' : 'gapArrow'; this.ui.tipOnce(tk, tip(tk), '', 'good', 4); }   // the arrow tip says 'arrow', the gate tip says 'gate'
   }
 
