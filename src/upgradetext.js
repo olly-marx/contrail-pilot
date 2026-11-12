@@ -1,6 +1,6 @@
 // THE WORDS OF AN UPGRADE LEVEL, in one place (BLOCK2-PLAN item 4, DESIGN-UPGRADE-BAR.md part B; the user: "in the hangar there should be a way to see the progress of that upgrade, like a bar that tells you what it does at
-// your level, how to upgrade it and what you'll get"). Pure: no DOM, no clock, no random numbers. The hangar strip (src/hangar.js previewCardHTML) calls levelCard; nothing else writes a level's words.
-//   levelCard(save, kind, id) -> { title, have, count, max, now, next, price, locked } or null for an unknown line
+// your level, how to upgrade it and what you'll get"). Pure: no DOM, no clock, no random numbers. The hangar strip (src/hangar.js previewCardHTML) calls upgradeCard; nothing else writes a level's words.
+//   upgradeCard(save, kind, id) -> { title, have, count, max, now, next, price, locked } or null for an unknown line
 //     kind 'plane' (id 'comet.engines'), 'system' (id 'forecast'), 'gadget' (id 'magnet'): the words are the level's effects (effectText), else its name
 //     kind 'nature' (id 'trees', 'soil', 'nursery'): the words are the level's `short` text (src/upgrades.js)
 //   have = levels bought, count = levels in the line, max = nothing left to buy; now = what the level you have does ('nothing yet' at 0); next = the name and effect of the next level (null at the end); price = the next level's { seeds, crystals }
@@ -21,7 +21,7 @@ function linesOf(save, kind, id) {
   return null;
 }
 
-export function levelCard(save, kind, id) {
+export function upgradeCard(save, kind, id) {
   const L = linesOf(save, kind, id); if (!L) return null;
   const { levels, have } = L, count = levels.length, max = have >= count, cur = have ? levels[have - 1] : null, nxt = max ? null : levels[have];
   const say = lv => (L.nature ? lv.short || lv.name || '' : wordsOf(lv)), sayNext = lv => (L.nature ? lv.short || lv.name || '' : nextWords(lv));
