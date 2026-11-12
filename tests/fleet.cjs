@@ -10,7 +10,7 @@
 
   // Nothing bought: today's no-upgrade values (PLANE-ERAS-1-3.md section 1), flying the Comet.
   const k0 = F.fleetKit({});
-  const today = { plane: 'comet', co2: 1.1, takeoff: 1, revealPx: 50, pickup: 12, perSkip: 0.5, flare: 1, dodgeCrystals: 1, dodgesPerNight: 3, autoSecs: 8, autoChance: 0, gaps: 1, fares: 1, hintLevel: 0 };
+  const today = { plane: 'comet', co2: 1.1, takeoff: 1, revealPx: 50, pickup: 12, perSkip: 0.5, flare: 1, dodgeCrystals: 1, dodgesPerNight: 3, autoSecs: 8, autoChance: 0, gaps: 1, fares: 1, hintLead: 0, hintArrow: false, hintGate: 0, hintSecond: false, hintBoost: 0, hintCues: 0 };
   for (const [key, v] of Object.entries(today)) check(k0[key] === v, `nothing bought: ${key} = ${k0[key]}, expected ${v}`);
 
   // Prices: each era totals 1.4-1.6x its budget; crystals = seeds / 8, HALVED from the 2030s (era >= 4, 2026-10-29).
