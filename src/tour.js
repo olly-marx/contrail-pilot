@@ -208,10 +208,11 @@ export class Tour {
       if (st.end) break;
     }
     this.el.hidden = true;
+    const lastKey = this.curStep && this.curStep.key;   // (clearSpot() below clears curStep; noteAbort needs the key)
     this.target = null; this.clearSpot();
     const exited = this.exited; this.exited = null;
     if (id) this.markDone(id);
-    else if (exited) this.noteAbort(kid, exited);
+    else if (exited) this.noteAbort(kid, exited, lastKey);
     this.busy = false;
     // Then whatever screen is showing NOW may have its own step (a rails tap often opens the next screen while this tour
     // is still finishing: the hangar's step was lost that way).
@@ -279,8 +280,8 @@ export class Tour {
     this.el.hidden = true;
   }
   // An interrupted step comes back ONCE (it may teach something the player needs), then counts as seen, so it neither loops on every HOME nor is lost by the first interruption. window.__tourAborts is for the tests.
-  noteAbort(kid, why) {
-    (window.__tourAborts = window.__tourAborts || []).push({ id: kid, key: this.curStep && this.curStep.key, why });
+  noteAbort(kid, why, key) {
+    (window.__tourAborts = window.__tourAborts || []).push({ id: kid, key, why });
     const m = (this.save.railAborts = this.save.railAborts || {}); m[kid] = (m[kid] || 0) + 1;
     if (m[kid] >= 2) this.markDone(kid); else writeSave(this.save);
   }
