@@ -53,7 +53,7 @@ group route-chip | src/globe.js src/sheet.js | routechip hubscreen
 group school-icy | src/school.js | schoolicy
 group save-safety | src/save.js src/online.js src/persist.js src/pilot.js src/main.js src/ui.js index.html | savesafe recoversave pilotcode
 group crossing-hud | src/GameScene.js src/sim/rules.js | crossinghud
-group gap-hint | src/fleet.js src/gapmarkers.js src/hintlines.js src/hintwords.js | gaphint
+group gap-hint | src/fleet.js src/gapmarkers.js src/hintlines.js src/hintwords.js | gaphint hintdraw
 group crossing-end | src/crossingend.js src/ui.js src/landmarks.js | crossingscreens crossinghud crossingmoment
 group plants-GameScene-js | src/GameScene.js | boardsonline flagclear preloadgate walkthrough
 group plants-steppe-js | src/habitat/steppe.js | rowfit
@@ -74,7 +74,7 @@ group hangar-pay | src/hangar.js style.css | hangarpay hubscreen onrails320
 group spotlight | src/tour.js src/railsubjects.js tests/lib/spotlight.js tests/lib/spotcases.js | spotlight onrails320 onrails rparcels
 group payoff-full | src/hangar.js style.css | payofffull
 group music | src/music.js src/musicdata.js src/musicengine.js src/musicplan.js | audiolive
-group gap-hint-restart | src/GameScene.js src/gapmarkers.js | gaphintrestart gaphint
+group gap-hint-restart | src/GameScene.js src/gapmarkers.js | gaphintrestart gaphint hintdraw
 group tools-everywhere | src/wild.js | toolseverywhere regions
 group plant-rail | src/GameScene.js src/tour.js src/tips.js src/railsubjects.js | plantrail
 group landlog-ui | src/landlog.js src/pilot.js | landlogui

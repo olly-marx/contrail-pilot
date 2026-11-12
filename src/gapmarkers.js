@@ -36,7 +36,7 @@ export function gateFor(st, planeY, speed, lead = 0, linger = 0) {
 export const ICON = { size: 10, alphaOn: 0.95, alphaOff: 0.4, wideFrom: 170 };
 export function iconFor(flags, first) {
   if (!flags || !flags.icon) return null;
-  const mid = Math.round((HEIGHT - GROUND_H) / 4);
+  const sky = HEIGHT - GROUND_H, mid = Math.round(sky / 4);   // (the same rail height as the old presence bracket; written apart so the presence plant below changes one line)
   return { x: GATE_RIGHT - ICON.size - 2, y: mid - ICON.size / 2, size: ICON.size, lit: !!(flags.lit && first), alpha: flags.lit && first ? ICON.alphaOn : ICON.alphaOff,
     gapSize: flags.size && first ? (first.wide >= ICON.wideFrom ? 'wide' : 'narrow') : null };
 }

@@ -830,3 +830,11 @@ treewords	src/resultscard.js	s/v.treeNames = v.trees \&\& planted \&\& names ? c
 treewords	src/resultscard.js	s/? clip(names, LINE_MAX) : /? names : /	a long list of kinds is not clipped to the row
 treelineui	style.css	s/^\.rc-trees \.rc-treenames { flex: none; font-size: 7px;/.rc-trees .rc-treenames { display: none; flex: none; font-size: 7px;/	the kinds line is hidden by the stylesheet
 textfit	src/GameScene.js	s/text(bx + 64, by - 3/text(bx + 32, by - 3/;s/\.setOrigin(1, 1);   \/\/ right-aligned/.setOrigin(0.5, 1);   \/\/ right-aligned/	the Next label is centred on the button again and runs off the right edge
+hintdraw	src/GameScene.js	s/    if (h.gate) for (let i = 0; i < gates.length \&\& i < (h.second ? 2 : 1); i++) {/    if (true) for (let i = 0; i < gates.length \&\& i < (h.second ? 2 : 1); i++) {/	a gate is drawn below Forecasting 3
+hintdraw	src/GameScene.js	s/gates.length \&\& i < (h.second ? 2 : 1); i++) {/gates.length \&\& i < 1; i++) {/	the second gate is never drawn
+hintdraw	src/GameScene.js	s/const ic = iconFor(h, first);/const ic = null;/	the forecast-on icon is never drawn
+hintdraw	src/GameScene.js	s/if (first \&\& first.arrow \&\& (!(h.blink/if (false \&\& first.arrow \&\& (!(h.blink/	the arrow is never drawn
+hintdraw	src/hintlines.js	s/second: !!k.hintSecond \&\& lead > 0/second: false/	the second gate never comes, whatever the ATC level
+hintdraw	src/hintlines.js	s/red: lead > 0 \&\& O >= CUE_FROM.red/red: false/	the arrow never turns red when urgent
+hintdraw	src/hintlines.js	s/GATE_FROM = 3,/GATE_FROM = 1,/	the gate is drawn from Forecasting 1
+hintdraw	src/gapmarkers.js	s/if (!flags || !flags.icon) return null;/if (!flags) return null;/	the icon is drawn below Ops 5
