@@ -11,7 +11,7 @@ globalThis.SEASON2 = true;
   // 1
   check(T.tip('rail-plant', 2) === 'You carry 2 trees. Take off and plant them.' && /You carry 6 trees/.test(T.tip('rail-plant', 6)), `rail-plant says how many trees the plane carries: '${T.tip('rail-plant', 2)}'`);
   const pl = T.tip('rail-planted', 10);
-  check(/Your first tree! It grows up in 10 flights\./.test(pl) && /not saved for the next flight/.test(pl), `rail-planted says it grows up in N flights and that unplanted trees are not saved: '${pl}'`);
+  check(/Your first tree! It grows up in 10 flights\./.test(pl) && /Unplanted trees are not saved\./.test(pl), `rail-planted says it grows up in N flights and that unplanted trees are not saved: '${pl}'`);
   check(/Buy more trees for each flight here/.test(T.tip('rail-parcels')) && /first level is free/.test(T.tip('rail-parcels')), `rail-parcels (NATURE): '${T.tip('rail-parcels')}'`);
   // 2
   const t1 = T.tip('tree-1');

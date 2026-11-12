@@ -131,6 +131,7 @@ export const RULES = {
     this.plantedNames = [];            // the names of the trees that landed on soil this flight
     this.touchdown = null;            // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
     this.forestFullSaid = false;
+    this.saidGroveFull = false;        // 'Grove full here!' is said once PER flight (src/droporder.js: nothing left to drop)
     this.landStored = 0;               // ...and rewilded land
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
     this.goldens = 0;                  // golden seeds grabbed

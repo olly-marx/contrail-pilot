@@ -792,8 +792,8 @@ droporder	src/droporder.js	s/DROP_ORDER.preferMission \&\& prefer ?/prefer ?/	th
 droporder	src/sim/rules.js	s/this.preferTag = DROP_ORDER.preferMission \&\& isSeason2(this.save) \&\& !this.school ? missionTag(this.save) : null;/this.preferTag = null;/	the world never reads the open mission kind
 droporder	src/droporder.js	s/  if (want) return want;/  if (false) return want;/	the mission kind is never preferred
 treewords	src/tips.js	s/say: n => `You carry ${n} trees. Take off and plant them.`/say: n => `You carry trees. Take off and plant them.`/	the HOME rail loses the count of trees
-treewords	src/tips.js	s/ Trees you do not plant are not saved for the next flight\.`/`/	the results rail forgets to say unplanted trees are not saved
-treewords	src/tips.js	s/The cross on the ground is where your tree will land\. Tap <b>PLANT<\/b>/Tap <b>SEND A SEED<\/b>/	the flight strip names the old button
+treewords	src/tips.js	s/ Unplanted trees are not saved\.`/`/	the results rail forgets to say unplanted trees are not saved
+treewords	src/tips.js	s/Tap <b>PLANT<\/b> early/Tap <b>SEND A SEED<\/b> early/	the flight strip names the old button
 treewords	src/upgrades.js	s/name: 'More trees', short: 'Plant 3 trees per flight.'/name: 'More parcels', short: 'Plant 3 trees per flight.'/	a Tree Planting level is called parcels again
 treewords	src/resultscard.js	s/const dropped = r.treesDropped || 0, planted = Math.min(r.planted || 0, dropped)/const dropped = r.treesDropped || 0, planted = r.treesDropped ? 0 : 0/	the planting line never counts planted trees
 treewords	src/resultscard.js	s/v.trees = r.school || !dropped ? /v.trees = !dropped ? /	flight school gets a planting line

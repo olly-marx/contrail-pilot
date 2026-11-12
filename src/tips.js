@@ -28,7 +28,7 @@ export const TIPS = {
   'school-low':    { say: 'Get <b>low</b> just before the runway!' },
 
   // ---- first-flight coach cards (explain: one-off, never freeze the game after school) ----
-  'tree-1':     { say: 'Brown ground ahead: a tree can grow there! The cross on the ground is where your tree will land. Tap <b>PLANT</b> a little early, when the cross turns green.', more: 'Brown ground = a place to plant a tree! The cross shows where your tree will land and turns green on the brown patch. Tap PLANT a little before you reach it: the tree floats down AND forwards.' },
+  'tree-1':     { say: 'Brown ground ahead! Tap <b>PLANT</b> early, when the cross turns green.', more: 'Brown ground = a place to plant a tree! The cross shows where your tree will land and turns green on the brown patch. Tap PLANT a little before you reach it: the tree floats down AND forwards.' },
   'tree-2':     { say: 'Your tree soaks up CO2 as it grows. Bigger trees soak up more.', more: 'Your tree takes CO2 out of the air as it grows. Bigger trees take a bit more. But trees are slow! A cleaner plane and smart contrails help the Earth faster.' },
   'tree-3':     { say: 'Different kinds of tree bring much more wildlife than lots of one kind.', more: 'Your Biodiversity meter shows how full of life your land is. Different kinds of trees bring much more wildlife than lots of the same kind.' },
   'x-first-animal': { say: 'A wild animal! Nature projects and trees bring them back here.' },
@@ -72,7 +72,7 @@ export const TIPS = {
   'rail-free-tap':     { say: 'Tap here to see your new jet engines.' },
   'rail-takeoff-h':    { say: 'Now take off and try them!' },
   'rail-plant':        { say: n => `You carry ${n} trees. Take off and plant them.` },   // n = the trees the plane carries (src/tour.js)
-  'rail-planted':      { say: n => `Your first tree! It grows up in ${n} flights. Trees you do not plant are not saved for the next flight.` },   // n = the flights it takes (the nursery)
+  'rail-planted':      { say: n => `Your first tree! It grows up in ${n} flights. Unplanted trees are not saved.` },   // n = the flights it takes (the nursery)
   'rail-parcels':      { say: 'Buy more trees for each flight here. The first level is free.' },
   'rail-free':         { say: 'Cleaner engines: less CO2, a cooler Earth. Tap FREE!' },
   'rail-payoff':       { say: 'Look: shiny new jet engines!' },
