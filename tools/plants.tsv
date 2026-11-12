@@ -837,3 +837,9 @@ hintdraw	src/hintlines.js	s/second: !!k.hintSecond \&\& lead > 0/second: false/	
 hintdraw	src/hintlines.js	s/red: lead > 0 \&\& O >= CUE_FROM.red/red: false/	the arrow never turns red when urgent
 hintdraw	src/hintlines.js	s/GATE_FROM = 3,/GATE_FROM = 1,/	the gate is drawn from Forecasting 1
 hintdraw	src/gapmarkers.js	s/if (!flags || !flags.icon) return null;/if (!flags) return null;/	the icon is drawn below Ops 5
+droporder	src/droporder.js	s/cand\[(turn + k) % cand.length\]/cand[k % cand.length]/	the drops no longer take turns (the turn counter is ignored)
+droporder	src/droporder.js	s/if (room.includes(c)) return c;/return c;/	a full kind still gets its turn
+droporder	src/droporder.js	s/if (want \&\& first) return want;/if (want) return want;/	the mission kind goes first on every drop, not only the first
+droporder	src/droporder.js	s/if (DROP_ORDER.mode === 'off') return cand.length ? cand\[turn % cand.length\] : null;/if (DROP_ORDER.mode === 'off') return room.length ? room[turn % room.length] : null;/	the off mode skips a full kind (it is the game before trees v2: no cap)
+droporder	src/droporder.js	s/get on() { return this.mode !== 'off'; }/get on() { return true; }/	DROP_ORDER.on is true in the off mode
+droporder	src/sim/rules.js	s/this.preferTag, this.speciesIdx, this.released === 0); },/this.preferTag, 0, this.released === 0); },/	the label always names the first turn, not the next drop

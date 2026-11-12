@@ -246,12 +246,11 @@ export const RULES = {
   // Parcels take turns through the kinds of tree you own, so variety comes naturally.
   // Each land's own open trees (src/landtrees.js), taken in turn so a flight mixes kinds. The UK slot kind is
   // returned: growth and cooling use its SPECIES row; localTree() names the land's own tree.
-  treeKind() {   // TREES V2 step 3: the kind with the fewest trees among the land's open ones (src/droporder.js); null = the grove is full here
-    if (!DROP_ORDER.on) { const open = treesOpen(this.save, this.regionNow || 'woodland'); return slotKind(open.length ? open[this.speciesIdx % open.length] : 0); }   // the old order (the sim's A/B arm)
-    const n = nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag);
+  treeKind() {   // the drop order (src/droporder.js DROP_ORDER.mode: 'turns' = the kinds take turns as before trees v2 (open[speciesIdx % open.length]) and a full kind is skipped; 'fewest'; 'off'); null = the grove is full here
+    const n = this.nextTreeInfo();
     return n ? slotKind(n.slot) : null;
   },
-  nextTreeInfo() { return !DROP_ORDER.on ? null : nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag); },
+  nextTreeInfo() { return nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag, this.speciesIdx, this.released === 0); },   // the tree the NEXT drop will plant: the label above the PLANT button and treeKind() ask the same function
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
   // drop them before you reach a soil plot. This works out which bit of ground (in today's screen
   // position) one would land on if dropped now. The ground keeps scrolling while it falls, so
