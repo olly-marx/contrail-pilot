@@ -616,7 +616,6 @@ groves	src/groves.js	s/save\.planted\[id\] = c\.planted;/;/	plantTree no longer 
 groves	src/groves.js	s/save\.plantedIn\[land\]\[id\] = c\.planted;/;/	plantTree no longer mirrors another land's old key
 groves	src/groves.js	s/if (x\.planted < n) {/if (x.planted < n \&\& x.planted === 0) {/	the smaller count wins when an older save disagrees
 groves	src/groves.js	s/Object\.values(groveView(save))\.reduce(/Object.values({ woodland: groveView(save).woodland || {} }).reduce(/	the total counts only the UK's trees
-groves	src/groves.js	s/c\.planted += 1; c\.grown += 1;/c.planted += 1;/	a planted tree is not counted as grown
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ Puffin Swift Falcon Otter 4\x36 A phone that has lost its pilot/	a pilot-code-shaped string is written into a comment
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ L\x6fla A phone that has lost its pilot/	a tester's first name is written into a comment
 secretscan	tests/secretscan.cjs	/file: 'tests\/pilotcode.cjs'/d	the allow-list entry for the pilotcode fixture is removed
@@ -800,3 +799,34 @@ gapmarkers	src/gapmarkers.js	s/if (!flags || !flags.icon) return null;/if (!flag
 gapmarkers	src/gapmarkers.js	s/lit: !!(flags.lit \&\& first)/lit: !!first/	the icon lights without Ops 6
 gapmarkers	src/gapmarkers.js	s/gapSize: flags.size \&\& first/gapSize: first/	the icon shows the gap's size without Ops 10
 upgradetext	src/upgradetext.js	s/if (hw) { card.now = hw.now;/if (false) { card.now = hw.now;/	the hint lines show the level effects instead of the sim chat's words
+groves	src/groves.js	s/c\.planted += 1; c\.saplings\.push({ points: 0, fresh: true });/c.planted += 1; c.grown += 1;/	a planted tree counts as grown at once (no sapling)
+nursery	src/groves.js	s/if (s\.fresh) { keep\.push/if (s.fresh \&\& false) { keep.push/	the planting flight gives a sapling its first point
+nursery	src/groves.js	s/if (p >= need) { c\.grown += 1; up += 1; }/if (p >= NURSERY_NEED[0]) { c.grown += 1; up += 1; }/	the nursery's need is ignored (always 10)
+nursery	src/groves.js	s/grow <= 0\.5 ? NURSERY_NEED\[2\]/grow <= 0.5 ? NURSERY_NEED[0]/	the second nursery level grows no faster
+nursery	src/groves.js	s/{ c\.grown += 1; up += 1; } else keep\.push/{ up += 1; } else keep.push/	a sapling that grows up is lost
+nursery	src/sim/rules.js	s/const treesGrown = !this\.school ? growGroves(/const treesGrown = false ? growGroves(/	banking a flight grows no sapling (re-aimed 2026-11-12: the line now keeps growGroves' return value)
+nursery	src/nature.js	s/const book = grownBook(save, region), base/const book = plantedHere(save, region), base/	the scenery shows saplings as grown trees
+droporder	src/droporder.js	s/room\.reduce((a, c) => (c\.n < a\.n ? c : a))/room.reduce((a, c) => (c.n > a.n ? c : a))/	the most planted kind is chosen, not the fewest
+droporder	src/droporder.js	s/(pending\[t\.id\] || 0)/0/	the parcels released but not landed are not counted
+droporder	src/droporder.js	s/c\.n < TREE_CAP/true/	a kind at its cap of 9 is still chosen
+droporder	src/droporder.js	s/(c\.n < a\.n ? c : a)/(c.n <= a.n ? c : a)/	a tie goes to the last slot, not the first
+droporder	src/sim/rules.js	s/const lid = localTree(kind, region)\.id; this\.dropped\[lid\] = Math\.max(0, (this\.dropped\[lid\] || 0) - 1);//	a landed parcel stays pending for ever
+droporder	src/sim/rules.js	s/const kind = this\.treeKind();/const kind = this.treeKind() || 'spruce';/	a full grove still lets the tree go
+droporder	src/droporder.js	s/room.find(c => c.tag === prefer)/cand.find(c => c.tag === prefer)/	the preference ignores the cap of 9 per kind
+droporder	src/droporder.js	s/DROP_ORDER.preferMission \&\& prefer ?/prefer ?/	the preferMission switch is ignored
+droporder	src/sim/rules.js	s/this.preferTag = DROP_ORDER.preferMission \&\& isSeason2(this.save) \&\& !this.school ? missionTag(this.save) : null;/this.preferTag = null;/	the world never reads the open mission kind
+droporder	src/droporder.js	s/  if (want) return want;/  if (false) return want;/	the mission kind is never preferred
+treewords	src/tips.js	s/say: n => `You carry ${n} trees. Take off and plant them.`/say: n => `You carry trees. Take off and plant them.`/	the HOME rail loses the count of trees
+treewords	src/tips.js	s/ Unplanted trees are not saved\.`/`/	the results rail forgets to say unplanted trees are not saved
+treewords	src/tips.js	s/Tap <b>PLANT<\/b> early/Tap <b>SEND A SEED<\/b> early/	the flight strip names the old button
+treewords	src/upgrades.js	s/name: 'More trees', short: 'Plant 3 trees per flight.'/name: 'More parcels', short: 'Plant 3 trees per flight.'/	a Tree Planting level is called parcels again
+treewords	src/resultscard.js	s/const dropped = r.treesDropped || 0, planted = Math.min(r.planted || 0, dropped)/const dropped = r.treesDropped || 0, planted = r.treesDropped ? 0 : 0/	the planting line never counts planted trees
+treewords	src/resultscard.js	s/v.trees = r.school || !dropped ? /v.trees = !dropped ? /	flight school gets a planting line
+treelineui	src/ui.js	s/$('rTrees').hidden = !v.trees;/$('rTrees').hidden = true;/	the planting line is never shown
+treelineui	style.css	s/^\.rc-trees { flex-direction: column;/.rc-trees { display: none; flex-direction: column;/	the planting line is hidden by the stylesheet
+treelineui	src/ui.js	s/, 'tree-grown'\]; writeSave(s);/]; writeSave(s);/	the grown-up toast is never marked told
+treelineui	src/ui.js	s/this.grownToastDue = (r.treesGrown || 0) > 0 \&\& /this.grownToastDue = false \&\& /	a grown tree never gives the toast
+treewords	src/resultscard.js	s/v.treeNames = v.trees \&\& planted \&\& names ? clip(names, LINE_MAX) : '';/v.treeNames = '';/	the second line (the kinds) is never given
+treewords	src/resultscard.js	s/? clip(names, LINE_MAX) : /? names : /	a long list of kinds is not clipped to the row
+treelineui	style.css	s/^\.rc-trees \.rc-treenames { flex: none; font-size: 7px;/.rc-trees .rc-treenames { display: none; flex: none; font-size: 7px;/	the kinds line is hidden by the stylesheet
+textfit	src/GameScene.js	s/text(bx + 64, by - 3/text(bx + 32, by - 3/;s/\.setOrigin(1, 1);   \/\/ right-aligned/.setOrigin(0.5, 1);   \/\/ right-aligned/	the Next label is centred on the button again and runs off the right edge

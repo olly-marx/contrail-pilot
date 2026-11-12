@@ -16,6 +16,8 @@
     'x-species': [longest(Object.values(REGION_TREES).flat().map(t => t.name))],
     'tour-new': ['NATURE'],
     'tour-newline': ['Soil Patches and Tree Nursery'],
+    'rail-plant': [6],      // the trees the plane carries (src/upgrades.js trees levels: 2, 3, 4, 6)
+    'rail-planted': [10],   // the flights a sapling needs (src/groves.js NURSERY_NEED: 10, 8, 6)
   };
   for (const [id, t] of Object.entries(T.TIPS)) {
     if (typeof t.say === 'function') check(SAMPLE[id], `${id}: a function tip needs a SAMPLE (its longest real values)`);

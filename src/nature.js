@@ -2,7 +2,7 @@ import { cz } from './config.js';
 import { UK_PROJECTS, UK_SPECIES, RARITY, REGION_DATA } from './habitats.js';
 import { WILDLIFE } from './wildlife.js';
 import { REGION_TREES } from './habitat/trees.js';
-import { treeBook, groveWith } from './groves.js';
+import { treeBook, groveWith, grownBook } from './groves.js';
 // Nature: tree species, rewilding projects and the Biodiversity meter (barren land to rainforest).
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
 // native kind is a big boost; more of the same kind adds less and less.
@@ -144,7 +144,7 @@ export function wildlifeScene(save, region = 'woodland') {
   const uk = region === 'woodland', bio = biodiversity(save, region);
   // Trees (research/PROPOSAL-TREES.md rule a): in every land you see the trees YOU planted there, plus a few of
   // its plantation tree (slot 0) from the start. Texture key = the land's tree id (src/wildlife.js 'tree-<id>').
-  const book = plantedHere(save, region), base = localTree(UK_SLOTS[0], region).id;
+  const book = grownBook(save, region), base = localTree(UK_SLOTS[0], region).id;   // only GROWN trees are seen (src/groves.js step 2)
   const treeKinds = [...new Set([base, ...Object.keys(book).filter(id => book[id] > 0)])]
     .filter(id => WILDLIFE.some(w => w.kind === 'tree' && w.sprite === `tree-${id}`));
   const here = regionSpecies(region).filter(w => w.sprite && canAppear(save, w.id, region) && !['cow', 'sheep'].includes(w.id));

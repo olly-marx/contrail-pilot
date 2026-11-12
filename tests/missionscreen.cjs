@@ -104,7 +104,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // and never "claim your prizes" (there is no claim step any more).
   p = await open({ ...s2, freeUpgrade: false, seeds: 0, crystals: 0, missionsDone: ['L1', 'L2', 'L3', 'L4'], freeParcelsGiven: true, unclaimed: [{ key: 'mission:L4', kind: 'mission', id: 'L4', label: 'Skip one airport, land at the next', seeds: 70, crystals: 1 }] });
   const cl = await p.evaluate(() => document.getElementById('hubNext').innerText);
-  check(/tree parcels/i.test(cl) && !/Claim/i.test(cl), `lesson 5: NEXT = the tree parcels in NATURE, never "claim": "${cl}"`);
+  check(/(free|buy) trees/i.test(cl) && !/Claim/i.test(cl), `lesson 5: NEXT = the tree parcels in NATURE, never "claim": "${cl}"`);
   const paidAtLoad = await saveIn(p);
   check(paidAtLoad.seeds === 70 && paidAtLoad.crystals === 1 && !(paidAtLoad.unclaimed || []).length, `the older save's prize was paid at load: ${paidAtLoad.seeds} / ${paidAtLoad.crystals}, left ${JSON.stringify(paidAtLoad.unclaimed)}`);
   await p.click('#hubNext .rc-row'); await p.waitForTimeout(400);

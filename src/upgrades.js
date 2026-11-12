@@ -72,13 +72,13 @@ export const LINES = [
   {
     id: 'trees', name: 'Tree Planting', group: 'Trees', tree: 'Nature',
     levels: [
-      { cost: 25, crystals: 3, name: 'Tree parcels', short: 'Drop 2 trees per flight onto brown soil.', parcels: 2 },
-      { cost: 40, crystals: 5, name: 'More parcels', short: 'Drop 3 trees per flight.', parcels: 3 },
+      { cost: 25, crystals: 3, name: 'Plant trees', short: 'Plant 2 trees per flight onto brown ground.', parcels: 2 },
+      { cost: 40, crystals: 5, name: 'More trees', short: 'Plant 3 trees per flight.', parcels: 3 },
       { cost: 450, crystals: 56, name: 'Big cargo hold', short: 'Drop 4 trees per flight.', parcels: 4 },
       { cost: 650, crystals: 81, name: 'Tree drop plane', short: 'Drop 6 trees per flight!', parcels: 6 },
     ],
     info: {
-      what: 'Parcels hold young trees. Drop them from your plane onto brown soil to plant them.',
+      what: 'Young trees ride in your plane. Plant them from the air onto brown ground.',
       why: 'Trees take CO2 out of the air as they grow. Plant early: they grow bigger and help more.',
       fact: 'A tree takes many years to grow big. Not making CO2 in the first place works faster.',
       links: ['citizenzoo', 'project'],
@@ -87,12 +87,12 @@ export const LINES = [
   {
     id: 'soil', name: 'Soil Patches', group: 'Trees', tree: 'Nature', unlock: { planted: 1 },
     levels: [
-      { cost: 20, crystals: 2, name: 'Bigger soil patches', short: 'Easier to hit with a parcel.', plotW: 64 },
+      { cost: 20, crystals: 2, name: 'Bigger soil patches', short: 'Easier to hit with a tree.', plotW: 64 },
       { cost: 90, crystals: 11, name: 'Huge soil patches', short: 'Really easy to hit!', plotW: 80 },
       { cost: 150, crystals: 19, name: 'Giant soil patches', short: 'You can hardly miss!', plotW: 96 },
     ],
     info: {
-      what: 'Patches of ready soil where your tree parcels can land and grow.',
+      what: 'Patches of ready soil where your trees can land and grow.',
       why: 'Bigger patches are easier to hit, so fewer trees are wasted.',
       fact: 'In real life, people get the ground ready first: clearing weeds and choosing the right spot for each tree.',
       links: ['citizenzoo'],
@@ -195,12 +195,12 @@ export const LINES = [
   {
     id: 'nursery', name: 'Tree Nursery', group: 'Trees', tree: 'Nature', requires: { line: 'trees', level: 2 },
     levels: [
-      { cost: 140, crystals: 18, name: 'Tree nursery', short: 'Your trees grow up faster.', grow: 0.7 },
-      { cost: 450, crystals: 56, name: 'Big nursery', short: 'Trees grow up twice as fast!', grow: 0.5 },
+      { cost: 140, crystals: 18, name: 'Tree nursery', short: 'Trees grow up in 8 flights.', grow: 0.7 },   // (no nursery: 10 flights; src/groves.js NURSERY_NEED)
+      { cost: 450, crystals: 56, name: 'Big nursery', short: 'Trees grow up in 6 flights.', grow: 0.5 },
     ],
     info: {
-      what: 'A tree nursery grows young trees until they are strong enough to plant out.',
-      why: 'Older, stronger young trees grow up faster, so they start taking in more CO2 sooner.',
+      what: 'The trees you drop start small and grow up in the nursery. Every flight you finish, landed or not, makes them grow a little.',
+      why: 'Only grown trees are seen in the wild. A faster nursery shows your trees sooner.',
       fact: 'Some trees are grown from seeds collected from old trees nearby, so they suit the local land.',
       links: ['citizenzoo'],
     },

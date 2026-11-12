@@ -6,7 +6,8 @@ import { tip } from '../tips.js';
 import { FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
-import { treeBook, plantTree } from '../groves.js';
+import { treeBook, plantTree, growGroves, needFromGrow } from '../groves.js';
+import { nextTree, DROP_ORDER, missionTag } from '../droporder.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
 import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as s2LessonsLeft } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
@@ -86,6 +87,8 @@ export const RULES = {
     this.nextPlotAt = PARCEL.firstAt;
     this.treeFeedback = 0;
     this.speciesIdx = 0;
+    this.preferTag = DROP_ORDER.preferMission && isSeason2(this.save) && !this.school ? missionTag(this.save) : null;   // the open plant-tree mission's kind (src/droporder.js), read once per flight
+    this.dropped = {};               // parcels released this flight that have not landed yet, by tree id (src/droporder.js: the next kind is the one with the fewest trees)
     this.decor = [];                 // ponds etc. scrolling on the ground
     this.nextDecorAt = 500;
     this.storks = [];
@@ -124,8 +127,11 @@ export const RULES = {
     this.feedback = { amount: 0, timer: 0 };
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.planted = 0;
-    this.touchdown = null;             // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
+    this.released = 0;                 // trees dropped this flight (hit or miss): the results line 'Planted 2 of 3 trees'
+    this.plantedNames = [];            // the names of the trees that landed on soil this flight
+    this.touchdown = null;            // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
     this.forestFullSaid = false;
+    this.saidGroveFull = false;        // 'Grove full here!' is said once PER flight (src/droporder.js: nothing left to drop)
     this.landStored = 0;               // ...and rewilded land
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
     this.goldens = 0;                  // golden seeds grabbed
@@ -240,10 +246,12 @@ export const RULES = {
   // Parcels take turns through the kinds of tree you own, so variety comes naturally.
   // Each land's own open trees (src/landtrees.js), taken in turn so a flight mixes kinds. The UK slot kind is
   // returned: growth and cooling use its SPECIES row; localTree() names the land's own tree.
-  treeKind() {
-    const open = treesOpen(this.save, this.regionNow || 'woodland');
-    return slotKind(open.length ? open[this.speciesIdx % open.length] : 0);
+  treeKind() {   // TREES V2 step 3: the kind with the fewest trees among the land's open ones (src/droporder.js); null = the grove is full here
+    if (!DROP_ORDER.on) { const open = treesOpen(this.save, this.regionNow || 'woodland'); return slotKind(open.length ? open[this.speciesIdx % open.length] : 0); }   // the old order (the sim's A/B arm)
+    const n = nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag);
+    return n ? slotKind(n.slot) : null;
   },
+  nextTreeInfo() { return !DROP_ORDER.on ? null : nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag); },
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
   // drop them before you reach a soil plot. This works out which bit of ground (in today's screen
   // position) one would land on if dropped now. The ground keeps scrolling while it falls, so
@@ -870,6 +878,7 @@ export const RULES = {
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save
     this.save.seeds += gained;
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
+    const treesGrown = !this.school ? growGroves(this.save, needFromGrow(this.kit.grow)) : 0;   // (how many saplings grew up in this banked flight: result.treesGrown, the one-time 'a tree has grown up' toast) every banked flight, landed or crashed, grows the saplings planted in EARLIER flights one point (src/groves.js)
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
     // Missions and badges are PAID here, the moment the flight is banked (R8; src/rewards.js addPrizes + src/missions2.js finish pay straight into the bank).
@@ -881,7 +890,7 @@ export const RULES = {
     this.result = {
       landed, landedAt: this.landedAt, from: this.homeName, lap, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
-      breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted, kinds: this.speciesPlanted.size,
+      breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted, treesDropped: this.released, treeNames: [...new Set(this.plantedNames)], treesGrown, kinds: this.speciesPlanted.size,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])],
@@ -1169,6 +1178,7 @@ export const RULES = {
   },
 
   parcelLanded(x, kind, region = this.regionNow || 'woodland') {
+    const lid = localTree(kind, region).id; this.dropped[lid] = Math.max(0, (this.dropped[lid] || 0) - 1);   // it has landed (or missed): no longer pending
     const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
     if (!plot) {
       const onRunway = this.runways.some(r => x >= r.x && x <= r.x + AIRPORT.runwayLen);
@@ -1182,6 +1192,7 @@ export const RULES = {
     const tree = { kind, plantedAt: this.elapsed, stage: 0 };   // kind: growth and cooling (UK slot)
     this.trees.push(tree);
     this.planted++;
+    this.plantedNames.push(here.name);
     this.speciesPlanted.add(here.id);   // kinds = SPECIES (local ids), not UK slots (PROPOSAL-TREES.md §4)
     this.speciesTags.add(here.uk ? here.id : `${region}:${here.id}`);   // ids repeat across lands (oak, acacia...): each land's counts on its own
     // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
@@ -1200,8 +1211,15 @@ export const RULES = {
       if (!this.saidNoSoil) { this.saidNoSoil = true; this.popup(this.plane.x + 20, this.plane.y - 12, this.regionNow === 'ocean' ? 'No land to plant on!' : 'Nothing grows on the ice!', '#cfe6ff'); }
       return;
     }
-    this.parcels--;
-    const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: this.treeKind(), region: this.regionNow || 'woodland' };   // a record; the crate is .view
+    const kind = this.treeKind();
+    if (!kind) {   // every open kind is at its cap here: the grove is full, the tree is kept for another land
+      this.playSound('nope');
+      if (!this.saidGroveFull) { this.saidGroveFull = true; this.popup(this.plane.x + 20, this.plane.y - 12, 'Grove full here!', '#cfe6ff'); }
+      return;
+    }
+    this.parcels--; this.released++;
+    const region = this.regionNow || 'woodland', tid = localTree(kind, region).id; this.dropped[tid] = (this.dropped[tid] || 0) + 1;
+    const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind, region };   // a record; the crate is .view
     this.parcelsFalling.push(p);
     this.showParcel(p);
     this.speciesIdx++;

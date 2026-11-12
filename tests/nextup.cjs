@@ -58,7 +58,7 @@
   check(pr[0] && pr[0].lead && pr[0].where === 'nature', `lesson 5 without tree parcels: NATURE leads: ${JSON.stringify(pr.map(x => x.key))}`);
   const cl = base(); cl.missionsDone = ['L1', 'L2', 'L3', 'L4']; cl.levels = {}; cl.freeParcelsGiven = true; cl.seeds = 0; cl.crystals = 0; cl.unclaimed = [{ key: 'mission:L4', kind: 'mission', id: 'L4', label: 'x', seeds: 70, crystals: 1 }];
   const clr = N.nextUp(cl);
-  check(clr[0] && clr[0].lead && clr[0].where === 'nature' && clr[0].short === 'Buy tree parcels' && !clr.some(x => /claim/i.test(x.key + x.short + x.full)), `lesson 5 with parcels unaffordable (even if an older save still holds prizes): NATURE leads to buy them, there is no claims lead any more (R8): ${JSON.stringify(clr.map(x => x.key))}`);
+  check(clr[0] && clr[0].lead && clr[0].where === 'nature' && clr[0].short === 'Buy trees' && !clr.some(x => /claim/i.test(x.key + x.short + x.full)), `lesson 5 with parcels unaffordable (even if an older save still holds prizes): NATURE leads to buy them, there is no claims lead any more (R8): ${JSON.stringify(clr.map(x => x.key))}`);
   const cx = N.nextUp(full, { crossingReady: 'LONDON to NEW YORK' });
   check(cx[0] && cx[0].lead && cx[0].where === 'fly' && /^Cross to NEW YORK$/.test(cx[0].short) && cx.length === 3 && cx.filter(x => x.lead).length === 1, `a crossing ready leads, and only one lead: ${JSON.stringify(cx.map(x => x.key))}`);
   check(N.nextUp({ ...base(), areas: undefined }).length === 0, 'a season-1 save has no next-up rows');

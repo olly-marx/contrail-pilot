@@ -390,6 +390,7 @@ export class UI {
     const cs = crossingState(s, { unlock: S2_UNLOCK }), ready = cs && cs.ready ? cs : null;   // (R-A: src/crossingview.js: the state, the 3 conditions, told once)
     const mustDo = leadOf(s);   // a pictured must-do lead row (the free part, the tree parcels): TAKE OFF is locked to it and the first hour shows one new thing at a time, so the box waits (measured: with it HOME was 20 px (390x667) and 26 px (320x568) too tall, tests/fitscreen.cjs)
     if (arrivedGoto(s)) writeSave(s);   // GO TO: the player is at the city it aimed for
+    if (this.grownToastDue) { this.grownToastDue = false; s.seenTips = [...(s.seenTips || []), 'tree-grown']; writeSave(s); setTimeout(() => this.toast('A tree you planted has grown up!', '', 'good', 3.5), 500); }   // tutorial 1a, step 7: once, the first time a sapling grows up (ui.showResults sets grownToastDue from result.treesGrown)
     const boxOn = !!(cs && s.tutorialDone && !lessonsLeft(s).length && !(mustDo && mustDo.pic));   // the HOME box (CROSSINGS V2) shows this crossing; a READY one is then not repeated as a gold UP NEXT row
     const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null, crossing: cs, boxShown: boxOn && !!ready });
     $('hubSeeds').textContent = s.seeds; $('hubCrystals').textContent = s.crystals || 0;
@@ -721,6 +722,8 @@ export class UI {
     $('rGain').textContent = '+0'; $('rCrys').textContent = `+${v.bank.crystals}`; $('rCrysBox').hidden = !v.bank.crystals;
     $('rMaths').hidden = !v.maths || !v.landed; $('rMathsTxt').textContent = v.maths;
     $('rLost').hidden = !v.maths || v.landed; $('rLost').textContent = v.maths;
+    $('rTrees').hidden = !v.trees; $('rTreesTxt').textContent = v.trees || ''; $('rTreesNames').textContent = v.treeNames || ''; $('rTreesNames').hidden = !v.treeNames;   // tutorial 1a: 'Planted 2 of 3 trees' and under it 'Spruce, Oak'
+    this.grownToastDue = (r.treesGrown || 0) > 0 && !(this.save.seenTips || []).includes('tree-grown');   // shown once, on the next HOME
     const mi = v.missions; $('rMission').hidden = !mi;
     if (mi) { $('rMission').className = `step rc-line rc-mission ${mi.fail !== undefined ? 'notyet' : 'done'}`; $('rMissionTxt').textContent = mi.line; $('rMissionPrize').innerHTML = mi.seeds ? `+${mi.seeds}<i class="seedicon"></i>` : ''; }
     $('rNext').hidden = !v.next.length;

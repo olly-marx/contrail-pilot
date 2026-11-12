@@ -34,10 +34,10 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
         check(!!r0, `${tag}: FIXTURE: the plant-tree row is on the MISSIONS screen`);
         if (!r0) { await ctx.close(); continue; }
         await shot(p, `${tag}-missions-asterisk.png`);
-        check(/\*$/.test(r0.name) && r0.how === 'Needs 2 parcels', `${tag}: the row shows the asterisk and 'Needs 2 parcels': ${JSON.stringify(r0)}`);
+        check(/\*$/.test(r0.name) && r0.how === 'Needs 2 trees', `${tag}: the row shows the asterisk and 'Needs 2 trees': ${JSON.stringify(r0)}`);
         stage = 'tap the row'; await p.click(rowSel); await p.waitForTimeout(400);
         const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? { text: e.innerText.replace(/\s+/g, ' '), action: (e.querySelector('.sheet-action') || {}).textContent || null } : null; });
-        check(!!sh && /\* You need: Tree parcels/.test(sh.text) && sh.action === 'GO TO NATURE', `${tag}: the sheet says '* You need: Tree parcels' and offers GO TO NATURE: ${JSON.stringify(sh)}`);
+        check(!!sh && /\* You need: Plant trees/.test(sh.text) && sh.action === 'GO TO NATURE', `${tag}: the sheet says '* You need: Plant trees' and offers GO TO NATURE: ${JSON.stringify(sh)}`);
         stage = 'tap GO TO NATURE'; await p.click('#sheet .sheet-action').catch(() => {}); await p.waitForTimeout(700);
         const nat = await p.evaluate(() => { const e = document.querySelector('[data-line="trees"]'); if (!e) return null; const r = e.getBoundingClientRect(); return { previewing: e.classList.contains('previewing'), onScreen: r.bottom > 0 && r.top < innerHeight, natureShown: !!document.querySelector('#nature') && !document.getElementById('nature').hidden }; });
         await shot(p, `${tag}-nature-after-tap.png`);

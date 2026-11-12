@@ -37,6 +37,11 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   const kinds = r.kinds ? ` · ${r.kinds} ${r.kinds === 1 ? 'kind' : 'kinds'}` : '';
   const base = `${grab} grabbed${mult}`;   // the tree kinds ride along only while the line still fits one row; the sheet always has them
   v.maths = r.school ? '' : r.landed ? clip((base + kinds).length <= LINE_MAX ? base + kinds : base, LINE_MAX) : `${total} seeds lost`;   // (the crystals kept are the hero line; the pixel font has no snowflake)
+  // The planting row (tutorial 1a; the user, 2026-11-11: two lines): 'Planted 2 of 3 trees' and under it the kinds, 'Spruce, Oak'; 'Missed 3 trees' (one line) when none landed on soil; nothing when no tree was dropped.
+  const dropped = r.treesDropped || 0, planted = Math.min(r.planted || 0, dropped), treeWord = dropped === 1 ? 'tree' : 'trees', names = (r.treeNames || []).join(', ');
+  const treesBase = !dropped ? '' : planted ? `Planted ${planted} of ${dropped} ${treeWord}` : `Missed ${dropped} ${treeWord}`;
+  v.trees = r.school || !dropped ? '' : treesBase;
+  v.treeNames = v.trees && planted && names ? clip(names, LINE_MAX) : '';   // the second line of the row: the kinds that landed ('Spruce, Oak'), clipped to the row
   // The sheet behind the maths line: every row of the old tally.
   const gains = r.natureGains || [];
   v.tally = [...earned.map(e => [e.label === 'Seeds' ? 'Seeds grabbed' : e.label, r.landed ? `+${e.n}` : `${e.n} lost`]),

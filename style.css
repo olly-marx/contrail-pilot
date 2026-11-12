@@ -171,6 +171,8 @@ p { margin: 0; }
 .rc-line.done { background: #d6f5d6; }
 .rc-line.notyet { background: #fde2e2; }
 .rc-lost { color: var(--warm); background: none; cursor: default; }
+.rc-trees { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 0; background: none; cursor: default; color: var(--green-dark); min-height: 18px; padding-top: 1px; padding-bottom: 1px; }   /* the planting row (tutorial 1a): 'Planted 2 of 3 trees', and under it the kinds, quiet, under the maths line */
+.rc-trees .rc-treenames { flex: none; font-size: 7px; color: var(--muted); }
 .rc-mission b { display: inline-flex; align-items: center; gap: 3px; color: var(--green-dark); }
 .rc-mission .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
 .rc-more { font-style: normal; color: var(--muted); }
@@ -1107,3 +1109,4 @@ h2.sub { margin-top: -4px; }
   .cel-layer { display: none; }
   .cel-layer i, .cel-push { animation: none; }
 }
+.w-nursery { margin: 2px 0 4px; font-size: 8px; text-align: center; }   /* the nursery line under a land's trees (TREES V2 step 2) */

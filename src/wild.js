@@ -7,9 +7,9 @@
 // its cities, or flown over it).
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
-import { LINES, tabOf, level, nextLevel, unlocked, unlockText, needsMoreNature, canBuy, freeParcels } from './upgrades.js';
+import { LINES, tabOf, level, nextLevel, unlocked, unlockText, needsMoreNature, canBuy, freeParcels, loadout } from './upgrades.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject } from './nature.js';
-import { treeBook } from './groves.js';
+import { treeBook, grownBook, nurseryStatus, needFromGrow } from './groves.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
 import { CITIES, S2_CITIES } from './cities.js';
 import { AREAS } from './areas.js';
@@ -115,6 +115,10 @@ export class WildScreen {
     eh.hidden = !s.tutorialDone || !isSeason2(s) || !(left || here);
     eh.textContent = here ? 'EXPLORING HERE: STOP' : 'EXPLORE HERE';
     eh.onclick = () => { sfx.tick(); if (here) { s.stayLand = null; s.routeMode = 'mission'; } else { s.stayLand = this.region; s.routeMode = 'explore'; } writeSave(s); this.ui.toast(here ? 'Back to your mission.' : `Exploring ${REGION_NAMES[this.region]}.`, '', 'good', 3); this.render(); };
+    // THE NURSERY (TREES V2 step 2): trees you drop start as saplings and grow up over the flights that follow; only grown trees are seen in this land's picture and in flight.
+    let nu = $('wNursery'); if (!nu) { nu = document.createElement('p'); nu.id = 'wNursery'; nu.className = 'small w-nursery'; row.after(nu); }
+    const nst = nurseryStatus(s, this.region, needFromGrow(loadout(s).grow));
+    nu.hidden = !nst.growing; nu.textContent = nst.growing ? `Growing: ${nst.growing} tree${nst.growing === 1 ? '' : 's'}. Next one is grown in ${nst.nextIn} flight${nst.nextIn === 1 ? '' : 's'}.` : '';
     // The planting tools (parcels, soil, nursery): bought once, they work in every land, so they are on EVERY land's tab (the user, 2026-11-09: a player who started in Australia could only buy
     // them on the Australian tab). Before this they were on the HOME land's tab only (2026-10-28: a Melbourne or Lagos player had to visit the UK's tab).
     const uk = true;
@@ -146,7 +150,7 @@ export class WildScreen {
     const found = this.animals().filter(w => w.sprite && this.found(w.id));
     // Only trees that suit this land (the user, 2026-10-24): the UK shows its own plantings; another region shows
     // what parcels planted THERE (save.plantedIn[region], that region's trees: src/nature.js localTree).
-    const mine = treeBook(s, this.region);
+    const mine = grownBook(s, this.region);   // the picture shows GROWN trees only
     const planted = Object.entries(mine || {}).filter(([, n]) => n > 0);
     this.field = new Field($('wScene'), this.region, done, planted, found, this.projects.map(p => p.id), id => { sfx.tick(); this.speciesInfo(id); });   // tap an animal: its card
     if (!found.length && !done.length) $('wScene').insertAdjacentHTML('beforeend', '<p class="w-empty">Bare land. Start a habitat project, and plant trees on your flights!</p>');
