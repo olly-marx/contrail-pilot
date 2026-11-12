@@ -31,7 +31,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
   };
   const stepUp = p => p.evaluate(async () => { const ui = game.registry.get('ui'); window.__tourAborts = []; ui.tour.busy = false; ui.tour.run('tf-step', [{ target: '#goBtn', text: 'test', tap: true }]); await new Promise(r => setTimeout(r, 700)); return !document.getElementById('tour').hidden; });
   try {
-    for (const [W, H] of [[390, 844], [320, 568]]) {
+    for (const [W, H] of (process.env.TF_SIZES || '390x844,320x568').split(',').map(z => z.split('x').map(Number))) {   // (TF_SIZES=390x844: a fast run for a plant)
       const tag = `${W}x${H}`, check = (c, m) => { if (!c) fails.push(`${tag}: ${m}`); };
       { const { ctx, p } = await open(W, H); let stage = 'clean HOME';
         try {
