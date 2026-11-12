@@ -34,7 +34,7 @@ globalThis.SEASON2 = true;
   // 8. the real engine: two drops plant two different kinds; a landed parcel is no longer pending; a full grove keeps the tree
   { const W = await import('../src/sim/world.js');
     const save = { ...base(), city: 'LONDON', fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} }, levels: { trees: 3 } };
-    const w = W.createWorld(save, 1); for (let i = 0; i < 4000 && w.state !== 'playing'; i++) w.step(1 / 60);
+    const w = W.createWorld(save, 1); w.holding = true; for (let i = 0; i < 4000 && w.state !== 'playing'; i++) w.step(1 / 60);   // (holding: the engine waits on the runway until the HOLD, src/sim/rules.js takeoff; measured 2026-11-12: without it the world stays in 'takeoff' for ever)
     w.frozen = false; w.regionNow = 'woodland'; w.parcels = 4;
     w.dropParcel(); w.dropParcel();
     const kinds = w.parcelsFalling.map(p => p.kind);
@@ -62,7 +62,7 @@ globalThis.SEASON2 = true;
     check(!!tag, `power: a save with the lessons done has an open plant-tree mission with a tree tag: '${tag}'`);
     if (tag) { for (let i = 0; i < 3; i++) for (const sl of open) if (idOf(sl) !== tag) G.plantTree(save, 'woodland', idOf(sl));   // every OTHER kind has 3 trees; the mission's kind has none: fewest-first would pick it anyway, so give it MORE
       for (let i = 0; i < 5; i++) G.plantTree(save, 'woodland', tag);
-      const w = W.createWorld(save, 1); for (let i = 0; i < 4000 && w.state !== 'playing'; i++) w.step(1 / 60);
+      const w = W.createWorld(save, 1); w.holding = true; for (let i = 0; i < 4000 && w.state !== 'playing'; i++) w.step(1 / 60);   // (holding: the engine waits on the runway until the HOLD, src/sim/rules.js takeoff; measured 2026-11-12: without it the world stays in 'takeoff' for ever)
       w.frozen = false; w.regionNow = 'woodland'; w.parcels = 4; w.dropParcel();
       const got = w.parcelsFalling[0] && w.parcelsFalling[0].kind;
       check(w.preferTag === tag && !!got, `the world read the mission's tag at the start of the flight (preferTag '${w.preferTag}', wanted '${tag}')`);
