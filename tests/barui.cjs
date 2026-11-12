@@ -7,6 +7,7 @@
 //   4. after buying level 3 (the payoff OK) the bar shows 3 filled, Now is 22 px and the Next moves on to level 4 ('Stronger coil')
 // Screenshots: SHOTS, else <tmpdir>/barui-shots (taken at the checked moment, written after the checks, FAIL- prefix when a check failed). Run: python3 -m http.server 8000 & node tests/barui.cjs   (plants: tools/plants.tsv, test barui)
 const { chromium } = require('playwright-core');
+require('./lib/classic.js');   // the classic world, as tests/hangar.cjs: this save is stored under the classic key 'contrailPilot.v2' (without it the game boots season 2 and reads 's2:contrailPilot.v2': a fresh save, no HANGAR tab)
 const { ready } = require('./lib/ready.js');
 const fs = require('fs'), os = require('os'), path = require('path');
 const SHOTS = process.env.SHOTS || path.join(os.tmpdir(), 'barui-shots');
