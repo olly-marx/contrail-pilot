@@ -1,4 +1,4 @@
-// THE WORDS OF EVERY UPGRADE LEVEL (src/upgradetext.js levelCard; BLOCK2-PLAN item 4, DESIGN-UPGRADE-BAR.md B3). Plain Node, no browser. For EVERY line of the shop (every plane's Engines / Wings & body / Cabin, every system, every gadget,
+// THE WORDS OF EVERY UPGRADE LEVEL (src/upgradetext.js upgradeCard; BLOCK2-PLAN item 4, DESIGN-UPGRADE-BAR.md B3). Plain Node, no browser. For EVERY line of the shop (every plane's Engines / Wings & body / Cabin, every system, every gadget,
 // every nature tool) and for EVERY level n from 0 to the last, the card of a save that owns n levels must say, by named lines:
 //   1. the line is known and has at least one level; its card has a title and 'count' equal to its levels
 //   2. 'Now' at level n is the words of level n ('nothing yet' at 0) and 'Next' is the name and effect of level n + 1: so the bar can never say a different thing from the level it describes
@@ -22,10 +22,10 @@ globalThis.SEASON2 = true;
   check(lines.length >= 40, `power: the shop has ${lines.length} lines (planes x 3, systems, gadgets, nature tools); fewer than 40 means the table did not load`);
   let cards = 0, maxNow = 0, maxNext = 0;
   for (const [kind, id] of lines) {
-    const c0 = T.levelCard(withLevel(kind, id, 0), kind, id);
+    const c0 = T.upgradeCard(withLevel(kind, id, 0), kind, id);
     if (!c0 || !(c0.count >= 1) || !c0.title) { check(false, `1: ${kind}:${id} has no card, no level or no title: ${JSON.stringify(c0)}`); continue; }
     for (let n = 0; n <= c0.count; n++) {
-      const c = T.levelCard(withLevel(kind, id, n), kind, id); cards++;
+      const c = T.upgradeCard(withLevel(kind, id, n), kind, id); cards++;
       const lvNow = n ? levelOf(kind, id, n - 1) : null, lvNext = n < c0.count ? levelOf(kind, id, n) : null;
       const sayNow = lvNow ? (kind === 'nature' ? (lvNow.short || lvNow.name) : T.wordsOf(lvNow)) : T.NOTHING_YET, sayNext = lvNext ? (kind === 'nature' ? (lvNext.short || lvNext.name) : T.nextWords(lvNext)) : null;
       check(c.have === n && c.count === c0.count, `1: ${kind}:${id} at level ${n}: have ${c.have}, count ${c.count}`);
