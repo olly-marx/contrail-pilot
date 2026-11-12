@@ -37,6 +37,10 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   const kinds = r.kinds ? ` · ${r.kinds} ${r.kinds === 1 ? 'kind' : 'kinds'}` : '';
   const base = `${grab} grabbed${mult}`;   // the tree kinds ride along only while the line still fits one row; the sheet always has them
   v.maths = r.school ? '' : r.landed ? clip((base + kinds).length <= LINE_MAX ? base + kinds : base, LINE_MAX) : `${total} seeds lost`;   // (the crystals kept are the hero line; the pixel font has no snowflake)
+  // The planting line (tutorial 1a): what the trees of this flight did. 'Planted 2 of 3 trees: Spruce, Oak' while it fits one row (the names are dropped first), 'Missed 3 trees' when none landed on soil; nothing when no tree was dropped.
+  const dropped = r.treesDropped || 0, planted = Math.min(r.planted || 0, dropped), treeWord = dropped === 1 ? 'tree' : 'trees', names = (r.treeNames || []).join(', ');
+  const treesBase = !dropped ? '' : planted ? `Planted ${planted} of ${dropped} ${treeWord}` : `Missed ${dropped} ${treeWord}`;
+  v.trees = r.school || !dropped ? '' : (planted && names && `${treesBase}: ${names}`.length <= LINE_MAX ? `${treesBase}: ${names}` : treesBase);
   // The sheet behind the maths line: every row of the old tally.
   const gains = r.natureGains || [];
   v.tally = [...earned.map(e => [e.label === 'Seeds' ? 'Seeds grabbed' : e.label, r.landed ? `+${e.n}` : `${e.n} lost`]),

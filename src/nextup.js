@@ -43,7 +43,7 @@ export function leadOf(save, crossingReady = null, crossing = null) {
   if (crossing && crossing.ready) return fitRow({ key: 'lead:cross', short: clip(`Cross to ${crossing.to}`), full: `Crossing ready: ${crossing.from} to ${crossing.to}`, where: 'fly', right: rightText(crossing), cross: true, lead: true });   // (R-A: NEW + the distance; a tap opens the sheet, never starts a flight; the title is clipped to fit beside it)
   if (crossingReady) return { key: 'lead:cross', short: clip(`Cross to ${String(crossingReady).split(' to ').pop()}`), full: `Crossing ready: ${crossingReady}`, where: 'fly', lead: true };
   if (save.freeUpgrade && M2.revealed(save, 'hangar')) return { key: 'lead:free', short: 'Pick your free part', full: 'Open the hangar: free upgrade!', where: 'hangar', pic: 'assets/ui/lesson-hangar.png', lead: true };
-  if (mid === 'L5' && !((save.levels || {}).trees)) return { key: 'lead:parcels', short: !save.freeParcelsGiven ? 'Free tree parcels' : 'Buy tree parcels', full: !save.freeParcelsGiven ? 'Free tree parcels in NATURE!' : 'Buy tree parcels in NATURE first', where: 'nature', pic: 'assets/ui/lesson-nature.png', lead: true };
+  if (mid === 'L5' && !((save.levels || {}).trees)) return { key: 'lead:parcels', short: !save.freeParcelsGiven ? 'Free trees' : 'Buy trees', full: !save.freeParcelsGiven ? 'Free trees in NATURE!' : 'Buy trees in NATURE first', where: 'nature', pic: 'assets/ui/lesson-nature.png', lead: true };
   return null;
 }
 

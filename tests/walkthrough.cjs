@@ -110,7 +110,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(400);
   // Lesson 5 needs parcels; prizes are paid when earned (R8), so NEXT goes straight to the parcels (it used to say 'claim your prizes' first).
   const n5 = await p.evaluate(() => document.getElementById('hubNext').innerText);
-  check(/tree parcels/i.test(n5) && !/Claim/i.test(n5), `lesson 5 asks for tree parcels in NATURE, never to claim prizes: "${n5}"`);
+  check(/(free|buy) trees/i.test(n5) && !/Claim/i.test(n5), `lesson 5 asks for tree parcels in NATURE, never to claim prizes: "${n5}"`);
   await shot('hub-lesson5');
   // Flight 5 (lesson 5: drop a tree) ends the lessons and opens the area ladder (S4): the MISSIONS screen is now TIER 1 of 3, no star yet,
   // and the day's trio sits under "Today".

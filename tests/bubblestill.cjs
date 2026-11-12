@@ -12,7 +12,7 @@ const fails = [], check = (c, m) => { if (!c) fails.push(m); };
     const p = await b.newPage({ viewport: { width: w, height: h } }); await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); }, save);
     await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#tabNature', { force: true }); 
-    let ok = false; for (let i = 0; i < 40; i++) { ok = await p.evaluate(() => { const t = document.getElementById('tour'); return !t.hidden && /parcels/i.test(t.querySelector('.tbubble p').textContent); }); if (ok) break; await p.waitForTimeout(150); }
+    let ok = false; for (let i = 0; i < 40; i++) { ok = await p.evaluate(() => { const t = document.getElementById('tour'); return !t.hidden && /buy more trees/i.test(t.querySelector('.tbubble p').textContent); }); if (ok) break; await p.waitForTimeout(150); }
     const sides = [], tops = []; for (let i = 0; i < 30; i++) { const v = await p.evaluate(() => { const b = document.querySelector('#tour .tbubble').getBoundingClientRect(), r = document.querySelector('#tour .tring').getBoundingClientRect(); return [b.top > r.top ? 'B' : 'A', Math.round(b.top)]; }); sides.push(v[0]); tops.push(v[1]); await p.waitForTimeout(100); }
     const changes = sides.filter((s, i) => i && s !== sides[i - 1]).length, spread = Math.max(...tops) - Math.min(...tops);
     check(ok && changes === 0 && spread <= 6, `${w}x${h}: the bubble keeps one side and place over 3 s of the pulse (step ${ok}, ${changes} side changes, moved ${spread} px)`);

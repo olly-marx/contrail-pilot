@@ -12,7 +12,8 @@ import { SUBJECTS } from './railsubjects.js';
 // Tab-bar targets and what replaces them on the season 2 hub (nothing: since R3 the tiles are gone and the bar's tabs are the targets; HOME goes back to the hub).
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
-import { LINES, unlocked, tabOf } from './upgrades.js';
+import { LINES, unlocked, tabOf, loadout } from './upgrades.js';
+import { needFromGrow } from './groves.js';
 import { getPilot, namesOpen } from './online.js';
 import { treesPlanted } from './treecount.js';
 // Rails rule (the user's playtest, 2026-10-29): a step that taps a bottom-bar tab must DECLARE whether the screen it opens has
@@ -114,8 +115,8 @@ export class Tour {
       { skipIf: () => { const m = document.getElementById('rMission'); return !m || m.hidden; }, target: '#rMission', text: tip('rail-mission'), ok: true },   // R1/R8: the prize is paid already (at the bank); the line says so
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     // The first tree (the user, 2026-11-09: the tutorial 'doesn't really show you how to plant a tree'): the seeds are bought -> TAKE OFF with them (HOME); the flight points at SEND A SEED (GameScene, until a tree lands); the results say it worked.
-    if (hub && d('L4') && !d('L5') && ((s.levels || {}).trees || 0) > 0 && treesPlanted(s) === 0 && !this.done('r-plant1')) return ['r-plant1', [{ target: '#goBtn', text: tip('rail-plant'), tap: true }]];
-    if (res && (this.ui.lastPlanted || 0) > 0 && treesPlanted(s) === this.ui.lastPlanted && !this.done('r-plant2')) return ['r-plant2', [{ target: '#rEarth', text: tip('rail-planted'), ok: true }]];
+    if (hub && d('L4') && !d('L5') && ((s.levels || {}).trees || 0) > 0 && treesPlanted(s) === 0 && !this.done('r-plant1')) return ['r-plant1', [{ target: '#goBtn', text: tip('rail-plant', (loadout(s).tree || {}).parcels || 2), tap: true }]];
+    if (res && (this.ui.lastPlanted || 0) > 0 && treesPlanted(s) === this.ui.lastPlanted && !this.done('r-plant2')) return ['r-plant2', [{ target: '#rEarth', text: tip('rail-planted', needFromGrow(loadout(s).grow)), ok: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
     // R11: after flight 2: NATURE opens; its first project is FREE; how nature works.
     // N0-N5, the NATURE introduction (the user approved, 2026-10-28): one idea per step, in the order a child asks - what is

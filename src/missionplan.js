@@ -134,5 +134,5 @@ export function needsOf(id, f, save) {
   const lv = levelForParcels(ask(f));
   if (((save.levels || {}).trees || 0) >= lv) return null;
   const L = line.levels[lv - 1];
-  return { line: 'trees', level: lv, parcels: L.parcels, name: L.name, text: `Needs ${L.parcels} parcels`, tab: 'nature' };
+  return { line: 'trees', level: lv, parcels: L.parcels, name: L.name, text: `Needs ${L.parcels} trees`, tab: 'nature' };
 }

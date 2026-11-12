@@ -127,7 +127,9 @@ export const RULES = {
     this.feedback = { amount: 0, timer: 0 };
     this.parcels = this.kit.tree ? this.kit.tree.parcels : 0;
     this.planted = 0;
-    this.touchdown = null;             // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
+    this.released = 0;                 // trees dropped this flight (hit or miss): the results line 'Planted 2 of 3 trees'
+    this.plantedNames = [];            // the names of the trees that landed on soil this flight
+    this.touchdown = null;            // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
     this.forestFullSaid = false;
     this.landStored = 0;               // ...and rewilded land
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
@@ -875,7 +877,7 @@ export const RULES = {
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save
     this.save.seeds += gained;
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
-    if (!this.school) growGroves(this.save, needFromGrow(this.kit.grow));   // every banked flight, landed or crashed, grows the saplings planted in EARLIER flights one point (src/groves.js)
+    const treesGrown = !this.school ? growGroves(this.save, needFromGrow(this.kit.grow)) : 0;   // (how many saplings grew up in this banked flight: result.treesGrown, the one-time 'a tree has grown up' toast) every banked flight, landed or crashed, grows the saplings planted in EARLIER flights one point (src/groves.js)
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
     // Missions and badges are PAID here, the moment the flight is banked (R8; src/rewards.js addPrizes + src/missions2.js finish pay straight into the bank).
@@ -887,7 +889,7 @@ export const RULES = {
     this.result = {
       landed, landedAt: this.landedAt, from: this.homeName, lap, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
-      breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted, kinds: this.speciesPlanted.size,
+      breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted, treesDropped: this.released, treeNames: [...new Set(this.plantedNames)], treesGrown, kinds: this.speciesPlanted.size,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])],
@@ -1189,6 +1191,7 @@ export const RULES = {
     const tree = { kind, plantedAt: this.elapsed, stage: 0 };   // kind: growth and cooling (UK slot)
     this.trees.push(tree);
     this.planted++;
+    this.plantedNames.push(here.name);
     this.speciesPlanted.add(here.id);   // kinds = SPECIES (local ids), not UK slots (PROPOSAL-TREES.md §4)
     this.speciesTags.add(here.uk ? here.id : `${region}:${here.id}`);   // ids repeat across lands (oak, acacia...): each land's counts on its own
     // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
@@ -1213,7 +1216,7 @@ export const RULES = {
       if (!this.saidGroveFull) { this.saidGroveFull = true; this.popup(this.plane.x + 20, this.plane.y - 12, 'Grove full here!', '#cfe6ff'); }
       return;
     }
-    this.parcels--;
+    this.parcels--; this.released++;
     const region = this.regionNow || 'woodland', tid = localTree(kind, region).id; this.dropped[tid] = (this.dropped[tid] || 0) + 1;
     const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind, region };   // a record; the crate is .view
     this.parcelsFalling.push(p);

@@ -1389,7 +1389,7 @@ export class GameScene extends Phaser.Scene {
   }
   onParcelMissed(x, onRunway) {
     this.burst(x, SKY_H, 0xc8a165, 6);
-    this.popup(x, SKY_H - 14, onRunway ? 'on the runway!' : 'missed!', '#ff8080');
+    this.popup(x, SKY_H - 14, onRunway ? 'On the runway!' : 'Missed. Tap a bit earlier.', '#ff8080');   // (tutorial 1a: the miss says what to change)
     sfx.nope();
   }
   showParcel(p) {
@@ -1410,7 +1410,7 @@ export class GameScene extends Phaser.Scene {
     plot.parts.push(sprite);
     this.burst(cx, SKY_H - 2, 0x8dffb0, 12);
     this.burst(cx, SKY_H - 2, 0xffe15a, 6);
-    this.popup(cx, SKY_H - 24, `${here.name.toUpperCase()} PLANTED!`, '#8dffb0', 8);
+    this.popup(cx, SKY_H - 24, `Tree planted: ${here.name}`, '#8dffb0', 8);
     if (first) this.time.delayedCall(450, () => this.popup(cx, SKY_H - 36, 'BIODIVERSITY UP! (new kind)', '#ffe15a'));   // the same kind again adds almost nothing: say nothing
     sfx.plant();
     buzz(30);
@@ -1565,9 +1565,9 @@ export class GameScene extends Phaser.Scene {
     this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? 'drop on soil!' : '') : '');
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow);   // nothing to plant on (0.10.7)
     this.setDropVisible(showDrop);
-    this.dropArrowGfx.clear();   // a bobbing arrow on SEND A SEED while soil is ahead and no tree has landed yet (not in school or the automated tests)
+    this.dropArrowGfx.clear();   // a bobbing arrow on PLANT while soil is ahead and no tree has landed yet (not in school or the automated tests)
     if (showDrop && soilSoon && this.noTreeYet() && !this.school && !(this.save.seenTips || []).includes('*')) { const d = this.dropBox, y = d.y - 6 + Math.sin(this.time.now / 180) * 3, cx = d.x + d.w / 2; this.dropArrowGfx.fillStyle(0xffe15a, 1).fillTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y).lineStyle(1, 0x1b1b2f, 1).strokeTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y); }
-    if (showDrop) { this.fitText(this.dropLabel.setText(`SEND A\nSEED x${this.parcels}`), this.dropBox.w - 8, 7); const nx = this.nextTreeInfo(); this.nextTreeText.setText(nx ? `Next: ${shortName(nx.name)}` : 'Grove full here'); }   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
+    if (showDrop) { this.fitText(this.dropLabel.setText(`PLANT\nx${this.parcels}`), this.dropBox.w - 8, 7); const nx = this.nextTreeInfo(); this.nextTreeText.setText(nx ? `Next: ${shortName(nx.name)}` : 'Grove full here'); }   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
     this.cargoText.setText(`${this.cargo}`);
     this.crysText.setText(`${this.crystals}`);
     this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');

@@ -44,7 +44,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     m.banners.forEach(bn => { bn.widths.forEach((w, i) => check(w <= bn.box - 6, `${tag}: banner ${bn.r} text "${bn.texts[i]}" is ${Math.round(w)} wide in a ${bn.box} box`));
       check(bn.bottom <= bn.bgH / 2, `${tag}: banner ${bn.r} text runs below its box (${bn.bottom} > ${bn.bgH / 2})`); check(bn.box <= m.W, `${tag}: banner ${bn.r} box wider than the screen`); });
     m.popup.forEach(q => check(q.left >= 0 && q.right <= m.W, `${tag}: the discovery popup for ${q.r} spans ${Math.round(q.left)}..${Math.round(q.right)} of ${m.W}`));
-    check(m.drop.shown && m.drop.text === `SEND A\nSEED x12`, `${tag}: the DROP button label should be "SEND A / SEED x12", is ${JSON.stringify(m.drop.text)} (shown ${m.drop.shown})`);
+    check(m.drop.shown && m.drop.text === `PLANT\nx12`, `${tag}: the DROP button label should be "PLANT / x12", is ${JSON.stringify(m.drop.text)} (shown ${m.drop.shown})`);
     check(m.drop.w <= m.drop.box.w - 6 && m.drop.h <= m.drop.box.h - 4, `${tag}: the DROP label is ${Math.round(m.drop.w)}x${Math.round(m.drop.h)} in a ${m.drop.box.w}x${m.drop.box.h} button`);
     check(p.errs.length === 0, `${tag}: page errors: ${p.errs.join(' | ')}`);
     await p.close();

@@ -69,9 +69,9 @@
   // 10c. Lesson 5 needs tree parcels. Since R8 prizes are paid when earned, there is no 'claim your prizes first' step: NEXT is the FREE parcels,
   // or (the free ones used) buy them.
   const l5 = { ...base(), missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, unclaimed: [{ key: 'mission:L4', seeds: 70, crystals: 1 }] };
-  check(H.hubView(l5).next.nature && /Free tree parcels/.test(H.hubView(l5).next.title), `lesson 5, parcels not yet taken: NEXT = the FREE parcels in NATURE, not 'claim' (the user, 2026-10-28) (${JSON.stringify(H.hubView(l5).next)})`);
+  check(H.hubView(l5).next.nature && /Free trees/.test(H.hubView(l5).next.title), `lesson 5, parcels not yet taken: NEXT = the FREE parcels in NATURE, not 'claim' (the user, 2026-10-28) (${JSON.stringify(H.hubView(l5).next)})`);
   const l5used = { ...l5, freeParcelsGiven: true, unclaimed: [] };   // (the free ones used up and sold back is not possible; this is the old path's guard)
-  check(H.hubView(l5used).next.nature && !H.hubView(l5used).next.claims && /Buy tree parcels/.test(H.hubView(l5used).next.title), `lesson 5, free parcels already given, parcels unaffordable: NEXT = buy them in NATURE, never 'claim' (${JSON.stringify(H.hubView(l5used).next)})`);
+  check(H.hubView(l5used).next.nature && !H.hubView(l5used).next.claims && /Buy trees/.test(H.hubView(l5used).next.title), `lesson 5, free parcels already given, parcels unaffordable: NEXT = buy them in NATURE, never 'claim' (${JSON.stringify(H.hubView(l5used).next)})`);
   check(!H.hubView({ ...l5used, unclaimed: [{ key: 'mission:L4', seeds: 70, crystals: 1 }] }).next.claims, 'an older save that still holds prizes gets no claim step either (the migration pays them at load)');
   check(H.hubView({ ...l5, unclaimed: [], seeds: 100, crystals: 5 }).next.nature, 'with the money in the bank: NEXT = buy parcels in NATURE');
   // 10. A free upgrade leads into the hangar.

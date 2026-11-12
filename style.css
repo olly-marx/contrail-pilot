@@ -171,6 +171,7 @@ p { margin: 0; }
 .rc-line.done { background: #d6f5d6; }
 .rc-line.notyet { background: #fde2e2; }
 .rc-lost { color: var(--warm); background: none; cursor: default; }
+.rc-trees { justify-content: flex-start; background: none; cursor: default; color: var(--green-dark); min-height: 18px; padding-top: 1px; padding-bottom: 1px; }   /* the planting line (tutorial 1a): one quiet row under the maths line */
 .rc-mission b { display: inline-flex; align-items: center; gap: 3px; color: var(--green-dark); }
 .rc-mission .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
 .rc-more { font-style: normal; color: var(--muted); }
