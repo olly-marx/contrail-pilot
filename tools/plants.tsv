@@ -798,6 +798,9 @@ treewords	src/upgrades.js	s/name: 'More trees', short: 'Plant 3 trees per flight
 treewords	src/resultscard.js	s/const dropped = r.treesDropped || 0, planted = Math.min(r.planted || 0, dropped)/const dropped = r.treesDropped || 0, planted = r.treesDropped ? 0 : 0/	the planting line never counts planted trees
 treewords	src/resultscard.js	s/v.trees = r.school || !dropped ? /v.trees = !dropped ? /	flight school gets a planting line
 treelineui	src/ui.js	s/$('rTrees').hidden = !v.trees;/$('rTrees').hidden = true;/	the planting line is never shown
-treelineui	style.css	s/^\.rc-trees { justify-content: flex-start;/.rc-trees { display: none; justify-content: flex-start;/	the planting line is hidden by the stylesheet
+treelineui	style.css	s/^\.rc-trees { flex-direction: column;/.rc-trees { display: none; flex-direction: column;/	the planting line is hidden by the stylesheet
 treelineui	src/ui.js	s/, 'tree-grown'\]; writeSave(s);/]; writeSave(s);/	the grown-up toast is never marked told
 treelineui	src/ui.js	s/this.grownToastDue = (r.treesGrown || 0) > 0 \&\& /this.grownToastDue = false \&\& /	a grown tree never gives the toast
+treewords	src/resultscard.js	s/v.treeNames = v.trees \&\& planted \&\& names ? clip(names, LINE_MAX) : '';/v.treeNames = '';/	the second line (the kinds) is never given
+treewords	src/resultscard.js	s/? clip(names, LINE_MAX) : /? names : /	a long list of kinds is not clipped to the row
+treelineui	style.css	s/^\.rc-trees \.rc-treenames { flex: none; font-size: 7px;/.rc-trees .rc-treenames { display: none; flex: none; font-size: 7px;/	the kinds line is hidden by the stylesheet

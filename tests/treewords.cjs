@@ -3,7 +3,7 @@
 //   1. the rail texts: HOME says 'You carry N trees. Take off and plant them.'; the results rail says the first tree 'grows up in N flights' and that trees you do not plant are not saved; NATURE says 'Buy more trees ... first level is free'
 //   2. the flight strip names the PLANT button and the cross that turns green
 //   3. no tip, no Tree Planting level, no Soil Patches text and no planting-mission text says 'parcel' or 'SEND A SEED'
-//   4. the results line: 'Planted 2 of 3 trees' (names added only while the line fits 28 characters), 'Missed 3 trees' when none landed, nothing when no tree was dropped or in flight school
+//   4. the results row, TWO lines: 'Planted 2 of 3 trees' and under it the kinds 'Spruce, Oak' (clipped to 28 characters); 'Missed 3 trees' alone when none landed; nothing when no tree was dropped or in flight school
 globalThis.SEASON2 = true;
 (async () => {
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
@@ -25,13 +25,15 @@ globalThis.SEASON2 = true;
   check(!bad.length, `no player text says 'parcel' or 'SEND A SEED': ${bad.slice(0, 4).join(' | ')}${bad.length > 4 ? ` ... ${bad.length} in all` : ''}`);
   // 4
   const base = { landed: true, landedAt: 'PARIS', distance: 1000, earned: [], rewards: [], breakdown: { co2: 0, night: 0, sun: 0, trees: 0 }, missions2: { done: [], next: null } };
-  const save = S.prepareSave(null), tv = r => R.resultsView({ ...base, ...r }, save).trees;
-  check(tv({ treesDropped: 3, planted: 2, treeNames: ['Spruce', 'Oak'] }) === 'Planted 2 of 3 trees', `2 of 3 planted: the names do not fit one row, so only the count: '${tv({ treesDropped: 3, planted: 2, treeNames: ['Spruce', 'Oak'] })}'`);
-  check(tv({ treesDropped: 1, planted: 1, treeNames: ['Oak'] }) === 'Planted 1 of 1 tree: Oak', `1 of 1 planted: the name fits: '${tv({ treesDropped: 1, planted: 1, treeNames: ['Oak'] })}'`);
-  check(tv({ treesDropped: 3, planted: 0, treeNames: [] }) === 'Missed 3 trees', `none landed on soil: '${tv({ treesDropped: 3, planted: 0, treeNames: [] })}'`);
-  check(tv({ treesDropped: 0, planted: 0 }) === '' && tv({}) === '', 'no tree dropped: no line');
-  check(tv({ school: true, treesDropped: 2, planted: 2, treeNames: ['Oak'] }) === '', 'flight school: no planting line');
-  check(R.LINE_MAX >= 'Planted 2 of 3 trees'.length && 'Planted 6 of 6 trees'.length <= R.LINE_MAX, 'the planting line fits the row');
+  const save = S.prepareSave(null), tv = r => { const v = R.resultsView({ ...base, ...r }, save); return `${v.trees}|${v.treeNames}`; };
+  check(tv({ treesDropped: 3, planted: 2, treeNames: ['Spruce', 'Oak'] }) === 'Planted 2 of 3 trees|Spruce, Oak', `2 of 3 planted: two lines, the count and then the kinds: '${tv({ treesDropped: 3, planted: 2, treeNames: ['Spruce', 'Oak'] })}'`);
+  check(tv({ treesDropped: 1, planted: 1, treeNames: ['Oak'] }) === 'Planted 1 of 1 tree|Oak', `1 of 1 planted: '${tv({ treesDropped: 1, planted: 1, treeNames: ['Oak'] })}'`);
+  check(tv({ treesDropped: 3, planted: 0, treeNames: [] }) === 'Missed 3 trees|', `none landed on soil: one line, no kinds: '${tv({ treesDropped: 3, planted: 0, treeNames: [] })}'`);
+  check(tv({ treesDropped: 0, planted: 0 }) === '|' && tv({}) === '|', 'no tree dropped: no row');
+  check(tv({ school: true, treesDropped: 2, planted: 2, treeNames: ['Oak'] }) === '|', 'flight school: no planting row');
+  { const long = R.resultsView({ ...base, treesDropped: 6, planted: 6, treeNames: ['Spruce', 'Birch', 'Oak', 'Rowan', 'Orchard apple'] }, save);
+    check(long.treeNames.length <= R.LINE_MAX && long.trees === 'Planted 6 of 6 trees', `a long list of kinds is clipped to the row (${R.LINE_MAX} characters): '${long.treeNames}' (${long.treeNames.length})`); }
+  check('Planted 6 of 6 trees'.length <= R.LINE_MAX, 'the count line fits the row');
   console.log(fails.length ? `FAIL treewords:\n - ${fails.join('\n - ')}` : 'PASS treewords: one noun (tree), the rail texts name the count, the grow-up time and that unplanted trees are not saved, no player text says parcel or SEND A SEED, the results line counts planted of dropped trees');
   process.exit(fails.length ? 1 : 0);
 })();

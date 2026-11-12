@@ -722,7 +722,7 @@ export class UI {
     $('rGain').textContent = '+0'; $('rCrys').textContent = `+${v.bank.crystals}`; $('rCrysBox').hidden = !v.bank.crystals;
     $('rMaths').hidden = !v.maths || !v.landed; $('rMathsTxt').textContent = v.maths;
     $('rLost').hidden = !v.maths || v.landed; $('rLost').textContent = v.maths;
-    $('rTrees').hidden = !v.trees; $('rTrees').textContent = v.trees || '';   // tutorial 1a: 'Planted 2 of 3 trees: Spruce, Oak'
+    $('rTrees').hidden = !v.trees; $('rTreesTxt').textContent = v.trees || ''; $('rTreesNames').textContent = v.treeNames || ''; $('rTreesNames').hidden = !v.treeNames;   // tutorial 1a: 'Planted 2 of 3 trees' and under it 'Spruce, Oak'
     this.grownToastDue = (r.treesGrown || 0) > 0 && !(this.save.seenTips || []).includes('tree-grown');   // shown once, on the next HOME
     const mi = v.missions; $('rMission').hidden = !mi;
     if (mi) { $('rMission').className = `step rc-line rc-mission ${mi.fail !== undefined ? 'notyet' : 'done'}`; $('rMissionTxt').textContent = mi.line; $('rMissionPrize').innerHTML = mi.seeds ? `+${mi.seeds}<i class="seedicon"></i>` : ''; }

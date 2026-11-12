@@ -1,7 +1,7 @@
 // THE PLANTING LINE ON THE RESULTS CARD AND THE 'A TREE HAS GROWN UP' TOAST (tutorial 1a steps 5 and 7; src/resultscard.js v.trees, src/ui.js showResults / renderHub, index.html #rTrees). Real page, 390x844 and 320x568,
 // a season 2 save in WARSAW with the lessons done. A synthetic result (3 trees dropped, 2 planted, one sapling grew up) goes through ui.showResults. Named lines, in order:
 //   FIXTURE  the results card opens
-//   1. the planting line 'Planted 2 of 3 trees' is on the card, visible, inside the screen and not covered
+//   1. the planting ROW is on the card as two lines, "Planted 2 of 3 trees" and under it "Spruce, Oak", both visible, inside the screen and not covered
 //   2. the card still fits: the FLY ON button is fully on screen
 //   3. the next HOME shows the toast 'A tree you planted has grown up!' and marks it told (seenTips has 'tree-grown')
 //   4. a second result with a grown tree shows the toast NO second time
@@ -31,15 +31,19 @@ const RES = { landed: true, landedAt: 'PARIS', distance: 900, earned: [], reward
         await p.waitForFunction(() => { const e = document.getElementById('rTrees'); return e && !e.hidden && e.classList.contains('in'); }, null, { timeout: 8000 }).catch(() => {});
         await p.waitForTimeout(600);
         const m = await p.evaluate(() => {
-          const e = document.getElementById('rTrees'), go = document.getElementById('againBtn');
-          if (!e) return null;
-          const r = e.getBoundingClientRect(), g = go.getBoundingClientRect(), top = document.elementsFromPoint(r.left + Math.min(20, r.width / 2), r.top + r.height / 2)[0];
-          return { text: e.textContent.trim(), hidden: e.hidden, shown: e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0, rect: [Math.round(r.top), Math.round(r.bottom)], inside: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, covered: !(top && (top === e || e.contains(top))), go: [Math.round(g.top), Math.round(g.bottom)], goOn: g.top >= 0 && g.bottom <= innerHeight, H: innerHeight };
+          const row = document.getElementById('rTrees'), go = document.getElementById('againBtn');
+          if (!row) return null;
+          const g = go.getBoundingClientRect();
+          const probe = e => { const r = e.getBoundingClientRect(), top = document.elementsFromPoint(r.left + Math.min(20, r.width / 2), r.top + r.height / 2)[0];
+            return { text: e.textContent.trim(), hidden: e.hidden, shown: e.getClientRects().length > 0 && getComputedStyle(e).visibility !== 'hidden' && +getComputedStyle(e).opacity > 0, rect: [Math.round(r.top), Math.round(r.bottom)], inside: r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight, covered: !(top && (top === e || e.contains(top) || top.contains(e))) }; };
+          const a = probe(document.getElementById('rTreesTxt')), n = probe(document.getElementById('rTreesNames')), rr = row.getBoundingClientRect();
+          return { text: a.text, names: n.text, hidden: row.hidden || a.hidden, shown: a.shown && n.shown, inside: a.inside && n.inside, covered: a.covered || n.covered, twoLines: n.rect[0] >= a.rect[1] - 1, rowRect: [Math.round(rr.top), Math.round(rr.bottom)],
+            go: [Math.round(g.top), Math.round(g.bottom)], goOn: g.top >= 0 && g.bottom <= innerHeight, H: innerHeight };
         });
         buf = shotsOk ? await p.screenshot().catch(() => null) : null;
         check(!!m, 'FIXTURE: the results card has no #rTrees element');
         if (m) {
-          check(m.text === 'Planted 2 of 3 trees' && !m.hidden && m.shown && m.inside && !m.covered, `1: the planting line is not on the card, visible, inside the screen and uncovered: ${JSON.stringify(m)}`);
+          check(m.text === 'Planted 2 of 3 trees' && m.names === 'Spruce, Oak' && !m.hidden && m.shown && m.inside && !m.covered && m.twoLines, `1: the planting row is not two visible lines ('Planted 2 of 3 trees' and under it 'Spruce, Oak') inside the screen and uncovered: ${JSON.stringify(m)}`);
           check(m.goOn, `2: the card no longer fits: FLY ON is not fully on screen (${m.go} of ${m.H})`);
         }
         stage = 'home'; await p.evaluate(() => { const ui = game.registry.get('ui'); ui.showTitle(); });
