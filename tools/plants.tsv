@@ -779,3 +779,5 @@ rparcels	src/tour.js	s/      if (top1 \&\& top1 !== t \&\& !t.contains(top1)) {/
 rparcels	src/tour.js	s/      set(b, { top: `${Math.max(4, Math.min(H - 4 - h2, tt))}px` });/      set(b, { top: `${Math.round(cy - h2 \/ 2)}px` });/	the guide bubble sits on the target
 rparcels	src/tour.js	s/    if (subs.length \&\& !pinned) {/    if (subs.length) {/	a subject step ignores a pinned cover (the measured 1b fault)
 audiolive	tests/audiolive.cjs	s/musicWindowS < shortest - CROSSFADE_GUARD_S/musicWindowS > shortest - CROSSFADE_GUARD_S/	the music window is no longer checked against the shortest track
+forecastsmooth	src/fleet.js	s/{ reveal: 60, fakes: 0.2, late: 0.25 }/{ reveal: 60 }/	level 1 back to the default 40% fakes / 30% late (worse than nothing)
+forecastsmooth	src/fleet.js	s/{ reveal: 160, fakes: 0.15, late: 0.16 }/{ reveal: 160, fakes: 0.3, late: 0.2 }/	a mid level jumps back up to 30% false alarms

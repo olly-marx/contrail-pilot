@@ -43,8 +43,8 @@
   // Bought levels combine: flying the 747 with engines 2, the 1950s ops level 1, magnet 2, hold 1, body 1.
   const k = F.fleetKit({ fleet: { plane: 'jumbo', planes: { comet: { engines: 2 }, jumbo: { engines: 2, body: 1 } }, systems: { ops: 1, forecast: 3 }, gadgets: { magnet: 2, hold: 1, gear: 2 } } });
   check(near(k.co2, 1.0 * 0.88 * 0.96), `747 CO2 = engines 2 (x0.88, replaces x0.93) x ops 1 (x0.96): ${k.co2}`);
-  check(k.pickup === 19 && near(k.perSkip, 0.6) && near(k.flare, 1.2) && k.revealPx === 100, `gadgets and systems apply: ${JSON.stringify(k)}`);
-  check(k.hintLevel === 1, 'each system on its own gives a faint next-gap hint (ops 1 + forecast 3, no ATC: level 1)');
+  check(k.pickup === 19 && near(k.perSkip, 0.6) && near(k.flare, 1.2) && k.revealPx === 115, `gadgets and systems apply: ${JSON.stringify(k)}`);   // (revealPx 115: the smoothed Forecasting table of this branch; main had 100)
+  check(k.hintLevel === 1, 'each system on its own gives a faint next-gap hint (ops 1 + forecast 3, no ATC: level 1)');   // (main's rule, kept)
   // Engines: each effect from the newest level that has it (0.11.4): Comet Engines 2 (reversers, flare only)
   // keeps Engines 1's CO2 x0.9.
   const c2 = F.fleetKit({ fleet: { plane: 'comet', planes: { comet: { engines: 2 } }, systems: {}, gadgets: {} } });

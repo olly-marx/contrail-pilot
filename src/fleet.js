@@ -121,14 +121,16 @@ const C = [30, 70, 150, 280, 400, 600, 900, 1300, 1800, 2500, 3400, 4500];   // 
 const S = (k, name, fx, more) => L(Math.floor(k / 2), C[k], name, fx, more);
 export const SYSTEMS = [
   { id: 'forecast', name: 'Forecasting', levels: [
-    S(0, 'Pilot reports and weather balloons', { reveal: 60 }), S(1, 'First computer weather forecasts', { reveal: 75, fakes: 0.35 }),
-    S(2, 'Global forecast model (ECMWF, 1979)', { reveal: 100, fakes: 0.35 }), S(3, 'Better forecast models', { reveal: 130, fakes: 0.3 }),
-    S(4, 'Humidity sensors on airliners (MOZAIC, 1994)', { reveal: 160, fakes: 0.3, late: 0.2 }),
-    S(5, 'Sharing airliner data', { reveal: 200, fakes: 0.3, late: 0.2, nightPatches: 0.95 }),
+    // 2026-11 (the user: 'detection upgrades seem intermittent'): the first levels used to get the DEFAULT fakes 0.4 / late 0.3 (a level-1 forecast was WORSE than
+    // none: ~49% false alarms). fakes and late now fall steadily with every level (tests/forecastsmooth.cjs); levels 9-12 are as before.
+    S(0, 'Pilot reports and weather balloons', { reveal: 60, fakes: 0.2, late: 0.25 }), S(1, 'First computer weather forecasts', { reveal: 85, fakes: 0.2, late: 0.22 }),
+    S(2, 'Global forecast model (ECMWF, 1979)', { reveal: 115, fakes: 0.18, late: 0.2 }), S(3, 'Better forecast models', { reveal: 150, fakes: 0.16, late: 0.18 }),
+    S(4, 'Humidity sensors on airliners (MOZAIC, 1994)', { reveal: 160, fakes: 0.15, late: 0.16 }),
+    S(5, 'Sharing airliner data', { reveal: 200, fakes: 0.14, late: 0.14, nightPatches: 0.95 }),
     // 2010s (eras 4-6 proposal): sharper, fewer false alarms. nightPatches stays 0.95: the measured heat totals come from
     // the plane and Ops only (BALANCE-ERAS-4-6), so forecasting adds no hidden heat cut.
-    S(6, 'Satellite contrail detection (2017)', { reveal: 240, fakes: 0.25, late: 0.15, nightPatches: 0.95 }),
-    S(7, 'Ensemble humidity forecasts', { reveal: 280, fakes: 0.2, late: 0.12, nightPatches: 0.95 }),
+    S(6, 'Satellite contrail detection (2017)', { reveal: 240, fakes: 0.13, late: 0.12, nightPatches: 0.95 }),
+    S(7, 'Ensemble humidity forecasts', { reveal: 280, fakes: 0.12, late: 0.1, nightPatches: 0.95 }),
     S(8, 'AI weather models (2023+)', { reveal: 330, fakes: 0.12, late: 0.08, nightPatches: 0.95 }),
     S(9, 'Contrail forecasts in the flight plan', { reveal: 360, fakes: 0.1, late: 0.06, nightPatches: 0.95 }),
     S(10, 'Lidar sky picture', { reveal: 400, fakes: 0.05, late: 0.03, nightPatches: 0.95 }),
