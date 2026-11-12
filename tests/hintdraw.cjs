@@ -43,7 +43,8 @@ const CASES = [
     await p.screenshot({ path: path.join(OUT, `hintdraw-edge-${tag}.png`), clip: { x: W - 80, y: 0, width: 80, height: H - 60 } });
     r.errs = errs; await p.close(); return r;
   };
-  for (const cs of CASES) for (const [W, H] of cs.sizes) {
+  const ONLY = process.env.HD_CASES ? process.env.HD_CASES.split(',') : null, FIRST_SIZE_ONLY = !!process.env.HD_CASES;   // HD_CASES=arrow,second: only those cases, at 390 only (the short run a plant needs; the control runs everything)
+  for (const cs of CASES.filter(c => !ONLY || ONLY.includes(c.id))) for (const [W, H] of cs.sizes.filter(z => !FIRST_SIZE_ONLY || z[0] === 390)) {
     const r = await fly(cs, W, H), tag = `${cs.id} @ ${W}x${H}`;
     check(!r.errs.length, `${tag}: no page errors ${r.errs}`);
     if (cs.id === 'none') check(r.drawn === 0 && r.gates === 0 && !r.arrow && r.icon === 0, `${tag}: no hint line bought draws NOTHING (frames drawn ${r.drawn}, gates ${r.gates}, arrow ${r.arrow}, icon frames ${r.icon})`);
