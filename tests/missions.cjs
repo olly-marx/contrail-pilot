@@ -81,9 +81,9 @@ const KEY = 'contrailPilot.v2';
   const first5 = ['land', 'seeds-5', 'shade-10', 'clean-night', 'pass-1'];
   await setSave({ ...base, missionsDone: first5 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   const c7 = await p.textContent('#tMission');
-  check(/MISSION 6\//.test(c7) && /Plant a tree/.test(c7) && /Needs:/.test(c7) && /Tree parcels/.test(c7), `mission 6 should say it needs Tree parcels: ${c7}`);
+  check(/MISSION 6\//.test(c7) && /Plant a tree/.test(c7) && /Needs:/.test(c7) && /Plant trees \(NATURE\)/.test(c7), `mission 6 should say it needs Plant trees (NATURE): ${c7}`);
   await setSave({ ...base, missionsDone: first5, levels: { trees: 1 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
-  check(!/Needs:/.test(await p.textContent('#tMission')), 'with Tree parcels owned the card should not say Needs');
+  check(!/Needs:/.test(await p.textContent('#tMission')), 'with Plant trees owned the card should not say Needs');
   // 6. The later missions: the wildlife one needs a habitat project; the World tour needs every land discovered.
   const later = await p.evaluate(async () => { const M = await import('./src/missions.js'); const m = id => M.MISSIONS.find(x => x.id === id);
     return { n: M.MISSIONS.length, ids: M.MISSIONS.map(x => x.id),

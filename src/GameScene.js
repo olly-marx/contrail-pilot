@@ -306,6 +306,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   startFlight() {
+    if (this.ui && this.ui.tour) this.ui.tour.abort();   // a flight starting by any route (the HOME button, a key, a crossing, TRY AGAIN) never leaves a rails step up over the game (src/tour.js abort)
     // Rebuild if this scene is from an old flight, or upgrades changed the scenery since.
     // Also if a new direction was chosen on the FLY screen since (the path is built with the scene).
     const pathNow = () => (this.school ? this.path : this.save.flyCrossing ? crossingPath(this.save.flyCrossing) : routeFor(this.save.tutorialDone ? this.save : schoolSave(this.save)));   // (school: set by startSchool; lazy: a tap before create() has no save)

@@ -70,7 +70,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // another land; the rails point at the FREE button (one target); the tap gives them free.
   const l5 = { landings: 4, missionsDone: ['L1', 'L2', 'L3', 'L4'], seeds: 0, crystals: 0, discovered: { savanna: true, desert: true, steppe: true, rainforest: true } };
   p = await open(save({ ...l5, shownLines: ['trees'], tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-map', 'r-parcels', 'nature-lead'] }), { width: 390, height: 844 });   // (phase A: every guide seen, to test the tab alone)
-  check(/Free tree parcels/.test(await p.evaluate(() => document.getElementById('hubNext').innerText)), `L5: NEXT says the tree parcels are free (${await p.evaluate(() => document.getElementById('hubNext').innerText)})`);
+  check(/Free trees/.test(await p.evaluate(() => document.getElementById('hubNext').innerText)), `L5: NEXT says the free trees (Free trees) (${await p.evaluate(() => document.getElementById('hubNext').innerText)})`);
   await p.click('#tabNature'); await p.waitForTimeout(500);
   const other = await p.$('#wRegions [data-region]:not([disabled]):not(.on)');
   check(!!other, 'L5: another land tab to view (the trap: NATURE kept the last-viewed tab)');
@@ -82,12 +82,12 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   { let h = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); }   // the hub's 'Something NEW!' lights NATURE: tap what is lit
     if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(600); }
   // A player taps what is lit (the 'NEW: Tree Planting! Tap i' spotlight first, closing its info card) until the parcels step.
-  a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up && /parcels/i.test(a.text)) break;
+  a = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { a = await audit(p); if (a.up && /Buy more trees/i.test(a.text)) break;
     if (await p.isVisible('#iClose')) await p.click('#iClose');
     else if (a.up) { const ok = await p.$('#tour .tbubble .btn:not([hidden])'); if (ok && await ok.isVisible()) await ok.click(); else if (a.ring) await p.mouse.click(a.ring.x, a.ring.y); }
     await p.waitForTimeout(250); }
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/L5-free-parcels.png` });
-  check(a.up && /parcels/i.test(a.text) && a.reach.length === 1 && /FREE/.test(a.reach[0] || '') && a.inView, `L5: the rails point at the FREE parcels, the only tappable thing, on screen ("${a.text}"; ${a.reach.join(' / ')})`);
+  check(a.up && /Buy more trees/i.test(a.text) && a.reach.length === 1 && /FREE/.test(a.reach[0] || '') && a.inView, `L5: the rails point at the FREE trees (Buy more trees ... the first level is free), the only tappable thing, on screen ("${a.text}"; ${a.reach.join(' / ')})`);
   if (a.ring) { await p.mouse.click(a.ring.x, a.ring.y); await p.waitForTimeout(700); }
   const sv = await p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
   check((sv.levels || {}).trees === 1 && sv.seeds === 0 && sv.freeParcelsGiven, `L5: the tap gives the first parcels free (${JSON.stringify(sv.levels)}, seeds ${sv.seeds})`);
@@ -98,7 +98,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // still reach only the target.
   p = await open(save({ ...l5, tours: [...save({}).tours, 'r-systems', 'r-boards', 'r-bonus', 'r-map'], shownLines: ['trees'] }), { width: 375, height: 667 }, true);   // (a touch phone: the drag is real touch events)
   { let h = null; for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { h = await audit(p); if (h.up) break; await p.waitForTimeout(150); } if (h.up && h.ring) await p.mouse.click(h.ring.x, h.ring.y); else await p.click('#tabNature'); await p.waitForTimeout(700); }
-  for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { const x = await audit(p); if (x.up && /parcels/i.test(x.text)) break; await p.waitForTimeout(150); }
+  for (let i = 0, t0 = Date.now(); Date.now() - t0 < 30000; i++) { const x = await audit(p); if (x.up && /Buy more trees/i.test(x.text)) break; await p.waitForTimeout(150); }
   const sc0 = await p.evaluate(() => document.getElementById('nature').scrollTop);
   await p.mouse.move(20, 120); await p.mouse.wheel(0, 200); await p.waitForTimeout(400);
   const sc1 = await p.evaluate(() => document.getElementById('nature').scrollTop);

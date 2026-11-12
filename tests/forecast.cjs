@@ -21,8 +21,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
 
   // 1. The numbers: none, level 1, level 5.
   const k = await p.evaluate(async () => { const F = await import('/src/fleet.js'); const kit = n => F.fleetKit({ fleet: { plane: 'comet', planes: { comet: {} }, systems: { forecast: n }, gadgets: {} } });
-    return [0, 1, 4, 5].map(n => [kit(n).revealPx, kit(n).fakes, kit(n).late]); });
-  check(JSON.stringify(k) === '[[50,0,0],[60,0.4,0.3],[130,0.3,0.3],[160,0.3,0.2]]', `reveal / false share / missed share by level 0, 1, 4, 5: ${JSON.stringify(k)}`);
+    return [0, 1, 2, 3, 4, 5].map(n => [kit(n).revealPx, kit(n).fakes, kit(n).late]); });
+  // (0.62.0: the Forecasting levels were smoothed on purpose, src/fleet.js SYSTEMS forecast, tests/forecastsmooth.cjs: level 1 is no longer worse than nothing)
+  const pick = [0, 1, 4, 5].map(i => k[i]);
+  check(JSON.stringify(pick) === '[[50,0,0],[60,0.2,0.25],[150,0.16,0.18],[160,0.15,0.16]]', `reveal / false share / missed share by level 0, 1, 4, 5: ${JSON.stringify(pick)}`);
+  check(k.slice(1).every((q, i, a) => (i === 0 ? q[0] > k[0][0] : q[0] > a[i - 1][0]) && (i === 0 || (q[1] <= a[i - 1][1] + 1e-9 && q[2] <= a[i - 1][2] + 1e-9))), `every Forecasting level is better than the last (reveal up; false and missed shares never up) for levels 0 to 5: ${JSON.stringify(k)}`);
 
   // 2. In flight: a false patch right ahead of the plane.
   await p.click('#goBtn');

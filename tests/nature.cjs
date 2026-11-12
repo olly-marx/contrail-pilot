@@ -33,8 +33,10 @@ const KEY = 'contrailPilot.v2';
   // the UK opens spruce, birch, oak (the tree rework: kinds are no longer bought).
   await setSave({ ...base, seenTips: ['*'], levels: { trees: 2 }, habitat: { woodland: ['deadwood'] }, planted: { birch: 9, oak: 9 } }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
-  const kinds = await scene(() => { const s = game.scene.getScene('game'); const out = []; for (let i = 0; i < 3; i++) { out.push(s.treeKind()); s.speciesIdx++; } s.speciesIdx = 0; return out; });
-  check(JSON.stringify(kinds) === '["spruce","birch","oak"]', `parcels should rotate spruce, birch, oak; got ${kinds}`);
+  // (0.62.0: this save has birch 9 and oak 9 planted, which is the CAP of 9 per kind. The shipping order 'turns' (src/droporder.js DROP_ORDER.mode) skips a full kind, so it plants spruce each time; the rotation over the OPEN kinds that this line is about is the mode 'off' = the game as before trees v2.)
+  const kinds = await scene(async () => { const D = await import('/src/droporder.js'), s = game.scene.getScene('game'), run = mode => { D.DROP_ORDER.mode = mode; const out = []; s.speciesIdx = 0; for (let i = 0; i < 3; i++) { out.push(s.treeKind()); s.speciesIdx++; } s.speciesIdx = 0; return out; }; const off = run('off'), turns = run('turns'); D.DROP_ORDER.mode = 'turns'; return { off, turns }; });
+  check(JSON.stringify(kinds.off) === '["spruce","birch","oak"]', `parcels should rotate spruce, birch, oak (mode 'off', the order before trees v2); got ${kinds.off}`);
+  check(JSON.stringify(kinds.turns) === '["spruce","spruce","spruce"]', `with birch and oak at the cap of 9 the shipping order skips them (spruce each time); got ${kinds.turns}`);
 
   // 3. Projects come in tiers (2026-10-22): Tier 1 is open from the start; Tier 2 is one locked card
   // saying the meter level that opens it; Tier 3 is not shown yet.

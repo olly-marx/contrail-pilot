@@ -14,6 +14,7 @@ const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets agai
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf, loadout } from './upgrades.js';
 import { needFromGrow } from './groves.js';
+import { hudShowing } from './hudclear.js';
 import { getPilot, namesOpen } from './online.js';
 import { treesPlanted } from './treecount.js';
 // Rails rule (the user's playtest, 2026-10-29): a step that taps a bottom-bar tab must DECLARE whether the screen it opens has
@@ -196,19 +197,21 @@ export class Tour {
   // ---------- running a tour ----------
   async run(id, steps) {
     const kid = id || 'new';
-    this.busy = true;
-    this.el.hidden = false;
+    this.busy = true; this.exited = null;   // (the overlay is NOT shown here: step() shows it once its target is found; it used to be unhidden up to 4 s before, over whatever screen was up, even a flight)
     for (let i = 0; i < steps.length; i++) {
       const st = steps[i]; st.key = st.key || `${kid}#${i + 1}`;   // (the key the subject is declared under: src/railsubjects.js)
       if (st.skipIf && st.skipIf()) continue;
       if (st.ready && !st.ready()) { id = null; break; }   // its target screen has nothing to act on: do not start (it runs again later)
       if (!await this.step(st)) { id = null; break; }   // its button is gone (e.g. a flight started): stop; it runs again next time
+      if (this.exited) { id = null; break; }   // a flight started (or the target went away) while the step was up: the step ended itself (see abort() and the poll in step())
       if (st.after) st.after();
       if (st.end) break;
     }
     this.el.hidden = true;
     this.target = null; this.clearSpot();
+    const exited = this.exited; this.exited = null;
     if (id) this.markDone(id);
+    else if (exited) this.noteAbort(kid, exited);
     this.busy = false;
     // Then whatever screen is showing NOW may have its own step (a rails tap often opens the next screen while this tour
     // is still finishing: the hangar's step was lost that way).
@@ -229,6 +232,9 @@ export class Tour {
     const vr = t.getBoundingClientRect();
     if (st.scroll || vr.top < 0 || vr.bottom > innerHeight) { t.scrollIntoView({ block: 'center' }); await sleep(300); }
     this.target = t; this.side = null; this.curStep = st;   // (a new step decides its bubble's side afresh)
+    if (this.exited) return true;   // aborted while it was looking for its target: never show it
+    if (hudShowing()) { this.exited = 'flight'; return true; }   // a flight is on: never show a step over the game
+    this.el.hidden = false;
     // One action per step (the one-target audit): a row's own price/BUY sits inside the row's tap area (.rowc-price is
     // absolute over .rowc-tap), so while the step points at the row's tap, that price hides (DESIGN-HANGAR-NATURE).
     const solo = t.classList && t.classList.contains('rowc-tap') && t.closest('.rowc'); if (solo) solo.classList.add('tour-only');
@@ -243,16 +249,40 @@ export class Tour {
     this.place();
     if (st.focus) setTimeout(() => t.focus(), 50);
     await new Promise(resolve => {
-      const finish = () => { clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; document.querySelectorAll('.rowc.tour-only').forEach(r => r.classList.remove('tour-only')); document.querySelectorAll('.rowc.tour-price').forEach(r => r.classList.remove('tour-price')); document.querySelectorAll('.rowc.tour-info').forEach(r => r.classList.remove('tour-info')); document.querySelectorAll('.tour-inert').forEach(r => r.classList.remove('tour-inert')); resolve(); };
+      let gone = 0;   // polls (150 ms) for which the target has not been on screen
+      const finish = () => { this.finishStep = null; this.tapPending = false; clearInterval(poll); document.removeEventListener('click', onTap, true); ok.onclick = null; document.querySelectorAll('.rowc.tour-only').forEach(r => r.classList.remove('tour-only')); document.querySelectorAll('.rowc.tour-price').forEach(r => r.classList.remove('tour-price')); document.querySelectorAll('.rowc.tour-info').forEach(r => r.classList.remove('tour-info')); document.querySelectorAll('.tour-inert').forEach(r => r.classList.remove('tour-inert')); resolve(); };
       // A tap on the target (with `area`, on ANY element matching `target` inside the hole). Let the button do its job first.
       const want = FEATURES.season2 ? HUB_TARGETS[st.target] || st.target : st.target;
-      const onTap = e => { if (e.target.closest && e.target.closest(want)) setTimeout(finish, 0); };
+      const onTap = e => { if (e.target.closest && e.target.closest(want)) { this.tapPending = true; setTimeout(finish, 0); } };   // (tapPending: the tap that starts a flight finishes its own step; abort() leaves it alone)
       if (st.tap) document.addEventListener('click', onTap, true);
       if (st.ok) ok.onclick = finish;
-      const poll = setInterval(() => { if (Date.now() - (this.userScrollAt || 0) > 1500) this.keepVisible(); this.place(); if (st.until && st.until()) finish(); }, 150);
+      this.finishStep = finish;
+      const poll = setInterval(() => {
+        // THE OVERLAY MUST NEVER SURVIVE INTO A FLIGHT (the user, 2026-11-12: "after I buy an upgrade in NATURE, tapping in flight does not respond"; measured: the catcher panels of a rails step stayed over the game, on live 0.61.0 too):
+        // a pending abort, a flight on screen, or a target that has been off screen for about a second ends the step; run() then keeps it for another time (noteAbort).
+        if (this.exited) { finish(); return; }
+        if (hudShowing()) { this.exited = 'flight'; finish(); return; }
+        if (!t.isConnected || t.getClientRects().length === 0) { if (++gone > 6) { this.exited = 'gone'; finish(); return; } } else gone = 0;
+        if (Date.now() - (this.userScrollAt || 0) > 1500) this.keepVisible(); this.place(); if (st.until && st.until()) finish();
+      }, 150);
     });
     await sleep(150);
     return true;
+  }
+
+  // A flight is starting (src/ui.js start / startSchool, GameScene.startFlight): no rails step may stay up over the game. A tap on the step's own lit target is left alone (it finishes the step by itself in a moment).
+  abort() {
+    if (this.tapPending) return;
+    if (!this.busy) { this.el.hidden = true; return; }
+    this.exited = 'abort';
+    if (this.finishStep) this.finishStep();
+    this.el.hidden = true;
+  }
+  // An interrupted step comes back ONCE (it may teach something the player needs), then counts as seen, so it neither loops on every HOME nor is lost by the first interruption. window.__tourAborts is for the tests.
+  noteAbort(kid, why) {
+    (window.__tourAborts = window.__tourAborts || []).push({ id: kid, key: this.curStep && this.curStep.key, why });
+    const m = (this.save.railAborts = this.save.railAborts || {}); m[kid] = (m[kid] || 0) + 1;
+    if (m[kid] >= 2) this.markDone(kid); else writeSave(this.save);
   }
 
   find(sel) {

@@ -97,3 +97,4 @@ group mission-pay | src/missionprize.js src/missionplan.js src/missions2.js src/
 group cross-reward | src/crossings.js src/crossingend.js src/crossingview.js src/missionprize.js src/ui.js style.css | crossrewardui crossboxui crossingscreens
 group upgrade-bar | src/hangar.js src/upgradetext.js style.css | barui hangar fitscreen
 group tree-line | src/resultscard.js src/ui.js style.css index.html src/sim/rules.js | treelineui
+group tour-flight | src/tour.js src/ui.js src/GameScene.js | tourflight

@@ -154,6 +154,7 @@ export class UI {
     if (!this.save.tutorialDone) return this.startSchool();
     unlockAudio();
     this.showOnly(null);
+    if (this.tour) this.tour.abort();   // no rails step may stay up over the game (src/tour.js abort: measured 2026-11-12, a step's catcher panels swallowed the flight's taps)
     this.onStart();
   }
 
@@ -162,7 +163,7 @@ export class UI {
     unlockAudio();
     this.showOnly(null);
     $('how').hidden = false;
-    $('howClose').onclick = () => { $('how').hidden = true; $('howClose').onclick = () => { $('how').hidden = true; }; this.onSchool(); };
+    $('howClose').onclick = () => { $('how').hidden = true; $('howClose').onclick = () => { $('how').hidden = true; }; if (this.tour) this.tour.abort(); this.onSchool(); };
   }
 
   // The mission card on the title screen: this flight's goal, and what you need for it.
