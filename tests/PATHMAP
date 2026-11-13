@@ -101,4 +101,4 @@ group tour-flight | src/tour.js src/ui.js src/GameScene.js | tourflight
 group naturebar-test | tests/naturebar.cjs | naturebar
 group chipsfit-test | tests/chipsfit.cjs | chipsfit
 group results-chips | src/ui.js style.css src/resultscard.js | chipsfit
-group naturefold-test | tests/naturefold.cjs | naturefold
+group naturefold-test | tests/naturefold.cjs style.css | naturefold
