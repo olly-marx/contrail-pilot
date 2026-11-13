@@ -20,6 +20,7 @@ globalThis.SEASON2 = true;
   const plant = (s, slot, n) => { for (let i = 0; i < n; i++) G.plantTree(s, 'woodland', idOf(slot)); };
   const grow = (s, slot, n) => { plant(s, slot, n); const c = s.groves.woodland[idOf(slot)]; c.grown = c.planted; c.saplings = []; };
   const kinds3 = s => M.visible(s, 'LONDON').some(v => v.def && v.def.id === 'kinds3');
+  check(C.STAR_GROW3.on === false, 'R5: STAR_GROW3 ships OFF until the sim chat measures it');
   check(C.NATIVE_FIRST.on === false, 'P5: NATIVE_FIRST ships OFF until the sim chat checks the pacing');
   check(C.GROWN_METER.on === false, 'G4: GROWN_METER ships OFF until the sim chat measures it');   // (first: every check below assumes the shipped switches)
   const open = L.treesOpen(base(), 'woodland');
@@ -41,6 +42,22 @@ globalThis.SEASON2 = true;
   { const s4 = tiersDone(base()); for (const sl of [0, 1, 2, 3]) plant(s4, sl, 9); const was = D.DROP_ORDER.mode; D.DROP_ORDER.mode = 'off';
     try { const f4 = M.fillFor(s4, 'weurope', 'LONDON'); check(f4.kindsRoom >= 2 && kinds3(s4) && !L.OPENS[4].ok(s4, 'woodland'), `K4: drop order 'off' (no cap, the game before trees v2): full kinds still have room, kinds3 is offered, slot 4 is not opened by the stuck rule (room ${f4.kindsRoom}, offered ${kinds3(s4)})`); }
     finally { D.DROP_ORDER.mode = was; } }
+
+  // R. STAR_GROW3 (the user, 2026-11-13: 'fully grow 3 trees'): kinds3 becomes 'Grow 3 trees in <land>', done on a landed flight once the land has 3 GROWN trees, offered even on a full land
+  { const was = C.STAR_GROW3.on, RES = { landed: true, landedAt: 'PARIS', cargo: 0, sunBlocked: 0, planted: 0, airportsSkipped: 0, nightOwl: false, bumped: 0, goldens: 0, dodges: 0, cleanGaps: 0, noFlyPassed: 0, treeIds: [], foundIds: [] };
+    const fly = (sv, r = RES) => M.onFlight(sv, { ...r }).some(m => m.key === 'weurope:kinds3');
+    try {
+      C.STAR_GROW3.on = true;
+      const full = tiersDone(base()); for (const sl of [0, 1, 2, 3]) plant(full, sl, 9);
+      const v = M.visible(full, 'LONDON').find(x => x.def && x.def.id === 'kinds3');
+      check(!!v && /^Grow 3 trees in /.test(v.title), `R1: switch on, the star is offered on a full land as 'Grow 3 trees in ...': ${v && v.title}`);
+      const two = tiersDone(base()); grow(two, 1, 2); plant(two, 2, 5);
+      check(!fly(two), 'R2: 2 grown trees (and saplings) do not finish it');
+      const three = tiersDone(base()); grow(three, 1, 2); grow(three, 2, 1);
+      check(fly(three), 'R3: 3 grown trees of any kinds finish it on a landed flight');
+      const crash = tiersDone(base()); grow(crash, 1, 3);
+      check(!fly(crash, { ...RES, landed: false, landedAt: null }), 'R4: a crash finishes nothing');
+    } finally { C.STAR_GROW3.on = was; } }
 
   // N. the sapling view (src/groves.js saplingsIn / newlyGrown / markGrownSeen): the HUD bar and the wild area's enclosure read these
   { const s = base(); plant(s, 1, 2); plant(s, 2, 1);
