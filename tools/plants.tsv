@@ -103,7 +103,7 @@ audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never'
 releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
 releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible$/ tours bubblestill missionlanes pilotpreview keepvisible/	onboarding changes no longer run firsthour-real
 sim-hint@PLANT=blind	-	-	the player ignores the hint
-sim-progression-s2@PLANT=nostars	-	-	crossings offered without the area missions
+sim-progression-s2@PLANT=noready	-	-	crossings offered before they are ready
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
 sim-twists@PLANT=still	-	-	no twist ever moves
 sim-twists@PLANT=early	-	-	twists ignore their start distance
