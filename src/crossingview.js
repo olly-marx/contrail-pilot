@@ -2,7 +2,7 @@
 // Pure: no DOM, no clock, no random numbers. src/ui.js draws it (the sheet, the HOME row and dot, the globe arc); src/nextup.js turns it into UP NEXT rows;
 // src/missionsview.js into the CROSSING block of MISSIONS. A crossing is READY by status (src/crossings.js readiness: Era, Plane, Nature; the trial stars are no longer a gate and where the player is does not
 // matter): whichever tick completes LAST is the moment, and it can happen on a results card or in NATURE, so the sheet fires on whatever screen the player sees next (ui.maybeCrossingSheet).
-import { upcoming, readiness, planeProgress, ladderSplit, rungOf } from './crossings.js';
+import { upcoming, readiness, planeProgress, ladderSplit, rungOf, natureNeed } from './crossings.js';
 import { pathTo, linksFor } from './route.js';
 import { SEASON } from './season.js';
 import { AREAS, opensName } from './areas.js';
@@ -18,7 +18,7 @@ const openName = id => opensName(id);   // CROSSINGS V3: the region it opens
 
 // state of ONE crossing: { id, from, to, km, difficulty, opens, ready, told, conds: [{ key, label, line, plain, status, done, frac, where }], nearest, crossing }. The three ticks, in order: Era, Plane, Nature.
 export function stateOf(save, c, { unlock = false } = {}) {
-  const rd = readiness(save, c), pp = planeProgress(save, c), need = SEASON.offer.biodiversity;
+  const rd = readiness(save, c), pp = planeProgress(save, c), need = natureNeed(c);
   const conds = [
     { key: 'era', label: 'Era', line: 'a later era', plain: 'A later era brings it.', where: 'fly', done: rd.era, frac: rd.era ? 1 : 0, status: rd.era ? 'done' : 'later' },
     { key: 'plane', label: 'Plane', line: 'a better plane', plain: 'Fly farther or upgrade plane', where: 'hangar', done: rd.plane, frac: pp, status: rd.plane ? 'done' : (pp >= 0.75 ? 'nearly' : 'not yet') },

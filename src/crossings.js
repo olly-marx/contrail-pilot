@@ -38,7 +38,9 @@ export const rungOf = c => LADDER.indexOf(typeof c === 'string' ? c : c.id);
 // How many region crossings this save has made: the regions open, less the home region.
 export const crossingsMade = save => Math.max(0, regionsOpen(unlockedAreas(save)).length - 1);
 export const topRung = save => crossingsMade(save) - 1;
-export const crossingKm = c => (c.kind === 'lap' ? SEASON.crossingKm.final : SEASON.crossingKm[c.era + 1]);
+export const crossingKm = c => (c.kind === 'lap' ? SEASON.crossingKm.final : (SEASON.step && SEASON.step.km[c.era]) || SEASON.crossingKm[c.era + 1]);
+// The nature meter a crossing needs (SEASON.step.bio by crossing number; the lap and anything else: offer.biodiversity).
+export const natureNeed = c => (c && c.kind !== 'lap' && SEASON.step && Number.isFinite(SEASON.step.bio[c.era]) ? SEASON.step.bio[c.era] : SEASON.offer.biodiversity);
 // The two areas a crossing joins ('ocean' for Honolulu/Nadi, which belong to no area).
 export const sides = c => [areaOf(c.a) || 'ocean', areaOf(c.b) || 'ocean'];
 // Your home city: where the start choice put you (src/startchoice.js save.homeArea), else where you are.
@@ -78,7 +80,7 @@ export const planeReady = (save, c) => reachKm(save) >= SEASON.offer.distanceSha
 export const planeProgress = (save, c) => { const need = SEASON.offer.distanceShare * c.km; return need ? Math.min(1, reachKm(save) / need) : 1; };
 export const natureBest = save => Math.max(0, ...unlockedAreas(save).map(k => bestAreaBio(save, k)));
 export function readiness(save, c) {
-  const era = eraProgress(save).index >= c.era, plane = planeReady(save, c), nb = natureBest(save), nature = nb >= SEASON.offer.biodiversity;
+  const era = eraProgress(save).index >= c.era, plane = planeReady(save, c), nb = natureBest(save), nature = nb >= natureNeed(c);
   return { era, plane, nature, natureHave: Math.round(nb), ready: era && plane && nature };
 }
 

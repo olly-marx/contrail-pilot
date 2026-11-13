@@ -28,6 +28,15 @@ globalThis.SEASON2 = true;
     while (true) { const nx = C.upcoming(save).find(c => c.kind !== 'lap'); if (!nx) break; check(nx.era === prev + 1 && nx.km > (prev >= 0 ? C.crossingKm({ era: prev }) : 0), `${label}: crossing ${nx.era + 1} (${nx.id}) is harder than the last: era ${nx.era}, ${nx.km} km`); prev = nx.era; C.completeCrossing(save, nx); steps++; if (steps > 6) break; }
     check(Object.keys(A.AREAS).every(k => save.areas.includes(k)) && C.upcoming(save).some(c => c.kind === 'lap'), `${label}: after its last crossing every region is open and the lap is next`);
   }
+  // 2b. THE PACING LEVERS (SEASON.step, 2026-11-13): the n-th crossing's length and nature need come from step.km[n] / step.bio[n]; the 5th and the lap keep their lengths
+  { const SS = (await import('../src/season.js')).SEASON, km0 = SS.step.km[0], bio0 = SS.step.bio[0];
+    check(JSON.stringify(SS.step.km.slice(3)) === '[27000,30000]' && SS.crossingKm.final === 40000, `the 4th, 5th and the lap keep 27,000 / 30,000 / 40,000 (the user: no shortening): ${SS.step.km}, ${SS.crossingKm.final}`);
+    try {
+      SS.step.km[0] = 9000; SS.step.bio[0] = 40;
+      const sv = { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', tutorialDone: true, flightSeconds: 0, bestDistance: 99999 };
+      const first = C.available(sv).find(c => c.kind !== 'lap');
+      check(first && first.km === 9000 && C.natureNeed(first) === 40 && C.readiness(sv, first).nature === false, `a lever moves the first crossing: ${first && [first.km, C.natureNeed(first)]}`);
+    } finally { SS.step.km[0] = km0; SS.step.bio[0] = bio0; } }
   // 3
   const base = () => ({ fuel: 'kerosene', priceVersion: 2, tutorialDone: true, areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], areaBest: {}, crossed: [], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: {}, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   const w = base(), c = { ...C.asNext(C.crossingById('mediterranean'), 0), from: 'ROME', to: 'TUNIS' };
