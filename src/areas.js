@@ -16,9 +16,27 @@ export const AREAS = {
   patagonia: { name: 'Patagonia', starter: true, start: 'PUNTA ARENAS', cities: ['PUNTA ARENAS', 'PUERTO MADRYN', 'BALMACEDA'] },
 };
 export const OCEAN_STONES = ['HONOLULU', 'NADI'];
+// REGIONS (CROSSINGS V3, the user 2026-11-13: '6 regions, 5 crossings plus the lap ... each harder than the last'): the areas open a whole REGION at a time. Your start opens your
+// home region; each crossing opens another region. Areas stay (missions, start cities, nature are per area); only what opens together changed.
+export const REGIONS = {
+  europe: { name: 'Europe', areas: ['weurope', 'nordic'] },
+  afme: { name: 'Africa & the Middle East', areas: ['africa', 'mideast'] },
+  asia: { name: 'Asia', areas: ['sasia', 'easia'] },
+  namerica: { name: 'North America', areas: ['namerica'] },
+  samerica: { name: 'South America', areas: ['samerica', 'patagonia'] },
+  oceania: { name: 'Oceania', areas: ['oceania', 'aotearoa'] },
+};
+export const regionOfArea = k => Object.keys(REGIONS).find(r => REGIONS[r].areas.includes(k)) || null;
+export const regionName = r => (REGIONS[r] ? REGIONS[r].name : 'the Pacific');
+// An area's display name for 'opens ...' lines: the REGION it belongs to.
+export const opensName = k => regionName(regionOfArea(k));
+// Every key plus the other areas of its region (keys that are no area, e.g. 'ocean', are kept as they are). Order: the keys first, then what was added.
+export const withRegions = keys => { const out = [...(keys || [])]; for (const k of keys || []) { const r = regionOfArea(k); if (r) for (const a of REGIONS[r].areas) if (!out.includes(a)) out.push(a); } return out; };
+// Regions with every area open.
+export const regionsOpen = keys => Object.keys(REGIONS).filter(r => REGIONS[r].areas.every(a => (keys || []).includes(a)));
 // The default for a new season 2 player until the start choice (M2): Western Europe, from Amsterdam (PLANE-ONBOARDING-PLAN).
 export const DEFAULT_AREA = 'weurope';
 export const areaOf = name => Object.keys(AREAS).find(k => AREAS[k].cities.includes(name)) || null;
 // (save.areas may also hold 'ocean', the Pacific stepping stones a crossing to Honolulu/Nadi opens: not an area with cities of its own.)
-export const unlockedAreas = save => { const ks = (save.areas || []).filter(k => AREAS[k]); return ks.length ? ks : [DEFAULT_AREA]; };
+export const unlockedAreas = save => { const ks = withRegions(save.areas || []).filter(k => AREAS[k]); return ks.length ? ks : withRegions([DEFAULT_AREA]); };   // (CROSSINGS V3: a whole region opens together)
 export const citiesOf = keys => keys.flatMap(k => AREAS[k].cities);

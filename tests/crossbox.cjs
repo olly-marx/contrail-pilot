@@ -10,7 +10,7 @@ globalThis.SEASON2 = true;
   const base = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], areaBest: {}, crossed: [], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: { trees: 1 }, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
   const bad = s => /\bkm\b|\bmetres?\b|\bmiles?\b|\d{3,}/i.test(String(s));
   let n = 0;
-  for (const c of C.CROSSINGS) {
+  for (const c of C.CROSSINGS.flatMap(x => (x.kind === 'lap' ? [C.asNext(x)] : [0, 1, 2, 3, 4].map(n => C.asNext(x, n))))) {   // CROSSINGS V3: every route as each of the 5 crossings (asNext), and the lap
     const cc = { ...c, from: c.a || 'LONDON', to: c.b || 'LONDON', km: C.crossingKm(c), opens: 'africa' };
     for (let mask = 0; mask < 8; mask++) {
       const st = V.stateOf(base, cc), want = [!!(mask & 1), !!(mask & 2), !!(mask & 4)];   // era, plane, nature
@@ -33,7 +33,7 @@ globalThis.SEASON2 = true;
       }
     }
   }
-  check(V.boxView(V.stateOf(base, { ...C.CROSSINGS[0], from: 'WARSAW', to: 'STOCKHOLM', km: 6500, opens: 'nordic' })).ticks.length === 3 && !('stars' in V.boxView(V.stateOf(base, { ...C.CROSSINGS[0], from: 'WARSAW', to: 'STOCKHOLM', km: 6500, opens: 'nordic' }))), 'three ticks, no stars');
-  console.log(fails.length ? `FAIL crossbox:\n - ${fails.slice(0, 12).join('\n - ')}${fails.length > 12 ? `\n ... and ${fails.length - 12} more` : ''}` : `PASS crossbox: ${n} box and screen states (22 crossings x 8 tick combinations) are within budget, say no distance, and send the player where the open tick is fixed`);
+  check(V.boxView(V.stateOf(base, { ...C.asNext(C.CROSSINGS[0], 0), from: 'ROME', to: 'TUNIS', km: 6500, opens: 'mideast' })).ticks.length === 3 && !('stars' in V.boxView(V.stateOf(base, { ...C.asNext(C.CROSSINGS[0], 0), from: 'WARSAW', to: 'STOCKHOLM', km: 6500, opens: 'nordic' }))), 'three ticks, no stars');
+  console.log(fails.length ? `FAIL crossbox:\n - ${fails.slice(0, 12).join('\n - ')}${fails.length > 12 ? `\n ... and ${fails.length - 12} more` : ''}` : `PASS crossbox: ${n} box and screen states (every route at each of the 5 steps and the lap x 8 tick combinations) are within budget, say no distance, and send the player where the open tick is fixed`);
   process.exit(fails.length ? 1 : 0);
 })();

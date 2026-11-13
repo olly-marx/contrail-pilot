@@ -1,7 +1,7 @@
 // TAP ANY CITY (ROUTING V2 step 1, research/DESIGN-ROUTING-V2.md; the user, 2026-11-09: "I should be able to click any city I want to go to and fly there, even in a different region, by the most direct route").
 // Pure: no DOM, no clock, no random numbers. src/ui.js shows the card; src/globe.js uses nearestDot for the tap. A tap on the globe shows the city's NAME and its STOPS, then FLY;
 // FLY sets the player's standing aim (save.aimCity, src/aim.js setGoto), the same field GO TO uses, and the flights steer there by the shortest way over the open network. No distances anywhere.
-import { AREAS, areaOf, unlockedAreas } from './areas.js';
+import { AREAS, areaOf, unlockedAreas, regionOfArea } from './areas.js';
 import { CROSSINGS, LADDER, sides } from './crossings.js';
 import { linksFor, pathTo, legBetween } from './route.js';
 import { capFor } from './capability.js';
@@ -18,8 +18,9 @@ export const MAX_DOTS = 6;   // the dots show at most six stops, then a plus (th
 
 // The crossing that opens an area: one of its crossings whose OTHER end is already open, else the first of its crossings on the ladder. null if it has none.
 export function openerOf(save, area) {
-  const open = unlockedAreas(save), cs = CROSSINGS.filter(c => c.kind !== 'lap' && sides(c).includes(area));
-  const next = cs.filter(c => open.includes(sides(c).find(s => s !== area)));
+  const R = regionOfArea(area), reg = c => sides(c).map(regionOfArea);   // CROSSINGS V3: a route opens the area's whole REGION
+  const open = unlockedAreas(save), cs = CROSSINGS.filter(c => c.kind !== 'lap' && reg(c).includes(R));
+  const next = cs.filter(c => { const other = sides(c).find(s => regionOfArea(s) !== R); return other && open.includes(other); });
   return (next.length ? next : cs).slice().sort((a, b) => LADDER.indexOf(a.id) - LADDER.indexOf(b.id))[0] || null;   // the FIRST on the ladder: the one the player will meet first (src/crossings.js LADDER)
 }
 

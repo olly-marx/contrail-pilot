@@ -1,7 +1,7 @@
 // SEASON 2 start choice (the redesign, M2; research/MASTER-PLAN.md Part B): a new season 2 player picks a starter
 // area, then a city in it (the area's default first). That area is unlocked; the rest wait for crossings.
 // Built as its own overlay so the live game's screens are untouched.
-import { AREAS } from './areas.js';
+import { AREAS, withRegions } from './areas.js';
 import { city } from './network.js';
 import { REGION_NAMES } from './habitats.js';
 
@@ -35,6 +35,6 @@ export function chooseStart() {
 }
 // Apply a choice to the save.
 export function applyStart(save, { area, city: name }) {
-  save.areas = [area]; save.homeArea = area; save.homeCity = name; save.city = name; save.heading = null;
+  save.areas = withRegions([area]); save.homeArea = area; save.homeCity = name; save.city = name; save.heading = null;
   save.visited = [name];   // not the default save's LONDON (the non-UK starter audit, 2026-10-28)
 }

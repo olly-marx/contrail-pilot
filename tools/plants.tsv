@@ -582,9 +582,6 @@ crystalreason	src/sim/rules.js	s/        } else if (why !== 'quiet') this.onNoCr
 crystalpopup	src/GameScene.js	s/this.crystalWhyAt = this.gameTime; this.popup(this.plane.x + 25, this.plane.y - 16, text, '#c9d6e8');/this.crystalWhyAt = this.gameTime;/	a missed cloud shows no line
 crystalpopup	src/GameScene.js	s/if (!text || this.explaining || /if (!text || /	the line is shown over a tip
 crystalpopup	src/GameScene.js	s/    if (this.crystalWhyAt != null \&\& this.gameTime - this.crystalWhyAt < 12000) return;//	a line for every missed cloud (no 12 s limit)
-crossladder	src/crossingview.js	s/higher = st(sp.higher), exception = st(sp.exception), easier = st(sp.easier);/higher = st([...sp.higher, ...sp.exception, ...sp.easier]), exception = [], easier = [];/	the next crossing is the nearest ready one again (no ladder)
-crossladder	src/crossings.js	s/exception = lower.filter(c => !covered.has(c.opens));/exception = [];/	a lower crossing that is the only way to open an area is dropped
-crossladder	src/crossingview.js	s/const lower = \[...exception, ...easier\].filter(s => s !== pick)/const lower = [].filter(s => s !== pick)/	the screen lists no easier ones
 crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
 pickcity	src/pickcity.js	s/  if (area \&\& !unlockedAreas(save)\.includes(area)) {/  if (false) {/	a closed-area city is treated like an open one
@@ -899,3 +896,6 @@ financemarket	src/finance.js	s/pull: 1 \/ 10, sigma: 0.075,/pull: 1 \/ 10, sigma
 cityrow	src/sim/rules.js	s/return Math.max(0, Math.min(1, 1 - (d - STORMS.spacing) \/ CITY_FADE));/return 1;/	the buildings show all the time again
 cityrow	src/sim/rules.js	s/const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));/const d = Math.abs(ahead - this.distancePx);/	only the next city shows its buildings
 cityrowui	src/GameScene.js	s/    this.city.setAlpha(this.cityRowAlpha());/    this.city.setAlpha(1);/	the game ignores the rule
+
+crossladder	src/crossings.js	s/export const crossingsMade = save => Math.max(0, regionsOpen(unlockedAreas(save)).length - 1);/export const crossingsMade = save => 0;/	every crossing is as hard as the first
+crossladder	src/areas.js	s/^export const withRegions = keys => .*$/export const withRegions = keys => [...(keys || [])];/	an open area no longer opens its whole region

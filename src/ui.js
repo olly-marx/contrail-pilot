@@ -3,7 +3,7 @@ import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
 import { routeFor, setGoto, clearGoto, arrivedGoto, gotoTarget, gotoHops, migrateAim, steerOf, activeMission, routeMode, stayLandLeft } from './aim.js';
 import { headingWord } from './network.js';
-import { AREAS, unlockedAreas } from './areas.js';
+import { AREAS, unlockedAreas, REGIONS, regionsOpen, opensName as regionOpensName } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
 import { available as crossingsNow, readiness, moreToCome, laterEra } from './crossings.js';
 import { SEASON } from './season.js';
@@ -12,7 +12,7 @@ const S2_UNLOCK = typeof location !== 'undefined' && new URLSearchParams(locatio
 // Season 2: the crossings you can see from your areas, each with what it still needs (MASTER-PLAN B4).
 // The capability estimate, this area's biodiversity and its contrail missions arrive in M4/M6; until then 0 / false.
 // A crossing can open an AREA or the ocean stepping stones (Honolulu, Nadi: no area of their own, so no AREAS entry).
-const opensName = id => (AREAS[id] ? AREAS[id].name : 'the Pacific');
+const opensName = id => regionOpensName(id);   // CROSSINGS V3: the region it opens (src/areas.js)
 const crossingsHTML = s => {
   if (!s.tutorialDone) return '';
   const list = crossingsNow(s);
@@ -26,8 +26,8 @@ const crossingsHTML = s => {
       ${go ? `<button class="btn go" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : `Needs: ${needs.join(', ')}`}</p>`; }).join('')}</div>`;
 };
 // Season 2: which areas you fly in, and which are still locked (dim dots on the globe; crossings open them).
-const areaLine = s => { const open = unlockedAreas(s), shut = Object.keys(AREAS).filter(k => !open.includes(k));
-  return `<p class="small" id="jAreas">Your area: <b>${open.map(k => AREAS[k].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(k => AREAS[k].name).join(', ')}` : ''}</p>`; };
+const areaLine = s => { const open = regionsOpen(unlockedAreas(s)), shut = Object.keys(REGIONS).filter(r => !open.includes(r));   // CROSSINGS V3: regions, not areas
+  return `<p class="small" id="jAreas">Your region${open.length === 1 ? '' : 's'}: <b>${open.map(r => REGIONS[r].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(r => REGIONS[r].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
 import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';

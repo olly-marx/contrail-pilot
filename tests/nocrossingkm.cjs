@@ -9,7 +9,7 @@ globalThis.SEASON2 = true;
   const bad = s => /\bkm\b|\bmetres?\b|\bmiles?\b|\d[\d,.]{3,}/i.test(String(s));
   const base = () => ({ fuel: 'kerosene', priceVersion: 2, tutorialDone: true, areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], areaBest: {}, crossed: [], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: { trees: 1 }, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   let scanned = 0; const eras = [];
-  for (const c of C.CROSSINGS) {
+  for (const c of C.CROSSINGS.flatMap(x => (x.kind === 'lap' ? [C.asNext(x)] : [0, 1, 2, 3, 4].map(n => C.asNext(x, n))))) {   // CROSSINGS V3: every route as each of the 5 crossings (asNext), and the lap
     const cc = { ...c, from: c.a || 'LONDON', to: c.b || 'LONDON', km: C.crossingKm(c), opens: 'africa' }, st = V.stateOf(base(), cc);
     check(st, `${c.id}: no state could be built`); if (!st) continue;
     const texts = { sheet: Object.values(V.sheetText(st, false)).join(' | '), first: Object.values(V.sheetText(st, true)).join(' | '), right: V.rightText(st), rightTold: V.rightText({ ...st, told: true }), route: V.routeCrossRest(cc), lap: V.routeLapRest(cc),

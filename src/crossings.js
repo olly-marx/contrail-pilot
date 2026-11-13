@@ -5,7 +5,7 @@
 // The FINAL BOSS (the user, 2026-10-27): a LAP OF THE EARTH from your home city back to it, once every area is open.
 // Auckland-Santiago, the old boss, is now an ordinary 2030s crossing (it closes the circle of areas).
 import { SEASON } from './season.js';
-import { AREAS, OCEAN_STONES, areaOf, unlockedAreas } from './areas.js';
+import { AREAS, OCEAN_STONES, areaOf, unlockedAreas, regionsOpen, regionOfArea, withRegions } from './areas.js';
 import { eraProgress } from './eras.js';
 import { linksOf, choices, city } from './network.js';
 import { tourPath } from './route.js';
@@ -15,37 +15,29 @@ import { bestAreaBio } from './arealand.js';
 import { crossingReward, crossingWord } from './missionprize.js';
 import { payPrize } from './rewards.js';
 
+// CROSSINGS V3 (the user, 2026-11-13: '22 crossings is obscene ... 6 regions, 5 crossings plus the lap is perfect. Each one harder than the last'): EIGHT famous routes join the
+// six REGIONS (src/areas.js); you choose which way to go next. A route has no era of its own: the n-th crossing you make (n = regions open - 1) is era n and takes era n's length
+// (SEASON.crossingKm), so every crossing is harder than the last whichever route you take. Five crossings open the world; then the lap. Old ids (save.crossed) are kept as they were.
 export const CROSSINGS = [
-  { id: 'warsaw-stockholm', a: 'WARSAW', b: 'STOCKHOLM', era: 0, kind: 'frontier' },
-  { id: 'khartoum-addis', a: 'KHARTOUM', b: 'ADDIS ABABA', era: 0, kind: 'frontier' },
-  { id: 'hanoi-hongkong', a: 'HANOI', b: 'HONG KONG', era: 0, kind: 'frontier' },
-  { id: 'jakarta-darwin', a: 'JAKARTA', b: 'DARWIN', era: 0, kind: 'frontier' },
-  { id: 'mexico-panama', a: 'MEXICO CITY', b: 'PANAMA', era: 0, kind: 'frontier' },
-  { id: 'tasman', a: 'AUCKLAND', b: 'SYDNEY', era: 0, kind: 'frontier' },
-  { id: 'patagonia', a: 'PUERTO MADRYN', b: 'BUENOS AIRES', era: 0, kind: 'frontier' },   // Patagonia <-> South America: the Patagonia start's first way out (2026-10-28)   // Aotearoa <-> Australia: the NZ start's first way out (2026-10-28)
-  { id: 'north-atlantic', a: 'LISBON', b: 'NEW YORK', era: 1, kind: 'ocean' },
-  { id: 'reykjavik-newyork', a: 'REYKJAVIK', b: 'NEW YORK', era: 1, kind: 'ocean' },
-  { id: 'arabian-sea', a: 'MUSCAT', b: 'KARACHI', era: 1, kind: 'ocean' },
-  { id: 'caribbean', a: 'MIAMI', b: 'CARACAS', era: 1, kind: 'ocean' },
-  { id: 'mediterranean', a: 'ROME', b: 'TUNIS', era: 1, kind: 'second' },
-  { id: 'silk-road', a: 'TASHKENT', b: 'ULAANBAATAR', era: 1, kind: 'second' },
-  { id: 'south-atlantic', a: 'LAGOS', b: 'BELEM', era: 2, kind: 'long' },
-  { id: 'north-pacific', a: 'SAPPORO', b: 'ANCHORAGE', era: 2, kind: 'long' },
-  { id: 'singapore-perth', a: 'SINGAPORE', b: 'PERTH', era: 2, kind: 'long' },
-  { id: 'indian-ocean', a: 'ANTANANARIVO', b: 'PERTH', era: 2, kind: 'long' },
-  { id: 'pacific-islands', a: 'LOS ANGELES', b: 'HONOLULU', era: 3, kind: 'long' },
-  { id: 'honolulu-tokyo', a: 'HONOLULU', b: 'TOKYO', era: 3, kind: 'long' },
-  { id: 'nadi-auckland', a: 'NADI', b: 'AUCKLAND', era: 4, kind: 'long' },
-  { id: 'auckland-santiago', a: 'AUCKLAND', b: 'SANTIAGO', era: 4, kind: 'long' },
+  { id: 'mediterranean', a: 'ROME', b: 'TUNIS', kind: 'route' },             // Europe <-> Africa & the Middle East
+  { id: 'north-atlantic', a: 'LISBON', b: 'NEW YORK', kind: 'route' },       // Europe <-> North America
+  { id: 'arabian-sea', a: 'MUSCAT', b: 'KARACHI', kind: 'route' },           // Africa & the Middle East <-> Asia
+  { id: 'singapore-perth', a: 'SINGAPORE', b: 'PERTH', kind: 'route' },      // Asia <-> Oceania
+  { id: 'caribbean', a: 'MIAMI', b: 'CARACAS', kind: 'route' },              // North America <-> South America
+  { id: 'south-atlantic', a: 'LAGOS', b: 'BELEM', kind: 'route' },           // Africa & the Middle East <-> South America
+  { id: 'north-pacific', a: 'SAPPORO', b: 'ANCHORAGE', kind: 'route' },      // Asia <-> North America
+  { id: 'auckland-santiago', a: 'AUCKLAND', b: 'SANTIAGO', kind: 'route' },  // Oceania <-> South America
   { id: 'lap', era: 5, kind: 'lap' },   // from = to = your home city (save.homeArea's start), filled in by available()
 ];
 export const crossingById = id => CROSSINGS.find(c => c.id === id);
-// THE LADDER (CROSSINGS V2: 'crossings should always get harder'): every crossing's rung, DECLARED, by era and then the real length of the leg (great circle of its two airports); the lap is the last rung. The game lengths
-// are unchanged: this is only the ORDER. The next crossing offered is always above the highest rung already crossed (candidates below).
-export const LADDER = ['hanoi-hongkong', 'warsaw-stockholm', 'khartoum-addis', 'patagonia', 'tasman', 'mexico-panama', 'jakarta-darwin', 'mediterranean', 'arabian-sea', 'caribbean', 'silk-road', 'reykjavik-newyork', 'north-atlantic',
-  'singapore-perth', 'north-pacific', 'south-atlantic', 'indian-ocean', 'pacific-islands', 'honolulu-tokyo', 'nadi-auckland', 'auckland-santiago', 'lap'];
+// A route as the n-th crossing (era n and its length): what available() hands out when n crossings are made. Tests and screens that list every route at a given step use it.
+export const asNext = (c, n) => (c.kind === 'lap' ? { ...c, km: crossingKm(c) } : { ...c, era: n, km: crossingKm({ era: n }) });
+// The route order (CROSSINGS V3: only a stable order for lists; difficulty comes from how many crossings you have made, crossingsMade).
+export const LADDER = CROSSINGS.map(c => c.id);
 export const rungOf = c => LADDER.indexOf(typeof c === 'string' ? c : c.id);
-export const topRung = save => Math.max(-1, ...(save.crossed || []).map(id => LADDER.indexOf(id)));
+// How many region crossings this save has made: the regions open, less the home region.
+export const crossingsMade = save => Math.max(0, regionsOpen(unlockedAreas(save)).length - 1);
+export const topRung = save => crossingsMade(save) - 1;
 export const crossingKm = c => (c.kind === 'lap' ? SEASON.crossingKm.final : SEASON.crossingKm[c.era + 1]);
 // The two areas a crossing joins ('ocean' for Honolulu/Nadi, which belong to no area).
 export const sides = c => [areaOf(c.a) || 'ocean', areaOf(c.b) || 'ocean'];
@@ -54,32 +46,23 @@ export const homeCity = save => (save.homeArea && AREAS[save.homeArea] ? AREAS[s
 
 // The crossings you could fly now, from your unlocked areas: one end open, the other not; its era reached. The lap only
 // when EVERY area is open (from your home city, back to it). Each comes with the direction to fly it.
-export function available(save) {
-  const open = new Set(unlockedAreas(save)), era = eraProgress(save).index;
-  if ((save.areas || []).includes('ocean')) open.add('ocean');
-  const allOthers = Object.keys(AREAS).every(k => open.has(k));
-  const out = [];
-  for (const c of CROSSINGS) {
-    if (c.era > era || c.era > SEASON.maxEra) continue;   // (maxEra: 0.12.0 ends after the 1990s crossings)
-    const [sa, sb] = sides(c);
-    if (c.kind === 'lap') { if (allOthers && !(save.crossed || []).includes(c.id)) { const h = homeCity(save); out.push({ ...c, a: h, b: h, from: h, to: h, km: crossingKm(c) }); } continue; }
-    if (open.has(sa) && !open.has(sb)) out.push({ ...c, from: c.a, to: c.b, opens: sb, km: crossingKm(c) });
-    else if (open.has(sb) && !open.has(sa)) out.push({ ...c, from: c.b, to: c.a, opens: sa, km: crossingKm(c) });
-  }
-  return out;
-}
-
-// Every crossing with one end open and the other not, WHATEVER its era (crossings of the eras this release has): the HOME box talks about the next one before its era arrives.
-export function upcoming(save) {
-  const open = new Set(unlockedAreas(save));
+export function available(save) { return routes(save, true); }
+// Every route with one side open and the other not, WHATEVER the era (the HOME box talks about the next one before its era arrives).
+export function upcoming(save) { return routes(save, false); }
+// Each comes as the NEXT crossing: era n = crossingsMade(save) and that era's length, with the direction to fly it and the region it opens. The lap only when EVERY area is open.
+function routes(save, eraGate) {
+  const open = new Set(unlockedAreas(save)), era = eraProgress(save).index, n = crossingsMade(save);
   if ((save.areas || []).includes('ocean')) open.add('ocean');
   const allOthers = Object.keys(AREAS).every(k => open.has(k)), out = [];
   for (const c of CROSSINGS) {
-    if (c.era > SEASON.maxEra) continue;
-    const [sa, sb] = sides(c);
-    if (c.kind === 'lap') { if (allOthers && !(save.crossed || []).includes(c.id)) { const h = homeCity(save); out.push({ ...c, a: h, b: h, from: h, to: h, km: crossingKm(c) }); } continue; }
-    if (open.has(sa) && !open.has(sb)) out.push({ ...c, from: c.a, to: c.b, opens: sb, km: crossingKm(c) });
-    else if (open.has(sb) && !open.has(sa)) out.push({ ...c, from: c.b, to: c.a, opens: sa, km: crossingKm(c) });
+    if (c.kind === 'lap') {
+      if (allOthers && !(save.crossed || []).includes(c.id) && (!eraGate || c.era <= era) && c.era <= SEASON.maxEra) { const h = homeCity(save); out.push({ ...c, a: h, b: h, from: h, to: h, km: crossingKm(c) }); }
+      continue;
+    }
+    if (n > SEASON.maxEra - 1 || (eraGate && n > era)) continue;
+    const [sa, sb] = sides(c), x = { ...c, era: n };
+    if (open.has(sa) && !open.has(sb)) out.push({ ...x, from: c.a, to: c.b, opens: sb, region: regionOfArea(sb), km: crossingKm(x) });
+    else if (open.has(sb) && !open.has(sa)) out.push({ ...x, from: c.b, to: c.a, opens: sa, region: regionOfArea(sa), km: crossingKm(x) });
   }
   return out;
 }
@@ -101,15 +84,8 @@ export function readiness(save, c) {
 
 // The era (index) in which the next crossing you could fly opens, when it is later than yours and this release has it; else null.
 export function laterEra(save) {
-  const open = new Set(unlockedAreas(save)), era = eraProgress(save).index;
-  if ((save.areas || []).includes('ocean')) open.add('ocean');
-  let best = null;
-  for (const c of CROSSINGS) {
-    if (c.kind === 'lap' || c.era <= era || c.era > SEASON.maxEra) continue;
-    const [sa, sb] = sides(c);
-    if (open.has(sa) !== open.has(sb) && (best === null || c.era < best)) best = c.era;
-  }
-  return best;
+  const n = crossingsMade(save), era = eraProgress(save).index;
+  return n > era && n <= SEASON.maxEra - 1 && upcoming(save).some(c => c.kind !== 'lap') ? n : null;
 }
 // The placeholder at the end of this release: you have reached the last era it covers and nothing is left to fly.
 export const moreToCome = save => !save.lapDone && eraProgress(save).index >= SEASON.maxEra && available(save).length === 0;   // (after the lap: finished, nothing more to come)
@@ -158,9 +134,8 @@ export function completeCrossing(save, c) {
   }
   if (due) payPrize(save, due);
   save.crossed = [...new Set([...(save.crossed || []), c.id])];
-  const [sa, sb] = sides(c), open = new Set(save.areas || []);
-  for (const s of [sa, sb]) open.add(s);
-  save.areas = [...open];   // (the rules already moved save.city to where you landed)
+  const [sa, sb] = sides(c);
+  save.areas = withRegions([...(save.areas || []), sa, sb]);   // CROSSINGS V3: the whole region on the far side opens   // (the rules already moved save.city to where you landed)
   return true;
 }
 
@@ -176,8 +151,4 @@ export function crossingPath(c, count = 60) {
 //   higher     the rung is above the highest rung already crossed: these are the next ones;
 //   exception  a LOWER crossing that is the only way to open an area no higher crossing opens (it must stay reachable, e.g. the Patagonia crossing);
 //   easier     every other lower one: kept under 'an easier one', never offered as the next goal.
-export function ladderSplit(save) {
-  const all = upcoming(save), top = topRung(save), higher = all.filter(c => rungOf(c) > top), lower = all.filter(c => rungOf(c) <= top);
-  const covered = new Set(higher.map(c => c.opens)), exception = lower.filter(c => !covered.has(c.opens));
-  return { higher, exception, easier: lower.filter(c => !exception.includes(c)) };
-}
+export function ladderSplit(save) { return { higher: upcoming(save), exception: [], easier: [] }; }   // (CROSSINGS V3: every route on offer is the next crossing, at the same difficulty)

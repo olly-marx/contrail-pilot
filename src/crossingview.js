@@ -5,7 +5,7 @@
 import { upcoming, readiness, planeProgress, ladderSplit, rungOf } from './crossings.js';
 import { pathTo, linksFor } from './route.js';
 import { SEASON } from './season.js';
-import { AREAS } from './areas.js';
+import { AREAS, opensName } from './areas.js';
 import * as M2 from './missions2.js';
 import { CROSSING_WORDS, crossingWord, crossingReward, prizeText } from './missionprize.js';
 
@@ -14,7 +14,7 @@ const fmt = n => Math.round(n).toLocaleString('en-GB');
 export const DIFFICULTY = CROSSING_WORDS;   // (src/missionprize.js: the word and the prize come from the same list)
 export const difficultyOf = crossingWord;
 export const NEED_FAR = 'a longer landed flight';   // (not 'from here': the plane tick counts a flight from ANY area)
-const openName = id => (AREAS[id] ? AREAS[id].name : 'the Pacific');
+const openName = id => opensName(id);   // CROSSINGS V3: the region it opens
 
 // state of ONE crossing: { id, from, to, km, difficulty, opens, ready, told, conds: [{ key, label, line, plain, status, done, frac, where }], nearest, crossing }. The three ticks, in order: Era, Plane, Nature.
 export function stateOf(save, c, { unlock = false } = {}) {

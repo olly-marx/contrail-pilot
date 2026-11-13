@@ -1,14 +1,14 @@
 // The two screens a CROSSING flight ends on (release 2 of the crossing-as-a-pure-experience plan; the user's playtest of 0.30.2: "its OWN landing screen and its OWN crash
 // screen, like when you get a new plane"; research/CROSSING-EXPERIENCE.md). Pure: no DOM, no clock, no random numbers. src/ui.js showCrossingEnd draws it; tests/crossingend.cjs holds
 // its budgets and meaning. NO distance anywhere (no km, no metres, no record), no missions, no seeds TOTAL: a crossing is a pure flight; since release C the landing card names the one-time crossing prize (+N seeds, +N ice crystals).
-import { AREAS } from './areas.js';
+import { AREAS, opensName } from './areas.js';
 import { LANDMARKS } from './landmarks.js';
 import { planeById } from './fleet.js';
 import { prizeLines } from './missionprize.js';
 
 export const TITLE_MAX = 26;   // "WELCOME TO " + the longest city name + "!" (the payoff card is 380 px at most; the title wraps to two lines beyond this)
 export const LINE_MAX = 26;    // a paragraph line at 10 px in the 320 px card: MEASURED ~27 characters fit (the pixel font is ~10 px a character at 10 px), so 26. (The 8 px alternative was too small for 7-10 year olds.)
-const areaName = id => (AREAS[id] ? AREAS[id].name : 'the Pacific');
+const areaName = id => opensName(id);   // CROSSINGS V3: a crossing opens a whole region (src/areas.js)
 
 // r: the flight's result (r.crossing = { id, kind, landed, opens, to }, r.landedAt, r.crystals, r.cargo); save: after the flight; first: this was the player's first crossing.
 export function endView(r, save, { first = false } = {}) {
