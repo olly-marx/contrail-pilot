@@ -49,6 +49,9 @@ globalThis.SEASON2 = true;
     if (kind === 'gadget') return F.GADGETS.find(g => g.id === id).levels[i];
     return U.LINES.find(l => l.id === id).levels[i];
   }
+  // 6. (ledger row 46, 2026-11-13) the hangar strip drops 'Now:' on the three hint lines only (their stat bars show it), and keeps it everywhere else
+  { const off = lines.filter(([k, id]) => !T.showsNow(k, id)).map(([k, id]) => `${k}:${id}`).sort();
+    check(JSON.stringify(off) === JSON.stringify(['system:atc', 'system:forecast', 'system:ops']), `6: only the three hint lines drop the Now line: ${off.join(', ')}`); }
   console.log(fails.length ? `FAIL upgradetext:\n - ${fails.slice(0, 12).join('\n - ')}${fails.length > 12 ? `\n ... ${fails.length - 12} more` : ''}` : `PASS upgradetext: ${lines.length} lines, ${cards} cards: Now and Next match the level words, the last level is max, prices equal the levels' own (longest Now ${maxNow}, longest Next ${maxNext}); ${noEffect.length} levels have only a name for words: ${noEffect.join(' ') || 'none'}`);
   process.exit(fails.length ? 1 : 0);
 })();

@@ -11,7 +11,7 @@ import { composedURL } from './planelook.js';
 import { liveryOn } from './livery.js';
 import { onSwipe } from './swipe.js';
 import { lookFiles, hangarGadgets, previewBars, withNext, shortName } from './fleet.js';
-import { upgradeCard, ALL_DONE } from './upgradetext.js';
+import { upgradeCard, ALL_DONE, showsNow } from './upgradetext.js';
 import { statBarsHTML, animateBars } from './statbars.js';
 import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
@@ -239,7 +239,7 @@ export class FleetHangar {
     if (!c) return `<p class="small hp-what">${effectText(item)}</p>`;
     const segs = Array.from({ length: c.count }, (_, i) => `<i class="${i < c.have ? 'on' : ''}"></i>`).join('');
     return `<div class="lvbar" role="img" aria-label="level ${c.have} of ${c.count}">${segs}</div>`
-      + `<p class="small hp-now">Now: ${c.now}</p>` + `<p class="small hp-next">${c.next ? `Next: ${c.next}` : ALL_DONE}</p>`;
+      + (showsNow(item.kind, item.id) ? `<p class="small hp-now">Now: ${c.now}</p>` : '') + `<p class="small hp-next">${c.next ? `Next: ${c.next}` : ALL_DONE}</p>`;
   }
 
   // The big picture at the top (400 x 176, the art session's hangar portrait): the plane you fly, or

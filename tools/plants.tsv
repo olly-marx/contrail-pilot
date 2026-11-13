@@ -871,3 +871,4 @@ rebalance	src/missions2.js	s/flight: (r, s, f) => (STAR_GROW3.on ? grownIn(s, f.
 rebalance	src/missions2.js	s/ready: f => STAR_GROW3.on || f.kindsRoom >= 2,/ready: f => f.kindsRoom >= 2,/	the grow-3 star is not offered on a full land
 rebalance	src/groves.js	s/reduce((a, c) => a + Math.min(cap, c.grown), 0);$/reduce((a, c) => a + Math.min(cap, c.planted), 0);/	grownIn counts saplings
 rebalance	src/config.js	s/export const STAR_GROW3 = { on: true };/export const STAR_GROW3 = { on: false };/	the grow-3 star ships switched off
+upgradetext	src/upgradetext.js	s/export const showsNow = (kind, id) => !(kind === .system. \&\& HINT_LINE_IDS.includes(id));/export const showsNow = () => true;/	the hint lines keep the repeated Now line
