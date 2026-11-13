@@ -1,8 +1,8 @@
 // THE RESULTS CARD'S CHIPS KEEP THEIR WORDS (design run, problem 5: at 320 px three chips cut each label to two letters, 'Gu..' for Guanaco). src/ui.js showResults: under 340 px wide,
-// three or more chips show as two chips and a short '+N' chip. A synthetic result with three new animals goes through ui.showResults at 320x568 and 390x844. Named lines, in order:
+// three or more chips show as two chips and a short '+N' chip on a phone (under 480 px). A synthetic result with three new animals goes through ui.showResults at 320x568 and 390x844. Named lines, in order:
 //   FIXTURE  the chip row opens
-//   1. at 320 px: two animal chips and a '+1' chip, and neither animal's name is cut (its label is whole: no ellipsis)
-//   2. at 390 px: three animal chips, as before, no '+N' chip, and no name cut (a label may take two lines)
+//   1. two animal chips and a '+1' chip (the chip row is about 276 px wide at both sizes)
+//   2. neither animal's name is cut (a label may take two lines)
 //   3. every chip is inside the screen
 // Run: python3 -m http.server 8000 & node tests/chipsfit.cjs   (plants: tools/plants.tsv, test chipsfit)
 const { chromium } = require('playwright-core');
@@ -32,8 +32,8 @@ const RES = { landed: true, landedAt: 'PARIS', distance: 900, earned: [{ label: 
         check(!!m && m.length > 0, 'FIXTURE: the chip row opens');
         if (m) {
           const animals = m.filter(c => c.kind === 'animal'), more = m.filter(c => c.kind === 'more');
-          if (W < 340) check(animals.length === 2 && more.length === 1 && more[0].text === '+1' && animals.every(c => !c.cut), `1. two whole animal chips and a '+1' chip: ${JSON.stringify(m)}`);
-          else check(animals.length === 3 && more.length === 0 && animals.every(c => !c.cut), `2. three whole animal chips and no '+N' chip: ${JSON.stringify(m)}`);
+          check(animals.length === 2 && more.length === 1 && more[0].text === '+1', `1. two animal chips and a '+1' chip: ${JSON.stringify(m)}`);
+          check(animals.every(c => !c.cut), `2. no animal's name is cut (a label may take two lines): ${JSON.stringify(m)}`);
           check(m.every(c => c.inside), `3. every chip is inside the screen: ${JSON.stringify(m)}`);
         }
         check(!p.errs.length, `page errors: ${p.errs.join('; ')}`);
@@ -42,6 +42,6 @@ const RES = { landed: true, landedAt: 'PARIS', distance: 900, earned: [{ label: 
     }
   } finally { await b.close(); }
   console.log(log.join('\n'));
-  console.log(fails.length ? `FAIL chipsfit:\n - ${fails.join('\n - ')}` : 'PASS chipsfit: at 320 px the results card shows two whole chips and a +N chip; at 390 px three chips');
+  console.log(fails.length ? `FAIL chipsfit:\n - ${fails.join('\n - ')}` : 'PASS chipsfit: on a phone (320 and 390) the results card shows two whole chips and a +N chip');
   process.exit(fails.length ? 1 : 0);
 })();
