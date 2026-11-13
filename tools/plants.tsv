@@ -866,3 +866,4 @@ naturefold	style.css	s/^\.wfound { grid-template-columns: repeat(auto-fill, minm
 badgefont	style.css	s/^\.tab { font-size: 0; }$//	every tab draws its 7 px word again
 badgefont	style.css	s/^\.tab\.on { grid-column: span 2; font-size: 8px;/.tab.on { grid-column: span 2; font-size: 7px;/	the selected tab's word is 7 px again (the B blurs)
 naturefold	style.css	s#^\.wpin \.wscene { width: calc(100% - 6px); }$#@media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }#	the land's picture is 70 percent wide on short phones again
+keepvisible	style.css	s/^@media (max-height: 760px) { \.wpin { position: static; box-shadow: none; } }$//	NATURE's land stays pinned on short phones again (it covers half the screen at full width)
