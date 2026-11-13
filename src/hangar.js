@@ -212,22 +212,23 @@ export class FleetHangar {
     const f = fundOf(s), v = fundValue(s), k = canInvest(s), news = newsToday(s);
     const pct = f && f.seeds ? Math.round(1000 * (v / f.seeds - 1)) / 10 : 0;
     return `<p class="small">Nature fund: ${f ? `<b>${v.toLocaleString('en-GB')} seeds</b> (${pct >= 0 ? '+' : ''}${pct}% since you put in)` : 'nothing in yet'}. Up to ${L.fund.toLocaleString('en-GB')} seeds. It moves each day and night you fly, up or down; over many flights it grows, faster when world nature is healthier.</p>
-      ${this.chartSVG(fundSeries(s), [['price', 'fund']], 'Nature fund, last 20 game days')}
-      ${news ? `<p class="small fin-news ${news.up ? 'up' : 'down'}">Today: ${news.text} (${news.up ? '+' : ''}${Math.round(100 * news.size)}%)</p>` : ''}
+      ${this.chartSVG(fundSeries(s), [['price', 'fund']], 'Nature fund, last 20 game days', f && f.day)}
+      ${news ? `<p class="small fin-news ${news.up ? 'up' : 'down'}">Today: ${news.text} (${news.up ? '+' : ''}${Math.round(1000 * news.size) / 10}%)</p>` : ''}
       <button class="btn ${k ? 'go' : ''}" id="hInvest" type="button" ${k ? '' : 'disabled'}>${k ? `INVEST ${k} seeds` : 'Fund full, or keep your reserve'}</button>
       ${f ? `<button class="btn" id="hCashOut" type="button">CASH OUT ${Math.floor(v * (1 - FUND.fee)).toLocaleString('en-GB')} seeds</button>` : ''}`;
   }
 
   // A small line chart for the finance desk (2026-11-13: 'basic in game stock graphs'): rows = [{ key: number }], lines =
   // [[key, class]], one polyline each on a shared scale; the last point gets a dot. Pure SVG, no library.
-  chartSVG(rows, lines, title) {
+  chartSVG(rows, lines, title, markDay = null) {   // markDay: a game day to mark with a dashed line (the day you put money in)
     if (!rows.length) return '';
     const W = 260, H = 64, vals = rows.flatMap(r => lines.map(([k]) => r[k])), lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || 1;
     const x = i => rows.length > 1 ? 4 + (W - 8) * i / (rows.length - 1) : W / 2, y = v => 4 + (H - 8) * (1 - (v - lo) / span);
     const path = k => rows.map((r, i) => `${x(i).toFixed(1)},${y(r[k]).toFixed(1)}`).join(' '), last = rows.length - 1;
     const names = { pay: 'You pay', market: 'Market', get: 'You get', fund: 'Fund' };
-    return `<figure class="fin-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">${lines.map(([k, c]) => `<polyline class="fc-${c}" points="${path(k)}"/><circle class="fc-${c}" cx="${x(last)}" cy="${y(rows[last][k])}" r="2.5"/>`).join('')}</svg>
-      <figcaption>${title}${lines.length > 1 ? ': ' + lines.map(([, c]) => `<span class="fc-${c}">${names[c]}</span>`).join(' ') : ''}</figcaption></figure>`;
+    const mi = markDay == null ? -1 : rows.findIndex(r => r.d === markDay);
+    return `<figure class="fin-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">${mi >= 0 ? `<line class="fc-mark" x1="${x(mi)}" x2="${x(mi)}" y1="0" y2="${H}"/>` : ''}${lines.map(([k, c]) => `<polyline class="fc-${c}" points="${path(k)}"/><circle class="fc-${c}" cx="${x(last)}" cy="${y(rows[last][k])}" r="2.5"/>`).join('')}</svg>
+      <figcaption>${title}${mi >= 0 ? ' (dashes: the day you put in)' : ''}${lines.length > 1 ? ': ' + lines.map(([, c]) => `<span class="fc-${c}">${names[c]}</span>`).join(' ') : ''}</figcaption></figure>`;
   }
 
   // The item behind a selection ('plane:comet.engines', 'gadget:magnet', 'fly:jumbo').
