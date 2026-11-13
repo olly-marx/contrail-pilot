@@ -863,3 +863,5 @@ chipsfit	style.css	s/^\.rc-chip span { font-size: 7px; line-height: 1\.3;.*$/.rc
 naturefold	src/wild.js	s/folds = t !== current, shown/folds = false \&\& t !== current, shown/	every open, unfinished tier shows its rows again
 naturefold	style.css	s/^#wProjects \.w-tier \.btn\.tiny { min-height: var(--tap); min-width: var(--tap); }.*$//	the fold toggle is a 7 px link again
 naturefold	style.css	s/^\.wfound { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 4px; }$//	the animals are the old 3-across list again
+badgefont	style.css	s/^\.tab { font-size: 0; }$//	every tab draws its 7 px word again
+badgefont	style.css	s/^\.tab\.on { grid-column: span 2; font-size: 8px;/.tab.on { grid-column: span 2; font-size: 7px;/	the selected tab's word is 7 px again (the B blurs)
