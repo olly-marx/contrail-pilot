@@ -74,6 +74,10 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city
             const card = el.querySelector('.payoff-card').getBoundingClientRect(), r = pz.getBoundingClientRect(), cs = getComputedStyle(pz), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
             return { found: true, shown: cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > 0 && r.width > 0 && r.height > 0, inside: r.top >= card.top && r.bottom <= card.bottom && r.left >= card.left && r.right <= card.right, onTop: !!hit && pz.contains(hit), text: pz.innerText.replace(/\s+/g, ' ') }; });
           check(vis.found && vis.shown && vis.inside && vis.onTop && /\+2,000 seeds/.test(vis.text) && /\+250 ice crystals/.test(vis.text), `${tag} D: the two prize lines are not VISIBLE inside the ending card (shown, inside the card, not under another element): ${JSON.stringify(vis)}`);
+          const sp = await p.evaluate(() => { const ps = [...document.querySelectorAll('#ending .payoff-card p')], cs = ps.map(q => getComputedStyle(q));
+            const lh = ps.map((q, i) => { const f = parseFloat(cs[i].fontSize), l = parseFloat(cs[i].lineHeight); return { cls: q.className, ratio: +(l / f).toFixed(2) }; });
+            const gaps = ps.slice(1).map((q, i) => Math.round(q.getBoundingClientRect().top - ps[i].getBoundingClientRect().bottom)); return { lh, gaps }; });
+          check(sp.lh.every(x => x.ratio >= 1.25) && sp.gaps.every(g => g >= 8), `${tag} D: the ending card's lines are spaced (line height at least 1.25 x the font, at least 8 px between paragraphs; the lines sat tight at 320, 2026-11-11): ${JSON.stringify(sp)}`);
           check(!e || (e.top >= 0 && e.bottom <= e.h), `${tag} D: the ending card does not fit the screen (${e && Math.round(e.top)}-${e && Math.round(e.bottom)} of ${e && e.h})`);
           check(!p.errs.length, `${tag}: page errors (ending) ${p.errs.slice(0, 2)}`);
           keep(bufEnd, `${tag}-ending.png`);

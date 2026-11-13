@@ -4,7 +4,7 @@
 // HUD_BOTTOM is in game pixels (WIDTH = 288 wide); the page position follows the canvas's size and place.
 import { WIDTH } from './config.js';
 
-export const HUD_BOTTOM = 90;   // the lowest HUD text ends at about game y 87 (a two-line banner + the next-airport line): 3 px of air
+export const HUD_BOTTOM = 110;   // the lowest HUD item is the land's card ('TEMPERATE WOODLAND' + BIODIVERSITY, GameScene.regionBanner, game y 71 to 109, about 3 s at take-off and on a land change); the text lines end at about y 87
 
 // Page y of the HUD's lower edge, from the game canvas (0 when there is no canvas).
 export function hudBottomPx(canvas) {

@@ -33,7 +33,7 @@ const base = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
         await p.goto(URL); await ready(p); await p.waitForTimeout(800);
         await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 0; game.registry.get('ui').showTitle(); }); await p.waitForTimeout(400);
         stage = 'fly'; await p.evaluate(() => game.registry.get('ui').start()); await started(p).catch(() => null);
-        const seen = { frames: 0, together: 0, toast: 0, coach: 0, toastOnHud: 0, coachOnHud: 0, toastOnCoach: 0, firstShot: false, worst: {} }; let result = null; const t0 = Date.now();
+        const seen = { frames: 0, together: 0, biomeTogether: 0, toastOnBiome: 0, toast: 0, coach: 0, toastOnHud: 0, coachOnHud: 0, toastOnCoach: 0, firstShot: false, worst: {} }; let result = null; const t0 = Date.now();
         while (Date.now() - t0 < 90000) {
           const r = await p.evaluate(() => { const s = game.scene.getScene('game'), cv = document.querySelector('#game canvas') || document.querySelector('canvas'), cr = cv.getBoundingClientRect(), k = cr.width / s.scale.width;
             const toA = s.nextAirport ? s.nextAirport.worldX - s.distancePx : 9999, approach = toA < 300 && toA > -150, landing = approach && toA < 60;
@@ -41,11 +41,13 @@ const base = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
             const target = landing ? 999 : next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : approach ? s.groundedY() - 60 : 200;
             const box = e => { if (!e || e.hidden) return null; const q = e.getBoundingClientRect(), cs = getComputedStyle(e); return q.width > 0 && q.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden' ? { l: q.left, t: q.top, r: q.right, b: q.bottom } : null; };
             const txt = t => { if (!t || !t.text || !t.visible) return null; const q = t.getBounds(); return { l: cr.left + q.left * k, t: cr.top + q.top * k, r: cr.left + q.right * k, b: cr.top + q.bottom * k }; };
-            return { tap: s.state === 'playing' && s.plane.y > target && s.plane.vy > -50, state: s.state, toast: box(document.getElementById('toast')), coach: box(document.getElementById('coach')), banner: txt(s.missionText), next: txt(s.nextText),
+            return { tap: s.state === 'playing' && s.plane.y > target && s.plane.vy > -50, state: s.state, toast: box(document.getElementById('toast')), coach: box(document.getElementById('coach')), banner: txt(s.missionText), next: txt(s.nextText), biome: (s.banner && s.banner.visible && s.banner.alpha > 0.05) ? (q => ({ l: cr.left + q.left * k, t: cr.top + q.top * k, r: cr.left + q.right * k, b: cr.top + q.bottom * k }))(s.banner.getBounds()) : null,
               result: s.state === 'over' ? (s.result ? { landed: s.result.landed, reason: s.result.reason } : null) : undefined }; });
           seen.frames++;
           const area = (a, c) => (a && c) ? Math.max(0, Math.min(a.r, c.r) - Math.max(a.l, c.l)) * Math.max(0, Math.min(a.b, c.b) - Math.max(a.t, c.t)) : 0;
           const hud = [r.banner, r.next].filter(Boolean);
+          if (r.biome && (r.toast || r.coach)) seen.biomeTogether++;
+          const tOnBiome = r.biome ? area(r.toast, r.biome) : 0; if (tOnBiome > 4) seen.toastOnBiome++;
           if (r.toast) seen.toast++; if (r.coach) seen.coach++;
           if ((r.toast || r.coach) && hud.length) seen.together++;
           const tOn = Math.max(0, ...hud.map(h => area(r.toast, h))), cOn = Math.max(0, ...hud.map(h => area(r.coach, h))), tc = area(r.toast, r.coach);
@@ -58,9 +60,10 @@ const base = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
           if (r.tap) await p.mouse.click(Math.round(W / 2), Math.round(H / 2));
           await p.waitForTimeout(60);
         }
-        console.log(`FLIGHT ${tag}: result ${JSON.stringify(result)}, ${seen.frames} samples, toast on screen ${seen.toast}, coach strip ${seen.coach}, together with a HUD line ${seen.together}; samples ON the HUD: toast ${seen.toastOnHud} (allowed 2), strip ${seen.coachOnHud} (0), toast on strip ${seen.toastOnCoach} (0)`);
+        console.log(`FLIGHT ${tag}: result ${JSON.stringify(result)}, ${seen.frames} samples, toast on screen ${seen.toast}, coach strip ${seen.coach}, together with a HUD line ${seen.together}; samples ON the HUD: toast ${seen.toastOnHud} (allowed 2), strip ${seen.coachOnHud} (0), toast on strip ${seen.toastOnCoach} (0); biome card up with a card ${seen.biomeTogether}, toast ON the biome card ${seen.toastOnBiome} (allowed 2)`);
         check(result && result.landed && seen.together > 0, `${tag}: FIXTURE: the flight landed and a card and a HUD line were on screen together (result ${JSON.stringify(result)}, toast samples ${seen.toast}, coach samples ${seen.coach}, together ${seen.together})`);
         check(seen.toastOnHud <= 2, `${tag}: the toast never covers the banner or the next-airport line (more than 2 samples, about 150 ms: a toast that opens at the title, e.g. the keep-your-game-safe note, is on the HUD for at most the frame before the first flight update moves it, src/GameScene.js tidyToast): ${seen.toastOnHud} samples, first ${JSON.stringify(seen.worst.toast)}`);
+        check(seen.toastOnBiome <= 2, `${tag}: the toast never covers the land's card (TEMPERATE WOODLAND + BIODIVERSITY, GameScene.regionBanner; L-37): ${seen.toastOnBiome} samples`);
         check(seen.coachOnHud === 0, `${tag}: the coach strip never covers the banner or the next-airport line: ${seen.coachOnHud} samples, first ${JSON.stringify(seen.worst.coach)}`);
         check(seen.toastOnCoach === 0, `${tag}: the toast and the coach strip never cover each other: ${seen.toastOnCoach} samples, first ${JSON.stringify(seen.worst.both)}`);
         check(p.errs.length === 0, `${tag}: no page errors: ${p.errs}`);

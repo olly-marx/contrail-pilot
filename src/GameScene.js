@@ -1253,6 +1253,13 @@ export class GameScene extends Phaser.Scene {
     if (!low && this.dropToast) this.dropToast();
   }
 
+  // Game y of the lowest top-HUD text line on screen (the distance, the mission or target line, the next-airport line).
+  hudTextBottom() {
+    let y = this.distText && this.distText.visible && this.distText.text ? this.distText.y + this.distText.height : 0;
+    for (const t of [this.missionText, this.nextText]) if (t && t.visible && t.text) y = Math.max(y, t.y + t.height);
+    return y;
+  }
+
   // Draw the frame the rules just stepped: every picture where its record says (sim engine 5f).
   // over: the flight had already ended before this frame (only the contrails fade and the rays show).
   syncViews(dt, dx, inIssr, over) {
@@ -1265,7 +1272,11 @@ export class GameScene extends Phaser.Scene {
       this.planeSprite.setAlpha(1);
       const left = Math.ceil((this.autoUntil - this.gameTime) / 1000), locked = this.gameTime < (this.autoFrom || 0) + POWERUPS.autoLockMs;
       this.autoText.setText(this.onAutopilot() ? (locked ? `AUTOPILOT ${left}` : `AUTOPILOT ${left} - TAP to take control`) : 'AUTOPILOT - tap to fly!');
-      this.autoText.setPosition(Math.max(this.autoText.width / 2 + 4, this.plane.x + PLANE.w / 2), Math.max(10, this.plane.y - 14)).setVisible(true);
+      // Above the plane, unless that puts it on the top HUD text (the distance, the mission line, the next-airport line: the Coordinator's
+      // screenshot, 2026-11-12, 'AUTOPILOT - tap to fly!' drawn over the distance): then under the plane, and never higher than the HUD's lower edge.
+      const hudLow = this.hudTextBottom() + 4 + this.autoText.height / 2;
+      const above = this.plane.y - 14, ay = above >= hudLow ? above : Math.max(hudLow, this.plane.y + PLANE.h + 14);
+      this.autoText.setPosition(Math.max(this.autoText.width / 2 + 4, this.plane.x + PLANE.w / 2), ay).setVisible(true);
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
       this.autoText.setVisible(false);
@@ -1576,6 +1587,10 @@ export class GameScene extends Phaser.Scene {
     if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! shade: cooler' : 'ICY AIR! heat trapped!');
     else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');
     else this.hintText.setText('');
+    // The hint and the forest meter's 'kinds n/5' share the ground strip: a long hint ran into it (the Coordinator's screenshot, 2026-11-12,
+    // 'ICY AIR! shade: cooler' over 'kinds 0/5'). While they would touch, the hint wins (it is about now) and 'kinds' waits.
+    if (this.kindsText) { const h = this.hintText.text ? this.hintText.getBounds() : null, k = this.kindsText.getBounds();
+      this.kindsText.setVisible(!(h && h.right + 4 > k.left && h.left < k.right + 4 && h.bottom > k.top && h.top < k.bottom)); }
 
     const forest = 'FOREST FULL!';   // one short line (the meter shows the rest; longer text ran into it): FULL beats the soil hint
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
