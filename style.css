@@ -537,7 +537,11 @@ h2.sub { margin-top: -4px; }
    phones under 760px tall the picture is narrower (70%): about 210px pinned in all at 320x568 with the land nav (measured 2026-11-04; the gate is that the first price stays above the tab bar, tests/fitscreen.cjs), so a 600px phone still has about 340px of list. */
 #nature .panel { display: flex; flex-direction: column; }
 .wpin { position: sticky; top: -12px; z-index: 6;   /* -12px: the overlay's own padding, so nothing scrolls past ABOVE the pinned block */ display: grid; gap: 6px; padding: 8px 0; background: var(--paper); box-shadow: 0 4px 0 -1px rgba(27, 27, 47, .25); }
-/* The land's picture fills the width on every phone (the user, 2026-11-13: 'full width and don't shrink vertically'; it was 70 % under 760 px tall). */
+/* The land's picture fills the width on every phone (the user, 2026-11-13: 'full width and don't shrink vertically'; it was 70 % under 760 px tall). Its 3 px border is outside its
+   width (content-box), so the width leaves room for it. On a short phone the pinned block at full width would hold half the screen and cover the rows scrolling under it
+   (a tier's show button could not be tapped at 320x568): there it scrolls with the page instead of staying pinned. */
+.wpin .wscene { width: calc(100% - 6px); }
+@media (max-height: 760px) { .wpin { position: static; box-shadow: none; } }
 .wscene { position: relative; width: 100%; aspect-ratio: 288 / 120; overflow: hidden; border: 3px solid var(--ink); box-sizing: content-box;
   background: #8ed3ef no-repeat center / 100% 100%; image-rendering: pixelated; }
 .wscene .w-critter { position: absolute; transform: scale(2); transform-origin: bottom center; image-rendering: pixelated; }

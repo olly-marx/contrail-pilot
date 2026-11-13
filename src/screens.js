@@ -10,12 +10,12 @@
 //             in `from` turns it on. A pending check that now PASSES also fails the gate ("flip it to true"): the table cannot go stale
 //             and the gate is shown to see today's defect every run. Each release flips ITS screens' flags (UX-MASTER-PLAN F4).
 //   budget    visible text lines before any tap (C0); read by the Node text gate (textbudget2), not by these browser gates
-export const SCREENS = {
+export const SCREENS = {   // (nature: the NEXT row is NATURE's lead since the full-width picture, the user's choice of 2026-11-13; the project rows may start below the first screen on a small phone)
   results:  { root: '#results',  primary: '#againBtn',               first: '#rBank',           scroll: 'fits',  budget: 10, enforce: { fit: true,  overlap: true,  taps: false }, from: 'R1' },
   home:     { root: '#title',    primary: '#goBtn',                  first: '#hubNext',         scroll: 'fits',  budget: 25, enforce: { fit: true,  overlap: false, taps: false }, from: 'R3' },   // fit flipped in R3 (measured 390x667: 667/667, TAKE OFF 543 vs bar 607; 320x568: 568/568, 477 vs 508)
   missions: { root: '#missions', primary: '#mNext .rowc-tap',       first: '#mList .rowc',               scroll: 'first', budget: 2,  enforce: { fit: true,  overlap: true,  taps: true  }, from: 'R4' },   // taps flipped in R1: the results card pays the rich save's prizes, so MISSIONS no longer has the small CLAIM buttons
   hangar:   { root: '#hangar',   primary: '#hFleet .rowc-price.btn',     first: '#hFleet .rowc',    scroll: 'first', budget: 1,  enforce: { fit: true,  overlap: true,  taps: false }, from: 'R5' },
-  nature:   { root: '#nature',   primary: '#wProjects .rowc-price',  first: '#wProjects .rowc', scroll: 'first', budget: 1,  enforce: { fit: true,  overlap: true,  taps: false }, from: 'R6' },
+  nature:   { root: '#nature',   primary: '#wNextRow .rowc-price',   first: '#wNextRow',        scroll: 'first', budget: 1,  enforce: { fit: true,  overlap: true,  taps: false }, from: 'R6' },
   boards:   { root: '#boards',   primary: '',                        first: '',                 scroll: 'fits',  budget: 1,  enforce: { fit: true,  overlap: true,  taps: false }, from: 'R9' },
 };
 // The result variants the `fitscreen` gate renders for RESULTS (a single "a flight" is not a gate). Built in tools/uxlib.cjs.
