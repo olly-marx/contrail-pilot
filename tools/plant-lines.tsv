@@ -1,0 +1,49 @@
+# Expected FIRST failing line of a caught plant (ledger row 47, 2026-11-13). One per line, TAB separated:  test <TAB> label (exactly as in tools/plants.tsv) <TAB> the start of the line
+# tools/prove-plants.sh reports for that plant (tools/plant-why.sh: the test's first '- ' line). tools/plant-lines.sh runs the plants and fails when a plant is caught by a
+# DIFFERENT line (a plant caught by the wrong check proves nothing about its own rule), when a label here is not in plants.tsv, or when the plant is not caught.
+# Each expectation was read against its label by eye once (2026-11-13, all 44 matched) and is now checked by script.
+hintlines	the first line bought gives no arrow unless it is Air traffic control (row re-aimed 2026-11-11 from gaphint2)	the first line bought gives the arrow, and nothing shows wit
+hintlines	the warning time is not capped at 2.5 s (row re-aimed 2026-11-11 from gaphint2)	the warning time is capped at 2.5 s (levels 10, 11, 12: 2.4,
+hintlines	the gate comes from Forecasting 1: the arrow-only phase is gone (row re-aimed 2026-11-11 from gaphint2)	the gate comes only from Forecasting 3, the second gate and
+gapmarkers	presence bracket drawn with no systems	no systems: no presence bracket
+gapmarkers	presence bracket drawn on top of a real gate	a real gate is up: no presence bracket
+gapmarkers	presence bracket height moves with the level (carries information)	the presence bracket is the same at every level (no informat
+groves	the migration drops every land but the UK	every old count is in the groves: {"woodland":{"spruce":{"pl
+groves	plantTree no longer mirrors the UK's old key	the old keys mirror the groves: [{"spruce":3,"birch":2},{"me
+groves	plantTree no longer mirrors another land's old key	the old keys mirror the groves: [{"spruce":4,"birch":2,"oak"
+groves	the smaller count wins when an older save disagrees	the larger count wins per kind and a land only the old key k
+groves	the total counts only the UK's trees	the total is the old total: 5 / 5
+hintlines	the second gate comes at ATC 6, not 10	the gate comes only from Forecasting 3, the second gate and
+hintlines	the climb boost count starts at ATC 9	the gate comes only from Forecasting 3, the second gate and
+hintlines	the arrow blinks from Ops 1, not Ops 3	each Ops cue starts at its own level (red 2, blink 3, bigger
+hintlines	the gate opening fills in from Forecasting 2, not 4	each Ops cue starts at its own level (red 2, blink 3, bigger
+hintlines	levels 1 and 2 of the hint lines are not cheaper	forecast: levels 1 and 2 cost 15 and 33 seeds (2 and 4 cryst
+hintlines	a hangar hint line is over 28 characters	forecast: 13 levels of words, none over 28 characters (too l
+gapmarkers	the gate never lingers after its column reaches the screen	a gate lingers 1 s after its column reaches the screen only
+gapmarkers	the forecast-on icon shows without Ops 5	the forecast-on icon starts at Ops 5 (not at 4, not with no
+gapmarkers	the icon lights without Ops 6	the icon lights from Ops 6 only while a gap is in range
+gapmarkers	the icon shows the gap's size without Ops 10	the icon shows the next gap's size (narrow / wide) from Ops
+groves	a planted tree counts as grown at once (no sapling)	a planted tree is a SAPLING (the 3 old ones stay grown): {"p
+nursery	the planting flight gives a sapling its first point	need 10: after the planting flight the saplings have no poin
+nursery	the nursery's need is ignored (always 10)	need 8: grown at the end of flight f + 8: {"planted":2,"grow
+nursery	the second nursery level grows no faster	the need: none 10, level 1 (grow 0.7) 8, level 2 (grow 0.5)
+nursery	a sapling that grows up is lost	need 10: grown at the end of flight f + 10: {"planted":2,"gr
+nursery	banking a flight grows no sapling (re-aimed 2026-11-12: the line now keeps growGroves' return value)	banking the planting flight gives the sapling no point: {"pl
+nursery	the scenery shows saplings as grown trees	a sapling is not in the scenery: spruce,oak
+droporder	the most planted kind is chosen, not the fewest	10 drops give every kind two trees and the first 5 are all d
+droporder	the parcels released but not landed are not counted	10 drops give every kind two trees and the first 5 are all d
+droporder	a kind at its cap of 9 is still chosen	every open kind at 9: the grove is full (null)
+droporder	a tie goes to the last slot, not the first	an empty land starts with its lowest open slot: {"slot":4,"i
+droporder	a landed parcel stays pending for ever	a landed parcel is no longer pending: {"spruce":1,"birch":1}
+droporder	a full grove still lets the tree go	a full grove keeps the tree: parcels 1 (was 2)
+droporder	the preference ignores the cap of 9 per kind	a preferred kind at its cap of 9 is NOT chosen: {"slot":0,"i
+droporder	the preferMission switch is ignored	DROP_ORDER.preferMission = false ignores the preference: {"s
+droporder	the world never reads the open mission kind	the world read the mission's tag at the start of the flight
+droporder	the mission kind is never preferred	a preferred kind wins over fewest-first (without the prefere
+droporder	the drops no longer take turns (the turn counter is ignored)	T1: the drops take turns over the open kinds 0,1,2,3,4,0,1,2
+droporder	a full kind still gets its turn	T2: a kind at 9 is skipped (its turn goes to the next open k
+droporder	the mission kind goes first on every drop, not only the first	T4: the mission's kind first, then the turns (3 then 1): 3 t
+droporder	the off mode skips a full kind (it is the game before trees v2: no cap)	T5: 'off' ignores the cap and the preference (slot 1, wanted
+droporder	DROP_ORDER.on is true in the off mode	T5: 'off' ignores the cap and the preference (slot 0, wanted
+droporder	the label always names the first turn, not the next drop	T6: the label names the tree the next drop plants, a full ki
+upgradetext	a level loses its effect text (CO2 levels read as their name only)	5b: levels with only a name for words that are not declared
