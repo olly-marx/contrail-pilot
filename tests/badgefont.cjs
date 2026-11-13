@@ -64,6 +64,6 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
     }
   } catch (e) { fails.push('exception: ' + e); }
   await b.close();
-  console.log(fails.length ? `FAIL badgefont:\n - ${fails.join('\n - ')}` : 'PASS badgefont: the badge text is 8 px above 340 px wide and unchanged at 320, a locked card reads Bronze, no card spills more than on main, the tab bar is unchanged');
+  console.log(fails.length ? `FAIL badgefont:\n - ${fails.join('\n - ')}` : 'PASS badgefont: the badge text is 8 px above 340 px wide and unchanged at 320, a locked card reads Bronze, no card spills more than on main, the tab bar shows icons and names only the selected tab at 8 px');
   process.exit(fails.length ? 1 : 0);
 })();
