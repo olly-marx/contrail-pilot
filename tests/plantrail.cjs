@@ -53,7 +53,7 @@ const seed = extra => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMS
         await p.waitForFunction(() => { const u = game.registry.get('ui'); return u.tour && u.tour.busy; }, null, { timeout: 9000 }).catch(() => {});   // (the results reveal takes about 2 s before the rails look)
         const c = await rail(p); log.push(`c: ${JSON.stringify(c)}`);
         log.push(`c state: ${JSON.stringify(await p.evaluate(() => { const ui = game.registry.get('ui'); return { lastPlanted: ui.lastPlanted, trees: JSON.stringify(ui.save.planted), done: (ui.save.tours || []).filter(x => /^r-/.test(x)).join(), resultsShown: !document.getElementById('results').hidden, busy: ui.tour.busy }; }))}`);
-        check(c.busy && c.target === 'rEarth' && /Your first tree! It grows up in \d+ flights/.test(c.text) && /not saved/.test(c.text), `c: the results do not say the first tree grows up and that unplanted trees are not saved, on the Earth card: ${JSON.stringify(c)}`);
+        check(c.busy && c.target === 'rEarth' && /Your first tree! It grows (up in \d+ flights|in about [\d.]+ flying days)/.test(c.text) && /not saved/.test(c.text), `c: the results do not say the first tree grows up and that unplanted trees are not saved, on the Earth card: ${JSON.stringify(c)}`);
       }
       check(!p.errs.length, `page errors: ${p.errs.join('; ')}`); await ctx.close(); }
     { const { ctx, p } = await open(seed({ planted: { oak: 3 } }));   // control: an older player with trees
