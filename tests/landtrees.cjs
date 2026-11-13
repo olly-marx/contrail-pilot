@@ -4,6 +4,7 @@
 // 5. in flight a land shows only its plantation tree + what you planted there; 6. "Oak 4/9" counts.
 // Run: node tests/landtrees.cjs   (proved by planted defects, see CHANGES.json)
 (async () => {
+  { const SW = await import('../src/config.js'); SW.NATIVE_FIRST.on = false; }   // (2026-11-13, release of ledger row 54) this test checks the rules with NATIVE_FIRST OFF; tests/rebalance.cjs checks them ON (as shipped)
   const L = await import('../src/landtrees.js'), N = await import('../src/nature.js'), U = await import('../src/upgrades.js');
   const { createWorld } = await import('../src/sim/world.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };

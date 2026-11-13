@@ -5,6 +5,7 @@
 // refreshes with the date, pays seeds only; Firsts come once, on a crash too, worth 1 crystal.
 // Run: node tests/missions4.cjs
 (async () => {
+  { const SW = await import('../src/config.js'); SW.STAR_GROW3.on = false; }   // (2026-11-13, release of ledger row 54) this test checks the rules with STAR_GROW3 OFF; tests/rebalance.cjs checks them ON (as shipped)
   const M = await import('../src/missions2.js'), H = await import('../src/habitats.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const lessons = ['L1', 'L2', 'L3', 'L4', 'L5'];

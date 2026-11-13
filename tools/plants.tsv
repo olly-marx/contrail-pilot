@@ -855,7 +855,7 @@ rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + Math.min(cap, c.pla
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + c.grown, 0)/	Forester counts more than 9 of a kind
 rebalance	src/nature.js	s/const book = grownOnly ? grownBook : treeBook;/const book = treeBook;/	the biome meter counts saplings
 rebalance	src/sim/rules.js	s/land = this.landStored >= BIOME_COOL.store \* m ? 0 : BIOME_COOL.rate \* m \* dt;/land = this.landStored >= BIOME_COOL.store ? 0 : BIOME_COOL.rate * 0.5 * dt;/	biome cooling ignores the meter
-rebalance	src/config.js	s/export const BIOME_COOL = { on: false,/export const BIOME_COOL = { on: true,/	biome cooling ships switched on
+rebalance	src/config.js	s/export const BIOME_COOL = { on: true,/export const BIOME_COOL = { on: false,/	biome cooling ships switched off
 rebalance	src/droporder.js	s/export const BIOME_FULL_LABEL = 'Biome full';/export const BIOME_FULL_LABEL = 'Grove full';/	the old grove-full words
 rebalance	src/nature.js	s/grownOnly = GROWN_METER.on) {/grownOnly = false) {/	the switch never makes the meter count grown trees only
 rebalance	src/nature.js	s/ \&\& (!GROWN_METER.on || animalsAwake(save, region)); };/; };/	animals do not wait for a grown tree
@@ -863,11 +863,11 @@ rebalance	src/nature.js	s/  || regionSpecies(region).some(w => (save.found || {}
 rebalance	src/config.js	s/export const GROWN_METER = { on: false };/export const GROWN_METER = { on: true };/	the grown meter ships switched on
 rebalance	src/landtrees.js	s/(NATIVE_FIRST.on \&\& s <= 1 ? (s === 1 ? null : OPENS\[1\]) : OPENS\[s\]);/(OPENS[s]);/	the native-first switch does nothing
 rebalance	src/nexthere.js	s/PROGRESS\[NATIVE_FIRST.on \&\& shut.slot === 0 ? 1 : shut.slot\]/PROGRESS[shut.slot]/	NATURE's next-tree card breaks when the plantation tree is the shut one
-rebalance	src/config.js	s/export const NATIVE_FIRST = { on: false };/export const NATIVE_FIRST = { on: true };/	native first ships switched on
+rebalance	src/config.js	s/export const NATIVE_FIRST = { on: true };/export const NATIVE_FIRST = { on: false };/	native first ships switched off
 rebalance	src/missions2.js	s/const kindsRoom = DROP_ORDER.mode === 'off' ? open.length : open.filter/const kindsRoom = false ? open.length : open.filter/	kinds3 counts the cap in the no-cap 'off' mode
 rebalance	src/groves.js	s/if (!isObj(seen)) return out;   \/\/ no record/if (!isObj(seen)) return grownBook(save, land);   \/\/ no record/	an old save with no record replants every grown tree
 rebalance	src/groves.js	s/const d = c.grown - (whole(seen\[id\]));/const d = c.grown - c.grown;/	grown trees are never offered for replanting
 rebalance	src/missions2.js	s/flight: (r, s, f) => (STAR_GROW3.on ? grownIn(s, f.land) >= GROW3_N :/flight: (r, s, f) => (false ? grownIn(s, f.land) >= GROW3_N :/	the grow-3 star never finishes on grown trees
 rebalance	src/missions2.js	s/ready: f => STAR_GROW3.on || f.kindsRoom >= 2,/ready: f => f.kindsRoom >= 2,/	the grow-3 star is not offered on a full land
 rebalance	src/groves.js	s/reduce((a, c) => a + Math.min(cap, c.grown), 0);$/reduce((a, c) => a + Math.min(cap, c.planted), 0);/	grownIn counts saplings
-rebalance	src/config.js	s/export const STAR_GROW3 = { on: false };/export const STAR_GROW3 = { on: true };/	the grow-3 star ships switched on
+rebalance	src/config.js	s/export const STAR_GROW3 = { on: true };/export const STAR_GROW3 = { on: false };/	the grow-3 star ships switched off

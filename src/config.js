@@ -192,11 +192,11 @@ export const GROWN_METER = { on: false };
 // NATIVE FIRST (ledger row 49; the user 2026-11-13: "start with one native tree for each wild area, like the most basic tree"): when on, each land's slot-1 native
 // (birch in the UK, silver birch in the boreal, acacia in the savanna...) is open from the start, and the plantation tree (slot 0) opens with the first habitat
 // project instead (the rule slot 1 had). OFF by default: the first trees change pacing (kinds3, the meter), so the sim chat checks it first.
-export const NATIVE_FIRST = { on: false };
+export const NATIVE_FIRST = { on: true };
 // STAR_GROW3 (ledger row 54; the user 2026-11-13): the area's tree star 'kinds3' becomes 'Grow 3 trees in <land>' (3 fully grown trees there, any kinds), reachable even when the land is full.
 // OFF by default until the sim chat measures when it is done (the old 'plant 3 kinds in one flight' was done by flight 100 in 5 of 18 runs with the cap).
-export const STAR_GROW3 = { on: false };
-export const BIOME_COOL = { on: false, rate: 0.4, store: 80, drops: 0.25 };   // rate 0.4: research/biome-cool-confirm-report.txt (2026-11-13, 36 pairs on d2e5921): 0.5 gave x1.26 of t0 (x1.33 all switches on), the sim's estimate for 0.4 is x1.0-1.05; store and drops as measured
+export const STAR_GROW3 = { on: true };
+export const BIOME_COOL = { on: true, rate: 0.4, store: 80, drops: 0.25 };   // rate 0.4: research/biome-cool-confirm-report.txt (2026-11-13, 36 pairs on d2e5921): 0.5 gave x1.26 of t0 (x1.33 all switches on), the sim's estimate for 0.4 is x1.0-1.05; store and drops as measured
 export const FOREST = {
   early: 0.5,     // x every tree's cooling (stage values in nature.js)
   from: 10000,    // km
