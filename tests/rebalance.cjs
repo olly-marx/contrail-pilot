@@ -85,6 +85,27 @@ globalThis.SEASON2 = true;
     check(Math.abs(off.trees - offSap.trees) < 1e-9, `C3: with the switch OFF grown or sapling groves cool the same (the game as 0.62.0): ${off.trees.toFixed(4)} vs ${offSap.trees.toFixed(4)}`);
     check(C.BIOME_COOL.on === false, 'C4: BIOME_COOL ships OFF until the sim chat sets its numbers'); }
 
+  // G. TREES V2 STEP 4 (GROWN_METER, ledger row 51): with the switch on, the meter counts grown trees only and a land's animals wait for a grown tree (grandfather: an animal found there)
+  { const was = C.GROWN_METER.on;
+    try {
+      const sap = base(); plant(sap, 1, 9); plant(sap, 2, 9);
+      C.GROWN_METER.on = false; const offSap = N.biodiversity(sap, 'woodland');
+      C.GROWN_METER.on = true; const onSap = N.biodiversity(sap, 'woodland'), onGrown = (() => { const g = base(); grow(g, 1, 9); grow(g, 2, 9); return N.biodiversity(g, 'woodland'); })();
+      check(onSap < offSap && onGrown === offSap, `G1: switch on, saplings count nothing (on ${onSap} < off ${offSap}) and grown trees count as before (${onGrown})`);
+      // an animal that needs only projects this save has: find one in the woodland
+      const fresh = { ...base(), found: {} }, ids = N.regionSpecies('woodland').filter(w => !['cow', 'sheep'].includes(w.id)).map(w => w.id);
+      C.GROWN_METER.on = false; const can = ids.filter(id => N.canAppear(fresh, id, 'woodland'));
+      check(can.length > 0, `G0 power: some woodland animal can appear with the switch off on this save: ${can.length}`);
+      C.GROWN_METER.on = true;
+      const id = can[0], waits = !N.canAppear(fresh, id, 'woodland');
+      const one = { ...base(), found: {} }; grow(one, 0, 1); const after = N.canAppear(one, id, 'woodland');
+      const sap1 = { ...base(), found: {} }; plant(sap1, 0, 1); const sapOnly = N.canAppear(sap1, id, 'woodland');
+      check(waits && !sapOnly && after, `G2: switch on, '${id}' waits for a GROWN tree: no tree ${!waits ? 'appears' : 'waits'}, a sapling ${sapOnly ? 'appears' : 'waits'}, one grown tree ${after ? 'appears' : 'waits'}`);
+      const old = { ...base(), found: { [id]: 1 } }; const gf = N.canAppear(old, id, 'woodland');
+      check(gf, `G3: the grandfather rule: a land where '${id}' was already found keeps its animals with no grown tree`);
+      check(was === false, 'G4: GROWN_METER ships OFF until the sim chat measures it');
+    } finally { C.GROWN_METER.on = was; } }
+
   // W. words
   check(D.BIOME_FULL_LABEL === 'Biome full' && /biodiversity/.test(D.BIOME_FULL_POPUP), `W1: the full-biome words: '${D.BIOME_FULL_LABEL}' / '${D.BIOME_FULL_POPUP}'`);
 

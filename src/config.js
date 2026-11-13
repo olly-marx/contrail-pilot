@@ -184,6 +184,11 @@ export const PARCEL = {
 // When on: the land under the plane cools by rate x (its biome meter / 100) per second (src/nature.js biomeMeter: GROWN trees by variety + habitat projects),
 // until `store` x meter / 100 is soaked up in the flight; trees dropped in this flight cool `drops` x what they do today; the old projects-only land term is replaced.
 // OFF by default: nothing changes until the sim chat measures it. rate, store and drops are PROVISIONAL (not measured): the sim chat sets them.
+// TREES V2 STEP 4 (ledger row 51; the user 2026-11-10 decisions 6-8, confirmed 2026-11-13: "saplings count for nothing until they're fully grown").
+// When on: every biodiversity meter counts GROWN trees only (src/nature.js biodiversity: NATURE, animals, tree slots, the scenery's tree count), and a land's
+// animals appear only once ANY tree there is fully grown (src/nature.js canAppear), except a land where an animal was already found (the grandfather rule).
+// OFF by default: it changes pacing, and the sim chat measures it first.
+export const GROWN_METER = { on: false };
 export const BIOME_COOL = { on: false, rate: 0.4, store: 80, drops: 0.25 };
 export const FOREST = {
   early: 0.5,     // x every tree's cooling (stage values in nature.js)
