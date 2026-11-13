@@ -111,7 +111,7 @@ export function allowed(region, home, x, y) {
   if (y < GROUND[0] || y > GROUND[1] || x < 4 || x > FW - 4) return false;
   const X = Math.floor(x), Y = Math.floor(y), m = mask(region), i = Y * FW + X, w = m.water[i] === 1, d = m.dist[i];
   if (!hasWater(region)) return home === 'land' || home === 'shore' || home === 'edge';   // a land with no water: nothing to keep off (no water animal lives there)
-  if (home === 'water') return w && d >= 3;
+  if (home === 'water') return w && d >= 3 && y >= HORIZON + 18;   // not in the thin strip at the horizon, where a sprite pokes up over the backdrop's hills
   if (home === 'shore') return w ? d >= 2 : d <= 18;
   if (home === 'edge') return w ? d <= 4 : d <= 8;
   return !w && d >= 2;
