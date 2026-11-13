@@ -196,12 +196,12 @@ export class FleetHangar {
     const n = canTake(s), m = canSell(s);
     // (screenshot, 2026-10-28: a level that adds bonds / the dividend does not change the rate: say what it adds, no 0% bar)
     const adds = next && (next.dividend && !(L && L.dividend) ? 'Adds the nature dividend: crystals for landing where nature is healthy.' : next.bond && !(L && L.bond) ? 'Adds bonds: lock seeds, get them back with crystals.' : '');
-    return `<div class="line fline finance"><div class="fin-head"><div class="name">Natural capital</div><div class="small">${L ? L.name : 'Not yet'}. World nature: ${B} / 100</div></div>
+    return `<div class="line fline finance"><div class="fin-head"><div class="name">Natural capital</div><div class="small">${L ? L.name : 'Not yet'}. Nature in your areas: ${B} / 100</div></div>
       ${L ? `<p class="small">Today: <b>${rate(s)} seeds = 1 crystal</b>. You keep ${L.reserve.toLocaleString('en-GB')} seeds.</p>
         <button class="btn ${n ? 'go' : ''}" id="hTrade" type="button" ${n ? '' : 'disabled'}>${n ? `TRADE ${n * rate(s)} seeds for ${n} crystals` : 'Trade again after your next landing'}</button>
         <p class="small">Sell: <b>1 crystal = ${sellRate(s)} seeds</b>.</p>
         <button class="btn ${m ? 'go' : ''}" id="hSell" type="button" ${m ? '' : 'disabled'}>${m ? `SELL ${m} crystals for ${m * sellRate(s)} seeds` : 'Sell after your next landing'}</button>
-        ${this.fundHTML(s, L)}` : '<p class="small">Healthier world nature, better rates both ways.</p>'}
+        ${this.fundHTML(s, L)}` : '<p class="small">Healthier nature in your areas, better rates both ways.</p>'}
       ${L && L.bond ? `<p class="small">Bonds: ${bonds(s).map(b => `${Math.max(0, L.bond.landings - ((s.landings || 0) - b.at))} landings left`).join(', ') || 'none yet'}. Each pays back its seeds + about ${Math.floor(home / L.bond.perB)} crystals (your nature at payout).</p>
         <button class="btn ${canLock(s) ? 'go' : ''}" id="hBond" type="button" ${canLock(s) ? '' : 'disabled'}>LOCK ${L.bond.lock.toLocaleString('en-GB')} seeds for ${L.bond.landings} landings</button>` : ''}
       ${next ? `<div class="next"><span>Next: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost}<i class="seedicon"></i></button></div>${adds ? `<p class="small">${adds}</p>` : bar(lv + 1)}` : ''}</div>`;
@@ -211,7 +211,7 @@ export class FleetHangar {
   fundHTML(s, L) {
     const f = fundOf(s), v = fundValue(s), k = canInvest(s), news = newsToday();
     const pct = f && f.seeds ? Math.round(1000 * (v / f.seeds - 1)) / 10 : 0;
-    return `<p class="small">Nature fund: ${f ? `<b>${v.toLocaleString('en-GB')} seeds</b> (${pct >= 0 ? '+' : ''}${pct}% since you put in)` : 'nothing in yet'}. Up to ${L.fund.toLocaleString('en-GB')} seeds. It moves every hour, up or down; healthier world nature makes it grow.</p>
+    return `<p class="small">Nature fund: ${f ? `<b>${v.toLocaleString('en-GB')} seeds</b> (${pct >= 0 ? '+' : ''}${pct}% since you put in)` : 'nothing in yet'}. Up to ${L.fund.toLocaleString('en-GB')} seeds. It moves every hour, up or down; healthier nature in your areas makes it grow.</p>
       ${news ? `<p class="small fin-news ${news.up ? 'up' : 'down'}">Today: ${news.text} (${news.up ? '+' : ''}${Math.round(100 * news.size)}%)</p>` : ''}
       <button class="btn ${k ? 'go' : ''}" id="hInvest" type="button" ${k ? '' : 'disabled'}>${k ? `INVEST ${k} seeds` : 'Fund full, or keep your reserve'}</button>
       ${f ? `<button class="btn" id="hCashOut" type="button">CASH OUT ${Math.floor(v * (1 - FUND.fee)).toLocaleString('en-GB')} seeds</button>` : ''}`;
