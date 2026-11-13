@@ -180,6 +180,11 @@ export const PARCEL = {
 // game chat's trees-rework branch): twinFull, 6 parcels, never-crash pilot, 5 skies, smart / careful:
 // no trees 27.9k / 24.9k km, today's 5 slots 38.2k / 38.1k (a lap is 32,060: LAP_KM in route.js).
 // These are NEVER-CRASH UPPER BOUNDS, not what a real player reaches; every run still overheats in the end.
+// BIOME COOLING (2026-11-13, ledger row 54; the user: "the cooling should be mostly coming from the nature you have in that biome, not the trees you drop mid flight").
+// When on: the land under the plane cools by rate x (its biome meter / 100) per second (src/nature.js biomeMeter: GROWN trees by variety + habitat projects),
+// until `store` x meter / 100 is soaked up in the flight; trees dropped in this flight cool `drops` x what they do today; the old projects-only land term is replaced.
+// OFF by default: nothing changes until the sim chat measures it. rate, store and drops are PROVISIONAL (not measured): the sim chat sets them.
+export const BIOME_COOL = { on: false, rate: 0.4, store: 80, drops: 0.25 };
 export const FOREST = {
   early: 0.5,     // x every tree's cooling (stage values in nature.js)
   from: 10000,    // km

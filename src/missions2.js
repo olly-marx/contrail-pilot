@@ -92,7 +92,7 @@ export const TEMPLATES = [
   // tier 3: the crossing trial (star = the gate)
   { id: 'night', short: () => 'A whole clean night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', short: f => `Make ${10 * f.k} shade, land`, tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
-  { id: 'kinds3', short: f => `Plant ${f.kinds} kinds in one go`, tier: 3, star: true, prize: 20, needs: (f, s) => needsOf('kinds3', f, s), title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
+  { id: 'kinds3', short: f => `Plant ${f.kinds} kinds in one go`, tier: 3, star: true, prize: 20, ready: f => f.kinds >= 2, needs: (f, s) => needsOf('kinds3', f, s), title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
   // route (release A): the STRETCH (f.stretch: 'Fly to <CITY> in one flight': land there, the flight's own start at least min(3, the stored stop count) away, every airport on the way flown past); the floor
   // makes it the farthest city in the small areas too (src/missionplan.js stretchFor). An OLD 'Nonstop to <CITY>' (no f.stretch) keeps its rule.
   { id: 'route', short: f => (f.stretch ? `${f.cityC} in one go` : `Nonstop to ${f.cityC}`), tier: 3, prize: 15, ready: f => f.cityC !== f.start,
@@ -132,7 +132,9 @@ export function fillFor(save, a, startCity = save.city) {
   const landName = (REGION_NAMES[land] || 'this land').replace(/^Temperate /, '');
   const home = save.homeCity || (AREAS[a] && AREAS[a].start), others = cities.filter(c => c !== city && c !== home);   // not the home city (the audit: '...then MANAUS' for a Manaus start)
   const trees = landTrees(save, land), open = trees.filter(t => t.open), tree = open[open.length - 1] || trees[0];
-  const kinds = Math.max(2, Math.min(3, open.length));   // the '3 kinds' star asks for what this land can grow now (at least 2)
+  // The '3 kinds' star asks for what this land can still grow: open kinds with ROOM under the cap of 9 (2026-11-13, ledger row 54: a full kind cannot be dropped,
+  // src/droporder.js, so counting it made the mission impossible). Fewer than 2 with room: the mission is not offered here (`ready` below).
+  const kinds = Math.min(3, open.filter(t => !t.full).length);
   const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
   const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));
   const animal = wild.find(w => canAppear(save, w.id, land)) || null;

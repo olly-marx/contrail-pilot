@@ -31,6 +31,8 @@ export const treeBook = (save, land) => Object.fromEntries(Object.entries(groveV
 export const groveLands = save => Object.entries(groveView(save)).filter(([, L]) => Object.values(L).some(c => c.planted > 0)).map(([land]) => land);
 // Every tree planted, in every land.
 export const treesPlantedTotal = save => Object.values(groveView(save)).reduce((a, L) => a + Object.values(L).reduce((b, c) => b + c.planted, 0), 0);
+// Every tree fully GROWN, in every land, at most TREE_CAP (9) of a kind per land counted (the Forester badge, 2026-11-13 ledger row 54: growth and variety, not raw planting).
+export const treesGrownTotal = (save, cap = 9) => Object.values(groveView(save)).reduce((a, L) => a + Object.values(L).reduce((b, c) => b + Math.min(cap, c.grown), 0), 0);
 // The groves of a copy of this save with `n` trees of this kind in this land (for 'what would one more tree add' questions: the save itself is not touched).
 export function groveWith(save, land, id, n) {
   const g = groveView(save), L = g[land] || (g[land] = {}), c = L[id] || (L[id] = { planted: 0, grown: 0, saplings: [] });
