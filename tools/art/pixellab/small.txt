@@ -27,3 +27,5 @@ icefish   # Patagonia (2026-10-28)
 echidna
 # Polynesia
 tahitimonarch
+mara geoffroyscat darwinsfrog   # Patagonia (2026-11-13)
+tui fantail morepork   # Aotearoa New Zealand (2026-11-13)
