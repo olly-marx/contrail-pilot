@@ -10,14 +10,14 @@ const src = f => path.resolve(__dirname, '../src', f);
   globalThis.SEASON2 = true; globalThis.window = { SEASON2: true };
   const M = await import(src('finance.js'));
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  check(M.rateAt(1, 40) === 30 && M.rateAt(1, 80) === 20 && M.rateAt(1, 100) === 20, `level 1: B40 ${M.rateAt(1, 40)}, B80 ${M.rateAt(1, 80)}, B100 ${M.rateAt(1, 100)} (want 30 / 20 / 20)`);
-  check(M.rateAt(2, 80) === 16 && M.rateAt(2, 0) === 40, `level 2: B80 ${M.rateAt(2, 80)} (want 16), B0 ${M.rateAt(2, 0)} (want 40)`);
+  const T = 25; check(M.buyAt(1, 0, T) === 38 && M.buyAt(1, 100, T) === 28 && M.buyAt(1, 50, T) === 33, `level 1 at market 25: B0 ${M.buyAt(1, 0, T)}, B50 ${M.buyAt(1, 50, T)}, B100 ${M.buyAt(1, 100, T)} (want 38 / 33 / 28: the gap shrinks with world nature)`);
+  check(M.buyAt(2, 0, T) < M.buyAt(1, 0, T) && M.buyAt(4, 0, T) < M.buyAt(2, 0, T), `higher desk levels do not trim the gap (B0: ${[1, 2, 3, 4].map(l => M.buyAt(l, 0, T))})`);
   const save = { tutorialDone: true, seeds: 9000, crystals: 0, landings: 5, flightSeconds: 1e7, areas: ['weurope'], city: 'WARSAW' };
   check(M.canTake(save) === 0, 'the desk trades before a level is bought');
   check(!M.buyFinance({ ...save, flightSeconds: 0 }), 'the desk can be bought before the 2010s');
   check(M.buyFinance(save) && save.seeds === 7500 && M.financeLevel(save) === 1, 'buying level 1 (1,500 seeds) failed');
-  const r = M.rate(save), B = M.natureHealth(save), n = M.canTake(save);
-  check(r === M.rateAt(1, B), 'the rate is not the level formula of your nature');
+  const r = M.rate(save), B = M.financeBio(save), n = M.canTake(save);
+  check(r === M.buyAt(1, B, M.trueRate(M.gameDay(save))), 'the rate is not the market rate plus the gap of the world nature');
   check(n === Math.min(10, Math.floor((7500 - 4000) / r)), `could take ${n}, want min(10, (7500 - 4000) / ${r})`);
   const got = M.trade(save);
   check(got === n && save.crystals === n && save.seeds === 7500 - n * r, 'the trade did not move the right seeds and crystals');
@@ -54,9 +54,9 @@ const src = f => path.resolve(__dirname, '../src', f);
   // Save up for the next desk level (2026-10-29): at level 2 in the 2030s, the desk keeps the bonds' 5,000 (not the 3,500
   // reserve); in the 2010s (bonds not open yet) only the reserve.
   const su = era => ({ tutorialDone: true, seeds: 5200, crystals: 0, landings: 3, flightSeconds: era, areas: ['weurope'], city: 'WARSAW', finance: { level: 2 } });
-  const r2 = M.rateAt(2, 0), in2030s = M.canTake(su(1e8)), in2010s = M.canTake({ ...su(0), flightSeconds: 60 * 250 });   // 250 min = the 2010s (the 2030s open at ~341)
-  check(in2030s === Math.min(15, Math.floor((5200 - 5000) / r2)) && in2030s !== in2010s, `2030s, level 2: took ${in2030s}, want what is above the bonds' 5,000`);
-  check(in2010s === Math.min(15, Math.floor((5200 - 3500) / r2)), `2010s, level 2: took ${in2010s}, want what is above the 3,500 reserve`);
+  const su1 = su(1e8), su2 = { ...su(0), flightSeconds: 60 * 250 }, in2030s = M.canTake(su1), in2010s = M.canTake(su2);   // 250 min = the 2010s (the 2030s open at ~341)
+  check(in2030s === Math.min(15, Math.floor((5200 - 5000) / M.rate(su1))) && in2030s !== in2010s, `2030s, level 2: took ${in2030s}, want what is above the bonds' 5,000`);
+  check(in2010s === Math.min(15, Math.floor((5200 - 3500) / M.rate(su2))), `2010s, level 2: took ${in2010s}, want what is above the 3,500 reserve`);
   if (fails.length) { console.log(`FAIL finance\n  ${fails.join('\n  ')}`); process.exit(1); }
-  console.log(`PASS finance: 30:1 at B 40, 20:1 at B 80 (level 2: 16:1), reserve kept, cap and one trade a landing (this save: B ${B}, ${r}:1)`);
+  console.log(`PASS finance: at market 25 you pay 38 on a bare world, 28 on a healthy one, levels trim the gap, reserve kept, cap and one trade a landing (this save: B ${B}, you pay ${r})`);
 })();
