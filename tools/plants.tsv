@@ -848,7 +848,7 @@ tourflight	src/tour.js	s/if (++gone > 6) { this.exited = .gone.; finish(); retur
 tourflight	src/tour.js	s/if (m\[kid\] >= 2) this.markDone(kid); else writeSave(this.save);/if (m[kid] >= 99) this.markDone(kid); else writeSave(this.save);/	an interrupted step never counts as seen (it would loop on every HOME)
 tourflight	src/tour.js	s/if (hudShowing()) { this.exited = 'flight'; return true; }   \/\/ a flight is on: never show a step over the game/\/\/ (removed)/	a step asked for during a flight is shown over the game
 tourflight	src/GameScene.js	s/    if (this.ui \&\& this.ui.tour) this.ui.tour.abort();   \/\/ a flight starting by any route/    \/\/ (abort removed)   \/\/ a flight starting by any route/	scene.startFlight() does not end a rails step that is up
-rebalance	src/missions2.js	s/const kindsRoom = open.filter(t => !t.full).length,/const kindsRoom = open.length,/	kinds3 counts full kinds again
+rebalance	src/missions2.js	s/: open.filter(t => !t.full).length, kinds = /: open.length, kinds = /	kinds3 counts full kinds again
 rebalance	src/missions2.js	s/prize: 20, ready: f => f.kindsRoom >= 2, needs:/prize: 20, needs:/	kinds3 offered with fewer than 2 kinds with room
 rebalance	src/landtrees.js	s/kindsMissionDone(save, land) || kindsStuck(save, land) :/kindsMissionDone(save, land) :/	slot 4 never opens when kinds3 is stuck
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + Math.min(cap, c.planted), 0)/	Forester counts saplings
@@ -865,5 +865,5 @@ rebalance	src/landtrees.js	s/(NATIVE_FIRST.on \&\& s <= 1 ? (s === 1 ? null : OP
 rebalance	src/nexthere.js	s/PROGRESS\[NATIVE_FIRST.on \&\& shut.slot === 0 ? 1 : shut.slot\]/PROGRESS[shut.slot]/	NATURE's next-tree card breaks when the plantation tree is the shut one
 rebalance	src/config.js	s/export const NATIVE_FIRST = { on: false };/export const NATIVE_FIRST = { on: true };/	native first ships switched on
 rebalance	src/missions2.js	s/const kindsRoom = DROP_ORDER.mode === 'off' ? open.length : open.filter/const kindsRoom = false ? open.length : open.filter/	kinds3 counts the cap in the no-cap 'off' mode
-rebalance	src/groves.js	s/if (!isObj(seen)) return out;   \/\/ no record/if (false) return out;   \/\/ no record/	an old save with no record replants every grown tree
+rebalance	src/groves.js	s/if (!isObj(seen)) return out;   \/\/ no record/if (!isObj(seen)) return grownBook(save, land);   \/\/ no record/	an old save with no record replants every grown tree
 rebalance	src/groves.js	s/const d = c.grown - (whole(seen\[id\]));/const d = c.grown - c.grown;/	grown trees are never offered for replanting
