@@ -16,7 +16,7 @@ import { fleetOf } from './fleet.js';
 
 // DECLARED, not inferred (the sim chat's reach table, M-CITY v3, confirmed 2026-11-11): the starter areas whose OWN network offers fewer than 3 stops: Oceania 2, East Asia 2, Patagonia 1.
 // There the stretch is always the floor (the farthest city, so 'median 1 flight, 0 stuck' as the sim measured). Read only by tests/missionplan.cjs.
-export const SMALL_AREAS = { oceania: 2, easia: 2, patagonia: 1 };
+export const SMALL_AREAS = {};   // CROSSINGS V3 (2026-11-13): an area flies its whole REGION's network, and measured, every starter area has start cities 3+ stops from a candidate (min/max of the farthest: weurope 3/5, namerica 2/4, sasia 3/5, africa 3/5, samerica 2/4, easia 3/5, oceania 4/5, aotearoa 3/5, patagonia 4/4); a start with nothing 3 stops away still gets the floor (stretchFor)
 export const CITY_IDS = ['land-city', 'chain', 'rescue', 'route'];
 // THE FIELD MAP, declared once (the tests and the sim chat's analyzer read the same table): the city fields each city template OWNS. A mission's fill carries only these (plus the non-city fields: k, stage, key, rule, progress, ...);
 // the other city fields of the shared fill (where the player stands NOW) would show a moving city to any reader that picked the wrong one.

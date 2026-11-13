@@ -85,7 +85,7 @@ globalThis.SEASON2 = true;
 
   // 8-10. every starter area, every start city: real reachable cities (8); no chain ping-pong (A: leg C is not leg A when another city is left); the stretch is a real mission in EVERY area, small ones too (D),
   //       and its floor is the farthest city, ties to the longer route then list order (G)
-  const A = await import('../src/areas.js'), bad8 = [], badA = [], badD = [], badG = [];
+  const A = await import('../src/areas.js'), bad8 = [], badA = [], badD = [], badG = []; let floorSeen = 0;
   for (const [a, area] of Object.entries(A.AREAS)) {
     if (!area.starter) continue;
     for (const c of area.cities) {
@@ -100,8 +100,10 @@ globalThis.SEASON2 = true;
         if (id === 'chain' && o.rule === 'new' && o.cityC === o.city && P.farCity(sv, LL, o.cityB, [o.cityB, o.city])) badA.push(`${a} from ${c}: ${JSON.stringify(names)}`);
         if (id === 'route') {
           if (!o.stretch || o.stretch.stops < 1 || o.rule !== 'new') badD.push(`${a} from ${c}: ${JSON.stringify([o.cityC, o.stretch, o.rule])}`);
-          else if (P.SMALL_AREAS[a] !== undefined) {   // a small area alone: always the floor
+          else {   // a start with nothing 3 stops away (CROSSINGS V3: no whole area is small any more; some starts are): always the floor
             const all = P.candidates(sv, c).map((x, i) => ({ x, i, n: P.stopsOf(LL, c, x), km: P.routeKm(LL, c, x) })).filter(y => Number.isFinite(y.n) && y.n >= 1).sort((p, q) => q.n - p.n || q.km - p.km || p.i - q.i);
+            if (!(all.length && all[0].n < 3)) continue;
+            floorSeen++;
             if (all.length && all[0].x !== o.cityC) badG.push(`${a} from ${c}: floor ${all[0].x} (${all[0].n} stops, ${all[0].km} km), got ${o.cityC}`);
           }
         }
@@ -111,7 +113,8 @@ globalThis.SEASON2 = true;
   check(bad8.length === 0, `every starter area and start city gets real, reachable cities for land-city, chain and route: ${bad8.slice(0, 5).join('; ')}${bad8.length > 5 ? ` (+${bad8.length - 5})` : ''}`);
   check(badA.length === 0, `the chain never ping-pongs (leg C is not leg A while another city is left): ${badA.slice(0, 4).join('; ')}${badA.length > 4 ? ` (+${badA.length - 4})` : ''}`);
   check(badD.length === 0, `the stretch is a real mission in every starter area and start, the small ones too (Oceania, East Asia, Patagonia): ${badD.slice(0, 4).join('; ')}${badD.length > 4 ? ` (+${badD.length - 4})` : ''}`);
-  check(badG.length === 0, `in a small area the stretch is the FARTHEST city, ties to the longer route, then list order: ${badG.slice(0, 3).join('; ')}`);
+  check(floorSeen > 0, `power: some start has nothing 3 stops away (the floor rule is exercised): ${floorSeen}`);
+  check(badG.length === 0, `where nothing is 3 stops away the stretch is the FARTHEST city, ties to the longer route, then list order: ${badG.slice(0, 3).join('; ')}`);
   // B. a stretch stored with 4 stops stays completable from a start 3 stops away (the spec and the sim use 3)
   const Ls = R.linksFor(s0); let pair = null;
   for (const x of P.candidates(s0, 'LONDON')) { const y = P.candidates(s0, x).find(c => P.stopsOf(Ls, c, x) === 3); if (y) { pair = [y, x]; break; } }
