@@ -41,6 +41,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(/Next|km/.test(r.next), `and the next-airport line at the same time: "${r.next}"`);
   check(!r.hits.length, `no two HUD texts overlap: ${r.hits.join('; ')} ${JSON.stringify(r.boxes)}`);
   check(!p.errs.length, `page errors: ${p.errs}`);
+  // (C) The land's card (GameScene.regionBanner, about 3 s at take-off and on a land change) with this two-line title and the next-airport line on screen: it sits under both (design run, problem 7).
+  const card = await p.evaluate(() => { const s = game.scene.getScene('game'); s.regionBanner(s.regionNow); const c = s.banner; if (!c) return null;
+    const C = c.getBounds(), hits = ['missionText', 'nextText', 'distText'].filter(n => s[n].visible && s[n].text).filter(n => { const A = s[n].getBounds(); return A.x < C.x + C.width && C.x < A.x + A.width && A.y < C.y + C.height && C.y < A.y + A.height; });
+    return { top: Math.round(C.y), bottom: Math.round(C.y + C.height), mission: s.missionText.text, next: s.nextText.text, nextBottom: Math.round(s.nextText.y + s.nextText.height), hits }; });
+  check(card && card.mission.includes('\n') && /Next|km/.test(card.next), `FIXTURE (C): the land's card opened with a two-line title and the next-airport line on screen: ${JSON.stringify(card)}`);
+  check(card && !card.hits.length, `(C) the land's card never covers the mission title or the next-airport line: ${JSON.stringify(card)}`);
   // The Coordinator's screenshot (2026-11-12, a normal flight at 390x844): 'AUTOPILOT - tap to fly!' drawn over the distance counter when the
   // plane flies high, and 'ICY AIR! shade: cooler' over 'kinds 0/5' in the ground strip. (A) the plane at the top of the sky on autopilot.
     // The save above has no autoTakeoff: the plane is still parked on the runway ('HOLD to take off!'). Hold to take off, as a player does, until the flight is in the air.

@@ -582,7 +582,7 @@ export class GameScene extends Phaser.Scene {
     if (this.school || !REGION_NAMES[r]) return;
     const bio = biodiversity(this.save, r);
     if (this.banner) this.banner.destroy();
-    const W = 220, x = WIDTH / 2, y = 90;   // under the distance and next-airport lines
+    const W = 220, x = WIDTH / 2, y = Math.max(90, Math.ceil(this.hudTextBottom()) + 3 + 19);   // under the distance, mission and next-airport lines (19 = half the card): at y 90 a two-line mission's next-airport line sat under the card (design run, problem 7)
     const bg = this.add.rectangle(0, 0, W, 38, 0x1b2838, 0.82).setStrokeStyle(1, 0xffe15a);
     const name = this.fitText(this.add.text(0, -12, REGION_NAMES[r].toUpperCase(), { fontFamily: FONT, fontSize: '8px', color: '#ffe15a' }).setOrigin(0.5), W - 12);
     const sub = this.add.text(0, 0, `BIODIVERSITY ${bio}`, { fontFamily: FONT, fontSize: '7px', color: '#ffe15a' }).setOrigin(0.5);
