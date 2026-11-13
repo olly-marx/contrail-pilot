@@ -20,6 +20,7 @@ globalThis.SEASON2 = true;
   const plant = (s, slot, n) => { for (let i = 0; i < n; i++) G.plantTree(s, 'woodland', idOf(slot)); };
   const grow = (s, slot, n) => { plant(s, slot, n); const c = s.groves.woodland[idOf(slot)]; c.grown = c.planted; c.saplings = []; };
   const kinds3 = s => M.visible(s, 'LONDON').some(v => v.def && v.def.id === 'kinds3');
+  check(C.GROWN_METER.on === false, 'G4: GROWN_METER ships OFF until the sim chat measures it');   // (first: every check below assumes the shipped switches)
   const open = L.treesOpen(base(), 'woodland');
   check(open.length >= 4 && [0, 1, 2, 3].every(s => open.includes(s)), `power: this save opens slots 0..3 in the woodland: ${open}`);
 
@@ -103,7 +104,6 @@ globalThis.SEASON2 = true;
       check(waits && !sapOnly && after, `G2: switch on, '${id}' waits for a GROWN tree: no tree ${!waits ? 'appears' : 'waits'}, a sapling ${sapOnly ? 'appears' : 'waits'}, one grown tree ${after ? 'appears' : 'waits'}`);
       const old = { ...base(), found: { [id]: 1 } }; const gf = N.canAppear(old, id, 'woodland');
       check(gf, `G3: the grandfather rule: a land where '${id}' was already found keeps its animals with no grown tree`);
-      check(was === false, 'G4: GROWN_METER ships OFF until the sim chat measures it');
     } finally { C.GROWN_METER.on = was; } }
 
   // W. words
