@@ -9,6 +9,7 @@
 //   store:      sed -i 's/FOREST.storePower)/0)/' src/sim/physics.js
 // Plain Node, seconds. Run: node tests/sim-forest.cjs
 (async () => {
+  { const SW = await import('../src/config.js'); SW.BIOME_COOL.on = false; }   // (2026-11-13, release of ledger row 54) this test checks the rules with BIOME_COOL OFF; tests/rebalance.cjs checks them ON (as shipped)
   const { createWorld } = await import('../src/sim/world.js');
   const { FOREST } = await import('../src/config.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };

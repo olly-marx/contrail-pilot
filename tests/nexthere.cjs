@@ -3,6 +3,7 @@
 // is never a found one or a farm animal, and "out there now" only when it can really appear.
 // Run: node tests/nexthere.cjs   (proved by planted defects)
 (async () => {
+  { const SW = await import('../src/config.js'); SW.NATIVE_FIRST.on = false; }   // (2026-11-13, release of ledger row 54) this test checks the rules with NATIVE_FIRST OFF; tests/rebalance.cjs checks them ON (as shipped)
   const X = await import('../src/nexthere.js'), N = await import('../src/nature.js'), L = await import('../src/landtrees.js'), { REGION_DATA, TIERS } = await import('../src/habitats.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   for (const land of Object.keys(REGION_DATA)) {

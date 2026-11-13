@@ -20,9 +20,13 @@ globalThis.SEASON2 = true;
   const plant = (s, slot, n) => { for (let i = 0; i < n; i++) G.plantTree(s, 'woodland', idOf(slot)); };
   const grow = (s, slot, n) => { plant(s, slot, n); const c = s.groves.woodland[idOf(slot)]; c.grown = c.planted; c.saplings = []; };
   const kinds3 = s => M.visible(s, 'LONDON').some(v => v.def && v.def.id === 'kinds3');
-  check(C.STAR_GROW3.on === false, 'R5: STAR_GROW3 ships OFF until the sim chat measures it');
-  check(C.NATIVE_FIRST.on === false, 'P5: NATIVE_FIRST ships OFF until the sim chat checks the pacing');
-  check(C.GROWN_METER.on === false, 'G4: GROWN_METER ships OFF until the sim chat measures it');   // (first: every check below assumes the shipped switches)
+  // THE SHIPPED SWITCHES (the user, 2026-11-13 'release all'; the sim chat's confirm report): BIOME_COOL, NATIVE_FIRST and STAR_GROW3 ON; GROWN_METER OFF (its timing is being reworked).
+  check(C.STAR_GROW3.on === true, 'R5: STAR_GROW3 ships ON');
+  check(C.NATIVE_FIRST.on === true, 'P5: NATIVE_FIRST ships ON');
+  check(C.BIOME_COOL.on === true && C.BIOME_COOL.rate === 0.4, `C4: BIOME_COOL ships ON at rate 0.4 (${C.BIOME_COOL.on}, ${C.BIOME_COOL.rate})`);
+  check(C.GROWN_METER.on === false, 'G4: GROWN_METER ships OFF');
+  // Each block below sets the switch it tests; everything else runs with them OFF (the rules each block names).
+  C.STAR_GROW3.on = false; C.NATIVE_FIRST.on = false; C.BIOME_COOL.on = false;   // (first: every check below assumes the shipped switches)
   const open = L.treesOpen(base(), 'woodland');
   check(open.length >= 4 && [0, 1, 2, 3].every(s => open.includes(s)), `power: this save opens slots 0..3 in the woodland: ${open}`);
 
@@ -120,7 +124,7 @@ globalThis.SEASON2 = true;
     const gain = x => x.trees - none.trees;   // what the grove adds over the projects alone
     check(gain(mixed) > 2 * gain(stacked) && gain(stacked) > 0, `C2: 9 grown of 3 kinds add more than twice what 27 of one kind add: ${gain(mixed).toFixed(3)} vs ${gain(stacked).toFixed(3)}`);
     check(Math.abs(off.trees - offSap.trees) < 1e-9, `C3: with the switch OFF grown or sapling groves cool the same (the game as 0.62.0): ${off.trees.toFixed(4)} vs ${offSap.trees.toFixed(4)}`);
-    check(C.BIOME_COOL.on === false, 'C4: BIOME_COOL ships OFF until the sim chat sets its numbers'); }
+  }
 
   // G. TREES V2 STEP 4 (GROWN_METER, ledger row 51): with the switch on, the meter counts grown trees only and a land's animals wait for a grown tree (grandfather: an animal found there)
   { const was = C.GROWN_METER.on;

@@ -6,6 +6,7 @@
 // opens on its area's 'kinds3' mission; 9. area prizes are seeds only; 10. a free upgrade makes NEXT lead into the hangar.
 // Run: node tests/missions2.cjs   (proved by planted defects)
 (async () => {
+  { const SW = await import('../src/config.js'); SW.NATIVE_FIRST.on = false; SW.STAR_GROW3.on = false; }   // (2026-11-13, release of ledger row 54) this test checks the rules with NATIVE_FIRST, STAR_GROW3 OFF; tests/rebalance.cjs checks them ON (as shipped)
   const M = await import('../src/missions2.js'), C = await import('../src/crossings.js'), L = await import('../src/landtrees.js'), H = await import('../src/hub.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const base = () => ({ areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', visited: ['AMSTERDAM'], missionsDone: [], unclaimed: [], tutorialDone: true, levels: {}, habitat: {},
