@@ -148,11 +148,11 @@ export function payDividend(save) {
 // with the drift set by the WORLD's biodiversity when you cash out. Clamped to [clamp]. GAME VALUES, est.: target (sim
 // thread, pending): a full fund earns on average about a fifth of a flight's seeds per flight.
 export const FUND = {
-  // Sized from the sim (2026-11-13: flights of 36-42 s in eras 2-4 = 1.2-1.4 game days). The ~12 seeds a flight is a DESIGN
-  // ASSUMPTION for eras 3+, not a measurement: the sim measured 11.5 gross in era 1 only (its pilot stops landing later). At world B 8
-  // a full 2,000 fund drifts ~2.3 seeds a flight (about a fifth of a flight), and over 100 flights ends up ~9 times in 10.
+  // Sized from the sim's LEARNING pilot (research/finbio-learn-report.txt, 2026-11-13; it supersedes the fixed-skill run):
+  // era 3: flights 90-95 s = ~3 game days, ~49.5 seeds a flight, world B 23.5 (p10 8, p90 28). Target: a full level-1 fund
+  // (2,000) drifts ~10 seeds a flight there (about a fifth of a flight); bigger funds at higher levels earn more.
   sigma: 0.006,                  // a game day's spread
-  drift: { at0: 0.0007, at100: 0.0025 },   // the mean move a game day at world biodiversity 0 and 100: always above zero
+  drift: { at0: 0.0012, at100: 0.0035 },   // the mean move a game day at world biodiversity 0 and 100: always above zero
   news: { chance: 1 / 8, size: 0.015 },   // one game day in eight carries a +/-1.5% story
   fee: 0.01,                     // 1% taken when you cash out
   step: 500,                     // seeds a tap puts in
