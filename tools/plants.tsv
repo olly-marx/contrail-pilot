@@ -710,7 +710,7 @@ liverylook	src/hangar.js	s/lookFiles(id, f\.planes\[id\], 'hangar', liveryOn(s))
 liverylook	src/hangar.js	s/lookFiles(planeId, fn\.planes\[planeId\], 'hangar', liveryOn(s))/lookFiles(planeId, fn.planes[planeId], 'hangar')/	the preview of a purchase drops the livery
 liverylook	src/GameScene.js	s/'flight', liveryOn(this\.save))/'flight')/	the flying plane never wears the livery
 liverylook	src/sim/rules.js	s/^import { addPrizes } from '\.\.\/rewards\.js';/import { addPrizes } from '..\/rewards.js'; import { liveryOn } from '..\/livery.js';/	the sim engine imports the livery
-hudclear	src/hudclear.js	s/  return y > 0 ? `${y + 6}px` : '';/  return '';/	the toast is placed at 16 percent of the page again (toastTopCss never moves it below the HUD text)
+hudclear	src/hudclear.js	s/  return top > 0 ? `${top + 6}px` : '';/  return '';/	the toast is placed at 16 percent of the page again (toastTopCss never moves it below the HUD text)
 hudclear	style.css	s/top: calc(var(--hud-bottom, 0px) + 6px); bottom: auto;/top: 6px; bottom: auto;/	the coach strip opens at y 6 again (it covers the HUD text on a small phone)
 hudclear	src/GameScene.js	s/const dropToast = () => { if (this\.explaining \&\& toastEl/const dropToast = () => { if (false \&\& toastEl/	a toast already up is not moved below a strip that opens (they stack on each other)
 badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 341px) { .badge2 { font-size: 7px; } }/	the badge text is 7 px again on wide phones (Bronze reads Dronze)
