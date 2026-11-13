@@ -3,7 +3,7 @@
 Run from the repo root:  python3 tools/art/install_pixellab.py
 Sources: tools/art/pixellab/<batch>/<id>-f0.png, -f1.png (the 2 in-flight frames, 10 colours) and -card.png
 (the 64 px collection card), with provenance.jsonl beside them (prompt, tool, date).
-Writes assets/pixellab/<sprite>-0/1.png (cropped to the animal; the small animals halved, an exact 2x, so the
+Writes assets/pixellab/<sprite>-0/1.png (cropped to the animal, sized by its real-size class, see SHRINK below; the
 pixels stay crisp and their size matches today's sprites), assets/pixellab/ui/portrait-<sprite>-0.png (the card),
 and src/pixellab.js (which sprites have a PixelLab version). The game uses them ONLY with the preview on
 (?pixelart=on, FEATURES.pixelArt in src/config.js); everyone else keeps the generated art.
@@ -16,8 +16,15 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / 'tools' / 'art' / 'pixellab'
 OUT = ROOT / 'assets' / 'pixellab'
-# Small animals: halved so they stay small next to a cow (they were made on the same 32 px canvas).
-SMALL = {w for line in (SRC / 'small.txt').read_text().splitlines() for w in line.split('#')[0].split()}   # declared, not guessed
+# Size (Oliver, 2026-11-13: real size classes, replacing the hand list small.txt): every animal's real size in metres is
+# declared in pixellab/sizes.tsv; tools/art/sizes.py turns it into a class. Large and huge animals use their bigger
+# redraw (<id>-L-f0/f1.png, tools/art/pixellab_big.py); small ones are halved and tiny ones quartered, always by an
+# exact whole factor with nearest-neighbour, so pixels stay crisp. A tiny animal is only quartered if it stays at
+# least MIN_TINY px wide (else halved): a 3 px firefly cannot be seen.
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from sizes import SHRINK, size_class, sizes   # noqa: E402
+MIN_TINY = 6
 
 
 def sprite_keys():
@@ -28,13 +35,21 @@ def sprite_keys():
     return {sp['id']: ('sky-' if sp['kind'] == 'bird' else 'animal-') + sp['id'] for sp in SPECIES if sp['art'] is not None}
 
 
-def fit(im, small):
+def fit(im, k):
     im = im.crop(im.getbbox())
-    return im.resize((max(1, im.width // 2), max(1, im.height // 2)), Image.NEAREST) if small else im
+    return im.resize((max(1, im.width // k), max(1, im.height // k)), Image.NEAREST) if k > 1 else im
+
+
+def shrink_for(cls, width):
+    k = SHRINK[cls]
+    return 2 if k == 4 and width // 4 < MIN_TINY else k
 
 
 def main():
     keys = sprite_keys()
+    real = sizes()
+    missing = sorted(set(keys) - set(real))
+    if missing: raise SystemExit(f'no real size in pixellab/sizes.tsv for: {missing}')
     (OUT / 'ui').mkdir(parents=True, exist_ok=True)
     done = []
     for card in sorted(SRC.glob('*/*-card.png')):
@@ -43,7 +58,13 @@ def main():
         if sid not in keys or not (f0.exists() and f1.exists()):
             print('skip', sid); continue
         key = keys[sid]
-        a, b = fit(Image.open(f0).convert('RGBA'), sid in SMALL), fit(Image.open(f1).convert('RGBA'), sid in SMALL)
+        cls = size_class(real[sid])
+        if cls in ('large', 'huge'):
+            f0, f1 = card.with_name(f'{sid}-L-f0.png'), card.with_name(f'{sid}-L-f1.png')
+            if not (f0.exists() and f1.exists()): raise SystemExit(f'{sid} is {cls} but has no -L- redraw: run tools/art/pixellab_big.py')
+        im0 = Image.open(f0).convert('RGBA')
+        k = shrink_for(cls, im0.crop(im0.getbbox()).width)
+        a, b = fit(im0, k), fit(Image.open(f1).convert('RGBA'), k)
         w, h = max(a.width, b.width), max(a.height, b.height)   # both frames on one canvas, feet on the same line
         for i, im in enumerate((a, b)):
             c = Image.new('RGBA', (w, h), (0, 0, 0, 0)); c.alpha_composite(im, ((w - im.width) // 2, h - im.height))
