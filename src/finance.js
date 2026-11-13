@@ -12,6 +12,7 @@ import { AREAS } from './areas.js';
 import { city } from './network.js';
 import { biodiversity, worldBiodiversity } from './nature.js';
 import { eraProgress } from './eras.js';
+import { areaLands } from './arealand.js';
 
 export const FINANCE = {
   era: 3,
@@ -36,9 +37,15 @@ export function natureHealth(save) {
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
 }
 export function rateAt(level, B) { const L = FINANCE.levels[level - 1]; return L ? Math.max(L.floor, Math.round(L.base - L.slope * B)) : null; }
-// The EXCHANGE reads the WORLD's biodiversity (the user, 2026-11-13: 'depending on how strong your global biodiversity is'):
-// the mean of every region's meter (src/nature.js worldBiodiversity). natureHealth above stays for the bonds' interest.
-export const financeBio = save => worldBiodiversity(save);
+// The EXCHANGE and the fund read YOUR WORLD's biodiversity (the user, 2026-11-13: 'depending on how strong your global
+// biodiversity is'): the mean meter of EVERY land in the areas you have opened (src/arealand.js areaLands), not only each
+// area's home land (natureHealth, which stays for the bonds' interest). The whole planet's mean (worldBiodiversity) was
+// tried first and measured too low to move the rate (research/finbio-report.txt: B ~8 in era 3, 38:1 at every level).
+export function financeBio(save) {
+  const lands = [...new Set((save.areas || []).flatMap(areaLands))];
+  if (!lands.length) return worldBiodiversity(save);
+  return Math.round(lands.reduce((a, r) => a + biodiversity(save, r), 0) / lands.length);
+}
 export const rate = (save, level = financeLevel(save)) => rateAt(level, financeBio(save));
 // SELLING crystals for seeds (2026-11-13): the desk pays fewer seeds a crystal than it charges (the SPREAD), so flipping
 // back and forth always loses. The spread narrows as the world's nature gets healthier: a better deal both ways.
@@ -120,10 +127,10 @@ export function payDividend(save) {
 // with the drift set by the WORLD's biodiversity when you cash out (healthy nature pays; a bare world drifts down). The
 // growth is clamped to [CLAMP] and counts at most MAX_HOURS. GAME VALUES, est.: the sim thread measures them before release.
 export const FUND = {
-  sigmaH: 0.006,                 // an hour's spread (about 3% a day)
-  driftDay: { at0: 0, at100: 0.01 },   // the mean daily drift at world biodiversity 0 and 100 (0: a bare world only wobbles)
-  news: { chance: 1 / 3, size: 0.05, hour: 12 },   // a third of days carry one +/-5% story, at 12:00 UTC
-  fee: 0.02,                     // 2% taken when you cash out
+  sigmaH: 0.004,                 // an hour's spread (about 2% a day)
+  driftDay: { at0: 0.003, at100: 0.012 },   // the mean daily drift at biodiversity 0 and 100: always above zero, so holding a few days beats the fee
+  news: { chance: 1 / 3, size: 0.03, hour: 12 },   // a third of days carry one +/-3% story, at 12:00 UTC
+  fee: 0.01,                     // 1% taken when you cash out
   step: 500,                     // seeds a tap puts in
   maxHours: 24 * 30, clamp: [0.5, 2],
 };
