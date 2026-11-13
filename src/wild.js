@@ -24,6 +24,7 @@ import { nextHere } from './nexthere.js';
 import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
 import { fresh } from './fresh.js';
+import { FW, FH, HORIZON, GROUND, WATER, homeOf, FISH, STILL, startIn, nextIn, walk, isWater, featureSpots, treeOk, paintWater } from './water.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -390,7 +391,7 @@ function gate(root) {
 // (1.5 px/unit) at 1x, so a fox is about as wide as a tree. Things lower
 // down the field are nearer, so they are drawn in front. Animals walk to a spot, pause, pick
 // another, and face the way they go; flying birds cross the sky and come round again.
-const FW = 288, FH = 170, HORIZON = 60, GROUND = [HORIZON + 8, FH - 2];
+// (FW, FH, HORIZON, GROUND: src/water.js)
 // Where each project's feature goes: [x, y] of its bottom-left corner, in field pixels (at 2x).
 const SLOTS = { hedgerow: [[0, 72], [96, 72], [192, 72]], woodland: [[4, 98]], martens: [[96, 124]], storks: [[150, 108]],
   deadwood: [[60, 118]], margins: [[206, 96]], pond: [[118, 150]], voles: [[236, 170]], beavers: [[214, 142]],
@@ -408,7 +409,7 @@ const TREE_SPOTS = [[200, 84], [176, 90], [266, 88], [126, 92], [100, 96], [84, 
 const FEAT_W = 64, FEAT_H = 32;
 const orders = {};
 function treeSpots(region, feats = []) {
-  if (region === 'woodland') return TREE_SPOTS;
+  if (region === 'woodland') return TREE_SPOTS.filter(([x, y]) => treeOk(region, x, y));   // (none stands in the stream: tests/water.cjs)
   let h = 2166136261; for (const c of region) h = Math.imul(h ^ c.charCodeAt(0), 16777619);   // FNV-1a seed
   const rnd = () => { h = Math.imul(h ^ (h >>> 15), 2246822507) ^ Math.imul(h ^ (h >>> 13), 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; };
   // A tree may stand behind a feature (lower down is drawn in front), but its base never stands ON one (4 px margin).
@@ -416,7 +417,7 @@ function treeSpots(region, feats = []) {
   let grid = orders[region];
   if (!grid) {
     grid = [];
-    for (let y = GROUND[0] + 16; y <= FH - 4; y += 12) for (let x = 18; x <= FW - 18; x += 16) grid.push([x, y]);
+    for (let y = GROUND[0] + 16; y <= FH - 4; y += 12) for (let x = 18; x <= FW - 18; x += 16) if (treeOk(region, x, y)) grid.push([x, y]);   // never in the water (src/water.js)
     for (let i = grid.length - 1; i > 0; i--) { const k = Math.floor(rnd() * (i + 1)); [grid[i], grid[k]] = [grid[k], grid[i]]; }
     orders[region] = grid;
   }
@@ -439,6 +440,12 @@ class Field {
     f.className = 'wfield';
     f.style.backgroundImage = `url('assets/ui/field-${region}.png')`;
     el.appendChild(f);
+    this.water = null;
+    if (WATER[region]) {   // the land's water (src/water.js), under every feature, tree and animal; two frames of glints
+      const cv = document.createElement('canvas'); cv.width = FW; cv.height = FH; cv.className = 'wwater';
+      const g = cv.getContext('2d'); this.water = { g, frames: [0, 1].map(k => paintWater(region, k, g.createImageData(FW, FH))), k: -1, t: 0 };
+      g.putImageData(this.water.frames[0], 0, 0); this.water.k = 0; f.appendChild(cv);
+    }
     const put = (src, x, y, k, cls = '') => {   // bottom-left at (x, y), scaled k
       const img = document.createElement('img');
       img.src = src; img.alt = ''; img.className = `wf ${cls}`;
@@ -450,12 +457,12 @@ class Field {
     this.put = put;
     // Features are PixelLab art at 1x (2026-10-24; the hand-drawn ones were 1x art shown at 2x).
     for (const id of done) {
-      const spots = region === 'woodland' ? SLOTS[id] || [] : [REGION_SPOTS[order.indexOf(id)]].filter(Boolean);
+      const spots = this.spotsOf(id);
       for (const [x, y] of spots) put(`assets/ui/wild-${id}.png`, x, y, 1, 'feat');
     }
     const total = planted.reduce((a, [, n]) => a + n, 0);
     const kinds = planted.flatMap(([id, n]) => Array(n).fill(id));
-    const spots = treeSpots(region, done.map(id => REGION_SPOTS[order.indexOf(id)]).filter(Boolean));
+    const spots = treeSpots(region, done.flatMap(id => region === 'woodland' ? [] : this.spotsOf(id)));
     const nTrees = Math.min(spots.length, Math.ceil(total / 2));
     this.freeSpots = spots.slice(nTrees); this.treeKind = kinds[0] || 'oak';
     for (let i = 0; i < nTrees; i++) {
@@ -465,11 +472,12 @@ class Field {
     }
     // Animals: start at random spots; birds that fly take the sky.
     this.critters = found.map((w, i) => {
-      const fly = w.kind === 'bird' && w.pose !== 'standing';
-      const c = { w, fly, img: put(`${artDir(w.sprite)}/${w.sprite}-0.png`, 0, 0, 1, 'critter'), frame: 0, t: Math.random(), pause: Math.random() * 2,
-        x: 20 + Math.random() * (FW - 40), y: fly ? 14 + Math.random() * 30 : GROUND[0] + Math.random() * (GROUND[1] - GROUND[0]),
+      const fly = (w.kind === 'bird' || w.pose === 'flying') && w.pose !== 'standing' && w.pose !== 'ground';
+      const home = fly ? 'sky' : homeOf(w.id), at = fly ? null : startIn(region, home);   // its own zone: land, water, shore or edge (src/water.js)
+      const c = { w, fly, home, img: put(`${artDir(w.sprite)}/${w.sprite}-0.png`, 0, 0, 1, 'critter'), frame: 0, t: Math.random() * 10, pause: Math.random() * 2,
+        x: at ? at[0] : 20 + Math.random() * (FW - 40), y: at ? at[1] : fly ? 14 + Math.random() * 30 : GROUND[0] + Math.random() * (GROUND[1] - GROUND[0]),
         speed: fly ? 22 + Math.random() * 10 : 6 + Math.random() * 6, dir: Math.random() < 0.5 ? -1 : 1 };
-      if (!fly) this.pick(c);
+      if (!fly) { c.tx = c.x; c.ty = c.y; this.pick(c); }
       // Tap an animal in the picture to see it close up (the user, 2026-10-27): the same card as the collection's.
       c.img.style.pointerEvents = 'auto'; c.img.style.cursor = 'pointer'; c.img.dataset.critter = w.id;   // (not data-species: the collection cards use that)
       c.img.addEventListener('click', e => { e.stopPropagation(); if (this.onPick) this.onPick(w.id); });
@@ -482,13 +490,14 @@ class Field {
 
   // Tap-to-preview (the user, 2026-10-28: "see the effect BEFORE purchasing"): a project's feature, or new trees, ghosted
   // in the land; clearGhosts() takes them away. arrive(id) animates a just-bought feature into the scene.
-  spotsOf(id) { return this.region === 'woodland' ? SLOTS[id] || [] : [REGION_SPOTS[this.order.indexOf(id)]].filter(Boolean); }
+  // Each project's spot: on land, or in the water for a sea project (src/water.js PLACE), same spot every visit.
+  spotsOf(id) { if (this.region === 'woodland') return SLOTS[id] || []; this.featAt = this.featAt || featureSpots(this.region, this.order, REGION_SPOTS); return [this.featAt[this.order.indexOf(id)]].filter(Boolean); }
   ghost(id) { this.clearGhosts(); for (const [x, y] of this.spotsOf(id)) this.put(`assets/ui/wild-${id}.png`, x, y, 1, 'feat ghost'); }
   ghostTrees(n) { this.clearGhosts(); for (const [x, y] of this.freeSpots.slice(0, n)) this.put(`assets/tree-${this.treeKind}-2.png`, x, y, 1, 'tree ghost').style.transform = 'translate(-50%, -100%)'; }
   clearGhosts() { this.f.querySelectorAll('.ghost').forEach(g => g.remove()); }
   arrive(id) { this.f.querySelectorAll(`img.feat[src$="wild-${id}.png"]`).forEach(g => g.classList.add('arrive')); }
   fit() { this.f.style.transform = `scale(${this.el.clientWidth / FW})`; }
-  pick(c) { c.tx = 10 + Math.random() * (FW - 20); c.ty = GROUND[0] + Math.random() * (GROUND[1] - GROUND[0]); }
+  pick(c) { const p = STILL.has(c.w.id) ? null : nextIn(this.region, c.home, c.x, c.y); if (p) { c.tx = p[0]; c.ty = p[1]; } else { c.tx = c.x; c.ty = c.y; } }   // a straight walk that stays in its zone
   stop() { cancelAnimationFrame(this.raf); this.raf = null; }
 
   step(now) {
@@ -497,6 +506,7 @@ class Field {
     if (this.el.offsetParent !== null) {           // only while the NATURE screen is showing
       this.fit();
       for (const c of this.critters) this.move(c, dt);
+      if (this.water && (this.water.t += dt) > 0.7) { this.water.t = 0; this.water.k ^= 1; this.water.g.putImageData(this.water.frames[this.water.k], 0, 0); }
     }
     this.raf = requestAnimationFrame(t => this.step(t));
   }
@@ -510,16 +520,29 @@ class Field {
     } else if (c.pause > 0) {
       c.pause -= dt; moving = false;
     } else {
-      const dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy);
-      if (d < 1) { c.pause = 1 + Math.random() * 3; this.pick(c); moving = false; }
-      else { c.x += dx / d * c.speed * dt; c.y += dy / d * c.speed * 0.6 * dt; if (Math.abs(dx) > 0.5) c.dir = dx < 0 ? -1 : 1; }
+      const dx = c.tx - c.x;
+      if (!walk(c, dt)) { c.pause = 1 + Math.random() * 3; this.pick(c); moving = false; }
+      else if (Math.abs(dx) > 0.5) c.dir = dx < 0 ? -1 : 1;
     }
     c.t += dt;
     const frame = moving ? Math.floor(c.t / (c.fly ? 0.18 : 0.25)) % 2 : 0;   // 0 when standing still (not `false`)
     if (frame !== c.frame) { c.frame = frame; c.img.src = `${artDir(c.w.sprite)}/${c.w.sprite}-${frame}.png`; }
     const im = c.img;
     im.style.left = `${Math.round(c.x - im.naturalWidth / 2)}px`;
-    im.style.top = `${Math.round(c.y)}px`;
+    // In the water an animal shows only above the waterline (src/water.js): whales and dolphins rise and dip, fish show a fin and
+    // leap now and then, swimmers float. `under`: the share of the sprite below the water line.
+    let under = 0;
+    if (!c.fly && isWater(this.region, c.x, c.y)) {
+      const ph = c.t + (c.w.id.length * 1.7);
+      if (FISH.has(c.w.id)) { const leap = (ph % 7) < 0.6; under = leap ? 0.15 : 0.75; }
+      else if (STILL.has(c.w.id)) under = 0.5;
+      else if (c.home === 'water') under = 0.45 + 0.25 * Math.sin(ph * 0.9);
+      else if (c.home === 'edge') under = 0.2;
+      else under = 0.5;
+    }
+    const h = im.naturalHeight || 0, cut = Math.round(h * under);
+    im.style.top = `${Math.round(c.y) + cut}px`;
+    im.style.clipPath = cut ? `inset(0 0 ${cut}px 0)` : '';
     im.style.zIndex = c.fly ? 500 : Math.round(c.y);
     im.style.transform = `translateY(-100%) scaleX(${c.dir})`;   // sprites face right; flip to walk left
   }
