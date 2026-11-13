@@ -192,7 +192,7 @@ p { margin: 0; }
 .rc-chip { flex: 1 1 0; min-width: 0; padding: 0 6px; gap: 4px; justify-content: flex-start; }
 .rc-chip.more { flex: none; }
 .rc-chip img { width: 20px; height: 20px; flex: none; image-rendering: pixelated; }
-.rc-chip span { font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-chip span { font-size: 7px; line-height: 1.3; overflow: hidden; text-align: left; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }   /* two lines inside the 40 px chip: one line cut 'Culpeo fox' at 390 too (tests/chipsfit.cjs) */
 .rc-star { font-style: normal; color: var(--gold-dark); }
 .rc-rows p { display: flex; justify-content: space-between; gap: 8px; margin: 3px 0; font-size: 8px; }
 /* R10: the gear sheet (src/ui.js openGear) */
@@ -845,12 +845,38 @@ h2.sub { margin-top: -4px; }
 .hcap.working .dots::after { content: '...'; animation: hcapdots 1.2s steps(4) infinite; display: inline-block; width: 1.5em; overflow: hidden; vertical-align: bottom; }
 @keyframes hcapdots { from { width: 0; } to { width: 1.5em; } }
 /* M4: the ending card (ui.js showEnding), on the payoff's overlay style */
-.ending .ending-title { font-size: 14px; color: #1b1b2f; margin: 4px 0 10px; }
+.ending .ending-title { font-size: 14px; color: #1b1b2f; margin: 4px 0 10px; line-height: 1.3; }
+/* The lines sat tight under each other at 320 (the Coordinator's look, release C, 2026-11-11; tests/crossrewardui.cjs D checks the spacing). */
+.ending .payoff-card p { line-height: 1.5; }
+.ending .payoff-card .ending-prize { margin: 12px 0; }
 /* Nature finance desk (src/hangar.js financeHTML): one column, normal-size buttons (screenshot, 2026-10-28: cramped) */
 .fline.finance { display: block; }
 .fline.finance .fin-head { margin-bottom: 4px; }
 .fline.finance > .btn, .fline.finance .next .btn { font-size: 8px; padding: 6px 8px; width: auto; display: inline-block; }
 .fline.finance .next { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
+.fline.finance .fin-news.up { color: var(--green-dark); }
+.fline.finance .fin-news.down { color: #b23a2e; }
+.fline.finance > .btn { margin: 4px 0 8px; }
+.fline.finance #hCashOut { margin-left: 6px; }
+.fin-chart { margin: 4px 0 6px; }
+.fin-chart svg { width: 100%; height: auto; display: block; }
+.fin-chart polyline { fill: none; stroke-width: 1.6; }
+.fin-chart circle { stroke: none; }
+.fin-chart .fc-axis { stroke: var(--muted); stroke-width: 1; }
+.fin-chart .fc-tick { font: 7px 'Pixel', monospace; fill: var(--muted); }
+.fin-chart .fc-mark { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.fc-legend { display: flex; gap: 10px; font-size: 7px; margin-top: 2px; }
+.fc-legend i { display: inline-block; width: 12px; height: 2px; margin-right: 4px; vertical-align: middle; background: currentColor; }
+.fc-market { stroke: var(--night); fill: var(--night); color: var(--night); }
+.fc-pay { stroke: #b23a2e; fill: #b23a2e; color: #b23a2e; }
+.fc-get, .fc-fund { stroke: var(--green-dark); fill: var(--green-dark); color: var(--green-dark); }
+.fin-chart polyline.fc-market, .fin-chart polyline.fc-pay, .fin-chart polyline.fc-get, .fin-chart polyline.fc-fund { fill: none; }
+.fline.finance .fin-sub { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 10px; }
+.fline.finance .fin-sub .name { white-space: nowrap; }
+.fline.finance .fin-rates { margin: 2px 0; }
+.fline.finance .fin-up { color: var(--green-dark); }
+.fline.finance .fin-down { color: #b23a2e; }
+.fline.finance .hp-info { font-size: 7px; padding: 2px 5px; margin-left: 4px; }
 .sbar-delta.same { color: #5a6b80; }
 /* Steady lane progress bars (src/missions2.js STEADY). */
 .mrow .mbar { display: block; height: 6px; margin: 4px 0 2px; background: rgba(255,255,255,.18); border-radius: 3px; overflow: hidden; }
@@ -912,6 +938,7 @@ h2.sub { margin-top: -4px; }
 .lvbar i.on { background: #4caf50; }
 .hp-now, .hp-next { margin: 0 0 2px; line-height: 1.3; }
 .hp-now { color: var(--muted); }
+.rowc-lvl { margin: -2px 0 6px; padding: 4px 8px 2px; border: 2px solid var(--ink); border-top: 0; background: #fffbe8; }   /* NATURE: the tapped tool row's level bar (src/wild.js toolLevelHTML) */
 .nextplane { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
 .payoff.atbox { align-items: flex-start; justify-content: flex-start; }
 .payoff.atbox .payoff-card { box-sizing: border-box; max-width: none; }

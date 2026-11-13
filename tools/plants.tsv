@@ -80,7 +80,7 @@ releasegate	tools/gate-plan.py	s/if path.startswith('tests\/') and path.endswith
 releasegate	tests/PATHMAP	s/^group sim-node-only | \(.*\) | NONE$/group sim-node-only | \1 | flight/	Node-only sim files wrongly pull browser tests
 releasegate	tests/PATHMAP	s/ walkthrough postrails school flightregion/ walkthrough school flightregion/	rules.js no longer pulls postrails
 releasegate	tests/PATHMAP	s/| sim-bank fares flight$/| fares flight/	imports of rules.js no longer pull the contract test [x2]
-releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails twistdraw stripclear foundgate$/| onrails tipqueue l4hint twistdraw stripclear foundgate/	GameScene no longer pulls postrails
+releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails twistdraw stripclear foundgate cityrowui$/| onrails tipqueue l4hint twistdraw stripclear foundgate cityrowui/	GameScene no longer pulls postrails
 releasegate	tests/PATHMAP	s/ onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school/ onrails rails2 tipqueue l4hint walkthrough school/	the short-phone onrails run dropped
 season2-smoke@PART=Bweurope,Bnamerica,Bsasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B1)
 season2-smoke@PART=Bafrica,Bsamerica,Beasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B2)
@@ -120,7 +120,7 @@ hangar-feedback	src/fleet.js	s/keys: \['pickup'\]/keys: ['pickupX']/	a changed s
 lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return false;/	the lap counts away from home
 capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazard pool ignored (heat only)
 twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
-finance	src/finance.js	s/Math.round(L.base - L.slope \* B)/Math.round(L.base - L.slope * 0)/	the rate ignores nature
+finance	src/finance.js	s/(MARKET.gap0 - MARKET.gap100) \* b)/(MARKET.gap0 - MARKET.gap100) * 0)/	the rate ignores nature
 hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (false) pv.scrollIntoView/	a tapped row previews off screen
 hudlayout	src/GameScene.js	s/if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);/if (false) this.kindsText.setX(cx - 4);/	the kinds meter under CLEAN
 season2	src/areas.js	s/\.filter(k => AREAS\[k\])/.filter(k => k)/	save.areas holds ocean (Pacific stepping stones): the title crashed on AREAS[ocean]
@@ -690,7 +690,7 @@ resetui	src/ui.js	s/      location.reload(); .*$//	reset does not reload the pag
 resetui	src/ui.js	s/ Write your pilot code down first if you want to come back to your online pilot\.//	the reset confirm does not tell the player to write the pilot code down first
 payofffull	src/hangar.js	s#lab.style.top = `${Math.round(c.height + 6)}px`;#lab.style.top = `${Math.round(m.top - c.top - 6)}px`;#	the payoff label is back over the plane
 celebrate	src/celebrate.js	s#large: { particles: 24,#large: { particles: 40,#	a large burst makes 40 sparkles (over the cap)
-celebrate	src/celebrate.js	s#reduced ? { particles: 0, push: false, still: true, settleMs: 1000 }#reduced ? { particles: 8, push: false, still: true, settleMs: 1000 }#	reduced motion still makes sparkles
+celebrate	src/celebrate.js	s#reduced ? { particles: 0, push: false, still: true, settleMs: 1000, waves: 0, waveMs: 0 }#reduced ? { particles: 8, push: false, still: true, settleMs: 1000, waves: 0, waveMs: 0 }#	reduced motion still makes sparkles
 celebrate	src/celebrate.js	s#host.dataset.celebrated === '1')#false)#	a second celebration of the same host replays
 celebrate	src/celebrate.js	s#if (cue \&\& deps.sfx \&\& typeof deps.sfx\[cue\] === 'function') deps.sfx\[cue\]();#if (false) deps.sfx[cue]();#	the kit plays no cue
 celebrate	src/celebrate.js	s#  'nature-funded': { size: 'small', cue: 'grow' },#  'nature-funded': { size: 'small', cue: 'grow' }, 'crossing-lost': { size: 'large', cue: 'softfail' },#	a lost crossing is celebrated
@@ -710,7 +710,7 @@ liverylook	src/hangar.js	s/lookFiles(id, f\.planes\[id\], 'hangar', liveryOn(s))
 liverylook	src/hangar.js	s/lookFiles(planeId, fn\.planes\[planeId\], 'hangar', liveryOn(s))/lookFiles(planeId, fn.planes[planeId], 'hangar')/	the preview of a purchase drops the livery
 liverylook	src/GameScene.js	s/'flight', liveryOn(this\.save))/'flight')/	the flying plane never wears the livery
 liverylook	src/sim/rules.js	s/^import { addPrizes } from '\.\.\/rewards\.js';/import { addPrizes } from '..\/rewards.js'; import { liveryOn } from '..\/livery.js';/	the sim engine imports the livery
-hudclear	src/hudclear.js	s/  return y > 0 ? `${y + 6}px` : '';/  return '';/	the toast is placed at 16 percent of the page again (toastTopCss never moves it below the HUD text)
+hudclear	src/hudclear.js	s/  return top > 0 ? `${top + 6}px` : '';/  return '';/	the toast is placed at 16 percent of the page again (toastTopCss never moves it below the HUD text)
 hudclear	style.css	s/top: calc(var(--hud-bottom, 0px) + 6px); bottom: auto;/top: 6px; bottom: auto;/	the coach strip opens at y 6 again (it covers the HUD text on a small phone)
 hudclear	src/GameScene.js	s/const dropToast = () => { if (this\.explaining \&\& toastEl/const dropToast = () => { if (false \&\& toastEl/	a toast already up is not moved below a strip that opens (they stack on each other)
 badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 341px) { .badge2 { font-size: 7px; } }/	the badge text is 7 px again on wide phones (Bronze reads Dronze)
@@ -848,6 +848,19 @@ tourflight	src/tour.js	s/if (++gone > 6) { this.exited = .gone.; finish(); retur
 tourflight	src/tour.js	s/if (m\[kid\] >= 2) this.markDone(kid); else writeSave(this.save);/if (m[kid] >= 99) this.markDone(kid); else writeSave(this.save);/	an interrupted step never counts as seen (it would loop on every HOME)
 tourflight	src/tour.js	s/if (hudShowing()) { this.exited = 'flight'; return true; }   \/\/ a flight is on: never show a step over the game/\/\/ (removed)/	a step asked for during a flight is shown over the game
 tourflight	src/GameScene.js	s/    if (this.ui \&\& this.ui.tour) this.ui.tour.abort();   \/\/ a flight starting by any route/    \/\/ (abort removed)   \/\/ a flight starting by any route/	scene.startFlight() does not end a rails step that is up
+hudclear	src/hudclear.js	s/export const HUD_BOTTOM = 110;/export const HUD_BOTTOM = 90;/	the toast opens on the land's card again (HUD_BOTTOM back to 90, L-37)
+hudlayout	src/GameScene.js	s/ay = above >= hudLow ? above :/ay = true ? Math.max(10, above) :/	the autopilot label follows the plane onto the distance counter again
+hudlayout	src/GameScene.js	s/this.kindsText.setVisible(!(h \&\& /this.kindsText.setVisible(true || !(h \&\& /	the long ground-strip hint is drawn over 'kinds n/5' again
+crossrewardui	style.css	s/^\.ending \.payoff-card p { line-height: 1\.5; }$//	the ending card's lines sit tight again (no line height)
+hudclear	src/GameScene.js	s/^    this\.tidyToast();   \/\/ a toast already up (opened at the title).*$//	a toast that opened at the title stays at 16 percent for the first flight frame (L-43)
+celebrate	src/celebrate.js	s/waves: 3, waveMs: 700/waves: 1, waveMs: 700/	the lap's burst is a single wave (no longer than a crossing's)
+crossrewardui	src/ui.js	s/el.hidden = false; celebrateEvent(el.querySelector('.payoff-card'), 'lap-landed');/el.hidden = false;/	the ending card plays no celebration
+naturebar	src/wild.js	s/+ (this.toolId === line.id ? this.toolLevelHTML(line) : '');/+ '';/	a tapped NATURE tool row shows no level bar
+naturebar	src/wild.js	s/i < c.have ? 'on' : ''}"><\/i>`).join('');$/i <= c.have ? 'on' : ''}"><\/i>`).join('');/	the NATURE bar fills one segment too many
+hudlayout	src/GameScene.js	s/y = Math.max(90, Math.ceil(this.hudTextBottom()) + 3 + 19);/y = 90;/	the land's card sits at y 90 again, over a two-line mission's next-airport line
+chipsfit	src/ui.js	s/if (narrow \&\& v.allChips.length > 2) {/if (false) {/	three chips again on a phone (labels cut to two letters)
+chipsfit	style.css	s/^\.rc-chip span { font-size: 7px; line-height: 1\.3;.*$/.rc-chip span { font-size: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }/	the chip label is one cut line again
+upgradetext	src/fleet.js	s/  if (fx.co2) out.push(/  if (false) out.push(/	a level loses its effect text (CO2 levels read as their name only)
 rebalance	src/missions2.js	s/: open.filter(t => !t.full).length, kinds = /: open.length, kinds = /	kinds3 counts full kinds again
 rebalance	src/missions2.js	s/ready: f => STAR_GROW3.on || f.kindsRoom >= 2,/ready: f => STAR_GROW3.on || true,/	kinds3 offered with fewer than 2 kinds with room
 rebalance	src/landtrees.js	s/kindsMissionDone(save, land) || kindsStuck(save, land) :/kindsMissionDone(save, land) :/	slot 4 never opens when kinds3 is stuck
@@ -877,3 +890,12 @@ rebalance	src/groves.js	s/      if (s.fresh) { keep.push({ points: from, fresh: 
 rebalance	src/groves.js	s/const from = s.d ? s.points : Math.round(Math.min(1, s.points \/ need) \* goal);/const from = s.d ? s.points : 0;/	a sapling's flight points are lost when growth switches to days
 rebalance	src/sim/rules.js	s/GROW_DAYS.on ? { flown:/false ? { flown:/	the engine never banks game days
 rebalance	src/config.js	s/export const GROW_DAYS = { on: true,/export const GROW_DAYS = { on: false,/	growth in days ships switched off
+financemarket	src/finance.js	s/Math.min(buyAt(level, B, T) - 1, Math.round(T \* (1 - gapAt(level, B) \/ 2)))/Math.round(T * (1 + gapAt(level, B)))/	no spread: selling pays as much as buying costs
+financemarket	src/finance.js	s/(FUND.drift.at100 - FUND.drift.at0) \* Math.max/(FUND.drift.at100 - FUND.drift.at0) * 0 * Math.max/	the fund's drift ignores nature
+financemarket	src/finance.js	s/(save.flightSeconds || 0) \/ GAME_DAY)/Date.now() \/ 3600e3)/	the market runs on real time, not game time
+financemarket	src/finance.js	s/export const financeBio = save => worldBiodiversity(save);/export const financeBio = save => natureHealth(save);/	the exchange reads home nature, not the whole world
+financemarket	src/finance.js	s/drift: { at0: 0.0007,/drift: { at0: -0.0005,/	the fund loses on average for a low-nature player
+financemarket	src/finance.js	s/pull: 1 \/ 10, sigma: 0.075,/pull: 1 \/ 10, sigma: 0.03,/	the market barely fluctuates
+cityrow	src/sim/rules.js	s/return Math.max(0, Math.min(1, 1 - (d - STORMS.spacing) \/ CITY_FADE));/return 1;/	the buildings show all the time again
+cityrow	src/sim/rules.js	s/const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));/const d = Math.abs(ahead - this.distancePx);/	only the next city shows its buildings
+cityrowui	src/GameScene.js	s/    this.city.setAlpha(this.cityRowAlpha());/    this.city.setAlpha(1);/	the game ignores the rule

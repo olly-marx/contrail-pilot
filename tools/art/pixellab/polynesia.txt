@@ -3,3 +3,5 @@ manumea|tooth-billed pigeon (manumea), a dark slate-green pigeon with chestnut b
 kakerori|Rarotonga monarch (kakerori), a small plain all-grey flycatcher bird, grey belly with no yellow, pale blue-grey bill|bird|flying
 humpback|humpback whale, dark grey with long white flippers and knobbly head|animal|ground
 greenturtle|green sea turtle swimming, a flat smooth olive-brown sea turtle shell with long paddle flippers, not a tortoise|animal|ground
+mantaray|reef manta ray swimming, wide flat black wings with a white belly|animal|ground
+reefshark|blacktip reef shark swimming, grey with black fin tips|animal|ground

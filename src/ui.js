@@ -68,6 +68,7 @@ import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
+import { celebrateEvent } from './celebrate.js';
 import { setMusicOff, setMusicLevel, armMusic, syncMusic } from './music.js';
 import { musicStateOf, nextMusicState, musicChipText } from './musicplan.js';
 
@@ -735,8 +736,11 @@ export class UI {
     $('rEra').innerHTML = v.era ? `<span class="era-badge">${esc(v.era.id)}</span><span class="era-track"><span class="era-fill" style="width:${(v.era.frac * 100).toFixed(1)}%"></span></span><span class="rc-erat">${esc(v.era.text)}</span>` : '';
     const chipHTML = (c, i) => `<button class="chip rc-chip" type="button" data-i="${i}" data-kind="${c.kind}">${c.kind === 'animal' ? `<img src="${animalPortrait(WILDLIFE.find(w => w.id === c.id))}" alt="">`
       : c.kind === 'badge' ? `<img src="${medal(c.id, c.tier)}" alt="">` : '<i class="rc-star">&#9733;</i>'}<span>${esc(c.label)}</span></button>`;
+    // On a phone the chip row is about 276 px wide (measured at 320 and 390): three chips cut each name ('Gu..' for Guanaco; design run, problem 5). There: two chips and a short '+N' chip.
+    const narrow = innerWidth < 480;
+    if (narrow && v.allChips.length > 2) { v.chips = v.allChips.slice(0, 2); v.moreChips = v.allChips.length - 2; }
     $('rChips').hidden = !v.chips.length;
-    $('rChips').innerHTML = v.chips.map(chipHTML).join('') + (v.moreChips ? `<button class="chip rc-chip more" type="button" data-more="1"><span>+${v.moreChips} more</span></button>` : '');
+    $('rChips').innerHTML = v.chips.map(chipHTML).join('') + (v.moreChips ? `<button class="chip rc-chip more" type="button" data-more="1" aria-label="${v.moreChips} more"><span>+${v.moreChips}${narrow ? '' : ' more'}</span></button>` : '');
     // -- the sheets behind the lines (src/sheet.js): the old tally, the missions, the four Earth bars, a chip's story
     $('rMaths').onclick = () => showSheet({ eyebrow: 'THIS FLIGHT', title: 'Where it came from', html: `<div class="rc-rows">${v.tally.map(([a, b]) => `<p><span>${esc(a)}</span><b>${esc(b)}</b></p>`).join('')}</div>` });
     $('rMission').onclick = () => showSheet({ eyebrow: mi && mi.fail !== undefined ? 'NOT THIS TIME' : 'MISSIONS DONE', title: mi ? mi.line.replace(/^✓ /, '') : '', body: mi && mi.fail ? mi.fail : (mi ? mi.titles.join('. ') : '') });
@@ -986,7 +990,7 @@ export class UI {
       ${prize ? `<p class="ending-prize">${prizeLines(prize).join('<br>')}</p>` : ''}
       <p class="small">${(s.crossed || []).length} crossings flown. You finished Contrail Pilot!</p>
       <button id="endingOk" class="btn go big" type="button">OK</button></div>`;
-    el.hidden = false; sfx.coin && sfx.coin();
+    el.hidden = false; celebrateEvent(el.querySelector('.payoff-card'), 'lap-landed');   // the longer lap burst and its cue (src/celebrate.js; was a bare coin sound)
     document.getElementById('endingOk').onclick = () => { sfx.tick(); el.hidden = true; };
   }
   toast(title, body, kind = '', secs = 3.5) {

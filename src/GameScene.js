@@ -57,6 +57,7 @@ function lerpColour(a, b, t) {
 
 // How a flight ended, for the online Oops boards (from the crash message shown to the player).
 const LANDMARK_SCALE = 2;   // the user: bigger landmarks (whole numbers keep the pixels crisp)
+const FLIGHT_ANIMAL_SCALE = 1;   // ground animals in flight: their Wild Area size (Oliver, 2026-11-13: at 0.5 a rabbit was 6 px and hard to see; "make them all fairly large")
 const LANDMARK_HAZE = 0.82, LANDMARK_BACK = 6;   // skylines: a little see-through, base 6 px up behind the city row
 
 
@@ -313,6 +314,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])
       || (p => p.slice(0, 12).join() !== this.path.slice(0, 12).join())(pathNow())) { this.scene.restart({ go: true }); return; }   // (the whole near route: an aimed route can change after the first hop, src/aim.js)
     this.takeOff();   // the flight's rules (src/sim/rules.js): kit, random stream, onto the runway
+    this.tidyToast();   // a toast already up (opened at the title) moves under the HUD now, not on the first flight frame (L-43: tests/hudclear.cjs saw it on the banner for one frame)
     loading.flying = true;   // DECLARED: a flight (flight school too) is on, so the idle picture fetch waits (src/loader.js); cleared by onFinish and backToMenu
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
     this.regionBanner(this.regionNow);   // which land you take off from, and its meter
@@ -581,7 +583,7 @@ export class GameScene extends Phaser.Scene {
     if (this.school || !REGION_NAMES[r]) return;
     const bio = biodiversity(this.save, r);
     if (this.banner) this.banner.destroy();
-    const W = 220, x = WIDTH / 2, y = 90;   // under the distance and next-airport lines
+    const W = 220, x = WIDTH / 2, y = Math.max(90, Math.ceil(this.hudTextBottom()) + 3 + 19);   // under the distance, mission and next-airport lines (19 = half the card): at y 90 a two-line mission's next-airport line sat under the card (design run, problem 7)
     const bg = this.add.rectangle(0, 0, W, 38, 0x1b2838, 0.82).setStrokeStyle(1, 0xffe15a);
     const name = this.fitText(this.add.text(0, -12, REGION_NAMES[r].toUpperCase(), { fontFamily: FONT, fontSize: '8px', color: '#ffe15a' }).setOrigin(0.5), W - 12);
     const sub = this.add.text(0, 0, `BIODIVERSITY ${bio}`, { fontFamily: FONT, fontSize: '7px', color: '#ffe15a' }).setOrigin(0.5);
@@ -622,7 +624,8 @@ export class GameScene extends Phaser.Scene {
     const animal = sprite => {
       if (!clearOfRunway(atX)) return;
       const left = Math.random() < 0.5, standing = sprite.startsWith('sky-');
-      const img = this.add.image(atX, SKY_H + 4, `${sprite}-0`).setOrigin(0.5, 1).setFlipX(left);
+      // Real size classes (tools/art/sizes.py), at FLIGHT_ANIMAL_SCALE.
+      const img = this.add.image(atX, SKY_H + 4, `${sprite}-0`).setOrigin(0.5, 1).setFlipX(left).setScale(FLIGHT_ANIMAL_SCALE);
       this.wildLayer.add(img);
       this.life.push({ img, k: 1, kind: sprite, walk: standing ? 0 : (left ? -1 : 1) * Phaser.Math.FloatBetween(0, 3), t: Math.random() });
       this.seen(sprite);
@@ -683,6 +686,7 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar.tilePositionX += dx * 0.15;
     this.hills.tilePositionX += dx * 0.3; this.hills2.tilePositionX = this.hills.tilePositionX;
     this.city.tilePositionX += dx * 0.55;
+    this.city.setAlpha(this.cityRowAlpha());   // only near a city (src/sim/rules.js cityRowAlpha)
     this.landmarks = this.landmarks.filter(l => { l.x -= dx * 0.55; if (l.x + l.width < -10) { l.destroy(); return false; } return true; });
     this.ground.tilePositionX += dx; this.ground2.tilePositionX = this.ground.tilePositionX;
     if (this.hedge) this.hedge.tilePositionX += dx;
@@ -1253,6 +1257,13 @@ export class GameScene extends Phaser.Scene {
     if (!low && this.dropToast) this.dropToast();
   }
 
+  // Game y of the lowest top-HUD text line on screen (the distance, the mission or target line, the next-airport line).
+  hudTextBottom() {
+    let y = this.distText && this.distText.visible && this.distText.text ? this.distText.y + this.distText.height : 0;
+    for (const t of [this.missionText, this.nextText]) if (t && t.visible && t.text) y = Math.max(y, t.y + t.height);
+    return y;
+  }
+
   // Draw the frame the rules just stepped: every picture where its record says (sim engine 5f).
   // over: the flight had already ended before this frame (only the contrails fade and the rays show).
   syncViews(dt, dx, inIssr, over) {
@@ -1265,7 +1276,11 @@ export class GameScene extends Phaser.Scene {
       this.planeSprite.setAlpha(1);
       const left = Math.ceil((this.autoUntil - this.gameTime) / 1000), locked = this.gameTime < (this.autoFrom || 0) + POWERUPS.autoLockMs;
       this.autoText.setText(this.onAutopilot() ? (locked ? `AUTOPILOT ${left}` : `AUTOPILOT ${left} - TAP to take control`) : 'AUTOPILOT - tap to fly!');
-      this.autoText.setPosition(Math.max(this.autoText.width / 2 + 4, this.plane.x + PLANE.w / 2), Math.max(10, this.plane.y - 14)).setVisible(true);
+      // Above the plane, unless that puts it on the top HUD text (the distance, the mission line, the next-airport line: the Coordinator's
+      // screenshot, 2026-11-12, 'AUTOPILOT - tap to fly!' drawn over the distance): then under the plane, and never higher than the HUD's lower edge.
+      const hudLow = this.hudTextBottom() + 4 + this.autoText.height / 2;
+      const above = this.plane.y - 14, ay = above >= hudLow ? above : Math.max(hudLow, this.plane.y + PLANE.h + 14);
+      this.autoText.setPosition(Math.max(this.autoText.width / 2 + 4, this.plane.x + PLANE.w / 2), ay).setVisible(true);
     } else if (this.state === 'playing') {
       this.planeSprite.setAlpha(1);
       this.autoText.setVisible(false);
@@ -1576,6 +1591,10 @@ export class GameScene extends Phaser.Scene {
     if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! shade: cooler' : 'ICY AIR! heat trapped!');
     else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');
     else this.hintText.setText('');
+    // The hint and the forest meter's 'kinds n/5' share the ground strip: a long hint ran into it (the Coordinator's screenshot, 2026-11-12,
+    // 'ICY AIR! shade: cooler' over 'kinds 0/5'). While they would touch, the hint wins (it is about now) and 'kinds' waits.
+    if (this.kindsText) { const h = this.hintText.text ? this.hintText.getBounds() : null, k = this.kindsText.getBounds();
+      this.kindsText.setVisible(!(h && h.right + 4 > k.left && h.left < k.right + 4 && h.bottom > k.top && h.top < k.bottom)); }
 
     const forest = 'FOREST FULL!';   // one short line (the meter shows the rest; longer text ran into it): FULL beats the soil hint
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear

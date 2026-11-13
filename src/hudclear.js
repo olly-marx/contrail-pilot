@@ -4,7 +4,7 @@
 // HUD_BOTTOM is in game pixels (WIDTH = 288 wide); the page position follows the canvas's size and place.
 import { WIDTH } from './config.js';
 
-export const HUD_BOTTOM = 90;   // the lowest HUD text ends at about game y 87 (a two-line banner + the next-airport line): 3 px of air
+export const HUD_BOTTOM = 110;   // the lowest HUD item is the land's card ('TEMPERATE WOODLAND' + BIODIVERSITY, GameScene.regionBanner, game y 71 to 109, about 3 s at take-off and on a land change); the text lines end at about y 87
 
 // Page y of the HUD's lower edge, from the game canvas (0 when there is no canvas).
 export function hudBottomPx(canvas) {
@@ -21,8 +21,13 @@ export function hudShowing() {
 // The CSS `top` for the toast: under the HUD during a flight, '' (the stylesheet's 16 %) otherwise.
 export function toastTopCss() {
   if (!hudShowing()) return '';
-  const y = hudBottomPx(window.game && window.game.canvas);
-  return y > 0 ? `${y + 6}px` : '';
+  const cv = window.game && window.game.canvas, y = hudBottomPx(cv);
+  // The land's card moves down under a two-line mission + next-airport line (GameScene.regionBanner): while it shows, the toast goes under its real bottom.
+  let card = 0;
+  try { const s = window.game.scene.getScene('game'), b = s && s.banner, r = cv.getBoundingClientRect();
+    if (b && b.visible && r.width > 0) card = Math.round(r.top + (b.y + 19 + 1) * r.width / WIDTH); } catch (e) { card = 0; }
+  const top = Math.max(y, card);
+  return top > 0 ? `${top + 6}px` : '';
 }
 
 // The coach strip's CSS variable: the strip opens at --hud-bottom + 6 px (style.css .coach.tappable). Called each time a tip opens.

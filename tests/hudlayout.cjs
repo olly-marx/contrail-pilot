@@ -41,6 +41,35 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(/Next|km/.test(r.next), `and the next-airport line at the same time: "${r.next}"`);
   check(!r.hits.length, `no two HUD texts overlap: ${r.hits.join('; ')} ${JSON.stringify(r.boxes)}`);
   check(!p.errs.length, `page errors: ${p.errs}`);
+  // (C) The land's card (GameScene.regionBanner, about 3 s at take-off and on a land change) with this two-line title and the next-airport line on screen: it sits under both (design run, problem 7).
+  const card = await p.evaluate(() => { const s = game.scene.getScene('game'); s.regionBanner(s.regionNow); const c = s.banner; if (!c) return null;
+    const C = c.getBounds(), hits = ['missionText', 'nextText', 'distText'].filter(n => s[n].visible && s[n].text).filter(n => { const A = s[n].getBounds(); return A.x < C.x + C.width && C.x < A.x + A.width && A.y < C.y + C.height && C.y < A.y + A.height; });
+    return { top: Math.round(C.y), bottom: Math.round(C.y + C.height), missionH: Math.round(s.missionText.height), mission: s.missionText.text, next: s.nextText.text, nextBottom: Math.round(s.nextText.y + s.nextText.height), hits }; });
+  check(card && card.missionH > 12 && /Next|km/.test(card.next), `FIXTURE (C): the land's card opened with a two-line (wrapped) title and the next-airport line on screen: ${JSON.stringify(card)}`);
+  check(card && !card.hits.length, `(C) the land's card never covers the mission title or the next-airport line: ${JSON.stringify(card)}`);
+  // The Coordinator's screenshot (2026-11-12, a normal flight at 390x844): 'AUTOPILOT - tap to fly!' drawn over the distance counter when the
+  // plane flies high, and 'ICY AIR! shade: cooler' over 'kinds 0/5' in the ground strip. (A) the plane at the top of the sky on autopilot.
+    // The save above has no autoTakeoff: the plane is still parked on the runway ('HOLD to take off!'). Hold to take off, as a player does, until the flight is in the air.
+  await p.mouse.move(195, 600); await p.mouse.down();
+  await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 12000 }).catch(() => {});
+  await p.mouse.up();
+  const hi = [];
+  for (const y of [4, 20, 40, 60]) {
+    await p.evaluate(y => { const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.nextAirport.worldX = s.distancePx + 2000; s.plane.y = y; s.plane.vy = 0; }, y); await p.waitForTimeout(120);   // (the airport moved 2,000 px ahead: the check above brought it within 600 px and the plane would start its landing, where no autopilot label shows)
+    hi.push(await p.evaluate(y => { const s = game.scene.getScene('game'), a = s.autoText, on = ['distText', 'missionText', 'nextText'].filter(n => s[n].visible && s[n].text && (() => { const A = a.getBounds(), C = s[n].getBounds();
+      return A.x < C.x + C.width && C.x < A.x + A.width && A.y < C.y + C.height && C.y < A.y + A.height; })());
+      return { y, state: s.state, shown: a.visible && !!a.text, planeY: Math.round(s.plane.y), autoY: Math.round(a.y), on }; }, y));
+  }
+  check(hi.every(h => h.shown && Math.abs(h.planeY - h.y) < 30), `FIXTURE (A): the autopilot label shows with the plane held high: ${JSON.stringify(hi)}`);
+  check(hi.every(h => !h.on.length), `(A) the autopilot label is never drawn over the distance, the mission line or the next-airport line when the plane flies high: ${JSON.stringify(hi.filter(h => h.on.length))}`);
+  // (B) the longest hint with the forest meter's kinds line (a Comet with tree planting: 'kinds' sits at x 126, no CLEAN button).
+  await p.evaluate(() => { const s = game.scene.getScene('game'), t = s.hintText, set = t.setText.bind(t); t.setText = () => set('ICY AIR! heat trapped!'); s.plane.y = 200; });
+  await p.waitForTimeout(150);
+  const gs = await p.evaluate(() => { const s = game.scene.getScene('game'), h = s.hintText, k = s.kindsText;
+    if (!k) return { kinds: false }; const A = h.getBounds(), C = k.getBounds();
+    return { kinds: true, hint: h.visible ? h.text : '', kindsShown: k.visible && !!k.text, touch: k.visible && A.x < C.x + C.width && C.x < A.x + A.width && A.y < C.y + C.height && C.y < A.y + A.height }; });
+  check(gs.kinds && gs.hint === 'ICY AIR! heat trapped!', `FIXTURE (B): the kinds meter exists and the long hint is on screen: ${JSON.stringify(gs)}`);
+  check(!gs.touch, `(B) the ground-strip hint is never drawn over 'kinds n/5': ${JSON.stringify(gs)}`);
   // A 2010s plane with Ops 8 (the CLEAN button beside DROP) and the forest meter's 'kinds n/3' showing: nothing in the
   // ground strip overlaps (the screenshot, 2026-10-28: 'kinds' ran under CLEAN).
   const q = await b.newPage({ viewport: { width: 390, height: 844 } }); q.errs = []; q.on('pageerror', e => q.errs.push(String(e)));

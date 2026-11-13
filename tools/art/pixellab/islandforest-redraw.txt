@@ -1,0 +1,6 @@
+id|name|kind|pose
+tui|tui bird, glossy dark blue-green with a white throat tuft|bird|flying
+fantail|New Zealand fantail, small brown bird with a pale breast and a long spread fan tail|bird|flying
+morepork|morepork owl, small brown owl with white spots and big yellow eyes, wings spread|bird|flying
+pukeko|pukeko, purple-blue swamp hen with a red beak and red forehead shield and long orange legs|bird|standing
+kereru|kereru, a big New Zealand wood pigeon with a shiny green head and back, white breast, red beak and red feet|bird|flying

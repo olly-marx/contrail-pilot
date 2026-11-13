@@ -18,7 +18,7 @@ group results-card | src/resultscard.js src/nextup.js src/ui.js src/tour.js src/
 group heavy-onboarding | src/missions2.js src/upgrades.js src/hub.js src/wild.js | postrails
 group records | src/records.js src/recordsui.js | records-screen
 group save-season2 | src/save.js src/season2.js src/areas.js src/season.js src/crossings.js src/updates.js src/main.js src/reprice.js src/welcome.js | season2 season2-smoke savesafe updates cache reset welcome saveloss preview
-group nature-screen | src/wild.js src/nature.js src/habitats.js src/habitat/* src/landtrees.js src/groves.js src/wildlife.js src/animalart.js src/weboflife.js src/nexthere.js | nature nature-unknown wild wildfield regions biodiversity treepic wildlife forestmeter fields homenature
+group nature-screen | src/wild.js src/nature.js src/habitats.js src/habitat/* src/landtrees.js src/groves.js src/wildlife.js src/animalart.js src/weboflife.js src/nexthere.js src/water.js | nature nature-unknown wild wildfield regions biodiversity treepic wildlife forestmeter fields homenature
 group hangar-upgrades | src/treecount.js src/hangar.js src/fleet.js src/fleetfacts.js src/planelook.js src/planeparts.js src/badges.js src/eras.js src/statbars.js src/capability.js src/cappool.js src/capworker.js src/finance.js | hangar hangarnew upgrades progression looks fleetfacts badges badgeart fares eras crystals onrails payoffdraw payoffbroken
 group hangar-upgrades | src/hangar.js src/fleet.js src/fleetfacts.js src/planelook.js src/planeparts.js src/badges.js src/eras.js src/statbars.js src/capability.js src/cappool.js src/capworker.js src/finance.js | hangar hangarnew upgrades progression looks fleetfacts badges badgeart fares eras crystals onrails payoffdraw rowfit
 group fresh | src/fresh.js | hangarnew records-screen hangar nature
@@ -27,7 +27,7 @@ group engine-shared | src/sim/world.js src/sim/physics.js src/sim/masks.js src/s
 group engine-core | src/sim/rules.js | flight hazards lanes forest atc forecast collisions margin ponds powerups pickupgates issr-reveal gaphint twilight runway-back controls banners sim-bank sim-masks sim-rng-split rewards crystals fares badges records-screen eras upgrades missions missionscreen season2 season2-smoke onrails rails2 firsthour-real walkthrough postrails school flightregion regions terrain forestmeter treepic wild wildlife twistdraw
 group rules-imports | src/season.js src/crossings.js src/arealand.js src/missions2.js src/rewards.js src/badges.js src/nature.js src/landtrees.js src/groves.js src/droporder.js src/eras.js src/fleet.js | sim-bank fares flight
 group flight-rules | src/config.js src/crash.js src/gapmarkers.js src/Hud.js src/GameScene.js | flight hazards lanes forest atc forecast collisions margin ponds powerups pickupgates issr-reveal gaphint twilight runway-back controls banners sim-bank sim-masks sim-rng-split
-group game-scene | src/GameScene.js | onrails tipqueue l4hint postrails twistdraw stripclear foundgate
+group game-scene | src/GameScene.js | onrails tipqueue l4hint postrails twistdraw stripclear foundgate cityrowui
 group menu-map | src/ui.js src/recoverfirst.js src/globe.js src/cities.js src/route.js src/network.js src/geo.js src/pilot.js src/swipe.js src/landmask.js src/links.js index.html style.css | globe journey swipe gate features links everyleg flightregion hubscreen tours onrails onrails@VP=375x667 rails2 tipqueue recoverfirstui hangartakeoff
 group art-sound | assets/* vendor/* src/sound.js src/pixellab.js src/landmarks.js | textures projectart badgeart faces landmarks stormart pixelpreview treelayout terrain macrons
 group online | src/online.js src/restore.js src/uploadbanner.js src/newplayer.js src/recordsui.js | online onlinesave offline newplayer boardsonline
@@ -36,7 +36,7 @@ group service-worker | sw.js manifest.webmanifest src/swreg.js | swoffline swupd
 group sw-raw | sw.js src/updates.js src/swreg.js tests/lib/rawchrome.js tests/lib/sitehost.js tests/lib/swpage.js | swupdate swoffline swkill
 group route-header | src/GameScene.js src/sim/rules.js | routeheader
 group ux-fit | src/ui.js index.html style.css src/screens.js src/sheet.js tools/uxlib.cjs | fitscreen badgefont overlap taptargets rowfit hangar nature
-group ux-rows | src/hangar.js src/wild.js | overlap
+group ux-rows | src/hangar.js src/wild.js | overlap naturebar
 group rules-imports | src/aim.js | sim-bank fares flight
 group ux-fit | src/resultscard.js src/nextup.js | fitscreen overlap taptargets rowfit hangar nature
 ci-only | onrails320
@@ -87,7 +87,7 @@ group route-map | src/globe.js src/pickcity.js src/ui.js src/missionsview.js | r
 group target-banner | src/targetbanner.js src/GameScene.js src/aim.js | missionsteer targetbanner-ui plantrail textfit
 group gold-trail | src/goldtrail.js src/GameScene.js | goldtrail-ui
 group livery | src/livery.js src/fleet.js src/hangar.js src/GameScene.js tools/art/make_livery.py tools/art/livery-anchors.tsv | hangar looks preloadgate
-group celebrate | src/celebrate.js | NONE
+group celebrate | src/celebrate.js | crossrewardui
 group hud-clear | src/hudclear.js src/ui.js src/GameScene.js style.css | hudclear tipqueue stripclear
 group badgefont-test | tests/badgefont.cjs | badgefont
 group hudclear-test | tests/hudclear.cjs | hudclear
@@ -95,6 +95,9 @@ group audiolive-test | tests/audiolive.cjs | audiolive
 group needs-ui | src/missionplan.js src/missionsview.js src/ui.js src/wild.js src/missions2.js | needsmark-ui missiongo streakui
 group mission-pay | src/missionprize.js src/missionplan.js src/missions2.js src/aim.js src/targetbanner.js | missionscreen missiongo needsmark-ui streakui
 group cross-reward | src/crossings.js src/crossingend.js src/crossingview.js src/missionprize.js src/ui.js style.css | crossrewardui crossboxui crossingscreens
-group upgrade-bar | src/hangar.js src/upgradetext.js style.css | barui hangar fitscreen
+group upgrade-bar | src/hangar.js src/upgradetext.js style.css | barui hangar fitscreen naturebar
 group tree-line | src/resultscard.js src/ui.js style.css index.html src/sim/rules.js | treelineui
 group tour-flight | src/tour.js src/ui.js src/GameScene.js | tourflight
+group naturebar-test | tests/naturebar.cjs | naturebar
+group chipsfit-test | tests/chipsfit.cjs | chipsfit
+group results-chips | src/ui.js style.css src/resultscard.js | chipsfit

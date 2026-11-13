@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-13-trees-water-finance",
+    "version": "0.63.0",
+    "date": "2026-11-13",
+    "level": "minor",
+    "notes": [
+      "Forests now cool the planet by what grows in each land, every land starts with a native tree, and the tree star is now Grow 3 trees. The drop button says when a biome is full.",
+      "The wild areas have water: rivers, lakes and sea in each land, and water animals stay in the water. Animals are drawn at their real sizes, so a rabbit is no longer as big as an elephant.",
+      "Polynesia has sea projects: rāhui, the manta count, a shark sanctuary and Marae Moana, with the reef manta ray and the blacktip reef shark.",
+      "A new nature finance desk in the hangar: trade seeds and money at a rate that moves with the world's nature, and put money in a nature fund that grows over game days.",
+      "On a phone the results card shows two whole chips and a +N chip, the land's card opens under a two-line mission, and the toast no longer covers it.",
+      "In the hangar the three hint upgrades no longer repeat a Now line; their bars show it."
+    ]
+  },
+  {
     "id": "2026-11-12-trees-bar-hints",
     "version": "0.62.0",
     "date": "2026-11-12",
