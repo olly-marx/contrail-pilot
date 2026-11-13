@@ -23,6 +23,22 @@ const base = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   check(!!process.env.SHOTS || !SHOTS.startsWith('/home/'), `THE SCREENSHOTS DIRECTORY: the default (${SHOTS}) is not under /home: a CI runner has no such directory (the branch run of 0.54.0 failed with EACCES on it)`);
   try {
+    // 0. A toast that opened at the title is under the HUD from the flight's first moment (L-43): read inside startFlight itself, right after take-off, before any frame is drawn.
+    { const ctx = await b.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
+      await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
+      await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); }, { ...base, seenTips: ['*'] });
+      try {
+        await p.goto(URL); await ready(p); await p.waitForTimeout(500);
+        await p.evaluate(() => { const ui = game.registry.get('ui'), s = game.scene.getScene('game'), orig = s.startFlight;
+          s.startFlight = function (...a) { const r = orig.apply(this, a); if (this.state === 'takeoff' && window.__toastAtStart === undefined) { const t = document.getElementById('toast'); window.__toastAtStart = { shown: !t.hidden, top: t.style.top }; } return r; };
+          ui.toast('A note at the title', 'It must move under the HUD at take-off', '', 9); });
+        await p.evaluate(() => game.registry.get('ui').start()); await started(p);
+        const at = await p.evaluate(() => window.__toastAtStart || null);
+        console.log(`TAKE-OFF: the title's toast at take-off ${JSON.stringify(at)}`);
+        check(at && at.shown, `FIXTURE 0: a toast opened at the title was still up when the flight started: ${JSON.stringify(at)}`);
+        check(at && /px$/.test(at.top), `0. a toast that opened at the title is placed under the HUD the moment the flight starts, not one frame later (top '${at && at.top}', '' = the stylesheet's 16 percent; L-43)`);
+      } catch (e) { fails.push(`take-off toast: exception ${String(e).split('\n')[0]}`); }
+      await ctx.close(); }
     for (const [W, H, label, seenTips] of [[320, 568, 'firsttime', []], [320, 568, 'tipsoff', ['*']], [390, 844, 'tipsoff', ['*']], [390, 844, 'firsttime', []], [375, 667, 'firsttime', []], [375, 667, 'tipsoff', ['*']]]) {
       if (fails.length) break;   // (a flight is about 25 s: the first failure ends the run)
       const tag = `${W}x${H} ${label}`, ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));

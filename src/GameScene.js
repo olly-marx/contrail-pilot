@@ -313,6 +313,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])
       || (p => p.slice(0, 12).join() !== this.path.slice(0, 12).join())(pathNow())) { this.scene.restart({ go: true }); return; }   // (the whole near route: an aimed route can change after the first hop, src/aim.js)
     this.takeOff();   // the flight's rules (src/sim/rules.js): kit, random stream, onto the runway
+    this.tidyToast();   // a toast already up (opened at the title) moves under the HUD now, not on the first flight frame (L-43: tests/hudclear.cjs saw it on the banner for one frame)
     loading.flying = true;   // DECLARED: a flight (flight school too) is on, so the idle picture fetch waits (src/loader.js); cleared by onFinish and backToMenu
     this.cargoIcon.setVisible(true); this.crysIcon.setVisible(true); this.crysText.setVisible(true);
     this.regionBanner(this.regionNow);   // which land you take off from, and its meter

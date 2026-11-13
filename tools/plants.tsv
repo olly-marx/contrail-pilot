@@ -852,3 +852,4 @@ hudclear	src/hudclear.js	s/export const HUD_BOTTOM = 110;/export const HUD_BOTTO
 hudlayout	src/GameScene.js	s/ay = above >= hudLow ? above :/ay = true ? Math.max(10, above) :/	the autopilot label follows the plane onto the distance counter again
 hudlayout	src/GameScene.js	s/this.kindsText.setVisible(!(h \&\& /this.kindsText.setVisible(true || !(h \&\& /	the long ground-strip hint is drawn over 'kinds n/5' again
 crossrewardui	style.css	s/^\.ending \.payoff-card p { line-height: 1\.5; }$//	the ending card's lines sit tight again (no line height)
+hudclear	src/GameScene.js	s/^    this\.tidyToast();   \/\/ a toast already up (opened at the title).*$//	a toast that opened at the title stays at 16 percent for the first flight frame (L-43)
