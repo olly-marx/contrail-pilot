@@ -99,3 +99,5 @@ group upgrade-bar | src/hangar.js src/upgradetext.js style.css | barui hangar fi
 group tree-line | src/resultscard.js src/ui.js style.css index.html src/sim/rules.js | treelineui
 group tour-flight | src/tour.js src/ui.js src/GameScene.js | tourflight
 group naturebar-test | tests/naturebar.cjs | naturebar
+group chipsfit-test | tests/chipsfit.cjs | chipsfit
+group results-chips | src/ui.js style.css src/resultscard.js | chipsfit

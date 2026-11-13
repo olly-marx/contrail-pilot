@@ -858,3 +858,4 @@ crossrewardui	src/ui.js	s/el.hidden = false; celebrateEvent(el.querySelector('.p
 naturebar	src/wild.js	s/+ (this.toolId === line.id ? this.toolLevelHTML(line) : '');/+ '';/	a tapped NATURE tool row shows no level bar
 naturebar	src/wild.js	s/i < c.have ? 'on' : ''}"><\/i>`).join('');$/i <= c.have ? 'on' : ''}"><\/i>`).join('');/	the NATURE bar fills one segment too many
 hudlayout	src/GameScene.js	s/y = Math.max(90, Math.ceil(this.hudTextBottom()) + 3 + 19);/y = 90;/	the land's card sits at y 90 again, over a two-line mission's next-airport line
+chipsfit	src/ui.js	s/if (innerWidth < 340 \&\& v.allChips.length > 2) {/if (false) {/	three chips again at 320 (labels cut to two letters)
