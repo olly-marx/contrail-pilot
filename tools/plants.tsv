@@ -864,3 +864,6 @@ rebalance	src/config.js	s/export const GROWN_METER = { on: false };/export const
 rebalance	src/landtrees.js	s/(NATIVE_FIRST.on \&\& s <= 1 ? (s === 1 ? null : OPENS\[1\]) : OPENS\[s\]);/(OPENS[s]);/	the native-first switch does nothing
 rebalance	src/nexthere.js	s/PROGRESS\[NATIVE_FIRST.on \&\& shut.slot === 0 ? 1 : shut.slot\]/PROGRESS[shut.slot]/	NATURE's next-tree card breaks when the plantation tree is the shut one
 rebalance	src/config.js	s/export const NATIVE_FIRST = { on: false };/export const NATIVE_FIRST = { on: true };/	native first ships switched on
+rebalance	src/missions2.js	s/const kindsRoom = DROP_ORDER.mode === 'off' ? open.length : open.filter/const kindsRoom = false ? open.length : open.filter/	kinds3 counts the cap in the no-cap 'off' mode
+rebalance	src/groves.js	s/if (!isObj(seen)) return out;   \/\/ no record/if (false) return out;   \/\/ no record/	an old save with no record replants every grown tree
+rebalance	src/groves.js	s/const d = c.grown - (whole(seen\[id\]));/const d = c.grown - c.grown;/	grown trees are never offered for replanting
