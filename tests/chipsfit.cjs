@@ -2,7 +2,7 @@
 // three or more chips show as two chips and a short '+N' chip. A synthetic result with three new animals goes through ui.showResults at 320x568 and 390x844. Named lines, in order:
 //   FIXTURE  the chip row opens
 //   1. at 320 px: two animal chips and a '+1' chip, and neither animal's name is cut (its label is whole: no ellipsis)
-//   2. at 390 px: three animal chips, as before, and no '+N' chip
+//   2. at 390 px: three animal chips, as before, no '+N' chip, and no name cut (a label may take two lines)
 //   3. every chip is inside the screen
 // Run: python3 -m http.server 8000 & node tests/chipsfit.cjs   (plants: tools/plants.tsv, test chipsfit)
 const { chromium } = require('playwright-core');
@@ -27,13 +27,13 @@ const RES = { landed: true, landedAt: 'PARIS', distance: 900, earned: [{ label: 
         await p.waitForTimeout(1500);
         const m = await p.evaluate(() => { const row = document.getElementById('rChips'); if (!row || row.hidden) return null;
           return [...row.querySelectorAll('.rc-chip')].map(c => { const sp = c.querySelector('span'), q = c.getBoundingClientRect();
-            return { kind: c.dataset.kind || (c.dataset.more ? 'more' : ''), text: sp.textContent, cut: sp.scrollWidth > sp.clientWidth + 1, inside: q.left >= 0 && q.right <= innerWidth && q.bottom <= innerHeight }; }); });
+            return { kind: c.dataset.kind || (c.dataset.more ? 'more' : ''), text: sp.textContent, cut: sp.scrollWidth > sp.clientWidth + 1 || sp.scrollHeight > sp.clientHeight + 1, w: Math.round(q.width), inside: q.left >= 0 && q.right <= innerWidth && q.bottom <= innerHeight }; }); });
         log.push(`${tag} ${JSON.stringify(m)}`);
         check(!!m && m.length > 0, 'FIXTURE: the chip row opens');
         if (m) {
           const animals = m.filter(c => c.kind === 'animal'), more = m.filter(c => c.kind === 'more');
           if (W < 340) check(animals.length === 2 && more.length === 1 && more[0].text === '+1' && animals.every(c => !c.cut), `1. two whole animal chips and a '+1' chip: ${JSON.stringify(m)}`);
-          else check(animals.length === 3 && more.length === 0, `2. three animal chips and no '+N' chip: ${JSON.stringify(m)}`);
+          else check(animals.length === 3 && more.length === 0 && animals.every(c => !c.cut), `2. three whole animal chips and no '+N' chip: ${JSON.stringify(m)}`);
           check(m.every(c => c.inside), `3. every chip is inside the screen: ${JSON.stringify(m)}`);
         }
         check(!p.errs.length, `page errors: ${p.errs.join('; ')}`);
