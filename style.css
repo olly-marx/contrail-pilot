@@ -854,7 +854,7 @@ h2.sub { margin-top: -4px; }
 .fline.finance .fin-news.up { color: var(--green-dark); }
 .fline.finance .fin-news.down { color: #b23a2e; }
 .fline.finance > .btn { margin: 4px 0 8px; }
-.fline.finance #hCashOut, .fline.finance #hSell { margin-left: 6px; }
+.fline.finance #hCashOut { margin-left: 6px; }
 .fin-chart { margin: 4px 0 6px; }
 .fin-chart svg { width: 100%; height: auto; display: block; }
 .fin-chart polyline { fill: none; stroke-width: 1.6; }
@@ -868,7 +868,8 @@ h2.sub { margin-top: -4px; }
 .fc-pay { stroke: #b23a2e; fill: #b23a2e; color: #b23a2e; }
 .fc-get, .fc-fund { stroke: var(--green-dark); fill: var(--green-dark); color: var(--green-dark); }
 .fin-chart polyline.fc-market, .fin-chart polyline.fc-pay, .fin-chart polyline.fc-get, .fin-chart polyline.fc-fund { fill: none; }
-.fline.finance .fin-sub { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; }
+.fline.finance .fin-sub { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 10px; }
+.fline.finance .fin-sub .name { white-space: nowrap; }
 .fline.finance .fin-rates { margin: 2px 0; }
 .fline.finance .fin-up { color: var(--green-dark); }
 .fline.finance .fin-down { color: #b23a2e; }
