@@ -867,3 +867,7 @@ rebalance	src/config.js	s/export const NATIVE_FIRST = { on: false };/export cons
 rebalance	src/missions2.js	s/const kindsRoom = DROP_ORDER.mode === 'off' ? open.length : open.filter/const kindsRoom = false ? open.length : open.filter/	kinds3 counts the cap in the no-cap 'off' mode
 rebalance	src/groves.js	s/if (!isObj(seen)) return out;   \/\/ no record/if (!isObj(seen)) return grownBook(save, land);   \/\/ no record/	an old save with no record replants every grown tree
 rebalance	src/groves.js	s/const d = c.grown - (whole(seen\[id\]));/const d = c.grown - c.grown;/	grown trees are never offered for replanting
+rebalance	src/missions2.js	s/flight: (r, s, f) => (STAR_GROW3.on ? grownIn(s, f.land) >= GROW3_N :/flight: (r, s, f) => (false ? grownIn(s, f.land) >= GROW3_N :/	the grow-3 star never finishes on grown trees
+rebalance	src/missions2.js	s/ready: f => STAR_GROW3.on || f.kindsRoom >= 2,/ready: f => f.kindsRoom >= 2,/	the grow-3 star is not offered on a full land
+rebalance	src/groves.js	s/reduce((a, c) => a + Math.min(cap, c.grown), 0);$/reduce((a, c) => a + Math.min(cap, c.planted), 0);/	grownIn counts saplings
+rebalance	src/config.js	s/export const STAR_GROW3 = { on: false };/export const STAR_GROW3 = { on: true };/	the grow-3 star ships switched on
