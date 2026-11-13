@@ -24,7 +24,7 @@ const WITH = ['woodland', 'mediterranean', 'desert', 'monsoon', 'eastasia', 'bor
     const s = await p.evaluate(() => { const f = document.querySelector('#wScene .wfield'); const bg = f ? f.style.backgroundImage : '';
       return { bg, note: !!document.querySelector('#wScene .w-empty') && /being drawn/.test(document.querySelector('#wScene').textContent) }; });
     const ok = await p.evaluate(src => new Promise(res => { if (!src) return res(false); const i = new Image(); i.onload = () => res(i.width === 288 && i.height === 170); i.onerror = () => res(false); i.src = src; }),
-      (s.bg.match(/url\(["']?([^"')]+)/) || [])[1]);
+      (s.bg.match(/url\(["']?([^"')]*field-[a-z]+\.png)/) || [])[1]);   // the field picture's own layer (a land with water has the water layer on top of it: src/water.js)
     if (WITH.includes(r)) check(new RegExp(`field-${r}\\.png`).test(s.bg) && ok && !s.note, `${r}: shows its 288x170 field: ${JSON.stringify(s)} loaded=${ok}`);
     else check(s.note && !s.bg, `${r}: no field yet, says it is being drawn: ${JSON.stringify(s)}`);
   }

@@ -577,7 +577,6 @@ h2.sub { margin-top: -4px; }
 .wfield { position: absolute; left: 0; top: 0; width: 288px; height: 170px; transform-origin: 0 0; background-size: 288px 170px; image-rendering: pixelated; }
 .wfield .wf { position: absolute; image-rendering: pixelated; transform-origin: 0 100%; }
 .wfield .wf.critter { transform-origin: 50% 100%; }
-.wfield .wwater { position: absolute; left: 0; top: 0; width: 288px; height: 170px; image-rendering: pixelated; z-index: 1; pointer-events: none; }   /* src/water.js */
 .wscene.wfield-box .w-empty { z-index: 999; }
 
 /* ---------- results: NEW ANIMALS discovered (src/ui.js showResults) ---------- */
