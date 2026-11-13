@@ -17,13 +17,13 @@ export const OPENS = [
   // Native 4 (S3, PROPOSAL-TREE-MISSIONS.md): season 2 opens it with the area's crossing-trial mission "plant 3 kinds of
   // this land's tree in one flight" (src/missions2.js 'kinds3'), done in an area that has this land. Classic saves have
   // no area missions and keep the old rule, biodiversity 40 there.
-  // ...or (2026-11-13, ledger row 54) when slots 0..3 are ALL open and fewer than 2 of them have room under the cap: the mission is then never offered here again (src/missions2.js), so it cannot be the only way in.
+  // ...or (2026-11-13, ledger row 54) when fewer than 2 of slots 0..3 have room under the cap (an unopened slot counts as room): the mission is then never offered here again (src/missions2.js), so it cannot be the only way in.
   { text: 'Plant 3 kinds of tree here in one flight', ok: (save, land) => (isSeason2(save) ? kindsMissionDone(save, land) || kindsStuck(save, land) : biodiversity(save, land) >= 40) },
 ];
 
-// Slots 0..3 all open and fewer than 2 of them with room under the cap (planted + saplings < TREE_CAP). Reads OPENS[1..3] directly (not treesOpen: that would ask slot 4 again).
+// Fewer than 2 of slots 0..3 have room under the cap (planted + saplings < TREE_CAP). A slot not open yet is empty, so it counts as room: a land that can still open
+// a kind never opens slot 4 this way. Reads the book only (not treesOpen: that would ask slot 4 again).
 function kindsStuck(save, land) {
-  if (![1, 2, 3].every(s => OPENS[s].ok(save, land))) return false;
   const book = treeBook(save, land);
   return [0, 1, 2, 3].filter(s => (book[localTree(UK_SLOTS[s], land).id] || 0) < TREE_CAP).length < 2;
 }

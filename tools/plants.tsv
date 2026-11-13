@@ -851,7 +851,6 @@ tourflight	src/GameScene.js	s/    if (this.ui \&\& this.ui.tour) this.ui.tour.ab
 rebalance	src/missions2.js	s/const kinds = Math.min(3, open.filter(t => !t.full).length);/const kinds = Math.min(3, open.length);/	kinds3 counts full kinds again
 rebalance	src/missions2.js	s/prize: 20, ready: f => f.kinds >= 2, needs:/prize: 20, needs:/	kinds3 offered with fewer than 2 kinds with room
 rebalance	src/landtrees.js	s/kindsMissionDone(save, land) || kindsStuck(save, land) :/kindsMissionDone(save, land) :/	slot 4 never opens when kinds3 is stuck
-rebalance	src/landtrees.js	s/if (!\[1, 2, 3\].every(s => OPENS\[s\].ok(save, land))) return false;/if (false) return false;/	slot 4 opens before slots 1 to 3 are open
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + Math.min(cap, c.planted), 0)/	Forester counts saplings
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + c.grown, 0)/	Forester counts more than 9 of a kind
 rebalance	src/nature.js	s/const book = grownOnly ? grownBook : treeBook;/const book = treeBook;/	the biome meter counts saplings
