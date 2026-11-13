@@ -189,6 +189,10 @@ export const PARCEL = {
 // animals appear only once ANY tree there is fully grown (src/nature.js canAppear), except a land where an animal was already found (the grandfather rule).
 // OFF by default: it changes pacing, and the sim chat measures it first.
 export const GROWN_METER = { on: false };
+// NATIVE FIRST (ledger row 49; the user 2026-11-13: "start with one native tree for each wild area, like the most basic tree"): when on, each land's slot-1 native
+// (birch in the UK, silver birch in the boreal, acacia in the savanna...) is open from the start, and the plantation tree (slot 0) opens with the first habitat
+// project instead (the rule slot 1 had). OFF by default: the first trees change pacing (kinds3, the meter), so the sim chat checks it first.
+export const NATIVE_FIRST = { on: false };
 export const BIOME_COOL = { on: false, rate: 0.4, store: 80, drops: 0.25 };
 export const FOREST = {
   early: 0.5,     // x every tree's cooling (stage values in nature.js)

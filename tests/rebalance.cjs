@@ -20,6 +20,7 @@ globalThis.SEASON2 = true;
   const plant = (s, slot, n) => { for (let i = 0; i < n; i++) G.plantTree(s, 'woodland', idOf(slot)); };
   const grow = (s, slot, n) => { plant(s, slot, n); const c = s.groves.woodland[idOf(slot)]; c.grown = c.planted; c.saplings = []; };
   const kinds3 = s => M.visible(s, 'LONDON').some(v => v.def && v.def.id === 'kinds3');
+  check(C.NATIVE_FIRST.on === false, 'P5: NATIVE_FIRST ships OFF until the sim chat checks the pacing');
   check(C.GROWN_METER.on === false, 'G4: GROWN_METER ships OFF until the sim chat measures it');   // (first: every check below assumes the shipped switches)
   const open = L.treesOpen(base(), 'woodland');
   check(open.length >= 4 && [0, 1, 2, 3].every(s => open.includes(s)), `power: this save opens slots 0..3 in the woodland: ${open}`);
@@ -105,6 +106,22 @@ globalThis.SEASON2 = true;
       const old = { ...base(), found: { [id]: 1 } }; const gf = N.canAppear(old, id, 'woodland');
       check(gf, `G3: the grandfather rule: a land where '${id}' was already found keeps its animals with no grown tree`);
     } finally { C.GROWN_METER.on = was; } }
+
+  // P. NATIVE FIRST (ledger row 49; switch off): each land's slot-1 native is open from the start; the plantation tree (slot 0) opens with the first project
+  { const was = C.NATIVE_FIRST.on, X = await import('../src/nexthere.js');
+    try {
+      const fresh = { ...base(), habitat: {}, found: {} };
+      C.NATIVE_FIRST.on = false; const off = L.treesOpen(fresh, 'woodland').join();
+      C.NATIVE_FIRST.on = true; const on = L.treesOpen(fresh, 'woodland').join(), firstName = (D.nextTree(fresh, 'woodland') || {}).name;
+      const lands = Object.keys((await import('../src/habitat/trees.js')).REGION_TREES).filter(l => L.hasTrees(l)), allNative = lands.every(l => L.treesOpen(fresh, l).join() === '1');
+      const proj = { ...fresh, habitat: { woodland: ['deadwood'] } }, after = L.treesOpen(proj, 'woodland').join();
+      let hint = null; try { hint = X.nextHere(fresh, 'woodland').tree; } catch (e) { hint = 'THREW ' + e.message; }
+      check(off === '0', `P1: switch off, a new land opens only the plantation tree (slot 0): ${off}`);
+      check(on === '1' && allNative && firstName === 'Birch', `P2: switch on, every land opens only its slot-1 native, the UK's first drop is Birch: woodland ${on}, all lands ${allNative}, first '${firstName}'`);
+      check(after === '0,1', `P3: switch on, the first habitat project opens the plantation tree too: ${after}`);
+      check(hint && hint.name === 'Spruce' && /habitat project/.test(hint.rule || ''), `P4: switch on, NATURE's next-tree card names the plantation tree and the project rule: ${JSON.stringify(hint)}`);
+    } finally { C.NATIVE_FIRST.on = was; }
+  }
 
   // W. words
   check(D.BIOME_FULL_LABEL === 'Biome full' && /biodiversity/.test(D.BIOME_FULL_POPUP), `W1: the full-biome words: '${D.BIOME_FULL_LABEL}' / '${D.BIOME_FULL_POPUP}'`);

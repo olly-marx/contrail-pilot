@@ -5,6 +5,7 @@ import { biodiversity, projectsDone, regionSpecies, canAppear } from './nature.j
 import { TIERS } from './habitats.js';
 import { landTrees, foundHere, OPENS } from './landtrees.js';
 import { isSeason2 } from './missions2.js';
+import { NATIVE_FIRST } from './config.js';
 
 // Progress toward each native slot's rule: [have, need] (src/landtrees.js OPENS, same order).
 const PROGRESS = [null,
@@ -15,11 +16,12 @@ const PROGRESS = [null,
 
 const FARM = ['cow', 'sheep'];   // always there (nature.js wildlifeScene leaves them out of the wild animals)
 
+// (NATIVE_FIRST: a shut slot 0 shows slot 1's first-project progress, src/landtrees.js openRule.)
 export function nextHere(save, land) {
   const bio = biodiversity(save, land), found = save.found || {};
   const shut = landTrees(save, land).find(t => !t.open);
   let tree = null;
-  if (shut) { const [have, need] = PROGRESS[shut.slot](save, land); tree = { name: shut.name, rule: shut.rule, have: Math.min(have, need), need }; }
+  if (shut) { const [have, need] = PROGRESS[NATIVE_FIRST.on && shut.slot === 0 ? 1 : shut.slot](save, land); tree = { name: shut.name, rule: shut.rule, have: Math.min(have, need), need }; }
   const t = TIERS.find(x => bio < x.needs);
   const tier = t ? { tier: t.tier, name: t.name, have: bio, need: t.needs } : null;
   // The animal: one you can already meet out there (not found yet), else the closest to coming back.

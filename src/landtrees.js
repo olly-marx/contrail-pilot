@@ -7,6 +7,7 @@ import { isSeason2 } from './missions2.js';
 import { AREAS } from './areas.js';
 import { city } from './route.js';
 import { UK_SLOTS, SPECIES, projectsDone, biodiversity, regionSpecies, localTree } from './nature.js';
+import { NATIVE_FIRST } from './config.js';
 
 // What opens each native slot, in order (slot 1..4). Each rule reads only that land.
 export const OPENS = [
@@ -43,10 +44,12 @@ export function foundHere(save, land) {
 // Open slots in a land, e.g. [0, 1, 2]. Nothing grows on the sea or the ice: [].
 export function treesOpen(save, land) {
   if (!hasTrees(land)) return [];
-  const open = [0];
-  for (let s = 1; s < OPENS.length; s++) if (OPENS[s].ok(save, land)) open.push(s);
+  const open = [];
+  for (let s = 0; s < OPENS.length; s++) { const r = openRule(s); if (!r || r.ok(save, land)) open.push(s); }
   return open;
 }
+// The rule that opens a slot (null = open from the start). NATIVE_FIRST swaps slots 0 and 1: the native is free, the plantation tree takes the first-project rule.
+export const openRule = s => (NATIVE_FIRST.on && s <= 1 ? (s === 1 ? null : OPENS[1]) : OPENS[s]);
 
 // The UK kind for a slot (growth and cooling use its SPECIES row; localTree names the land's own tree).
 export const slotKind = slot => UK_SLOTS[slot];
@@ -59,7 +62,7 @@ export function landTrees(save, land) {
   return UK_SLOTS.map((kind, slot) => {
     const t = localTree(kind, land), n = book[t.id] || 0;
     const grown = (view[t.id] || {}).grown || 0;   // n = planted (grown + still growing)
-    return { slot, id: t.id, name: t.name, fact: t.fact, open: open.includes(slot), n, grown, growing: n - grown, cap: TREE_CAP, full: n >= TREE_CAP, rule: OPENS[slot] && OPENS[slot].text };
+    return { slot, id: t.id, name: t.name, fact: t.fact, open: open.includes(slot), n, grown, growing: n - grown, cap: TREE_CAP, full: n >= TREE_CAP, rule: openRule(slot) && openRule(slot).text };
   });
 }
 // "Oak 4/9" or "Spruce 9/9 full".
