@@ -32,7 +32,7 @@
   const again = M.onSave(s); check(again.length === 0 || !again.some(m => m.key === 'weurope:project'), 'and a second check does not complete (or pay) it again');
   check((s.seeds || 0) - seedsBefore === proj.prize.seeds, `paid exactly once: ${seedsBefore} -> ${s.seeds}`);
   // 3. Stages.
-  const s3 = { ...base(), areas: ['weurope', 'nordic'] };
+  const s3 = { ...base(), areas: ['weurope', 'nordic', 'mideast', 'africa'] };   // (CROSSINGS V3: one crossing = a second REGION)
   check(M.stageOf(s3) === 'challenge' && !M.visible(s3).some(m => m.key.startsWith('L')), 'after the first crossing: challenge stage, no lessons');
   check(M.visible(s3).find(m => m.key.endsWith(':bring')).title.includes('20'), `challenge asks more (bring 20, not 10): ${M.visible(s3).find(m => m.key.endsWith(':bring')).title}`);
   // 4. Tiers.

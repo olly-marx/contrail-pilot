@@ -8,10 +8,10 @@
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   check(C.SEASON2_ON === true, `SEASON2_ON follows globalThis.SEASON2 in Node (got ${C.SEASON2_ON})`);
   const save = { areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM' };
-  const links = R.linksFor(save), inArea = new Set(A.AREAS.weurope.cities);
+  const links = R.linksFor(save), inArea = new Set([...A.AREAS.weurope.cities, ...A.AREAS.nordic.cities]);   // CROSSINGS V3: the home REGION (Europe = Western Europe + the Nordic area)
   const ends = [...new Set(Object.entries(links).flatMap(([a, bs]) => [a, ...(Array.isArray(bs) ? bs : Object.keys(bs || {}))]))];
   const outside = ends.filter(n => !inArea.has(n));
-  check(ends.length > 5 && !outside.length, `the network stays inside Western Europe (${ends.length} cities, outside: ${outside.slice(0, 5)})`);
+  check(ends.length > 5 && !outside.length, `the network stays inside the Europe region (${ends.length} cities, outside: ${outside.slice(0, 5)})`);
   console.log(fails.length ? `FAIL season2-node:\n - ${fails.join('\n - ')}` : `PASS season2-node: SEASON2_ON in Node, the network confined to the unlocked area (${ends.length} cities)`);
   process.exit(fails.length ? 1 : 0);
 })();

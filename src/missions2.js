@@ -8,7 +8,7 @@
 //   project): an off-flight mission completes the moment the save changes, no flight needed (the user).
 // Pure: no DOM, no random. The game (src/sim/rules.js at banking, the shop after a purchase) and the sim call it.
 // Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes are paid straight into the bank (src/rewards.js payPrize).
-import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
+import { AREAS, areaOf, DEFAULT_AREA, regionsOpen, withRegions } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
 import { REGION_DATA, REGION_NAMES, TIERS } from './habitats.js';
@@ -38,7 +38,7 @@ export function stageOf(save, a = null) {
   // a new area reached after 2 crossings started at mastery with no nature built there). An area starts at 'challenge'
   // and becomes 'mastery' once its crossing gate (any 2 of its 3 stars) is done in it. With no area given: the global
   // teach-or-not answer (lessons, reveals).
-  const crossings = Math.max(0, (save.areas || []).length - 1);
+  const crossings = Math.max(0, regionsOpen(withRegions(save.areas || [])).length - 1);   // CROSSINGS V3: crossings made = regions open less the home region (an area count would call a fresh Europe start 'one crossing')
   if (crossings === 0) return 'teach';
   if (!a) return 'challenge';
   return gateDone(save, a) ? 'mastery' : 'challenge';

@@ -70,7 +70,7 @@
   check(bring && /20/.test(bring.title), `its targets are challenge-sized: "${bring && bring.title}"`);
   const ripe = { ...far, missionsDone: [...lessons, 'africa:night', 'africa:kinds3'] };
   check(M.stageOf(ripe, 'africa') === 'mastery', 'that area becomes mastery once its own gate (2 stars) is done');
-  check(M.stageOf(save(), 'weurope') === 'teach' && M.stageOf({ ...save(), areas: ['weurope', 'nordic'] }, 'nordic') === 'challenge', 'teach before any crossing; a new area after one: challenge');
+  check(M.stageOf(save(), 'weurope') === 'teach' && M.stageOf({ ...save(), areas: ['weurope', 'nordic'] }, 'weurope') === 'teach' && M.stageOf({ ...save(), areas: ['weurope', 'nordic', 'mideast', 'africa'] }, 'mideast') === 'challenge', 'teach before any crossing (a Europe start has 2 areas: still teach); a new region after one: challenge');
 
   // Daily trio.
   const d1 = save(); M.setDaily(d1, '2026-10-27'); const d2 = save(); M.setDaily(d2, '2026-10-27'); const d3 = save(); M.setDaily(d3, '2026-10-28');

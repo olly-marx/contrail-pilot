@@ -86,7 +86,7 @@ season2-smoke@PART=Bweurope,Bnamerica,Bsasia	src/route.js	s/(SEASON2_ON ? save :
 season2-smoke@PART=Bafrica,Bsamerica,Beasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B2)
 season2-smoke@PART=A,C,E,F,G	src/ui.js	s/if (tab === 'nature')/if (tab === 'natur')/	C: NATURE does not open
 season2-smoke@PART=A,C,E,F,G	src/pilot.js	s/const off = onlineOff(), names/const off = false, names/	C: PILOT offers a name form
-season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/(best === null || c.era < best)) best = c.era;/false) best = c.era;/	F: nothing to fly yet is silent
+season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/  return n > era \&\& n <= SEASON.maxEra - 1 \&\& upcoming(save).some(c => c.kind !== 'lap') ? n : null;/  return null;/	F: nothing to fly yet is silent
 season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/{ id: 'lap', era: 5,/{ id: 'lap', era: 9,/	E: the lap never offered (era 6: it replaced the MORE TO COME card)
 season2-smoke@PART=D	src/season.js	s/distanceShare: 0.7/distanceShare: 0/	D: a short flight is offered the crossing
 releasegate	tests/PATHMAP	s/ season2-smoke@PART=D / /	a season2-smoke piece dropped (section D unchecked)
@@ -899,3 +899,4 @@ cityrowui	src/GameScene.js	s/    this.city.setAlpha(this.cityRowAlpha());/    th
 
 crossladder	src/crossings.js	s/export const crossingsMade = save => Math.max(0, regionsOpen(unlockedAreas(save)).length - 1);/export const crossingsMade = save => 0;/	every crossing is as hard as the first
 crossladder	src/areas.js	s/^export const withRegions = keys => .*$/export const withRegions = keys => [...(keys || [])];/	an open area no longer opens its whole region
+missions4	src/missions2.js	s/  const crossings = Math.max(0, regionsOpen(withRegions(save.areas || \[\])).length - 1);/  const crossings = Math.max(0, (save.areas || []).length - 1);/	a fresh Europe start (two areas) skips the lessons
