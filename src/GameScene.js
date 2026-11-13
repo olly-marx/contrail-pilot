@@ -686,6 +686,7 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar.tilePositionX += dx * 0.15;
     this.hills.tilePositionX += dx * 0.3; this.hills2.tilePositionX = this.hills.tilePositionX;
     this.city.tilePositionX += dx * 0.55;
+    this.city.setAlpha(this.cityRowAlpha());   // only near a city (src/sim/rules.js cityRowAlpha)
     this.landmarks = this.landmarks.filter(l => { l.x -= dx * 0.55; if (l.x + l.width < -10) { l.destroy(); return false; } return true; });
     this.ground.tilePositionX += dx; this.ground2.tilePositionX = this.ground.tilePositionX;
     if (this.hedge) this.hedge.tilePositionX += dx;

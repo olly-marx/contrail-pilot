@@ -891,3 +891,6 @@ financemarket	src/finance.js	s/(save.flightSeconds || 0) \/ GAME_DAY)/Date.now()
 financemarket	src/finance.js	s/export const financeBio = save => worldBiodiversity(save);/export const financeBio = save => natureHealth(save);/	the exchange reads home nature, not the whole world
 financemarket	src/finance.js	s/drift: { at0: 0.0007,/drift: { at0: -0.0005,/	the fund loses on average for a low-nature player
 financemarket	src/finance.js	s/pull: 1 \/ 10, sigma: 0.075,/pull: 1 \/ 10, sigma: 0.03,/	the market barely fluctuates
+cityrow	src/sim/rules.js	s/return Math.max(0, Math.min(1, 1 - (d - STORMS.spacing) \/ CITY_FADE));/return 1;/	the buildings show all the time again
+cityrow	src/sim/rules.js	s/const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));/const d = Math.abs(ahead - this.distancePx);/	only the next city shows its buildings
+cityrowui	src/GameScene.js	s/    this.city.setAlpha(this.cityRowAlpha());/    this.city.setAlpha(1);/	the game ignores the rule

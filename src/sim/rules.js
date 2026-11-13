@@ -2,6 +2,7 @@
 // mixes them in (Object.assign(GameScene.prototype, RULES)) and the sim engine's world does the same, so both run
 // exactly this code. `this` is the flight. No Phaser here: drawing and sound go through hooks the world leaves empty.
 import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO, BIOME_COOL } from '../config.js';
+const CITY_FADE = 80;   // px over which the background city row fades out past one storm gap (cityRowAlpha)
 import { tip } from '../tips.js';
 import { FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity, biomeMeter } from '../nature.js';
@@ -566,6 +567,15 @@ export const RULES = {
   // out beyond the column never crashes you, and empty sky never does (the user, 2026-10-24).
   stormPixelsHit(st, enough) { return P.stormPixelsHit(this, st, enough, () => this.planePixels()); },
   hitBird(box) { return P.hitBird(this, box, () => this.planePixels()); },
+
+  // ---------- the city row in the background (the user, 2026-11-13: 'the background buildings ... should only be there in close proximity (one storm gap either side) of a city') ----------
+  // 1 while the plane is within one storm spacing (STORMS.spacing px) of the airport behind or ahead, fading to 0 over CITY_FADE px beyond; the never-landing test pilots keep 1 (unchanged).
+  cityRowAlpha() {
+    if (!this.nextAirport || this.nextAirport.worldX > 1e8) return 1;
+    const ahead = this.nextAirport.worldX, behind = ahead - this.legKm(this.airportIndex);
+    const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));
+    return Math.max(0, Math.min(1, 1 - (d - STORMS.spacing) / CITY_FADE));
+  },
 
   // ---------- the region below (the user, 2026-10-22: real geography decides it; src/geo.js) ----------
   // The leg from the airport behind to the one ahead; how far along it the plane is, as a fraction.
