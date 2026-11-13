@@ -9,6 +9,9 @@ import { LINES, level as natureLevel } from './upgrades.js';
 
 import { hintWords } from './hintwords.js';
 export const HINT_LINE_IDS = ['forecast', 'atc', 'ops'];
+// The hangar strip's 'Now:' line (ledger row 46, the user 2026-11-13: keep the stat bars, cut the repeated words): the three hint lines show their level in the stat bars, so their strip
+// shows only the segments and 'Next: ...'; every other line shows Now and Next. upgradeCard still carries `now` for every line (the tests and other callers read it).
+export const showsNow = (kind, id) => !(kind === 'system' && HINT_LINE_IDS.includes(id));
 export const NOTHING_YET = 'nothing yet';
 export const ALL_DONE = 'All done: the best there is.';
 // The level's effect in plain words, else its name (a level that only changes the picture has no effect text).
