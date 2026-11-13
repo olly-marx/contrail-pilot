@@ -120,7 +120,7 @@ hangar-feedback	src/fleet.js	s/keys: \['pickup'\]/keys: ['pickupX']/	a changed s
 lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return false;/	the lap counts away from home
 capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazard pool ignored (heat only)
 twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
-finance	src/finance.js	s/(MARKET.gap0 - MARKET.gap100) \* b)/(MARKET.gap0 - MARKET.gap100) * 0)/	the rate ignores nature
+finance	src/finance.js	s/Math.pow(1 - b, MARKET.curve)/Math.pow(1 - 0, MARKET.curve)/	the rate ignores nature
 hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (false) pv.scrollIntoView/	a tapped row previews off screen
 hudlayout	src/GameScene.js	s/if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);/if (false) this.kindsText.setX(cx - 4);/	the kinds meter under CLEAN
 season2	src/areas.js	s/\.filter(k => AREAS\[k\])/.filter(k => k)/	save.areas holds ocean (Pacific stepping stones): the title crashed on AREAS[ocean]
@@ -894,8 +894,9 @@ financemarket	src/finance.js	s/Math.min(buyAt(level, B, T) - 1, Math.round(T \* 
 financemarket	src/finance.js	s/(FUND.drift.at100 - FUND.drift.at0) \* Math.max/(FUND.drift.at100 - FUND.drift.at0) * 0 * Math.max/	the fund's drift ignores nature
 financemarket	src/finance.js	s/(save.flightSeconds || 0) \/ GAME_DAY)/Date.now() \/ 3600e3)/	the market runs on real time, not game time
 financemarket	src/finance.js	s/export const financeBio = save => worldBiodiversity(save);/export const financeBio = save => natureHealth(save);/	the exchange reads home nature, not the whole world
-financemarket	src/finance.js	s/drift: { at0: 0.0007,/drift: { at0: -0.0005,/	the fund loses on average for a low-nature player
+financemarket	src/finance.js	s/drift: { at0: 0.0012, at100: 0.0035 }/drift: { at0: -0.002, at100: 0.0035 }/	the fund loses on average for a low-nature player
 financemarket	src/finance.js	s/pull: 1 \/ 10, sigma: 0.075,/pull: 1 \/ 10, sigma: 0.03,/	the market barely fluctuates
 cityrow	src/sim/rules.js	s/return Math.max(0, Math.min(1, 1 - (d - STORMS.spacing) \/ CITY_FADE));/return 1;/	the buildings show all the time again
 cityrow	src/sim/rules.js	s/const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));/const d = Math.abs(ahead - this.distancePx);/	only the next city shows its buildings
 cityrowui	src/GameScene.js	s/    this.city.setAlpha(this.cityRowAlpha());/    this.city.setAlpha(1);/	the game ignores the rule
+finance	src/finance.js	s/curve: 4,/curve: 1,/	the gap closes evenly, not steep early

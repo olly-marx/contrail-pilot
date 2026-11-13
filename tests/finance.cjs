@@ -10,7 +10,7 @@ const src = f => path.resolve(__dirname, '../src', f);
   globalThis.SEASON2 = true; globalThis.window = { SEASON2: true };
   const M = await import(src('finance.js'));
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  const T = 25; check(M.buyAt(1, 0, T) === 38 && M.buyAt(1, 100, T) === 28 && M.buyAt(1, 50, T) === 33, `level 1 at market 25: B0 ${M.buyAt(1, 0, T)}, B50 ${M.buyAt(1, 50, T)}, B100 ${M.buyAt(1, 100, T)} (want 38 / 33 / 28: the gap shrinks with world nature)`);
+  const T = 25; check(M.buyAt(1, 0, T) === 38 && M.buyAt(1, 100, T) === 28 && M.buyAt(1, 50, T) === 28 && M.buyAt(1, 20, T) === 32, `level 1 at market 25: B0 ${M.buyAt(1, 0, T)}, B20 ${M.buyAt(1, 20, T)}, B50 ${M.buyAt(1, 50, T)}, B100 ${M.buyAt(1, 100, T)} (want 38 / 32 / 28 / 28: steep early, the user 2026-11-13)`);
   check(M.buyAt(2, 0, T) < M.buyAt(1, 0, T) && M.buyAt(4, 0, T) < M.buyAt(2, 0, T), `higher desk levels do not trim the gap (B0: ${[1, 2, 3, 4].map(l => M.buyAt(l, 0, T))})`);
   const save = { tutorialDone: true, seeds: 9000, crystals: 0, landings: 5, flightSeconds: 1e7, areas: ['weurope'], city: 'WARSAW' };
   check(M.canTake(save) === 0, 'the desk trades before a level is bought');

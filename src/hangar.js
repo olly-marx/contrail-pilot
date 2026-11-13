@@ -200,6 +200,7 @@ export class FleetHangar {
     // 2026-11-13 (the user: 'reducing text and making the screen simpler with small info buttons'): numbers and buttons on
     // the desk, the explanations behind the (i) buttons (financeSheet).
     return `<div class="line fline finance"><div class="fin-head"><div class="name">Natural capital ${i('market')}</div><div class="small">World nature ${B} / 100</div></div>
+      <p class="fin-wallet">You have <b>${(s.seeds || 0).toLocaleString('en-GB')}</b><i class="seedicon"></i> <b>${(s.crystals || 0).toLocaleString('en-GB')}</b><i class="crysicon"></i></p>
       ${L ? `${this.chartSVG(marketSeries(s), [['pay', 'pay'], ['true', 'market'], ['get', 'get']])}
         <p class="small fin-rates">Pay <b>${rate(s)}</b> · get <b>${sellRate(s)}</b> seeds a crystal</p>
         <button class="btn ${n ? 'go' : ''}" id="hTrade" type="button" ${n ? '' : 'disabled'}>${n ? `BUY ${n} crystals: ${n * rate(s)} seeds` : 'Buy after your next landing'}</button>
