@@ -49,9 +49,9 @@ const KEY = 'contrailPilot.v2';
   const conf = await p.evaluate(async () => { const r = await import('/src/route.js'), a = await import('/src/areas.js');
     const s = game.registry.get('save'); s.tutorialDone = true; s.city = 'AMSTERDAM';
     const path = r.flightPath(s, 40); game.registry.get('ui').renderJourney && game.registry.get('ui').renderJourney();
-    return { out: path.filter(c => !a.AREAS.weurope.cities.includes(c)), line: (document.getElementById('jAreas') || {}).textContent || '' }; });
-  check(conf.out.length === 0, `season 2 flight leaves Western Europe: ${conf.out.slice(0, 3)}`);
-  check(/Western Europe/.test(conf.line) && /Locked/.test(conf.line), `the FLY screen lists your area and the locked ones: '${conf.line}'`);
+    return { out: path.filter(c => ![...a.AREAS.weurope.cities, ...a.AREAS.nordic.cities].includes(c)), line: (document.getElementById('jAreas') || {}).textContent || '' }; });
+  check(conf.out.length === 0, `season 2 flight leaves the Europe region (CROSSINGS V3: Western Europe + the Nordic area): ${conf.out.slice(0, 3)}`);
+  check(/Your region: Europe/.test(conf.line) && /Locked: .*North America/.test(conf.line), `the FLY screen lists your region and the locked ones: '${conf.line}'`);
   // 2c. M2: a new season 2 player chooses a start area, then a city; flying is then confined to that area.
   await p.goto(URL + '?season2=reset'); await ready(p);
   await p.evaluate(() => { game.registry.get('ui').start(); });   // (not awaited: it waits for the player's choice)
@@ -63,8 +63,8 @@ const KEY = 'contrailPilot.v2';
   await p.waitForTimeout(300);
   const st = await p.evaluate(async () => { const s = game.registry.get('save'), r = await import('/src/route.js'), a = await import('/src/areas.js');
     const path = r.flightPath({ ...s, tutorialDone: true }, 40);
-    return { areas: s.areas, city: s.city, gone: !document.getElementById('startChoice'), out: path.filter(c => !a.AREAS.africa.cities.includes(c)) }; });
-  check(JSON.stringify(st.areas) === '["africa"]' && st.city === 'LAGOS' && st.gone && st.out.length === 0, `start in Lagos, Africa, and stay there: ${JSON.stringify(st)}`);
+    return { areas: s.areas, city: s.city, gone: !document.getElementById('startChoice'), out: path.filter(c => ![...a.AREAS.africa.cities, ...a.AREAS.mideast.cities].includes(c)) }; });
+  check(JSON.stringify(st.areas) === '["africa","mideast"]' && st.city === 'LAGOS' && st.gone && st.out.length === 0, `start in Lagos: Africa & the Middle East opens, and the flights stay in that region: ${JSON.stringify(st)}`);
   // 2d. M3: the crossing. Without the gates met it only says what it needs; with ?s2unlock=1 (preview debug) it can be
   // flown: one leg of 7,000 km to Tunis with a progress bar; landing it opens Africa & the Middle East.
   await p.evaluate(async () => { const s = game.registry.get('save'); Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', tutorialDone: true, seenTips: ['*'], tours: ['*'] });

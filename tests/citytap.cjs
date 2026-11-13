@@ -40,7 +40,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'AMSTERDAM', c
       await p.goto(URL); await ready(p); await p.waitForTimeout(1000);
       const sheet = nm => p.evaluate(n => { game.registry.get('ui').showCityCard(n); const e = document.getElementById('hubCard'); return { text: e ? e.innerText.replace(/\s+/g, ' ').trim() : '', fly: !!(e && e.querySelector('#ccFly')) }; }, nm);
       const closed = await sheet('SYDNEY'); log.push(`${tag} C: ${JSON.stringify(closed)}`);
-      check(/Opens with the Tasman crossing/.test(closed.text) && !closed.fly, `${tag} C: a closed-area city must say 'Opens with the Tasman crossing' (the first on the ladder that opens Oceania) and offer no FLY: ${JSON.stringify(closed)}`);
+      check(/Opens with the Singapore crossing/.test(closed.text) && !closed.fly, `${tag} C: a closed-area city must say 'Opens with the Singapore crossing' (CROSSINGS V3: the first route into Oceania in the list) and offer no FLY: ${JSON.stringify(closed)}`);
       await p.evaluate(() => { const e = document.getElementById('hubCard'); if (e) e.remove(); });
       const here = await sheet('AMSTERDAM'); log.push(`${tag} D: ${JSON.stringify(here)}`);
       check(/You are here/.test(here.text) && !here.fly, `${tag} D: your own city must say 'You are here.' and offer no FLY: ${JSON.stringify(here)}`);

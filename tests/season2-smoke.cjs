@@ -76,11 +76,11 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
     await p.waitForSelector('#howClose', { state: 'visible', timeout: 5000 }).catch(() => {});
     await p.click('#howClose', { timeout: 5000 }).catch(() => {});
     await started(p);
-    const f = await p.evaluate(async k => { const g = game.scene.getScene('game'), A = (await import('/src/areas.js')).AREAS[k];
+    const f = await p.evaluate(async k => { const g = game.scene.getScene('game'), AR = await import('/src/areas.js'), A = { start: AR.AREAS[k].start, cities: AR.withRegions([k]).flatMap(x => AR.AREAS[x].cities) };   // CROSSINGS V3: the home REGION
       const path = (g.path || []).slice(0, 6);
-      return { school: !!g.school, path, next: g.nextAirport && g.nextAirport.name, state: g.state, start: A.start, inArea: path.length > 1 && path.every(n => A.cities.includes(n)), areas: game.registry.get('save').areas }; }, k);
+      return { school: !!g.school, path, next: g.nextAirport && g.nextAirport.name, state: g.state, start: A.start, inArea: path.length > 1 && path.every(n => A.cities.includes(n)), areas: game.registry.get('save').areas, region: AR.withRegions([k]) }; }, k);
     check(home && home === f.start && f.path[0] === f.start, `B ${k}: flight school starts in ${f.start}, not London: ${JSON.stringify(f)}`);
-    check(f.school && f.inArea && f.next === f.path[1] && JSON.stringify(f.areas) === JSON.stringify([k]), `B ${k}: school flies over its own area to the next airport: ${JSON.stringify(f)}`);
+    check(f.school && f.inArea && f.next === f.path[1] && JSON.stringify(f.areas) === JSON.stringify(f.region), `B ${k}: school flies over its own region to the next airport: ${JSON.stringify(f)}`);
     await p.waitForTimeout(1200);
     const after = await p.evaluate(() => { const g = game.scene.getScene('game'); return { state: g.state, x: g.plane && g.plane.y }; });
     check(['takeoff', 'playing'].includes(after.state), `B ${k}: the plane is flying after a moment: ${JSON.stringify(after)}`);
