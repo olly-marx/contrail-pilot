@@ -241,11 +241,14 @@ export class WildScreen {
     };
     const how = 'Plant trees and finish the projects above!';   // every land takes trees (plantedIn)
     const open = TIERS.filter(t => bio >= t.needs), next = TIERS.find(t => bio < t.needs);
+    // ONE tier open at a time (the user, design run A, 2026-11-13: NATURE was 3 to 4.5 screens long): the CURRENT tier (the first open one not finished) shows its projects;
+    // every other open tier, finished or not, folds to one line with a show button (this.openTiers holds the ones the player unfolded).
+    const tierDone = t => P.filter(p => p.tier === t.tier).every(p => done.includes(p.id)), current = open.find(t => !tierDone(t));
     $('wProjects').innerHTML = open.map(t => {
       const ps = P.filter(p => p.tier === t.tier), n = ps.filter(p => done.includes(p.id)).length;
-      const finished = n === ps.length, shown = !finished || (this.openTiers || []).includes(t.tier);   // a finished tier folds to one line
-      return `<p class="w-tier">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? 'done ' : ''}${n}/${ps.length}</span>`
-        + (finished ? ` <button class="btn tiny" type="button" data-tier-toggle="${t.tier}">${shown ? 'hide' : 'show'}</button>` : '') + '</p>'
+      const finished = n === ps.length, folds = t !== current, shown = !folds || (this.openTiers || []).includes(t.tier);
+      return `<p class="w-tier" data-tier="${t.tier}">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? 'done ' : ''}${n}/${ps.length}</span>`
+        + (folds ? ` <button class="btn tiny" type="button" data-tier-toggle="${t.tier}">${shown ? 'hide' : 'show'}</button>` : '') + '</p>'
         + (shown ? ps.map(card).join('') : '');
     }).join('') + (next ? `<p class="w-tier w-tier-lock" data-tier-locked="${next.tier}">Tier ${next.tier}: ${esc(next.name)} <span class="small">Biodiversity ${next.needs} to open (now ${Math.floor(bio)})</span></p>` : '');
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
