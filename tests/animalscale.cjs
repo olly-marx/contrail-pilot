@@ -7,11 +7,11 @@
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const pngSize = f => { const b = fs.readFileSync(f); return [b.readUInt32BE(16), b.readUInt32BE(20)]; };
-const LIMITS = [['tiny', 0.12], ['small', 0.5], ['medium', 1.8], ['large', 3.5]];   // same as tools/art/sizes.py
-const cls = m => (LIMITS.find(([, l]) => m < l) || ['huge'])[0];
+const LIMITS = [['tiny', 0.12], ['small', 0.5], ['medium', 1.8], ['large', 3.5], ['huge', 5.0]];   // same as tools/art/sizes.py
+const cls = m => (LIMITS.find(([, l]) => m < l) || ['giant'])[0];
 // Longest side, in installed pixels: [min, max] per class.
-const BOUNDS = { tiny: [3, 14], small: [5, 16], medium: [10, 32], large: [24, 48], huge: [30, 64] };
-const ORDER = ['tiny', 'small', 'medium', 'large', 'huge'];
+const BOUNDS = { tiny: [3, 14], small: [5, 16], medium: [10, 32], large: [24, 48], huge: [30, 64], giant: [40, 80] };
+const ORDER = ['tiny', 'small', 'medium', 'large', 'huge', 'giant'];
 const real = {};
 for (const line of fs.readFileSync(path.join(ROOT, 'tools/art/pixellab/sizes.tsv'), 'utf8').split('\n')) {
   if (!line.trim() || line.startsWith('#')) continue;

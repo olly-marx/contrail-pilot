@@ -52,7 +52,7 @@ def one(sid, cap):
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('--only', default=''); ap.add_argument('--cap', type=float, default=1.0); ap.add_argument('--workers', type=int, default=3)
     a = ap.parse_args()
-    ids = [k for k, m in sizes().items() if size_class(m) in ('large', 'huge')]
+    ids = [k for k, m in sizes().items() if size_class(m) in ('large', 'huge', 'giant')]
     if a.only: ids = [k for k in ids if k in a.only.split(',')]
     with ThreadPoolExecutor(a.workers) as ex:
         for sid, res in ex.map(lambda k: one(k, a.cap), ids): print(f'{sid:16s} {res}', flush=True)

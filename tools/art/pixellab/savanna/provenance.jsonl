@@ -110,3 +110,5 @@
 {"file": "grevyszebra-L-s.png", "tool": "local edit", "prompt": "54 light-grey ground-shadow pixels erased from the bottom 2 rows", "size": "-", "date": "2026-11-13"}
 {"file": "zebra-L-s.png", "tool": "local edit", "prompt": "49 light-grey ground-shadow pixels erased from the bottom 2 rows", "size": "-", "date": "2026-11-13"}
 {"file": "grevyszebra-L-s.png", "tool": "local edit", "prompt": "19 more shadow pixels erased from row 40", "size": "-", "date": "2026-11-13"}
+{"file": "giraffe-L-s.png", "tool": "create-image-pixflux", "prompt": "flat 2D game sprite of a Giraffe walking right, completely side-on profile, true proportions, natural colours, chunky pixels, few colours, simple, the animal fills the picture, facing right, no ground, no shadow", "size": "80x80", "date": "2026-11-13"}
+{"file": "africanelephant-L-s.png", "tool": "create-image-pixflux", "prompt": "flat 2D game sprite of a African elephant walking right, completely side-on profile, true proportions, natural colours, chunky pixels, few colours, simple, the animal fills the picture, facing right, no ground, no shadow", "size": "80x80", "date": "2026-11-13"}

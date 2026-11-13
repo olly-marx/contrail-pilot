@@ -59,7 +59,7 @@ def main():
             print('skip', sid); continue
         key = keys[sid]
         cls = size_class(real[sid])
-        if cls in ('large', 'huge'):
+        if cls in ('large', 'huge', 'giant'):
             f0, f1 = card.with_name(f'{sid}-L-f0.png'), card.with_name(f'{sid}-L-f1.png')
             if not (f0.exists() and f1.exists()): raise SystemExit(f'{sid} is {cls} but has no -L- redraw: run tools/art/pixellab_big.py')
         im0 = Image.open(f0).convert('RGBA')
