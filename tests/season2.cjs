@@ -66,51 +66,51 @@ const KEY = 'contrailPilot.v2';
     return { areas: s.areas, city: s.city, gone: !document.getElementById('startChoice'), out: path.filter(c => !a.AREAS.africa.cities.includes(c)) }; });
   check(JSON.stringify(st.areas) === '["africa"]' && st.city === 'LAGOS' && st.gone && st.out.length === 0, `start in Lagos, Africa, and stay there: ${JSON.stringify(st)}`);
   // 2d. M3: the crossing. Without the gates met it only says what it needs; with ?s2unlock=1 (preview debug) it can be
-  // flown: one leg of 7,000 km to Stockholm with a progress bar; landing it opens the Nordic area.
-  await p.evaluate(async () => { const s = game.registry.get('save'); Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', tutorialDone: true, seenTips: ['*'], tours: ['*'] });
+  // flown: one leg of 7,000 km to Tunis with a progress bar; landing it opens Africa & the Middle East.
+  await p.evaluate(async () => { const s = game.registry.get('save'); Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', tutorialDone: true, seenTips: ['*'], tours: ['*'] });
     (await import('/src/save.js')).writeSave(s); });
   await p.goto(URL); await ready(p);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const card = await p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || '');
-  check(/WARSAW &gt; STOCKHOLM/.test(card) && /Needs:/.test(card) && !/data-cross/.test(card), `the crossing shows what it needs: ${card.slice(0, 160)}`);
+  check(/ROME &gt; TUNIS/.test(card) && /Needs:/.test(card) && !/data-cross/.test(card), `the crossing shows what it needs: ${card.slice(0, 160)}`);
   await p.goto(URL + '?s2unlock=1'); await ready(p);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
   if (await p.$('#sheet')) await p.click('#sheet .sheet-ok');   // (R-A: a ready crossing announces itself once, on HOME: LATER, then the route panel)
   if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.evaluate(() => game.registry.get('ui').openJourneySheet());   // (the route chip now opens the FLY TO sheet; the crossing buttons live in the journey sheet)
-  const btn = await p.$('#jCross [data-cross="warsaw-stockholm"]');
+  const btn = await p.$('#jCross [data-cross="mediterranean"]');
   check(!!btn, 'with ?s2unlock=1 the crossing can be flown');
   if (btn) {
     await btn.click(); await p.click('#sheet .sheet-action'); await started(p);   // (R-A: the crossing sheet is the confirm before the flight starts)
     const fl = await p.evaluate(() => { const g = game.scene.getScene('game'); return { c: g.crossing && g.crossing.id, to: g.nextAirport.name, at: Math.round(g.nextAirport.worldX - g.distancePx), dist: g.distText.text }; });
-    check(fl.c === 'warsaw-stockholm' && fl.to === 'STOCKHOLM' && fl.at >= 6400 && /TO STOCKHOLM/.test(fl.dist), `flying the crossing: ${JSON.stringify(fl)}`);
-    await p.evaluate(() => { const g = game.scene.getScene('game'); g.landedAt = 'STOCKHOLM'; g.distancePx = 7000; g.finish({ landed: true }); });
+    check(fl.c === 'mediterranean' && fl.to === 'TUNIS' && fl.at >= 6400 && /TO TUNIS/.test(fl.dist), `flying the crossing: ${JSON.stringify(fl)}`);
+    await p.evaluate(() => { const g = game.scene.getScene('game'); g.landedAt = 'TUNIS'; g.distancePx = 7000; g.finish({ landed: true }); });
     await p.waitForTimeout(500);
     const after = await p.evaluate(() => { const s = game.registry.get('save'); return { areas: s.areas, city: s.city, fly: s.flyCrossing || null, crossed: s.crossed }; });
-    check(after.areas.includes('nordic') && !after.fly && (after.crossed || []).includes('warsaw-stockholm'), `landing the crossing opens the Nordic area: ${JSON.stringify(after)}`);
+    check(after.areas.includes('mideast') && !after.fly && (after.crossed || []).includes('mediterranean'), `landing the crossing opens Africa & the Middle East: ${JSON.stringify(after)}`);
   }
   // 2e. 0.12.0: the offer gate in the shipped game. Best landed flight from the area >= 70% of 6,500 km (4,550) AND
   // biodiversity 30 in the start city's land; a real landed flight records the area's best; MORE TO COME when all is flown.
   const seed2e = (best, stars = ['weurope:night', 'weurope:shade10', 'weurope:kinds3']) => p.evaluate(async ([best, stars]) => { const s = game.registry.get('save'); const planted = {};
     for (const id of ['spruce', 'birch', 'oak', 'beech', 'pine', 'ash', 'rowan', 'hazel', 'willow', 'alder']) planted[id] = 40;
-    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', crossed: [], planted, areaBest: best, bestDistance: 0, flyCrossing: null, missionsDone: stars, freeUpgrade: false, freeGiven: true });   // (0.15.2: a free part still waiting locks TAKE OFF until it is picked; this player has picked it)   // S3: the 3 starred missions are a condition too
+    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', crossed: [], planted, areaBest: best, bestDistance: 0, flyCrossing: null, missionsDone: stars, freeUpgrade: false, freeGiven: true });   // (0.15.2: a free part still waiting locks TAKE OFF until it is picked; this player has picked it)   // S3: the 3 starred missions are a condition too
     (await import('/src/save.js')).writeSave(s); }, [best, stars]);
   const cardNow = async (best, stars) => { await seed2e(best, stars); await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
     return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
   let c2 = await cardNow({ weurope: 4549 });
-  check(/Needs:/.test(c2) && !/data-cross="warsaw-stockholm"/.test(c2), `4,549 km is not enough to be offered the 6,500 km crossing: ${c2.slice(0, 200)}`);
-  c2 = await cardNow({ nordic: 9999 });
-  check(/data-cross="warsaw-stockholm"/.test(c2), 'a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
+  check(/Needs:/.test(c2) && !/data-cross="mediterranean"/.test(c2), `4,549 km is not enough to be offered the 6,500 km crossing: ${c2.slice(0, 200)}`);
+  c2 = await cardNow({ namerica: 9999 });   // (a long flight from another area: CROSSINGS V3, the Nordic area is in the home region)
+  check(/data-cross="mediterranean"/.test(c2), 'a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
   c2 = await cardNow({ weurope: 4550 }, ['weurope:shade10']);
-  check(/data-cross="warsaw-stockholm"/.test(c2), `the trial stars are no longer a gate (CROSSINGS V2): 4,550 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c2.slice(0, 200)}`);
+  check(/data-cross="mediterranean"/.test(c2), `the trial stars are no longer a gate (CROSSINGS V2): 4,550 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c2.slice(0, 200)}`);
   c2 = await cardNow({ weurope: 4550 });
-  check(/data-cross="warsaw-stockholm"/.test(c2), `4,550 km (70%) + biodiversity 30 + the 3 starred: the crossing is offered: ${c2.slice(0, 200)}`);
+  check(/data-cross="mediterranean"/.test(c2), `4,550 km (70%) + biodiversity 30 + the 3 starred: the crossing is offered: ${c2.slice(0, 200)}`);
   await seed2e({}); await p.goto(URL); await ready(p);
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.click('#goBtn'); await started(p);
   await p.evaluate(() => { const g = game.scene.getScene('game'); g.landedAt = 'BERLIN'; g.distancePx = 3000; g.finish({ landed: true }); });
   await p.waitForTimeout(500);
   const rec = await p.evaluate(() => game.registry.get('save').areaBest);
-  check(rec && rec.weurope >= 2900 && rec.weurope <= 3100, `a landed flight from Warsaw records the best for Western Europe: ${JSON.stringify(rec)}`);
+  check(rec && rec.weurope >= 2900 && rec.weurope <= 3100, `a landed flight from Rome records the best for Western Europe: ${JSON.stringify(rec)}`);
   // every area AND the Pacific stepping stones are open: crossings to Honolulu/Nadi are real crossings since maxEra 3
   await p.evaluate(async () => { const s = game.registry.get('save'), a = await import('/src/areas.js'); s.areas = [...Object.keys(a.AREAS), 'ocean']; s.flightSeconds = 1e6; (await import('/src/save.js')).writeSave(s); });
   await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());

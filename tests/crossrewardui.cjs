@@ -1,5 +1,5 @@
-// RELEASE C: WHERE THE CROSSING PRIZE IS SHOWN (src/ui.js renderHub / openCrossings, src/crossingview.js boxView, src/crossingend.js endView). Real taps, 390x844 and 320x568, a season 2 save in WARSAW (the next crossing is
-// WARSAW > STOCKHOLM, Easy, which pays 100 seeds and 12 ice crystals). Named lines, in order:
+// RELEASE C: WHERE THE CROSSING PRIZE IS SHOWN (src/ui.js renderHub / openCrossings, src/crossingview.js boxView, src/crossingend.js endView). Real taps, 390x844 and 320x568, a season 2 save in ROME (the next crossing is
+// ROME > TUNIS, Easy, which pays 100 seeds and 12 ice crystals). Named lines, in order:
 //   FIXTURE  the NEXT CROSSING box is on HOME
 //   A. the HOME box says 'Prize: 100 seeds' next to the word Easy, and TAKE OFF is still on screen above the bar (the longer right cell must not push it off a short phone)
 //   B. a tap on the box opens the CROSSINGS screen, and it says 'Prize: 100 seeds' too
@@ -11,8 +11,8 @@ const { ready } = require('./lib/ready.js');
 const fs = require('fs'), os = require('os'), path = require('path');
 const SHOTS = process.env.SHOTS || path.join(os.tmpdir(), 'crossrewardui-shots');
 const URL = process.env.URL || 'http://localhost:8000/';
-const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city: 'WARSAW', visited: ['WARSAW'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true,
-  freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, areaBest: { weurope: 99999 }, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], crossingTold: ['warsaw-stockholm'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
+const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'ROME', city: 'ROME', visited: ['ROME'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true,
+  freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, areaBest: { weurope: 99999 }, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], crossingTold: ['mediterranean'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
@@ -41,7 +41,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city
             stage = 'tap box'; await p.click('#hubCross'); await p.waitForTimeout(500);
             const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? e.innerText.replace(/\s+/g, ' ').trim() : null; });
             bufScreen = await snap(p);
-            check(!!sh && /WARSAW > STOCKHOLM/.test(sh) && /Prize: 100 seeds/.test(sh), `${tag} B: the CROSSINGS screen does not say 'Prize: 100 seeds': ${JSON.stringify(sh)}`);
+            check(!!sh && /ROME > TUNIS/.test(sh) && /Prize: 100 seeds/.test(sh), `${tag} B: the CROSSINGS screen does not say 'Prize: 100 seeds': ${JSON.stringify(sh)}`);
           }
           check(!p.errs.length, `${tag}: page errors (home) ${p.errs.slice(0, 2)}`);
           keep(bufHome, `${tag}-home-box.png`); keep(bufScreen, `${tag}-crossings-screen.png`);
@@ -49,7 +49,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city
         await ctx.close(); }
       { const { ctx, p } = await open(W, H); let stage = 'start the crossing';
         try {
-          await p.evaluate(async () => { const V = await import('/src/crossingview.js'), ui = game.registry.get('ui'); ui.tour.busy = true; ui.flyCrossing(V.crossingById(game.registry.get('save'), 'warsaw-stockholm', { unlock: true })); });
+          await p.evaluate(async () => { const V = await import('/src/crossingview.js'), ui = game.registry.get('ui'); ui.tour.busy = true; ui.flyCrossing(V.crossingById(game.registry.get('save'), 'mediterranean', { unlock: true })); });
           await p.waitForFunction(() => { const g = game.scene.getScene('game'); return g && g.crossing && ['takeoff', 'playing'].includes(g.state); }, null, { timeout: 20000 }).catch(() => {});
           const before = await p.evaluate(() => { const s = game.registry.get('save'); return { seeds: s.seeds || 0, crystals: s.crystals || 0 }; });
           stage = 'land'; await p.evaluate(() => { const g = game.scene.getScene('game'); g.graceUntil = 0; g.landedAt = g.path[1]; g.finish({ landed: true }); });
@@ -65,8 +65,8 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city
         await ctx.close(); }
       { const { ctx, p } = await open(W, H); let stage = 'the ending';
         try {
-          await p.evaluate(() => game.registry.get('ui').showResults({ landed: true, landedAt: 'WARSAW', distance: 900, earned: [], rewards: [], breakdown: { co2: 0, night: 0, sun: 0, trees: 0 }, heat: 0, crystals: 0, planted: 0, missions2: { done: [], next: null }, school: false,
-            crossing: { id: 'lap', kind: 'lap', landed: true, to: 'WARSAW', prize: { seeds: 2000, crystals: 250 } } }));
+          await p.evaluate(() => game.registry.get('ui').showResults({ landed: true, landedAt: 'ROME', distance: 900, earned: [], rewards: [], breakdown: { co2: 0, night: 0, sun: 0, trees: 0 }, heat: 0, crystals: 0, planted: 0, missions2: { done: [], next: null }, school: false,
+            crossing: { id: 'lap', kind: 'lap', landed: true, to: 'ROME', prize: { seeds: 2000, crystals: 250 } } }));
           await p.waitForTimeout(800); const bufEnd = await snap(p);
           const e = await p.evaluate(() => { const el = document.getElementById('ending'); if (!el || el.hidden) return null; const c = el.querySelector('.payoff-card').getBoundingClientRect(); return { text: el.innerText.replace(/\s+/g, ' '), top: c.top, bottom: c.bottom, h: innerHeight }; });
           check(!!e && /\+2,000 seeds/.test(e.text) && /\+250 ice crystals/.test(e.text), `${tag} D: the ending screen does not say '+2,000 seeds' and '+250 ice crystals': ${JSON.stringify(e)}`);

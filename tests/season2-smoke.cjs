@@ -5,7 +5,7 @@
 //      (not London > Paris), the first hop is the next airport, the plane takes off, no page errors
 //   C  the tabs: HANGAR, NATURE, PILOT, BOARDS and back to FLY open with content and without errors
 //   D  the offer card with the gate met through a seeded save (areaBest + planted trees): 4,549 km not offered, another
-//      area's flight counts too (0.43.1), 4,550 km + biodiversity 30 offered; a crossing flight starts (Stockholm 6,500 km on)
+//      area's flight counts too (0.43.1), 4,550 km + biodiversity 30 offered; a crossing flight starts (Tunis 6,500 km on)
 //   E  every area open and the last era (far future, the era 6 release): THE LAP is listed, no MORE TO COME; after the lap, neither
 //   G  a tap before the scene exists (the 0.12.2 iPhone crash): startSchool/startFlight restart instead of throwing
 //   F  nothing to fly yet in an early era: the card says when the next crossing opens, not silence
@@ -115,17 +115,17 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   p = await fresh();
   const PLANTED = {}; for (const id of ['spruce', 'birch', 'oak', 'beech', 'pine', 'ash', 'rowan', 'hazel', 'willow', 'alder']) PLANTED[id] = 40;
   const STARS = ['weurope:night', 'weurope:shade10', 'weurope:kinds3'];   // S3: the area's 3 starred missions are a condition too
-  const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', planted: PLANTED, areaBest, missionsDone });
+  const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', planted: PLANTED, areaBest, missionsDone });
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
   let c = await card({ weurope: 4549 });
-  check(/WARSAW &gt; STOCKHOLM/.test(c) && /Needs:/.test(c) && !/data-cross/.test(c), `D: 4,549 km (just under 70%) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
-  c = await card({ nordic: 9999 });
-  check(/data-cross="warsaw-stockholm"/.test(c), 'D: a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
+  check(/ROME &gt; TUNIS/.test(c) && /Needs:/.test(c) && !/data-cross/.test(c), `D: 4,549 km (just under 70%) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
+  c = await card({ namerica: 9999 });   // (another area's flight: the Nordic area is in the home region now)
+  check(/data-cross="mediterranean"/.test(c), 'D: a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
   c = await card({ weurope: 4550 }, STARS.slice(1, 2));
-  check(/data-cross="warsaw-stockholm"/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 4,550 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
+  check(/data-cross="mediterranean"/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 4,550 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
   c = await card({ weurope: 4550 });
-  check(/data-cross="warsaw-stockholm"/.test(c), `D: 4,550 km + biodiversity 30 + the 3 starred: the crossing is offered: ${c.slice(0, 200)}`);
-  const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'WARSAW', areaBest: { weurope: 9999 }, missionsDone: STARS });
+  check(/data-cross="mediterranean"/.test(c), `D: 4,550 km + biodiversity 30 + the 3 starred: the crossing is offered: ${c.slice(0, 200)}`);
+  const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', areaBest: { weurope: 9999 }, missionsDone: STARS });
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); })();
   check(!/data-cross/.test(noTrees) && /nature 30/.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
   await card({ weurope: 4550 });
@@ -135,12 +135,12 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
   if (await p.$('#sheet')) await p.click('#sheet .sheet-ok');   // (R-A: a ready crossing announces itself once, on HOME: LATER, then the route panel)
   if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.evaluate(() => game.registry.get('ui').openJourneySheet());   // (the route chip now opens the FLY TO sheet; the crossing buttons live in the journey sheet)
-  const btn = await p.$('#jCross [data-cross="warsaw-stockholm"]');
+  const btn = await p.$('#jCross [data-cross="mediterranean"]');
   check(!!btn, 'D: the FLY THE CROSSING button is there');
   if (btn) {
     await btn.click(); await p.click('#sheet .sheet-action'); await started(p);   // (R-A: the crossing sheet is the confirm before the flight starts)
     const fl = await p.evaluate(() => { const g = game.scene.getScene('game'); return { c: g.crossing && g.crossing.id, to: g.nextAirport.name, at: Math.round(g.nextAirport.worldX - g.distancePx), dist: g.distText.text, path: g.path.slice(0, 3) }; });
-    check(fl.c === 'warsaw-stockholm' && fl.to === 'STOCKHOLM' && fl.at >= 6400 && fl.at <= 6500 && /TO STOCKHOLM/.test(fl.dist), `D: the crossing flight starts: Warsaw to Stockholm, 6,500 km away: ${JSON.stringify(fl)}`);
+    check(fl.c === 'mediterranean' && fl.to === 'TUNIS' && fl.at >= 6400 && fl.at <= 6500 && /TO TUNIS/.test(fl.dist), `D: the crossing flight starts: Rome to Tunis, 6,500 km away: ${JSON.stringify(fl)}`);
   }
   await p.context().close();
 
@@ -164,7 +164,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   // F. an empty FLY screen is not silent: the next crossing opens in a later era
   if (on('F')) {
   p = await fresh();
-  await seed(p, { areas: ['weurope', 'nordic'], homeArea: 'weurope', city: 'STOCKHOLM', flightSeconds: 0 });
+  await seed(p, { areas: ['weurope', 'mideast'], homeArea: 'weurope', city: 'TUNIS', flightSeconds: 0 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const later = await p.evaluate(() => ({ later: (document.getElementById('jLater') || {}).innerText || '', cross: !!document.querySelector('#jCross [data-cross]'), more: !!document.getElementById('jMore') }));
   check(/NEXT CROSSING/.test(later.later) && /1970s/.test(later.later) && !later.cross && !later.more, `F: nothing to fly yet: the card says the next crossing opens in the 1970s: ${JSON.stringify(later)}`);

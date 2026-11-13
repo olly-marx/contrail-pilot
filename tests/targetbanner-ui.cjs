@@ -1,17 +1,17 @@
-// THE TARGET BANNER AND THE LIGHT-UP IN A REAL FLIGHT (src/GameScene.js bannerNow / targetCity / the light-up; research/TARGET-BANNER-PLAN.md). At 390x844 and 320x568, a season 2 save in LONDON with the Warsaw-Stockholm crossing ready:
+// THE TARGET BANNER AND THE LIGHT-UP IN A REAL FLIGHT (src/GameScene.js bannerNow / targetCity / the light-up; research/TARGET-BANNER-PLAN.md). At 390x844 and 320x568, a season 2 save in LONDON with the Rome-Tunis crossing ready:
 // A. with a destination set (AMSTERDAM) the flight's top text says 'Flying to AMSTERDAM' (not the mission title) and fits the screen; B. the target runway is lit when it is on screen, no other runway is, and it goes out once the plane has passed it;
-// C. with no destination the top text is the mission title; D. a ready crossing's departure as the destination says 'Flying to WARSAW to cross'; E. a crossing flight's target is its arrival airport. Plants: tools/plants.tsv, test `targetbanner-ui`. Run: python3 -m http.server 8000 & node tests/targetbanner-ui.cjs
+// C. with no destination the top text is the mission title; D. a ready crossing's departure as the destination says 'Flying to ROME to cross'; E. a crossing flight's target is its arrival airport. Plants: tools/plants.tsv, test `targetbanner-ui`. Run: python3 -m http.server 8000 & node tests/targetbanner-ui.cjs
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const seed = (aim, label) => ({ routeMode: label === 'C' ? 'explore' : 'mission',   /* C: EXPLORE is chosen, so the mission is not the steer (src/aim.js steerOf); M: the default steer is the open mission */ areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], tutorialDone: true, autoTakeoff: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true,
-  freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, areaBest: { weurope: 99999 }, crossingTold: ['warsaw-stockholm'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], aimCity: aim || undefined, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
+  freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, areaBest: { weurope: 99999 }, crossingTold: ['mediterranean'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], aimCity: aim || undefined, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], log = [], check = (c, m) => { if (!c) fails.push(m); };
   try {
     for (const [W, H] of [[390, 844], [320, 568]]) {
-      for (const [label, aim] of [['A', 'AMSTERDAM'], ['C', null], ['M', null], ['D', 'WARSAW'], ['S', 'PARIS']]) {
+      for (const [label, aim] of [['A', 'AMSTERDAM'], ['C', null], ['M', null], ['D', 'ROME'], ['S', 'PARIS']]) {
         const tag = `${W}x${H} ${label}`, ctx = await b.newContext({ viewport: { width: W, height: H } }), p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
         await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
         await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed(aim, label));
@@ -51,9 +51,9 @@ const seed = (aim, label) => ({ routeMode: label === 'C' ? 'explore' : 'mission'
           } else if (label === 'C') {
             check(top && !/^Flying to/.test(top), `${tag}: with EXPLORE chosen and no destination the top text is the mission title, not a banner: ${JSON.stringify(top)}`);
           } else {
-            check(top === 'Flying to WARSAW to cross', `${tag} D: a ready crossing's departure must say 'Flying to WARSAW to cross': ${JSON.stringify(top)}`);
-            const crossT = await p.evaluate(() => { const s = game.scene.getScene('game'); const keep = s.crossing; s.crossing = { to: 'STOCKHOLM' }; const t = s.targetCity(); s.crossing = keep; return t; });
-            check(crossT === 'STOCKHOLM', `${tag} E: a crossing flight's target is its arrival airport: ${crossT}`);
+            check(top === 'Flying to ROME to cross', `${tag} D: a ready crossing's departure must say 'Flying to ROME to cross': ${JSON.stringify(top)}`);
+            const crossT = await p.evaluate(() => { const s = game.scene.getScene('game'); const keep = s.crossing; s.crossing = { to: 'TUNIS' }; const t = s.targetCity(); s.crossing = keep; return t; });
+            check(crossT === 'TUNIS', `${tag} E: a crossing flight's target is its arrival airport: ${crossT}`);
           }
           check(!p.errs.length, `${tag} page errors: ${p.errs}`);
         } catch (e) { check(false, `${tag}: an exception stopped the run after the checks above: ${String(e).split('\n')[0].slice(0, 140)}`); }

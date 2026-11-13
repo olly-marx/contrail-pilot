@@ -11,10 +11,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const SETUP = () => { const s = game.registry.get('save'), ui = game.registry.get('ui');
-    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], crossed: [], crossingTold: ['warsaw-stockholm'], unclaimed: [], seeds: 500, crystals: 50 });
+    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], crossed: [], crossingTold: ['mediterranean'], unclaimed: [], seeds: 500, crystals: 50 });
     ui.tour.busy = true; ui.showTitle(); };
   const startCrossing = async p => { await p.evaluate(SETUP); await p.waitForTimeout(500);
-    await p.evaluate(async () => { const V = await import('/src/crossingview.js'), cs = V.crossingById(game.registry.get('save'), 'warsaw-stockholm', { unlock: true }); game.registry.get('ui').flyCrossing(cs); });
+    await p.evaluate(async () => { const V = await import('/src/crossingview.js'), cs = V.crossingById(game.registry.get('save'), 'mediterranean', { unlock: true }); game.registry.get('ui').flyCrossing(cs); });
     await p.waitForFunction(() => { const g = game.scene.getScene('game'); return g && g.crossing && ['takeoff', 'playing'].includes(g.state); }, null, { timeout: 20000 }).catch(() => {});
     return p.evaluate(() => { const g = game.scene.getScene('game'); return !!(g && g.crossing); }); };
   const end = p => p.waitForFunction(() => { const e = document.getElementById('crossEnd'); return e && !e.hidden; }, null, { timeout: 12000 })
@@ -36,7 +36,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       await p.click('#crossEnd [data-end="on"]');
       await p.waitForFunction(() => !document.getElementById('title').hidden && document.getElementById('crossEnd').hidden, null, { timeout: 8000 }).catch(() => {});   // HOME is a condition, not a fixed 800 ms
       const after = await p.evaluate(() => ({ home: !document.getElementById('title').hidden, gone: document.getElementById('crossEnd').hidden, areas: JSON.parse(localStorage.getItem('contrailPilot.v2')).areas }));
-      check(after.home && after.gone && after.areas.includes('nordic'), `${tag}: FLY ON goes HOME and the new area is open: ${JSON.stringify(after)}`);
+      check(after.home && after.gone && after.areas.includes('mideast'), `${tag}: FLY ON goes HOME and the new area is open: ${JSON.stringify(after)}`);
     }
     check(!p.errs.length, `${tag}: no page errors (landing): ${p.errs.slice(0, 2)}`); await p.close();
     // CRASH
@@ -52,7 +52,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       await p.click('#crossEnd [data-end="again"]');
       const again = await p.waitForFunction(() => { const g = game.scene.getScene('game'); return g && g.crossing && ['takeoff', 'playing'].includes(g.state); }, null, { timeout: 15000 }).then(() => true).catch(() => false);
       const st = await p.evaluate(() => ({ areas: JSON.parse(localStorage.getItem('contrailPilot.v2')).areas }));
-      check(again && !st.areas.includes('nordic'), `${tag}: TRY AGAIN flies the same crossing at once and nothing opened (flew again ${again}, areas ${JSON.stringify(st.areas)})`);
+      check(again && !st.areas.includes('mideast'), `${tag}: TRY AGAIN flies the same crossing at once and nothing opened (flew again ${again}, areas ${JSON.stringify(st.areas)})`);
     }
     check(!p.errs.length, `${tag}: no page errors (crash): ${p.errs.slice(0, 2)}`); await p.close();
   }

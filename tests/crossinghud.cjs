@@ -9,12 +9,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const SETUP = () => { const s = game.registry.get('save'), ui = game.registry.get('ui');
-    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], crossed: [], crossingTold: ['warsaw-stockholm'], unclaimed: [], seeds: 500, crystals: 50 });
+    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], crossed: [], crossingTold: ['mediterranean'], unclaimed: [], seeds: 500, crystals: 50 });
     ui.tour.busy = true; ui.showTitle(); };
   for (const [W, H] of [[375, 667], [320, 568]]) {
     const tag = `${W}x${H}`, p = await U.openPage(b, W, H, URL);
     await p.evaluate(SETUP); await p.waitForTimeout(500);
-    await p.evaluate(async () => { const V = await import('/src/crossingview.js'), cs = V.crossingById(game.registry.get('save'), 'warsaw-stockholm', { unlock: true }); game.registry.get('ui').flyCrossing(cs); });   // (what FLY THE CROSSING does after its sheet: crossingmoment taps it for real)
+    await p.evaluate(async () => { const V = await import('/src/crossingview.js'), cs = V.crossingById(game.registry.get('save'), 'mediterranean', { unlock: true }); game.registry.get('ui').flyCrossing(cs); });   // (what FLY THE CROSSING does after its sheet: crossingmoment taps it for real)
     await p.waitForFunction(() => { const g = game.scene.getScene('game'); return g && g.crossing && ['takeoff', 'playing'].includes(g.state); }, null, { timeout: 20000 }).catch(() => {});
     const on = await p.evaluate(() => { const g = game.scene.getScene('game'); return !!(g && g.crossing); });
     check(on, `${tag}: a crossing flight started (the HUD cannot be asked about otherwise)`);
