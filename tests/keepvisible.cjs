@@ -64,6 +64,6 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.close();
   }
   await b.close();
-  console.log(fails.length ? `FAIL keepvisible:\n - ${fails.join('\n - ')}` : 'PASS keepvisible: at 375x667 and 320x568 a rails step brings a row out from behind the tab bar and from under the pinned land');
+  console.log(fails.length ? `FAIL keepvisible:\n - ${fails.join('\n - ')}` : 'PASS keepvisible: a rails step brings a row out from behind the tab bar (375x667, 320x568) and from under the pinned land (390x844); the land is not pinned on the short phones');
   process.exit(fails.length ? 1 : 0);
 })();
