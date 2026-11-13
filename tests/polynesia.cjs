@@ -31,7 +31,7 @@ globalThis.SEASON2 = true;
   const PD = await import('../src/habitat/polynesia.js'), wild = require('fs').readFileSync(`${__dirname}/../src/wild.js`, 'utf8');
   const scs = PD.PROJECTS.find(x => /Samoa Conservation Society/.test(x.org.name));
   check(scs && /membership/.test(scs.org.donate) && /join/i.test(scs.org.donateLabel || '') && /o\.donateLabel \|\| 'Help them \(donate\)'/.test(wild), 'a membership form is labelled "Join / support", not "Donate"');
-  check(PD.PROJECTS.length === 7 && !PD.PROJECTS.some(x => x.id === 'coralschool'), `7 projects, the unconfirmed nursery dropped (${PD.PROJECTS.map(x => x.id)})`);
+  check(PD.PROJECTS.length === 11 && !PD.PROJECTS.some(x => x.id === 'coralschool'), `11 projects (7 + 4 sea projects, 2026-11-13: research/BACKLOG.md W3), the unconfirmed nursery dropped (${PD.PROJECTS.map(x => x.id)})`);
   check(/fewer than 250/.test(scs.fact) && scs.src.some(([t]) => /BirdLife/.test(t)), 'manumea: BirdLife\'s fewer than 250, cited');
   check(/const FIELD_ART = \[[^\]]*'polynesia'/.test(wild), 'NATURE draws the polynesia field (FIELD_ART lists it; the browser turn found it missing)');
   console.log(fails.length ? `FAIL polynesia:\n - ${fails.join('\n - ')}` : `PASS polynesia: 8 cities, islands in 'polynesia', ${path.slice(0, 11).join(' > ')}, stones and crossings intact`);

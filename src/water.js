@@ -36,7 +36,7 @@ export const WATER = {
 // Only animals that walk use this: a bird that flies keeps the sky.
 export const HOMES = {
   humpback: 'water', rightwhale: 'water', hectors: 'water', maui: 'water', riverdolphin: 'water', greenturtle: 'water', loggerhead: 'water',
-  riverturtle: 'water', pirarucu: 'water', murraycod: 'water', inanga: 'water', icefish: 'water', cohosalmon: 'water', atlanticsalmon: 'water', oyster: 'water',
+  riverturtle: 'water', mantaray: 'water', reefshark: 'water', pirarucu: 'water', murraycod: 'water', inanga: 'water', icefish: 'water', cohosalmon: 'water', atlanticsalmon: 'water', oyster: 'water',
   sealion: 'shore', leopardseal: 'shore', furseal: 'shore', elephantseal: 'shore', harbourseal: 'shore', huillin: 'shore', giantotter: 'shore', smoothotter: 'shore',
   otter: 'shore', watervole: 'shore', beaver: 'shore', platypus: 'shore', hippo: 'shore', capybara: 'shore', korora: 'shore', hoiho: 'shore', kingpenguin: 'shore',
   magellanicpenguin: 'shore', gharial: 'shore', frog: 'shore', fishingcat: 'shore',
@@ -50,7 +50,7 @@ export const homeOf = id => HOMES[id] || 'land';
 // Where each project's feature stands (declared; every other project's feature stands on land). 'water': the art has its own
 // water line (a boat, a whale's tail, kelp, a reef); 'shore': on land by the water (a beach nest, a seal rock).
 export const PLACE = {
-  coralplant: 'water', turtleclinic: 'shore',                                                            // polynesia
+  coralplant: 'water', turtleclinic: 'shore', rahui: 'water', mantacount: 'water', sharksafe: 'water', maraemoana: 'water',   // polynesia
   whalesea: 'water', kelpsea: 'water', penguinsea: 'shore', fjordwatch: 'water',                          // steppe
   nzdolphins: 'water', hoihoplant: 'shore', whitebait: 'shore',                                           // islandforest
   sealcount: 'shore', rivers: 'shore', eiderguard: 'shore',                                               // tundra
