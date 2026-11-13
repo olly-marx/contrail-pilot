@@ -453,10 +453,14 @@ class Field {
     f.style.backgroundImage = `url('assets/ui/field-${region}.png')`;
     el.appendChild(f);
     this.water = null;
-    if (WATER[region]) {   // the land's water (src/water.js), under every feature, tree and animal; two frames of glints
-      const cv = document.createElement('canvas'); cv.width = FW; cv.height = FH; cv.className = 'wwater';
-      const g = cv.getContext('2d'); this.water = { g, frames: [0, 1].map(k => paintWater(region, k, g.createImageData(FW, FH))), k: -1, t: 0 };
-      g.putImageData(this.water.frames[0], 0, 0); this.water.k = 0; f.appendChild(cv);
+    // The land's water (src/water.js) as a second BACKGROUND layer over the field picture, so it sits under every feature, tree and
+    // animal and is not a page element (as a canvas it was a picture box the 'Bare land' note overlapped: tests/overlap.cjs, 0.63 CI).
+    // Two frames of glints, swapped every 0.7 s.
+    if (WATER[region]) {
+      const cv = document.createElement('canvas'); cv.width = FW; cv.height = FH; const g = cv.getContext('2d');
+      const urls = [0, 1].map(k => { g.clearRect(0, 0, FW, FH); g.putImageData(paintWater(region, k, g.createImageData(FW, FH)), 0, 0); return cv.toDataURL(); });
+      this.water = { urls, k: 0, t: 0, field: `url('assets/ui/field-${region}.png')` };
+      f.style.backgroundImage = `url('${urls[0]}'), ${this.water.field}`;
     }
     const put = (src, x, y, k, cls = '') => {   // bottom-left at (x, y), scaled k
       const img = document.createElement('img');
@@ -525,7 +529,7 @@ class Field {
     if (this.el.offsetParent !== null) {           // only while the NATURE screen is showing
       this.fit();
       for (const c of this.critters) this.move(c, dt);
-      if (this.water && (this.water.t += dt) > 0.7) { this.water.t = 0; this.water.k ^= 1; this.water.g.putImageData(this.water.frames[this.water.k], 0, 0); }
+      if (this.water && (this.water.t += dt) > 0.7) { const w = this.water; w.t = 0; w.k ^= 1; this.f.style.backgroundImage = `url('${w.urls[w.k]}'), ${w.field}`; }
     }
     this.raf = requestAnimationFrame(t => this.step(t));
   }
