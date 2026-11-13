@@ -167,6 +167,7 @@ export function cutFor(region, home, x, y, half, h, under) {
 export function walk(c, dt) {
   const dx = c.tx - c.x, dy = c.ty - c.y, d = Math.hypot(dx, dy);
   if (d < 1) return false;
+  if (!(dt > 0)) return true;   // a step back in time (a frame stamped before the last one) must not walk backwards out of the zone
   const v = Math.min(d, c.speed * dt * (1 - 0.4 * Math.abs(dy) / d));
   c.x += dx / d * v; c.y += dy / d * v;
   return true;

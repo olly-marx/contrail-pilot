@@ -58,6 +58,8 @@
   for (const id of ['humpback', 'riverdolphin', 'murraycod']) { const r = byId[id].region, p = W.startIn(r, 'water', rnd); check(p && W.isWater(r, p[0], p[1]), `${id}: a water start is in the water`); }
   for (const r of Object.keys(W.WATER)) { const p = W.startIn(r, 'land', rnd); check(p && !W.isWater(r, p[0], p[1]), `${r}: a land start is on land`); }
 
+  // A frame stamped before the last one gives a negative step (seen in the browser, 2026-11-13: a whale walked backwards onto the island).
+  { const c = { x: 100, y: 120, tx: 140, ty: 120, speed: 10 }; W.walk(c, -5); check(c.x === 100 && c.y === 120, `a negative step must not move an animal: ${c.x},${c.y}`); }
   // 3. features
   const BASE = [[2, 98], [100, 92], [212, 96], [30, 136], [128, 128], [216, 140], [64, 162], [160, 156], [232, 170], [2, 170], [112, 170], [180, 112], [252, 118]];   // REGION_SPOTS (src/wild.js)
   for (const r of Object.keys(projects)) {
