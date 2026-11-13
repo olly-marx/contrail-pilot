@@ -17,7 +17,7 @@ import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
 import { markSeen, hangarScope, dots, fresh } from './fresh.js';
 import { showSheet } from './sheet.js';
-import { FINANCE, FUND, financeLevel, financeOpen, financeBio, natureHealth, rate, rateAt, sellRate, canTake, trade, canSell, sell, buyFinance, bonds, canLock, lockBond, payBonds, payDividend, fundOf, fundValue, canInvest, invest, cashOut, newsToday } from './finance.js';
+import { FINANCE, FUND, financeLevel, financeOpen, financeBio, natureHealth, rate, buyAt, sellRate, trueRate, gameDay, marketSeries, fundSeries, canTake, trade, canSell, sell, buyFinance, bonds, canLock, lockBond, payBonds, payDividend, fundOf, fundValue, canInvest, invest, cashOut, newsToday } from './finance.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
 
 const $ = id => document.getElementById(id);
@@ -192,14 +192,14 @@ export class FleetHangar {
   financeHTML(s) {
     if (!financeOpen(s)) return '';
     const lv = financeLevel(s), B = financeBio(s), home = natureHealth(s), next = FINANCE.levels[lv], L = FINANCE.levels[lv - 1];
-    const bar = lvTo => statBarsHTML([{ label: 'Seeds per crystal', now: lv ? rate(s) : 40, then: rateAt(lvTo, B), min: 0, max: 40, better: 'lower' }]);
+    const T = trueRate(gameDay(s)), bar = lvTo => statBarsHTML([{ label: 'You pay a crystal', now: lv ? rate(s) : buyAt(1, B, T), then: buyAt(lvTo, B, T), min: 0, max: 50, better: 'lower' }]);
     const n = canTake(s), m = canSell(s);
     // (screenshot, 2026-10-28: a level that adds bonds / the dividend does not change the rate: say what it adds, no 0% bar)
     const adds = next && (next.dividend && !(L && L.dividend) ? 'Adds the nature dividend: crystals for landing where nature is healthy.' : next.bond && !(L && L.bond) ? 'Adds bonds: lock seeds, get them back with crystals.' : '');
     return `<div class="line fline finance"><div class="fin-head"><div class="name">Natural capital</div><div class="small">${L ? L.name : 'Not yet'}. World nature: ${B} / 100</div></div>
-      ${L ? `<p class="small">Today: <b>${rate(s)} seeds = 1 crystal</b>. You keep ${L.reserve.toLocaleString('en-GB')} seeds.</p>
+      ${L ? `<p class="small">Market price: <b>${T} seeds</b> a crystal. You pay <b>${rate(s)}</b>, you get <b>${sellRate(s)}</b>: a healthier world closes the gap. You keep ${L.reserve.toLocaleString('en-GB')} seeds.</p>
+        ${this.chartSVG(marketSeries(s), [['pay', 'pay'], ['true', 'market'], ['get', 'get']], 'Crystal price, last 20 game days')}
         <button class="btn ${n ? 'go' : ''}" id="hTrade" type="button" ${n ? '' : 'disabled'}>${n ? `TRADE ${n * rate(s)} seeds for ${n} crystals` : 'Trade again after your next landing'}</button>
-        <p class="small">Sell: <b>1 crystal = ${sellRate(s)} seeds</b>.</p>
         <button class="btn ${m ? 'go' : ''}" id="hSell" type="button" ${m ? '' : 'disabled'}>${m ? `SELL ${m} crystals for ${m * sellRate(s)} seeds` : 'Sell after your next landing'}</button>
         ${this.fundHTML(s, L)}` : '<p class="small">Healthier world nature, better rates both ways.</p>'}
       ${L && L.bond ? `<p class="small">Bonds: ${bonds(s).map(b => `${Math.max(0, L.bond.landings - ((s.landings || 0) - b.at))} landings left`).join(', ') || 'none yet'}. Each pays back its seeds + about ${Math.floor(home / L.bond.perB)} crystals (your nature at payout).</p>
@@ -207,14 +207,27 @@ export class FleetHangar {
       ${next ? `<div class="next"><span>Next: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost}<i class="seedicon"></i></button></div>${adds ? `<p class="small">${adds}</p>` : bar(lv + 1)}` : ''}</div>`;
   }
 
-  // THE NATURE FUND (src/finance.js, 2026-11-13): seeds in, worth more or less on a real clock; today's story; cash out less the fee.
+  // THE NATURE FUND (src/finance.js, 2026-11-13): seeds in, worth more or less each game day you fly; today's story; cash out less the fee.
   fundHTML(s, L) {
-    const f = fundOf(s), v = fundValue(s), k = canInvest(s), news = newsToday();
+    const f = fundOf(s), v = fundValue(s), k = canInvest(s), news = newsToday(s);
     const pct = f && f.seeds ? Math.round(1000 * (v / f.seeds - 1)) / 10 : 0;
-    return `<p class="small">Nature fund: ${f ? `<b>${v.toLocaleString('en-GB')} seeds</b> (${pct >= 0 ? '+' : ''}${pct}% since you put in)` : 'nothing in yet'}. Up to ${L.fund.toLocaleString('en-GB')} seeds. It moves every hour, up or down; healthier world nature makes it grow.</p>
+    return `<p class="small">Nature fund: ${f ? `<b>${v.toLocaleString('en-GB')} seeds</b> (${pct >= 0 ? '+' : ''}${pct}% since you put in)` : 'nothing in yet'}. Up to ${L.fund.toLocaleString('en-GB')} seeds. It moves each day and night you fly, up or down; over many flights it grows, faster when world nature is healthier.</p>
+      ${this.chartSVG(fundSeries(s), [['price', 'fund']], 'Nature fund, last 20 game days')}
       ${news ? `<p class="small fin-news ${news.up ? 'up' : 'down'}">Today: ${news.text} (${news.up ? '+' : ''}${Math.round(100 * news.size)}%)</p>` : ''}
       <button class="btn ${k ? 'go' : ''}" id="hInvest" type="button" ${k ? '' : 'disabled'}>${k ? `INVEST ${k} seeds` : 'Fund full, or keep your reserve'}</button>
       ${f ? `<button class="btn" id="hCashOut" type="button">CASH OUT ${Math.floor(v * (1 - FUND.fee)).toLocaleString('en-GB')} seeds</button>` : ''}`;
+  }
+
+  // A small line chart for the finance desk (2026-11-13: 'basic in game stock graphs'): rows = [{ key: number }], lines =
+  // [[key, class]], one polyline each on a shared scale; the last point gets a dot. Pure SVG, no library.
+  chartSVG(rows, lines, title) {
+    if (!rows.length) return '';
+    const W = 260, H = 64, vals = rows.flatMap(r => lines.map(([k]) => r[k])), lo = Math.min(...vals), hi = Math.max(...vals), span = hi - lo || 1;
+    const x = i => rows.length > 1 ? 4 + (W - 8) * i / (rows.length - 1) : W / 2, y = v => 4 + (H - 8) * (1 - (v - lo) / span);
+    const path = k => rows.map((r, i) => `${x(i).toFixed(1)},${y(r[k]).toFixed(1)}`).join(' '), last = rows.length - 1;
+    const names = { pay: 'You pay', market: 'Market', get: 'You get', fund: 'Fund' };
+    return `<figure class="fin-chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${title}">${lines.map(([k, c]) => `<polyline class="fc-${c}" points="${path(k)}"/><circle class="fc-${c}" cx="${x(last)}" cy="${y(rows[last][k])}" r="2.5"/>`).join('')}</svg>
+      <figcaption>${title}${lines.length > 1 ? ': ' + lines.map(([, c]) => `<span class="fc-${c}">${names[c]}</span>`).join(' ') : ''}</figcaption></figure>`;
   }
 
   // The item behind a selection ('plane:comet.engines', 'gadget:magnet', 'fly:jumbo').

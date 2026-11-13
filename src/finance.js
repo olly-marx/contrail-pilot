@@ -1,29 +1,27 @@
 // NATURE FINANCE: natural capital (the user, 2026-10-27; research/PROPOSAL-ERAS-4-6-SYSTEMS.md section 5). Real finance is
 // starting to value nature. Crystals are the ordinary currency (experts run short); a late-game player is RICH in natural
-// currency (seeds). The exchange desk turns seeds into crystals at a RATE SET BY YOUR NATURE'S HEALTH: healthier nature,
-// a better rate. Opens in the 2010s (era 3). The sim chat measures it before release (BALANCE-RESCALE-S2's measured point:
-// 20 seeds : 1 crystal above a 4,000 reserve doubled experts' purchases, typical players untouched).
-//   health B  = the MEAN biodiversity (0-100) of the home lands of your open areas (a new area pulls it down until you
-//               rebuild there: the "new land, new nature" story).
-//   rate      = max(floor, base - slope x B) seeds per crystal.     Level 1 at B 40: 30:1; at B 80: 20:1 (the measured point).
+// currency (seeds). The exchange desk trades both ways at the MARKET's true rate (it moves each game day, the same for
+// everyone) plus a GAP set by the WHOLE WORLD's biodiversity: a bare world pays badly, a healthy one well (2026-11-13; the
+// market section below). Opens in the 2010s (era 3). The sim measures it before release.
 //   you keep  = the reserve; at most `cap` crystals per landing.
 // Level 3 (bonds) opens in the 2030s, level 4 (the dividend) in the far future.
 import { AREAS } from './areas.js';
 import { city } from './network.js';
 import { biodiversity, worldBiodiversity } from './nature.js';
 import { eraProgress } from './eras.js';
+import { DAYNIGHT } from './config.js';
 
 export const FINANCE = {
   era: 3,
   levels: [
-    { name: 'Natural capital account', fund: 2000, cost: 1500, base: 40, slope: 0.25, floor: 20, reserve: 4000, cap: 10 },
-    { name: 'Nature-positive rating', fund: 3000, cost: 3000, base: 40, slope: 0.30, floor: 16, reserve: 3500, cap: 15 },
+    { name: 'Natural capital account', fund: 2000, cost: 1500, reserve: 4000, cap: 10 },
+    { name: 'Nature-positive rating', fund: 3000, cost: 3000, reserve: 3500, cap: 15 },
     // The 2030s: BONDS. Lock `lock` seeds for `landings` landings; get them back plus floor(B / perB) crystals, B read at
     // PAYOUT (nature pays interest only if you keep it healthy). At most `most` bonds at once; the reserve still holds.
-    { name: 'Biodiversity bonds', fund: 4000, cost: 5000, era: 4, base: 40, slope: 0.30, floor: 16, reserve: 3500, cap: 15, bond: { lock: 1000, landings: 10, perB: 4, most: 3 } },
+    { name: 'Biodiversity bonds', fund: 4000, cost: 5000, era: 4, reserve: 3500, cap: 15, bond: { lock: 1000, landings: 10, perB: 4, most: 3 } },
     // The far future: the NATURE DIVIDEND. Each landing in an area whose OWN biodiversity is >= minBio pays perLanding crystal(s),
     // collected on the next hangar visit (at most `cap` a visit). Bonds stay.
-    { name: 'Nature dividend', fund: 5000, cost: 8000, era: 5, base: 40, slope: 0.30, floor: 16, reserve: 3000, cap: 20, bond: { lock: 1000, landings: 10, perB: 4, most: 3 }, dividend: { minBio: 60, perLanding: 1, cap: 3 } },
+    { name: 'Nature dividend', fund: 5000, cost: 8000, era: 5, reserve: 3000, cap: 20, bond: { lock: 1000, landings: 10, perB: 4, most: 3 }, dividend: { minBio: 60, perLanding: 1, cap: 3 } },
   ],
 };
 export const financeLevel = save => Math.min(FINANCE.levels.length, (save.finance && save.finance.level) || 0);
@@ -35,19 +33,48 @@ export function natureHealth(save) {
   const vals = areas.map(k => { const c = city(AREAS[k].start); return biodiversity(save, c ? c.region : undefined); });
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
 }
-export function rateAt(level, B) { const L = FINANCE.levels[level - 1]; return L ? Math.max(L.floor, Math.round(L.base - L.slope * B)) : null; }
 // The EXCHANGE and the fund read the WHOLE WORLD's biodiversity: the mean meter of every land (src/nature.js
 // worldBiodiversity). The user, 2026-11-13: 'it's over all land. That is just the sad reality and you will get bad rates
 // until the whole world is more diverse.' (Measured: B ~8 in era 3, research/finbio-report.txt.) natureHealth above stays
 // for the bonds' interest.
 export const financeBio = save => worldBiodiversity(save);
-export const rate = (save, level = financeLevel(save)) => rateAt(level, financeBio(save));
-// SELLING crystals for seeds (2026-11-13): the desk pays fewer seeds a crystal than it charges (the SPREAD), so flipping
-// back and forth always loses. The spread narrows as the world's nature gets healthier: a better deal both ways.
-export const SPREAD = { at0: 10, at100: 4 };
-export const spreadAt = B => Math.round(SPREAD.at0 - (SPREAD.at0 - SPREAD.at100) * Math.max(0, Math.min(100, B)) / 100);
-export function sellRateAt(level, B) { const b = rateAt(level, B); return b == null ? null : Math.max(1, b - spreadAt(B)); }
-export const sellRate = (save, level = financeLevel(save)) => sellRateAt(level, financeBio(save));
+// ---------- the market (the user, 2026-11-13: 'your rate vs the true exchange rate, which can fluctuate too') ----------
+// TIME is GAME time (the user, 2026-11-13: 'use in game time, since the flights have a day and night'): one game day is a day
+// plus a night of flying (DAYNIGHT, 30 s), counted from save.flightSeconds. Nothing moves while you are not flying, the clock
+// cannot be wound, and the sim engine advances it like any flight.
+export const GAME_DAY = DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds;
+export const gameDay = save => Math.floor((save.flightSeconds || 0) / GAME_DAY);
+// A 32-bit integer hash to [0, 1) (no Math.random: the series must be the same everywhere).
+function hash01(n, salt = 0) {
+  let x = (n ^ salt ^ 0x9e3779b9) >>> 0;
+  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b) >>> 0; x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35) >>> 0; x = (x ^ (x >>> 16)) >>> 0;
+  return x / 4294967296;
+}
+const unit = (d, salt) => (hash01(d, salt) * 2 - 1) * Math.sqrt(3);   // mean 0, variance 1, never past +/-1.73
+// THE TRUE RATE: one price for everyone, seeds per crystal. It wanders around `mid` and is pulled back each day by `pull`
+// (an Ornstein-Uhlenbeck walk on its log), so it stays about 19 to 33 and never runs away. Worked from `warm` days back.
+// YOUR RATES: you pay the true rate PLUS a gap and get it LESS half the gap. The gap is `gap0` on a bare world and `gap100`
+// on a fully healthy one; each desk level above the first trims it by `perLevel`. GAME VALUES, est.: the sim measures them.
+export const MARKET = { mid: 25, pull: 1 / 20, sigma: 0.04, warm: 200, gap0: 0.5, gap100: 0.1, perLevel: 0.1 };
+const SALT_MARKET = 0x3c6ef372;
+// The true rate for each of the game days d0..d1 (inclusive), as an array.
+export function trueRates(d0, d1) {
+  const out = []; let x = 0;
+  for (let d = d0 - MARKET.warm; d <= d1; d++) { x = x * (1 - MARKET.pull) + MARKET.sigma * unit(d, SALT_MARKET); if (d >= d0) out.push(Math.round(10 * MARKET.mid * Math.exp(x)) / 10); }
+  return out;
+}
+export const trueRate = d => trueRates(d, d)[0];
+export function gapAt(level, B) { const b = Math.max(0, Math.min(100, B)) / 100; return (MARKET.gap0 - (MARKET.gap0 - MARKET.gap100) * b) * (1 - MARKET.perLevel * Math.max(0, level - 1)); }
+// Seeds you PAY for a crystal and seeds you GET for one, at true rate T. Selling always pays less than buying costs.
+export function buyAt(level, B, T) { return level ? Math.max(1, Math.round(T * (1 + gapAt(level, B)))) : null; }
+export function sellAt(level, B, T) { return level ? Math.max(1, Math.min(buyAt(level, B, T) - 1, Math.round(T * (1 - gapAt(level, B) / 2)))) : null; }
+export const rate = (save, level = financeLevel(save)) => buyAt(level, financeBio(save), trueRate(gameDay(save)));
+export const sellRate = (save, level = financeLevel(save)) => sellAt(level, financeBio(save), trueRate(gameDay(save)));
+// The last n game days for the desk's graph: [{ d, true, pay, get }].
+export function marketSeries(save, n = 20, level = Math.max(1, financeLevel(save))) {
+  const d1 = gameDay(save), d0 = Math.max(0, d1 - n + 1), B = financeBio(save);
+  return trueRates(d0, d1).map((T, i) => ({ d: d0 + i, true: T, pay: buyAt(level, B, T), get: sellAt(level, B, T) }));
+}
 // How many crystals you could take now (0 when the desk is shut, you are under the reserve, or you traded this landing).
 export function canTake(save) {
   const lv = financeLevel(save), L = FINANCE.levels[lv - 1];
@@ -116,75 +143,70 @@ export function payDividend(save) {
 }
 
 // ---------- the nature fund (every level, the 2010s on; the user, 2026-11-13) ----------
-// Put seeds in; they grow or shrink on a REAL clock. The fund's moves are one series for everyone: each real hour h has a
-// fixed random step (a hash of h, so the same hour is the same step on every phone and in tests). Your money follows
-//   value = paid in x exp( sum over the hours held of (drift + SIGMA x step(h)) + the day's news jumps ),
-// with the drift set by the WORLD's biodiversity when you cash out (healthy nature pays; a bare world drifts down). The
-// growth is clamped to [CLAMP] and counts at most MAX_HOURS. GAME VALUES, est.: the sim thread measures them before release.
+// Put seeds in; they grow or shrink each GAME DAY you fly. Each game day d has a fixed random step (a hash of d), and
+//   value = paid in x exp( sum over the game days held of (drift + sigma x step(d)) + the news jumps ),
+// with the drift set by the WORLD's biodiversity when you cash out. Clamped to [clamp]. GAME VALUES, est.: target (sim
+// thread, pending): a full fund earns on average about a fifth of a flight's seeds per flight.
 export const FUND = {
-  sigmaH: 0.004,                 // an hour's spread (about 2% a day)
-  driftDay: { at0: 0.003, at100: 0.012 },   // the mean daily drift at biodiversity 0 and 100: always above zero, so holding a few days beats the fee
-  news: { chance: 1 / 3, size: 0.03, hour: 12 },   // a third of days carry one +/-3% story, at 12:00 UTC
+  // Sized from the sim (2026-11-13: era 3 ~40.5 s a flight = 1.35 game days; ~12 seeds a flight, provisional): at world B 8
+  // a full 2,000 fund drifts ~2.3 seeds a flight (about a fifth of a flight), and over 100 flights ends up ~9 times in 10.
+  sigma: 0.006,                  // a game day's spread
+  drift: { at0: 0.0007, at100: 0.0025 },   // the mean move a game day at world biodiversity 0 and 100: always above zero
+  news: { chance: 1 / 8, size: 0.015 },   // one game day in eight carries a +/-1.5% story
   fee: 0.01,                     // 1% taken when you cash out
   step: 500,                     // seeds a tap puts in
-  maxHours: 24 * 30, clamp: [0.5, 2],
+  clamp: [0.5, 3],
 };
-const HOUR = 3600e3;
-export const hourOf = ms => Math.floor(ms / HOUR);
-// A 32-bit integer hash to [0, 1) (no Math.random: the series must be the same everywhere).
-function hash01(n, salt = 0) {
-  let x = (n ^ salt ^ 0x9e3779b9) >>> 0;
-  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b) >>> 0; x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35) >>> 0; x = (x ^ (x >>> 16)) >>> 0;
-  return x / 4294967296;
-}
-export const stepAt = h => (hash01(h) * 2 - 1) * Math.sqrt(3);   // mean 0, variance 1, never past +/-1.73
+const SALT_FUND = 0, SALT_NEWS = 0x5bd1e995;
+export const stepAt = d => unit(d, SALT_FUND);
 const GOOD = ['Reef restoration beats its target', 'Forest fund plants a million trees', 'Wetland project wins a prize', 'River clean-up opens early'];
 const BAD = ['Storm hits the forest fund', 'Drought slows the wetland project', 'Coral bleaching hits the reef fund', 'Wildfire burns a planted hillside'];
-// The day's story (d = days since 1970), or null on a quiet day.
+// Game day d's story, or null on a quiet day.
 export function newsOn(d) {
-  if (hash01(d, 0x5bd1e995) >= FUND.news.chance) return null;
+  if (hash01(d, SALT_NEWS) >= FUND.news.chance) return null;
   const up = hash01(d, 0x27d4eb2f) < 0.5, list = up ? GOOD : BAD, text = list[Math.floor(hash01(d, 0x165667b1) * list.length)];
   return { up, text, size: up ? FUND.news.size : -FUND.news.size };
 }
-export const newsToday = (now = Date.now()) => newsOn(Math.floor(hourOf(now) / 24));
-export const driftHourAt = B => (FUND.driftDay.at0 + (FUND.driftDay.at100 - FUND.driftDay.at0) * Math.max(0, Math.min(100, B)) / 100) / 24;
-// The growth factor from hour h0 to hour h1 at world biodiversity B (1 when no whole hour has passed).
-export function growth(h0, h1, B) {
-  h1 = Math.min(h1, h0 + FUND.maxHours);
-  if (!(h1 > h0)) return 1;
-  let log = 0; const mu = driftHourAt(B);
-  for (let h = h0 + 1; h <= h1; h++) {
-    log += mu + FUND.sigmaH * stepAt(h);
-    if (h % 24 === FUND.news.hour) { const n = newsOn(Math.floor(h / 24)); if (n) log += Math.log(1 + n.size); }
-  }
-  return Math.min(FUND.clamp[1], Math.max(FUND.clamp[0], Math.exp(log)));
+export const newsToday = save => newsOn(gameDay(save));
+export const driftAt = B => FUND.drift.at0 + (FUND.drift.at100 - FUND.drift.at0) * Math.max(0, Math.min(100, B)) / 100;
+// The fund's own log-price on game day d relative to day d0 (no drift: the drift is yours, set by nature).
+function moveLog(d0, d1, B) {
+  let log = 0; const mu = driftAt(B);
+  for (let d = d0 + 1; d <= d1; d++) { log += mu + FUND.sigma * stepAt(d); const n = newsOn(d); if (n) log += Math.log(1 + n.size); }
+  return log;
+}
+// The growth factor from game day d0 to d1 at world biodiversity B (1 when no whole game day has passed).
+export function growth(d0, d1, B) { return d1 > d0 ? Math.min(FUND.clamp[1], Math.max(FUND.clamp[0], Math.exp(moveLog(d0, d1, B)))) : 1; }
+// The fund's price for the graph: the last n game days, 100 at the first.
+export function fundSeries(save, n = 20) {
+  const d1 = gameDay(save), d0 = Math.max(0, d1 - n + 1), B = financeBio(save), out = [];
+  for (let d = d0; d <= d1; d++) out.push({ d, price: Math.round(1000 * Math.exp(moveLog(d0, d, B))) / 10 });
+  return out;
 }
 const fundCfg = save => { const L = FINANCE.levels[financeLevel(save) - 1]; return L && financeOpen(save) ? L.fund : 0; };
 export const fundOf = save => (save.finance && save.finance.fund) || null;
-// The clock never runs backwards for a save: a phone set back reads the latest hour this save has seen.
-function nowHour(save, now) { const h = Math.max(hourOf(now), (save.finance && save.finance.seenHour) || 0); if (save.finance) save.finance.seenHour = h; return h; }
 // What your fund is worth now (seeds, whole), 0 with nothing in.
-export function fundValue(save, now = Date.now()) {
+export function fundValue(save) {
   const f = fundOf(save); if (!f) return 0;
-  return Math.floor(f.seeds * growth(f.hour, nowHour(save, now), financeBio(save)));
+  return Math.floor(f.seeds * growth(f.day, gameDay(save), financeBio(save)));
 }
 // Seeds a tap would put in now: FUND.step, or less to stay under the level's cap and above the desk's reserve.
-export function canInvest(save, now = Date.now()) {
+export function canInvest(save) {
   const cap = fundCfg(save), L = FINANCE.levels[financeLevel(save) - 1]; if (!cap) return 0;
-  const room = cap - fundValue(save, now), spare = (save.seeds || 0) - L.reserve;
+  const room = cap - fundValue(save), spare = (save.seeds || 0) - L.reserve;
   return Math.max(0, Math.min(FUND.step, room, spare));
 }
-// Put seeds in: what is already in is valued now and rolled into one holding that starts this hour.
-export function invest(save, now = Date.now()) {
-  const n = canInvest(save, now); if (!n) return 0;
-  const v = fundValue(save, now);
-  save.seeds -= n; save.finance.fund = { seeds: v + n, hour: nowHour(save, now) };
+// Put seeds in: what is already in is valued now and rolled into one holding that starts this game day.
+export function invest(save) {
+  const n = canInvest(save); if (!n) return 0;
+  const v = fundValue(save);
+  save.seeds -= n; save.finance.fund = { seeds: v + n, day: gameDay(save) };
   return n;
 }
 // Take everything out (less the fee): seeds paid, 0 with nothing in.
-export function cashOut(save, now = Date.now()) {
+export function cashOut(save) {
   if (!fundOf(save)) return 0;
-  const pay = Math.floor(fundValue(save, now) * (1 - FUND.fee));
+  const pay = Math.floor(fundValue(save) * (1 - FUND.fee));
   save.seeds = (save.seeds || 0) + pay; delete save.finance.fund;
   return pay;
 }
