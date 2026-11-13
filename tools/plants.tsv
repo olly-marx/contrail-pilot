@@ -855,3 +855,5 @@ crossrewardui	style.css	s/^\.ending \.payoff-card p { line-height: 1\.5; }$//	th
 hudclear	src/GameScene.js	s/^    this\.tidyToast();   \/\/ a toast already up (opened at the title).*$//	a toast that opened at the title stays at 16 percent for the first flight frame (L-43)
 celebrate	src/celebrate.js	s/waves: 3, waveMs: 700/waves: 1, waveMs: 700/	the lap's burst is a single wave (no longer than a crossing's)
 crossrewardui	src/ui.js	s/el.hidden = false; celebrateEvent(el.querySelector('.payoff-card'), 'lap-landed');/el.hidden = false;/	the ending card plays no celebration
+naturebar	src/wild.js	s/+ (this.toolId === line.id ? this.toolLevelHTML(line) : '');/+ '';/	a tapped NATURE tool row shows no level bar
+naturebar	src/wild.js	s/i < c.have ? 'on' : ''}"><\/i>`).join('');$/i <= c.have ? 'on' : ''}"><\/i>`).join('');/	the NATURE bar fills one segment too many

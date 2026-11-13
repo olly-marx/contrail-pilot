@@ -915,6 +915,7 @@ h2.sub { margin-top: -4px; }
 .lvbar i.on { background: #4caf50; }
 .hp-now, .hp-next { margin: 0 0 2px; line-height: 1.3; }
 .hp-now { color: var(--muted); }
+.rowc-lvl { margin: -2px 0 6px; padding: 4px 8px 2px; border: 2px solid var(--ink); border-top: 0; background: #fffbe8; }   /* NATURE: the tapped tool row's level bar (src/wild.js toolLevelHTML) */
 .nextplane { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 10px; }
 .payoff.atbox { align-items: flex-start; justify-content: flex-start; }
 .payoff.atbox .payoff-card { box-sizing: border-box; max-width: none; }

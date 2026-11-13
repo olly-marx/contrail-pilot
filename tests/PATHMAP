@@ -36,7 +36,7 @@ group service-worker | sw.js manifest.webmanifest src/swreg.js | swoffline swupd
 group sw-raw | sw.js src/updates.js src/swreg.js tests/lib/rawchrome.js tests/lib/sitehost.js tests/lib/swpage.js | swupdate swoffline swkill
 group route-header | src/GameScene.js src/sim/rules.js | routeheader
 group ux-fit | src/ui.js index.html style.css src/screens.js src/sheet.js tools/uxlib.cjs | fitscreen badgefont overlap taptargets rowfit hangar nature
-group ux-rows | src/hangar.js src/wild.js | overlap
+group ux-rows | src/hangar.js src/wild.js | overlap naturebar
 group rules-imports | src/aim.js | sim-bank fares flight
 group ux-fit | src/resultscard.js src/nextup.js | fitscreen overlap taptargets rowfit hangar nature
 ci-only | onrails320
@@ -95,6 +95,7 @@ group audiolive-test | tests/audiolive.cjs | audiolive
 group needs-ui | src/missionplan.js src/missionsview.js src/ui.js src/wild.js src/missions2.js | needsmark-ui missiongo streakui
 group mission-pay | src/missionprize.js src/missionplan.js src/missions2.js src/aim.js src/targetbanner.js | missionscreen missiongo needsmark-ui streakui
 group cross-reward | src/crossings.js src/crossingend.js src/crossingview.js src/missionprize.js src/ui.js style.css | crossrewardui crossboxui crossingscreens
-group upgrade-bar | src/hangar.js src/upgradetext.js style.css | barui hangar fitscreen
+group upgrade-bar | src/hangar.js src/upgradetext.js style.css | barui hangar fitscreen naturebar
 group tree-line | src/resultscard.js src/ui.js style.css index.html src/sim/rules.js | treelineui
 group tour-flight | src/tour.js src/ui.js src/GameScene.js | tourflight
+group naturebar-test | tests/naturebar.cjs | naturebar

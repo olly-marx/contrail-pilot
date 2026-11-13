@@ -24,6 +24,7 @@ import { nextHere } from './nexthere.js';
 import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
 import { fresh } from './fresh.js';
+import { upgradeCard, ALL_DONE } from './upgradetext.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -207,7 +208,18 @@ export class WildScreen {
     const sub = !next ? 'All done!' : short ? `need ${short} more` : `Next: ${esc(next.name)}`;
     return `<div class="rowc price-top tool ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''} ${this.toolId === line.id ? 'previewing sel' : ''}" data-line="${line.id}">`
       + `<button class="rowc-tap" data-tpreview="${line.id}" type="button" aria-label="See where ${esc(line.name)} would grow trees"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span>${this.isNew && this.isNew(`line:${line.id}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
-      + `<span class="rowc-sub">${sub}</span></button>${price}<button class="rowc-info btn" data-info="${line.id}" type="button" aria-label="About ${esc(line.name)}">i</button></div>`;
+      + `<span class="rowc-sub">${sub}</span></button>${price}<button class="rowc-info btn" data-info="${line.id}" type="button" aria-label="About ${esc(line.name)}">i</button></div>`
+      + (this.toolId === line.id ? this.toolLevelHTML(line) : '');
+  }
+
+  // THE UPGRADE BAR on NATURE (ledger L-52; the hangar's strip has it since 0.62.0): under the tapped tool row, one segment per level filled up to yours, then
+  // 'Now:' and 'Next:' from the same table as the hangar (src/upgradetext.js upgradeCard, kind 'nature': each level's `short` words). Shown only while the row is tapped.
+  toolLevelHTML(line) {
+    const c = upgradeCard(this.save, 'nature', line.id);
+    if (!c) return '';
+    const segs = Array.from({ length: c.count }, (_, i) => `<i class="${i < c.have ? 'on' : ''}"></i>`).join('');
+    return `<div class="rowc-lvl" data-lvl="${line.id}"><div class="lvbar" role="img" aria-label="level ${c.have} of ${c.count}">${segs}</div>`
+      + `<p class="small hp-now">Now: ${esc(c.now)}</p><p class="small hp-next">${c.next ? `Next: ${esc(c.next)}` : ALL_DONE}</p></div>`;
   }
 
   renderProjects() {
