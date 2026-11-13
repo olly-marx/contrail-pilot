@@ -20,7 +20,7 @@ globalThis.SEASON2 = true;
   const links = R.linksFor(save);
   check(area.cities.every(c => (links[c] || []).some(n => area.cities.includes(n))), 'every city links to another city in the area');
   check(['HONOLULU', 'NADI'].every(c => A.OCEAN_STONES.includes(c) && !A.areaOf(c)), 'NADI and HONOLULU stay ocean stones');
-  for (const id of ['nadi-auckland', 'tasman', 'auckland-santiago', 'pacific-islands', 'honolulu-tokyo']) {
+  for (const id of ['auckland-santiago', 'singapore-perth']) {   // CROSSINGS V3: the routes out of Oceania
     const c = X.crossingById(id), [a, b] = c ? X.sides(c) : [];
     check(c && a !== b, `crossing ${id} still joins two different sides (${a} / ${b})`);
   }

@@ -49,7 +49,7 @@
   M.onFlight(crash, { ...landed({ nightOwl: true, sunBlocked: 12, cargo: 99 }), landed: false });
   check(crash.missionsDone.filter(k => !/^(steady|daily):/.test(k)).length === s.missionsDone.filter(k => !/^(steady|daily):/.test(k)).length, 'a crash completes no lesson or template mission (steady goals and the easy daily count on purpose)');
   // 7. The gate.
-  const raw = C.CROSSINGS.find(x => x.id === 'warsaw-stockholm'), c = { ...raw, from: 'WARSAW', to: 'STOCKHOLM', km: C.crossingKm(raw) }, full = { capabilityKm: 1e9, bio: 99 };   // as available() orients it
+  const raw = C.asNext(C.crossingById('mediterranean'), 0), c = { ...raw, from: 'ROME', to: 'TUNIS' }, full = { capabilityKm: 1e9, bio: 99 };   // as available() orients it
   M.onFlight(s, landed({ sunBlocked: 10 }));   // 1 of 3 starred
   check(M.starsDone(s, 'weurope') === 1 && !M.gateDone(s, 'weurope') && !C.offerCheck(c, { ...full, missionsDone: C.offerCtx(s, c).missionsDone }).offered, 'one of the three starred: no crossing');
   M.onFlight(s, landed({ treeIds: ['spruce', 'birch', 'oak'] }));   // 2 of 3 (the night star NOT done: it blocked weaker pilots)

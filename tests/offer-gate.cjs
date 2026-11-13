@@ -9,11 +9,11 @@
   const { SEASON } = await import('../src/season.js');
   const { biodiversity } = await import('../src/nature.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  const base = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, landings: 30, mission: 99, flightSeconds: 1e6, areas: ['weurope'], city: 'WARSAW', missionsDone: ['weurope:night', 'weurope:shade10', 'weurope:kinds3'],   /* S3: the 3 starred missions are a condition too */
+  const base = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, landings: 30, mission: 99, flightSeconds: 1e6, areas: ['weurope'], city: 'ROME', missionsDone: ['weurope:night', 'weurope:shade10', 'weurope:kinds3'],   /* S3: the 3 starred missions are a condition too */
     fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
   if (process.env.PLANT === 'nogate') { SEASON.offer.distanceShare = 0; SEASON.offer.biodiversity = 0; }
-  const c = X.available(base).find(x => x.id === 'warsaw-stockholm');
-  check(c && c.km === 6500, `Warsaw-Stockholm is the 6,500 km crossing: ${c && c.km}`);
+  const c = X.available(base).find(x => x.id === 'mediterranean');   // CROSSINGS V3: Western Europe's first crossing
+  check(c && c.km === 6500, `the Mediterranean (the first crossing) is the 6,500 km crossing: ${c && c.km}`);
   const ok = save => X.offerCheck(c, X.offerCtx(save, c)).offered;
   // plant enough trees for bio >= 30 in the start city's region (found, not assumed)
   const green = { ...base, planted: {} };
@@ -48,8 +48,8 @@
   check(X.available(finished).length === 0 && !X.moreToCome(finished), 'after the lap: nothing to fly and no "more to come" (the game is finished)');
   check(!X.moreToCome(base), 'a save with crossings still to fly shows no placeholder');
   // the empty FLY screen: nothing to fly now, but the next crossing opens in a later era (laterEra), told instead of silence
-  const early = { ...base, flightSeconds: 0, areas: ['weurope', 'nordic'], city: 'STOCKHOLM' };
-  check(X.available(early).length === 0 && X.laterEra(early) === 1, `1950s save with both era-0 crossings of its areas done: nothing now, the next opens in era 1: ${X.available(early).length} ${X.laterEra(early)}`);
+  const early = { ...base, flightSeconds: 0, areas: ['weurope', 'mideast'], city: 'TUNIS' };   // CROSSINGS V3: one crossing made (Europe + Africa & the Middle East), so the next is era 1
+  check(X.available(early).length === 0 && X.laterEra(early) === 1, `1950s save with its first crossing made: nothing now, the next (crossing 2) opens in era 1: ${X.available(early).length} ${X.laterEra(early)}`);
   check(X.laterEra(base) === null, 'a save already in the last era has no later crossing to announce');
   console.log({ fails });
   if (fails.length) { console.log('FAIL'); process.exit(1); }

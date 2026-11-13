@@ -16,11 +16,11 @@ const src = f => path.resolve(__dirname, '../src', f);
   const L = lap();
   check(L && L.from === AREAS[home].start && L.to === AREAS[home].start, `the lap is not home -> home (${L && L.from} -> ${L && L.to})`);
   check(L && L.km === 40000 && SEASON.crossingKm.final === 40000, `the lap is not 40,000 km (${L && L.km})`);
-  save.areas = keys.slice(1);
+  save.areas = keys.filter(k => !['weurope', 'nordic'].includes(k));   // (CROSSINGS V3: a whole region shut; one area alone would reopen with its region)
   check(!lap(), 'the lap is offered before every area is open');
   save.areas = keys.slice();
   const as = X.crossingById('auckland-santiago');
-  check(as && as.kind === 'long' && !X.crossingById('final'), 'Auckland-Santiago is still the boss');
+  check(as && as.kind === 'route' && !X.crossingById('final'), 'Auckland-Santiago is an ordinary route, not the boss');
   if (L) {
     save.city = AREAS[keys[1]].start;
     check(X.completeCrossing(save, L) === false && !(save.crossed || []).includes('lap'), 'the lap counted when landing away from home');

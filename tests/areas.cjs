@@ -2,7 +2,7 @@
 // No browser. Run: node tests/areas.cjs
 //  OFF (the live game): the world network is EXACTLY today's (a fingerprint of LINKS; update it only on purpose).
 //  ON (a child process with window.SEASON2): every area is joined up, no dead ends, and every flight path from every
-//  city and take-off choice stays inside the area; two areas together join up too; Honolulu/Nadi stay out.
+//  city and take-off choice stays inside the area's REGION (CROSSINGS V3: the areas of a region open together); two areas together join up too; Honolulu/Nadi stay out.
 const path = require('path'), crypto = require('crypto'), { execFileSync } = require('child_process');
 const LIVE_LINKS = '5d56aca22854190f';   // sha256(JSON(LINKS)) of the live network, 104 cities (28841f6)
 const src = f => path.resolve(__dirname, '../src', f);
@@ -17,14 +17,14 @@ const src = f => path.resolve(__dirname, '../src', f);
     check(/PASS/.test(out), `switch ON:\n${out}`);
   } else {
     globalThis.SEASON2 = true; globalThis.window = { SEASON2: true };   // (cities.js reads globalThis.SEASON2 since S4; window is for config.js FEATURES)
-    const { AREAS, OCEAN_STONES } = await import(src('areas.js'));
+    const { AREAS, OCEAN_STONES, withRegions } = await import(src('areas.js'));
     const { CITIES } = await import(src('cities.js'));
     const route = await import(src('route.js')), net = await import(src('network.js'));
     const names = new Set(CITIES.map(c => c.name)), all = Object.values(AREAS).flatMap(a => a.cities);
     check(all.length === new Set(all).size, 'a city is in two areas');
     check(CITIES.every(c => all.includes(c.name) || OCEAN_STONES.includes(c.name)), 'a city is in no area');
     const confined = (keys, label) => {
-      const mine = keys.flatMap(k => AREAS[k].cities);
+      const mine = withRegions(keys).filter(k => AREAS[k]).flatMap(k => AREAS[k].cities);   // CROSSINGS V3 (2026-11-13): an open area opens its whole REGION
       const L = route.linksFor({ areas: keys });
       const fp = route.flightPath({ areas: keys, city: AREAS[keys[0]].start, tutorialDone: true }, 40).filter(x => !mine.includes(x));
       check(!fp.length, `${label}: flightPath leaves the area (${fp[0]})`);

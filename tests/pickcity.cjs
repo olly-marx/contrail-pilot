@@ -14,7 +14,7 @@ globalThis.SEASON2 = true;
     const save = { areas: [k], tutorialDone: true, homeArea: k, city: A.AREAS[k].start };
     for (const c of CT.CITIES) {
       const d = P.cityCard(save, c.name); cards++; seen[d.state]++;
-      const area = A.areaOf(c.name), open = area === k;
+      const area = A.areaOf(c.name), open = A.withRegions([k]).includes(area);   // CROSSINGS V3: the whole region is open
       check(!bad(d.line), `${k}/${c.name}: a distance or a long number reaches the player: "${d.line}"`);
       check(d.line.length <= 48, `${k}/${c.name}: the line is short (${d.line.length}): "${d.line}"`);
       if (c.name === save.city) { check(d.state === 'here' && !d.canFly, `${k}/${c.name}: your own city says you are here and cannot fly`); continue; }
@@ -23,7 +23,7 @@ globalThis.SEASON2 = true;
         check(d.state === 'ok' && d.canFly && d.stops === path.length - 1 && d.dots === Math.min(d.stops, 6) && d.moreDots === (d.stops > 6) && d.line === `${d.stops} stop${d.stops === 1 ? '' : 's'}`, `${k}/${c.name}: an open city is 'ok' with its stops: ${JSON.stringify(d)}`);
       } else if (area) {
         const x = C.CROSSINGS.find(z => z.id === d.crossing);
-        check(d.state === 'closed' && !d.canFly && x && C.sides(x).includes(area) && d.line === `Opens with the ${P.CROSSING_NAMES[x.id]} crossing`, `${k}/${c.name}: a closed-area city names a crossing that touches its area and cannot fly: ${JSON.stringify(d)}`);
+        check(d.state === 'closed' && !d.canFly && x && C.sides(x).map(A.regionOfArea).includes(A.regionOfArea(area)) && d.line === `Opens with the ${P.CROSSING_NAMES[x.id]} crossing`, `${k}/${c.name}: a closed-area city names a crossing that touches its area and cannot fly: ${JSON.stringify(d)}`);
       } else check(d.state === 'noroute' && !d.canFly, `${k}/${c.name}: a stepping stone (no area) has no route: ${JSON.stringify(d)}`);
     }
   }
@@ -33,13 +33,13 @@ globalThis.SEASON2 = true;
   let most = null; for (const c of CT.CITIES) { const d = P.cityCard(all, c.name); if (d.state === 'ok' && (!most || d.stops > most.stops)) most = d; }
   check(most && most.stops > 6 && most.moreDots === true && most.dots === 6, `the longest way shows six dots and a plus: ${JSON.stringify(most)}`);
   // 4. Patagonia: before its crossing there is no route and the card says which crossing flies there; after it, an ordinary route
-  const before = { ...all, areas: all.areas.filter(k => k !== 'samerica'), crossed: [] };   // Patagonia open, South America (the Patagonia crossing) not yet
+  const before = { ...all, areas: all.areas.filter(k => k !== 'samerica'), crossed: [] };   // CROSSINGS V3: Patagonia open re-opens South America (one region), so it is never an island
   const pb = P.cityCard(before, 'PUNTA ARENAS'), pa = P.cityCard(all, 'PUNTA ARENAS');
-  check(pb.state === 'noroute' && pb.line === 'The Patagonia crossing flies there.' && !pb.canFly, `Patagonia while samerica is closed: ${JSON.stringify(pb)}`);
+  check(pb.state === 'ok' && pb.canFly, `Patagonia is an ordinary route even when only Patagonia was listed open: ${JSON.stringify(pb)}`);
   check(pa.state === 'ok' && pa.canFly && pa.stops >= 3, `Patagonia once South America is open is an ordinary route: ${JSON.stringify(pa)}`);
   // 4b. the closed card names the FIRST crossing on the ladder (the one the player meets first): Sydney from Western Europe is the Tasman crossing, which precedes the Timor Sea one
   const sy = P.cityCard({ areas: ['weurope'], tutorialDone: true, homeArea: 'weurope', city: 'LONDON' }, 'SYDNEY');
-  check(sy.state === 'closed' && sy.crossing === 'tasman' && sy.line === 'Opens with the Tasman crossing' && C.LADDER.indexOf('tasman') < C.LADDER.indexOf('jakarta-darwin'), `Sydney names the first crossing on the ladder (Tasman): ${JSON.stringify(sy)}`);
+  check(sy.state === 'closed' && sy.crossing === 'singapore-perth' && sy.line === `Opens with the ${P.CROSSING_NAMES['singapore-perth']} crossing` && C.LADDER.indexOf('singapore-perth') < C.LADDER.indexOf('auckland-santiago'), `Sydney names the first route into Oceania in the list (Singapore-Perth): ${JSON.stringify(sy)}`);
   // 5. a city that does not exist is not a card
   check(P.cityCard(all, 'ATLANTIS') === null, 'an unknown city gives no card');
   // 6. the tap picks the NEAREST dot within the radius, and nothing beyond it

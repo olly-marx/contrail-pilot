@@ -23,9 +23,9 @@ const fs = require('fs'), path = require('path');
     check(got.length === 1 && got[0].seeds === 10 && got[0].crystals === 4, `an old lapDone save gets the badge on its next flight with 10 seeds + 4 crystals: ${JSON.stringify(got)}`);
     check(p2.filter(x => x.id === 'lap').length === 0, 'and the prize is paid once (the next flight pays nothing for it)'); });
   // 5. no other crossing sets it: every rung, landed through the real completeCrossing, then a flight is banked
-  run(() => { let n = 0; for (const def of X.CROSSINGS) { const s = base(); const c = { ...def, from: def.a || s.city, to: def.kind === 'lap' ? s.city : def.b, opens: def.id }; X.completeCrossing(s, c); n++;
+  run(() => { let n = 0; for (const def0 of X.CROSSINGS) { const def = X.asNext(def0, 0), s = base(); const c = { ...def, from: def.a || s.city, to: def.kind === 'lap' ? s.city : def.b, opens: def.id }; X.completeCrossing(s, c); n++;
       const w = B.earnBadges(s, flight()).filter(x => x.id === 'lap'); check(def.kind === 'lap' ? w.length === 1 : w.length === 0, `${def.id}: Lap Complete is earned by the lap only: ${JSON.stringify(w)}`); }
-    check(n >= 22, `power: ${n} crossings tried`); });
+    check(n >= 9, `power: ${n} crossings tried (CROSSINGS V3: 8 routes + the lap)`); });
   // 6. THE ORDER, pinned in the source: bankFlight (which pays) computes lapLanded itself; GameScene calls completeCrossing only after finish() -> bankFlight
   { const rules = fs.readFileSync(path.join(__dirname, '../src/sim/rules.js'), 'utf8'), gs = fs.readFileSync(path.join(__dirname, '../src/GameScene.js'), 'utf8');
     const iBank = rules.indexOf('this.bankFlight({ landed, reason });'), iLap = rules.indexOf("lapLanded: !!(landed && this.crossing && this.crossing.kind === 'lap' && this.save.city === this.crossing.to)");

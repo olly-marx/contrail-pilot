@@ -11,11 +11,11 @@
   const save = { fleet: { plane: 'comet', planes: { comet: {} } } };
   const text = v => [v.eyebrow, v.title, ...v.lines, ...v.buttons.map(b => b.label)].join(' | ');
   const land = (city, opens, extra = {}) => ({ landed: true, landedAt: city, crystals: 3, cargo: 40, distance: 6500, crossing: { id: 'x', kind: 'frontier', landed: true, opens, to: city }, ...extra });
-  const crash = (extra = {}) => ({ landed: false, reason: 'Bird strike!\nYou hit a bird.', crystals: 2, cargo: 25, distance: 3100, crossing: { id: 'x', kind: 'frontier', landed: false, opens: 'nordic', to: 'STOCKHOLM' }, ...extra });
+  const crash = (extra = {}) => ({ landed: false, reason: 'Bird strike!\nYou hit a bird.', crystals: 2, cargo: 25, distance: 3100, crossing: { id: 'x', kind: 'route', landed: false, opens: 'mideast', to: 'TUNIS' }, ...extra });
   // 1. The landing.
-  const v1 = E.endView(land('STOCKHOLM', 'nordic'), save, { first: true });
-  check(v1.kind === 'landed' && v1.eyebrow === 'A NEW WAY OPENED' && v1.title === 'WELCOME TO STOCKHOLM!' && v1.lines[0] === 'Nordic & North Atlantic' && /open to you/.test(v1.lines[1]), `the landing says where you are and what opened: ${text(v1)}`);
-  check(/New missions are open/.test(v1.lines.join(' ')) && !/New missions/.test(E.endView(land('STOCKHOLM', 'nordic'), save, { first: false }).lines.join(' ')), 'the FIRST crossing says new missions wait; later ones do not');
+  const v1 = E.endView(land('TUNIS', 'mideast'), save, { first: true });
+  check(v1.kind === 'landed' && v1.eyebrow === 'A NEW WAY OPENED' && v1.title === 'WELCOME TO TUNIS!' && v1.lines[0] === 'Africa & the Middle East' && /open to you/.test(v1.lines[1]), `the landing says where you are and what opened: ${text(v1)}`);
+  check(/New missions are open/.test(v1.lines.join(' ')) && !/New missions/.test(E.endView(land('TUNIS', 'mideast'), save, { first: false }).lines.join(' ')), 'the FIRST crossing says new missions wait; later ones do not');
   check(v1.buttons.length === 1 && v1.buttons[0].label === 'FLY ON', `one button, FLY ON: ${JSON.stringify(v1.buttons)}`);
   check(v1.pic && fs.existsSync(path.join(__dirname, '..', v1.pic)), `the landing picture exists on disk: ${v1.pic}`);
   // 2. The crash.
