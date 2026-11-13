@@ -41,6 +41,14 @@ const fs = require('fs'), path = require('path');
   check(K.CELEBRATIONS['crossing-landed'].size === 'large' && K.CELEBRATIONS['era-opens'].size === 'large' && K.CELEBRATIONS['nature-funded'].size === 'small', 'the big moments are large (crossing landed, era opens), a nature project is small');
   const bad = Object.keys(K.CELEBRATIONS).filter(k => /crash|lost|fail|overheat|grounded/.test(k));
   check(bad.length === 0 && K.celebrateEvent(mk('div'), 'crossing-lost', { sfx: {}, reduced: false, schedule: () => {} }) === false, `a crash or a loss is NOT celebrated (events: ${bad.join(', ') || 'none'}; crossing-lost plays nothing)`);
+  // 6b. the lap (the game's ending): longer than any crossing, three waves, every layer gone at settle
+  const L = K.CELEBRATIONS['lap-landed'];
+  check(L && K.SIZES[L.size] && K.SIZES[L.size].settleMs > K.SIZES[K.CELEBRATIONS['crossing-landed'].size].settleMs, `the lap's burst lasts longer than a crossing's (lap ${L && K.SIZES[L.size] && K.SIZES[L.size].settleMs} ms)`);
+  { const host = mk('div'), q = []; let now = 0, made = 0, last = 0, steps = 0; const realAppend = host.appendChild; host.appendChild = c => { made++; return realAppend.call(host, c); };
+    K.celebrateEvent(host, 'lap-landed', { sfx: { era: () => {} }, reduced: false, schedule: (fn, ms) => q.push([now + ms, fn]) });
+    while (q.length && steps++ < 100) { q.sort((a, b) => a[0] - b[0]); const [t, fn] = q.shift(); now = t; fn(); if (host.children.length) last = now; }
+    check(made === 3 && steps < 100, `the lap bursts in three waves (layers made ${made}, timer steps ${steps})`);
+    check(host.children.length === 0 && last <= K.SIZES.lap.settleMs, `at settle (${K.SIZES.lap.settleMs} ms) every wave's layer is gone (left ${host.children.length}, last layer seen at ${last} ms)`); }
   // 7. the CSS
   const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
   const rule = sel => { const m = css.match(new RegExp(sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' \\{([^}]*)\\}')); return m ? m[1] : ''; };

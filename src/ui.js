@@ -68,6 +68,7 @@ import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
+import { celebrateEvent } from './celebrate.js';
 import { setMusicOff, setMusicLevel, armMusic, syncMusic } from './music.js';
 import { musicStateOf, nextMusicState, musicChipText } from './musicplan.js';
 
@@ -986,7 +987,7 @@ export class UI {
       ${prize ? `<p class="ending-prize">${prizeLines(prize).join('<br>')}</p>` : ''}
       <p class="small">${(s.crossed || []).length} crossings flown. You finished Contrail Pilot!</p>
       <button id="endingOk" class="btn go big" type="button">OK</button></div>`;
-    el.hidden = false; sfx.coin && sfx.coin();
+    el.hidden = false; celebrateEvent(el.querySelector('.payoff-card'), 'lap-landed');   // the longer lap burst and its cue (src/celebrate.js; was a bare coin sound)
     document.getElementById('endingOk').onclick = () => { sfx.tick(); el.hidden = true; };
   }
   toast(title, body, kind = '', secs = 3.5) {

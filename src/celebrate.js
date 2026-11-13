@@ -5,13 +5,16 @@
 import { sfx } from './sound.js';
 
 export const PARTICLE_CAP = 24;   // the most sparkles any burst makes (the 320x568 card has room for no more, and each is one element)
-export const SIZES = { small: { particles: 8, settleMs: 500, push: false }, medium: { particles: 16, settleMs: 900, push: true }, large: { particles: 24, settleMs: 1400, push: true } };
+export const SIZES = { small: { particles: 8, settleMs: 500, push: false }, medium: { particles: 16, settleMs: 900, push: true }, large: { particles: 24, settleMs: 1400, push: true },
+  // The lap of the world (the user's fourth lap extra, CROSSING-REWARD-PLAN.md: a longer burst than any crossing): the large burst three times, 0.7 s apart, each wave its own layer.
+  lap: { particles: 24, settleMs: 2400, push: true, waves: 3, waveMs: 700 } };
 export const REACH_PX = 120;      // the farthest a sparkle travels from the burst's centre: inside half the narrowest card (294 px at 320 wide)
 export const PALETTE = ['#ffe15a', '#ffffff', '#7fd0ff', '#8dffb0'];   // the game's gold, white, cool blue, green
 
 // WHICH EVENT GETS WHICH BURST AND CUE (declared, not inferred). NOT here on purpose: a crash. A crossing that is lost (crossing-lost), a flight that crashes, an overheat: no particles, no celebration.
 export const CELEBRATIONS = {
   'crossing-landed': { size: 'large', cue: 'welcome' },
+  'lap-landed': { size: 'lap', cue: 'era' },   // the game's ending card (ui.js showEnding): only on a LANDED lap
   'era-opens': { size: 'large', cue: 'era' },
   'part-arrives': { size: 'medium', cue: 'reveal' },
   'mission-done': { size: 'medium', cue: 'done' },
@@ -33,7 +36,7 @@ export function particleSpecs(n) {
 export function celebrationPlan(size, { reduced = false } = {}) {
   const s = SIZES[size];
   if (!s) throw new Error(`celebrate: unknown size ${size}`);
-  return reduced ? { particles: 0, push: false, still: true, settleMs: 1000 } : { particles: Math.min(s.particles, PARTICLE_CAP), push: s.push, still: false, settleMs: s.settleMs };
+  return reduced ? { particles: 0, push: false, still: true, settleMs: 1000, waves: 0, waveMs: 0 } : { particles: Math.min(s.particles, PARTICLE_CAP), push: s.push, still: false, settleMs: s.settleMs, waves: s.waves || 1, waveMs: s.waveMs || 0 };
 }
 
 const defaults = () => ({
@@ -52,15 +55,19 @@ export function celebrate(host, { size = 'medium', cue = null } = {}, deps = def
   if (plan.still) { host.classList.add('cel-still'); deps.schedule(() => host.classList.remove('cel-still'), plan.settleMs); return true; }
   if (plan.push) { host.classList.add('cel-push'); deps.schedule(() => host.classList.remove('cel-push'), 400); }
   if (plan.particles) {
-    const layer = host.ownerDocument.createElement('div');
-    layer.className = 'cel-layer';
-    for (const p of particleSpecs(plan.particles)) {
-      const i = host.ownerDocument.createElement('i');
-      i.style.setProperty('--x', `${p.x}px`); i.style.setProperty('--y', `${p.y}px`); i.style.setProperty('--d', `${p.delay}s`); i.style.setProperty('--c', p.colour);
-      layer.appendChild(i);
-    }
-    host.appendChild(layer);
-    deps.schedule(() => layer.remove(), plan.settleMs);
+    const wave = w => {   // one layer of sparkles; every layer is gone at settle (a wave never outlives the burst)
+      const layer = host.ownerDocument.createElement('div');
+      layer.className = 'cel-layer';
+      for (const p of particleSpecs(plan.particles)) {
+        const i = host.ownerDocument.createElement('i');
+        i.style.setProperty('--x', `${p.x}px`); i.style.setProperty('--y', `${p.y}px`); i.style.setProperty('--d', `${p.delay}s`); i.style.setProperty('--c', p.colour);
+        layer.appendChild(i);
+      }
+      host.appendChild(layer);
+      deps.schedule(() => layer.remove(), plan.settleMs - w * plan.waveMs);
+    };
+    wave(0);
+    for (let w = 1; w < plan.waves; w++) deps.schedule(() => wave(w), w * plan.waveMs);
   }
   return true;
 }
