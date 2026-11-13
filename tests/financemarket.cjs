@@ -53,12 +53,12 @@ const src = f => path.resolve(__dirname, '../src', f);
   const span = 300, runs = 40; let up = 0, down = 0;
   for (let i = 0; i < runs; i++) { const a = i * span; up += Math.log(M.growth(a, a + span, 100)); down += Math.log(M.growth(a, a + span, 0)); }
   check(up / runs > down / runs + 0.3, `a healthy world does not grow clearly faster (${(up / runs).toFixed(2)} vs ${(down / runs).toFixed(2)} log over ${span} days)`);
-  // Worth having at B 8 (the sim's era-3 world, 2026-11-13; 1.35 game days and ~12 seeds a flight, provisional):
-  const perFlight = 2000 * M.driftAt(8) * 1.35, flights = 100, days = Math.round(flights * 1.35);
-  check(perFlight >= 0.1 * 12 && perFlight <= 0.4 * 12, `a full fund drifts ${perFlight.toFixed(2)} seeds a flight at B 8 (want 10% to 40% of 12)`);
+  // Worth having in era 3 (the sim's learning pilot, 2026-11-13: world B 23.5, ~3 game days and ~49.5 seeds a flight):
+  const perFlight = 2000 * M.driftAt(23.5) * 3, flights = 100, days = flights * 3;
+  check(perFlight >= 0.1 * 49.5 && perFlight <= 0.3 * 49.5, `a full 2,000 fund drifts ${perFlight.toFixed(1)} seeds a flight at B 23.5 (want 10% to 30% of 49.5)`);
   let ahead = 0; const tries = 400;
   for (let i = 0; i < tries; i++) if (M.growth(i * 977, i * 977 + days, 8) * (1 - M.FUND.fee) > 1) ahead++;
-  check(ahead / tries >= 0.75, `after ${flights} flights at B 8 a fund is ahead (after the fee) in only ${ahead} of ${tries} starts (want 3 in 4)`);
+  check(ahead / tries >= 0.75, `after ${flights} flights at B 8 (the low end) a fund is ahead (after the fee) in only ${ahead} of ${tries} starts (want 3 in 4)`);
   const fs = JSON.parse(JSON.stringify(base)); fs.seeds = 4600;
   check(M.canInvest(fs) === 500 && M.invest(fs) === 500 && fs.seeds === 4100 && M.fundValue(fs) === 500, 'investing 500 did not move 500 seeds into the fund');
   check(M.canInvest(fs) === 100, `the reserve (4,000) was not kept: could invest ${M.canInvest(fs)}, want 100`);
@@ -72,5 +72,5 @@ const src = f => path.resolve(__dirname, '../src', f);
   check(news.length > 60 && news.length < 150 && news.some(n => n.up) && news.some(n => !n.up), `news days ${news.length} of 800 (want about 100, both kinds)`);
   check(M.fundSeries(base).length === 20, 'the fund graph is not 20 game days');
   if (fails.length) { console.log(`FAIL financemarket\n  ${fails.join('\n  ')}`); process.exit(1); }
-  console.log(`PASS financemarket: true rate ${lo}..${hi}, ${(100 * dayMove).toFixed(1)}% a game day, you pay > market > you get everywhere, world B ${M.financeBio(base)}, game time only; fund at B 8: ${perFlight.toFixed(2)} seeds a flight, ahead after ${flights} flights in ${ahead}/${tries}, worst game day ${(100 * (Math.exp(worst) - 1)).toFixed(1)}%`);
+  console.log(`PASS financemarket: true rate ${lo}..${hi}, ${(100 * dayMove).toFixed(1)}% a game day, you pay > market > you get everywhere, world B ${M.financeBio(base)}, game time only; fund at B 23.5: ${perFlight.toFixed(1)} seeds a flight, ahead after ${flights} flights in ${ahead}/${tries}, worst game day ${(100 * (Math.exp(worst) - 1)).toFixed(1)}%`);
 })();

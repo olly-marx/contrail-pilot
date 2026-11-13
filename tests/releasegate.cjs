@@ -63,6 +63,9 @@ r = list(['src/tour.js']); check(r.tests.has('onrails') && r.tests.has('onrails@
 // 12. firsthour-real (80 s, the only test that plays school like a child) is NOT in the always-run smoke (user, 2026-10-28): it runs for onboarding-group changes (and engine-core, harness), CI always.
 r = list(['research/BACKLOG.md']); check(!r.tests.has('firsthour-real'), 'a docs-only change does not run firsthour-real');
 r = list(['src/tour.js']); check(r.tests.has('firsthour-real'), 'an onboarding file (src/tour.js) runs firsthour-real');
+// src/tour.js also reaches firsthour-real through the results-card group, so the line above stays green when the onboarding group drops it
+// (plant row 'onboarding changes no longer run firsthour-real' went uncaught, found 2026-11-13). src/school.js is in onboarding and in no other group that lists firsthour-real.
+r = list(['src/school.js']); check(r.tests.has('firsthour-real'), 'an onboarding-only file (src/school.js) runs firsthour-real');
 r = list(['src/records.js']); check(!r.tests.has('firsthour-real'), 'a records change does not run firsthour-real');
 r = list(['src/sim/rules.js']); check(r.tests.has('firsthour-real'), 'rules.js (school landing, free part) runs firsthour-real');
 

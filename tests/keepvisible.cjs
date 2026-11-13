@@ -4,7 +4,7 @@
 //   A. HANGAR: a row placed BEHIND the bottom tab bar (on screen, so the step's own scrollIntoView does not fire): a step on it
 //      must bring it above the bar;
 //   B. NATURE: a project row scrolled UNDER the pinned land: a step on it must uncover it.
-// Run at 375x667 AND 320x568: at 320x568 the pinned block's bottom is past the middle of the screen, so a rails step that only aimed for
+// Run at 375x667, 320x568 and 390x844. B runs only where the land is pinned (taller than 760 px: 390x844); on the shorter two B0 checks it is NOT pinned. (Before 2026-11-13, at 320x568 the pinned block's bottom is past the middle of the screen, so a rails step that only aimed for
 // the middle (the old code) left the FREE! button covered (onrails320 N3-N5; diagnosed 2026-11-03).
 // Run: python3 -m http.server 8000 & node tests/keepvisible.cjs   (proved by planted defects)
 const { chromium } = require('playwright-core');
@@ -13,7 +13,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  for (const [W, H] of [[375, 667], [320, 568]]) {
+  for (const [W, H] of [[375, 667], [320, 568], [390, 844]]) {
   const check = (c, m) => { if (!c) fails.push(`${W}x${H}: ${m}`); };
   const p = await b.newPage({ viewport: { width: W, height: H }, hasTouch: true });
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
@@ -47,20 +47,23 @@ const URL = process.env.URL || 'http://localhost:8000/';
   }, { sel, band });
   const rowSel = await p.evaluate(() => { const r = [...document.querySelectorAll('#hFleet .rowc[data-row]')].pop(); return r ? `#hFleet .rowc[data-row="${r.dataset.row}"] .rowc-tap` : null; });
   check(!!rowSel, 'a hangar row to test with');
-  if (rowSel) { const a = await run(rowSel, 'bar');
+  if (rowSel && H <= 760) { const a = await run(rowSel, 'bar');   // (A at the two short sizes only: at 390x844 the hangar's rows all fit above the bar, nothing can be placed behind it)
     check(a.before, `A: the test put the row behind the tab bar first (else it proves nothing): ${JSON.stringify(a)}`);
     check(a.after, `A: a rails step brings a row from behind the tab bar to above it: ${JSON.stringify(a)}`); }
   await p.evaluate(() => { const ui = game.registry.get('ui'); ui.go('nature'); ui.wild.bio = () => 100; ui.wild.openTiers = [1, 2, 3]; ui.wild.renderProjects(); });
   await p.waitForTimeout(900);
   const projSel = await p.evaluate(() => { const r = [...document.querySelectorAll('#wProjects .project[data-pline]')][3]; return r ? `#wProjects .project[data-pline="${r.dataset.pline}"] .rowc-tap` : null; });
   check(!!projSel, 'a NATURE row to test with');
-  if (projSel) { const c = await run(projSel, 'pin');
+  // Since 2026-11-13 (the user's full-width picture) NATURE's land is PINNED only on phones taller than 760 px; on a shorter one it scrolls with the page, so nothing can sit under it.
+  const pinned = await p.evaluate(() => getComputedStyle(document.querySelector('.wpin')).position === 'sticky');
+  check(pinned === (H > 760), `B0: NATURE's land is pinned exactly on phones taller than 760 px (here ${H} px tall: pinned ${pinned})`);
+  if (projSel && pinned) { const c = await run(projSel, 'pin');
     check(c.before, `B: the test put the row under the pinned land first (else it proves nothing): ${JSON.stringify(c)}`);
     check(c.after, `B: a rails step uncovers a row from under the pinned land: ${JSON.stringify(c)}`); }
   check(!errs.length, `page errors ${errs}`);
   await p.close();
   }
   await b.close();
-  console.log(fails.length ? `FAIL keepvisible:\n - ${fails.join('\n - ')}` : 'PASS keepvisible: at 375x667 and 320x568 a rails step brings a row out from behind the tab bar and from under the pinned land');
+  console.log(fails.length ? `FAIL keepvisible:\n - ${fails.join('\n - ')}` : 'PASS keepvisible: a rails step brings a row out from behind the tab bar (375x667, 320x568) and from under the pinned land (390x844); the land is not pinned on the short phones');
   process.exit(fails.length ? 1 : 0);
 })();

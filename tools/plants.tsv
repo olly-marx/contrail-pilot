@@ -103,7 +103,7 @@ audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never'
 releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
 releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible$/ tours bubblestill missionlanes pilotpreview keepvisible/	onboarding changes no longer run firsthour-real
 sim-hint@PLANT=blind	-	-	the player ignores the hint
-sim-progression-s2@PLANT=nostars	-	-	crossings offered without the area missions
+sim-progression-s2@PLANT=noready	-	-	crossings offered before they are ready
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
 sim-twists@PLANT=still	-	-	no twist ever moves
 sim-twists@PLANT=early	-	-	twists ignore their start distance
@@ -120,7 +120,7 @@ hangar-feedback	src/fleet.js	s/keys: \['pickup'\]/keys: ['pickupX']/	a changed s
 lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return false;/	the lap counts away from home
 capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazard pool ignored (heat only)
 twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
-finance	src/finance.js	s/(MARKET.gap0 - MARKET.gap100) \* b)/(MARKET.gap0 - MARKET.gap100) * 0)/	the rate ignores nature
+finance	src/finance.js	s/Math.pow(1 - b, MARKET.curve)/Math.pow(1 - 0, MARKET.curve)/	the rate ignores nature
 hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (false) pv.scrollIntoView/	a tapped row previews off screen
 hudlayout	src/GameScene.js	s/if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);/if (false) this.kindsText.setX(cx - 4);/	the kinds meter under CLEAN
 season2	src/areas.js	s/\.filter(k => AREAS\[k\])/.filter(k => k)/	save.areas holds ocean (Pacific stepping stones): the title crashed on AREAS[ocean]
@@ -707,7 +707,7 @@ liverylook	src/GameScene.js	s/'flight', liveryOn(this\.save))/'flight')/	the fly
 liverylook	src/sim/rules.js	s/^import { addPrizes } from '\.\.\/rewards\.js';/import { addPrizes } from '..\/rewards.js'; import { liveryOn } from '..\/livery.js';/	the sim engine imports the livery
 hudclear	src/hudclear.js	s/  return top > 0 ? `${top + 6}px` : '';/  return '';/	the toast is placed at 16 percent of the page again (toastTopCss never moves it below the HUD text)
 hudclear	style.css	s/top: calc(var(--hud-bottom, 0px) + 6px); bottom: auto;/top: 6px; bottom: auto;/	the coach strip opens at y 6 again (it covers the HUD text on a small phone)
-hudclear	src/GameScene.js	s/const dropToast = () => { if (this\.explaining \&\& toastEl/const dropToast = () => { if (false \&\& toastEl/	a toast already up is not moved below a strip that opens (they stack on each other)
+hudclear	src/GameScene.js	s/const dropToast = () => { if (this\.explaining \&\& toastEl/const dropToast = () => { if (false \&\& toastEl/	a toast already up is not moved below a strip that opens (they stack on each other; CHANCE-DEPENDENT: needs a toast up when the strip opens, caught 2 of 3 runs on 2026-11-13)
 badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 341px) { .badge2 { font-size: 7px; } }/	the badge text is 7 px again on wide phones (Bronze reads Dronze)
 badgefont	style.css	s/@media (min-width: 341px) { .badge2 { font-size: 8px; } }/@media (min-width: 300px) { .badge2 { font-size: 8px; } }/	the 8 px badge text reaches the 320 phone (cards spill)
 badgefont	style.css	s/^\.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr))/.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr))/	the badge cards are too narrow for their text
@@ -888,7 +888,7 @@ financemarket	src/finance.js	s/Math.min(buyAt(level, B, T) - 1, Math.round(T \* 
 financemarket	src/finance.js	s/(FUND.drift.at100 - FUND.drift.at0) \* Math.max/(FUND.drift.at100 - FUND.drift.at0) * 0 * Math.max/	the fund's drift ignores nature
 financemarket	src/finance.js	s/(save.flightSeconds || 0) \/ GAME_DAY)/Date.now() \/ 3600e3)/	the market runs on real time, not game time
 financemarket	src/finance.js	s/export const financeBio = save => worldBiodiversity(save);/export const financeBio = save => natureHealth(save);/	the exchange reads home nature, not the whole world
-financemarket	src/finance.js	s/drift: { at0: 0.0007,/drift: { at0: -0.0005,/	the fund loses on average for a low-nature player
+financemarket	src/finance.js	s/drift: { at0: 0.0012, at100: 0.0035 }/drift: { at0: -0.002, at100: 0.0035 }/	the fund loses on average for a low-nature player
 financemarket	src/finance.js	s/pull: 1 \/ 10, sigma: 0.075,/pull: 1 \/ 10, sigma: 0.03,/	the market barely fluctuates
 cityrow	src/sim/rules.js	s/return Math.max(0, Math.min(1, 1 - (d - STORMS.spacing) \/ CITY_FADE));/return 1;/	the buildings show all the time again
 cityrow	src/sim/rules.js	s/const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));/const d = Math.abs(ahead - this.distancePx);/	only the next city shows its buildings
@@ -897,3 +897,11 @@ cityrowui	src/GameScene.js	s/    this.city.setAlpha(this.cityRowAlpha());/    th
 crossladder	src/crossings.js	s/export const crossingsMade = save => Math.max(0, regionsOpen(unlockedAreas(save)).length - 1);/export const crossingsMade = save => 0;/	every crossing is as hard as the first
 crossladder	src/areas.js	s/^export const withRegions = keys => .*$/export const withRegions = keys => [...(keys || [])];/	an open area no longer opens its whole region
 missions4	src/missions2.js	s/  const crossings = Math.max(0, regionsOpen(withRegions(save.areas || \[\])).length - 1);/  const crossings = Math.max(0, (save.areas || []).length - 1);/	a fresh Europe start (two areas) skips the lessons
+finance	src/finance.js	s/curve: 4,/curve: 1,/	the gap closes evenly, not steep early
+naturefold	src/wild.js	s/folds = t !== current, shown/folds = false \&\& t !== current, shown/	every open, unfinished tier shows its rows again
+naturefold	style.css	s/^#wProjects \.w-tier \.btn\.tiny { min-height: var(--tap); min-width: var(--tap); }.*$//	the fold toggle is a 7 px link again
+naturefold	style.css	s/^\.wfound { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 4px; }$//	the animals are the old 3-across list again
+badgefont	style.css	s/^\.tab { font-size: 0; }$//	every tab draws its 7 px word again
+badgefont	style.css	s/^\.tab\.on { grid-column: span 2; font-size: 8px;/.tab.on { grid-column: span 2; font-size: 7px;/	the selected tab's word is 7 px again (the B blurs)
+naturefold	style.css	s#^\.wpin \.wscene { width: calc(100% - 6px); }$#@media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }#	the land's picture is 70 percent wide on short phones again
+keepvisible	style.css	s/^@media (max-height: 760px) { \.wpin { position: static; box-shadow: none; } }$//	NATURE's land stays pinned on short phones again (it covers half the screen at full width)

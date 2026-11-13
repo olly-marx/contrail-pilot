@@ -10,7 +10,9 @@ const pngSize = f => { const b = fs.readFileSync(f); return [b.readUInt32BE(16),
 const LIMITS = [['tiny', 0.12], ['small', 0.5], ['medium', 1.8], ['large', 3.5], ['huge', 5.0]];   // same as tools/art/sizes.py
 const cls = m => (LIMITS.find(([, l]) => m < l) || ['giant'])[0];
 // Longest side, in installed pixels: [min, max] per class.
-const BOUNDS = { tiny: [3, 14], small: [5, 16], medium: [10, 32], large: [24, 48], huge: [30, 64], giant: [40, 80] };
+const BOUNDS = { tiny: [5, 16], small: [5, 16], medium: [10, 32], large: [24, 48], huge: [30, 48], giant: [40, 64] };
+// Classes drawn the same way (same canvas and shrink, tools/art/sizes.py) may tie; the rest must grow strictly.
+const DRAWN = { tiny: '32/2', small: '32/2', medium: '32/1', large: '48/1', huge: '48/1', giant: '64/1' };
 const ORDER = ['tiny', 'small', 'medium', 'large', 'huge', 'giant'];
 const real = {};
 for (const line of fs.readFileSync(path.join(ROOT, 'tools/art/pixellab/sizes.tsv'), 'utf8').split('\n')) {
@@ -32,7 +34,7 @@ for (const line of fs.readFileSync(path.join(ROOT, 'tools/art/pixellab/sizes.tsv
   }
   const med = a => a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)];
   const meds = ORDER.map(c => (by[c] && by[c].length ? med(by[c]) : NaN));
-  for (let i = 1; i < ORDER.length; i++) if (!(meds[i] > meds[i - 1])) bad.push(`median ${ORDER[i]} ${meds[i]} px is not above median ${ORDER[i - 1]} ${meds[i - 1]} px`);
+  for (let i = 1; i < ORDER.length; i++) if (DRAWN[ORDER[i]] === DRAWN[ORDER[i - 1]] ? meds[i] < meds[i - 1] - 2 : !(meds[i] > meds[i - 1])) bad.push(`median ${ORDER[i]} ${meds[i]} px is not above (or, drawn alike, near) median ${ORDER[i - 1]} ${meds[i - 1]} px`);
   const summary = ORDER.map((c, i) => `${c} ${(by[c] || []).length} (median ${meds[i]} px)`).join(', ');
   if (bad.length) { console.log(`FAIL animalscale: ${bad.length} problems\n  ` + bad.join('\n  ')); process.exit(1); }
   console.log(`PASS animalscale (${summary})`);

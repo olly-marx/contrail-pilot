@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-11-13-grow-days-nature-fold",
+    "version": "0.64.0",
+    "date": "2026-11-13",
+    "level": "minor",
+    "notes": [
+      "Trees you plant now grow by the game days you fly, each kind at its own pace (4 to 12 days, faster with a nursery), instead of by number of flights.",
+      "The city buildings in the background now show only near a city.",
+      "The finance desk shows your seeds and crystals at the top, and the exchange rate improves quickly at first and then levels off.",
+      "Trees are drawn twice as tall, and the biggest and smallest animals are closer in size.",
+      "The bottom bar shows pictures, and the tab you are on shows its name in big clear letters.",
+      "NATURE is shorter: only the tier you are working on is open, and your animals are a grid of small pictures. Tap one to read about it.",
+      "The picture of your land on NATURE now fills the whole width of the screen."
+    ]
+  },
+  {
     "id": "2026-11-13-trees-water-finance",
     "version": "0.63.0",
     "date": "2026-11-13",

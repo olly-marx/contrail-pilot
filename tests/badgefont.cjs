@@ -7,7 +7,7 @@
 //  1. above 340 px wide the badge text under the name (.badge2 span, where a locked card says 'Bronze: ...') is drawn at 8 px; at 340 px or less it is unchanged (7 px); a locked many-tier card does read 'Bronze: ...'.
 //  2. the badge names (.badge2 b) are not drawn smaller than 7 px.
 //  3. no card spills more than on main by more than 2 px (per card name).
-//  4. the tab bar is unchanged: 7 px at 390, 6 px at 320 (pinned only so the card change cannot drag it along).
+//  4. the tab bar (the user, 2026-11-13): icons only (the other tabs' words at font-size 0), the selected tab's word at 8 px and whole.
 // Screenshots go to $SHOTS, default <tmpdir>/badgefont-shots (skipped, not failed, when the directory cannot be made). Run: python3 -m http.server 8000 & node tests/badgefont.cjs   (plants: tools/plants.tsv, test badgefont)
 const { chromium } = require('playwright-core');
 const fs = require('fs');
@@ -36,7 +36,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
         const m = await p.evaluate(() => {
           const vis = e => { const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return !e.hidden && cs.display !== 'none' && r.width > 0 && r.height > 0; };
           const cardsNow = () => [...document.querySelectorAll('.badge2')].filter(vis).map(e => { const l = e.querySelector('b'), sp = e.querySelector('span'); return { got: e.classList.contains('got'), name: l ? l.textContent.trim() : '', bfs: l ? parseFloat(getComputedStyle(l).fontSize) : 0, text: sp ? sp.textContent.trim() : '', sfs: sp ? parseFloat(getComputedStyle(sp).fontSize) : 0, spill: Math.max(0, Math.max(l ? l.scrollWidth : 0, sp ? sp.scrollWidth : 0, e.scrollWidth) - e.clientWidth), cw: e.clientWidth }; });
-          const tabs = [...document.querySelectorAll('#tabbar .tab')].filter(vis).map(e => ({ t: (e.innerText || e.textContent).trim(), fs: parseFloat(getComputedStyle(e).fontSize) }));
+          const tabs = [...document.querySelectorAll('#tabbar .tab')].filter(vis).map(e => ({ t: (e.textContent).trim(), fs: parseFloat(getComputedStyle(e).fontSize), on: e.classList.contains('on'), fits: e.scrollWidth <= e.clientWidth + 1 }));
           const cards = cardsNow();
           // the baseline: the old badge CSS (main 2f6f7a3) put back on top, measured, taken off again
           const st = document.createElement('style'); st.textContent = '.badge2 { font-size: 7px !important; } .badge2 b { font-size: 7px !important; } .badge-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)) !important; }'; document.head.appendChild(st);
@@ -53,8 +53,8 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
         check(smallB.length === 0, `${tag}: the badge names (.badge2 b) are not drawn smaller than 7 px: ${JSON.stringify(smallB.slice(0, 3).map(x => [x.name, x.bfs]))}`);
         const worse = m.cards.filter(x => x.spill > (m.base[x.name] || 0) + 2);
         check(worse.length === 0, `${tag}: no card spills more than on main (+2 px): ${JSON.stringify(worse.slice(0, 4).map(x => [x.name, 'now', x.spill, 'main', m.base[x.name] || 0]))}`);
-        const want = W <= 340 ? 6 : 7, tabsChanged = m.tabs.filter(x => x.fs !== want);
-        check(tabsChanged.length === 0, `${tag}: the tab bar is unchanged (${want} px): ${JSON.stringify(tabsChanged.map(x => [x.t, x.fs]))}`);
+        const on = m.tabs.filter(x => x.on), off = m.tabs.filter(x => !x.on);
+        check(on.length === 1 && on[0].fs === 8 && on[0].fits && off.every(x => x.fs === 0), `${tag}: the tab bar draws icons only, and the selected tab its word at 8 px, whole (the user, 2026-11-13): ${JSON.stringify(m.tabs)}`);
         console.log(`MEASURE ${tag}: ${m.cards.length} cards, names at ${[...new Set(m.cards.map(x => x.bfs))]} px, text at ${[...new Set(m.cards.map(x => x.sfs))]} px, spill now ${JSON.stringify(m.cards.filter(x => x.spill > 0).map(x => [x.name, x.spill]))} / on main ${JSON.stringify(Object.entries(m.base).filter(([, v]) => v > 0))}; tabs at ${[...new Set(m.tabs.map(x => x.fs))]} px`);
         await shot(p, `${tag}-boards.png`);
         await p.evaluate(() => { const g = document.querySelector('.badge-grid'); if (g) g.scrollIntoView({ block: 'center' }); }); await p.waitForTimeout(300);
@@ -64,6 +64,6 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
     }
   } catch (e) { fails.push('exception: ' + e); }
   await b.close();
-  console.log(fails.length ? `FAIL badgefont:\n - ${fails.join('\n - ')}` : 'PASS badgefont: the badge text is 8 px above 340 px wide and unchanged at 320, a locked card reads Bronze, no card spills more than on main, the tab bar is unchanged');
+  console.log(fails.length ? `FAIL badgefont:\n - ${fails.join('\n - ')}` : 'PASS badgefont: the badge text is 8 px above 340 px wide and unchanged at 320, a locked card reads Bronze, no card spills more than on main, the tab bar shows icons and names only the selected tab at 8 px');
   process.exit(fails.length ? 1 : 0);
 })();

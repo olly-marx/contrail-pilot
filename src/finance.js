@@ -55,7 +55,7 @@ const unit = (d, salt) => (hash01(d, salt) * 2 - 1) * Math.sqrt(3);   // mean 0,
 // (an Ornstein-Uhlenbeck walk on its log), so it swings about 18 to 35 and never runs away (clamped at `edge`). Worked from `warm` days back.
 // YOUR RATES: you pay the true rate PLUS a gap and get it LESS half the gap. The gap is `gap0` on a bare world and `gap100`
 // on a fully healthy one; each desk level above the first trims it by `perLevel`. GAME VALUES, est.: the sim measures them.
-export const MARKET = { mid: 25, pull: 1 / 10, sigma: 0.075, edge: 0.45, warm: 120, gap0: 0.5, gap100: 0.1, perLevel: 0.1 };   // edge: |log move| at most 0.45 (16..39); 2026-11-13 'should fluctuate a bit more'
+export const MARKET = { mid: 25, pull: 1 / 10, sigma: 0.075, edge: 0.45, warm: 120, gap0: 0.5, gap100: 0.1, curve: 4, perLevel: 0.15 };   // edge: |log move| at most 0.45 (16..39); 2026-11-13 'should fluctuate a bit more'
 const SALT_MARKET = 0x3c6ef372;
 // The true rate for each of the game days d0..d1 (inclusive), as an array.
 export function trueRates(d0, d1) {
@@ -64,7 +64,9 @@ export function trueRates(d0, d1) {
   return out;
 }
 export const trueRate = d => trueRates(d, d)[0];
-export function gapAt(level, B) { const b = Math.max(0, Math.min(100, B)) / 100; return (MARKET.gap0 - (MARKET.gap0 - MARKET.gap100) * b) * (1 - MARKET.perLevel * Math.max(0, level - 1)); }
+// STEEP EARLY (the user, 2026-11-13: 'it needs to be steep in the early stages'): the gap closes as (1 - b)^curve, so the
+// first greening of the world narrows it most (curve 4: half the gap is gone by world B ~16).
+export function gapAt(level, B) { const b = Math.max(0, Math.min(100, B)) / 100; return (MARKET.gap100 + (MARKET.gap0 - MARKET.gap100) * Math.pow(1 - b, MARKET.curve)) * (1 - MARKET.perLevel * Math.max(0, level - 1)); }
 // Seeds you PAY for a crystal and seeds you GET for one, at true rate T. Selling always pays less than buying costs.
 export function buyAt(level, B, T) { return level ? Math.max(1, Math.round(T * (1 + gapAt(level, B)))) : null; }
 export function sellAt(level, B, T) { return level ? Math.max(1, Math.min(buyAt(level, B, T) - 1, Math.round(T * (1 - gapAt(level, B) / 2)))) : null; }
@@ -148,11 +150,11 @@ export function payDividend(save) {
 // with the drift set by the WORLD's biodiversity when you cash out. Clamped to [clamp]. GAME VALUES, est.: target (sim
 // thread, pending): a full fund earns on average about a fifth of a flight's seeds per flight.
 export const FUND = {
-  // Sized from the sim (2026-11-13: flights of 36-42 s in eras 2-4 = 1.2-1.4 game days). The ~12 seeds a flight is a DESIGN
-  // ASSUMPTION for eras 3+, not a measurement: the sim measured 11.5 gross in era 1 only (its pilot stops landing later). At world B 8
-  // a full 2,000 fund drifts ~2.3 seeds a flight (about a fifth of a flight), and over 100 flights ends up ~9 times in 10.
+  // Sized from the sim's LEARNING pilot (research/finbio-learn-report.txt, 2026-11-13; it supersedes the fixed-skill run):
+  // era 3: flights 90-95 s = ~3 game days, ~49.5 seeds a flight, world B 23.5 (p10 8, p90 28). Target: a full level-1 fund
+  // (2,000) drifts ~10 seeds a flight there (about a fifth of a flight); bigger funds at higher levels earn more.
   sigma: 0.006,                  // a game day's spread
-  drift: { at0: 0.0007, at100: 0.0025 },   // the mean move a game day at world biodiversity 0 and 100: always above zero
+  drift: { at0: 0.0012, at100: 0.0035 },   // the mean move a game day at world biodiversity 0 and 100: always above zero
   news: { chance: 1 / 8, size: 0.015 },   // one game day in eight carries a +/-1.5% story
   fee: 0.01,                     // 1% taken when you cash out
   step: 500,                     // seeds a tap puts in
