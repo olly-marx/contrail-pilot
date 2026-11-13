@@ -45,10 +45,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // plane flies high, and 'ICY AIR! shade: cooler' over 'kinds 0/5' in the ground strip. (A) the plane at the top of the sky on autopilot.
     const hi = [];
   for (const y of [4, 20, 40, 60]) {
-    await p.evaluate(y => { const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.plane.y = y; s.plane.vy = 0; }, y); await p.waitForTimeout(120);
+    await p.evaluate(y => { const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.nextAirport.worldX = s.distancePx + 2000; s.plane.y = y; s.plane.vy = 0; }, y); await p.waitForTimeout(120);   // (the airport moved 2,000 px ahead: the check above brought it within 600 px and the plane would start its landing, where no autopilot label shows)
     hi.push(await p.evaluate(y => { const s = game.scene.getScene('game'), a = s.autoText, on = ['distText', 'missionText', 'nextText'].filter(n => s[n].visible && s[n].text && (() => { const A = a.getBounds(), C = s[n].getBounds();
       return A.x < C.x + C.width && C.x < A.x + A.width && A.y < C.y + C.height && C.y < A.y + A.height; })());
-      return { y, shown: a.visible && !!a.text, planeY: Math.round(s.plane.y), autoY: Math.round(a.y), on }; }, y));
+      return { y, state: s.state, shown: a.visible && !!a.text, planeY: Math.round(s.plane.y), autoY: Math.round(a.y), on }; }, y));
   }
   check(hi.every(h => h.shown && Math.abs(h.planeY - h.y) < 30), `FIXTURE (A): the autopilot label shows with the plane held high: ${JSON.stringify(hi)}`);
   check(hi.every(h => !h.on.length), `(A) the autopilot label is never drawn over the distance, the mission line or the next-airport line when the plane flies high: ${JSON.stringify(hi.filter(h => h.on.length))}`);
