@@ -872,3 +872,8 @@ rebalance	src/missions2.js	s/ready: f => STAR_GROW3.on || f.kindsRoom >= 2,/read
 rebalance	src/groves.js	s/reduce((a, c) => a + Math.min(cap, c.grown), 0);$/reduce((a, c) => a + Math.min(cap, c.planted), 0);/	grownIn counts saplings
 rebalance	src/config.js	s/export const STAR_GROW3 = { on: true };/export const STAR_GROW3 = { on: false };/	the grow-3 star ships switched off
 upgradetext	src/upgradetext.js	s/export const showsNow = (kind, id) => !(kind === .system. \&\& HINT_LINE_IDS.includes(id));/export const showsNow = () => true;/	the hint lines keep the repeated Now line
+rebalance	src/landtrees.js	s/const slot = slotOf(land, id), base = GROW_DAYS.bySlot\[slot >= 0 \&\& slot < GROW_DAYS.bySlot.length ? slot : 0\];/const slot = slotOf(land, id), base = GROW_DAYS.bySlot[0];/	every kind grows as fast as the plantation tree
+rebalance	src/groves.js	s/      if (s.fresh) { keep.push({ points: from, fresh: false, d: true }); continue; }/      if (false) { keep.push({ points: from, fresh: false, d: true }); continue; }/	the planting flight counts toward growth in days
+rebalance	src/groves.js	s/const from = s.d ? s.points : Math.round(Math.min(1, s.points \/ need) \* goal);/const from = s.d ? s.points : 0;/	a sapling's flight points are lost when growth switches to days
+rebalance	src/sim/rules.js	s/GROW_DAYS.on ? { flown:/false ? { flown:/	the engine never banks game days
+rebalance	src/config.js	s/export const GROW_DAYS = { on: false,/export const GROW_DAYS = { on: true,/	growth in days ships switched on
