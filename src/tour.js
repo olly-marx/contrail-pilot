@@ -6,14 +6,15 @@
 // Saves with seenTips ['*'] or tours ['*'] (automated tests) never see a tour. save.tours: tours done;
 // save.shownLines: upgrade lines already pointed out.
 import { tip } from './tips.js';
-import { FEATURES } from './config.js';
+import { FEATURES, GROW_DAYS } from './config.js';
 import { revealed as s2Revealed, lessonsLeft as s2LessonsLeft } from './missions2.js';
 import { SUBJECTS } from './railsubjects.js';
 // Tab-bar targets and what replaces them on the season 2 hub (nothing: since R3 the tiles are gone and the bar's tabs are the targets; HOME goes back to the hub).
 const HUB_TARGETS = {};   // (the bottom bar is back: tabs are real targets again)   // (HOME is the bar's #tabFly again)
 import { writeSave } from './save.js';
 import { LINES, unlocked, tabOf, loadout } from './upgrades.js';
-import { needFromGrow } from './groves.js';
+import { needFromGrow, nurseryStatus, groveLands } from './groves.js';
+import { growNeedTenths } from './landtrees.js';
 import { hudShowing } from './hudclear.js';
 import { getPilot, namesOpen } from './online.js';
 import { treesPlanted } from './treecount.js';
@@ -117,7 +118,7 @@ export class Tour {
       { target: '#againBtn', text: tip('rail-wildlife'), tap: true }]];
     // The first tree (the user, 2026-11-09: the tutorial 'doesn't really show you how to plant a tree'): the seeds are bought -> TAKE OFF with them (HOME); the flight points at SEND A SEED (GameScene, until a tree lands); the results say it worked.
     if (hub && d('L4') && !d('L5') && ((s.levels || {}).trees || 0) > 0 && treesPlanted(s) === 0 && !this.done('r-plant1')) return ['r-plant1', [{ target: '#goBtn', text: tip('rail-plant', (loadout(s).tree || {}).parcels || 2), tap: true }]];
-    if (res && (this.ui.lastPlanted || 0) > 0 && treesPlanted(s) === this.ui.lastPlanted && !this.done('r-plant2')) return ['r-plant2', [{ target: '#rEarth', text: tip('rail-planted', needFromGrow(loadout(s).grow)), ok: true }]];
+    if (res && (this.ui.lastPlanted || 0) > 0 && treesPlanted(s) === this.ui.lastPlanted && !this.done('r-plant2')) return ['r-plant2', [{ target: '#rEarth', text: tip('rail-planted', ...firstGrowth(s)), ok: true }]];
     if (hub && d('L1') && !d('L2') && !this.done('r-takeoff2')) return ['r-takeoff2', [{ target: '#goBtn', text: tip('rail-takeoff2'), tap: true }]];
     // R11: after flight 2: NATURE opens; its first project is FREE; how nature works.
     // N0-N5, the NATURE introduction (the user approved, 2026-10-28): one idea per step, in the order a child asks - what is
@@ -413,4 +414,11 @@ export class Tour {
   }
 
   nudge() { const b = this.el.querySelector('.tbubble'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+}
+// The first tree's wait for the 'rail-planted' tip: [n, unit]. Flights (the nursery's need), or with GROW_DAYS the days until the soonest sapling of any land is grown.
+function firstGrowth(s) {
+  const grow = loadout(s).grow;
+  if (!GROW_DAYS.on) return [needFromGrow(grow), 'flight'];
+  const need = needFromGrow(grow), days = groveLands(s).map(l => nurseryStatus(s, l, need, (land, id) => growNeedTenths(land, id, grow)).nextIn).filter(n => n != null);
+  return [days.length ? Math.min(...days) : Math.round(GROW_DAYS.bySlot[0] * 10) / 10, 'day'];
 }

@@ -196,6 +196,11 @@ export const NATIVE_FIRST = { on: true };
 // STAR_GROW3 (ledger row 54; the user 2026-11-13): the area's tree star 'kinds3' becomes 'Grow 3 trees in <land>' (3 fully grown trees there, any kinds), reachable even when the land is full.
 // OFF by default until the sim chat measures when it is done (the old 'plant 3 kinds in one flight' was done by flight 100 in 5 of 18 runs with the cap).
 export const STAR_GROW3 = { on: true };
+// GROW_DAYS (the user, 2026-11-13: growth linked to flight time like the finance, in game days; 'since we need to grow many trees we can make it faster ... certain trees can take longer'):
+// when on, every sapling in every land grows by the GAME DAYS flown in each banked flight (DAYNIGHT: 30 s a day), and is grown after its kind's days:
+// bySlot[slot] (the plantation tree fastest, the slowest native longest) x nursery[level] (no nursery, Tree nursery, Big nursery). The planting flight still does not count.
+// OFF by default until the sim chat checks the pacing (a median flight is ~1.3 game days: 4 to 12 days = ~3 to 9 flights).
+export const GROW_DAYS = { on: false, bySlot: [4, 6, 8, 10, 12], nursery: [1, 0.8, 0.6] };
 export const BIOME_COOL = { on: true, rate: 0.4, store: 80, drops: 0.25 };   // rate 0.4: research/biome-cool-confirm-report.txt (2026-11-13, 36 pairs on d2e5921): 0.5 gave x1.26 of t0 (x1.33 all switches on), the sim's estimate for 0.4 is x1.0-1.05; store and drops as measured
 export const FOREST = {
   early: 0.5,     // x every tree's cooling (stage values in nature.js)

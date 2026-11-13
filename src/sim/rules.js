@@ -1,11 +1,11 @@
 // The flight's rules as methods (sim engine landing 5f, 2026-10-25), moved verbatim from GameScene. GameScene
 // mixes them in (Object.assign(GameScene.prototype, RULES)) and the sim engine's world does the same, so both run
 // exactly this code. `this` is the flight. No Phaser here: drawing and sound go through hooks the world leaves empty.
-import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO, BIOME_COOL } from '../config.js';
+import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO, BIOME_COOL, GROW_DAYS } from '../config.js';
 import { tip } from '../tips.js';
 import { FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
 import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity, biomeMeter } from '../nature.js';
-import { treesOpen, slotKind } from '../landtrees.js';
+import { treesOpen, slotKind, growNeedTenths } from '../landtrees.js';
 import { treeBook, plantTree, growGroves, needFromGrow } from '../groves.js';
 import { nextTree, DROP_ORDER, missionTag, BIOME_FULL_POPUP } from '../droporder.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
@@ -886,7 +886,7 @@ export const RULES = {
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save
     this.save.seeds += gained;
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
-    const treesGrown = !this.school ? growGroves(this.save, needFromGrow(this.kit.grow)) : 0;   // (how many saplings grew up in this banked flight: result.treesGrown, the one-time 'a tree has grown up' toast) every banked flight, landed or crashed, grows the saplings planted in EARLIER flights one point (src/groves.js)
+    const treesGrown = !this.school ? growGroves(this.save, needFromGrow(this.kit.grow), GROW_DAYS.on ? { flown: (this.flySeconds || 0) / (DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds), needOf: (land, id) => growNeedTenths(land, id, this.kit.grow) } : null) : 0;   // (how many saplings grew up in this banked flight: result.treesGrown, the one-time 'a tree has grown up' toast) every banked flight, landed or crashed, grows the saplings planted in EARLIER flights one point (src/groves.js)
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
     // Missions and badges are PAID here, the moment the flight is banked (R8; src/rewards.js addPrizes + src/missions2.js finish pay straight into the bank).

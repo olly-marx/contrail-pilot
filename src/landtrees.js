@@ -7,7 +7,7 @@ import { isSeason2 } from './missions2.js';
 import { AREAS } from './areas.js';
 import { city } from './route.js';
 import { UK_SLOTS, SPECIES, projectsDone, biodiversity, regionSpecies, localTree } from './nature.js';
-import { NATIVE_FIRST } from './config.js';
+import { NATIVE_FIRST, GROW_DAYS } from './config.js';
 import { DROP_ORDER } from './droporder.js';
 
 // What opens each native slot, in order (slot 1..4). Each rule reads only that land.
@@ -72,3 +72,10 @@ export const countText = t => `${t.name} ${Math.min(t.n, t.cap)}/${t.cap}${t.ful
 
 // Slots open now that were not open in `before` (a copy of the save from before the flight / purchase).
 export const newlyOpen = (before, after, land) => treesOpen(after, land).filter(s => !treesOpen(before, land).includes(s));
+// GROW_DAYS: the tenths of a game day a kind needs to grow in a land: GROW_DAYS.bySlot[its slot] x the nursery's factor (kit.grow 1 / 0.7 / 0.5 = none / Tree nursery / Big nursery), x 10.
+export const slotOf = (land, id) => (land === 'woodland' || !REGION_TREES[land] ? UK_SLOTS.indexOf(id) : ((REGION_TREES[land].find(t => t.id === id) || {}).slot));
+export function growNeedTenths(land, id, grow = 1) {
+  const slot = slotOf(land, id), base = GROW_DAYS.bySlot[slot >= 0 && slot < GROW_DAYS.bySlot.length ? slot : 0];
+  const lv = grow <= 0.5 ? 2 : grow <= 0.7 ? 1 : 0;
+  return Math.round(base * GROW_DAYS.nursery[lv] * 10);
+}

@@ -1,4 +1,4 @@
-import { CLIMATE, CONTRAIL, ISSR, PARCEL, CARGO, CRYSTALS, cz } from './config.js';
+import { CLIMATE, CONTRAIL, ISSR, PARCEL, CARGO, CRYSTALS, GROW_DAYS, cz } from './config.js';
 import { SPECIES, biodiversity } from './nature.js';
 import { treesPlanted } from './treecount.js';
 import { RETIRED_LINES, fleetKit } from './fleet.js';
@@ -195,8 +195,8 @@ export const LINES = [
   {
     id: 'nursery', name: 'Tree Nursery', group: 'Trees', tree: 'Nature', requires: { line: 'trees', level: 2 },
     levels: [
-      { cost: 140, crystals: 18, name: 'Tree nursery', short: 'Trees grow up in 8 flights.', grow: 0.7 },   // (no nursery: 10 flights; src/groves.js NURSERY_NEED)
-      { cost: 450, crystals: 56, name: 'Big nursery', short: 'Trees grow up in 6 flights.', grow: 0.5 },
+      { cost: 140, crystals: 18, name: 'Tree nursery', get short() { return GROW_DAYS.on ? 'Trees grow up 20% faster.' : 'Trees grow up in 8 flights.'; }, grow: 0.7 },   // (no nursery: 10 flights; src/groves.js NURSERY_NEED)
+      { cost: 450, crystals: 56, name: 'Big nursery', get short() { return GROW_DAYS.on ? 'Trees grow up 40% faster.' : 'Trees grow up in 6 flights.'; }, grow: 0.5 },
     ],
     info: {
       what: 'The trees you drop start small and grow up in the nursery. Every flight you finish, landed or not, makes them grow a little.',

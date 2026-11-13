@@ -24,6 +24,8 @@
     const text = typeof t.say === 'function' ? t.say(...(SAMPLE[id] || [])) : t.say;
     check(T.wordCount(text) <= T.BUDGET, `${id}: ${T.wordCount(text)} words (budget ${T.BUDGET}): "${text}"`);
   }
+  // 1b. (GROW_DAYS, 2026-11-13) the day form of 'rail-planted' fits too (12 days: the slowest kind with no nursery)
+  { const d = T.TIPS['rail-planted'].say(12, 'day'); check(T.wordCount(d) <= T.BUDGET && /flying days/.test(d), `rail-planted (days): ${T.wordCount(d)} words (budget ${T.BUDGET}): "${d}"`); }
   // 2-3. Scan every source file.
   const files = [], walk = d => fs.readdirSync(d, { withFileTypes: true }).forEach(e => { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (p.endsWith('.js')) files.push(p); });
   walk(path.join(__dirname, '..', 'src'));

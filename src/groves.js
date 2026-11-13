@@ -14,7 +14,7 @@ export function groveView(save) {
   if (isObj(save) && isObj(save.groves)) {
     for (const [land, L] of Object.entries(save.groves)) if (isObj(L)) for (const [id, c] of Object.entries(L)) {
       if (!isObj(c)) continue;
-      const x = cellOf(land, id), sap = (Array.isArray(c.saplings) ? c.saplings : []).filter(isObj).map(s => ({ points: whole(s.points), fresh: !!s.fresh }));
+      const x = cellOf(land, id), sap = (Array.isArray(c.saplings) ? c.saplings : []).filter(isObj).map(s => (s.d ? { points: whole(s.points), fresh: !!s.fresh, d: true } : { points: whole(s.points), fresh: !!s.fresh }));   // d: points are TENTHS OF A GAME DAY (GROW_DAYS), else flights
       x.saplings = sap; x.grown = whole(c.grown); x.planted = Math.max(whole(c.planted), x.grown + sap.length);   // planted = grown + still growing
     }
   }
@@ -60,29 +60,46 @@ export const needFromGrow = grow => (grow <= 0.5 ? NURSERY_NEED[2] : grow <= 0.7
 // Trees fully grown in a land by kind: { id: n }. The scenery and the NATURE picture show these only.
 export const grownBook = (save, land) => Object.fromEntries(Object.entries(groveView(save)[land] || {}).filter(([, c]) => c.grown > 0).map(([id, c]) => [id, c.grown]));
 // One banked flight: every sapling that was not planted in THIS flight gets a point; those with `need` points become grown. Returns how many grew up.
-export function growGroves(save, need) {
+// days (GROW_DAYS, src/config.js): { flown: game days of this flight, needOf: (land, id) => tenths of a day that kind needs }. Then a sapling gains round(flown x 10) tenths, and
+// is grown at needOf(land, id). A sapling still counted in flights (no `d`) is carried over once, in proportion: points / need flights of the way -> the same share of its days.
+export function growGroves(save, need, days = null) {
   const g = ensureGroves(save); let up = 0;
-  for (const L of Object.values(g)) for (const c of Object.values(L)) {
+  for (const [land, L] of Object.entries(g)) for (const [id, c] of Object.entries(L)) {
     const keep = [];
     for (const s of c.saplings) {
-      if (s.fresh) { keep.push({ points: s.points, fresh: false }); continue; }
-      const p = s.points + 1;
-      if (p >= need) { c.grown += 1; up += 1; } else keep.push({ points: p, fresh: false });
+      if (!days) {
+        if (s.fresh) { keep.push({ points: s.points, fresh: false }); continue; }
+        const p = s.points + 1;
+        if (p >= need) { c.grown += 1; up += 1; } else keep.push({ points: p, fresh: false });
+        continue;
+      }
+      const goal = Math.max(1, whole(days.needOf(land, id)));
+      const from = s.d ? s.points : Math.round(Math.min(1, s.points / need) * goal);   // (the carry-over)
+      if (s.fresh) { keep.push({ points: from, fresh: false, d: true }); continue; }
+      const p = from + Math.max(0, Math.round((Number(days.flown) || 0) * 10));
+      if (p >= goal) { c.grown += 1; up += 1; } else keep.push({ points: p, fresh: false, d: true });
     }
     c.saplings = keep;
   }
   return up;
 }
 // What the nursery is doing in a land: how many saplings are growing and in how many more flights the next one is grown (null when none).
-export function nurseryStatus(save, land, need) {
-  const cells = Object.values(groveView(save)[land] || {}), saps = cells.flatMap(c => c.saplings);
-  return { growing: saps.length, nextIn: saps.length ? Math.max(1, Math.min(...saps.map(s => need - s.points))) : null };
+// needOf (GROW_DAYS): (land, id) => tenths of a day; then nextIn is in GAME DAYS and unit is 'day' (a sapling still in flight points is shown by its carried-over share).
+export function nurseryStatus(save, land, need, needOf = null) {
+  const cells = Object.entries(groveView(save)[land] || {}), saps = cells.flatMap(([id, c]) => c.saplings.map(s => ({ id, ...s })));
+  if (!needOf) return { growing: saps.length, nextIn: saps.length ? Math.max(1, Math.min(...saps.map(s => need - s.points))) : null, unit: 'flight' };
+  const left = s => { const goal = Math.max(1, needOf(land, s.id)), p = s.d ? s.points : Math.round(Math.min(1, s.points / need) * goal); return Math.max(1, Math.ceil((goal - p) / 10)); };
+  return { growing: saps.length, nextIn: saps.length ? Math.min(...saps.map(left)) : null, unit: 'day' };
 }
 // THE SAPLING VIEW (the user, 2026-11-13: the flight HUD shows your sapling growth; the wild area has a sapling enclosure, and a grown tree is replanted into the wild picture).
 // Every sapling in a land, most grown first: [{ id, points, need, frac (0..1 of the way to grown), left (flights to go, >= 1) }]. Pure: reads the save, writes nothing.
-export function saplingsIn(save, land, need) {
+export function saplingsIn(save, land, need, needOf = null) {
   const out = [];
-  for (const [id, c] of Object.entries(groveView(save)[land] || {})) for (const sp of c.saplings) out.push({ id, points: sp.points, need, frac: Math.min(1, sp.points / need), left: Math.max(1, need - sp.points) });
+  for (const [id, c] of Object.entries(groveView(save)[land] || {})) for (const sp of c.saplings) {
+    if (!needOf) { out.push({ id, points: sp.points, need, frac: Math.min(1, sp.points / need), left: Math.max(1, need - sp.points), unit: 'flight' }); continue; }
+    const goal = Math.max(1, needOf(land, id)), p = sp.d ? sp.points : Math.round(Math.min(1, sp.points / need) * goal);   // (GROW_DAYS: tenths of a day; left in days)
+    out.push({ id, points: p, need: goal, frac: Math.min(1, p / goal), left: Math.max(1, Math.ceil((goal - p) / 10)), unit: 'day' });
+  }
   return out.sort((a, b) => b.points - a.points || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 // Grown trees not yet shown being replanted: { id: n } of grown trees above save.seenGrown[land][id] (what the wild area last showed). markGrownSeen writes it (the only writer).

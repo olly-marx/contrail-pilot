@@ -162,6 +162,39 @@ globalThis.SEASON2 = true;
     } finally { C.NATIVE_FIRST.on = was; }
   }
 
+  // DY. GROW_DAYS (the user, 2026-11-13: growth by game days flown, each kind its own time): spruce (slot 0) 4 days, orchard (slot 4) 12; nursery x0.8 / x0.6; flight points carried over
+  { const was = C.GROW_DAYS.on, LT = L;
+    try {
+      C.GROW_DAYS.on = true;
+      const days = (flown, grow = 1) => ({ flown, needOf: (land, id) => LT.growNeedTenths(land, id, grow) });
+      const s = base(); plant(s, 0, 1); plant(s, 4, 1);
+      G.growGroves(s, 10, days(2));   // the planting flight: does not count
+      const when = {}; for (let f = 1; f <= 12; f++) { G.growGroves(s, 10, days(1.3)); const g = s.groves.woodland; for (const sl of [0, 4]) if (!when[sl] && g[idOf(sl)].grown) when[sl] = f; }
+      check(LT.growNeedTenths('woodland', idOf(0)) === 40 && LT.growNeedTenths('woodland', idOf(4)) === 120, `DY1 power: spruce needs 4.0 days, the fruit tree 12.0 (${LT.growNeedTenths('woodland', idOf(0))}, ${LT.growNeedTenths('woodland', idOf(4))} tenths)`);
+      check(when[0] === 4 && when[4] === 10, `DY2: at 1.3 days a flight, spruce is grown after 4 flights and the fruit tree after 10: ${JSON.stringify(when)}`);
+      check(LT.growNeedTenths('woodland', idOf(0), 0.7) === 32 && LT.growNeedTenths('woodland', idOf(0), 0.5) === 24, `DY3: the nursery levels cut spruce to 3.2 and 2.4 days: ${LT.growNeedTenths('woodland', idOf(0), 0.7)}, ${LT.growNeedTenths('woodland', idOf(0), 0.5)}`);
+      const long = base(); plant(long, 0, 1); G.growGroves(long, 10, days(2)); G.growGroves(long, 10, days(4.2));
+      check(long.groves.woodland[idOf(0)].grown === 1, 'DY4: one long flight of 4.2 days grows a spruce at once (time flown, not flights)');
+      const old = base(); plant(old, 0, 1); for (let i = 0; i < 6; i++) G.growGroves(old, 10);   // flight mode: the planting flight + 5 points of 10
+      const carried = G.saplingsIn(old, 'woodland', 10, (l, id) => LT.growNeedTenths(l, id, 1))[0];
+      G.growGroves(old, 10, days(1.3)); const after1 = old.groves.woodland[idOf(0)].saplings[0];
+      check(carried && carried.points === 20 && after1 && after1.points === 33 && after1.d === true, `DY5: a sapling half-way in flights carries over half of its days (20 of 40 tenths), then grows by days: ${JSON.stringify([carried, after1])}`);
+      const ns = G.nurseryStatus(old, 'woodland', 10, (l, id) => LT.growNeedTenths(l, id, 1));
+      check(ns.unit === 'day' && ns.nextIn === 1, `DY6: NATURE's nursery line counts days: ${JSON.stringify(ns)}`);
+      C.GROW_DAYS.on = false;
+      const off = base(); plant(off, 0, 1); for (let i = 0; i < 3; i++) G.growGroves(off, 10);
+      check(off.groves.woodland[idOf(0)].saplings[0].points === 2 && !off.groves.woodland[idOf(0)].saplings[0].d, 'DY7: switch off, a sapling still gains one point a flight');
+      // the engine passes the days of the banked flight (src/sim/rules.js bankFlight)
+      C.GROW_DAYS.on = true;
+      const W = await import('../src/sim/world.js'), sv = { ...base(), fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } }; plant(sv, 0, 1);
+      sv.groves.woodland[idOf(0)].saplings[0] = { points: 0, fresh: false, d: true };
+      const w = W.createWorld(sv, 1); w.holding = true; for (let i = 0; i < 4000 && w.state !== 'playing'; i++) w.step(1 / 60);
+      w.explain = () => false; w.hitsStorm = () => false; w.hitBird = () => false; w.nextAirport.worldX = 1e12; w.flySeconds = 75; w.landedAt = w.path[1]; w.finish({ landed: true });
+      const sp = w.save.groves.woodland[idOf(0)].saplings[0];
+      check(sp && sp.points === 25, `DY8: the engine banks 75 s of flying as 2.5 days (25 tenths): ${JSON.stringify(sp)}`);
+    } finally { C.GROW_DAYS.on = was; }
+    check(C.GROW_DAYS.on === false, 'DY9: GROW_DAYS ships OFF until the sim chat checks the pacing'); }
+
   // W. words
   check(D.BIOME_FULL_LABEL === 'Biome full' && /biodiversity/.test(D.BIOME_FULL_POPUP), `W1: the full-biome words: '${D.BIOME_FULL_LABEL}' / '${D.BIOME_FULL_POPUP}'`);
 

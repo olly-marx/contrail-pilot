@@ -73,7 +73,7 @@ export const TIPS = {
   'rail-free-tap':     { say: 'Tap here to see your new jet engines.' },
   'rail-takeoff-h':    { say: 'Now take off and try them!' },
   'rail-plant':        { say: n => `You carry ${n} trees. Take off and plant them.` },   // n = the trees the plane carries (src/tour.js)
-  'rail-planted':      { say: n => `Your first tree! It grows up in ${n} flights. Unplanted trees are not saved.` },   // n = the flights it takes (the nursery)
+  'rail-planted':      { say: (n, unit = 'flight') => (unit === 'day' ? `Your first tree! It grows in about ${n} flying days. Unplanted trees are lost.` : `Your first tree! It grows up in ${n} flights. Unplanted trees are not saved.`) },   // n, unit: flights, or game days (GROW_DAYS)   // n = the flights it takes (the nursery)
   'rail-parcels':      { say: 'Buy more trees for each flight here. The first level is free.' },
   'rail-free':         { say: 'Cleaner engines: less CO2, a cooler Earth. Tap FREE!' },
   'rail-payoff':       { say: 'Look: shiny new jet engines!' },
