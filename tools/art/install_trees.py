@@ -26,7 +26,10 @@ def crop(path):
 def main():
     ids = sorted({p.stem[3:] for p in SRC.glob('ts-*.png') if not p.stem.endswith('-raw')})
     for i in ids:
-        full = crop(SRC / f'ts-{i}.png')
+        # tl-<id>.png: the same tree on a 64 px canvas (Oliver, 2026-11-13: trees were tiny next to the real-size animals;
+        # tools/art/pixellab/trees-64.txt). Preferred over the 32 px ts-<id>.png when present.
+        big = SRC / f'tl-{i}.png'
+        full = crop(big if big.exists() else SRC / f'ts-{i}.png')
         full.save(ROOT / 'assets' / f'tree-{i}-2.png')
         full.resize((max(1, round(full.width * 0.7)), max(1, round(full.height * 0.7))), Image.NEAREST).save(ROOT / 'assets' / f'tree-{i}-1.png')
         crop(SRC / f'tc-{i}.png').save(ROOT / 'assets/ui' / f'portrait-tree-{i}-0.png')
