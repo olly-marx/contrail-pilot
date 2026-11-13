@@ -849,7 +849,7 @@ tourflight	src/tour.js	s/if (m\[kid\] >= 2) this.markDone(kid); else writeSave(t
 tourflight	src/tour.js	s/if (hudShowing()) { this.exited = 'flight'; return true; }   \/\/ a flight is on: never show a step over the game/\/\/ (removed)/	a step asked for during a flight is shown over the game
 tourflight	src/GameScene.js	s/    if (this.ui \&\& this.ui.tour) this.ui.tour.abort();   \/\/ a flight starting by any route/    \/\/ (abort removed)   \/\/ a flight starting by any route/	scene.startFlight() does not end a rails step that is up
 rebalance	src/missions2.js	s/: open.filter(t => !t.full).length, kinds = /: open.length, kinds = /	kinds3 counts full kinds again
-rebalance	src/missions2.js	s/prize: 20, ready: f => f.kindsRoom >= 2, needs:/prize: 20, needs:/	kinds3 offered with fewer than 2 kinds with room
+rebalance	src/missions2.js	s/ready: f => STAR_GROW3.on || f.kindsRoom >= 2,/ready: f => STAR_GROW3.on || true,/	kinds3 offered with fewer than 2 kinds with room
 rebalance	src/landtrees.js	s/kindsMissionDone(save, land) || kindsStuck(save, land) :/kindsMissionDone(save, land) :/	slot 4 never opens when kinds3 is stuck
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + Math.min(cap, c.planted), 0)/	Forester counts saplings
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + c.grown, 0)/	Forester counts more than 9 of a kind
