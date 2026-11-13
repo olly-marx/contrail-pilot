@@ -876,4 +876,4 @@ rebalance	src/landtrees.js	s/const slot = slotOf(land, id), base = GROW_DAYS.byS
 rebalance	src/groves.js	s/      if (s.fresh) { keep.push({ points: from, fresh: false, d: true }); continue; }/      if (false) { keep.push({ points: from, fresh: false, d: true }); continue; }/	the planting flight counts toward growth in days
 rebalance	src/groves.js	s/const from = s.d ? s.points : Math.round(Math.min(1, s.points \/ need) \* goal);/const from = s.d ? s.points : 0;/	a sapling's flight points are lost when growth switches to days
 rebalance	src/sim/rules.js	s/GROW_DAYS.on ? { flown:/false ? { flown:/	the engine never banks game days
-rebalance	src/config.js	s/export const GROW_DAYS = { on: false,/export const GROW_DAYS = { on: true,/	growth in days ships switched on
+rebalance	src/config.js	s/export const GROW_DAYS = { on: true,/export const GROW_DAYS = { on: false,/	growth in days ships switched off

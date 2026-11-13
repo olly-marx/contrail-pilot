@@ -25,8 +25,9 @@ globalThis.SEASON2 = true;
   check(C.NATIVE_FIRST.on === true, 'P5: NATIVE_FIRST ships ON');
   check(C.BIOME_COOL.on === true && C.BIOME_COOL.rate === 0.4, `C4: BIOME_COOL ships ON at rate 0.4 (${C.BIOME_COOL.on}, ${C.BIOME_COOL.rate})`);
   check(C.GROWN_METER.on === false, 'G4: GROWN_METER ships OFF');
+  check(C.GROW_DAYS.on === true, 'DY9: GROW_DAYS ships ON (the user, 2026-11-13; research/grow-days-report.txt)');
   // Each block below sets the switch it tests; everything else runs with them OFF (the rules each block names).
-  C.STAR_GROW3.on = false; C.NATIVE_FIRST.on = false; C.BIOME_COOL.on = false;   // (first: every check below assumes the shipped switches)
+  C.STAR_GROW3.on = false; C.NATIVE_FIRST.on = false; C.BIOME_COOL.on = false; C.GROW_DAYS.on = false;   // (first: every check below assumes the shipped switches)
   const open = L.treesOpen(base(), 'woodland');
   check(open.length >= 4 && [0, 1, 2, 3].every(s => open.includes(s)), `power: this save opens slots 0..3 in the woodland: ${open}`);
 
@@ -193,7 +194,7 @@ globalThis.SEASON2 = true;
       const sp = w.save.groves.woodland[idOf(0)].saplings[0];
       check(sp && sp.points === 25, `DY8: the engine banks 75 s of flying as 2.5 days (25 tenths): ${JSON.stringify(sp)}`);
     } finally { C.GROW_DAYS.on = was; }
-    check(C.GROW_DAYS.on === false, 'DY9: GROW_DAYS ships OFF until the sim chat checks the pacing'); }
+  }
 
   // W. words
   check(D.BIOME_FULL_LABEL === 'Biome full' && /biodiversity/.test(D.BIOME_FULL_POPUP), `W1: the full-biome words: '${D.BIOME_FULL_LABEL}' / '${D.BIOME_FULL_POPUP}'`);
