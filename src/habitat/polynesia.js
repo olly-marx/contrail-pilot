@@ -52,6 +52,32 @@ export const PROJECTS = [
     src: [['BirdLife International: It worked! Rare birds recovering', 'https://www.birdlife.org/news/2021/11/22/it-worked-rare-birds-recovering-thanks-to-ambitious-island-restoration/'], ['Island Conservation: Expedition to save the Polynesian ground-dove', 'https://www.islandconservation.org/update-from-the-field-expedition-to-save-critically-endangered-polynesian-ground-dove-on-track-to-be-a-success/']],
     org: { name: 'BirdLife, SOP Manu and Island Conservation', learn: 'https://www.birdlife.org/news/2021/11/22/it-worked-rare-birds-recovering-thanks-to-ambitious-island-restoration/', donate: 'https://www.islandconservation.org/donate/' } },   // Island Conservation's own domain (linked from its own project page)
 
+  // Sea projects (the user, 2026-11-13: an island land's 100 should be mostly sea; research/BACKLOG.md W3). Researched 2026-11-13;
+  // every URL fetched (status 200) and the quoted claim found on the page, except where a comment says otherwise. factChecked: false.
+  { id: 'rahui', name: 'Rest part of the lagoon (rāhui)', tier: 1, band: 'big',
+    short: 'A village sets aside part of its lagoon as a rāhui, an old Tahitian rule: nobody may fish there, dive there or even sail through.',
+    chain: ['Part of the lagoon is left alone', 'fish there can grow and breed', 'the village and scientists check how the reef is doing'],
+    fact: 'In 2014, the people of Teahupo\'o in Tahiti set aside about 5 of every 100 parts of their lagoon as a rāhui. Nobody may fish there, or even go in.',
+    src: [['Mongabay: French Polynesians revive traditional rāhui (2024)', 'https://news.mongabay.com/2024/07/french-polynesians-revive-traditional-rahui-to-protect-fish-and-livelihoods/']],
+    org: { name: 'The village of Teahupo\'o, with the Rāhui Center', learn: 'https://news.mongabay.com/2024/07/french-polynesians-revive-traditional-rahui-to-protect-fish-and-livelihoods/', donate: null } },   // no own site with a donate page found: no donate link
+  { id: 'mantacount', name: 'Count the manta rays', tier: 2, band: 'cheap',
+    short: 'Divers send in photos of the manta rays they meet, and scientists use them to tell each manta apart and learn where they live.',
+    chain: ['Divers photograph manta rays', 'each photo shows which manta it is', 'scientists learn which places mantas need'],
+    fact: 'The French Polynesia Manta Project began in 2015. Photos from divers have found more than 400 different manta rays across 3 of the island groups.',
+    src: [['Manta Trust: French Polynesia Manta Project', 'https://www.mantatrust.org/french-polynesia']],
+    org: { name: 'Observatoire des Requins de Polynésie, with the Manta Trust', learn: 'https://www.mantatrust.org/french-polynesia', donate: 'https://www.mantatrust.org/donate' } },   // own domain (the Manta Trust's)
+  { id: 'sharksafe', name: 'Keep every shark safe', tier: 2, band: 'big',
+    short: 'A law made all of French Polynesia\'s sea a safe place for sharks and rays: nobody may catch them or sell their fins.',
+    chain: ['Sharks may not be caught', 'more sharks hunt on the reef', 'divers count the sharks to see if it works'],
+    fact: 'In 2006, French Polynesia made its whole sea, about 5.5 million km², safe for every shark and ray but one, the shortfin mako. Six years later the mako was protected too.',
+    src: [['Mongabay: 18 years on, how are sharks faring in French Polynesia\'s shark sanctuary? (2024)', 'https://news.mongabay.com/2024/05/18-years-on-how-are-sharks-faring-in-french-polynesias-shark-sanctuary/']],
+    org: { name: 'Observatoire des Requins de Polynésie (the Shark Observatory)', learn: 'https://www.requinsdepolynesie.com/index.php', donate: 'https://www.requinsdepolynesie.com/orp/don.php' } },   // own domain (bank transfer only; the page is in French)
+  { id: 'maraemoana', name: 'Make the whole ocean a park', tier: 3, band: 'mid',
+    short: 'The Cook Islands made all of its ocean one big marine park, Marae Moana, with no big fishing boats or sea-bed mining close to the islands.',
+    chain: ['The whole ocean becomes a park', 'the waters near each island are kept for small fishing only', 'reefs, fish and whales have room to recover'],
+    fact: 'In July 2017, the Cook Islands made its whole ocean, nearly 2 million km², into Marae Moana. For 50 nautical miles round each island there is no big fishing or sea-bed mining.',
+    src: [['Marae Moana (Cook Islands Government)', 'https://www.maraemoana.gov.ck/'], ['Wikipedia: Marae Moana (the 50 nautical miles)', 'https://en.wikipedia.org/wiki/Marae_Moana']],
+    org: { name: 'Marae Moana (Cook Islands)', learn: 'https://www.maraemoana.gov.ck/', donate: `${TIS}join-donate/`, donateLabel: 'Support Te Ipukarea Society' } },   // TIS's own domain; that TIS worked on the park is from search results (IUCN), not a fetched page
 ];
 
 const sp = (name, kind, rarity, needs, why, fact, src) => ({ name, kind, rarity, needs, why, fact, src });
@@ -67,5 +93,7 @@ export const SPECIES = {
   malau: sp('Malau (Tongan megapode)', 'bird', 'uncommon', [], 'The malau lives only on the volcano island of Niuafo\'ou in Tonga.', 'The malau does not sit on its eggs. It buries them in soil warmed by the volcano and lets the heat do the work.', [['Key Biodiversity Areas: Niuafo\'ou', 'https://www.keybiodiversityareas.org/site/factsheet/24503']]),
   kakerori: sp('Kakerori (Rarotonga monarch)', 'bird', 'rare', ['kakerorisave'], 'Rats eat kakerori eggs and chicks, so rat control lets more chicks grow up.', 'Young kakerori are orange. By their fourth year they have turned all grey.', [['Birds of the World: Rarotonga Monarch', 'https://birdsoftheworld.org/bow/species/rarmon1/cur/introduction'], ['Wikipedia: Rarotonga monarch', 'https://en.wikipedia.org/wiki/Rarotonga_monarch']]),
   tahitimonarch: sp('Tahiti monarch (ʻōmāmā)', 'bird', 'rare', ['monarchguard'], 'Trapping rats and guarding nests helps this tiny bird in the valleys of Tahiti.', 'The grown-up bird is shiny black with a pale blue beak, and it is only about 15 cm long.', [['Birds of the World: Tahiti Monarch', 'https://birdsoftheworld.org/bow/species/tahmon2/cur/introduction'], ['Wikipedia: Tahiti monarch', 'https://en.wikipedia.org/wiki/Tahiti_monarch']]),
+  mantaray: sp('Reef manta ray', 'animal', 'rare', ['mantacount'], 'Knowing each manta from photos shows which places they need, so those places can be kept safe.', 'The French Polynesia Manta Project has found 137 different reef manta rays around Bora Bora alone.', [['Manta Trust: French Polynesia Manta Project', 'https://www.mantatrust.org/french-polynesia']]),
+  reefshark: sp('Blacktip reef shark', 'animal', 'uncommon', ['sharksafe'], 'Sharks may not be caught anywhere in French Polynesia\'s sea, so they can hunt on the reef in peace.', 'Divers and dive centres help scientists count the sharks in French Polynesia\'s sea.', [['Mongabay: 18 years on, how are sharks faring in French Polynesia\'s shark sanctuary? (2024)', 'https://news.mongabay.com/2024/05/18-years-on-how-are-sharks-faring-in-french-polynesias-shark-sanctuary/']]),
   manumea: sp('Manumea (tooth-billed pigeon)', 'bird', 'legendary', ['manumeasearch'], 'Finding where the last manumea live lets villages protect those forests.', 'The manumea is one of the closest living relatives of the dodo.', [['Colossal Foundation and Samoa Conservation Society press release (silicon.co.uk)', 'https://www.silicon.co.uk/press-release/the-colossal-foundation-partners-with-the-samoa-conservation-society-to-find-the-critically-endangered-tooth-billed-pigeon-through-advanced-bioacoustic-technologies']]),
 };
