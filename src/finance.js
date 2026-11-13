@@ -55,7 +55,7 @@ const unit = (d, salt) => (hash01(d, salt) * 2 - 1) * Math.sqrt(3);   // mean 0,
 // (an Ornstein-Uhlenbeck walk on its log), so it swings about 18 to 35 and never runs away (clamped at `edge`). Worked from `warm` days back.
 // YOUR RATES: you pay the true rate PLUS a gap and get it LESS half the gap. The gap is `gap0` on a bare world and `gap100`
 // on a fully healthy one; each desk level above the first trims it by `perLevel`. GAME VALUES, est.: the sim measures them.
-export const MARKET = { mid: 25, pull: 1 / 10, sigma: 0.075, edge: 0.45, warm: 120, gap0: 0.5, gap100: 0.1, perLevel: 0.1 };   // edge: |log move| at most 0.45 (16..39); 2026-11-13 'should fluctuate a bit more'
+export const MARKET = { mid: 25, pull: 1 / 10, sigma: 0.075, edge: 0.45, warm: 120, gap0: 0.5, gap100: 0.1, curve: 4, perLevel: 0.15 };   // edge: |log move| at most 0.45 (16..39); 2026-11-13 'should fluctuate a bit more'
 const SALT_MARKET = 0x3c6ef372;
 // The true rate for each of the game days d0..d1 (inclusive), as an array.
 export function trueRates(d0, d1) {
@@ -64,7 +64,9 @@ export function trueRates(d0, d1) {
   return out;
 }
 export const trueRate = d => trueRates(d, d)[0];
-export function gapAt(level, B) { const b = Math.max(0, Math.min(100, B)) / 100; return (MARKET.gap0 - (MARKET.gap0 - MARKET.gap100) * b) * (1 - MARKET.perLevel * Math.max(0, level - 1)); }
+// STEEP EARLY (the user, 2026-11-13: 'it needs to be steep in the early stages'): the gap closes as (1 - b)^curve, so the
+// first greening of the world narrows it most (curve 4: half the gap is gone by world B ~16).
+export function gapAt(level, B) { const b = Math.max(0, Math.min(100, B)) / 100; return (MARKET.gap100 + (MARKET.gap0 - MARKET.gap100) * Math.pow(1 - b, MARKET.curve)) * (1 - MARKET.perLevel * Math.max(0, level - 1)); }
 // Seeds you PAY for a crystal and seeds you GET for one, at true rate T. Selling always pays less than buying costs.
 export function buyAt(level, B, T) { return level ? Math.max(1, Math.round(T * (1 + gapAt(level, B)))) : null; }
 export function sellAt(level, B, T) { return level ? Math.max(1, Math.min(buyAt(level, B, T) - 1, Math.round(T * (1 - gapAt(level, B) / 2)))) : null; }
