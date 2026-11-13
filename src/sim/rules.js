@@ -1,13 +1,13 @@
 // The flight's rules as methods (sim engine landing 5f, 2026-10-25), moved verbatim from GameScene. GameScene
 // mixes them in (Object.assign(GameScene.prototype, RULES)) and the sim engine's world does the same, so both run
 // exactly this code. `this` is the flight. No Phaser here: drawing and sound go through hooks the world leaves empty.
-import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO } from '../config.js';
+import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARCEL, HAZARDS, AIRPORT, CLIMATE, TOKENS, POWERUPS, TAKEOFF, CRYSTALS, FOREST, CARGO, BIOME_COOL } from '../config.js';
 import { tip } from '../tips.js';
 import { FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
-import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity } from '../nature.js';
+import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity, biomeMeter } from '../nature.js';
 import { treesOpen, slotKind } from '../landtrees.js';
 import { treeBook, plantTree, growGroves, needFromGrow } from '../groves.js';
-import { nextTree, DROP_ORDER, missionTag } from '../droporder.js';
+import { nextTree, DROP_ORDER, missionTag, BIOME_FULL_POPUP } from '../droporder.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
 import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as s2LessonsLeft } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
@@ -131,8 +131,9 @@ export const RULES = {
     this.plantedNames = [];            // the names of the trees that landed on soil this flight
     this.touchdown = null;            // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
     this.forestFullSaid = false;
-    this.saidGroveFull = false;        // 'Grove full here!' is said once PER flight (src/droporder.js: nothing left to drop)
+    this.saidGroveFull = false;        // BIOME_FULL_POPUP is said once PER flight (src/droporder.js: nothing left to drop)
     this.landStored = 0;               // ...and rewilded land
+    this.biomeMeters = {};             // BIOME_COOL: each land's grown-tree meter, read once per flight (grown trees only change between flights, src/groves.js growGroves)
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
     this.goldens = 0;                  // golden seeds grabbed
     this.foundIds = []; this.foundThisFlight = 0;   // animals found THIS flight (the scene object is reused between flights)
@@ -669,14 +670,22 @@ export const RULES = {
       const age = this.elapsed - t.plantedAt;
       const g = this.kit.grow, stage = age < 4 * g ? 0 : age < 9 * g ? 1 : 2;   // Tree Nursery: grows faster
       t.stage = stage;
-      const cool = forestFull ? 0 : SPECIES[t.kind].coolPerStage[stage] * FOREST.early * (stage === 2 ? 1 + oldWood : 1) * dt;
+      const cool = forestFull ? 0 : SPECIES[t.kind].coolPerStage[stage] * FOREST.early * (stage === 2 ? 1 + oldWood : 1) * (BIOME_COOL.on ? BIOME_COOL.drops : 1) * dt;
       this.forestStored += cool;
       this.heat -= cool;
       this.breakdown.trees += cool;
       this.treeFeedback += cool;
     }
-    const landFull = this.landStored >= FOREST.landStore * projectsDone(this.save).length / PROJECTS.length;
-    const land = landFull ? 0 : natureCooling(this.save, this.regionNow) * dt;   // rewilded land soaks up a little CO2, until it is full
+    let land;
+    if (BIOME_COOL.on) {   // the biome under the plane cools by its meter (grown trees by variety + projects), until the flight's biome store is full
+      const r = this.regionNow || 'woodland';
+      if (!(r in this.biomeMeters)) this.biomeMeters[r] = biomeMeter(this.save, r) / 100;   // 0..1
+      const m = this.biomeMeters[r];
+      land = this.landStored >= BIOME_COOL.store * m ? 0 : BIOME_COOL.rate * m * dt;
+    } else {
+      const landFull = this.landStored >= FOREST.landStore * projectsDone(this.save).length / PROJECTS.length;
+      land = landFull ? 0 : natureCooling(this.save, this.regionNow) * dt;   // rewilded land soaks up a little CO2, until it is full
+    }
     this.landStored += land;
     this.heat -= land; this.breakdown.trees += land;
     if (this.treeFeedback >= 1) {
@@ -1213,7 +1222,7 @@ export const RULES = {
     const kind = this.treeKind();
     if (!kind) {   // every open kind is at its cap here: the grove is full, the tree is kept for another land
       this.playSound('nope');
-      if (!this.saidGroveFull) { this.saidGroveFull = true; this.popup(this.plane.x + 20, this.plane.y - 12, 'Grove full here!', '#cfe6ff'); }
+      if (!this.saidGroveFull) { this.saidGroveFull = true; this.popup(this.plane.x + 20, this.plane.y - 12, BIOME_FULL_POPUP, '#cfe6ff'); }
       return;
     }
     this.parcels--; this.released++;

@@ -180,6 +180,23 @@ export const PARCEL = {
 // game chat's trees-rework branch): twinFull, 6 parcels, never-crash pilot, 5 skies, smart / careful:
 // no trees 27.9k / 24.9k km, today's 5 slots 38.2k / 38.1k (a lap is 32,060: LAP_KM in route.js).
 // These are NEVER-CRASH UPPER BOUNDS, not what a real player reaches; every run still overheats in the end.
+// BIOME COOLING (2026-11-13, ledger row 54; the user: "the cooling should be mostly coming from the nature you have in that biome, not the trees you drop mid flight").
+// When on: the land under the plane cools by rate x (its biome meter / 100) per second (src/nature.js biomeMeter: GROWN trees by variety + habitat projects),
+// until `store` x meter / 100 is soaked up in the flight; trees dropped in this flight cool `drops` x what they do today; the old projects-only land term is replaced.
+// OFF by default until the sim chat confirms rate 0.5 together with GROWN_METER and NATIVE_FIRST.
+// TREES V2 STEP 4 (ledger row 51; the user 2026-11-10 decisions 6-8, confirmed 2026-11-13: "saplings count for nothing until they're fully grown").
+// When on: every biodiversity meter counts GROWN trees only (src/nature.js biodiversity: NATURE, animals, tree slots, the scenery's tree count), and a land's
+// animals appear only once ANY tree there is fully grown (src/nature.js canAppear), except a land where an animal was already found (the grandfather rule).
+// OFF by default: it changes pacing, and the sim chat measures it first.
+export const GROWN_METER = { on: false };
+// NATIVE FIRST (ledger row 49; the user 2026-11-13: "start with one native tree for each wild area, like the most basic tree"): when on, each land's slot-1 native
+// (birch in the UK, silver birch in the boreal, acacia in the savanna...) is open from the start, and the plantation tree (slot 0) opens with the first habitat
+// project instead (the rule slot 1 had). OFF by default: the first trees change pacing (kinds3, the meter), so the sim chat checks it first.
+export const NATIVE_FIRST = { on: false };
+// STAR_GROW3 (ledger row 54; the user 2026-11-13): the area's tree star 'kinds3' becomes 'Grow 3 trees in <land>' (3 fully grown trees there, any kinds), reachable even when the land is full.
+// OFF by default until the sim chat measures when it is done (the old 'plant 3 kinds in one flight' was done by flight 100 in 5 of 18 runs with the cap).
+export const STAR_GROW3 = { on: false };
+export const BIOME_COOL = { on: false, rate: 0.4, store: 80, drops: 0.25 };   // rate 0.4: research/biome-cool-confirm-report.txt (2026-11-13, 36 pairs on d2e5921): 0.5 gave x1.26 of t0 (x1.33 all switches on), the sim's estimate for 0.4 is x1.0-1.05; store and drops as measured
 export const FOREST = {
   early: 0.5,     // x every tree's cooling (stage values in nature.js)
   from: 10000,    // km

@@ -18,6 +18,10 @@ import { payPrize } from './rewards.js';
 import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 import { missionPrize, kindOf } from './missionprize.js';
 import { CITY_IDS, ownFill, entryFor, needsOf, stopsOf, STREAK_IDS, STREAK_N, streakD, planeIdOf, ownStreak, kmWords } from './missionplan.js';
+import { DROP_ORDER } from './droporder.js';
+import { STAR_GROW3 } from './config.js';
+import { grownIn } from './groves.js';
+const GROW3_N = 3;
 
 // A season 2 save: save.areas is written only by season 2 (the start choice, src/startchoice.js, and crossings), so it is
 // the declared marker; classic saves keep the 13 classic missions (src/missions.js) for the classic tests.
@@ -92,7 +96,9 @@ export const TEMPLATES = [
   // tier 3: the crossing trial (star = the gate)
   { id: 'night', short: () => 'A whole clean night', tier: 3, star: true, prize: 20, title: f => `A whole night with no contrail over ${f.landName}`, flight: (r, s, f) => f.here && r.nightOwl },
   { id: 'shade10', short: f => `Make ${10 * f.k} shade, land`, tier: 3, star: true, prize: 20, title: f => `Make ${10 * f.k} shade and land`, flight: (r, s, f) => f.here && r.sunBlocked >= 10 * f.k },
-  { id: 'kinds3', short: f => `Plant ${f.kinds} kinds in one go`, tier: 3, star: true, prize: 20, needs: (f, s) => needsOf('kinds3', f, s), title: f => `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`, flight: (r, s, f) => f.here && kindsOf(r, f.land) >= f.kinds },   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
+  { id: 'kinds3', short: f => (STAR_GROW3.on ? `Grow ${GROW3_N} trees here` : `Plant ${f.kinds} kinds in one go`), tier: 3, star: true, prize: 20, ready: f => STAR_GROW3.on || f.kindsRoom >= 2, needs: (f, s) => needsOf('kinds3', f, s),
+    title: f => (STAR_GROW3.on ? `Grow ${GROW3_N} trees in ${f.landName}` : `Plant ${f.kinds} kinds of ${f.landName} tree in one flight`),
+    flight: (r, s, f) => (STAR_GROW3.on ? grownIn(s, f.land) >= GROW3_N : f.here && kindsOf(r, f.land) >= f.kinds) },   // STAR_GROW3 (the user, 2026-11-13: 'fully grow 3 trees', easier and about trees): any banked landed flight once the land has 3 GROWN trees (src/groves.js grownIn). Keeps the id kinds3 (saves, slot 4, the crossing stars).   // f.kinds: the kinds OPEN in that land, 2..3 (2026-10-28: a land plateauing below biodiversity 20 has only 2, so a fixed 3 was impossible)
   // route (release A): the STRETCH (f.stretch: 'Fly to <CITY> in one flight': land there, the flight's own start at least min(3, the stored stop count) away, every airport on the way flown past); the floor
   // makes it the farthest city in the small areas too (src/missionplan.js stretchFor). An OLD 'Nonstop to <CITY>' (no f.stretch) keeps its rule.
   { id: 'route', short: f => (f.stretch ? `${f.cityC} in one go` : `Nonstop to ${f.cityC}`), tier: 3, prize: 15, ready: f => f.cityC !== f.start,
@@ -132,14 +138,16 @@ export function fillFor(save, a, startCity = save.city) {
   const landName = (REGION_NAMES[land] || 'this land').replace(/^Temperate /, '');
   const home = save.homeCity || (AREAS[a] && AREAS[a].start), others = cities.filter(c => c !== city && c !== home);   // not the home city (the audit: '...then MANAUS' for a Manaus start)
   const trees = landTrees(save, land), open = trees.filter(t => t.open), tree = open[open.length - 1] || trees[0];
-  const kinds = Math.max(2, Math.min(3, open.length));   // the '3 kinds' star asks for what this land can grow now (at least 2)
+  // The '3 kinds' star asks for what this land can still grow: open kinds with ROOM under the cap of 9 (2026-11-13, ledger row 54: a full kind cannot be dropped,
+  // src/droporder.js, so counting it made the mission impossible). Fewer than 2 with room: the mission is not offered here (`ready` below).
+  const kindsRoom = DROP_ORDER.mode === 'off' ? open.length : open.filter(t => !t.full).length, kinds = Math.max(2, Math.min(3, kindsRoom));   // ('off' = the game before trees v2: no cap, so a full kind still has room)
   const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
   const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));
   const animal = wild.find(w => canAppear(save, w.id, land)) || null;
   const cityB = others.find(c => near(startCity, c) && near(city, c)) || others[0] || city;   // rescue from here; a chain's 2nd from its 1st
   const cityC = [...others].reverse().find(c => near(startCity, c, true)) || others[others.length - 1] || city;   // 'route': an airport passed on the way
   return { area: a, land, landName, start: startCity, city, cityB, cityC, k, stage: stageOf(save, a),
-    here: areaOf(startCity) === a, treeName: tree ? tree.name : 'tree', treeTag, kinds, animal: animal && animal.id, animalName: animal ? animal.name : 'wild animal' };
+    here: areaOf(startCity) === a, treeName: tree ? tree.name : 'tree', treeTag, kinds, kindsRoom, animal: animal && animal.id, animalName: animal ? animal.name : 'wild animal' };
 }
 const key = (a, t) => `${a}:${t.id}`;
 export const tierOpen = (save, a, tier) => tier === 1 || TEMPLATES.filter(t => t.tier === tier - 1 && done(save).has(key(a, t))).length >= 3;

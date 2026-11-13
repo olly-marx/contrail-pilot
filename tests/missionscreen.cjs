@@ -50,10 +50,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(!/free part/i.test(after2.next) && !after2.locked && /TAKE OFF/.test(after2.text), `after picking the free part: NEXT is the lesson, TAKE OFF is unlocked: ${JSON.stringify(after2)}`);
   await p.close();
   // 3-4. The MISSIONS screen, and an off-flight mission.
-  p = await open({ ...s2, freeUpgrade: false, found: { rabbit: 1, fox: 1 }, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:shade', 'weurope:plant-tree', 'weurope:bring', 'weurope:chain', 'weurope:dodge', 'weurope:rescue'] });
+  p = await open({ ...s2, freeUpgrade: false, found: { rabbit: 1, fox: 1 }, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:shade', 'weurope:plant-tree', 'weurope:bring', 'weurope:chain', 'weurope:dodge', 'weurope:rescue'] });   // (no project here: 1 tree kind open, so the kinds star is NOT offered since 2026-11-13, ledger row 54: 2 stars, not 3)
   await p.click('#tabMissions'); await p.waitForTimeout(400);
   const ms = await p.evaluate(() => ({ shown: !document.getElementById('missions').hidden, rows: document.querySelectorAll('#mNext .rowc.goal, #mList .rowc.goal:not(.daily):not(.steady)').length, stars: document.querySelectorAll('#mNext .rowc.goal.star, #mList .rowc.goal.star').length, back: !document.getElementById('tabbar').hidden && !document.getElementById('tabFly').hidden }));
-  check(ms.shown && ms.rows >= 3 && ms.stars === 3 && ms.back, `the MISSIONS screen lists NEXT and the open missions (R4: .rowc.goal rows), 3 starred, with the bar's HOME: ${JSON.stringify(ms)}`);
+  check(ms.shown && ms.rows >= 3 && ms.stars === 2 && ms.back, `the MISSIONS screen lists NEXT and the open missions (R4: .rowc.goal rows), 2 starred (kinds3 needs 2 kinds with room), with the bar's HOME: ${JSON.stringify(ms)}`);
   // S4: the MISSIONS screen has a "Today" label and the day's trio under the tier list (the menu sets the trio from today's date), tinted
   // apart from the area's rows; none of them starred (only the crossing trial is).
   const today = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent.replace(/\s*\(.*$/, '')), daily: document.querySelectorAll('#mList .rowc.goal.daily').length,

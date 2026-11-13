@@ -31,6 +31,10 @@ export const treeBook = (save, land) => Object.fromEntries(Object.entries(groveV
 export const groveLands = save => Object.entries(groveView(save)).filter(([, L]) => Object.values(L).some(c => c.planted > 0)).map(([land]) => land);
 // Every tree planted, in every land.
 export const treesPlantedTotal = save => Object.values(groveView(save)).reduce((a, L) => a + Object.values(L).reduce((b, c) => b + c.planted, 0), 0);
+// Every tree fully GROWN, in every land, at most TREE_CAP (9) of a kind per land counted (the Forester badge, 2026-11-13 ledger row 54: growth and variety, not raw planting).
+export const treesGrownTotal = (save, cap = 9) => Object.values(groveView(save)).reduce((a, L) => a + Object.values(L).reduce((b, c) => b + Math.min(cap, c.grown), 0), 0);
+// Grown trees in ONE land, at most `cap` of a kind (the 'Grow 3 trees' star, src/missions2.js kinds3 with STAR_GROW3).
+export const grownIn = (save, land, cap = 9) => Object.values(groveView(save)[land] || {}).reduce((a, c) => a + Math.min(cap, c.grown), 0);
 // The groves of a copy of this save with `n` trees of this kind in this land (for 'what would one more tree add' questions: the save itself is not touched).
 export function groveWith(save, land, id, n) {
   const g = groveView(save), L = g[land] || (g[land] = {}), c = L[id] || (L[id] = { planted: 0, grown: 0, saplings: [] });
@@ -40,6 +44,7 @@ export function groveWith(save, land, id, n) {
 export function ensureGroves(save) { if (!isObj(save)) return null; save.groves = groveView(save); return save.groves; }
 // One tree planted in this land (the tree's own id in that land). Writes the groves and mirrors the old keys. Returns the new count of that kind.
 export function plantTree(save, land, id) {
+  if (!(isObj(save.seenGrown) && isObj(save.seenGrown[land]))) markGrownSeen(save, land);   // the first sapling in a land starts its replanting record (what is grown now counts as seen)
   const g = ensureGroves(save), L = g[land] || (g[land] = {}), c = L[id] || (L[id] = { planted: 0, grown: 0, saplings: [] });
   c.planted += 1; c.saplings.push({ points: 0, fresh: true });   // (step 2: a planted tree is a SAPLING; it is grown after the nursery's flights, growGroves)
   if (land === 'woodland') { if (!isObj(save.planted)) save.planted = {}; save.planted[id] = c.planted; }
@@ -72,4 +77,23 @@ export function growGroves(save, need) {
 export function nurseryStatus(save, land, need) {
   const cells = Object.values(groveView(save)[land] || {}), saps = cells.flatMap(c => c.saplings);
   return { growing: saps.length, nextIn: saps.length ? Math.max(1, Math.min(...saps.map(s => need - s.points))) : null };
+}
+// THE SAPLING VIEW (the user, 2026-11-13: the flight HUD shows your sapling growth; the wild area has a sapling enclosure, and a grown tree is replanted into the wild picture).
+// Every sapling in a land, most grown first: [{ id, points, need, frac (0..1 of the way to grown), left (flights to go, >= 1) }]. Pure: reads the save, writes nothing.
+export function saplingsIn(save, land, need) {
+  const out = [];
+  for (const [id, c] of Object.entries(groveView(save)[land] || {})) for (const sp of c.saplings) out.push({ id, points: sp.points, need, frac: Math.min(1, sp.points / need), left: Math.max(1, need - sp.points) });
+  return out.sort((a, b) => b.points - a.points || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+// Grown trees not yet shown being replanted: { id: n } of grown trees above save.seenGrown[land][id] (what the wild area last showed). markGrownSeen writes it (the only writer).
+export function newlyGrown(save, land) {
+  const seen = isObj(save) && isObj(save.seenGrown) ? save.seenGrown[land] : null, out = {};
+  if (!isObj(seen)) return out;   // no record for this land yet (an old save, or nothing planted since): nothing to replant
+  for (const [id, c] of Object.entries(groveView(save)[land] || {})) { const d = c.grown - (whole(seen[id])); if (d > 0) out[id] = d; }
+  return out;
+}
+export function markGrownSeen(save, land) {
+  if (!isObj(save)) return;
+  if (!isObj(save.seenGrown)) save.seenGrown = {};
+  save.seenGrown[land] = Object.fromEntries(Object.entries(groveView(save)[land] || {}).map(([id, c]) => [id, c.grown]));
 }

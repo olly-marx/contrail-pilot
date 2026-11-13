@@ -37,5 +37,8 @@ export function nextTree(save, land, pending = {}, prefer = null, turn = 0, firs
   for (let k = 0; k < cand.length; k++) { const c = cand[(turn + k) % cand.length]; if (room.includes(c)) return c; }
   return null;
 }
+// When every open kind in the land is at its cap (the user, 2026-11-13: 'the biome is full of that species, and it would reduce your biodiversity if you overpopulated a species').
+export const BIOME_FULL_LABEL = 'Biome full';
+export const BIOME_FULL_POPUP = 'Biome full: more would harm its biodiversity!';
 // The word on the button: the first word of the tree's name, upper case, at most 8 letters ('Next: OAK').
 export const shortName = name => String(name || '').split(' ')[0].toUpperCase().slice(0, 8);

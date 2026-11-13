@@ -36,7 +36,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       out.drop = { text: s.dropLabel.text, w: s.dropLabel.width, h: s.dropLabel.height, box: s.dropBox, shown: s.dropShown };
       // 3b. the 'Next: <TREE>' label above the PLANT button, for every tree name of every land (it must stay on the screen)
       const { REGION_TREES } = await import('./src/habitat/trees.js'), { shortName } = await import('./src/droporder.js'), names = [...new Set(Object.values(REGION_TREES).flat().map(t => t.name))];
-      out.next = names.concat(['Grove full']).map(n => { s.nextTreeInfo = () => (n === 'Grove full' ? null : { name: n }); s.updateTexts(false); const b = s.nextTreeText.getBounds(); return { n, text: s.nextTreeText.text, left: b.x, right: b.x + b.width }; });
+      out.next = names.concat(['Biome full']).map(n => { s.nextTreeInfo = () => (n === 'Biome full' ? null : { name: n }); s.updateTexts(false); const b = s.nextTreeText.getBounds(); return { n, text: s.nextTreeText.text, left: b.x, right: b.x + b.width }; });
       out.W = W; out.canvas = (() => { const r = document.querySelector('canvas').getBoundingClientRect(); return { w: r.width, vw: innerWidth }; })();
       return out;
     });

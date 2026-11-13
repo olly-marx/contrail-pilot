@@ -1,4 +1,4 @@
-import { cz } from './config.js';
+import { cz, GROWN_METER } from './config.js';
 import { UK_PROJECTS, UK_SPECIES, RARITY, REGION_DATA } from './habitats.js';
 import { WILDLIFE } from './wildlife.js';
 import { REGION_TREES } from './habitat/trees.js';
@@ -75,22 +75,26 @@ const pointsHere = (region, id, n) => !n ? 0 : nativeHere(region, id) ? Math.min
 
 // One meter per region (2026-10-22). The UK counts trees too (the trees you plant are UK trees);
 // every other region is its projects only: 100 = all of that region's projects done.
-export function biodiversity(save, region = 'woodland') {
+// grownOnly (2026-11-13, ledger row 54): count only fully GROWN trees (src/groves.js grownBook); a sapling adds nothing. The biome cooling reads this (BIOME_COOL in config.js).
+export function biodiversity(save, region = 'woodland', grownOnly = GROWN_METER.on) {
   let b = 0;
+  const book = grownOnly ? grownBook : treeBook;
   if (region === 'woodland') {
-    for (const [id, n] of Object.entries(treeBook(save, 'woodland'))) b += speciesPoints(id, n);
+    for (const [id, n] of Object.entries(book(save, 'woodland'))) b += speciesPoints(id, n);
     for (const p of projectsDone(save)) b += p.bio;
     return Math.min(100, Math.round(b * 100 / RAW_MAX()));
   }
   if (!REGION_DATA[region]) return 0;   // the sea and the ice (src/geo.js) have no projects
   // Elsewhere: that region's trees (as the UK's: ~40 of 100) plus its projects.
   const all = REGION_DATA[region].projects;
-  for (const [id, n] of Object.entries(plantedHere(save, region))) b += pointsHere(region, id, n);
+  for (const [id, n] of Object.entries(grownOnly ? grownBook(save, region) : plantedHere(save, region))) b += pointsHere(region, id, n);
   for (const p of projectsDone(save, region)) b += p.bio;
   const raw = TREES_MAX * all.reduce((a, p) => a + p.bio, 0) / PROJECTS.reduce((a, p) => a + p.bio, 0) + all.reduce((a, p) => a + p.bio, 0);
   return Math.min(100, Math.round(b * 100 / raw));
 }
 // The whole world: the average of every region's meter (for a world board later).
+// The biome meter: grown trees (variety saturates at 9 of a kind) plus habitat projects. Cooling from the land under the plane reads this.
+export const biomeMeter = (save, region = 'woodland') => biodiversity(save, region, true);
 export const worldBiodiversity = save => Math.round(Object.keys(REGION_DATA).reduce((a, r) => a + biodiversity(save, r), 0) / Object.keys(REGION_DATA).length);
 
 // What one more tree of this kind adds to the meter (shown as a popup when it is planted).
@@ -132,7 +136,10 @@ export function regionSpecies(region) {
 }
 export const canAppear = (save, id, region = 'woodland') => {
   const c = REGION_DATA[region] && REGION_DATA[region].species[id], done = projectsDone(save, region).map(p => p.id);
-  return !!c && c.needs.every(n => done.includes(n)) && biodiversity(save, region) >= c.bio; };
+  return !!c && c.needs.every(n => done.includes(n)) && biodiversity(save, region) >= c.bio && (!GROWN_METER.on || animalsAwake(save, region)); };
+// GROWN_METER (step 4): a land's animals wait for its first fully grown tree; a land where an animal was already found counts as awake (the grandfather rule: nothing seen disappears).
+export const animalsAwake = (save, region) => Object.values(grownBook(save, region)).some(n => n > 0)
+  || regionSpecies(region).some(w => (save.found || {})[w.id] && !['cow', 'sheep'].includes(w.id));
 
 // Background wildlife you can see but not hit, rebuilt each flight from the habitat (above).
 // A bare field is sad on purpose: a few cows and sheep, a few spruce all the same, empty sky.
