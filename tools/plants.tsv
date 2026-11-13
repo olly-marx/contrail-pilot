@@ -853,3 +853,4 @@ financemarket	src/finance.js	s/(FUND.drift.at100 - FUND.drift.at0) \* Math.max/(
 financemarket	src/finance.js	s/(save.flightSeconds || 0) \/ GAME_DAY)/Date.now() \/ 3600e3)/	the market runs on real time, not game time
 financemarket	src/finance.js	s/export const financeBio = save => worldBiodiversity(save);/export const financeBio = save => natureHealth(save);/	the exchange reads home nature, not the whole world
 financemarket	src/finance.js	s/drift: { at0: 0.0007,/drift: { at0: -0.0005,/	the fund loses on average for a low-nature player
+financemarket	src/finance.js	s/pull: 1 \/ 10, sigma: 0.075,/pull: 1 \/ 10, sigma: 0.03,/	the market barely fluctuates

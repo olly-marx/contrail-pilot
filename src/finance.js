@@ -52,15 +52,15 @@ function hash01(n, salt = 0) {
 }
 const unit = (d, salt) => (hash01(d, salt) * 2 - 1) * Math.sqrt(3);   // mean 0, variance 1, never past +/-1.73
 // THE TRUE RATE: one price for everyone, seeds per crystal. It wanders around `mid` and is pulled back each day by `pull`
-// (an Ornstein-Uhlenbeck walk on its log), so it stays about 19 to 33 and never runs away. Worked from `warm` days back.
+// (an Ornstein-Uhlenbeck walk on its log), so it swings about 18 to 35 and never runs away (clamped at `edge`). Worked from `warm` days back.
 // YOUR RATES: you pay the true rate PLUS a gap and get it LESS half the gap. The gap is `gap0` on a bare world and `gap100`
 // on a fully healthy one; each desk level above the first trims it by `perLevel`. GAME VALUES, est.: the sim measures them.
-export const MARKET = { mid: 25, pull: 1 / 20, sigma: 0.04, warm: 200, gap0: 0.5, gap100: 0.1, perLevel: 0.1 };
+export const MARKET = { mid: 25, pull: 1 / 10, sigma: 0.075, edge: 0.45, warm: 120, gap0: 0.5, gap100: 0.1, perLevel: 0.1 };   // edge: |log move| at most 0.45 (16..39); 2026-11-13 'should fluctuate a bit more'
 const SALT_MARKET = 0x3c6ef372;
 // The true rate for each of the game days d0..d1 (inclusive), as an array.
 export function trueRates(d0, d1) {
   const out = []; let x = 0;
-  for (let d = d0 - MARKET.warm; d <= d1; d++) { x = x * (1 - MARKET.pull) + MARKET.sigma * unit(d, SALT_MARKET); if (d >= d0) out.push(Math.round(10 * MARKET.mid * Math.exp(x)) / 10); }
+  for (let d = d0 - MARKET.warm; d <= d1; d++) { x = Math.max(-MARKET.edge, Math.min(MARKET.edge, x * (1 - MARKET.pull) + MARKET.sigma * unit(d, SALT_MARKET))); if (d >= d0) out.push(Math.round(10 * MARKET.mid * Math.exp(x)) / 10); }
   return out;
 }
 export const trueRate = d => trueRates(d, d)[0];

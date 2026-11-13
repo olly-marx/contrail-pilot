@@ -18,7 +18,8 @@ const src = f => path.resolve(__dirname, '../src', f);
   // --- the market
   const rates = M.trueRates(0, 20000), lo = Math.min(...rates), hi = Math.max(...rates);
   check(lo >= 15 && hi <= 40, `the true rate left 15..40 over 20,000 game days (${lo}..${hi})`);
-  check(new Set(rates.slice(0, 20)).size > 5, 'the true rate hardly moves day to day');
+  const dayMove = rates.slice(1).reduce((a, r, i) => a + Math.abs(Math.log(r / rates[i])), 0) / (rates.length - 1);
+  check(dayMove >= 0.04, `the true rate moves only ${(100 * dayMove).toFixed(1)}% a game day on average (the user, 2026-11-13: 'should fluctuate a bit more'; want 4% or more)`);
   check(M.trueRate(1234) === M.trueRates(1230, 1240)[4], 'the same game day gave two true rates');
   let bad = '';
   for (let lv = 1; lv <= 4 && !bad; lv++) for (let B = 0; B <= 100 && !bad; B += 10) for (const T of [15, 25, 40]) {
@@ -71,5 +72,5 @@ const src = f => path.resolve(__dirname, '../src', f);
   check(news.length > 60 && news.length < 150 && news.some(n => n.up) && news.some(n => !n.up), `news days ${news.length} of 800 (want about 100, both kinds)`);
   check(M.fundSeries(base).length === 20, 'the fund graph is not 20 game days');
   if (fails.length) { console.log(`FAIL financemarket\n  ${fails.join('\n  ')}`); process.exit(1); }
-  console.log(`PASS financemarket: true rate ${lo}..${hi}, you pay > market > you get everywhere, world B ${M.financeBio(base)}, game time only; fund at B 8: ${perFlight.toFixed(2)} seeds a flight, ahead after ${flights} flights in ${ahead}/${tries}, worst game day ${(100 * (Math.exp(worst) - 1)).toFixed(1)}%`);
+  console.log(`PASS financemarket: true rate ${lo}..${hi}, ${(100 * dayMove).toFixed(1)}% a game day, you pay > market > you get everywhere, world B ${M.financeBio(base)}, game time only; fund at B 8: ${perFlight.toFixed(2)} seeds a flight, ahead after ${flights} flights in ${ahead}/${tries}, worst game day ${(100 * (Math.exp(worst) - 1)).toFixed(1)}%`);
 })();
