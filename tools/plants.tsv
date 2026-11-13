@@ -568,7 +568,7 @@ gotoaim	src/aim.js	s/pathTo(save.city, t, linksFor(save)).length - 1 : 0; };/Mat
 crossbox	src/crossingview.js	s/dots: Math.min(hops, 6), moreDots: hops > 6,/dots: hops, moreDots: false,/	the hop dots are not capped at 6
 crossbox	src/crossingview.js	s/(b.where === 'goto' ? { label: `GO TO ${s.from}`, act: 'goto' } : { label: `CROSS TO ${s.to}`, act: 'cross' })/{ label: `CROSS TO ${s.to}`, act: 'cross' }/	a ready crossing away from its airport offers CROSS TO instead of GO TO
 gotoreach	src/route.js	s/^export const linksFor = save => (SEASON2_ON ? linksOf(citiesOf(unlockedAreas(save))) : WORLD);/export const linksFor = save => (SEASON2_ON ? linksOf(citiesOf(unlockedAreas(save).slice(0, 1))) : WORLD);/	only the first open area is in the network
-gotoreach	src/areas.js	s/oceania: { name: 'Australia', starter: true, start: 'MELBOURNE', cities: \['SYDNEY', /oceania: { name: 'Australia', starter: true, start: 'MELBOURNE', cities: [/	a departure airport (Sydney) is missing from the network
+gotoreach	src/areas.js	s/cities: \['SYDNEY', 'PERTH', 'DARWIN'/cities: ['SYDNEY', 'DARWIN'/	a departure airport (Perth) is missing from the network
 crossgoto	src/ui.js	s/setGoto(s, box.city); writeSave(s); this.showTitle(); };/writeSave(s); this.showTitle(); };/	GO TO sets no aim
 crossgoto	src/ui.js	s/  if (arrivedGoto(s)) writeSave(s);/  if (false) writeSave(s);/	the aim never clears on arrival
 crossgoto	src/ui.js	s/    if (this.hubCs) \$('goBtn').textContent = `CROSS TO ${cs.to}`;/    if (false) $('goBtn').textContent = 'TAKE OFF';/	the big button never says CROSS TO at the airport
@@ -588,11 +588,9 @@ pickcity	src/pickcity.js	s/  if (area \&\& !unlockedAreas(save)\.includes(area))
 pickcity	src/pickcity.js	s/const stops = path\.length - 1;/const stops = path.length;/	the stops count is one too many
 pickcity	src/pickcity.js	s/dots: Math\.min(stops, MAX_DOTS), moreDots: stops > MAX_DOTS/dots: stops, moreDots: false/	the dots are not capped at six
 pickcity	src/pickcity.js	s/if (e < bd) { bd = e; best = d; }/if (e < r \&\& !best) { bd = e; best = d; }/	the tap picks the first dot in range, not the nearest
-pickcity	src/pickcity.js	s/split \&\& !(save\.crossed || \[\])\.includes('patagonia') ? 'The Patagonia crossing flies there\.' : 'No flight route there yet\.'/'No flight route there yet.'/	the Patagonia card does not name its crossing
 citytap	src/ui.js	s/ onCity: v\.worldChoice ? name => this\.showCityCard(name) : null,//	a tap on a city opens no card
 citytap	src/ui.js	s/setGoto(s, card\.name); delete s\.heading; writeSave(s); this\.start();/delete s.heading; writeSave(s); this.start();/	FLY sets no aim
 citytap	src/ui.js	s/canFly = card\.canFly \&\& !locked;/canFly = true;/	a closed or no-route city offers FLY
-pickcity	src/pickcity.js	s/LADDER\.indexOf(a\.id) - LADDER\.indexOf(b\.id)/CROSSINGS.indexOf(a) - CROSSINGS.indexOf(b)/	the closed card names the first crossing in the list, not the first on the ladder
 citytap	style.css	s/^\.hub-card \.hc-dot { width: 6px; height: 6px; }/.hub-card .hc-dot { width: 3px; height: 3px; }/	the stop dots are tiny again
 music	src/sound.js	s#  heartbeat: 1, issr: 0.7, warm: 0.5,#  heartbeat: 1, issr: 0.7, warm: 1,#	the quiet warning 'warm' no longer ducks (its depth is 1)
 hubscreen	src/ui.js	s/^ *\/\/ The first tab keeps its label FLY .*$/      $('tabFly').childNodes[$('tabFly').childNodes.length - 1].textContent = 'HOME';/	the HOME word is written into the news dot again
@@ -738,7 +736,6 @@ needsmark-ui	src/missionplan.js	s/if (((save.levels || {}).trees || 0) >= lv) re
 missionplan	src/missionplan.js	s/farCity(save, L, B, \[B, A\]) || farCity/farCity(save, L, B, [B]) || farCity/	the chain's third leg may be the first city again (ping-pong)
 missionplan	src/missions2.js	s/n >= Math.min(3, f.stretch.stops)/n >= f.stretch.stops/	a stretch stored with 4 stops cannot be completed from a nearer start
 missionplan	src/missionplan.js	s/const nw = save.missionCities == null ? null : newRule(/const nw = newRule(/	an old save shows the NEW rule's cities until they are stored (they flip)
-missionplan	src/missionplan.js	s/filter(x => Number.isFinite(x.n) \&\& x.n >= 1);/filter(x => Number.isFinite(x.n) \&\& x.n >= 2);/	the stretch's floor needs 2 stops (a 1-stop area has no stretch)
 missionplan	src/missionplan.js	s/q.n - p.n || q.km - p.km || p.i - q.i/q.n - p.n || p.i - q.i/	the floor's ties go to list order, not to the longer route
 missionplan	src/sim/progression.js	s/ missionCities: {}, \.\.\.start/ ...start/	the sim's start save has no missionCities (its first city is stored as an old save's)
 missionplan	src/missionplan.js	s/^  for (const k of ALL_CITY_FIELDS) if (!CITY_FIELDS\[id\].includes(k)) delete own\[k\];.*$//	a mission keeps the city fields of the other templates (a moving city)
