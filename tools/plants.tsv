@@ -799,10 +799,10 @@ gapmarkers	src/gapmarkers.js	s/lit: !!(flags.lit \&\& first)/lit: !!first/	the i
 gapmarkers	src/gapmarkers.js	s/gapSize: flags.size \&\& first/gapSize: first/	the icon shows the gap's size without Ops 10
 upgradetext	src/upgradetext.js	s/if (hw) { card.now = hw.now;/if (false) { card.now = hw.now;/	the hint lines show the level effects instead of the sim chat's words
 groves	src/groves.js	s/c\.planted += 1; c\.saplings\.push({ points: 0, fresh: true });/c.planted += 1; c.grown += 1;/	a planted tree counts as grown at once (no sapling)
-nursery	src/groves.js	s/if (s\.fresh) { keep\.push/if (s.fresh \&\& false) { keep.push/	the planting flight gives a sapling its first point
+nursery	src/groves.js	s/if (s\.fresh) { keep\.push({ points: s\.points, fresh: false }); continue; }/if (s.fresh \&\& false) { keep.push({ points: s.points, fresh: false }); continue; }/	the planting flight gives a sapling its first point
 nursery	src/groves.js	s/if (p >= need) { c\.grown += 1; up += 1; }/if (p >= NURSERY_NEED[0]) { c.grown += 1; up += 1; }/	the nursery's need is ignored (always 10)
 nursery	src/groves.js	s/grow <= 0\.5 ? NURSERY_NEED\[2\]/grow <= 0.5 ? NURSERY_NEED[0]/	the second nursery level grows no faster
-nursery	src/groves.js	s/{ c\.grown += 1; up += 1; } else keep\.push/{ up += 1; } else keep.push/	a sapling that grows up is lost
+nursery	src/groves.js	s/if (p >= need) { c\.grown += 1; up += 1; } else keep\.push/if (p >= need) { up += 1; } else keep.push/	a sapling that grows up is lost
 nursery	src/sim/rules.js	s/const treesGrown = !this\.school ? growGroves(/const treesGrown = false ? growGroves(/	banking a flight grows no sapling (re-aimed 2026-11-12: the line now keeps growGroves' return value)
 nursery	src/nature.js	s/const book = grownBook(save, region), base/const book = plantedHere(save, region), base/	the scenery shows saplings as grown trees
 droporder	src/droporder.js	s/room\.reduce((a, c) => (c\.n < a\.n ? c : a))/room.reduce((a, c) => (c.n > a.n ? c : a))/	the most planted kind is chosen, not the fewest
