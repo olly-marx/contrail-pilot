@@ -20,7 +20,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.goto(URL); await ready(p); await p.waitForTimeout(800); await p.click('#goBtn');
   for (let i = 0; i < 60 && await p.evaluate(() => game.scene.getScene('game').state) !== 'playing'; i++) await p.waitForTimeout(100);
   const r = await p.evaluate(async () => {
-    const { FOREST } = await import('./src/config.js');
+    const { FOREST, BIOME_COOL } = await import('./src/config.js');
+    BIOME_COOL.on = false;   // (2026-11-13, ledger row 54) this test checks the drop forest and the old projects-only land store; tests/rebalance.cjs checks biome cooling ON (as shipped)
     const s = game.scene.getScene('game'), out = { FOREST: { ...FOREST } };
     game.loop.sleep();
     s.hitsStorm = () => false; s.hitBird = () => false; s.explain = () => false; s.nextAirport.worldX = 1e12;
