@@ -57,6 +57,7 @@ function lerpColour(a, b, t) {
 
 // How a flight ended, for the online Oops boards (from the crash message shown to the player).
 const LANDMARK_SCALE = 2;   // the user: bigger landmarks (whole numbers keep the pixels crisp)
+const FLIGHT_ANIMAL_SCALE = 1;   // ground animals in flight: their Wild Area size (Oliver, 2026-11-13: at 0.5 a rabbit was 6 px and hard to see; "make them all fairly large")
 const LANDMARK_HAZE = 0.82, LANDMARK_BACK = 6;   // skylines: a little see-through, base 6 px up behind the city row
 
 
@@ -623,7 +624,8 @@ export class GameScene extends Phaser.Scene {
     const animal = sprite => {
       if (!clearOfRunway(atX)) return;
       const left = Math.random() < 0.5, standing = sprite.startsWith('sky-');
-      const img = this.add.image(atX, SKY_H + 4, `${sprite}-0`).setOrigin(0.5, 1).setFlipX(left);
+      // Real size classes (tools/art/sizes.py), at FLIGHT_ANIMAL_SCALE.
+      const img = this.add.image(atX, SKY_H + 4, `${sprite}-0`).setOrigin(0.5, 1).setFlipX(left).setScale(FLIGHT_ANIMAL_SCALE);
       this.wildLayer.add(img);
       this.life.push({ img, k: 1, kind: sprite, walk: standing ? 0 : (left ? -1 : 1) * Phaser.Math.FloatBetween(0, 3), t: Math.random() });
       this.seen(sprite);

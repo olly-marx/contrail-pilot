@@ -1,6 +1,9 @@
 # Compose tutorial diagrams from PixelLab objects (hybrid, the user's pick 2026-10-27): the layout stays a clear diagram.
 from PIL import Image, ImageDraw
-O = '/home/ojm/art-tut/obj/'; OUT = '/home/ojm/art-tut/final/'
+import pathlib
+ROOT = str(pathlib.Path(__file__).resolve().parents[2]) + '/'   # the repo (was the removed worktree cp-wt-s3)
+TUT = str(pathlib.Path.home() / 'Documents/contrail/art/art-tut') + '/'   # LAYOUT.md (was ~/art-tut)
+O = TUT + 'obj/'; OUT = TUT + 'final/'
 import os; os.makedirs(OUT, exist_ok=True)
 SKY, GROUND, SOIL = (110, 198, 232, 255), (93, 168, 74, 255), (138, 96, 58, 255)
 obj = lambda n: Image.open(O + n + '.png').convert('RGBA')
@@ -25,7 +28,7 @@ im = base(); n = crop(obj('nature')); n = n.resize((n.width * 2, n.height * 2), 
 print('ok')
 
 # ---- The player's OWN plane everywhere (Coordinator + the user, 2026-10-27): the in-game Comet sprite, NOSE RIGHT. ----
-COMET = Image.open('/home/ojm/cp-wt-s3/assets/plane-comet.png').convert('RGBA')
+COMET = Image.open(ROOT + 'assets/plane-comet.png').convert('RGBA')
 def nose_right(sprite):
     # The tail fin is the tallest part: the topmost opaque pixels must sit in the LEFT half, so the nose points right.
     a = sprite.getchannel('A'); top = next(y for y in range(sprite.height) if any(a.getpixel((x, y)) for x in range(sprite.width)))
@@ -46,7 +49,7 @@ def planes_in(im):
     assert all(10 <= len(g) <= 30 for g in groups), f'unexpected blue blobs (not a plane): {[len(g) for g in groups]}'
     return boxes
 def restyle(name):
-    old = Image.open(f'/home/ojm/cp-wt-s3/assets/ui/lesson-{name}.png').convert('RGBA')
+    old = Image.open(f'{ROOT}assets/ui/lesson-{name}.png').convert('RGBA')
     boxes = planes_in(old)
     big = old.resize((old.width * 2, old.height * 2), Image.NEAREST)
     covered = {}   # pixels the Comet covers (its own white and dark outline are fine there)
@@ -86,7 +89,7 @@ print('storm + hangar rebuilt with the Comet, nose right')
 
 # ---- Redone with the game's own pieces (the user, 2026-10-27): the seed picture used old big seeds, and the overheating
 # picture was "terrible". Seed = the in-game token (assets/token.png); heat = the in-game Earth face + the HUD's heat bar.
-A = '/home/ojm/cp-wt-s3/assets/'
+A = ROOT + 'assets/'
 TOKEN = Image.open(A + 'token.png').convert('RGBA'); TOKEN2 = TOKEN.resize((28, 28), Image.NEAREST)
 def runway(d, x0, x1, y):
     d.rectangle([x0, y, x1, y + 5], fill=(90, 90, 100, 255))

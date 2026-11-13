@@ -1,0 +1,9 @@
+id|name|kind|pose
+culpeo|culpeo fox, a grey-brown South American fox with a reddish head and legs and a bushy black-tipped tail|animal|ground
+sealion|South American sea lion, a big brown sea lion with a thick mane and front flippers|animal|ground
+uplandgoose|upland goose, a male with a white head and chest, grey barred back and black legs|bird|standing
+mara|Patagonian mara, a hare-like rodent with long legs, grey back, white rump and short ears|animal|ground
+pudu|southern pudu, the smallest deer, tiny and round with short legs, plain reddish-brown, very short spike antlers|animal|ground
+geoffroyscat|Geoffroy's cat, a small wild cat, pale grey-gold with many small black spots and a ringed tail|animal|ground
+furseal|South American fur seal swimming, dark brown seal with a pointed snout and small ears|animal|ground
+darwinsfrog|Darwin's frog, a small green frog with a pointed snout and a black and white belly, no lily pad|animal|ground
