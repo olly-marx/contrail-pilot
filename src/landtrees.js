@@ -8,6 +8,7 @@ import { AREAS } from './areas.js';
 import { city } from './route.js';
 import { UK_SLOTS, SPECIES, projectsDone, biodiversity, regionSpecies, localTree } from './nature.js';
 import { NATIVE_FIRST } from './config.js';
+import { DROP_ORDER } from './droporder.js';
 
 // What opens each native slot, in order (slot 1..4). Each rule reads only that land.
 export const OPENS = [
@@ -25,6 +26,7 @@ export const OPENS = [
 // Fewer than 2 of slots 0..3 have room under the cap (planted + saplings < TREE_CAP). A slot not open yet is empty, so it counts as room: a land that can still open
 // a kind never opens slot 4 this way. Reads the book only (not treesOpen: that would ask slot 4 again).
 function kindsStuck(save, land) {
+  if (DROP_ORDER.mode === 'off') return false;   // the game before trees v2 has no cap: never stuck
   const book = treeBook(save, land);
   return [0, 1, 2, 3].filter(s => (book[localTree(UK_SLOTS[s], land).id] || 0) < TREE_CAP).length < 2;
 }

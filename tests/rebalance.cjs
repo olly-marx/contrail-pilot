@@ -38,6 +38,24 @@ globalThis.SEASON2 = true;
     const f3 = M.fillFor(s3, 'weurope', 'LONDON'), open3 = L.treesOpen(s3, 'woodland');
     check(open3.includes(4) && f3.kindsRoom === 1 && !kinds3(s3), `K3: one kind with room: the star is NOT offered (open ${open3}, room ${f3.kindsRoom}, offered ${kinds3(s3)})`); }
 
+  { const s4 = tiersDone(base()); for (const sl of [0, 1, 2, 3]) plant(s4, sl, 9); const was = D.DROP_ORDER.mode; D.DROP_ORDER.mode = 'off';
+    try { const f4 = M.fillFor(s4, 'weurope', 'LONDON'); check(f4.kindsRoom >= 2 && kinds3(s4) && !L.OPENS[4].ok(s4, 'woodland'), `K4: drop order 'off' (no cap, the game before trees v2): full kinds still have room, kinds3 is offered, slot 4 is not opened by the stuck rule (room ${f4.kindsRoom}, offered ${kinds3(s4)})`); }
+    finally { D.DROP_ORDER.mode = was; } }
+
+  // N. the sapling view (src/groves.js saplingsIn / newlyGrown / markGrownSeen): the HUD bar and the wild area's enclosure read these
+  { const s = base(); plant(s, 1, 2); plant(s, 2, 1);
+    G.growGroves(s, 10); G.growGroves(s, 10); G.growGroves(s, 10);   // the planting flight's own point is not counted: 2 points each
+    const v = G.saplingsIn(s, 'woodland', 10);
+    check(v.length === 3 && v.every(x => x.points === 2 && x.left === 8 && Math.abs(x.frac - 0.2) < 1e-9), `N1: three saplings, 2 of 10 points each, 8 flights to go: ${JSON.stringify(v)}`);
+    check(JSON.stringify(G.newlyGrown(s, 'woodland')) === '{}', `N2: nothing grown yet, nothing to replant: ${JSON.stringify(G.newlyGrown(s, 'woodland'))}`);
+    for (let i = 0; i < 8; i++) G.growGroves(s, 10);
+    const ng = G.newlyGrown(s, 'woodland');
+    check(ng[idOf(1)] === 2 && ng[idOf(2)] === 1 && G.saplingsIn(s, 'woodland', 10).length === 0, `N3: all three grew up and are waiting to be replanted: ${JSON.stringify(ng)}`);
+    G.markGrownSeen(s, 'woodland');
+    check(JSON.stringify(G.newlyGrown(s, 'woodland')) === '{}', 'N4: once the wild area has shown them, nothing is left to replant');
+    const old = { ...base(), planted: { spruce: 4 } };
+    check(JSON.stringify(G.newlyGrown(old, 'woodland')) === '{}', 'N5: an old save with grown trees and no record replants nothing'); }
+
   // S. slot 4
   { const s = base(); s.missionsDone = s.missionsDone.filter(k => k !== 'weurope:kinds3');
     check(!L.OPENS[4].ok(s, 'woodland'), 'S1: slot 4 is shut with empty groves and no kinds3 done');

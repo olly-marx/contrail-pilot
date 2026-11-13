@@ -183,7 +183,7 @@ export const PARCEL = {
 // BIOME COOLING (2026-11-13, ledger row 54; the user: "the cooling should be mostly coming from the nature you have in that biome, not the trees you drop mid flight").
 // When on: the land under the plane cools by rate x (its biome meter / 100) per second (src/nature.js biomeMeter: GROWN trees by variety + habitat projects),
 // until `store` x meter / 100 is soaked up in the flight; trees dropped in this flight cool `drops` x what they do today; the old projects-only land term is replaced.
-// OFF by default: nothing changes until the sim chat measures it. rate, store and drops are PROVISIONAL (not measured): the sim chat sets them.
+// OFF by default until the sim chat confirms rate 0.5 together with GROWN_METER and NATIVE_FIRST.
 // TREES V2 STEP 4 (ledger row 51; the user 2026-11-10 decisions 6-8, confirmed 2026-11-13: "saplings count for nothing until they're fully grown").
 // When on: every biodiversity meter counts GROWN trees only (src/nature.js biodiversity: NATURE, animals, tree slots, the scenery's tree count), and a land's
 // animals appear only once ANY tree there is fully grown (src/nature.js canAppear), except a land where an animal was already found (the grandfather rule).
@@ -193,7 +193,7 @@ export const GROWN_METER = { on: false };
 // (birch in the UK, silver birch in the boreal, acacia in the savanna...) is open from the start, and the plantation tree (slot 0) opens with the first habitat
 // project instead (the rule slot 1 had). OFF by default: the first trees change pacing (kinds3, the meter), so the sim chat checks it first.
 export const NATIVE_FIRST = { on: false };
-export const BIOME_COOL = { on: false, rate: 0.4, store: 80, drops: 0.25 };
+export const BIOME_COOL = { on: false, rate: 0.5, store: 80, drops: 0.25 };   // rate 0.5: the sim chat's biome-cool report 2026-11-13 (research/biome-cool-report.txt: 0.4 gave x0.91 of t0, inconclusive); store and drops as measured there
 export const FOREST = {
   early: 0.5,     // x every tree's cooling (stage values in nature.js)
   from: 10000,    // km

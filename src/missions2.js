@@ -18,6 +18,7 @@ import { payPrize } from './rewards.js';
 import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 import { missionPrize, kindOf } from './missionprize.js';
 import { CITY_IDS, ownFill, entryFor, needsOf, stopsOf, STREAK_IDS, STREAK_N, streakD, planeIdOf, ownStreak, kmWords } from './missionplan.js';
+import { DROP_ORDER } from './droporder.js';
 
 // A season 2 save: save.areas is written only by season 2 (the start choice, src/startchoice.js, and crossings), so it is
 // the declared marker; classic saves keep the 13 classic missions (src/missions.js) for the classic tests.
@@ -134,7 +135,7 @@ export function fillFor(save, a, startCity = save.city) {
   const trees = landTrees(save, land), open = trees.filter(t => t.open), tree = open[open.length - 1] || trees[0];
   // The '3 kinds' star asks for what this land can still grow: open kinds with ROOM under the cap of 9 (2026-11-13, ledger row 54: a full kind cannot be dropped,
   // src/droporder.js, so counting it made the mission impossible). Fewer than 2 with room: the mission is not offered here (`ready` below).
-  const kindsRoom = open.filter(t => !t.full).length, kinds = Math.max(2, Math.min(3, kindsRoom));
+  const kindsRoom = DROP_ORDER.mode === 'off' ? open.length : open.filter(t => !t.full).length, kinds = Math.max(2, Math.min(3, kindsRoom));   // ('off' = the game before trees v2: no cap, so a full kind still has room)
   const treeTag = tree ? (land === 'woodland' ? tree.id : `${land}:${tree.id}`) : '';
   const found = save.found || {}, wild = regionSpecies(land).filter(w => w.sprite && !found[w.id] && !['cow', 'sheep'].includes(w.id));
   const animal = wild.find(w => canAppear(save, w.id, land)) || null;

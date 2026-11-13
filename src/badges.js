@@ -49,7 +49,7 @@ export const BADGES = [
     measure: (r, s) => (s.totals || {}).gaps || 0 },
   { id: 'golden', name: 'Golden Touch', theme: 'seeds', tiers: T3(2, 5, 10), unit: 'golden seeds in one flight',
     measure: r => r.goldens || 0 },
-  { id: 'forester', name: 'Forester', theme: 'nature', tiers: T3(5, 25, 100), unit: 'trees grown',   // 2026-11-13 (ledger row 54): GROWN trees, at most 9 of a kind per land; tiers pending the sim chat
+  { id: 'forester', name: 'Forester', theme: 'nature', tiers: T3(5, 25, 50), unit: 'trees grown',   // 2026-11-13 (ledger row 54): GROWN trees, at most 9 of a kind per land; tiers 5/25/50 from the sim chat's biome-cool report (a mixed grower has ~46 grown by flight 58)
     measure: (r, s) => treesGrown(s) },
   { id: 'naturalist', name: 'Naturalist', theme: 'nature', tiers: T3(5, 12, 23), unit: 'kinds of wildlife found',
     measure: (r, s) => found(s) },
