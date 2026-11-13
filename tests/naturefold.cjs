@@ -5,6 +5,7 @@
 //   1. exactly one tier shows its project rows; the other open tiers show their heading and a 'show' button and no rows
 //   2. 'show' on a folded tier opens its rows, and 'hide' folds it again
 //   3. the fold toggle is a real tap (at least 40 x 40 px)
+//   4. the animals are a grid of small portraits: at least 4 across, every portrait at least 40 x 40 px, and the grid at most 420 px tall at 390 (it was 706)
 //   (printed, not checked: the page height before and after, for the design run's table)
 // Run: python3 -m http.server 8000 & node tests/naturefold.cjs   (plants: tools/plants.tsv, test naturefold)
 const { chromium } = require('playwright-core');
@@ -38,6 +39,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
           check(cf && cf.rows > 0 && cf.toggle === 'hide' && df && df.rows === 0 && df.toggle === 'show', `2. 'show' opens tier ${f.tier}'s rows and 'hide' folds them again: ${JSON.stringify({ after: cf, again: df })}`);
           check(folded.every(h => h.tw >= 40 && h.th >= 40), `3. the fold toggle is at least 40 x 40 px: ${JSON.stringify(folded)}`);
         }
+        const g = await p.evaluate(() => { const F = document.getElementById('wFound'), cards = [...F.querySelectorAll('.w-card')], qs = cards.map(c => c.getBoundingClientRect());
+          return { n: cards.length, h: Math.round(F.getBoundingClientRect().height), across: qs.filter(q => Math.abs(q.top - qs[0].top) < 2).length, small: qs.filter(q => q.width < 40 || q.height < 40).length }; });
+        log.push(`${tag} animals ${JSON.stringify(g)}`);
+        check(g.n > 8 && g.across >= 4 && g.small === 0 && (W !== 390 || g.h <= 420), `4. the animals are a grid of small portraits (at least 4 across, each at least 40 x 40, at most 420 px tall at 390): ${JSON.stringify(g)}`);
         check(!p.errs.length, `page errors: ${p.errs.join('; ')}`);
       } catch (e) { fails.push(`${tag}: exception ${String(e).split('\n')[0]}`); }
       await p.close();

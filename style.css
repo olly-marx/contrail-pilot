@@ -1115,3 +1115,9 @@ h2.sub { margin-top: -4px; }
 }
 .w-nursery { margin: 2px 0 4px; font-size: 8px; text-align: center; }   /* the nursery line under a land's trees (TREES V2 step 2) */
 #wProjects .w-tier .btn.tiny { min-height: var(--tap); min-width: var(--tap); }   /* the fold toggle is a real tap (design run A) */
+/* NATURE's animals as a grid of small portraits (the user, 2026-11-13: the 23-card list was 706 of NATURE's 2,006 px at 390). The name and rarity stay in the card for screen readers
+   and the tests, drawn only in the animal's own card on a tap (speciesInfo). Each portrait is a real tap: at least 48 px tall, 56 px wide. tests/naturefold.cjs line 4. */
+.wfound { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 4px; }
+.wfound .w-card { padding: 0; gap: 0; border-width: 6px; border-image-width: 6px; min-height: 48px; justify-content: center; }
+.wfound .w-card img { height: 36px; max-width: 100%; }
+.wfound .w-card > span, .wfound .w-card > .w-rarity { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
