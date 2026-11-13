@@ -43,7 +43,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(!p.errs.length, `page errors: ${p.errs}`);
   // The Coordinator's screenshot (2026-11-12, a normal flight at 390x844): 'AUTOPILOT - tap to fly!' drawn over the distance counter when the
   // plane flies high, and 'ICY AIR! shade: cooler' over 'kinds 0/5' in the ground strip. (A) the plane at the top of the sky on autopilot.
-    const hi = [];
+    // The save above has no autoTakeoff: the plane is still parked on the runway ('HOLD to take off!'). Hold to take off, as a player does, until the flight is in the air.
+  await p.mouse.move(195, 600); await p.mouse.down();
+  await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 12000 }).catch(() => {});
+  await p.mouse.up();
+  const hi = [];
   for (const y of [4, 20, 40, 60]) {
     await p.evaluate(y => { const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.nextAirport.worldX = s.distancePx + 2000; s.plane.y = y; s.plane.vy = 0; }, y); await p.waitForTimeout(120);   // (the airport moved 2,000 px ahead: the check above brought it within 600 px and the plane would start its landing, where no autopilot label shows)
     hi.push(await p.evaluate(y => { const s = game.scene.getScene('game'), a = s.autoText, on = ['distText', 'missionText', 'nextText'].filter(n => s[n].visible && s[n].text && (() => { const A = a.getBounds(), C = s[n].getBounds();
