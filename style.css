@@ -851,6 +851,9 @@ h2.sub { margin-top: -4px; }
 .fline.finance .fin-head { margin-bottom: 4px; }
 .fline.finance > .btn, .fline.finance .next .btn { font-size: 8px; padding: 6px 8px; width: auto; display: inline-block; }
 .fline.finance .next { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
+.fline.finance .fin-news.up { color: var(--green-dark); }
+.fline.finance .fin-news.down { color: #b23a2e; }
+.fline.finance #hCashOut { margin-left: 6px; }
 .sbar-delta.same { color: #5a6b80; }
 /* Steady lane progress bars (src/missions2.js STEADY). */
 .mrow .mbar { display: block; height: 6px; margin: 4px 0 2px; background: rgba(255,255,255,.18); border-radius: 3px; overflow: hidden; }
