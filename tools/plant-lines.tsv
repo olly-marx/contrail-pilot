@@ -46,3 +46,4 @@ droporder	the mission kind goes first on every drop, not only the first	T4: the 
 droporder	the off mode skips a full kind (it is the game before trees v2: no cap)	T5: 'off' ignores the cap and the preference (slot 1, wanted
 droporder	DROP_ORDER.on is true in the off mode	T5: 'off' ignores the cap and the preference (slot 0, wanted
 droporder	the label always names the first turn, not the next drop	T6: the label names the tree the next drop plants, a full ki
+upgradetext	a level loses its effect text (CO2 levels read as their name only)	5b: levels with only a name for words that are not declared
