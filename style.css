@@ -433,8 +433,14 @@ h2.sub { margin-top: -4px; }
 .tab.on { background: #d8d4c8; color: var(--ink, #1b1b2f); }
 .tab { min-width: 0; }
 .tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }   /* a long pilot name on the PILOT tab is cut, not spilled */
-@media (max-width: 340px) { .tab { font-size: 6px; } }
 .tab .newtag { position: absolute; top: -6px; right: 0; }
+/* ICONS ONLY, THE SELECTED TAB NAMED (the user, 2026-11-13): the pixel font is sharp only at 8 px, and at 7 px (6 px at 320) 'BOARDS' read 'DOARDS'; 8 px labels on all six tabs
+   collide ('MISSIONS' into 'HANGAR'). So the other tabs draw no label (font-size 0: the word stays the button's name for screen readers and the tests), and the selected tab takes two
+   columns and draws its word at 8 px. Its marker is a light line along its top, not the solid light block (one bright block fewer above TAKE OFF). Icons 20 px. tests/badgefont.cjs line 4. */
+.tab { font-size: 0; }
+.tab .ti { width: 20px; height: 20px; }
+.tab.on { grid-column: span 2; font-size: 8px; background: transparent; color: #fff; box-shadow: inset 0 3px 0 #d8d4c8; }
+.tab:not(.on) { color: #a9a596; }
 .ti { width: 16px; height: 16px; display: block; background: currentColor;
   -webkit-mask: var(--m) center / contain no-repeat; mask: var(--m) center / contain no-repeat; }
 .ti-fly { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Cpath d='M0 4h7v1H0zM3 2h1v5H3zM6 3h1v1H6zM1 3h1v1H1z'/%3E%3C/svg%3E"); }
@@ -531,7 +537,11 @@ h2.sub { margin-top: -4px; }
    phones under 760px tall the picture is narrower (70%): about 210px pinned in all at 320x568 with the land nav (measured 2026-11-04; the gate is that the first price stays above the tab bar, tests/fitscreen.cjs), so a 600px phone still has about 340px of list. */
 #nature .panel { display: flex; flex-direction: column; }
 .wpin { position: sticky; top: -12px; z-index: 6;   /* -12px: the overlay's own padding, so nothing scrolls past ABOVE the pinned block */ display: grid; gap: 6px; padding: 8px 0; background: var(--paper); box-shadow: 0 4px 0 -1px rgba(27, 27, 47, .25); }
-@media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }
+/* The land's picture fills the width on every phone (the user, 2026-11-13: 'full width and don't shrink vertically'; it was 70 % under 760 px tall). Its 3 px border is outside its
+   width (content-box), so the width leaves room for it. On a short phone the pinned block at full width would hold half the screen and cover the rows scrolling under it
+   (a tier's show button could not be tapped at 320x568): there it scrolls with the page instead of staying pinned. */
+.wpin .wscene { width: calc(100% - 6px); }
+@media (max-height: 760px) { .wpin { position: static; box-shadow: none; } }
 .wscene { position: relative; width: 100%; aspect-ratio: 288 / 120; overflow: hidden; border: 3px solid var(--ink); box-sizing: content-box;
   background: #8ed3ef no-repeat center / 100% 100%; image-rendering: pixelated; }
 .wscene .w-critter { position: absolute; transform: scale(2); transform-origin: bottom center; image-rendering: pixelated; }
@@ -1139,3 +1149,10 @@ h2.sub { margin-top: -4px; }
   .cel-layer i, .cel-push { animation: none; }
 }
 .w-nursery { margin: 2px 0 4px; font-size: 8px; text-align: center; }   /* the nursery line under a land's trees (TREES V2 step 2) */
+#wProjects .w-tier .btn.tiny { min-height: var(--tap); min-width: var(--tap); }   /* the fold toggle is a real tap (design run A) */
+/* NATURE's animals as a grid of small portraits (the user, 2026-11-13: the 23-card list was 706 of NATURE's 2,006 px at 390). The name and rarity stay in the card for screen readers
+   and the tests, drawn only in the animal's own card on a tap (speciesInfo). Each portrait is a real tap: at least 48 px tall, 56 px wide. tests/naturefold.cjs line 4. */
+.wfound { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 4px; }
+.wfound .w-card { padding: 0; gap: 0; border-width: 6px; border-image-width: 6px; min-height: 48px; justify-content: center; }
+.wfound .w-card img { height: 36px; max-width: 100%; }
+.wfound .w-card > span, .wfound .w-card > .w-rarity { position: absolute; left: 0; top: 0; visibility: hidden; }   /* the name/rarity stay in the DOM for the tests and screen readers, off the layout and the fit/overlap gates (they are read in the animal's card on a tap) */

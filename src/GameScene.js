@@ -1238,7 +1238,10 @@ export class GameScene extends Phaser.Scene {
   // (and no top strip owns its place: dropToast), it follows the HUD rule every frame (src/hudclear.js; tests/hudclear.cjs found it at 390x844, first-time seed).
   tidyToast() {
     const t = document.getElementById('toast'), c = document.getElementById('coach');
-    if (!t || t.hidden || !c || !c.hidden) return;
+    if (!t || t.hidden || !c) return;
+    // A strip is up: the toast sits under it, checked every frame (the strip can MOVE without resizing, which the ResizeObserver in showTip misses: a branch run caught the toast
+    // on the strip for one sample at 320x568, 2026-11-13).
+    if (!c.hidden) { if (this.dropToast) this.dropToast(); return; }
     const want = toastTopCss();
     if (t.style.top !== want) t.style.top = want;
   }

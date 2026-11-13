@@ -18,7 +18,7 @@ group results-card | src/resultscard.js src/nextup.js src/ui.js src/tour.js src/
 group heavy-onboarding | src/missions2.js src/upgrades.js src/hub.js src/wild.js | postrails
 group records | src/records.js src/recordsui.js | records-screen
 group save-season2 | src/save.js src/season2.js src/areas.js src/season.js src/crossings.js src/updates.js src/main.js src/reprice.js src/welcome.js | season2 season2-smoke savesafe updates cache reset welcome saveloss preview
-group nature-screen | src/wild.js src/nature.js src/habitats.js src/habitat/* src/landtrees.js src/groves.js src/wildlife.js src/animalart.js src/weboflife.js src/nexthere.js src/water.js | nature nature-unknown wild wildfield regions biodiversity treepic wildlife forestmeter fields homenature
+group nature-screen | src/wild.js src/nature.js src/habitats.js src/habitat/* src/landtrees.js src/groves.js src/wildlife.js src/animalart.js src/weboflife.js src/nexthere.js src/water.js | naturefold nature nature-unknown wild wildfield regions biodiversity treepic wildlife forestmeter fields homenature
 group hangar-upgrades | src/treecount.js src/hangar.js src/fleet.js src/fleetfacts.js src/planelook.js src/planeparts.js src/badges.js src/eras.js src/statbars.js src/capability.js src/cappool.js src/capworker.js src/finance.js | hangar hangarnew upgrades progression looks fleetfacts badges badgeart fares eras crystals onrails payoffdraw payoffbroken
 group hangar-upgrades | src/hangar.js src/fleet.js src/fleetfacts.js src/planelook.js src/planeparts.js src/badges.js src/eras.js src/statbars.js src/capability.js src/cappool.js src/capworker.js src/finance.js | hangar hangarnew upgrades progression looks fleetfacts badges badgeart fares eras crystals onrails payoffdraw rowfit
 group fresh | src/fresh.js | hangarnew records-screen hangar nature
@@ -101,3 +101,5 @@ group tour-flight | src/tour.js src/ui.js src/GameScene.js | tourflight
 group naturebar-test | tests/naturebar.cjs | naturebar
 group chipsfit-test | tests/chipsfit.cjs | chipsfit
 group results-chips | src/ui.js style.css src/resultscard.js | chipsfit
+group naturefold-test | tests/naturefold.cjs style.css | naturefold
+group nature-pin | style.css src/wild.js | keepvisible

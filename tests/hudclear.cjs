@@ -51,7 +51,8 @@ const base = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
         stage = 'fly'; await p.evaluate(() => game.registry.get('ui').start()); await started(p).catch(() => null);
         const seen = { frames: 0, together: 0, biomeTogether: 0, toastOnBiome: 0, toast: 0, coach: 0, toastOnHud: 0, coachOnHud: 0, toastOnCoach: 0, firstShot: false, worst: {} }; let result = null; const t0 = Date.now();
         while (Date.now() - t0 < 90000) {
-          const r = await p.evaluate(() => { const s = game.scene.getScene('game'), cv = document.querySelector('#game canvas') || document.querySelector('canvas'), cr = cv.getBoundingClientRect(), k = cr.width / s.scale.width;
+          const r = await p.evaluate(async () => { await new Promise(res => requestAnimationFrame(() => setTimeout(res, 0)));   // read just AFTER a frame was drawn: a forced layout between a strip's resize and its ResizeObserver (which runs inside the next frame, before its paint) showed a toast on the strip that no frame ever drew (2026-11-13)
+            const s = game.scene.getScene('game'), cv = document.querySelector('#game canvas') || document.querySelector('canvas'), cr = cv.getBoundingClientRect(), k = cr.width / s.scale.width;
             const toA = s.nextAirport ? s.nextAirport.worldX - s.distancePx : 9999, approach = toA < 300 && toA > -150, landing = approach && toA < 60;
             const next = s.storms.find(st => st.rects[0].x + 44 > s.plane.x);
             const target = landing ? 999 : next ? next.rects[0].height + (next.rects[1].y - next.rects[0].height) / 2 - 2 : approach ? s.groundedY() - 60 : 200;
