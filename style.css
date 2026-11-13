@@ -1120,4 +1120,4 @@ h2.sub { margin-top: -4px; }
 .wfound { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 4px; }
 .wfound .w-card { padding: 0; gap: 0; border-width: 6px; border-image-width: 6px; min-height: 48px; justify-content: center; }
 .wfound .w-card img { height: 36px; max-width: 100%; }
-.wfound .w-card > span, .wfound .w-card > .w-rarity { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.wfound .w-card > span, .wfound .w-card > .w-rarity { position: absolute; left: 0; top: 0; visibility: hidden; }   /* the name/rarity stay in the DOM for the tests and screen readers, off the layout and the fit/overlap gates (they are read in the animal's card on a tap) */
