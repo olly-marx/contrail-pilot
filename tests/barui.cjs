@@ -49,6 +49,11 @@ const save = { tutorialDone: true, muted: true, seenTips: ['*'], tours: ['*'], f
         await p.click('[data-ftab=gadgets]').catch(() => {}); await p.waitForTimeout(200); await p.click('[data-ftap="gadget:magnet"]').catch(() => {}); await p.waitForTimeout(600);
         const m2 = await read();
         check(!!m2 && m2.on === 3 && /^Now: grab seeds from 22 px$/.test(m2.now) && /^Next: Stronger coil: grab seeds from 26 px$/.test(m2.next), `4: after buying level 3 the bar shows 3 filled, Now 22 px and Next 'Stronger coil': ${JSON.stringify(m2)}`);
+        // 5. (ledger row 46, 2026-11-13) a hint line (ATC) shows its stat bars and 'Next:', and NO 'Now:' line (the bars show it)
+        stage = 'tap the ATC row'; await p.click('[data-ftab=systems]').catch(() => {}); await p.waitForTimeout(250); await p.click('[data-ftap="system:atc"]').catch(() => {}); await p.waitForTimeout(600);
+        const h = await p.evaluate(() => { const st = document.getElementById('hPreview'); if (!st || st.classList.contains('empty')) return null;
+          return { now: !!st.querySelector('.hp-now'), next: (st.querySelector('.hp-next') || {}).textContent || '', bars: st.querySelectorAll('.sbar, .statbar, [class*=bar] .fill, .bars > *').length, html: st.innerHTML.length }; });
+        check(!!h && !h.now && /^Next: /.test(h.next), `5: the ATC hint row shows Next and no Now line: ${JSON.stringify(h)}`);
         check(!p.errs.length, `page errors ${p.errs.slice(0, 2)}`);
       } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); }
       if (buf) try { fs.writeFileSync(`${SHOTS}/${fails.length > before ? 'FAIL-' : ''}${W}x${H}-hangar-bar.png`, buf); } catch (e) { /* no shot */ }
