@@ -871,6 +871,8 @@ h2.sub { margin-top: -4px; }
 .fline.finance .fin-sub { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 10px; }
 .fline.finance .fin-sub .name { white-space: nowrap; }
 .fline.finance .fin-rates { margin: 2px 0; }
+.fline.finance .fin-wallet { font-size: 9px; margin: 4px 0 2px; }
+.fline.finance .fin-wallet b { margin-left: 4px; }
 .fline.finance .fin-up { color: var(--green-dark); }
 .fline.finance .fin-down { color: #b23a2e; }
 .fline.finance .hp-info { font-size: 7px; padding: 2px 5px; margin-left: 4px; }
