@@ -19,10 +19,10 @@ export const WATER = {
   tundra: { look: 'sea', shapes: [{ kind: 'coast', side: 'left', at: 46, amp: 7, period: 60 }, { kind: 'river', pts: [[206, 60], [190, 98], [210, 132], [196, 170]], w: 6 }] },
   mediterranean: { look: 'sea', shapes: [{ kind: 'coast', side: 'bottom', at: 18, amp: 4, period: 90 }, { kind: 'lake', cx: 236, cy: 92, rx: 30, ry: 9 }] },
   plains: { look: 'sea', shapes: [{ kind: 'coast', side: 'right', at: 40, amp: 6, period: 50 }, { kind: 'lake', cx: 64, cy: 106, rx: 22, ry: 7 }] },
-  rainforest: { look: 'brown', shapes: [{ kind: 'river', pts: [[0, 118], [80, 108], [170, 126], [288, 110]], w: 18 }] },
-  monsoon: { look: 'fresh', shapes: [{ kind: 'river', pts: [[0, 100], [100, 112], [190, 98], [288, 110]], w: 12 }] },
+  rainforest: { look: 'brown', shapes: [{ kind: 'river', pts: [[0, 118], [80, 108], [170, 126], [288, 110]], w: 28 }] },
+  monsoon: { look: 'fresh', shapes: [{ kind: 'river', pts: [[0, 100], [100, 112], [190, 98], [288, 110]], w: 18 }] },
   boreal: { look: 'fresh', shapes: [{ kind: 'river', pts: [[150, 60], [140, 100], [170, 132], [152, 170]], w: 9 }, { kind: 'lake', cx: 60, cy: 150, rx: 30, ry: 9 }] },
-  bush: { look: 'fresh', shapes: [{ kind: 'river', pts: [[0, 140], [90, 130], [180, 146], [288, 134]], w: 10 }] },
+  bush: { look: 'fresh', shapes: [{ kind: 'river', pts: [[0, 140], [90, 130], [180, 146], [288, 134]], w: 14 }] },
   savanna: { look: 'fresh', shapes: [{ kind: 'lake', cx: 150, cy: 122, rx: 40, ry: 12 }] },
   eastasia: { look: 'fresh', shapes: [{ kind: 'lake', cx: 80, cy: 128, rx: 44, ry: 14 }, { kind: 'lake', cx: 222, cy: 152, rx: 24, ry: 8 }] },
   woodland: { look: 'fresh', shapes: [{ kind: 'river', pts: [[246, 60], [238, 90], [252, 116], [232, 140], [226, 170]], w: 6 }] },
@@ -107,36 +107,60 @@ export function mask(region) {
 export const isWater = (region, x, y) => { const X = Math.floor(x), Y = Math.floor(y); if (X < 0 || X >= FW || Y < 0 || Y >= FH) return false; return mask(region).water[Y * FW + X] === 1; };
 
 // May an animal with this home stand at (x, y)? ('land' animals keep 2 px off the water; 'water' ones 3 px off the land.)
-export function allowed(region, home, x, y) {
-  if (y < GROUND[0] || y > GROUND[1] || x < 4 || x > FW - 4) return false;
-  const X = Math.floor(x), Y = Math.floor(y), m = mask(region), i = Y * FW + X, w = m.water[i] === 1, d = m.dist[i];
+// `half`: half the sprite's width (animal sizes are real since animal-scale, 2026-11-13: a 46 px pirarucu in an 18 px river sat
+// mostly over the grass). An animal in the water needs water under its whole width at its waterline, not only under its middle.
+const spanWet = (region, x, y, half) => { for (let dx = -half; dx <= half; dx += 2) if (!isWater(region, x + dx, y)) return false; return isWater(region, x + half, y); };
+export function allowed(region, home, x, y, half = 0) {
+  const X = Math.floor(x), Y = Math.floor(y);
+  if (Y < GROUND[0] || Y > GROUND[1] || X < 4 || X > FW - 5) return false;   // by the pixel, like every rule below
+  const m = mask(region), i = Y * FW + X, w = m.water[i] === 1, d = m.dist[i];
+  if (w && half > 0 && (home === 'water' || home === 'shore') && !spanWet(region, X + 0.5, Y + 0.5, half)) return false;   // by the pixel, so the 1.4 px box in clearPath covers every point
   if (!hasWater(region)) return home === 'land' || home === 'shore' || home === 'edge';   // a land with no water: nothing to keep off (no water animal lives there)
   if (home === 'water') return w && d >= 3 && y >= HORIZON + 18;   // not in the thin strip at the horizon, where a sprite pokes up over the backdrop's hills
   if (home === 'shore') return w ? d >= 2 : d <= 18;
   if (home === 'edge') return w ? d <= 4 : d <= 8;
   return !w && d >= 2;
 }
-// A straight walk stays in the zone if every pixel it can touch is allowed: samples 1 px apart, each checked with the
-// corners of a 1.4 px box round it, so any point between two samples (at most 0.5 px from one) lies in a checked pixel.
-const boxOk = (region, home, x, y) => allowed(region, home, x - 0.7, y - 0.7) && allowed(region, home, x + 0.7, y - 0.7) && allowed(region, home, x - 0.7, y + 0.7) && allowed(region, home, x + 0.7, y + 0.7);
-export function clearPath(region, home, x0, y0, x1, y1) {
+// A straight walk stays in the zone if every pixel it can touch is allowed: samples 1 px apart, each checked with every
+// pixel of a 1.4 px box round it, so any point between two samples (at most 0.5 px from one) lies in a checked pixel.
+// (allowed depends only on the pixel, so checking every pixel the box touches, up to 3 x 3, covers every point in it.)
+const boxOk = (region, home, x, y, half = 0) => {
+  for (let Y = Math.floor(y - 0.7); Y <= Math.floor(y + 0.7); Y++) for (let X = Math.floor(x - 0.7); X <= Math.floor(x + 0.7); X++) if (!allowed(region, home, X + 0.5, Y + 0.5, half)) return false;
+  return true;
+};
+export function clearPath(region, home, x0, y0, x1, y1, half = 0) {
   const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0));
-  for (let k = 0; k <= n; k++) { const t = n ? k / n : 0; if (!boxOk(region, home, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t)) return false; }
+  for (let k = 0; k <= n; k++) { const t = n ? k / n : 0; if (!boxOk(region, home, x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, half)) return false; }
   return true;
 }
 // Every allowed spot for a home in a land, on a 2 px grid (cached).
 const spotCache = {};
-export function zoneSpots(region, home) {
-  const k = `${region}/${home}`; if (spotCache[k]) return spotCache[k];
-  const out = []; for (let y = GROUND[0]; y <= GROUND[1]; y += 2) for (let x = 6; x <= FW - 6; x += 2) if (boxOk(region, home, x + 0.5, y + 0.5)) out.push([x + 0.5, y + 0.5]);
+export function zoneSpots(region, home, half = 0) {
+  const k = `${region}/${home}/${half}`; if (spotCache[k]) return spotCache[k];
+  const out = []; for (let y = GROUND[0]; y <= GROUND[1]; y += 2) for (let x = 6; x <= FW - 6; x += 2) if (boxOk(region, home, x + 0.5, y + 0.5, half)) out.push([x + 0.5, y + 0.5]);
   return (spotCache[k] = out);
 }
 // A start spot, and the next spot to walk to (reachable in a straight line inside the zone; null = stay and pause).
-export function startIn(region, home, rnd = Math.random) { const s = zoneSpots(region, home); return s.length ? s[Math.floor(rnd() * s.length)] : null; }
-export function nextIn(region, home, x, y, rnd = Math.random) {
-  const s = zoneSpots(region, home); if (!s.length) return null;
-  for (let tries = 0; tries < 24; tries++) { const p = s[Math.floor(rnd() * s.length)]; if (clearPath(region, home, x, y, p[0], p[1])) return p; }
+export function startIn(region, home, rnd = Math.random, half = 0) { const s = zoneSpots(region, home, half); return s.length ? s[Math.floor(rnd() * s.length)] : null; }
+export function nextIn(region, home, x, y, rnd = Math.random, half = 0) {
+  const s = zoneSpots(region, home, half); if (!s.length) return null;
+  for (let tries = 0; tries < 24; tries++) { const p = s[Math.floor(rnd() * s.length)]; if (clearPath(region, home, x, y, p[0], p[1], half)) return p; }
   return null;
+}
+// The sprite's half width for the zone rules: a couple of px of fin or tail may overhang the bank.
+export const halfOf = width => Math.max(0, Math.floor(width / 2) - 2);
+// How many px of water lie straight above the waterline across the sprite's width (the least of its columns): a swimmer is drawn
+// no taller than this, so it never shows above the far bank, at any size.
+export function headroom(region, x, y, half = 0) {
+  let best = 99;
+  for (let dx = -half; dx <= half; dx += 1) { let n = 0; while (n < 99 && isWater(region, x + dx, y - 1 - n)) n++; best = Math.min(best, n); }
+  return best;
+}
+// px of the sprite (height h) hidden below the waterline: `under` of it, and more if the water above is shallower than the rest.
+export function cutFor(region, home, x, y, half, h, under) {
+  let cut = Math.round(h * under);
+  if (under > 0 && (home === 'water' || home === 'shore')) cut = Math.max(cut, h - headroom(region, x, y, half));
+  return Math.min(h, cut);
 }
 // One frame of walking, straight at the target (the old walk bent towards the target, so its path left a straight line):
 // slower when heading up or down the field (depth), as before.

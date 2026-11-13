@@ -20,6 +20,10 @@
   for (const id of Object.keys(W.PLACE)) check(Object.values(projects).some(l => l.includes(id)), `PLACE names a project that does not exist: ${id}`);
   for (const r of Object.keys(W.WATER)) check(projects[r], `WATER names a land that does not exist: ${r}`);
 
+  // Each sprite's real size (animal sizes are real since animal-scale: a 46 px pirarucu in an 18 px river sat over the grass): read
+  // from the PNG header of the file the field shows.
+  const { animalDir } = await import('../src/animalart.js'), fs = require('fs');
+  const sizeOf = w => { try { const b = fs.readFileSync(`${__dirname}/../${animalDir(w.sprite)}/${w.sprite}-0.png`); return [b.readUInt32BE(16), b.readUInt32BE(20)]; } catch (e) { return [0, 0]; } };
   // 2. walking, seeded
   let seed = 12345; const rnd = () => ((seed = Math.imul(seed ^ (seed >>> 15), 2246822507) ^ 0x9e3779b9) >>> 0) / 4294967296;
   const STEPS = process.env.GATE ? 1500 : 6000, dt = 0.05;
@@ -27,16 +31,23 @@
   for (const w of WL.WILDLIFE) {
     const flies = (w.kind === 'bird' || w.pose === 'flying') && w.pose !== 'standing' && w.pose !== 'ground';
     if (flies || w.kind === 'tree' || !projects[w.region]) continue;
-    const home = W.HOMES[w.id] || 'land', at = W.startIn(w.region, home, rnd);
-    check(at, `${w.id}: no room for a ${home} animal in ${w.region}`); if (!at) continue;
+    const home = W.HOMES[w.id] || 'land', size = sizeOf(w), half = W.halfOf(size[0]), at = W.startIn(w.region, home, rnd, half);
+    check(at, `${w.id}: no room for a ${home} animal ${size[0]} px wide in ${w.region}`); if (!at) continue;
     walkers++;
     const c = { x: at[0], y: at[1], tx: at[0], ty: at[1], speed: 6 + rnd() * 6 };
     let bad = null, dist = 0;
     for (let k = 0; k < STEPS && !bad; k++) {
       const x0 = c.x, y0 = c.y;
-      if (!W.walk(c, dt)) { const p = W.STILL.has(w.id) ? null : W.nextIn(w.region, home, c.x, c.y, rnd); if (p) { c.tx = p[0]; c.ty = p[1]; } }
+      if (!W.walk(c, dt)) { const p = W.STILL.has(w.id) ? null : W.nextIn(w.region, home, c.x, c.y, rnd, half); if (p) { c.tx = p[0]; c.ty = p[1]; } }
       dist += Math.hypot(c.x - x0, c.y - y0);
-      if (!W.allowed(w.region, home, c.x, c.y)) bad = [Math.round(c.x), Math.round(c.y), k, W.isWater(w.region, c.x, c.y) ? 'in water' : 'on land'];
+      if (!W.allowed(w.region, home, c.x, c.y, half)) bad = [Math.round(c.x), Math.round(c.y), k, W.isWater(w.region, c.x, c.y) ? 'in water' : 'on land'];
+      // In the water, its whole width is wet at the waterline, and the part drawn above it (the least `under` the field uses: a fish's
+      // leap, 0.15) never reaches the grass of the far bank.
+      else if (W.isWater(w.region, c.x, c.y) && (home === 'water' || home === 'shore')) {
+        const X = Math.floor(c.x) + 0.5, Y = Math.floor(c.y) + 0.5; if (!W.isWater(w.region, X - half, Y) || !W.isWater(w.region, X + half, Y)) bad = [Math.round(c.x), Math.round(c.y), k, `${size[0]} px wide, not all in the water`];
+        const show = size[1] - W.cutFor(w.region, home, c.x, c.y, half, size[1], 0.15);
+        for (let dx = -half; dx <= half && !bad; dx++) for (let dy = 1; dy <= show && !bad; dy++) if (!W.isWater(w.region, c.x + dx, c.y - dy)) bad = [Math.round(c.x), Math.round(c.y), k, `drawn ${show} px tall over the bank`];
+      }
     }
     check(!bad, `${w.id} (${home}, ${w.region}) left its zone: ${JSON.stringify(bad)}`);
     if (W.homeOf(w.id) !== 'land') check(W.STILL.has(w.id) || W.isWater(w.region, c.x, c.y) || home !== 'water', `${w.id} ended out of the water`);

@@ -24,7 +24,7 @@ import { nextHere } from './nexthere.js';
 import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
 import { fresh } from './fresh.js';
-import { FW, FH, HORIZON, GROUND, WATER, homeOf, FISH, STILL, startIn, nextIn, walk, isWater, featureSpots, treeOk, paintWater } from './water.js';
+import { FW, FH, HORIZON, GROUND, WATER, homeOf, FISH, STILL, startIn, nextIn, walk, isWater, featureSpots, treeOk, paintWater, allowed, halfOf, cutFor } from './water.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
@@ -477,7 +477,14 @@ class Field {
       const c = { w, fly, home, img: put(`${artDir(w.sprite)}/${w.sprite}-0.png`, 0, 0, 1, 'critter'), frame: 0, t: Math.random() * 10, pause: Math.random() * 2,
         x: at ? at[0] : 20 + Math.random() * (FW - 40), y: at ? at[1] : fly ? 14 + Math.random() * 30 : GROUND[0] + Math.random() * (GROUND[1] - GROUND[0]),
         speed: fly ? 22 + Math.random() * 10 : 6 + Math.random() * 6, dir: Math.random() < 0.5 ? -1 : 1 };
+      c.half = 0;
       if (!fly) { c.tx = c.x; c.ty = c.y; this.pick(c); }
+      // Once the sprite has loaded its width is known: a swimmer needs water under its whole width (src/water.js), so one started where
+      // only its middle was wet moves to a spot that fits it.
+      if (!fly) { const sized = () => { if (c.sized || !c.img.naturalWidth) return; c.sized = true; c.half = halfOf(c.img.naturalWidth);
+        if (!allowed(region, home, c.x, c.y, c.half)) { const p = startIn(region, home, Math.random, c.half); if (p) { c.x = p[0]; c.y = p[1]; } }
+        c.tx = c.x; c.ty = c.y; this.pick(c); };
+        if (c.img.complete) sized(); else c.img.addEventListener('load', sized, { once: true }); }
       // Tap an animal in the picture to see it close up (the user, 2026-10-27): the same card as the collection's.
       c.img.style.pointerEvents = 'auto'; c.img.style.cursor = 'pointer'; c.img.dataset.critter = w.id;   // (not data-species: the collection cards use that)
       c.img.addEventListener('click', e => { e.stopPropagation(); if (this.onPick) this.onPick(w.id); });
@@ -497,7 +504,7 @@ class Field {
   clearGhosts() { this.f.querySelectorAll('.ghost').forEach(g => g.remove()); }
   arrive(id) { this.f.querySelectorAll(`img.feat[src$="wild-${id}.png"]`).forEach(g => g.classList.add('arrive')); }
   fit() { this.f.style.transform = `scale(${this.el.clientWidth / FW})`; }
-  pick(c) { const p = STILL.has(c.w.id) ? null : nextIn(this.region, c.home, c.x, c.y); if (p) { c.tx = p[0]; c.ty = p[1]; } else { c.tx = c.x; c.ty = c.y; } }   // a straight walk that stays in its zone
+  pick(c) { const p = STILL.has(c.w.id) ? null : nextIn(this.region, c.home, c.x, c.y, Math.random, c.half || 0); if (p) { c.tx = p[0]; c.ty = p[1]; } else { c.tx = c.x; c.ty = c.y; } }   // a straight walk that stays in its zone
   stop() { cancelAnimationFrame(this.raf); this.raf = null; }
 
   step(now) {
@@ -540,7 +547,8 @@ class Field {
       else if (c.home === 'edge') under = 0.2;
       else under = 0.5;
     }
-    const h = im.naturalHeight || 0, cut = Math.round(h * under);
+    // Never taller than the water above the waterline, so a big swimmer in a narrow river does not show over the far bank (src/water.js).
+    const h = im.naturalHeight || 0, cut = cutFor(this.region, c.home, c.x, c.y, c.half || 0, h, under);
     im.style.top = `${Math.round(c.y) + cut}px`;
     im.style.clipPath = cut ? `inset(0 0 ${cut}px 0)` : '';
     im.style.zIndex = c.fly ? 500 : Math.round(c.y);
