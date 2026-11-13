@@ -47,7 +47,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   }, { sel, band });
   const rowSel = await p.evaluate(() => { const r = [...document.querySelectorAll('#hFleet .rowc[data-row]')].pop(); return r ? `#hFleet .rowc[data-row="${r.dataset.row}"] .rowc-tap` : null; });
   check(!!rowSel, 'a hangar row to test with');
-  if (rowSel) { const a = await run(rowSel, 'bar');
+  if (rowSel && H <= 760) { const a = await run(rowSel, 'bar');   // (A at the two short sizes only: at 390x844 the hangar's rows all fit above the bar, nothing can be placed behind it)
     check(a.before, `A: the test put the row behind the tab bar first (else it proves nothing): ${JSON.stringify(a)}`);
     check(a.after, `A: a rails step brings a row from behind the tab bar to above it: ${JSON.stringify(a)}`); }
   await p.evaluate(() => { const ui = game.registry.get('ui'); ui.go('nature'); ui.wild.bio = () => 100; ui.wild.openTiers = [1, 2, 3]; ui.wild.renderProjects(); });
