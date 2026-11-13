@@ -26,12 +26,12 @@ import { city } from '../route.js';
 import { SEASON2_ON } from '../cities.js';
 import { SEASON } from '../season.js';
 import { AREAS, areaOf } from '../areas.js';
-import { available, offerCheck, offerCtx, completeCrossing } from '../crossings.js';
+import { available, offerCheck, offerCtx, completeCrossing, readiness } from '../crossings.js';
 import { onSave as missionsOnSave } from '../missions2.js';
 
-// Test switches (tests/sim-progression-s2.cjs plants each; it must FAIL): nostars = offer crossings without the area's
-// missions; nocomplete = a landed crossing opens nothing.
-export const PROG_PLANTS = { nostars: false, nocomplete: false };
+// Test switches (tests/sim-progression-s2.cjs plants each; it must FAIL): noready = offer the first available crossing even when
+// it is not ready (readiness); nocomplete = a landed crossing opens nothing.
+export const PROG_PLANTS = { noready: false, nocomplete: false };   // noready (2026-11-13): offer the first available crossing whether or not it is ready (replaces nostars: the game's rule has no stars)
 
 const DT = 16.67 / 1000;
 // A player who learns: s rises from 0.75 towards 0.9 over ~30 flights. A parameter, NOT fitted yet (PROGRESSION-SIM.md).
@@ -114,7 +114,7 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
       if (k && k !== areaOf(save.city) && AREAS[k]) save.city = AREAS[k].start;
     }
     if (s2) {
-      c2 = available(save).find(c => { const ctx = offerCtx(save, c); if (PROG_PLANTS.nostars) delete ctx.missionsDone; return offerCheck(c, ctx).offered; }) || null;
+      c2 = available(save).find(c => PROG_PLANTS.noready || readiness(save, c).ready) || null;   // the game's rule (ui.js: readiness(s, c).ready): era, plane, nature; not the departure area's stars
       if (c2) { save.flyCrossing = c2; crossing = c2.km; }
     } else {
       if (n === 1 || n % every === 0) cap = capability(save, { pilots: ['careful'], seeds: capSeeds }).careful.median;
@@ -127,7 +127,7 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
     // (also while its missions are still open: they are done in parallel).
     let landFrom = 0;
     if (s2 && chaseGate && !c2) for (const c of available(save)) { const ctx = offerCtx(save, c), need = offerCheck(c, ctx).need;
-      if (!need.capability && need.nature) landFrom = Math.max(landFrom, Math.ceil(SEASON.offer.distanceShare * c.km) + 50); }
+      if (!readiness(save, c).plane && readiness(save, c).nature && readiness(save, c).era) landFrom = Math.max(landFrom, Math.ceil(SEASON.offer.distanceShare * c.km) + 50); }
     const w = flyOne(save, { seed: seed * 100000 + n, skill: s, careful, crossing, useHint, landFrom, maxSkip: careful ? maxSkip : Math.floor(rnd() * 3) });
     save = w.save;
     const here = w.regionNow && REGION_DATA[w.regionNow] ? w.regionNow : 'woodland';
