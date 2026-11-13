@@ -853,6 +853,7 @@ h2.sub { margin-top: -4px; }
 .fline.finance .next { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; }
 .fline.finance .fin-news.up { color: var(--green-dark); }
 .fline.finance .fin-news.down { color: #b23a2e; }
+.fline.finance > .btn { margin: 4px 0 8px; }
 .fline.finance #hCashOut { margin-left: 6px; }
 .sbar-delta.same { color: #5a6b80; }
 /* Steady lane progress bars (src/missions2.js STEADY). */
