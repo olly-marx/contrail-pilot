@@ -521,7 +521,7 @@ class Field {
 
   step(now) {
     if (!this.raf) return;
-    const dt = Math.min(0.1, (now - this.last) / 1000); this.last = now;
+    const dt = Math.max(0, Math.min(0.1, (now - this.last) / 1000)); this.last = now;   // a first frame can be stamped before `last`: a negative step made frame -1 (404s for sprite--1.png)
     if (this.el.offsetParent !== null) {           // only while the NATURE screen is showing
       this.fit();
       for (const c of this.critters) this.move(c, dt);
