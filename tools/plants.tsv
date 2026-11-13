@@ -11,7 +11,7 @@ flight	src/sim/rules.js	s/      if (this.hitsStorm(s)) {/      if (false) {/	sto
 lanes	src/sim/rules.js	s/      if (!blocks) {/      if (true) {/	addIssr guard removed
 lanes	src/sim/rules.js	s/if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t;/y = t;/	flock guard removed
 forest	src/sim/rules.js	s/const cool = forestFull ? 0 : /const cool = /	forest cap removed
-forest	src/sim/rules.js	s/const land = landFull ? 0 : /const land = /	land cap removed
+forest	src/sim/rules.js	s/land = landFull ? 0 : /land = /	land cap removed
 forest	src/sim/rules.js	s/(stage === 2 ? 1 + oldWood : 1)/1/	old-wood boost removed
 forest	src/sim/physics.js	s/FOREST.power);/0);/	kinds power zeroed
 forest	src/sim/physics.js	s/FOREST.storePower)/0)/	store power zeroed
@@ -29,7 +29,7 @@ sim-flight	src/sim/rules.js	s/      if (this.hitsStorm(s)) {/      if (false) {/
 sim-lanes	src/sim/rules.js	s/      if (!blocks) {/      if (true) {/	addIssr guard removed
 sim-lanes	src/sim/rules.js	s/if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t;/y = t;/	flock guard removed
 sim-forest	src/sim/rules.js	s/const cool = forestFull ? 0 : /const cool = /	forest cap removed
-sim-forest	src/sim/rules.js	s/const land = landFull ? 0 : /const land = /	land cap removed
+sim-forest	src/sim/rules.js	s/land = landFull ? 0 : /land = /	land cap removed
 sim-forest	src/sim/rules.js	s/(stage === 2 ? 1 + oldWood : 1)/1/	old-wood boost removed
 sim-forest	src/sim/physics.js	s/FOREST.power);/0);/	kinds power zeroed
 sim-forest	src/sim/physics.js	s/FOREST.storePower)/0)/	store power zeroed
@@ -161,7 +161,7 @@ railwords	src/tips.js	s#Forecasting shows icy air sooner. Save up for it!#Foreca
 season2	src/areas.js	s#aotearoa: { name: 'Aotearoa & Polynesia', starter: true,#aotearoa: { name: 'Aotearoa \& Polynesia', starter: false,#	NZ not a starter
 sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
 # macrons: not sed-able (a font edit). Proven 2026-10-28 by deleting U+012B from vendor/fonts/contrail-pixel.woff2's cmap (fontTools) -> FAIL.
-kindsreach	src/missions2.js	s#  const kinds = Math.max(2, Math.min(3, open.length));#  const kinds = 3;#	the kinds star fixed at 3 (impossible in plateau lands)
+kindsreach	src/missions2.js	s#kinds = Math.max(2, Math.min(3, kindsRoom));#kinds = 3;#	the kinds star fixed at 3 (impossible in plateau lands)
 homelanding	src/sim/rules.js	s# \&\& !(r.name === this.homeName \&\& r.worldX <= 0));# \&\& r.name !== this.homeName);#	the home runway never landable (the old exclusion)
 hubscreen	style.css	s/grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px;/grid-template-columns: repeat(5, 1fr); gap: 4px;/	the 6 tabs wrap to two rows and cover the buttons above
 fleet	src/fleet.js	s/co2: 0.57, noFlyGapAdd: 8, margin/co2: 0.57, noFlyGapAdd: 0, margin/	the 787 loses its era-step help
@@ -522,8 +522,8 @@ hangarpay	src/hangar.js	s/else { this.render(); if (this.ui.tour) setTimeout/els
 spotlight	src/tour.js	s/fill="#000"/fill="#fff"/	the holes of the dark are not holes (the target is darkened)
 treesplanted	src/treecount.js	s/^export const treesPlanted = .*$/export const treesPlanted = s => !s || typeof s !== 'object' ? 0 : num(s.planted);/	trees planted abroad are not counted (the helper reads save.planted only)
 treesplanted	src/upgrades.js	s/if (u.planted \&\& treesPlanted(save) < u.planted)/if (u.planted \&\& Object.values(save.planted || {}).reduce((a, n) => a + n, 0) < u.planted)/	Soil Patches reads save.planted alone again
-treesplanted	src/badges.js	s/measure: (r, s) => treesPlanted(s) },/measure: (r, s) => sum(s.planted) },/	Forester reads save.planted alone again
-treesplanted	src/badges.js	s/forester: treesPlanted(save),/forester: sum(save.planted),/	the Forester badge bar reads save.planted alone again
+treesplanted	src/badges.js	s/measure: (r, s) => treesGrown(s) },/measure: (r, s) => sum(s.planted) },/	Forester reads save.planted alone again
+treesplanted	src/badges.js	s/forester: treesGrown(save),/forester: sum(save.planted),/	the Forester badge bar reads save.planted alone again
 musicplan	src/musicplan.js	s#export const DEFAULT_MUSIC_LEVEL = 'middle';#export const DEFAULT_MUSIC_LEVEL = 'loud';#	the default music level is loud
 musicplan	src/musicplan.js	s#export const MUSIC_LEVELS = { soft: 0.03, middle: 0.038, loud: 0.056 };#export const MUSIC_LEVELS = { soft: 0.07, middle: 0.04, loud: 0.06 };#	the music levels are not ordered (soft is the loudest)
 musicplan	src/musicplan.js	s#export const musicStateOf = save => (save \&\& save.musicOff) ? 'off' :#export const musicStateOf = save => false ? 'off' :#	a legacy save with musicOff true plays music
@@ -615,7 +615,7 @@ groves	src/groves.js	s/const n = whole(n0); if (!n) continue;/const n = whole(n0
 groves	src/groves.js	s/save\.planted\[id\] = c\.planted;/;/	plantTree no longer mirrors the UK's old key
 groves	src/groves.js	s/save\.plantedIn\[land\]\[id\] = c\.planted;/;/	plantTree no longer mirrors another land's old key
 groves	src/groves.js	s/if (x\.planted < n) {/if (x.planted < n \&\& x.planted === 0) {/	the smaller count wins when an older save disagrees
-groves	src/groves.js	s/Object\.values(groveView(save))\.reduce(/Object.values({ woodland: groveView(save).woodland || {} }).reduce(/	the total counts only the UK's trees
+groves	src/groves.js	s/treesPlantedTotal = save => Object\.values(groveView(save))\.reduce(/treesPlantedTotal = save => Object.values({ woodland: groveView(save).woodland || {} }).reduce(/	the total counts only the UK's trees
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ Puffin Swift Falcon Otter 4\x36 A phone that has lost its pilot/	a pilot-code-shaped string is written into a comment
 secretscan	src/recoverfirst.js	s/^\/\/ A phone that has lost its pilot/\/\/ L\x6fla A phone that has lost its pilot/	a tester's first name is written into a comment
 secretscan	tests/secretscan.cjs	/file: 'tests\/pilotcode.cjs'/d	the allow-list entry for the pilotcode fixture is removed
@@ -848,8 +848,8 @@ tourflight	src/tour.js	s/if (++gone > 6) { this.exited = .gone.; finish(); retur
 tourflight	src/tour.js	s/if (m\[kid\] >= 2) this.markDone(kid); else writeSave(this.save);/if (m[kid] >= 99) this.markDone(kid); else writeSave(this.save);/	an interrupted step never counts as seen (it would loop on every HOME)
 tourflight	src/tour.js	s/if (hudShowing()) { this.exited = 'flight'; return true; }   \/\/ a flight is on: never show a step over the game/\/\/ (removed)/	a step asked for during a flight is shown over the game
 tourflight	src/GameScene.js	s/    if (this.ui \&\& this.ui.tour) this.ui.tour.abort();   \/\/ a flight starting by any route/    \/\/ (abort removed)   \/\/ a flight starting by any route/	scene.startFlight() does not end a rails step that is up
-rebalance	src/missions2.js	s/const kinds = Math.min(3, open.filter(t => !t.full).length);/const kinds = Math.min(3, open.length);/	kinds3 counts full kinds again
-rebalance	src/missions2.js	s/prize: 20, ready: f => f.kinds >= 2, needs:/prize: 20, needs:/	kinds3 offered with fewer than 2 kinds with room
+rebalance	src/missions2.js	s/const kindsRoom = open.filter(t => !t.full).length,/const kindsRoom = open.length,/	kinds3 counts full kinds again
+rebalance	src/missions2.js	s/prize: 20, ready: f => f.kindsRoom >= 2, needs:/prize: 20, needs:/	kinds3 offered with fewer than 2 kinds with room
 rebalance	src/landtrees.js	s/kindsMissionDone(save, land) || kindsStuck(save, land) :/kindsMissionDone(save, land) :/	slot 4 never opens when kinds3 is stuck
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + Math.min(cap, c.planted), 0)/	Forester counts saplings
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + c.grown, 0)/	Forester counts more than 9 of a kind

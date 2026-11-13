@@ -34,7 +34,7 @@ globalThis.SEASON2 = true;
     check(f2.kinds === Math.min(3, room2), `K2: two full kinds: the star asks for the kinds with room (${f2.kinds}, room ${room2})`);
     const s3 = tiersDone(base()); for (const sl of [0, 1, 2, 3]) plant(s3, sl, 9);   // slots 0..3 full: slot 4 opens (S below) and is the ONE kind with room
     const f3 = M.fillFor(s3, 'weurope', 'LONDON'), open3 = L.treesOpen(s3, 'woodland');
-    check(open3.includes(4) && f3.kinds === 1 && !kinds3(s3), `K3: one kind with room: the star is NOT offered (open ${open3}, kinds ${f3.kinds}, offered ${kinds3(s3)})`); }
+    check(open3.includes(4) && f3.kindsRoom === 1 && !kinds3(s3), `K3: one kind with room: the star is NOT offered (open ${open3}, room ${f3.kindsRoom}, offered ${kinds3(s3)})`); }
 
   // S. slot 4
   { const s = base(); s.missionsDone = s.missionsDone.filter(k => k !== 'weurope:kinds3');
