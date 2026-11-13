@@ -865,3 +865,4 @@ naturefold	style.css	s/^#wProjects \.w-tier \.btn\.tiny { min-height: var(--tap)
 naturefold	style.css	s/^\.wfound { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 4px; }$//	the animals are the old 3-across list again
 badgefont	style.css	s/^\.tab { font-size: 0; }$//	every tab draws its 7 px word again
 badgefont	style.css	s/^\.tab\.on { grid-column: span 2; font-size: 8px;/.tab.on { grid-column: span 2; font-size: 7px;/	the selected tab's word is 7 px again (the B blurs)
+naturefold	style.css	s#^/\* The land's picture fills the width on every phone.*$#@media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }#	the land's picture is 70 percent wide on short phones again

@@ -6,6 +6,7 @@
 //   2. 'show' on a folded tier opens its rows, and 'hide' folds it again
 //   3. the fold toggle is a real tap (at least 40 x 40 px)
 //   4. the animals are a grid of small portraits: at least 4 across, every portrait at least 40 x 40 px, and the grid at most 420 px tall at 390 (it was 706)
+//   5. the land's picture fills the width of its panel (the user, 2026-11-13; it was 70 % on short phones)
 //   (printed, not checked: the page height before and after, for the design run's table)
 // Run: python3 -m http.server 8000 & node tests/naturefold.cjs   (plants: tools/plants.tsv, test naturefold)
 const { chromium } = require('playwright-core');
@@ -43,6 +44,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
           return { n: cards.length, h: Math.round(F.getBoundingClientRect().height), across: qs.filter(q => Math.abs(q.top - qs[0].top) < 2).length, small: qs.filter(q => q.width < 40 || q.height < 40).length }; });
         log.push(`${tag} animals ${JSON.stringify(g)}`);
         check(g.n > 8 && g.across >= 4 && g.small === 0 && (W !== 390 || g.h <= 420), `4. the animals are a grid of small portraits (at least 4 across, each at least 40 x 40, at most 420 px tall at 390): ${JSON.stringify(g)}`);
+        const pic = await p.evaluate(() => { const sc = document.getElementById('wScene'), pin = sc.closest('.wpin'), a = sc.getBoundingClientRect(), b = pin.getBoundingClientRect(), first = document.querySelector('#wProjects .rowc'), bar = document.getElementById('tabbar');
+          return { scene: Math.round(a.width), panel: Math.round(b.width), sceneH: Math.round(a.height), firstBottom: first ? Math.round(first.getBoundingClientRect().bottom) : null, barTop: Math.round(bar.getBoundingClientRect().top) }; });
+        log.push(`${tag} picture ${JSON.stringify(pic)}`);
+        check(pic.scene >= pic.panel - 8, `5. the land's picture fills the width of its panel: ${JSON.stringify(pic)}`);
         check(!p.errs.length, `page errors: ${p.errs.join('; ')}`);
       } catch (e) { fails.push(`${tag}: exception ${String(e).split('\n')[0]}`); }
       await p.close();
