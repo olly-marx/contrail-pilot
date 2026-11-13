@@ -10,7 +10,7 @@ const path = require('path');
 const src = f => path.resolve(__dirname, '../src', f);
 (async () => {
   globalThis.SEASON2 = true; globalThis.window = { SEASON2: true };
-  const M = await import(src('finance.js')), N = await import(src('nature.js')), AL = await import(src('arealand.js'));
+  const M = await import(src('finance.js')), N = await import(src('nature.js'));
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   // --- exchange
   for (let lv = 1; lv <= M.FINANCE.levels.length; lv++) for (let B = 0; B <= 100; B += 5) {
@@ -20,9 +20,7 @@ const src = f => path.resolve(__dirname, '../src', f);
   check(M.spreadAt(0) > M.spreadAt(100), `the spread does not narrow with nature (${M.spreadAt(0)} at 0, ${M.spreadAt(100)} at 100)`);
   const base = { tutorialDone: true, seeds: 9000, crystals: 20, landings: 5, flightSeconds: 1e7, areas: ['weurope'], city: 'WARSAW', finance: { level: 1 }, planted: { spruce: 40, birch: 40, oak: 40, rowan: 40, orchard: 40 } };
   check(M.natureHealth(base) !== N.worldBiodiversity(base), 'test save: home nature equals world nature, so the world check proves nothing');
-  const lands = [...new Set(base.areas.flatMap(AL.areaLands))], wantB = Math.round(lands.reduce((a, r) => a + N.biodiversity(base, r), 0) / lands.length);
-  check(lands.length > 1 && M.financeBio(base) === wantB, `the exchange reads ${M.financeBio(base)}, want the mean of every land in your areas ${wantB} (${lands})`);
-  check(M.financeBio(base) !== N.worldBiodiversity(base), 'test save: your areas equal the whole world, so the check proves nothing');
+  check(M.financeBio(base) === N.worldBiodiversity(base), `the exchange reads ${M.financeBio(base)}, want the whole world's ${N.worldBiodiversity(base)}`);
   // The fund's expected value beats the fee within a week at your world's biodiversity (the sim, 2026-11-13: at B 8 it lost).
   check(Math.exp(7 * 24 * M.driftHourAt(8)) * (1 - M.FUND.fee) > 1, `a week held at B 8 loses on average (drift ${(2400 * M.driftHourAt(8)).toFixed(2)}%/day, fee ${100 * M.FUND.fee}%)`);
   const sv = JSON.parse(JSON.stringify(base)), sr = M.sellRate(sv), k = M.canSell(sv);
@@ -62,5 +60,5 @@ const src = f => path.resolve(__dirname, '../src', f);
   const news = Array.from({ length: 300 }, (_, d) => M.newsOn(d)).filter(Boolean);
   check(news.length > 60 && news.length < 140 && news.some(n => n.up) && news.some(n => !n.up), `news days ${news.length} of 300 (want about 100, both kinds)`);
   if (fails.length) { console.log(`FAIL financemarket\n  ${fails.join('\n  ')}`); process.exit(1); }
-  console.log(`PASS financemarket: sell below buy everywhere (spread ${M.spreadAt(0)} to ${M.spreadAt(100)}), your areas B ${M.financeBio(base)}, worst day ${(100 * (Math.exp(worst) - 1)).toFixed(1)}%, month log-growth +${(up / months).toFixed(3)} healthy / ${(down / months).toFixed(3)} bare, ${news.length} news days of 300`);
+  console.log(`PASS financemarket: sell below buy everywhere (spread ${M.spreadAt(0)} to ${M.spreadAt(100)}), world B ${M.financeBio(base)}, worst day ${(100 * (Math.exp(worst) - 1)).toFixed(1)}%, month log-growth +${(up / months).toFixed(3)} healthy / ${(down / months).toFixed(3)} bare, ${news.length} news days of 300`);
 })();

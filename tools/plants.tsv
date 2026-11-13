@@ -851,5 +851,5 @@ tourflight	src/GameScene.js	s/    if (this.ui \&\& this.ui.tour) this.ui.tour.ab
 financemarket	src/finance.js	s/return b == null ? null : Math.max(1, b - spreadAt(B));/return b == null ? null : Math.max(1, b);/	no spread: selling pays as much as buying costs
 financemarket	src/finance.js	s/at0) \* Math.max(0, Math.min(100, B)) \/ 100) \/ 24/at0) * 0 \/ 100) \/ 24/	the fund's drift ignores nature
 financemarket	src/finance.js	s/Math.max(hourOf(now), (save.finance \&\& save.finance.seenHour) || 0)/hourOf(now)/	the clock may run backwards
-financemarket	src/finance.js	s/if (!lands.length) return worldBiodiversity(save);/return natureHealth(save);/	the exchange reads home nature, not every land of your areas
+financemarket	src/finance.js	s/export const financeBio = save => worldBiodiversity(save);/export const financeBio = save => natureHealth(save);/	the exchange reads home nature, not the whole world
 financemarket	src/finance.js	s/driftDay: { at0: 0.003,/driftDay: { at0: -0.002,/	the fund loses on average for a low-nature player

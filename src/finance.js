@@ -12,7 +12,6 @@ import { AREAS } from './areas.js';
 import { city } from './network.js';
 import { biodiversity, worldBiodiversity } from './nature.js';
 import { eraProgress } from './eras.js';
-import { areaLands } from './arealand.js';
 
 export const FINANCE = {
   era: 3,
@@ -37,15 +36,11 @@ export function natureHealth(save) {
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
 }
 export function rateAt(level, B) { const L = FINANCE.levels[level - 1]; return L ? Math.max(L.floor, Math.round(L.base - L.slope * B)) : null; }
-// The EXCHANGE and the fund read YOUR WORLD's biodiversity (the user, 2026-11-13: 'depending on how strong your global
-// biodiversity is'): the mean meter of EVERY land in the areas you have opened (src/arealand.js areaLands), not only each
-// area's home land (natureHealth, which stays for the bonds' interest). The whole planet's mean (worldBiodiversity) was
-// tried first and measured too low to move the rate (research/finbio-report.txt: B ~8 in era 3, 38:1 at every level).
-export function financeBio(save) {
-  const lands = [...new Set((save.areas || []).flatMap(areaLands))];
-  if (!lands.length) return worldBiodiversity(save);
-  return Math.round(lands.reduce((a, r) => a + biodiversity(save, r), 0) / lands.length);
-}
+// The EXCHANGE and the fund read the WHOLE WORLD's biodiversity: the mean meter of every land (src/nature.js
+// worldBiodiversity). The user, 2026-11-13: 'it's over all land. That is just the sad reality and you will get bad rates
+// until the whole world is more diverse.' (Measured: B ~8 in era 3, research/finbio-report.txt.) natureHealth above stays
+// for the bonds' interest.
+export const financeBio = save => worldBiodiversity(save);
 export const rate = (save, level = financeLevel(save)) => rateAt(level, financeBio(save));
 // SELLING crystals for seeds (2026-11-13): the desk pays fewer seeds a crystal than it charges (the SPREAD), so flipping
 // back and forth always loses. The spread narrows as the world's nature gets healthier: a better deal both ways.
