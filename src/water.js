@@ -61,11 +61,17 @@ export const PLACE = {
 
 // ---------- the mask ----------
 const segDist = (x, y, [ax, ay], [bx, by]) => { const dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))); return Math.hypot(x - ax - t * dx, y - ay - t * dy); };
+// A river's points joined by a smooth curve (Catmull-Rom, 12 steps a span), so bends are round, not corners.
+const smooth = pts => { const P = [pts[0], ...pts, pts[pts.length - 1]], out = [];
+  for (let i = 1; i < P.length - 2; i++) for (let k = 0; k < 12; k++) { const t = k / 12, t2 = t * t, t3 = t2 * t;
+    out.push([0, 1].map(j => 0.5 * (2 * P[i][j] + (-P[i - 1][j] + P[i + 1][j]) * t + (2 * P[i - 1][j] - 5 * P[i][j] + 4 * P[i + 1][j] - P[i + 2][j]) * t2 + (-P[i - 1][j] + 3 * P[i][j] - 3 * P[i + 1][j] + P[i + 2][j]) * t3))); }
+  out.push(pts[pts.length - 1]); return out; };
+const curves = new Map();
 function inShape(s, x, y) {
   if (y < HORIZON) return false;
   if (s.kind === 'island') return ((x - s.cx) / s.rx) ** 2 + ((y - s.cy) / s.ry) ** 2 > 1;
   if (s.kind === 'lake') return ((x - s.cx) / s.rx) ** 2 + ((y - s.cy) / s.ry) ** 2 <= 1;
-  if (s.kind === 'river') { for (let i = 1; i < s.pts.length; i++) if (segDist(x, y, s.pts[i - 1], s.pts[i]) <= s.w / 2) return true; return false; }
+  if (s.kind === 'river') { if (!curves.has(s)) curves.set(s, smooth(s.pts)); const c = curves.get(s); for (let i = 1; i < c.length; i++) if (segDist(x, y, c[i - 1], c[i]) <= s.w / 2) return true; return false; }
   if (s.kind === 'coast') {
     const wave = a => s.amp * Math.sin(a * 2 * Math.PI / s.period);
     if (s.side === 'bottom') return y > FH - s.at + wave(x);
@@ -178,7 +184,7 @@ export const treeOk = (region, x, y) => !hasWater(region) || (!isWater(region, x
 const LOOK = {
   sea: { deep: [47, 124, 190], shallow: [92, 176, 214], foam: [232, 246, 255], bank: [233, 214, 152], reef: [108, 200, 214], glint: [170, 220, 245] },
   fresh: { deep: [58, 128, 168], shallow: [96, 164, 190], foam: [206, 232, 240], bank: [128, 106, 70], glint: [168, 212, 228] },
-  brown: { deep: [140, 106, 64], shallow: [170, 134, 86], foam: [214, 190, 140], bank: [110, 88, 56], glint: [196, 166, 112] },
+  brown: { deep: [52, 98, 100], shallow: [84, 132, 124], foam: [84, 132, 124], bank: [104, 84, 52], glint: [180, 226, 222] },   // a dark, tea-coloured river (a brown one read as a road, 2026-11-13)
 };
 const hash = (x, y) => { let h = Math.imul(x * 374761393 + y * 668265263, 1274126177); h ^= h >>> 13; return (h >>> 0) % 1000; };
 // Two frames of the water layer (the glints swap places), transparent where there is no water or bank.
@@ -191,7 +197,7 @@ export function paintWater(region, frame, img) {
     if (w) {
       c = dist <= 1 ? L.foam : dist <= 4 ? L.shallow : L.deep;
       if (W.reef && dist >= 9 && dist <= 11 && hash(x, y) < 450) c = L.reef;
-      if (dist > 2 && hash(x + frame * 7, y) < 22 && y % 3 === frame % 3) c = L.glint;
+      if (dist > 2 && hash((x >> 2) + frame * 7, y) < 40 && y % 3 === frame % 3) c = L.glint;   // short sideways streaks
       if (y < HORIZON + 3 && dist > 1) c = L.shallow;   // a softer line where the water meets the backdrop
     } else if (dist <= 2 && y >= HORIZON) c = L.bank;
     if (c) { d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255; }
