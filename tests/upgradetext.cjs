@@ -5,7 +5,7 @@
 //   2. 'Now' at level n is the words of level n ('nothing yet' at 0) and 'Next' is the name and effect of level n + 1: so the bar can never say a different thing from the level it describes
 //   3. the last level has no Next and no price and is 'max'; any other level has a Next and a price equal to the level's own cost and crystals
 //   4. every word is non-empty and a 'Now' is at most 70 characters, a 'Next' at most 110 (the strip wraps; the browser test checks it fits at 320)
-//   5. levels with NO effect text (their words are only their name) are LISTED in the pass message; this line only fails on a level without a name. The list is MEASURED by this test's first run: a declared ceiling is pinned after it (BLOCK2-PLAN item 4)
+//   5. levels with NO effect text (their words are only their name) are LISTED in the pass message; a level without a name fails; and (5b, 2026-11-13) a name-only level not in NO_EFFECT_ALLOWED fails (pinned empty from the measured list)
 // Plants: tools/plants.tsv, test `upgradetext`. Run: node tests/upgradetext.cjs
 globalThis.SEASON2 = true;
 (async () => {
@@ -49,6 +49,11 @@ globalThis.SEASON2 = true;
     if (kind === 'gadget') return F.GADGETS.find(g => g.id === id).levels[i];
     return U.LINES.find(l => l.id === id).levels[i];
   }
+  // 5b. THE DECLARED LIST (ledger row 52, pinned 2026-11-13 from the measured list: none). A level whose words are only its name must be named here;
+  // a new one fails until it gets effect text or is added on purpose.
+  const NO_EFFECT_ALLOWED = [];
+  const extra = noEffect.filter(k => !NO_EFFECT_ALLOWED.includes(k));
+  check(extra.length === 0, `5b: levels with only a name for words that are not declared: ${extra.join(', ')}`);
   console.log(fails.length ? `FAIL upgradetext:\n - ${fails.slice(0, 12).join('\n - ')}${fails.length > 12 ? `\n ... ${fails.length - 12} more` : ''}` : `PASS upgradetext: ${lines.length} lines, ${cards} cards: Now and Next match the level words, the last level is max, prices equal the levels' own (longest Now ${maxNow}, longest Next ${maxNext}); ${noEffect.length} levels have only a name for words: ${noEffect.join(' ') || 'none'}`);
   process.exit(fails.length ? 1 : 0);
 })();
