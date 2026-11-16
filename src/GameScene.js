@@ -21,7 +21,7 @@ import { AREAS } from './areas.js';
 import { writeSave } from './save.js';
 import { gateFor, iconFor, MARK, GATE_RIGHT } from './gapmarkers.js';
 import { hintFlags, URGENT_NEAR } from './hintlines.js';
-import { tip } from './tips.js';
+import { tip, groundTip } from './tips.js';
 import { applyHudVar, toastTopCss } from './hudclear.js';
 const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
 import { CONTRAIL_MARGIN, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra, towerKey, stationKey } from './fleet.js';
@@ -347,7 +347,7 @@ export class GameScene extends Phaser.Scene {
   explainAgain(html, pic = null) {
     if (this.school || this.state !== 'playing' || (this.save.seenTips || []).includes('*')) return false;
     if (this.explaining) { (this.tipQueue = this.tipQueue || []).push([html, pic, 'tree-1']); return true; }   // another tip is up: this one waits its turn (the strip must not be lost to it)
-    this.showTip(html, pic);
+    this.showTip(html, pic, 'tree-1');
     return true;
   }
   explain(id, html, pic = null) {
@@ -358,19 +358,20 @@ export class GameScene extends Phaser.Scene {
     seen.push(id);
     writeSave(this.save);
     if (this.explaining) { (this.tipQueue = this.tipQueue || []).push([html, pic, id]); return true; }   // waits its turn
-    this.showTip(html, pic);
+    this.showTip(html, pic, id);
     return true;
   }
   // Season 2: wild animals (and scenery birds) only once the NATURE lesson (L2) is done: one new thing at a time.
   wildAllowed() { if (this.wildOK0 == null) this.wildOK0 = !isSeason2(this.save) || (this.save.missionsDone || []).includes('L2'); return this.wildOK0; }   // from flight 3, after the NATURE lesson (the user, 2026-10-29; was flight 2 since the rails of 2026-10-27)
 
-  showTip(html, pic) {
+  showTip(html, pic, id = null) {
     this.explaining = true;   // a bubble is up (NOT frozen)
     this.tipAt = this.time.now;
     // A small strip, never over the plane: at the top, or at the bottom when the plane is high (the user, 2026-10-27).
     applyHudVar(this.game.canvas);   // the strip opens BELOW the HUD text (banner + next-airport line): src/hudclear.js, style.css .coach.tappable
-    this.ui.coach(html, false, false, false, pic);
-    document.getElementById('coach').classList.toggle('strip-low', this.plane.y < HEIGHT * 0.4);
+    const top = groundTip(id);   // about the ground (soil, trees, animals, the runway): always at the top (the user, 2026-11-16)
+    this.ui.coach(html, false, false, false, pic, top);
+    document.getElementById('coach').classList.toggle('strip-low', !top && this.plane.y < HEIGHT * 0.4);
     // A toast already up (dusk, SAF, a token) drops below a top strip instead of sitting under it (the audit, 2026-10-28).
     const coachEl = document.getElementById('coach'), toastEl = document.getElementById('toast');
     const dropToast = () => { if (this.explaining && toastEl && !toastEl.hidden && !coachEl.hidden && !coachEl.classList.contains('strip-low')) toastEl.style.top = `${Math.round(coachEl.getBoundingClientRect().bottom + 6)}px`; };
@@ -385,7 +386,7 @@ export class GameScene extends Phaser.Scene {
     if (this.state !== 'playing') { this.dropTips(); return; }   // the flight ended: unshown tips are unmarked, not lost
     let q = (this.tipQueue || []).shift();
     while (q && q[2] === 'tree-1' && !this.noTreeYet()) q = (this.tipQueue || []).shift();   // a queued 'soil ahead' strip is dropped once a tree has landed
-    if (q) this.time.delayedCall(400, () => { if (!this.explaining && this.state === 'playing') this.showTip(q[0], q[1]); else { this.tipQueue.unshift(q); this.dropTips(); } });
+    if (q) this.time.delayedCall(400, () => { if (!this.explaining && this.state === 'playing') this.showTip(q[0], q[1], q[2]); else { this.tipQueue.unshift(q); this.dropTips(); } });
   }
 
 

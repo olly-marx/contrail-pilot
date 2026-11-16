@@ -1034,7 +1034,7 @@ export class UI {
   // waiting=true: the game is frozen until the player continues. button=true (the default): only
   // the OK button continues, enabled after a short pause so a tap meant for the plane can't hit it.
   // button=false: a tap anywhere continues (the "tap the screen" lesson in flight school).
-  coach(text, waiting, school = true, button = true, pic = null) {
+  coach(text, waiting, school = true, button = true, pic = null, top = false) {   // top: the bubble about the ground sits at the top (src/tips.js GROUND_TIPS)
     $('coachText').innerHTML = text;
     const img = $('coachPic');
     img.hidden = !pic;
@@ -1050,7 +1050,8 @@ export class UI {
     $('coach').classList.toggle('waiting', !!waiting);
     $('coach').classList.toggle('tappable', !waiting && !school);   // an in-flight tip: a tap ON it may close it (after 2 s: GameScene.onCoachTap)
     $('coach').hidden = false;
-    $('coach').classList.toggle('high', !school);   // explanations sit high, so the ground stays visible
+    $('coach').classList.toggle('high', !school || top);
+    $('coach').classList.toggle('ground-top', !!top);   // explanations sit high, so the ground stays visible
     $('skipSchool').hidden = !school;
   }
   hideCoach() { $('coach').hidden = true; $('coachDim').hidden = true; $('skipSchool').hidden = true; this.coachButton = false; }

@@ -26,7 +26,7 @@ export class School {
     };
     // Freeze, show, do. Each lesson: the game freezes and dims, a diagram explains the idea
     // (`pic`, an assets/ui/lesson-*.png), then the player tries it with only that thing on screen.
-    const lesson = (pic, say, setup) => ({ say, tap: true, pic, setup });
+    const lesson = (pic, say, setup, top = false) => ({ say, tap: true, pic, setup, top });
     return [
       { say: tip('school-hold'), done: () => s.state === 'playing' },
       lesson('lesson-tap', tip('lesson-tap')),
@@ -80,8 +80,8 @@ export class School {
           ? tip('school-oops')
           : tip('school-great')), tap: true },
       lesson('lesson-heat', tip('lesson-heat')),
-      lesson('lesson-land', tip('lesson-land'), () => { this.holdClock = true; s.clock = 2; }),
-      { say: tip('school-low'),
+      lesson('lesson-land', tip('lesson-land'), () => { this.holdClock = true; s.clock = 2; }, true),   // about the runway: the bubble at the top (the user, 2026-11-16)
+      { say: tip('school-low'), top: true,
         setup: () => {
           this.holdClock = true; s.clock = 2;
           s.nextAirport = { worldX: s.distancePx + 520, name: s.path[1], spawned: false };   // flight school: LONDON to PARIS (season 2: your own first hop)
@@ -100,7 +100,7 @@ export class School {
     if (step.setup) step.setup();
     const text = typeof step.say === 'function' ? step.say() : step.say;
     this.s.frozen = !!step.tap;
-    this.ui.coach(text, !!step.tap, !step.high, !step.flapOnTap, step.pic || null);   // high: bubble at the top, so the ground shows
+    this.ui.coach(text, !!step.tap, !step.high, !step.flapOnTap, step.pic || null, !!step.top);   // high: bubble at the top, so the ground shows
   }
 
   // Returns true if flight school used the tap.

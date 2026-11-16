@@ -29,7 +29,7 @@ export const TIPS = {
 
   // ---- first-flight coach cards (explain: one-off, never freeze the game after school) ----
   'tree-1':     { say: 'Brown ground ahead! Tap <b>PLANT</b> early, when the cross turns green.', more: 'Brown ground = a place to plant a tree! The cross shows where your tree will land and turns green on the brown patch. Tap PLANT a little before you reach it: the tree floats down AND forwards.' },
-  'tree-2':     { say: 'Your tree soaks up CO2 as it grows. Bigger trees soak up more.', more: 'Your tree takes CO2 out of the air as it grows. Bigger trees take a bit more. But trees are slow! A cleaner plane and smart contrails help the Earth faster.' },
+  'tree-2':     { say: 'Trees grow as you fly. Grown trees cool the Earth over their land.', more: 'A tree you plant starts as a sapling and grows over your next flights (see it in NATURE). Once it is grown it fills this land\'s Nature bar, and every flight over this land cools the Earth a little more. Saplings do almost nothing yet: trees are slow, so cleaner planes and smart contrails help faster.' },   // (the user, 2026-11-16: the old line said a tree soaks up CO2 as it grows, which grown-only cooling made untrue)
   'tree-3':     { say: 'Different kinds of tree bring much more wildlife than lots of one kind.', more: 'Your Biodiversity meter shows how full of life your land is. Different kinds of trees bring much more wildlife than lots of the same kind.' },
   'x-first-animal': { say: 'A wild animal! Nature projects and trees bring them back here.' },
   'x-gold':     { say: 'A golden seed! It\'s worth 3 seeds, and only shows up on long flights.', more: 'A golden seed is worth 3 seeds. They only appear on long flights.' },
@@ -132,6 +132,11 @@ export function tip(id, ...args) {
   if (!t) return `[missing tip ${id}]`;
   return typeof t.say === 'function' ? t.say(...args) : t.say;
 }
+// Bubbles about something ON THE GROUND (soil, trees, animals, the runway) sit at the TOP of the screen, so they never cover what they are about (the user, 2026-11-16:
+// "seed planting happens at the bottom so text at the top, same with landing"). Every other in-flight strip keeps the old rule (away from the plane). Keys are tip ids;
+// 'x-species-<tree>' and other suffixed ids match by their base id.
+export const GROUND_TIPS = ['tree-1', 'tree-2', 'tree-3', 'x-first-animal', 'x-species', 'rail-skip', 'lesson-land', 'school-low', 'lesson-plant', 'plant-'];
+export const groundTip = id => !!id && GROUND_TIPS.some(g => id === g || (g.endsWith('-') ? id.startsWith(g) : id.startsWith(`${g}-`)));
 export const more = id => (TIPS[id] && TIPS[id].more) || '';
 
 // Words as a child reads them: HTML tags out, every other run of letters/digits is a word.

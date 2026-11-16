@@ -379,6 +379,7 @@ p { margin: 0; }
 .coach-pic { display: block; width: 240px; max-width: 100%; image-rendering: pixelated; margin: 2px 0 8px; box-shadow: 0 0 0 2px var(--ink); }
 .coach-dim { position: fixed; inset: 0; background: rgba(10, 14, 40, .55); z-index: 24; }
 .coach.lesson { bottom: auto; top: 50%; transform: translate(-50%, -50%); }
+.coach.lesson.ground-top { top: max(12%, calc(var(--hud-bottom, 0px) + 8px)); transform: translateX(-50%); }   /* a lesson about the ground (the runway, soil): the card sits at the top so the ground stays in view (the user, 2026-11-16) */
 
 /* ---------- credits and About ---------- */
 .credit { font-size: 7px; line-height: 1.6; color: var(--muted); margin: 10px 0 0; }
@@ -449,6 +450,18 @@ h2.sub { margin-top: -4px; }
 .ti-pilot { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Cpath d='M2 0h4v1H2zM1 1h6v1H1zM2 2h4v3H2zM1 6h6v2H1z'/%3E%3C/svg%3E"); }
 .ti-boards { --m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Cpath d='M3 1h2v7H3zM0 4h2v4H0zM6 3h2v5H6z'/%3E%3C/svg%3E"); }
 .tab.glow:not(.on) { color: var(--gold); animation: glow 1s steps(2) infinite; }
+/* PIXELLAB TAB ICONS (the user, 2026-11-16: "pixellab icons for these tabs to make it clearer"; MISSIONS and PILOT used to share one mask). 24 px drawings in assets/ui/tabs/,
+   in colour, so the tab icons are pictures, not currentColor masks; the selected tab keeps its word, the others go a little dim. #tabMissions shows the cap while it is the SCHOOL. */
+.tab .ti { -webkit-mask: none; mask: none; background: var(--img) center / contain no-repeat; image-rendering: pixelated; width: 24px; height: 24px; }
+.tab:not(.on) .ti { opacity: .72; }
+.tab.glow:not(.on) .ti { opacity: 1; animation: glow 1s steps(2) infinite; }
+.tab .ti-fly { --img: url("assets/ui/tabs/tab-fly.png"); }
+.tab .ti-school { --img: url("assets/ui/tabs/tab-school.png"); }
+.tab .ti-missions { --img: url("assets/ui/tabs/tab-missions.png"); }
+.tab .ti-hangar { --img: url("assets/ui/tabs/tab-hangar.png"); }
+.tab .ti-nature { --img: url("assets/ui/tabs/tab-nature.png"); }
+.tab .ti-pilot { --img: url("assets/ui/tabs/tab-pilot.png"); }
+.tab .ti-boards { --img: url("assets/ui/tabs/tab-boards.png"); }
 
 /* the journey strip (FLY screen) */
 .journey { font-size: 8px; text-align: center; display: grid; gap: 4px; }
