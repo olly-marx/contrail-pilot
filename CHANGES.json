@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-16-crossings-v3",
+    "version": "0.65.0",
+    "date": "2026-11-16",
+    "level": "minor",
+    "notes": [
+      "The world is now 6 regions, and your start opens your whole home region.",
+      "There are 5 crossings plus the lap, each harder than the last, and you choose which region to open next.",
+      "Your save keeps everything: any area you had open now opens its whole region.",
+      "Crossing prizes now total 4,500 seeds and 561 crystals over a game (they were 9,100 and 1,132), because there are fewer crossings."
+    ]
+  },
+  {
     "id": "2026-11-13-grow-days-nature-fold",
     "version": "0.64.0",
     "date": "2026-11-13",
