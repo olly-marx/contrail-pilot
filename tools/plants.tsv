@@ -907,3 +907,6 @@ naturefold	style.css	s#^\.wpin \.wscene { width: calc(100% - 6px); }$#@media (ma
 keepvisible	style.css	s/^@media (max-height: 760px) { \.wpin { position: static; box-shadow: none; } }$//	NATURE's land stays pinned on short phones again (it covers half the screen at full width)
 crossladder	src/crossings.js	s/(SEASON.step \&\& SEASON.step.km\[c.era\]) || SEASON.crossingKm\[c.era + 1\]/SEASON.crossingKm[c.era + 1]/	the length lever does nothing
 crossladder	src/crossings.js	s/SEASON.step.bioMul\[c.era\] : 1));/1 : 1));/	the nature lever does nothing
+stucktouch	src/main.js	s/^watchStaleTouches(game);/if (false) watchStaleTouches(game);/	stuck finger guard off
+touchfree	src/touchfree.js	s/if (!q || !q.active || on.has(q.identifier)) continue;/if (!q || !q.active) continue;/	a finger still down is released too
+touchfree	src/touchfree.js	s/for (let i = 1; i < (pointers/for (let i = 0; i < (pointers/	the mouse pointer is released too

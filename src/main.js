@@ -14,6 +14,7 @@ import { WildScreen } from './wild.js';
 import { Updates } from './updates.js';
 import { catchCrashes } from './crash.js';
 import { loading } from './loader.js';
+import { watchStaleTouches } from './touchfree.js';
 
 const save = loadSave();
 // Crash catcher (src/crash.js): an error shows a card with what broke and where, instead of a silent freeze.
@@ -51,6 +52,7 @@ const game = new Phaser.Game({
   callbacks: { preBoot: g => { g.registry.set('save', save); g.registry.set('ui', ui); } },
 });
 window.game = game;   // exposed for debugging and automated tests
+watchStaleTouches(game);   // a finger lifted off a redrawn element must not leave Phaser's touch pointer held (src/touchfree.js)
 ui.showHeldCard();    // a save that could not be read: nothing is written until the player chooses (src/save.js)
 
 ui.showTitle();
