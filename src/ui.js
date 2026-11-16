@@ -515,11 +515,15 @@ export class UI {
       + `<span class="les-r">${r.state === 'done' ? 'replay' : r.state === 'now' ? 'NOW' : r.state === 'growing' ? 'growing' : ''}</span></button>`;
     if (b.graduated) { el.innerHTML = `<button class="chip m-school" id="mSchoolOpen" type="button">FLIGHT SCHOOL: ${b.total} lessons done ›</button><div id="mSchoolList" hidden></div>`; }
     else {
-      const courses = []; for (const r of b.rows) { let c = courses[courses.length - 1]; if (!c || c.name !== r.course) courses.push(c = { name: r.course, rows: [] }); c.rows.push(r); }
-      // Show the courses up to the current one, and the next course locked (the rest is a count): the board stays short at 320 px.
-      const nowAt = Math.max(0, courses.findIndex(c => c.rows.some(r => r.state === 'now'))), shown = courses.slice(0, nowAt + 2), hidden = b.rows.length - shown.reduce((a, c) => a + c.rows.length, 0);
+      // Short at 320 px (the first look, 2026-11-16: every done lesson on its own row was two screens long): the done lessons fold into one row (tap: the list to replay),
+      // then the lessons from the current one to the end of the next course; the rest is a count.
+      const doneRows = b.rows.filter(r => r.state === 'done'), open = b.rows.filter(r => r.state !== 'done');
+      const nowCourse = (open.find(r => r.state === 'now') || open[0] || {}).course, courses = [...new Set(open.map(r => r.course))], keep = courses.slice(0, Math.max(1, courses.indexOf(nowCourse) + 2));
+      const shownRows = open.filter(r => keep.includes(r.course) || r.state === 'growing'), hidden = open.length - shownRows.length;
+      const groups = []; for (const r of shownRows) { let c = groups[groups.length - 1]; if (!c || c.name !== r.course) groups.push(c = { name: r.course, rows: [] }); c.rows.push(r); }
       el.innerHTML = `<div class="school-board"><div class="sb-head"><h3>FLIGHT SCHOOL</h3><span class="small">${b.done} of ${b.total} lessons</span></div><p class="small sb-sub">${tip('board-head')}</p>`
-        + shown.map(c => `<p class="label">${esc(c.name.toUpperCase())}</p>${c.rows.map(row).join('')}`).join('')
+        + (doneRows.length ? `<button class="les done" type="button" id="mSchoolDone"><span class="les-ic">✓</span><span class="les-t"><b>${doneRows.length} lesson${doneRows.length === 1 ? '' : 's'} done</b></span><span class="les-r">replay ›</span></button><div id="mSchoolDoneList" hidden></div>` : '')
+        + groups.map(c => `<p class="label">${esc(c.name.toUpperCase())}</p>${c.rows.map(row).join('')}`).join('')
         + (hidden > 0 ? `<p class="small sb-more">${hidden} more lessons to come</p>` : '')
         + (b.now ? `<button class="btn go sb-start" id="mSchoolStart" type="button">START LESSON</button>` : '') + '</div>';
     }
@@ -527,6 +531,7 @@ export class UI {
       const st = boardView(s).rows.find(r => r.id === id).state, act = st === 'now' || st === 'growing' ? { label: st === 'growing' ? 'SEE IT IN NATURE' : 'START LESSON', onTap: () => this.startLesson(id) } : null;
       showSheet({ eyebrow: st === 'done' ? 'LESSON DONE' : 'LESSON', title: l.title, pic: `assets/ui/${l.pic}.png`, body: more(`board-${id}`) || tip(`board-${id}`), action: act }); };
     el.querySelectorAll('[data-les]').forEach(x => x.onclick = () => open(x.dataset.les));
+    if ($('mSchoolDone')) $('mSchoolDone').onclick = () => { sfx.tick(); const l = $('mSchoolDoneList'); l.hidden = !l.hidden; if (!l.hidden) { l.innerHTML = b.rows.filter(r => r.state === 'done').map(row).join(''); l.querySelectorAll('[data-les]').forEach(x => x.onclick = () => open(x.dataset.les)); } };
     if ($('mSchoolStart')) $('mSchoolStart').onclick = () => { sfx.tick(); this.startLesson(b.now); };
     if ($('mSchoolOpen')) $('mSchoolOpen').onclick = () => { sfx.tick(); const l = $('mSchoolList'); l.hidden = !l.hidden; if (!l.hidden) { l.innerHTML = b.rows.map(row).join(''); l.querySelectorAll('[data-les]').forEach(x => x.onclick = () => open(x.dataset.les)); } };
   }
