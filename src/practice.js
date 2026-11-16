@@ -36,7 +36,7 @@ export class Practice extends School {
     const s = this.s;
     s.save.treePractice = true; writeSave(s.save);
     s.school = null; s.frozen = false; this.ui.hideCoach();
-    s.scene.restart();
+    s.scene.restart({});   // EMPTY data, said out loud: Phaser keeps the last start's data when restart() is given none, and that was { go: true, mode: 'practice' } (the practice started again behind HOME)
     this.ui.showTitle();
     this.ui.toast('Lesson done!', 'Tree practice flight', 'good', 3);
   }
