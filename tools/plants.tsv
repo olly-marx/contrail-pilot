@@ -101,7 +101,7 @@ audiocrash	src/crash.js	s/audio device|audiocontext|NotAllowedError|AbortError/z
 audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no longer catches a rejected resume()
 audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
 releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
-releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible$/ tours bubblestill missionlanes pilotpreview keepvisible/	onboarding changes no longer run firsthour-real
+releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible practice$/ tours bubblestill missionlanes pilotpreview keepvisible practice/	onboarding changes no longer run firsthour-real
 sim-hint@PLANT=blind	-	-	the player ignores the hint
 sim-progression-s2@PLANT=noready	-	-	crossings offered before they are ready
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
@@ -434,7 +434,7 @@ sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 })
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x26]
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x27]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
