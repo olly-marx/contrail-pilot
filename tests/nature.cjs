@@ -65,7 +65,7 @@ const KEY = 'contrailPilot.v2';
   await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
   await scene(() => { const s = game.scene.getScene('game'); s.storms = []; s.nextStormAt = 1e9; s.plane.y = 200; s.plane.vy = 0; s.addPlot(100); s.parcelLanded(110, 'spruce'); });
   const ex = await scene(() => { const s = game.scene.getScene('game'); return { explaining: s.explaining, frozen: s.frozen, text: document.getElementById('coachText').textContent }; });
-  check(ex.explaining && !ex.frozen && /CO2/.test(ex.text), `first planting shows a short trees-and-CO2 bubble, without pausing: ${JSON.stringify(ex)}`);
+  check(ex.explaining && !ex.frozen && /grow/i.test(ex.text) && /cool/i.test(ex.text), `first planting shows a short trees-grow-and-cool bubble (tree-2 since 2026-11-16: grown trees cool their land), without pausing: ${JSON.stringify(ex)}`);
   await scene(() => { const s = game.scene.getScene('game'); s.nextStormAt = 1e9; s.storms = []; s.birds = []; s.turbs = []; s.heat = 0; });
   let bioTip = '';
   for (let i = 0; i < 40 && !/kinds of tree/.test(bioTip); i++) { await p.waitForTimeout(200); await scene(() => { const s = game.scene.getScene('game'); s.plane.y = 200; s.plane.vy = 0; s.heat = 0; }); bioTip = await scene(() => game.scene.getScene('game').explaining ? document.getElementById('coachText').textContent : ''); }

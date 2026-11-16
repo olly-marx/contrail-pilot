@@ -164,7 +164,7 @@ export class UI {
     this.onStart();
   }
 
-  practiceDue() { const l = current(this.save); return !!(l && l.id === 'practice' && isSeason2(this.save) && this.save.tutorialDone); }
+  practiceDue() { const s = this.save; if (!s.school2 || !s.tutorialDone || !isSeason2(s)) return false; const l = current(s); return !!(l && l.id === 'practice'); }   // (only on a save that started with the board: CI 2026-11-16 caught an old save's TAKE OFF starting the practice)
   startPractice() { unlockAudio(); this.showOnly(null); if (this.tour) this.tour.abort(); this.onPractice && this.onPractice(); }
 
   // How to play comes first, so the lessons have something to hang on. Then flight school.
@@ -507,7 +507,7 @@ export class UI {
   // THE SCHOOL BOARD (src/lessons.js; the user, 2026-11-16). On the MISSIONS tab while lessons remain (the tab reads SCHOOL), then folded into one REPLAY row.
   renderSchool() {
     const s = this.save, el = $('mSchool'); if (!el) return;
-    if (!FEATURES.season2 || !isSeason2(s) || !s.tutorialDone) { el.innerHTML = ''; return; }
+    if (!FEATURES.season2 || !isSeason2(s) || !s.tutorialDone || !s.school2) { el.innerHTML = ''; return; }   // (the board is for players who started with it: an existing player keeps MISSIONS as it was)
     const b = boardView(s), esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const mark = { done: '✓', now: '▶', growing: '…', lock: '' };
     const row = r => `<button class="les ${r.state}" type="button" data-les="${r.id}" ${r.state === 'lock' ? 'disabled' : ''}><span class="les-ic">${mark[r.state]}</span>`
@@ -519,9 +519,9 @@ export class UI {
       // then the lessons from the current one to the end of the next course; the rest is a count.
       const doneRows = b.rows.filter(r => r.state === 'done'), open = b.rows.filter(r => r.state !== 'done');
       const nowCourse = (open.find(r => r.state === 'now') || open[0] || {}).course, courses = [...new Set(open.map(r => r.course))], keep = courses.slice(0, Math.max(1, courses.indexOf(nowCourse) + 2));
-      const shownRows = open.filter(r => keep.includes(r.course) || r.state === 'growing'), hidden = open.length - shownRows.length;
+      const shownRows = open.filter(r => keep.includes(r.course) || r.state === 'growing').slice(0, 3), hidden = open.length - shownRows.length;   // (3 at most: the board and START LESSON fit above the bar at 320x568, tests/fitscreen.cjs)
       const groups = []; for (const r of shownRows) { let c = groups[groups.length - 1]; if (!c || c.name !== r.course) groups.push(c = { name: r.course, rows: [] }); c.rows.push(r); }
-      el.innerHTML = `<div class="school-board"><div class="sb-head"><h3>FLIGHT SCHOOL</h3><span class="small">${b.done} of ${b.total} lessons</span></div><p class="small sb-sub">${tip('board-head')}</p>`
+      el.innerHTML = `<div class="school-board"><div class="sb-head"><h3>FLIGHT SCHOOL</h3><span class="small">${b.done} of ${b.total} lessons</span></div>${doneRows.length ? '' : `<p class="small sb-sub">${tip('board-head')}</p>`}`
         + (doneRows.length ? `<button class="les done" type="button" id="mSchoolDone"><span class="les-ic">✓</span><span class="les-t"><b>${doneRows.length} lesson${doneRows.length === 1 ? '' : 's'} done</b></span><span class="les-r">replay ›</span></button><div id="mSchoolDoneList" hidden></div>` : '')
         + groups.map(c => `<p class="label">${esc(c.name.toUpperCase())}</p>${c.rows.map(row).join('')}`).join('')
         + (hidden > 0 ? `<p class="small sb-more">${hidden} more lessons to come</p>` : '')
@@ -584,7 +584,7 @@ export class UI {
       const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: hubRevealed(this.save, 'pilot'), boards: hubRevealed(this.save, 'boards') };
       document.querySelectorAll('#tabbar [data-go]').forEach(b => { b.hidden = !show[b.dataset.go]; });
       // The MISSIONS tab is the SCHOOL while lessons remain (src/lessons.js): its word and its PixelLab icon say which.
-      const sch = isSeason2(this.save) && this.save.tutorialDone && !boardView(this.save).graduated;
+      const sch = isSeason2(this.save) && this.save.tutorialDone && this.save.school2 && !boardView(this.save).graduated;
       if ($('tabMissionsName')) $('tabMissionsName').textContent = sch ? 'SCHOOL' : 'MISSIONS';
       if ($('tabMissionsIcon')) $('tabMissionsIcon').className = `ti ${sch ? 'ti-school' : 'ti-missions'}`;
       // The first tab keeps its label FLY (the user, 2026-11-10). Do NOT write 'HOME' into the tab's last child: that is the news dot #dFly, and the word bled out of it at the tab's corner.
