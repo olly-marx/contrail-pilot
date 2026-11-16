@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-16-taps-pinion",
+    "version": "0.65.1",
+    "date": "2026-11-16",
+    "level": "minor",
+    "notes": [
+      "Fixed: after swiping between lands on NATURE or between hangar tabs, taps work in flight again.",
+      "The Comet's Pinion fuel tanks now hang under the wing, and its thrust reversers are redrawn.",
+      "The card that shows a newly fitted upgrade no longer has a TAKE OFF row at the bottom."
+    ]
+  },
+  {
     "id": "2026-11-16-crossings-v3",
     "version": "0.65.0",
     "date": "2026-11-16",
