@@ -7,6 +7,7 @@ import { FIRSTS } from './missions2.js';
 import { clip, rightOf } from './nextup.js';
 const chipLabel = name => (String(name).length <= 11 ? String(name) : String(name).split(' ')[0].length <= 11 ? String(name).split(' ')[0] : clip(name, 11));
 import { WILDLIFE } from './wildlife.js';
+import { natureFrom } from './treepen.js';
 
 export const LINE_MAX = 28;      // a muted/maths/missions/earth line at 320 px: MEASURED in the browser (the pixel font is ~8.2 px a character at 8 px, so 33 wrapped; research/UX-MEASURE.md)
 export const CHIPS_MAX = 3;      // chips on the card; more become "+N more"
@@ -63,6 +64,8 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   const b = r.breakdown || { co2: 0, night: 0, sun: 0, trees: 0 }, R = Math.round;
   v.earth = r.school ? null : { heat: r.heat, warm: `Warmed CO2 ${R(b.co2)} · Night ${R(b.night)}`, cool: `Cooled Shade ${R(b.sun)} · Nature ${R(b.trees)}`,
     bars: [['CO2', R(b.co2), '+'], ['Night', R(b.night), '+'], ['Shade', R(b.sun), '-'], ['Nature', R(b.trees), '-']] };
+  // 5b. Where 'Nature' came from (the tree UI, 2026-11-16): which land cooled, the trees dropped this flight, how much the saplings grew, the next one to grow up. For the Earth sheet only.
+  if (v.earth) v.earth.nature = natureFrom(r, save);
   // 6. The era: one line (the badge, the bar, the minutes). "NEW ERA" is its own beat in ui.showResults, before the hangar.
   if (r.school) v.era = null;
   else { const p = eraProgress(save); v.era = { id: p.era.id === 'future' ? 'Far future' : p.era.id, frac: p.frac, text: p.next ? `${Math.floor(p.done)}/${Math.round(p.need)} min` : 'every era open', to: p.next ? p.next.name : '' }; }

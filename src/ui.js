@@ -32,6 +32,7 @@ import { drawGlobe } from './globe.js';
 import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
+import { natureSheetHTML } from './treepen.js';
 import { isSeason2, assignMissionCities, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus, saving } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, migrateClaims, sumPrizes } from './rewards.js';
@@ -745,7 +746,7 @@ export class UI {
     $('rMaths').onclick = () => showSheet({ eyebrow: 'THIS FLIGHT', title: 'Where it came from', html: `<div class="rc-rows">${v.tally.map(([a, b]) => `<p><span>${esc(a)}</span><b>${esc(b)}</b></p>`).join('')}</div>` });
     $('rMission').onclick = () => showSheet({ eyebrow: mi && mi.fail !== undefined ? 'NOT THIS TIME' : 'MISSIONS DONE', title: mi ? mi.line.replace(/^✓ /, '') : '', body: mi && mi.fail ? mi.fail : (mi ? mi.titles.join('. ') : '') });
     $('rEarth').onclick = () => showSheet({ eyebrow: 'THE EARTH', title: v.earth.warm.split(' ')[0] + ' and ' + v.earth.cool.split(' ')[0].toLowerCase(),
-      html: `<div class="earth-bars rc-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>` });
+      html: `<div class="earth-bars rc-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>${natureSheetHTML(v.earth.nature)}` });
     $('rNextRows').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.next[+b.dataset.i]; sfx.tick();
       if (n.key === 'lead:cross') { const cs = crossingState(this.save, { unlock: S2_UNLOCK }); if (cs && cs.ready) return this.showCrossingSheet(cs); }
       if (n.where === 'hangar' || n.where === 'nature' || n.where === 'pilot' || (n.where === 'missions' && n.cross)) this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : n.cross ? 'CROSSING' : 'UP NEXT', title: n.short, body: n.full }); });

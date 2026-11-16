@@ -1105,7 +1105,7 @@ h2.sub { margin-top: -4px; }
   .payoff.arrive .pay-spark { animation: none; display: none; }
   .payoff.arrive .pay-mark { animation: none; }
   #results .slam.in, .stamp { animation: none; }
-  .newbest, .coach-tap, .newtag, .btn.glow, .line.pick, .tab.glow:not(.on), .btn.claim, .btn.claim.pulse, .tcaptain, .wf.ghost, .wf.arrive, .w-webpic.w-flash, .fpreview .fpic img.fghost, .hcap.working .dots::after { animation: none; }
+  .newbest, .coach-tap, .newtag, .btn.glow, .line.pick, .tab.glow:not(.on), .tab.glow:not(.on) .ti, .btn.claim, .btn.claim.pulse, .tcaptain, .wf.ghost, .wf.arrive, .w-webpic.w-flash, .fpreview .fpic img.fghost, .hcap.working .dots::after { animation: none; }
   .hplane .hp-corner, .hplane .hp-preview, #tour .tring, #tour .tfinger { animation: none; }
 }
 /* BACK UP MY GAME (src/ui.js openBackup / openRestore) */
@@ -1161,7 +1161,22 @@ h2.sub { margin-top: -4px; }
   .cel-layer { display: none; }
   .cel-layer i, .cel-push { animation: none; }
 }
-.w-nursery { margin: 2px 0 4px; font-size: 8px; text-align: center; }   /* the nursery line under a land's trees (TREES V2 step 2) */
+.w-nursery { margin: 4px 0 8px; display: grid; gap: 8px; }   /* the land's cooling card and the tree pen (src/treepen.js; the user, 2026-11-16) */
+.landcool, .pen { border: 2px solid #9fd2a3; background: #e9f7ea; padding: 8px; display: grid; gap: 5px; color: var(--ink, #1b1b2f); }
+.pen { border-color: #d9d4c3; background: #fbf8ef; }
+.pen-h { font-size: 9px; letter-spacing: .04em; }
+.pen-sub { color: #5a5e78; margin: 0; }
+.landcool p { margin: 0; }
+.lc-n { font-size: 11px; color: #1d6a2a; }
+.pen-row { display: grid; grid-template-columns: 30px 1fr; gap: 8px; align-items: center; background: #fff; border: 2px solid #e2ddcc; padding: 4px 6px; }
+.pen-pic { width: 28px; height: 28px; object-fit: contain; object-position: bottom; image-rendering: pixelated; }
+.pen-mid { display: grid; gap: 3px; min-width: 0; }
+.pen-l { display: flex; justify-content: space-between; gap: 6px; font-size: 8px; }
+.pen-l.small { font-size: 7px; color: #5a5e78; }
+.pen-bar { display: block; height: 7px; background: #e2ddcc; border: 1px solid #b9b39e; position: relative; }
+.pen-bar i { position: absolute; inset: 0 auto 0 0; background: #2f8a3b; }
+.pen-bar.lc { background: #cfe9d1; border-color: #7fb985; }
+.pen-more { margin: 0; text-align: center; }   /* the nursery line under a land's trees (TREES V2 step 2) */
 #wProjects .w-tier .btn.tiny { min-height: var(--tap); min-width: var(--tap); }   /* the fold toggle is a real tap (design run A) */
 /* NATURE's animals as a grid of small portraits (the user, 2026-11-13: the 23-card list was 706 of NATURE's 2,006 px at 390). The name and rarity stay in the card for screen readers
    and the tests, drawn only in the animal's own card on a tap (speciesInfo). Each portrait is a real tap: at least 48 px tall, 56 px wide. tests/naturefold.cjs line 4. */

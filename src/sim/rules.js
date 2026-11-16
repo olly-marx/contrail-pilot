@@ -134,6 +134,9 @@ export const RULES = {
     this.forestFullSaid = false;
     this.saidGroveFull = false;        // BIOME_FULL_POPUP is said once PER flight (src/droporder.js: nothing left to drop)
     this.landStored = 0;               // ...and rewilded land
+    this.natureBy = {};                // the results card's Nature line, by land (the tree UI, 2026-11-16): bookkeeping only, nothing reads it back
+    this.dropCool = 0;                 // ...and what the trees dropped in THIS flight cooled
+    this.grewDays = 0;                 // ...and the game days the saplings grew at banking
     this.biomeMeters = {};             // BIOME_COOL: each land's grown-tree meter, read once per flight (grown trees only change between flights, src/groves.js growGroves)
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
     this.goldens = 0;                  // golden seeds grabbed
@@ -683,7 +686,7 @@ export const RULES = {
       const cool = forestFull ? 0 : SPECIES[t.kind].coolPerStage[stage] * FOREST.early * (stage === 2 ? 1 + oldWood : 1) * (BIOME_COOL.on ? BIOME_COOL.drops : 1) * dt;
       this.forestStored += cool;
       this.heat -= cool;
-      this.breakdown.trees += cool;
+      this.breakdown.trees += cool; this.dropCool += cool;
       this.treeFeedback += cool;
     }
     let land;
@@ -698,6 +701,7 @@ export const RULES = {
     }
     this.landStored += land;
     this.heat -= land; this.breakdown.trees += land;
+    if (land > 0) { const r = this.regionNow || 'woodland'; this.natureBy[r] = (this.natureBy[r] || 0) + land; }
     if (this.treeFeedback >= 1) {
       this.popup(WIDTH / 2, SKY_H - 12, `-${this.treeFeedback.toFixed(1)} from your forest`, '#8dffb0');
       this.coolSparkle();
@@ -896,6 +900,7 @@ export const RULES = {
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save
     this.save.seeds += gained;
     this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
+    this.grewDays = !this.school && GROW_DAYS.on ? (this.flySeconds || 0) / (DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds) : 0;   // (the results card: 'your saplings grew +N days')
     const treesGrown = !this.school ? growGroves(this.save, needFromGrow(this.kit.grow), GROW_DAYS.on ? { flown: (this.flySeconds || 0) / (DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds), needOf: (land, id) => growNeedTenths(land, id, this.kit.grow) } : null) : 0;   // (how many saplings grew up in this banked flight: result.treesGrown, the one-time 'a tree has grown up' toast) every banked flight, landed or crashed, grows the saplings planted in EARLIER flights one point (src/groves.js)
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
@@ -908,7 +913,7 @@ export const RULES = {
     this.result = {
       landed, landedAt: this.landedAt, from: this.homeName, lap, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
-      breakdown: { ...this.breakdown }, earned, gained, newBadges, newRecord, planted: this.planted, treesDropped: this.released, treeNames: [...new Set(this.plantedNames)], treesGrown, kinds: this.speciesPlanted.size,
+      breakdown: { ...this.breakdown }, natureBy: { ...this.natureBy }, dropCool: this.dropCool, grewDays: this.grewDays || 0, earned, gained, newBadges, newRecord, planted: this.planted, treesDropped: this.released, treeNames: [...new Set(this.plantedNames)], treesGrown, kinds: this.speciesPlanted.size,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])],
