@@ -1,7 +1,7 @@
 import {
   km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, CONTRAIL, COLOURS,
   AIRPORT, CRYSTALS, DAYNIGHT, RADIATION, CLIMATE, TOKENS, PARCEL, HAZARDS,
-  FOREST, POWERUPS, FEATURES,
+  FOREST, POWERUPS, FEATURES, BIOME_COOL,
 } from './config.js';
 import { School } from './school.js';
 import * as P from './sim/physics.js';   // the flight's rules, shared with the sim engine
@@ -22,6 +22,8 @@ import { writeSave } from './save.js';
 import { gateFor, iconFor, MARK, GATE_RIGHT } from './gapmarkers.js';
 import { hintFlags, URGENT_NEAR } from './hintlines.js';
 import { tip, groundTip } from './tips.js';
+import { Practice } from './practice.js';
+import { coolCap } from './treepen.js';
 import { applyHudVar, toastTopCss } from './hudclear.js';
 const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
 import { CONTRAIL_MARGIN, UPGRADE_ART, lookFiles, stickers, fleetOf, levelEra, towerKey, stationKey } from './fleet.js';
@@ -34,7 +36,7 @@ import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
 import { animalDir, animalPortrait } from './animalart.js';
 import { LANDMARKS } from './landmarks.js';
-import { SPECIES, biodiversity, plantGain, hasProject, wildlifeScene, regionSpecies } from './nature.js';
+import { SPECIES, biodiversity, biomeMeter, plantGain, hasProject, wildlifeScene, regionSpecies } from './nature.js';
 import { REGION_DATA, REGION_NAMES } from './habitats.js';
 import { treesPlanted } from './treecount.js';
 import { CRYSTAL_WHY } from './tips.js';
@@ -249,6 +251,7 @@ export class GameScene extends Phaser.Scene {
     this.updateScenery(0);
     this.drawSky(0);
     if (this.autostart === 'school') this.startSchool();
+    else if (this.autostart === 'practice') this.startPractice();
     else if (this.autostart) this.startFlight();
   }
 
@@ -285,6 +288,15 @@ export class GameScene extends Phaser.Scene {
     const stale = () => { const sp = flightPath(schoolSave(this.save)); return this.path[0] !== sp[0] || this.path[1] !== sp[1]; };
     if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet]) || stale()) { this.scene.restart({ go: true, mode: 'school' }); return; }
     this.school = new School(this, this.ui);
+    this.nextAirport = { worldX: 1e9, name: this.path[1], spawned: false };
+    this.startFlight();
+    this.school.begin();
+  }
+
+  // The tree practice flight (src/practice.js): a school with its own steps, from your own city.
+  startPractice() {
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])) { this.scene.restart({ go: true, mode: 'practice' }); return; }
+    this.school = new Practice(this, this.ui);
     this.nextAirport = { worldX: 1e9, name: this.path[1], spawned: false };
     this.startFlight();
     this.school.begin();
@@ -587,7 +599,8 @@ export class GameScene extends Phaser.Scene {
     const W = 220, x = WIDTH / 2, y = Math.max(90, Math.ceil(this.hudTextBottom()) + 3 + 19);   // under the distance, mission and next-airport lines (19 = half the card): at y 90 a two-line mission's next-airport line sat under the card (design run, problem 7)
     const bg = this.add.rectangle(0, 0, W, 38, 0x1b2838, 0.82).setStrokeStyle(1, 0xffe15a);
     const name = this.fitText(this.add.text(0, -12, REGION_NAMES[r].toUpperCase(), { fontFamily: FONT, fontSize: '8px', color: '#ffe15a' }).setOrigin(0.5), W - 12);
-    const sub = this.add.text(0, 0, `BIODIVERSITY ${bio}`, { fontFamily: FONT, fontSize: '7px', color: '#ffe15a' }).setOrigin(0.5);
+    const cap = BIOME_COOL.on ? coolCap(biomeMeter(this.save, r)) : 0;   // what this land cools on a flight over it (src/treepen.js; the user, 2026-11-16: show what trees do)
+    const sub = this.add.text(0, 0, cap > 0 ? `NATURE ${bio} · COOLS UP TO -${cap}` : `BIODIVERSITY ${bio}`, { fontFamily: FONT, fontSize: '7px', color: '#ffe15a' }).setOrigin(0.5);
     const track = this.add.rectangle(-W / 2 + 8, 12, W - 16, 4, 0x2b4a6f).setOrigin(0, 0.5);
     const fill = this.add.rectangle(-W / 2 + 8, 12, Math.max(1, (W - 16) * bio / 100), 4, 0x8dffb0).setOrigin(0, 0.5);
     this.banner = this.add.container(x, y, [bg, name, sub, track, fill]).setDepth(60).setAlpha(0);

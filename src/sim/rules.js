@@ -137,6 +137,7 @@ export const RULES = {
     this.natureBy = {};                // the results card's Nature line, by land (the tree UI, 2026-11-16): bookkeeping only, nothing reads it back
     this.dropCool = 0;                 // ...and what the trees dropped in THIS flight cooled
     this.grewDays = 0;                 // ...and the game days the saplings grew at banking
+    this.landFullSaid = false;         // ...and whether 'Nature here is full' was said this flight
     this.biomeMeters = {};             // BIOME_COOL: each land's grown-tree meter, read once per flight (grown trees only change between flights, src/groves.js growGroves)
     this.forestStored = 0;             // CO2 the forest has soaked up this flight (see forestStore())
     this.goldens = 0;                  // golden seeds grabbed
@@ -702,6 +703,7 @@ export const RULES = {
     this.landStored += land;
     this.heat -= land; this.breakdown.trees += land;
     if (land > 0) { const r = this.regionNow || 'woodland'; this.natureBy[r] = (this.natureBy[r] || 0) + land; }
+    else if (BIOME_COOL.on && !this.landFullSaid && this.landStored > 0 && (this.natureBy[this.regionNow || 'woodland'] || 0) > 0) { this.landFullSaid = true; this.popup(WIDTH / 2, SKY_H / 2 - 30, 'Nature here is full for this flight', '#8dffb0'); }   // (the tree UI, 2026-11-16: the cooling stops, and the player is told why)
     if (this.treeFeedback >= 1) {
       this.popup(WIDTH / 2, SKY_H - 12, `-${this.treeFeedback.toFixed(1)} from your forest`, '#8dffb0');
       this.coolSparkle();
@@ -1206,6 +1208,7 @@ export const RULES = {
     if (!plot) {
       const onRunway = this.runways.some(r => x >= r.x && x <= r.x + AIRPORT.runwayLen);
       if (onRunway) this.parcelOnRunway = true;   // a funny challenge
+      if (this.school && this.school.practice) this.parcels++;   // practice: a miss gives the seed back (src/practice.js)
       this.onParcelMissed(x, onRunway);
       return;
     }
@@ -1221,7 +1224,7 @@ export const RULES = {
     // Biodiversity: a new kind of tree is a big boost; the same kind again adds less.
     // Counted where it grows, in the one record for every land (src/groves.js; the UK is the land 'woodland').
     const land = here.uk ? 'woodland' : region, first = !(treeBook(this.save, land)[here.id] > 0);
-    plantTree(this.save, land, here.id);
+    if (!this.school) plantTree(this.save, land, here.id);   // (the tree practice flight is a school: its trees are practice, never saved: src/practice.js)
     this.showTree(tree, plot, here, first);
   },
 

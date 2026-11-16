@@ -30,7 +30,7 @@ if (repriceSave(save) || moved) writeSave(save);   // once, for saves from befor
 try { await document.fonts.load('8px Pixel'); } catch (e) { /* play on with the fallback */ }
 
 const scene = () => game.scene.getScene('game');
-const ui = new UI(save, { onStart: () => scene().startFlight(), onSchool: () => scene().startSchool() });
+const ui = new UI(save, { onStart: () => scene().startFlight(), onSchool: () => scene().startSchool(), onPractice: () => scene().startPractice() });
 document.getElementById('skipSchool').onclick = () => scene().skipSchool();
 // Tips close only with their OK button. The bubble itself counts as a tap only for the
 // flight-school "tap the screen" step, which has no button.

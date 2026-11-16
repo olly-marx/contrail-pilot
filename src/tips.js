@@ -75,7 +75,7 @@ export const TIPS = {
   'board-L3':        { say: 'At night, fly around icy air: night contrails trap heat.', more: 'With no sun to block, a night contrail is a lid on a pot: it traps heat. Fly above or below the icy patch.' },
   'board-map':       { say: 'Spin the globe and tap a city to choose your next flight.', more: 'On HOME the globe is your map. Drag it to spin it, and tap a city dot to fly there next.' },
   'board-L4':        { say: 'Fly past an airport and land at the next: a bigger bonus.', more: 'Every airport you fly past adds to your landing bonus. Land at the next one to keep it all.' },
-  'board-trees':     { say: 'Get tree parcels in NATURE. The first ones are free.', more: 'Tree parcels are the trees your plane carries on each flight. Buy more in NATURE. The first level is free.' },
+  'board-trees':     { say: 'Get trees for your plane in NATURE. The first ones are free.', more: 'Your plane carries a few trees on each flight. Get more in NATURE, under Tree Planting. The first level is free.' },
   'board-practice':  { say: 'Practise dropping seeds on brown soil, with nothing else in the sky.', more: 'A seed falls forward, not straight down. Tap PLANT when the green cross is on the brown soil. In practice a miss gives the seed back.' },
   'board-L5':        { say: 'Plant a tree on brown soil on a real flight.', more: 'On a real flight, brown soil patches come along the ground while you carry trees. Tap PLANT a little before you reach one.' },
   'board-grow':      { say: 'Saplings grow as you fly. Grown trees cool their land.', more: 'A tree you plant is a sapling. It grows over your next flights, and the tree nursery in NATURE shows how many days are left. Once grown it fills its land\'s Nature bar, and every flight over that land cools the Earth more.' },
@@ -105,10 +105,13 @@ export const TIPS = {
   'rail-mission':      { say: 'You finished a mission: the seeds for it are already yours!' },
   'rail-wildlife':     { say: 'Another flight now: find icy air in the daytime!' },
   'rail-takeoff2':     { say: 'Take off, and fly through icy air in daylight!' },
-  'rail-trees':        { say: 'Time to plant trees! Open NATURE to get your free tree parcels.' },
+  'rail-trees':        { say: 'Time to plant trees! Open NATURE to get your first trees free.' },
   'rail-practice':     { say: 'A practice flight: drop seeds on brown soil. No storms, no hurry.' },
   'rail-earth':        { say: 'This line shows what warmed and cooled the Earth. Tap it after any flight.' },
   'rail-school-lesson': { say: 'A new lesson is waiting in SCHOOL.' },
+  'practice-card':     { say: 'A seed falls forward, not straight down. Watch the cross on the ground.' },
+  'practice-go':       { say: 'Tap <b>PLANT</b> when the green cross is on the brown soil. Plant three!' },
+  'practice-done':     { say: 'Three trees! On real flights, soil comes along while you carry trees.' },
   'rail-nature':       { say: 'Animals need places to live. Let us see yours!' },
   'rail-nat-land':     { say: 'This is your wild land. It is bare now.' },
   'rail-nat-tap':      { say: 'Projects help animals come back. Tap this one to see!' },
@@ -157,7 +160,7 @@ export function tip(id, ...args) {
 // Bubbles about something ON THE GROUND (soil, trees, animals, the runway) sit at the TOP of the screen, so they never cover what they are about (the user, 2026-11-16:
 // "seed planting happens at the bottom so text at the top, same with landing"). Every other in-flight strip keeps the old rule (away from the plane). Keys are tip ids;
 // 'x-species-<tree>' and other suffixed ids match by their base id.
-export const GROUND_TIPS = ['tree-1', 'tree-2', 'tree-3', 'x-first-animal', 'x-species', 'rail-skip', 'lesson-land', 'school-low', 'lesson-plant', 'plant-'];
+export const GROUND_TIPS = ['tree-1', 'tree-2', 'tree-3', 'x-first-animal', 'x-species', 'rail-skip', 'lesson-land', 'school-low', 'lesson-plant', 'plant-', 'practice-'];
 export const groundTip = id => !!id && GROUND_TIPS.some(g => id === g || (g.endsWith('-') ? id.startsWith(g) : id.startsWith(`${g}-`)));
 export const more = id => (TIPS[id] && TIPS[id].more) || '';
 

@@ -33,7 +33,7 @@ import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
 import { natureSheetHTML } from './treepen.js';
-import { boardView, BOARD } from './lessons.js';
+import { boardView, BOARD, current } from './lessons.js';
 import { isSeason2, assignMissionCities, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus, saving } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, migrateClaims, sumPrizes } from './rewards.js';
@@ -109,12 +109,13 @@ const sign = v => (v > 0 ? '+' : v < 0 ? '-' : '') + Math.abs(v);
 export const parcelsWanted = s => isSeason2(s) && (s.missionsDone || []).includes('L4') && !(s.missionsDone || []).includes('L5') && !((s.levels || {}).trees > 0);
 
 export class UI {
-  constructor(save, { onStart, onSchool }) {
+  constructor(save, { onStart, onSchool, onPractice }) {
     this.fleet = new FleetHangar(this); this.sfx = sfx;   // the plane side's hangar (src/hangar.js)
     this.save = save; this.crossingAuto = new Set();   // (the crossing ids whose sheet has opened by itself this page load)
     this.migrated = migrateClaims(save); if (this.migrated) writeSave(save);   // R8: prizes an older save never claimed are paid once, then a toast on the first menu
     this.onStart = onStart;
     this.onSchool = onSchool;
+    this.onPractice = onPractice;
     this.toastTimer = null;
 
     $('goBtn').onclick = () => (this.hubCs ? this.openCrossings(this.hubCs) : this.start());
@@ -156,11 +157,15 @@ export class UI {
     if (FEATURES.season2 && this.save.freeUpgrade && hubRevealed(this.save, 'hangar') && this.save.tutorialDone) return this.go('hangar');   // locked: the free part first
     if (FEATURES.season2 && needsStartChoice(this.save)) return this.askStart().then(() => this.start());   // season 2: choose your start first
     if (!this.save.tutorialDone) return this.startSchool();
+    if (FEATURES.season2 && this.practiceDue()) return this.startPractice();   // the School board's tree practice flight is the lesson now (src/practice.js)
     unlockAudio();
     this.showOnly(null);
     if (this.tour) this.tour.abort();   // no rails step may stay up over the game (src/tour.js abort: measured 2026-11-12, a step's catcher panels swallowed the flight's taps)
     this.onStart();
   }
+
+  practiceDue() { const l = current(this.save); return !!(l && l.id === 'practice' && isSeason2(this.save) && this.save.tutorialDone); }
+  startPractice() { unlockAudio(); this.showOnly(null); if (this.tour) this.tour.abort(); this.onPractice && this.onPractice(); }
 
   // How to play comes first, so the lessons have something to hang on. Then flight school.
   startSchool() {
