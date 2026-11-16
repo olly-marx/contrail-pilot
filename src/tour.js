@@ -18,6 +18,7 @@ import { growNeedTenths } from './landtrees.js';
 import { hudShowing } from './hudclear.js';
 import { getPilot, namesOpen } from './online.js';
 import { treesPlanted } from './treecount.js';
+import { current as lessonNow } from './lessons.js';
 // Rails rule (the user's playtest, 2026-10-29): a step that taps a bottom-bar tab must DECLARE whether the screen it opens has
 // something to act on (ready); run() stops before such a step when it is false. tests/tourready.cjs checks every tab step declares it.
 const always = () => true;
@@ -70,7 +71,8 @@ export class Tour {
   // the map, the records tour) each wait for a landing nobody has been told something at: save.tourToday = the landing number one of them last ran at. The lesson rails are not queued.
   slot() { return (this.save.tourToday || 0) < (this.save.landings || 0); }
   stamp() { this.save.tourToday = this.save.landings || 0; writeSave(this.save); }
-  nameDue() { return FEATURES.season2 && !window.CP_PREVIEW && !this.done('name') && !getPilot() && namesOpen() && (this.save.landings || 0) >= 5 && this.slot(); }
+  nameDue() { return FEATURES.season2 && !window.CP_PREVIEW && !this.done('name') && !getPilot() && namesOpen() && (this.save.school2 ? this.lesson() === 'name' : (this.save.landings || 0) >= 5 && this.slot()); }
+  lesson() { const l = lessonNow(this.save); return l ? l.id : null; }   // the School board's current lesson (src/lessons.js)
 
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
@@ -142,8 +144,20 @@ export class Tour {
     if (where === 'nature' && d('L4') && !d('L5') && !((s.levels || {}).trees > 0) && !this.done('r-parcels')) return ['r-parcels', [{ target: '#wTrees [data-buy="trees"]', text: tip('rail-parcels'), tap: true }]];
     // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).
     // R-map (the user, 2026-11-06: nothing told them the globe is a map): once the world is revealed (L4) and NO LESSON LEAD is on HOME (the bubble would hide the very row the player must tap: the free tree at L5), from landing 5, one OK step on the globe; the NAME comes first if it is due.
-    if (hub && s2Revealed(s, 'world') && (s.landings || 0) >= 5 && !s2LessonsLeft(s).length && !s.freeUpgrade && this.slot() && !this.nameDue() && !this.done('r-map')) return ['r-map', [{ target: '#hubGlobe', text: tip('rail-map'), ok: true }]];
-    if (hub && s2Revealed(s, 'boards') && (s.landings || 0) >= 6 && this.slot() && !this.done('r-boards')) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true, ready: always }]];
+    if (hub && s2Revealed(s, 'world') && !s.freeUpgrade && !this.done('r-map') && (s.school2 ? this.lesson() === 'map' : (s.landings || 0) >= 5 && !s2LessonsLeft(s).length && this.slot() && !this.nameDue())) return ['r-map', [{ target: '#hubGlobe', text: tip('rail-map'), ok: true }]];
+    if (hub && s2Revealed(s, 'boards') && !this.done('r-boards') && (s.school2 ? this.lesson() === 'records' : (s.landings || 0) >= 6 && this.slot())) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true, ready: always }]];
+    // THE SCHOOL BOARD's own steps (src/lessons.js; the user, 2026-11-16): the lessons that had no guided step.
+    if (s.school2) {
+      const now = this.lesson();
+      // Get your trees: HOME points at NATURE (the parcels' FREE is r-parcels there). Before, only the gold UP NEXT row did: a player who pressed TAKE OFF flew on with no trees.
+      if (hub && now === 'trees' && !this.done('r-trees')) return ['r-trees', [{ target: '#tabNature', text: tip('rail-trees'), tap: true, ready: always }]];
+      // The tree practice flight: TAKE OFF starts it (GameScene reads ui.practiceDue()).
+      if (hub && now === 'practice' && !this.done('r-practice')) return ['r-practice', [{ target: '#goBtn', text: tip('rail-practice'), tap: true }]];
+      // Reading your flight: the Earth line on the results card.
+      if (res && now === 'results' && document.getElementById('rEarth') && !document.getElementById('rEarth').hidden) return ['r-earth', [{ target: '#rEarth', text: tip('rail-earth'), ok: true }]];
+      // Crossings: a lesson card on the board; HOME points at the SCHOOL tab.
+      if (hub && now === 'crossings' && !this.done('r-crosshint')) return ['r-crosshint', [{ target: '#tabMissions', text: tip('rail-school-lesson'), tap: true, ready: always }]];
+    }
     return null;
   }
 

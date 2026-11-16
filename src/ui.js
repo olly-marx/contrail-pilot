@@ -33,6 +33,7 @@ import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
 import { natureSheetHTML } from './treepen.js';
+import { boardView, BOARD } from './lessons.js';
 import { isSeason2, assignMissionCities, onSave as missionsOnSave, visible as missionsVisible, setDaily, dailyVisible, lessonsLeft, steadyVisible, streakBonus, saving } from './missions2.js';
 import { REGION_NAMES } from './habitats.js';
 import { missionReward, migrateClaims, sumPrizes } from './rewards.js';
@@ -56,6 +57,7 @@ import { FleetHangar } from './hangar.js';
 import { dots, markSeen, migrateSeen, defaultLands, hangarScope } from './fresh.js';
 import { showEraWelcome } from './welcome.js';
 import { showSheet } from './sheet.js';
+import { tip, more } from './tips.js';
 import { cityCard, routeOf, tripLine } from './pickcity.js';
 import { DEFAULT_DEST, defaultTargetFrom } from './destination.js';
 import { chipView } from './steerchip.js';
@@ -216,7 +218,7 @@ export class UI {
 
   // ONE start choice at a time (src/startchoice.js): the menu and START may both ask; they share the same screen.
   askStart() {
-    return this.startAsked || (this.startAsked = chooseStart().then(c => { applyStart(this.save, c); writeSave(this.save); this.startAsked = null; this.renderJourney();
+    return this.startAsked || (this.startAsked = chooseStart().then(c => { applyStart(this.save, c); if (!this.save.tutorialDone && !(this.save.flights > 0)) this.save.school2 = true;   /* a brand-new player gets the School board's tab holds (src/lessons.js) */ writeSave(this.save); this.startAsked = null; this.renderJourney();
       // The menu's backdrop was built before the choice (it showed LONDON behind a Johannesburg start): rebuild it at the new home.
       const g = typeof window !== 'undefined' && window.game && window.game.scene && window.game.scene.getScene('game');
       if (g && g.sys && g.sys.isActive() && g.state === 'idle') g.scene.restart(); }));
@@ -470,6 +472,7 @@ export class UI {
     const v = this.missionsV = missionsView(s);
     const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const rowHTML = (r, cls = '') => `<div class="rowc goal ${cls}${r.star ? ' star' : ''}${r.aimed ? ' aimed' : ''}"><button class="rowc-tap" type="button" data-mrow="${esc(r.key)}"><span class="rowc-slot"><i class="mi ${r.icon}"></i></span><span class="rowc-top"><span class="rowc-name">${esc(r.short)}</span></span><span class="rowc-sub"><span class="m-how">${esc(r.aimed ? 'AIMED' : r.how)}</span>${r.prize ? `<b class="rowc-prize">+${r.prize}<i class="seedicon"></i></b>` : ''}</span></button></div>`;
+    this.renderSchool();
     $('mArea').textContent = v.area; $('mTier').textContent = v.tierLine;
     $('mNext').innerHTML = v.next ? `<p class="label">NEXT</p>${rowHTML(v.next, 'next')}` : '';
     const group = (label, rows, extra = '') => rows.length ? `<p class="label">${label}${extra}</p>${rows.join('')}` : '';
@@ -494,6 +497,41 @@ export class UI {
     if ($('mDone')) $('mDone').onclick = () => { sfx.tick(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
     if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
+  }
+
+  // THE SCHOOL BOARD (src/lessons.js; the user, 2026-11-16). On the MISSIONS tab while lessons remain (the tab reads SCHOOL), then folded into one REPLAY row.
+  renderSchool() {
+    const s = this.save, el = $('mSchool'); if (!el) return;
+    if (!FEATURES.season2 || !isSeason2(s) || !s.tutorialDone) { el.innerHTML = ''; return; }
+    const b = boardView(s), esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const mark = { done: '✓', now: '▶', growing: '…', lock: '' };
+    const row = r => `<button class="les ${r.state}" type="button" data-les="${r.id}" ${r.state === 'lock' ? 'disabled' : ''}><span class="les-ic">${mark[r.state]}</span>`
+      + `<span class="les-t"><b>${esc(r.title)}</b>${r.state === 'now' || r.state === 'growing' ? `<small>${esc(r.short)}</small>` : ''}</span>`
+      + `<span class="les-r">${r.state === 'done' ? 'replay' : r.state === 'now' ? 'NOW' : r.state === 'growing' ? 'growing' : ''}</span></button>`;
+    if (b.graduated) { el.innerHTML = `<button class="chip m-school" id="mSchoolOpen" type="button">FLIGHT SCHOOL: ${b.total} lessons done ›</button><div id="mSchoolList" hidden></div>`; }
+    else {
+      const courses = []; for (const r of b.rows) { let c = courses[courses.length - 1]; if (!c || c.name !== r.course) courses.push(c = { name: r.course, rows: [] }); c.rows.push(r); }
+      // Show the courses up to the current one, and the next course locked (the rest is a count): the board stays short at 320 px.
+      const nowAt = Math.max(0, courses.findIndex(c => c.rows.some(r => r.state === 'now'))), shown = courses.slice(0, nowAt + 2), hidden = b.rows.length - shown.reduce((a, c) => a + c.rows.length, 0);
+      el.innerHTML = `<div class="school-board"><div class="sb-head"><h3>FLIGHT SCHOOL</h3><span class="small">${b.done} of ${b.total} lessons</span></div><p class="small sb-sub">${tip('board-head')}</p>`
+        + shown.map(c => `<p class="label">${esc(c.name.toUpperCase())}</p>${c.rows.map(row).join('')}`).join('')
+        + (hidden > 0 ? `<p class="small sb-more">${hidden} more lessons to come</p>` : '')
+        + (b.now ? `<button class="btn go sb-start" id="mSchoolStart" type="button">START LESSON</button>` : '') + '</div>';
+    }
+    const open = id => { const l = BOARD.find(x => x.id === id); if (!l) return; sfx.tick();
+      const st = boardView(s).rows.find(r => r.id === id).state, act = st === 'now' || st === 'growing' ? { label: st === 'growing' ? 'SEE IT IN NATURE' : 'START LESSON', onTap: () => this.startLesson(id) } : null;
+      showSheet({ eyebrow: st === 'done' ? 'LESSON DONE' : 'LESSON', title: l.title, pic: `assets/ui/${l.pic}.png`, body: more(`board-${id}`) || tip(`board-${id}`), action: act }); };
+    el.querySelectorAll('[data-les]').forEach(x => x.onclick = () => open(x.dataset.les));
+    if ($('mSchoolStart')) $('mSchoolStart').onclick = () => { sfx.tick(); this.startLesson(b.now); };
+    if ($('mSchoolOpen')) $('mSchoolOpen').onclick = () => { sfx.tick(); const l = $('mSchoolList'); l.hidden = !l.hidden; if (!l.hidden) { l.innerHTML = b.rows.map(row).join(''); l.querySelectorAll('[data-les]').forEach(x => x.onclick = () => open(x.dataset.les)); } };
+  }
+  // START LESSON: go where the lesson happens; the rails there (src/tour.js) take over. A 'read' lesson is its card: reading it is doing it.
+  startLesson(id) {
+    const l = BOARD.find(x => x.id === id); if (!l) return;
+    if (l.kind === 'read') { const s = this.save, key = id === 'results' ? 'r-earth' : 'r-cross';
+      showSheet({ eyebrow: 'LESSON', title: l.title, pic: `assets/ui/${l.pic}.png`, body: more(`board-${id}`), action: { label: 'GOT IT', onTap: () => { s.tours = [...new Set([...(s.tours || []), key])]; writeSave(s); this.toast('Lesson done!', l.title, 'good', 3); this.showMissions(); } } }); return; }
+    if (l.kind === 'practice') { this.startPractice ? this.startPractice() : this.go('fly'); return; }
+    this.go(l.kind === 'fly' ? 'fly' : (l.where || 'fly'));
   }
 
   // ---------- navigation ----------
@@ -535,6 +573,10 @@ export class UI {
     if (FEATURES.season2) {
       const show = { fly: true, missions: hubRevealed(this.save, 'missions'), hangar: hubRevealed(this.save, 'hangar'), nature: hubRevealed(this.save, 'nature'), pilot: hubRevealed(this.save, 'pilot'), boards: hubRevealed(this.save, 'boards') };
       document.querySelectorAll('#tabbar [data-go]').forEach(b => { b.hidden = !show[b.dataset.go]; });
+      // The MISSIONS tab is the SCHOOL while lessons remain (src/lessons.js): its word and its PixelLab icon say which.
+      const sch = isSeason2(this.save) && this.save.tutorialDone && !boardView(this.save).graduated;
+      if ($('tabMissionsName')) $('tabMissionsName').textContent = sch ? 'SCHOOL' : 'MISSIONS';
+      if ($('tabMissionsIcon')) $('tabMissionsIcon').className = `ti ${sch ? 'ti-school' : 'ti-missions'}`;
       // The first tab keeps its label FLY (the user, 2026-11-10). Do NOT write 'HOME' into the tab's last child: that is the news dot #dFly, and the word bled out of it at the tab's corner.
     }
     if (id !== 'title') $('title').classList.remove('menu', 'world');

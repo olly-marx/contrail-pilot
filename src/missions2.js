@@ -21,6 +21,7 @@ import { CITY_IDS, ownFill, entryFor, needsOf, stopsOf, STREAK_IDS, STREAK_N, st
 import { DROP_ORDER } from './droporder.js';
 import { STAR_GROW3 } from './config.js';
 import { grownIn } from './groves.js';
+import { reached as reachedLesson } from './lessons.js';
 const GROW3_N = 3;
 
 // A season 2 save: save.areas is written only by season 2 (the start choice, src/startchoice.js, and crossings), so it is
@@ -58,8 +59,13 @@ export const LESSONS = [
 export const lessonsLeft = save => (stageOf(save) === 'teach' ? LESSONS.filter(l => !done(save).has(l.id)) : []);
 // A free part waiting ALWAYS reveals the hangar (the user, 2026-10-27, twice: the school landing grants it, but lesson L1
 // - which used to be the only thing revealing the hangar - ignores school flights, and a crash on flight 1 leaves it undone).
-export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === 'hangar' && !!(save.freeUpgrade || save.freeGiven)) || ((tile === 'boards' || tile === 'pilot') && (save.landings || 0) >= 5)   // once given, it stays (a crash on flight 1 hid it again: firsthour-real.cjs)
-  || LESSONS.some(l => l.reveals.includes(tile) && done(save).has(l.id));
+// THE SCHOOL BOARD (src/lessons.js; the user, 2026-11-16): on a save that started with the board (save.school2), the PILOT and BOARDS tabs and the world (the globe) wait for THEIR lesson
+// to start, instead of a landing count ("this become available before you know what they are"). Older saves keep the old rule, so nothing disappears from them.
+const HELD = { pilot: 'name', boards: 'records', world: 'map' };
+export const revealed = (save, tile) => stageOf(save) !== 'teach' || (tile === 'hangar' && !!(save.freeUpgrade || save.freeGiven))
+  || (save.school2 && HELD[tile] ? reachedLesson(save, HELD[tile]) : false)
+  || (!save.school2 && (tile === 'boards' || tile === 'pilot') && (save.landings || 0) >= 5)   // once given, it stays (a crash on flight 1 hid it again: firsthour-real.cjs)
+  || (!(save.school2 && HELD[tile]) && LESSONS.some(l => l.reveals.includes(tile) && done(save).has(l.id)));
 
 // Seed prizes x~0.33 on 2026-10-28 (the user: too much currency early; research/BALANCE-EARLY-PRIZES.md): lessons were
 // 60/60/70/70/70, tiers 30/50/60/40. Crystal prizes unchanged.

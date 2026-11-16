@@ -1184,3 +1184,21 @@ h2.sub { margin-top: -4px; }
 .wfound .w-card { padding: 0; gap: 0; border-width: 6px; border-image-width: 6px; min-height: 48px; justify-content: center; }
 .wfound .w-card img { height: 36px; max-width: 100%; }
 .wfound .w-card > span, .wfound .w-card > .w-rarity { position: absolute; left: 0; top: 0; visibility: hidden; }   /* the name/rarity stay in the DOM for the tests and screen readers, off the layout and the fit/overlap gates (they are read in the animal's card on a tap) */
+
+/* THE SCHOOL BOARD (src/lessons.js, ui.renderSchool; the user, 2026-11-16) */
+.school-board { display: grid; gap: 5px; margin: 0 0 12px; padding: 8px; border: 3px solid var(--ink, #1b1b2f); background: #fbf8ef; }
+.sb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.sb-head h3 { margin: 0; font-size: 11px; }
+.sb-sub, .sb-more { margin: 0; color: #5a5e78; }
+.school-board .label { margin: 6px 0 0; }
+.les { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; align-items: center; width: 100%; text-align: left; font: inherit; font-size: 8px; color: var(--ink, #1b1b2f);
+  background: #fff; border: 2px solid #d9d4c3; padding: 6px 8px; min-height: 40px; cursor: pointer; }
+.les-t { display: grid; gap: 2px; min-width: 0; }
+.les-t small { font-size: 7px; color: #5a5e78; }
+.les-r { font-size: 7px; color: #5a5e78; }
+.les.done { background: #e7f5e7; border-color: #b9dfba; } .les.done .les-ic { color: #2f8a3b; }
+.les.now { background: #fff6d6; border-color: var(--ink, #1b1b2f); } .les.now .les-r { color: var(--ink, #1b1b2f); }
+.les.growing { background: #eef9ef; border-style: dashed; border-color: #9fd2a3; }
+.les.lock { opacity: .5; cursor: default; }
+.sb-start { margin-top: 6px; }
+.m-school { width: 100%; margin: 0 0 10px; }
