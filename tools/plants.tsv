@@ -910,3 +910,5 @@ crossladder	src/crossings.js	s/SEASON.step.bioMul\[c.era\] : 1));/1 : 1));/	the 
 stucktouch	src/main.js	s/^watchStaleTouches(game);/if (false) watchStaleTouches(game);/	stuck finger guard off
 touchfree	src/touchfree.js	s/if (!q || !q.active || on.has(q.identifier)) continue;/if (!q || !q.active) continue;/	a finger still down is released too
 touchfree	src/touchfree.js	s/for (let i = 1; i < (pointers/for (let i = 0; i < (pointers/	the mouse pointer is released too
+payoffcard	style.css	s/^#hangar.paying .panel > .buttons { display: none; }/#hangar.paying .panel > .nobuttons { display: none; }/	bottom TAKE OFF row shown under the fitted card
+payoffcard	src/hangar.js	s/g.drawImage(bareImg, 0, 0, w, h);/g.drawImage(beforeImg, 0, 0, w, h);/	ring measured against the busy before picture
