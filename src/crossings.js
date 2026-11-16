@@ -39,8 +39,8 @@ export const rungOf = c => LADDER.indexOf(typeof c === 'string' ? c : c.id);
 export const crossingsMade = save => Math.max(0, regionsOpen(unlockedAreas(save)).length - 1);
 export const topRung = save => crossingsMade(save) - 1;
 export const crossingKm = c => (c.kind === 'lap' ? SEASON.crossingKm.final : (SEASON.step && SEASON.step.km[c.era]) || SEASON.crossingKm[c.era + 1]);
-// The nature meter a crossing needs (SEASON.step.bio by crossing number; the lap and anything else: offer.biodiversity).
-export const natureNeed = c => (c && c.kind !== 'lap' && SEASON.step && Number.isFinite(SEASON.step.bio[c.era]) ? SEASON.step.bio[c.era] : SEASON.offer.biodiversity);
+// The nature meter a crossing needs: offer.biodiversity x SEASON.step.bioMul by crossing number (the lap and anything else: offer.biodiversity).
+export const natureNeed = c => Math.round(SEASON.offer.biodiversity * (c && c.kind !== 'lap' && SEASON.step && Number.isFinite(SEASON.step.bioMul[c.era]) ? SEASON.step.bioMul[c.era] : 1));
 // The two areas a crossing joins ('ocean' for Honolulu/Nadi, which belong to no area).
 export const sides = c => [areaOf(c.a) || 'ocean', areaOf(c.b) || 'ocean'];
 // Your home city: where the start choice put you (src/startchoice.js save.homeArea), else where you are.

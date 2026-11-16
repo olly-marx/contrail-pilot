@@ -15,8 +15,8 @@ export const SEASON = {
   // final = the LAP OF THE EARTH (the Earth is 40,075 km round). Still behind maxEra until the era 4-6 releases.
   crossingKm: { 1: 6500, 2: 13000, 3: 18000, 4: 27000, 5: 30000, final: 40000 },
   // CROSSINGS V3 PACING LEVERS (2026-11-13; the user: 'balance is key ... the other yardsticks are too easy'): per crossing number n (0 = the first), its length and the nature meter it needs.
-  // Today's values (the same as crossingKm by era and offer.biodiversity) until the sim chat picks the arms; the 5th and the lap keep their lengths (the user: no shortening).
-  step: { km: [6500, 13000, 18000, 27000, 30000], bio: [30, 30, 30, 30, 30] },
+  // The 5th and the lap keep their lengths (the user: no shortening). crossingKm above stays for anything that is not a V3 route.
+  step: { km: [9000, 16000, 22000, 27000, 30000], bioMul: [38 / 30, 1, 1, 1, 1] },   // bioMul x offer.biodiversity (30): the first crossing needs 38. (A multiplier, so offer.biodiversity stays THE base bar the tests' lever sets.)   // SHIPPED 2026-11-16 (the user: 'ship this out'): arm P3b, research/rt-P3b-report*.txt: crossings at about flights 32 / 127 / 164 / 217; bio 38 is under the weakest land's plateau (~40)
   // The tanker (PROPOSAL-REFUELLING option A): rendezvous marks on the mission bar per refuelling-gadget level.
   tanker: { marks: [[], [0.5], [1 / 3, 2 / 3], [1 / 3, 2 / 3], [0.25, 0.5, 0.75]], holdS: [0, 8, 6, 5, 4], boxPx: [0, 24, 30, 36, 40] },
 };

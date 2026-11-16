@@ -25,7 +25,7 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'R
       const tag = `${W}x${H}`;
       { const { ctx, p } = await open(seed(true), W, H); const h = await home(p); log.push(`${tag} A: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-A-${W}.png` });
         check(h.shown && /NEXT CROSSING/.test(h.text) && /ROME > TUNIS/.test(h.text) && /Easy/.test(h.text), `${tag} A: the box is not on HOME with the route and the word: ${JSON.stringify(h)}`);
-        check(h.on.join() === 'true,true,false' && /Plant trees\. Nature \d+ of 30/.test(h.text), `${tag} A: the ticks or the plain line are wrong: ${JSON.stringify([h.on, h.text])}`);
+        check(h.on.join() === 'true,true,false' && /Plant trees\. Nature \d+ of 38/.test(h.text), `${tag} A: the ticks or the plain line are wrong: ${JSON.stringify([h.on, h.text])}`);
         check(h.goVisible, `${tag} A: TAKE OFF is not fully on screen above the bar with the box showing`);
         if (!h.shown) { await ctx.close(); continue; }   // (no box to tap: the checks above already failed; a tap would only time out)
         await p.click('#hubCross'); await p.waitForTimeout(500);
