@@ -21,8 +21,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.goto(URL + q); await ready(p); await p.waitForTimeout(800);
     await p.click('#startChoice [data-area="weurope"]').catch(() => {}); await p.click('#startChoice [data-city]').catch(() => {}); await p.waitForTimeout(1200);
     // After the rails: lessons done, every rails tour done, NO pilot name, then back to the menu (the tour decides from here).
-    await p.evaluate(() => { const s = game.registry.get('save'); Object.assign(s, { tutorialDone: true, freeGiven: true, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], landings: 5,
-      tours: ['hangar', 'r-boards', 'r-bonus', 'r-free', 'r-nature', 'r-parcels', 'r-res1', 'r-res2', 'r-school', 'r-systems', 'r-takeoff1', 'r-takeoff2'] });
+    await p.evaluate(() => { const s = game.registry.get('save'); Object.assign(s, { tutorialDone: true, freeGiven: true, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], landings: 5, treePractice: true, levels: { ...(s.levels || {}), trees: 1 },   // (a new save has the School board: every lesson before 'Your pilot name' done, 2026-11-16)
+      tours: ['r-map', 'r-earth', 'hangar', 'r-boards', 'r-bonus', 'r-free', 'r-nature', 'r-parcels', 'r-res1', 'r-res2', 'r-school', 'r-systems', 'r-takeoff1', 'r-takeoff2'] });
       const t = document.getElementById('tour'); if (t) t.hidden = true; const ui = game.registry.get('ui'); ui.tour.busy = false; ui.showTitle(); });
     await p.waitForTimeout(2500);
     const hello = await bubble(p);
