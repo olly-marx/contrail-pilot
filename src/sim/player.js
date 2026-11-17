@@ -60,7 +60,10 @@ const KS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 18, 22, 27, 33, 40];   // first-
 // looked for further ahead because a flock closes faster than the scenery.
 const FLOCK = { up: 44, down: 56, wide: 68, ahead: 340 };
 
-export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0, budget = 1, plan = 'threat', seed = 1, land = null, useHint = false } = {}) {
+// late (bad landings, 2026-11-17): the share of approaches flown TOO HIGH: the pilot keeps its cruising height until it is lateAt px from the runway's
+// start (40 px before it to 40 px past it), then lets the flare take it down. Which approaches: a hash of the seed and the airport, never the pilot's
+// own random stream, so late = 0 (the default) flies exactly as before.
+export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0, budget = 1, plan = 'threat', seed = 1, land = null, useHint = false, late = 0 } = {}) {
   const threat = plan !== 'classic';
   const c = Math.max(0, Math.min(1, care));
   const s = Math.max(0, Math.min(1, skill)), rnd = makeRng((seed * 2654435761) >>> 0 ^ 0x5eed);
@@ -198,6 +201,10 @@ export function makePlayer({ skill = 0.7, careful = true, care = careful ? 1 : 0
   const approach = w => {
     const toStart = w.nextAirport.worldX - w.distancePx;
     if (toStart > 700 || toStart < -AIRPORT.runwayLen) return null;
+    if (late > 0) {
+      const h = makeRng(((seed * 2654435761) ^ Math.round(w.nextAirport.worldX)) >>> 0)();
+      if (h < late && toStart > 40 - 80 * (h / late)) return null;   // too high: keep cruising until 40 px before .. 40 px past the start
+    }
     const clear = !w.storms.some(st => st.rects[0].x + st.rects[0].width > w.plane.x - 4 && st.rects[0].x < w.plane.x + Math.max(0, toStart) + PLANE.w);
     if (clear) return toStart < AIRPORT.flareFrom * w.kit.flare ? 'glide' : 'low';
     // A storm still stands between the plane and the runway: fly its gap as usual (2026-10-29). Holding low from 700 km out

@@ -17,7 +17,7 @@ export const LINE_INFO = {
   ops: { what: 'How the airline runs the flight: fuel, speed, weight.', why: 'Small savings on every flight add up to a lot less CO2.' },
   magnet: { what: 'A pretend gadget that pulls floating seeds towards your plane.', why: 'More seeds on board means more seeds when you land safely.' },
   hold: { what: 'The hold under the floor carries bags and cargo.', why: 'Fly past airports and your landing bonus grows. A bigger hold makes it grow faster. Crash, and you lose it all!' },
-  gear: { what: 'Help with landing: radio beams and computers that line you up with the runway.', why: 'A wider landing window means more safe landings.' },
+  gear: { what: 'Help with landing: radio beams and computers that line you up with the runway.', why: 'A wider landing window, harder brakes and a steeper way down: fewer runs off the end of the runway.' },
   sensors: { what: 'Instruments on the plane that measure the air around it.', why: 'Knowing the air helps you dodge warming contrails at night, for more ice crystals.' },
   autopilot: { what: 'The autopilot can fly the plane for a while. Grab its pick-up in the sky!', why: 'A better autopilot lasts longer and turns up more often.' },
 };

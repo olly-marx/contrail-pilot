@@ -12,12 +12,14 @@ const md = s => new Set(s.missionsDone || []);
 const tour = (s, id) => (s.tours || []).includes(id) || (s.tours || []).includes('*');
 const L = id => s => md(s).has(id);
 // What the OLD rules had already shown a player (src/missions2.js revealed before 2026-11-16), for saves without school2.
-const oldShown = { map: L('L4'), name: s => (s.landings || 0) >= 5, records: s => (s.landings || 0) >= 5, trees: L('L4'), practice: s => treesPlanted(s) > 0 || md(s).has('L5'), results: s => (s.flights || 0) >= 1, crossings: s => (s.areas || []).length > 1 };
+const oldShown = { runway: L('L1'), map: L('L4'), name: s => (s.landings || 0) >= 5, records: s => (s.landings || 0) >= 5, trees: L('L4'), practice: s => treesPlanted(s) > 0 || md(s).has('L5'), results: s => (s.flights || 0) >= 1, crossings: s => (s.areas || []).length > 1 };
 
 export const BOARD = [
   { id: 'school',    course: 'Flying',       title: 'Flight school',             short: 'Fly, dodge, land.',                           pic: 'lesson-tap',  kind: 'fly',    done: s => !!s.tutorialDone },
   { id: 'free',      course: 'Your plane',   title: 'Your free part',            short: 'Pick a part in the hangar.',                  pic: 'lesson-hangar', kind: 'screen', where: 'hangar', done: s => !!s.freeGiven && !s.freeUpgrade },
   { id: 'L1',        course: 'Airports',     title: 'Land at the next airport',  short: 'Fly low over the runway.',                    pic: 'lesson-land', kind: 'fly',    done: L('L1') },
+  // Bad landings (the user, 2026-11-17): done by one landing that stopped on the runway. A player already past L2 when this lesson arrived is not held back by it.
+  { id: 'runway',    course: 'Airports',     title: 'Land before the line',      short: 'Touch down before the yellow line.',          pic: 'lesson-land', kind: 'fly',    done: s => (s.goodLandings || 0) > 0 || md(s).has('L2') },
   { id: 'L2',        course: 'Contrails',    title: 'Icy air in daytime',        short: 'Daytime contrails make shade.',               pic: 'lesson-day',  kind: 'fly',    done: L('L2') },
   { id: 'nature',    course: 'Nature',       title: 'Your wild land',            short: 'Take your free nature project.',              pic: 'lesson-nature', kind: 'screen', where: 'nature', done: s => tour(s, 'r-nature') || !!s.freeProjectGiven },
   { id: 'L3',        course: 'Contrails',    title: 'Dodge icy air at night',    short: 'Night contrails trap heat.',                  pic: 'lesson-night', kind: 'fly',   done: L('L3') },

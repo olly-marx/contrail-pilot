@@ -38,7 +38,7 @@ const DT = 16.67 / 1000;
 export const LEARNING = n => 0.75 + 0.15 * (1 - Math.exp(-n / 30));
 
 // One flight from `save` (a stored save). Returns the world after it ended (its save is the banked save).
-export function flyOne(save, { seed, skill, careful, budget = 0.5, maxSkip, crossing = 0, maxSteps = 400000, useHint = false, landFrom = 0 }) {
+export function flyOne(save, { seed, skill, careful, budget = 0.5, maxSkip, crossing = 0, maxSteps = 400000, useHint = false, landFrom = 0, late = 0 }) {
   const w = createWorld(save, seed);
   w.save.autoTakeoff = true;
   for (let i = 0; i < 3000 && w.state !== 'playing'; i++) w.step(DT);
@@ -49,7 +49,7 @@ export function flyOne(save, { seed, skill, careful, budget = 0.5, maxSkip, cros
   // landFrom (season 2, chaseGate): going for a crossing's distance gate, it flies on past maxSkip until landFrom km.
   const land = () => crossing ? true : (w.airportsSkipped >= maxSkip && w.distancePx >= landFrom)
     || w.heat + (w.heat / Math.max(1, w.distancePx)) * w.legKm(w.airportIndex + 1) >= CLIMATE.dangerLine * 0.9;
-  const pilot = makePlayer({ skill, careful, budget, seed, land, useHint });   // threat-first planning (the default); careful choices within the inner half of the safe band
+  const pilot = makePlayer({ skill, careful, budget, seed, land, useHint, late });   // threat-first planning (the default); careful choices within the inner half of the safe band
   for (let i = 0; i < maxSteps && (w.state === 'playing' || w.state === 'landing'); i++) {
     if (w.state === 'playing') {
       if (pilot.wantsFlap(w)) w.applyFlap();
@@ -91,7 +91,7 @@ export function shop(save, region) {
 }
 
 export function progression({ careful = true, skill = LEARNING, flights = 100, seed = 1, tiers = [7000, 9000, 11000, 14000, 17000],
-  every = 10, maxSkip = 3, capSeeds = [1, 2, 3], start = {}, beforeFlight = null, useHint = false, chaseGate = false, pursue = false } = {}) {
+  every = 10, maxSkip = 3, capSeeds = [1, 2, 3], start = {}, beforeFlight = null, useHint = false, chaseGate = false, pursue = false, late = 0 } = {}) {
   let save = { tutorialDone: true, muted: true, seenTips: ['*'], landings: 0, missionCities: {}, ...start };   // (missionCities {}: a new player's save: the first city missions are stored by the NEW rules, not as an old save's)
   const rnd = makeRng(seed * 7919 + 13), rows = [], events = [];
   let tier = 0, cap = null, eraWas = 0;
@@ -128,7 +128,7 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
     let landFrom = 0;
     if (s2 && chaseGate && !c2) for (const c of available(save)) { const ctx = offerCtx(save, c), need = offerCheck(c, ctx).need;
       if (!readiness(save, c).plane && readiness(save, c).nature && readiness(save, c).era) landFrom = Math.max(landFrom, Math.ceil(SEASON.offer.distanceShare * c.km) + 50); }
-    const w = flyOne(save, { seed: seed * 100000 + n, skill: s, careful, crossing, useHint, landFrom, maxSkip: careful ? maxSkip : Math.floor(rnd() * 3) });
+    const w = flyOne(save, { seed: seed * 100000 + n, skill: s, careful, crossing, useHint, landFrom, late, maxSkip: careful ? maxSkip : Math.floor(rnd() * 3) });
     save = w.save;
     const here = w.regionNow && REGION_DATA[w.regionNow] ? w.regionNow : 'woodland';
     if (c2) {   // as GameScene.finish: a landed crossing opens the far side; the crossing is over either way
@@ -146,7 +146,7 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
     const era = eraProgress(save).index;
     if (era > eraWas) { events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `era ${era} opens (${fleetOf(save).plane})` }); eraWas = era; }
     rows.push({ flight: n, skill: +s.toFixed(3), km: Math.round(w.distancePx), landed: !!w.landed, end: w.landed ? 'landed' : (w.endReason || '').split('\n')[0],
-      skipped: w.airportsSkipped, crossing: crossing || '', crossingId: c2 ? c2.id : '', areas: s2 ? [...save.areas] : null, seeds: save.seeds, crystals: save.crystals || 0, minutes: +(save.flightSeconds / 60).toFixed(1),
+      overran: !!(w.result && w.result.overran), flare: w.kit.flare, skipped: w.airportsSkipped, crossing: crossing || '', crossingId: c2 ? c2.id : '', areas: s2 ? [...save.areas] : null, seeds: save.seeds, crystals: save.crystals || 0, minutes: +(save.flightSeconds / 60).toFixed(1),
       era, plane: fleetOf(save).plane, bio: biodiversity(save, here), region: here, homeBio, prizes: prizes.seeds, capability: cap, bought: bought.join(' ') });
   }
   return { rows, events, summary: summarise(rows, events) };

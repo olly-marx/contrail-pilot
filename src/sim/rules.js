@@ -23,7 +23,7 @@ import { loadout, FUELS } from '../upgrades.js';
 // no-fly zone counts when the nose reaches it (a crash in it counts too); trees = treeIds left empty.
 // Planted defects for tests/sim-twists.cjs (each must FAIL it): still = no twist ever moves; early = twists ignore `from`.
 export const TWIST_PLANTS = { still: false, early: false };
-export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false, touchdown: false };
+export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false, touchdown: false, overrun: false, keepAll: false, flat: false };
 import { recordFlight } from '../records.js';
 import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
@@ -97,7 +97,8 @@ export const RULES = {
     this.popups = [];
     this.tokens = [];                // floating trees to collect
     this.cargo = 0;                  // seeds on board: kept only if you land
-    this.crystals = 0;               // ice crystals earned this flight: always kept
+    this.crystals = 0;               // ice crystals earned this flight (bankFlight keeps part of them after a crash or a bad landing)
+    this.crystalsLost = 0;
     this.nightDodges = 0;            // dodge crystals so far tonight (capped)
     this.dodgesTotal = 0;            // all nights this flight (for the online boards)
     this.nextTokenAt = 420;
@@ -131,6 +132,7 @@ export const RULES = {
     this.released = 0;                 // trees dropped this flight (hit or miss): the results line 'Planted 2 of 3 trees'
     this.plantedNames = [];            // the names of the trees that landed on soil this flight
     this.touchdown = null;            // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
+    this.overran = false;             // a BAD LANDING: the roll-out ran past the runway's end (land; AIRPORT.overrunKeep)
     this.forestFullSaid = false;
     this.saidGroveFull = false;        // BIOME_FULL_POPUP is said once PER flight (src/droporder.js: nothing left to drop)
     this.landStored = 0;               // ...and rewilded land
@@ -214,6 +216,9 @@ export const RULES = {
   // Bigger Hold: grows faster. Rounded to 1 decimal so 1 + 0.6 * n never shows as 3.4000000000000004.
   multiplier() { return Math.round((1 + this.kit.perSkip * this.airportsSkipped) * 10) / 10; },
   hitbox() { return { x: this.plane.x, y: this.plane.y, w: PLANE.w, h: PLANE.h }; },
+  // The roll-out after touchdown: the landing window brakes (src/config.js AIRPORT.overrunKeep). Linear slow-down, so distance = v x time / 2.
+  rollTime() { return AIRPORT.rollSeconds / Math.max(1, this.kit.flare || 1); },
+  rollDistance(v) { return v * this.rollTime() / 2; },
   // Hitbox y at which the sprite's wheels touch the ground.
   groundedY() { return SKY_H - PLANE.spriteH + PLANE.spriteOffY; },
   // Bottom of the drawn plane (wheels), used for ground contact.
@@ -626,7 +631,7 @@ export const RULES = {
 
     // Speed: ramps up while flying, rolls to a stop after touchdown.
     if (this.state === 'landing') {
-      this.speed = Math.max(0, this.landingSpeed * (1 - this.stateTime / AIRPORT.rollSeconds));
+      this.speed = Math.max(0, this.landingSpeed * (1 - this.stateTime / this.rollTime()));
     } else if (this.state === 'takeoff') {
       // Holding speeds the plane up along the runway; letting go slows it down again.
       const held = this.holding || this.save.autoTakeoff || this.airborne;   // autoTakeoff: tests only
@@ -755,7 +760,7 @@ export const RULES = {
 
     const out = { dx, inIssr };
     if (this.state === 'landing') {
-      if (this.stateTime >= AIRPORT.rollSeconds) this.finish({ landed: true });
+      if (this.stateTime >= this.rollTime()) this.finish({ landed: true });
       return out;
     }
     if (this.state !== 'playing') return out;
@@ -772,7 +777,7 @@ export const RULES = {
     if (this.spriteBottom() >= SKY_H) {
       const rw = this.runwayUnder(box);
       this.noteTouchdown(box, rw);
-      if (rw) this.land(rw);
+      if (rw) this.land(rw, box);
       else this.finish({ reason: 'You hit the ground!', sound: 'thud' });
       return out;
     }
@@ -856,10 +861,21 @@ export const RULES = {
     // Fares (eras): a landed flight pays per 1,000 km, by plane, x the Cabin upgrades (src/fleet.js FARES).
     const fares = landed && !this.school ? Math.round((FARES[this.kit.plane] || 0) * m / 1e6 * this.kit.fares) : 0;
     if (fares) earned.push({ label: 'Passenger fares', n: fares, lost: false });
+    // A BAD LANDING (ran off the runway's end; the user, 2026-11-17): still a landing, but only AIRPORT.overrunKeep of the flight's seeds (rounded up) is kept.
+    const overran = landed && this.overran && !this.school;
+    if (overran) {
+      const all = earned.reduce((a, e) => a + e.n, 0), lost = all - Math.ceil(all * (FIELD_PLANTS.keepAll ? 1 : AIRPORT.overrunKeep));
+      if (lost > 0) earned.push({ label: 'Ran off the runway', n: -lost, lost: false });
+    }
+    // Ice crystals: a bad landing or a crash keeps only part of this flight's (rounded up); a good landing keeps them all.
+    const crystalKeep = this.school || FIELD_PLANTS.keepAll ? 1 : overran ? AIRPORT.overrunKeep : !landed ? AIRPORT.crashCrystalKeep : 1;
+    this.crystalsLost = this.crystals - Math.ceil(this.crystals * crystalKeep);
+    this.crystals -= this.crystalsLost;
     const gained = landed ? earned.reduce((a, e) => a + e.n, 0) : 0;
     if (!landed && this.cargo) this.popup(this.plane.x + 25, this.plane.y - 14, `-${this.cargo} seeds lost!`, '#ff6a5a', 16);
 
     if (landed) this.save.landings = (this.save.landings || 0) + 1;
+    if (landed && !overran && !this.school) this.save.goodLandings = (this.save.goodLandings || 0) + 1;   // the 'runway' lesson (src/lessons.js)
     if (landed && heat < 0 && !this.school) this.save.coolLandings = (this.save.coolLandings || 0) + 1;   // Cool Planet badge
     const crash = landed ? null : crashKind(reason);
     if (crash && !this.school) { this.save.crashes = this.save.crashes || {}; this.save.crashes[crash] = (this.save.crashes[crash] || 0) + 1; }
@@ -901,7 +917,7 @@ export const RULES = {
     if (newRecord) this.save.bestDistance = m;
     if (landed && !this.school && !this.crossing) recordAreaBest(this.save, this.homeName, m);   // season 2 offer gate (src/crossings.js): game and engine keep the same save
     this.save.seeds += gained;
-    this.save.crystals = (this.save.crystals || 0) + this.crystals;   // always kept: smart flying counts even if you crash
+    this.save.crystals = (this.save.crystals || 0) + this.crystals;   // what is kept (above): all of it after a good landing, part after a crash or a bad landing
     this.grewDays = !this.school && GROW_DAYS.on ? (this.flySeconds || 0) / (DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds) : 0;   // (the results card: 'your saplings grew +N days')
     const treesGrown = !this.school ? growGroves(this.save, needFromGrow(this.kit.grow), GROW_DAYS.on ? { flown: (this.flySeconds || 0) / (DAYNIGHT.daySeconds + DAYNIGHT.nightSeconds), needOf: (land, id) => growNeedTenths(land, id, this.kit.grow) } : null) : 0;   // (how many saplings grew up in this banked flight: result.treesGrown, the one-time 'a tree has grown up' toast) every banked flight, landed or crashed, grows the saplings planted in EARLIER flights one point (src/groves.js)
     // The first safe landing earns one free upgrade, to show what the hangar is for.
@@ -922,7 +938,7 @@ export const RULES = {
       missions2: s2 ? { done: s2Done.map(d => d.title), next: s2Next ? s2Next.title : null } : null,
       // Mission fields (PROPOSAL-HOME-MISSIONS): trees planted this flight ('land:id', UK bare), clean storm gaps, no-fly
       // zones passed. Animals found: foundIds above (the game's 'seen' hook fills it; [] in Node).
-      touchdown: this.touchdown, treeIds: FIELD_PLANTS.trees ? [] : [...this.speciesTags], cleanGaps: this.school ? 0 : this.cleanGaps, noFlyPassed: this.school ? 0 : this.noFlyPassed,
+      overran, crystalsLost: this.crystalsLost, touchdown: this.touchdown, treeIds: FIELD_PLANTS.trees ? [] : [...this.speciesTags], cleanGaps: this.school ? 0 : this.cleanGaps, noFlyPassed: this.school ? 0 : this.noFlyPassed,
       mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, natureGains, bio: biodiversity(this.save),
     };
     this.bank = { m, missionDone, lap, crash, gained };
@@ -945,7 +961,11 @@ export const RULES = {
       const v = Math.max(1, this.speed);
       // Before the runway: sink just slowly enough to reach it. Over it: gently, but fast
       // enough to touch down before the far end.
-      const cap = toStart > 0 ? Math.max(15, drop / ((toStart + 20) / v)) : Math.max(AIRPORT.flareVy, drop / (room / v));
+      let cap = toStart > 0 ? Math.max(15, drop / ((toStart + 20) / v)) : Math.max(AIRPORT.flareVy, drop / (room / v));
+      // Over the runway: come down steep enough to STOP before the end, if the landing window allows that steep a sink;
+      // if not, float down as before and run off the end (a bad landing).
+      const stopRoom = room - this.rollDistance(v);
+      if (!FIELD_PLANTS.flat && toStart <= 0 && stopRoom > 0 && drop / (stopRoom / v) <= AIRPORT.steepVy * this.kit.flare) cap = Math.max(AIRPORT.flareVy, drop / (stopRoom / v));
       this.plane.vy = Math.min(this.plane.vy, cap);
       this.flaring = true;
     }
@@ -1068,9 +1088,11 @@ export const RULES = {
     this.onCrystals(n, why);
   },
 
-  land(rw) {
+  land(rw, box) {
     this.landedAt = rw.name;
     this.landingSpeed = this.speed;
+    // A bad landing: where the nose stops after the roll-out, past the runway's end. (No box: the flight school, never judged.)
+    this.overran = !!box && !FIELD_PLANTS.overrun && box.x + box.w + this.rollDistance(this.speed) > rw.x + AIRPORT.runwayLen;
     this.plane.y = this.groundedY();
     this.plane.vy = 0;
     this.setState('landing');
