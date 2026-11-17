@@ -1534,6 +1534,14 @@ export class GameScene extends Phaser.Scene {
     if (y < 110) { const hud = this.hudBottom(); t.y = Math.max(t.y, hud + t.height / 2 + 26); }
     // Keep popups on screen.
     t.x = Phaser.Math.Clamp(t.x, Math.min(t.width / 2 + 24, WIDTH / 2), WIDTH - Math.min(t.width / 2 + 24, WIDTH / 2));   // clear of the side bars
+    // Polish (Oliver, 2026-11-17, "rough around the edges"): the same words still rising are not shown twice ('CONTRAIL!' x2 on a ragged
+    // icy-air edge), and a new pop-up never sits on one still rising: it moves down under it (the shot had 'CONTRAIL!' over '+1.0 hotter').
+    if (this.popups.some(p => p.t.text === t.text && p.life > 0.5)) { t.destroy(); return; }
+    for (let k = 0; k < 4; k++) {
+      const hit = this.popups.find(p => Math.abs(p.t.y - t.y) < (p.t.height + t.height) / 2 + 1 && Math.abs(p.t.x - t.x) < (p.t.width + t.width) / 2);
+      if (!hit) break;
+      t.y = hit.t.y + (hit.t.height + t.height) / 2 + 2;
+    }
     this.fxLayer.add(t);
     this.popups.push({ t, life: 1.1, vy: -22 });
   }

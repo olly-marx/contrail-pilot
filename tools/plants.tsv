@@ -915,3 +915,5 @@ payoffcard	src/hangar.js	s/g.drawImage(bareImg, 0, 0, w, h);/g.drawImage(beforeI
 rowicons	src/rowicons.js	s/'sensors', //	a gadget row loses its picture
 rowicons	src/hangar.js	s/\${tap}\${rowIcon(id)}/${tap}<span class="rowc-slot"><\/span>/	the hangar rows go back to the empty slot
 rowicons	src/rowicons.js	s/ri-\${id}\.png/ri-${id}-raw.png/	the row points at a file that is not there
+textfit	src/GameScene.js	s/if (this.popups.some(p => p.t.text === t.text \&\& p.life > 0.5)) { t.destroy(); return; }//	the same pop-up shows twice
+textfit	src/GameScene.js	s/for (let k = 0; k < 4; k++) {/for (let k = 0; k < 0; k++) {/	pop-ups stack on each other again
