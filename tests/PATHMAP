@@ -36,7 +36,7 @@ group service-worker | sw.js manifest.webmanifest src/swreg.js | swoffline swupd
 group sw-raw | sw.js src/updates.js src/swreg.js tests/lib/rawchrome.js tests/lib/sitehost.js tests/lib/swpage.js | swupdate swoffline swkill
 group route-header | src/GameScene.js src/sim/rules.js | routeheader
 group ux-fit | src/ui.js index.html style.css src/screens.js src/sheet.js tools/uxlib.cjs | fitscreen badgefont overlap taptargets rowfit hangar nature
-group ux-rows | src/hangar.js src/wild.js src/rowicons.js assets/ui/rows/* | overlap naturebar rowicons rowfit
+group ux-rows | src/hangar.js src/wild.js src/rowicons.js assets/ui/rows/* | overlap naturebar rowfit
 group rules-imports | src/aim.js | sim-bank fares flight
 group ux-fit | src/resultscard.js src/nextup.js | fitscreen overlap taptargets rowfit hangar nature
 ci-only | onrails320
