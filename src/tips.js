@@ -50,7 +50,7 @@ export const TIPS = {
   issrNight:  { say: 'A night contrail traps heat. Climb or dive out of the icy air!', more: 'No sunlight to block, so it only traps heat.' },
   firstToken: { say: 'You grabbed a seed! Land safely to keep it.' },
   powerSaf:   { say: 'SAF is cleaner fuel: less CO2, and thinner contrails that fade sooner.', more: 'Less CO2 and less soot, so contrails are thinner and fade sooner. They still happen.' },
-  airport:    { say: 'Airport ahead! Fly low over the runway to land.', more: 'Get low as you reach the grey runway: the plane lands itself. Or fly on for more seeds!' },
+  airport:    { say: 'Airport ahead! Get low early and land before the yellow line.', more: 'Get low BEFORE the grey runway: the plane lands itself. Touch down after the yellow line and you run off the end and lose half. Or fly on for more seeds!' },
   safAhead:   { say: 'Cleaner fuel ahead! Grab the green can.' },
   forestFull: { say: 'Your forest is full for this flight. More kinds of tree hold much more.', more: 'A forest can only soak up so much CO2 in one flight. Plant all 5 kinds of tree to make it hold much more.' },
   firstDrop:  { say: 'Tree away! It floats down and forwards.', more: 'It floats down AND forwards. Plant it before the brown ground to grow a tree.' },
