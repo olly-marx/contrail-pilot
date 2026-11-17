@@ -831,6 +831,10 @@ export class GameScene extends Phaser.Scene {
     // The stop line (bad landings, 2026-11-17): be down before it, or the roll-out runs off the end. Better Landing gear brakes harder, so it moves along.
     const stop = Math.round(AIRPORT.runwayLen - this.rollDistance(Math.max(WORLD.startSpeed, this.speed || 0)));
     if (stop > PLANE.w) parts.push(this.add.rectangle(x + stop - 2, SKY_H, 2, 6, 0xffe15a).setOrigin(0));
+    // The barrier at the runway's end: two posts and a red and white bar. A bad landing crashes through it (onOverrun).
+    const barrier = [this.add.rectangle(x + AIRPORT.runwayLen, SKY_H, 2, 9, 0xdddddd).setOrigin(0, 1), this.add.rectangle(x + AIRPORT.runwayLen + 6, SKY_H, 2, 9, 0xdddddd).setOrigin(0, 1),
+      this.add.rectangle(x + AIRPORT.runwayLen - 1, SKY_H - 8, 10, 3, 0xe23b3b).setOrigin(0)];
+    parts.push(...barrier); rw.barrier = barrier;
     // Control tower at the far end.
     // The tower shows your Air traffic control level; a weather station your Forecasting era (art session).
     const sys = fleetOf(this.save).systems, atc = sys.atc || 0, fc = sys.forecast || 0;
@@ -1415,8 +1419,18 @@ export class GameScene extends Phaser.Scene {
     this.drawPlane();
     sfx.land();
     this.burst(this.plane.x + 10, SKY_H - 2, 0xd8d4c8, 10);
-    if (this.overran) this.popup(this.plane.x + 25, SKY_H - 40, 'TOO LATE: OFF THE END!', '#ff6a5a', 12);
-    else this.popup(this.plane.x + 25, SKY_H - 40, 'TOUCHDOWN!', '#ffe15a', 16);
+    this.popup(this.plane.x + 25, SKY_H - 40, 'TOUCHDOWN!', '#ffe15a', 16);
+  }
+  // Through the barrier (bad landings): sparks, a crunch, a shake, the barrier flies off, 'OVERRUN!'.
+  onOverrun(rw) {
+    const x = rw.x + AIRPORT.runwayLen + 4;
+    sfx.overrun(); this.shake(250, 0.012);
+    this.burst(x, SKY_H - 4, 0xffd23a, 14); this.burst(x, SKY_H - 6, 0xff7a1a, 10); this.burst(x, SKY_H - 2, 0xffffff, 6);
+    rw.parts = rw.parts.filter(p => !(rw.barrier || []).includes(p));   // loose now: the tween moves them, not the runway
+    for (const [k, b] of (rw.barrier || []).entries()) {
+      this.tweens.add({ targets: b, x: b.x + 26 + 10 * k, y: b.y - 14 + 6 * k, angle: 200 + 70 * k, alpha: 0, duration: 650, onComplete: () => b.destroy() });
+    }
+    this.popup(this.plane.x + 25, SKY_H - 72, 'OVERRUN!', '#ff6a5a', 16);   // above TOUCHDOWN!, which is still on screen
   }
   onPopFake(i) {
     const cx = i.x + i.width / 2, cy = i.y + i.height / 2;
