@@ -925,3 +925,7 @@ lessons	src/lessons.js	s/ || s.pilotNamed === true },/ },/	the name lesson waits
 tours	src/tour.js	s/{ target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || \/internet|different\/.test($('pMsg').textContent) },/{ target: '#pFirst', text: tip('tour-form'), until: () => \/^[A-Za-z]{2,12}$\/.test($('pFirst').value) }, { target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || \/internet|different\/.test($('pMsg').textContent) },/	the name highlight hops after two letters again
 namelesson	src/tour.js	s/if (this.save.school2 \&\& !namesOpen() \&\& !this.done('name') \&\& this.lesson() === 'name') this.markDone('name');//	the name lesson waits for ever where names are off
 treepen	src/treepen.js	s/have: Math.round(sp.points) \/ 10,/have: Math.floor(sp.points \/ 10),/	the nursery shows whole days only again
+overrun@PLANT=overrun	-	-	an overrun is never judged
+overrun@PLANT=keepAll	-	-	a bad landing or a crash loses nothing
+overrun@PLANT=flat	-	-	no steeper way down over the runway
+overrun@PLANT=linear	-	-	the gear pull is not squared
