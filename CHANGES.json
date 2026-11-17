@@ -1,5 +1,20 @@
 [
   {
+    "id": "2026-11-17-school-fixes",
+    "version": "0.66.1",
+    "date": "2026-11-17",
+    "level": "minor",
+    "notes": [
+      "Fixed: the School's pilot-name lesson no longer gets stuck.",
+      "Naming your pilot is one simple step, and the lesson ticks off once your name is saved.",
+      "Lesson bubbles that sit low stay above the ground, so you can see the soil and the PLANT button.",
+      "The tree nursery shows part days, like 2.4 of 6 days.",
+      "The ring round a new plane part no longer hides the part.",
+      "New pictures for the hangar's systems and gadgets and NATURE's tree tools.",
+      "Pop-ups in flight no longer pile on top of each other. The skip flight school button is gone."
+    ]
+  },
+  {
     "id": "2026-11-17-school",
     "version": "0.66.0",
     "date": "2026-11-17",
