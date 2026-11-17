@@ -128,6 +128,7 @@ export const TIPS = {
 
   // ---- menu tours (src/tour.js) ----
   'tour-hello':   { say: 'Welcome, pilot! Tap <b>PILOT</b> to choose your pilot name.' },
+  'tour-form':    { say: 'Type your <b>first name</b>, pick a <b>word</b>, then tap <b>SAVE MY NAME</b>.' },
   'tour-first':   { say: 'Type your <b>first name</b> here.' },
   'tour-word':    { say: 'Now pick a <b>word</b> to go with it.' },
   'tour-save':    { say: 'Tap <b>SAVE</b>!' },

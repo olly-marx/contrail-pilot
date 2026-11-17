@@ -165,10 +165,9 @@ export class Tour {
   nameSteps() {
     return [
       { target: '#tabPilot', text: tip('tour-hello'), tap: true, ready: namesOpen },
-      { target: '#pFirst', text: tip('tour-first'), until: () => /^[A-Za-z]{2,12}$/.test($('pFirst').value), focus: true },
-      { target: '#pWords', text: tip('tour-word'), until: () => !!(this.ui.pilot && this.ui.pilot.draft.word) },
-      { target: '#pSave', text: tip('tour-save'), tap: true },
-      { target: '#pName', text: tip('tour-saving'), until: () => !!getPilot() || /internet|different/.test($('pMsg').textContent), wait: true },
+      // ONE step round the whole form (Oliver, 2026-11-17: the highlight hopped from the name box to the words after two letters, while he was
+      // still typing; and the 'Saving...' bubble sat over the pilot card). It stays put until the name is saved or the save says why not.
+      { target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || /internet|different/.test($('pMsg').textContent) },
       { skipIf: () => !!getPilot() || !/different/.test($('pMsg').textContent), target: '#pEdit', text: tip('tour-retry'), until: () => !!getPilot() || /internet/.test($('pMsg').textContent) },
       { skipIf: () => !!getPilot(), target: '#pMsg', text: tip('tour-offline'), ok: true, end: true },
       { target: '#tabBoards', text: tip('tour-boards'), tap: true, ready: always },

@@ -5,7 +5,7 @@
 // tests/railsubjects.cjs (Node) checks that every step of every tour has an entry here; tests/spotlight.cjs (browser) checks the spotlight of each step on the real screen.
 export const COUNTS = {   // tour id -> how many steps it has (the number of entries it must declare)
   'r-school': 1, 'r-hangar': 1, 'r-free': 2, 'r-takeoff1': 1, 'r-res1': 3, 'r-takeoff2': 1, 'r-res2': 1, 'r-nature': 5, 'r-bonus': 1, 'r-systems': 3, 'r-parcels': 1, 'r-plant1': 1, 'r-plant2': 1, 'r-map': 1, 'r-boards': 1, 'r-payoff': 1, 'r-trees': 1, 'r-practice': 1, 'r-earth': 1, 'r-crosshint': 1,
-  name: 10, new: 3,
+  name: 7, new: 3,
 };
 export const SUBJECTS = {
   'r-school#1': '#rNextRows .rc-row',              // the UP NEXT lead row that says "a free part"
@@ -29,7 +29,7 @@ export const SUBJECTS = {
   'r-map#1': null, 'r-boards#1': null,
   'r-trees#1': null, 'r-practice#1': null, 'r-earth#1': null, 'r-crosshint#1': null,   // the School board's steps (src/lessons.js): each target is its own subject
   'r-payoff#1': ['.pay-frame', '#payLabel'],       // the plane and the new part on it, and the caption under it (the label sits in its own row below the picture)
-  'name#1': null, 'name#2': null, 'name#3': null, 'name#4': null, 'name#5': null, 'name#6': null, 'name#7': null, 'name#8': null, 'name#9': null, 'name#10': null,
+  'name#1': null, 'name#2': null, 'name#3': null, 'name#4': null, 'name#5': null, 'name#6': null, 'name#7': null,
   'new#1': null,
   'new#2': '^.rowc',                               // the NEW line's row (its picture and name), not only its (i)
   'new#3': ['#iWhat', '#iWhy'],                    // the information card's two paragraphs (its title scrolls off a 320x568 screen)

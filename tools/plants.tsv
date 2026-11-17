@@ -921,3 +921,5 @@ textfit	src/GameScene.js	s/if (!coachEl.classList.contains('strip-low') \&\& thi
 textfit	src/GameScene.js	s/if (this.explaining \&\& strip \&\& !strip.hidden \&\& !strip.classList.contains('strip-low')) return;//	a land banner opens under a top lesson strip
 stripclear	style.css	s/bottom: calc(var(--ground-px, 0px) + 4px); }/bottom: 6px; }/	a low strip covers the ground and PLANT again
 payoffcard	src/hangar.js	s/const pad = Math.max(4, /const pad = 0 * Math.max(4, /	the ring sits on the part's edge again
+lessons	src/lessons.js	s/ || s.pilotNamed === true },/ },/	the name lesson waits for the tour again
+tours	src/tour.js	s/{ target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || \/internet|different\/.test($('pMsg').textContent) },/{ target: '#pFirst', text: tip('tour-form'), until: () => \/^[A-Za-z]{2,12}$\/.test($('pFirst').value) }, { target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || \/internet|different\/.test($('pMsg').textContent) },/	the name highlight hops after two letters again

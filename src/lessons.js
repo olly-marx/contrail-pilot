@@ -28,7 +28,7 @@ export const BOARD = [
   { id: 'L5',        course: 'Trees',        title: 'Drop a tree on brown soil', short: 'Plant one on a real flight.',                 pic: 'lesson-plot', kind: 'fly',    done: L('L5') },
   { id: 'grow',      course: 'Trees',        title: 'Watch it grow',             short: 'Saplings grow as you fly. See NATURE.',       pic: 'lesson-tree-co2', kind: 'passive', where: 'nature', done: s => treesGrownTotal(s) > 0 },
   { id: 'results',   course: 'Your flights', title: 'Reading your flight',       short: 'What warmed and cooled the Earth.',           pic: 'lesson-heat', kind: 'read',   done: s => tour(s, 'r-earth') },
-  { id: 'name',      course: 'Pilot',        title: 'Your pilot name',           short: 'Choose the name on the boards.',              pic: 'lesson-bars', kind: 'screen', where: 'pilot', done: s => tour(s, 'name') },
+  { id: 'name',      course: 'Pilot',        title: 'Your pilot name',           short: 'Choose the name on the boards.',              pic: 'lesson-bars', kind: 'screen', where: 'pilot', done: s => tour(s, 'name') || s.pilotNamed === true },   // a saved name finishes it even if the tour was left before its end (Oliver, 2026-11-17: still said 'save pilot name' after saving)
   { id: 'records',   course: 'Pilot',        title: 'Your records',              short: 'Your best flights.',                          pic: 'lesson-bars', kind: 'screen', where: 'boards', done: s => tour(s, 'r-boards') },
   { id: 'crossings', course: 'The world',    title: 'Crossings',                 short: 'How to open the next part of the world.',     pic: 'lesson-bonus', kind: 'read',  done: s => tour(s, 'r-cross') || (s.areas || []).length > 1 },
 ];
