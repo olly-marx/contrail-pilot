@@ -388,6 +388,8 @@ export class GameScene extends Phaser.Scene {
     const coachEl = document.getElementById('coach'), toastEl = document.getElementById('toast');
     const dropToast = () => { if (this.explaining && toastEl && !toastEl.hidden && !coachEl.hidden && !coachEl.classList.contains('strip-low')) toastEl.style.top = `${Math.round(coachEl.getBoundingClientRect().bottom + 6)}px`; };
     this.dropToast = dropToast; dropToast();
+    // Polish (2026-11-17): the land banner and a strip at the top shared the same few lines under the HUD (the practice flight's shot): the lesson wins.
+    if (!coachEl.classList.contains('strip-low') && this.banner) { this.banner.destroy(); this.banner = null; }
     if (typeof ResizeObserver !== 'undefined') { (this.stripWatch = this.stripWatch || new ResizeObserver(() => dropToast())).disconnect(); this.stripWatch.observe(coachEl); }   // the strip grows when its picture loads: follow it at once
     else { setTimeout(dropToast, 250); setTimeout(dropToast, 800); }
     const mine = this.tipSerial = (this.tipSerial || 0) + 1;
@@ -594,6 +596,8 @@ export class GameScene extends Phaser.Scene {
   // and meter for 2.5 s at the top of the sky. Over a bare land, once per device, how to bring it to life.
   regionBanner(r) {
     if (this.school || !REGION_NAMES[r]) return;
+    const strip = document.getElementById('coach');
+    if (this.explaining && strip && !strip.hidden && !strip.classList.contains('strip-low')) return;   // a lesson strip is at the top: no banner under it (polish, 2026-11-17)
     const bio = biodiversity(this.save, r);
     if (this.banner) this.banner.destroy();
     const W = 220, x = WIDTH / 2, y = Math.max(90, Math.ceil(this.hudTextBottom()) + 3 + 19);   // under the distance, mission and next-airport lines (19 = half the card): at y 90 a two-line mission's next-airport line sat under the card (design run, problem 7)
