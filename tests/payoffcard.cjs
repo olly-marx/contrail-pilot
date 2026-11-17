@@ -42,10 +42,15 @@ SAVE.fleet = { ...SAVE.fleet, plane: 'comet', planes: { ...SAVE.fleet.planes, co
     if (await p.locator('#hPreviewBuy').isVisible().catch(() => false)) await p.click('#hPreviewBuy');
     await p.waitForFunction(() => document.querySelector('#payoff.labelled'), null, { timeout: 12000 }).catch(() => {});
     const up = await p.evaluate(() => { const vis = id => !!document.getElementById(id).offsetParent, f = document.querySelector('#payoff .pay-frame').getBoundingClientRect(), m = document.getElementById('payMark').getBoundingClientRect();
-      return { text: (document.getElementById('payText') || {}).textContent, go: vis('hGoBtn'), reset: vis('resetBtn'), top: vis('hGoTop'), ring: m.width / f.width, ringW: Math.round(m.width) }; });
+      return { text: (document.getElementById('payText') || {}).textContent, go: vis('hGoBtn'), reset: vis('resetBtn'), top: vis('hGoTop'), ring: m.width / f.width, ringW: Math.round(m.width),
+        clear: (() => { const mk = document.getElementById('payMark'), part = document.querySelector('#payoff .pay-part'); if (!mk.dataset.part || !part) return null;
+          const [x0, y0, x1, y1, w, h] = mk.dataset.part.split(',').map(Number), r = part.getBoundingClientRect(), sx = r.width / w, sy = r.height / h, bw = 2;   /* the ring's border */
+          const px = { l: r.left + x0 * sx, t: r.top + y0 * sy, r: r.left + (x1 + 1) * sx, b: r.top + (y1 + 1) * sy };
+          return Math.round(Math.min(px.l - (m.left + bw), px.t - (m.top + bw), (m.right - bw) - px.r, (m.bottom - bw) - px.b)); })() }; });
     check(/Pinion fuel tanks: fitted!/.test(up.text), `the card says the part is fitted: ${JSON.stringify(up)}`);
     check(!up.go && !up.reset, `while the card is up, the bottom TAKE OFF and reset row are hidden: ${JSON.stringify(up)}`);
     check(up.ringW > 0 && up.ring < 0.3, `the ring goes round the new part only (${Math.round(up.ring * 100)} % of the frame wide): ${JSON.stringify(up)}`);
+    check(up.clear !== null && up.clear >= 2, `the ring's border stays clear of the part (Oliver, 2026-11-17: the highlight covered the part): gap ${up.clear} px`);
     await p.click('#payOk'); await p.waitForTimeout(500);
     check(await p.evaluate(() => !!document.getElementById('hGoBtn').offsetParent), 'after OK the bottom TAKE OFF is back');
   }

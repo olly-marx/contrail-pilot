@@ -155,6 +155,11 @@ export class FleetHangar {
       let x0 = w, y0 = h, x1 = -1, y1 = -1;
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const k = (y * w + x) * 4; if (Math.abs(A[k] - B[k]) + Math.abs(A[k + 1] - B[k + 1]) + Math.abs(A[k + 2] - B[k + 2]) + Math.abs(A[k + 3] - B[k + 3]) > 60) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
       if (x1 < 0) return;
+      mark.dataset.part = [x0, y0, x1, y1, w, h].join(',');   // the changed pixels' box (tests/payoffcard.cjs: the ring must clear it)
+      // A margin round the part (Oliver, 2026-11-17: the highlight often covered the part itself): the ring's 2 px border sits OUTSIDE the
+      // changed pixels, by about 4 % of the picture (at least 4 art pixels), kept inside the picture.
+      const pad = Math.max(4, Math.round(0.04 * Math.max(w, h)));
+      x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(w - 1, x1 + pad); y1 = Math.min(h - 1, y1 + pad);
       const pct = (v, n) => `${(100 * v / n).toFixed(2)}%`;
       Object.assign(mark.style, { left: pct(x0, w), top: pct(y0, h), width: pct(x1 - x0 + 1, w), height: pct(y1 - y0 + 1, h) });
       const sp = el.querySelector('.pay-spark'); if (sp) { sp.style.left = pct((x0 + x1) / 2, w); sp.style.top = pct((y0 + y1) / 2, h); } };   // the sparkle sits ON the part (there is no zoom any more: the whole plane stays in view)
