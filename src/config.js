@@ -111,11 +111,11 @@ export const AIRPORT = {
   flareCo2: 1.5,       // CO2 x this while flaring
   rollSeconds: 1.4,    // decelerate along the runway after touchdown
   // BAD LANDINGS (the user, 2026-11-17): running off the runway's end is not a crash, but keeps only part of the flight.
-  // The landing window (kit.flare, the Landing gear and plane parts, 1 to about 2) also brakes (the roll takes rollSeconds / flare)
-  // and lets the flare come down steeper over the runway to stop in time (up to steepVy x flare).
+  // The landing window (kit.flare, the Landing gear and plane parts, 1 to about 2) also brakes (the roll takes rollSeconds / flare^2)
+  // and lets the flare come down steeper over the runway to stop in time (up to steepVy x flare^2). (src/sim/rules.js landingPower)
   overrunKeep: 0.5,    // share of the flight's seeds and ice crystals kept after running off the runway (rounded up)
   crashCrystalKeep: 0.5, // share of the flight's ice crystals kept after a crash (rounded up); was 1 before 2026-11-17
-  steepVy: 90,         // px/s: the steepest the flare may sink over the runway at landing window x1
+  steepVy: 90,         // px/s: the steepest the flare may sink over the runway at landing window x1 (x flare^2 above it)
 };
 
 export const TOKENS = {

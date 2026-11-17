@@ -2,7 +2,7 @@
 # tools/prove-plants.sh applies each (the file must be unchanged in git), runs `node tests/<test>.cjs` (browser tests need URL + NODE_PATH),
 # requires a NON-ZERO exit, and restores the file with `git checkout`. A plant that does not change the file, or a test that still passes, is reported.
 # Rules for a plant: it leaves the code parseable; it breaks exactly the rule the test names; `if (false)` not `{}` as an arrow body.
-flight	src/sim/rules.js	s/if (rw) this.land(rw);/if (false) this.land(rw);/	landing disabled
+flight	src/sim/rules.js	s/if (rw) this.land(rw, box);/if (false) this.land(rw, box);/	landing disabled
 flight	src/sim/rules.js	s/if (this.heat >= CLIMATE.dangerLine) { this.finish/if (false) { this.finish/	overheat disabled
 flight	src/sim/rules.js	s/else this.finish({ reason: 'You hit the ground!', sound: 'thud' });/else {}/	ground crash disabled
 flight	src/sim/rules.js	s/this.heatTrapped += rate \* dt;/this.heatTrapped += 0;/	night heat zeroed
@@ -20,7 +20,7 @@ crystals	src/sim/rules.js	s/    if (this.isDay) return 'day';//	day dodge counts
 crystals	src/sim/rules.js	s/    if (!i.inPath) return 'notheading';//	no path needed
 crystals	src/sim/rules.js	s/    if (i.entered) return 'touched';//	night contrail counts
 crystals	src/sim/rules.js	s/this.save.crystals = (this.save.crystals || 0) + this.crystals;/this.save.crystals = (this.save.crystals || 0) + (landed ? this.crystals : 0);/	crystals lost on crash
-sim-flight	src/sim/rules.js	s/if (rw) this.land(rw);/if (false) this.land(rw);/	landing disabled
+sim-flight	src/sim/rules.js	s/if (rw) this.land(rw, box);/if (false) this.land(rw, box);/	landing disabled
 sim-flight	src/sim/rules.js	s/if (this.heat >= CLIMATE.dangerLine) { this.finish/if (false) { this.finish/	overheat disabled
 sim-flight	src/sim/rules.js	s/else this.finish({ reason: 'You hit the ground!', sound: 'thud' });/else {}/	ground crash disabled
 sim-flight	src/sim/rules.js	s/this.heatTrapped += rate \* dt;/this.heatTrapped += 0;/	night heat zeroed

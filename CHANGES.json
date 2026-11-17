@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-17-bad-landings",
+    "version": "0.67.0",
+    "date": "2026-11-17",
+    "level": "major",
+    "notes": [
+      "Land before the yellow line! Run off the end of the runway and you lose half your seeds and ice crystals.",
+      "Overrun the runway and you crash through the barrier at the end.",
+      "Better Landing gear brakes harder and lets you come down steeper, so late landings are easier to save.",
+      "A crash now keeps half the ice crystals from that flight.",
+      "New School lesson: Land before the line."
+    ]
+  },
+  {
     "id": "2026-11-17-school-fixes",
     "version": "0.66.1",
     "date": "2026-11-17",

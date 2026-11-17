@@ -7,7 +7,8 @@
 //   D  a crash (no runway), x1      -> 3 of 5 crystals kept
 //   F  the barrier at the end is hit (onOverrun) exactly once on B, never on A or C
 //   E  the roll-out stops short of the runway's end on every landing judged good (the rule's own geometry, checked from frames)
-// Plain Node. PLANT=overrun (never judged) | keepAll (nothing lost) | flat (no steeper way down): each must FAIL.  Run: node tests/overrun.cjs
+//   G  one gear step (x1.2) stops in time where x1 runs off the end (the gear's pull is the landing window squared)
+// Plain Node. PLANT=overrun (never judged) | keepAll (nothing lost) | flat (no steeper way down) | linear (gear pull not squared): each must FAIL.  Run: node tests/overrun.cjs
 (async () => {
   const R = await import('../src/sim/rules.js');
   const { createWorld } = await import('../src/sim/world.js');
@@ -49,6 +50,9 @@
   // E: the geometry. Where the nose really stopped (frames) against the runway's end, for every landing above.
   for (const [n, o] of [['A', A], ['B', B], ['C', C]]) if (o.r.landed) check(`E ${n} stop vs end`, (o.stopNose <= o.rwEnd + 0.5) === !o.r.overran, `nose stopped ${Math.round(o.stopNose - o.rwEnd)} px from the end, overran ${o.r.overran}`);
   check('F barrier: once on the overrun, never on a good landing', B.barrier === 1 && A.barrier === 0 && C.barrier === 0, `A ${A.barrier}, B ${B.barrier}, C ${C.barrier}`);
+  // G: one gear step is felt. The same approach (arriving 160 px up over the runway's start) runs off the end at x1 and stops in time at x1.2 (the squared pull; linear x1.2 is not enough).
+  const G1 = fly({ H: 160, D: 0, flare: 1 }), G2 = fly({ H: 160, D: 0, flare: 1.2 });
+  check('G one gear step (x1.2) saves a high approach that x1 overruns', G1.r.overran && G2.r.landed && !G2.r.overran, `x1: ${say(G1)} | x1.2: ${say(G2)}`);
   console.log(fails.length ? `FAILED: ${fails.join(', ')}` : 'PASS');
   process.exit(fails.length ? 1 : 0);
 })();

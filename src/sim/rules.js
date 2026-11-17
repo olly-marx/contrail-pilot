@@ -23,7 +23,7 @@ import { loadout, FUELS } from '../upgrades.js';
 // no-fly zone counts when the nose reaches it (a crash in it counts too); trees = treeIds left empty.
 // Planted defects for tests/sim-twists.cjs (each must FAIL it): still = no twist ever moves; early = twists ignore `from`.
 export const TWIST_PLANTS = { still: false, early: false };
-export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false, touchdown: false, overrun: false, keepAll: false, flat: false };
+export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false, touchdown: false, overrun: false, keepAll: false, flat: false, linear: false };
 import { recordFlight } from '../records.js';
 import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
@@ -132,6 +132,7 @@ export const RULES = {
     this.released = 0;                 // trees dropped this flight (hit or miss): the results line 'Planted 2 of 3 trees'
     this.plantedNames = [];            // the names of the trees that landed on soil this flight
     this.touchdown = null;            // the numbers of this flight's ground contact (noteTouchdown): result.touchdown
+    this.landedRunway = null; this.hitBarrier = false;   // the runway landed on, and whether a bad landing has hit its barrier yet (onOverrun)
     this.overran = false;             // a BAD LANDING: the roll-out ran past the runway's end (land; AIRPORT.overrunKeep)
     this.forestFullSaid = false;
     this.saidGroveFull = false;        // BIOME_FULL_POPUP is said once PER flight (src/droporder.js: nothing left to drop)
@@ -217,7 +218,10 @@ export const RULES = {
   multiplier() { return Math.round((1 + this.kit.perSkip * this.airportsSkipped) * 10) / 10; },
   hitbox() { return { x: this.plane.x, y: this.plane.y, w: PLANE.w, h: PLANE.h }; },
   // The roll-out after touchdown: the landing window brakes (src/config.js AIRPORT.overrunKeep). Linear slow-down, so distance = v x time / 2.
-  rollTime() { return AIRPORT.rollSeconds / Math.max(1, this.kit.flare || 1); },
+  // The landing gear's pull on the roll-out and the steep way down is the landing window SQUARED (Oliver, 2026-11-17: 'are those sufficient?'): x1.1 alone moved the
+  // highest safe arrival over the runway start by 5-10 px at cruising speed, which nobody feels; squared it is 20-25 px per step. x1 (no gear) is unchanged.
+  landingPower() { const f = Math.max(1, this.kit.flare || 1); return FIELD_PLANTS.linear ? f : f * f; },
+  rollTime() { return AIRPORT.rollSeconds / this.landingPower(); },
   rollDistance(v) { return v * this.rollTime() / 2; },
   // Hitbox y at which the sprite's wheels touch the ground.
   groundedY() { return SKY_H - PLANE.spriteH + PLANE.spriteOffY; },
@@ -968,7 +972,7 @@ export const RULES = {
       // Over the runway: come down steep enough to STOP before the end, if the landing window allows that steep a sink;
       // if not, float down as before and run off the end (a bad landing).
       const stopRoom = room - this.rollDistance(v);
-      if (!FIELD_PLANTS.flat && toStart <= 0 && stopRoom > 0 && drop / (stopRoom / v) <= AIRPORT.steepVy * this.kit.flare) cap = Math.max(AIRPORT.flareVy, drop / (stopRoom / v));
+      if (!FIELD_PLANTS.flat && toStart <= 0 && stopRoom > 0 && drop / (stopRoom / v) <= AIRPORT.steepVy * this.landingPower()) cap = Math.max(AIRPORT.flareVy, drop / (stopRoom / v));
       this.plane.vy = Math.min(this.plane.vy, cap);
       this.flaring = true;
     }
