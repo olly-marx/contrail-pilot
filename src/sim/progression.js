@@ -146,7 +146,7 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
     const era = eraProgress(save).index;
     if (era > eraWas) { events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `era ${era} opens (${fleetOf(save).plane})` }); eraWas = era; }
     rows.push({ flight: n, skill: +s.toFixed(3), km: Math.round(w.distancePx), landed: !!w.landed, end: w.landed ? 'landed' : (w.endReason || '').split('\n')[0],
-      overran: !!(w.result && w.result.overran), flare: w.kit.flare, skipped: w.airportsSkipped, crossing: crossing || '', crossingId: c2 ? c2.id : '', areas: s2 ? [...save.areas] : null, seeds: save.seeds, crystals: save.crystals || 0, minutes: +(save.flightSeconds / 60).toFixed(1),
+      overran: !!(w.result && w.result.overran), flare: w.kit.flare, gained: (w.result && w.result.gained) || 0, crystalsGot: (w.result && w.result.crystals) || 0, crystalsLost: (w.result && w.result.crystalsLost) || 0, skipped: w.airportsSkipped, crossing: crossing || '', crossingId: c2 ? c2.id : '', areas: s2 ? [...save.areas] : null, seeds: save.seeds, crystals: save.crystals || 0, minutes: +(save.flightSeconds / 60).toFixed(1),
       era, plane: fleetOf(save).plane, bio: biodiversity(save, here), region: here, homeBio, prizes: prizes.seeds, capability: cap, bought: bought.join(' ') });
   }
   return { rows, events, summary: summarise(rows, events) };
