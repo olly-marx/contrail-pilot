@@ -24,7 +24,7 @@ export const TIPS = {
   'school-oops':   { say: 'Oops, a night contrail: that traps heat. Next time fly around it.' },
   'school-great':  { say: 'Great flying! No night contrail. The Earth says thank you!' },
   'lesson-heat':   { say: 'Watch the Earth bar. If the red reaches the top, your flight ends.', more: 'Watch the Earth bar! CO2 and night contrails fill it red. If it reaches the top, the Earth is too hot: your flight ends and you lose your seeds. Shade and trees bring it down.' },
-  'lesson-land':   { say: 'An airport is coming! Fly low over the runway and the plane lands itself.', more: 'Morning! An airport is coming. Fly low as you reach the grey runway. At the end, the plane lands itself.' },
+  'lesson-land':   { say: 'An airport is coming! Come in low and touch down before the yellow line.', more: 'Morning! An airport is coming. Fly low BEFORE the grey runway and the plane lands itself. Touch down before the yellow line: land late and you run off the end and lose half your seeds and ice crystals. Better Landing gear brakes harder and lets you come down steeper.' },
   'school-low':    { say: 'Get <b>low</b> just before the runway!' },
 
   // ---- first-flight coach cards (explain: one-off, never freeze the game after school) ----

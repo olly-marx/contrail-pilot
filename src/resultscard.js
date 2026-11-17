@@ -29,7 +29,7 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   const prizeSeeds = sum(rewards.filter(u => u.kind === 'mission'), u => u.seeds), prizeCrystals = sum(rewards.filter(u => u.kind === 'mission'), u => u.crystals);
   const v = { school: !!r.school, landed: !!r.landed, lead };
   // 1. The head: eyebrow, the city or the thing hit, the distance, a record star.
-  v.eyebrow = r.school ? 'FLIGHT SCHOOL' : r.landed ? 'LANDED IN' : 'CRASHED:';
+  v.eyebrow = r.school ? 'FLIGHT SCHOOL' : r.landed ? (r.overran ? 'BAD LANDING IN' : 'LANDED IN') : 'CRASHED:';
   v.title = r.school ? 'Well done!' : r.landed ? r.landedAt : crashTitle(r.reason);
   v.dist = km(r.distance || 0); v.record = !!r.newRecord;
   // 2. The bank: what this flight ADDED to the bank, all sources (what you carried home, bonuses, fares, prizes). A crash loses the seeds you carried.
@@ -37,7 +37,7 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   const mult = Number(r.mult) > 1 && earned.some(e => /^Long/.test(e.label)) ? ` × ${r.mult} bonus` : '';   // the word the r-bonus rail says (tests/railwords.cjs)
   const kinds = r.kinds ? ` · ${r.kinds} ${r.kinds === 1 ? 'kind' : 'kinds'}` : '';
   const base = `${grab} grabbed${mult}`;   // the tree kinds ride along only while the line still fits one row; the sheet always has them
-  v.maths = r.school ? '' : r.landed ? clip((base + kinds).length <= LINE_MAX ? base + kinds : base, LINE_MAX) : `${total} seeds lost`;   // (the crystals kept are the hero line; the pixel font has no snowflake)
+  v.maths = r.school ? '' : r.overran ? 'Off the runway: half lost' : r.landed ? clip((base + kinds).length <= LINE_MAX ? base + kinds : base, LINE_MAX) : `${total} seeds lost`;   // (the crystals kept are the hero line; the pixel font has no snowflake)
   // The planting row (tutorial 1a; the user, 2026-11-11: two lines): 'Planted 2 of 3 trees' and under it the kinds, 'Spruce, Oak'; 'Missed 3 trees' (one line) when none landed on soil; nothing when no tree was dropped.
   const dropped = r.treesDropped || 0, planted = Math.min(r.planted || 0, dropped), treeWord = dropped === 1 ? 'tree' : 'trees', names = (r.treeNames || []).join(', ');
   const treesBase = !dropped ? '' : planted ? `Planted ${planted} of ${dropped} ${treeWord}` : `Missed ${dropped} ${treeWord}`;
@@ -45,9 +45,9 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   v.treeNames = v.trees && planted && names ? clip(names, LINE_MAX) : '';   // the second line of the row: the kinds that landed ('Spruce, Oak'), clipped to the row
   // The sheet behind the maths line: every row of the old tally.
   const gains = r.natureGains || [];
-  v.tally = [...earned.map(e => [e.label === 'Seeds' ? 'Seeds grabbed' : e.label, r.landed ? `+${e.n}` : `${e.n} lost`]),
+  v.tally = [...earned.map(e => [e.label === 'Seeds' ? 'Seeds grabbed' : e.label, r.landed ? (e.n < 0 ? `${e.n}` : `+${e.n}`) : `${e.n} lost`]),
     ...gains.map(g => [g.name, `+${g.gain}`]), ...(r.kinds ? [[`${plural(r.kinds, 'tree kind')} today`, 'forest bonus']] : []),
-    ...(r.crystals ? [['Ice crystals (kept)', `+${r.crystals}`]] : []), ...(paid.seeds ? [['Prizes', `+${paid.seeds}`]] : [])];
+    ...(r.crystals ? [['Ice crystals (kept)', `+${r.crystals}`]] : []), ...(r.crystalsLost ? [['Ice crystals lost', `-${r.crystalsLost}`]] : []), ...(paid.seeds ? [['Prizes', `+${paid.seeds}`]] : [])];
   // 3. Missions: 1 -> its name, 2+ -> the count; the seeds they paid on the right. The sheet lists them. (Season 1: the one mission's outcome.)
   if (r.missions2) {
     const n = missionTitles.length;

@@ -828,6 +828,9 @@ export class GameScene extends Phaser.Scene {
     const { x, name } = rw;
     const strip = this.add.tileSprite(x, SKY_H, AIRPORT.runwayLen, 6, 'runway').setOrigin(0);   // centre dash every 20 px
     const parts = [strip];
+    // The stop line (bad landings, 2026-11-17): be down before it, or the roll-out runs off the end. Better Landing gear brakes harder, so it moves along.
+    const stop = Math.round(AIRPORT.runwayLen - this.rollDistance(Math.max(WORLD.startSpeed, this.speed || 0)));
+    if (stop > PLANE.w) parts.push(this.add.rectangle(x + stop - 2, SKY_H, 2, 6, 0xffe15a).setOrigin(0));
     // Control tower at the far end.
     // The tower shows your Air traffic control level; a weather station your Forecasting era (art session).
     const sys = fleetOf(this.save).systems, atc = sys.atc || 0, fc = sys.forecast || 0;
@@ -1412,7 +1415,8 @@ export class GameScene extends Phaser.Scene {
     this.drawPlane();
     sfx.land();
     this.burst(this.plane.x + 10, SKY_H - 2, 0xd8d4c8, 10);
-    this.popup(this.plane.x + 25, SKY_H - 40, 'TOUCHDOWN!', '#ffe15a', 16);
+    if (this.overran) this.popup(this.plane.x + 25, SKY_H - 40, 'TOO LATE: OFF THE END!', '#ff6a5a', 12);
+    else this.popup(this.plane.x + 25, SKY_H - 40, 'TOUCHDOWN!', '#ffe15a', 16);
   }
   onPopFake(i) {
     const cx = i.x + i.width / 2, cy = i.y + i.height / 2;
