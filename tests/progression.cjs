@@ -49,9 +49,10 @@ const KEY = 'contrailPilot.v2';
   await noStorms(); await hold(); await grab(4);
   for (let i = 0; i < 8; i++) { await hold(); await p.waitForTimeout(60); }
   await scene(() => { const s = game.scene.getScene('game'); s.airportsSkipped = 1; s.heat = 20; s.distancePx = s.nextAirport.worldX - 250; });
+  // Let go 150 px before the runway: a late, high arrival now runs off the end (bad landings, 0.67.0) and banks only half.
   for (let i = 0; i < 150; i++) {
     const st = await scene(() => { const s = game.scene.getScene('game'); s.heat = Math.max(s.heat, 20);
-      const toA = s.nextAirport.worldX - s.distancePx; if (toA > -20) { s.plane.y = 300; s.plane.vy = 0; } return s.state; });
+      const toA = s.nextAirport.worldX - s.distancePx; if (toA > 150) { s.plane.y = 300; s.plane.vy = 0; } return s.state; });
     if (st === 'over') break;
     await p.waitForTimeout(40);
   }
