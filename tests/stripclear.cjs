@@ -35,6 +35,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       const pr = { l: k.left + s.plane.x * sx, t: k.top + (s.plane.y - 8) * sy, r: k.left + (s.plane.x + 58) * sx, b: k.top + (s.plane.y + 22) * sy };
       if (!coach.hidden && cr.left < pr.r && pr.l < cr.right && cr.top < pr.b && pr.t < cr.bottom) out.covered[phase]++;
       const low = coach.classList.contains('strip-low'); if (low !== last) { out.flips++; last = low; }
+      if (low && !coach.hidden) out.lowOverGround = Math.max(out.lowOverGround || -1e9, Math.round(cr.bottom - (k.top + 464 * sy)));   /* a low strip ends above the horizon (game y 464 = HEIGHT - GROUND_H) */
       out.frames++;
       if (t < 5000) requestAnimationFrame(tick); else done(out);
     };
@@ -45,6 +46,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(!r.closed && r.frames > 20, `the tip stayed up through the test (${r.frames} frames): ${JSON.stringify(r)}`);
   check(r.covered[0] <= 3, `the plane climbs into the top strip: it moves away (covered ${r.covered[0]} frames)`);
   check(r.covered[1] <= 3, `the plane dives to the bottom: the strip moves back (covered ${r.covered[1]} frames)`);
+  check(r.lowOverGround !== undefined && r.lowOverGround <= 1, `a low strip sits above the ground band, so soil and PLANT stay visible (Oliver, 2026-11-17): its bottom is ${r.lowOverGround} px past the horizon`);
   check(r.flips === 2, `one flip per move, no flicker: ${r.flips} flips for 2 moves`);
   check(!errs.length, `page errors: ${errs}`);
   await b.close();

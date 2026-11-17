@@ -919,3 +919,4 @@ textfit	src/GameScene.js	s/if (this.popups.some(p => p.t.text === t.text \&\& p.
 textfit	src/GameScene.js	s/for (let k = 0; k < 4; k++) {/for (let k = 0; k < 0; k++) {/	pop-ups stack on each other again
 textfit	src/GameScene.js	s/if (!coachEl.classList.contains('strip-low') \&\& this.banner) { this.banner.destroy(); this.banner = null; }//	a top lesson strip leaves the land banner under it
 textfit	src/GameScene.js	s/if (this.explaining \&\& strip \&\& !strip.hidden \&\& !strip.classList.contains('strip-low')) return;//	a land banner opens under a top lesson strip
+stripclear	style.css	s/bottom: calc(var(--ground-px, 0px) + 4px); }/bottom: 6px; }/	a low strip covers the ground and PLANT again

@@ -283,7 +283,6 @@ p { margin: 0; }
 .coach-ok { margin-top: 8px; font: inherit; font-size: 9px; padding: 8px 12px; background: var(--cool); color: var(--ink); border: 0; cursor: pointer;
   box-shadow: 0 -2px 0 0 var(--ink), 0 2px 0 0 var(--ink), -2px 0 0 0 var(--ink), 2px 0 0 0 var(--ink); }
 .coach-ok:disabled { opacity: .4; cursor: default; }
-.skip { position: fixed; bottom: 8px; right: 8px; z-index: 26; background: rgba(255,255,255,.8) !important; }
 
 /* ---------- simpler screens ---------- */
 .overlay.clear { background: rgba(27, 27, 47, 0.25); }
@@ -807,7 +806,7 @@ h2.sub { margin-top: -4px; }
 @keyframes payzoom { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
 /* In-flight teaching strip (tappable tips): small, never over the plane (top, or bottom when the plane is high) */
 .coach.tappable { top: calc(var(--hud-bottom, 0px) + 6px); bottom: auto; transform: translateX(-50%); max-height: 20vh; overflow: hidden; padding: 4px 6px; }
-.coach.tappable.strip-low { top: auto; bottom: 6px; }
+.coach.tappable.strip-low { top: auto; bottom: calc(var(--ground-px, 0px) + 4px); }   /* above the ground band: soil and PLANT stay visible (src/hudclear.js groundPx) */
 .coach.tappable .coach-pic { width: 64px; max-height: 40px; object-fit: contain; float: left; margin: 0 6px 0 0; }
 .coach.tappable .coach-face { width: 24px; height: 24px; background-size: 24px 24px; }
 /* One character: Captain Contrail replaces the old Captain Cumulus face everywhere (the user, 2026-10-27) */

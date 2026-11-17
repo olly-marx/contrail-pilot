@@ -2,7 +2,7 @@
 // The DOM cards that open during a flight (the toast, the coach strip) used to sit at 16 % of the page and at y 6 px: on a tall phone the toast landed on that text,
 // on a small one the first-time coach strip covered it (tests/hudclear.cjs, 2026-11-11). Rule: those cards sit BELOW the HUD text.
 // HUD_BOTTOM is in game pixels (WIDTH = 288 wide); the page position follows the canvas's size and place.
-import { WIDTH } from './config.js';
+import { WIDTH, HEIGHT, GROUND_H } from './config.js';
 
 export const HUD_BOTTOM = 110;   // the lowest HUD item is the land's card ('TEMPERATE WOODLAND' + BIODIVERSITY, GameScene.regionBanner, game y 71 to 109, about 3 s at take-off and on a land change); the text lines end at about y 87
 
@@ -33,4 +33,15 @@ export function toastTopCss() {
 // The coach strip's CSS variable: the strip opens at --hud-bottom + 6 px (style.css .coach.tappable). Called each time a tip opens.
 export function applyHudVar(canvas) {
   document.documentElement.style.setProperty('--hud-bottom', `${hudBottomPx(canvas)}px`);
+  document.documentElement.style.setProperty('--ground-px', `${groundPx(canvas)}px`);
+}
+
+// Page pixels from the bottom of the window up to the horizon (the top of the ground band). A strip that has to go low sits ABOVE it, so the
+// ground, the soil patches and the PLANT button stay in view (Oliver, 2026-11-17: on the first seed flight the strip covered the bottom; said before).
+export function groundPx(canvas) {
+  if (!canvas || !canvas.getBoundingClientRect) return 0;
+  const r = canvas.getBoundingClientRect();
+  if (!(r.width > 0)) return 0;
+  const horizon = r.top + (HEIGHT - GROUND_H) * r.height / HEIGHT;
+  return Math.max(0, Math.round(window.innerHeight - horizon));
 }

@@ -1105,7 +1105,6 @@ export class UI {
     $('coach').hidden = false;
     $('coach').classList.toggle('high', !school || top);
     $('coach').classList.toggle('ground-top', !!top);   // explanations sit high, so the ground stays visible
-    $('skipSchool').hidden = !school;
   }
-  hideCoach() { $('coach').hidden = true; $('coachDim').hidden = true; $('skipSchool').hidden = true; this.coachButton = false; }
+  hideCoach() { $('coach').hidden = true; $('coachDim').hidden = true; this.coachButton = false; }
 }

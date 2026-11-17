@@ -68,7 +68,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const school = await scene(() => { const s = game.scene.getScene('game'); return { school: !!s.school, region: s.regionNow, km: Math.round(s.distancePx) }; });
   check(school.school && school.region === 'savanna', `flight school flies over the START land (savanna for Johannesburg): ${JSON.stringify(school)}`);
   await shot('school');
-  await p.click('#skipSchool').catch(() => {}); await p.waitForTimeout(800);
+  await p.evaluate(() => game.scene.getScene('game').skipSchool());   // the button is gone (Oliver, 2026-11-17: flight school is not skipped); the test still jumps ahead await p.waitForTimeout(800);
   // Flight 1 (lesson 1: land). No wild animals yet.
   if (await p.evaluate(() => document.getElementById('results') && !document.getElementById('results').hidden)) await p.click('#againBtn');
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
