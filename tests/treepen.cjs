@@ -19,6 +19,8 @@
   check(JSON.stringify(save.groves.woodland.birch.saplings.length) === '2', 'meterIfGrown does not touch the save');
   check(v.grown === 1 && v.projects === 1, `made of: ${v.grown} grown, ${v.projects} projects`);
   const html = P.penHTML(v);
+  { const part = { missionsDone: ['L5'], levels: { trees: 1 }, groves: { woodland: { birch: { planted: 1, grown: 0, saplings: [{ points: 24, fresh: false, d: true }] } } } };
+    const pv = P.penView(part, 'woodland'); check(pv.saps[0].days.have === 2.4 && /2\.4 of 6 days/.test(P.penHTML(pv)), `part days show: 24 tenths = 2.4 days, not 2: ${JSON.stringify(pv.saps[0].days)}`); }
   check(/TREE NURSERY/.test(html) && /3 of 6 days/.test(html) && new RegExp(`-${v.cool}`).test(html), 'the card says the pen, the days and the cooling');
   // An empty land: no pen, and the card says what grown trees will do.
   const bare = P.penView({ missionsDone: [] }, 'woodland');

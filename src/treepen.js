@@ -32,7 +32,8 @@ export function penView(save, land) {
   const meter = biomeMeter(save, land);
   const saps = saplingsIn(save, land, needFromGrow(grow), needOf).map(sp => {
     const after = meterIfGrown(save, land, sp.id);
-    return { ...sp, name: names[sp.id] || sp.id, days: sp.unit === 'day' ? { have: Math.floor(sp.points / 10), need: Math.round(sp.need / 10) } : null, gain: Math.max(0, after - meter), coolAfter: coolCap(after) };
+    // days.have in tenths (Oliver, 2026-11-17: Math.floor showed whole days only, so a part-day flight looked like no growth)
+    return { ...sp, name: names[sp.id] || sp.id, days: sp.unit === 'day' ? { have: Math.round(sp.points) / 10, need: Math.round(sp.need / 10) } : null, gain: Math.max(0, after - meter), coolAfter: coolCap(after) };
   });
   const grown = Object.values(groveView(save)[land] || {}).reduce((a, c) => a + c.grown, 0);
   return { land, meter, cool: coolCap(meter), saps, grown, projects: projectsDone(save, land).length, nursery: grow < 1 };

@@ -101,7 +101,7 @@ audiocrash	src/crash.js	s/audio device|audiocontext|NotAllowedError|AbortError/z
 audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no longer catches a rejected resume()
 audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
 releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
-releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible practice$/ tours bubblestill missionlanes pilotpreview keepvisible practice/	onboarding changes no longer run firsthour-real
+releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible practice namelesson$/ tours bubblestill missionlanes pilotpreview keepvisible practice namelesson/	onboarding changes no longer run firsthour-real
 sim-hint@PLANT=blind	-	-	the player ignores the hint
 sim-progression-s2@PLANT=noready	-	-	crossings offered before they are ready
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
@@ -924,3 +924,4 @@ payoffcard	src/hangar.js	s/const pad = Math.max(4, /const pad = 0 * Math.max(4, 
 lessons	src/lessons.js	s/ || s.pilotNamed === true },/ },/	the name lesson waits for the tour again
 tours	src/tour.js	s/{ target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || \/internet|different\/.test($('pMsg').textContent) },/{ target: '#pFirst', text: tip('tour-form'), until: () => \/^[A-Za-z]{2,12}$\/.test($('pFirst').value) }, { target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || \/internet|different\/.test($('pMsg').textContent) },/	the name highlight hops after two letters again
 namelesson	src/tour.js	s/if (this.save.school2 \&\& !namesOpen() \&\& !this.done('name') \&\& this.lesson() === 'name') this.markDone('name');//	the name lesson waits for ever where names are off
+treepen	src/treepen.js	s/have: Math.round(sp.points) \/ 10,/have: Math.floor(sp.points \/ 10),/	the nursery shows whole days only again
