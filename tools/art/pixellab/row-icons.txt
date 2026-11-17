@@ -1,0 +1,12 @@
+# Upgrade row icons for the hangar (systems, gadgets) and NATURE tools: 32 px, one object, no background, no text.
+ri-forecast|pixflux|32|32|12|a weather forecast symbol: small white cloud with a yellow sun behind it, game icon
+ri-atc|pixflux|32|32|12|an airport control tower with a green glass top, game icon
+ri-ops|pixflux|32|32|12|a red fuel can with a yellow spout, game icon
+ri-magnet|pixflux|32|32|12|a red horseshoe magnet with silver tips, game icon
+ri-hold|pixflux|32|32|12|a brown mail sack tied at the top, game icon
+ri-gear|pixflux|32|32|12|an airplane landing gear: one black rubber wheel on a grey strut, game icon
+ri-sensors|pixflux|32|32|12|a thermometer with a red bulb, game icon
+ri-autopilot|pixflux|32|32|12|a dark grey airplane control yoke steering wheel, game icon
+ri-trees|pixflux|32|32|12|a small green sapling with two leaves growing from a brown mound of soil, game icon
+ri-soil|pixflux|32|32|12|a garden spade stuck in a mound of brown soil, game icon
+ri-nursery|pixflux|32|32|12|a terracotta flower pot holding a small young tree, game icon

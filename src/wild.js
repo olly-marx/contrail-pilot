@@ -27,6 +27,7 @@ import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
 import { fresh } from './fresh.js';
 import { upgradeCard, ALL_DONE } from './upgradetext.js';
+import { rowIcon } from './rowicons.js';
 import { FW, FH, HORIZON, GROUND, WATER, homeOf, FISH, STILL, startIn, nextIn, walk, isWater, featureSpots, treeOk, paintWater, allowed, halfOf, cutFor } from './water.js';
 
 const $ = id => document.getElementById(id);
@@ -200,7 +201,7 @@ export class WildScreen {
   toolRowHTML(line) {
     const s = this.save, cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
     if (!unlocked(s, line)) {   // a branch shows its name and what it needs; other locked lines stay a surprise
-      return `<div class="rowc locked" data-line="${line.id}"><span class="rowc-tap"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${line.requires ? esc(line.name) : '???'}</span></span><span class="rowc-sub">${esc(unlockText(line, s))}</span></span></div>`;
+      return `<div class="rowc locked" data-line="${line.id}"><span class="rowc-tap">${line.requires ? rowIcon(line.id) : '<span class="rowc-slot"></span>'}<span class="rowc-top"><span class="rowc-name">${line.requires ? esc(line.name) : '???'}</span></span><span class="rowc-sub">${esc(unlockText(line, s))}</span></span></div>`;
     }
     const have = level(s, line.id), next = nextLevel(s, line), waitBio = needsMoreNature(s, line);
     const isFree = (!!s.freeUpgrade || freeParcels(s, line.id)) && next && have === 0 && !waitBio, ok = isFree || canBuy(s, line);
@@ -211,7 +212,7 @@ export class WildScreen {
       : `<button class="rowc-price btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>`;
     const sub = !next ? 'All done!' : short ? `need ${short} more` : `Next: ${esc(next.name)}`;
     return `<div class="rowc price-top tool ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''} ${this.toolId === line.id ? 'previewing sel' : ''}" data-line="${line.id}">`
-      + `<button class="rowc-tap" data-tpreview="${line.id}" type="button" aria-label="See where ${esc(line.name)} would grow trees"><span class="rowc-slot"></span><span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span>${this.isNew && this.isNew(`line:${line.id}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
+      + `<button class="rowc-tap" data-tpreview="${line.id}" type="button" aria-label="See where ${esc(line.name)} would grow trees">${rowIcon(line.id)}<span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span>${this.isNew && this.isNew(`line:${line.id}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
       + `<span class="rowc-sub">${sub}</span></button>${price}<button class="rowc-info btn" data-info="${line.id}" type="button" aria-label="About ${esc(line.name)}">i</button></div>`
       + (this.toolId === line.id ? this.toolLevelHTML(line) : '');
   }
