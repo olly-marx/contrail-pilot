@@ -760,6 +760,9 @@ export const RULES = {
 
     const out = { dx, inIssr };
     if (this.state === 'landing') {
+      // A bad landing: the nose reaches the barrier at the runway's end (the user, 2026-11-17: crash through it, sparks, a sound, 'OVERRUN!'). Looks only.
+      const lr = this.landedRunway;
+      if (this.overran && lr && !this.hitBarrier && this.plane.x + PLANE.w >= lr.x + AIRPORT.runwayLen) { this.hitBarrier = true; this.onOverrun(lr); }
       if (this.stateTime >= this.rollTime()) this.finish({ landed: true });
       return out;
     }
@@ -1089,7 +1092,7 @@ export const RULES = {
   },
 
   land(rw, box) {
-    this.landedAt = rw.name;
+    this.landedAt = rw.name; this.landedRunway = rw; this.hitBarrier = false;
     this.landingSpeed = this.speed;
     // A bad landing: where the nose stops after the roll-out, past the runway's end. (No box: the flight school, never judged.)
     this.overran = !!box && !FIELD_PLANTS.overrun && box.x + box.w + this.rollDistance(this.speed) > rw.x + AIRPORT.runwayLen;

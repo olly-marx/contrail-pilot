@@ -94,6 +94,7 @@ const rawSfx = {
   done: () => [523, 784, 1047].forEach((f, i) => tone({ freq: f, dur: 0.16, type: 'triangle', vol: 0.045, delay: i * 0.08 })),   // a mission is done
   medal: () => { tone({ freq: 880, dur: 0.8, vol: 0.035 }); tone({ freq: 1760, dur: 0.5, vol: 0.015 }); tone({ freq: 2217, dur: 0.35, vol: 0.01 }); },   // a badge: one bell strike with a long decay
   welcome: () => { tone({ freq: 196, to: 262, dur: 0.8, vol: 0.03 }); [523, 659, 784, 1047].forEach((f, i) => tone({ freq: f, dur: i === 3 ? 0.55 : 0.2, type: 'triangle', vol: 0.045, delay: i * 0.11 })); },   // a crossing lands
+  overrun: () => { noise({ dur: 0.4, vol: 0.08, cutoff: 3000 }); tone({ freq: 260, to: 70, dur: 0.35, vol: 0.09 }); tone({ freq: 1500, to: 900, dur: 0.12, type: 'triangle', vol: 0.03, delay: 0.05 }); },   // through the barrier at the runway's end (bad landings, 2026-11-17)
   softfail: () => [330, 262].forEach((f, i) => tone({ freq: f, to: f * 0.95, dur: 0.26, vol: 0.05, delay: i * 0.2 })),   // a crossing is lost: two falling notes, no buzz
   dawn: () => [523, 659, 784].forEach((f, i) => tone({ freq: f, dur: 0.2, type: 'triangle', vol: 0.045, delay: i * 0.15 })),
 };
@@ -107,7 +108,7 @@ export const DUCK_K = 3;
 export const DUCKS = {
   tick: 1, flap: 1, coin: 1, cool: 1, plant: 1, buy: 1, land: 1, nope: 1,
   heartbeat: 1, issr: 0.7, warm: 0.5, thud: 1, crack: 1, flutter: 0.5, nofly: 0.7, crash: 1, overheat: 0.7, dusk: 0.7, dawn: 0.7,
-  reveal: 1, era: 1, grow: 1, done: 0.7, medal: 1, welcome: 1, softfail: 1,
+  reveal: 1, era: 1, grow: 1, done: 0.7, medal: 1, welcome: 1, softfail: 1, overrun: 1,   // overrun: noise + a falling tone, as loud as thud/crack (not measured)
 };
 let duckHook = null;
 export function setDuckHook(f) { duckHook = f; }

@@ -5,6 +5,7 @@
 //   B  high at the runway start, x1 -> landed (not a crash), overran, 6 seeds (half rounded up) and 3 crystals kept; the results card says so
 //   C  the same approach, x2        -> landed, not overran (steeper way down and harder brakes): the gear is what saves it
 //   D  a crash (no runway), x1      -> 3 of 5 crystals kept
+//   F  the barrier at the end is hit (onOverrun) exactly once on B, never on A or C
 //   E  the roll-out stops short of the runway's end on every landing judged good (the rule's own geometry, checked from frames)
 // Plain Node. PLANT=overrun (never judged) | keepAll (nothing lost) | flat (no steeper way down): each must FAIL.  Run: node tests/overrun.cjs
 (async () => {
@@ -18,7 +19,7 @@
   const fly = ({ H, D, flare, runway = true }) => {
     const save = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, landings: 30, mission: 99, levels: {}, planted: {},
       fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
-    const w = createWorld(save, 7);
+    const w = createWorld(save, 7); let barrier = 0; w.onOverrun = () => { barrier++; };
     for (let i = 0; i < 3000 && w.state !== 'playing'; i++) w.step(1 / 60);
     for (let i = 0; i < 600; i++) { w.graceUntil = 0; w.storms = []; w.birds = []; w.plane.y = 150; w.plane.vy = 0; w.nextAirport.worldX = w.distancePx + 5000; w.step(1 / 60); }   // up to cruising speed, no airport near
     w.explain = () => false; w.graceUntil = 0; w.autoUntil = 0; w.kit.flare = flare;
@@ -30,7 +31,7 @@
       if (w.state === 'landing' && w.runways.length) { stopNose = w.plane.x + PLANE.w; rwEnd = w.runways[0].x + AIRPORT.runwayLen; }
       w.step(1 / 60);
     }
-    return { w, r: w.result, speed0, stopNose, rwEnd };
+    return { w, r: w.result, speed0, stopNose, rwEnd, barrier };
   };
   const check = (name, ok, line) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}: ${line}`); if (!ok) fails.push(name); };
   const say = o => `landed ${o.r.landed} overran ${o.r.overran} seeds +${o.r.gained} crystals ${o.r.crystals} (lost ${o.r.crystalsLost}) touchdown pos ${o.r.touchdown && o.r.touchdown.pos} speed ${Math.round(o.speed0)} stop ${o.stopNose && Math.round(o.stopNose - o.rwEnd)} px past the end`;
@@ -47,6 +48,7 @@
   check('D crash keeps half the crystals', !Dc.r.landed && Dc.r.crystals === 3 && Dc.r.crystalsLost === 2, say(Dc));
   // E: the geometry. Where the nose really stopped (frames) against the runway's end, for every landing above.
   for (const [n, o] of [['A', A], ['B', B], ['C', C]]) if (o.r.landed) check(`E ${n} stop vs end`, (o.stopNose <= o.rwEnd + 0.5) === !o.r.overran, `nose stopped ${Math.round(o.stopNose - o.rwEnd)} px from the end, overran ${o.r.overran}`);
+  check('F barrier: once on the overrun, never on a good landing', B.barrier === 1 && A.barrier === 0 && C.barrier === 0, `A ${A.barrier}, B ${B.barrier}, C ${C.barrier}`);
   console.log(fails.length ? `FAILED: ${fails.join(', ')}` : 'PASS');
   process.exit(fails.length ? 1 : 0);
 })();
