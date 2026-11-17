@@ -11,12 +11,14 @@ import { animalPortrait, animalDir } from './animalart.js';
 import { BADGES, medal, tierOf } from './badges.js';
 import { PLANES, LOOKS, STICKERS, fleetOf } from './fleet.js';
 import { discovered } from './wild.js';
+import { ROW_ICONS } from './rowicons.js';
 
 // Single pictures the screens use (src/ui.js, tour.js, welcome.js, school.js, hub.js): declared one by one.
 export const FIXED_UI = [
   'assets/ui/captain-point.png', 'assets/ui/icon-seed.png', 'assets/ui/icon-crystal.png', 'assets/ui/hangar-bg.png', 'assets/ui/hangar-spot.png',
   'assets/ui/focus-corner.png', 'assets/ui/lesson-hangar.png', 'assets/ui/lesson-nature.png', 'assets/ui/card-frame-locked.png',
   'assets/ui/badge-locked.png', 'assets/ui/badge-secret.png', 'assets/ui/badge-oops-1.png',
+  ...[...ROW_ICONS].map(id => `assets/ui/rows/ri-${id}.png`),   // the hangar's and NATURE's row pictures (src/rowicons.js)
 ];
 // The lesson pictures (school, tips, the missions screen), the mission icons and the pieces style.css draws from: explicit names, each used by a screen.
 const names = (pre, list) => list.map(n => `assets/ui/${pre}${n}.png`);

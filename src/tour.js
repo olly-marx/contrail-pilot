@@ -421,8 +421,11 @@ export class Tour {
       if (t0 < 4 || t0 + bh > H - 4) below = !below;   // no room on that side: the other side (decided once)
       this.side = below ? 'below' : 'above';
     }
+    b.classList.remove('compact');
     let top = this.side === 'below' ? u1 + gap : u0 - gap - bh;
     top = Math.max(4, Math.min(H - 4 - bh, top));
+    // A tall target (the whole name form at 320x568, Oliver's one-step naming, 2026-11-17) leaves too little room: the compact bubble (no Captain) before covering it.
+    if (top < u1 && top + bh > u0) { b.classList.add('compact'); const bc = b.getBoundingClientRect().height; top = Math.max(4, Math.min(H - 4 - bc, this.side === 'below' ? u1 + gap : u0 - gap - bc)); }
     set(b, { top: `${top}px` });
     // The captain points AT the target: mirrored when the target is to the left of the bubble's middle.
     const cap = this.el.querySelector('.tcaptain'), br = b.getBoundingClientRect();
