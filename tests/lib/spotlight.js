@@ -33,9 +33,10 @@ exports.pixels = async page => {
     if (!r) continue;
     const clip = { x: Math.round(r.left + 8), y: Math.round(r.top + 8), width: Math.round(r.right - r.left - 16), height: Math.round(r.bottom - r.top - 16) };
     if (clip.width < 4 || clip.height < 4) continue;
-    const A = await page.screenshot({ clip });
+    // animations off for both shots (2026-11-17): the hangar tab's FREE glow blinks every 0.5 s (style.css @keyframes glow), so two shots 60 ms apart differed by 10.0 a third of the time; the check is about the mask
+    const A = await page.screenshot({ clip, animations: 'disabled' });
     await page.evaluate(() => { document.getElementById('tour').style.visibility = 'hidden'; }); await page.waitForTimeout(60);
-    const B = await page.screenshot({ clip });
+    const B = await page.screenshot({ clip, animations: 'disabled' });
     await page.evaluate(() => { document.getElementById('tour').style.visibility = ''; });
     // (decoded in the page: a canvas reads both PNGs; no PNG library is needed in Node)
     const mean = await page.evaluate(async ([a, b]) => { const load = u => new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = `data:image/png;base64,${u}`; }); const [x, y] = [await load(a), await load(b)];
