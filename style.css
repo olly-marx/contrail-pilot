@@ -1113,6 +1113,7 @@ h2.sub { margin-top: -4px; }
 .bk-line { margin: 2px 0; } .bk-warn { color: #b02a1a; margin-top: 8px; } .gear-last { text-align: center; margin: 8px 0 0; }
 /* The hangar purchase display (src/hangar.js payoff): while it is open the rest of the hangar list is hidden; OK shows it again from a fresh render. */
 #hFleet.paying > :not(#payoff) { display: none; }
+#hangar.paying .panel > .buttons { display: none; }   /* the bottom TAKE OFF + reset row waits for OK too (Oliver, 2026-11-16) */
 /* CROSSINGS V2 (research/DESIGN-CROSSINGS-V2.md): the HOME box 'NEXT CROSSING' (src/crossingview.js boxView): the route and how hard, three ticks that fill in, one plain line. No distance. */
 .hub-cross { text-align: left; border: 2px solid var(--ink, #1b1b2f); border-radius: 4px; padding: 3px 6px; box-sizing: border-box; width: 100%; background: rgba(255,255,255,0.55); cursor: pointer; }
 .hub-cross .rc-label { margin: 0 0 1px; text-align: left; }

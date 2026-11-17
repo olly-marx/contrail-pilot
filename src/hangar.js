@@ -130,7 +130,8 @@ export class FleetHangar {
     const el = document.createElement('div'); el.id = 'payoff'; el.className = 'payoff inbox';
     if (box) { box.hidden = true; box.insertAdjacentElement('afterend', el); } else document.body.appendChild(el);
     this.paying = true;
-    const fleetEl = $('hFleet'); if (fleetEl) fleetEl.classList.add('paying');   // the upgrade list below the display is HIDDEN until OK (the user, 2026-11-09: it stayed visible, some rows looked buyable); OK shows it from a fresh render
+    const fleetEl = $('hFleet'); if (fleetEl) fleetEl.classList.add('paying');
+    $('hangar').classList.add('paying');   // the bottom TAKE OFF / reset row is hidden too (Oliver, 2026-11-16: a TAKE OFF under 'fitted!' does not belong on that card; OK is its one action)   // the upgrade list below the display is HIDDEN until OK (the user, 2026-11-09: it stayed visible, some rows looked buyable); OK shows it from a fresh render
     el.innerHTML = `<div class="payoff-card"><div class="pay-frame"><div class="pay-plane"><img id="payBefore" alt="">${added.map(p => `<img class="pay-part" src="${p}" alt="">`).join('')}<i class="pay-spark"></i><b id="payMark" class="pay-mark"></b></div></div>
       <span id="payLabel" class="pay-label">${rails || !name ? tip('rail-payoff-label') : `NEW: ${name}!`}</span>
       ${bars.length ? `<div class="pay-bars">${statBarsHTML(bars)}</div>` : ''}
@@ -142,9 +143,13 @@ export class FleetHangar {
     // Where the new part is: each part layer is a whole repainted plane, so the part = the pixels that CHANGE when the
     // layer goes on (before vs after). Their box becomes a RING inside the picture (#payMark; the plane is never zoomed or cropped).
     const part = el.querySelector('.pay-part'), mark = $('payMark'), plane = el.querySelector('.pay-plane'), beforeImg = $('payBefore');
-    const measure = () => { if (!part || !part.naturalWidth || !beforeImg.naturalWidth || mark.dataset.done) return; mark.dataset.done = '1';
+    // The ring is measured against the BARE plane (files.base), not the picture before: a part layer is the whole plane with one part changed,
+    // so against a 'before' that already wears other parts and gadgets every one of them counted as changed and the ring went round the whole plane
+    // (measured 2026-11-16 on a Comet with engines and gadgets fitted: the Pinion ring covered the fuselage).
+    const bareImg = new Image(); bareImg.src = files.base;
+    const measure = () => { if (!part || !part.naturalWidth || !bareImg.naturalWidth || mark.dataset.done) return; mark.dataset.done = '1';
       const w = part.naturalWidth, h = part.naturalHeight, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d', { willReadFrequently: true });
-      g.drawImage(beforeImg, 0, 0, w, h); const A = g.getImageData(0, 0, w, h).data; g.drawImage(part, 0, 0); const B = g.getImageData(0, 0, w, h).data;
+      g.drawImage(bareImg, 0, 0, w, h); const A = g.getImageData(0, 0, w, h).data; g.drawImage(part, 0, 0); const B = g.getImageData(0, 0, w, h).data;
       let x0 = w, y0 = h, x1 = -1, y1 = -1;
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const k = (y * w + x) * 4; if (Math.abs(A[k] - B[k]) + Math.abs(A[k + 1] - B[k + 1]) + Math.abs(A[k + 2] - B[k + 2]) + Math.abs(A[k + 3] - B[k + 3]) > 60) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
       if (x1 < 0) return;
@@ -156,7 +161,7 @@ export class FleetHangar {
     const hideBroken = img => { if (!img.naturalWidth) { img.style.display = 'none'; img.dataset.broken = '1'; } };
     const whenLoaded = img => new Promise(r => { if (img.complete && img.naturalWidth) return r();
       img.addEventListener('load', r, { once: true }); img.addEventListener('error', () => { hideBroken(img); r(); }, { once: true }); });
-    if (part) Promise.all([whenLoaded(part), whenLoaded(beforeImg)]).then(measure);
+    if (part) Promise.all([whenLoaded(part), whenLoaded(bareImg)]).then(measure);
     // The label arrow, placed over the part once the zoom has settled (the user, 2026-10-28: the payoff must not be flat).
     // The label sits in its own row BELOW the picture frame, under the ring (the user: at 320 the label lay over the middle of the plane's body). The row is reserved in CSS (.payoff.inbox:not(.nopart) .pay-frame margin-bottom).
     const label = () => { const lab = $('payLabel'), card = el.querySelector('.pay-frame'); if (!lab || !el.isConnected) return;
@@ -170,13 +175,13 @@ export class FleetHangar {
     // pictures are in (6 s at most), and the zoom + label need the measured part; without it, the plane shows flat (no zoom).
     const settle = () => { if (!el.isConnected) return; if (added.length && mark.dataset.done) label(); else { el.classList.add('nopart'); el.classList.add('labelled'); }
       if (rails && this.ui.tour) this.ui.tour.payoffOk(); };   // the rails: ring OK (the rest of the page is live)
-    const pics = [whenLoaded(beforeImg), ...(part ? [whenLoaded(part)] : [])];
+    const pics = [whenLoaded(beforeImg), ...(part ? [whenLoaded(part), whenLoaded(bareImg)] : [])];
     Promise.race([Promise.all(pics).then(() => part && measure()), new Promise(r => setTimeout(r, 6000))]).then(() => {
       el.querySelectorAll('.pay-part, #payBefore').forEach(img => { if (img.getAttribute('src')) hideBroken(img); });   // (the 6 s fallback too)
       if (part && !mark.dataset.done) el.classList.add('nopart');
       setTimeout(() => { if (el.isConnected) { el.classList.add('arrive'); this.ui.sfx.reveal && this.ui.sfx.reveal(); animateBars(el); setTimeout(settle, 700); } }, 600); });   // the part arrives (ringed, sparkle on it; no zoom), then the label
     // Ending the payoff: OK, or leaving the hangar mid-payoff (the plane build's review: it stayed parked until OK).
-    this.endPayoff = () => { el.remove(); if (box) box.hidden = false; const fl = $('hFleet'); if (fl) fl.classList.remove('paying'); this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
+    this.endPayoff = () => { el.remove(); if (box) box.hidden = false; const fl = $('hFleet'); if (fl) fl.classList.remove('paying'); $('hangar').classList.remove('paying'); this.paying = false; this.renderLater = false; this.endPayoff = () => {}; };
     $('payOk').onclick = () => { this.ui.sfx.tick(); this.endPayoff();
       if (toFly) this.ui.go('fly'); else { this.render(); if (this.ui.tour) setTimeout(() => this.ui.tour.maybe('hangar'), 300); } };   // stay: the rails' next step (TAKE OFF) is in the hangar
   }

@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-11-17-school",
+    "version": "0.66.0",
+    "date": "2026-11-17",
+    "level": "major",
+    "notes": [
+      "New players learn in a School: 16 lessons in the SCHOOL tab, one at a time.",
+      "Tabs like PILOT and BOARDS open when their lesson comes, not before.",
+      "A calm practice flight teaches you to plant trees before the real thing.",
+      "NATURE has a nursery: see how many days each young tree needs to grow.",
+      "Tap the Earth line after a flight to see which land's trees cooled the Earth.",
+      "New tab pictures."
+    ]
+  },
+  {
+    "id": "2026-11-16-taps-pinion",
+    "version": "0.65.1",
+    "date": "2026-11-16",
+    "level": "minor",
+    "notes": [
+      "Fixed: after swiping between lands on NATURE or between hangar tabs, taps work in flight again.",
+      "The Comet's Pinion fuel tanks now hang under the wing, and its thrust reversers are redrawn.",
+      "The card that shows a newly fitted upgrade no longer has a TAKE OFF row at the bottom."
+    ]
+  },
+  {
     "id": "2026-11-16-crossings-v3",
     "version": "0.65.0",
     "date": "2026-11-16",
