@@ -923,3 +923,4 @@ stripclear	style.css	s/bottom: calc(var(--ground-px, 0px) + 4px); }/bottom: 6px;
 payoffcard	src/hangar.js	s/const pad = Math.max(4, /const pad = 0 * Math.max(4, /	the ring sits on the part's edge again
 lessons	src/lessons.js	s/ || s.pilotNamed === true },/ },/	the name lesson waits for the tour again
 tours	src/tour.js	s/{ target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || \/internet|different\/.test($('pMsg').textContent) },/{ target: '#pFirst', text: tip('tour-form'), until: () => \/^[A-Za-z]{2,12}$\/.test($('pFirst').value) }, { target: '#pEdit', text: tip('tour-form'), until: () => !!getPilot() || \/internet|different\/.test($('pMsg').textContent) },/	the name highlight hops after two letters again
+namelesson	src/tour.js	s/if (this.save.school2 \&\& !namesOpen() \&\& !this.done('name') \&\& this.lesson() === 'name') this.markDone('name');//	the name lesson waits for ever where names are off

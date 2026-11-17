@@ -76,6 +76,9 @@ export class Tour {
 
   maybe(where) {
     if (this.busy || this.off() || !this.save.tutorialDone) return;
+    // A device that can never name a pilot (NEW PLAYER TEST mode, ?preview: online is switched off on purpose) passes the School's name lesson:
+    // the name tour never starts there, so the board stayed on 'Your pilot name' for good (Oliver, 2026-11-17: "can't get past the pilot mission").
+    if (this.save.school2 && !namesOpen() && !this.done('name') && this.lesson() === 'name') this.markDone('name');
     if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
     // Season 1 and the preview: the name step at once. Season 2 (online is back, 0.20.0): it comes with BOARDS after the 3rd landing, and only when no
     // rails step is due (below), so it never cuts across the hangar rails.
