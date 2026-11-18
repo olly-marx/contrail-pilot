@@ -118,7 +118,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', planted: PLANTED, habitat: { woodland: ['deadwood', 'meadow', 'margins'] }, areaBest, missionsDone });   // (3 projects: woodland meter 41 >= the first crossing's 38, CROSSINGS V3)
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
   let c = await card({ weurope: 6299 });
-  check(/ROME &gt; TUNIS/.test(c) && /Needs:/.test(c) && !/data-cross/.test(c), `D: 6,299 km (just under 70%) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
+  check(/ROME &gt; TUNIS/.test(c) && /data-k="plane"><span class="xc-l">Plane<\/span><span class="xc-bar">/.test(c) && /class="xc-next">[^<]+</.test(c) && !/data-cross/.test(c), `D: 6,299 km (just under 70%) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
   c = await card({ namerica: 9999 });   // (another area's flight: the Nordic area is in the home region now)
   check(/data-cross="mediterranean"/.test(c), 'D: a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
   c = await card({ weurope: 6300 }, STARS.slice(1, 2));
@@ -127,7 +127,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   check(/data-cross="mediterranean"/.test(c), `D: 6,300 km + biodiversity 38 + the 3 starred: the crossing is offered: ${c.slice(0, 200)}`);
   const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', areaBest: { weurope: 9999 }, missionsDone: STARS });
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); })();
-  check(!/data-cross/.test(noTrees) && /nature 38/.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
+  check(!/data-cross/.test(noTrees) && /class="xc-v">0 \/ 38</.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
   await card({ weurope: 6300 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', crossing: document.getElementById('hubNext').classList.contains('crossing') }));

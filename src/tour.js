@@ -19,6 +19,7 @@ import { hudShowing } from './hudclear.js';
 import { getPilot, namesOpen } from './online.js';
 import { treesPlanted } from './treecount.js';
 import { current as lessonNow } from './lessons.js';
+import { activeMission } from './aim.js';
 // Rails rule (the user's playtest, 2026-10-29): a step that taps a bottom-bar tab must DECLARE whether the screen it opens has
 // something to act on (ready); run() stops before such a step when it is false. tests/tourready.cjs checks every tab step declares it.
 const always = () => true;
@@ -79,7 +80,7 @@ export class Tour {
     // A device that can never name a pilot (NEW PLAYER TEST mode, ?preview: online is switched off on purpose) passes the School's name lesson:
     // the name tour never starts there, so the board stayed on 'Your pilot name' for good (Oliver, 2026-11-17: "can't get past the pilot mission").
     if (this.save.school2 && !namesOpen() && !this.done('name') && this.lesson() === 'name') this.markDone('name');
-    if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
+    if ($({ title: 'title', results: 'results', hangar: 'hangar', nature: 'nature', missions: 'missions' }[where] || 'results').hidden || !$('repriced').hidden) return;   // only on a screen that is showing: never in flight
     // Season 1 and the preview: the name step at once. Season 2 (online is back, 0.20.0): it comes with BOARDS after the 3rd landing, and only when no
     // rails step is due (below), so it never cuts across the hangar rails.
     const s2name = FEATURES.season2 && !window.CP_PREVIEW, wantName = !this.done('name') && !getPilot() && namesOpen();
@@ -147,7 +148,17 @@ export class Tour {
     if (where === 'nature' && d('L4') && !d('L5') && !((s.levels || {}).trees > 0) && !this.done('r-parcels')) return ['r-parcels', [{ target: '#wTrees [data-buy="trees"]', text: tip('rail-parcels'), tap: true }]];
     // R14: MY RECORDS (src/recordsui.js) once BOARDS is revealed (landing 3): one target, the BOARDS tab (Coordinator, 2026-10-28).
     // R-map (the user, 2026-11-06: nothing told them the globe is a map): once the world is revealed (L4) and NO LESSON LEAD is on HOME (the bubble would hide the very row the player must tap: the free tree at L5), from landing 5, one OK step on the globe; the NAME comes first if it is due.
-    if (hub && s2Revealed(s, 'world') && !s.freeUpgrade && !this.done('r-map') && (s.school2 ? this.lesson() === 'map' : (s.landings || 0) >= 5 && !s2LessonsLeft(s).length && this.slot() && !this.nameDue())) return ['r-map', [{ target: '#hubGlobe', text: tip('rail-map'), ok: true }]];
+    // CHOOSE WHERE TO FLY, hands on (the owner, 2026-11-18): drag the globe, tap a city (its card: src/ui.js showCityCard), close it, open the route chip, pick MISSION or EXPLORE (src/ui.js openDestinationSheet).
+    // Each step waits for the real action (a drag is counted by ui.globeDrags, set by the globe's onUse; the card by #hubCard showing).
+    if (hub && s2Revealed(s, 'world') && !s.freeUpgrade && !this.done('r-map') && (s.school2 ? this.lesson() === 'map' : (s.landings || 0) >= 5 && !s2LessonsLeft(s).length && this.slot() && !this.nameDue())) {
+      const drags0 = this.ui.globeDrags || 0, card = () => { const c = $('hubCard'); return !!c && !c.hidden; };
+      return ['r-map', [
+        { target: '#hubGlobe', text: tip('rail-map'), until: () => (this.ui.globeDrags || 0) > drags0 },
+        { target: '#hubGlobe', text: tip('rail-map-city'), until: card },
+        { target: '#ccX', text: tip('rail-map-card'), tap: true },
+        { target: '#hubRoute', text: tip('rail-map-chip'), tap: true },
+        { area: '#sheet .ds-actions', target: '#dsMission, #dsExplore', text: tip('rail-map-mode', !!document.getElementById('dsMission') || !!activeMission(s)), tap: true }]];
+    }
     if (hub && s2Revealed(s, 'boards') && !this.done('r-boards') && (s.school2 ? this.lesson() === 'records' : (s.landings || 0) >= 6 && this.slot())) return ['r-boards', [{ target: '#tabBoards', text: tip('rail-boards'), tap: true, ready: always }]];
     // THE SCHOOL BOARD's own steps (src/lessons.js; the user, 2026-11-16): the lessons that had no guided step.
     if (s.school2) {
@@ -160,6 +171,16 @@ export class Tour {
       if (res && now === 'results' && document.getElementById('rEarth') && !document.getElementById('rEarth').hidden) return ['r-earth', [{ target: '#rEarth', text: tip('rail-earth'), ok: true }]];
       // Crossings: a lesson card on the board; HOME points at the SCHOOL tab.
       if (hub && now === 'crossings' && !this.done('r-crosshint')) return ['r-crosshint', [{ target: '#tabMissions', text: tip('rail-school-lesson'), tap: true, ready: always }]];
+      // Crossings, guided (the owner, 2026-11-18): on MISSIONS, the first crossing card (src/ui.js crossingsHTML), then its three rows, then its next line (or FLY THE CROSSING), each with OK.
+      if (where === 'missions' && now === 'crossings' && !this.done('r-cross') && document.querySelector('#mCross .xcard')) {
+        const c = '#mCross .xcard:first-child';
+        return ['r-cross', [
+          { target: `${c} .xc-head`, text: tip('rail-cross'), ok: true },
+          { target: `${c} [data-k="era"]`, text: tip('rail-cross-era'), ok: true },
+          { target: `${c} [data-k="plane"]`, text: tip('rail-cross-plane'), ok: true },
+          { target: `${c} [data-k="nature"]`, text: tip('rail-cross-nature'), ok: true },
+          { target: `${c} .xc-next`, text: tip('rail-cross-next'), ok: true, after: () => this.ui.toast && this.ui.toast('Lesson done!', 'Crossings', 'good', 3) }]];
+      }
     }
     return null;
   }
@@ -233,7 +254,7 @@ export class Tour {
     this.busy = false;
     // Then whatever screen is showing NOW may have its own step (a rails tap often opens the next screen while this tour
     // is still finishing: the hangar's step was lost that way).
-    setTimeout(() => this.maybe(['title', 'results', 'hangar', 'nature'].find(id => !$(id).hidden) || 'title'), 300);
+    setTimeout(() => this.maybe(['title', 'results', 'hangar', 'nature', 'missions'].find(id => !$(id).hidden) || 'title'), 300);
   }
 
   async step(st) {

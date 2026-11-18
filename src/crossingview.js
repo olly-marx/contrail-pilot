@@ -2,7 +2,7 @@
 // Pure: no DOM, no clock, no random numbers. src/ui.js draws it (the sheet, the HOME row and dot, the globe arc); src/nextup.js turns it into UP NEXT rows;
 // src/missionsview.js into the CROSSING block of MISSIONS. A crossing is READY by status (src/crossings.js readiness: Era, Plane, Nature; the trial stars are no longer a gate and where the player is does not
 // matter): whichever tick completes LAST is the moment, and it can happen on a results card or in NATURE, so the sheet fires on whatever screen the player sees next (ui.maybeCrossingSheet).
-import { upcoming, readiness, planeProgress, ladderSplit, rungOf, natureNeed } from './crossings.js';
+import { upcoming, available, readiness, planeProgress, ladderSplit, rungOf, natureNeed } from './crossings.js';
 import { pathTo, linksFor } from './route.js';
 import { SEASON } from './season.js';
 import { AREAS, opensName } from './areas.js';
@@ -80,3 +80,18 @@ export const screenView = s => {
   return { ...b, eyebrow: 'NEXT CROSSING', opens: s.opens, button, link: s.ready && s.atDeparture ? 'fly normally' : null,
     easier: (s.easier || []).map(e => ({ id: e.id, label: `${e.from} > ${e.to}`, word: e.difficulty, ready: !!e.ready })) };
 };
+
+// THE CROSSING CARD (the owner, 2026-11-18, on MISSIONS: "I don't understand it, and it's ugly" - the old wall of grey 'CROSSING: A > B, non-stop, Easy (opens ...) Needs: ...' text and a second
+// 'CROSSING TO X' tick list under it). ONE card per crossing on offer (src/crossings.js available): the route, the land it opens, three rows Era / Plane / Nature (a tick when done; else a small bar,
+// nature with its own 'have / need', the plane with a word, never a distance), and ONE plain line on what to do next for the open row nearest to done (stateOf's nearest). A ready card says so and
+// carries FLY THE CROSSING. Pure: src/ui.js crossingsHTML draws it; tests/crosscard.cjs holds it.
+export const CARD_NEXT = { era: 'A later era opens it. Keep flying.', plane: 'Land a longer flight, or upgrade your plane in HANGAR.', nature: 'Raise nature in a land you have: plant and fund in NATURE.' };
+export const CARD_READY = 'Ready! One long flight with no stops.';
+export function cardOf(save, c, opts = {}) {
+  const s = stateOf(save, c, opts), lap = c.kind === 'lap', need = natureNeed(c);
+  const rows = s.conds.map(x => ({ key: x.key, label: { era: 'Era', plane: 'Plane', nature: 'Nature' }[x.key], done: !!x.done, frac: x.done ? 1 : Math.max(0, Math.min(1, x.frac || 0)),
+    value: x.done ? null : x.key === 'nature' ? `${Math.round(readiness(save, c).natureHave)} / ${need}` : x.key === 'plane' ? (x.status === 'nearly' ? 'nearly' : 'not yet') : 'later' }));
+  return { id: c.id, lap, route: lap ? 'LAP OF THE EARTH' : `${s.from} > ${s.to}`, word: s.difficulty, opens: lap ? `From ${s.from} round the world and home` : `Opens ${s.opens}`,
+    ready: !!s.ready, rows, next: s.ready ? CARD_READY : s.nearest ? CARD_NEXT[s.nearest.key] : '', nextKey: s.ready ? null : s.nearest ? s.nearest.key : null, state: s };
+}
+export const cardsView = (save, opts = {}) => available(save).map(c => cardOf(save, c, opts));   // (the order of src/crossings.js; the rows are by status, so every card on offer is ready together)

@@ -72,7 +72,7 @@ const KEY = 'contrailPilot.v2';
   await p.goto(URL); await ready(p);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const card = await p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || '');
-  check(/ROME &gt; TUNIS/.test(card) && /Needs:/.test(card) && !/data-cross/.test(card), `the crossing shows what it needs: ${card.slice(0, 160)}`);
+  check(/ROME &gt; TUNIS/.test(card) && /xc-bar/.test(card) && /class="xc-next">[^<]+</.test(card) && !/data-cross/.test(card), `the crossing card shows what it needs (an open row's bar and the next line): ${card.slice(0, 160)}`);
   await p.goto(URL + '?s2unlock=1'); await ready(p);
   await p.evaluate(() => game.registry.get('ui').showTitle());
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
@@ -98,7 +98,7 @@ const KEY = 'contrailPilot.v2';
   const cardNow = async (best, stars) => { await seed2e(best, stars); await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
     return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
   let c2 = await cardNow({ weurope: 6299 });
-  check(/Needs:/.test(c2) && !/data-cross="mediterranean"/.test(c2), `6,299 km is not enough to be offered the 9,000 km crossing: ${c2.slice(0, 200)}`);
+  check(/data-k="plane"><span class="xc-l">Plane<\/span><span class="xc-bar">/.test(c2) && !/data-cross="mediterranean"/.test(c2), `6,299 km is not enough to be offered the 9,000 km crossing: ${c2.slice(0, 200)}`);
   c2 = await cardNow({ namerica: 9999 });   // (a long flight from another area: CROSSINGS V3, the Nordic area is in the home region)
   check(/data-cross="mediterranean"/.test(c2), 'a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
   c2 = await cardNow({ weurope: 6300 }, ['weurope:shade10']);

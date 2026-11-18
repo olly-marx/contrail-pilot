@@ -5,7 +5,7 @@ import { routeFor, setGoto, clearGoto, arrivedGoto, gotoTarget, gotoHops, migrat
 import { headingWord } from './network.js';
 import { AREAS, unlockedAreas, REGIONS, regionsOpen, opensName as regionOpensName } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
-import { available as crossingsNow, readiness, moreToCome, laterEra, natureNeed } from './crossings.js';
+import { available as crossingsNow, readiness, moreToCome, laterEra } from './crossings.js';
 import { SEASON } from './season.js';
 // Season 2 debug (?s2unlock=1, preview only): every available crossing can be flown, skipping the offer gates (M3 tryout).
 const S2_UNLOCK = typeof location !== 'undefined' && new URLSearchParams(location.search).get('s2unlock') === '1';
@@ -13,17 +13,20 @@ const S2_UNLOCK = typeof location !== 'undefined' && new URLSearchParams(locatio
 // The capability estimate, this area's biodiversity and its contrail missions arrive in M4/M6; until then 0 / false.
 // A crossing can open an AREA or the ocean stepping stones (Honolulu, Nadi: no area of their own, so no AREAS entry).
 const opensName = id => regionOpensName(id);   // CROSSINGS V3: the region it opens (src/areas.js)
-const crossingsHTML = s => {
+// THE CROSSING CARDS (the owner, 2026-11-18: the old lines were "a wall of centered grey text"): one card per crossing (src/crossingview.js cardsView). `p` prefixes the ids: 'j' in the route
+// sheet (#jCross, #jLater, #jMore, #jLap: tests/season2*.cjs read them), 'm' on MISSIONS (#mCross...), so the two copies in the page never share an id.
+const crossingsHTML = (s, p = 'j') => {
   if (!s.tutorialDone) return '';
-  const list = crossingsNow(s);
-  if (!list.length) { const le = laterEra(s); if (le !== null) return `<div id="jCross"><p class="small" id="jLater"><b>NEXT CROSSING</b><br>New crossings open in ${ERAS[le].name}. Keep flying to get there!</p></div>`; }
-  if (!list.length) return moreToCome(s) ? '<div id="jCross"><p class="small" id="jMore"><b>MORE TO COME!</b><br>You have flown every crossing there is for now. Faster planes and the far oceans are on their way.</p></div>' : '';
-  return `<div id="jCross">${list.map(c => { const rd = readiness(s, c), go = rd.ready || S2_UNLOCK;
-    const needs = [!rd.era && 'a later era', !rd.plane && NEED_FAR, !rd.nature && `nature ${natureNeed(c)} (now ${rd.natureHave})`].filter(Boolean);
-    const head = c.kind === 'lap' ? `<b id="jLap">THE LAP OF THE EARTH</b>${routeLapRest(c)}`   // the final boss (M4)
-      : `<b>CROSSING: ${c.from} &gt; ${c.to}</b>${routeCrossRest(c)}`;
-    return `<p class="small">${head}<br>
-      ${go ? `<button class="btn go" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : `Needs: ${needs.join(', ')}`}</p>`; }).join('')}</div>`;
+  const cards = cardsView(s, { unlock: S2_UNLOCK });
+  if (!cards.length) { const le = laterEra(s); if (le !== null) return `<div id="${p}Cross"><p class="small" id="${p}Later"><b>NEXT CROSSING</b><br>New crossings open in ${ERAS[le].name}. Keep flying to get there!</p></div>`; }
+  if (!cards.length) return moreToCome(s) ? `<div id="${p}Cross"><p class="small" id="${p}More"><b>MORE TO COME!</b><br>You have flown every crossing there is for now. Faster planes and the far oceans are on their way.</p></div>` : '';
+  const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const row = r => `<div class="xc-row${r.done ? ' done' : ''}" data-k="${r.key}"><span class="xc-l">${r.label}</span>`
+    + (r.done ? '<span class="xc-tick">done <i aria-hidden="true">&#10003;</i></span>' : `<span class="xc-bar"><i style="width:${Math.round(r.frac * 100)}%"></i></span><span class="xc-v">${esc(r.value)}</span>`) + '</div>';
+  return `<div id="${p}Cross" class="xcards">${cards.map(c => `<div class="xcard${c.ready ? ' ready' : ''}" data-xc="${c.id}">`
+    + `<div class="xc-head"><b class="xc-route"${c.lap ? ` id="${p}Lap"` : ''}>${esc(c.route)}</b><span class="xc-word">${esc(c.word)}</span></div><p class="xc-opens">${esc(c.opens)}</p>`
+    + `<div class="xc-rows">${c.rows.map(row).join('')}</div><p class="xc-next">${esc(c.next)}</p>`
+    + (c.ready ? `<button class="btn go xc-fly" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : '') + '</div>').join('')}</div>`;
 };
 // Season 2: which areas you fly in, and which are still locked (dim dots on the globe; crossings open them).
 const areaLine = s => { const open = regionsOpen(unlockedAreas(s)), shut = Object.keys(REGIONS).filter(r => !open.includes(r));   // CROSSINGS V3: regions, not areas
@@ -66,7 +69,7 @@ import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp, leadOf } from './nextup.js';
 import { endView } from './crossingend.js';
 import { prizeLines } from './missionprize.js';
-import { crossingState, crossingById, momentDue, markTold, sheetText, NEED_FAR, routeCrossRest, routeLapRest, endingBody, boxView, screenView } from './crossingview.js';
+import { crossingState, crossingById, momentDue, markTold, sheetText, endingBody, boxView, screenView, cardsView } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
@@ -444,7 +447,7 @@ export class UI {
     const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it
     hint.textContent = v.worldChoice ? 'Spin it. Tap a city to fly.' : 'Drag the world to spin it.';
     this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, onCity: v.worldChoice ? name => this.showCityCard(name) : null, lit: linksFor(s),
-      onUse: () => this.globeUsed(),
+      onUse: () => { this.globeDrags = (this.globeDrags || 0) + 1; this.globeUsed(); },   // (globeDrags: the map lesson's first step waits for a real drag, src/tour.js r-map)
       cross: ready ? { from: city(ready.from), to: city(ready.to), onTap: () => this.showCrossingSheet(ready) } : null });   // R-A: the ready crossing's arc and its breathing ring (tap: the sheet)
     this.hubWords = v.words;
   }
@@ -482,11 +485,12 @@ export class UI {
     $('mNext').innerHTML = v.next ? `<p class="label">NEXT</p>${rowHTML(v.next, 'next')}` : '';
     const group = (label, rows, extra = '') => rows.length ? `<p class="label">${label}${extra}</p>${rows.join('')}` : '';
     const empty = !v.next && !v.open.length;
-    $('mList').innerHTML = (empty ? `<p>All done here!</p>${crossingsHTML(s).replace(/<button[^>]*data-cross[^>]*>.*?<\/button>/g, '<b>Ready!</b> Tap HOME, then UP NEXT.') || '<p class="small">Keep flying: new missions come with new eras.</p>'}` : '')
+    const xc = crossingsHTML(s, 'm');   // the crossing cards (one per crossing on offer; the owner, 2026-11-18): they replace the old text lines and the 'CROSSING TO X' tick list
+    $('mList').innerHTML = (empty ? `<p>All done here!</p>${xc ? '' : '<p class="small">Keep flying: new missions come with new eras.</p>'}` : '')
       + group('OPEN', v.open.map(r => rowHTML(r)))
       + group('TODAY', v.today.rows.map(r => rowHTML(r, 'daily')), v.today.streak ? ` <span class="small">(streak +${v.today.streak})</span>` : '')
       + (v.comingUp ? `<p class="label">COMING UP</p><p class="m-coming">${esc(v.comingUp)}</p>` : '')
-      + (v.crossing ? `<p class="label">${esc(v.crossing.title.toUpperCase())}</p><div class="m-cross">${v.crossing.rows.map(r => `<p class="m-tick${r.done ? ' done' : ''}"><span>${esc(r.label)}</span><b>${esc(r.status)}</b></p>`).join('')}${v.crossing.ready ? '<button id="mCross" class="chip m-gold" type="button">FLY THE CROSSING</button>' : ''}</div>` : '')
+      + (xc ? `${/class="xcard/.test(xc) ? '<p class="label">CROSSINGS</p>' : ''}${xc}` : '')
       + group('STEADY', v.steady.map(r => rowHTML({ ...r, star: false }, 'steady')), saving(s) ? '' : ' <span class="small">(1 seed each)</span>')
       + (v.done.count ? `<button id="mDone" class="chip m-done" type="button">DONE ${v.done.count} ›</button>` : '');
     // Tap a row: its sheet (the full title, the how, the prize) with the one action it has: GO THERE (a city mission), or the hop to HANGAR / NATURE.
@@ -498,10 +502,11 @@ export class UI {
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
       showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds${r.prizeC ? ` and +${r.prizeC} ice crystal${r.prizeC > 1 ? 's' : ''}` : ''}.` : ''}`, action }); });
     $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
-    if ($('mCross')) $('mCross').onclick = () => { const cs = crossingState(s, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); };
+    document.querySelectorAll('#mCross [data-cross]').forEach(b => b.onclick = () => { const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); });   // (the CROSSINGS screen: the moment sheet the first time, GO TO the departure city from elsewhere)
     if ($('mDone')) $('mDone').onclick = () => { sfx.tick(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
     if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
+    if (this.tour) this.tour.maybe('missions');   // the crossings lesson's rails (src/tour.js r-cross) run here
   }
 
   // THE SCHOOL BOARD (src/lessons.js; the user, 2026-11-16). On the MISSIONS tab while lessons remain (the tab reads SCHOOL), then folded into one REPLAY row.
@@ -538,7 +543,7 @@ export class UI {
   // START LESSON: go where the lesson happens; the rails there (src/tour.js) take over. A 'read' lesson is its card: reading it is doing it.
   startLesson(id) {
     const l = BOARD.find(x => x.id === id); if (!l) return;
-    if (l.kind === 'read') { const s = this.save, key = id === 'results' ? 'r-earth' : 'r-cross';
+    if (l.kind === 'read') { const s = this.save, key = 'r-earth';   // (the one 'read' lesson left: Reading your flight; Crossings is guided on MISSIONS since 2026-11-18)
       showSheet({ eyebrow: 'LESSON', title: l.title, pic: `assets/ui/${l.pic}.png`, body: more(`board-${id}`), action: { label: 'GOT IT', onTap: () => { s.tours = [...new Set([...(s.tours || []), key])]; writeSave(s); this.toast('Lesson done!', l.title, 'good', 3); this.showMissions(); } } }); return; }
     if (l.kind === 'practice') { this.startPractice ? this.startPractice() : this.go('fly'); return; }
     this.go(l.kind === 'fly' ? 'fly' : (l.where || 'fly'));

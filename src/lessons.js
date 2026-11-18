@@ -1,5 +1,5 @@
 // THE FLIGHT SCHOOL BOARD (the user, 2026-11-16: "a school thing made more formal? Like it has lessons that unlock?"; proposal approved the same day: "Build it").
-// Sixteen lessons in courses, in order. Each one opens one thing, and nothing appears on the bar before its lesson (the tab holds: src/missions2.js revealed reads
+// Seventeen lessons in courses, in order. Each one opens one thing, and nothing appears on the bar before its lesson (the tab holds: src/missions2.js revealed reads
 // `reached`). The five old lessons L1..L5 keep their ids, goals and prizes (src/missions2.js LESSONS); the new ones carry no prize, so the economy and the sim are unchanged.
 // A lesson is DONE by what has really happened (a lesson id in missionsDone, a rails tour in save.tours, a tree grown...). `passive` lessons (watch it grow) never block
 // the ones after them: they finish on their own while the player flies.
@@ -7,12 +7,13 @@
 // disappears from an existing player. Pure: no DOM.
 import { treesPlanted } from './treecount.js';
 import { treesGrownTotal } from './groves.js';
+import { available as crossingsOnOffer } from './crossings.js';
 
 const md = s => new Set(s.missionsDone || []);
 const tour = (s, id) => (s.tours || []).includes(id) || (s.tours || []).includes('*');
 const L = id => s => md(s).has(id);
 // What the OLD rules had already shown a player (src/missions2.js revealed before 2026-11-16), for saves without school2.
-const oldShown = { runway: L('L1'), map: L('L4'), name: s => (s.landings || 0) >= 5, records: s => (s.landings || 0) >= 5, trees: L('L4'), practice: s => treesPlanted(s) > 0 || md(s).has('L5'), results: s => (s.flights || 0) >= 1, crossings: s => (s.areas || []).length > 1 };
+const oldShown = { runway: L('L1'), map: L('L4'), name: s => (s.landings || 0) >= 5, records: s => (s.landings || 0) >= 5, trees: L('L4'), practice: s => treesPlanted(s) > 0 || md(s).has('L5'), results: s => (s.flights || 0) >= 1, crossings: s => (s.crossed || []).length > 0 };   // (was (s.areas || []).length > 1: a home REGION of two areas, e.g. Asia = sasia + easia, made it true for a player who had never crossed)
 
 export const BOARD = [
   { id: 'school',    course: 'Flying',       title: 'Flight school',             short: 'Fly, dodge, land.',                           pic: 'lesson-tap',  kind: 'fly',    done: s => !!s.tutorialDone },
@@ -32,11 +33,16 @@ export const BOARD = [
   { id: 'results',   course: 'Your flights', title: 'Reading your flight',       short: 'What warmed and cooled the Earth.',           pic: 'lesson-heat', kind: 'read',   done: s => tour(s, 'r-earth') },
   { id: 'name',      course: 'Pilot',        title: 'Your pilot name',           short: 'Choose the name on the boards.',              pic: 'lesson-bars', kind: 'screen', where: 'pilot', done: s => tour(s, 'name') || s.pilotNamed === true },   // a saved name finishes it even if the tour was left before its end (Oliver, 2026-11-17: still said 'save pilot name' after saving)
   { id: 'records',   course: 'Pilot',        title: 'Your records',              short: 'Your best flights.',                          pic: 'lesson-bars', kind: 'screen', where: 'boards', done: s => tour(s, 'r-boards') },
-  { id: 'crossings', course: 'The world',    title: 'Crossings',                 short: 'How to open the next part of the world.',     pic: 'lesson-bonus', kind: 'read',  done: s => tour(s, 'r-cross') || (s.areas || []).length > 1 },
+  // Crossings (the owner, 2026-11-18: "the game teaching should never end until everything about the game you care about is understood"): a guided lesson on MISSIONS (src/tour.js 'r-cross'), at the crossing
+  // card and its three rows. `open`: it waits until a crossing is listed (src/crossings.js available) so the card it points at exists. Done by the lesson, or by flying a crossing. (It used to be done by
+  // (s.areas || []).length > 1, which every player of a two-area home region had from the start, so no one in Asia, Europe, Africa & the Middle East, South America or Oceania ever saw it.)
+  { id: 'crossings', course: 'The world',    title: 'Crossings',                 short: 'How to open the next part of the world.',     pic: 'lesson-bonus', kind: 'screen', where: 'missions', open: s => !!s.tutorialDone && crossingsOnOffer(s).length > 0, done: s => tour(s, 'r-cross') || (s.crossed || []).length > 0 },
 ];
 export const lessonDone = (s, l) => !!l.done(s) || (!s.school2 && !!(oldShown[l.id] && oldShown[l.id](s)));
-// The lesson the player is on: the first not done that is not passive. null = graduated.
-export function current(s) { return BOARD.find(l => l.kind !== 'passive' && !lessonDone(s, l)) || null; }
+// A lesson with `open` waits for its thing to exist (the crossings lesson: a crossing listed); until then it is locked and never the current one.
+export const lessonOpen = (s, l) => !l.open || !!l.open(s);
+// The lesson the player is on: the first not done that is not passive and is open. null = graduated, or the only lessons left are not open yet.
+export function current(s) { return BOARD.find(l => l.kind !== 'passive' && !lessonDone(s, l) && lessonOpen(s, l)) || null; }
 // Reached: done, or the current one, or passive and every lesson before it done (a tab held for a lesson shows from the moment that lesson starts).
 export function reached(s, id) {
   const i = BOARD.findIndex(l => l.id === id); if (i < 0) return true;

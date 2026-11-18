@@ -23,8 +23,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const home0 = await p.evaluate(() => ({ rows: [(document.getElementById('hubCross') || { innerText: '' }).innerText.replace(/\s+/g, ' ').trim()], dot: !document.getElementById('dFly').hidden }));
     check(home0.rows.some(r => /NEXT CROSSING.*Nature 0 of 38/.test(r)) && !home0.dot && !(await sheet(p)), `${tag}: before the moment the HOME box says which tick is open, no dot, no sheet: ${JSON.stringify(home0)}`);
     await p.click('#tabMissions'); await p.waitForTimeout(500);
-    const ticks = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent.trim()).find(t => /^CROSSING TO/.test(t)), rows: [...document.querySelectorAll('#mList .m-tick')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) }));
-    check(ticks.label === 'CROSSING TO TUNIS' && ticks.rows.length === 3 && /Era.*done/.test(ticks.rows[0]) && /Plane.*done/.test(ticks.rows[1]) && /Nature 38.*0/.test(ticks.rows[2]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
+    const ticks = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent.trim()).find(t => /^CROSSINGS/.test(t)), route: (document.querySelector('#mCross .xcard .xc-route') || {}).textContent, rows: [...document.querySelectorAll('#mCross .xcard:first-child .xc-row')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) }));   // (the crossing CARD, 2026-11-18: it replaced the 'CROSSING TO X' tick list)
+    check(ticks.label === 'CROSSINGS' && ticks.route === 'ROME > TUNIS' && ticks.rows.length === 3 && /Era.*done/.test(ticks.rows[0]) && /Plane.*done/.test(ticks.rows[1]) && /Nature.*0 \/ 38/.test(ticks.rows[2]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
     // 2. THE MOMENT, in NATURE: funding a project completes the last condition.
     await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 1; });   // the lever: nature is "met" by the next project
     await p.click('#tabNature'); await p.waitForTimeout(700);
