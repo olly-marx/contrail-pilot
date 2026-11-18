@@ -24,6 +24,7 @@ import { isSeason2 } from './missions2.js';
 import { stayLandLeft, setGoto, clearGoto } from './aim.js';
 import { flyHereChoice } from './flyhere.js';
 import { city as cityOf } from './route.js';
+import { WILDLIFE } from './wildlife.js';
 import { nextHere } from './nexthere.js';
 import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
@@ -52,12 +53,33 @@ export function discovered(save, region) {
   return (save.visited || []).some(n => (CITIES.find(c => c.name === n) || {}).region === region);   // src/cities.js
 }
 
+// The land NATURE opens on for one animal (the results card's SEE IT IN NATURE, 2026-11-18): its own land (WILDLIFE .region) when that land is open
+// and lists it; else the first open land that lists it; null when no open land does (NATURE then opens as usual).
+export function speciesLand(save, id) {
+  const has = r => discovered(save, r) && regionSpecies(r).some(w => w.id === id), own = (WILDLIFE.find(w => w.id === id) || {}).region;
+  return own && REGION_NAMES[own] && has(own) ? own : Object.keys(REGION_NAMES).find(has) || null;
+}
+
 export class WildScreen {
   constructor(ui) {
     this.ui = ui;
     this.save = ui.save;
     this.region = null;   // the home land until a tab is chosen (render)
-    $('wInfoClose').onclick = () => { $('wInfo').hidden = true; };
+    $('wInfoClose').onclick = () => { $('wInfo').hidden = true; if (this.spotOff) this.spotOff(); };
+  }
+
+  // Open on one animal (the results card's SEE IT IN NATURE): its land, its card in the found grid scrolled into view and lit, then its info.
+  // The light stays while the info is open and goes 1.5 s after it closes (or on the next render). Returns false when no open land has it.
+  showSpecies(id) {
+    const land = speciesLand(this.save, id);
+    if (!land) return false;
+    if (land !== this.region) { this.region = land; this.openTiers = []; this.toolId = null; this.hintOn = false; }
+    this.render();
+    const card = $('wFound').querySelector(`[data-species="${id}"]`);
+    if (card) { card.classList.add('w-spot'); if (card.scrollIntoView) card.scrollIntoView({ block: 'center' }); }
+    this.spotOff = () => { this.spotOff = null; setTimeout(() => card && card.classList.remove('w-spot'), 1500); };
+    this.speciesInfo(id);
+    return true;
   }
 
   home() { return homeRegion(this.save); }   // the player's home land (ui.js asks: no import cycle)

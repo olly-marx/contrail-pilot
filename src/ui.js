@@ -562,6 +562,8 @@ export class UI {
     if (tab === 'nature' && this.wild) { this.wild.toolId = lineId; this.wild.render(); }
     setTimeout(() => { const el = document.querySelector(`[data-line="${lineId}"]`); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center' }); }, 60);
   }
+  // NATURE opened on one animal (the results card's SEE IT IN NATURE): its land, its card in view and lit, its info open (src/wild.js showSpecies).
+  natureOn(id) { this.go('nature'); if (this.wild) this.wild.showSpecies(id); }
   go(tab) {
     if (tab !== 'hangar' && this.fleet && this.fleet.paying) this.fleet.endPayoff();   // leaving mid-payoff: it ends (no parked payoff)
     if (tab === 'fly') return this.showTitle();
@@ -791,8 +793,8 @@ export class UI {
     if (v.earth) { $('rWarm').textContent = v.earth.warm; $('rCool').textContent = v.earth.cool; this.drawEarthFace($('rFace'), v.earth.heat); }
     $('rEra').hidden = !v.era;
     $('rEra').innerHTML = v.era ? `<span class="era-badge">${esc(v.era.id)}</span><span class="era-track"><span class="era-fill" style="width:${(v.era.frac * 100).toFixed(1)}%"></span></span><span class="rc-erat">${esc(v.era.text)}</span>` : '';
-    const chipHTML = (c, i) => `<button class="chip rc-chip" type="button" data-i="${i}" data-kind="${c.kind}">${c.kind === 'animal' ? `<img src="${animalPortrait(WILDLIFE.find(w => w.id === c.id))}" alt="">`
-      : c.kind === 'badge' ? `<img src="${medal(c.id, c.tier)}" alt="">` : '<i class="rc-star">&#9733;</i>'}<span>${esc(c.label)}</span></button>`;
+    const chipPic = c => (c.kind === 'animal' ? `<img src="${animalPortrait(WILDLIFE.find(w => w.id === c.id))}" alt="">` : c.kind === 'badge' ? `<img src="${medal(c.id, c.tier)}" alt="">` : '<i class="rc-star">&#9733;</i>');
+    const chipHTML = (c, i) => `<button class="chip rc-chip" type="button" data-i="${i}" data-kind="${c.kind}">${chipPic(c)}<span>${esc(c.label)}</span></button>`;
     // On a phone the chip row is about 276 px wide (measured at 320 and 390): three chips cut each name ('Gu..' for Guanaco; design run, problem 5). There: two chips and a short '+N' chip.
     const narrow = innerWidth < 480;
     if (narrow && v.allChips.length > 2) { v.chips = v.allChips.slice(0, 2); v.moreChips = v.allChips.length - 2; }
@@ -806,10 +808,16 @@ export class UI {
     $('rNextRows').querySelectorAll('.rc-row').forEach(b => b.onclick = () => { const n = v.next[+b.dataset.i]; sfx.tick();
       if (n.key === 'lead:cross') { const cs = crossingState(this.save, { unlock: S2_UNLOCK }); if (cs && cs.ready) return this.showCrossingSheet(cs); }
       if (n.where === 'hangar' || n.where === 'nature' || n.where === 'pilot' || (n.where === 'missions' && n.cross)) this.go(n.where); else showSheet({ eyebrow: n.daily ? 'TODAY' : n.cross ? 'CROSSING' : 'UP NEXT', title: n.short, body: n.full }); });
-    const chipSheet = c => { const w = c.kind === 'animal' ? WILDLIFE.find(x => x.id === c.id) : null;
+    // A chip's own sheet. SEE IT IN NATURE opens NATURE on that animal (its land, its card lit, its info: wild.showSpecies). `back`: OK returns to the grid it came from.
+    const chipSheet = (c, back = null) => { const w = c.kind === 'animal' ? WILDLIFE.find(x => x.id === c.id) : null;
       showSheet({ eyebrow: c.kind === 'animal' ? 'NEW ANIMAL' : c.kind === 'badge' ? 'NEW BADGE' : 'A FIRST', title: c.full, pic: w ? animalPortrait(w) : c.kind === 'badge' ? medal(c.id, c.tier) : '', body: c.body,
-        action: c.kind === 'animal' ? { label: 'SEE IT IN NATURE', onTap: () => this.go('nature') } : null }); };
-    $('rChips').querySelectorAll('.rc-chip').forEach(b => b.onclick = () => { sfx.tick(); if (b.dataset.more) showSheet({ eyebrow: 'ALSO NEW', title: 'More to see', body: v.allChips.slice(v.chips.length).map(c => c.full).join('. ') }); else chipSheet(v.chips[+b.dataset.i]); });
+        action: c.kind === 'animal' ? { label: 'SEE IT IN NATURE', onTap: () => this.natureOn(c.id) } : null,
+        onClose: back ? () => setTimeout(() => { if (!$('results').hidden && !document.getElementById('sheet')) back(); }, 0) : null }); };   // (after SEE IT IN NATURE the results are gone: no grid)
+    // "+N more" (the owner, 2026-11-18): a pop-up with EVERY new thing of this flight as a picture card, its name under it; a card opens its sheet.
+    const allSheet = () => { showSheet({ eyebrow: 'THIS FLIGHT', title: `${v.allChips.length} new things`,
+      html: `<div class="rc-grid">${v.allChips.map((c, i) => `<button class="rc-gcard" type="button" data-i="${i}" data-kind="${c.kind}">${chipPic(c)}<span>${esc(c.name)}</span></button>`).join('')}</div>` });
+      document.querySelectorAll('#sheet .rc-gcard').forEach(b => b.onclick = () => { sfx.tick(); chipSheet(v.allChips[+b.dataset.i], allSheet); }); };
+    $('rChips').querySelectorAll('.rc-chip').forEach(b => b.onclick = () => { sfx.tick(); if (b.dataset.more) allSheet(); else chipSheet(v.chips[+b.dataset.i]); });
     this.showOnly('results');
     $('results').scrollTop = 0;
     $('results').classList.add('revealing');   // while the card builds, its lines are inert: a tap to SKIP must not open a sheet (CSS: #results.revealing)

@@ -69,11 +69,11 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   // 6. The era: one line (the badge, the bar, the minutes). "NEW ERA" is its own beat in ui.showResults, before the hangar.
   if (r.school) v.era = null;
   else { const p = eraProgress(save); v.era = { id: p.era.id === 'future' ? 'Far future' : p.era.id, frac: p.frac, text: p.next ? `${Math.floor(p.done)}/${Math.round(p.need)} min` : 'every era open', to: p.next ? p.next.name : '' }; }
-  // 7. Chips: a new animal, a new badge, a first. Max CHIPS_MAX; the rest "+N more". Each opens a sheet (ui.showResults).
+  // 7. Chips: a new animal, a new badge, a first. Max CHIPS_MAX; the rest "+N more". Each opens a sheet (ui.showResults). `name`: the whole short name, under its picture in the "+N more" grid.
   const chips = [
-    ...(r.foundIds || []).map(id => WILDLIFE.find(w => w.id === id)).filter(Boolean).map(w => ({ kind: 'animal', id: w.id, label: chipLabel(w.name), full: w.name, body: `A new animal! ${w.name} now lives in your Wild Area. See it in NATURE.` })),
-    ...rewards.filter(u => u.kind === 'badge').map(u => ({ kind: 'badge', id: u.id, tier: u.tier, label: chipLabel(u.label), full: u.label, body: `New badge: ${u.label}. You earned +${u.seeds} seeds and +${u.crystals} crystals. All your badges are in BOARDS.` })),
-    ...firstTitles.map(t => { const f = FIRSTS.find(x => x.title === t); return { kind: 'first', id: f.id, label: clip(f.short, 11), full: t, body: t }; }),
+    ...(r.foundIds || []).map(id => WILDLIFE.find(w => w.id === id)).filter(Boolean).map(w => ({ kind: 'animal', id: w.id, label: chipLabel(w.name), full: w.name, name: w.name, body: `A new animal! ${w.name} now lives in your Wild Area. See it in NATURE.` })),
+    ...rewards.filter(u => u.kind === 'badge').map(u => ({ kind: 'badge', id: u.id, tier: u.tier, label: chipLabel(u.label), full: u.label, name: u.label, body: `New badge: ${u.label}. You earned +${u.seeds} seeds and +${u.crystals} crystals. All your badges are in BOARDS.` })),
+    ...firstTitles.map(t => { const f = FIRSTS.find(x => x.title === t); return { kind: 'first', id: f.id, label: clip(f.short, 11), full: t, name: f.short, body: t }; }),
   ];
   v.chips = chips.slice(0, CHIPS_MAX); v.moreChips = Math.max(0, chips.length - CHIPS_MAX); v.allChips = chips;
   return v;
