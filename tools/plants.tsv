@@ -9,7 +9,7 @@ flight	src/sim/rules.js	s/this.heatTrapped += rate \* dt;/this.heatTrapped += 0;
 flight	src/sim/rules.js	s/this.sunBlocked += -rate \* dt;/this.sunBlocked += 0;/	day sun zeroed
 flight	src/sim/rules.js	s/      if (this.hitsStorm(s)) {/      if (false) {/	storm hit disabled
 lanes	src/sim/rules.js	s/      if (!blocks) {/      if (true) {/	addIssr guard removed
-lanes	src/sim/rules.js	s/if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t;/y = t;/	flock guard removed
+lanes	src/sim/rules.js	s/if (!this.flockBlocksGap(x, t, FLOCK_HALF) \&\& !this.flockBlocksClimb(x, t, FLOCK_HALF)) y = t;/y = t;/	flock guard removed
 forest	src/sim/rules.js	s/const cool = forestFull ? 0 : /const cool = /	forest cap removed
 forest	src/sim/rules.js	s/land = landFull ? 0 : /land = /	land cap removed
 forest	src/sim/rules.js	s/(stage === 2 ? 1 + oldWood : 1)/1/	old-wood boost removed
@@ -27,7 +27,7 @@ sim-flight	src/sim/rules.js	s/this.heatTrapped += rate \* dt;/this.heatTrapped +
 sim-flight	src/sim/rules.js	s/this.sunBlocked += -rate \* dt;/this.sunBlocked += 0;/	day sun zeroed
 sim-flight	src/sim/rules.js	s/      if (this.hitsStorm(s)) {/      if (false) {/	storm hit disabled
 sim-lanes	src/sim/rules.js	s/      if (!blocks) {/      if (true) {/	addIssr guard removed
-sim-lanes	src/sim/rules.js	s/if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t;/y = t;/	flock guard removed
+sim-lanes	src/sim/rules.js	s/if (!this.flockBlocksGap(x, t, FLOCK_HALF) \&\& !this.flockBlocksClimb(x, t, FLOCK_HALF)) y = t;/y = t;/	flock guard removed
 sim-forest	src/sim/rules.js	s/const cool = forestFull ? 0 : /const cool = /	forest cap removed
 sim-forest	src/sim/rules.js	s/land = landFull ? 0 : /land = /	land cap removed
 sim-forest	src/sim/rules.js	s/(stage === 2 ? 1 + oldWood : 1)/1/	old-wood boost removed
@@ -405,7 +405,7 @@ crossinghud	src/GameScene.js	s/    if (this.crossing) this.drawCrossingBar();/  
 crossingscore	src/sim/rules.js	s/ \&\& s2 \&\& !this.crossing ? s2Flight(/ \&\& s2 ? s2Flight(/	scoring on a crossing flight returns (missions are scored and paid on it)
 hintlines	src/hintlines.js	s/hintLead: any ? ATC_LEAD\[A\] || ATC_LEAD\[1\] : 0/hintLead: any ? ATC_LEAD[A] : 0/	the first line bought gives no arrow unless it is Air traffic control (row re-aimed 2026-11-11 from gaphint2)
 hintlines	src/hintlines.js	s/2\.4, 2\.5, 2\.5\]/2.4, 2.5, 2.7]/	the warning time is not capped at 2.5 s (row re-aimed 2026-11-11 from gaphint2)
-hintlines	src/hintlines.js	s/GATE_FROM = 3,/GATE_FROM = 1,/	the gate comes from Forecasting 1: the arrow-only phase is gone (row re-aimed 2026-11-11 from gaphint2)
+hintlines	src/hintlines.js	s/GATE_FROM = 5,/GATE_FROM = 1,/	the gate comes from Forecasting 1: the arrow-only phase is gone (row re-aimed 2026-11-11 from gaphint2)
 crossingend	src/crossingend.js	s/title: `WELCOME TO ${city}!`/title: `WELCOME TO ${city}! 6500 km`/	the landing screen shows a distance
 crossingend	src/crossingend.js	s/buttons: \[{ id: 'again', label: 'TRY AGAIN' }, { id: 'home', label: 'HOME' }\]/buttons: [{ id: 'home', label: 'HOME' }]/	the crash screen has no TRY AGAIN
 crossingend	src/crossingend.js	s/lost > 0) lines.push/lost > 99999) lines.push/	a crash never says the carried seeds are lost
@@ -784,7 +784,7 @@ barui	style.css	s/^\.lvbar { display: flex; gap: 2px; margin: 4px 0 3px; }/.lvba
 hintlines	src/hintlines.js	s/SECOND_GATE_FROM = 10/SECOND_GATE_FROM = 6/	the second gate comes at ATC 6, not 10
 hintlines	src/hintlines.js	s/BOOST_BY_ATC = \[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3\]/BOOST_BY_ATC = [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 3]/	the climb boost count starts at ATC 9
 hintlines	src/hintlines.js	s/red: 2, blink: 3/red: 2, blink: 1/	the arrow blinks from Ops 1, not Ops 3
-hintlines	src/hintlines.js	s/FILL_FROM = 4/FILL_FROM = 2/	the gate opening fills in from Forecasting 2, not 4
+hintlines	src/hintlines.js	s/FILL_FROM = 6/FILL_FROM = 2/	the gate opening fills in from Forecasting 2, not 6
 hintlines	src/fleet.js	s/export const HINT_CHEAP = 0.6;/export const HINT_CHEAP = 1;/	levels 1 and 2 of the hint lines are not cheaper
 hintlines	src/hintwords.js	s/\['Arrow to the gap', 'Better icy-air view'\]/['Arrow to the gap', 'Better icy-air view and a long extra line']/	a hangar hint line is over 28 characters
 gapmarkers	src/gapmarkers.js	s/if (x < WIDTH - linger \* speed) return null;/if (x < WIDTH) return null;/	the gate never lingers after its column reaches the screen
@@ -829,7 +829,7 @@ hintdraw	src/GameScene.js	s/const ic = iconFor(h, first);/const ic = null;/	the 
 hintdraw	src/GameScene.js	s/if (first \&\& first.arrow \&\& (!(h.blink/if (false \&\& first.arrow \&\& (!(h.blink/	the arrow is never drawn
 hintdraw	src/hintlines.js	s/second: !!k.hintSecond \&\& lead > 0/second: false/	the second gate never comes, whatever the ATC level
 hintdraw	src/hintlines.js	s/red: lead > 0 \&\& O >= CUE_FROM.red/red: false/	the arrow never turns red when urgent
-hintdraw	src/hintlines.js	s/GATE_FROM = 3,/GATE_FROM = 1,/	the gate is drawn from Forecasting 1
+hintdraw	src/hintlines.js	s/GATE_FROM = 5,/GATE_FROM = 1,/	the gate is drawn from Forecasting 1
 hintdraw	src/gapmarkers.js	s/if (!flags || !flags.icon) return null;/if (!flags) return null;/	the icon is drawn below Ops 5
 droporder	src/droporder.js	s/cand\[(turn + k) % cand.length\]/cand[k % cand.length]/	the drops no longer take turns (the turn counter is ignored)
 droporder	src/droporder.js	s/if (room.includes(c)) return c;/return c;/	a full kind still gets its turn

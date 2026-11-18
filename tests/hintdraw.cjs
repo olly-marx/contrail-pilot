@@ -2,9 +2,9 @@
 // each frame drew (scene.hintDrawn: { inRange, gates, arrow, red, icon, lit, size }), and the flags are OR-ed over 9 s of frames (max for gates). Cases (systems -> must draw):
 //   none                      -> nothing at all (no arrow, no gate, no icon).
 //   forecast 2, ops 2         -> the ARROW and NO gate, NO icon (Forecasting 1-2 give no gate; the icon starts at Ops 5), and the arrow turns red when urgent (Ops 2).
-//   forecast 3, ops 5         -> ONE gate (never two without ATC 10), the arrow, the icon (not lit: lit is Ops 6).
-//   forecast 3, atc 10, ops 6 -> TWO gates (the second gate is ATC 10), the icon lit while a gap is in range. (The real ATC 10 warning is 2.4 s = 216 px at the first leg's 90 px/s, which is shorter than the 230 px between pairs: the second gate
-//                                shows once the plane is past the first airport. So the test lifts the kit's hintLead to 3.2 s after checking it is 2.4: it tests the DRAWING, tests/hintlines.cjs holds the table.)
+//   forecast 5, ops 5         -> ONE gate (the gate starts at Forecasting 5 since 2026-11-18) (never two without ATC 10), the arrow, the icon (not lit: lit is Ops 6).
+//   forecast 5, atc 10, ops 6 -> TWO gates (the second gate is ATC 10), the icon lit while a gap is in range. (The real ATC 10 warning is 1.2 s since 2026-11-18 (was 2.4 s = 216 px at the first leg's 90 px/s, which is shorter than the 230 px between pairs: the second gate
+//                                shows once the plane is past the first airport. So the test lifts the kit's hintLead to 3.2 s after checking it is 1.2: it tests the DRAWING, tests/hintlines.cjs holds the table.)
 // Screenshots (the right edge, and the whole screen) go to SHOTS, else os.tmpdir() (a non-recursive mkdir). Run: python3 -m http.server 8000 & node tests/hintdraw.cjs   (proved by planted defects: tools/plants.tsv, test hintdraw)
 const { chromium } = require('playwright-core'), fs = require('fs'), os = require('os'), path = require('path');
 require('./lib/shipped.js');
@@ -14,8 +14,8 @@ try { fs.mkdirSync(OUT); } catch (e) { /* exists */ }
 const CASES = [
   { id: 'none', systems: {}, sizes: [[390, 844]] },
   { id: 'arrow', systems: { forecast: 2, ops: 2 }, sizes: [[390, 844], [320, 568]] },
-  { id: 'gate-icon', systems: { forecast: 3, ops: 5 }, sizes: [[390, 844]] },
-  { id: 'second', systems: { forecast: 3, atc: 10, ops: 6 }, sizes: [[390, 844], [320, 568]], lead: 3.2 },
+  { id: 'gate-icon', systems: { forecast: 5, ops: 5 }, sizes: [[390, 844]] },
+  { id: 'second', systems: { forecast: 5, atc: 10, ops: 6 }, sizes: [[390, 844], [320, 568]], lead: 3.2 },
 ];
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });
@@ -50,18 +50,18 @@ const CASES = [
     if (cs.id === 'none') check(r.drawn === 0 && r.gates === 0 && !r.arrow && r.icon === 0, `${tag}: no hint line bought draws NOTHING (frames drawn ${r.drawn}, gates ${r.gates}, arrow ${r.arrow}, icon frames ${r.icon})`);
     if (cs.id === 'arrow') {
       check(r.arrow && r.drawn > 50, `${tag}: Forecasting 2 + Ops 2 draw the ARROW (arrow ${r.arrow}, frames ${r.drawn})`);
-      check(r.gates === 0, `${tag}: and NO gate below Forecasting 3 (most gates drawn in one frame: ${r.gates})`);
+      check(r.gates === 0, `${tag}: and NO gate below Forecasting 5 (most gates drawn in one frame: ${r.gates})`);
       check(r.icon === 0, `${tag}: and NO icon below Ops 5 (icon frames ${r.icon})`);
       check(r.red, `${tag}: the arrow turns red when urgent from Ops 2 (red seen ${r.red})`);
     }
     if (cs.id === 'gate-icon') {
-      check(r.gates === 1, `${tag}: Forecasting 3 draws ONE gate, never two without ATC 10 (most gates in one frame: ${r.gates})`);
+      check(r.gates === 1, `${tag}: Forecasting 5 draws ONE gate, never two without ATC 10 (most gates in one frame: ${r.gates})`);
       check(r.arrow, `${tag}: the arrow shows with the gate (${r.arrow})`);
       check(r.icon > 50 && r.icon === r.drawn, `${tag}: the icon is steady from Ops 5 (icon frames ${r.icon} of ${r.drawn})`);
       check(!r.lit, `${tag}: but it is not lit before Ops 6 (lit ${r.lit})`);
     }
     if (cs.id === 'second') {
-      check(r.realLead === 2.4, `${tag}: ATC 10 is a 2.4 s warning in the kit (got ${r.realLead})`);
+      check(r.realLead === 1.2, `${tag}: ATC 10 is a 1.2 s warning in the kit (2026-11-18; got ${r.realLead})`);
       check(r.gates === 2, `${tag}: ATC 10 draws a SECOND gate (most gates in one frame: ${r.gates}, in range ${r.inRange})`);
       check(r.icon === r.drawn && r.drawn > 50 && r.lit, `${tag}: the icon is steady and lit while a gap is in range from Ops 6 (icon frames ${r.icon} of ${r.drawn}, lit ${r.lit})`);
     }
@@ -69,5 +69,5 @@ const CASES = [
   console.log({ fails });
   await b.close();
   if (fails.length) { console.log('FAIL hintdraw:\n - ' + fails.join('\n - ')); process.exit(1); }
-  console.log('PASS hintdraw: arrow only below Forecasting 3 and Ops 5, one gate from Forecasting 3, a second gate at ATC 10, the steady icon from Ops 5, lit from Ops 6, nothing with no line');
+  console.log('PASS hintdraw: arrow only below Forecasting 5 and Ops 5, one gate from Forecasting 5, a second gate at ATC 10, the steady icon from Ops 5, lit from Ops 6, nothing with no line');
 })();

@@ -37,7 +37,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const none = await fly({});                                 // no system at all: no hint (one flavour per line since 2026-11-11: any ONE system gives the arrow, tests/hintlines.cjs)
   const full = await fly({ forecast: 6, atc: 6, ops: 6 });
   check(none.level === 0 && !none.hinted && none.maxX <= 300, `with no system at all: no hint, storms made just off screen: ${JSON.stringify(none)}`);
-  check(full.level === 1.6 && full.hinted && full.maxX > 340, `all three at 6 (ATC 6 = a 1.6 s warning, Forecasting 6 = a gate): storms made well ahead and the gate glows: ${JSON.stringify(full)}`);
+  check(full.level === 0.8 && full.hinted && full.maxX > 340, `all three at 6 (ATC 6 = a 0.8 s warning since 2026-11-18, Forecasting 6 = a gate): storms made well ahead and the gate glows: ${JSON.stringify(full)}`);
   check(!none.errs.length && !full.errs.length, `page errors: ${none.errs} ${full.errs}`);
   console.log({ fails, none, full });
   await b.close();

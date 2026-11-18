@@ -29,6 +29,7 @@ import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
 import * as P from './physics.js';
 import { mask } from './masks-load.js';
+import { reach as gapReach, reference as gapReference } from './gapmodel.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));   // = Phaser.Math.Clamp
@@ -72,6 +73,7 @@ export const RULES = {
     this.elapsed = 0;
     this.stateTime = 0;
     this.storms = [];
+    this.lastGapY = null; this.lastGap = null; this.modelRef = null;   // the gap model's memory of the last gap (per flight)
     this.issrs = [];
     this.contrails = [];
     this.blockers = [];
@@ -297,6 +299,36 @@ export const RULES = {
       return fx < this.plane.x + PLANE.w + 120 && fx + half * 26 + 16 > this.plane.x - 80 && top < st.rects[1].y && bottom > r.height;   // wide margin: the speed creeps up
     });
   },
+  // Birds out of the climb (2026-11-18 human-limits study): would the flock be at the plane while it travels between two
+  // consecutive gaps more than climbJump px apart, inside the height span between them? (HAZARDS.birds.climbJump, 0 = off)
+  flockBlocksClimb(x, y, half) {
+    const B = HAZARDS.birds, J = B.climbJump; if (!J) return false;
+    const v = Math.max(1, this.speed), fv = v + B.extraSpeed;
+    const wob = B.wobble;   // the full bob, not the kit's (bird detection must not change where things spawn)
+    const top = y - half * 9 - 4 - wob, bottom = y + half * 9 + 16 + wob;
+    const t1 = (x - (this.plane.x + PLANE.w + 40)) / fv, t2 = (x + half * 26 + 16 - (this.plane.x - 40)) / fv;   // flock level with the plane
+    const cols = this.storms.filter(st => st.rects[0].x + st.rects[0].width > this.plane.x - 10).sort((a, b) => a.rects[0].x - b.rects[0].x);
+    for (let i = 1; i < cols.length; i++) {
+      const a = cols[i - 1], b = cols[i], cA = (a.rects[0].height + a.rects[1].y) / 2, cB = (b.rects[0].height + b.rects[1].y) / 2;
+      if (Math.abs(cA - cB) <= J) continue;
+      const tA = (a.rects[0].x + a.rects[0].width - this.plane.x) / v - 0.3, tB = (b.rects[0].x - this.plane.x - PLANE.w) / v + 0.3;
+      if (t2 > tA && t1 < tB && top < Math.max(cA, cB) && bottom > Math.min(cA, cB)) return true;
+    }
+    return false;
+  },
+  // A new column whose gap is far from the last one: would a flock already in the sky sit in the climb between them?
+  // Then draw the gap again (2026-11-18 human-limits study; HAZARDS.birds.climbJump, 0 = off).
+  climbBlocked(x, t) {
+    const B = HAZARDS.birds, J = B.climbJump;
+    if (!J || this.lastGapY == null || Math.abs(t - this.lastGapY) <= J || !this.birds.length) return false;
+    const prev = this.storms[this.storms.length - 1]; if (!prev) return false;
+    const v = Math.max(1, this.speed), fv = v + B.extraSpeed, wob = B.wobble;   // (as flockBlocksClimb)
+    const tA = (prev.rects[0].x + prev.rects[0].width - this.plane.x) / v - 0.3, tB = (x - this.plane.x - PLANE.w) / v + 0.3;
+    const lo = Math.min(t, this.lastGapY), hi = Math.max(t, this.lastGapY);
+    return this.birds.some(f => { const half = f.half ?? FLOCK_HALF, top = f.y - half * 9 - 4 - wob, bottom = f.y + half * 9 + 16 + wob;
+      const t1 = (f.x - (this.plane.x + PLANE.w + 40)) / fv, t2 = (f.x + half * 26 + 16 - (this.plane.x - 40)) / fv;
+      return t2 > tA && t1 < tB && top < hi && bottom > lo; });
+  },
   heatPct() { return this.heat * 100 / CLIMATE.dangerLine; },   // heat as % of the danger line (the warning thresholds are in %)
 
   spawn() {
@@ -394,16 +426,27 @@ export const RULES = {
     let gap = Math.max(STORMS.minGap, STORMS.startGap - STORMS.gapShrinkPerPair * (this.stormCount - (this.warmStorms || 0)));
     const nf = HAZARDS.noFly;
     const noFly = this.distancePx >= nf.from && this.rand() < this.squeezed(nf.chance, 'capNoFly');
+    const gapBase = noFly ? Math.max(nf.minGap, gap - nf.gapLess) : gap;   // the gap model reads the gap BEFORE kit knobs, so a knob never changes where gaps are
     if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess + (P.KNOB_PLANTS.gapAdd ? 0 : this.kit.noFlyGapAdd || 0));   // ATC 8 (2010s, free route airspace): wider no-fly gaps
     gap = Math.round(gap * this.kit.gaps);   // air traffic control (eras): better spacing, gaps up to ~3% wider
-    const lo = STORMS.marginTop + gap / 2;
-    const hi = SKY_H - STORMS.marginTop - gap / 2;
+    let lo = STORMS.marginTop + gap / 2;
+    let hi = SKY_H - STORMS.marginTop - gap / 2;
+    // The gap model (STORMS.model; src/sim/gapmodel.js): never further from the last gap than the reference player at this distance can climb
+    // (up) or dive (down). Same number of draws as before, from a narrower range.
+    if (STORMS.model && this.lastGapY != null) {
+      const ref = gapReference(STORMS.model, this.distancePx), g = Math.min(gapBase, this.lastGap ?? gapBase);
+      const r = gapReach({ v: this.speed + 2 * WORLD.speedGain, g, T: ref.T, RT: ref.RT, ahead: WIDTH - PLANE.x - PLANE.w, flap: -PLANE.flapVelocity, gravity: PLANE.gravity, maxFall: PLANE.maxFall, sky: SKY_H - 2 * STORMS.marginTop });
+      const m = STORMS.model.margin, nlo = Math.max(lo, this.lastGapY - Math.max(0, r.up - m)), nhi = Math.min(hi, this.lastGapY + Math.max(0, r.down - m));
+      if (nlo <= nhi) { lo = nlo; hi = nhi; } else { lo = hi = Math.max(lo, Math.min(hi, this.lastGapY)); }
+      this.modelRef = ref;   // (read by the practice page and the sim tools)
+    }
     const w = noFly ? nf.width : STORMS.width;
     // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time);
     // with the ISSR.laneExtra variant, a lane that much taller.
     let gapY = null;
-    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2, this.issrs, ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined)) gapY = t; }
-    if (gapY === null) return;
+    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2, this.issrs, ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined) && !this.climbBlocked(x, t)) gapY = t; }
+    if (gapY === null) { this.lastGapY = null; return; }   // no column this time: the next one is a whole spacing further on, and free (the model's range must never pin a run of skipped columns)
+    this.lastGapY = gapY; this.lastGap = gapBase;
     if (noFly) this.addNoFlyAt(x, gapY, gap);
     else this.addStormPairAt(x, gapY, gap);
   },
@@ -521,7 +564,7 @@ export const RULES = {
   addFlock(x = WIDTH + 20, y = null) {
     const B = HAZARDS.birds, n = this.between(B.flock[0], B.flock[1]);
     if (y === null) {   // never a flock in a storm gap just as the plane goes through it (10 tries, else skip)
-      for (let k = 0; k < 10 && y === null; k++) { const t = this.between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t; }
+      for (let k = 0; k < 10 && y === null; k++) { const t = this.between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, FLOCK_HALF) && !this.flockBlocksClimb(x, t, FLOCK_HALF)) y = t; }
       if (y === null) return;
     }
     // A dense arrowhead of many small birds (2026-10-22: the user wanted flocks more obvious), packed
@@ -645,6 +688,8 @@ export const RULES = {
     } else {
       if (this.distancePx < WORLD.warmup) this.warmTime = this.elapsed;   // speed-up starts after the warm-up leg
       this.speed = this.school ? WORLD.startSpeed : Math.min(WORLD.maxSpeed, WORLD.startSpeed + WORLD.speedGain * (this.elapsed - (this.warmTime || 0)));
+      const S2 = WORLD.speed2;   // (2026-11-18) past maxSpeed, a slow rise by distance
+      if (S2 && !this.school && this.distancePx > S2.from) this.speed = Math.max(this.speed, WORLD.maxSpeed + (S2.top - WORLD.maxSpeed) * Math.min(1, (this.distancePx - S2.from) / (S2.to - S2.from)));
     }
     const dx = this.speed * dt;
     this.distancePx += dx;

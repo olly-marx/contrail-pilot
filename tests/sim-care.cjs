@@ -11,8 +11,10 @@
 // PLANT=care weakens the contrail term (x 0.5): must FAIL.
 // Run: node tests/sim-care.cjs
 const GOLD = {
-  care0: [10530.619, 9586.502, 8218.673, 8204.153, 10519.428, 9135.647, 10976.856, 9780.52, 8082.072, 9022.377, 10800.35, 10904.331],
-  care1: [9595.196, 9817.717, 6401.681, 8206.227, 10050.65, 1122.944, 10358.701, 9896.634, 8941.428, 10703.444, 10945.107, 10879.436],
+  // 2026-11-18: re-flown DELIBERATELY for the gap model (STORMS.model, WORLD.speed2, birds.climbJump): the player code is unchanged, so care 0 / 1 are
+  // still the pre-knob players; only the skies moved. Before: care0 [10530.619, 9586.502, 8218.673, ...], care1 [9595.196, 9817.717, 6401.681, ...].
+  care0: [10061.679, 9514.871, 9133.506, 8990.397, 9545.239, 10316.419, 10782.3, 9758.66, 9354.848, 8924.414, 9854.959, 11008.634],
+  care1: [10090.375, 9885.661, 9357.004, 1350.989, 9357.004, 10280.856, 10434.501, 9942.76, 9357.004, 10638.247, 9357.004, 10786.811],
 };
 (async () => {
   const { createWorld } = await import('../src/sim/world.js');

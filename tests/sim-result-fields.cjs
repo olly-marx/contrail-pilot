@@ -21,7 +21,8 @@
   // Skies 1-6 at s = 0.85; skies 2, 6 and 9 again at s = 0.8, where a forgiven nick is survived (scanned 2026-10-27:
   // s = 0.8 survived a scrape in skies 2, 6, 9, 15, 27, 28 of 40; s = 0.9 in none).
   // GATE form (tools/gate.sh sets GATE=1): sky 6 at 0.85 (the no-fly crash) and the three s = 0.8 scrape skies; every power check below still has its case.
-  const CASES = process.env.GATE ? [[6, 0.85], [2, 0.8], [6, 0.8], [9, 0.8]] : [[1, 0.85], [2, 0.85], [3, 0.85], [4, 0.85], [5, 0.85], [6, 0.85], [2, 0.8], [6, 0.8], [9, 0.8]];
+  // 2026-11-18 (gap model): sky 6 no longer ends in a no-fly zone; sky 10 at 0.85 does (scanned skies 1-30: 10, 12, 20, 25, 30 at 0.85).
+  const CASES = process.env.GATE ? [[10, 0.85], [2, 0.8], [6, 0.8], [9, 0.8]] : [[1, 0.85], [2, 0.85], [3, 0.85], [4, 0.85], [5, 0.85], [6, 0.85], [10, 0.85], [2, 0.8], [6, 0.8], [9, 0.8]];
   for (const [seed, skill] of CASES) {
     const save = { fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, landings: 30, mission: 99, levels: { trees: 2, soil: 1 }, planted: {},
       fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} }, simSeed: seed };

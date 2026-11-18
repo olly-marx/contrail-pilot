@@ -52,6 +52,7 @@ export const WORLD = {
   startSpeed: 90,    // px/s scroll speed
   speedGain: 0.55,   // px/s added per second flown after the warm-up (top speed ~1.5 min in)
   maxSpeed: 140,
+  speed2: { from: 12000, to: 40000, top: 180 },   // (2026-11-18) after maxSpeed, a slow rise by distance to `top` (null = off: top speed 140 as before)
   warmup: 1500,      // m: no speed-up or narrowing gaps before the first airport
   pxPerMetre: 1,     // distance shown = px scrolled / this
 };
@@ -66,6 +67,12 @@ export const STORMS = {
   spacing: 230,      // px between storm pairs (260 until 0.10.0: with the shorter legs back, a busier sky per km)
   clearLane: 24,     // every storm gap keeps a lane this much taller than the plane free of icy air and birds
   marginTop: 40,     // gap centre never closer than this to the top/ground
+  // THE GAP MODEL (2026-11-18, research/GAP-FEASIBILITY-HUMAN-2026-11-18.md; null = off, the old uniform draw). The next gap's centre is
+  // drawn uniformly but never further than a REFERENCE PLAYER can climb or dive (fitted formula, src/sim/gapmodel.js). The reference
+  // player gets better with distance: z (standard deviations above an average player) goes from z0 at d0 km to z1 at d1 km. With
+  // z1 = 2.3 only the best ~1% of players can fly every pair of a very long run; nothing is ever beyond them. Guessed population
+  // (to be measured in the beta): taps every tapMs +- tapSd ms, reaction rt +- rtSd s.
+  model: { z0: -1.6, z1: 2.3, d0: 0, d1: 40000, tapMs: 170, tapSd: 25, rt: 0.30, rtSd: 0.04, margin: 16 },   // margin: the formula is within +13.5 px of the exact search
 };
 
 export const ISSR = {
@@ -157,7 +164,7 @@ export const HAZARDS = {
   noFly:      { from: 8000, chance: 0.45, width: 30, gapLess: 28, minGap: 82,
                 // Era 4 twist (2010s, PROPOSAL-ERAS-4-6-SYSTEMS): from 14,000 km a zone's gap drifts up or down (px/s). TBD-SIM.
                 drift: { from: 14000, era: 3, pxs: 4, away: true } },   // sized 2026-10-27 (BALANCE-ERAS-4-6.md): 10+ px/s is a cliff
-  birds:      { from: 10000, every: 700, chance: 0.55, flock: [11, 15], extraSpeed: 45, wobble: 22,   // many small birds (2026-10-22)
+  birds:      { from: 10000, every: 700, chance: 0.55, flock: [11, 15], extraSpeed: 45, wobble: 22, climbJump: 150,   // many small birds (2026-10-22). climbJump (2026-11-18): no flock in the climb between two gaps more than this many px apart (0 = off; research/GAP-FEASIBILITY-HUMAN-2026-11-18.md)
                 // Era 5 twist (2030s): from 18,000 km a flock slides dy px once, at `at` of the screen, over `secs`. TBD-SIM.
                 turn: { from: 18000, era: 4, dy: 90, at: 0.55, secs: 0.6 } },   // sized 2026-10-27: mild even at 110
   // The long-haul squeeze (far future): from 26,000 km, every 4,000 km the no-fly and bird chances rise by `add`. TBD-SIM.
