@@ -49,6 +49,7 @@ const SAVE = { school2: true, tutorialDone: true, muted: true, priceVersion: 99,
     await audited(2);
     await p.waitForTimeout(4500); st = await spot();   // (longer than a step's 4 s wait for its next target to show: a step 2 that did not wait would be gone by now)
     check(st.key === 'r-map#2', `${tag} 2: with no city tapped the city step stays up: ${JSON.stringify(st)}`);
+    if (st.key !== 'r-map#2') { await p.close(); continue; }
     // 3. A real tap on a city dot.
     const pick = () => p.evaluate(async () => { const { CITIES } = await import('./src/cities.js'), gl = document.getElementById('hubGlobe').__globe, r = document.getElementById('hubGlobe').getBoundingClientRect();
       const ok = q => q && q.x > r.left + r.width * 0.25 && q.x < r.right - r.width * 0.25 && q.y > r.top + r.height * 0.15 && q.y < r.bottom - r.height * 0.2;
