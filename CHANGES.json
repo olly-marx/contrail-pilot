@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-18-update-crash",
+    "version": "0.67.1",
+    "date": "2026-11-18",
+    "level": "minor",
+    "notes": [
+      "Fixed: right after an update the game could stop on the loading screen with an error. Every part of the game now updates together."
+    ]
+  },
+  {
     "id": "2026-11-17-bad-landings",
     "version": "0.67.0",
     "date": "2026-11-17",

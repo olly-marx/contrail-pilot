@@ -11,7 +11,10 @@ rm -rf "$OUT"; mkdir -p "$OUT"
 cp -r index.html style.css .nojekyll src assets vendor sw.js manifest.webmanifest "$OUT/"
 # Stamp every script/style URL with this build. Pages lets browsers keep files for 10 min,
 # so without this a phone could run a new index.html with OLD scripts (new buttons, dead).
-sed -i -E "s#(from '\./[A-Za-z]+\.js)'#\1?v=$V'#g" "$OUT"/src/*.js
+# EVERY relative module URL in EVERY file under src/ (0.67.1: the old rule stamped only './name.js' in src/*.js, so './sim/rules.js', '../config.js'
+# and './missions2.js' kept bare URLs; a phone that updated mid-session ran the new GameScene.js with the OLD sim/rules.js: 'this.rollDistance is not a function').
+# Static (from '...', import '...'), dynamic (import('...')) and worker (new URL('...', import.meta.url)) specifiers; tests/stamps.cjs checks the built site.
+find "$OUT/src" -name '*.js' -exec sed -i -E "s#((from|import|import\(|URL\() *')(\.\.?/[^'?]+\.js)'#\1\3?v=$V'#g" {} +
 sed -i -E "s#(src|href)=\"(src/main\.js|src/newplayer\.js|style\.css|vendor/[a-z.]+\.js)\"#\1=\"\2?v=$V\"#g" "$OUT/index.html"
 grep -q "src/main.js?v=$V" "$OUT/index.html"   # fail the build if the stamp didn't take
 # version.json: what's live, read by src/updates.js to offer the update. tools/check-release.py stops

@@ -929,3 +929,6 @@ overrun@PLANT=overrun	-	-	an overrun is never judged
 overrun@PLANT=keepAll	-	-	a bad landing or a crash loses nothing
 overrun@PLANT=flat	-	-	no steeper way down over the runway
 overrun@PLANT=linear	-	-	the gear pull is not squared
+stamps	tools/make-site.sh	s#find "$OUT/src" -name#find "$OUT/src" -maxdepth 1 -name#	files under src/sim and src/habitat are not stamped
+stamps	tools/make-site.sh	s#(\\.\\.?/#(\\./#	'../x.js' imports are not stamped
+stamps	tools/make-site.sh	s#|import\\(|URL\\(##	dynamic and worker imports are not stamped
