@@ -1,4 +1,4 @@
-import { cz, GROWN_METER } from './config.js';
+import { cz, GROWN_METER, LAND_EVEN } from './config.js';
 import { UK_PROJECTS, UK_SPECIES, RARITY, REGION_DATA } from './habitats.js';
 import { WILDLIFE } from './wildlife.js';
 import { REGION_TREES } from './habitat/trees.js';
@@ -88,9 +88,17 @@ export function biodiversity(save, region = 'woodland', grownOnly = GROWN_METER.
   // Elsewhere: that region's trees (as the UK's: ~40 of 100) plus its projects.
   const all = REGION_DATA[region].projects;
   for (const [id, n] of Object.entries(grownOnly ? grownBook(save, region) : plantedHere(save, region))) b += pointsHere(region, id, n);
-  for (const p of projectsDone(save, region)) b += p.bio;
+  for (const p of projectsDone(save, region)) b += p.bio * projectWeight(all, p);
   const raw = TREES_MAX * all.reduce((a, p) => a + p.bio, 0) / PROJECTS.reduce((a, p) => a + p.bio, 0) + all.reduce((a, p) => a + p.bio, 0);
   return Math.min(100, Math.round(b * 100 / raw));
+}
+// LAND EVEN (src/config.js): a project's weight in its land's meter. 1 unless the land's tier 1-2 share of project points is under LAND_EVEN.share; then tier 1-2 projects
+// count share x total / (their points) and the rest (1 - share) x total / (their points), so the land's total, and a finished land's 100, stay as they were.
+export function projectWeight(all, p) {
+  if (!LAND_EVEN.on) return 1;
+  const T = all.reduce((a, q) => a + q.bio, 0), T12 = all.filter(q => q.tier <= 2).reduce((a, q) => a + q.bio, 0);
+  if (!T || !T12 || T12 >= T || T12 / T >= LAND_EVEN.share) return 1;
+  return p.tier <= 2 ? LAND_EVEN.share * T / T12 : (1 - LAND_EVEN.share) * T / (T - T12);
 }
 // The whole world: the average of every region's meter (for a world board later).
 // The biome meter: grown trees (variety saturates at 9 of a kind) plus habitat projects. Cooling from the land under the plane reads this.
