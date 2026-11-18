@@ -932,3 +932,10 @@ overrun@PLANT=linear	-	-	the gear pull is not squared
 stamps	tools/make-site.sh	s#find "$OUT/src" -name#find "$OUT/src" -maxdepth 1 -name#	files under src/sim and src/habitat are not stamped
 stamps	tools/make-site.sh	s#(\\.\\.?/#(\\./#	'../x.js' imports are not stamped
 stamps	tools/make-site.sh	s#|import\\(|URL\\(##	dynamic and worker imports are not stamped
+maplands	src/globe.js	s/else if (id \&\& (x + y) % 3 !== 2)/else if (false \&\& id)/	no line where two lands meet
+maplands	src/globe.js	s/^export const BORDER_MIX = 0.85;/export const BORDER_MIX = 0;/	the line has no colour
+maplands	src/globe.js	s/if (onPaint) onPaint(out);/if (onPaint \&\& !canvas.__named) { canvas.__named = 1; onPaint(out); }/	names placed once, never follow the globe
+maplands	src/globe.js	s/x: bx\[id\] + 0.5, y: by\[id\] + 0.5/x: 64, y: 64/	every name at the middle of the picture, not on its land
+maplands	src/landlabels.js	s/new Set(unlockedAreas(save).flatMap(areaLands))/new Set(Object.keys(LAND_SHORT))/	every land shown as opened
+maplands	style.css	s/^\.hub-lands { position: absolute; inset: 0; pointer-events: none;/.hub-lands { position: absolute; inset: 0;/	names catch taps meant for cities
+maplands	src/ui.js	s/onPaint: out => placeLandLabels(/onPaintOff: out => placeLandLabels(/	names not wired to the hub globe

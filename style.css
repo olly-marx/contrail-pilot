@@ -1149,6 +1149,9 @@ h2.sub { margin-top: -4px; }
 .hub-labels { position: absolute; inset: 0; pointer-events: none; }
 .globe-label { position: absolute; font-size: 7px; line-height: 1; white-space: nowrap; color: #fff; text-shadow: 1px 0 #1b1b2f, -1px 0 #1b1b2f, 0 1px #1b1b2f, 0 -1px #1b1b2f; }
 .globe-label.dest { color: #ffd34d; }
+.hub-lands { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }   /* MAP REGIONS: the land names (src/landlabels.js); taps go through to the cities */
+.land-label { position: absolute; max-width: 9em; font-size: 6px; line-height: 1.3; text-align: center; color: rgba(255, 255, 255, .62); text-shadow: 1px 0 #1b1b2f, -1px 0 #1b1b2f, 0 1px #1b1b2f, 0 -1px #1b1b2f; }
+.land-label.open { font-size: 7px; color: #fff6d6; }
 
 /* The celebration kit (src/celebrate.js, research/CELEBRATION-KIT.md): a layer of pixel sparkles over a card, one-shot, transform and opacity only, never in the way of a tap. */
 .cel-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 3; }

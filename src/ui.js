@@ -29,6 +29,7 @@ const crossingsHTML = s => {
 const areaLine = s => { const open = regionsOpen(unlockedAreas(s)), shut = Object.keys(REGIONS).filter(r => !open.includes(r));   // CROSSINGS V3: regions, not areas
   return `<p class="small" id="jAreas">Your region${open.length === 1 ? '' : 's'}: <b>${open.map(r => REGIONS[r].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(r => REGIONS[r].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
+import { openLands, placeLandLabels } from './landlabels.js';
 import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';
 import { hubView, revealed as hubRevealed } from './hub.js';
@@ -443,8 +444,11 @@ export class UI {
     const pick = name => { this.globeUsed(); sfx.tick(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it
     hint.textContent = v.worldChoice ? 'Spin it. Tap a city to fly.' : 'Drag the world to spin it.';
-    this.hubGlobe = drawGlobe($('hubGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, onCity: v.worldChoice ? name => this.showCityCard(name) : null, lit: linksFor(s),
-      onUse: () => this.globeUsed(),
+    // MAP REGIONS: the lines between lands are in the picture (src/globe.js); the land names are a layer over it that follows every redraw (src/landlabels.js).
+    let lands = $('hubLands'); if (!lands) { lands = document.createElement('div'); lands.id = 'hubLands'; lands.className = 'hub-lands'; document.querySelector('.hub-globe-wrap').prepend(lands); }
+    const openNow = openLands(s), hubCv = $('hubGlobe');
+    this.hubGlobe = drawGlobe(hubCv, here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, onCity: v.worldChoice ? name => this.showCityCard(name) : null, lit: linksFor(s),
+      onUse: () => this.globeUsed(), onPaint: out => placeLandLabels(lands, hubCv, out.lands, openNow),
       cross: ready ? { from: city(ready.from), to: city(ready.to), onTap: () => this.showCrossingSheet(ready) } : null });   // R-A: the ready crossing's arc and its breathing ring (tap: the sheet)
     this.hubWords = v.words;
   }

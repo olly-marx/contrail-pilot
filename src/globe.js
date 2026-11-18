@@ -24,7 +24,7 @@ function getMask() {
 export const isLand = (lat, lon) => getMask()[Math.min(LAND_H - 1, Math.max(0, Math.floor((90 - lat) / 180 * LAND_H))) * LAND_W + (((Math.floor((lon + 180) / 360 * LAND_W) % LAND_W) + LAND_W) % LAND_W)] === 1;
 // The colour of the ground: the declared regions (src/geo.js) at one-degree cells, blurred over about 6 degrees so the
 // ground fades from one region to the next instead of showing the boxes' straight edges.
-function region(lat, lon) {
+function regionTable() {
   if (!regions) {
     const W = 360, H = 180, names = Object.keys(LAND), a = new Float32Array(W * H * 3);
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const r = regionAt(89.5 - j, -179.5 + i), c = LAND[r] || FALLBACK; a.set(c, (j * W + i) * 3); }
@@ -35,9 +35,23 @@ function region(lat, lon) {
       return out; };
     regions = blur(blur(a, 'x'), 'y');
   }
-  const k = (Math.min(179, Math.max(0, Math.floor(90 - lat))) * 360 + (((Math.floor(lon + 180) % 360) + 360) % 360)) * 3;
-  return [regions[k], regions[k + 1], regions[k + 2]];
+  return regions;
 }
+const cellOf = (lat, lon) => Math.min(179, Math.max(0, Math.floor(90 - lat))) * 360 + (((Math.floor(lon + 180) % 360) + 360) % 360);   // the one-degree cell
+// MAP REGIONS (the user, 2026-11-18: "draw lines that show the regions ... where you cross from one biome to another, with some
+// text"): the SAME one-degree cells as the colour above, unblurred, as a number per cell (0 = no land region: 'ocean'). paint()
+// draws a thin line where two neighbouring land pixels have different numbers and returns where each land's pixels are.
+export const LAND_IDS = ['', ...Object.keys(LAND)];   // index = the number in the table; LAND_IDS[0] = no region
+let regionIds = null;
+function regionIdTable() {
+  if (!regionIds) {
+    regionIds = new Uint8Array(360 * 180);
+    for (let j = 0; j < 180; j++) for (let i = 0; i < 360; i++) regionIds[j * 360 + i] = Math.max(0, LAND_IDS.indexOf(regionAt(89.5 - j, -179.5 + i)));
+  }
+  return regionIds;
+}
+export const BORDER = [255, 246, 214];   // the line between two lands: a pale dashed line, light against every land colour
+export const BORDER_MIX = 0.85;          // how much of BORDER a line pixel takes (the rest is the ground below, shaded)
 
 // ---------- the view: a camera frame on the sphere ----------
 // { c, r, u }: unit vectors; c = the point in the middle of the picture (towards you), r = right, u = up.
@@ -88,7 +102,8 @@ export function project(f, lat, lon) {
 // dragging), 2 = five (still): the edges of small islands and coasts come out cleaner.
 export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross = null, phase = 0) {
   const g = canvas.getContext('2d'), S = canvas.width, R = S / 2 - 1, c0 = S / 2, Z = f.zoom || 1;
-  const img = g.createImageData(S, S), px = img.data, landAt = new Uint8Array(S * S), rgb = new Uint8Array(S * S * 3), inDisc = new Uint8Array(S * S);
+  const img = g.createImageData(S, S), px = img.data, landAt = new Uint8Array(S * S), rgb = new Uint8Array(S * S * 3), inDisc = new Uint8Array(S * S), rid = new Uint8Array(S * S);
+  const ids = regionIdTable(), ground = regionTable();
   const off = quality > 1 ? [[0, 0], [0.3, 0.3], [-0.3, 0.3], [0.3, -0.3], [-0.3, -0.3]] : [[0, 0]];
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const nx = (x + 0.5 - c0) / (R * Z), ny = (y + 0.5 - c0) / (R * Z), k = y * S + x;
@@ -103,21 +118,29 @@ export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross
       if (isLand(lat, lon)) votes++;
     }
     landAt[k] = votes * 2 > off.length ? 1 : 0;
+    const cell = landAt[k] ? cellOf(lat0, lon0) : 0; if (landAt[k]) rid[k] = ids[cell];
     const z = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny)), lit = 0.62 + 0.38 * z * (0.8 + 0.2 * (-nx - ny) / 1.4);   // a soft round shading
-    const base = landAt[k] ? region(lat0, lon0) : SEA;
-    for (let ch = 0; ch < 3; ch++) rgb[k * 3 + ch] = Math.max(0, Math.min(255, base[ch] * lit));
+    if (landAt[k]) for (let ch = 0; ch < 3; ch++) rgb[k * 3 + ch] = Math.max(0, Math.min(255, ground[cell * 3 + ch] * lit));   // (read from the table: no array made per pixel)
+    else for (let ch = 0; ch < 3; ch++) rgb[k * 3 + ch] = Math.max(0, Math.min(255, SEA[ch] * lit));
   }
   // Small islands (too small for a sample) as single pixels, then coast lines: land touching sea gets a darker edge,
   // sea touching land a lighter shelf, both one pixel wide.
   for (const [lat, lon] of getIslands()) { const q = project(f, lat, lon); if (q) { const x = Math.round(c0 + q[0] * R - 0.5), y = Math.round(c0 + q[1] * R - 0.5); if (x >= 0 && y >= 0 && x < S && y < S && inDisc[y * S + x]) landAt[y * S + x] = landAt[y * S + x] || 2; } }
+  const NL = LAND_IDS.length, cnt = new Uint32Array(NL), sx = new Float64Array(NL), sy = new Float64Array(NL), lines = [];
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const k = y * S + x; if (!inDisc[k]) continue;
     let [r, gg, b] = [rgb[k * 3], rgb[k * 3 + 1], rgb[k * 3 + 2]];
+    const id = landAt[k] === 1 ? rid[k] : 0;
+    if (id) { cnt[id]++; sx[id] += x; sy[id] += y; }
     if (landAt[k] === 2) { r = 86; gg = 128; b = 84; }   // a speck of island: its own green, no coast line round it
     const edge = d => { const xx = x + d[0], yy = y + d[1]; return xx >= 0 && yy >= 0 && xx < S && yy < S && inDisc[yy * S + xx] ? landAt[yy * S + xx] === 1 : null; };
     const nb = [edge([1, 0]), edge([-1, 0]), edge([0, 1]), edge([0, -1])];
     if (landAt[k] === 1 && nb.some(v => v === false)) { r *= 0.62; gg *= 0.66; b *= 0.62; }
     else if (!landAt[k] && nb.some(v => v === true)) { r = r * 0.55 + SHALLOW[0] * 0.45; gg = gg * 0.55 + SHALLOW[1] * 0.45; b = b * 0.55 + SHALLOW[2] * 0.45; }
+    // The line between two lands: this land pixel and the land pixel to its right or below are in different regions (one pixel
+    // wide, on this side), dashed (two on, one off) so it reads as a border and not as a coast.
+    else if (id && (x + y) % 3 !== 2) { const o = (x + 1 < S && landAt[k + 1] === 1 && rid[k + 1]) || 0, u = (y + 1 < S && landAt[k + S] === 1 && rid[k + S]) || 0;
+      if ((o && o !== id) || (u && u !== id)) { r = r * (1 - BORDER_MIX) + BORDER[0] * BORDER_MIX; gg = gg * (1 - BORDER_MIX) + BORDER[1] * BORDER_MIX; b = b * (1 - BORDER_MIX) + BORDER[2] * BORDER_MIX; lines.push(k); } }
     px[k * 4] = r; px[k * 4 + 1] = gg; px[k * 4 + 2] = b; px[k * 4 + 3] = 255;
   }
   // The outline of the globe: one dark ring.
@@ -127,6 +150,23 @@ export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross
     if (rim) { px[k * 4] = INK[0]; px[k * 4 + 1] = INK[1]; px[k * 4 + 2] = INK[2]; }
   }
   g.putImageData(img, 0, 0);
+  // Where each land is in this picture, for its name (src/landlabels.js): its VISUAL middle, the pixel of the land farthest from
+  // its edge (a sea, another land or the picture's edge; chamfer distance, two passes), the one nearest the middle of all its
+  // pixels when several tie. (The plain middle of all its pixels can fall outside the land: the desert's, between the Sahara and
+  // Arabia, fell on Cairo's marker.) And how many pixels it has.
+  // (On a half-size grid, every other pixel: a name needs a place to about 2 pixels, and the drag must stay fast: tests/globe.cjs.)
+  const H = S >> 1, lab = new Uint8Array(H * H), dist = new Uint16Array(H * H), lands = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < H; x++) { const k = 2 * y * S + 2 * x; lab[y * H + x] = landAt[k] === 1 ? rid[k] : 0; }
+  for (let id = 1; id < NL; id++) if (cnt[id]) { sx[id] /= cnt[id] * 2; sy[id] /= cnt[id] * 2; }
+  for (let y = 0; y < H; y++) for (let x = 0; x < H; x++) { const k = y * H + x, l = lab[k]; if (!l) continue; let d = 3;
+    if (x > 0 && y > 0) { const a = lab[k - 1] === l ? dist[k - 1] + 3 : 3, b = lab[k - H] === l ? dist[k - H] + 3 : 3, c = lab[k - H - 1] === l ? dist[k - H - 1] + 4 : 4, e = x + 1 < H && lab[k - H + 1] === l ? dist[k - H + 1] + 4 : 4; d = Math.min(a, b, c, e); }
+    dist[k] = d; }
+  const deep = new Int32Array(NL).fill(-1), mid = new Float64Array(NL).fill(Infinity), bx = new Int16Array(NL), by = new Int16Array(NL);
+  for (let y = H - 1; y >= 0; y--) for (let x = H - 1; x >= 0; x--) { const k = y * H + x, l = lab[k]; if (!l) continue; let d = dist[k];
+    if (x + 1 < H && y + 1 < H) { const a = lab[k + 1] === l ? dist[k + 1] + 3 : 3, b = lab[k + H] === l ? dist[k + H] + 3 : 3, c = lab[k + H + 1] === l ? dist[k + H + 1] + 4 : 4, e = x > 0 && lab[k + H - 1] === l ? dist[k + H - 1] + 4 : 4; d = Math.min(d, a, b, c, e); } else d = Math.min(d, 3);
+    dist[k] = d; const dc = (x - sx[l]) ** 2 + (y - sy[l]) ** 2;
+    if (d > deep[l] || (d === deep[l] && dc < mid[l])) { deep[l] = d; mid[l] = dc; bx[l] = 2 * x; by[l] = 2 * y; } }
+  for (let id = 1; id < NL; id++) if (cnt[id] && deep[id] >= 0) lands.push({ id: LAND_IDS[id], x: bx[id] + 0.5, y: by[id] + 0.5, n: cnt[id] });
   const to = (lat, lon) => { const q = project(f, lat, lon); return q && [Math.round(c0 + q[0] * R), Math.round(c0 + q[1] * R)]; };
   // Every airport a dot.
   // Every city a white dot, on LAND: a port that falls on a sea pixel at this size is moved to the nearest land pixel (up to 3 away).
@@ -163,7 +203,7 @@ export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross
   }
   const h = path[0] && to(path[0].lat, path[0].lon);
   if (h) { g.fillStyle = '#1b1b2f'; g.fillRect(h[0] - 4, h[1] - 4, 8, 8); g.fillStyle = '#ff5a4d'; g.fillRect(h[0] - 3, h[1] - 3, 6, 6); }   // you are here
-  return { dots };
+  return { dots, lands, lines };
 }
 function getIslands() { return islands || (islands = ISLANDS); }
 
@@ -173,7 +213,7 @@ function getIslands() { return islands || (islands = ISLANDS); }
 // sample a pixel while it moves, five once it settles. Returns { frame(), nudge(dx), destroy() }.
 export const TAP_PX = 6, TAP_MS = 400;
 export const CITY_PX = 11;   // canvas pixels: a finger's width on the globe (a canvas pixel is about two screen pixels)
-export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = null, lit = null, cross = null, onUse = null } = {}) {
+export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = null, lit = null, cross = null, onUse = null, onPaint = null } = {}) {
   let f = frameRoute(cross ? [...(path.length ? path : [CITIES[0]]), cross.from, cross.to] : (path.length ? path : [CITIES[0]]));   // (a ready crossing is framed too: its destination must be on the globe)
   let phase = 0, pulse = cross ? setInterval(() => { phase ^= 1; redraw(1); }, 700) : 0;
   canvas.width = canvas.height = SIZE;
@@ -181,7 +221,9 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = n
   canvas.style.cursor = 'grab';
   let down = null, wantQuality = 1, coast = null, raf = 0, alive = true;
   // One redraw a frame at most, however many events came in; the best quality asked for since the last one.
-  const redraw = q => { wantQuality = Math.max(wantQuality, q); if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (!alive) return; paint(canvas, f, path, wantQuality, ways, lit, cross, phase); wantQuality = 1; }); };
+  const redraw = q => { wantQuality = Math.max(wantQuality, q); if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (!alive) return; draw(wantQuality); wantQuality = 1; }); };
+  // Every picture is passed on (MAP REGIONS: the land names follow the globe as it turns): onPaint({ dots, lands, lines }).
+  const draw = q => { const out = paint(canvas, f, path, q, ways, lit, cross, phase); if (onPaint) onPaint(out); return out; };
   const scale = () => canvas.width / (canvas.getBoundingClientRect().width || canvas.width);   // canvas pixels per screen pixel
   const R = () => canvas.width / 2 - 1;
   const hit = (ev) => {   // the way dot under the finger, if any (within 8 canvas pixels)
@@ -224,7 +266,7 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = n
   const onCancel = ev => { if (down && ev.pointerId === down.id) { down = null; canvas.style.cursor = 'grab'; redraw(2); } };
   canvas.addEventListener('pointerdown', onDown); canvas.addEventListener('pointermove', onMove);
   canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onCancel);
-  paint(canvas, f, path, 2, ways, lit, cross, phase);
+  draw(2);
   // nudge(dx): turn by dx canvas pixels, as a drag would (the hub's spin buttons, S2 of PROPOSAL-HOME-MISSIONS.md).
   return { frame: () => f, routePath: () => path.map(c => c.name), setPath(p) { path = p && p.length ? p : [CITIES[0]]; f = frameRoute(cross ? [...path, cross.from, cross.to] : path); redraw(2); },   // ROUTE ON THE MAP (R1): the route of a tapped city is drawn in the globe's own gold line, re-framed; routePath() is what is drawn (the tests read it)
     cityPos(name) { const c = CITIES.find(x => x.name === name), q = c && project(f, c.lat, c.lon); if (!q) return null; const r = canvas.getBoundingClientRect(), k = scale(); return { x: r.left + (canvas.width / 2 + q[0] * R()) / k, y: r.top + (canvas.height / 2 + q[1] * R()) / k }; }, markPos() { const m = markXY(); if (!m) return null; const r = canvas.getBoundingClientRect(), k = scale(); return { x: r.left + m[0] / k, y: r.top + m[1] / k }; }, nudge(dx) { coast = null; f = turn(f, dx, 0, R()); redraw(2); }, destroy() { alive = false; if (pulse) clearInterval(pulse); if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
