@@ -1,7 +1,7 @@
 // THE HOME BOX 'NEXT CROSSING' AND THE CROSSINGS SCREEN (src/ui.js renderHub / openCrossings, src/crossingview.js boxView; CROSSINGS V2). Real taps at 390x844 and 320x568, a season 2 save with the lessons done.
 //   A. Era and Plane done, Nature open: HOME shows the box (route 'ROME > TUNIS', the word Easy, three ticks with the first two filled, the line 'Plant trees. Nature N of 30'); TAKE OFF is still on screen above the bar
 //      (the box must not push it off a 320x568 phone); a tap on the box opens the CROSSINGS screen with the same route and one button, NATURE, which opens NATURE.
-//   B. Nature met too (the lever SEASON.offer.biodiversity = 0): the moment sheet ('A NEW WAY OPENS') opens by itself and marks the crossing told; then the box is gold and says 'Ready!' and its tap opens the screen with CROSS TO TUNIS.
+//   B. Nature met too (the lever SEASON.offer.biodiversity = 0): the moment (the Crossing unlocked! card since 0.70.0) opens by itself and marks the crossing told; then the box is gold and says 'Ready!' and its tap opens the screen with CROSS TO TUNIS.
 //   C. Lessons not done: no box (the first hour stays quiet).   D. A free part waiting (a pictured must-do lead row, TAKE OFF locked): no box (HOME would scroll: tests/fitscreen.cjs).
 // Plants: tools/plants.tsv, test `crossboxui`. Run: python3 -m http.server 8000 & node tests/crossboxui.cjs
 const { chromium } = require('playwright-core');
@@ -25,7 +25,7 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'R
       const tag = `${W}x${H}`;
       { const { ctx, p } = await open(seed(true), W, H); const h = await home(p); log.push(`${tag} A: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-A-${W}.png` });
         check(h.shown && /NEXT CROSSING/.test(h.text) && /ROME > TUNIS/.test(h.text) && /Easy/.test(h.text), `${tag} A: the box is not on HOME with the route and the word: ${JSON.stringify(h)}`);
-        check(h.on.join() === 'true,true,false' && /Plant trees\. Nature \d+ of 38/.test(h.text), `${tag} A: the ticks or the plain line are wrong: ${JSON.stringify([h.on, h.text])}`);
+        check(h.on.join() === 'true,true,false' && /Plant trees\. Nature \d+ of 30/.test(h.text), `${tag} A: the ticks or the plain line are wrong: ${JSON.stringify([h.on, h.text])}`);
         check(h.goVisible, `${tag} A: TAKE OFF is not fully on screen above the bar with the box showing`);
         if (!h.shown) { await ctx.close(); continue; }   // (no box to tap: the checks above already failed; a tap would only time out)
         await p.click('#hubCross'); await p.waitForTimeout(500);
@@ -36,9 +36,9 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'R
       { const { ctx, p } = await open(seed(true), W, H);
         await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 0; game.registry.get('ui').showTitle(); }); await p.waitForTimeout(600);
         // the moment fires by itself on the next screen the player sees (src/ui.js maybeCrossingSheet): the sheet is already open, and the crossing is marked told
-        const m1 = await p.evaluate(() => { const e = document.getElementById('sheet'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', told: (JSON.parse(localStorage.getItem('contrailPilot.v2')).crossingTold || []).join() }; });
-        check(/A NEW WAY OPENS/.test(m1.sheet) && m1.told === 'mediterranean', `${tag} B: the moment sheet did not open by itself or the crossing is not marked told: ${JSON.stringify(m1)}`);
-        await p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
+        const m1 = await p.evaluate(() => { const e = document.getElementById('crossUnlock'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', told: (JSON.parse(localStorage.getItem('contrailPilot.v2')).crossingTold || []).join() }; });
+        check(/CROSSING UNLOCKED!/.test(m1.sheet) && m1.told === 'mediterranean', `${tag} B: the Crossing unlocked! card (0.70.0) did not open by itself or the crossing is not marked told: ${JSON.stringify(m1)}`);
+        await p.evaluate(() => { for (const id of ['sheet', 'crossUnlock']) { const e = document.getElementById(id); if (e) e.remove(); } game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
         const h = await home(p); log.push(`${tag} B: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-B-${W}.png` });
         const upn = await p.evaluate(() => (document.getElementById('hubNext') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
         check(!/Cross to TUNIS/.test(upn), `${tag} B: UP NEXT repeats the ready crossing under the box: ${upn}`);
