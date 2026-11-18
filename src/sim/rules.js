@@ -29,6 +29,7 @@ import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
 import * as P from './physics.js';
 import { mask } from './masks-load.js';
+import { reach as gapReach, reference as gapReference } from './gapmodel.js';
 
 const SKY_H = HEIGHT - GROUND_H;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));   // = Phaser.Math.Clamp
@@ -426,15 +427,24 @@ export const RULES = {
     const noFly = this.distancePx >= nf.from && this.rand() < this.squeezed(nf.chance, 'capNoFly');
     if (noFly) gap = Math.max(nf.minGap, gap - nf.gapLess + (P.KNOB_PLANTS.gapAdd ? 0 : this.kit.noFlyGapAdd || 0));   // ATC 8 (2010s, free route airspace): wider no-fly gaps
     gap = Math.round(gap * this.kit.gaps);   // air traffic control (eras): better spacing, gaps up to ~3% wider
-    const lo = STORMS.marginTop + gap / 2;
-    const hi = SKY_H - STORMS.marginTop - gap / 2;
+    let lo = STORMS.marginTop + gap / 2;
+    let hi = SKY_H - STORMS.marginTop - gap / 2;
+    // The gap model (STORMS.model; src/sim/gapmodel.js): never further from the last gap than the reference player at this distance can climb
+    // (up) or dive (down). Same number of draws as before, from a narrower range.
+    if (STORMS.model && this.lastGapY != null) {
+      const ref = gapReference(STORMS.model, this.distancePx), g = Math.min(gap, this.lastGap ?? gap);
+      const r = gapReach({ v: this.speed + 2 * WORLD.speedGain, g, T: ref.T, RT: ref.RT, ahead: WIDTH - PLANE.x - PLANE.w, flap: -PLANE.flapVelocity, gravity: PLANE.gravity, maxFall: PLANE.maxFall, sky: SKY_H - 2 * STORMS.marginTop });
+      const m = STORMS.model.margin, nlo = Math.max(lo, this.lastGapY - Math.max(0, r.up - m)), nhi = Math.min(hi, this.lastGapY + Math.max(0, r.down - m));
+      if (nlo <= nhi) { lo = nlo; hi = nhi; } else { lo = hi = Math.max(lo, Math.min(hi, this.lastGapY)); }
+      this.modelRef = ref;   // (read by the practice page and the sim tools)
+    }
     const w = noFly ? nf.width : STORMS.width;
     // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time);
     // with the ISSR.laneExtra variant, a lane that much taller.
     let gapY = null;
     for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2, this.issrs, ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined) && !this.climbBlocked(x, t)) gapY = t; }
     if (gapY === null) return;
-    this.lastGapY = gapY;
+    this.lastGapY = gapY; this.lastGap = gap;
     if (noFly) this.addNoFlyAt(x, gapY, gap);
     else this.addStormPairAt(x, gapY, gap);
   },
@@ -676,6 +686,8 @@ export const RULES = {
     } else {
       if (this.distancePx < WORLD.warmup) this.warmTime = this.elapsed;   // speed-up starts after the warm-up leg
       this.speed = this.school ? WORLD.startSpeed : Math.min(WORLD.maxSpeed, WORLD.startSpeed + WORLD.speedGain * (this.elapsed - (this.warmTime || 0)));
+      const S2 = WORLD.speed2;   // (2026-11-18) past maxSpeed, a slow rise by distance
+      if (S2 && !this.school && this.distancePx > S2.from) this.speed = Math.max(this.speed, WORLD.maxSpeed + (S2.top - WORLD.maxSpeed) * Math.min(1, (this.distancePx - S2.from) / (S2.to - S2.from)));
     }
     const dx = this.speed * dt;
     this.distancePx += dx;
