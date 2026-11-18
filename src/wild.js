@@ -21,7 +21,9 @@ import { landTrees, countText, growNeedTenths, hasTrees } from './landtrees.js';
 import { GROW_DAYS } from './config.js';
 import { broughtBack } from './weboflife.js';
 import { isSeason2 } from './missions2.js';
-import { stayLandLeft } from './aim.js';
+import { stayLandLeft, setGoto, clearGoto } from './aim.js';
+import { flyHereChoice } from './flyhere.js';
+import { city as cityOf } from './route.js';
 import { nextHere } from './nexthere.js';
 import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
@@ -113,13 +115,7 @@ export class WildScreen {
     const trees = landTrees(s, this.region);
     row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">${t.open && isNew(`tree:${t.slot}`) ? '<i class="dot"></i>' : ''}
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
-    // EXPLORE HERE (research/ROUTE-DEFAULT-MISSION-PLAN.md): explore only the cities of THIS land until each is visited (save.routeMode 'explore' + save.stayLand). Hidden when the land has no open city left to visit.
-    let eh = $('wExploreHere');
-    if (!eh) { eh = document.createElement('button'); eh.id = 'wExploreHere'; eh.type = 'button'; eh.className = 'chip'; row.after(eh); }
-    const here = s.tutorialDone && s.stayLand === this.region && s.routeMode === 'explore', left = stayLandLeft(s, this.region);
-    eh.hidden = !s.tutorialDone || !isSeason2(s) || !(left || here);
-    eh.textContent = here ? 'EXPLORING HERE: STOP' : 'EXPLORE HERE';
-    eh.onclick = () => { sfx.tick(); if (here) { s.stayLand = null; s.routeMode = 'mission'; } else { s.stayLand = this.region; s.routeMode = 'explore'; } writeSave(s); this.ui.toast(here ? 'Back to your mission.' : `Exploring ${REGION_NAMES[this.region]}.`, '', 'good', 3); this.render(); };
+    this.renderFlyHere();
     // THE NURSERY (TREES V2 step 2): trees you drop start as saplings and grow up over the flights that follow; only grown trees are seen in this land's picture and in flight.
     // THE PEN AND THE LAND'S COOLING (src/treepen.js; the user, 2026-11-16): each sapling's days, what it adds once grown, and what this land does for the Earth. Replaces the one-line 'Growing: N trees'.
     let nu = $('wNursery'); if (!nu) { nu = document.createElement('div'); nu.id = 'wNursery'; nu.className = 'w-nursery'; row.after(nu); }
@@ -141,6 +137,34 @@ export class WildScreen {
     this.renderFound();
     // This land is SHOWING (NATURE visible, not a refresh behind another screen): what it shows is now seen (src/fresh.js).
     if (!$('nature').hidden && markSeen(s, natureScope(this.region), fo)) this.ui.persist();
+  }
+
+  // FLY HERE (src/flyhere.js; the owner, 2026-11-18: 'select fly here, so that you can fly to a natural area if you're not already there, and then fly around it'). One line and one
+  // button under the land's picture, where it is seen (the old EXPLORE HERE chip sat below the trees, off the first screen). Away from the land: FLY HERE aims the route at its nearest city
+  // (save.aimCity, src/aim.js setGoto) and, when the land still has a city to visit, keeps the flights in it from then on (save.stayLand + routeMode 'explore': the chosen city steers first,
+  // so the stay starts once the player is there); then the FLY screen shows the route. In the land: FLY AROUND HERE (the stay alone; hidden when every city here is visited). Not reachable:
+  // which crossing opens it. STOP undoes either. Season 2 after the tutorial only.
+  renderFlyHere() {
+    const s = this.save, land = this.region;
+    let el = $('wFlyHere');
+    if (!el) { el = document.createElement('div'); el.id = 'wFlyHere'; el.className = 'w-flyhere'; $('wNextLine').before(el); }
+    const ch = s.tutorialDone && isSeason2(s) ? flyHereChoice(s, land) : null, left = stayLandLeft(s, land);
+    const inLand = c => !!c && (cityOf(c) || {}).region === land;
+    const staying = s.stayLand === land && s.routeMode === 'explore', going = !!(ch && ch.kind === 'go' && inLand(s.aimCity));
+    const stop = () => { if (inLand(s.aimCity)) clearGoto(s); s.stayLand = null; s.routeMode = 'mission'; };
+    let line = '', label = '', tap = null;
+    if (!ch) { /* hidden */ } else if (ch.kind === 'here') {
+      if (staying) { line = 'Your flights stay in this land.'; label = 'STOP'; tap = () => { stop(); this.ui.toast('Back to your mission.', '', 'good', 3); }; }
+      else if (left) { line = 'You are in this land.'; label = 'FLY AROUND HERE'; tap = () => { s.stayLand = land; s.routeMode = 'explore'; this.ui.toast(`Flying around ${REGION_NAMES[land]}.`, '', 'good', 3); return true; }; }
+    } else if (ch.kind === 'go') {
+      if (going || staying) { line = `Going to ${going ? s.aimCity : 'this land'}.`; label = 'STOP'; tap = () => { stop(); this.ui.toast('Back to your mission.', '', 'good', 3); }; }
+      else { line = `${ch.city} is ${ch.hops} ${ch.hops === 1 ? 'stop' : 'stops'} away.`; label = 'FLY HERE';
+        tap = () => { setGoto(s, ch.city); if (left) { s.stayLand = land; s.routeMode = 'explore'; } else if (s.stayLand) s.stayLand = null;
+          this.ui.toast(`Going to ${ch.city}.`, left ? `Then your flights stay in ${REGION_NAMES[land]}.` : '', 'good', 4); return true; }; }
+    } else line = ch.from ? `To fly here, first cross from ${ch.from} to ${ch.to}.` : 'To fly here, make more crossings first.';
+    el.hidden = !line;
+    el.innerHTML = line ? `<span class="small wfh-line">${esc(line)}</span>${label ? `<button id="wFlyHereBtn" class="chip${label === 'STOP' ? '' : ' go'}" type="button">${label}</button>` : ''}` : '';
+    if (tap) $('wFlyHereBtn').onclick = () => { sfx.tick(); const fly = tap(); writeSave(s); if (fly) this.ui.go('fly'); else this.render(); };
   }
 
   // The land as a 2D field you look across (2026-10-22): the habitat features of every project done,
