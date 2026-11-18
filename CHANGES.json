@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-18-fair-gaps",
+    "version": "0.69.0",
+    "date": "2026-11-18",
+    "level": "major",
+    "notes": [
+      "Fairer skies: the next gap is never further away than a skilled player can climb or dive in time. Long flights still get harder.",
+      "No more flocks of birds sitting in the climb between two far-apart gaps.",
+      "Long flights keep speeding up: from 12,000 km the plane gets slowly faster, up to a new top speed by 40,000 km.",
+      "Forecast upgrades now give their help more gradually: the warning starts at 0.3 s and grows 0.1 s a level, and the gate starts at Forecasting 5."
+    ]
+  },
+  {
     "id": "2026-11-18-lands-and-crossings",
     "version": "0.68.0",
     "date": "2026-11-18",
