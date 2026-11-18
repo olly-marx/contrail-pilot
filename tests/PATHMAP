@@ -108,3 +108,4 @@ group payoff-card | src/hangar.js src/planelook.js style.css assets/ui/upgrades/
 group map-regions | src/globe.js src/landlabels.js src/geo.js src/areas.js src/arealand.js src/ui.js style.css | maplands globe hubscreen
 group fly-here | src/flyhere.js src/wild.js src/aim.js style.css | flyheretap exploreland
 group more-chips | src/ui.js src/wild.js src/resultscard.js style.css tests/morechips.cjs | morechips
+group crossing-cards | src/crossingview.js src/crossings.js src/ui.js src/lessons.js src/tour.js src/railsubjects.js src/tips.js style.css | crosscard-ui maplesson

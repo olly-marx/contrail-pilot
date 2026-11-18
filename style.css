@@ -142,12 +142,27 @@ p { margin: 0; }
 #mNext .label, #mList .label { text-align: left; }
 .m-coming { font-size: 8px; color: var(--muted); margin: 0; padding: 4px 8px; background: #ece8dc; }
 .m-done { width: 100%; justify-content: center; margin-top: 8px; }
-/* R-A: the crossing's three conditions on MISSIONS (src/crossingview.js) */
-.m-cross { display: grid; gap: 3px; }
-.m-tick { display: flex; justify-content: space-between; gap: 6px; margin: 0; padding: 6px 8px; background: #fff; font-size: 8px; }
-.m-tick b { font-weight: normal; color: var(--muted); }
-.m-tick.done b { color: var(--green-dark); }
-.m-gold { width: 100%; justify-content: center; background: var(--gold); margin-top: 4px; }
+/* THE CROSSING CARDS (src/crossingview.js cardsView, drawn by src/ui.js crossingsHTML; the owner, 2026-11-18): one card per crossing, left-aligned, three rows with a tick or a bar */
+.xcards { display: grid; gap: 8px; text-align: left; }
+.xcard { background: #fff; border: 2px solid var(--ink); border-radius: 6px; padding: 8px 10px; display: grid; gap: 5px; font-size: 8px; line-height: 1.5; }
+.xcard.ready { background: #fff7d6; border-color: var(--gold-dark); }
+.xc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.xc-route { font-size: 10px; font-weight: normal; overflow-wrap: anywhere; }
+.xc-word { font-size: 7px; color: var(--muted); white-space: nowrap; }
+.xc-opens { margin: 0; font-size: 7px; color: var(--muted); }
+.xc-rows { display: grid; gap: 3px; }
+.xc-row { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 8px; padding: 4px 6px; background: #f4f1e8; border-radius: 3px; min-height: 18px; }
+.xc-row.done { background: #e7f5e7; }
+.xc-tick { grid-column: 2 / 4; justify-self: end; display: inline-flex; align-items: center; gap: 6px; color: var(--green-dark); font-size: 7px; }
+.xc-tick i { display: inline-block; width: 14px; height: 14px; line-height: 14px; text-align: center; background: var(--green); color: #fff; border-radius: 3px; font: bold 11px/14px sans-serif; font-style: normal; }
+.xc-bar { height: 8px; background: #dcd6c4; border: 1px solid #b9b19b; border-radius: 2px; overflow: hidden; }
+.xc-bar i { display: block; height: 100%; background: var(--green); }
+.xc-row[data-k="plane"] .xc-bar i { background: var(--cool); }
+.xc-v { font-size: 7px; color: var(--ink); white-space: nowrap; min-width: 44px; text-align: right; }
+.xc-next { margin: 0; font-size: 7px; color: var(--ink); }
+.xcard.ready .xc-next { color: var(--green-dark); }
+.xc-fly { width: 100%; justify-content: center; margin-top: 2px; }
+#tJourney .xcards { margin: 8px 0; }
 
 /* ---------- R1: the results card (src/resultscard.js is the data, src/ui.js showResults draws it; research/UX-MASTER-PLAN.md C1) ----------
    ONE card that fits 390x667 and 320x568 with no scrolling and FLY ON on screen. The card's own gap (6) replaces the panel's 12. Text lines are
