@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-18-crossing-pacing",
+    "version": "0.69.0",
+    "date": "2026-11-18",
+    "level": "major",
+    "notes": [
+      "Crossing unlocked! A big celebration the first time a crossing is ready.",
+      "The first crossing comes sooner: 7,000 km and nature 30, so you can make it in the 1950s.",
+      "Every land's first nature projects now count about the same, so no home land is much harder.",
+      "After a crossing, grow nature in the new part of the world before the next one. The crossing card says where."
+    ]
+  },
+  {
     "id": "2026-11-18-lands-and-crossings",
     "version": "0.68.0",
     "date": "2026-11-18",
