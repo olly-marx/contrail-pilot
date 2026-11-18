@@ -14,6 +14,8 @@ import { capFor } from './capability.js';
 import { bestAreaBio } from './arealand.js';
 import { crossingReward, crossingWord } from './missionprize.js';
 import { payPrize } from './rewards.js';
+import { REGION_DATA } from './habitats.js';
+import { projectsDone } from './nature.js';
 
 // CROSSINGS V3 (the user, 2026-11-13: '22 crossings is obscene ... 6 regions, 5 crossings plus the lap is perfect. Each one harder than the last'): EIGHT famous routes join the
 // six REGIONS (src/areas.js); you choose which way to go next. A route has no era of its own: the n-th crossing you make (n = regions open - 1) is era n and takes era n's length
@@ -143,7 +145,21 @@ export function completeCrossing(save, c) {
   save.crossed = [...new Set([...(save.crossed || []), c.id])];
   const [sa, sb] = sides(c);
   save.areas = withRegions([...(save.areas || []), sa, sb]);   // CROSSINGS V3: the whole region on the far side opens   // (the rules already moved save.city to where you landed)
+  crossingStart(save);
   return true;
+}
+// A HEAD START in the new region (Oliver, 2026-11-18: a home region far from the next crossing must not make the game harder; SEASON.step.crossStart): the land you landed in gets
+// its first tier 1 project free (as the home land's free project), and your flights stay in that land (save.stayLand, src/aim.js) so the next nature climb starts where you are.
+// Recorded as save.crossStart = { land, project } for the ending screen (src/crossingend.js).
+export function crossingStart(save) {
+  if (!(SEASON.step && SEASON.step.crossStart)) return null;
+  const land = (city(save.city) || {}).region, P = land && REGION_DATA[land] ? REGION_DATA[land].projects : null;
+  if (!P) return null;
+  const done = projectsDone(save, land).map(p => p.id), p = P.find(x => x.tier === 1 && !done.includes(x.id));
+  if (p) { save.habitat = save.habitat || {}; save.habitat[land] = [...(save.habitat[land] || []), p.id]; }
+  save.stayLand = land; save.routeMode = 'explore';
+  save.crossStart = { land, project: p ? p.id : null, name: p ? p.name : null };
+  return save.crossStart;
 }
 
 // The path of a crossing flight: departure, the gateway, then on through the area it opens (the world-tour rule), so

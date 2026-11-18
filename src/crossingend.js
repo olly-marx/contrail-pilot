@@ -17,6 +17,7 @@ export function endView(r, save, { first = false } = {}) {
     const city = r.landedAt || c.to, lm = LANDMARKS[city];
     const nm = areaName(c.opens), lines = [`${nm[0].toUpperCase()}${nm.slice(1)}`, 'is open to you!', first ? 'New missions are open!' : 'More cities to fly to!'];
     if (c.prize) lines.push(...prizeLines(c.prize));   // the crossing prize (src/missionprize.js), paid once
+    if (save && save.crossStart && save.crossStart.name) lines.push(`A free nature project here: ${save.crossStart.name}.`);   // the head start (src/crossings.js crossingStart)
     return { kind: 'landed', eyebrow: 'A NEW WAY OPENED', title: `WELCOME TO ${city}!`, lines, pic: lm ? `assets/${lm.key}.png` : null, buttons: [{ id: 'on', label: 'FLY ON' }] };
   }
   const f = save && save.fleet ? planeById(save.fleet.plane) : null, kept = r.crystals || 0, lost = r.cargo || 0;
