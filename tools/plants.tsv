@@ -970,3 +970,4 @@ maplesson	src/tour.js	s/target: '#dsMission, #dsExplore'/target: '#dsChange'/	MI
 crossingmoment	src/ui.js	s/showCrossingUnlocked(cs, { save: s, first }).then(r => { if (r === 'go') this.flyCrossing(cs); });/this.showCrossingSheet(cs);/	the moment opens the small sheet, not the Crossing unlocked! card
 crossingmoment	src/ui.js	s/if (r === 'go') this.flyCrossing(cs);/if (false) this.flyCrossing(cs);/	the card's FLY THE CROSSING starts nothing
 crossingmoment	src/crossunlock.js	s/el.remove(); sfx.tick();/sfx.tick();/	LATER leaves the card on screen
+spotlight@SPOT_CASES=r-nature	src/wild.js	s/isSeason2(s) \&\& railDone ? flyHereChoice/isSeason2(s) ? flyHereChoice/	the FLY HERE row shows during the NATURE guide (pushes r-nature#3 off a 320 phone)
