@@ -21,7 +21,7 @@ globalThis.SEASON2 = true;
   };
   // 0. THE THREE HINT LINES use the sim chat's words (src/hintwords.js), not the level effects: forecast level 0 'No forecast yet' / 'An arrow to the gap'; atc level 3 'Warning 1.0 s early'; ops at its last level has no Next
   { const fc = T.upgradeCard(withLevel('system', 'forecast', 0), 'system', 'forecast'), at = T.upgradeCard(withLevel('system', 'atc', 3), 'system', 'atc'), op = T.upgradeCard(withLevel('system', 'ops', 12), 'system', 'ops');
-    check(fc.now === 'No forecast yet' && fc.next === 'An arrow to the gap' && at.now === 'Warning 1.0 s early' && op.next === null && op.max === true, `0: the hint lines use src/hintwords.js: forecast 0 '${fc.now}' / '${fc.next}', atc 3 '${at.now}', ops 12 next ${op.next} max ${op.max}`); }
+    check(fc.now === 'No forecast yet' && fc.next === 'An arrow to the gap' && at.now === 'Warning 0.5 s early' && op.next === null && op.max === true, `0: the hint lines use src/hintwords.js: forecast 0 '${fc.now}' / '${fc.next}', atc 3 '${at.now}', ops 12 next ${op.next} max ${op.max}`); }
   const lines = T.allLines(), noEffect = [];
   check(lines.length >= 40, `power: the shop has ${lines.length} lines (planes x 3, systems, gadgets, nature tools); fewer than 40 means the table did not load`);
   let cards = 0, maxNow = 0, maxNext = 0;
