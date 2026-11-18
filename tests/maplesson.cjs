@@ -45,7 +45,10 @@ const SAVE = { school2: true, tutorialDone: true, muted: true, priceVersion: 99,
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     st = await waitKey('r-map#2');
     check(st.key === 'r-map#2', `${tag} 2: a real drag of the globe passes the first step: ${JSON.stringify(st)}`);
+    if (st.key !== 'r-map#2') { fails.push(`${tag}: stopping this size (no step 2)`); await p.close(); continue; }   // (fail by name, not by a timeout)
     await audited(2);
+    await p.waitForTimeout(1500); st = await spot();
+    check(st.key === 'r-map#2', `${tag} 2: with no city tapped the city step stays up: ${JSON.stringify(st)}`);
     // 3. A real tap on a city dot.
     const pick = () => p.evaluate(async () => { const { CITIES } = await import('./src/cities.js'), gl = document.getElementById('hubGlobe').__globe, r = document.getElementById('hubGlobe').getBoundingClientRect();
       const ok = q => q && q.x > r.left + r.width * 0.25 && q.x < r.right - r.width * 0.25 && q.y > r.top + r.height * 0.15 && q.y < r.bottom - r.height * 0.2;
