@@ -967,3 +967,6 @@ maplesson	src/ui.js	s/this.globeDrags = (this.globeDrags || 0) + 1; //	a drag of
 maplesson	src/tour.js	s/text: tip('rail-map'), until: () => (this.ui.globeDrags || 0) > drags0 }/text: tip('rail-map'), ok: true }/	the drag step can be skipped with OK
 maplesson	src/tour.js	s/text: tip('rail-map-city'), until: card }/text: tip('rail-map-city'), until: () => true }/	the city step does not wait for a city
 maplesson	src/tour.js	s/target: '#dsMission, #dsExplore'/target: '#dsChange'/	MISSION or EXPLORE does not finish the lesson
+crossingmoment	src/ui.js	s/showCrossingUnlocked(cs, { save: s, first }).then(r => { if (r === 'go') this.flyCrossing(cs); });/this.showCrossingSheet(cs);/	the moment opens the small sheet, not the Crossing unlocked! card
+crossingmoment	src/ui.js	s/if (r === 'go') this.flyCrossing(cs);/if (false) this.flyCrossing(cs);/	the card's FLY THE CROSSING starts nothing
+crossingmoment	src/crossunlock.js	s/el.remove(); sfx.tick();/sfx.tick();/	LATER leaves the card on screen

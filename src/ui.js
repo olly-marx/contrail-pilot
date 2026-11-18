@@ -60,6 +60,7 @@ import { eraBarHTML } from './eras.js';
 import { FleetHangar } from './hangar.js';
 import { dots, markSeen, migrateSeen, defaultLands, hangarScope } from './fresh.js';
 import { showEraWelcome } from './welcome.js';
+import { showCrossingUnlocked } from './crossunlock.js';
 import { showSheet } from './sheet.js';
 import { tip, more } from './tips.js';
 import { cityCard, routeOf, tripLine } from './pickcity.js';
@@ -740,7 +741,11 @@ export class UI {
     // Only on a menu screen that is showing and idle: not in flight, not mid-reveal, not under a sheet, a tour step, a payoff or an era welcome.
     const shown = document.querySelector('.overlay.screen:not([hidden])');
     if (!shown || ($('repriced') && !$('repriced').hidden) || ($('startChoice') && !$('startChoice').hidden) || $('sheet') || ($('results').classList.contains('revealing')) || (this.tour && this.tour.el && !this.tour.el.hidden) || (this.fleet && this.fleet.paying) || document.querySelector('.era-card, #payoff:not([hidden]), #ending')) return;
-    this.crossingAuto.add(cs.id); this.showCrossingSheet(cs);
+    this.crossingAuto.add(cs.id);
+    // The big moment (Oliver, 2026-11-18): the full-screen 'Crossing unlocked!' card, not the small sheet. It marks the crossing told like the sheet did.
+    const first = !(s.crossed || []).length && !(s.crossingTold || []).length;
+    markTold(s, cs.id); writeSave(s); this.refreshDots();
+    showCrossingUnlocked(cs, { save: s, first }).then(r => { if (r === 'go') this.flyCrossing(cs); });
   }
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).

@@ -1236,3 +1236,13 @@ h2.sub { margin-top: -4px; }
 .w-flyhere .wfh-line { flex: 1; min-width: 0; margin: 0; line-height: 1.5; }
 .w-flyhere .chip { flex: none; }
 .w-flyhere .chip.go { background: var(--gold); }
+/* "Crossing unlocked!" (src/crossunlock.js, 2026-11-18): the era welcome's card with a sky over open sea, the route's two cities and the player's plane crossing between them. */
+.cross-unlock .cu-sky { background: linear-gradient(#2a6fb8 0%, #7fc3f0 55%, #1f4f8a 56%, #173c6b 100%); }
+.cross-unlock .cu-route { height: 64px; }
+.cross-unlock .cu-end { position: absolute; top: 4px; left: 2px; font-size: 9px; color: #ffe15a; }
+.cross-unlock .cu-to { left: auto; right: 2px; }
+.cross-unlock .ec-plane { width: 140px; }
+.cross-unlock #cuGo, .cross-unlock .cu-later { opacity: 0; display: block; margin: 8px auto 0; }
+.cross-unlock .cu-later { background: transparent; color: #cfe6ff; border: 0; box-shadow: none; font-size: 10px; min-height: 44px; }
+.cross-unlock.go #cuGo, .cross-unlock.go .cu-later { animation: ec-in 0.4s 2.6s forwards; }
+@media (prefers-reduced-motion: reduce) { .cross-unlock #cuGo, .cross-unlock .cu-later { opacity: 1; animation: none; } }
