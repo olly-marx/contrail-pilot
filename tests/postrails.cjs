@@ -39,7 +39,14 @@ const FROM = PART === 'B' ? 7 : 3, TO = PART === 'A' ? 6 : 10;
       return { ok: ok && !ok.hidden && ok.offsetParent !== null, x: r.left + r.width / 2, y: r.top + r.height / 2, text: t.querySelector('.tbubble p').textContent }; });
     if (!t) return false;
     log.push(`lit: ${t.text}`);
-    if (t.ok) await p.click('#tour .tbubble .btn'); else await p.mouse.click(t.x, t.y);
+    // The map lesson (src/tour.js r-map, hands on since 2026-11-18) asks for a DRAG of the globe, then a tap on a city dot, and its last step lights MISSION / EXPLORE together: do as a player would.
+    const key = await p.evaluate(() => game.registry.get('ui').tour.spot().key);
+    if (key === 'r-map#1') { await p.mouse.move(t.x - 40, t.y); await p.mouse.down(); for (let d = -40; d <= 40; d += 8) await p.mouse.move(t.x + d, t.y); await p.mouse.up(); }
+    else if (key === 'r-map#2') { await p.waitForTimeout(800); const c = await p.evaluate(async () => { const { CITIES } = await import('./src/cities.js'), gl = document.getElementById('hubGlobe').__globe, r = document.getElementById('hubGlobe').getBoundingClientRect();
+      const dots = CITIES.map(c => ({ n: c.name, ...(gl.cityPos(c.name) || {}) })).filter(d => d.x != null && d.x > r.left + r.width * 0.25 && d.x < r.right - r.width * 0.25 && d.y > r.top + r.height * 0.15 && d.y < r.bottom - r.height * 0.2);
+      return dots.find(d => !dots.some(e => e !== d && Math.hypot(e.x - d.x, e.y - d.y) < 14)) || null; }); if (c) await p.mouse.click(c.x, c.y); }
+    else if (key === 'r-map#5') await p.click('#dsExplore');
+    else if (t.ok) await p.click('#tour .tbubble .btn'); else await p.mouse.click(t.x, t.y);
     await p.waitForTimeout(500); return true;
   };
   const settle = async () => { for (let i = 0; i < 25 && await tapLit(); i++); };
