@@ -1205,3 +1205,9 @@ h2.sub { margin-top: -4px; }
 .les.lock { opacity: .5; cursor: default; }
 .sb-start { margin-top: 6px; min-height: 44px; }
 .m-school { width: 100%; margin: 0 0 10px; }
+/* FLY HERE under the land's picture (src/wild.js renderFlyHere; the owner, 2026-11-18): one line and one 40 px chip. */
+.w-flyhere { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 4px; }
+.w-flyhere[hidden] { display: none; }
+.w-flyhere .wfh-line { flex: 1; min-width: 0; margin: 0; line-height: 1.5; }
+.w-flyhere .chip { flex: none; }
+.w-flyhere .chip.go { background: var(--gold); }
