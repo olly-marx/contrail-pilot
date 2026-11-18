@@ -157,7 +157,7 @@ export const HAZARDS = {
   noFly:      { from: 8000, chance: 0.45, width: 30, gapLess: 28, minGap: 82,
                 // Era 4 twist (2010s, PROPOSAL-ERAS-4-6-SYSTEMS): from 14,000 km a zone's gap drifts up or down (px/s). TBD-SIM.
                 drift: { from: 14000, era: 3, pxs: 4, away: true } },   // sized 2026-10-27 (BALANCE-ERAS-4-6.md): 10+ px/s is a cliff
-  birds:      { from: 10000, every: 700, chance: 0.55, flock: [11, 15], extraSpeed: 45, wobble: 22,   // many small birds (2026-10-22)
+  birds:      { from: 10000, every: 700, chance: 0.55, flock: [11, 15], extraSpeed: 45, wobble: 22, climbJump: 150,   // many small birds (2026-10-22). climbJump (2026-11-18): no flock in the climb between two gaps more than this many px apart (0 = off; research/GAP-FEASIBILITY-HUMAN-2026-11-18.md)
                 // Era 5 twist (2030s): from 18,000 km a flock slides dy px once, at `at` of the screen, over `secs`. TBD-SIM.
                 turn: { from: 18000, era: 4, dy: 90, at: 0.55, secs: 0.6 } },   // sized 2026-10-27: mild even at 110
   // The long-haul squeeze (far future): from 26,000 km, every 4,000 km the no-fly and bird chances rise by `add`. TBD-SIM.

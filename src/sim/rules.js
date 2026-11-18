@@ -297,6 +297,36 @@ export const RULES = {
       return fx < this.plane.x + PLANE.w + 120 && fx + half * 26 + 16 > this.plane.x - 80 && top < st.rects[1].y && bottom > r.height;   // wide margin: the speed creeps up
     });
   },
+  // Birds out of the climb (2026-11-18 human-limits study): would the flock be at the plane while it travels between two
+  // consecutive gaps more than climbJump px apart, inside the height span between them? (HAZARDS.birds.climbJump, 0 = off)
+  flockBlocksClimb(x, y, half) {
+    const B = HAZARDS.birds, J = B.climbJump; if (!J) return false;
+    const v = Math.max(1, this.speed), fv = v + B.extraSpeed;
+    const wob = B.wobble * (P.KNOB_PLANTS.wobble ? 1 : this.kit.birdWobbleMul ?? 1);
+    const top = y - half * 9 - 4 - wob, bottom = y + half * 9 + 16 + wob;
+    const t1 = (x - (this.plane.x + PLANE.w + 40)) / fv, t2 = (x + half * 26 + 16 - (this.plane.x - 40)) / fv;   // flock level with the plane
+    const cols = this.storms.filter(st => st.rects[0].x + st.rects[0].width > this.plane.x - 10).sort((a, b) => a.rects[0].x - b.rects[0].x);
+    for (let i = 1; i < cols.length; i++) {
+      const a = cols[i - 1], b = cols[i], cA = (a.rects[0].height + a.rects[1].y) / 2, cB = (b.rects[0].height + b.rects[1].y) / 2;
+      if (Math.abs(cA - cB) <= J) continue;
+      const tA = (a.rects[0].x + a.rects[0].width - this.plane.x) / v - 0.3, tB = (b.rects[0].x - this.plane.x - PLANE.w) / v + 0.3;
+      if (t2 > tA && t1 < tB && top < Math.max(cA, cB) && bottom > Math.min(cA, cB)) return true;
+    }
+    return false;
+  },
+  // A new column whose gap is far from the last one: would a flock already in the sky sit in the climb between them?
+  // Then draw the gap again (2026-11-18 human-limits study; HAZARDS.birds.climbJump, 0 = off).
+  climbBlocked(x, t) {
+    const B = HAZARDS.birds, J = B.climbJump;
+    if (!J || this.lastGapY == null || Math.abs(t - this.lastGapY) <= J || !this.birds.length) return false;
+    const prev = this.storms[this.storms.length - 1]; if (!prev) return false;
+    const v = Math.max(1, this.speed), fv = v + B.extraSpeed, wob = B.wobble * (P.KNOB_PLANTS.wobble ? 1 : this.kit.birdWobbleMul ?? 1);
+    const tA = (prev.rects[0].x + prev.rects[0].width - this.plane.x) / v - 0.3, tB = (x - this.plane.x - PLANE.w) / v + 0.3;
+    const lo = Math.min(t, this.lastGapY), hi = Math.max(t, this.lastGapY);
+    return this.birds.some(f => { const half = f.half ?? FLOCK_HALF, top = f.y - half * 9 - 4 - wob, bottom = f.y + half * 9 + 16 + wob;
+      const t1 = (f.x - (this.plane.x + PLANE.w + 40)) / fv, t2 = (f.x + half * 26 + 16 - (this.plane.x - 40)) / fv;
+      return t2 > tA && t1 < tB && top < hi && bottom > lo; });
+  },
   heatPct() { return this.heat * 100 / CLIMATE.dangerLine; },   // heat as % of the danger line (the warning thresholds are in %)
 
   spawn() {
@@ -402,8 +432,9 @@ export const RULES = {
     // Leave a clear lane past any icy air already in this column (20 tries, else no storm this time);
     // with the ISSR.laneExtra variant, a lane that much taller.
     let gapY = null;
-    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2, this.issrs, ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined)) gapY = t; }
+    for (let k = 0; k < 20 && gapY === null; k++) { const t = this.between(lo, hi); if (this.laneClear(x, w, t - gap / 2, t + gap / 2, this.issrs, ISSR.laneExtra ? PLANE.h + STORMS.clearLane + ISSR.laneExtra : undefined) && !this.climbBlocked(x, t)) gapY = t; }
     if (gapY === null) return;
+    this.lastGapY = gapY;
     if (noFly) this.addNoFlyAt(x, gapY, gap);
     else this.addStormPairAt(x, gapY, gap);
   },
@@ -521,7 +552,7 @@ export const RULES = {
   addFlock(x = WIDTH + 20, y = null) {
     const B = HAZARDS.birds, n = this.between(B.flock[0], B.flock[1]);
     if (y === null) {   // never a flock in a storm gap just as the plane goes through it (10 tries, else skip)
-      for (let k = 0; k < 10 && y === null; k++) { const t = this.between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, FLOCK_HALF)) y = t; }
+      for (let k = 0; k < 10 && y === null; k++) { const t = this.between(60, SKY_H - 90); if (!this.flockBlocksGap(x, t, FLOCK_HALF) && !this.flockBlocksClimb(x, t, FLOCK_HALF)) y = t; }
       if (y === null) return;
     }
     // A dense arrowhead of many small birds (2026-10-22: the user wanted flocks more obvious), packed
