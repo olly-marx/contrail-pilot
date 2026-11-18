@@ -13,6 +13,7 @@
 //   6. SEE IT IN NATURE (guanaco): NATURE shows Patagonia (the steppe), the guanaco's card is lit and on screen, its info is open and names it
 //   7. the light goes after the info is closed
 //   8. a flight with 14 new animals: the grid scrolls inside the pop-up (at 320x568; at 390x844 all 14 fit), which still fits the screen, and every card is >= 44 px
+//   9. an animal two open lands list opens on its OWN land: the red panda (WILDLIFE region eastasia, also listed in monsoon, which comes first) opens East Asia
 // Env: SHOTS=<prefix> also saves screenshots (deviceScaleFactor 2) of the card, the grid and the nature landing (<prefix>-*.png at 390x844, <prefix>-320-*.png at 320x568).
 // Run: python3 -m http.server 8000 & node tests/morechips.cjs   (plants: tools/plants.tsv, test morechips)
 require('./lib/shipped.js');
@@ -20,7 +21,7 @@ const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
 const found = { rabbit: 1, hedgehog: 1, fox: 1, deer: 1, guanaco: 1 };
-const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city: 'WARSAW', visited: ['WARSAW'], discovered: { steppe: true }, found, tutorialDone: true, muted: true, priceVersion: 2,
+const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'WARSAW', city: 'WARSAW', visited: ['WARSAW'], discovered: { steppe: true, monsoon: true, eastasia: true }, found: { ...found, redpanda: 1 }, tutorialDone: true, muted: true, priceVersion: 2,
   seenTips: ['x-bars'], tours: ['*'], freeGiven: true, freeProjectGiven: true, freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'],
   fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
 const RES = { landed: true, landedAt: 'PARIS', distance: 900, earned: [{ label: 'Seeds', n: 20 }], rewards: [{ kind: 'badge', id: 'longhaul', tier: 1, label: 'Long Haul', seeds: 10, crystals: 1 }],
@@ -79,6 +80,9 @@ const RES = { landed: true, landedAt: 'PARIS', distance: 900, earned: [{ label: 
         await p.waitForTimeout(1600);
         const off = await p.evaluate(() => !document.querySelector('#wFound .w-spot'));
         check(off, '7. the light goes after the info is closed');
+        const rp = await p.evaluate(() => { const ui = game.registry.get('ui'); document.getElementById('wInfo').hidden = true; ui.natureOn('redpanda'); return { land: ui.wild.region, info: (document.querySelector('#wInfo h2') || {}).textContent }; });
+        check(rp.land === 'eastasia' && rp.info === 'Red panda', `9. the red panda opens on its own land (eastasia), not the first land that lists it: ${JSON.stringify(rp)}`);
+        await p.evaluate(() => { document.getElementById('wInfo').hidden = true; });
         const many = { ...RES, rewards: [], missions2: { done: [], next: null }, foundIds: ['rabbit', 'hedgehog', 'fox', 'deer', 'cow', 'sheep', 'guanaco', 'culpeo', 'sealion', 'uplandgoose', 'mara', 'magellanicpenguin', 'pudu', 'geoffroyscat'] };
         await p.evaluate(r => { const ui = game.registry.get('ui'); ui.showResults(r); setTimeout(() => { ui.skipReveal = true; }, 60); }, many);
         await p.waitForTimeout(2000);
