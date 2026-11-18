@@ -4,8 +4,8 @@
 //   B  one flight start per starter area: the start choice, then flight school flies from YOUR city over YOUR area
 //      (not London > Paris), the first hop is the next airport, the plane takes off, no page errors
 //   C  the tabs: HANGAR, NATURE, PILOT, BOARDS and back to FLY open with content and without errors
-//   D  the offer card with the gate met through a seeded save (areaBest + planted trees): 6,299 km not offered, another
-//      area's flight counts too (0.43.1), 6,300 km + biodiversity 38 offered; a crossing flight starts (Tunis 9,000 km on)
+//   D  the offer card with the gate met through a seeded save (areaBest + planted trees): 4,899 km not offered, another
+//      area's flight counts too (0.43.1), 4,900 km + biodiversity 30 offered; a crossing flight starts (Tunis 7,000 km on; pacing A2 2026-11-18)
 //   E  every area open and the last era (far future, the era 6 release): THE LAP is listed, no MORE TO COME; after the lap, neither
 //   G  a tap before the scene exists (the 0.12.2 iPhone crash): startSchool/startFlight restart instead of throwing
 //   F  nothing to fly yet in an early era: the card says when the next crossing opens, not silence
@@ -13,7 +13,7 @@
 // Planted defects, each must FAIL the check named (revert with git checkout after):
 //   B  sed -i 's/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/' src/route.js        -> "B <area>: flight school starts in ..."
 //   C  sed -i "s/if (tab === 'nature')/if (tab === 'natur')/" src/ui.js                    -> "C: NATURE opens"
-//   D  sed -i 's/distanceShare: 0.7/distanceShare: 0/; s/biodiversity: 30, /biodiversity: 0, /' src/season.js -> "D: 6,299 km ..."
+//   D  sed -i 's/distanceShare: 0.7/distanceShare: 0/; s/biodiversity: 30, /biodiversity: 0, /' src/season.js -> "D: 4,899 km ..."
 //   D  sed -i 's/maxEra: 2/maxEra: 9/' src/season.js ... (offer-gate.cjs covers it); crossing start: break crossingPath in src/crossings.js
 //   F  sed -i 's/if (best === null || c.era < best)/if (false)/' src/crossings.js  -> "F: nothing to fly yet"
 //   C  sed -i 's/const off = onlineOff();/const off = false;/' src/pilot.js -> "C: PILOT says"
@@ -117,18 +117,18 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   const STARS = ['weurope:night', 'weurope:shade10', 'weurope:kinds3'];   // S3: the area's 3 starred missions are a condition too
   const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', planted: PLANTED, habitat: { woodland: ['deadwood', 'meadow', 'margins'] }, areaBest, missionsDone });   // (3 projects: woodland meter 41 >= the first crossing's 38, CROSSINGS V3)
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
-  let c = await card({ weurope: 6299 });
-  check(/ROME &gt; TUNIS/.test(c) && /data-k="plane"><span class="xc-l">Plane<\/span><span class="xc-bar">/.test(c) && /class="xc-next">[^<]+</.test(c) && !/data-cross/.test(c), `D: 6,299 km (just under 70%) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
+  let c = await card({ weurope: 4899 });
+  check(/ROME &gt; TUNIS/.test(c) && /data-k="plane"><span class="xc-l">Plane<\/span><span class="xc-bar">/.test(c) && /class="xc-next">[^<]+</.test(c) && !/data-cross/.test(c), `D: 4,899 km (just under 70% of 7,000) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
   c = await card({ namerica: 9999 });   // (another area's flight: the Nordic area is in the home region now)
   check(/data-cross="mediterranean"/.test(c), 'D: a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
-  c = await card({ weurope: 6300 }, STARS.slice(1, 2));
-  check(/data-cross="mediterranean"/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 6,300 km + biodiversity 38 is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
-  c = await card({ weurope: 6300 });
-  check(/data-cross="mediterranean"/.test(c), `D: 6,300 km + biodiversity 38 + the 3 starred: the crossing is offered: ${c.slice(0, 200)}`);
+  c = await card({ weurope: 4900 }, STARS.slice(1, 2));
+  check(/data-cross="mediterranean"/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 4,900 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
+  c = await card({ weurope: 4900 });
+  check(/data-cross="mediterranean"/.test(c), `D: 4,900 km + biodiversity 30 + the 3 starred: the crossing is offered: ${c.slice(0, 200)}`);
   const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', areaBest: { weurope: 9999 }, missionsDone: STARS });
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); })();
-  check(!/data-cross/.test(noTrees) && /class="xc-v">0 \/ 38</.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
-  await card({ weurope: 6300 });
+  check(!/data-cross/.test(noTrees) && /class="xc-v">0 \/ 30</.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
+  await card({ weurope: 4900 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', crossing: document.getElementById('hubNext').classList.contains('crossing') }));
   check(nextCard.crossing && /Cross to/i.test(nextCard.text), `D: the hub's UP NEXT leads with the ready crossing (R3: "Cross to <city>"): ${JSON.stringify(nextCard)}`);
@@ -140,7 +140,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   if (btn) {
     await btn.click(); await p.click('#sheet .sheet-action'); await started(p);   // (R-A: the crossing sheet is the confirm before the flight starts)
     const fl = await p.evaluate(() => { const g = game.scene.getScene('game'); return { c: g.crossing && g.crossing.id, to: g.nextAirport.name, at: Math.round(g.nextAirport.worldX - g.distancePx), dist: g.distText.text, path: g.path.slice(0, 3) }; });
-    check(fl.c === 'mediterranean' && fl.to === 'TUNIS' && fl.at >= 8900 && fl.at <= 9000 && /TO TUNIS/.test(fl.dist), `D: the crossing flight starts: Rome to Tunis, 9,000 km away: ${JSON.stringify(fl)}`);
+    check(fl.c === 'mediterranean' && fl.to === 'TUNIS' && fl.at >= 6900 && fl.at <= 7000 && /TO TUNIS/.test(fl.dist), `D: the crossing flight starts: Rome to Tunis, 7,000 km away: ${JSON.stringify(fl)}`);
   }
   await p.context().close();
 
