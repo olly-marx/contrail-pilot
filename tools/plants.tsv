@@ -344,7 +344,7 @@ crossingmoment	src/crossingview.js	s/save.crossingTold = \[...new Set(\[...(save
 crossingmoment	src/ui.js	s/hc.onclick = () => this.openCrossings(cs);/hc.onclick = () => this.flyCrossing(cs);/	a tap on the HOME box starts the crossing flight
 crossingmoment	src/ui.js	s/if (\$('dFly')) \$('dFly').hidden = !(cs \&\& cs.ready);/if ($('dFly')) $('dFly').hidden = true;/	the HOME tab dot never lights
 crossingmoment	src/globe.js	s/if (cross \&\& cross.onTap \&\& markHit(ev)) { cross.onTap(); return; }//	a tap on the globe's ring does nothing
-crossingmoment	src/missionsview.js	s/v.crossing = cs ? {/v.crossing = false ? {/	MISSIONS shows no crossing conditions
+missionsview	src/missionsview.js	s/v.crossing = cs ? {/v.crossing = false ? {/	MISSIONS shows no crossing conditions (the data: the MISSIONS screen shows the crossing cards since 0.68.0, so crossingmoment cannot see this)
 routechip	src/ui.js	s/    \$('hubRoute').onclick = () => this.openRouteSheet();/    $('hubRoute').onclick = () => { sfx.flap(); $('title').classList.toggle('world'); };/	the route chip still pushes the old panel into the page (no sheet)
 routechip	src/ui.js	s/if ((s.tours || \[\]).some(t => t === 'globe-hint' || t === '\*')) return; s.tours = \[...(s.tours || \[\]), 'globe-hint']; writeSave(s);/return;/	the caption never goes away
 routechip	src/ui.js	s/hint.hidden = !s.tutorialDone ||/hint.hidden = true ||/	the caption never shows
