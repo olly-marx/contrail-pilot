@@ -105,3 +105,4 @@ group naturefold-test | tests/naturefold.cjs style.css | naturefold
 group nature-pin | style.css src/wild.js | keepvisible
 group stuck-touch | src/touchfree.js src/main.js src/swipe.js src/wild.js src/hangar.js vendor/phaser.min.js | stucktouch
 group payoff-card | src/hangar.js src/planelook.js style.css assets/ui/upgrades/* assets/ui/plane-hangar-* | payoffcard
+group more-chips | src/ui.js src/wild.js src/resultscard.js style.css tests/morechips.cjs | morechips
