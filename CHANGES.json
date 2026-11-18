@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-18-lands-and-crossings",
+    "version": "0.68.0",
+    "date": "2026-11-18",
+    "level": "major",
+    "notes": [
+      "The globe shows where each land starts and ends, with the names of your lands.",
+      "FLY HERE on a land in NATURE takes you to it, then keeps your flights in that land.",
+      "After a flight, +N more shows pictures of everything new. SEE IT IN NATURE takes you to that animal.",
+      "Crossings in MISSIONS are now simple cards: Era, Plane and Nature, with what to do next.",
+      "New in Flight School: a Crossings lesson, and a hands-on lesson on choosing where to fly."
+    ]
+  },
+  {
     "id": "2026-11-18-update-crash",
     "version": "0.67.1",
     "date": "2026-11-18",
