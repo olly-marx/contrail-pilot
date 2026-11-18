@@ -971,3 +971,7 @@ crossingmoment	src/ui.js	s/showCrossingUnlocked(cs, { save: s, first }).then(r =
 crossingmoment	src/ui.js	s/if (r === 'go') this.flyCrossing(cs);/if (false) this.flyCrossing(cs);/	the card's FLY THE CROSSING starts nothing
 crossingmoment	src/crossunlock.js	s/el.remove(); sfx.tick();/sfx.tick();/	LATER leaves the card on screen
 spotlight@SPOT_CASES=r-nature	src/wild.js	s/isSeason2(s) \&\& railDone ? flyHereChoice/isSeason2(s) ? flyHereChoice/	the FLY HERE row shows during the NATURE guide (pushes r-nature#3 off a 320 phone)
+landeven	src/nature.js	s/  if (!LAND_EVEN.on) return 1;/  return 1;/	LAND_EVEN weights nothing
+landeven	src/nature.js	s/b += p.bio \* projectWeight(all, p);/b += p.bio;/	the meter ignores the land weights
+crosscard	src/crossings.js	s/SEASON.step.natureRule === 'weakest')) return natureBest(save);/false)) return natureBest(save);/	a crossing reads the best land, not the weakest region
+crosscard	src/crossingview.js	s/(s.nearest.key === 'nature' \&\& wk ? natureNextIn(REGIONS\[wk\].name) : CARD_NEXT\[s.nearest.key\])/CARD_NEXT[s.nearest.key]/	the card does not name the region to grow

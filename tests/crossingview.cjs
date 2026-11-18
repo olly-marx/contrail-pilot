@@ -11,13 +11,13 @@
     missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: { trees: 1 }, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   // 1. The three ticks: Era, Plane, Nature (CROSSINGS V2: ready by status; the trial stars and where the player is do not matter).
   const s0 = base(), c0 = V.crossingState(s0);
-  check(c0 && c0.id === 'mediterranean' && c0.to === 'TUNIS' && c0.km === 9000 && !c0.ready, `a fresh weurope pilot: the first crossing is near, not ready: ${JSON.stringify(c0 && [c0.id, c0.ready])}`);
-  check(c0.conds.map(x => x.label).join('|') === 'Era|Plane|Nature 38', `the three ticks, in order: ${c0.conds.map(x => x.label)}`);
+  check(c0 && c0.id === 'mediterranean' && c0.to === 'TUNIS' && c0.km === 7000 && !c0.ready, `a fresh weurope pilot: the first crossing is near, not ready: ${JSON.stringify(c0 && [c0.id, c0.ready])}`);
+  check(c0.conds.map(x => x.label).join('|') === 'Era|Plane|Nature 30', `the three ticks, in order: ${c0.conds.map(x => x.label)}`);
   check(c0.conds.map(x => x.done).join() === 'true,false,false', `a fresh pilot has the era (the first crossing is era 0) and nothing else: ${c0.conds.map(x => [x.key, x.done])}`);
   const s1 = base(); s1.areaBest = { weurope: 99999 };
   const c1 = V.crossingState(s1);
   check(c1.conds.filter(x => x.done).map(x => x.key).join() === 'era,plane' && c1.nearest && c1.nearest.key === 'nature' && !c1.ready, `era + plane done, nature left: nearest is nature, not ready: ${JSON.stringify(c1.conds.map(x => [x.key, x.done]))}`);
-  check(/^Plant trees\. Nature \d+ of 38$/.test(V.boxView(c1).line), `the box's plain line: "${V.boxView(c1).line}"`);
+  check(/^Plant trees\. Nature \d+ of 30$/.test(V.boxView(c1).line), `the box's plain line: "${V.boxView(c1).line}"`);
   const bio0 = S.SEASON.offer.biodiversity; S.SEASON.offer.biodiversity = 0; const c2 = V.crossingState(s1); S.SEASON.offer.biodiversity = bio0;   // the test lever: "the last tick has just been met"
   check(c2.ready && !c2.told, `era + plane + nature: ready, not told, with NO trial stars in the save: ${JSON.stringify([c2.ready, c2.told])}`);
   // 1b. a crossing of a later era: the Era tick is open and the plain line says so; where the player is does not matter (the same state from another city)

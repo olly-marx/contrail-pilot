@@ -81,6 +81,8 @@ export const planeProgress = (save, c) => { const need = SEASON.offer.distanceSh
 export const natureBest = save => Math.max(0, ...unlockedAreas(save).map(k => bestAreaBio(save, k)));
 // The nature a crossing reads (SEASON.step.natureRule, src/season.js): 'best' = natureBest; 'weakest' = the weakest opened region's best land.
 export const regionNature = save => { const by = {}; for (const k of unlockedAreas(save)) { const r = regionOfArea(k); if (r) by[r] = Math.max(by[r] ?? 0, bestAreaBio(save, k)); } return by; };
+// The region a 'weakest' crossing waits on (null under 'best', or with one region open): the opened region whose best land is lowest (src/crossingview.js names it on the card).
+export const weakestRegion = save => { if (!(SEASON.step && SEASON.step.natureRule === 'weakest')) return null; const by = regionNature(save), ks = Object.keys(by); return ks.length > 1 ? ks.reduce((a, b) => (by[b] < by[a] ? b : a)) : null; };
 export const natureHave = save => { if (!(SEASON.step && SEASON.step.natureRule === 'weakest')) return natureBest(save); const v = Object.values(regionNature(save)); return v.length ? Math.min(...v) : natureBest(save); };
 export function readiness(save, c) {
   const era = eraProgress(save).index >= c.era, plane = planeReady(save, c), nb = natureHave(save), nature = nb >= natureNeed(c);

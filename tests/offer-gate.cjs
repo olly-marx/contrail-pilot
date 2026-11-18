@@ -13,7 +13,7 @@
     fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
   if (process.env.PLANT === 'nogate') { SEASON.offer.distanceShare = 0; SEASON.offer.biodiversity = 0; }
   const c = X.available(base).find(x => x.id === 'mediterranean');   // CROSSINGS V3: Western Europe's first crossing
-  check(c && c.km === 9000, `the Mediterranean (the first crossing) is the 9,000 km crossing (SEASON.step.km[0]): ${c && c.km}`);
+  check(c && c.km === 7000, `the Mediterranean (the first crossing) is the 7,000 km crossing (pacing A2, 2026-11-18) (SEASON.step.km[0]): ${c && c.km}`);
   const ok = save => X.offerCheck(c, X.offerCtx(save, c)).offered;
   // plant enough trees for bio >= 30 in the start city's region (found, not assumed)
   const green = { ...base, planted: {} };

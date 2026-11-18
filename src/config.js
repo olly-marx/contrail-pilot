@@ -199,7 +199,7 @@ export const GROWN_METER = { on: false };
 // points in East Asia, 0.73 on the plains (habitat files), so the same first steps give a meter of 22 there and 43 here (scratch/rebal/bioprobe.mjs). ON: a land whose
 // tier 1-2 share is below `share` gets its tier 1-2 projects weighted up and its later ones down, keeping the land's total (a finished land is still 100). Lands at
 // or above `share` are unchanged. src/nature.js projectWeight.
-export const LAND_EVEN = { on: false, share: 0.6 };
+export const LAND_EVEN = { on: true, share: 0.65 };   // ON 2026-11-18: pacing arm A2 (research/PACING-2026-11-18-RESULTS.md)
 // NATIVE FIRST (ledger row 49; the user 2026-11-13: "start with one native tree for each wild area, like the most basic tree"): when on, each land's slot-1 native
 // (birch in the UK, silver birch in the boreal, acacia in the savanna...) is open from the start, and the plantation tree (slot 0) opens with the first habitat
 // project instead (the rule slot 1 had). OFF by default: the first trees change pacing (kinds3, the meter), so the sim chat checks it first.
