@@ -170,7 +170,9 @@ export class WildScreen {
     const s = this.save, land = this.region;
     let el = $('wFlyHere');
     if (!el) { el = document.createElement('div'); el.id = 'wFlyHere'; el.className = 'w-flyhere'; $('wNextLine').before(el); }
-    const ch = s.tutorialDone && isSeason2(s) ? flyHereChoice(s, land) : null, left = stayLandLeft(s, land);
+    // Not while the NATURE guide (rail r-nature, src/tour.js) is still to come: on a 320x568 phone the row pushed the guide's project row and land apart, off the screen (0.68.0 branch run, spotlight r-nature#3).
+    const railDone = (s.tours || []).some(t => t === 'r-nature' || t === '*');
+    const ch = s.tutorialDone && isSeason2(s) && railDone ? flyHereChoice(s, land) : null, left = stayLandLeft(s, land);
     const inLand = c => !!c && (cityOf(c) || {}).region === land;
     const staying = s.stayLand === land && s.routeMode === 'explore', going = !!(ch && ch.kind === 'go' && inLand(s.aimCity));
     const stop = () => { if (inLand(s.aimCity)) clearGoto(s); s.stayLand = null; s.routeMode = 'mission'; };

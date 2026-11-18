@@ -967,3 +967,4 @@ maplesson	src/ui.js	s/this.globeDrags = (this.globeDrags || 0) + 1; //	a drag of
 maplesson	src/tour.js	s/text: tip('rail-map'), until: () => (this.ui.globeDrags || 0) > drags0 }/text: tip('rail-map'), ok: true }/	the drag step can be skipped with OK
 maplesson	src/tour.js	s/text: tip('rail-map-city'), until: card }/text: tip('rail-map-city'), until: () => true }/	the city step does not wait for a city
 maplesson	src/tour.js	s/target: '#dsMission, #dsExplore'/target: '#dsChange'/	MISSION or EXPLORE does not finish the lesson
+spotlight@SPOT_CASES=r-nature	src/wild.js	s/isSeason2(s) \&\& railDone ? flyHereChoice/isSeason2(s) ? flyHereChoice/	the FLY HERE row shows during the NATURE guide (pushes r-nature#3 off a 320 phone)
