@@ -156,9 +156,9 @@ export function crossingStart(save) {
   const land = (city(save.city) || {}).region, P = land && REGION_DATA[land] ? REGION_DATA[land].projects : null;
   if (!P) return null;
   const done = projectsDone(save, land).map(p => p.id), p = P.find(x => x.tier === 1 && !done.includes(x.id));
-  if (p) { save.habitat = save.habitat || {}; save.habitat[land] = [...(save.habitat[land] || []), p.id]; }
+  if (p && SEASON.step.crossStart !== 'stay') { save.habitat = save.habitat || {}; save.habitat[land] = [...(save.habitat[land] || []), p.id]; }   // ('stay': no free project, only the stay)
   save.stayLand = land; save.routeMode = 'explore';
-  save.crossStart = { land, project: p ? p.id : null, name: p ? p.name : null };
+  const given = p && SEASON.step.crossStart !== 'stay'; save.crossStart = { land, project: given ? p.id : null, name: given ? p.name : null };
   return save.crossStart;
 }
 
