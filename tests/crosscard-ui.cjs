@@ -47,7 +47,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     check(cards.length && cards.every(c => /NATURE|HANGAR/.test(c.next) && !c.fly), `${tag} A: one next line naming where to go, no FLY button: ${JSON.stringify(cards.map(c => [c.next, c.fly]))}`);
     check(!/CROSSING:|Needs:|CROSSING TO/.test(text), `${tag} A: none of the old crossing text on MISSIONS: ${JSON.stringify(text.match(/.{0,30}(CROSSING:|Needs:|CROSSING TO).{0,30}/))}`);
     check(cards.every(c => c.left >= 0 && c.right <= W), `${tag} A: every card fits the screen: ${JSON.stringify(cards.map(c => [c.left, c.right]))}`);
-    if (W === 390) { await p.evaluate(() => document.querySelector('#mCross').scrollIntoView()); await p.waitForTimeout(200); await p.screenshot({ path: process.env.SHOTS ? `${process.env.SHOTS}/crosscard-notready.png` : '/dev/null' }).catch(() => {}); }
+    if (W === 390) { await p.evaluate(() => (document.querySelector('#mCross') || document.body).scrollIntoView()); await p.waitForTimeout(200); await p.screenshot({ path: process.env.SHOTS ? `${process.env.SHOTS}/crosscard-notready.png` : '/dev/null' }).catch(() => {}); }
     check(!p.errs.length, `${tag} A: page errors: ${p.errs}`);
     await p.close();
 
@@ -58,11 +58,14 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     if (sheetUp) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); }   // (the one-time moment sheet may come by itself: it is not this test's subject)
     cards = await cardsOf(p);
     check(cards.length === 3 && cards.every(c => c.rows.every(r => r.tick && !r.bar) && c.fly && /^Ready!/.test(c.next)), `${tag} B: ready: every row ticked, Ready! and FLY THE CROSSING on each card: ${JSON.stringify(cards.map(c => [c.rows.map(r => r.tick), c.next, c.fly]))}`);
+    if (!(await p.$('#mCross .xcard:first-child [data-cross]'))) { fails.push(`${tag} B: no FLY THE CROSSING button on a ready card (stopping this size)`); await p.close(); continue; }   // (fail by name, not by a timeout)
     await p.evaluate(() => { const s = game.registry.get('save'); s.crossingTold = []; });
     await p.tap('#mCross .xcard:first-child [data-cross]'); await p.waitForTimeout(500);
     let sh = await p.evaluate(() => ({ text: (document.getElementById('sheet') || {}).innerText || '', flying: !!game.registry.get('save').flyCrossing }));
     check(/MUSCAT is within reach/.test(sh.text) && !sh.flying, `${tag} B: a real tap on FLY THE CROSSING opens the crossing sheet and starts no flight: ${JSON.stringify(sh)}`);
-    if (sh.text) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); }
+    if (!sh.text) { fails.push(`${tag} B: no sheet after the tap (stopping this size)`); await p.close(); continue; }
+    await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300);
+    if (await p.evaluate(() => !!game.registry.get('save').flyCrossing || !document.querySelector('#mCross [data-cross]'))) { fails.push(`${tag} B: the tap started a flight (stopping this size)`); await p.close(); continue; }
     await p.tap('#mCross .xcard:first-child [data-cross]'); await p.waitForTimeout(500);
     sh = await p.evaluate(() => (document.getElementById('sheet') || {}).innerText || '');
     check(/CROSS TO MUSCAT/.test(sh), `${tag} B: once told, at KARACHI the tap opens the CROSSINGS screen with CROSS TO MUSCAT: ${sh.replace(/\s+/g, ' ')}`);
@@ -71,7 +74,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     await p.tap('#mCross .xcard:nth-child(2) [data-cross]'); await p.waitForTimeout(500);
     sh = await p.evaluate(() => (document.getElementById('sheet') || {}).innerText || '');
     check(/GO TO SINGAPORE/.test(sh), `${tag} B: away from its departure the card's button offers GO TO SINGAPORE: ${sh.replace(/\s+/g, ' ')}`);
-    if (W === 390) { if (sh) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); } await p.evaluate(() => document.querySelector('#mCross').scrollIntoView()); await p.waitForTimeout(200); await p.screenshot({ path: process.env.SHOTS ? `${process.env.SHOTS}/crosscard-ready.png` : '/dev/null' }).catch(() => {}); }
+    if (W === 390) { if (sh) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); } await p.evaluate(() => (document.querySelector('#mCross') || document.body).scrollIntoView()); await p.waitForTimeout(200); await p.screenshot({ path: process.env.SHOTS ? `${process.env.SHOTS}/crosscard-ready.png` : '/dev/null' }).catch(() => {}); }
     check(!p.errs.length, `${tag} B: page errors: ${p.errs}`);
     await p.close();
 
