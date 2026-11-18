@@ -45,7 +45,7 @@
   const k = F.fleetKit({ fleet: { plane: 'jumbo', planes: { comet: { engines: 2 }, jumbo: { engines: 2, body: 1 } }, systems: { ops: 1, forecast: 3 }, gadgets: { magnet: 2, hold: 1, gear: 2 } } });
   check(near(k.co2, 1.0 * 0.88 * 0.96), `747 CO2 = engines 2 (x0.88, replaces x0.93) x ops 1 (x0.96): ${k.co2}`);
   check(k.pickup === 19 && near(k.perSkip, 0.6) && near(k.flare, 1.2) && k.revealPx === 115, `gadgets and systems apply: ${JSON.stringify(k)}`);   // (revealPx 115: the smoothed Forecasting table of this branch; main had 100)
-  check(k.hintLead === 0.5 && k.hintGate === 3 && k.hintCues === 1 && k.hintLevel === undefined, 'one flavour per line: ops 1 + forecast 3, no ATC: a 0.5 s arrow warning, the gate level 3, the cues level 1, no shared hintLevel');
+  check(k.hintLead === 0.3 && k.hintGate === 3 && k.hintCues === 1 && k.hintLevel === undefined, 'one flavour per line: ops 1 + forecast 3, no ATC: a 0.3 s arrow warning (2026-11-18), the gate level 3, the cues level 1, no shared hintLevel');
   // Engines: each effect from the newest level that has it (0.11.4): Comet Engines 2 (reversers, flare only)
   // keeps Engines 1's CO2 x0.9.
   const c2 = F.fleetKit({ fleet: { plane: 'comet', planes: { comet: { engines: 2 } }, systems: {}, gadgets: {} } });

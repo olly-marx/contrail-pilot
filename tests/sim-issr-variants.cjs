@@ -1,5 +1,5 @@
 // The icy-air spawn variants do what they say, and keep the amount of icy air (sim engine, 2026-10-26).
-// 3 flights x 15,000 km per variant (Comet, crashes off, heat off). Checks against today's rule:
+// 8 flights x 15,000 km per variant (Comet, crashes off, heat off). Checks against today's rule:
 //   thin  (thinK 0.4):     patches ~0.4 x as tall (+-15%), the same area per 10,000 km (+-10%), the same night share;
 //   lane  (laneExtra 40):  the 10th-percentile clear lane through storm gaps >= the rule (plane + clearLane + 40);
 //   reveal (revealBoost 3): exactly today's sky, and a patch 100 px away is shown (today it is hidden beyond 50 px; the fade keeps the outer quarter of the range hidden).
@@ -9,7 +9,7 @@
   const { measure } = await import('../tools/sim/issr-variants.mjs');
   const P = await import('../src/sim/physics.js');
   const { ISSR } = await import('../src/config.js');
-  const plant = !!process.env.PLANT, o = { flights: 3, km: 15000 };
+  const plant = !!process.env.PLANT, o = { flights: +(process.env.FLIGHTS || 8), km: 15000 };   // 8 (was 3, 2026-11-18): with 3 flights the thin-vs-today night share sat at the 0.05 edge and any change to the sky could tip it
   const V = plant ? { thin: { thinK: 1 }, lane: { laneExtra: 0 }, reveal: { revealBoost: 1 } } : { thin: { thinK: 0.4 }, lane: { laneExtra: 40 }, reveal: { revealBoost: 3 } };
   const today = measure({}, o), thin = measure(V.thin, o), lane = measure(V.lane, o), reveal = measure(V.reveal, o);
   const fails = [], near = (a, b, f) => Math.abs(a - b) <= f * Math.abs(b);
