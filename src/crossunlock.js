@@ -15,7 +15,7 @@ export function unlockText(cs, first = false) {
     kicker: UNLOCK_KICKER,
     title: `You can cross to ${cs.to}!`,
     route: [cs.from, cs.to],
-    tag: `You have met every need: Era, Plane and Nature. One long flight with no stops opens ${cs.opens || 'a new part of the world'}.`,
+    tag: 'You have met every need: Era, Plane and Nature. Now one long flight with no stops.',
     note: first ? 'Missions do not count on a crossing: just get there.' : '',
     go: 'FLY THE CROSSING', later: 'LATER',
   };
