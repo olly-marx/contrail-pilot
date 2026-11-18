@@ -91,7 +91,7 @@ export function cardOf(save, c, opts = {}) {
   const s = stateOf(save, c, opts), lap = c.kind === 'lap', need = natureNeed(c);
   const rows = s.conds.map(x => ({ key: x.key, label: { era: 'Era', plane: 'Plane', nature: 'Nature' }[x.key], done: !!x.done, frac: x.done ? 1 : Math.max(0, Math.min(1, x.frac || 0)),
     value: x.done ? null : x.key === 'nature' ? `${Math.round(readiness(save, c).natureHave)} / ${need}` : x.key === 'plane' ? (x.status === 'nearly' ? 'nearly' : 'not yet') : 'later' }));
-  return { id: c.id, lap, route: lap ? 'LAP OF THE EARTH' : `${s.from} > ${s.to}`, word: s.difficulty, opens: lap ? `From ${s.from} round the world and home` : `Opens ${s.opens}`,
+  return { id: c.id, lap, route: lap ? 'THE LAP OF THE EARTH' : `${s.from} > ${s.to}`, word: s.difficulty, opens: lap ? `From ${s.from} round the world and home, non-stop` : `Opens ${s.opens}`,
     ready: !!s.ready, rows, next: s.ready ? CARD_READY : s.nearest ? CARD_NEXT[s.nearest.key] : '', nextKey: s.ready ? null : s.nearest ? s.nearest.key : null, state: s };
 }
 export const cardsView = (save, opts = {}) => available(save).map(c => cardOf(save, c, opts));   // (the order of src/crossings.js; the rows are by status, so every card on offer is ready together)
