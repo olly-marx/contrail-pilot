@@ -44,13 +44,36 @@ function db() {
   if (!client && window.supabase) client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: 'contrailPilot.auth' } });
   return client;
 }
+// Bot check on sign-in (security plan A, 2026-11-19): Cloudflare Turnstile, invisible, only when a NEW device signs in.
+// Off while TURNSTILE_SITE_KEY is null. Turning it on takes three steps IN THIS ORDER: (1) make a Turnstile widget for
+// olly-marx.github.io and put its site key here, (2) release that game, (3) only then switch on CAPTCHA in Supabase Auth
+// (Turnstile, with the widget's secret key). Switching Supabase on first would stop every older game from signing in.
+export const TURNSTILE_SITE_KEY = null;
+let turnstileLoad = null;
+function captchaToken() {
+  if (!TURNSTILE_SITE_KEY || typeof document === 'undefined') return Promise.resolve(undefined);
+  turnstileLoad = turnstileLoad || new Promise((ok, no) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; sc.async = true;
+    sc.onload = () => ok(window.turnstile); sc.onerror = () => { turnstileLoad = null; no(new Error('turnstile')); };
+    document.head.appendChild(sc);
+  });
+  return turnstileLoad.then(ts => new Promise((ok, no) => {
+    const box = document.createElement('div'); box.style.cssText = 'position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:99999';   // shown only if Cloudflare needs a tap
+    document.body.appendChild(box);
+    const done = f => v => { box.remove(); f(v); };
+    ts.render(box, { sitekey: TURNSTILE_SITE_KEY, appearance: 'interaction-only', callback: done(ok), 'error-callback': done(() => no(new Error('turnstile'))) });
+  }));
+}
+
 // One anonymous account per device: no email, no password.
 async function session() {
   const c = db();
   if (!c) throw new Error('no supabase');
   const { data } = await c.auth.getSession();
   if (data.session) return data.session;
-  const r = await c.auth.signInAnonymously();
+  const token = await captchaToken();
+  const r = await c.auth.signInAnonymously(token ? { options: { captchaToken: token } } : undefined);
   if (r.error) throw r.error;
   return r.data.session;
 }
