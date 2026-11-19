@@ -6,7 +6,7 @@ export const PROJECTS = [
     chain: ['Collectors gather seeds', 'a big seed mix is scattered on old fields', 'new forest grows'],
     fact: 'In Brazil, the Xingu Seed Network has collected seeds from over 220 kinds of plant and helped regrow more than 6,600 hectares of forest.',
     src: [['Ashden: Rede de Sementes do Xingu', 'https://ashden.org/awards/winners/rede-de-sementes-do-xingu/']],
-    org: { name: 'Rede de Sementes do Xingu (Xingu Seed Network)', learn: 'https://www.sementesdoxingu.org.br/', donate: 'https://www.sementesdoxingu.org.br/doe/' } },
+    org: { name: 'Instituto Socioambiental (ISA), which helped start the Xingu Seed Network', learn: 'https://www.socioambiental.org/en', donate: null } },
   { id: 'brazilnut', name: 'Brazil-nut harvest', tier: 1, band: 'cheap',
     short: 'Collect Brazil nuts from wild trees and leave the forest standing.',
     chain: ['Nut trees stay in the wild forest', 'big bees pollinate the flowers', 'agoutis bury the nuts and some grow into new trees'],

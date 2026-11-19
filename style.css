@@ -1249,3 +1249,21 @@ h2.sub { margin-top: -4px; }
 .era-card.cross-unlock { padding-top: min(26vw, 120px); }
 .cross-unlock .cu-sky { height: min(30vw, 140px); }
 @media (max-height: 640px) { .cross-unlock .ec-body { line-height: 1.6; } .cross-unlock .ec-title span { font-size: 22px; } }
+
+/* A nature project goes in (src/wild.js payoff, 2026-11-19): the land zooms in on it, it drops in, a card under the land. */
+.wfield.zooming { transition: transform .8s ease-in-out; }
+.wfield .wf.feat.held { opacity: 0; }
+.wpay { background: #fffbe8; border: 3px solid var(--ink); padding: 6px 8px; text-align: center; }
+.wpay p { margin: 3px 0; }
+.wpay .eyebrow { color: #1e7a3c; }
+.wpay .wp-name { font-size: 9px; }
+.wpay .wp-line { font-size: 8px; line-height: 1.5; }
+.wpay .wp-who { color: var(--muted); }
+.wp-buttons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: flex-start; margin-top: 4px; }
+/* LEARN MORE (src/learnmore.js): a hold-to-open gate, then the link. */
+.learn { display: grid; justify-items: center; gap: 2px; }
+.learn .learn-msg { font-size: 7px; margin: 0; max-width: 150px; }
+.learn .learn-link { margin: 0; font-size: 8px; }
+.payoff-card .pay-fact { font-size: 8px; line-height: 1.5; color: var(--muted); }
+.payoff-card .learn { margin: 4px 0; }
+@media (prefers-reduced-motion: reduce) { .wfield.zooming { transition: none; } }

@@ -573,6 +573,7 @@ export class UI {
   natureOn(id) { this.go('nature'); if (this.wild) this.wild.showSpecies(id); }
   go(tab) {
     if (tab !== 'hangar' && this.fleet && this.fleet.paying) this.fleet.endPayoff();   // leaving mid-payoff: it ends (no parked payoff)
+    if (tab !== 'nature' && this.wild && this.wild.pay) this.wild.endPay();   // the same for a nature project's card (src/wild.js payoff)
     if (tab === 'fly') return this.showTitle();
     if (tab === 'hangar') return this.showHangar();
     if (tab === 'missions') return this.showMissions();

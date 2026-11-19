@@ -28,6 +28,7 @@ import { WILDLIFE } from './wildlife.js';
 import { nextHere } from './nexthere.js';
 import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
+import { learnHTML, wireLearn } from './learnmore.js';
 import { fresh } from './fresh.js';
 import { upgradeCard, ALL_DONE } from './upgradetext.js';
 import { rowIcon } from './rowicons.js';
@@ -208,6 +209,7 @@ export class WildScreen {
     const planted = Object.entries(mine || {}).filter(([, n]) => n > 0);
     this.field = new Field($('wScene'), this.region, done, planted, found, this.projects.map(p => p.id), id => { sfx.tick(); this.speciesInfo(id); });   // tap an animal: its card
     if (!found.length && !done.length) $('wScene').insertAdjacentHTML('beforeend', '<p class="w-empty">Bare land. Start a habitat project, and plant trees on your flights!</p>');
+    if (this.pay) { if (this.pay.region === this.region) { this.field.zoomTo(this.pay.id, true); if (!this.pay.dropped) this.field.holdBack(this.pay.id); } else this.endPay(); }   // a re-render while the card is up keeps the zoom; another land ends it
   }
 
   found(id) { return !!(this.save.found || {})[id]; }
@@ -369,14 +371,54 @@ export class WildScreen {
     writeSave(s); sfx.grow();
     this.previewId = null;
     this.render();
-    // It arrives: the feature drops into the land, the bar fills from where it was, the animals it brings flash.
-    this.field && this.field.arrive(id);
-    const fill = document.querySelector('#wMeter .mfill'), b1 = this.bio();
-    if (fill && b1 > b0) { fill.style.transition = 'none'; fill.style.width = `${b0}%`; void fill.offsetWidth; fill.style.transition = 'width .9s ease-out'; fill.style.width = `${b1}%`; }
-    document.querySelectorAll(`#wProjects [data-pline="${id}"] .w-webpic`).forEach(b => b.classList.add('w-flash'));
-    // Who might come now? (only animals that are drawn can turn up in flight)
-    const now = this.animals().filter(w => w.sprite && canAppear(s, w.id, r) && !this.found(w.id) && w.c.needs.includes(id));
-    if (now.length) this.ui.toast(`${p.name}: done!`, `Look out on your flights for: ${now.map(w => w.name).join(', ')}!`, 'good', 4);
+    this.payoff(id, p, b0);
+  }
+
+  // The project goes in (Oliver, 2026-11-19, as the plane-part payoff in src/hangar.js): the land zooms in on the project's spot, the
+  // feature drops in, the bar fills from where it was, the animals it brings flash; then a card under the land says what was done,
+  // with OK and LEARN MORE (the organisation behind it, through the grown-up gate). OK zooms back out.
+  // While the tutorial runs (tour r-nature: its next step points at the meter) there is no card: the land zooms in and back out.
+  payoff(id, p, b0) {
+    const s = this.save, r = this.region, f = this.field, card = !(this.ui.tour && this.ui.tour.busy);
+    const now = this.animals().filter(w => w.sprite && canAppear(s, w.id, r) && !this.found(w.id) && w.c.needs.includes(id));   // who might come now (only drawn animals turn up in flight)
+    const tell = () => { if (now.length) this.ui.toast(`${p.name}: done!`, `Look out on your flights for: ${now.map(w => w.name).join(', ')}!`, 'good', 4); };
+    const drop = () => {
+      if (this.field) this.field.arrive(id);
+      const fill = document.querySelector('#wMeter .mfill'), b1 = this.bio();
+      if (fill && b1 > b0) { fill.style.transition = 'none'; fill.style.width = `${b0}%`; void fill.offsetWidth; fill.style.transition = 'width .9s ease-out'; fill.style.width = `${b1}%`; }
+      document.querySelectorAll(`#wProjects [data-pline="${id}"] .w-webpic`).forEach(b => b.classList.add('w-flash'));
+    };
+    if (!f || !f.zoomTo(id)) { drop(); if (card) this.showPay(p, tell); else tell(); return; }   // no picture of this land yet: the card alone
+    this.pay = { id, region: r };
+    f.holdBack(id);   // hidden until the zoom has arrived, then it drops in
+    const live = () => this.pay && this.pay.id === id;   // (a re-render rebuilds the field: renderScene keeps the zoom; another land or leaving ends it)
+    setTimeout(() => {
+      if (!live()) return;
+      drop(); this.pay.dropped = true;
+      setTimeout(() => { if (!live()) return;
+        if (card) this.showPay(p, tell); else { tell(); this.endPay(); } }, card ? 800 : 1400);
+    }, 850);
+  }
+
+  // The card under the land (#wPay, in the pinned block where the preview strip sits): what was done, OK, LEARN MORE.
+  showPay(p, after = () => {}) {
+    const el = $('wPay'); if (!el) return after();
+    this.pay = this.pay || { id: p.id, region: this.region };
+    this.pay.after = after;
+    el.innerHTML = `<p class="eyebrow">Done!</p><p class="wp-name"><b>${esc(p.name)}</b></p><p class="wp-line">${esc(p.short)}</p>
+      ${p.org ? `<p class="small wp-who">${esc(p.org.name)}</p>` : ''}
+      <div class="wp-buttons"><button id="wPayOk" class="btn go" type="button">OK</button>${p.org ? learnHTML(p.org.name, p.org.learn) : ''}</div>`;
+    el.hidden = false;
+    wireLearn(el);
+    $('wPayOk').onclick = () => { sfx.tick(); this.endPay(); };
+  }
+
+  // Ending the payoff: OK, leaving NATURE (src/ui.js go), or another land. Zooms back out; the animals' toast comes after.
+  endPay() {
+    const pay = this.pay; this.pay = null;
+    const el = $('wPay'); if (el) { el.hidden = true; el.innerHTML = ''; }
+    if (this.field) this.field.unzoom();
+    if (pay && pay.after) pay.after();
   }
 
   projectInfo(id) {
@@ -573,8 +615,26 @@ class Field {
   ghost(id) { this.clearGhosts(); for (const [x, y] of this.spotsOf(id)) this.put(`assets/ui/wild-${id}.png`, x, y, 1, 'feat ghost'); }
   ghostTrees(n) { this.clearGhosts(); for (const [x, y] of this.freeSpots.slice(0, n)) this.put(`assets/tree-${this.treeKind}-2.png`, x, y, 1, 'tree ghost').style.transform = 'translate(-50%, -100%)'; }
   clearGhosts() { this.f.querySelectorAll('.ghost').forEach(g => g.remove()); }
-  arrive(id) { this.f.querySelectorAll(`img.feat[src$="wild-${id}.png"]`).forEach(g => g.classList.add('arrive')); }
-  fit() { this.f.style.transform = `scale(${this.el.clientWidth / FW})`; }
+  // The payoff's zoom (WildScreen.payoff): the field scaled k times more, the project's features in the middle, never past the field's edges.
+  // fit() runs every frame, so the zoom is a state it applies; the .zooming class gives the change its transition.
+  zoomTo(id, instant = false, k = 2.4) {
+    const spots = this.spotsOf(id); if (!spots.length || !this.el.clientWidth) return false;
+    const imgs = [...this.f.querySelectorAll(`img.feat[src$="wild-${id}.png"]`)];
+    let cx = 0, cy = 0;
+    spots.forEach(([x, y], i) => { const im = imgs[i], w = (im && im.naturalWidth) || 64, h = (im && im.naturalHeight) || 24; cx += x + w / 2; cy += y - h / 2; });   // spots are bottom-left
+    this.zoom = { cx: cx / spots.length, cy: cy / spots.length, k };
+    this.f.classList.toggle('zooming', !instant);
+    this.fit(); return true;
+  }
+  unzoom() { if (!this.zoom) return; this.zoom = null; this.f.classList.add('zooming'); this.fit(); setTimeout(() => this.f.classList.remove('zooming'), 900); }
+  holdBack(id) { this.f.querySelectorAll(`img.feat[src$="wild-${id}.png"]`).forEach(g => g.classList.add('held')); }
+  arrive(id) { this.f.querySelectorAll(`img.feat[src$="wild-${id}.png"]`).forEach(g => { g.classList.remove('held'); g.classList.add('arrive'); }); }
+  fit() {
+    const W = this.el.clientWidth, H = this.el.clientHeight, S = W / FW, z = this.zoom;
+    if (!z) { this.f.style.transform = `translate(0px, 0px) scale(${S})`; return; }
+    const k = S * z.k, tx = Math.min(0, Math.max(W - FW * k, W / 2 - z.cx * k)), ty = Math.min(0, Math.max(H - FH * k, H / 2 - z.cy * k));
+    this.f.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k})`;
+  }
   pick(c) { const p = STILL.has(c.w.id) ? null : nextIn(this.region, c.home, c.x, c.y, Math.random, c.half || 0); if (p) { c.tx = p[0]; c.ty = p[1]; } else { c.tx = c.x; c.ty = c.y; } }   // a straight walk that stays in its zone
   stop() { cancelAnimationFrame(this.raf); this.raf = null; }
 
