@@ -975,3 +975,4 @@ landeven	src/nature.js	s/  if (!LAND_EVEN.on) return 1;/  return 1;/	LAND_EVEN w
 landeven	src/nature.js	s/b += p.bio \* projectWeight(all, p);/b += p.bio;/	the meter ignores the land weights
 crosscard	src/crossings.js	s/SEASON.step.natureRule === 'weakest')) return natureBest(save);/false)) return natureBest(save);/	a crossing reads the best land, not the weakest region
 crosscard	src/crossingview.js	s/(s.nearest.key === 'nature' \&\& wk ? natureNextIn(REGIONS\[wk\].name) : CARD_NEXT\[s.nearest.key\])/CARD_NEXT[s.nearest.key]/	the card does not name the region to grow
+nametaken	src/online.js	s/for (; tries < 8; tries++)/for (; tries < 1; tries++)/	a taken pilot name is not retried with a new number

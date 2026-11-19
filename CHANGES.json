@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-19-security",
+    "version": "0.71.1",
+    "date": "2026-11-19",
+    "level": "minor",
+    "notes": [
+      "Every pilot name is now one of a kind: if yours is taken, you get a new number.",
+      "New pilot codes have one more word, so they are harder to guess."
+    ]
+  },
+  {
     "id": "2026-11-19-learn-more-tidy",
     "version": "0.71.0",
     "date": "2026-11-19",
