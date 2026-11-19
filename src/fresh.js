@@ -16,8 +16,8 @@
 // 'boards/badges'). save.seen[scope] = the keys the player has been SHOWN there. fresh = keys that exist now and are not in seen.
 // 'Shown' means the sub-screen's own render called markSeen WHILE VISIBLE: there is no timer, and a hidden render must not call it
 // (so NATURE can no longer clear the hangar's dot: the old ui.js:287 bug was one shared list).
-// markSeen REPLACES the scope's list with the keys that exist now, so a key that went away (you spent the seeds) and comes back
-// is new again; a key that stays is not.
+// markSeen ADDS the keys that exist now to the scope's list (2026-11-19; it used to REPLACE it, so a key that went away when you spent
+// the seeds and came back lit its dot again, every flight). A key is new once, ever.
 // Not here yet: 'fly:<plane>' for a plane just joined (R5). MISSIONS is a declared hook (below), pending R4 (the game chat's).
 import { nextBuys, canAfford } from './fleet.js';
 import { LINES, canBuy, level, tabOf } from './upgrades.js';
@@ -93,12 +93,14 @@ export const isFresh = (save, scope, key, opts) => (fresh(save, opts)[scope] || 
 
 // The sub-screen is SHOWING: everything on it is now seen. Call it from that screen's render, never from a hidden one.
 // Returns true if the save changed (the caller persists).
+// Seen is FOR GOOD (Oliver, 2026-11-19: dots came back every time you could afford a thing again): the keys showing now are ADDED to the
+// scope's list, never replace it, so each key ('gadget:magnet:3', 'project:meadow') lights a dot once, ever.
 export function markSeen(save, scope, opts) {
   const now = current(save, opts)[scope] || [];
   save.seen = save.seen || {};
-  const before = save.seen[scope] || [];
-  if (before.length === now.length && before.every((k, i) => k === now[i])) return false;
-  save.seen[scope] = now.slice();
+  const before = save.seen[scope] || [], next = [...new Set([...before, ...now])];
+  if (next.length === before.length) return false;
+  save.seen[scope] = next;
   return true;
 }
 

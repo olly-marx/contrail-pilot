@@ -135,7 +135,7 @@ export class WildScreen {
     let row = $('wLandTrees');
     if (!row) { row = document.createElement('div'); row.id = 'wLandTrees'; row.className = 'w-landtrees'; $('wTrees').before(row); }
     const trees = landTrees(s, this.region);
-    row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">${t.open && isNew(`tree:${t.slot}`) ? '<i class="dot"></i>' : ''}
+    row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">
       <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
     this.renderFlyHere();
     // THE NURSERY (TREES V2 step 2): trees you drop start as saplings and grow up over the flights that follow; only grown trees are seen in this land's picture and in flight.
@@ -260,7 +260,7 @@ export class WildScreen {
       : `<button class="rowc-price btn ${isFree ? 'free' : ok ? 'go' : ''}" data-buy="${line.id}" type="button" ${ok ? '' : 'disabled'}>${isFree ? 'FREE!' : cost(next)}</button>`;
     const sub = !next ? 'All done!' : short ? `need ${short} more` : `Next: ${esc(next.name)}`;
     return `<div class="rowc price-top tool ${next ? '' : 'maxed'} ${isFree ? 'pick' : ''} ${this.toolId === line.id ? 'previewing sel' : ''}" data-line="${line.id}">`
-      + `<button class="rowc-tap" data-tpreview="${line.id}" type="button" aria-label="See where ${esc(line.name)} would grow trees">${rowIcon(line.id)}<span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span>${this.isNew && this.isNew(`line:${line.id}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
+      + `<button class="rowc-tap" data-tpreview="${line.id}" type="button" aria-label="See where ${esc(line.name)} would grow trees">${rowIcon(line.id)}<span class="rowc-top"><span class="rowc-name">${esc(line.name)}</span><span class="rowc-pips">${pips}</span></span>`
       + `<span class="rowc-sub">${sub}</span></button>${price}<button class="rowc-info btn" data-info="${line.id}" type="button" aria-label="About ${esc(line.name)}">i</button></div>`
       + (this.toolId === line.id ? this.toolLevelHTML(line) : '');
   }
@@ -289,7 +289,7 @@ export class WildScreen {
       const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? (p.chain[0].length <= 22 ? p.chain[0] : 'Helps this land') : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings back: ${w.length} animal${w.length > 1 ? 's' : ''}`; })();   /* (an unfound animal is not named: the surprise stays) */
       return `<div class="rowc project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing sel' : ''}" data-pline="${p.id}">`
         + `<button class="rowc-tap" type="button" data-preview="${p.id}"><img class="rowc-icon" src="assets/ui/proj-${p.id}.png" alt="">`
-        + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span>${!have && this.isNew && this.isNew(`project:${p.id}`) ? '<i class="dot row-new"></i>' : ''}</span><span class="rowc-sub">${esc(sub)}</span></button>`
+        + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span></span><span class="rowc-sub">${esc(sub)}</span></button>`
         + `${have ? '<span class="rowc-price w-done">DONE</span>' : btn.replace('class="btn ', 'class="rowc-price btn ')}</div>`;
     };
     const how = 'Plant trees and finish the projects above!';   // every land takes trees (plantedIn)

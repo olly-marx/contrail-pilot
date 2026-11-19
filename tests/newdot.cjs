@@ -1,8 +1,8 @@
 // "New" dots (UX master plan B4): src/fresh.js is the ONE source of what is new. Node half, no browser. Run: node tests/newdot.cjs
 // Checks the rules the UI relies on: separate scopes (NATURE cannot clear the hangar: the old ui.js:287 bug), 'seen' is only what
-// markSeen recorded for THAT scope, a key that goes away and returns is new again, the migration marks everything already there as
+// markSeen recorded for THAT scope, a key once seen stays seen even if it goes away and returns (Oliver, 2026-11-19: a dot lights once, ever), the migration marks everything already there as
 // seen (no dot storm), tab dots roll up their sub-scopes.
-// Plants (tools/plants.tsv): markSeen clears every scope; fresh ignores seen; markSeen unions instead of replacing.
+// Plants (tools/plants.tsv): markSeen clears every scope; fresh ignores seen; markSeen replaces instead of adding.
 const path = require('path');
 const src = f => path.join(__dirname, '..', 'src', f);
 (async () => {
@@ -40,12 +40,12 @@ const src = f => path.join(__dirname, '..', 'src', f);
   check(Object.keys(F.fresh(s)).length === 0, `everything seen but fresh = ${JSON.stringify(F.fresh(s))}`);
   check(F.markSeen(s, 'hangar/plane') === false, 'markSeen with nothing new should report no change (no needless write)');
 
-  // A key that goes away (the seeds are spent) and comes back is new again; one that stays is not.
+  // A key that goes away (the seeds are spent) and comes back is NOT new again (Oliver, 2026-11-19: the dots came back every flight).
   const a = rich(); F.markSeen(a, hs[0]);
   check(!has(F.fresh(a), hs[0]), 'control: seen');
   a.seeds = 0; a.crystals = 0; F.markSeen(a, hs[0]);   // looked again while it could not be afforded
   a.seeds = 1e6; a.crystals = 1e4;
-  check(has(F.fresh(a), hs[0]), `${hs[0]} became affordable again after being seen unaffordable: it should be new again`);
+  check(!has(F.fresh(a), hs[0]), `${hs[0]} became affordable again after being seen unaffordable: it was seen once, so no dot again`);
 
   // Migration: everything already there is seen, then NEW things show.
   const m = rich();

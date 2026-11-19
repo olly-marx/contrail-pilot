@@ -407,7 +407,7 @@ export class FleetHangar {
     }
     const tap = next ? `<button class="rowc-tap" data-ftap="${key}" type="button" aria-label="See what ${name} does">` : '<span class="rowc-tap">';
     return `<div class="rowc price-top ${next ? '' : 'maxed'} ${locked ? 'locked' : ''} ${this.sel === key ? 'sel' : ''}" data-row="${key}" data-fline="${key}">`
-      + `${tap}${rowIcon(id)}<span class="rowc-top"><span class="rowc-name">${name}</span>${next && this.rowNew && this.rowNew.has(`${key}:${have + 1}`) ? '<i class="dot row-new"></i>' : ''}<span class="rowc-pips">${pips}</span></span>`
+      + `${tap}${rowIcon(id)}<span class="rowc-top"><span class="rowc-name">${name}</span><span class="rowc-pips">${pips}</span></span>`
       + `<span class="rowc-sub">${sub}</span>${next ? '</button>' : '</span>'}${price}</div>`;
   }
 
