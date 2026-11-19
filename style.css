@@ -410,11 +410,6 @@ p { margin: 0; }
 .logo { display: block; image-rendering: pixelated; margin: 2px 0 6px; }
 .logo-mark { image-rendering: pixelated; vertical-align: middle; margin-right: 6px; }
 
-/* Grown-up gate: hold to fill the bar; then a real link appears (opened by a tap, so never blocked). */
-.btn.gate { position: relative; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.gate-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: rgba(0,0,0,.25); }
-.btn.gate.holding .gate-fill { width: 100%; transition: width 2s linear; }
-.gate-label { position: relative; }
 .logo-sub { margin: -4px 0 8px; letter-spacing: 1px; }
 .logo-aeis { margin-top: 14px; }
 
@@ -1260,3 +1255,20 @@ h2.sub { margin-top: -4px; }
   .rowc.price-top .rowc-sub { padding-right: 0; }
   .rowc-name { font-size: 8px; }   /* the Pixel font is drawn for multiples of 8 (tests/badgefont.cjs): 8 px is crisp and fits 'Tree Planting' */
 }
+
+/* A nature project goes in (src/wild.js payoff, 2026-11-19): the land zooms in on it, it drops in, a card under the land. */
+.wfield.zooming { transition: transform .8s ease-in-out; }
+.wfield .wf.feat.held { opacity: 0; }
+.wpay { background: #fffbe8; border: 3px solid var(--ink); padding: 6px 8px; text-align: center; }
+.wpay p { margin: 3px 0; }
+.wpay .eyebrow { color: #1e7a3c; }
+.wpay .wp-name { font-size: 9px; }
+.wpay .wp-line { font-size: 8px; line-height: 1.5; }
+.wpay .wp-who { color: var(--muted); }
+.wp-buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; margin: 8px 0 4px; }
+.wp-buttons .btn { margin: 0; font-size: 10px; line-height: 1.2; }
+/* LEARN MORE (src/learnmore.js): a link that looks like a button. */
+.btn.learn-btn { display: inline-block; text-decoration: none; color: var(--ink); line-height: 1.2; }
+.payoff-card .pay-fact { font-size: 8px; line-height: 1.5; color: var(--muted); }
+.payoff-card .pay-learn { margin: 6px 0; }
+@media (prefers-reduced-motion: reduce) { .wfield.zooming { transition: none; } }

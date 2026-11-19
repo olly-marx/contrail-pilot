@@ -573,6 +573,7 @@ export class UI {
   natureOn(id) { this.go('nature'); if (this.wild) this.wild.showSpecies(id); }
   go(tab) {
     if (tab !== 'hangar' && this.fleet && this.fleet.paying) this.fleet.endPayoff();   // leaving mid-payoff: it ends (no parked payoff)
+    if (tab !== 'nature' && this.wild && this.wild.pay) this.wild.endPay();   // the same for a nature project's card (src/wild.js payoff)
     if (tab === 'fly') return this.showTitle();
     if (tab === 'hangar') return this.showHangar();
     if (tab === 'missions') return this.showMissions();
@@ -1025,25 +1026,8 @@ export class UI {
     $('info').hidden = false;
   }
 
-  // Grown-up gate: hold the button for 2 s (a bar fills). Then it turns into a real link, which
-  // the grown-up taps. Opening the site straight from a tap means no browser blocks it (a link
-  // opened from a timer is blocked on phones, Safari especially). The link hides again after 10 s.
-  setupRealTree() {
-    const btn = $('realTreeBtn'), link = $('realTreeLink');
-    link.href = LINKS.citizenzoo.url;
-    let timer = null, back = null;
-    const cancel = () => { clearTimeout(timer); timer = null; btn.classList.remove('holding'); };
-    const reset = () => { clearTimeout(back); link.hidden = true; btn.hidden = false; $('gateMsg').hidden = false; };
-    btn.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      btn.setPointerCapture?.(e.pointerId);   // keep the hold even if the finger wobbles off the button
-      btn.classList.add('holding');
-      timer = setTimeout(() => { cancel(); btn.hidden = true; $('gateMsg').hidden = true; link.hidden = false; back = setTimeout(reset, 10000); }, 2000);
-    });
-    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => btn.addEventListener(ev, cancel));
-    btn.addEventListener('contextmenu', e => e.preventDefault());   // no long-press menu
-    link.addEventListener('click', () => setTimeout(reset, 500));
-  }
+  // The Citizen Zoo link: a plain link (Oliver, 2026-11-19: the grown-up hold is gone).
+  setupRealTree() { $('realTreeLink').href = LINKS.citizenzoo.url; }
 
   setupMute() {
     const btn = $('muteBtn');

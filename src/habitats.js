@@ -78,6 +78,23 @@ export const UK_PROJECTS = [
     src: [['Vincent Wildlife Trust: pine martens arrive in Wales', 'https://www.vwt.org.uk/news-media/news/pine-martens-arrive-in-wales'], ['University of Aberdeen: pine martens help red squirrels', 'https://www.abdn.ac.uk/news/11655/']] },
 ];
 
+// Who does each UK project for real (LEARN MORE on the card when one is done, src/wild.js payoff; Oliver, 2026-11-19).
+// Each link opened 2026-11-19 (research/LEARN-MORE-NOTES.md; wildlifetrusts.org sits behind a Cloudflare check, a real site).
+const UK_ORGS = {
+  deadwood: ['Buglife', 'https://www.buglife.org.uk/'],
+  meadow: ['Plantlife', 'https://www.plantlife.org.uk/'],
+  margins: ['Bumblebee Conservation Trust', 'https://www.bumblebeeconservation.org/'],
+  hedgerow: ["People's Trust for Endangered Species", 'https://ptes.org/'],
+  pond: ['Freshwater Habitats Trust', 'https://freshwaterhabitats.org.uk/'],
+  woodland: ['Woodland Trust', 'https://www.woodlandtrust.org.uk/'],
+  voles: ['The Wildlife Trusts', 'https://www.wildlifetrusts.org/'],
+  beavers: ['Beaver Trust', 'https://beavertrust.org/'],
+  rewet: ['IUCN UK Peatland Programme', 'https://www.iucn-uk-peatlandprogramme.org/'],
+  storks: ['The White Stork Project', 'https://www.whitestorkproject.org/'],
+  martens: ['Vincent Wildlife Trust', 'https://www.vwt.org.uk/'],
+};
+for (const p of UK_PROJECTS) { const o = UK_ORGS[p.id]; if (o) p.org = { name: o[0], learn: o[1], donate: null }; }
+
 // How often an animal of each rarity is picked when one appears (weight), and how far into a flight
 // (km) it can first be seen: rare ones need long flights (the user, 2026-10-22).
 export const RARITY = {
