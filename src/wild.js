@@ -368,7 +368,7 @@ export class WildScreen {
     if (!fundProject(s, r, id)) { if (freeOne) { s.seeds -= p.cost; s.crystals -= p.crystals || 0; } sfx.nope(); return; }   // src/nature.js: the same rule the sim engine's player uses
     if (freeOne) s.freeProjectGiven = true;
     this.ui.missionsAfterSave && this.ui.missionsAfterSave();   // season 2: off-flight missions (S3)
-    writeSave(s); sfx.grow();
+    this.ui.persist ? this.ui.persist() : writeSave(s); sfx.grow();   // persist = save + the bar's dots + the crossing moment (ui.maybeCrossingSheet): a project can complete the last crossing condition (tests/crossingmoment.cjs)
     this.previewId = null;
     this.render();
     this.payoff(id, p, b0);
@@ -390,6 +390,7 @@ export class WildScreen {
     };
     if (!f || !f.zoomTo(id)) { drop(); if (card) this.showPay(p, tell); else tell(); return; }   // no picture of this land yet: the card alone
     this.pay = { id, region: r };
+    if (!card) { drop(); this.pay.dropped = true; setTimeout(() => { if (this.pay && this.pay.id === id) { tell(); this.endPay(); } }, 1600); return; }   // the tutorial: it drops in at once (the tour's next step and tests/onrails.cjs N3 look right away), a short zoom, no card
     f.holdBack(id);   // hidden until the zoom has arrived, then it drops in
     const live = () => this.pay && this.pay.id === id;   // (a re-render rebuilds the field: renderScene keeps the zoom; another land or leaving ends it)
     setTimeout(() => {
