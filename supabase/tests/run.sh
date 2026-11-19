@@ -14,4 +14,5 @@ docker exec -i $PG psql -q -U postgres < tests/rls.sql 2>&1
 docker exec -i $PG psql -q -U postgres < tests/online_save.sql 2>&1
 docker exec -i $PG psql -q -U postgres < tests/send_flights.sql 2>&1
 docker exec -i $PG psql -q -U postgres < tests/flight_limits.sql 2>&1
+docker exec -i $PG psql -q -U postgres < tests/names_login.sql 2>&1
 PG=${CP_PG:-cp-pg}; docker rm -f $PG >/dev/null

@@ -51,9 +51,9 @@ select name, is_me from leaderboard('longest', 'all') where name like 'Kim%';
 set role authenticated;
 -- A stranger guesses: 10 wrong codes, then even the right one is refused for an hour.
 set request.uid = 'c3c3c3c3-0000-0000-0000-000000000003';
-\echo (the laptop wrong guess above was attempt 1; 9 more:)
-select count(*) filter (where not ok) as wrong from generate_series(1, 9) i, pilot_login('Kim', 'Comet', 42::smallint, 'guess guess guess ' || i);
-\echo EXPECT 9 wrong
+\echo (since 20261119020000 wrong codes count per DEVICE: this device makes 10)
+select count(*) filter (where not ok) as wrong from generate_series(1, 10) i, pilot_login('Kim', 'Comet', 42::smallint, 'guess guess guess ' || i);
+\echo EXPECT 10 wrong
 select ok, why from pilot_login('Kim', 'Comet', 42::smallint, 'otter comet robin hare 77');
-\echo EXPECT f, too many tries (even with the right code, for an hour)
+\echo EXPECT f, too many tries (this device, even with the right code, for an hour)
 reset role;
