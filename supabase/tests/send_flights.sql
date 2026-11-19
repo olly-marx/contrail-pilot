@@ -20,15 +20,15 @@ select count(*) as rows_now from flights;
 select send_flights((select jsonb_agg(jsonb_build_object('landed', true, 'distance_m', 5)) from generate_series(1, 101))) ;
 \echo EXPECT refused: too many flights in one go (101)
 select send_flights('[{"landed":true,"distance_m":1000},{"landed":true,"distance_m":999999999}]');
-\echo EXPECT refused: a bad flight (distance out of range) rejects the whole batch
+\echo EXPECT 2: since 20261119010000_flight_limits an impossible flight no longer rejects the batch: it is set aside (flights_rejected)
 select count(*) as rows_after_bad from flights;
-\echo EXPECT 30: nothing from the bad batch got in
+\echo EXPECT 31: the good flight got in, the 999,999,999 km one did not
 select send_flights((select jsonb_agg(jsonb_build_object('landed', true, 'distance_m', 7)) from generate_series(1, 100))) as sent;
 select send_flights((select jsonb_agg(jsonb_build_object('landed', true, 'distance_m', 8)) from generate_series(1, 100))) as sent;
 select send_flights((select jsonb_agg(jsonb_build_object('landed', true, 'distance_m', 9)) from generate_series(1, 100))) as sent;
-\echo EXPECT 100, 100, then refused on the third: 30 + 200 = 230, another 100 would pass 300 in a day
+\echo EXPECT 100, 100, then refused on the third: 31 kept + 1 rejected + 200 = 232, another 100 would pass 300 in a day (rejected flights count)
 select count(*) as rows_total from flights;
-\echo EXPECT 230
+\echo EXPECT 231
 insert into flights (landed, distance_m) values (true, 10);
 \echo EXPECT refused: the setting does not leak, the limit is back for single inserts
 select current_setting('cp.bulk', true) as bulk_flag;

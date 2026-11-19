@@ -11,7 +11,7 @@ select set_pilot_code('short');
 select set_pilot_code('Otter Comet Robin Hare 77');
 select has_pilot_code() as phone_has_code;
 \echo EXPECT t
-insert into flights (landed, distance_m) values (true, 5000);
+select send_flights('[{"landed":true,"distance_m":5000}]') as sent;
 select put_save('{"seeds": 100}', 1000) as kept;
 \echo EXPECT t (first save)
 select put_save('{"seeds": 50}', 900) as kept;
@@ -30,7 +30,7 @@ select ok, save->>'seeds' as seeds, stamp from pilot_login('kim', 'Comet', 42::s
 \echo EXPECT t, 100, 1000: the laptop joined and got the save
 select my_player() = 'a1a1a1a1-0000-0000-0000-000000000001' as laptop_is_kim;
 \echo EXPECT t
-insert into flights (landed, distance_m) values (true, 7000);
+select send_flights('[{"landed":true,"distance_m":7000}]') as sent;
 select count(*) as kims_flights_seen from flights;
 \echo EXPECT 2: the laptop flight counts for Kim, and the laptop sees both
 select put_save('{"seeds": 300}', 2000) as kept;
