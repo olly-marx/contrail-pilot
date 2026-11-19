@@ -56,7 +56,7 @@ async function session() {
 }
 
 // Save (or change) this device's pilot name. Needs the internet: the word filter lives in the
-// database. Returns { ok: true } or { ok: false, why: 'rude' | 'offline' }.
+// database. Returns { ok: true, tag } (tag: the number it got, new when the name was taken) or { ok: false, why: 'rude' | 'taken' | 'offline' }.
 export async function savePilot(p) {
   if (typeof window !== 'undefined' && window.CP_PREVIEW) { write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag }); return { ok: true }; }   // ?preview=1: local only, nothing sent
   if (noOnline()) return { ok: false, why: 'offline' };
@@ -65,13 +65,19 @@ export async function savePilot(p) {
     const row = { first_name: p.first, word: p.word, tag: p.tag };
     // A device that joined another pilot ("I already have a pilot") renames THAT pilot.
     const mine = (await c.rpc('my_player')).data || s.user.id;
-    let { data, error } = await c.from('players').update(row).eq('id', mine).select('id');
-    if (!error && !(data && data.length)) ({ error } = await c.from('players').insert(row));
-    if (error) return { ok: false, why: /first_name|check constraint/.test(error.message) ? 'rude' : 'offline' };
-    write(PILOT_KEY, { first: p.first, word: p.word, tag: p.tag }); rememberFirst(p.first);
+    // Names are unique (players_name_unique, 2026-11-19): a name someone already has gets a new number, a few times.
+    let error = null, tries = 0;
+    for (; tries < 8; tries++) {
+      let data; ({ data, error } = await c.from('players').update(row).eq('id', mine).select('id'));
+      if (!error && !(data && data.length)) ({ error } = await c.from('players').insert(row));
+      if (!(error && error.code === '23505' && /players_name_unique/.test(error.message || ''))) break;
+      row.tag = randomTag();
+    }
+    if (error) return { ok: false, why: error.code === '23505' ? 'taken' : /first_name|check constraint/.test(error.message) ? 'rude' : 'offline' };
+    write(PILOT_KEY, { first: p.first, word: p.word, tag: row.tag }); rememberFirst(p.first);
     flush();
     ensureCode();
-    return { ok: true };
+    return { ok: true, tag: row.tag };
   } catch (e) {
     return { ok: false, why: 'offline' };
   }
@@ -173,7 +179,10 @@ export async function leaderboard(board, period) {
 // flight); on opening the game the newer copy wins (this device's unsent changes count as newer).
 // The pilot code (4 words + a number) brings the pilot and its save to any other device.
 export const getCode = () => read(CODE_KEY, null);
-export const makeCode = () => [0, 1, 2, 3].map(() => NAME_WORDS[Math.floor(Math.random() * NAME_WORDS.length)]).join(' ') + ' ' + randomTag();
+// The pilot code: five name words and a number (24^5 x 90, about 716 million; four words until 2026-11-19), from the
+// browser's cryptographic random numbers (Math.random is predictable). Older four-word codes keep working.
+const pick = n => { try { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; } catch (e) { return Math.floor(Math.random() * n); } };
+export const makeCode = () => [0, 1, 2, 3, 4].map(() => NAME_WORDS[pick(NAME_WORDS.length)]).join(' ') + ' ' + (10 + pick(90));
 export async function ensureCode(fresh = false) {
   if (noOnline()) return getCode();
   if (!getPilot() || (getCode() && !fresh)) return getCode();

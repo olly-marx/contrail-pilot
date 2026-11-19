@@ -158,6 +158,7 @@ export class PilotScreens {
     $('pSave').disabled = true;
     $('pMsg').textContent = 'Saving...';
     const r = await savePilot(this.draft);
+    if (r.ok && r.tag) this.draft.tag = r.tag;   // the name was taken: it got a new number
     if (r.ok) {
       this.save.pilotNamed = true; writeSave(this.save);
       this.edit(false);
@@ -166,7 +167,7 @@ export class PilotScreens {
       this.codeFirst();
       return;
     }
-    $('pMsg').textContent = r.why === 'rude' ? 'Try a different name, please.' : 'No internet right now. Try again soon!';
+    $('pMsg').textContent = r.why === 'rude' ? 'Try a different name, please.' : r.why === 'taken' ? 'That name is taken. Try another word!' : 'No internet right now. Try again soon!';
     $('pSave').disabled = false;
   }
 

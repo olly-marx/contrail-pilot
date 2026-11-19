@@ -11,6 +11,7 @@ const ALLOW = [
   { file: 'supabase/tests/online_save.sql', code: 'otter comet robin hare 11' },
   { file: 'tests/onlinesave.cjs', code: 'puffin puffin puffin puffin 11' },
   { file: 'tests/pilotcode.cjs', code: 'owl fox hare cloud 42' },
+  { file: 'supabase/tests/names_login.sql', code: 'swift otter comet hare 31' },   // fake (2026-11-19, the per-device login limit test)
 ];
 const NAMES = [['l', 'ola'].join('')];   // the tester's first name, built from parts so that this file does not hold it
 const fails = [], check = (c, m) => { if (!c) fails.push(m); };
