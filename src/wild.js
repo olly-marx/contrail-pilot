@@ -28,7 +28,7 @@ import { WILDLIFE } from './wildlife.js';
 import { nextHere } from './nexthere.js';
 import { dots, markSeen, natureScope } from './fresh.js';
 import { showSheet } from './sheet.js';
-import { learnHTML, wireLearn } from './learnmore.js';
+import { learnHTML } from './learnmore.js';
 import { fresh } from './fresh.js';
 import { upgradeCard, ALL_DONE } from './upgradetext.js';
 import { rowIcon } from './rowicons.js';
@@ -376,7 +376,7 @@ export class WildScreen {
 
   // The project goes in (Oliver, 2026-11-19, as the plane-part payoff in src/hangar.js): the land zooms in on the project's spot, the
   // feature drops in, the bar fills from where it was, the animals it brings flash; then a card under the land says what was done,
-  // with OK and LEARN MORE (the organisation behind it, through the grown-up gate). OK zooms back out.
+  // with OK and LEARN MORE (a link to the organisation behind it). OK zooms back out.
   // While the tutorial runs (tour r-nature: its next step points at the meter) there is no card: the land zooms in and back out.
   payoff(id, p, b0) {
     const s = this.save, r = this.region, f = this.field, card = !(this.ui.tour && this.ui.tour.busy);
@@ -409,7 +409,6 @@ export class WildScreen {
       ${p.org ? `<p class="small wp-who">${esc(p.org.name)}</p>` : ''}
       <div class="wp-buttons"><button id="wPayOk" class="btn go" type="button">OK</button>${p.org ? learnHTML(p.org.name, p.org.learn) : ''}</div>`;
     el.hidden = false;
-    wireLearn(el);
     $('wPayOk').onclick = () => { sfx.tick(); this.endPay(); };
   }
 
@@ -429,7 +428,6 @@ export class WildScreen {
       <div class="fact"><p class="label">Did you know?</p><p>${esc(p.fact)}</p></div>
       ${helps.length ? `<p><b>Helps bring back:</b> ${helps.map(esc).join(', ')}</p>` : ''}${links(p.src)}${p.org ? orgHTML(p.org) : ''}`;
     $('wInfo').hidden = false;
-    if (p.org) gate($('wInfoBody'));
   }
 
   // The collection: every animal of this region. Found: portrait + name. Not yet: a silhouette and a hint.
@@ -469,29 +467,10 @@ function picHTML(w, cls = '') {
 }
 
 // Who runs a project, and links to them (the user's goal, 2026-10-22: a knowledge base of real
-// projects people can support). The game takes no payments: the links sit behind the grown-up gate.
+// projects people can support). The game takes no payments. Plain links (Oliver, 2026-11-19: no grown-up hold).
 function orgHTML(o) {
   return `<div class="w-org"><p class="label">Who does this?</p><p><b>${esc(o.name)}</b></p>
-    <button class="btn green gate w-gate" type="button"><span class="gate-fill"></span><span class="gate-label">ASK A GROWN-UP</span></button>
-    <div class="links w-orglinks" hidden><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">${esc(o.donateLabel || 'Help them (donate)')} &gt;</a>` : ''}</div>
-    <p class="small w-gatemsg">Grown-ups: press and HOLD the button for 2 seconds.</p></div>`;
-}
-// Hold 2 s to show the links (as the Citizen Zoo gate in ui.js; links hide again after 10 s).
-function gate(root) {
-  const btn = root.querySelector('.w-gate'), box = root.querySelector('.w-orglinks'), msg = root.querySelector('.w-gatemsg');
-  if (!btn) return;
-  let timer = null, back = null;
-  const cancel = () => { clearTimeout(timer); timer = null; btn.classList.remove('holding'); };
-  const reset = () => { clearTimeout(back); box.hidden = true; btn.hidden = false; msg.hidden = false; };
-  btn.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    btn.setPointerCapture?.(e.pointerId);
-    btn.classList.add('holding');
-    timer = setTimeout(() => { cancel(); btn.hidden = true; msg.hidden = true; box.hidden = false; back = setTimeout(reset, 10000); }, 2000);
-  });
-  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => btn.addEventListener(ev, cancel));
-  btn.addEventListener('contextmenu', e => e.preventDefault());
-  box.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setTimeout(reset, 500)));
+    <div class="links w-orglinks"><a href="${esc(o.learn)}" target="_blank" rel="noopener">Learn about them &gt;</a>${o.donate ? `<a href="${esc(o.donate)}" target="_blank" rel="noopener">${esc(o.donateLabel || 'Help them (donate)')} &gt;</a>` : ''}</div></div>`;
 }
 
 // ---------- the Wild Area field (art session, 2026-10-22) ----------

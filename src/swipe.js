@@ -11,7 +11,7 @@
 // as a pan and cancels the pointer, so no swipe ever completes): the browser keeps vertical scrolling and pinch, we get the
 // sideways moves; a nested scroller that scrolls sideways (a row of tabs) is its own scroll container and keeps its own pan.
 export const MIN_PX = 60, DX_OVER_DY = 1.8, MAX_MS = 600, EDGE_PX = 24;
-const SKIP = 'input, select, textarea, canvas, [data-noswipe], .gate, .w-gate, .holding';
+const SKIP = 'input, select, textarea, canvas, [data-noswipe], .gate, .holding';
 
 export function onSwipe(el, cb) {
   if (el.__swipe) { el.__swipe.cb = cb; return; }   // wired already (the screen was drawn again): just the new callbacks

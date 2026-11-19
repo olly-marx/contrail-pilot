@@ -7,7 +7,7 @@
 import { ERAS, eraProgress } from './eras.js';
 import { tip } from './tips.js';
 import { LINE_INFO, LEVEL_FACTS, levelCard } from './fleetfacts.js';
-import { PART_RESEARCH, learnHTML, wireLearn } from './learnmore.js';
+import { PART_RESEARCH, learnHTML } from './learnmore.js';
 const esc = t => String(t).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
 import { composedURL } from './planelook.js';
 import { liveryOn } from './livery.js';
@@ -137,14 +137,13 @@ export class FleetHangar {
     const fleetEl = $('hFleet'); if (fleetEl) fleetEl.classList.add('paying');
     $('hangar').classList.add('paying');   // the bottom TAKE OFF / reset row is hidden too (Oliver, 2026-11-16: a TAKE OFF under 'fitted!' does not belong on that card; OK is its one action)   // the upgrade list below the display is HIDDEN until OK (the user, 2026-11-09: it stayed visible, some rows looked buyable); OK shows it from a fresh render
     // One line on what the part is (its checked fact, src/fleetfacts.js; never a 'guess'), and for the 2030s and far-future parts
-    // LEARN MORE: the real research behind it (src/learnmore.js, behind the grown-up gate). Oliver, 2026-11-19. Not on the tutorial's first part.
+    // LEARN MORE: the real research behind it (src/learnmore.js). Oliver, 2026-11-19. Not on the tutorial's first part.
     const fact = !rails && name && LEVEL_FACTS[name] && LEVEL_FACTS[name].status !== 'guess' ? LEVEL_FACTS[name].fact : '', research = !rails && name && PART_RESEARCH[name];
-    const extra = `${fact ? `<p class="pay-fact pay-later">${esc(fact)}</p>` : ''}${research ? `<div class="pay-later">${learnHTML(research.name, research.url)}</div>` : ''}`;
+    const extra = `${fact ? `<p class="pay-fact pay-later">${esc(fact)}</p>` : ''}${research ? `<p class="pay-later pay-learn">${learnHTML(research.name, research.url)}</p>` : ''}`;
     el.innerHTML = `<div class="payoff-card"><div class="pay-frame"><div class="pay-plane"><img id="payBefore" alt="">${added.map(p => `<img class="pay-part" src="${p}" alt="">`).join('')}<i class="pay-spark"></i><b id="payMark" class="pay-mark"></b></div></div>
       <span id="payLabel" class="pay-label">${rails || !name ? tip('rail-payoff-label') : `NEW: ${shortName({ name })}!`}</span>
       ${bars.length ? `<div class="pay-bars">${statBarsHTML(bars)}</div>` : ''}
       <p id="payText" class="pay-later">${rails || !name ? tip('rail-payoff') : `${name}: fitted!`}</p>${extra}<button id="payOk" class="btn go big pay-later" type="button">OK</button></div>`;
-    wireLearn(el);
     el.classList.toggle('nopart', !added.length);
     if (box) el.scrollIntoView({ block: 'start', behavior: 'instant' });   // (instant: a smooth scroll still running moved the picture)
     const old = before ? before.parts : files.parts.filter(p => !added.includes(p));

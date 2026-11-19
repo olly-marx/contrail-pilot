@@ -2,7 +2,7 @@
 //   1. every key of PART_RESEARCH is a real plane level name (src/fleet.js), with a name and an https url;
 //   2. every UK project has an org with a name and an https learn url (the region projects: tests/habitatdata.cjs);
 //   3. no learn url is on a domain known dead (old.ni.is: the Icelandic institute moved to natt.is; sementesdoxingu.org.br: certificate error);
-//   4. learnHTML escapes the name and url, and keeps the link hidden until the gate opens.
+//   4. learnHTML escapes the name and url, and is a plain link (Oliver, 2026-11-19: no grown-up hold).
 // No browser. Run: node tests/learnmore.cjs
 const path = require('path');
 const errs = [], check = (c, m) => { if (!c) errs.push(m); };
@@ -26,7 +26,7 @@ const DEAD = /old\.ni\.is|sementesdoxingu\.org\.br/;
     for (const [id, s] of Object.entries(m.SPECIES || {})) for (const [, u] of s.src || []) check(!DEAD.test(u), `${r}/${id}: a dead domain: ${u}`); }
   const h = L.learnHTML('A & B <x>', 'https://example.org/?a=1&b="2"');
   check(h.includes('A &amp; B &lt;x&gt;') && h.includes('&amp;b=&quot;2&quot;'), `learnHTML escapes the name and url: ${h}`);
-  check(/class="learn-link" hidden/.test(h) && /learn-gate/.test(h), 'learnHTML: the link starts hidden behind the gate button');
+  check(/^<a [^>]*href="https:/.test(h) && !/hidden|gate|grown/i.test(h), `learnHTML: a plain visible link, no hold: ${h}`);
   if (errs.length) { console.log(`FAIL learnmore (${errs.length})`); errs.forEach(e => console.log(`- ${e}`)); process.exit(1); }
   console.log(`ok learnmore: ${keys.length} plane parts, ${UK_PROJECTS.length} UK projects, ${REGIONS.length} regions clean`);
 })();

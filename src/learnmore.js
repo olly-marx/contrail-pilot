@@ -1,6 +1,5 @@
 // LEARN MORE (Oliver, 2026-11-19): a real organisation or research programme behind a nature project or a plane part,
-// one tap from the card that says it is done. The link sits behind the grown-up gate (hold 2 s), as the org links in the
-// project info (src/wild.js orgHTML): the game is for children and never sends them off-site on one tap.
+// one tap from the card that says it is done. A plain link (Oliver, 2026-11-19: the grown-up hold is gone everywhere).
 // Every URL here was opened in headless Chrome on 2026-11-19 (tools/linkcheck.cjs); tests/learnmore.cjs checks the shape.
 
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -21,27 +20,8 @@ export const PART_RESEARCH = {
   'Insulated liquid-hydrogen tanks': { name: 'FlyZero hydrogen aircraft study (UK)', url: 'https://www.ati.org.uk/what-we-do/research-innovation/flyzero/' },
 };
 
-// The LEARN MORE button (a hold-to-open gate) and the link it shows. `who` = the organisation's name.
+// LEARN MORE: a plain link styled as a button (Oliver, 2026-11-19: no grown-up hold, "let people just click the button").
+// `who` = the organisation's name (the link's title).
 export function learnHTML(who, url) {
-  return `<div class="learn"><button class="btn gate learn-gate" type="button"><span class="gate-fill"></span><span class="gate-label">LEARN MORE</span></button>
-    <p class="small learn-msg">Grown-ups: press and hold for 2 seconds.</p>
-    <p class="learn-link" hidden><a href="${esc(url)}" target="_blank" rel="noopener">${esc(who)} &gt;</a></p></div>`;
-}
-
-// Hold 2 s: the link shows (and hides again after 10 s, or 0.5 s after it is opened), as the gate in src/wild.js.
-export function wireLearn(root) {
-  const btn = root && root.querySelector('.learn-gate'); if (!btn) return;
-  const msg = root.querySelector('.learn-msg'), box = root.querySelector('.learn-link');
-  let timer = null, back = null;
-  const cancel = () => { clearTimeout(timer); timer = null; btn.classList.remove('holding'); };
-  const reset = () => { clearTimeout(back); box.hidden = true; btn.hidden = false; msg.hidden = false; };
-  btn.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    btn.setPointerCapture?.(e.pointerId);
-    btn.classList.add('holding');
-    timer = setTimeout(() => { cancel(); btn.hidden = true; msg.hidden = true; box.hidden = false; back = setTimeout(reset, 10000); }, 2000);
-  });
-  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => btn.addEventListener(ev, cancel));
-  btn.addEventListener('contextmenu', e => e.preventDefault());
-  box.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setTimeout(reset, 500)));
+  return `<a class="btn learn-btn" href="${esc(url)}" target="_blank" rel="noopener" title="${esc(who)}">LEARN MORE</a>`;
 }

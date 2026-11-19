@@ -1,7 +1,7 @@
 // NATURE in every region (2026-10-22, the user's design): a region's tab opens once you have been
 // there (landed in one of its cities, or flown over it). Each region has its
 // own projects, meter and animals, bought into save.habitat[region]; animals not drawn yet show a "?";
-// who runs a project is shown, with links behind the grown-up gate (hold 2 s).
+// who runs a project is shown, with links to them (no hold since 2026-11-19).
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/regions.cjs
 const { chromium } = require('playwright-core');
 require('./lib/classic.js');
@@ -59,17 +59,12 @@ const KEY = 'contrailPilot.v2';
   check(fill === `${meters.med}%`, `the meter shown is the region's own: ${fill} vs ${meters.med}%`);
   check(await p.isVisible('#wTrees'), 'the planting tools are on every land, not only the home land (the user, 2026-11-09)');
 
-  // 4. Who runs it: the name shows; the links only after a grown-up holds the button for 2 s.
+  // 4. Who runs it: the name and its links, shown straight away (Oliver, 2026-11-19: no grown-up hold).
   await p.evaluate(() => document.querySelector('[data-pline="olives"] .rowc-tap').click()); await p.waitForTimeout(300);   /* the (i) lives in the preview strip now (DESIGN-HANGAR-NATURE) */
   await p.click('#wStrip [data-pinfo="olives"]'); await p.waitForTimeout(200);
-  const before = await p.evaluate(() => ({ org: !!document.querySelector('#wInfoBody .w-org b'), shown: !document.querySelector('.w-orglinks').hidden }));
-  check(before.org && !before.shown, `org named, links hidden until the gate: ${JSON.stringify(before)}`);
-  const g = await p.$('.w-gate'), bb = await g.boundingBox();
-  await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.waitForTimeout(600); await p.mouse.up();
-  check(await p.evaluate(() => document.querySelector('.w-orglinks').hidden), 'a short tap does not open the links');
-  await p.mouse.down(); await p.waitForTimeout(2300); await p.mouse.up();
-  const after = await p.evaluate(() => ({ shown: !document.querySelector('.w-orglinks').hidden, urls: [...document.querySelectorAll('.w-orglinks a')].map(a => a.href) }));
-  check(after.shown && after.urls.length >= 1 && after.urls.every(u => u.startsWith('https://')), `held 2 s: links show: ${JSON.stringify(after)}`);
+  const org = await p.evaluate(() => ({ org: !!document.querySelector('#wInfoBody .w-org b'), shown: !!document.querySelector('.w-orglinks') && !document.querySelector('.w-orglinks').hidden,
+    hold: !!document.querySelector('#wInfoBody .w-gate'), urls: [...document.querySelectorAll('.w-orglinks a')].map(a => a.href) }));
+  check(org.org && org.shown && !org.hold && org.urls.length >= 1 && org.urls.every(u => u.startsWith('https://')), `org named, its links shown with no hold: ${JSON.stringify(org)}`);
   await p.click('#wInfoClose');
 
   // 5. Animals not drawn yet: a "?" card, and their page says they are being drawn.

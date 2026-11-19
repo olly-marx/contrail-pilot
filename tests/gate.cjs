@@ -1,6 +1,6 @@
-// Grown-up gate: a short tap does nothing; holding 2 s (mouse or touch) reveals a real link to
-// Citizen Zoo (so the site opens from a direct tap, which phones don't block); the game itself
-// never calls window.open for it.
+// The Citizen Zoo link (was the grown-up gate; Oliver, 2026-11-19: no hold, "let people just click the button"): with the feature
+// on, the hangar shows a real link to Citizen Zoo straight away, with no hold button and no 'grown-ups' line (the site opens from a
+// direct tap, which phones don't block); the game itself never calls window.open for it.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/gate.cjs
 const { chromium } = require('playwright-core');
 require('./lib/classic.js');
@@ -19,18 +19,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
       window.__opened = 0; window.open = () => { window.__opened++; return null; }; });
     await p.goto(URL + '?citizenzoo'); await ready(p); await p.waitForTimeout(700);   // the gate is part of the Citizen Zoo feature (off by default)
     await p.click('#tabHangar'); await p.waitForTimeout(300);
-    await p.locator('#realTreeBtn').scrollIntoViewIfNeeded();
-    const box = await p.locator('#realTreeBtn').boundingBox(), x = box.x + box.width / 2, y = box.y + box.height / 2;
-    const cdp = mode === 'touch' ? await ctx.newCDPSession(p) : null;
-    const press = async ms => {
-      if (mode === 'mouse') { await p.mouse.move(x, y); await p.mouse.down(); await p.waitForTimeout(ms); await p.mouse.up(); }
-      else { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] }); await p.waitForTimeout(ms); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
-      await p.waitForTimeout(200);
-    };
-    await press(300);
-    check(!(await p.isVisible('#realTreeLink')), `${mode}: a short tap should not unlock the link`);
-    await press(2300);
-    check(await p.isVisible('#realTreeLink'), `${mode}: holding 2 s should show the Citizen Zoo link`);
+    await p.locator('#realTreeLink').scrollIntoViewIfNeeded();
+    check(await p.isVisible('#realTreeLink'), `${mode}: the Citizen Zoo link shows with no hold`);
+    check(!(await p.$('#realTreeBtn')) && !/grown-ups?/i.test(await p.textContent('.realtree')), `${mode}: no hold button and no grown-ups line`);
     const href = await p.getAttribute('#realTreeLink', 'href');
     check(/citizenzoo\.org/.test(href || ''), `${mode}: the link should go to Citizen Zoo, got ${href}`);
     check(await p.evaluate(() => window.__opened) === 0, `${mode}: the game should not open the site from a timer (blocked on phones)`);
