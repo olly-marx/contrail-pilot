@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-19-learn-more-tidy",
+    "version": "0.71.0",
+    "date": "2026-11-19",
+    "level": "major",
+    "notes": [
+      "Build a nature project and watch it go into your land, then tap LEARN MORE to see the real people who do it.",
+      "New plane parts from the 2030s and later tell you about the real research behind them.",
+      "Red dots now show only once for each new thing, and only on the menu buttons.",
+      "The hangar button no longer flashes.",
+      "Upgrade names line up neatly on small phones."
+    ]
+  },
+  {
     "id": "2026-11-18-crossing-pacing",
     "version": "0.70.0",
     "date": "2026-11-18",
