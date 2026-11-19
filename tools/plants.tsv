@@ -297,8 +297,8 @@ hangar	style.css	s/^\.ftabs \.btn\.ftab { position: relative; min-height: var(--
 hangar	src/hangar.js	s/k !== this.tab \&\& d\[hangarScope(k)\]/false/	no dot on a sub-tab with news
 hangar	src/hangar.js	s/if (pinfo) pinfo.onclick/if (false) pinfo.onclick/	the (i) beside the plane name does nothing
 hangar	src/hangar.js	s/if (era) era.onclick/if (false) era.onclick/	tapping the era line does nothing
-hangar	src/hangar.js	s/this.rowNew.has(`${key}:${have + 1}`)/false/	no row dot beside a name with a new item
-hangar	src/ui.js	s/this.fleet.rowNew = null;/this.fleet.rowNew = this.fleet.rowNew;/	row dots survive into the next visit (never cleared)
+hangar	src/hangar.js	s/<span class="rowc-name">${name}<\/span>/<span class="rowc-name">${name}<\/span><i class="dot row-new"><\/i>/	a dot on a hangar row again (Oliver, 2026-11-19: dots on the bar and sub-tabs only)
+missionscreen	src/ui.js	s/    \/\/ (no glow on HANGAR: Oliver/    $('tabHangar').classList.toggle('glow', true); \/\/ (/	the bar's HANGAR flashes again
 records-screen	src/recordsui.js	s/^    seen();   \/\/ this sub-tab is showing/    \/\/ seen();   \/\/ this sub-tab is showing/	the BOARDS sub-tabs never mark themselves seen: the dots and NEW RECORD! never clear
 records-screen	src/recordsui.js	s/if (opts.toast) opts.toast(/if (false) opts.toast(/	the first-visit line (and the online note) is not shown at all
 records-screen	src/recordsui.js	s/newBadges.includes(b.id) ?/false ?/	no dot on the new badge

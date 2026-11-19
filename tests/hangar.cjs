@@ -146,13 +146,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   check(!dd.cur && dd.gad, `a dot on a sub-tab with news, never on the one showing: ${JSON.stringify(dd)}`);
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(250);
   check(!(await p.evaluate(() => !!document.querySelector('[data-ftab=gadgets] .dot'))), 'the gadgets dot is gone once GADGETS is showing');
-  // R7: a row with a NEW item has a dot beside its name for this visit; the next visit has none (it was seen).
+  // No row dots (Oliver, 2026-11-19: the dots live on the bar and the sub-tabs only): a gadget row with a new item has no dot of its own.
   await p.evaluate(() => { const ui = game.registry.get('ui'); ui.save.seen['hangar/gadgets'] = []; ui.showHangar(); });
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(250);
-  const rd = await p.evaluate(() => ({ n: document.querySelectorAll('#hFleet .rowc .dot.row-new').length, inName: [...document.querySelectorAll('#hFleet .rowc .dot.row-new')].every(d => d.parentElement.classList.contains('rowc-top')) }));
-  check(rd.n >= 1 && rd.inName, `a gadget row with a new item has a dot beside its name: ${JSON.stringify(rd)}`);
-  await p.evaluate(() => game.registry.get('ui').showHangar()); await p.waitForTimeout(250);
-  check(await p.evaluate(() => document.querySelectorAll('#hFleet .rowc .dot.row-new').length) === 0, 'the next visit shows no row dot (it was seen)');
+  check(await p.evaluate(() => document.querySelectorAll('#hFleet .rowc .dot').length) === 0, 'no dot on any hangar row');
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   // Choose a plane: FLY THIS on the Comet.
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);

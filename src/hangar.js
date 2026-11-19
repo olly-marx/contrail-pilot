@@ -41,9 +41,7 @@ export class FleetHangar {
   render() {
     if (this.paying) { this.renderLater = true; return; }   // a payoff is showing IN the box: nothing may rebuild it (stage 2)
     const s = this.ui.save, el = $('hFleet');
-    // R7: a row with a NEW item carries a dot beside its name for the rest of this visit. The set is taken BEFORE this render marks the
-    // tab seen (and keeps what earlier renders of this visit found); ui.showHangar() empties it when the hangar is opened again.
-    this.rowNew = this.rowNew || new Set(); (fresh(s, this.ui.freshOpts())[hangarScope(this.tab)] || []).forEach(k => this.rowNew.add(k));
+    // (No row dots since 2026-11-19, Oliver: the dots are on the bar and the PLANE / SYSTEMS / GADGETS sub-tabs only.)
     // R5 (UX plan C5): picture + caption (the range lives in the caption), the strip, THEN the sub-tabs directly under it, then the rows.
     // No era chips, no per-tab help sentence: the era is ONE line in PLANE (tap = a sheet), the plane paragraph is behind the (i).
     el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.previewCardHTML(s) + this.tabsHTML(s)
