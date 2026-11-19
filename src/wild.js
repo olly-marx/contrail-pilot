@@ -136,7 +136,7 @@ export class WildScreen {
     if (!row) { row = document.createElement('div'); row.id = 'wLandTrees'; row.className = 'w-landtrees'; $('wTrees').before(row); }
     const trees = landTrees(s, this.region);
     row.innerHTML = trees.map(t => `<figure class="w-tree ${t.open ? '' : 'shut'}${t.full ? ' full' : ''}" title="${esc(t.open ? t.fact || '' : t.rule)}">
-      <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.rule)}</small>`}</figcaption></figure>`).join('');
+      <img src="assets/tree-${t.id}-2.png" alt="" class="${t.open ? '' : 'w-shadow'}"><figcaption>${t.open ? esc(countText(t)) : `${esc(t.name)}<br><small>${esc(t.card || t.rule)}</small>`}</figcaption></figure>`).join('');
     this.renderFlyHere();
     // THE NURSERY (TREES V2 step 2): trees you drop start as saplings and grow up over the flights that follow; only grown trees are seen in this land's picture and in flight.
     // THE PEN AND THE LAND'S COOLING (src/treepen.js; the user, 2026-11-16): each sapling's days, what it adds once grown, and what this land does for the Earth. Replaces the one-line 'Growing: N trees'.
@@ -286,7 +286,7 @@ export class WildScreen {
       const btn = have ? '<span class="w-done">DONE</span>'
         : `<button class="btn ${free ? 'free' : ok ? 'go' : ''}" type="button" data-project="${p.id}" ${ok ? '' : 'disabled'}>${free ? 'FREE!' : cost(p)}</button>`;
       // The shared row (DESIGN-HANGAR-NATURE §5a): icon | short name / one line | price. The full story is in the strip.
-      const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? (p.chain[0].length <= 22 ? p.chain[0] : 'Helps this land') : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings back: ${w.length} animal${w.length > 1 ? 's' : ''}`; })();   /* (an unfound animal is not named: the surprise stays) */
+      const sub = (() => { const w = broughtBack(s, this.region, p.id), f = w.filter(a => a.found); return !w.length ? (p.chain[0].length <= 22 ? p.chain[0] : 'Helps this land') : f.length === w.length && w.length === 1 ? `Brings back: ${f[0].name}` : `Brings ${w.length} animal${w.length > 1 ? 's' : ''}`   /* (short: 'Brings back: 2 animals' wrapped beside the price at 320, 2026-11-19) */; })();   /* (an unfound animal is not named: the surprise stays) */
       return `<div class="rowc project ${have ? 'maxed' : ''} ${free ? 'freeline' : ''} ${this.previewId === p.id ? 'previewing sel' : ''}" data-pline="${p.id}">`
         + `<button class="rowc-tap" type="button" data-preview="${p.id}"><img class="rowc-icon" src="assets/ui/proj-${p.id}.png" alt="">`
         + `<span class="rowc-top"><span class="rowc-name">${esc(p.row || p.name)}</span></span><span class="rowc-sub">${esc(sub)}</span></button>`

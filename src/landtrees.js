@@ -13,14 +13,14 @@ import { DROP_ORDER } from './droporder.js';
 // What opens each native slot, in order (slot 1..4). Each rule reads only that land.
 export const OPENS = [
   null,   // slot 0: always open
-  { text: 'Finish a habitat project here', ok: (save, land) => projectsDone(save, land).length >= 1 },
-  { text: 'Reach biodiversity 20 here', ok: (save, land) => biodiversity(save, land) >= 20 },
-  { text: 'Find 5 of the animals here', ok: (save, land) => foundHere(save, land) >= 5 },
+  { text: 'Finish a habitat project here', card: '1 project', ok: (save, land) => projectsDone(save, land).length >= 1 },
+  { text: 'Reach biodiversity 20 here', card: 'Nature 20', ok: (save, land) => biodiversity(save, land) >= 20 },
+  { text: 'Find 5 of the animals here', card: '5 animals', ok: (save, land) => foundHere(save, land) >= 5 },
   // Native 4 (S3, PROPOSAL-TREE-MISSIONS.md): season 2 opens it with the area's crossing-trial mission "plant 3 kinds of
   // this land's tree in one flight" (src/missions2.js 'kinds3'), done in an area that has this land. Classic saves have
   // no area missions and keep the old rule, biodiversity 40 there.
   // ...or (2026-11-13, ledger row 54) when fewer than 2 of slots 0..3 have room under the cap (an unopened slot counts as room): the mission is then never offered here again (src/missions2.js), so it cannot be the only way in.
-  { text: 'Plant 3 kinds of tree here in one flight', ok: (save, land) => (isSeason2(save) ? kindsMissionDone(save, land) || kindsStuck(save, land) : biodiversity(save, land) >= 40) },
+  { text: 'Plant 3 kinds of tree here in one flight', card: '3 kinds', ok: (save, land) => (isSeason2(save) ? kindsMissionDone(save, land) || kindsStuck(save, land) : biodiversity(save, land) >= 40) },
 ];
 
 // Fewer than 2 of slots 0..3 have room under the cap (planted + saplings < TREE_CAP). A slot not open yet is empty, so it counts as room: a land that can still open
@@ -64,7 +64,7 @@ export function landTrees(save, land) {
   return UK_SLOTS.map((kind, slot) => {
     const t = localTree(kind, land), n = book[t.id] || 0;
     const grown = (view[t.id] || {}).grown || 0;   // n = planted (grown + still growing)
-    return { slot, id: t.id, name: t.name, fact: t.fact, open: open.includes(slot), n, grown, growing: n - grown, cap: TREE_CAP, full: n >= TREE_CAP, rule: openRule(slot) && openRule(slot).text };
+    return { slot, id: t.id, name: t.name, fact: t.fact, open: open.includes(slot), n, grown, growing: n - grown, cap: TREE_CAP, full: n >= TREE_CAP, rule: openRule(slot) && openRule(slot).text, card: openRule(slot) && (openRule(slot).card || openRule(slot).text) };   // card: the few words under a shut tree's picture (the full rule is its title and the NEXT line)
   });
 }
 // "Oak 4/9" or "Spruce 9/9 full".

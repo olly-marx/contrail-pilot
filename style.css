@@ -1250,3 +1250,13 @@ h2.sub { margin-top: -4px; }
 .era-card.cross-unlock { padding-top: min(26vw, 120px); }
 .cross-unlock .cu-sky { height: min(30vw, 140px); }
 @media (max-height: 640px) { .cross-unlock .ec-body { line-height: 1.6; } .cross-unlock .ec-title span { font-size: 22px; } }
+
+/* Small phones (Oliver, 2026-11-19: names wrapping in odd places): at 360 px and under the price is 86 px, not 100, so two-word names
+   ('Landing gear', 'Tree Planting') keep one line beside it. Measured with scratch/uidots/wraps.cjs (text lines per row at 320). */
+@media (max-width: 360px) {
+  .rowc-price { width: 86px; padding: 4px 1px; }
+  .rowc-sub { padding-right: 92px; }
+  .rowc.price-top .rowc-top { padding-right: 92px; }
+  .rowc.price-top .rowc-sub { padding-right: 0; }
+  .rowc-name { font-size: 8px; }   /* the Pixel font is drawn for multiples of 8 (tests/badgefont.cjs): 8 px is crisp and fits 'Tree Planting' */
+}
