@@ -57,7 +57,7 @@ const KEY = 'contrailPilot.v2';
   check(db.save && db.save.seeds === 500 && db.stamp > 0, `the phone's save is uploaded: ${JSON.stringify(db.save && db.save.seeds)}`);
   await phone.click('#tabPilot'); await phone.waitForTimeout(1200);
   const code = await phone.textContent('#pCode');
-  check(/^([A-Z][a-z]+ ){4}\d{2}$/.test(code) && db.code === code.toLowerCase(), `a pilot code (4 words + a number) is shown and set: "${code}"`);
+  check(/^([A-Z][a-z]+ ){5}\d{2}$/.test(code) && db.code === code.toLowerCase(), `a pilot code (5 words + a number, since 2026-11-19) is shown and set: "${code}"`);
   check(await phone.isVisible('#pCodeBox') && /Write this down/.test(await phone.textContent('#pCodeBox')), 'it says to write it down');
 
   // 2. The laptop (empty): wrong code refused; the right code brings Kim back with the progress.

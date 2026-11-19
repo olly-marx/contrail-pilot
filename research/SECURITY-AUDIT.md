@@ -63,3 +63,21 @@ B. Server-authoritative economy (only if currency ever has real value): the serv
 
 All of A touches the live database; each step needs a migration, a local test in supabase/tests, and Oliver's go
 before it is applied.
+
+## Status (2026-11-19, branch security-audit; nothing live)
+
+Done and tested locally:
+- `supabase/migrations/20261119000000_live_baseline.sql`: the repo now builds the live schema (structural pg_dump diff
+  against the live dump is empty; applying it to a copy of live changes nothing; a planted missing column makes the diff fail).
+- `20261119010000_flight_limits.sql`: impossible flights set aside in `flights_rejected` (limits in `flight_limits`).
+- `20261119020000_names_and_login.sql`: `players_name_unique`; wrong codes counted per device (10/h) with a per-pilot
+  backstop (100/day); advisor fixes.
+- Game: a taken name gets a new number; pilot codes are five words from `crypto.getRandomValues`; Turnstile support,
+  OFF until `TURNSTILE_SITE_KEY` is set.
+- DB tests: `supabase/tests/run.sh` (CP_PG=<container> to pick a name); browser tests run: 15 online-related, all pass
+  after the code-shape tests were updated to five words. The full browser suite was NOT run.
+- Not done: save tamper check (option 1), dropped because server-checked earnings (flight replay) replace it.
+
+Flight replay (for coins with real value): `tools/xengine.cjs` flies 54 seeded flights in Node, Chrome and WebKit:
+all identical; a one-in-a-million change in the browser copies is caught in all 54. Replay cost measured with the sim
+engine: 60 to 200 ms of CPU per flight (25 s to 3.3 min flights). Not yet tested on a real iPhone.

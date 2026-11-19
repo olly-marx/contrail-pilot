@@ -1,6 +1,6 @@
 // THE PILOT CODE AND THE OUTBOX (src/online.js ensureCode / sendFlight), against a stub Supabase in plain Node. A tester's code appeared long after the first flights, and that
 // pilot had no save or flights online (2026-11-09). What the code says: a code is written on the device ONLY after set_pilot_code succeeded; a failing call leaves no code and the next startup tries again;
-// the code is four NAME_WORDS and a number 10-99, sent as one string; the server stores sha256(lower(code)). The outbox keeps the last 100 flights.
+// the code is five NAME_WORDS (four until 2026-11-19) and a number 10-99, sent as one string; the server stores sha256(lower(code)). The outbox keeps the last 100 flights.
 //   1. positive control: a named pilot with no code + a working server gets a code (shape, the same string sent, the hash the server stores);  2. no pilot: no call;  3. set_pilot_code fails ('no pilot yet'):
 //   no code on the device, then the next call after the server works creates it;  4. an existing code is kept (no second call);  5. 150 flights sent while the server fails: the outbox holds 100, the newest.
 // Run: node tests/pilotcodeensure.cjs   (proved by a planted defect: tools/plants.tsv)
@@ -18,14 +18,14 @@ const crypto = require('crypto');
   globalThis.window = { addEventListener() {}, supabase: { createClient: () => ({ auth: { getSession: async () => ({ data: { session: { user: { id: 'u1' } } } }), signInAnonymously: async () => ({ data: { session: { user: { id: 'u1' } } }, error: null }) }, rpc }) } };
   const O = await import('../src/online.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
-  const shapeOk = c => { const w = String(c).split(' '); return w.length === 5 && w.slice(0, 4).every(x => O.NAME_WORDS.includes(x)) && /^\d\d$/.test(w[4]) && +w[4] >= 10 && +w[4] <= 99; };
+  const shapeOk = c => { const w = String(c).split(' '); return w.length === 6 && w.slice(0, 5).every(x => O.NAME_WORDS.includes(x)) && /^\d\d$/.test(w[5]) && +w[5] >= 10 && +w[5] <= 99; };
   const KEY = 'contrailPilot.code';
   // 2. no pilot: nothing is called
   await O.ensureCode(); check(!srv.calls.length && !mem[KEY], `no pilot: no server call and no code (calls ${JSON.stringify(srv.calls)}, code ${mem[KEY]})`);
   // 1. the control
   mem['contrailPilot.pilot'] = JSON.stringify({ first: 'Tester', word: 'Puffin', tag: 23 });
   const code = await O.ensureCode();
-  check(shapeOk(code), `control: the code is four NAME_WORDS and a number 10-99: ${code}`);
+  check(shapeOk(code), `control: the code is five NAME_WORDS (four until 2026-11-19) and a number 10-99: ${code}`);
   check(srv.sent === code && JSON.parse(mem[KEY]) === code, `control: the server got the same string the device keeps (sent ${srv.sent}, kept ${mem[KEY]})`);
   check(srv.hash === crypto.createHash('sha256').update(String(code).toLowerCase()).digest('hex'), 'control: the server stores sha256 of the lowercased code');
   // 4. an existing code is kept
