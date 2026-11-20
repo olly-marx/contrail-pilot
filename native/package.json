@@ -1,0 +1,15 @@
+{
+  "name": "contrail-native",
+  "private": true,
+  "description": "Capacitor shell for the phone apps. www/ is built by tools/make-app.sh from tools/make-site.sh; never edit it.",
+  "scripts": {
+    "www": "bash ../tools/make-app.sh",
+    "sync": "bash ../tools/make-app.sh && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/cli": "8.6.2",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/ios": "8.6.2"
+  }
+}
