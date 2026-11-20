@@ -14,6 +14,7 @@ export async function killServiceWorker() {
 // urls: absolute or page-relative picture addresses to keep for offline.
 export async function startServiceWorker(urls = []) {
   if (!('serviceWorker' in navigator) || !stamp()) return 'skipped';
+  try { if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return 'skipped (app)'; } catch (e) { /* not the app */ }   // the phone app carries its files inside it (tools/make-app.sh)
   if (new URLSearchParams(location.search).get('nosw')) { await killServiceWorker(); return 'killed (?nosw)'; }
   try {
     const v = await (await fetch('version.json', { cache: 'no-store' })).json();

@@ -1,0 +1,85 @@
+# Build the iPhone app on GitHub's Mac runner and send it to TestFlight (internal testers only; no store release, no review).
+# Runs on a push to app/** branches or by hand. Never on main, so a web release never ships an app build by accident.
+# Signing: Xcode automatic signing with the App Store Connect API key (secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_B64);
+# no certificates are kept anywhere. The web files are the same bundle as the web deploy (tools/make-app.sh -> tools/make-site.sh).
+name: iPhone app to TestFlight
+
+on:
+  push:
+    branches: ['app/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TEAM_ID: 9SR6FGGBQC
+  BUNDLE_ID: com.olivermarx.flightgame
+
+jobs:
+  testflight:
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: No keys in the repo
+        run: tools/no-keys.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: GNU sed (tools/make-site.sh is written for Linux sed; macOS sed rejects its patterns)
+        run: |
+          brew install gnu-sed
+          echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> "$GITHUB_PATH"
+      - name: Web files into the app
+        run: |
+          cd native && npm ci
+          cd .. && bash tools/make-app.sh "${GITHUB_SHA::7}"
+          cd native && npx cap sync ios
+      - name: API key
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          echo "${{ secrets.ASC_KEY_P8_B64 }}" | base64 --decode > "$RUNNER_TEMP/asc/AuthKey.p8"
+      - name: Archive (version from src/version.js, build number = this run)
+        run: |
+          V=$(sed -n "s/.*VERSION = '\([^']*\)'.*/\1/p" src/version.js)
+          echo "version $V build ${{ github.run_number }}"
+          xcodebuild -version
+          xcodebuild archive \
+            -project native/ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
+            -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}" \
+            DEVELOPMENT_TEAM="$TEAM_ID" CODE_SIGN_STYLE=Automatic \
+            PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+            MARKETING_VERSION="$V" CURRENT_PROJECT_VERSION="${{ github.run_number }}"
+      - name: Export and upload to App Store Connect (TestFlight)
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>testFlightInternalTestingOnly</key><true/>
+          </dict></plist>
+          EOF
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
+            -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}"
+      - name: Remove the key
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/asc"

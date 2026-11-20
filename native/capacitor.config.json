@@ -1,0 +1,8 @@
+{
+  "appId": "com.olivermarx.flightgame",
+  "appName": "Contrail Pilot",
+  "webDir": "www",
+  "backgroundColor": "#87c5ea",
+  "ios": { "contentInset": "never" },
+  "android": { "allowMixedContent": false }
+}

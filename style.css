@@ -26,13 +26,15 @@
 
 [hidden] { display: none !important; }
 html, body { margin: 0; height: 100%; background: var(--ink); overflow: hidden; touch-action: none; }
+/* (phone app, 2026-11-20) keep the game out from under the notch / Dynamic Island and the rounded corners: the app's web view fills the whole screen (viewport-fit=cover), Safari's does not, so on the web these insets are 0 and nothing moves */
+body { box-sizing: border-box; padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); }
 body { font-family: 'Pixel', monospace; color: var(--ink); -webkit-font-smoothing: none; }
 #game { width: 100%; height: 100%; }
 canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 
 /* ---------- overlays ---------- */
 .overlay {
-  position: fixed; inset: 0; display: flex; padding: 12px; overflow-y: auto;
+  position: fixed; inset: 0; display: flex; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left)); overflow-y: auto;
   background: rgba(27, 27, 47, 0.55); z-index: 10;
 }
 .panel {
