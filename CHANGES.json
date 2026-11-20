@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-20-one-crossing-apps",
+    "version": "0.72.0",
+    "date": "2026-11-20",
+    "level": "major",
+    "notes": [
+      "When you can cross to more than one new land, MISSIONS shows one crossing card instead of several.",
+      "When the crossing is ready, you choose where you would like to go.",
+      "A long press no longer selects text over the game."
+    ]
+  },
+  {
     "id": "2026-11-19-security",
     "version": "0.71.1",
     "date": "2026-11-19",

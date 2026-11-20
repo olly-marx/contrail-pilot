@@ -55,3 +55,30 @@ jobs:
             echo "::error title=Flaky test: a verify run allows none::$(grep '^flaky (passed on retry)' /tmp/shard.out)"
             exit 1
           fi
+
+  # iPhones run the game in WebKit (Safari and the app's web view); every test above runs in Chrome (2026-11-20, Oliver: web, iOS and Android ship together).
+  # tests/webkit/smoke.cjs walks a new player and a playing save in WebKit at an iPhone size. Outside tests/*.cjs, so tools/test.sh and the shards never run it.
+  webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Dry run (nothing is tested)
+        if: ${{ inputs.dry }}
+        run: echo "DRY - the WebKit smoke test would run"
+      - uses: actions/checkout@v4
+        if: ${{ !inputs.dry }}
+      - uses: actions/setup-node@v4
+        if: ${{ !inputs.dry }}
+        with:
+          node-version: 22
+      - name: Install test driver and WebKit
+        if: ${{ !inputs.dry }}
+        run: |
+          npm i --no-save playwright-core@1 playwright@1
+          npx playwright install --with-deps webkit
+      - name: Serve the game
+        if: ${{ !inputs.dry }}
+        run: python3 -m http.server 8000 >/dev/null 2>&1 &
+      - name: WebKit smoke test
+        if: ${{ !inputs.dry }}
+        run: node tests/webkit/smoke.cjs

@@ -434,7 +434,7 @@ sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 })
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x28]
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x30]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
@@ -958,8 +958,8 @@ crosscard	src/crossingview.js	s/CARD_NEXT\[s.nearest.key\]/CARD_NEXT[s.conds.fin
 crosscard	src/crossingview.js	s/`\${Math.round(readiness(save, c).natureHave)} \/ \${need}`/`${need}`/	the nature row shows only what it needs
 crosscard	src/lessons.js	s/done: s => tour(s, 'r-cross') || (s.crossed || \[\]).length > 0/done: s => tour(s, 'r-cross') || (s.areas || []).length > 1/	a two-area home region finishes the crossings lesson again
 crosscard	src/lessons.js	s/ \&\& lessonOpen(s, l)) || null/) || null/	the crossings lesson is current before any crossing is listed
-crosscard-ui	src/ui.js	s/(c.ready ? `<button class="btn go xc-fly"/(false ? `<button class="btn go xc-fly"/	a ready card has no FLY THE CROSSING
-crosscard-ui	src/ui.js	s/if (cs) this.openCrossings(cs); });   \/\/ (the CROSSINGS screen/if (cs) this.flyCrossing(cs); });   \/\/ (the CROSSINGS screen/	the card's button starts the flight with no sheet
+crosscard-ui	src/ui.js	s/(c.ready ? (c.multi ? '<button class="btn go xc-fly"/(false ? (c.multi ? '<button class="btn go xc-fly"/	a ready card has no FLY A CROSSING / FLY THE CROSSING
+crosscard-ui	src/ui.js	s/if (fly) this.flyCrossing(cs); else this.openCrossings/if (true) this.flyCrossing(cs); else this.openCrossings/	a pick on MISSIONS starts the flight with no CROSSINGS screen
 crosscard-ui	src/ui.js	s/const xc = crossingsHTML(s, 'm');/const xc = '';/	MISSIONS shows no crossing cards
 crosscard-ui	src/tour.js	s/, missions: 'missions' }\[where\]/ }[where]/	the crossings lesson never starts on MISSIONS
 crosscard-ui	style.css	s/^\.xcard { background: #fff;/.xcard { width: 420px; background: #fff;/	a crossing card wider than the phone
@@ -967,8 +967,9 @@ maplesson	src/ui.js	s/this.globeDrags = (this.globeDrags || 0) + 1; //	a drag of
 maplesson	src/tour.js	s/text: tip('rail-map'), until: () => (this.ui.globeDrags || 0) > drags0 }/text: tip('rail-map'), ok: true }/	the drag step can be skipped with OK
 maplesson	src/tour.js	s/text: tip('rail-map-city'), until: card }/text: tip('rail-map-city'), until: () => true }/	the city step does not wait for a city
 maplesson	src/tour.js	s/target: '#dsMission, #dsExplore'/target: '#dsChange'/	MISSION or EXPLORE does not finish the lesson
-crossingmoment	src/ui.js	s/showCrossingUnlocked(cs, { save: s, first }).then(r => { if (r === 'go') this.flyCrossing(cs); });/this.showCrossingSheet(cs);/	the moment opens the small sheet, not the Crossing unlocked! card
-crossingmoment	src/ui.js	s/if (r === 'go') this.flyCrossing(cs);/if (false) this.flyCrossing(cs);/	the card's FLY THE CROSSING starts nothing
+crossingmoment	src/ui.js	s/showCrossingUnlocked(cs, { save: s, first, choices: multi ? card : null }).then(r => { if (r === 'go') (multi ? this.pickCrossing({ fly: true }) : this.flyCrossing(cs)); });/this.showCrossingSheet(cs);/	the moment opens the small sheet, not the Crossing unlocked! card
+crossingmoment	src/ui.js	s/if (r === 'go') (multi ?/if (false) (multi ?/	the card's WHERE TO? starts nothing
+crosscard	src/crossingview.js	s/  if (cards.length < 2) return cards;/  if (cards.length < 99) return cards;/	several crossings on offer are separate cards again
 crossingmoment	src/crossunlock.js	s/el.remove(); sfx.tick();/sfx.tick();/	LATER leaves the card on screen
 spotlight@SPOT_CASES=r-nature	src/wild.js	s/isSeason2(s) \&\& railDone ? flyHereChoice/isSeason2(s) ? flyHereChoice/	the FLY HERE row shows during the NATURE guide (pushes r-nature#3 off a 320 phone)
 landeven	src/nature.js	s/  if (!LAND_EVEN.on) return 1;/  return 1;/	LAND_EVEN weights nothing

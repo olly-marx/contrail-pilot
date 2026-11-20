@@ -1,10 +1,17 @@
-# Build the iPhone app on GitHub's Mac runner and send it to TestFlight (internal testers only; no store release, no review).
-# Runs on a push to app/** branches or by hand. Never on main, so a web release never ships an app build by accident.
+# The phone apps, built from the SAME commit the web deploy just published (Oliver, 2026-11-20: web, iOS and Android "should all ship together"):
+#   ios      GitHub's Mac runner builds the iPhone app and sends it to TestFlight (internal testers only; no store release, no review).
+#   android  a Linux runner builds the Android app (a debug build, kept 14 days as an artifact) until the Play upload key exists; then it uploads to internal testing.
+# When: after "Test and deploy" SUCCEEDS on main (so an app is never built from a commit whose tests failed or that is not live), on a push to app/** (trying
+# the app alone), or by hand.
 # Signing: Xcode automatic signing with the App Store Connect API key (secrets ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8_B64);
 # no certificates are kept anywhere. The web files are the same bundle as the web deploy (tools/make-app.sh -> tools/make-site.sh).
-name: iPhone app to TestFlight
+name: Phone apps (TestFlight, Android)
 
 on:
+  workflow_run:
+    workflows: ['Test and deploy']
+    types: [completed]
+    branches: [main]
   push:
     branches: ['app/**']
   workflow_dispatch:
@@ -13,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ios-${{ github.ref }}
+  group: apps-${{ github.event.workflow_run.head_sha || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -22,10 +29,14 @@ env:
 
 jobs:
   testflight:
+    # after a deploy: only a SUCCESSFUL main run (a failed or cancelled test never ships an app)
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: macos-26
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: No keys in the repo
         run: tools/no-keys.sh
       - uses: actions/setup-node@v4
@@ -38,7 +49,8 @@ jobs:
       - name: Web files into the app
         run: |
           cd native && npm ci
-          cd .. && bash tools/make-app.sh "${GITHUB_SHA::7}"
+          SHA=$(git rev-parse --short=7 HEAD)
+          cd .. && bash tools/make-app.sh "$SHA"
           cd native && npx cap sync ios
       - name: API key
         run: |
@@ -83,3 +95,36 @@ jobs:
       - name: Remove the key
         if: always()
         run: rm -rf "$RUNNER_TEMP/asc"
+
+  android:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: No keys in the repo
+        run: tools/no-keys.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Web files into the app
+        run: |
+          cd native && npm ci
+          cd .. && bash tools/make-app.sh "$(git rev-parse --short=7 HEAD)"
+          cd native && npx cap sync android
+      - name: Build (debug; the release build waits for the Play upload key)
+        run: |
+          V=$(sed -n "s/.*VERSION = '\([^']*\)'.*/\1/p" src/version.js)
+          cd native/android && ./gradlew --no-daemon -q assembleDebug
+          mv app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/contrail-pilot-$V-${{ github.run_number }}-debug.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-debug-apk
+          path: ${{ runner.temp }}/*.apk
+          retention-days: 14
