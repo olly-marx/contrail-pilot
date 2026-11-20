@@ -31,6 +31,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: GNU sed (tools/make-site.sh is written for Linux sed; macOS sed rejects its patterns)
+        run: |
+          brew install gnu-sed
+          echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> "$GITHUB_PATH"
       - name: Web files into the app
         run: |
           cd native && npm ci
