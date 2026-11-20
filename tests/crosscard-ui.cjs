@@ -1,9 +1,10 @@
 // THE CROSSING CARDS on MISSIONS and THE CROSSINGS LESSON, with real taps at 390x844 and 320x568 (the owner, 2026-11-18: the crossing lines were "a wall of centered grey text ... I don't understand it,
 // and it's ugly"; and "the game teaching should never end until everything about the game you care about is understood"). Data rules: tests/crosscard.cjs. Named lines:
-//   A. NOT READY (an Asia pilot, every mission done, 3,000 km landed, nature 24): MISSIONS shows one card per crossing (3), each with its route, the land it opens, the rows Era / Plane / Nature
+//   (Oliver, 2026-11-20: three cards repeating the same rows became ONE card, '3 WAYS TO CROSS', and FLY A CROSSING asks 'Where would you like to go?')
+//   A. NOT READY (an Asia pilot, every mission done, 3,000 km landed, nature 24): MISSIONS shows ONE card for the 3 crossings, with the land it opens, the rows Era / Plane / Nature
 //      (Era ticked, Plane and Nature with a bar, nature "24 / 30") and one next line; none of the old text ("CROSSING:", "Needs:", "CROSSING TO"); no card wider than the screen; no FLY button.
-//   B. READY: every row ticked, FLY THE CROSSING on each card; a REAL tap on the first one opens the crossing sheet (no flight starts); once told, the tap opens the CROSSINGS screen (CROSS TO at the
-//      departure, GO TO elsewhere).
+//   B. READY: every row ticked, FLY A CROSSING; a REAL tap opens 'Where would you like to go?' with one button per crossing (no flight starts); KARACHI > MUSCAT opens the CROSSINGS screen
+//      (CROSS TO MUSCAT at its departure), SINGAPORE > PERTH offers GO TO SINGAPORE.
 //   C. THE LESSON: a School player with every other lesson done (Asia: two areas, the case the old rule marked done): HOME's step points at SCHOOL; a real tap there starts the 'r-cross' rails on
 //      MISSIONS: 5 steps (the card, Era, Plane, Nature, the next line) on the FIRST card, each passing the spotlight audit (tests/lib/spotlight.js); OK through them: the lesson is done.
 // Run: python3 -m http.server 8000 & node tests/crosscard-ui.cjs   (plants in tools/plants.tsv)
@@ -31,7 +32,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     s.habitat = { monsoon: H.REGION_DATA.monsoon.projects.slice(0, n).map(p => p.id) }; } };
   const cardsOf = p => p.evaluate(() => [...document.querySelectorAll('#mCross .xcard')].map(c => ({ text: c.innerText.replace(/\s+/g, ' ').trim(), route: c.querySelector('.xc-route').textContent, opens: c.querySelector('.xc-opens').textContent,
     rows: [...c.querySelectorAll('.xc-row')].map(r => ({ k: r.dataset.k, tick: !!r.querySelector('.xc-tick'), bar: !!r.querySelector('.xc-bar'), v: (r.querySelector('.xc-v') || {}).textContent || '' })),
-    next: (c.querySelector('.xc-next') || {}).textContent || '', fly: !!c.querySelector('[data-cross]'), right: c.getBoundingClientRect().right, left: c.getBoundingClientRect().left })));
+    next: (c.querySelector('.xc-next') || {}).textContent || '', fly: !!c.querySelector('[data-cross], [data-pick]'), right: c.getBoundingClientRect().right, left: c.getBoundingClientRect().left })));
   const list = p => p.evaluate(() => document.getElementById('mList').innerText);
 
   for (const [W, H] of [[390, 844], [320, 568]]) {
@@ -40,8 +41,8 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     let p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], bestDistance: 3000 }, W, H, { ...SETUP, arg: 5 });
     await p.tap('#tabMissions'); await p.waitForTimeout(600);
     let cards = await cardsOf(p), text = await list(p);
-    check(cards.length === 3 && cards.map(c => c.route).join('|') === 'KARACHI > MUSCAT|SINGAPORE > PERTH|SAPPORO > ANCHORAGE', `${tag} A: one card per crossing, each with its route: ${JSON.stringify(cards.map(c => c.route))}`);
-    check(cards.length && cards[0].opens === 'Opens Africa & the Middle East', `${tag} A: the card names the land it opens: ${cards.length && cards[0].opens}`);
+    check(cards.length === 1 && cards[0].route === '3 WAYS TO CROSS', `${tag} A: ONE card for the three crossings: ${JSON.stringify(cards.map(c => c.route))}`);
+    check(cards.length && cards[0].opens === 'Opens Africa & the Middle East, Oceania or North America', `${tag} A: the card names every land a crossing opens: ${cards.length && cards[0].opens}`);
     check(cards.length && cards.every(c => c.rows.map(r => r.k).join() === 'era,plane,nature' && c.rows[0].tick && !c.rows[0].bar && c.rows[1].bar && !c.rows[1].tick && c.rows[2].bar && c.rows[2].v === '24 / 30'),
       `${tag} A: Era ticked, Plane and Nature with a bar, nature "24 / 30": ${JSON.stringify(cards.map(c => c.rows))}`);
     check(cards.length && cards.every(c => /NATURE|HANGAR/.test(c.next) && !c.fly), `${tag} A: one next line naming where to go, no FLY button: ${JSON.stringify(cards.map(c => [c.next, c.fly]))}`);
@@ -58,23 +59,23 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     if (sheetUp) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); }   // (the one-time moment may come by itself: it is not this test's subject)
     if (await p.evaluate(() => !!document.getElementById('crossUnlock'))) { await p.waitForTimeout(2800); await p.tap('#cuLater'); await p.waitForTimeout(300); }   // (since 0.69.0 the moment is the full-screen Crossing unlocked! card)
     cards = await cardsOf(p);
-    check(cards.length === 3 && cards.every(c => c.rows.every(r => r.tick && !r.bar) && c.fly && /^Ready!/.test(c.next)), `${tag} B: ready: every row ticked, Ready! and FLY THE CROSSING on each card: ${JSON.stringify(cards.map(c => [c.rows.map(r => r.tick), c.next, c.fly]))}`);
-    if (!(await p.$('#mCross .xcard:first-child [data-cross]'))) { fails.push(`${tag} B: no FLY THE CROSSING button on a ready card (stopping this size)`); await p.close(); continue; }   // (fail by name, not by a timeout)
+    check(cards.length === 1 && cards.every(c => c.rows.every(r => r.tick && !r.bar) && c.fly && /^Ready!/.test(c.next)), `${tag} B: ready: one card, every row ticked, Ready! and FLY A CROSSING: ${JSON.stringify(cards.map(c => [c.rows.map(r => r.tick), c.next, c.fly]))}`);
+    if (!(await p.$('#mCross .xcard [data-pick]'))) { fails.push(`${tag} B: no FLY A CROSSING button on the ready card (stopping this size)`); await p.close(); continue; }   // (fail by name, not by a timeout)
     await p.evaluate(() => { const s = game.registry.get('save'); s.crossingTold = []; });
-    await p.tap('#mCross .xcard:first-child [data-cross]'); await p.waitForTimeout(500);
-    let sh = await p.evaluate(() => ({ text: (document.getElementById('sheet') || {}).innerText || '', flying: !!game.registry.get('save').flyCrossing }));
-    check(/MUSCAT is within reach/.test(sh.text) && !sh.flying, `${tag} B: a real tap on FLY THE CROSSING opens the crossing sheet and starts no flight: ${JSON.stringify(sh)}`);
-    if (!sh.text) { fails.push(`${tag} B: no sheet after the tap (stopping this size)`); await p.close(); continue; }
-    await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300);
-    if (await p.evaluate(() => !!game.registry.get('save').flyCrossing || !document.querySelector('#mCross [data-cross]'))) { fails.push(`${tag} B: the tap started a flight (stopping this size)`); await p.close(); continue; }
-    await p.tap('#mCross .xcard:first-child [data-cross]'); await p.waitForTimeout(500);
-    sh = await p.evaluate(() => (document.getElementById('sheet') || {}).innerText || '');
-    check(/CROSS TO MUSCAT/.test(sh), `${tag} B: once told, at KARACHI the tap opens the CROSSINGS screen with CROSS TO MUSCAT: ${sh.replace(/\s+/g, ' ')}`);
+    const pick = async () => { await p.tap('#mCross .xcard [data-pick]'); await p.waitForTimeout(500);
+      return p.evaluate(() => ({ title: (document.querySelector('#sheet .sheet-title') || {}).textContent || '', choices: [...document.querySelectorAll('#sheet [data-pickx]')].map(b => ({ id: b.dataset.pickx, text: b.innerText.replace(/\s+/g, ' ').trim(), on: !b.disabled, fits: b.getBoundingClientRect().right <= innerWidth })), flying: !!game.registry.get('save').flyCrossing })); };
+    let pk = await pick();
+    check(pk.title === 'Where would you like to go?' && pk.choices.length === 3 && pk.choices.every(c => c.on && c.fits) && /KARACHI > MUSCAT.*Africa & the Middle East/.test(pk.choices[0].text) && !pk.flying,
+      `${tag} B: a real tap on FLY A CROSSING asks where to, one button per crossing, and starts no flight: ${JSON.stringify(pk)}`);
+    if (!pk.choices.length) { fails.push(`${tag} B: no choices after the tap (stopping this size)`); await p.close(); continue; }
+    await p.tap('#sheet [data-pickx="arabian-sea"]'); await p.waitForTimeout(500);
+    let sh = await p.evaluate(() => (document.getElementById('sheet') || {}).innerText || '');
+    check(/CROSS TO MUSCAT/.test(sh) && !(await p.evaluate(() => !!game.registry.get('save').flyCrossing)), `${tag} B: picking KARACHI > MUSCAT at KARACHI opens the CROSSINGS screen with CROSS TO MUSCAT: ${sh.replace(/\s+/g, ' ')}`);
     if (sh) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); }
-    await p.evaluate(() => { game.registry.get('save').crossingTold = ['arabian-sea', 'singapore-perth', 'north-pacific']; });
-    await p.tap('#mCross .xcard:nth-child(2) [data-cross]'); await p.waitForTimeout(500);
+    pk = await pick();
+    await p.tap('#sheet [data-pickx="singapore-perth"]'); await p.waitForTimeout(500);
     sh = await p.evaluate(() => (document.getElementById('sheet') || {}).innerText || '');
-    check(/GO TO SINGAPORE/.test(sh), `${tag} B: away from its departure the card's button offers GO TO SINGAPORE: ${sh.replace(/\s+/g, ' ')}`);
+    check(/GO TO SINGAPORE/.test(sh), `${tag} B: picking SINGAPORE > PERTH away from its departure offers GO TO SINGAPORE: ${sh.replace(/\s+/g, ' ')}`);
     if (W === 390) { if (sh) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); } await p.evaluate(() => (document.querySelector('#mCross') || document.body).scrollIntoView()); await p.waitForTimeout(200); await p.screenshot({ path: process.env.SHOTS ? `${process.env.SHOTS}/crosscard-ready.png` : '/dev/null' }).catch(() => {}); }
     check(!p.errs.length, `${tag} B: page errors: ${p.errs}`);
     await p.close();
@@ -107,5 +108,5 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
   }
   await b.close();
   if (fails.length) { console.log('FAIL crosscard-ui\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1); }
-  console.log('PASS crosscard-ui: MISSIONS shows one card per crossing (route, land, Era/Plane/Nature, next line; FLY THE CROSSING when ready) and the crossings lesson walks the first card in 5 steps, at 390x844 and 320x568');
+  console.log('PASS crosscard-ui: MISSIONS shows ONE card for the crossings on offer (every land it opens, Era/Plane/Nature, next line; FLY A CROSSING asks where to) and the crossings lesson walks the first card in 5 steps, at 390x844 and 320x568');
 })();

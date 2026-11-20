@@ -97,3 +97,19 @@ export function cardOf(save, c, opts = {}) {
     ready: !!s.ready, rows, next: s.ready ? CARD_READY : s.nearest ? (s.nearest.key === 'nature' && wk ? natureNextIn(REGIONS[wk].name) : CARD_NEXT[s.nearest.key]) : '', nextKey: s.ready ? null : s.nearest ? s.nearest.key : null, state: s };
 }
 export const cardsView = (save, opts = {}) => available(save).map(c => cardOf(save, c, opts));   // (the order of src/crossings.js; the rows are by status, so every card on offer is ready together)
+
+// ONE CROSSING CARD (Oliver, 2026-11-20, on three cards out of Africa that each repeat 'Nature 4/30': "one card and then when we're ready to do the first crossing it'll be like where would
+// you like to go?"). Several crossings on offer share their rows (the rows are by status), so they are ONE card: the rows and next line of the crossing nearest to ready (a ready one first),
+// 'Opens A, B or C', and `choices` (one per crossing) for the 'Where would you like to go?' sheet that FLY A CROSSING opens. One crossing on offer: its own card, as before.
+export const PICK_TITLE = 'Where would you like to go?';
+export const PICK_ROUTE = n => `${n} WAYS TO CROSS`;
+const orList = names => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`);
+export function oneCardView(save, opts = {}) {
+  const cards = cardsView(save, opts);
+  if (cards.length < 2) return cards;
+  const score = c => (c.ready ? 10 : 0) + c.rows.reduce((a, r) => a + r.frac, 0);
+  const base = cards.slice().sort((a, b) => score(b) - score(a))[0];   // (a stable sort: a tie keeps src/crossings.js order)
+  const words = [...new Set(cards.map(c => c.word))], opens = [...new Set(cards.map(c => c.opens.replace(/^Opens /, '')))];
+  return [{ ...base, id: 'pick', multi: true, lap: false, route: PICK_ROUTE(cards.length), word: words.length === 1 ? words[0] : '', opens: `Opens ${orList(opens)}`,
+    ready: cards.some(c => c.ready), choices: cards.map(c => ({ id: c.id, route: c.route, opens: c.opens, word: c.word, ready: c.ready })) }];
+}

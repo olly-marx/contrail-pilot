@@ -26,7 +26,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(home0.rows.some(r => /NEXT CROSSING.*Nature 0 of 30/.test(r)) && !home0.dot && !(await sheet(p)), `${tag}: before the moment the HOME box says which tick is open, no dot, no sheet: ${JSON.stringify(home0)}`);
     await p.click('#tabMissions'); await p.waitForTimeout(500);
     const ticks = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent.trim()).find(t => /^CROSSINGS/.test(t)), route: (document.querySelector('#mCross .xcard .xc-route') || {}).textContent, rows: [...document.querySelectorAll('#mCross .xcard:first-child .xc-row')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) }));   // (the crossing CARD, 2026-11-18: it replaced the 'CROSSING TO X' tick list)
-    check(ticks.label === 'CROSSINGS' && ticks.route === 'ROME > TUNIS' && ticks.rows.length === 3 && /Era.*done/.test(ticks.rows[0]) && /Plane.*done/.test(ticks.rows[1]) && /Nature.*0 \/ 30/.test(ticks.rows[2]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
+    check(ticks.label === 'CROSSINGS' && ticks.route === '2 WAYS TO CROSS' && ticks.rows.length === 3 && /Era.*done/.test(ticks.rows[0]) && /Plane.*done/.test(ticks.rows[1]) && /Nature.*0 \/ 30/.test(ticks.rows[2]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
     // 2. THE MOMENT, in NATURE: funding a project completes the last condition.
     await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 1; });   // the lever: nature is "met" by the next project
     await p.click('#tabNature'); await p.waitForTimeout(700);
@@ -35,9 +35,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     if (fund) { await fund.click(); await p.waitForTimeout(900); }
     const sh = await moment(p), shSmall = await sheet(p);
     const loop = p.errs.some(e => /call stack/i.test(e));   // a markTold that marks nothing makes showCrossingSheet -> refreshDots -> maybeCrossingSheet call itself
-    check(sh && /CROSSING UNLOCKED!/.test(sh) && /cross to TUNIS!/i.test(sh) && /Era, Plane and Nature/.test(sh) && /Easy/.test(sh) && !shSmall, `${tag}: ${loop ? 'the card re-opens itself in a loop (the moment is never marked told): ' + p.errs[0] : 'the Crossing unlocked! card never appeared (or has the wrong words, or the small sheet came instead) after the last condition was met in NATURE: ' + sh + ' / sheet ' + shSmall}`);
+    check(sh && /CROSSING UNLOCKED!/.test(sh) && /cross to a new land!/i.test(sh) && /WHERE TO\?/.test(sh) && /Era, Plane and Nature/.test(sh) && /Easy/.test(sh) && !shSmall, `${tag}: ${loop ? 'the card re-opens itself in a loop (the moment is never marked told): ' + p.errs[0] : 'the Crossing unlocked! card never appeared (or has the wrong words, or the small sheet came instead) after the last condition was met in NATURE: ' + sh + ' / sheet ' + shSmall}`);
     if (!sh) { await p.close(); continue; }   // nothing below can be asked of a sheet that is not there: fail by NAME, not by a timeout
-    const a = await sv(); check(a.told && a.told.join() === 'mediterranean' && !a.fly, `${tag}: ${a.fly ? 'a flight started' : 'the told mark was not saved (crossingTold is ' + JSON.stringify(a.told) + ')'}: the sheet must mark it told and start NO flight`);
+    const a = await sv(); check(a.told && a.told.includes('mediterranean') && !a.fly, `${tag}: ${a.fly ? 'a flight started' : 'the told mark was not saved (crossingTold is ' + JSON.stringify(a.told) + ')'}: the sheet must mark it told and start NO flight`);
     // 3. LATER closes it, and it never comes back.
     await p.waitForTimeout(2800); await p.click('#cuLater'); await p.waitForTimeout(300);
     await p.evaluate(() => { game.registry.get('ui').persist(); game.registry.get('ui').refreshDots(); }); await p.waitForTimeout(400);
@@ -69,8 +69,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.waitForFunction(() => document.getElementById('crossUnlock'), null, { timeout: 8000 }).catch(() => {});
     const afterFlight = await p.evaluate(() => ({ sheet: document.getElementById('crossUnlock') ? document.getElementById('crossUnlock').innerText.replace(/\s+/g, ' ') : null, results: !document.getElementById('results').hidden, row: (document.querySelector('#rNextRows .rc-row.must') || {}).innerText }));
     check(afterFlight.sheet && /CROSSING UNLOCKED!/.test(afterFlight.sheet) && afterFlight.results && /Cross to TUNIS/.test(afterFlight.row || ''), `${tag}: after a flight the results card shows the row and the sheet appears: ${JSON.stringify(afterFlight)}`);
-    // 8. The card's own FLY THE CROSSING starts the crossing flight (the card, not the small sheet).
-    if (afterFlight.sheet) { await p.waitForTimeout(2800); await p.click('#cuGo'); await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s && ['takeoff', 'playing'].includes(s.state); }, null, { timeout: 15000 }).catch(() => {});
+    // 8. The card's WHERE TO? asks 'Where would you like to go?' and the pick (ROME > TUNIS) starts that crossing flight at once (Oliver, 2026-11-20: a Western Europe pilot has 2 crossings on offer, ROME > TUNIS and the North Atlantic: ONE card, '2 WAYS TO CROSS'; FLY A CROSSING asks where to).
+    if (afterFlight.sheet) { await p.waitForTimeout(2800); await p.click('#cuGo'); await p.waitForTimeout(400); await p.click('#sheet [data-pickx="mediterranean"]').catch(() => {}); await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s && ['takeoff', 'playing'].includes(s.state); }, null, { timeout: 15000 }).catch(() => {});
       const g = await p.evaluate(() => ({ fly: (game.registry.get('save').flyCrossing || {}).id || game.registry.get('save').flyCrossing || null, card: !!document.getElementById('crossUnlock') }));
       check(/mediterranean/.test(JSON.stringify(g.fly)) && !g.card, `${tag}: the card's FLY THE CROSSING starts the crossing flight and the card goes: ${JSON.stringify(g)}`); }
     await p.close();

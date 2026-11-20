@@ -118,16 +118,16 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', planted: PLANTED, habitat: { woodland: ['deadwood', 'meadow', 'margins'] }, areaBest, missionsDone });   // (3 projects: woodland meter 41 >= the first crossing's 38, CROSSINGS V3)
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
   let c = await card({ weurope: 4899 });
-  check(/ROME &gt; TUNIS/.test(c) && /data-k="plane"><span class="xc-l">Plane<\/span><span class="xc-bar">/.test(c) && /class="xc-next">[^<]+</.test(c) && !/data-cross/.test(c), `D: 4,899 km (just under 70% of 7,000) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
+  check(/2 WAYS TO CROSS/.test(c) && /data-k="plane"><span class="xc-l">Plane<\/span><span class="xc-bar">/.test(c) && /class="xc-next">[^<]+</.test(c) && !/data-cross|data-ready="[a-z]/.test(c), `D: 4,899 km (just under 70% of 7,000) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
   c = await card({ namerica: 9999 });   // (another area's flight: the Nordic area is in the home region now)
-  check(/data-cross="mediterranean"/.test(c), 'D: a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
+  check(/data-ready="[^"]*mediterranean/.test(c), 'D: a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
   c = await card({ weurope: 4900 }, STARS.slice(1, 2));
-  check(/data-cross="mediterranean"/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 4,900 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
+  check(/data-ready="[^"]*mediterranean/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 4,900 km + biodiversity 30 is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
   c = await card({ weurope: 4900 });
-  check(/data-cross="mediterranean"/.test(c), `D: 4,900 km + biodiversity 30 + the 3 starred: the crossing is offered: ${c.slice(0, 200)}`);
+  check(/data-ready="[^"]*mediterranean/.test(c), `D: 4,900 km + biodiversity 30 + the 3 starred: the crossing is offered: ${c.slice(0, 200)}`);
   const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', areaBest: { weurope: 9999 }, missionsDone: STARS });
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); })();
-  check(!/data-cross/.test(noTrees) && /class="xc-v">0 \/ 30</.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
+  check(!/data-cross|data-ready="[a-z]/.test(noTrees) && /class="xc-v">0 \/ 30</.test(noTrees), `D: a long flight but no biodiversity is not offered: ${noTrees.slice(0, 200)}`);
   await card({ weurope: 4900 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', crossing: document.getElementById('hubNext').classList.contains('crossing') }));
@@ -135,10 +135,10 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
   if (await p.$('#sheet')) await p.click('#sheet .sheet-ok');   // (R-A: a ready crossing announces itself once, on HOME: LATER, then the route panel)
   if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.evaluate(() => game.registry.get('ui').openJourneySheet());   // (the route chip now opens the FLY TO sheet; the crossing buttons live in the journey sheet)
-  const btn = await p.$('#jCross [data-cross="mediterranean"]');
+  const btn = await p.$('#jCross [data-pick]');   // (Oliver, 2026-11-20: a Western Europe pilot has 2 crossings on offer, ROME > TUNIS and the North Atlantic: ONE card, '2 WAYS TO CROSS'; FLY A CROSSING asks where to)
   check(!!btn, 'D: the FLY THE CROSSING button is there');
   if (btn) {
-    await btn.click(); await p.click('#sheet .sheet-action'); await started(p);   // (R-A: the crossing sheet is the confirm before the flight starts)
+    await btn.click(); await p.click('#sheet [data-pickx="mediterranean"]'); await p.click('#sheet .sheet-action'); await started(p);   // (R-A: the crossing sheet is the confirm before the flight starts)
     const fl = await p.evaluate(() => { const g = game.scene.getScene('game'); return { c: g.crossing && g.crossing.id, to: g.nextAirport.name, at: Math.round(g.nextAirport.worldX - g.distancePx), dist: g.distText.text, path: g.path.slice(0, 3) }; });
     check(fl.c === 'mediterranean' && fl.to === 'TUNIS' && fl.at >= 6900 && fl.at <= 7000 && /TO TUNIS/.test(fl.dist), `D: the crossing flight starts: Rome to Tunis, 7,000 km away: ${JSON.stringify(fl)}`);
   }
@@ -166,7 +166,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   p = await fresh();
   await seed(p, { areas: ['weurope', 'mideast'], homeArea: 'weurope', city: 'TUNIS', flightSeconds: 0 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
-  const later = await p.evaluate(() => ({ later: (document.getElementById('jLater') || {}).innerText || '', cross: !!document.querySelector('#jCross [data-cross]'), more: !!document.getElementById('jMore') }));
+  const later = await p.evaluate(() => ({ later: (document.getElementById('jLater') || {}).innerText || '', cross: !!document.querySelector('#jCross [data-cross], #jCross [data-pick]'), more: !!document.getElementById('jMore') }));
   check(/NEXT CROSSING/.test(later.later) && /1970s/.test(later.later) && !later.cross && !later.more, `F: nothing to fly yet: the card says the next crossing opens in the 1970s: ${JSON.stringify(later)}`);
   await p.context().close();
 

@@ -37,7 +37,7 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'R
         await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 0; game.registry.get('ui').showTitle(); }); await p.waitForTimeout(600);
         // the moment fires by itself on the next screen the player sees (src/ui.js maybeCrossingSheet): the sheet is already open, and the crossing is marked told
         const m1 = await p.evaluate(() => { const e = document.getElementById('crossUnlock'); return { sheet: e ? e.innerText.replace(/\s+/g, ' ') : '', told: (JSON.parse(localStorage.getItem('contrailPilot.v2')).crossingTold || []).join() }; });
-        check(/CROSSING UNLOCKED!/.test(m1.sheet) && m1.told === 'mediterranean', `${tag} B: the Crossing unlocked! card (0.70.0) did not open by itself or the crossing is not marked told: ${JSON.stringify(m1)}`);
+        check(/CROSSING UNLOCKED!/.test(m1.sheet) && m1.told.split(',').includes('mediterranean'), `${tag} B: the Crossing unlocked! card (0.70.0) did not open by itself or the crossing is not marked told: ${JSON.stringify(m1)}`);
         await p.evaluate(() => { for (const id of ['sheet', 'crossUnlock']) { const e = document.getElementById(id); if (e) e.remove(); } game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
         const h = await home(p); log.push(`${tag} B: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-B-${W}.png` });
         const upn = await p.evaluate(() => (document.getElementById('hubNext') || { innerText: '' }).innerText.replace(/\s+/g, ' '));

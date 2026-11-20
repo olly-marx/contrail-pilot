@@ -25,6 +25,14 @@
   check(cards.every(c => c.rows.every(r => !/km|\d,\d{3}/.test(String(r.value)))), 'no distance anywhere on a card');
   // The next line: the open row NEAREST to done (plane 3,000 of 4,900 = 0.61 vs nature 24/30 = 0.8: nature).
   check(k.nextKey === 'nature' && k.next === V.CARD_NEXT.nature && /NATURE/.test(k.next), `the next line is for the nearest open row (nature): ${k.nextKey} "${k.next}"`);
+  // 1b. ONE CARD (Oliver, 2026-11-20: three cards out of one region repeated the same rows): oneCardView folds the crossings on offer into one card with every land it opens and a choice per crossing.
+  const one = V.oneCardView(s1)[0] || {};
+  check(V.oneCardView(s1).length === 1 && one.multi && one.route === '3 WAYS TO CROSS' && one.opens === 'Opens Africa & the Middle East, Oceania or North America', `ONE card for the 3 crossings, naming every land: ${JSON.stringify([V.oneCardView(s1).length, one.route, one.opens])}`);
+  check(JSON.stringify((one.choices || []).map(c => c.id)) === JSON.stringify(cards.map(c => c.id)) && JSON.stringify(one.rows) === JSON.stringify(k.rows) && one.next === k.next && !one.ready, `the one card keeps the shared rows and next line, and lists every crossing to pick: ${JSON.stringify(one.choices)}`);
+  const one3 = V.oneCardView(save({ bestDistance: 99999, habitat: proj(9) }))[0] || {};
+  check(one3.ready && (one3.choices || []).length && one3.choices.every(c => c.ready) && one3.next === V.CARD_READY, `ready: the one card is ready and every choice can be picked: ${JSON.stringify([one3.ready, one3.choices])}`);
+  const solo = save({ areas: ['namerica', 'sasia', 'africa', 'samerica', 'easia', 'mideast', 'nordic', 'oceania', 'aotearoa', 'patagonia'], homeArea: 'sasia', city: 'LONDON', flightSeconds: 3600 * 200 }), soloCards = V.cardsView(solo);
+  check(soloCards.length === 1 && JSON.stringify(V.oneCardView(solo)) === JSON.stringify(soloCards) && !V.oneCardView(solo)[0].multi, `one crossing on offer (only Western Europe left): its own card, unchanged: ${soloCards.length}`);
   const s2 = save({ bestDistance: 4500, habitat: proj(1) }), k2 = V.cardsView(s2).find(c => c.id === 'arabian-sea');
   check(k2.nextKey === 'plane' && /HANGAR/.test(k2.next), `plane nearer than nature: the next line is the plane's: ${k2.nextKey} "${k2.next}"`);
   // Ready: every row done, the Ready line, and the ready card first.

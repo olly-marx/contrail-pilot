@@ -17,16 +17,16 @@ const opensName = id => regionOpensName(id);   // CROSSINGS V3: the region it op
 // sheet (#jCross, #jLater, #jMore, #jLap: tests/season2*.cjs read them), 'm' on MISSIONS (#mCross...), so the two copies in the page never share an id.
 const crossingsHTML = (s, p = 'j') => {
   if (!s.tutorialDone) return '';
-  const cards = cardsView(s, { unlock: S2_UNLOCK });
+  const cards = oneCardView(s, { unlock: S2_UNLOCK });   // (Oliver, 2026-11-20: several crossings on offer are ONE card; FLY A CROSSING asks where to)
   if (!cards.length) { const le = laterEra(s); if (le !== null) return `<div id="${p}Cross"><p class="small" id="${p}Later"><b>NEXT CROSSING</b><br>New crossings open in ${ERAS[le].name}. Keep flying to get there!</p></div>`; }
   if (!cards.length) return moreToCome(s) ? `<div id="${p}Cross"><p class="small" id="${p}More"><b>MORE TO COME!</b><br>You have flown every crossing there is for now. Faster planes and the far oceans are on their way.</p></div>` : '';
   const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const row = r => `<div class="xc-row${r.done ? ' done' : ''}" data-k="${r.key}"><span class="xc-l">${r.label}</span>`
     + (r.done ? '<span class="xc-tick">done <i aria-hidden="true">&#10003;</i></span>' : `<span class="xc-bar"><i style="width:${Math.round(r.frac * 100)}%"></i></span><span class="xc-v">${esc(r.value)}</span>`) + '</div>';
-  return `<div id="${p}Cross" class="xcards">${cards.map(c => `<div class="xcard${c.ready ? ' ready' : ''}" data-xc="${c.id}">`
+  return `<div id="${p}Cross" class="xcards">${cards.map(c => `<div class="xcard${c.ready ? ' ready' : ''}" data-xc="${c.id}"${c.multi ? ` data-ready="${c.choices.filter(x => x.ready).map(x => x.id).join(' ')}"` : ''}>`
     + `<div class="xc-head"><b class="xc-route"${c.lap ? ` id="${p}Lap"` : ''}>${esc(c.route)}</b><span class="xc-word">${esc(c.word)}</span></div><p class="xc-opens">${esc(c.opens)}</p>`
     + `<div class="xc-rows">${c.rows.map(row).join('')}</div><p class="xc-next">${esc(c.next)}</p>`
-    + (c.ready ? `<button class="btn go xc-fly" type="button" data-cross="${c.id}">FLY THE CROSSING</button>` : '') + '</div>').join('')}</div>`;
+    + (c.ready ? (c.multi ? '<button class="btn go xc-fly" type="button" data-pick="1">FLY A CROSSING</button>' : `<button class="btn go xc-fly" type="button" data-cross="${c.id}">FLY THE CROSSING</button>`) : '') + '</div>').join('')}</div>`;
 };
 // Season 2: which areas you fly in, and which are still locked (dim dots on the globe; crossings open them).
 const areaLine = s => { const open = regionsOpen(unlockedAreas(s)), shut = Object.keys(REGIONS).filter(r => !open.includes(r));   // CROSSINGS V3: regions, not areas
@@ -71,7 +71,7 @@ import { resultsView, NEXT_ROWS } from './resultscard.js';
 import { nextUp, leadOf } from './nextup.js';
 import { endView } from './crossingend.js';
 import { prizeLines } from './missionprize.js';
-import { crossingState, crossingById, momentDue, markTold, sheetText, endingBody, boxView, screenView, cardsView } from './crossingview.js';
+import { crossingState, crossingById, momentDue, markTold, sheetText, endingBody, boxView, screenView, cardsView, oneCardView, PICK_TITLE } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
@@ -222,6 +222,7 @@ export class UI {
     // Season 2: fly a crossing (the flight's rules read save.flyCrossing; GameScene clears it when the flight ends).
     document.querySelectorAll('#jCross [data-cross]').forEach(b => b.onclick = () => {
       sfx.tick(); const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.showCrossingSheet(cs); });   // (R-A: the sheet confirms before the flight)
+    document.querySelectorAll('#jCross [data-pick]').forEach(b => b.onclick = () => { sfx.tick(); this.pickCrossing(); });
     drawGlobe($('jGlobe'), here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: pick, lit: FEATURES.season2 ? linksFor(s) : null });
     $('tJourney').querySelectorAll('[data-way]').forEach(b => b.onclick = () => pick(b.dataset.way));
   }
@@ -508,7 +509,8 @@ export class UI {
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
       showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds${r.prizeC ? ` and +${r.prizeC} ice crystal${r.prizeC > 1 ? 's' : ''}` : ''}.` : ''}`, action }); });
     $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
-    document.querySelectorAll('#mCross [data-cross]').forEach(b => b.onclick = () => { const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); });   // (the CROSSINGS screen: the moment sheet the first time, GO TO the departure city from elsewhere)
+    document.querySelectorAll('#mCross [data-cross]').forEach(b => b.onclick = () => { const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); });
+    document.querySelectorAll('#mCross [data-pick]').forEach(b => b.onclick = () => { sfx.tick(); this.pickCrossing(); });   // (the CROSSINGS screen: the moment sheet the first time, GO TO the departure city from elsewhere)
     if ($('mDone')) $('mDone').onclick = () => { sfx.tick(); const n = v.done.names, shown = n.slice(0, 12); showSheet({ eyebrow: 'DONE', title: `${v.done.count} missions done`, body: shown.join('. ') + (n.length > shown.length ? `. And ${n.length - shown.length} more.` : '') }); };
     this.showOnly('missions');
     if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
@@ -734,6 +736,15 @@ export class UI {
     document.querySelectorAll('#sheet [data-easier]').forEach(b => b.onclick = () => { const e = (cs.easier || []).find(x => x.id === b.dataset.easier); if (e) this.openCrossings(e.state); });   // 'an easier one': open that crossing's own screen
   }
   flyCrossing(cs) { const s = this.save; s.flyCrossing = cs.crossing; writeSave(s); this.start(); }
+  // 'Where would you like to go?' (Oliver, 2026-11-20): one button per crossing on offer (the ready ones; one not ready yet says so and is off). A pick opens that crossing as a tap on its own card did
+  // (src/ui.js openCrossings: the confirm sheet the first time, GO TO its departure city from elsewhere, else CROSS TO).
+  pickCrossing({ fly = false } = {}) {   // fly: from the Crossing unlocked! card, whose old FLY THE CROSSING flew at once from anywhere
+    const s = this.save, card = oneCardView(s, { unlock: S2_UNLOCK })[0]; if (!card) return;
+    if (!card.multi) { const cs = crossingById(s, card.id, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); return; }
+    const esc = x => String(x == null ? '' : x).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    showSheet({ eyebrow: 'CROSSING', title: PICK_TITLE, ok: 'LATER', html: `<div class="xc-pick">${card.choices.map(c => `<button class="btn${c.ready ? ' go' : ''} xc-choice" type="button" data-pickx="${esc(c.id)}"${c.ready ? '' : ' disabled'}><b>${esc(c.route)}</b><span>${esc(c.opens)}${c.ready ? '' : ' (not yet)'}</span></button>`).join('')}</div>` });
+    document.querySelectorAll('#sheet [data-pickx]').forEach(b => b.onclick = () => { const cs = crossingById(s, b.dataset.pickx, { unlock: S2_UNLOCK }); if (cs) { markTold(s, cs.id); writeSave(s); if (fly) this.flyCrossing(cs); else this.openCrossings({ ...cs, told: true }); } });
+  }
   maybeCrossingSheet() {
     const s = this.save;
     if (!FEATURES.season2 || !isSeason2(s) || !s.tutorialDone) return;
@@ -746,7 +757,9 @@ export class UI {
     // The big moment (Oliver, 2026-11-18): the full-screen 'Crossing unlocked!' card, not the small sheet. It marks the crossing told like the sheet did.
     const first = !(s.crossed || []).length && !(s.crossingTold || []).length;
     markTold(s, cs.id); writeSave(s); this.refreshDots();
-    showCrossingUnlocked(cs, { save: s, first }).then(r => { if (r === 'go') this.flyCrossing(cs); });
+    const card = oneCardView(s, { unlock: S2_UNLOCK })[0], multi = !!(card && card.multi);   // several ready together: the card asks WHERE TO? and opens the pick sheet
+    if (multi) { for (const c of card.choices) if (c.ready) markTold(s, c.id); writeSave(s); }
+    showCrossingUnlocked(cs, { save: s, first, choices: multi ? card : null }).then(r => { if (r === 'go') (multi ? this.pickCrossing({ fly: true }) : this.flyCrossing(cs)); });
   }
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).
