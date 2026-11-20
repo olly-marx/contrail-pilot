@@ -110,3 +110,5 @@ group fly-here | src/flyhere.js src/wild.js src/aim.js style.css | flyheretap ex
 group more-chips | src/ui.js src/wild.js src/resultscard.js style.css tests/morechips.cjs | morechips
 group crossing-cards | src/crossingview.js src/crossings.js src/ui.js src/lessons.js src/tour.js src/railsubjects.js src/tips.js style.css | crosscard-ui maplesson
 group names-taken | src/online.js src/pilot.js | nametaken
+# phone apps (2026-11-20): the Capacitor shell; its proof is the apps workflow's iPhone and Android builds after each deploy, and the WebKit smoke job in tests.yml
+group phone-apps | native/* | NONE
