@@ -71,6 +71,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     await p.tap('#sheet [data-pickx="arabian-sea"]'); await p.waitForTimeout(500);
     let sh = await p.evaluate(() => (document.getElementById('sheet') || {}).innerText || '');
     check(/CROSS TO MUSCAT/.test(sh) && !(await p.evaluate(() => !!game.registry.get('save').flyCrossing)), `${tag} B: picking KARACHI > MUSCAT at KARACHI opens the CROSSINGS screen with CROSS TO MUSCAT: ${sh.replace(/\s+/g, ' ')}`);
+    if (await p.evaluate(() => !!game.registry.get('save').flyCrossing)) { fails.push(`${tag} B: the pick started a flight instead of opening the CROSSINGS screen (stopping this size)`); await p.close(); continue; }   // (fail by name, not by a timeout)
     if (sh) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); }
     pk = await pick();
     await p.tap('#sheet [data-pickx="singapore-perth"]'); await p.waitForTimeout(500);
