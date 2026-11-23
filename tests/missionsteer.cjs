@@ -15,7 +15,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     try {
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed);
-      await p.goto(URL); await ready(p);
+      await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; game.registry.get('ui').showTitle(); });   /* (2026-11-23) this needs an AREA LADDER mission open (retired by story missions, still in the code): the ladder is switched on here */
       await p.waitForFunction(() => { const b = document.getElementById('hubRoute'); return !!b && b.offsetParent !== null; }, null, { timeout: 15000 }).catch(() => null);
       const closeSheet = () => p.evaluate(() => { const e = document.getElementById('sheet'); if (e) e.remove(); });
       const chip = () => p.evaluate(() => document.getElementById('hubRoute').innerText.replace(/\s+/g, ' ').trim());
@@ -32,7 +32,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       await p.click('#dsExplore', { timeout: 4000 }).catch(() => check(false, 'B: no EXPLORE chip')); await p.waitForTimeout(500);
       const c1 = await chip(), mode = await p.evaluate(() => game.registry.get('ui').save.routeMode); log.push(`B chip: ${c1} ${mode}`);
       check(c1.startsWith(`Explore: ${exp.n}`) && mode === 'explore', `B: EXPLORE switches the chip to 'Explore: ${exp.n}' and saves the mode: ${c1} / ${mode}`);
-      await p.goto(URL); await ready(p); await p.waitForFunction(() => { const b = document.getElementById('hubRoute'); return !!b && b.offsetParent !== null; }, null, { timeout: 15000 }).catch(() => null);
+      await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; game.registry.get('ui').showTitle(); });   /* (2026-11-23) this needs an AREA LADDER mission open (retired by story missions, still in the code): the ladder is switched on here */ await p.waitForFunction(() => { const b = document.getElementById('hubRoute'); return !!b && b.offsetParent !== null; }, null, { timeout: 15000 }).catch(() => null);
       const c2 = await chip(); check(c2.startsWith(`Explore: ${exp.n}`), `B: EXPLORE persists across a reload: ${c2}`);
       // C
       await openChip(); const s1 = await sheetText(); check(/EXPLORING/.test(s1), `C: in EXPLORE the sheet says EXPLORING: ${s1}`);

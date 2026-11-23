@@ -24,7 +24,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       await p.addInitScript(x => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(x)); sessionStorage.setItem('fresh', '1'); } }, s);
       let stage = 'load';
       try {
-        await p.goto(URL); await ready(p); await p.waitForTimeout(800);
+        await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) this needs an AREA LADDER mission open (retired by story missions, still in the code): the ladder is switched on here */ await p.waitForTimeout(800);
         const go = id => p.evaluate(t => game.registry.get('ui').go(t), id).then(() => p.waitForTimeout(700));
         const chip = () => p.evaluate(() => document.getElementById('hubRoute').innerText.replace(/\s+/g, ' ').trim());
         const btn = () => p.evaluate(() => { const e = document.getElementById('wFlyHereBtn'); return e ? { hidden: e.hidden || e.offsetParent === null, text: e.textContent.trim() } : null; });

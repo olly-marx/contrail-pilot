@@ -13,6 +13,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     ui.tour.busy = true; ui.showTitle(); };
   for (const [W, H] of [[375, 667], [320, 568]]) {
     const tag = `${W}x${H}`, p = await U.openPage(b, W, H, URL);
+    await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) the positive control needs an AREA LADDER mission line (retired by story missions, still in the code): the ladder is switched on here */
     await p.evaluate(SETUP); await p.waitForTimeout(500);
     await p.evaluate(async () => { const V = await import('/src/crossingview.js'), cs = V.crossingById(game.registry.get('save'), 'mediterranean', { unlock: true }); game.registry.get('ui').flyCrossing(cs); });   // (what FLY THE CROSSING does after its sheet: crossingmoment taps it for real)
     await p.waitForFunction(() => { const g = game.scene.getScene('game'); return g && g.crossing && ['takeoff', 'playing'].includes(g.state); }, null, { timeout: 20000 }).catch(() => {});

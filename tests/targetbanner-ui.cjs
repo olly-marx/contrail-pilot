@@ -16,7 +16,7 @@ const seed = (aim, label) => ({ routeMode: label === 'C' ? 'explore' : 'mission'
         await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
         await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed(aim, label));
         try {
-          await p.goto(URL); await ready(p); await p.waitForTimeout(800);
+          await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) this needs an AREA LADDER mission open (retired by story missions, still in the code): the ladder is switched on here */ await p.waitForTimeout(800);
           await p.evaluate(async () => { (await import('/src/season.js')).SEASON.offer.biodiversity = 0; game.registry.get('ui').showTitle(); }); await p.waitForTimeout(500);
           await p.evaluate(() => game.registry.get('ui').start()); await started(p).catch(() => null);
           if (label === 'S') await p.evaluate(() => { game.scene.getScene('game').bannerNow = () => 'Flying to PARIS\nthen ROME'; });   // FORCED two-line banner (a real mission steer is x42-steer's: tests/missionsteer.cjs)

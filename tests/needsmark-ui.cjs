@@ -25,7 +25,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed);
       let stage = 'load';
       try {
-        await p.goto(URL); await ready(p); await p.waitForTimeout(800);
+        await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) this needs an AREA LADDER mission open (retired by story missions, still in the code): the ladder is switched on here */ await p.waitForTimeout(800);
         const rowSel = '[data-mrow="weurope:plant-tree"]';
         const open = async () => { await p.evaluate(() => game.registry.get('ui').go('missions')); await p.waitForTimeout(500); };
         const rowInfo = () => p.evaluate(sel => { const e = document.querySelector(sel); return e ? { name: e.querySelector('.rowc-name').textContent.trim(), how: e.querySelector('.m-how').textContent.trim() } : null; }, rowSel);

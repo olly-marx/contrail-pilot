@@ -47,10 +47,10 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   const resultsState = () => p.evaluate(() => ({ btn: document.getElementById('againBtn').textContent, coach: !document.getElementById('coach').hidden }));
 
   // 0a. Start choice: Africa, Johannesburg.
-  await p.goto(URL); await ready(p); await p.waitForTimeout(800);
+  await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) this needs an AREA LADDER mission open (retired by story missions, still in the code): the ladder is switched on here */ await p.waitForTimeout(800);
   await shot('start-choice');
   await p.click('#startChoice [data-area="africa"]'); await p.click('#startChoice [data-city="JOHANNESBURG"]'); await p.waitForTimeout(500);
-  await p.waitForTimeout(800); await ready(p);
+  await p.waitForTimeout(800); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) this needs an AREA LADDER mission open (retired by story missions, still in the code): the ladder is switched on here */
   await watch();
   const home = await scene(() => { const s = game.scene.getScene('game'); return { first: s.path && s.path[0], region: s.regionNow }; });
   check(home.first === 'JOHANNESBURG' && home.region === 'savanna', `the menu's backdrop is the chosen home, not London: ${JSON.stringify(home)}`);

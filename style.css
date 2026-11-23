@@ -1311,4 +1311,4 @@ h2.sub { margin-top: -4px; }
 .slock { flex: none; width: 8px; height: 9px; background: var(--ink); position: relative; margin-top: 4px; }
 .slock::before { content: ''; position: absolute; left: 1px; top: -5px; width: 2px; height: 4px; border: 2px solid var(--ink); border-bottom: 0; }
 .sbtns { display: flex; gap: 6px; justify-content: flex-end; }
-.sbtns .btn { font-size: 8px; padding: 6px 8px; }
+.sbtns .btn { font-size: 8px; padding: 6px 10px; min-height: 40px; min-width: 64px; }   /* tests/taptargets.cjs: at least 40 px */
