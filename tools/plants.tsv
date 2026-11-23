@@ -184,7 +184,6 @@ steady	src/missions2.js	s/streakBonus = save => (saving(save) ? /streakBonus = s
 missionlanes	src/ui.js	s/    if (FEATURES.season2 \&\& isSeason2(s)) setDaily(s, new Date/    if (false) setDaily(s, new Date/	MISSIONS does not set today's dailies
 stripclear	src/GameScene.js	s/    if (this.explaining \&\& !this.school) this.keepStripClear();/    if (false) this.keepStripClear();/	the strip is placed once only, at open
 stripclear	src/GameScene.js	s/    const low = !coach.classList.contains(.strip-low.);/    const low = true;/	the strip only ever moves down (flips to low again over a low plane)
-finance	src/finance.js	s/const N = FINANCE.levels\[lv\], keep/const N = null \&\& FINANCE.levels[lv], keep/	the desk does not save up for its next level
 fleet	src/fleet.js	s/export const CRYSTAL_HALF_FROM = 4;/export const CRYSTAL_HALF_FROM = 9;/	the 2030s crystal prices not halved
 tourready	src/tour.js	s/tap: true, ready: namesOpen }/tap: true }/	the PILOT step does not declare ready
 tourready	src/tour.js	s/      if (st.ready \&\& !st.ready()) { id = null; break; }/      if (false) { id = null; break; }/	run() ignores ready
@@ -883,10 +882,14 @@ rebalance	src/groves.js	s/const from = s.d ? s.points : Math.round(Math.min(1, s
 rebalance	src/sim/rules.js	s/GROW_DAYS.on ? { flown:/false ? { flown:/	the engine never banks game days
 rebalance	src/config.js	s/export const GROW_DAYS = { on: true,/export const GROW_DAYS = { on: false,/	growth in days ships switched off
 financemarket	src/finance.js	s/Math.min(buyAt(level, B, T) - 1, Math.round(T \* (1 - gapAt(level, B) \/ 2)))/Math.round(T * (1 + gapAt(level, B)))/	no spread: selling pays as much as buying costs
-financemarket	src/finance.js	s/(FUND.drift.at100 - FUND.drift.at0) \* Math.max/(FUND.drift.at100 - FUND.drift.at0) * 0 * Math.max/	the fund's drift ignores nature
+financemarket	src/finance.js	s/(FUND.bonus.at100 - FUND.bonus.at0) \* Math.max/(FUND.bonus.at100 - FUND.bonus.at0) * 0 * Math.max/	the fund's nature bonus ignores nature
 financemarket	src/finance.js	s/(save.flightSeconds || 0) \/ GAME_DAY)/Date.now() \/ 3600e3)/	the market runs on real time, not game time
+financemarket	src/finance.js	s/x = x \* (1 - FUND.pull) + FUND.sigma/x = x + FUND.sigma/	the fund's noise never returns to the trend (a random walk)
+financemarket	src/finance.js	s/fee: 0.02,/fee: 0,/	no fee: a quick in-and-out never loses
+finance	src/finance.js	s/Math.floor((save.seeds || 0) \/ rate(save))/Math.floor(((save.seeds || 0) - 24000) \/ rate(save))/	the desk keeps back a 24,000 reserve again
+finance	src/finance.js	s/maxBuy(save) ? null : `Need ${rate(save)} seeds for a crystal`/maxBuy(save) ? null : 'Buy after your next landing'/	the greyed buy button talks about landings again
 financemarket	src/finance.js	s/export const financeBio = save => worldBiodiversity(save);/export const financeBio = save => natureHealth(save);/	the exchange reads home nature, not the whole world
-financemarket	src/finance.js	s/drift: { at0: 0.0012, at100: 0.0035 }/drift: { at0: -0.002, at100: 0.0035 }/	the fund loses on average for a low-nature player
+financemarket	src/finance.js	s/trend: 0.0025,/trend: -0.001,/	the fund has no upward trend
 financemarket	src/finance.js	s/pull: 1 \/ 10, sigma: 0.075,/pull: 1 \/ 10, sigma: 0.03,/	the market barely fluctuates
 cityrow	src/sim/rules.js	s/return Math.max(0, Math.min(1, 1 - (d - STORMS.spacing) \/ CITY_FADE));/return 1;/	the buildings show all the time again
 cityrow	src/sim/rules.js	s/const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));/const d = Math.abs(ahead - this.distancePx);/	only the next city shows its buildings
@@ -987,3 +990,7 @@ waterways	src/nature.js	s/  if (isWaterProject(region, p.id)) return waterOpenHe
 waterways	src/sim/rules.js	s/wb\[region\]\[id\] = (wb\[region\]\[id\] || 0) + 1;/wb[region][id] = wb[region][id] || 0;/	a water drop never counts
 waterways	src/water.js	s/  riverbeach: 'shore', fishcount: 'water', dolphins: 'water', otterwatch: 'shore', platypusbank: 'shore',/  riverbeach: 'shore', fishcount: 'water', dolphins: 'water', otterwatch: 'shore',/	a water project is drawn on dry land in NATURE
 crossreward	src/missionprize.js	s/Easy: \[4800, 384\]/Easy: [2400, 192]/	crossings pay half of 3 stories
+newdot	src/fresh.js	s/if (financeOpen(save)) { add(.hangar\/bank., .bank:open.);/if (false) { add("hangar\/bank", "bank:open");/	the BANK tab never lights a NEW dot
+bank	src/hangar.js	s/...(financeOpen(s) ? \[\['bank', 'BANK'\]\] : \[\])/...(false ? [['bank', 'BANK']] : [])/	no BANK tab: the desk is unreachable
+bank	src/hangar.js	s/if (trade(s, this.finAmt(s, 'buy'))) done();/if (trade(s, 1)) done();/	BUY ignores the amount picked
+bank	src/finance.js	s/maxBuy(save) ? null : `Need ${rate(save)} seeds for a crystal`/maxBuy(save) ? null : 'Buy after your next landing'/	the greyed buy button talks about landings again

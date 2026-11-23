@@ -20,7 +20,7 @@ import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
 import { markSeen, hangarScope, dots, fresh } from './fresh.js';
 import { showSheet } from './sheet.js';
-import { FINANCE, FUND, financeLevel, financeOpen, financeBio, natureHealth, bondCrystals, rate, buyAt, sellRate, trueRate, gameDay, marketSeries, fundSeries, canTake, trade, canSell, sell, buyFinance, bonds, canLock, lockBond, payBonds, payDividend, fundOf, fundValue, canInvest, invest, cashOut, newsToday } from './finance.js';
+import { FINANCE, FUND, financeLevel, financeOpen, financeBio, natureHealth, bondCrystals, rate, buyAt, sellRate, trueRate, gameDay, marketSeries, fundSeries, maxBuy, maxSell, buyBlock, sellBlock, trade, sell, buyFinance, bonds, canLock, lockBond, payBonds, payDividend, fundOf, fundValue, cashValue, canInvest, investBlock, invest, cashOut, newsToday } from './finance.js';
 
 import { rowIcon } from './rowicons.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
@@ -48,7 +48,7 @@ export class FleetHangar {
     // R5 (UX plan C5): picture + caption (the range lives in the caption), the strip, THEN the sub-tabs directly under it, then the rows.
     // No era chips, no per-tab help sentence: the era is ONE line in PLANE (tap = a sheet), the plane paragraph is behind the (i).
     el.innerHTML = this.freePickHTML(s) + this.previewHTML(s) + this.previewCardHTML(s) + this.tabsHTML(s)
-      + (this.tab === 'plane' ? this.planeHTML(s) : this.groupHTML(s, this.tab === 'systems' ? SYSTEMS : GADGETS, this.tab === 'systems' ? 'system' : 'gadget'));
+      + (this.tab === 'bank' ? this.financeHTML(s) : this.tab === 'plane' ? this.planeHTML(s) : this.groupHTML(s, this.tab === 'systems' ? SYSTEMS : GADGETS, this.tab === 'systems' ? 'system' : 'gadget'));
     // Matured biodiversity bonds pay out when you come to the hangar (src/finance.js).
     const div = payDividend(s); if (div) { this.ui.persist(); this.ui.toast && this.ui.toast('NATURE DIVIDEND!', `+${div} crystals: your land here is healthy.`, 'good', 4); }
     const paid = payBonds(s); if (paid) { this.ui.persist(); this.ui.toast && this.ui.toast('BONDS PAID!', `${paid.seeds.toLocaleString('en-GB')} seeds back + ${paid.crystals} crystals: healthy nature pays interest.`, 'good', 4); }
@@ -57,14 +57,17 @@ export class FleetHangar {
     // M4: how far this plane + nature can get (src/capability.js), worked out in the background after a purchase.
     estimate(s, () => { this.ui.persist(); const c = $('hCap'); if (c) c.outerHTML = this.capHTML(s); });
     const bb = $('hBond'); if (bb) bb.onclick = () => { if (lockBond(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };
-    const tb = $('hTrade'); if (tb) tb.onclick = () => { if (trade(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };
-    const sb = $('hSell'); if (sb) sb.onclick = () => { if (sell(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };
-    const ib = $('hInvest'); if (ib) ib.onclick = () => { if (invest(s)) { this.ui.persist(); this.ui.sfx.coin(); this.render(); } };
-    const ob = $('hCashOut'); if (ob) ob.onclick = () => { const p = cashOut(s); if (p) { this.ui.persist(); this.ui.sfx.coin(); this.ui.toast && this.ui.toast('FUND CASHED OUT', `+${p.toLocaleString('en-GB')} seeds`, 'good', 3); this.render(); } };
+    // THE BANK (2026-11-23): amounts picked with - / + / MAX (data-fstep="buy:-1" etc.), then BUY / SELL / INVEST / TAKE OUT.
+    const done = () => { this.ui.persist(); this.ui.sfx.coin(); this.render(); };
+    const tb = $('hTrade'); if (tb) tb.onclick = () => { if (trade(s, this.finAmt(s, 'buy'))) done(); };
+    const sb = $('hSell'); if (sb) sb.onclick = () => { if (sell(s, this.finAmt(s, 'sell'))) done(); };
+    const ib = $('hInvest'); if (ib) ib.onclick = () => { if (invest(s, this.finAmt(s, 'fund'))) done(); };
+    el.querySelectorAll('[data-fstep]').forEach(b => b.onclick = () => { const [k, d] = b.dataset.fstep.split(':'); this.finStep(s, k, d); this.ui.sfx.tick(); this.render(); });
+    const ob = $('hCashOut'); if (ob) ob.onclick = () => { const p = cashOut(s); if (p) { this.ui.persist(); this.ui.sfx.coin(); this.ui.toast && this.ui.toast('MONEY TAKEN OUT', `+${p.toLocaleString('en-GB')} seeds`, 'good', 3); this.render(); } };
     const fb2 = $('hFinBuy'); if (fb2) fb2.onclick = () => { if (buyFinance(s)) { this.ui.persist(); this.ui.sfx.buy(); this.render(); requestAnimationFrame(() => animateBars($('hFleet'))); } else this.ui.sfx.nope(); };
     el.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { this.tab = b.dataset.ftab; this.ui.sfx.tick(); this.render(); });
-    // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS (src/swipe.js).
-    const goTab = d => { const tabs = ['plane', 'systems', 'gadgets'], i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.tick(); this.render(); };
+    // Swipe sideways to change tab (0.11.0): PLANE <-> SYSTEMS <-> GADGETS <-> BANK (src/swipe.js).
+    const goTab = d => { const tabs = this.tabList(s).map(t => t[0]), i = tabs.indexOf(this.tab) + d; if (i < 0 || i >= tabs.length) return; this.tab = tabs[i]; this.ui.sfx.tick(); this.render(); };
     onSwipe($('hangar'), { next: () => goTab(1), prev: () => goTab(-1) });   // the WHOLE screen (the list is short now: #hFleet alone left a dead area below it on a tall phone)
     const era = $('hNextPlane'); if (era) era.onclick = () => this.eraSheet(s);
     const pinfo = el.querySelector('[data-planeinfo]'); if (pinfo) pinfo.onclick = () => this.planeSheet(s);
@@ -205,46 +208,63 @@ export class FleetHangar {
     return km ? `<span id="hCap" class="hcap" title="How far your plane and nature can reach">~${Math.round(km / 1000)}k km</span>`
       : `<span id="hCap" class="hcap working" title="Working out how far your plane can go">${estimating() ? '~ km' : ''}<i class="dots"></i></span>`;
   }
-  // NATURE FINANCE (src/finance.js), from the 2010s: the desk's level, today's rate from your nature's health (a bar: fewer
-  // seeds a crystal is better), the next level's rate previewed, and the TRADE button (once a landing, above the reserve).
+  // THE BANK tab (src/finance.js; rework 2026-11-23): the wallet, the EXCHANGE (graph, rates, an amount, BUY / SELL), the NATURE
+  // FUND (graph with its trend, value and gain, an amount, INVEST / TAKE OUT), bonds, and the desk's next level. A greyed button
+  // says WHY (buyBlock / sellBlock / investBlock), never 'after your next landing'.
+  // Amounts: this.fin = { buy, sell, fund }, clamped to what is possible now; the steps are 1 / 5 / 10 crystals and 100 / 500 / 1,000 seeds.
+  finMax(s, k) { return k === 'buy' ? maxBuy(s) : k === 'sell' ? maxSell(s) : canInvest(s); }
+  finAmt(s, k) {
+    this.fin = this.fin || {}; const max = this.finMax(s, k), dflt = k === 'fund' ? 1000 : 10;
+    return Math.max(max ? 1 : 0, Math.min(max, this.fin[k] ?? dflt));
+  }
+  finStep(s, k, d) {
+    this.fin = this.fin || {}; const now = this.finAmt(s, k), max = this.finMax(s, k), big = k === 'fund' ? (now >= 1000 ? 1000 : 100) : (now >= 10 ? 5 : 1);
+    this.fin[k] = d === 'max' ? max : Math.max(1, Math.min(max, d === '+' ? now + big : now - big));
+  }
+  stepperHTML(s, k, unit) {
+    const n = this.finAmt(s, k), max = this.finMax(s, k);
+    return `<div class="fin-amt"><button class="btn" data-fstep="${k}:-" type="button" ${n > 1 ? '' : 'disabled'} aria-label="Less">-</button><b>${n.toLocaleString('en-GB')}</b> ${unit}<button class="btn" data-fstep="${k}:+" type="button" ${n < max ? '' : 'disabled'} aria-label="More">+</button><button class="btn fin-max" data-fstep="${k}:max" type="button" ${n < max ? '' : 'disabled'}>MAX</button></div>`;
+  }
   financeHTML(s) {
     if (!financeOpen(s)) return '';
-    const lv = financeLevel(s), B = financeBio(s), home = natureHealth(s), next = FINANCE.levels[lv], L = FINANCE.levels[lv - 1];
+    const lv = financeLevel(s), B = financeBio(s), next = FINANCE.levels[lv], L = FINANCE.levels[lv - 1];
     const T = trueRate(gameDay(s)), bar = lvTo => statBarsHTML([{ label: 'You pay a crystal', now: lv ? rate(s) : buyAt(1, B, T), then: buyAt(lvTo, B, T), min: 0, max: 50, better: 'lower' }]);
-    const n = canTake(s), m = canSell(s), i = k => `<button class="btn hp-info" data-fininfo="${k}" type="button" aria-label="How it works">i</button>`;
-    // (screenshot, 2026-10-28: a level that adds bonds / the dividend does not change the rate: say what it adds, no 0% bar)
+    const i = k => `<button class="btn hp-info" data-fininfo="${k}" type="button" aria-label="How it works">i</button>`;
     const adds = next && (next.dividend && !(L && L.dividend) ? 'Adds the nature dividend.' : next.bond && !(L && L.bond) ? 'Adds bonds.' : '');
-    // 2026-11-13 (the user: 'reducing text and making the screen simpler with small info buttons'): numbers and buttons on
-    // the desk, the explanations behind the (i) buttons (financeSheet).
-    return `<div class="line fline finance"><div class="fin-head"><div class="name">Natural capital ${i('market')}</div><div class="small">World nature ${B} / 100</div></div>
+    const nb = this.finAmt(s, 'buy'), ns = this.finAmt(s, 'sell'), bb = buyBlock(s), sbk = sellBlock(s);
+    const nextLine = next ? `<div class="next"><span>${L ? 'Next' : 'Open the desk'}: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost.toLocaleString('en-GB')}<i class="seedicon"></i></button></div>${adds ? `<p class="small">${adds}</p>` : L ? bar(lv + 1) : ''}` : '';
+    return `<div class="line fline finance"><div class="fin-head"><div class="name">Exchange ${i('market')}</div><div class="small">World nature ${B} / 100</div></div>
       <p class="fin-wallet">You have <b>${(s.seeds || 0).toLocaleString('en-GB')}</b><i class="seedicon"></i> <b>${(s.crystals || 0).toLocaleString('en-GB')}</b><i class="crysicon"></i></p>
       ${L ? `${this.chartSVG(marketSeries(s), [['pay', 'pay'], ['true', 'market'], ['get', 'get']])}
         <p class="small fin-rates">Pay <b>${rate(s)}</b> · get <b>${sellRate(s)}</b> seeds a crystal</p>
-        <button class="btn ${n ? 'go' : ''}" id="hTrade" type="button" ${n ? '' : 'disabled'}>${n ? `BUY ${n} crystals: ${n * rate(s)} seeds` : 'Buy after your next landing'}</button>
-        <button class="btn ${m ? 'go' : ''}" id="hSell" type="button" ${m ? '' : 'disabled'}>${m ? `SELL ${m} crystals: +${m * sellRate(s)} seeds` : 'Sell after your next landing'}</button>
-        ${this.fundHTML(s, L, i)}` : '<p class="small">Trade seeds and crystals; invest in nature.</p>'}
-      ${L && L.bond ? `<p class="small">Bonds ${i('bonds')}: ${bonds(s).map(b => `${Math.max(0, L.bond.landings - ((s.landings || 0) - b.at))} landings left`).join(', ') || 'none yet'}</p>
-        <button class="btn ${canLock(s) ? 'go' : ''}" id="hBond" type="button" ${canLock(s) ? '' : 'disabled'}>LOCK ${L.bond.lock.toLocaleString('en-GB')} seeds for ${L.bond.landings} landings</button>` : ''}
-      ${next ? `<div class="next"><span>Next: <b>${next.name}</b></span><button class="btn ${s.seeds >= next.cost ? 'go' : ''}" id="hFinBuy" type="button" ${s.seeds >= next.cost ? '' : 'disabled'}>${next.cost}<i class="seedicon"></i></button></div>${adds ? `<p class="small">${adds}</p>` : bar(lv + 1)}` : ''}</div>`;
+        <div class="fin-trade"><div>${this.stepperHTML(s, 'buy', 'to buy')}<button class="btn ${bb ? '' : 'go'}" id="hTrade" type="button" ${bb ? 'disabled' : ''}>${bb || `BUY ${nb}<i class="crysicon"></i> for ${(nb * rate(s)).toLocaleString('en-GB')}`}</button></div>
+        <div>${this.stepperHTML(s, 'sell', 'to sell')}<button class="btn ${sbk ? '' : 'go'}" id="hSell" type="button" ${sbk ? 'disabled' : ''}>${sbk || `SELL ${ns}<i class="crysicon"></i> for ${(ns * sellRate(s)).toLocaleString('en-GB')}`}</button></div></div>` : '<p class="small">Swap seeds and crystals, and grow seeds in the nature fund.</p>'}
+      ${L ? '' : nextLine}</div>
+      ${L ? this.fundHTML(s, L, i) : ''}
+      ${L && L.bond ? `<div class="line fline finance"><p class="small">Bonds ${i('bonds')}: ${bonds(s).map(b => `${Math.max(0, L.bond.landings - ((s.landings || 0) - b.at))} landings left`).join(', ') || 'none yet'}</p>
+        <button class="btn ${canLock(s) ? 'go' : ''}" id="hBond" type="button" ${canLock(s) ? '' : 'disabled'}>LOCK ${L.bond.lock.toLocaleString('en-GB')} seeds for ${L.bond.landings} landings</button></div>` : ''}
+      ${L && next ? `<div class="line fline finance">${nextLine}</div>` : ''}`;
   }
 
-  // THE NATURE FUND (src/finance.js, 2026-11-13): value and change, its graph, today's story, INVEST / CASH OUT.
+  // THE NATURE FUND (src/finance.js, rework 2026-11-23): value and gain on what you put in, the graph with its dashed trend,
+  // today's story, an amount, INVEST and TAKE OUT (the 2% fee shown in the button's number).
   fundHTML(s, L, i) {
-    const f = fundOf(s), v = fundValue(s), k = canInvest(s), news = newsToday(s);
-    const pct = f && f.seeds ? Math.round(1000 * (v / f.seeds - 1)) / 10 : 0;
-    return `<div class="fin-sub"><span class="name">Nature fund ${i('fund')}</span><span class="small">${f ? `<b>${v.toLocaleString('en-GB')}</b> seeds <span class="${pct >= 0 ? 'fin-up' : 'fin-down'}">${pct >= 0 ? '+' : ''}${pct}%</span>` : `empty (up to ${L.fund.toLocaleString('en-GB')})`}</span></div>
-      ${this.chartSVG(fundSeries(s), [['price', 'fund']], f && f.day)}
+    const f = fundOf(s), v = fundValue(s), nf = this.finAmt(s, 'fund'), blk = investBlock(s), news = newsToday(s);
+    const pct = f && f.paid ? Math.round(1000 * (v / f.paid - 1)) / 10 : 0;
+    return `<div class="line fline finance"><div class="fin-sub"><span class="name">Nature fund ${i('fund')}</span><span class="small">${f ? `<b>${v.toLocaleString('en-GB')}</b><i class="seedicon"></i> <span class="${pct >= 0 ? 'fin-up' : 'fin-down'}">${pct >= 0 ? '+' : ''}${pct}%</span>` : 'empty'}</span></div>
+      ${this.chartSVG(fundSeries(s), [['price', 'fund'], ['trend', 'trend']], f && f.day)}
       ${news ? `<p class="small fin-news ${news.up ? 'up' : 'down'}">${news.text} (${news.up ? '+' : ''}${Math.round(1000 * news.size) / 10}%)</p>` : ''}
-      <button class="btn ${k ? 'go' : ''}" id="hInvest" type="button" ${k ? '' : 'disabled'}>${k ? `INVEST ${k}` : 'Fund full'}</button>
-      ${f ? `<button class="btn" id="hCashOut" type="button">CASH OUT ${Math.floor(v * (1 - FUND.fee)).toLocaleString('en-GB')}</button>` : ''}`;
+      ${this.stepperHTML(s, 'fund', 'seeds')}
+      <div class="fin-trade"><button class="btn ${blk ? '' : 'go'}" id="hInvest" type="button" ${blk ? 'disabled' : ''}>${blk || `INVEST ${nf.toLocaleString('en-GB')}`}</button>
+      ${f ? `<button class="btn" id="hCashOut" type="button">TAKE OUT ${cashValue(s).toLocaleString('en-GB')}</button>` : ''}</div>
+      <p class="small fin-note">Taking out costs ${Math.round(100 * FUND.fee)}%. Holds up to ${L.fund.toLocaleString('en-GB')}.</p></div>`;
   }
   // The (i) sheets of the finance desk: the explanations that used to sit on the desk.
   financeSheet(s, k) {
     const L = FINANCE.levels[financeLevel(s) - 1], B = financeBio(s);
     const body = {
-      market: `Crystals have one market price, the same for every pilot. It moves a little every day and night you fly. You always pay more than the market and get less. The gap is set by the WHOLE WORLD's nature (now ${B} / 100): the greener the world, the smaller the gap. One trade a landing. You always keep ${L ? L.reserve.toLocaleString('en-GB') : 'some'} seeds.`,
-      fund: `Put seeds in (up to ${L ? L.fund.toLocaleString('en-GB') : 'a limit'}). Each day and night you fly, the fund goes up or down a little; news days move it more. Over many flights it grows, faster when the world's nature is healthier. Cashing out costs ${Math.round(100 * FUND.fee)}%. The dashed line on the graph is the day you put seeds in.`,
-      bonds: `Lock ${L && L.bond ? L.bond.lock.toLocaleString('en-GB') : 'some'} seeds for ${L && L.bond ? L.bond.landings : 'a few'} landings. You get them back with about ${L && L.bond ? bondCrystals(s, L.bond) : 'some'} crystals: healthy nature in your areas pays interest.`,
+      market: `Crystals have one market price, the same for every pilot. It moves a little every day and night you fly. You always pay more than the market and get less. The gap is set by the WHOLE WORLD's nature (now ${B} / 100): the greener the world, the smaller the gap, and each desk level trims it. Trade as much as you like, whenever you like.`,
+      fund: `Put seeds in (up to ${L ? L.fund.toLocaleString('en-GB') : 'a limit'}). The fund's price is the same for every pilot: it climbs along the dashed trend line, wobbling above and below it as you fly, and news days give it a jolt. Your seeds also grow a little faster when the world's nature is healthier. Taking money out costs ${Math.round(100 * FUND.fee)}%, so leave it in for a while: after ten flights it is almost always ahead, but taking it out soon, or in a dip, can lose seeds. The dotted line is the day you last put seeds in.`,
     }[k];
     if (body) showSheet({ eyebrow: 'NATURAL CAPITAL', title: { market: 'Buying and selling crystals', fund: 'The nature fund', bonds: 'Bonds' }[k], body });
   }
@@ -258,7 +278,7 @@ export class FleetHangar {
     const x = i => rows.length > 1 ? L0 + (W - L0 - 6) * i / (rows.length - 1) : (W + L0) / 2, y = v => 4 + (H - B0 - 8) * (1 - (v - lo) / (hi - lo));
     const path = k => rows.map((r, i) => `${x(i).toFixed(1)},${y(r[k]).toFixed(1)}`).join(' '), last = rows.length - 1;
     const mi = markDay == null ? -1 : rows.findIndex(r => r.d === markDay), fmt = v => Math.round(v);
-    const names = { pay: 'You pay', market: 'Market', get: 'You get', fund: 'Fund' };
+    const names = { pay: 'You pay', market: 'Market', get: 'You get', fund: 'Fund', trend: 'Trend' };
     const axes = `<line class="fc-axis" x1="${L0}" y1="2" x2="${L0}" y2="${H - B0}"/><line class="fc-axis" x1="${L0}" y1="${H - B0}" x2="${W - 2}" y2="${H - B0}"/>
       <text class="fc-tick" x="${L0 - 3}" y="${y(hi - pad) + 3}" text-anchor="end">${fmt(hi - pad)}</text><text class="fc-tick" x="${L0 - 3}" y="${y(lo + pad) + 3}" text-anchor="end">${fmt(lo + pad)}</text>
       <text class="fc-tick" x="${L0}" y="${H - 2}">${rows.length} days ago</text><text class="fc-tick" x="${W - 2}" y="${H - 2}" text-anchor="end">now</text>`;
@@ -318,10 +338,13 @@ export class FleetHangar {
     return `<div class="fpreview ${owned ? '' : 'locked'}"><div class="fpic"><img src="${pl.portrait}" alt="${pl.name}" data-plane="${id}">${ghosts}</div><div class="fpcap"><b>${pl.name}</b><span>${tag}</span>${f.plane === id ? this.capHTML(s) : ''}</div></div>`;
   }
 
+  // The hangar's sub-tabs; BANK (the finance desk) joins in the 2010s (2026-11-23: it used to sit under the SYSTEMS rows).
+  tabList(s) { return [['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS'], ...(financeOpen(s) ? [['bank', 'BANK']] : [])]; }
   // The sub-tabs (>= 40 px each), a dot on the ones with something new that are NOT the one showing (src/fresh.js).
   tabsHTML(s) {
     const d = dots(s, this.ui.freshOpts());
-    return `<div class="ftabs">${[['plane', 'PLANE'], ['systems', 'SYSTEMS'], ['gadgets', 'GADGETS']].map(([k, n]) =>
+    if (this.tab === 'bank' && !financeOpen(s)) this.tab = 'plane';
+    return `<div class="ftabs">${this.tabList(s).map(([k, n]) =>
       `<button class="btn ftab ${this.tab === k ? 'on' : ''}" data-ftab="${k}" type="button">${n}${k !== this.tab && d[hangarScope(k)] ? '<i class="dot"></i>' : ''}</button>`).join('')}</div>`;
   }
 
@@ -366,7 +389,7 @@ export class FleetHangar {
   groupHTML(s, list, kind) {
     const f = fleetOf(s), owned = kind === 'system' ? f.systems : f.gadgets, now = eraProgress(s).index;
     return list.map(g => this.lineHTML(s, { kind, id: g.id, name: g.name, levels: g.levels, have: owned[g.id] || 0, eraOf: levelEra, now })).join('')
-      + (kind === 'system' ? this.financeHTML(s) : '');
+      ;
   }
 
   // The (i) card: what the line is, every level (era, price, what it does, how sure we are of the

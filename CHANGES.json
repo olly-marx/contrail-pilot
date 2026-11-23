@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-23-bank",
+    "version": "0.74.0",
+    "date": "2026-11-23",
+    "level": "minor",
+    "notes": [
+      "The finance desk has its own BANK tab in the hangar, from the 2010s.",
+      "Buy and sell any number of crystals, whenever you like. Opening the desk costs 1,500 seeds.",
+      "The nature fund climbs over time, with ups and downs along the way. Leave your seeds in: taking them out soon, or in a dip, can lose some.",
+      "Greyed-out buttons now say why."
+    ]
+  },
+  {
     "id": "2026-11-23-stories-balance-waterways",
     "version": "0.73.0",
     "date": "2026-11-23",

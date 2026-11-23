@@ -3,30 +3,31 @@
 // currency (seeds). The exchange desk trades both ways at the MARKET's true rate (it moves each game day, the same for
 // everyone) plus a GAP set by the WHOLE WORLD's biodiversity: a bare world pays badly, a healthy one well (2026-11-13; the
 // market section below). Opens in the 2010s (era 3). The sim measures it before release.
-//   you keep  = the reserve; at most `cap` crystals per landing.
 // Level 3 (bonds) opens in the 2030s, level 4 (the dividend) in the far future.
 import { AREAS } from './areas.js';
 import { city } from './network.js';
 import { biodiversity, worldBiodiversity } from './nature.js';
 import { eraProgress } from './eras.js';
-import { DAYNIGHT, scaleSeeds, PRICE_SCALE } from './config.js';
+import { DAYNIGHT, PRICE_SCALE } from './config.js';
 
+// 2026-11-23 REWORK (Oliver: 'it always says buy after next flight ... impossible to actually invest'). Measured: the 0.73.0 price
+// scale had made the desk cost 9,000 seeds and keep back a 24,000 reserve, while the progression sim's era-3 pilot holds 100 to
+// 3,900 seeds: nobody could trade or invest. Now: NO reserve, NO one-trade-a-landing rule (the buy/sell gap is the cost of
+// trading), any amount up to what you can afford, and the desk's own prices set here in today's seeds (NOT through scaleSeeds;
+// an era-3 flight earns ~350 seeds, so level 1 is about four flights). `fund` = the most the nature fund holds at that level.
 export const FINANCE = {
   era: 3,
   levels: [
-    { name: 'Natural capital account', fund: 2000, cost: 1500, reserve: 4000, cap: 10 },
-    { name: 'Nature-positive rating', fund: 3000, cost: 3000, reserve: 3500, cap: 15 },
-    // The 2030s: BONDS. Lock `lock` seeds for `landings` landings; get them back plus floor(B / perB) crystals, B read at
-    // PAYOUT (nature pays interest only if you keep it healthy). At most `most` bonds at once; the reserve still holds.
-    { name: 'Biodiversity bonds', fund: 4000, cost: 5000, era: 4, reserve: 3500, cap: 15, bond: { lock: 1000, landings: 10, perB: 4, most: 3 } },
-    // The far future: the NATURE DIVIDEND. Each landing in an area whose OWN biodiversity is >= minBio pays perLanding crystal(s),
+    { name: 'Natural capital account', cost: 1500, fund: 5000 },
+    { name: 'Nature-positive rating', cost: 3000, fund: 8000 },
+    // The 2030s: BONDS. Lock `lock` seeds for `landings` landings; get them back plus bondCrystals() crystals, nature read at
+    // PAYOUT (nature pays interest only if you keep it healthy). At most `most` bonds at once.
+    { name: 'Biodiversity bonds', cost: 5000, fund: 12000, era: 4, bond: { lock: 3000, landings: 10, perB: 4, most: 3 } },
+    // The far future: the NATURE DIVIDEND. Each landing in an area whose OWN biodiversity is >= minBio pays perLanding crystals,
     // collected on the next hangar visit (at most `cap` a visit). Bonds stay.
-    { name: 'Nature dividend', fund: 5000, cost: 8000, era: 5, reserve: 3000, cap: 20, bond: { lock: 1000, landings: 10, perB: 4, most: 3 }, dividend: { minBio: 60, perLanding: 1, cap: 3 } },
+    { name: 'Nature dividend', cost: 8000, fund: 20000, era: 5, bond: { lock: 3000, landings: 10, perB: 4, most: 3 }, dividend: { minBio: 60, perLanding: PRICE_SCALE.crystals, cap: 3 * PRICE_SCALE.crystals } },
   ],
 };
-// PRICE SCALE (0.73.0, src/config.js): the desk's seed amounts (cost, fund, reserve, bond lock) x8; the dividend's crystals x7 (bond interest: bondCrystals below).
-for (const L of FINANCE.levels) { for (const k of ['cost', 'fund', 'reserve']) L[k] = scaleSeeds(L[k]); if (L.bond) L.bond = { ...L.bond, lock: scaleSeeds(L.bond.lock) };
-  if (L.dividend) L.dividend = { ...L.dividend, perLanding: L.dividend.perLanding * PRICE_SCALE.crystals, cap: L.dividend.cap * PRICE_SCALE.crystals }; }
 export const bondCrystals = (save, b) => Math.floor(natureHealth(save) * PRICE_SCALE.crystals / b.perB);   // a bond's interest in crystals (x7 since 0.73.0)
 export const financeLevel = save => Math.min(FINANCE.levels.length, (save.finance && save.finance.level) || 0);
 export const financeOpen = save => eraProgress(save).index >= FINANCE.era;
@@ -81,29 +82,22 @@ export function marketSeries(save, n = 20, level = Math.max(1, financeLevel(save
   const d1 = gameDay(save), d0 = Math.max(0, d1 - n + 1), B = financeBio(save);
   return trueRates(d0, d1).map((T, i) => ({ d: d0 + i, true: T, pay: buyAt(level, B, T), get: sellAt(level, B, T) }));
 }
-// How many crystals you could take now (0 when the desk is shut, you are under the reserve, or you traded this landing).
-export function canTake(save) {
-  const lv = financeLevel(save), L = FINANCE.levels[lv - 1];
-  if (!L || !financeOpen(save) || (save.finance.tradedAt ?? -1) === (save.landings || 0)) return 0;
-  // Save up for the next desk level (sim chat + Coordinator, 2026-10-29): while it exists and its era is open, keep its price
-  // too, so the player reaches bonds and the dividend instead of trading down to the reserve every landing.
-  const N = FINANCE.levels[lv], keep = N && eraProgress(save).index >= (N.era ?? FINANCE.era) ? Math.max(L.reserve, N.cost) : L.reserve;
-  return Math.max(0, Math.min(L.cap, Math.floor(((save.seeds || 0) - keep) / rate(save))));
-}
-export function trade(save) {
-  const n = canTake(save); if (!n) return 0;
-  save.seeds -= n * rate(save); save.crystals = (save.crystals || 0) + n; save.finance.tradedAt = save.landings || 0;
+// TRADING (2026-11-23): any amount, any time the desk is open. maxBuy = crystals your seeds pay for; maxSell = the crystals you hold.
+const deskOpen = save => financeLevel(save) > 0 && financeOpen(save);
+export const maxBuy = save => deskOpen(save) ? Math.max(0, Math.floor((save.seeds || 0) / rate(save))) : 0;
+export const maxSell = save => deskOpen(save) ? Math.max(0, Math.floor(save.crystals || 0)) : 0;
+// Why you cannot buy or sell right now, in words for the greyed button (null when you can).
+export function buyBlock(save) { return !deskOpen(save) ? 'Open the desk first' : maxBuy(save) ? null : `Need ${rate(save)} seeds for a crystal`; }
+export function sellBlock(save) { return !deskOpen(save) ? 'Open the desk first' : maxSell(save) ? null : 'No crystals to sell'; }
+// Buy / sell n crystals (clamped to what you can); returns how many moved.
+export function trade(save, n = 1) {
+  n = Math.min(Math.floor(n), maxBuy(save)); if (!(n > 0)) return 0;
+  save.seeds -= n * rate(save); save.crystals = (save.crystals || 0) + n;
   return n;
 }
-// Crystals you could sell now: up to the level's cap, one trade (either way) a landing.
-export function canSell(save) {
-  const L = FINANCE.levels[financeLevel(save) - 1];
-  if (!L || !financeOpen(save) || (save.finance.tradedAt ?? -1) === (save.landings || 0)) return 0;
-  return Math.max(0, Math.min(L.cap, Math.floor(save.crystals || 0)));
-}
-export function sell(save) {
-  const n = canSell(save); if (!n) return 0;
-  save.crystals -= n; save.seeds = (save.seeds || 0) + n * sellRate(save); save.finance.tradedAt = save.landings || 0;
+export function sell(save, n = 1) {
+  n = Math.min(Math.floor(n), maxSell(save)); if (!(n > 0)) return 0;
+  save.crystals -= n; save.seeds = (save.seeds || 0) + n * sellRate(save);
   return n;
 }
 export function buyFinance(save) {
@@ -117,8 +111,8 @@ export function buyFinance(save) {
 const bondCfg = save => { const L = FINANCE.levels[financeLevel(save) - 1]; return L && L.bond; };
 export const bonds = save => (save.finance && save.finance.bonds) || [];
 export function canLock(save) {
-  const b = bondCfg(save), L = FINANCE.levels[financeLevel(save) - 1];
-  return !!b && bonds(save).length < b.most && (save.seeds || 0) - b.lock >= L.reserve;
+  const b = bondCfg(save);
+  return !!b && bonds(save).length < b.most && (save.seeds || 0) >= b.lock;
 }
 export function lockBond(save) {
   if (!canLock(save)) return false;
@@ -148,21 +142,21 @@ export function payDividend(save) {
   const n = Math.min(d.cap, since * d.perLanding); save.crystals = (save.crystals || 0) + n; return n;
 }
 
-// ---------- the nature fund (every level, the 2010s on; the user, 2026-11-13) ----------
-// Put seeds in; they grow or shrink each GAME DAY you fly. Each game day d has a fixed random step (a hash of d), and
-//   value = paid in x exp( sum over the game days held of (drift + sigma x step(d)) + the news jumps ),
-// with the drift set by the WORLD's biodiversity when you cash out. Clamped to [clamp]. GAME VALUES, est.: target (sim
-// thread, pending): a full fund earns on average about a fifth of a flight's seeds per flight.
+// ---------- the nature fund (2026-11-23 rework; Oliver: 'it should trend more upwards with some noise that make badly timed
+// withdrawals lose money') ----------
+// ONE PRICE for everyone, like the market: price(d) = 100 x exp(trend x d + x_d), where x_d is NOISE AROUND THE TREND, pulled back
+// toward it each game day (an Ornstein-Uhlenbeck walk) and kicked by news days. You buy UNITS at today's price and sell them at the
+// price on the day you take them out, less the fee. Because the noise always returns to the trend, a long hold almost always gains
+// and a short one, or one taken out in a dip, often loses. On top, your holding earns a NATURE BONUS a game day set by the
+// world's biodiversity (B now, folded in whenever you put in or take out).
+// Simmed 2026-11-23 (3 game days a flight, 2% fee): held 1 flight loses 65% of the time, 5 flights 23%, 10 flights 3%, 20 never.
 export const FUND = {
-  // Sized from the sim's LEARNING pilot (research/finbio-learn-report.txt, 2026-11-13; it supersedes the fixed-skill run):
-  // era 3: flights 90-95 s = ~3 game days, ~49.5 seeds a flight, world B 23.5 (p10 8, p90 28). Target: a full level-1 fund
-  // (2,000) drifts ~10 seeds a flight there (about a fifth of a flight); bigger funds at higher levels earn more.
-  sigma: 0.006,                  // a game day's spread
-  drift: { at0: 0.0012, at100: 0.0035 },   // the mean move a game day at world biodiversity 0 and 100: always above zero
-  news: { chance: 1 / 8, size: 0.015 },   // one game day in eight carries a +/-1.5% story
-  fee: 0.01,                     // 1% taken when you cash out
-  step: 500 * PRICE_SCALE.seeds,  // seeds a tap puts in (500 x the 0.73.0 PRICE SCALE)
-  clamp: [0.5, 3],
+  trend: 0.0025,                 // the shared price's growth a game day (~0.75% a flight)
+  bonus: { at0: 0, at100: 0.002 },   // your holding's extra growth a game day at world biodiversity 0 and 100
+  pull: 0.12, sigma: 0.012,      // how fast the noise returns to the trend, and a game day's spread
+  news: { chance: 1 / 8, size: 0.03 },   // one game day in eight carries a +/-3% story (it fades like any noise)
+  fee: 0.02,                     // 2% taken when you take money out
+  warm: 120,                     // game days of noise worked out before the first one asked for
 };
 const SALT_FUND = 0, SALT_NEWS = 0x5bd1e995;
 export const stepAt = d => unit(d, SALT_FUND);
@@ -175,45 +169,51 @@ export function newsOn(d) {
   return { up, text, size: up ? FUND.news.size : -FUND.news.size };
 }
 export const newsToday = save => newsOn(gameDay(save));
-export const driftAt = B => FUND.drift.at0 + (FUND.drift.at100 - FUND.drift.at0) * Math.max(0, Math.min(100, B)) / 100;
-// The fund's own log-price on game day d relative to day d0 (no drift: the drift is yours, set by nature).
-function moveLog(d0, d1, B) {
-  let log = 0; const mu = driftAt(B);
-  for (let d = d0 + 1; d <= d1; d++) { log += mu + FUND.sigma * stepAt(d); const n = newsOn(d); if (n) log += Math.log(1 + n.size); }
-  return log;
-}
-// The growth factor from game day d0 to d1 at world biodiversity B (1 when no whole game day has passed).
-export function growth(d0, d1, B) { return d1 > d0 ? Math.min(FUND.clamp[1], Math.max(FUND.clamp[0], Math.exp(moveLog(d0, d1, B)))) : 1; }
-// The fund's price for the graph: the last n game days, 100 at the first.
-export function fundSeries(save, n = 20) {
-  const d1 = gameDay(save), d0 = Math.max(0, d1 - n + 1), B = financeBio(save), out = [];
-  for (let d = d0; d <= d1; d++) out.push({ d, price: Math.round(1000 * Math.exp(moveLog(d0, d, B))) / 10 });
+// The noise (log distance from the trend) for game days d0..d1.
+export function fundNoise(d0, d1) {
+  const out = []; let x = 0;
+  for (let d = d0 - FUND.warm; d <= d1; d++) { x = x * (1 - FUND.pull) + FUND.sigma * stepAt(d); const n = newsOn(d); if (n) x += n.size; if (d >= d0) out.push(x); }
   return out;
 }
+// The log move of the shared price from game day d0 to d1 (trend plus the change in noise). Only RATIOS are ever used, so nothing
+// overflows however long a save has flown.
+export function priceLog(d0, d1) { if (d1 <= d0) return 0; const x = fundNoise(d0, d1); return FUND.trend * (d1 - d0) + x[x.length - 1] - x[0]; }
+export const bonusAt = B => FUND.bonus.at0 + (FUND.bonus.at100 - FUND.bonus.at0) * Math.max(0, Math.min(100, B)) / 100;
+// The growth factor of a holding from game day d0 to d1 at world biodiversity B (the price move times the nature bonus).
+export function growth(d0, d1, B) { return d1 > d0 ? Math.exp(priceLog(d0, d1) + bonusAt(B) * (d1 - d0)) : 1; }
+// The fund's price for the graph: the last n game days, 100 at the trend's first day, and the trend line: [{ d, price, trend }].
+export function fundSeries(save, n = 20) {
+  const d1 = gameDay(save), d0 = Math.max(0, d1 - n + 1);
+  return fundNoise(d0, d1).map((x, i) => ({ d: d0 + i, price: Math.round(1000 * Math.exp(FUND.trend * i + x)) / 10, trend: Math.round(1000 * Math.exp(FUND.trend * i)) / 10 }));
+}
 const fundCfg = save => { const L = FINANCE.levels[financeLevel(save) - 1]; return L && financeOpen(save) ? L.fund : 0; };
-export const fundOf = save => (save.finance && save.finance.fund) || null;
+// The holding: { seeds, day, paid }: worth `seeds` on game day `day` (rolled up whenever you put more in), and `paid` = the
+// seeds you put in, for the gain shown. A holding from before the rework has no `paid`: it reads as its own seeds.
+export function fundOf(save) {
+  const f = save.finance && save.finance.fund; if (!f) return null;
+  return { seeds: f.seeds || 0, day: f.day || 0, paid: f.paid ?? f.seeds ?? 0 };
+}
 // What your fund is worth now (seeds, whole), 0 with nothing in.
-export function fundValue(save) {
-  const f = fundOf(save); if (!f) return 0;
-  return Math.floor(f.seeds * growth(f.day, gameDay(save), financeBio(save)));
-}
-// Seeds a tap would put in now: FUND.step, or less to stay under the level's cap and above the desk's reserve.
+export function fundValue(save) { const f = fundOf(save); return f ? Math.floor(f.seeds * growth(f.day, gameDay(save), financeBio(save))) : 0; }
+// What taking it all out pays now (value less the fee).
+export const cashValue = save => Math.floor(fundValue(save) * (1 - FUND.fee));
+// The most you can put in now: the room under the level's cap, and your seeds.
 export function canInvest(save) {
-  const cap = fundCfg(save), L = FINANCE.levels[financeLevel(save) - 1]; if (!cap) return 0;
-  const room = cap - fundValue(save), spare = (save.seeds || 0) - L.reserve;
-  return Math.max(0, Math.min(FUND.step, room, spare));
+  const cap = fundCfg(save); if (!cap) return 0;
+  return Math.max(0, Math.min(cap - fundValue(save), Math.floor(save.seeds || 0)));
 }
-// Put seeds in: what is already in is valued now and rolled into one holding that starts this game day.
-export function invest(save) {
-  const n = canInvest(save); if (!n) return 0;
-  const v = fundValue(save);
-  save.seeds -= n; save.finance.fund = { seeds: v + n, day: gameDay(save) };
+export function investBlock(save) { return !fundCfg(save) ? 'Open the desk first' : canInvest(save) ? null : fundValue(save) >= fundCfg(save) ? 'Fund full' : 'No seeds to put in'; }
+// Put n seeds in (clamped to canInvest): what is in is valued now and rolled into one holding from today. Returns seeds put in.
+export function invest(save, n = canInvest(save)) {
+  n = Math.min(Math.floor(n), canInvest(save)); if (!(n > 0)) return 0;
+  const f = fundOf(save), v = fundValue(save);
+  save.seeds -= n; save.finance.fund = { seeds: v + n, day: gameDay(save), paid: (f ? f.paid : 0) + n };
   return n;
 }
 // Take everything out (less the fee): seeds paid, 0 with nothing in.
 export function cashOut(save) {
   if (!fundOf(save)) return 0;
-  const pay = Math.floor(fundValue(save) * (1 - FUND.fee));
+  const pay = cashValue(save);
   save.seeds = (save.seeds || 0) + pay; delete save.finance.fund;
   return pay;
 }

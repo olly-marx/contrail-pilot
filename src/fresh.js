@@ -25,19 +25,21 @@ import { REGION_DATA } from './habitats.js';
 import { biodiversity, regionSpecies, projectOpen } from './nature.js';
 import { landTrees } from './landtrees.js';
 import { BADGES, tierOf } from './badges.js';
+import { FINANCE, financeOpen, financeLevel } from './finance.js';
+import { eraProgress } from './eras.js';
 
 const KIND_SCOPE = { plane: 'hangar/plane', system: 'hangar/systems', gadget: 'hangar/gadgets' };
 // Every scope the master plan names, and who produces its keys. A scope with no producer must say 'pending: R<n>' (tests/newdot.cjs
 // fails on a scope that is neither), so nothing is silently unused.
 export const PRODUCERS = {
   'hangar/plane': 'fresh.js current(): fleet nextBuys + old upgrade lines', 'hangar/systems': 'fresh.js current(): fleet nextBuys',
-  'hangar/gadgets': 'fresh.js current(): fleet nextBuys', 'nature/<land>': 'fresh.js current(): projects, trees, animals',
+  'hangar/gadgets': 'fresh.js current(): fleet nextBuys', 'hangar/bank': 'fresh.js current(): the finance desk opening (era 3) and its next level affordable', 'nature/<land>': 'fresh.js current(): projects, trees, animals',
   'boards/records': 'save.records.beaten (records.js recordFlight, R2 step 2)', 'boards/badges': 'fresh.js current(): save.badgeTiers',
   'missions': 'pending: R4 (shipped as a HOOK, so newdot still reads it as pending: the keys need opts.missions): ui.freshOpts() passes missionsFreshKeys (src/missionsview.js) -> [\'tier:<n>\', \'done:<key>\']',
 };
-export const hangarScope = tab => `hangar/${tab}`;   // tab: 'plane' | 'systems' | 'gadgets'
+export const hangarScope = tab => `hangar/${tab}`;   // tab: 'plane' | 'systems' | 'gadgets' | 'bank'
 export const natureScope = land => `nature/${land}`;
-export const HANGAR_SCOPES = ['hangar/plane', 'hangar/systems', 'hangar/gadgets'];
+export const HANGAR_SCOPES = ['hangar/plane', 'hangar/systems', 'hangar/gadgets', 'hangar/bank'];
 export const BOARD_SCOPES = ['boards/records', 'boards/badges'];
 
 // Things in the fleet you could buy right now: 'plane:comet.engines:2', 'system:atc:1', 'gadget:magnet:3'. (Moved here from
@@ -52,6 +54,9 @@ export const defaultLands = save => ['woodland', ...Object.keys(save.discovered 
 export function current(save, { lands = defaultLands(save), missions = null } = {}) {
   const out = {}, add = (scope, key) => (out[scope] = out[scope] || []).push(key);
   for (const b of nextBuys(save)) if (b.open && canAfford(save, b)) add(KIND_SCOPE[b.kind] || 'hangar/plane', `${b.kind}:${b.id}:${b.level}`);
+  // THE BANK (src/finance.js, 2026-11-23): new once when it opens in the 2010s, and when its next level is affordable and its era open.
+  if (financeOpen(save)) { add('hangar/bank', 'bank:open'); const lv = financeLevel(save), N = FINANCE.levels[lv];
+    if (N && (save.seeds || 0) >= N.cost && eraProgress(save).index >= (N.era ?? FINANCE.era)) add('hangar/bank', `bank:level:${lv + 1}`); }
   // The old upgrade lines (planting tools, trees): the Trees / Nature groups live on NATURE's home tab, the rest in the hangar.
   for (const l of LINES) if (canBuy(save, l)) add(tabOf(l) === 'nature' ? `nature/${lands[0] || 'woodland'}` : 'hangar/plane', `line:${l.id}:${level(save, l.id) + 1}`);
   for (const land of lands) {

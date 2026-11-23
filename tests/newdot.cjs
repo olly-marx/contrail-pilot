@@ -72,7 +72,7 @@ const src = f => path.join(__dirname, '..', 'src', f);
   check(['hangar/plane', 'hangar/systems', 'hangar/gadgets', 'nature/<land>', 'boards/records', 'boards/badges', 'missions'].every(sc => F.PRODUCERS[sc]), 'a scope the plan names is missing from PRODUCERS');
   const live = rich(); live.badgeTiers = { longhaul: 1 }; live.records = { beaten: ['record:longest:ever:1'] };
   const got = F.current(live, { missions: () => ['tier:2', 'done:L3'] });
-  const bare = F.current(live);   // WITHOUT the missions hook: a scope not marked pending must produce on its own
+  const bare = { ...F.current(live), ...F.current({ ...live, flightSeconds: 60 * 400 }) };   // WITHOUT the missions hook: a scope not marked pending must produce on its own (the BANK opens in the 2010s: a second read at 400 min flown)
   for (const sc of Object.keys(F.PRODUCERS).filter(k => !/pending/.test(F.PRODUCERS[k]))) {
     const real = sc === 'nature/<land>' ? Object.keys(bare).filter(k => k.startsWith('nature/')) : bare[sc] ? [sc] : [];
     check(real.length >= 1, `PRODUCERS says ${sc} is produced, but a rich save has no keys there`);

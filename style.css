@@ -939,6 +939,18 @@ h2.sub { margin-top: -4px; }
 .fline.finance .fin-wallet b { margin-left: 4px; }
 .fline.finance .fin-up { color: var(--green-dark); }
 .fline.finance .fin-down { color: #b23a2e; }
+.fline.finance .fin-trade { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 6px; }
+.fline.finance .fin-trade > div { flex: 1 1 130px; display: flex; flex-direction: column; gap: 4px; }
+.fline.finance .fin-trade .btn { font-size: 8px; padding: 8px 6px; width: 100%; }
+.fline.finance .fin-trade > .btn { flex: 1 1 120px; width: auto; }
+.fline.finance .fin-amt { display: flex; align-items: center; gap: 6px; font-size: 8px; }
+.fline.finance .fin-amt .btn { width: 32px; min-height: 32px; padding: 4px 0; font-size: 10px; }
+.fline.finance .fin-amt .fin-max { width: auto; padding: 4px 6px; font-size: 7px; }
+.fline.finance .fin-amt b { min-width: 3ch; text-align: right; }
+.fline.finance .fin-note { margin: 2px 0 0; }
+.fline.finance + .fline.finance { margin-top: 8px; }
+.fc-trend { stroke: var(--muted); fill: var(--muted); color: var(--muted); }
+.fin-chart polyline.fc-trend { fill: none; stroke-dasharray: 4 3; stroke-width: 1.2; }
 .fline.finance .hp-info { font-size: 7px; padding: 2px 5px; margin-left: 4px; }
 .sbar-delta.same { color: #5a6b80; }
 /* Steady lane progress bars (src/missions2.js STEADY). */
