@@ -4,7 +4,7 @@
 // 2. Three offers; the third needs an upgrade (a gadget/nature level the pilot lacks, or a stage longer than today's reach) and cannot
 //    be accepted; the other two can, and no stage of theirs is longer than the reach.
 // 3. Sized for the pilot: a pilot who has flown 25,000 km gets stages of more than 8,000 km; a new pilot gets none longer than its reach.
-// 4. Pay: 500 seeds and 40 crystals per 15,000 km (the user's yardstick), stored with the offer.
+// 4. Pay: 1,000 seeds and 80 crystals per 15,000 km (the user's yardstick), stored with the offer.
 // 5. ACCEPT sets the destination to the first stop; each landing at the next stop pays that stage and moves the destination on; a
 //    landing elsewhere changes nothing; the last stop ends it, the slot empties and is filled again.
 // Plants: tools/plants.tsv, test storyboard. Run: node tests/storyboard.cjs
@@ -25,7 +25,7 @@
   check(!B.missing(s, a).length && !B.missing(s, b).length, 'the other two can be accepted');
   s.bestDistance = 25000; s.areaBest = {};
   for (const o of [a, b]) check(Math.max(...o.stages) <= 25000 && Math.max(...o.stages) > 8000, `${o.title}: stages sized for a 25,000 km pilot (${o.stages})`);
-  for (const o of s.storyBoard) check(o.pay.seeds === Math.round(o.km * 500 / 15000) && o.pay.crystals === Math.round(o.km * 40 / 15000), `${o.title}: pays 500 seeds / 40 crystals per 15,000 km (${o.km} km: ${JSON.stringify(o.pay)})`);
+  for (const o of s.storyBoard) check(o.pay.seeds === Math.round(o.km * 1000 / 15000) && o.pay.crystals === Math.round(o.km * 80 / 15000), `${o.title}: pays 1,000 seeds / 80 crystals per 15,000 km (${o.km} km: ${JSON.stringify(o.pay)})`);
   check(!B.accept(s, c.id) || !B.missing(s, c).length, 'an offer that still needs an upgrade cannot be accepted');
 
   // 3: a new pilot.
@@ -48,5 +48,5 @@
   check(B.fillBoard(s) === true && s.storyBoard[0] && s.storyBoard[0].id !== a.id && JSON.stringify(s.storyBoard.slice(1)) === JSON.stringify([b, c]), 'the empty slot is filled again; the others stay as they were');
 
   if (fails.length) { console.log('FAIL storyboard\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS storyboard (offers fixed once made, one in three needs an upgrade, sized for the pilot, 500 seeds / 40 crystals per 15,000 km, flown stop by stop)');
+  console.log('PASS storyboard (offers fixed once made, one in three needs an upgrade, sized for the pilot, 1,000 seeds / 80 crystals per 15,000 km, flown stop by stop)');
 })();

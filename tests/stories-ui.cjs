@@ -4,7 +4,7 @@
 //   2. Reopening MISSIONS shows the same three offers (nothing is made again).
 //   3. ACCEPT: the destination is the story's first stop, and in flight the route strip names it.
 //   4. Landing at the first stop (the pickup) moves the destination to the second stop; landing at the second pays that stage
-//      (500 seeds and 40 crystals per 15,000 km of it) straight into the bank, and the results list it.
+//      (1,000 seeds and 80 crystals per 15,000 km of it) straight into the bank, and the results list it.
 //   5. A crash changes nothing.
 // Plants: tools/plants.tsv, test stories-ui. Run: python3 -m http.server 8000 & node tests/stories-ui.cjs
 const { chromium } = require('playwright-core');
@@ -58,7 +58,7 @@ const SAVE = { areas: ['weurope', 'africa'], homeArea: 'weurope', homeCity: 'LON
     check(s.aimCity === o.stops[1], `after the pickup the destination is the second stop ${o.stops[1]}: ${s.aimCity}`);
     const seeds0 = s.seeds, crystals0 = s.crystals || 0;
     const r2 = await land(o.stops[1]); s = await save();
-    const want = { seeds: Math.round(o.stages[0] * 500 / 15000), crystals: Math.round(o.stages[0] * 40 / 15000) };
+    const want = { seeds: Math.round(o.stages[0] * 1000 / 15000), crystals: Math.round(o.stages[0] * 80 / 15000) };
     check(s.seeds - seeds0 >= want.seeds && (s.crystals || 0) - crystals0 >= want.crystals, `the second stop pays its ${o.stages[0]} km stage (${JSON.stringify(want)}): seeds ${seeds0} -> ${s.seeds}, crystals ${crystals0} -> ${s.crystals}`);
     check(r2.result.some(l => l.includes(o.title) && l.includes(o.stops[1])), `the results list the story stop: ${JSON.stringify(r2.result)}`);
     check(o.stops.length < 3 || s.aimCity === o.stops[2], `and the destination moves on to ${o.stops[2]}: ${s.aimCity}`);

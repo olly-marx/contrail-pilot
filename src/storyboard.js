@@ -10,7 +10,7 @@
 // a stage 15-35% longer than today's reach (it opens when the reach grows: plane or nature upgrades), or a gadget/nature level.
 // ACCEPT makes it the active story: its next stop becomes the flight's destination (save.aimCity, src/aim.js), so the route strip
 // and the lit runway point there. A stop counts when you LAND there (any number of flights; a crash changes nothing). Each stop
-// pays its stage at the user's yardstick, 500 seeds and 40 crystals per 15,000 km, the moment it is reached. A finished offer
+// pays its stage at 1,000 seeds and 80 crystals per 15,000 km (the user's yardstick, doubled on 2026-11-23), the moment it is reached. A finished offer
 // leaves the board and its slot is filled again, sized at that moment.
 import { CITIES } from './cities.js';
 import { AREAS, areaOf, unlockedAreas, citiesOf } from './areas.js';
@@ -25,7 +25,7 @@ export const STORY_PICS = ['story-vaccine', 'story-crate'];
 export const storyPicUrl = pic => (STORY_PICS.includes(pic) ? `assets/ui/portrait-${pic}-0.png` : animalPortrait({ sprite: pic, portrait: `assets/ui/portrait-${pic}` }) || 'assets/ui/portrait-story-crate-0.png');
 
 export const STORY = { on: true, slots: 3, fit: [0.55, 0.85], stretch: [1.15, 1.35], maxStops: 4 };
-export const SEEDS_PER_KM = 500 / 15000, CRYSTALS_PER_KM = 40 / 15000;
+export const SEEDS_PER_KM = 1000 / 15000, CRYSTALS_PER_KM = 80 / 15000;   // (the user, 2026-11-23: 'at least 2x' the first anchor of 500 seeds and 40 crystals per 15,000 km)
 export const storyPay = km => ({ seeds: Math.round(km * SEEDS_PER_KM), crystals: Math.round(km * CRYSTALS_PER_KM) });
 
 // THEMES: the story's words, with {0}..{3} for the stops in order (0 = the pickup). `stops`: how many cities. `areas`: where it
