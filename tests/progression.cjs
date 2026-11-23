@@ -58,13 +58,14 @@ const KEY = 'contrailPilot.v2';
   }
   r = await scene(() => game.scene.getScene('game').result);
   check(r && r.landed, 'did not land');
-  check(r && r.gained === 6, `4 trees x1.5 should bank 6, got ${r && r.gained}`);
+  const fares = r ? ((r.earned || []).find(e => e.label === 'Passenger fares') || { n: 0 }).n : 0;   // (0.73.0: a landed flight also pays fares)
+  check(r && r.gained === 6 + fares, `4 trees x1.5 should bank 6 (+ ${fares} fares), got ${r && r.gained}`);
   const landPrize = sumSeeds(r && r.rewards), seedsNow = (await getSave()).seeds;   // the landing's prize is paid by the card ~1 s after the landing: either side of that is fine
-  check(seedsNow === 11 + crashPrize || seedsNow === 11 + crashPrize + landPrize, `bank should be 5 + 6 = 11 plus the prizes the cards paid (${crashPrize}, then ${landPrize}), got ${seedsNow}`);
+  check(seedsNow === 11 + fares + crashPrize || seedsNow === 11 + fares + crashPrize + landPrize, `bank should be 5 + 6 + fares = ${11 + fares} plus the prizes the cards paid (${crashPrize}, then ${landPrize}), got ${seedsNow}`);
 
   // 3. Hangar (the fleet since the eras, 2026-10-23): systems and gadgets with prices; the next
   // era's levels are blocked. Tree species stay locked before planting a tree.
-  await setSave({ ...base, seeds: 360, crystals: 30, landings: 3 });   // (0.73.0 PRICE SCALE: x6 seeds, x5 crystals) await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await setSave({ ...base, seeds: 360, crystals: 30, landings: 3 }); await p.reload(); await ready(p); await p.waitForTimeout(600);   // (0.73.0 PRICE SCALE: x6 seeds, x5 crystals)
   await p.click('#tabHangar');
   check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
   await p.click('[data-ftab=systems]');
