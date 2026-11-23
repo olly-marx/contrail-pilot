@@ -56,6 +56,12 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/asc"
           echo "${{ secrets.ASC_KEY_P8_B64 }}" | base64 --decode > "$RUNNER_TEMP/asc/AuthKey.p8"
+      - name: Revoke stale CI signing certificates (automatic signing makes one each run; the account's limit stopped the 0.73.0 archive)
+        env:
+          ASC_KEY_PATH: ${{ runner.temp }}/asc/AuthKey.p8
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: node tools/asc-prune-certs.mjs
       - name: Archive (version from src/version.js, build number = this run)
         run: |
           V=$(sed -n "s/.*VERSION = '\([^']*\)'.*/\1/p" src/version.js)
