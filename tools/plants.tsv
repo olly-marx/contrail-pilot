@@ -645,7 +645,7 @@ targetbanner	src/targetbanner.js	s/\${crossFrom ? ' to cross' : ''}/${''}/	the c
 targetbanner	src/targetbanner.js	s/return cond ? `\${first}\\n\${cond}` : first;/return first;/	the mission's condition is lost from the banner
 targetbanner	src/targetbanner.js	s/!!target \&\& name === target \&\& !passed/!!target \&\& !passed/	every airport lights, not only the target
 targetbanner	src/targetbanner.js	s/ \&\& !passed \&\& !landed;/ \&\& !landed;/	the airport stays lit after the plane has passed it
-targetbanner-ui	src/GameScene.js	s/this\.missionText\.setText(this\.bannerNow() || (n \&\& this\.state !== 'over' ? n\.title : ''));/this.missionText.setText((n \&\& this.state !== 'over' ? n.title : ''));/	the mission title is not replaced by the banner
+targetbanner-ui	src/GameScene.js	s/this.missionText.setText(b ? cond :/this.missionText.setText(false ? cond :/	the mission title is not replaced while a destination is set (the strip names the city, and the title says it again)
 targetbanner-ui	src/GameScene.js	s/rw\.lit = lit;/rw.lit = false;/	the target runway is never lit
 targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = isLit(rw.name, rw.name,/	every runway is lit
 targetbanner-ui	src/GameScene.js	s/, city = st.why === 'chosen' || st.why === 'mission' ? st.city : null; if (!city) return null;/, city = 'AMSTERDAM';/	the banner names a city even with no destination
