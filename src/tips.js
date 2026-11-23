@@ -94,9 +94,9 @@ export const TIPS = {
   'rail-map-mode':     { say: mission => (mission ? 'MISSION flies to your mission. EXPLORE finds a city you have not seen. Pick one!' : 'EXPLORE flies to a city you have not seen. Tap it!') },   // mission: the MISSION chip is there (src/aim.js activeMission)
   'rail-cross':        { say: 'A crossing: one long non-stop flight that opens a new part of the world.' },
   'rail-cross-era':    { say: 'Era: some crossings wait for a later era. A tick means it is done.' },
-  'rail-cross-plane':  { say: 'Plane: land longer flights, or make your plane better in HANGAR.' },
+  'rail-cross-plane':  { say: 'Range: how far your plane can fly. Upgrade it in HANGAR to reach further.' },
   'rail-cross-nature': { say: 'Nature: plant trees and fund projects in NATURE to fill this bar.' },
-  'rail-cross-next':   { say: 'This line says what to do next. Three ticks, and you can fly it!' },
+  'rail-cross-next':   { say: 'This line says what to do next. A tick, and you can fly it!' },
   'rail-free-tap':     { say: 'Tap here to see your new jet engines.' },
   'rail-takeoff-h':    { say: 'Now take off and try them!' },
   'rail-plant':        { say: n => `You carry ${n} trees. Take off and plant them.` },   // n = the trees the plane carries (src/tour.js)

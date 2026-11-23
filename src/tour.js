@@ -176,9 +176,7 @@ export class Tour {
         const c = '#mCross .xcard:first-child';
         return ['r-cross', [
           { target: `${c} .xc-head`, text: tip('rail-cross'), ok: true },
-          { target: `${c} [data-k="era"]`, text: tip('rail-cross-era'), ok: true },
-          { target: `${c} [data-k="plane"]`, text: tip('rail-cross-plane'), ok: true },
-          { target: `${c} [data-k="nature"]`, text: tip('rail-cross-nature'), ok: true },
+          { target: `${c} [data-k="plane"]`, text: tip('rail-cross-plane'), ok: true },   // (V4, 0.73.0: the one Range row; Era and Nature rows are gone)
           { target: `${c} .xc-next`, text: tip('rail-cross-next'), ok: true, after: () => this.ui.toast && this.ui.toast('Lesson done!', 'Crossings', 'good', 3) }]];
       }
     }

@@ -66,7 +66,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'ROME', city: 
       { const { ctx, p } = await open(W, H); let stage = 'the ending';
         try {
           await p.evaluate(() => game.registry.get('ui').showResults({ landed: true, landedAt: 'ROME', distance: 900, earned: [], rewards: [], breakdown: { co2: 0, night: 0, sun: 0, trees: 0 }, heat: 0, crystals: 0, planted: 0, missions2: { done: [], next: null }, school: false,
-            crossing: { id: 'lap', kind: 'lap', landed: true, to: 'ROME', prize: { seeds: 2000, crystals: 250 } } }));
+            crossing: { id: 'lap', kind: 'lap', landed: true, to: 'ROME', prize: { seeds: 16000, crystals: 1280 } } }));
           await p.waitForTimeout(800); const bufEnd = await snap(p);
           const e = await p.evaluate(() => { const el = document.getElementById('ending'); if (!el || el.hidden) return null; const c = el.querySelector('.payoff-card').getBoundingClientRect(); return { text: el.innerText.replace(/\s+/g, ' '), top: c.top, bottom: c.bottom, h: innerHeight }; });
           check(!!e && /\+16,000 seeds/.test(e.text) && /\+1,280 ice crystals/.test(e.text), `${tag} D: the ending screen does not say '+16,000 seeds' and '+1,280 ice crystals': ${JSON.stringify(e)}`);
