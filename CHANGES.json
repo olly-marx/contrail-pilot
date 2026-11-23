@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-23-crossing-ladder",
+    "version": "0.75.0",
+    "date": "2026-11-23",
+    "level": "major",
+    "notes": [
+      "Crossings now climb a ladder: each one is harder than the last. The game picks the one your plane has the best chance of flying, and keeps it until you fly it.",
+      "A crossing counts your plane's range from the land it leaves, so its nature matters.",
+      "Crossing range no longer drops after you buy an upgrade.",
+      "Prices are lower and rounded to clean numbers.",
+      "NATURE has a WATER section: it says how to open it, shows your water drops, and lists the water projects in blue.",
+      "The first blue patch in flight explains itself."
+    ]
+  },
+  {
     "id": "2026-11-23-bank",
     "version": "0.74.0",
     "date": "2026-11-23",
