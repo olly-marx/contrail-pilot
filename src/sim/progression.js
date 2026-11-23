@@ -14,6 +14,7 @@
 import { createWorld } from './world.js';
 import { makePlayer } from './player.js';
 import { capability } from './simulate.js';
+import { CAP, combine, poolFor, capKey } from '../capability.js';
 import { makeRng } from './rng.js';
 import { CLIMATE } from '../config.js';
 import { nextBuys, canAfford, buyFleet, fleetOf, choosePlane, PLANES } from '../fleet.js';
@@ -101,6 +102,10 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
     // (offerCtx): best landed flight from the area, its biodiversity, its starred missions), as the hub's NEXT button picks it
     // (ui.js). Classic: the old capability rule over `tiers`.
     const s2 = SEASON2_ON && Array.isArray(save.areas) && save.areas.length > 0;
+    // The hangar's RANGE as the game keeps it (0.73.0: crossings open on range alone): worked out on the first flight and every `every`, stored like
+    // src/capability.js estimate does (save.capability, keyed; a purchase makes it stale until the next one). Season 2 only (the classic rule below has its own).
+    if (s2 && (n === 1 || n % every === 0)) { const runs = capability(save, { pilots: ['careful'], seeds: CAP.heatSeeds, maxKm: CAP.maxKm }).careful.runs;
+      save.capability = { km: combine(runs, poolFor(save)), key: capKey(save), area: areaOf(save.city) || null }; }
     if (beforeFlight) beforeFlight(save, n);
     const home = (city(save.city) || {}).region, homeBio = REGION_DATA[home] ? biodiversity(save, home) : biodiversity(save);
     let c2 = null, crossing = 0;

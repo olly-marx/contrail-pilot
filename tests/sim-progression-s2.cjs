@@ -5,7 +5,7 @@
 // (era, plane reach from any area, best nature; no stars), so this test's oracle is readiness; power = some flight where a crossing was available but not ready.
 // Western Europe start whose biodiversity already passes (the woodland projects funded) but with no long landed flight yet (AMENDED 2026-11-13: no areaBest,
 // so the plane tick holds crossing 1 back at first)
-// s = 0.8, 2 seeds x 40 flights. Power: a flight where a crossing was available but not ready, and at least one landed crossing.
+// s = 0.9 (0.73.0: 0.8 crashed every 12,000 km range-only crossing in 40 flights; 0.9 lands 5 of 10), 2 seeds x 40 flights. Power: a flight where a crossing was available but not ready, and at least one landed crossing.
 // Plain Node. PLANT=noready | nocomplete (PROG_PLANTS in progression.js): must FAIL.  Run: node tests/sim-progression-s2.cjs
 globalThis.SEASON2 = true;
 (async () => {
@@ -18,7 +18,7 @@ globalThis.SEASON2 = true;
   const fails = [], power = { notReady: 0, landed: 0, offered: 0 };
   for (const seed of [1, 2]) {
     const want = [];
-    const r = P.progression({ careful: true, skill: () => 0.8, flights: 40, seed, maxSkip: 4, start: { areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', habitat: { woodland: UK_PROJECTS.map(p => p.id) } },
+    const r = P.progression({ careful: true, skill: () => 0.9, flights: 40, seed, maxSkip: 4, start: { areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', habitat: { woodland: UK_PROJECTS.map(p => p.id) } },
       beforeFlight: (save, n) => {
         const c = X.available(save).find(c => X.readiness(save, c).ready) || null;   // the game's rule since 2026-11-09 (ui.js: readiness(s, c).ready)
         if (!c && X.available(save).length) power.notReady++;
