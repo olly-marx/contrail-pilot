@@ -6,7 +6,7 @@ import { treeBook, groveView } from './groves.js';
 import { isSeason2 } from './missions2.js';
 import { AREAS } from './areas.js';
 import { city } from './route.js';
-import { UK_SLOTS, SPECIES, projectsDone, biodiversity, regionSpecies, localTree, WATERWAYS } from './nature.js';
+import { UK_SLOTS, SPECIES, projectsDone, biodiversity, landMeter, regionSpecies, localTree, WATERWAYS } from './nature.js';
 import { treeCap } from './waterways.js';
 import { NATIVE_FIRST, GROW_DAYS } from './config.js';
 import { DROP_ORDER } from './droporder.js';
@@ -15,13 +15,13 @@ import { DROP_ORDER } from './droporder.js';
 export const OPENS = [
   null,   // slot 0: always open
   { text: 'Finish a habitat project here', card: '1 project', ok: (save, land) => projectsDone(save, land).length >= 1 },
-  { text: 'Reach biodiversity 20 here', card: 'Nature 20', ok: (save, land) => biodiversity(save, land) >= 20 },
+  { text: 'Reach biodiversity 20 here', card: 'Nature 20', ok: (save, land) => landMeter(save, land) >= 20 },   // (0.73.0: the LAND part, as the meter was before the water split)
   { text: 'Find 5 of the animals here', card: '5 animals', ok: (save, land) => foundHere(save, land) >= 5 },
   // Native 4 (S3, PROPOSAL-TREE-MISSIONS.md): season 2 opens it with the area's crossing-trial mission "plant 3 kinds of
   // this land's tree in one flight" (src/missions2.js 'kinds3'), done in an area that has this land. Classic saves have
   // no area missions and keep the old rule, biodiversity 40 there.
   // ...or (2026-11-13, ledger row 54) when fewer than 2 of slots 0..3 have room under the cap (an unopened slot counts as room): the mission is then never offered here again (src/missions2.js), so it cannot be the only way in.
-  { text: 'Plant 3 kinds of tree here in one flight', card: '3 kinds', ok: (save, land) => (isSeason2(save) ? kindsMissionDone(save, land) || kindsStuck(save, land) : biodiversity(save, land) >= 40) },
+  { text: 'Plant 3 kinds of tree here in one flight', card: '3 kinds', ok: (save, land) => (isSeason2(save) ? kindsMissionDone(save, land) || kindsStuck(save, land) : landMeter(save, land) >= 40) },
 ];
 
 // Fewer than 2 of slots 0..3 have room under the cap (planted + saplings < TREE_CAP). A slot not open yet is empty, so it counts as room: a land that can still open

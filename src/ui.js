@@ -774,7 +774,7 @@ export class UI {
     const cs = crossingState(s, { unlock: S2_UNLOCK });
     if (!momentDue(cs) || this.crossingAuto.has(cs.id)) return;
     if ((s.seenTips || []).includes('*') && !s.crossMomentTest) return;
-    { const cur = s.school2 ? current(s) : null; if (cur && cur.id !== 'crossings') return; }   // (0.73.0) not while School lessons before the crossings one remain: with range-only crossings a Comet with a few upgrades qualifies during the first hour   // (0.73.0) an automated test's save ('*' tips) sees the big card only when it asks (crossMomentTest): with range-only crossings most test planes now qualify   // (crossingAuto: the sheet opens by itself at most once per page load, even if the told mark could not be saved)
+    if (lessonsLeft(s).length) return;   // (0.73.0) not during the first-hour lessons: with range-only crossings a Comet with a few upgrades qualifies early   // (0.73.0) an automated test's save ('*' tips) sees the big card only when it asks (crossMomentTest): with range-only crossings most test planes now qualify   // (crossingAuto: the sheet opens by itself at most once per page load, even if the told mark could not be saved)
     // Only on a menu screen that is showing and idle: not in flight, not mid-reveal, not under a sheet, a tour step, a payoff or an era welcome.
     const shown = document.querySelector('.overlay.screen:not([hidden])');
     if (!shown || ($('repriced') && !$('repriced').hidden) || ($('startChoice') && !$('startChoice').hidden) || $('sheet') || ($('results').classList.contains('revealing')) || (this.tour && this.tour.el && !this.tour.el.hidden) || (this.fleet && this.fleet.paying) || document.querySelector('.era-card, #payoff:not([hidden]), #ending')) return;

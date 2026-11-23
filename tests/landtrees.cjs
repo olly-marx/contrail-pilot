@@ -20,7 +20,7 @@
   check(L.treesOpen(p1, 'savanna').includes(1), 'a project in the savanna opens its native 1');
   check(!L.treesOpen(p1, 'mediterranean').includes(1) && !L.treesOpen(p1, 'woodland').includes(1), "...and not another land's");
   for (const land of ['woodland', 'savanna', 'mediterranean']) {
-    const bio = s => N.biodiversity(s, land), open = s => L.treesOpen(s, land);
+    const bio = s => N.landMeter(s, land),   /* (0.73.0: the slots read the LAND part) */ open = s => L.treesOpen(s, land);
     // plant trees until the meter passes 20 then 40; the slot must open exactly when the meter crosses
     const s = structuredClone(base), book = land === 'woodland' ? s.planted : (s.plantedIn[land] = {});
     const ids = L.landTrees(s, land).map(t => t.id);
@@ -29,7 +29,7 @@
       book[ids[i % 5]] = (book[ids[i % 5]] || 0) + 1;
       ok = ok && open(s).includes(2) === (bio(s) >= 20) && open(s).includes(4) === (bio(s) >= 40);
     }
-    check(ok, `${land}: natives 2 and 4 open exactly at biodiversity 20 and 40`);
+    check(ok, `${land}: natives 2 and 4 open exactly at land biodiversity 20 and 40`);
     const animals = N.regionSpecies(land).slice(0, 5).map(w => w.id), f = {};
     animals.slice(0, 4).forEach(id => f[id] = 1);
     check(!open({ ...base, found: f }).includes(3), `${land}: 4 animals found: native 3 still shut`);
