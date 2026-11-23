@@ -8,6 +8,7 @@
 //   project): an off-flight mission completes the moment the save changes, no flight needed (the user).
 // Pure: no DOM, no random. The game (src/sim/rules.js at banking, the shop after a purchase) and the sim call it.
 // Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes are paid straight into the bank (src/rewards.js payPrize).
+import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard } from './storyboard.js';
 import { AREAS, areaOf, DEFAULT_AREA, regionsOpen, withRegions } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
@@ -161,13 +162,16 @@ export const tierOpen = (save, a, tier) => tier === 1 || TEMPLATES.filter(t => t
 // pilots; all 3 are still there to do). GATE_STARS is the number needed.
 export const GATE_STARS = 2;
 export const starsDone = (save, a) => STARS.filter(id => done(save).has(`${a}:${id}`)).length;
-export const gateDone = (save, a) => starsDone(save, a) >= GATE_STARS;
+export const gateDone = (save, a) => (STORY.on ? true : starsDone(save, a) >= GATE_STARS);   // (story missions replace the ladder, 2026-11-23: its stars gate nothing; crossings are readied by plane and nature, the balance thread)
 
 // What the player sees: the next lesson while any are left, else the open tiers of the area they are in, undone first.
 // [{ key, title, tier, star, kind, prize: { seeds, crystals } }]
 export function visible(save, startCity = save.city) {
   const left = lessonsLeft(save);
   if (left.length) { const l = left[0]; return [{ key: l.id, title: l.title, tier: 0, star: false, kind: 'flight', prize: l.prize, def: l }]; }
+  // STORY MISSIONS (the user, 2026-11-23: "this whole system replaces the previous missions"): after the lessons, the open mission is the
+  // active story (src/storyboard.js), if one is accepted; the stories on offer are on the MISSIONS screen. The area ladder is not offered.
+  if (STORY.on) { const st = storyRow(save); return st ? [st] : []; }
   const a = areaOf(startCity) || area(save), f = fillFor(save, a, startCity);
   // A city mission has its OWN fill: the cities stored in save.missionCities when it was first shown, else what the rules name now (src/missionplan.js). Pure: nothing is stored here.
   return TEMPLATES.filter(t => tierOpen(save, a, t.tier) && !done(save).has(key(a, t))).map(t => ({ t, own: CITY_IDS.includes(t.id) ? ownFill(save, a, startCity, t.id, f, key(a, t)) : STREAK_IDS.includes(t.id) ? ownStreak(save, key(a, t), t.id, f) : f }))
@@ -179,6 +183,7 @@ export function visible(save, startCity = save.city) {
 // An old save (no save.missionCities) keeps the cities it shows today (rule 'old'); everything shown after that uses the new rules. Returns true when the save changed.
 export function assignMissionCities(save, startCity = save.city) {
   if (!isSeason2(save) || lessonsLeft(save).length) return false;
+  if (STORY.on) return fillStoryBoard(save);   // (the stories on offer are made, and stored, when they are first shown)
   const legacy = save.missionCities == null;
   const stored = save.missionCities = save.missionCities || {};
   let changed = legacy;
@@ -248,7 +253,11 @@ export function onFlight(save, r) {
   const startCity = save.city;
   assignMissionCities(save, startCity);   // (idempotent: the game stored them when HOME drew them; the sim, which never draws HOME, stores them here)
   advanceChains(save, r, startCity);
-  const due = visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true));
+  // A story stop: landing at the active story's next stop pays that stage now (src/storyboard.js), and the board refills a finished slot.
+  const story = STORY.on && r.landedAt ? storyLandedAt(save, r.landedAt) : null;
+  const storyDone = story && story.pay.seeds + story.pay.crystals > 0 ? [{ key: `story:${story.id}:${story.n}`, title: `${story.title}: ${story.city}${story.done ? ' (story done!)' : ''}`, prize: story.pay, story }] : [];
+  if (story && story.done) fillStoryBoard(save);
+  const due = [...storyDone, ...visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true))];
   const daily = dailyVisible(save).filter(d => d.def.flight(r, save, d.fill) === true);
   save.prevLanded = r.landedAt;   // for "land at A, then B" (read on the NEXT flight)
   return finish(save, taught([...firsts, ...steady, ...due, ...daily]));

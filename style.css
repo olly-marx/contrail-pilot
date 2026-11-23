@@ -1282,3 +1282,32 @@ h2.sub { margin-top: -4px; }
 .payoff-card .pay-fact { font-size: 8px; line-height: 1.5; color: var(--muted); }
 .payoff-card .pay-learn { margin: 6px 0; }
 @media (prefers-reduced-motion: reduce) { .wfield.zooming { transition: none; } }
+
+/* STORY MISSIONS (src/ui.js showMissions, src/storyboard.js; 2026-11-23): the board's cards */
+.sboard { display: grid; gap: 8px; margin-bottom: 8px; }
+.scard { display: flex; gap: 8px; align-items: flex-start; text-align: left; border: 2px solid var(--ink); background: #fff8e1; padding: 6px 8px; box-shadow: 0 3px 0 var(--ink); }
+.scard.active { border-color: #1d7fa3; background: #e9fbff; box-shadow: 0 3px 0 #1d7fa3; }
+.scard.locked { background: #ecebf2; }
+.scard.locked .spic { filter: grayscale(1); opacity: 0.7; }
+.scard .spic { flex: none; width: 52px; height: 52px; object-fit: contain; image-rendering: pixelated; background: #fff; border: 2px solid var(--ink); padding: 2px; }
+.scard .sbody { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.scard .shead { display: flex; justify-content: space-between; font-size: 7px; color: var(--muted); }
+.scard .stitle { font-size: 10px; }
+.scard .stext { margin: 0; font-size: 7px; line-height: 1.5; color: var(--muted); }
+.schips { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; }
+.schip { font-size: 7px; padding: 2px 4px; border: 2px solid var(--ink); background: #fff; white-space: nowrap; }
+.schip.pickup { background: var(--gold); }
+.schip.drop { background: #9be29b; }
+.schip.done { opacity: 0.45; text-decoration: line-through; }
+.schip.next { animation: snext 0.9s steps(2) infinite; }
+@keyframes snext { 50% { background: #fff; box-shadow: 0 0 0 2px var(--gold); } }
+.sarrow { width: 0; height: 0; border: 4px solid transparent; border-left: 5px solid var(--ink); margin-right: -3px; }
+.sstats { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 8px; font-weight: bold; color: var(--green-dark); }
+.sstat { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.sstat:first-child { color: var(--ink); }
+.sicon-plane { display: inline-block; width: 16px; height: 16px; background: url('assets/ui/mi-airports.png') center / 16px 16px; image-rendering: pixelated; }
+.sneed { justify-self: start; display: inline-flex; align-items: center; gap: 4px; font-size: 7px; line-height: 1.5; padding: 2px 4px; background: #fff; border: 2px solid var(--ink); }
+.slock { flex: none; width: 8px; height: 9px; background: var(--ink); position: relative; margin-top: 4px; }
+.slock::before { content: ''; position: absolute; left: 1px; top: -5px; width: 2px; height: 4px; border: 2px solid var(--ink); border-bottom: 0; }
+.sbtns { display: flex; gap: 6px; justify-content: flex-end; }
+.sbtns .btn { font-size: 8px; padding: 6px 8px; }

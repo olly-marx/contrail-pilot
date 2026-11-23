@@ -6,6 +6,7 @@ import * as M2 from './missions2.js';
 import { AREAS, areaOf, DEFAULT_AREA } from './areas.js';
 import { nextUp, itemOf, clip, rightOf } from './nextup.js';
 import { CITY_TEMPLATES } from './aim.js';
+import { STORY, missing as storyMissing } from './storyboard.js';
 import { crossingState, ticksTitle } from './crossingview.js';
 import { kmWords } from './missionplan.js';
 import { STAR_GROW3 } from './config.js';
@@ -93,6 +94,8 @@ export function missionsView(save) {
   const stars = M2.starsDone(save, a);
   const v = { area: (AREAS[a] && AREAS[a].name) || a, stage, teach };
   v.tierLine = teach ? `Lessons · ${lessonsDone}/${M2.LESSONS.length}` : `Tier ${tierNow} · ${doneInTier}/${inTier.length} done${tierNow === 3 ? ` · stars ${stars}/${M2.GATE_STARS}` : ''}`;
+  // STORY MISSIONS (src/storyboard.js, 2026-11-23): the board of three fixed offers replaces the tiers.
+  if (STORY.on && !teach) { v.tierLine = `Stories · ${save.storiesDone || 0} done`; v.board = (save.storyBoard || []).filter(Boolean).map(o => ({ ...o, missing: storyMissing(save, o), active: save.storyActive === o.id })); }
   // 2. NEXT, pinned: nextUp's top row (a must-do lead, or the first open mission), the same words as HOME and the results.
   const top = up[0] && !up[0].daily ? up[0] : null;   // a daily is never pinned (it is under TODAY): with no open mission left the screen says what a crossing needs
   v.next = top ? row(save, top, vis) : null;
@@ -102,7 +105,7 @@ export function missionsView(save) {
   const daily = M2.dailyVisible(save);   // (open from lesson 3 on, alongside the remaining lessons: missions2 decides, not the stage)
   v.today = { rows: daily.map(m => row(save, itemOf(save, m), vis)), streak: M2.streakBonus(save) };
   // 5. COMING UP: the next tier as ONE line with its opener and the count; at tier 3 the crossing trial's stars. Nothing further ahead (surprise stays).
-  v.comingUp = teach ? null : tierNow < 3 ? `Tier ${tierNow + 1} · after 3 of tier ${tierNow} (${Math.min(doneInTier, 3)}/3)` : !M2.gateDone(save, a) ? `Crossing trial: ${stars}/${M2.GATE_STARS} stars` : null;
+  v.comingUp = teach || STORY.on ? null : tierNow < 3 ? `Tier ${tierNow + 1} · after 3 of tier ${tierNow} (${Math.min(doneInTier, 3)}/3)` : !M2.gateDone(save, a) ? `Crossing trial: ${stars}/${M2.GATE_STARS} stars` : null;
   // 5b. CROSSING (R-A): the crossing that is near or ready, with its 3 conditions as ticks (the user: "I knew it was coming" and still had to hunt). It replaces the
   //     tier-3 "Crossing trial" line, which was one of those conditions.
   const cs = crossingState(save);

@@ -73,6 +73,7 @@ import { endView } from './crossingend.js';
 import { prizeLines } from './missionprize.js';
 import { crossingState, crossingById, momentDue, markTold, sheetText, endingBody, boxView, screenView, cardsView, oneCardView, PICK_TITLE } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
+import { accept as storyAccept, pause as storyPause } from './storyboard.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -493,7 +494,20 @@ export class UI {
     const group = (label, rows, extra = '') => rows.length ? `<p class="label">${label}${extra}</p>${rows.join('')}` : '';
     const empty = !v.next && !v.open.length;
     const xc = crossingsHTML(s, 'm');   // the crossing cards (one per crossing on offer; the owner, 2026-11-18): they replace the old text lines and the 'CROSSING TO X' tick list
-    $('mList').innerHTML = (empty ? `<p>All done here!</p>${xc ? '' : '<p class="small">Keep flying: new missions come with new eras.</p>'}` : '')
+    // STORY MISSIONS (src/storyboard.js; the user, 2026-11-23): three fixed offers as cards: a picture, the stops as coloured city chips (pickup gold,
+    // drop-off green), distance, seeds and crystals as icons; ACCEPT (or, on the one that needs an upgrade, what to buy and the button to it); the active
+    // one shows its stops done and the next one blinking.
+    const storyCards = v.board ? v.board.map(o => { const n = o.reached || 0;
+      const chips = o.stops.map((c, i) => `${i ? '<i class="sarrow"></i>' : ''}<span class="schip ${i ? 'drop' : 'pickup'}${o.active && i < n ? ' done' : ''}${o.active && i === n ? ' next' : ''}">${esc(c)}</span>`).join('');
+      const lock = o.missing.length ? `<span class="sneed"><i class="slock"></i>Needs ${o.missing.map(m => `<b>${esc(m.text)}</b>`).join(', ')}</span>` : '';
+      const btn = o.active ? '<button class="btn" type="button" data-spause="1">PAUSE</button>' : o.missing.length ? `<button class="btn go" type="button" data-sgoto="${o.missing[0].tab}">GET IT IN ${o.missing[0].tab.toUpperCase()}</button>`
+        : `<button class="btn go" type="button" data-saccept="${esc(o.id)}">${n ? 'CARRY ON' : 'ACCEPT'}</button>`;
+      return `<div class="scard${o.missing.length ? ' locked' : ''}${o.active ? ' active' : ''}"><img class="spic" alt="" src="assets/ui/portrait-${esc(o.pic)}-0.png" onerror="this.src='assets/ui/portrait-story-crate-0.png'">`
+        + `<div class="sbody">${o.active ? `<div class="shead"><span>ON THIS STORY</span><span>Stop ${n + 1} of ${o.stops.length}</span></div>` : ''}<b class="stitle">${esc(o.title)}</b><p class="stext">${esc(o.story)}</p>`
+        + `<div class="schips">${chips}</div><div class="sstats"><span class="sstat"><i class="sicon-plane"></i>${km(o.km)}</span><span class="sstat">+${o.pay.seeds}<i class="seedicon"></i></span><span class="sstat">+${o.pay.crystals}<i class="crysicon"></i></span></div>`
+        + `${lock}<div class="sbtns">${btn}</div></div></div>`; }).join('') : '';
+    $('mList').innerHTML = (empty && !storyCards ? `<p>All done here!</p>${xc ? '' : '<p class="small">Keep flying: new missions come with new eras.</p>'}` : '')
+      + (storyCards ? `<p class="label">STORIES</p><div class="sboard">${storyCards}</div>` : '')
       + group('OPEN', v.open.map(r => rowHTML(r)))
       + group('TODAY', v.today.rows.map(r => rowHTML(r, 'daily')), v.today.streak ? ` <span class="small">(streak +${v.today.streak})</span>` : '')
       + (v.comingUp ? `<p class="label">COMING UP</p><p class="m-coming">${esc(v.comingUp)}</p>` : '')
@@ -508,6 +522,9 @@ export class UI {
         : r.city && r.cityName ? { label: r.aimed ? 'STOP GOING' : 'GO THERE', onTap: () => { if (r.aimed) clearGoto(s); else setGoto(s, r.cityName); writeSave(s); this.toast(r.aimed ? 'Back to the suggested city' : `Going to ${r.cityName}`, '', 'good', 3); this.showMissions(); } }   // ROUTING V2 step 3: the mission's city becomes the destination (the same field as GO TO and a tapped city)
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
       showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds${r.prizeC ? ` and +${r.prizeC} ice crystal${r.prizeC > 1 ? 's' : ''}` : ''}.` : ''}`, action }); });
+    document.querySelectorAll('#mList [data-saccept]').forEach(b => b.onclick = () => { if (storyAccept(s, b.dataset.saccept)) { sfx.tick(); writeSave(s); const o = (s.storyBoard || []).find(x => x && x.id === b.dataset.saccept); this.toast('Story accepted!', o ? `First stop: ${o.stops[o.reached || 0]}` : '', 'good', 3); this.showMissions(); } });
+    document.querySelectorAll('#mList [data-spause]').forEach(b => b.onclick = () => { sfx.tick(); storyPause(s); writeSave(s); this.showMissions(); });
+    document.querySelectorAll('#mList [data-sgoto]').forEach(b => b.onclick = () => { sfx.tick(); this.go(b.dataset.sgoto); });
     $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
     document.querySelectorAll('#mCross [data-cross]').forEach(b => b.onclick = () => { const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); });
     document.querySelectorAll('#mCross [data-pick]').forEach(b => b.onclick = () => { sfx.tick(); this.pickCrossing(); });   // (the CROSSINGS screen: the moment sheet the first time, GO TO the departure city from elsewhere)

@@ -191,7 +191,7 @@ export function landedAt(save, city) {
     save.storyBoard = save.storyBoard.map(x => (x === o ? null : x));
     delete save.storyActive; if (save.aimCity === city) delete save.aimCity;
   } else save.aimCity = o.stops[o.reached];
-  return { title: o.title, city, line: o.lines[i] || '', n: i + 1, of: o.stops.length, done, pay };
+  return { id: o.id, title: o.title, city, line: o.lines[i] || '', n: i + 1, of: o.stops.length, done, pay };
 }
 // The mission row the rest of the game sees (src/missions2.js visible; src/aim.js steers to its city): the active story, or null.
 export function storyRow(save) {
