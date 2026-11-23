@@ -312,3 +312,5 @@ export const COLOURS = {
 export const PRICE_SCALE = { seeds: 6, crystals: 5, version: 3 };   // (x8 / x7 first: the sim then bought 45% fewer upgrades a flight in flights 26-70, crystal-bound; set to the equilibrium)
 export const scaleSeeds = n => (n >= 50 ? Math.round(n * PRICE_SCALE.seeds / 10) * 10 : Math.round(n * PRICE_SCALE.seeds / 5) * 5);
 export const scaleCrystals = n => Math.round(n * PRICE_SCALE.crystals);
+// A price in a row: 10,000 and over as '10.8k' (0.73.0: scaled prices reach five digits and did not fit a 375 px row, tests/rowfit).
+export const kNum = n => (n >= 10000 ? `${(n / 1000).toFixed(n % 1000 ? 1 : 0)}k` : String(n));

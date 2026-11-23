@@ -39,14 +39,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const p = await start('NEW YORK');
   for (const r of ['ocean', 'ice']) {
     const out = await p.evaluate(rr => new Promise(res => { const s = game.scene.getScene('game');
-      s.regionHere = () => rr; s.setRegion(rr);   // hold the region (the game re-checks it every frame)
+      s.regionHere = () => rr; s.regionAt = () => rr; s.setRegion(rr);   // hold the region (the game re-checks it every frame; regionAt: the coastline's look-ahead, 0.73.0)
       setTimeout(() => {
         const before = s.parcels, falling = s.parcelsFalling.length; s.dropParcel();
-        res({ button: s.dropShown, ground: s.terrain && s.terrain.ground, life: [s.wildlife.treesPerScreen, s.wildlife.wildPerScreen, s.wildlife.farmPerScreen, s.wildlife.birdsPerScreen],
+        res({ button: s.dropShown, ground: s.terrain && s.terrain.ground, life: [s.wildlife.treesPerScreen, s.wildlife.waterOnly ? 0 : s.wildlife.wildPerScreen, s.wildlife.farmPerScreen, s.wildlife.birdsPerScreen], waterOnly: !!s.wildlife.waterOnly,
           dropped: s.parcels !== before || s.parcelsFalling.length !== falling, parcels: before });
       }, 1800); }), r);
     check(out.ground === `ground-${r}`, `${r}: its own ground strip: ${out.ground}`);
-    check(out.life.every(n => n === 0), `${r}: no trees, animals, farms or birds: ${out.life}`);
+    check(out.life.every(n => n === 0), `${r}: no trees, land animals, farms or birds (0.73.0: over the sea only the last land's WATER animals swim, waterOnly ${out.waterOnly}): ${out.life}`);
     check(out.button === false, `${r}: no DROP button shown`);
     check(out.parcels > 0 && !out.dropped, `${r}: a tree parcel cannot be dropped: ${JSON.stringify(out)}`);
   }

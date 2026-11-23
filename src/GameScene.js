@@ -587,7 +587,7 @@ export class GameScene extends Phaser.Scene {
     if (this.hedge) this.hedge.setVisible(r === 'woodland');
     if (r !== 'ocean' && r !== 'ice' && REGION_DATA[r]) { this.lastLand = r; this.lastWaterPart = waterPart(this.save, r); }
     // Over the open sea (0.73.0): the last land's WATER animals swim there; no trees, farms or land animals.
-    if (this.life) this.wildlife = r === 'ocean' && this.lastLand ? { ...wildlifeScene(this.save, this.lastLand), waterOnly: true, treesPerScreen: 0, farmPerScreen: 0 } : wildlifeScene(this.save, r);   // (at the start, buildWildlife makes it)
+    if (this.life) this.wildlife = r === 'ocean' && this.lastLand ? { ...wildlifeScene(this.save, this.lastLand), waterOnly: true, treesPerScreen: 0, farmPerScreen: 0, birdsPerScreen: 0 } : wildlifeScene(this.save, r);   // (at the start, buildWildlife makes it)
     // Discovered only by really flying into it: not when the scene is built (that would change the save on
     // every page load, and a reopened device would then keep its own save over a newer online one).
     if (instant || this.school || this.state !== 'playing' || r === 'woodland' || !REGION_DATA[r]) return;

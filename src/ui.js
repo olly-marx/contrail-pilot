@@ -1,4 +1,4 @@
-import { FEATURES, km, CLIMATE, FOREST } from './config.js';
+import { FEATURES, km, CLIMATE, FOREST, kNum } from './config.js';
 import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
 import { routeFor, setGoto, clearGoto, arrivedGoto, gotoTarget, gotoHops, migrateAim, steerOf, activeMission, routeMode, stayLandLeft } from './aim.js';
@@ -958,7 +958,7 @@ export class UI {
 
   // One upgrade line's card (hangar and NATURE screen): name, level pips, (i), next level + BUY.
   lineCardHTML(line, depth = 0) {
-    const cost = l => `${l.cost}<i class="seedicon"></i>${l.crystals ? ` ${l.crystals}<i class="crysicon"></i>` : ''}`;
+    const cost = l => `${kNum(l.cost)}<i class="seedicon"></i>${l.crystals ? ` ${kNum(l.crystals)}<i class="crysicon"></i>` : ''}`;
       const s = this.save, free = !!s.freeUpgrade, head = '', indent = depth ? ` branch d${Math.min(depth, 3)}` : '';
       if (!unlocked(s, line)) {   // a branch shows its name and what it needs; other locked lines stay a surprise
         return `<div class="line locked${indent}"><div><div class="group">${line.group}</div><div class="name">${line.requires ? line.name : '???'}</div><div class="small">${unlockText(line, s)}</div></div></div>`;
