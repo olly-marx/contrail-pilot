@@ -24,7 +24,7 @@ export const capFresh = save => !!(save.capability && save.capability.key === ca
 // (0.73.2, CROSSINGS V5) The range FROM an area: the plane over THAT area's land (its nature cools the flight). save.capArea[area] = { km, key }; the area the player is in
 // also has save.capability. A save placed in the area's start city is what the estimate flies.
 export const atArea = (save, area) => (AREAS[area] && areaOf(save.city) !== area ? { ...save, city: AREAS[area].start } : save);
-export const capForArea = (save, area) => { const c = (save.capArea || {})[area]; return c && Number.isFinite(c.km) ? c.km : area && area === areaOf(save.city) ? capFor(save) : 0; };
+export const capForArea = (save, area) => { if (area && area === areaOf(save.city) && save.capability) return capFor(save); const c = (save.capArea || {})[area]; return c && Number.isFinite(c.km) ? c.km : 0; };
 export const capAreaFresh = (save, area) => { const c = (save.capArea || {})[area]; return !!c && c.key === capKey(atArea(save, area)); };
 export const roundCap = km => Math.round(km / CAP.roundKm) * CAP.roundKm;
 // The pool for the plane you fly (an era without its own pool yet uses the nearest earlier one).

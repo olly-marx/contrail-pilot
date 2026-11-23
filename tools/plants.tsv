@@ -579,7 +579,7 @@ crystalreason	src/sim/rules.js	s/        } else if (why !== 'quiet') this.onNoCr
 crystalpopup	src/GameScene.js	s/this.crystalWhyAt = this.gameTime; this.popup(this.plane.x + 25, this.plane.y - 16, text, '#c9d6e8');/this.crystalWhyAt = this.gameTime;/	a missed cloud shows no line
 crystalpopup	src/GameScene.js	s/if (!text || this.explaining || /if (!text || /	the line is shown over a tip
 crystalpopup	src/GameScene.js	s/    if (this.crystalWhyAt != null \&\& this.gameTime - this.crystalWhyAt < 12000) return;//	a line for every missed cloud (no 12 s limit)
-crossladder	src/crossings.js	s/^const reachKm = save => Math.max(.*$/const reachKm = save => (save.areaBest || {}).weurope || 0;/	the plane tick counts only a flight from the departure area again
+crossladder	src/crossings.js	s/^export const reachFrom = (save, c) => .*$/export const reachFrom = (save, c) => reachKm(save);/	a crossing reads the plane's reach from anywhere again (not the departure land)
 provewhy	tools/plant-why.sh	s/grep -E .^ \*- . | head -n 1)/grep -iE "FAIL|Error" | head -n 1)/	the bare FAIL header is reported instead of the own failing line
 pickcity	src/pickcity.js	s/  if (area \&\& !unlockedAreas(save)\.includes(area)) {/  if (false) {/	a closed-area city is treated like an open one
 pickcity	src/pickcity.js	s/const stops = path\.length - 1;/const stops = path.length;/	the stops count is one too many
