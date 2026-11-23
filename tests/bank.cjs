@@ -54,6 +54,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#hTrade'); await p.waitForTimeout(200);
   s = await saved(p);
   check(s.crystals === 40 && s.seeds === 1500 - 20 * rate, `two buys of 10 at ${rate}: ${s.crystals} crystals, ${s.seeds} seeds`);
+  // Oliver 2026-11-23: 'when I invested money in the bank it didn't reflect on my balance until I went out and came back in'.
+  const head = async () => [Number(await text(p, '#hTrees')), Number(await text(p, '#hCrystals'))];
+  let hd = await head();
+  check(hd[0] === s.seeds && hd[1] === s.crystals, `after BUY the top counters show ${hd[0]} seeds ${hd[1]} crystals, the save has ${s.seeds} / ${s.crystals}`);
   await p.click('[data-fstep="buy:max"]'); await p.waitForTimeout(150);
   await p.click('#hTrade'); await p.waitForTimeout(200);
   s = await saved(p);
@@ -75,6 +79,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#hInvest'); await p.waitForTimeout(200);
   s = await saved(p);
   check(s.finance.fund && s.finance.fund.paid > 0 && s.seeds === seeds0 - s.finance.fund.paid, `investing: ${JSON.stringify(s.finance.fund)}, seeds ${seeds0} -> ${s.seeds}`);
+  hd = await head();
+  check(hd[0] === s.seeds, `after INVEST the top counter shows ${hd[0]} seeds, the save has ${s.seeds}`);
   check(await p.isVisible('#hCashOut'), 'no TAKE OUT button with money in the fund');
   // The desk fits a phone: nothing wider than the screen.
   const wide = await p.evaluate(() => [...document.querySelectorAll('#hFleet .finance *')].filter(e => e.getBoundingClientRect().right > window.innerWidth + 1).length);

@@ -44,6 +44,9 @@ export class FleetHangar {
   render() {
     if (this.paying) { this.renderLater = true; return; }   // a payoff is showing IN the box: nothing may rebuild it (stage 2)
     const s = this.ui.save, el = $('hFleet');
+    // The seed and crystal counters at the top follow every redraw (Oliver, 2026-11-23: a BANK trade or INVEST left the old
+    // balance on show until he left the hangar and came back; the BANK buttons redraw only this box, not UI.renderHangar).
+    const ht = $('hTrees'), hc = $('hCrystals'); if (ht) ht.textContent = s.seeds; if (hc) hc.textContent = s.crystals || 0;
     // (No row dots since 2026-11-19, Oliver: the dots are on the bar and the PLANE / SYSTEMS / GADGETS sub-tabs only.)
     // R5 (UX plan C5): picture + caption (the range lives in the caption), the strip, THEN the sub-tabs directly under it, then the rows.
     // No era chips, no per-tab help sentence: the era is ONE line in PLANE (tap = a sheet), the plane paragraph is behind the (i).
