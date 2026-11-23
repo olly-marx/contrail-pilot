@@ -23,7 +23,7 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 // `paid` = what this flight's prizes were worth { seeds, crystals }: they were PAID at the bank (R8), the card only shows them.
 // `next` = nextUp(save) rows (the caller asks for NEXT_ROWS), `lead` = 'hangar' | 'nature' | null (ui.resultsLead).
 export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = [], lead = null } = {}) {
-  const earned = r.earned || [], total = sum(earned, e => e.n), grab = earned[0] ? earned[0].n : 0;
+  const earned = r.earned || [], kept = earned.filter(e => !(r.landed && e.lost)), total = sum(r.landed ? kept : earned, e => e.n), grab = earned[0] ? earned[0].n : 0;
   const rewards = r.rewards || [], done = (r.missions2 && r.missions2.done) || [];
   const firstTitles = done.filter(t => FIRSTS.some(f => f.title === t)), missionTitles = done.filter(t => !firstTitles.includes(t));
   const prizeSeeds = sum(rewards.filter(u => u.kind === 'mission'), u => u.seeds), prizeCrystals = sum(rewards.filter(u => u.kind === 'mission'), u => u.crystals);
@@ -34,10 +34,10 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   v.dist = km(r.distance || 0); v.record = !!r.newRecord;
   // 2. The bank: what this flight ADDED to the bank, all sources (what you carried home, bonuses, fares, prizes). A crash loses the seeds you carried.
   v.bank = { seeds: (r.landed ? total : 0) + paid.seeds, crystals: (r.crystals || 0) + paid.crystals, lost: r.landed ? 0 : total };
-  const mult = Number(r.mult) > 1 && earned.some(e => /^Long/.test(e.label)) ? ` × ${r.mult} bonus` : '';   // the word the r-bonus rail says (tests/railwords.cjs)
+  const mult = Number(r.mult) > 1 && earned.some(e => /^Long/.test(e.label)) ? ` +${Math.round((Number(r.mult) - 1) * 100)}% bonus` : '';   // the word the r-bonus rail says (tests/railwords.cjs)
   const kinds = r.kinds ? ` · ${r.kinds} ${r.kinds === 1 ? 'kind' : 'kinds'}` : '';
   const base = `${grab} grabbed${mult}`;   // the tree kinds ride along only while the line still fits one row; the sheet always has them
-  v.maths = r.school ? '' : r.overran ? 'Off the runway: half lost' : r.landed ? clip((base + kinds).length <= LINE_MAX ? base + kinds : base, LINE_MAX) : `${total} seeds lost`;   // (the crystals kept are the hero line; the pixel font has no snowflake)
+  v.maths = r.school ? '' : r.overran ? 'Off the runway: no fares' : r.landed ? clip((base + kinds).length <= LINE_MAX ? base + kinds : base, LINE_MAX) : `${total} seeds lost`;   // (the crystals kept are the hero line; the pixel font has no snowflake)
   // The planting row (tutorial 1a; the user, 2026-11-11: two lines): 'Planted 2 of 3 trees' and under it the kinds, 'Spruce, Oak'; 'Missed 3 trees' (one line) when none landed on soil; nothing when no tree was dropped.
   const dropped = r.treesDropped || 0, planted = Math.min(r.planted || 0, dropped), treeWord = dropped === 1 ? 'tree' : 'trees', names = (r.treeNames || []).join(', ');
   const treesBase = !dropped ? '' : planted ? `Planted ${planted} of ${dropped} ${treeWord}` : `Missed ${dropped} ${treeWord}`;
@@ -45,9 +45,9 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
   v.treeNames = v.trees && planted && names ? clip(names, LINE_MAX) : '';   // the second line of the row: the kinds that landed ('Spruce, Oak'), clipped to the row
   // The sheet behind the maths line: every row of the old tally.
   const gains = r.natureGains || [];
-  v.tally = [...earned.map(e => [e.label === 'Seeds' ? 'Seeds grabbed' : e.label, r.landed ? (e.n < 0 ? `${e.n}` : `+${e.n}`) : `${e.n} lost`]),
+  v.tally = [...earned.map(e => [e.label === 'Seeds' ? 'Seeds grabbed' : e.label, r.landed && !e.lost ? (e.n < 0 ? `${e.n}` : `+${e.n}`) : `${e.n} lost`]),
     ...gains.map(g => [g.name, `+${g.gain}`]), ...(r.kinds ? [[`${plural(r.kinds, 'tree kind')} today`, 'forest bonus']] : []),
-    ...(r.crystals ? [['Ice crystals (kept)', `+${r.crystals}`]] : []), ...(r.crystalsLost ? [['Ice crystals lost', `-${r.crystalsLost}`]] : []), ...(paid.seeds ? [['Prizes', `+${paid.seeds}`]] : [])];
+    ...(r.distanceCrystals ? [['Distance crystals', `+${r.distanceCrystals}`]] : []), ...(r.crystals ? [['Ice crystals (kept)', `+${r.crystals}`]] : []), ...(r.crystalsLost ? [['Ice crystals lost', `-${r.crystalsLost}`]] : []), ...(paid.seeds ? [['Prizes', `+${paid.seeds}`]] : [])];
   // 3. Missions: 1 -> its name, 2+ -> the count; the seeds they paid on the right. The sheet lists them. (Season 1: the one mission's outcome.)
   if (r.missions2) {
     const n = missionTitles.length;

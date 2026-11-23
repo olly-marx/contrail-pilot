@@ -59,12 +59,12 @@ const src = f => path.resolve(__dirname, '../src', f);
   let ahead = 0; const tries = 400;
   for (let i = 0; i < tries; i++) if (M.growth(i * 977, i * 977 + days, 8) * (1 - M.FUND.fee) > 1) ahead++;
   check(ahead / tries >= 0.75, `after ${flights} flights at B 8 (the low end) a fund is ahead (after the fee) in only ${ahead} of ${tries} starts (want 3 in 4)`);
-  const fs = JSON.parse(JSON.stringify(base)); fs.seeds = 4600;
-  check(M.canInvest(fs) === 500 && M.invest(fs) === 500 && fs.seeds === 4100 && M.fundValue(fs) === 500, 'investing 500 did not move 500 seeds into the fund');
-  check(M.canInvest(fs) === 100, `the reserve (4,000) was not kept: could invest ${M.canInvest(fs)}, want 100`);
+  const fs = JSON.parse(JSON.stringify(base)), L1 = M.FINANCE.levels[0], st = M.FUND.step; fs.seeds = L1.reserve + st + st / 5;   // (0.73.0: x8 amounts)
+  check(M.canInvest(fs) === st && M.invest(fs) === st && fs.seeds === L1.reserve + st / 5 && M.fundValue(fs) === st, `investing ${st} did not move ${st} seeds into the fund`);
+  check(M.canInvest(fs) === st / 5, `the reserve (${L1.reserve}) was not kept: could invest ${M.canInvest(fs)}, want ${st / 5}`);
   const cs = JSON.parse(JSON.stringify(base)); cs.seeds = 1e6; let put = 0; while (M.invest(cs)) put++;
   check(M.fundValue(cs) === M.FINANCE.levels[0].fund && put === 4, `the fund cap: holding ${M.fundValue(cs)} after ${put} taps, want ${M.FINANCE.levels[0].fund}`);
-  cs.flightSeconds += 30 * M.GAME_DAY; const v1 = M.fundValue(cs), want = Math.floor(2000 * M.growth(M.gameDay(cs) - 30, M.gameDay(cs), M.financeBio(cs)));
+  cs.flightSeconds += 30 * M.GAME_DAY; const v1 = M.fundValue(cs), want = Math.floor(L1.fund * M.growth(M.gameDay(cs) - 30, M.gameDay(cs), M.financeBio(cs)));
   check(v1 === want, `value after 30 game days ${v1}, want ${want}`);
   const before = cs.seeds, paid = M.cashOut(cs);
   check(paid === Math.floor(v1 * (1 - M.FUND.fee)) && cs.seeds === before + paid && !M.fundOf(cs), `cash out paid ${paid}, want ${Math.floor(v1 * (1 - M.FUND.fee))} and an empty fund`);

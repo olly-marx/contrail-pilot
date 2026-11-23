@@ -13,7 +13,7 @@
 import { areaOf } from './areas.js';
 import { HAZARD_POOLS } from './cappool.js';
 import { fleetOf, planeById } from './fleet.js';
-export const CAP = { heatSeeds: [1, 2, 3], roundKm: 500, msPerFrame: 6, maxKm: 60000 };
+export const CAP = { heatSeeds: [1, 2, 3], roundKm: 500, msPerFrame: 6, maxKm: 60000, hazards: false, v: 2 };   // v: bumped so saved estimates (capKey) are made again
 
 const hash = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619); return (h >>> 0).toString(36); };
 export const capKey = save => hash(JSON.stringify([save.fleet || null, save.levels || null, save.fuel || null, save.habitat || null, areaOf(save.city) || null, CAP]));
@@ -22,8 +22,11 @@ export const roundCap = km => Math.round(km / CAP.roundKm) * CAP.roundKm;
 // The pool for the plane you fly (an era without its own pool yet uses the nearest earlier one).
 export const poolFor = save => { const p = planeById(fleetOf(save).plane), era = p ? p.era : 0;
   for (let e = era; e >= 0; e--) if (HAZARD_POOLS[e]) return HAZARD_POOLS[e]; return []; };
+// RANGE = the HEAT distance only since 0.73.0 (Oliver, 2026-11-23: 'judge that on the distance the plane can fly based on the nature and plane upgrades'; his plane read
+// ~17,000 km after 25,000 km flights). The hazard pool (a sim pilot's crash distance, medians 14,000-17,000 km on EVERY plane) capped the estimate, so upgrades barely
+// moved it; crashing is skill, not range. Measured 2026-11-23: twin at flight 140 heat 26,100 km, shown 15,000. CAP.hazards true brings the old min() back.
 export function combine(heats, pool) {
-  const all = []; for (const h of heats) for (const z of pool) all.push(Math.min(h, z));
+  const all = []; for (const h of heats) { if (!CAP.hazards) { all.push(h); continue; } for (const z of pool) all.push(Math.min(h, z)); }
   all.sort((a, b) => a - b); return roundCap(all.length ? all[all.length >> 1] : 0);
 }
 const heatOpts = () => ({ pilots: ['careful'], seeds: CAP.heatSeeds, maxKm: CAP.maxKm });

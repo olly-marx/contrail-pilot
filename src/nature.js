@@ -3,6 +3,8 @@ import { UK_PROJECTS, UK_SPECIES, RARITY, REGION_DATA } from './habitats.js';
 import { WILDLIFE } from './wildlife.js';
 import { REGION_TREES } from './habitat/trees.js';
 import { treeBook, groveWith, grownBook } from './groves.js';
+import { isWaterProject, treeCap, BASE_CAP, waterMeter, combine, landShare, waterShare } from './waterways.js';
+import { nextTree } from './droporder.js';
 // Nature: tree species, rewilding projects and the Biodiversity meter (barren land to rainforest).
 // The meter is kept across flights. Variety counts more than numbers: the first tree of a new
 // native kind is a big boost; more of the same kind adds less and less.
@@ -71,26 +73,47 @@ const plantedHere = (save, region) => treeBook(save, region);   // one record fo
 // Slot 0 is the plantation tree (rows of one kind: few animals), scored low like spruce, even where it is
 // native (Aleppo pine, Chinese fir, loblolly pine...); slots 1-4 score like the UK natives.
 const nativeHere = (region, id) => region === 'woodland' ? SPECIES[id] && SPECIES[id].native : ((REGION_TREES[region] || []).find(t => t.id === id) || { slot: 0 }).slot > 0;
-const pointsHere = (region, id, n) => !n ? 0 : nativeHere(region, id) ? Math.min(18, 6 * Math.sqrt(n)) : Math.min(6, 2 * Math.sqrt(n));
+// (0.73.0: n is scaled by the land's tree cap, src/waterways.js treeCap: a water-heavy land's smaller cap still scores what 9 of a kind score.)
+const pointsHere = (region, id, n0) => { const n = n0 * (WATERWAYS.on ? BASE_CAP / treeCap(region) : 1); return !n ? 0 : nativeHere(region, id) ? Math.min(18, 6 * Math.sqrt(n)) : Math.min(6, 2 * Math.sqrt(n)); };
 
 // One meter per region (2026-10-22). The UK counts trees too (the trees you plant are UK trees);
 // every other region is its projects only: 100 = all of that region's projects done.
 // grownOnly (2026-11-13, ledger row 54): count only fully GROWN trees (src/groves.js grownBook); a sapling adds nothing. The biome cooling reads this (BIOME_COOL in config.js).
+// WATERWAYS (0.73.0, src/waterways.js): the meter = the land part x the land's land share + the water part x its water share. WATERWAYS.on false = the meter as before 0.73.0.
+export const WATERWAYS = { on: true };
 export function biodiversity(save, region = 'woodland', grownOnly = GROWN_METER.on) {
+  if (!WATERWAYS.on) return landMeter(save, region, grownOnly);
+  if (region !== 'woodland' && !REGION_DATA[region]) return 0;
+  return combine(region, landMeter(save, region, grownOnly), waterPart(save, region));
+}
+// The three bars of a land (the meter display, 0.73.0: name, then land / water / total): each 0..100, and the shares.
+export function biodiversityParts(save, region = 'woodland') {
+  const land = landMeter(save, region), water = WATERWAYS.on ? waterPart(save, region) : 0;
+  return { land, water, total: biodiversity(save, region), landShare: WATERWAYS.on ? landShare(region) : 100, waterShare: WATERWAYS.on ? waterShare(region) : 0 };
+}
+// The WATER part, 0..100: water drops (save.waterBook[land]) and water projects funded.
+export const waterPart = (save, region) => !REGION_DATA[region] ? 0 : waterMeter(region, (save.waterBook || {})[region] || {}, (save.habitat || {})[region] || [], REGION_DATA[region].projects);
+// The LAND part, 0..100: trees + land projects (since 0.73.0 water projects are left out here and count on the water side). Until 0.73.0 this was the whole meter.
+export function landMeter(save, region = 'woodland', grownOnly = GROWN_METER.on, exact = false) {
+  const out = v => (exact ? Math.min(100, v) : Math.min(100, Math.round(v)));
   let b = 0;
-  const book = grownOnly ? grownBook : treeBook;
+  const book = grownOnly ? grownBook : treeBook, landOnly = p => !WATERWAYS.on || !isWaterProject(region, p.id);
   if (region === 'woodland') {
     for (const [id, n] of Object.entries(book(save, 'woodland'))) b += speciesPoints(id, n);
-    for (const p of projectsDone(save)) b += p.bio;
-    return Math.min(100, Math.round(b * 100 / RAW_MAX()));
+    for (const p of projectsDone(save).filter(landOnly)) b += p.bio;
+    return out(b * 100 / (TREES_MAX + PROJECTS.filter(landOnly).reduce((a, p) => a + p.bio, 0)));
   }
   if (!REGION_DATA[region]) return 0;   // the sea and the ice (src/geo.js) have no projects
-  // Elsewhere: that region's trees (as the UK's: ~40 of 100) plus its projects.
-  const all = REGION_DATA[region].projects;
-  for (const [id, n] of Object.entries(grownOnly ? grownBook(save, region) : plantedHere(save, region))) b += pointsHere(region, id, n);
-  for (const p of projectsDone(save, region)) b += p.bio * projectWeight(all, p);
-  const raw = TREES_MAX * all.reduce((a, p) => a + p.bio, 0) / PROJECTS.reduce((a, p) => a + p.bio, 0) + all.reduce((a, p) => a + p.bio, 0);
-  return Math.min(100, Math.round(b * 100 / raw));
+  // Elsewhere: that region's trees (as the UK's: ~40 of 100) plus its land projects.
+  const all = REGION_DATA[region].projects.filter(landOnly);
+  let t = 0, pr = 0;
+  for (const [id, n] of Object.entries(grownOnly ? grownBook(save, region) : plantedHere(save, region))) t += pointsHere(region, id, n);
+  for (const p of projectsDone(save, region).filter(landOnly)) pr += p.bio * projectWeight(all, p);
+  // The trees' share of the land part is the UK's (TREES_MAX against the UK's land projects, ~40 of 100); the projects fill the rest. (Until 0.73.0 the trees' raw points were set
+  // against TREES_MAX x the land's project points / the UK's, so a land with more project points than the UK could never fill its meter: the desert topped out at 80.)
+  const ukLand = PROJECTS.filter(p => !WATERWAYS.on || !isWaterProject('woodland', p.id)).reduce((a, p) => a + p.bio, 0), treeShare = TREES_MAX / (TREES_MAX + ukLand);
+  const allBio = all.reduce((a, p) => a + p.bio, 0);
+  return out(100 * (treeShare * Math.min(1, t / TREES_MAX) + (1 - treeShare) * (allBio ? Math.min(1, pr / allBio) : 0)));
 }
 // LAND EVEN (src/config.js): a project's weight in its land's meter. 1 unless the land's tier 1-2 share of project points is under LAND_EVEN.share; then tier 1-2 projects
 // count share x total / (their points) and the rest (1 - share) x total / (their points), so the land's total, and a finished land's 100, stay as they were.
@@ -109,9 +132,9 @@ export const worldBiodiversity = save => Math.round(Object.keys(REGION_DATA).red
 // What one more tree adds to a region's meter (local id; see localTree).
 export function plantGainHere(save, region, id) {
   if (region === 'woodland') return plantGain(save, id);
-  const n = plantedHere(save, region)[id] || 0, before = biodiversity(save, region);
+  const n = plantedHere(save, region)[id] || 0, before = landMeter(save, region, undefined, true);
   const s2 = { ...save, groves: groveWith(save, region, id, n + 1) };
-  return biodiversity(s2, region) - before;
+  return landMeter(s2, region, undefined, true) - before;   // (0.73.0: the LAND part a tree adds; the whole meter, rounded after the land share, often showed +0)
 }
 export function plantGain(save, id) {
   const n = treeBook(save, 'woodland')[id] || 0;
@@ -190,9 +213,17 @@ export function wildlifeScene(save, region = 'woodland') {
 
 // Fund a habitat project in a region (moved from the NATURE screen, src/wild.js, 2026-10-26, so the sim engine's
 // player funds exactly as the game): open (the land's biodiversity reaches its tier), not done, affordable.
+// Is a project open to fund (0.73.0)? A LAND project when the land part reaches its tier (as before, when the whole meter was the land); a WATER project only once the land's
+// biome is full (its water is open: no tree kind has room) and the water part reaches its tier. (Oliver, 2026-11-23: water projects 'unlocked at a certain stage'.)
+export const waterOpenHere = (save, region) => !nextTree(save, region);
+export function projectOpen(save, region, p) {
+  if (!WATERWAYS.on) return biodiversity(save, region) >= p.needs;
+  if (isWaterProject(region, p.id)) return waterOpenHere(save, region) && waterPart(save, region) >= Math.min(p.needs, 30);
+  return landMeter(save, region) >= p.needs;
+}
 export function fundProject(save, region, id) {
   const p = REGION_DATA[region].projects.find(x => x.id === id);
-  if (!p || projectsDone(save, region).some(d => d.id === id) || biodiversity(save, region) < p.needs || save.seeds < p.cost || (save.crystals || 0) < p.crystals) return false;
+  if (!p || projectsDone(save, region).some(d => d.id === id) || !projectOpen(save, region, p) || save.seeds < p.cost || (save.crystals || 0) < p.crystals) return false;
   save.seeds -= p.cost; save.crystals -= p.crystals;
   save.habitat = save.habitat || {}; save.habitat[region] = [...(save.habitat[region] || []), id];
   return true;

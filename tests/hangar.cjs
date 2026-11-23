@@ -24,7 +24,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const row = (p, name) => p.evaluate(n => [...document.querySelectorAll('#hFleet .rowc')].find(e => e.querySelector('.rowc-name').textContent === n).textContent.replace(/\s+/g, ' '), name);
   const saved = p => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
 
-  // 1. Buy the 1970s magnet level (3): 150 x 0.43 = 65 seeds, 8 crystals.
+  // 1. Buy the 1970s magnet level (3): 150 x 0.43 = 65 seeds, 8 crystals, x the 0.73.0 PRICE SCALE (x6 / x5) = 390 seeds, 40 crystals.
   let p = await open(150);
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
@@ -36,11 +36,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.waitForTimeout(200);
   check(await p.isVisible('#hFleet'), 'after the payoff OK: not in the hangar any more');
   let s = await saved(p);
-  check(s.fleet.gadgets.magnet === 3 && s.seeds === 1185 && s.crystals === 142, `magnet 3 bought: ${JSON.stringify({ m: s.fleet.gadgets.magnet, seeds: s.seeds, crystals: s.crystals })}`);
+  check(s.fleet.gadgets.magnet === 3 && s.seeds === 860 && s.crystals === 110, `magnet 3 bought: ${JSON.stringify({ m: s.fleet.gadgets.magnet, seeds: s.seeds, crystals: s.crystals })}`);
   // (the redesign: the row shows 'Next: …' and the pips; the level you have shows as 3 lit pips, its name in the strip)
   const pipsOn = await p.evaluate(() => document.querySelectorAll('[data-row="gadget:magnet"] .pip.on').length);
   check(pipsOn === 3 && /Next: Stronger coil/.test(await row(p, 'Magnet')), `the row moves on: 3 pips lit (${pipsOn}), "${await row(p, 'Magnet')}"`);
-  check(await p.textContent('#hTrees') === '1185', `the seed count on screen drops to 1185: ${await p.textContent('#hTrees')}`);
+  check(await p.textContent('#hTrees') === '860', `the seed count on screen drops to 860 (1,250 - 390: magnet 3 at the 0.73.0 prices): ${await p.textContent('#hTrees')}`);
   // Tap-to-preview (2026-10-28): a row LOW in the list is tapped -> its preview card must be on screen (it is at the top).
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   const low = await p.$$('[data-ftap^="plane:"]');

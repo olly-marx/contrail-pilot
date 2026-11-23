@@ -64,8 +64,8 @@ hazards	src/sim/rules.js	s/Bird strike!/Oops!/	bird reason text changed
 pickupgates	src/sim/rules.js	s/!this.school \&\& this.kit.safCans \&\& safHelps/!this.school \&\& safHelps/	SAF cans before SAF exists
 pickupgates	src/sim/rules.js	s/else if (!this.school \&\& this.kit.autoChance \&\& r > 1 - this.kit.autoChance)/else if (!this.school \&\& r > 0.5)/	autopilot pick-up without the gadget
 fares	src/sim/rules.js	s/const fares = landed \&\& !this.school ?/const fares = !this.school ?/	a crash pays fares
-fares	src/fleet.js	s/export const FARES = { comet: 2,/export const FARES = { comet: 3,/	Comet fare changed
-fares	src/sim/rules.js	s/\/ 1e6 \* this.kit.fares)/\/ 1e6)/	Cabin upgrades ignored
+fares	src/fleet.js	s/export const FARES = { comet: 20,/export const FARES = { comet: 21,/	Comet fare changed
+fares	src/sim/rules.js	s/\* km \* this.kit.fares)/* km)/	Cabin upgrades ignored
 eras	src/eras.js	s/ERA_BASE_MIN = 20;/ERA_BASE_MIN = 30;/	era base minutes changed
 eras	src/eras.js	s/Math.pow(n, 1.5)/Math.pow(n, 2)/	era growth exponent changed
 controls	src/GameScene.js	s/const TIP_MAX = 6, TIP_MIN_TAP = 2;/const TIP_MAX = 2, TIP_MIN_TAP = 2;/	a tip goes too early
@@ -86,9 +86,8 @@ season2-smoke@PART=Bweurope,Bnamerica,Bsasia	src/route.js	s/(SEASON2_ON ? save :
 season2-smoke@PART=Bafrica,Bsamerica,Beasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B2)
 season2-smoke@PART=A,C,E,F,G	src/ui.js	s/if (tab === 'nature')/if (tab === 'natur')/	C: NATURE does not open
 season2-smoke@PART=A,C,E,F,G	src/pilot.js	s/const off = onlineOff(), names/const off = false, names/	C: PILOT offers a name form
-season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/  return n > era \&\& n <= SEASON.maxEra - 1 \&\& upcoming(save).some(c => c.kind !== 'lap') ? n : null;/  return null;/	F: nothing to fly yet is silent
 season2-smoke@PART=A,C,E,F,G	src/crossings.js	s/{ id: 'lap', era: 5,/{ id: 'lap', era: 9,/	E: the lap never offered (era 6: it replaced the MORE TO COME card)
-season2-smoke@PART=D	src/season.js	s/distanceShare: 0.7/distanceShare: 0/	D: a short flight is offered the crossing
+season2-smoke@PART=D	src/season.js	s/distanceShare: 1 }/distanceShare: 0 }/	D: a short flight is offered the crossing
 releasegate	tests/PATHMAP	s/ season2-smoke@PART=D / /	a season2-smoke piece dropped (section D unchecked)
 releasegate	tests/PATHMAP	s/season2-smoke@PART=D /season2-smoke@PART=D,C /	a season2-smoke section checked twice
 releasegate	tools/gate-plan.py	s/    for t in \[t for t in why if '@PART=' in t and t.split('@')\[0\] in why\]:/    for t in []:/	the pieces are repeated next to the whole test
@@ -118,7 +117,7 @@ era4-knobs	src/sim/physics.js	s/nightHeat: false/nightHeat: true/	night contrail
 era4-knobs	src/sim/physics.js	s/clean: false, wobble: false }/clean: true, wobble: false }/	contrail-free cruise ignored
 hangar-feedback	src/fleet.js	s/keys: \['pickup'\]/keys: ['pickupX']/	a changed setting with no bar
 lap	src/crossings.js	s/if (save.city !== c.to) return false;/if (false) return false;/	the lap counts away from home
-capability	src/capability.js	s/all.push(Math.min(h, z));/all.push(h);/	the hazard pool ignored (heat only)
+capability	src/capability.js	s/hazards: false, v: 2 }/hazards: true, v: 2 }/	the crash pool caps the range again (the pre-0.73.0 estimate)
 twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
 finance	src/finance.js	s/Math.pow(1 - b, MARKET.curve)/Math.pow(1 - 0, MARKET.curve)/	the rate ignores nature
 hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (false) pv.scrollIntoView/	a tapped row previews off screen
@@ -156,7 +155,7 @@ preview	src/season2.js	s#const store = PREVIEW ? {#const store = false ? {#	prev
 tipqueue	src/GameScene.js	s#  dropTips() {#  dropTips() { return;#	unshown tips not unmarked
 tipqueue	src/GameScene.js	s#^    dropToast();$#    void 0;#;s#this.stripWatch.observe(coachEl);#void 0;#	the toast stays under the strip
 l4hint	src/GameScene.js	s#else if (skipThis && toAirport < AIRPORT.signFrom)#else if (false \&\& skipThis)#	the landing call on an L4 flight
-railwords	src/resultscard.js	s# × ${r.mult} bonus# × ${r.mult}#	the maths line without the word the rail says
+railwords	src/resultscard.js	s#% bonus` : ''#%` : ''#	the maths line without the word the rail says
 railwords	src/tips.js	s#Forecasting shows icy air sooner. Save up for it!#Forecasting shows icy air sooner. Buy it when you can!#	the systems rail pushes a purchase
 season2	src/areas.js	s#aotearoa: { name: 'Aotearoa & Polynesia', starter: true,#aotearoa: { name: 'Aotearoa \& Polynesia', starter: false,#	NZ not a starter
 sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
@@ -538,7 +537,7 @@ recoverfirst	src/online.js	s/^export const rememberFirst = .*$/export const reme
 recoverfirstui	src/pilot.js	s/^    const lost = !off \&\& !this.chooseNew \&\& pilotLost(this.save, getPilot());.*$/    const lost = false;/	the PILOT tab opens on the empty new-name form again
 nocrossingkm	src/crossingview.js	s/body: `A non-stop flight\. How hard:/body: `A non-stop flight of ${s.km} km. How hard:/	the sheet says the crossing's distance again
 nocrossingkm	src/crossingview.js	s/export const rightText = s => (s.told ? s.difficulty : `NEW ${s.difficulty}`);/export const rightText = s => (s.told ? `${s.km} km` : `NEW ${s.km} km`);/	the HOME row shows the distance again
-nocrossingkm	src/crossingview.js	s/label: 'Plane', line: 'a better plane'/label: `Fly ${Math.round(0.7 * c.km)} km`, line: 'a better plane'/	the plane tick names a distance again
+nocrossingkm	src/crossingview.js	s/label: 'Range', line: 'more range'/label: `Fly ${c.km} km`, line: 'more range'/	the range tick names a distance again
 nocrossingkm	src/crossingview.js	s/^export const DIFFICULTY = .*$/export const DIFFICULTY = ['Easy', 'Easy', 'Easy', 'Easy', 'Easy', 'The lap'];/	every crossing is as easy as the first
 toolseverywhere	src/wild.js	s/^    const uk = true;$/    const uk = this.region === (homeRegion(s) || 'woodland');/	the planting tools are on the home land only again
 plantrail	src/GameScene.js	s/ \&\& this.noTreeYet()) this.explainAgain(/ \&\& false) this.explainAgain(/	the soil tip is shown once only (it never comes back until a tree lands)
@@ -550,7 +549,7 @@ landlog	src/landlog.js	s/\.slice(-LANDLOG_MAX)/.slice(-1000)/	the landing log ke
 landlog	src/ui.js	s/if (r\.touchdown \&\& !r\.school) recordTouchdown(r\.touchdown);/if (false) recordTouchdown(r.touchdown);/	the results never record the touchdown
 landlogui	src/pilot.js	s/^    $('pLandCopy').onclick = () => {.*$/    $('pLandCopy').onclick = () => {};/	the COPY LANDING NUMBERS button does nothing
 crossbox	src/crossingview.js	s/route: `\${s.from} > \${s.to}`, word: s.difficulty/route: `${s.from} > ${s.to} (${s.km} km)`, word: s.difficulty/	the box shows the crossing's distance again
-crossbox	src/crossingview.js	s/const ticks = \[\['Era', 'era'\], \['Plane', 'plane'\], \['Nature', 'nature'\]\]/const ticks = [['Era', 'era'], ['Nature', 'nature'], ['Plane', 'plane']]/	the box ticks are in the wrong order
+crossbox	src/crossingview.js	s/const ticks = \[\['Range', 'plane'\]\]/const ticks = [['Era', 'era'], ['Range', 'plane']]/	the box shows an Era tick again
 crossbox	src/crossingview.js	s/n \&\& n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' }/n \&\& n.where === 'hangar' ? { label: 'NATURE', act: 'nature' }/	an open plane tick sends the player to NATURE
 crossbox	src/crossingview.js	s/: s.nearest ? s.nearest.plain : '';/: s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
 crossboxui	src/ui.js	s/hc.hidden = !box; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
@@ -725,7 +724,7 @@ needsmark	src/missionplan.js	s/return i < 0 ? lv.length : i + 1;/return i < 0 ? 
 needsmark	src/missionplan.js	s/if (((save.levels || {}).trees || 0) >= lv) return null;/if (((save.levels || {}).trees || 0) > lv) return null;/	the marker stays when the player owns exactly the level
 needsmark	src/missionsview.js	s/const need = m \&\& def \&\& def.needs ? def.needs(m.fill, save) : null;/const need = null;/	the row never shows the asterisk
 missionprize	src/missionprize.js	s/shade: \[10, 0\], 'plant-tree'/shade: [11, 0], 'plant-tree'/	a tier-1 kind pays one seed more (the tier total moves)
-missionprize	src/missionprize.js	s/'Very hard': \[1100, 137\]/'Very hard': [1101, 137]/	a crossing word pays one seed more
+missionprize	src/missionprize.js	s/'Very hard': \[12800, 1024\]/'Very hard': [12801, 1024]/	a crossing word pays one seed more
 missionprize	src/missionprize.js	s/  if (!b) throw new Error(.missionPrize: unknown mission kind .*$/  if (!b) return { seeds: 0, crystals: 0 };/	an unknown mission kind pays nothing instead of throwing
 missionprize	src/missions2.js	s/prize: missionPrize(kindOf(t.id), f.k), def: t, fill: own/prize: { seeds: t.prize * f.k, crystals: 0 }, def: t, fill: own/	the prize shown is the old flat one, not the table's
 needsmark-ui	src/missionsview.js	s/short: need ? [^:]* : n.short,/short: n.short,/	the row never shows the asterisk
@@ -753,7 +752,7 @@ missionstreak	src/missions2.js	s/    if (!k.startsWith(`${a}:`)) continue;.*$/  
 crossreward	src/crossings.js	s/^  if (due) payPrize(save, due);$/  if (false) payPrize(save, due);/	the crossing pays nothing
 crossreward	src/crossings.js	s/export const crossingPrizeDue = (save, c) => ((save.crossed || \[\]).includes(c.id) ? null : /export const crossingPrizeDue = (save, c) => (false ? null : /	a crossing already crossed pays again (back-pay)
 crossreward	src/crossings.js	s/    if (save.city !== c.to) return false;/    if (save.city !== c.to) { if (due) payPrize(save, due); return false; }/	the lap pays even when not landed at home
-crossreward	src/missionprize.js	s/Harder: \[700, 87\]/Harder: [700, 88]/	a crossing word pays one crystal more (the sum moves)
+crossreward	src/missionprize.js	s/Harder: \[10800, 864\]/Harder: [10800, 865]/	a crossing word pays one crystal more (the sum moves)
 crossreward	src/crossingend.js	s/    if (c.prize) lines.push(.*$/    if (false) lines.push(...prizeLines(c.prize));/	the landing card names no prize
 crossreward	src/crossingview.js	s/word: s.difficulty, prize: prizeText(s.prize), ticks,/word: s.difficulty, prize: prizeText({ seeds: 1 }), ticks,/	the box shows a prize that is not the one paid
 crossrewardui	src/ui.js	s/ <span class=[^>]*hc-prize[^>]*>${esc(box.prize)}<\/span>//	the HOME box shows no prize
@@ -800,7 +799,7 @@ nursery	src/sim/rules.js	s/const treesGrown = !this\.school ? growGroves(/const 
 nursery	src/nature.js	s/const book = grownBook(save, region), base/const book = plantedHere(save, region), base/	the scenery shows saplings as grown trees
 droporder	src/droporder.js	s/room\.reduce((a, c) => (c\.n < a\.n ? c : a))/room.reduce((a, c) => (c.n > a.n ? c : a))/	the most planted kind is chosen, not the fewest
 droporder	src/droporder.js	s/(pending\[t\.id\] || 0)/0/	the parcels released but not landed are not counted
-droporder	src/droporder.js	s/c\.n < TREE_CAP/true/	a kind at its cap of 9 is still chosen
+droporder	src/droporder.js	s/c\.n < capOf(land)/true/	a kind at its cap is still chosen
 droporder	src/droporder.js	s/(c\.n < a\.n ? c : a)/(c.n <= a.n ? c : a)/	a tie goes to the last slot, not the first
 droporder	src/sim/rules.js	s/const lid = localTree(kind, region)\.id; this\.dropped\[lid\] = Math\.max(0, (this\.dropped\[lid\] || 0) - 1);//	a landed parcel stays pending for ever
 droporder	src/sim/rules.js	s/const kind = this\.treeKind();/const kind = this.treeKind() || 'spruce';/	a full grove still lets the tree go
@@ -859,11 +858,11 @@ rebalance	src/missions2.js	s/ready: f => STAR_GROW3.on || f.kindsRoom >= 2,/read
 rebalance	src/landtrees.js	s/kindsMissionDone(save, land) || kindsStuck(save, land) :/kindsMissionDone(save, land) :/	slot 4 never opens when kinds3 is stuck
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + Math.min(cap, c.planted), 0)/	Forester counts saplings
 rebalance	src/groves.js	s/b + Math.min(cap, c.grown), 0)/b + c.grown, 0)/	Forester counts more than 9 of a kind
-rebalance	src/nature.js	s/const book = grownOnly ? grownBook : treeBook;/const book = treeBook;/	the biome meter counts saplings
+rebalance	src/nature.js	s/const book = grownOnly ? grownBook : treeBook, landOnly/const book = treeBook, landOnly/	the biome meter counts saplings
 rebalance	src/sim/rules.js	s/land = this.landStored >= BIOME_COOL.store \* m ? 0 : BIOME_COOL.rate \* m \* dt;/land = this.landStored >= BIOME_COOL.store ? 0 : BIOME_COOL.rate * 0.5 * dt;/	biome cooling ignores the meter
 rebalance	src/config.js	s/export const BIOME_COOL = { on: true,/export const BIOME_COOL = { on: false,/	biome cooling ships switched off
 rebalance	src/droporder.js	s/export const BIOME_FULL_LABEL = 'Biome full';/export const BIOME_FULL_LABEL = 'Grove full';/	the old grove-full words
-rebalance	src/nature.js	s/grownOnly = GROWN_METER.on) {/grownOnly = false) {/	the switch never makes the meter count grown trees only
+rebalance	src/nature.js	s/export function landMeter(save, region = 'woodland', grownOnly = GROWN_METER.on, exact = false) {/export function landMeter(save, region = 'woodland', grownOnly = false, exact = false) {/	the switch never makes the meter count grown trees only
 rebalance	src/nature.js	s/ \&\& (!GROWN_METER.on || animalsAwake(save, region)); };/; };/	animals do not wait for a grown tree
 rebalance	src/nature.js	s/  || regionSpecies(region).some(w => (save.found || {})\[w.id\] \&\& !\['cow', 'sheep'\].includes(w.id));/  || false;/	no grandfather rule: a land with found animals but no grown tree loses them
 rebalance	src/config.js	s/export const GROWN_METER = { on: false };/export const GROWN_METER = { on: true };/	the grown meter ships switched on
@@ -893,7 +892,7 @@ cityrow	src/sim/rules.js	s/return Math.max(0, Math.min(1, 1 - (d - STORMS.spacin
 cityrow	src/sim/rules.js	s/const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));/const d = Math.abs(ahead - this.distancePx);/	only the next city shows its buildings
 cityrowui	src/GameScene.js	s/    this.city.setAlpha(this.cityRowAlpha());/    this.city.setAlpha(1);/	the game ignores the rule
 
-crossladder	src/crossings.js	s/export const crossingsMade = save => Math.max(0, regionsOpen(unlockedAreas(save)).length - 1);/export const crossingsMade = save => 0;/	every crossing is as hard as the first
+crossladder	src/crossings.js	s/  return eraGate ? out.slice(0, 1) : out;/  return out;/	every route is on offer at once again
 crossladder	src/areas.js	s/^export const withRegions = keys => .*$/export const withRegions = keys => [...(keys || [])];/	an open area no longer opens its whole region
 missions4	src/missions2.js	s/  const crossings = Math.max(0, regionsOpen(withRegions(save.areas || \[\])).length - 1);/  const crossings = Math.max(0, (save.areas || []).length - 1);/	a fresh Europe start (two areas) skips the lessons
 finance	src/finance.js	s/curve: 4,/curve: 1,/	the gap closes evenly, not steep early
@@ -905,7 +904,7 @@ badgefont	style.css	s/^\.tab\.on { grid-column: span 2; font-size: 8px;/.tab.on 
 naturefold	style.css	s#^\.wpin \.wscene { width: calc(100% - 6px); }$#@media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }#	the land's picture is 70 percent wide on short phones again
 keepvisible	style.css	s/^@media (max-height: 760px) { \.wpin { position: static; box-shadow: none; } }$//	NATURE's land stays pinned on short phones again (it covers half the screen at full width)
 crossladder	src/crossings.js	s/(SEASON.step \&\& SEASON.step.km\[c.era\]) || SEASON.crossingKm\[c.era + 1\]/SEASON.crossingKm[c.era + 1]/	the length lever does nothing
-crossladder	src/crossings.js	s/SEASON.step.bioMul\[c.era\] : 1));/1 : 1));/	the nature lever does nothing
+crossladder	src/crossings.js	s/  out.sort((a, b) => a.km - b.km);/  out.sort((a, b) => b.km - a.km);/	the offer is the longest route, not the shortest
 stucktouch	src/main.js	s/^watchStaleTouches(game);/if (false) watchStaleTouches(game);/	stuck finger guard off
 touchfree	src/touchfree.js	s/if (!q || !q.active || on.has(q.identifier)) continue;/if (!q || !q.active) continue;/	a finger still down is released too
 touchfree	src/touchfree.js	s/for (let i = 1; i < (pointers/for (let i = 0; i < (pointers/	the mouse pointer is released too
@@ -953,10 +952,9 @@ morechips	src/wild.js	s/card.classList.add('w-spot'); //	the animal's card is no
 morechips	src/wild.js	s/^    this\.speciesInfo(id);$/    void 0;/	the animal's info does not open
 morechips	style.css	s/^\.rc-gcard { display: flex;\(.*\)min-height: 64px; padding: 6px 2px;/.rc-gcard { display: flex;\1min-height: 30px; padding: 0 2px; height: 30px; overflow: hidden;/	grid cards smaller than a tap
 morechips	src/resultscard.js	s/full: t, name: f.short, body: t/full: t, body: t/	a first's card has no name under it
-crosscard	src/crossingview.js	s/CARD_NEXT\[s.nearest.key\]/CARD_NEXT[s.conds.find(x => !x.done).key]/	the next line names the first open row, not the nearest
-crosscard	src/crossingview.js	s/`\${Math.round(readiness(save, c).natureHave)} \/ \${need}`/`${need}`/	the nature row shows only what it needs
+crosscard	src/crossingview.js	s/where: 'hangar', done: rd.plane, frac: pp,/where: 'hangar', done: rd.plane, frac: 1 - pp,/	the range bar fills the wrong way
+crosscard	src/crossings.js	s/  return eraGate ? out.slice(0, 1) : out;/  return out;/	every crossing on offer at once again (several cards)
 crosscard	src/lessons.js	s/done: s => tour(s, 'r-cross') || (s.crossed || \[\]).length > 0/done: s => tour(s, 'r-cross') || (s.areas || []).length > 1/	a two-area home region finishes the crossings lesson again
-crosscard	src/lessons.js	s/ \&\& lessonOpen(s, l)) || null/) || null/	the crossings lesson is current before any crossing is listed
 crosscard-ui	src/ui.js	s/(c.ready ? (c.multi ? '<button class="btn go xc-fly"/(false ? (c.multi ? '<button class="btn go xc-fly"/	a ready card has no FLY A CROSSING / FLY THE CROSSING
 crosscard-ui	src/ui.js	s/if (fly) this.flyCrossing(cs); else this.openCrossings/if (true) this.flyCrossing(cs); else this.openCrossings/	a pick on MISSIONS starts the flight with no CROSSINGS screen
 crosscard-ui	src/ui.js	s/const xc = crossingsHTML(s, 'm');/const xc = '';/	MISSIONS shows no crossing cards
@@ -968,13 +966,10 @@ maplesson	src/tour.js	s/text: tip('rail-map-city'), until: card }/text: tip('rai
 maplesson	src/tour.js	s/target: '#dsMission, #dsExplore'/target: '#dsChange'/	MISSION or EXPLORE does not finish the lesson
 crossingmoment	src/ui.js	s/showCrossingUnlocked(cs, { save: s, first, choices: multi ? card : null }).then(r => { if (r === 'go') (multi ? this.pickCrossing({ fly: true }) : this.flyCrossing(cs)); });/this.showCrossingSheet(cs);/	the moment opens the small sheet, not the Crossing unlocked! card
 crossingmoment	src/ui.js	s/if (r === 'go') (multi ?/if (false) (multi ?/	the card's WHERE TO? starts nothing
-crosscard	src/crossingview.js	s/  if (cards.length < 2) return cards;/  if (cards.length < 99) return cards;/	several crossings on offer are separate cards again
 crossingmoment	src/crossunlock.js	s/el.remove(); sfx.tick();/sfx.tick();/	LATER leaves the card on screen
 spotlight@SPOT_CASES=r-nature	src/wild.js	s/isSeason2(s) \&\& railDone ? flyHereChoice/isSeason2(s) ? flyHereChoice/	the FLY HERE row shows during the NATURE guide (pushes r-nature#3 off a 320 phone)
 landeven	src/nature.js	s/  if (!LAND_EVEN.on) return 1;/  return 1;/	LAND_EVEN weights nothing
-landeven	src/nature.js	s/b += p.bio \* projectWeight(all, p);/b += p.bio;/	the meter ignores the land weights
-crosscard	src/crossings.js	s/SEASON.step.natureRule === 'weakest')) return natureBest(save);/false)) return natureBest(save);/	a crossing reads the best land, not the weakest region
-crosscard	src/crossingview.js	s/(s.nearest.key === 'nature' \&\& wk ? natureNextIn(REGIONS\[wk\].name) : CARD_NEXT\[s.nearest.key\])/CARD_NEXT[s.nearest.key]/	the card does not name the region to grow
+landeven	src/nature.js	s/pr += p.bio \* projectWeight(all, p);/pr += p.bio;/	the meter ignores the land weights
 nametaken	src/online.js	s/for (; tries < 8; tries++)/for (; tries < 1; tries++)/	a taken pilot name is not retried with a new number
 
 textfit	src/Hud.js	s/fontSize: '7px', color: '#ffe15a', stroke: '#000', strokeThickness: 2 }).setOrigin(1, 0)/fontSize: '7px', color: '#ffe15a', stroke: '#000', strokeThickness: 2 }).setOrigin(0, 0)/	the route strip's city name starts at the strip's end and runs off the right edge
@@ -982,3 +977,12 @@ storyboard	src/storyboard.js	s/  for (let i = 0; i < STORY.slots; i++) if (!b\[i
 storyboard	src/storyboard.js	s/^export const SEEDS_PER_KM = 1000 \/ 15000/export const SEEDS_PER_KM = 30 \/ 15000/	stories pay the old measly prize (30 seeds)
 stories-ui	src/missions2.js	s/const story = STORY.on \&\& r.landedAt ? storyLandedAt(save, r.landedAt) : null;/const story = null;/	a landing at the story's stop is never scored (no pay, the destination never moves on)
 stories-ui	src/storyboard.js	s/^export const missing = (save, offer) => (offer.needs || \[\]).map(needInfo).filter(i => i \&\& !has(save, i));/export const missing = () => [];/	the upgrade story is not locked (it can be accepted without the upgrade)
+crossingview	src/season.js	s/distanceShare: 1 }/distanceShare: 0.7 }/	a 70% flight opens the crossing again (V4: the whole crossing)
+runwayclear	src/sim/rules.js	s/    if (na \&\& !na.spawned) spans.push(PLANE.x + na.worldX - this.distancePx);/    if (false) spans.push(0);/	the runway not drawn yet is ignored (trees grow in front of it)
+runwayclear	src/sim/rules.js	s/const na = this.nextAirport, spans = (this.runways || \[\]).map(r => r.x);/const na = this.nextAirport, spans = [];/	the drawn runways are ignored
+pricescale	src/save.js	s/  rescaleBank(s);       \/\/ 0.73.0: the bank in the new prices (PRICE_SCALE)/  \/\/ (not scaled)/	an old bank is never scaled
+pricescale	src/save.js	s/  s.priceVersion = PRICE_SCALE.version;$/  s.priceVersion = 2;/	the bank is scaled again on every load
+waterways	src/nature.js	s/  return combine(region, landMeter(save, region, grownOnly), waterPart(save, region));/  return combine(region, landMeter(save, region, grownOnly), 0);/	the water part is ignored in the meter
+waterways	src/nature.js	s/  if (isWaterProject(region, p.id)) return waterOpenHere(save, region) \&\& waterPart/  if (isWaterProject(region, p.id)) return true \&\& waterPart/	water projects open before the biome is full
+waterways	src/sim/rules.js	s/wb\[region\]\[id\] = (wb\[region\]\[id\] || 0) + 1;/wb[region][id] = wb[region][id] || 0;/	a water drop never counts
+waterways	src/water.js	s/  riverbeach: 'shore', fishcount: 'water', dolphins: 'water', otterwatch: 'shore', platypusbank: 'shore',/  riverbeach: 'shore', fishcount: 'water', dolphins: 'water', otterwatch: 'shore',/	a water project is drawn on dry land in NATURE

@@ -22,29 +22,35 @@ globalThis.SEASON2 = true;
   const extra = process.env.TESTER_BACKUP || require('os').homedir() + '/contrail-research/tester-backup-2026-11-09.json';
   if (fs.existsSync(extra)) { const r = B.readBackup(fs.readFileSync(extra, 'utf8')); check(r.ok, 'EXTRA (local only): the full backup reads'); if (r.ok) saves.push(['EXTRA full backup (local only)', r.save]); }
   for (const [label, save0] of saves) {
-    const save = JSON.parse(JSON.stringify(save0)), n0 = C.crossingsMade(save), up = C.upcoming(save).filter(c => c.kind !== 'lap');
-    check(A.regionsOpen(save.areas).length === n0 + 1 && up.length > 0 && up.every(c => c.era === n0), `${label}: the old save opens whole regions (${A.regionsOpen(save.areas)}) and every next route is crossing ${n0 + 1} (era ${n0}): ${up.map(c => c.id + ':' + c.era)}`);
-    let prev = n0 - 1, steps = 0;
-    while (true) { const nx = C.upcoming(save).find(c => c.kind !== 'lap'); if (!nx) break; check(nx.era === prev + 1 && nx.km > (prev >= 0 ? C.crossingKm({ era: prev }) : 0), `${label}: crossing ${nx.era + 1} (${nx.id}) is harder than the last: era ${nx.era}, ${nx.km} km`); prev = nx.era; C.completeCrossing(save, nx); steps++; if (steps > 6) break; }
+    // V4 (0.73.0, Oliver 2026-11-22/23): each route has its OWN tier; ONE is offered: the shortest of those that open a new region. Flying the offer each time opens every region, then the lap.
+    const save = JSON.parse(JSON.stringify(save0)), up = C.upcoming(save).filter(c => c.kind !== 'lap');
+    check(up.length > 0 && up.every(c => c.era === C.ROUTE_TIER[c.id]), `${label}: every next route carries its own tier: ${up.map(c => c.id + ':' + c.era)}`);
+    let steps = 0;
+    while (true) {
+      const all = C.upcoming(save).filter(c => c.kind !== 'lap'), offer = C.available(save);
+      if (!all.length) break;
+      check(offer.length === 1 && offer[0].km === Math.min(...all.map(c => c.km)), `${label}: one crossing on offer, the shortest: ${offer.map(c => c.id + ':' + c.km)} of ${all.map(c => c.id + ':' + c.km)}`);
+      C.completeCrossing(save, offer[0]); steps++; if (steps > 10) break;
+    }
     check(Object.keys(A.AREAS).every(k => save.areas.includes(k)) && C.upcoming(save).some(c => c.kind === 'lap'), `${label}: after its last crossing every region is open and the lap is next`);
   }
   // 2b. THE PACING LEVERS (SEASON.step, 2026-11-13): the n-th crossing's length and nature need come from step.km[n] / step.bioMul[n] x offer.biodiversity; the 5th and the lap keep their lengths
   { const SS = (await import('../src/season.js')).SEASON, km0 = SS.step.km[0], bio0 = SS.step.bioMul[0];
-    check(JSON.stringify(SS.step.km.slice(3)) === '[27000,30000]' && SS.crossingKm.final === 40000, `the 4th, 5th and the lap keep 27,000 / 30,000 / 40,000 (the user: no shortening): ${SS.step.km}, ${SS.crossingKm.final}`);
+    check(JSON.stringify(SS.step.km.slice(3)) === '[27000,32000]' && SS.crossingKm.final === 40000, `the 4th, 5th and the lap are 27,000 / 32,000 (Oliver, 2026-11-23) / 40,000: ${SS.step.km}, ${SS.crossingKm.final}`);
     try {
       SS.step.km[0] = 12000; SS.step.bioMul[0] = 40 / 30;
       const sv = { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', tutorialDone: true, flightSeconds: 0, bestDistance: 99999 };
       const first = C.available(sv).find(c => c.kind !== 'lap');
-      check(first && first.km === 12000 && C.natureNeed(first) === 40 && C.readiness(sv, first).nature === false, `a lever moves the first crossing: ${first && [first.km, C.natureNeed(first)]}`);
+      check(first && first.km === 12000 && C.readiness(sv, first).nature === true, `a lever moves the Easy tier's length (V4: nature is not asked): ${first && [first.km, C.readiness(sv, first).nature]}`);
     } finally { SS.step.km[0] = km0; SS.step.bioMul[0] = bio0; } }
   // 3
   const base = () => ({ fuel: 'kerosene', priceVersion: 2, tutorialDone: true, areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], areaBest: {}, crossed: [], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: {}, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   const w = base(), c = { ...C.asNext(C.crossingById('mediterranean'), 0), from: 'ROME', to: 'TUNIS' };
   check(!C.planeReady(w, c), 'a fresh pilot: the plane tick is open');
-  w.areaBest = { nordic: 9999 }; check(C.planeReady(w, c), 'a landed flight from ANOTHER area (the Nordic area) covers a crossing from Rome');
-  const w2 = base(); w2.bestDistance = 9999; check(C.planeReady(w2, c), 'the longest landed flight of all counts');
+  w.areaBest = { nordic: 19999 }; check(C.planeReady(w, c), 'a landed flight from ANOTHER area (the Nordic area) covers a crossing from Rome');
+  const w2 = base(); w2.bestDistance = 19999; check(C.planeReady(w2, c), 'the longest landed flight of all counts');
   const open = V.stateOf(base(), c).conds.find(x => x.key === 'plane');
-  check(open.plain === 'Fly farther or upgrade plane' && open.plain.length <= 28, `the open plane line says what to do and fits: "${open.plain}"`);
-  console.log(fails.length ? `FAIL crossladder:\n - ${fails.join('\n - ')}` : 'PASS crossladder: 8 routes join the 6 regions from every start; each crossing is harder than the last over the real save; the plane tick counts a flight from any area');
+  check(open.plain === 'More range: upgrade plane' && open.plain.length <= 28, `the open plane line says what to do and fits: "${open.plain}"`);
+  console.log(fails.length ? `FAIL crossladder:\n - ${fails.join('\n - ')}` : 'PASS crossladder: 8 routes join the 6 regions from every start; one crossing on offer, the shortest, until every region is open; the range tick counts a flight from any area');
   process.exit(fails.length ? 1 : 0);
 })();

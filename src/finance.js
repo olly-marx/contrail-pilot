@@ -9,7 +9,7 @@ import { AREAS } from './areas.js';
 import { city } from './network.js';
 import { biodiversity, worldBiodiversity } from './nature.js';
 import { eraProgress } from './eras.js';
-import { DAYNIGHT } from './config.js';
+import { DAYNIGHT, scaleSeeds, PRICE_SCALE } from './config.js';
 
 export const FINANCE = {
   era: 3,
@@ -24,6 +24,10 @@ export const FINANCE = {
     { name: 'Nature dividend', fund: 5000, cost: 8000, era: 5, reserve: 3000, cap: 20, bond: { lock: 1000, landings: 10, perB: 4, most: 3 }, dividend: { minBio: 60, perLanding: 1, cap: 3 } },
   ],
 };
+// PRICE SCALE (0.73.0, src/config.js): the desk's seed amounts (cost, fund, reserve, bond lock) x8; the dividend's crystals x7 (bond interest: bondCrystals below).
+for (const L of FINANCE.levels) { for (const k of ['cost', 'fund', 'reserve']) L[k] = scaleSeeds(L[k]); if (L.bond) L.bond = { ...L.bond, lock: scaleSeeds(L.bond.lock) };
+  if (L.dividend) L.dividend = { ...L.dividend, perLanding: L.dividend.perLanding * PRICE_SCALE.crystals, cap: L.dividend.cap * PRICE_SCALE.crystals }; }
+export const bondCrystals = (save, b) => Math.floor(natureHealth(save) * PRICE_SCALE.crystals / b.perB);   // a bond's interest in crystals (x7 since 0.73.0)
 export const financeLevel = save => Math.min(FINANCE.levels.length, (save.finance && save.finance.level) || 0);
 export const financeOpen = save => eraProgress(save).index >= FINANCE.era;
 
@@ -127,7 +131,7 @@ export function payBonds(save) {
   const b = bondCfg(save); if (!b) return null;
   const due = bonds(save).filter(x => (save.landings || 0) - x.at >= b.landings);
   if (!due.length) return null;
-  const crystals = due.length * Math.floor(natureHealth(save) / b.perB), seeds = due.reduce((a, x) => a + x.seeds, 0);
+  const crystals = due.length * bondCrystals(save, b), seeds = due.reduce((a, x) => a + x.seeds, 0);
   save.seeds = (save.seeds || 0) + seeds; save.crystals = (save.crystals || 0) + crystals;
   save.finance.bonds = bonds(save).filter(x => !due.includes(x));
   return { seeds, crystals };
@@ -157,7 +161,7 @@ export const FUND = {
   drift: { at0: 0.0012, at100: 0.0035 },   // the mean move a game day at world biodiversity 0 and 100: always above zero
   news: { chance: 1 / 8, size: 0.015 },   // one game day in eight carries a +/-1.5% story
   fee: 0.01,                     // 1% taken when you cash out
-  step: 500,                     // seeds a tap puts in
+  step: 500 * PRICE_SCALE.seeds,  // seeds a tap puts in (500 x the 0.73.0 PRICE SCALE)
   clamp: [0.5, 3],
 };
 const SALT_FUND = 0, SALT_NEWS = 0x5bd1e995;

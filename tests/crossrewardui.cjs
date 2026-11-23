@@ -1,10 +1,10 @@
 // RELEASE C: WHERE THE CROSSING PRIZE IS SHOWN (src/ui.js renderHub / openCrossings, src/crossingview.js boxView, src/crossingend.js endView). Real taps, 390x844 and 320x568, a season 2 save in ROME (the next crossing is
-// ROME > TUNIS, Easy, which pays 100 seeds and 12 ice crystals). Named lines, in order:
+// ROME > TUNIS, Easy, which pays 4,800 seeds and 384 ice crystals (0.73.0)). Named lines, in order:
 //   FIXTURE  the NEXT CROSSING box is on HOME
-//   A. the HOME box says 'Prize: 100 seeds' next to the word Easy, and TAKE OFF is still on screen above the bar (the longer right cell must not push it off a short phone)
-//   B. a tap on the box opens the CROSSINGS screen, and it says 'Prize: 100 seeds' too
-//   C. a landed crossing's own card says '+100 seeds' and '+12 ice crystals', fits the screen, and the bank got the 100 seeds and 12 crystals
-//   D. the lap landed (the ENDING screen, src/ui.js showEnding) says '+2,000 seeds' and '+250 ice crystals', and fits the screen
+//   A. the HOME box says 'Prize: 4,800 seeds' next to the word Easy, and TAKE OFF is still on screen above the bar (the longer right cell must not push it off a short phone)
+//   B. a tap on the box opens the CROSSINGS screen, and it says 'Prize: 4,800 seeds' too
+//   C. a landed crossing's own card says '+4,800 seeds' and '+384 ice crystals', fits the screen, and the bank got the 4,800 seeds and 384 crystals
+//   D. the lap landed (the ENDING screen, src/ui.js showEnding) says '+16,000 seeds' and '+1,280 ice crystals', and fits the screen
 // Screenshots: SHOTS, else <tmpdir>/crossrewardui-shots. Run: python3 -m http.server 8000 & node tests/crossrewardui.cjs   (plants: tools/plants.tsv, test crossrewardui)
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
@@ -36,12 +36,12 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'ROME', city: 
           const bufHome = await snap(p);
           check(h.shown, `${tag}: FIXTURE: the NEXT CROSSING box is not on HOME: ${JSON.stringify(h)}`);
           if (h.shown) {
-            check(/Easy/.test(h.text) && /Prize: 100 seeds/.test(h.text) && h.inside, `${tag} A: the HOME box does not say 'Prize: 100 seeds' next to Easy inside the screen: ${JSON.stringify(h)}`);
+            check(/Easy/.test(h.text) && /Prize: 4,800 seeds/.test(h.text) && h.inside, `${tag} A: the HOME box does not say 'Prize: 4,800 seeds' next to Easy inside the screen: ${JSON.stringify(h)}`);
             check(h.goVisible, `${tag} A: TAKE OFF is not fully on screen above the bar with the prize showing`);
             stage = 'tap box'; await p.click('#hubCross'); await p.waitForTimeout(500);
             const sh = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? e.innerText.replace(/\s+/g, ' ').trim() : null; });
             bufScreen = await snap(p);
-            check(!!sh && /ROME > TUNIS/.test(sh) && /Prize: 100 seeds/.test(sh), `${tag} B: the CROSSINGS screen does not say 'Prize: 100 seeds': ${JSON.stringify(sh)}`);
+            check(!!sh && /ROME > TUNIS/.test(sh) && /Prize: 4,800 seeds/.test(sh), `${tag} B: the CROSSINGS screen does not say 'Prize: 4,800 seeds': ${JSON.stringify(sh)}`);
           }
           check(!p.errs.length, `${tag}: page errors (home) ${p.errs.slice(0, 2)}`);
           keep(bufHome, `${tag}-home-box.png`); keep(bufScreen, `${tag}-crossings-screen.png`);
@@ -56,9 +56,9 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'ROME', city: 
           await p.waitForFunction(() => { const e = document.getElementById('crossEnd'); return e && !e.hidden; }, null, { timeout: 12000 });
           await p.waitForTimeout(600); const bufLand = await snap(p);
           const e = await p.evaluate(() => { const el = document.getElementById('crossEnd'), c = el.querySelector('.payoff-card').getBoundingClientRect(), s = JSON.parse(localStorage.getItem('contrailPilot.v2')); return { text: el.innerText.replace(/\s+/g, ' '), top: c.top, bottom: c.bottom, h: innerHeight, seeds: s.seeds || 0, crystals: s.crystals || 0 }; });
-          check(/\+100 seeds/.test(e.text) && /\+12 ice crystals/.test(e.text), `${tag} C: the landing card does not say '+100 seeds' and '+12 ice crystals': ${e.text}`);
+          check(/\+4,800 seeds/.test(e.text) && /\+384 ice crystals/.test(e.text), `${tag} C: the landing card does not say '+4,800 seeds' and '+384 ice crystals': ${e.text}`);
           check(e.top >= 0 && e.bottom <= e.h, `${tag} C: the landing card does not fit the screen (${Math.round(e.top)}-${Math.round(e.bottom)} of ${e.h})`);
-          check(e.seeds >= before.seeds + 100 && e.crystals >= before.crystals + 12, `${tag} C: the bank did not get the prize: before ${JSON.stringify(before)}, after ${e.seeds}/${e.crystals}`);
+          check(e.seeds >= before.seeds + 4800 && e.crystals >= before.crystals + 384, `${tag} C: the bank did not get the prize: before ${JSON.stringify(before)}, after ${e.seeds}/${e.crystals}`);
           check(!p.errs.length, `${tag}: page errors (landing) ${p.errs.slice(0, 2)}`);
           keep(bufLand, `${tag}-landing-card.png`);
         } catch (e) { fails.push(`${tag}: exception at "${stage}": ${String(e).split('\n')[0]}`); }
@@ -69,11 +69,11 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'ROME', city: 
             crossing: { id: 'lap', kind: 'lap', landed: true, to: 'ROME', prize: { seeds: 2000, crystals: 250 } } }));
           await p.waitForTimeout(800); const bufEnd = await snap(p);
           const e = await p.evaluate(() => { const el = document.getElementById('ending'); if (!el || el.hidden) return null; const c = el.querySelector('.payoff-card').getBoundingClientRect(); return { text: el.innerText.replace(/\s+/g, ' '), top: c.top, bottom: c.bottom, h: innerHeight }; });
-          check(!!e && /\+2,000 seeds/.test(e.text) && /\+250 ice crystals/.test(e.text), `${tag} D: the ending screen does not say '+2,000 seeds' and '+250 ice crystals': ${JSON.stringify(e)}`);
+          check(!!e && /\+16,000 seeds/.test(e.text) && /\+1,280 ice crystals/.test(e.text), `${tag} D: the ending screen does not say '+16,000 seeds' and '+1,280 ice crystals': ${JSON.stringify(e)}`);
           const vis = await p.evaluate(() => { const el = document.getElementById('ending'), pz = el && el.querySelector('.ending-prize'); if (!pz) return { found: false };
             const card = el.querySelector('.payoff-card').getBoundingClientRect(), r = pz.getBoundingClientRect(), cs = getComputedStyle(pz), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
             return { found: true, shown: cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity > 0 && r.width > 0 && r.height > 0, inside: r.top >= card.top && r.bottom <= card.bottom && r.left >= card.left && r.right <= card.right, onTop: !!hit && pz.contains(hit), text: pz.innerText.replace(/\s+/g, ' ') }; });
-          check(vis.found && vis.shown && vis.inside && vis.onTop && /\+2,000 seeds/.test(vis.text) && /\+250 ice crystals/.test(vis.text), `${tag} D: the two prize lines are not VISIBLE inside the ending card (shown, inside the card, not under another element): ${JSON.stringify(vis)}`);
+          check(vis.found && vis.shown && vis.inside && vis.onTop && /\+16,000 seeds/.test(vis.text) && /\+1,280 ice crystals/.test(vis.text), `${tag} D: the two prize lines are not VISIBLE inside the ending card (shown, inside the card, not under another element): ${JSON.stringify(vis)}`);
           const cel = await p.evaluate(() => { const c = document.querySelector('#ending .payoff-card'); return c ? c.dataset.celebrated || '' : null; });
           check(cel === '1', `${tag} D: the ending card plays the lap's celebration (src/celebrate.js 'lap-landed'; data-celebrated '${cel}')`);
           const sp = await p.evaluate(() => { const ps = [...document.querySelectorAll('#ending .payoff-card p')], cs = ps.map(q => getComputedStyle(q));

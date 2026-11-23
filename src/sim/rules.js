@@ -5,10 +5,11 @@ import { km, WIDTH, HEIGHT, GROUND_H, PLANE, WORLD, STORMS, ISSR, DAYNIGHT, PARC
 const CITY_FADE = 80;   // px over which the background city row fades out past one storm gap (cityRowAlpha)
 import { tip } from '../tips.js';
 import { FORECAST, FARES, syncFleet, PLANES } from '../fleet.js';
-import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity, biomeMeter } from '../nature.js';
+import { SPECIES, natureCooling, projectsDone, PROJECTS, localTree, biodiversity, biomeMeter, WATERWAYS as WATERWAYS_ON } from '../nature.js';
 import { treesOpen, slotKind, growNeedTenths } from '../landtrees.js';
 import { treeBook, plantTree, growGroves, needFromGrow } from '../groves.js';
 import { nextTree, DROP_ORDER, missionTag, BIOME_FULL_POPUP } from '../droporder.js';
+import { dropsOf, DROP_CAP, WATER_PLOT, isWaterProject, YIELD_PER_PROJECT } from '../waterways.js';
 import { current as currentMission, complete as completeMission, indexOf as missionIndexOf } from '../missions.js';
 import { isSeason2, onFlight as s2Flight, next as s2NextMission, lessonsLeft as s2LessonsLeft } from '../missions2.js';
 import { addPrizes } from '../rewards.js';
@@ -42,6 +43,9 @@ const FLOCK_HALF = 2;   // a flock fills the box of an old 5-bird V: 26 px acros
 // tools/sim/bake-masks.py bakes a mask for each: add a letter there too.
 export const STORM_ART = ['c', 'd'];
 const STORM_OVERLAP = 40;   // a tall column stacks another tower behind, overlapping this much
+
+// The long-flight bonus in whole percent ('+150%'), not a fractional multiplier (Oliver, 2026-11-23).
+export const bonusText = mult => `+${Math.round((mult - 1) * 100)}%`;
 
 export const RULES = {
   // Onto the runway (moved from GameScene.startFlight): the kit as bought now, a fresh random stream, take-off.
@@ -100,7 +104,7 @@ export const RULES = {
     this.tokens = [];                // floating trees to collect
     this.cargo = 0;                  // seeds on board: kept only if you land
     this.crystals = 0;               // ice crystals earned this flight (bankFlight keeps part of them after a crash or a bad landing)
-    this.crystalsLost = 0;
+    this.crystalsLost = 0; this.distanceCrystals = 0;
     this.nightDodges = 0;            // dodge crystals so far tonight (capped)
     this.dodgesTotal = 0;            // all nights this flight (for the online boards)
     this.nextTokenAt = 420;
@@ -137,7 +141,7 @@ export const RULES = {
     this.landedRunway = null; this.hitBarrier = false;   // the runway landed on, and whether a bad landing has hit its barrier yet (onOverrun)
     this.overran = false;             // a BAD LANDING: the roll-out ran past the runway's end (land; AIRPORT.overrunKeep)
     this.forestFullSaid = false;
-    this.saidGroveFull = false;        // BIOME_FULL_POPUP is said once PER flight (src/droporder.js: nothing left to drop)
+    this.saidGroveFull = false; this.saidWaterFull = false; this.waterPending = {}; this.waterDrops = 0;   // (waterways, 0.73.0)        // BIOME_FULL_POPUP is said once PER flight (src/droporder.js: nothing left to drop)
     this.landStored = 0;               // ...and rewilded land
     this.natureBy = {};                // the results card's Nature line, by land (the tree UI, 2026-11-16): bookkeeping only, nothing reads it back
     this.dropCool = 0;                 // ...and what the trees dropped in THIS flight cooled
@@ -267,6 +271,14 @@ export const RULES = {
     const n = this.nextTreeInfo();
     return n ? slotKind(n.slot) : null;
   },
+  // WATERWAYS (0.73.0, src/waterways.js): once a land's biome is full (no tree kind has room) and it has water drops, the drops go on its WATER targets instead.
+  waterOpen(region = this.regionNow || 'woodland') { return WATERWAYS_ON.on && dropsOf(region).length > 0 && !nextTree(this.save, region, this.dropped, null, 0, false); },
+  // The next water drop: the land's kinds take turns, a kind at DROP_CAP is skipped (pending drops counted); null = the water is full here too.
+  nextWaterDrop(region = this.regionNow || 'woodland') {
+    const kinds = dropsOf(region), book = ((this.save.waterBook || {})[region]) || {}, pend = this.waterPending || {};
+    for (let k = 0; k < kinds.length; k++) { const d = kinds[(this.speciesIdx + k) % kinds.length]; if ((book[d.id] || 0) + (pend[d.id] || 0) < DROP_CAP) return d; }
+    return null;
+  },
   nextTreeInfo() { return nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag, this.speciesIdx, this.released === 0); },   // the tree the NEXT drop will plant: the label above the PLANT button and treeKind() ask the same function
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
   // drop them before you reach a soil plot. This works out which bit of ground (in today's screen
@@ -356,8 +368,9 @@ export const RULES = {
       const x = WIDTH + 10;
       const onRunway = this.runways.some(r => x + this.kit.plotW > r.x - 10 && x < r.x + AIRPORT.runwayLen + 10)
         || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
-      if (this.parcels > 0 && !onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x);   // no parcels, the sea or the ice: no soil
-      this.nextPlotAt += this.between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
+      const water = this.waterOpen();   // (0.73.0: the land's biome is full: its WATER targets, narrower and rarer than soil: WATER_PLOT)
+      if (this.parcels > 0 && !onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x, water);   // no parcels, the sea or the ice: no soil
+      this.nextPlotAt += water ? this.between(WATER_PLOT.every[0], WATER_PLOT.every[1]) : this.between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
     }
     if (this.school) return;   // flight school places everything itself
 
@@ -485,13 +498,20 @@ export const RULES = {
     this.showNoFly(st);
     this.newHazard('noFly');
   },
+  // Is screen x (an object `half` px either side of it) clear of every runway, the one on screen AND the next airport's before it is drawn? Scenery trees and ground animals
+  // use it (Oliver, 2026-11-23: 'trees grow in front of the runways'; the scenery trees had no check, and the animals' check missed a runway not yet drawn).
+  clearOfRunways(x, half = 20) {
+    const na = this.nextAirport, spans = (this.runways || []).map(r => r.x);
+    if (na && !na.spawned) spans.push(PLANE.x + na.worldX - this.distancePx);
+    return !spans.some(rx => rx < x + half && rx + AIRPORT.runwayLen > x - half);
+  },
   addRunway(worldX, name) {
     const rw = { x: PLANE.x + worldX - this.distancePx, worldX, name, parts: [] };   // x: the runway's start on screen (the record; its pictures follow it)
     this.runways.push(rw);
     this.showRunway(rw);
   },
-  addPlot(x) {
-    const pl = { x, parts: [], used: false };
+  addPlot(x, water = false) {
+    const pl = { x, parts: [], used: false, water, w: water ? WATER_PLOT.w : this.kit.plotW };
     this.plots.push(pl);
     this.showPlot(pl);
   },
@@ -635,6 +655,12 @@ export const RULES = {
 
   // ---------- the region below (the user, 2026-10-22: real geography decides it; src/geo.js) ----------
   // The leg from the airport behind to the one ahead; how far along it the plane is, as a fraction.
+  // The land `ahead` px in front of the plane on this leg (the view's coastline, 0.73.0; the rules' own region stays regionHere).
+  regionAt(ahead = 0) {
+    if (this.school || !this.nextAirport || this.nextAirport.worldX > 1e8) return this.regionHere();
+    const i = this.airportIndex, len = this.legKm(i), from = this.nextAirport.worldX - len;
+    return regionBelow(city(this.path[i]), city(this.path[i + 1]), Math.min(1, (this.distancePx + ahead - from) / len));
+  },
   regionHere() {
     // Flight school flies over your START city's land (season 2 starts anywhere; the user flew a Johannesburg start over UK woodland).
     // A coastal start that maps to the open sea or the ice keeps 'woodland' (nothing could be planted or shown there).
@@ -907,23 +933,24 @@ export const RULES = {
     // Trees: only what you carry home. Longer flights multiply it; a cooler Earth adds a bonus.
     const earned = [];
     const mult = this.multiplier();
+    // A BAD LANDING (ran off the runway's end): still a landing. Since 0.73.0 (Oliver, 2026-11-23: 'overrunning should delete the benefits from fares and
+    // multipliers') it keeps the sky seeds and every crystal earned in the air, and loses the long-flight bonus, the fares and the distance crystals.
+    const overran = landed && this.overran && !this.school && !FIELD_PLANTS.keepAll;
     earned.push({ label: `Seeds grabbed in the sky`, n: this.cargo, lost: !landed });
-    if (mult > 1 && this.cargo) earned.push({ label: `Long flight bonus x${mult}`, n: Math.round(this.cargo * (mult - 1)), lost: !landed });
+    if (mult > 1 && this.cargo) earned.push({ label: `Long flight bonus ${bonusText(mult)}`, n: Math.round(this.cargo * (mult - 1)), lost: !landed || overran });
     if (heat < 0) earned.push({ label: 'Cooler Earth bonus', n: CARGO.coolBonus, lost: !landed });
-    // Fares (eras): a landed flight pays per 1,000 km, by plane, x the Cabin upgrades (src/fleet.js FARES).
-    const fares = landed && !this.school ? Math.round((FARES[this.kit.plane] || 0) * m / 1e6 * this.kit.fares) : 0;
-    if (fares) earned.push({ label: 'Passenger fares', n: fares, lost: false });
-    // A BAD LANDING (ran off the runway's end; the user, 2026-11-17): still a landing, but only AIRPORT.overrunKeep of the flight's seeds (rounded up) is kept.
-    const overran = landed && this.overran && !this.school;
-    if (overran) {
-      const all = earned.reduce((a, e) => a + e.n, 0), lost = all - Math.ceil(all * (FIELD_PLANTS.keepAll ? 1 : AIRPORT.overrunKeep));
-      if (lost > 0) earned.push({ label: 'Ran off the runway', n: -lost, lost: false });
-    }
-    // Ice crystals: a bad landing or a crash keeps only part of this flight's (rounded up); a good landing keeps them all.
-    const crystalKeep = this.school || FIELD_PLANTS.keepAll ? 1 : overran ? AIRPORT.overrunKeep : !landed ? AIRPORT.crashCrystalKeep : 1;
-    this.crystalsLost = this.crystals - Math.ceil(this.crystals * crystalKeep);
-    this.crystals -= this.crystalsLost;
-    const gained = landed ? earned.reduce((a, e) => a + e.n, 0) : 0;
+    // Fares: a landed flight pays per 1,000 GAME km (distance is already game km: WORLD.pxPerMetre 1), by plane, x the Cabin upgrades (src/fleet.js FARES).
+    // (Until 0.73.0 this divided by 1e6 as if m were metres, so every real flight paid 0: research/... balance audit 2026-11-22.)
+    const fares = landed && !this.school ? Math.round((FARES[this.kit.plane] || 0) * km * this.kit.fares) : 0;
+    if (fares) earned.push({ label: 'Passenger fares', n: fares, lost: overran });
+    // WATERWAYS (0.73.0): every water project funded, in any land, pays a steady YIELD_PER_PROJECT seeds on each landing ('it starts producing stuff for you').
+    const water = landed && !this.school && WATERWAYS_ON.on ? Object.entries(this.save.habitat || {}).reduce((a, [land, ids]) => a + (ids || []).filter(id => isWaterProject(land, id)).length, 0) : 0;
+    if (water) earned.push({ label: 'Water projects', n: water * YIELD_PER_PROJECT, lost: false });
+    // Ice crystals: all kept, on a crash too (Oliver, 2026-11-23). A clean landing adds CRYSTALS.perKm per 1,000 km (an overrun does not).
+    this.crystalsLost = 0;
+    this.distanceCrystals = landed && !this.school && !overran ? Math.floor(km * CRYSTALS.perKm) : 0;
+    if (this.distanceCrystals) this.crystals += this.distanceCrystals;
+    const gained = landed ? earned.filter(e => !e.lost).reduce((a, e) => a + e.n, 0) : 0;
     if (!landed && this.cargo) this.popup(this.plane.x + 25, this.plane.y - 14, `-${this.cargo} seeds lost!`, '#ff6a5a', 16);
 
     if (landed) this.save.landings = (this.save.landings || 0) + 1;
@@ -990,7 +1017,7 @@ export const RULES = {
       missions2: s2 ? { done: s2Done.map(d => d.title), next: s2Next ? s2Next.title : null } : null,
       // Mission fields (PROPOSAL-HOME-MISSIONS): trees planted this flight ('land:id', UK bare), clean storm gaps, no-fly
       // zones passed. Animals found: foundIds above (the game's 'seen' hook fills it; [] in Node).
-      overran, crystalsLost: this.crystalsLost, touchdown: this.touchdown, treeIds: FIELD_PLANTS.trees ? [] : [...this.speciesTags], cleanGaps: this.school ? 0 : this.cleanGaps, noFlyPassed: this.school ? 0 : this.noFlyPassed,
+      overran, crystalsLost: this.crystalsLost, distanceCrystals: this.distanceCrystals || 0, touchdown: this.touchdown, treeIds: FIELD_PLANTS.trees ? [] : [...this.speciesTags], cleanGaps: this.school ? 0 : this.cleanGaps, noFlyPassed: this.school ? 0 : this.noFlyPassed,
       mission: mission ? { title: mission.title, done: missionDone, doneText: missionDone ? mission.done || '' : '', fail: missionDone ? '' : mission.fail(partial, this.save), next: nextMission ? nextMission.title : null, last: !nextMission && missionDone } : null, natureGain, natureGains, bio: biodiversity(this.save),
     };
     this.bank = { m, missionDone, lap, crash, gained };
@@ -1270,7 +1297,7 @@ export const RULES = {
       p.x += -this.speed * (1 - Math.exp(-p.t / PARCEL.dragTime)) * dt;
       p.y += p.vy * dt;
       if (p.y < SKY_H) return true;
-      this.parcelLanded(p.x, p.kind, p.region);
+      if (p.water) this.waterLanded(p.x, p.kind, p.region); else this.parcelLanded(p.x, p.kind, p.region);
       this.unshow(p);
       return false;
     });
@@ -1278,7 +1305,7 @@ export const RULES = {
 
   parcelLanded(x, kind, region = this.regionNow || 'woodland') {
     const lid = localTree(kind, region).id; this.dropped[lid] = Math.max(0, (this.dropped[lid] || 0) - 1);   // it has landed (or missed): no longer pending
-    const plot = this.plots.find(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
+    const plot = this.plots.find(pl => !pl.used && !pl.water && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
     if (!plot) {
       const onRunway = this.runways.some(r => x >= r.x && x <= r.x + AIRPORT.runwayLen);
       if (onRunway) this.parcelOnRunway = true;   // a funny challenge
@@ -1302,6 +1329,18 @@ export const RULES = {
     this.showTree(tree, plot, here, first);
   },
 
+  // A water drop came down (0.73.0): on an unused water target it counts in save.waterBook[land][id] (src/waterways.js waterMeter); elsewhere it is missed.
+  waterLanded(x, id, region) {
+    this.waterPending[id] = Math.max(0, (this.waterPending[id] || 0) - 1);
+    const plot = this.plots.find(pl => !pl.used && pl.water && x >= pl.x - 3 && x <= pl.x + pl.w + 3);
+    if (!plot) { this.onParcelMissed(x, false); return; }
+    plot.used = true; this.waterDrops = (this.waterDrops || 0) + 1;
+    if (!this.school) { const wb = this.save.waterBook = this.save.waterBook || {}; wb[region] = wb[region] || {}; wb[region][id] = (wb[region][id] || 0) + 1; }
+    const d = dropsOf(region).find(k => k.id === id);
+    this.popup(plot.x + plot.w / 2, SKY_H - 30, `+ ${d ? d.name : 'Water life'}`, '#7fd3f0', 10);
+    this.onWaterDrop(plot, d);
+  },
+
   dropParcel() {
     if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
     if (this.parcels <= 0) { this.playSound('nope'); return; }
@@ -1309,6 +1348,14 @@ export const RULES = {
     if (['ocean', 'ice'].includes(this.regionNow)) {
       this.playSound('nope');
       if (!this.saidNoSoil) { this.saidNoSoil = true; this.popup(this.plane.x + 20, this.plane.y - 12, this.regionNow === 'ocean' ? 'No land to plant on!' : 'Nothing grows on the ice!', '#cfe6ff'); }
+      return;
+    }
+    if (this.waterOpen()) {   // WATERWAYS (0.73.0): the biome is full and this land has water: drop for its water instead
+      const d = this.nextWaterDrop();
+      if (!d) { this.playSound('nope'); if (!this.saidWaterFull) { this.saidWaterFull = true; this.popup(this.plane.x + 20, this.plane.y - 12, 'The water here is full of life!', '#cfe6ff'); } return; }
+      this.parcels--; this.released++; this.waterPending[d.id] = (this.waterPending[d.id] || 0) + 1;
+      const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: d.id, region: this.regionNow || 'woodland', water: true };
+      this.parcelsFalling.push(p); this.showParcel(p); this.speciesIdx++; this.playSound('flap');
       return;
     }
     const kind = this.treeKind();

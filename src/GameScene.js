@@ -5,7 +5,7 @@ import {
 } from './config.js';
 import { School } from './school.js';
 import * as P from './sim/physics.js';   // the flight's rules, shared with the sim engine
-import { RULES, STORM_ART } from './sim/rules.js';   // the flight's rules as methods, shared with the sim engine
+import { RULES, STORM_ART, bonusText } from './sim/rules.js';   // the flight's rules as methods, shared with the sim engine
 import { mask } from './sim/masks-load.js';
 import { MASK_DATA } from './sim/masks.js';
 import { Hud, RouteStrip } from './Hud.js';
@@ -34,9 +34,11 @@ import { current as currentMission, MISSIONS } from './missions.js';
 import { isSeason2, next as s2Next, revealed as s2Revealed } from './missions2.js';
 import { PART_LINES, natureBadge, natureLevels } from './planeparts.js';
 import { WILDLIFE, REGIONS } from './wildlife.js';
+import { homeOf } from './water.js';
+import { dropsOf } from './waterways.js';
 import { animalDir, animalPortrait } from './animalart.js';
 import { LANDMARKS } from './landmarks.js';
-import { SPECIES, biodiversity, biomeMeter, plantGain, hasProject, wildlifeScene, regionSpecies } from './nature.js';
+import { SPECIES, biodiversity, biodiversityParts, biomeMeter, plantGain, hasProject, wildlifeScene, regionSpecies, waterPart } from './nature.js';
 import { REGION_DATA, REGION_NAMES } from './habitats.js';
 import { treesPlanted } from './treecount.js';
 import { CRYSTAL_WHY } from './tips.js';
@@ -158,12 +160,12 @@ export class GameScene extends Phaser.Scene {
     this.loadPathArt();
     loading.onSceneBuilt();   // (the loading screen goes once the menu pictures are in too)
     if (FEATURES.pixelReadout) this.previewReadout();
-    this.buildWildlife();
     this.plotLayer = this.add.layer();
     this.aimGfx = this.add.graphics();     // where a parcel dropped now would land
     this.treeLayer = this.add.layer();
     this.runwayLayer = this.add.layer();
     this.addRunway(-60, this.homeName);    // home runway under the plane: the city you take off from
+    this.buildWildlife();                  // AFTER the home runway (0.73.0): the first screen's scenery trees and animals keep clear of it (they were placed before it existed)
     this.fxLayer = this.add.layer();       // particles and popups
 
     this.heatFx = this.add.graphics();   // red edges when the Earth overheats
@@ -571,6 +573,7 @@ export class GameScene extends Phaser.Scene {
     const terrain = REGIONS[r];   // every region has strips since 0.10.7 (ocean and ice too: tools/art/make_regions.py); a missing one keeps the last land's
     // (A tileSprite's texture.key is an internal copy, so the strip keys shown are kept in this.terrain.)
     if (terrain && instant) { this.ground.setTexture(terrain.ground); this.hills.setTexture(terrain.hills); this.terrain = { ...terrain }; }
+    else if (this.coast && this.coast.to === r) { /* a COASTLINE is already scrolling in (updateCoast): no fade */ }
     else if (terrain && (!this.terrain || this.terrain.ground !== terrain.ground)) {
       if (this.terrainTween) this.terrainTween.complete();
       this.ground2.setTexture(terrain.ground).setAlpha(0); this.hills2.setTexture(terrain.hills).setAlpha(0);
@@ -582,7 +585,9 @@ export class GameScene extends Phaser.Scene {
     this.regionBanner(r);
     if (this.flowers) this.flowers.setVisible(r === 'woodland');
     if (this.hedge) this.hedge.setVisible(r === 'woodland');
-    if (this.life) this.wildlife = wildlifeScene(this.save, r);   // (at the start, buildWildlife makes it)
+    if (r !== 'ocean' && r !== 'ice' && REGION_DATA[r]) { this.lastLand = r; this.lastWaterPart = waterPart(this.save, r); }
+    // Over the open sea (0.73.0): the last land's WATER animals swim there; no trees, farms or land animals.
+    if (this.life) this.wildlife = r === 'ocean' && this.lastLand ? { ...wildlifeScene(this.save, this.lastLand), waterOnly: true, treesPerScreen: 0, farmPerScreen: 0 } : wildlifeScene(this.save, r);   // (at the start, buildWildlife makes it)
     // Discovered only by really flying into it: not when the scene is built (that would change the save on
     // every page load, and a reopened device would then keep its own save over a newer online one).
     if (instant || this.school || this.state !== 'playing' || r === 'woodland' || !REGION_DATA[r]) return;
@@ -607,8 +612,11 @@ export class GameScene extends Phaser.Scene {
     const cap = BIOME_COOL.on ? coolCap(biomeMeter(this.save, r)) : 0;   // what this land cools on a flight over it (src/treepen.js; the user, 2026-11-16: show what trees do)
     const sub = this.add.text(0, 0, cap > 0 ? `NATURE ${bio} · COOLS UP TO -${cap}` : `BIODIVERSITY ${bio}`, { fontFamily: FONT, fontSize: '7px', color: '#ffe15a' }).setOrigin(0.5);
     const track = this.add.rectangle(-W / 2 + 8, 12, W - 16, 4, 0x2b4a6f).setOrigin(0, 0.5);
-    const fill = this.add.rectangle(-W / 2 + 8, 12, Math.max(1, (W - 16) * bio / 100), 4, 0x8dffb0).setOrigin(0, 0.5);
-    this.banner = this.add.container(x, y, [bg, name, sub, track, fill]).setDepth(60).setAlpha(0);
+    // 0.73.0: the bar in two colours, the land's points (green) then its water's (blue): biodiversityParts (src/nature.js), the shares from src/waterways.js.
+    const P = biodiversityParts(this.save, r), landPts = P.land * P.landShare / 100, waterPts = P.water * P.waterShare / 100;
+    const fill = this.add.rectangle(-W / 2 + 8, 12, Math.max(1, (W - 16) * landPts / 100), 4, 0x8dffb0).setOrigin(0, 0.5);
+    const wfill = this.add.rectangle(-W / 2 + 8 + (W - 16) * landPts / 100, 12, Math.max(0, (W - 16) * waterPts / 100), 4, 0x6fd0ff).setOrigin(0, 0.5);
+    this.banner = this.add.container(x, y, [bg, name, sub, track, fill, wfill]).setDepth(60).setAlpha(0);
     this.banner.regionId = r; this.banner.bio = bio;
     this.tweens.add({ targets: this.banner, alpha: 1, duration: 250, yoyo: true, hold: 2500, onComplete: () => { if (this.banner) { this.banner.destroy(); this.banner = null; } } });
     if (bio === 0 && this.state === 'playing') this.ui.tipOnce('bareLand', tip('bareLand', REGION_NAMES[r]), '', 'good', 5);
@@ -617,14 +625,14 @@ export class GameScene extends Phaser.Scene {
   buildWildlife() {
     this.wildlife = wildlifeScene(this.save, this.regionNow || 'woodland');
     this.life = [];
-    this.lifeNext = { tree: 0, farm: 0, wild: 0, bird: 0 };
+    this.lifeNext = { tree: 0, farm: 0, wild: 0, bird: 0, fish: 0 };
     for (let x = 0; x < WIDTH + 10; x += 4) this.updateWildlife(4, x);
   }
 
   updateWildlife(dx, atX = WIDTH + 12) {
     const W = this.wildlife, pick = a => a[Math.floor(Math.random() * a.length)];
     const gap = perScreen => WIDTH / perScreen * Phaser.Math.FloatBetween(0.5, 1.5);
-    const clearOfRunway = x => !this.runways || !this.runways.some(r => r.x < x + 20 && r.x + AIRPORT.runwayLen > x - 20);
+    const clearOfRunway = (x, half = 20) => this.clearOfRunways(x, half);   // (src/sim/rules.js: the runway on screen and the next one before it is drawn)
     const due = (k, perScreen) => {
       if (!perScreen) return false;
       this.lifeNext[k] -= dx;
@@ -634,7 +642,7 @@ export class GameScene extends Phaser.Scene {
     };
     if (due('tree', W.treesPerScreen)) {
       const tk = pick(W.treeKinds);
-      if (this.textures.exists(`tree-${tk}-2`)) {   // (a land's trees may still be loading)
+      if (this.textures.exists(`tree-${tk}-2`) && clearOfRunway(atX, 30)) {   // (a land's trees may still be loading; never in front of a runway: Oliver, 2026-11-23)
         const t = this.add.image(atX, SKY_H + 1, `tree-${tk}-2`).setOrigin(0.5, 1).setScale(Phaser.Math.FloatBetween(0.9, 1.1));
         this.farTreeLayer.add(t); this.life.push({ img: t, k: 1 });
       }
@@ -642,6 +650,16 @@ export class GameScene extends Phaser.Scene {
     // `sprite`: texture prefix from src/wildlife.js ('animal-otter', 'sky-heron' for a standing bird).
     const animal = sprite => {
       if (!clearOfRunway(atX)) return;
+      // WATERWAYS (0.73.0, Oliver 2026-11-23: 'water-based animals in flight need to go in the water'): a water or shore animal (src/water.js HOMES) only over the sea
+      // (W.waterOnly: the open sea after a land, its own water animals), swimming at the waterline; never on a land's ground strip. A land animal never over the sea.
+      const who = (W.who || {})[sprite], home = who ? homeOf(who.id) : 'land';
+      if (W.waterOnly ? home === 'land' : home === 'water' || home === 'shore') return;
+      if (W.waterOnly) {
+        const img = this.add.image(atX, SKY_H + 10, `${sprite}-0`).setOrigin(0.5, 1).setFlipX(true).setScale(FLIGHT_ANIMAL_SCALE);
+        img.setCrop(0, 0, img.width, Math.max(4, img.height - 6));   // the lower part under the water
+        this.wildLayer.add(img); this.life.push({ img, k: 1, kind: sprite, walk: -Phaser.Math.FloatBetween(2, 8), t: Math.random(), water: true }); this.seen(sprite);
+        return;
+      }
       const left = Math.random() < 0.5, standing = sprite.startsWith('sky-');
       // Real size classes (tools/art/sizes.py), at FLIGHT_ANIMAL_SCALE.
       const img = this.add.image(atX, SKY_H + 4, `${sprite}-0`).setOrigin(0.5, 1).setFlipX(left).setScale(FLIGHT_ANIMAL_SCALE);
@@ -662,6 +680,9 @@ export class GameScene extends Phaser.Scene {
       this.life.push({ img, k: 0.35, kind: b, walk: Phaser.Math.FloatBetween(4, 10), t: Math.random(), bob: Math.random() * 6, y0: img.y });
       this.seen(b);
     }
+    // WATER FULL OF LIFE (0.73.0): fish jump over the sea and over the water targets, more as the land's water part fills (src/nature.js waterPart).
+    const overSea = this.regionNow === 'ocean', wetPlot = (this.plots || []).find(pl => pl.water && pl.x > 0 && pl.x < WIDTH);
+    if ((overSea || wetPlot) && due('fish', 0.6 + 3 * (this.lastWaterPart || 0) / 100)) this.fishJump(wetPlot ? wetPlot.x + wetPlot.w / 2 : Phaser.Math.Between(PLANE.x + 30, WIDTH - 10));
     const dt = this.game.loop.delta / 1000 || 0.016;
     for (const l of this.life) {
       l.img.x -= dx * l.k - (l.walk || 0) * dt;
@@ -701,6 +722,35 @@ export class GameScene extends Phaser.Scene {
     this.puffs = this.puffs.filter(p => { if (p.t >= 0.9) { p.img.destroy(); return false; } return true; });
   }
 
+  // THE COASTLINE (0.73.0, Oliver 2026-11-23: 'the transition between land and sea ... fades between the two, where I actually want it to be a distinct drop-off'). When the land
+  // at the right edge of the screen turns from land to sea (or back), the new ground scrolls in behind a hard edge: a beach and a surf line, masked, no fade. Land to land still fades.
+  updateCoast(dx) {
+    if (this.school || !this.regionAt) return;
+    const ahead = this.regionAt(WIDTH - PLANE.x), wet = r => r === 'ocean';
+    if (!this.coast && ahead && ahead !== this.regionNow && REGIONS[ahead] && wet(ahead) !== wet(this.regionNow) && (!this.terrain || REGIONS[ahead].ground !== this.terrain.ground)) {
+      if (this.terrainTween) this.terrainTween.complete();
+      const T = REGIONS[ahead];
+      this.coastMaskG = this.coastMaskG || this.make.graphics({ add: false });
+      const mask = this.coastMask = this.coastMask || this.coastMaskG.createGeometryMask();
+      this.ground2.setTexture(T.ground).setAlpha(1).setMask(mask); this.hills2.setTexture(T.hills).setAlpha(1).setMask(mask);
+      this.coastEdge = this.coastEdge || this.add.graphics().setDepth(this.ground2.depth + 0.5);
+      this.coast = { x: WIDTH, to: ahead, terrain: { ...T }, toSea: wet(ahead) };
+    }
+    if (!this.coast) return;
+    const c = this.coast; c.x -= dx;
+    // Nothing of the land past the edge stands in the sea (and no swimmer on the new land): drop what is beyond it.
+    this.life = this.life.filter(l => { if (l.img.x > c.x + 2 && !!l.water !== c.toSea) { l.img.destroy(); return false; } return true; });
+    this.coastMaskG.clear().fillStyle(0xffffff).fillRect(Math.max(0, c.x), 0, WIDTH, HEIGHT);
+    const g = this.coastEdge.clear(), sx = Math.round(c.x), sandL = c.toSea ? sx - 6 : sx, surf = c.toSea ? sx : sx - 3;
+    g.fillStyle(0xe8d29a, 1).fillRect(sandL, SKY_H, 6, GROUND_H);          // the beach
+    g.fillStyle(0xffffff, 0.9).fillRect(surf, SKY_H, 3, GROUND_H);        // the surf line
+    g.fillStyle(0x6b5a3a, 1).fillRect(c.toSea ? sandL - 2 : sandL + 6, SKY_H, 2, GROUND_H);   // the land's edge
+    if (c.x <= 0) {
+      this.ground.setTexture(c.terrain.ground); this.hills.setTexture(c.terrain.hills); this.terrain = c.terrain;
+      this.ground2.setAlpha(0).clearMask(); this.hills2.setAlpha(0).clearMask(); g.clear(); this.coast = null;
+    }
+  }
+
   updateScenery(dx) {
     this.cloudsFar.tilePositionX += dx * 0.15;
     this.hills.tilePositionX += dx * 0.3; this.hills2.tilePositionX = this.hills.tilePositionX;
@@ -708,6 +758,7 @@ export class GameScene extends Phaser.Scene {
     this.city.setAlpha(this.cityRowAlpha());   // only near a city (src/sim/rules.js cityRowAlpha)
     this.landmarks = this.landmarks.filter(l => { l.x -= dx * 0.55; if (l.x + l.width < -10) { l.destroy(); return false; } return true; });
     this.ground.tilePositionX += dx; this.ground2.tilePositionX = this.ground.tilePositionX;
+    this.updateCoast(dx);
     if (this.hedge) this.hedge.tilePositionX += dx;
     if (this.flowers) this.flowers.tilePositionX += dx;
     // Ponds (with a beaver dam once beavers are back) and storks gliding far away.
@@ -876,6 +927,13 @@ export class GameScene extends Phaser.Scene {
 
   showPlot(pl) {
     const x = pl.x;
+    if (pl.water) {   // a WATER target (0.73.0): a stretch of river or reef in the ground, with banks, narrower than soil; a blue marker bobs over it
+      const w = pl.w, parts = [this.add.rectangle(x, SKY_H - 1, w, 10, 0x2f7fc0).setOrigin(0), this.add.rectangle(x, SKY_H - 1, w, 2, 0x9fe0ff).setOrigin(0),
+        this.add.rectangle(x - 3, SKY_H - 3, 4, 5, 0x7a5a3a).setOrigin(0), this.add.rectangle(x + w - 1, SKY_H - 3, 4, 5, 0x7a5a3a).setOrigin(0)];
+      const marker = this.add.image(x + w / 2, SKY_H - 18, 'plot-arrow').setOrigin(0.5).setTint(0x6fd0ff);
+      parts.push(marker); this.plotLayer.add(parts); pl.parts = parts; pl.marker = marker;
+      return;
+    }
     const W = this.kit.plotW;
     // A raised mound of dark soil with furrows, a little sign, and a marker that bobs above it.
     // Built from tileable pieces so any width works (W = 8 + 8n): sunlit left slope, soil, shaded right.
@@ -895,7 +953,7 @@ export class GameScene extends Phaser.Scene {
     g.clear();
     if (!this.kit.tree || this.parcels <= 0 || this.state !== 'playing') return;
     const x = Math.round(this.predictLanding());
-    const onPlot = this.plots.some(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + this.kit.plotW + 3);
+    const onPlot = this.plots.some(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + (pl.w || this.kit.plotW) + 3);
     g.fillStyle(0x000000, 0.6);
     for (let i = -5; i <= 5; i++) { g.fillRect(x + i - 1, SKY_H - 6 + i, 3, 2); g.fillRect(x + i - 1, SKY_H - 6 - i, 3, 2); }
     g.fillStyle(onPlot ? 0x8dffb0 : 0xffffff, 1);
@@ -1460,6 +1518,20 @@ export class GameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(lerpColour(from, to, toOther));
     this.drawSky(time);
   }
+  // A fish leaps out of the water and back (code-drawn, 0.73.0 water life).
+  fishJump(x) {
+    if (!this.textures.exists('fish-jump')) { const g = this.make.graphics({ add: false }); g.fillStyle(0xcfe8f5, 1).fillEllipse(5, 3, 9, 4).fillTriangle(9, 3, 12, 0, 12, 6); g.fillStyle(0x1b2838, 1).fillRect(2, 2, 1, 1); g.generateTexture('fish-jump', 13, 7); g.destroy(); }
+    const f = this.add.image(x, SKY_H + 4, 'fish-jump').setOrigin(0.5).setDepth(1);
+    this.wildLayer.add(f);
+    this.tweens.add({ targets: f, y: SKY_H - 16, angle: -40, duration: 320, ease: 'Sine.easeOut', yoyo: true, onYoyo: () => f.setAngle(40), onComplete: () => { this.burst(f.x, SKY_H + 2, 0x9fe0ff, 4); f.destroy(); } });
+    this.life.push({ img: f, k: 1, water: true });
+  }
+  // A water drop landed on its target (src/sim/rules.js waterLanded): a splash, and a fish jumps where it went in.
+  onWaterDrop(plot) {
+    this.burst(plot.x + plot.w / 2, SKY_H, 0x9fe0ff, 10);
+    this.time.delayedCall(250, () => this.fishJump(plot.x + plot.w / 2));
+    sfx.coin && sfx.coin();
+  }
   onParcelMissed(x, onRunway) {
     this.burst(x, SKY_H, 0xc8a165, 6);
     this.popup(x, SKY_H - 14, onRunway ? 'On the runway!' : 'Missed. Tap a bit earlier.', '#ff8080');   // (tutorial 1a: the miss says what to change)
@@ -1680,10 +1752,10 @@ export class GameScene extends Phaser.Scene {
     this.setDropVisible(showDrop);
     this.dropArrowGfx.clear();   // a bobbing arrow on PLANT while soil is ahead and no tree has landed yet (not in school or the automated tests)
     if (showDrop && soilSoon && this.noTreeYet() && !this.school && !(this.save.seenTips || []).includes('*')) { const d = this.dropBox, y = d.y - 6 + Math.sin(this.time.now / 180) * 3, cx = d.x + d.w / 2; this.dropArrowGfx.fillStyle(0xffe15a, 1).fillTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y).lineStyle(1, 0x1b1b2f, 1).strokeTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y); }
-    if (showDrop) { this.fitText(this.dropLabel.setText(`PLANT\nx${this.parcels}`), this.dropBox.w - 8, 7); const nx = this.nextTreeInfo(); this.fitText(this.nextTreeText.setText(nx ? `Next: ${shortName(nx.name)}` : BIOME_FULL_LABEL), NEXT_LABEL_W, 7); }   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
+    if (showDrop) { this.fitText(this.dropLabel.setText(`PLANT\nx${this.parcels}`), this.dropBox.w - 8, 7); const nx = this.nextTreeInfo(), wd = !nx && this.waterOpen() ? this.nextWaterDrop() : null; this.fitText(this.nextTreeText.setText(nx ? `Next: ${shortName(nx.name)}` : wd ? `Next: ${shortName(wd.name)}` : BIOME_FULL_LABEL), NEXT_LABEL_W, 7); }   // (0.73.0: the water drop once the biome is full)   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
     this.cargoText.setText(`${this.cargo}`);
     this.crysText.setText(`${this.crystals}`);
-    this.multText.setText(this.airportsSkipped ? `x${this.multiplier()}` : '');
+    this.multText.setText(this.airportsSkipped ? bonusText(this.multiplier()) : '');
     this.multText.x = this.crysText.x + this.crysText.width + 6; this.multText.y = this.crysText.y;   // row 2, clear of the distance
   }
 

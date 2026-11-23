@@ -2,7 +2,7 @@
 // AMENDED 2026-11-12: the shipping order is now 'turns' (see DROP_ORDER below); the rest of this header describes the 'fewest' mode (the sim's t0b arm).
 // The next tree dropped in a land is chosen by the game, so a child never picks and always knows what will land: among the land's OPEN kinds (src/landtrees.js treesOpen) it is the kind with the FEWEST trees (planted, saplings included, plus the
 // parcels already released this flight that have not landed yet); a kind at its cap (TREE_CAP, 9) is skipped; a tie goes to the lowest slot. Nothing left: the grove is full (null). Pure and deterministic: no random numbers.
-import { treesOpen, TREE_CAP } from './landtrees.js';
+import { treesOpen, capOf } from './landtrees.js';
 import { localTree, UK_SLOTS } from './nature.js';
 import { treeBook } from './groves.js';
 import { visible } from './missions2.js';
@@ -25,7 +25,7 @@ export const missionTag = save => { const m = visible(save).find(x => x.def && x
 export function nextTree(save, land, pending = {}, prefer = null, turn = 0, first = false) {
   const book = treeBook(save, land);
   const cand = treesOpen(save, land).map(slot => { const t = localTree(UK_SLOTS[slot], land); return { slot, id: t.id, name: t.name, tag: land === 'woodland' ? t.id : `${land}:${t.id}`, n: (book[t.id] || 0) + (pending[t.id] || 0) }; });
-  const room = cand.filter(c => c.n < TREE_CAP);
+  const room = cand.filter(c => c.n < capOf(land));   // (0.73.0: the land's own cap, src/waterways.js treeCap)
   const want = DROP_ORDER.preferMission && prefer ? room.find(c => c.tag === prefer) : null;   // the open mission's kind first, but ONLY while it has room (the cap of 9 still wins)
   if (DROP_ORDER.mode === 'off') return cand.length ? cand[turn % cand.length] : null;   // the game as it was before trees v2
   if (DROP_ORDER.mode === 'fewest') {

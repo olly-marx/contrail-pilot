@@ -6,7 +6,8 @@ import { treeBook, groveView } from './groves.js';
 import { isSeason2 } from './missions2.js';
 import { AREAS } from './areas.js';
 import { city } from './route.js';
-import { UK_SLOTS, SPECIES, projectsDone, biodiversity, regionSpecies, localTree } from './nature.js';
+import { UK_SLOTS, SPECIES, projectsDone, biodiversity, regionSpecies, localTree, WATERWAYS } from './nature.js';
+import { treeCap } from './waterways.js';
 import { NATIVE_FIRST, GROW_DAYS } from './config.js';
 import { DROP_ORDER } from './droporder.js';
 
@@ -28,7 +29,7 @@ export const OPENS = [
 function kindsStuck(save, land) {
   if (DROP_ORDER.mode === 'off') return false;   // the game before trees v2 has no cap: never stuck
   const book = treeBook(save, land);
-  return [0, 1, 2, 3].filter(s => (book[localTree(UK_SLOTS[s], land).id] || 0) < TREE_CAP).length < 2;
+  return [0, 1, 2, 3].filter(s => (book[localTree(UK_SLOTS[s], land).id] || 0) < capOf(land)).length < 2;
 }
 // Is the "3 kinds of tree" mission done in an area with this land (any of its cities stands in it)?
 const kindsMissionDone = (save, land) => Object.keys(AREAS).some(a => (save.missionsDone || []).includes(`${a}:kinds3`)
@@ -57,14 +58,15 @@ export const openRule = s => (NATIVE_FIRST.on && s <= 1 ? (s === 1 ? null : OPEN
 export const slotKind = slot => UK_SLOTS[slot];
 
 // The land's 5 trees for the NATURE page: { slot, id, name, open, n, cap, full, rule }.
-export const TREE_CAP = 9;   // points level off at 9 of a kind (nature.js speciesPoints: 6 x sqrt(9) = 18, 2 x sqrt(9) = 6)
+export const TREE_CAP = 9;   // points level off at 9 of a kind (nature.js speciesPoints: 6 x sqrt(9) = 18, 2 x sqrt(9) = 6). Since 0.73.0 a LAND's cap is capOf(land) (src/waterways.js treeCap: smaller in water-heavy lands)
+export const capOf = land => (WATERWAYS.on ? treeCap(land) : TREE_CAP);
 export function landTrees(save, land) {
   if (!hasTrees(land)) return [];
   const open = treesOpen(save, land), book = treeBook(save, land), view = groveView(save)[land] || {};
   return UK_SLOTS.map((kind, slot) => {
     const t = localTree(kind, land), n = book[t.id] || 0;
     const grown = (view[t.id] || {}).grown || 0;   // n = planted (grown + still growing)
-    return { slot, id: t.id, name: t.name, fact: t.fact, open: open.includes(slot), n, grown, growing: n - grown, cap: TREE_CAP, full: n >= TREE_CAP, rule: openRule(slot) && openRule(slot).text, card: openRule(slot) && (openRule(slot).card || openRule(slot).text) };   // card: the few words under a shut tree's picture (the full rule is its title and the NEXT line)
+    return { slot, id: t.id, name: t.name, fact: t.fact, open: open.includes(slot), n, grown, growing: n - grown, cap: capOf(land), full: n >= capOf(land), rule: openRule(slot) && openRule(slot).text, card: openRule(slot) && (openRule(slot).card || openRule(slot).text) };   // card: the few words under a shut tree's picture (the full rule is its title and the NEXT line)
   });
 }
 // "Oak 4/9" or "Spruce 9/9 full".

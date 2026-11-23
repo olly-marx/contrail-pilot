@@ -6,10 +6,8 @@
 // Auckland-Santiago, the old boss, is now an ordinary 2030s crossing (it closes the circle of areas).
 import { SEASON } from './season.js';
 import { AREAS, OCEAN_STONES, areaOf, unlockedAreas, regionsOpen, regionOfArea, withRegions } from './areas.js';
-import { eraProgress } from './eras.js';
 import { linksOf, choices, city } from './network.js';
 import { tourPath } from './route.js';
-import { gateDone } from './missions2.js';
 import { capFor } from './capability.js';
 import { bestAreaBio } from './arealand.js';
 import { crossingReward, crossingWord } from './missionprize.js';
@@ -32,8 +30,21 @@ export const CROSSINGS = [
   { id: 'lap', era: 5, kind: 'lap' },   // from = to = your home city (save.homeArea's start), filled in by available()
 ];
 export const crossingById = id => CROSSINGS.find(c => c.id === id);
+// CROSSINGS V4 (Oliver, 2026-11-22/23: 'in Africa, crossing to Rome is easy but crossing to Sao Paulo is really hard and far'; 'judge it on the distance the plane can fly
+// ... not on the era'; 'only one crossing offered at a time'): every route has its OWN difficulty, ranked by its real great-circle distance (approximate km in the comment),
+// as a tier 0-4 (the word: Easy ... Very hard) with that tier's game length (SEASON.step.km). No era gate; it is offered when your RANGE reaches its length.
+export const ROUTE_TIER = {
+  mediterranean: 0,       // Rome-Tunis, ~600 km
+  'arabian-sea': 0,       // Muscat-Karachi, ~850 km
+  caribbean: 1,           // Miami-Caracas, ~2,200 km
+  'singapore-perth': 1,   // ~3,900 km
+  'north-pacific': 2,     // Sapporo-Anchorage, ~5,000 km
+  'north-atlantic': 2,    // Lisbon-New York, ~5,400 km
+  'south-atlantic': 3,    // Lagos-Belem, ~5,900 km
+  'auckland-santiago': 4, // ~9,700 km
+};
 // A route as the n-th crossing (era n and its length): what available() hands out when n crossings are made. Tests and screens that list every route at a given step use it.
-export const asNext = (c, n) => (c.kind === 'lap' ? { ...c, km: crossingKm(c) } : { ...c, era: n, km: crossingKm({ era: n }) });
+export const asNext = (c, n) => (c.kind === 'lap' ? { ...c, km: crossingKm(c) } : { ...c, era: ROUTE_TIER[c.id] ?? n, km: crossingKm({ era: ROUTE_TIER[c.id] ?? n }) });   // (V4: a route's tier is its own; n only for an unknown id)
 // The route order (CROSSINGS V3: only a stable order for lists; difficulty comes from how many crossings you have made, crossingsMade).
 export const LADDER = CROSSINGS.map(c => c.id);
 export const rungOf = c => LADDER.indexOf(typeof c === 'string' ? c : c.id);
@@ -55,20 +66,21 @@ export function available(save) { return routes(save, true); }
 export function upcoming(save) { return routes(save, false); }
 // Each comes as the NEXT crossing: era n = crossingsMade(save) and that era's length, with the direction to fly it and the region it opens. The lap only when EVERY area is open.
 function routes(save, eraGate) {
-  const open = new Set(unlockedAreas(save)), era = eraProgress(save).index, n = crossingsMade(save);
+  const open = new Set(unlockedAreas(save));
   if ((save.areas || []).includes('ocean')) open.add('ocean');
   const allOthers = Object.keys(AREAS).every(k => open.has(k)), out = [];
   for (const c of CROSSINGS) {
     if (c.kind === 'lap') {
-      if (allOthers && !(save.crossed || []).includes(c.id) && (!eraGate || c.era <= era) && c.era <= SEASON.maxEra) { const h = homeCity(save); out.push({ ...c, a: h, b: h, from: h, to: h, km: crossingKm(c) }); }
+      if (allOthers && !(save.crossed || []).includes(c.id) && c.era <= SEASON.maxEra) { const h = homeCity(save); out.push({ ...c, a: h, b: h, from: h, to: h, km: crossingKm(c) }); }
       continue;
     }
-    if (n > SEASON.maxEra - 1 || (eraGate && n > era)) continue;
-    const [sa, sb] = sides(c), x = { ...c, era: n };
+    const [sa, sb] = sides(c), x = { ...c, era: ROUTE_TIER[c.id] ?? 4 };
     if (open.has(sa) && !open.has(sb)) out.push({ ...x, from: c.a, to: c.b, opens: sb, region: regionOfArea(sb), km: crossingKm(x) });
     else if (open.has(sb) && !open.has(sa)) out.push({ ...x, from: c.b, to: c.a, opens: sa, region: regionOfArea(sa), km: crossingKm(x) });
   }
-  return out;
+  // V4: ONE offer at a time (Oliver, 2026-11-22): the shortest route that opens a new region (a stable sort: ties keep the CROSSINGS order). upcoming() lists them all.
+  out.sort((a, b) => a.km - b.km);
+  return eraGate ? out.slice(0, 1) : out;
 }
 
 // READY BY STATUS (the user, 2026-11-09, CROSSINGS V2: 'a crossing becomes available based on status, NOT where you are'): three ticks, none of them about the trial stars or where the player is.
@@ -78,6 +90,9 @@ function routes(save, eraGate) {
 // The plane's reach, FROM ANY AREA (the user, 2026-11-09: 'status, not location'; a pilot was told to upgrade a plane that only needed a longer landed flight from another land): the best landed flight
 // from any area, the longest landed flight of all (save.bestDistance: a flown crossing counts), or the hangar's estimate for the area the player is in. Today's 70 percent rule otherwise.
 const reachKm = save => Math.max(0, save.bestDistance || 0, ...Object.values(save.areaBest || {}), capFor(save, areaOf(save.city) || '') || 0);
+// V4 (Oliver, 2026-11-23: 'when it's unlocked, you should only just be able to get there in theory'): the RANGE (src/capability.js: how far this plane and nature fly before the
+// planet overheats) or a landed flight reaches the WHOLE crossing (SEASON.offer.distanceShare is 1).
+export const reachOf = save => reachKm(save);
 export const planeReady = (save, c) => reachKm(save) >= SEASON.offer.distanceShare * c.km;
 export const planeProgress = (save, c) => { const need = SEASON.offer.distanceShare * c.km; return need ? Math.min(1, reachKm(save) / need) : 1; };
 export const natureBest = save => Math.max(0, ...unlockedAreas(save).map(k => bestAreaBio(save, k)));
@@ -87,17 +102,15 @@ export const regionNature = save => { const by = {}; for (const k of unlockedAre
 export const weakestRegion = save => { if (!(SEASON.step && SEASON.step.natureRule === 'weakest')) return null; const by = regionNature(save), ks = Object.keys(by); return ks.length > 1 ? ks.reduce((a, b) => (by[b] < by[a] ? b : a)) : null; };
 export const natureHave = save => { if (!(SEASON.step && SEASON.step.natureRule === 'weakest')) return natureBest(save); const v = Object.values(regionNature(save)); return v.length ? Math.min(...v) : natureBest(save); };
 export function readiness(save, c) {
-  const era = eraProgress(save).index >= c.era, plane = planeReady(save, c), nb = natureHave(save), nature = nb >= natureNeed(c);
-  return { era, plane, nature, natureHave: Math.round(nb), ready: era && plane && nature };
+  // V4: the plane's range only. era and nature stay in the answer (always true) so the screens that tick them still read.
+  const plane = planeReady(save, c), nb = natureHave(save);
+  return { era: true, plane, nature: true, natureHave: Math.round(nb), ready: plane };
 }
 
 // The era (index) in which the next crossing you could fly opens, when it is later than yours and this release has it; else null.
-export function laterEra(save) {
-  const n = crossingsMade(save), era = eraProgress(save).index;
-  return n > era && n <= SEASON.maxEra - 1 && upcoming(save).some(c => c.kind !== 'lap') ? n : null;
-}
+export function laterEra() { return null; }   // V4: no crossing waits for an era
 // The placeholder at the end of this release: you have reached the last era it covers and nothing is left to fly.
-export const moreToCome = save => !save.lapDone && eraProgress(save).index >= SEASON.maxEra && available(save).length === 0;   // (after the lap: finished, nothing more to come)
+export const moreToCome = save => !save.lapDone && upcoming(save).length === 0 && !Object.keys(AREAS).every(k => unlockedAreas(save).includes(k));   // V4: nothing left to fly and the world not open   // (after the lap: finished, nothing more to come)
 
 // Season 2 stand-ins for the offer gate (user, 2026-10-26): the best LANDED ordinary flight from each area, kept on the
 // save (areaBest[area], game km) by recordAreaBest from GameScene.onFinish; and the area's biodiversity = the meter of the
@@ -112,14 +125,14 @@ export function offerCtx(save, c) {
   const k = areaOf(c.from);
   // missionsDone (S3): the area's crossing trial, its 3 starred missions (src/missions2.js), done in THIS area.
   // capabilityKm (M4): the best landed flight OR the hangar's estimate for this area (src/capability.js), whichever is larger.
-  return { capabilityKm: Math.max((save.areaBest || {})[k] || 0, k ? capFor(save, k) : 0), bio: k ? bestAreaBio(save, k) : 0,   /* the best of the area's lands (was the start city's land only) */ missionsDone: k ? gateDone(save, k) : false };
+  return { capabilityKm: reachKm(save), bio: k ? bestAreaBio(save, k) : 0 };   // V4: range from anywhere; no nature or mission condition (Oliver, 2026-11-23)
 }
 
 // Why a crossing is or is not OFFERED (MASTER-PLAN B4): the conditions and the rule from src/season.js.
 // `ctx` gives the measured parts the game knows: capabilityKm (here: best flight from the area), bio (the area's
 // biodiversity) and, once the area missions exist (M6), missionsDone. A condition whose ctx value is undefined is not asked.
 export function offerCheck(c, ctx) {
-  const need = { capability: ctx.capabilityKm >= SEASON.offer.distanceShare * c.km, nature: ctx.bio >= SEASON.offer.biodiversity };
+  const need = { capability: ctx.capabilityKm >= SEASON.offer.distanceShare * c.km };   // V4: range only
   if (ctx.missionsDone !== undefined) need.contrails = !!ctx.missionsDone;
   const met = Object.values(need).filter(Boolean).length, n = Object.keys(need).length;
   return { need, offered: SEASON.offer.rule === '2of3' && n === 3 ? met >= 2 : met === n };
@@ -174,4 +187,4 @@ export function crossingPath(c, count = 60) {
 //   higher     the rung is above the highest rung already crossed: these are the next ones;
 //   exception  a LOWER crossing that is the only way to open an area no higher crossing opens (it must stay reachable, e.g. the Patagonia crossing);
 //   easier     every other lower one: kept under 'an easier one', never offered as the next goal.
-export function ladderSplit(save) { return { higher: upcoming(save), exception: [], easier: [] }; }   // (CROSSINGS V3: every route on offer is the next crossing, at the same difficulty)
+export function ladderSplit(save) { return { higher: available(save), exception: [], easier: [] }; }   // (V4: the one on offer)   // (CROSSINGS V3: every route on offer is the next crossing, at the same difficulty)

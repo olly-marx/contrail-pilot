@@ -8,7 +8,7 @@
 // confirmed by a primary source (plane-verification-eras.md): the game must not present it as fact.
 // Costs are the spec's unscaled prices x ERA_SCALE (section 7: each era totals ~1.5x its budget);
 // estimates until tuned against measured income. Crystals = seeds / 8.
-import { ISSR, CARGO, CRYSTALS, POWERUPS } from './config.js';
+import { ISSR, CARGO, CRYSTALS, POWERUPS, scaleSeeds, scaleCrystals } from './config.js';
 import { hintFor } from './hintlines.js';
 import { eraProgress } from './eras.js';
 
@@ -38,19 +38,21 @@ export const FORECAST = { popPx: 30 };
 // Forecasting = the gate, ATC = the warning time (+ the second gate and the boost count), Fuel & operations = the cues; the kit carries hintLead, hintArrow, hintGate, hintSecond, hintBoost, hintCues.
 // Passenger fares: seeds per 1,000 km of a LANDED flight, x the Cabin upgrades (GAME VALUES, est.;
 // tune against measured income ~39 seeds a flight). Bigger planes carry more people.
-export const FARES = { comet: 2, jumbo: 3, twin: 4, dreamliner: 5, truss: 6, hydrogen: 7 };
+// 0.73.0 (Oliver, 2026-11-23: 'the fares should take care of' income; a 15,000 km flight ~500 seeds): real seeds per 1,000 game km. Until 0.73.0 the
+// bank divided by 1e6 as if km were metres and every real flight paid 0 (2, 3, 4, 5, 6, 7 then).
+export const FARES = { comet: 20, jumbo: 24, twin: 28, dreamliner: 32, truss: 36, hydrogen: 40 };
 export const CONTRAIL_MARGIN = { deep: 0.75, inside: 1, edge: 1.12, edge2: 1.16, edge3: 1.2, edge4: 1.3 };   // edge3: the 2030s; edge4: hydrogen (more water, +46% formation: PROPOSAL-10)   // edge2: the 2010s (the efficiency trap goes on)
 export const PLANES = [
   { id: 'comet', era: 0, name: 'Comet 4', co2: 1.1, margin: 'deep', sprite: 'plane-comet', portrait: 'assets/ui/plane-hangar-comet.png',
     lines: {
       engines: [L(0, 40, 'Rolls-Royce Avon turbojets, tuned', { co2: 0.9 }), L(0, 90, 'Thrust reversers', { flare: 1.15 }, V)],
-      body: [L(0, 40, 'Pinion fuel tanks', { perSkip: 0.05 }, V), L(0, 90, 'Oval windows and thicker skin', { flare: 1.1 })],
+      body: [L(0, 40, 'Pinion fuel tanks', { perSkip: 0.1 }, V), L(0, 90, 'Oval windows and thicker skin', { flare: 1.1 })],
       cabin: [L(0, 30, 'Tourist class', { fares: 1.1 }, V), L(0, 70, 'Jet-age galley', { fares: 1.2 })],
     } },
   { id: 'jumbo', era: 1, name: '747 jumbo', co2: 1.0, margin: 'inside', sprite: 'plane-747', portrait: 'assets/ui/plane-hangar-jumbo.png',
     lines: {
       engines: [L(1, 90, 'JT9D high-bypass turbofans', { co2: 0.93 }), L(1, 200, 'Hush-kit nacelles', { co2: 0.88 }), L(1, 350, 'Next-gen engines (747-400 era)', { co2: 0.8 })],
-      body: [L(1, 80, 'Stretched upper deck (747-300)', { perSkip: 0.05 }), L(1, 180, 'Winglets (747-400)', { co2: 0.95 }, V), L(1, 320, 'Glass cockpit', { flare: 1.1 })],
+      body: [L(1, 80, 'Stretched upper deck (747-300)', { perSkip: 0.1 }), L(1, 180, 'Winglets (747-400)', { co2: 0.95 }, V), L(1, 320, 'Glass cockpit', { flare: 1.1 })],
       cabin: [L(1, 70, 'Upper-deck lounge', { fares: 1.1 }, V), L(1, 160, 'Wide-body economy, nine or ten across', { fares: 1.2 }), L(1, 300, 'Business class', { fares: 1.35 }, V)],
     } },
   { id: 'twin', era: 2, name: '1990s twin', co2: 0.8, margin: 'edge', sprite: 'plane-twin', portrait: 'assets/ui/plane-hangar-twin.png',
@@ -128,19 +130,19 @@ export const SYSTEMS = [
     S(10, 'Lidar sky picture', { reveal: 400, fakes: 0.05, late: 0.03, nightPatches: 0.95 }),
     S(11, 'Shared live humidity from every plane', { reveal: 440, fakes: 0.03, late: 0.02, nightPatches: 0.95 })] },
   { id: 'atc', name: 'Air traffic control', levels: [
-    S(0, 'Fixed airways and radio', { gaps: 1.005 }), S(1, 'Position reports', { gaps: 1.01 }),
-    S(2, 'Computer radar with altitude readout', { gaps: 1.01, gapTurb: 0.85 }), S(3, 'Better radar', { gaps: 1.02, gapTurb: 0.85, airportEarly: true }),
-    S(4, 'RVSM: more flight levels (North Atlantic, 1997)', { gaps: 1.03, gapTurb: 0.85, airportEarly: true }),
-    S(5, 'Bird-strike advisories', { gaps: 1.03, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75 }, V),
+    S(0, 'Fixed airways and radio', { gaps: 1.02 }), S(1, 'Position reports', { gaps: 1.03 }),
+    S(2, 'Computer radar with altitude readout', { gaps: 1.04, gapTurb: 0.85 }), S(3, 'Better radar', { gaps: 1.05, gapTurb: 0.85, airportEarly: true }),
+    S(4, 'RVSM: more flight levels (North Atlantic, 1997)', { gaps: 1.06, gapTurb: 0.85, airportEarly: true }),
+    S(5, 'Bird-strike advisories', { gaps: 1.06, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75 }, V),
     // 2010s: the answer to drifting no-fly zones (they arrive at 14,000 km in the 2010s): see them early, with their drift.
-    S(6, 'Satellite tracking (ADS-B)', { gaps: 1.03, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 300 }),
-    S(7, 'Free route airspace', { gaps: 1.03, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 300, noFlyGapAdd: 10 }),
+    S(6, 'Satellite tracking (ADS-B)', { gaps: 1.07, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 300 }),
+    S(7, 'Free route airspace', { gaps: 1.07, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 300, noFlyGapAdd: 10 }),
     // 2030s: the answer to turning flocks (they arrive at 18,000 km): the call before the turn.
-    S(8, 'Contrail-aware air traffic control', { gaps: 1.04, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 350, noFlyGapAdd: 10 }),
-    S(9, 'Turn calls: "flock climbing"', { gaps: 1.04, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 350, noFlyGapAdd: 10, turnShown: true }),
+    S(8, 'Contrail-aware air traffic control', { gaps: 1.08, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 350, noFlyGapAdd: 10 }),
+    S(9, 'Turn calls: "flock climbing"', { gaps: 1.08, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 350, noFlyGapAdd: 10, turnShown: true }),
     // Far future: the answer to pulsing storms (from 22,000 km) and the long-haul squeeze.
-    S(10, 'Automatic separation', { gaps: 1.05, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 400, noFlyGapAdd: 12, turnShown: true }),
-    S(11, 'Sky-wide traffic picture', { gaps: 1.05, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 400, noFlyGapAdd: 16, turnShown: true, pulseShown: true })] },
+    S(10, 'Automatic separation', { gaps: 1.09, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 400, noFlyGapAdd: 12, turnShown: true }),
+    S(11, 'Sky-wide traffic picture', { gaps: 1.1, gapTurb: 0.85, airportEarly: true, gapBirds: 0.75, noFlyWarnPx: 400, noFlyGapAdd: 16, turnShown: true, pulseShown: true })] },
   { id: 'ops', name: 'Fuel & operations', levels: [
     S(0, 'Standard kerosene jet fuel (Jet A, 1959)', { co2: 0.96 }), S(1, 'Best cruise speed', { co2: 0.92 }, V),
     S(2, 'Oil-crisis savings: lighter loads (1973)', { co2: 0.92, takeoff: 0.92 }, V), S(3, 'Taxi on fewer engines', { co2: 0.92, takeoff: 0.86 }, V),
@@ -159,22 +161,24 @@ export const SYSTEMS = [
 // step; 25 + 55 seeds become 15 + 33 per line). Applied here, after the table, so the level lines above stay as they are; crystals follow the seeds (1 per 8 seeds, as price()).
 export const HINT_CHEAP = 0.6;
 for (const sys of SYSTEMS) for (const lv of sys.levels.slice(0, 2)) { lv.cost = Math.round(lv.cost * HINT_CHEAP); lv.crystals = Math.round(lv.cost / 8); }
+// PRICE SCALE (0.73.0, src/config.js): every plane line and system level x8 seeds and x7 crystals, after the tables and HINT_CHEAP above (the gadgets: after their table).
+for (const lv of [...PLANES.flatMap(p => Object.values(p.lines).flat()), ...SYSTEMS.flatMap(g => g.levels)]) { lv.base = { cost: lv.cost, crystals: lv.crystals || 0 }; lv.cost = scaleSeeds(lv.cost); lv.crystals = scaleCrystals(lv.crystals || 0); }
 export const GADGETS = [
   { id: 'magnet', name: 'Magnet', levels: [S(0, 'Horseshoe magnet', { pickup: 16 }), S(1, 'Bigger horseshoe', { pickup: 19 }),
     S(2, 'Electromagnet', { pickup: 22 }), S(3, 'Stronger coil', { pickup: 26 }), S(4, 'Neodymium magnet', { pickup: 30 }, V), S(5, 'Bigger neodymium', { pickup: 34 }, V)] },
-  { id: 'hold', name: 'Cargo hold', levels: [S(0, 'Mail sacks', { perSkip: 0.55 }), S(1, 'More mail sacks', { perSkip: 0.6 }),
-    S(2, 'Cargo containers', { perSkip: 0.65 }, V), S(3, 'More containers', { perSkip: 0.7 }, V), S(4, 'Roller floor', { perSkip: 0.75 }), S(5, 'Longer roller floor', { perSkip: 0.8 })] },
+  { id: 'hold', name: 'Cargo hold', levels: [S(0, 'Mail sacks', { perSkip: 0.6 }), S(1, 'More mail sacks', { perSkip: 0.7 }),
+    S(2, 'Cargo containers', { perSkip: 0.8 }, V), S(3, 'More containers', { perSkip: 0.9 }, V), S(4, 'Roller floor', { perSkip: 1 }), S(5, 'Longer roller floor', { perSkip: 1.1 })] },
   { id: 'gear', name: 'Landing gear', levels: [S(0, 'ILS beams', { flare: 1.1 }, V), S(1, 'Sharper ILS beams', { flare: 1.2 }, V),
     S(2, 'Autoland (Trident, 1965)', { flare: 1.3 }, V), S(3, 'Better autoland', { flare: 1.4 }, V), S(4, 'GPS approaches', { flare: 1.5 }, V), S(5, 'Precise GPS approaches', { flare: 1.6 }, V)] },
-  { id: 'sensors', name: 'Sensors', levels: [S(0, 'Thermometer', { dodge: 1, perNight: 4 }), S(1, 'Better thermometer', { dodge: 2, perNight: 4 }),
-    S(2, 'Weather radar', { dodge: 2, perNight: 5 }), S(3, 'Colour radar', { dodge: 2, perNight: 6 }),
-    S(4, 'Humidity sensor (WVSS-I)', { dodge: 3, perNight: 6 }, V), S(5, 'Better humidity sensor', { dodge: 3, perNight: 8 }, V),
-    S(6, 'Bird radar', { dodge: 3, perNight: 8, birdWarnPx: 250 }), S(7, 'Longer-range bird radar', { dodge: 3, perNight: 9, birdWarnPx: 350 }),
+  { id: 'sensors', name: 'Sensors', levels: [S(0, 'Thermometer', { dodge: 2, perNight: 4 }), S(1, 'Better thermometer', { dodge: 3, perNight: 4 }),
+    S(2, 'Weather radar', { dodge: 3, perNight: 5 }), S(3, 'Colour radar', { dodge: 3, perNight: 6 }),
+    S(4, 'Humidity sensor (WVSS-I)', { dodge: 4, perNight: 6 }, V), S(5, 'Better humidity sensor', { dodge: 4, perNight: 8 }, V),
+    S(6, 'Bird radar', { dodge: 4, perNight: 8, birdWarnPx: 250 }), S(7, 'Longer-range bird radar', { dodge: 4, perNight: 9, birdWarnPx: 350 }),
     // 2030s bird detection (the user's "less up/down bird movement"): steadier flocks. Sized by playtest (the sim cannot value it).
-    S(8, 'Bird detection', { dodge: 3, perNight: 9, birdWarnPx: 350, birdWobble: 0.6 }), S(9, 'Better bird detection', { dodge: 3, perNight: 10, birdWarnPx: 400, birdWobble: 0.35 }),
+    S(8, 'Bird detection', { dodge: 5, perNight: 9, birdWarnPx: 350, birdWobble: 0.6 }), S(9, 'Better bird detection', { dodge: 5, perNight: 10, birdWarnPx: 400, birdWobble: 0.35 }),
     // Far future: bird-aware routing, fewer flocks (x the spawn chance, with ATC's advisories: kit.gapBirds, no new rule).
-    S(10, 'Bird-aware routing', { dodge: 3, perNight: 10, birdWarnPx: 400, birdWobble: 0.35, birdChance: 0.85 }),
-    S(11, 'Better bird-aware routing', { dodge: 3, perNight: 11, birdWarnPx: 400, birdWobble: 0.35, birdChance: 0.7 })] },
+    S(10, 'Bird-aware routing', { dodge: 5, perNight: 10, birdWarnPx: 400, birdWobble: 0.35, birdChance: 0.85 }),
+    S(11, 'Better bird-aware routing', { dodge: 6, perNight: 11, birdWarnPx: 400, birdWobble: 0.35, birdChance: 0.7 })] },
   { id: 'autopilot', name: 'Autopilot', levels: [S(0, 'Height hold', { autoSecs: 8, autoChance: 0.06 }), S(1, 'Better height hold', { autoSecs: 9, autoChance: 0.06 }),
     S(2, 'Autothrottle', { autoSecs: 10, autoChance: 0.07 }), S(3, 'Better autothrottle', { autoSecs: 11, autoChance: 0.07 }),
     S(4, 'Flight management computer', { autoSecs: 12, autoChance: 0.08 }), S(5, 'Better flight computer', { autoSecs: 13, autoChance: 0.09 }),
@@ -182,6 +186,8 @@ export const GADGETS = [
     S(8, 'Autopilot that sees birds', { autoSecs: 16, autoChance: 0.11 }), S(9, 'Better bird-aware autopilot', { autoSecs: 17, autoChance: 0.12 }),
     S(10, 'Autopilot that sees the whole sky', { autoSecs: 18, autoChance: 0.13 }), S(11, 'Best autopilot', { autoSecs: 19, autoChance: 0.14 })] },
 ];
+
+for (const lv of GADGETS.flatMap(g => g.levels)) { lv.base = { cost: lv.cost, crystals: lv.crystals || 0 }; lv.cost = scaleSeeds(lv.cost); lv.crystals = scaleCrystals(lv.crystals || 0); }   // (the PRICE SCALE, as the systems above)
 
 // Short names for the one-line hangar row (DESIGN-HANGAR-NATURE: 'Next: <name>' fits at 375 px, <= 30 characters, no ellipsis).
 // The full name stays everywhere else (the preview strip, the (i) card, the facts, which are keyed by it).
@@ -290,7 +296,7 @@ export function fleetKit(save) {
     pickup: gad('magnet').pickup || 12,
     perSkip: (gad('hold').perSkip || CARGO.multiplierPerSkip) + add('perSkip'),
     flare: (gad('gear').flare || 1) * mul('flare'),
-    dodgeCrystals: sen.dodge || CRYSTALS.dodge, dodgesPerNight: sen.perNight || CRYSTALS.dodgesPerNight,
+    dodgeCrystals: CRYSTALS.dodge * (sen.dodge || 1), dodgesPerNight: sen.perNight || CRYSTALS.dodgesPerNight,   // Sensors' dodge: a whole multiplier on CRYSTALS.dodge (0.73.0)
     // Autopilot pick-ups only once the Autopilot gadget is bought (0.10.2: they used to come for everyone).
     autoSecs: ap.autoSecs || POWERUPS.autoSeconds, autoChance: ap.autoChance || 0,
     // Eras 4-6 (PROPOSAL-ERAS-4-6-SYSTEMS): kit fields the 2010s levels set; each is 0 / 1 / false before, so eras 1-3 fly as before.
@@ -395,10 +401,10 @@ export const STAT_BARS = [
   { id: 'hintBoost', label: 'Second gate and climb boost', keys: ['hintSecond', 'hintBoost'], v: k => k.hintBoost, min: 0, max: 3, better: 'higher' },   // ATC 10-12
   { id: 'hintCues', label: 'Arrow colours and icon', keys: ['hintCues'], v: k => k.hintCues, min: 0, max: 12, better: 'higher' },   // Fuel & operations
   { id: 'fares', label: 'Fares', keys: ['fares'], v: k => k.fares, min: 1, max: 2, better: 'higher' },
-  { id: 'skip', label: 'Bonus per airport skipped', keys: ['perSkip'], v: k => k.perSkip, min: 0, max: 1, better: 'higher' },
+  { id: 'skip', label: 'Bonus per airport skipped', keys: ['perSkip'], v: k => k.perSkip, min: 0, max: 1.3, better: 'higher' },
   { id: 'flare', label: 'Landing window', keys: ['flare'], v: k => k.flare, min: 1, max: 2, better: 'higher' },
   { id: 'pickup', label: 'Pick-up reach', keys: ['pickup'], v: k => k.pickup, min: 0, max: 34, better: 'higher' },
-  { id: 'dodge', label: 'Crystals per night', keys: ['dodgeCrystals', 'dodgesPerNight'], v: k => k.dodgeCrystals * k.dodgesPerNight, min: 0, max: 24, better: 'higher' },
+  { id: 'dodge', label: 'Crystals per night', keys: ['dodgeCrystals', 'dodgesPerNight'], v: k => k.dodgeCrystals * k.dodgesPerNight, min: 0, max: 110, better: 'higher' },
   { id: 'autoSecs', label: 'Autopilot time', keys: ['autoSecs'], v: k => k.autoSecs, min: 0, max: 13, better: 'higher' },
   { id: 'autoChance', label: 'Autopilot pick-ups', keys: ['autoChance'], v: k => k.autoChance, min: 0, max: 0.1, better: 'higher' },
 ];
@@ -425,13 +431,13 @@ export function effectText(fx) {
   if (fx.co2) out.push(`${pc(fx.co2)}% less CO2`);
   if (fx.takeoff) out.push(`take-off ${pc(fx.takeoff)}% less CO2`);
   if (fx.flare) out.push(`landing window x${fx.flare}`);
-  if (fx.perSkip) out.push(fx.perSkip < 0.5 ? `cargo +${fx.perSkip} per airport passed` : `landing bonus +${fx.perSkip} per airport passed`);
+  if (fx.perSkip) out.push(fx.perSkip < 0.5 ? `landing bonus +${Math.round(fx.perSkip * 100)}% more per airport passed` : `landing bonus +${Math.round(fx.perSkip * 100)}% per airport passed`);
   if (fx.fares) out.push(`fares +${Math.round((fx.fares - 1) * 100)}%`);
   if (fx.reveal) out.push(`see icy air ${fx.reveal} px ahead`);
   if (fx.fakes) out.push(`${Math.round(fx.fakes * 100)}% false patches`);
   if (fx.late) out.push(`${Math.round(fx.late * 100)}% spotted late`);
   if (fx.nightPatches) out.push('fewer icy patches in your path at night');
-  if (fx.gaps) out.push(`gaps ${((fx.gaps - 1) * 100).toFixed(1).replace('.0', '')}% wider`);
+  if (fx.gaps) out.push(`gaps ${Math.round((fx.gaps - 1) * 100)}% wider`);
   if (fx.noFlyWarnPx) out.push('see no-fly zones early, and which way they drift');
   if (fx.noFlyGapAdd) out.push(`no-fly gaps ${fx.noFlyGapAdd} px wider`);
   if (fx.cleanSecs) out.push(`hold to fly ${fx.cleanSecs} s a night with no contrail`);
@@ -440,7 +446,7 @@ export function effectText(fx) {
   if (fx.airportEarly) out.push('the "get LOW to land" call comes sooner');
   if (fx.gapBirds) out.push(`${Math.round((1 - fx.gapBirds) * 100)}% fewer bird flocks`);
   if (fx.pickup) out.push(`grab seeds from ${fx.pickup} px`);
-  if (fx.dodge) out.push(`Night clouds you avoid: ${fx.dodge} crystal${fx.dodge > 1 ? 's' : ''} each`);
+  if (fx.dodge) out.push(`Night clouds you avoid: x${fx.dodge} crystals (${fx.dodge * CRYSTALS.dodge} each)`);
   if (fx.autoSecs) out.push(`autopilot ${fx.autoSecs} s, found ${Math.round(fx.autoChance * 100)}% of the time`);
   return out.join(', ');
 }

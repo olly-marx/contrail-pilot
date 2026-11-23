@@ -35,7 +35,7 @@ export const TIPS = {
   'x-gold':     { say: 'A golden seed! It\'s worth 3 seeds, and only shows up on long flights.', more: 'A golden seed is worth 3 seeds. They only appear on long flights.' },
   'x-crystals': { say: 'Ice crystals! You earn them by flying smartly around contrails at night.', more: 'Contrails are made of ice crystals. You earn them for smart contrail flying: dodging icy air at night, and nights with no contrails. Spend them in the hangar on research.' },
   'x-species':  { say: name => `A new kind of tree: <b>${name}</b>! New kinds help lots of wildlife.`, more: 'New kinds of tree fill your Biodiversity meter the most.' },
-  'x-multiplier': { say: 'You skipped an airport, so your landing bonus is now <b>x1.5</b>!', more: 'You flew past an airport. That is fine: the next one is ahead. Your landing bonus grows with every airport you pass.' },
+  'x-multiplier': { say: 'You skipped an airport, so your landing bonus is now <b>+50%</b> of your seeds!', more: 'You flew past an airport. That is fine: the next one is ahead. Your landing bonus grows with every airport you pass.' },
   'x-bars':     { say: 'Watch two bars: CO2 on the left, the Earth on the right.', more: 'Two bars to watch. Left: the CO2 your plane makes right now. Right: the Earth. Red = hotter, blue = cooler.' },
   'x-hot':      { say: 'The Earth is getting too hot! Land soon, or make some shade.', more: 'If the red bar on the right reaches the top, your flight is over. Land soon, make shade in the daytime, or stay out of icy air at night.' },
   'hazard-turbulence': { say: 'Wavy lines mean bumpy air. Fly over or under it if you can.', more: 'Wavy lines = bumpy air! Inside it your plane gets pushed about and your taps work a little late.' },

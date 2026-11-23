@@ -41,8 +41,8 @@
   const nightNear = pass({ night: true, through: false });
   const dayDodge = pass({ night: false, through: false, dive: true });
   const nightThrough = pass({ night: true, through: true });
-  check(nightDodge.crystals === 1, `dodging icy air at night should earn 1 crystal: ${JSON.stringify(nightDodge)}`);
-  check(nightDodge.over && nightDodge.saved === 1, `crystals should be kept after a crash: ${JSON.stringify(nightDodge)}`);
+  check(nightDodge.crystals === 2, `dodging icy air at night should earn CRYSTALS.dodge = 2 (no Sensors; 1 until 0.73.0): ${JSON.stringify(nightDodge)}`);
+  check(nightDodge.over && nightDodge.saved === 2, `ALL crystals should be kept after a crash (0.73.0): ${JSON.stringify(nightDodge)}`);
   check(nightNear.crystals === 0, `icy air that was never in your path should earn none: ${JSON.stringify(nightNear)}`);
   check(dayDodge.crystals === 0, `dodging icy air by day should earn none: ${JSON.stringify(dayDodge)}`);
   check(nightThrough.contrails > 0 && nightThrough.crystals === 0, `a night contrail should earn none: ${JSON.stringify(nightThrough)}`);

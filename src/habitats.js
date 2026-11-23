@@ -5,7 +5,7 @@
 // meter is high enough, and seeing it on screen counts as finding it. Researched 2026-10-21 (UK);
 // every fact has a source for the group to check before the festival (see `src`).
 // UK first; other regions follow.
-import { cz } from './config.js';   // Citizen Zoo mentions only when that feature is on
+import { cz, scaleSeeds, scaleCrystals } from './config.js';   // Citizen Zoo mentions only when that feature is on
 
 // Projects (UK woodland & farmland), cheap to big, in 3 TIERS (the user, 2026-10-22: the screen
 // showed too many at once): 1 first steps, 2 wetter and wilder (Biodiversity 12), 3 bring them
@@ -205,11 +205,13 @@ const PRICE = { 1: { cheap: 20, mid: 60, big: 140 }, 2: { cheap: 170, mid: 300, 
 const BIO = { 1: 6, 2: 10, 3: 14 };   // meter points per project (the meter is out of the region's total)
 // The meter level each rarity needs before it can appear (as in the UK: rare 30, very rare 50+).
 export const RARITY_BIO = { common: 0, uncommon: 15, rare: 30, legendary: 50 };
-const priced = p => ({ ...p, cost: PRICE[p.tier][p.band], crystals: Math.round(PRICE[p.tier][p.band] / 8),
+const priced = p => ({ ...p, base: { cost: PRICE[p.tier][p.band], crystals: Math.round(PRICE[p.tier][p.band] / 8) }, cost: scaleSeeds(PRICE[p.tier][p.band]), crystals: scaleCrystals(Math.round(PRICE[p.tier][p.band] / 8)),   /* x the PRICE SCALE since 0.73.0 (src/config.js) */
   bio: BIO[p.tier], needs: TIERS.find(t => t.tier === p.tier).needs });
 const leveled = S => Object.fromEntries(Object.entries(S).map(([id, s]) => [id, { bio: RARITY_BIO[s.rarity], ...s }]));
 const region = m => ({ projects: m.PROJECTS.map(priced), species: leveled(m.SPECIES) });
 
+// The UK's hand-set prices x the PRICE SCALE too (0.73.0, src/config.js); its needs are unchanged.
+for (const p of UK_PROJECTS) { p.base = { cost: p.cost, crystals: p.crystals || 0 }; p.cost = scaleSeeds(p.cost); p.crystals = scaleCrystals(p.crystals || 0); }
 // REGION_DATA[region] = { projects, species }: the UK keeps its hand-set prices and needs.
 export const REGION_DATA = {
   woodland: { projects: UK_PROJECTS, species: UK_SPECIES },

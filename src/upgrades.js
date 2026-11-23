@@ -1,4 +1,4 @@
-import { CLIMATE, CONTRAIL, ISSR, PARCEL, CARGO, CRYSTALS, GROW_DAYS, cz } from './config.js';
+import { CLIMATE, CONTRAIL, ISSR, PARCEL, CARGO, CRYSTALS, GROW_DAYS, cz, scaleSeeds, scaleCrystals } from './config.js';
 import { SPECIES, biodiversity } from './nature.js';
 import { treesPlanted } from './treecount.js';
 import { RETIRED_LINES, fleetKit } from './fleet.js';
@@ -206,6 +206,9 @@ export const LINES = [
     },
   },
 ];
+
+// PRICE SCALE (0.73.0, src/config.js): the lines still sold (the tree lines; the old plane lines are retired) x8 seeds, x7 crystals.
+for (const line of LINES) if (!RETIRED_LINES.includes(line.id)) for (const lv of line.levels) { lv.base = { cost: lv.cost, crystals: lv.crystals || 0 }; lv.cost = scaleSeeds(lv.cost); lv.crystals = scaleCrystals(lv.crystals || 0); }
 
 export const FUELS = {
   // `water`: water vapour in the exhaust (drawn as white wisps). Hydrogen makes about 2.5x as much.

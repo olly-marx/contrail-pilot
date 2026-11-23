@@ -32,7 +32,10 @@ export function missionPrize(kind, k = 1, plane = null) {
 }
 
 // The crossing prize by difficulty word (the full scale; paid once, in completeCrossing, only when the crossing is not yet in save.crossed: release C wires it; no back-pay).
-export const CROSSING_PRIZE = { Easy: [100, 12], Medium: [200, 25], Hard: [400, 50], Harder: [700, 87], 'Very hard': [1100, 137], 'The lap': [2000, 250] };
+// 0.73.0 (Oliver, 2026-11-22: 'current crossing rewards are weak'; 2026-11-23: 'the crossings ... should be worth about 3 stories'). A story at the reach a crossing needs pays
+// storyPay(2 x that km) (src/storyboard.js: 1,000 seeds and 80 crystals per 15,000 km of paid stages; its stages total about twice the reach), so a crossing pays
+// 3 x storyPay(2 x km) = 400 seeds and 32 crystals per 1,000 km of the crossing: Easy 12,000 ... Very hard 32,000 km; the lap 40,000.
+export const CROSSING_PRIZE = { Easy: [4800, 384], Medium: [6400, 512], Hard: [8800, 704], Harder: [10800, 864], 'Very hard': [12800, 1024], 'The lap': [16000, 1280] };
 // HOW HARD a crossing is, as a word (the ONE list: src/crossingview.js DIFFICULTY and difficultyOf are these two). The ladder follows the eras; the lap is the last.
 export const CROSSING_WORDS = ['Easy', 'Medium', 'Hard', 'Harder', 'Very hard', 'The lap'];
 export const crossingWord = c => {
@@ -44,7 +47,7 @@ export const crossingWord = c => {
 // The words the screens use for a prize: 'Prize: 400 seeds' (the CROSSINGS screen, the HOME box), '+400 seeds' / '+50 ice crystals' (the landing card).
 // The two card lines of a paid crossing prize ('+100 seeds', '+12 ice crystals'; thousands with a comma): the landing card (src/crossingend.js) and the ending (src/ui.js showEnding).
 export const prizeLines = p => [`+${p.seeds.toLocaleString('en-GB')} seeds`, `+${p.crystals.toLocaleString('en-GB')} ice crystals`];
-export const prizeText = r => `Prize: ${r.seeds} seeds`;
+export const prizeText = r => `Prize: ${r.seeds.toLocaleString('en-GB')} seeds`;   // (thousands with a comma since 0.73.0: 'Prize: 1,200 seeds')
 export function crossingReward(word) {
   const b = Object.prototype.hasOwnProperty.call(CROSSING_PRIZE, word) ? CROSSING_PRIZE[word] : null;
   if (!b) throw new Error(`crossingReward: unknown difficulty word '${word}'`);

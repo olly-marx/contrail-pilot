@@ -46,7 +46,7 @@ import { WILDLIFE } from './wildlife.js';
 import { animalPortrait } from './animalart.js';
 // HTML screens around the game: title, results, hangar (shop), info pop-ups, tips and flight school.
 import { LINES, FUELS, level, nextLevel, canBuy, buyLevel, fuelChoices, unlocked, unlockText, needsMoreNature, tabOf, lineById, freeParcels } from './upgrades.js';
-import { biodiversity, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
+import { biodiversity, biodiversityParts, stage, STAGES, NATURE_FACTS, SPECIES } from './nature.js';
 import { treesPlanted } from './treecount.js';
 import { recordTouchdown } from './landlog.js';
 import { current as currentMission, blocked as missionBlocked, allDone as missionsDone, indexOf as missionIndexOf, MISSIONS } from './missions.js';
@@ -106,8 +106,14 @@ const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.c
 // The Biodiversity meter as HTML: a bar plus the stage name.
 // region: whose meter it is (each land has its own, 0.11.1: the bar used to say only "Biodiversity").
 export function meterHTML(save, b = biodiversity(save), region = 'woodland') {   // b: a region's meter (NATURE tabs)
-  const st = stage(b);
-  return `<div class="meter"><span class="mlabel">${REGION_NAMES[region] || 'Biodiversity'}</span><span class="mtrack"><span class="mfill" style="width:${b}%"></span>${STAGES.slice(1).map(x => `<i style="left:${x.at}%"></i>`).join('')}</span><b>${st.name}</b></div>`;
+  // 0.73.0 (Oliver, 2026-11-23): the land's name on its OWN line, then three bars of the same width in every land, side by side: land, water, total. Each shows the points of
+  // its share ('Land 28/60'), so a long name no longer squeezes a bar. (Until 0.73.0: one line, name | bar | stage. Three rows did not fit NATURE at 320x568: tests/fitscreen.)
+  const st = stage(b), P = biodiversityParts(save, region), pts = (v, sh) => Math.round(v * sh / 100);
+  const row = (k, label, fill, text, ticks = '') => `<span class="mbar3 mbar3-${k}"><span class="mk">${label}</span><span class="mv">${text}</span><span class="mtrack"><span class="mfill mfill-${k}" style="width:${fill}%"></span>${ticks}</span></span>`;
+  return `<div class="meter"><span class="mhead"><span class="mlabel">${REGION_NAMES[region] || 'Biodiversity'}</span><b>${st.name}</b></span><span class="mbars${P.waterShare ? '' : ' two'}">`
+    + row('land', 'Land', P.land, `${pts(P.land, P.landShare)}/${P.landShare}`)
+    + (P.waterShare ? row('water', 'Water', P.water, `${pts(P.water, P.waterShare)}/${P.waterShare}`) : '')
+    + row('total', 'Total', b, `${b}/100`, STAGES.slice(1).map(x => `<i style="left:${x.at}%"></i>`).join('')) + '</span></div>';
 }
 const sign = v => (v > 0 ? '+' : v < 0 ? '-' : '') + Math.abs(v);
 

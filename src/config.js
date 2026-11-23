@@ -120,8 +120,9 @@ export const AIRPORT = {
   // BAD LANDINGS (the user, 2026-11-17): running off the runway's end is not a crash, but keeps only part of the flight.
   // The landing window (kit.flare, the Landing gear and plane parts, 1 to about 2) also brakes (the roll takes rollSeconds / flare^2)
   // and lets the flare come down steeper over the runway to stop in time (up to steepVy x flare^2). (src/sim/rules.js landingPower)
-  overrunKeep: 0.5,    // share of the flight's seeds and ice crystals kept after running off the runway (rounded up)
-  crashCrystalKeep: 0.5, // share of the flight's ice crystals kept after a crash (rounded up); was 1 before 2026-11-17
+  overrunKeep: 0.5,    // (until 0.73.0) share of the flight's seeds and crystals kept after an overrun. Since 0.73.0 (Oliver, 2026-11-23) an overrun loses the fares, the
+                       // long-flight bonus and the distance crystals instead, and keeps the sky seeds and every other crystal: src/sim/rules.js bankFlight. Kept for tools/sim/landing-econ.mjs.
+  crashCrystalKeep: 1,   // share of the flight's ice crystals kept after a crash: ALL (Oliver, 2026-11-23: crashes keep crystals; 0.5 from 2026-11-17 to 0.73.0)
   steepVy: 90,         // px/s: the steepest the flare may sink over the runway at landing window x1 (x flare^2 above it)
 };
 
@@ -236,12 +237,13 @@ export const FOREST = {
 };
 
 export const CRYSTALS = {
-  dodge: 1,            // icy air that was in your path at night, flown around
+  dodge: 2,            // icy air that was in your path at night, flown around (x the Sensors multiplier, kit.dodgeMul; balance 2026-11-23: was 1, Sensors set 1-3)
   dodgesPerNight: 3,   // at most this many dodge crystals each night
-  cleanNight: 2,       // a whole night with no heat trapped (Night Owl)
+  cleanNight: 6,       // a whole night with no heat trapped (Night Owl; 2 until the 2026-11-23 balance)
+  perKm: 1,            // crystals per 1,000 km of a clean landing (the crystal side of the fares; Oliver's anchor 2026-11-23: a 15,000 km flight ~40 crystals)
 };
 export const CARGO = {
-  multiplierPerSkip: 0.5,   // landing bonus: x1, x1.5, x2 ... per airport skipped
+  multiplierPerSkip: 0.5,   // landing bonus: +50% of the sky seeds per airport skipped (shown in whole percent since 0.73.0)
   coolBonus: 3,             // extra trees for landing with the Earth cooler than at take off
 };
 
@@ -303,3 +305,10 @@ export const COLOURS = {
   co2: 0x9a9a9a,
   hudBack: 0x000000,
 };
+
+// PRICE SCALE (0.73.0, measured 2026-11-23): fares now pay (they paid 0 until 0.73.0) and crystals come per 1,000 km and per dodge x Sensors, so the progression sim's
+// careful learning pilot banks x8.1 the seeds and x6.7 the crystals over 200 flights (scratch/balance-audit econ-s1 vs econ-new). Every upgrade, project and finance price
+// is scaled by this so the pace stays as measured; existing banks are scaled once (src/save.js, priceVersion 3).
+export const PRICE_SCALE = { seeds: 6, crystals: 5, version: 3 };   // (x8 / x7 first: the sim then bought 45% fewer upgrades a flight in flights 26-70, crystal-bound; set to the equilibrium)
+export const scaleSeeds = n => (n >= 50 ? Math.round(n * PRICE_SCALE.seeds / 10) * 10 : Math.round(n * PRICE_SCALE.seeds / 5) * 5);
+export const scaleCrystals = n => Math.round(n * PRICE_SCALE.crystals);

@@ -1,10 +1,10 @@
 // Bad landings (the user, 2026-11-17; src/sim/rules.js land / freeFall / bankFlight, src/config.js AIRPORT.overrunKeep, steepVy, crashCrystalKeep).
 // Controlled approaches, no taps, nothing in the sky: the plane is put at a height H over the ground, D px before the runway's start
 // (D < 0: already over it), with 11 seeds and 5 ice crystals on board, landing window (kit.flare) x1 or x2.
-//   A  low from far out, x1        -> landed, not overran, all 11 seeds and 5 crystals kept
-//   B  high at the runway start, x1 -> landed (not a crash), overran, 6 seeds (half rounded up) and 3 crystals kept; the results card says so
+//   A  low from far out, x1        -> landed, not overran: the 11 sky seeds + the fares, the 5 crystals + the distance crystals
+//   B  high at the runway start, x1 -> landed (not a crash), overran (0.73.0, Oliver 2026-11-23): the 11 sky seeds and all 5 crystals kept, the fares and the distance crystals lost; the card says so
 //   C  the same approach, x2        -> landed, not overran (steeper way down and harder brakes): the gear is what saves it
-//   D  a crash (no runway), x1      -> 3 of 5 crystals kept
+//   D  a crash (no runway), x1      -> all 5 crystals kept (0.73.0; half until then)
 //   F  the barrier at the end is hit (onOverrun) exactly once on B, never on A or C
 //   E  the roll-out stops short of the runway's end on every landing judged good (the rule's own geometry, checked from frames)
 //   G  one gear step (x1.2) stops in time where x1 runs off the end (the gear's pull is the landing window squared)
@@ -36,17 +36,18 @@
   };
   const check = (name, ok, line) => { console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}: ${line}`); if (!ok) fails.push(name); };
   const say = o => `landed ${o.r.landed} overran ${o.r.overran} seeds +${o.r.gained} crystals ${o.r.crystals} (lost ${o.r.crystalsLost}) touchdown pos ${o.r.touchdown && o.r.touchdown.pos} speed ${Math.round(o.speed0)} stop ${o.stopNose && Math.round(o.stopNose - o.rwEnd)} px past the end`;
+  const fare = o => ((o.r.earned || []).find(e => e.label === 'Passenger fares') || {}).n || 0;
   const A = fly({ H: 60, D: 250, flare: 1 });
-  check('A low from far out, x1', A.r.landed && !A.r.overran && A.r.gained === 11 && A.r.crystals === 5, say(A));
+  check('A low from far out, x1', A.r.landed && !A.r.overran && fare(A) > 0 && A.r.gained === 11 + fare(A) && A.r.distanceCrystals === Math.floor(A.r.distance / 1000) && A.r.distanceCrystals > 0 && A.r.crystals === 5 + A.r.distanceCrystals, say(A) + ` fares ${fare(A)} distance crystals ${A.r.distanceCrystals}`);
   const B = fly({ H: 120, D: 0, flare: 1 });
   const vB = resultsView(B.r, B.w.save);
-  check('B high at the runway start, x1', B.r.landed && B.r.overran && B.r.gained === 6 && B.r.crystals === 3 && B.r.crystalsLost === 2, say(B));
-  check('B results card', vB.eyebrow === 'BAD LANDING IN' && vB.maths === 'Off the runway: half lost' && vB.tally.some(t => t[0] === 'Ran off the runway' && t[1] === '-5') && vB.tally.some(t => t[0] === 'Ice crystals lost' && t[1] === '-2'),
+  check('B high at the runway start, x1', B.r.landed && B.r.overran && fare(B) > 0 && B.r.gained === 11 && B.r.crystals === 5 && !B.r.distanceCrystals, say(B) + ` fares (lost) ${fare(B)}`);
+  check('B results card', vB.eyebrow === 'BAD LANDING IN' && vB.maths === 'Off the runway: no fares' && vB.tally.some(t => t[0] === 'Passenger fares' && t[1] === `${fare(B)} lost`) && vB.tally.some(t => t[0] === 'Ice crystals (kept)' && t[1] === '+5') && vB.bank.seeds === 11,
     `eyebrow "${vB.eyebrow}" maths "${vB.maths}" tally ${JSON.stringify(vB.tally)}`);
   const C = fly({ H: 120, D: 0, flare: 2 });
-  check('C the same approach, x2', C.r.landed && !C.r.overran && C.r.gained === 11 && C.r.crystals === 5, say(C));
+  check('C the same approach, x2', C.r.landed && !C.r.overran && C.r.gained === 11 + fare(C) && C.r.crystals === 5 + C.r.distanceCrystals, say(C));
   const Dc = fly({ H: 60, D: 0, flare: 1, runway: false });
-  check('D crash keeps half the crystals', !Dc.r.landed && Dc.r.crystals === 3 && Dc.r.crystalsLost === 2, say(Dc));
+  check('D crash keeps every crystal', !Dc.r.landed && Dc.r.crystals === 5 && !Dc.r.crystalsLost && !Dc.r.distanceCrystals, say(Dc));
   // E: the geometry. Where the nose really stopped (frames) against the runway's end, for every landing above.
   for (const [n, o] of [['A', A], ['B', B], ['C', C]]) if (o.r.landed) check(`E ${n} stop vs end`, (o.stopNose <= o.rwEnd + 0.5) === !o.r.overran, `nose stopped ${Math.round(o.stopNose - o.rwEnd)} px from the end, overran ${o.r.overran}`);
   check('F barrier: once on the overrun, never on a good landing', B.barrier === 1 && A.barrier === 0 && C.barrier === 0, `A ${A.barrier}, B ${B.barrier}, C ${C.barrier}`);

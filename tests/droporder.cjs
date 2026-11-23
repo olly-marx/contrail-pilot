@@ -4,6 +4,7 @@
 globalThis.SEASON2 = true;
 (async () => {
   (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER (its missions or its crossing stars), retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
+  const WW = await import('../src/waterways.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const D = await import('../src/droporder.js'), L = await import('../src/landtrees.js'), N = await import('../src/nature.js'), G = await import('../src/groves.js');
   const base = () => ({ areas: ['weurope'], homeArea: 'weurope', tutorialDone: true, planted: {}, plantedIn: {}, habitat: { woodland: ['deadwood', 'meadow', 'margins', 'pond', 'hedgerow', 'woodland', 'voles'] },
@@ -70,7 +71,13 @@ globalThis.SEASON2 = true;
     w.plots.push({ x: 100, used: false }); const p0 = w.parcelsFalling[0]; w.parcelLanded(101, p0.kind, p0.region);
     check(Object.values(w.dropped).reduce((a, n) => a + n, 0) === 1, `a landed parcel is no longer pending: ${JSON.stringify(w.dropped)}`);
     for (const sl of open) for (let i = 0; i < 9; i++) G.plantTree(w.save, 'woodland', idOf(sl)); w.dropped = {}; const before = w.parcels; w.dropParcel();
-    check(w.parcels === before && w.parcelsFalling.length === 2, `a full grove keeps the tree: parcels ${w.parcels} (was ${before})`); }
+    // 0.73.0 WATERWAYS: a full grove in a land with water drops sends the drop to the WATER (src/waterways.js); with the water full too (or waterways off) the tree is kept.
+    const wl = w.parcelsFalling[w.parcelsFalling.length - 1];
+    check(w.parcels === before - 1 && w.parcelsFalling.length === 3 && wl.water && WW.dropsOf('woodland').some(d => d.id === wl.kind), `a full grove drops for the water instead: parcels ${w.parcels} (was ${before}), ${JSON.stringify(wl && [wl.water, wl.kind])}`);
+    w.save.waterBook = { woodland: Object.fromEntries(WW.dropsOf('woodland').map(d => [d.id, WW.DROP_CAP])) }; w.waterPending = {}; const b2 = w.parcels; w.dropParcel();
+    check(w.parcels === b2 && w.parcelsFalling.length === 3, `the grove AND the water full: the parcel is kept: parcels ${w.parcels} (was ${b2})`);
+    N.WATERWAYS.on = false; const b3 = w.parcels; w.dropParcel(); N.WATERWAYS.on = true;
+    check(w.parcels === b3 && w.parcelsFalling.length === 3, `waterways off: a full grove keeps the tree, as before: parcels ${w.parcels} (was ${b3})`); }
   D.DROP_ORDER.mode = 'fewest';
   // 9. THE MISSION'S KIND (the user, 2026-11-11; src/droporder.js missionTag, DROP_ORDER.preferMission; the sim's second arm, research M-T7b): a preferred tag wins over fewest-first while its kind has room
   { const s = base(); for (let i = 0; i < 3; i++) G.plantTree(s, 'woodland', idOf(open[0]));   // open[0] has the MOST trees, so fewest-first alone would not pick it

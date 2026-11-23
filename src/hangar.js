@@ -19,7 +19,7 @@ import { capFor, estimate, estimating } from './capability.js';
 import { areaOf } from './areas.js';
 import { markSeen, hangarScope, dots, fresh } from './fresh.js';
 import { showSheet } from './sheet.js';
-import { FINANCE, FUND, financeLevel, financeOpen, financeBio, natureHealth, rate, buyAt, sellRate, trueRate, gameDay, marketSeries, fundSeries, canTake, trade, canSell, sell, buyFinance, bonds, canLock, lockBond, payBonds, payDividend, fundOf, fundValue, canInvest, invest, cashOut, newsToday } from './finance.js';
+import { FINANCE, FUND, financeLevel, financeOpen, financeBio, natureHealth, bondCrystals, rate, buyAt, sellRate, trueRate, gameDay, marketSeries, fundSeries, canTake, trade, canSell, sell, buyFinance, bonds, canLock, lockBond, payBonds, payDividend, fundOf, fundValue, canInvest, invest, cashOut, newsToday } from './finance.js';
 
 import { rowIcon } from './rowicons.js';
 import { FARES, PLANES, PLANE_LINES, SYSTEMS, GADGETS, fleetOf, nextBuys, canAfford, buyFleet, choosePlane, effectText, levelEra, planeById } from './fleet.js';
@@ -243,7 +243,7 @@ export class FleetHangar {
     const body = {
       market: `Crystals have one market price, the same for every pilot. It moves a little every day and night you fly. You always pay more than the market and get less. The gap is set by the WHOLE WORLD's nature (now ${B} / 100): the greener the world, the smaller the gap. One trade a landing. You always keep ${L ? L.reserve.toLocaleString('en-GB') : 'some'} seeds.`,
       fund: `Put seeds in (up to ${L ? L.fund.toLocaleString('en-GB') : 'a limit'}). Each day and night you fly, the fund goes up or down a little; news days move it more. Over many flights it grows, faster when the world's nature is healthier. Cashing out costs ${Math.round(100 * FUND.fee)}%. The dashed line on the graph is the day you put seeds in.`,
-      bonds: `Lock ${L && L.bond ? L.bond.lock.toLocaleString('en-GB') : 'some'} seeds for ${L && L.bond ? L.bond.landings : 'a few'} landings. You get them back with about ${L && L.bond ? Math.floor(natureHealth(s) / L.bond.perB) : 'some'} crystals: healthy nature in your areas pays interest.`,
+      bonds: `Lock ${L && L.bond ? L.bond.lock.toLocaleString('en-GB') : 'some'} seeds for ${L && L.bond ? L.bond.landings : 'a few'} landings. You get them back with about ${L && L.bond ? bondCrystals(s, L.bond) : 'some'} crystals: healthy nature in your areas pays interest.`,
     }[k];
     if (body) showSheet({ eyebrow: 'NATURAL CAPITAL', title: { market: 'Buying and selling crystals', fund: 'The nature fund', bonds: 'Bonds' }[k], body });
   }

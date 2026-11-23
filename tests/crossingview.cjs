@@ -11,29 +11,27 @@
     missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: { trees: 1 }, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   // 1. The three ticks: Era, Plane, Nature (CROSSINGS V2: ready by status; the trial stars and where the player is do not matter).
   const s0 = base(), c0 = V.crossingState(s0);
-  check(c0 && c0.id === 'mediterranean' && c0.to === 'TUNIS' && c0.km === 7000 && !c0.ready, `a fresh weurope pilot: the first crossing is near, not ready: ${JSON.stringify(c0 && [c0.id, c0.ready])}`);
-  check(c0.conds.map(x => x.label).join('|') === 'Era|Plane|Nature 30', `the three ticks, in order: ${c0.conds.map(x => x.label)}`);
-  check(c0.conds.map(x => x.done).join() === 'true,false,false', `a fresh pilot has the era (the first crossing is era 0) and nothing else: ${c0.conds.map(x => [x.key, x.done])}`);
-  const s1 = base(); s1.areaBest = { weurope: 99999 };
-  const c1 = V.crossingState(s1);
-  check(c1.conds.filter(x => x.done).map(x => x.key).join() === 'era,plane' && c1.nearest && c1.nearest.key === 'nature' && !c1.ready, `era + plane done, nature left: nearest is nature, not ready: ${JSON.stringify(c1.conds.map(x => [x.key, x.done]))}`);
-  check(/^Plant trees\. Nature \d+ of 30$/.test(V.boxView(c1).line), `the box's plain line: "${V.boxView(c1).line}"`);
-  const bio0 = S.SEASON.offer.biodiversity; S.SEASON.offer.biodiversity = 0; const c2 = V.crossingState(s1); S.SEASON.offer.biodiversity = bio0;   // the test lever: "the last tick has just been met"
-  check(c2.ready && !c2.told, `era + plane + nature: ready, not told, with NO trial stars in the save: ${JSON.stringify([c2.ready, c2.told])}`);
-  // 1b. a crossing of a later era: the Era tick is open and the plain line says so; where the player is does not matter (the same state from another city)
-  { const s1b = { ...s1, areas: ['weurope', 'nordic', 'africa', 'mideast'] };   // (CROSSINGS V3: one crossing made, so the next is era 1, later than this era-0 pilot)
-    const later = C.upcoming(s1b).find(c => c.era >= 1), far = { ...s1, city: 'OSLO', visited: ['OSLO'] };
-    check(later && !V.stateOf(s1b, later).conds[0].done && V.stateOf(s1b, later).conds[0].plain === 'A later era brings it.', `a later era's crossing has the Era tick open: ${JSON.stringify(later && V.stateOf(s1b, later).conds[0])}`);
-    check(JSON.stringify(V.crossingState(s1).conds) === JSON.stringify(V.crossingState(far).conds), 'the ticks do not depend on the city the player is in'); }
+  check(c0 && c0.id === 'mediterranean' && c0.to === 'TUNIS' && c0.km === 12000 && !c0.ready, `a fresh weurope pilot: the first crossing is near, not ready: ${JSON.stringify(c0 && [c0.id, c0.ready])}`);
+  // V4 (0.73.0, Oliver 2026-11-23): ONE tick, Range (the plane's range or a landed flight reaches the whole crossing); no era, no nature.
+  check(c0.conds.map(x => x.label).join('|') === 'Range', `one tick, Range: ${c0.conds.map(x => x.label)}`);
+  check(c0.conds.map(x => x.done).join() === 'false' && c0.nearest && c0.nearest.key === 'plane', `a fresh pilot: the range is not there yet: ${c0.conds.map(x => [x.key, x.done])}`);
+  check(V.boxView(c0).line === 'More range: upgrade plane', `the box's plain line: "${V.boxView(c0).line}"`);
+  const sShort = base(); sShort.areaBest = { weurope: 11999 };
+  check(!V.crossingState(sShort).ready, 'an 11,999 km flight does not open a 12,000 km crossing (V4: the whole crossing, not 70%)');
+  const s1 = base(); s1.areaBest = { weurope: 12000 };
+  const c2 = V.crossingState(s1);
+  check(c2.ready && !c2.told, `a 12,000 km landed flight: ready, not told, with no nature and no trial stars: ${JSON.stringify([c2.ready, c2.told])}`);
+  { const far = { ...s1, city: 'OSLO', visited: ['OSLO'] };
+    check(JSON.stringify(V.crossingState(s1).conds) === JSON.stringify(V.crossingState(far).conds), 'the tick does not depend on the city the player is in'); }
   // 2. The moment fires once.
   check(V.momentDue(c2) === true, 'the moment is due');
-  V.markTold(s1, c2.id); S.SEASON.offer.biodiversity = 0; const c3 = V.crossingState(s1); S.SEASON.offer.biodiversity = bio0;
+  V.markTold(s1, c2.id); const c3 = V.crossingState(s1);
   check(c3.told && V.momentDue(c3) === false && JSON.stringify(s1.crossingTold) === '["mediterranean"]', `after markTold nothing is due twice and the save remembers: ${JSON.stringify([c3.told, s1.crossingTold])}`);
   V.markTold(s1, c2.id); check(s1.crossingTold.length === 1, 'markTold is idempotent');
   // 3. UP NEXT.
-  const near = N.nextUp(s1, { crossing: c1, limit: 3 });
+  const near = N.nextUp(s1, { crossing: c0, limit: 3 });
   check(!near.some(r => r.key === 'cross:progress'), `UP NEXT has no quiet crossing line any more (the HOME box replaced it): ${JSON.stringify(near.map(r => r.short))}`);
-  const teach = { ...s1, missionsDone: ['L1'] }, early = N.nextUp(teach, { crossing: c1, limit: 3 });   // the lessons are not done: the quiet line waits
+  const teach = { ...s1, missionsDone: ['L1'] }, early = N.nextUp(teach, { crossing: c0, limit: 3 });   // the lessons are not done: the quiet line waits
   check(!early.some(r => r.key === 'cross:progress'), `while lessons remain UP NEXT shows no crossing line: ${JSON.stringify(early.map(r => r.key))}`);
   const fresh = { ...c2, told: false }, told = { ...c2, told: true };
   const rd = N.nextUp(s1, { crossing: fresh, crossingReady: 'ROME to TUNIS', limit: 3 }), rt = N.nextUp(s1, { crossing: told, crossingReady: 'ROME to TUNIS', limit: 3 });
@@ -46,11 +44,11 @@
   // 4. Every crossing, longest names.
   for (const c of C.CROSSINGS.flatMap(x => (x.kind === 'lap' ? [] : [0, 1, 2, 3, 4].map(n => C.asNext(x, n))))) {   // CROSSINGS V3: every route as each of the 5 crossings
     const full = { ...c, from: c.a, to: c.b, opens: 'weurope', km: C.crossingKm(c) }, st = V.stateOf(s0, full), t = V.sheetText(st);
-    check(t.title.length <= 34 && T.wordCount(`${t.title} ${t.body}`) <= 60 && st.conds.length >= 2, `${c.id}: the sheet fits (title ${t.title.length}, ${T.wordCount(`${t.title} ${t.body}`)} words)`);
+    check(t.title.length <= 34 && T.wordCount(`${t.title} ${t.body}`) <= 60 && st.conds.length >= 1, `${c.id}: the sheet fits (title ${t.title.length}, ${T.wordCount(`${t.title} ${t.body}`)} words)`);
     const t1 = V.sheetText(st, true); check(T.wordCount(`${t1.title} ${t1.body}`) <= 60 && /no stops/.test(t1.body) && !/no stops/.test(t.body), `${c.id}: the FIRST crossing's sheet says what a crossing is, within 60 words (${T.wordCount(`${t1.title} ${t1.body}`)}), and later sheets do not`);
     check(V.ticksTitle(st).length <= 28 && V.rightText(st).length <= 13, `${c.id}: ticks title ${V.ticksTitle(st).length}, right ${V.rightText(st).length}`);
     const row = N.fitRow({ short: `Cross to ${st.to}`, where: 'fly', right: V.rightText(st) }); check(row.short.length + row.right.length <= N.ROW_MAX, `${c.id}: the lead row fits one line: "${row.short}" + "${row.right}"`);
   }
-  console.log(fails.length ? `FAIL crossingview:\n - ${fails.join('\n - ')}` : `PASS crossingview: 3 conditions, nearest, the moment once and only once, UP NEXT rows, and the sheet and rows of all ${C.CROSSINGS.length - 1} crossings within budget`);
+  console.log(fails.length ? `FAIL crossingview:\n - ${fails.join('\n - ')}` : `PASS crossingview: one Range condition (the whole crossing), nearest, the moment once and only once, UP NEXT rows, and the sheet and rows of all ${C.CROSSINGS.length - 1} crossings within budget`);
   process.exit(fails.length ? 1 : 0);
 })();

@@ -2,7 +2,7 @@
 // 1. lessons come first, in order, and reveal the hub's tiles; 2. an OFF-FLIGHT mission completes on the purchase
 // itself, with no flight; 3. teach missions are not offered after the first crossing, and later stages ask more;
 // 4. a tier opens after any 3 of the one before; 5. "here" missions and the crossing gate count only in their own area;
-// 6. a crash completes nothing; 7. the crossing is not offered with 2 of the 3 starred missions; 8. a land's 4th tree
+// 6. a crash completes nothing; 7. the starred missions count (crossings no longer wait on them: V4, 0.73.0); 8. a land's 4th tree
 // opens on its area's 'kinds3' mission; 9. area prizes are seeds only; 10. a free upgrade makes NEXT lead into the hangar.
 // Run: node tests/missions2.cjs   (proved by planted defects)
 (async () => {
@@ -52,9 +52,9 @@
   // 7. The gate.
   const raw = C.asNext(C.crossingById('mediterranean'), 0), c = { ...raw, from: 'ROME', to: 'TUNIS' }, full = { capabilityKm: 1e9, bio: 99 };   // as available() orients it
   M.onFlight(s, landed({ sunBlocked: 10 }));   // 1 of 3 starred
-  check(M.starsDone(s, 'weurope') === 1 && !M.gateDone(s, 'weurope') && !C.offerCheck(c, { ...full, missionsDone: C.offerCtx(s, c).missionsDone }).offered, 'one of the three starred: no crossing');
+  check(M.starsDone(s, 'weurope') === 1 && !M.gateDone(s, 'weurope') && C.offerCheck(c, { ...full, ...C.offerCtx(s, c), capabilityKm: 1e9 }).offered, 'one of the three starred: the star count is 1, and the crossing does not wait on stars (V4, 0.73.0: range only)');
   M.onFlight(s, landed({ treeIds: ['spruce', 'birch', 'oak'] }));   // 2 of 3 (the night star NOT done: it blocked weaker pilots)
-  check(M.starsDone(s, 'weurope') === 2 && M.gateDone(s, 'weurope') && C.offerCtx(s, c).missionsDone === true && C.offerCheck(c, { ...full, missionsDone: true }).offered, 'any two of the three starred (the user, 2026-10-27): the gate is open');
+  check(M.starsDone(s, 'weurope') === 2 && M.gateDone(s, 'weurope') && C.offerCtx(s, c).missionsDone === undefined, 'any two of the three starred (the user, 2026-10-27): the stars are done; crossings no longer read them (V4)');
   check(!M.gateDone(s, 'namerica'), "Western Europe's trio does not open North America's gate");
   // 8. The 4th tree.
   check(L.treesOpen(s, 'woodland').includes(4) || L.OPENS[4].ok(s, 'woodland'), "woodland's 4th tree opens on Western Europe's 'kinds3'");

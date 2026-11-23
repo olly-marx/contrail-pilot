@@ -57,6 +57,11 @@ export const PLACE = {
   turtlebeach: 'shore', flamingoisland: 'water',                                                          // mediterranean
   oysters: 'water',                                                                                       // plains
   pond: 'land', voles: 'shore', beavers: 'shore',                                                         // woodland: its own SLOTS, kept
+  // 0.73.0 WATERWAYS: every water project (src/waterways.js WATER_PROJECTS) stands by or in its land's water in the NATURE field (Oliver, 2026-11-23: 'water-based projects
+  // must be placed on the water, or on the coast'). 'shore' for features drawn on land (reed beds, banks, dams, nests); 'water' for ones drawn in the water.
+  rewet: 'shore', reedcut: 'shore', mangroves: 'shore', peatdams: 'shore', gharialhatch: 'shore', storkrice: 'shore', zhalong: 'shore',
+  culvert: 'shore', beavermove: 'shore', elwha: 'shore', potholes: 'shore', platte: 'shore', ditchblock: 'shore',
+  riverbeach: 'shore', fishcount: 'water', dolphins: 'water', otterwatch: 'shore', platypusbank: 'shore',
 };
 
 // ---------- the mask ----------

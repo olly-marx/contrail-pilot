@@ -22,7 +22,7 @@
 import { nextBuys, canAfford } from './fleet.js';
 import { LINES, canBuy, level, tabOf } from './upgrades.js';
 import { REGION_DATA } from './habitats.js';
-import { biodiversity, regionSpecies } from './nature.js';
+import { biodiversity, regionSpecies, projectOpen } from './nature.js';
 import { landTrees } from './landtrees.js';
 import { BADGES, tierOf } from './badges.js';
 
@@ -58,7 +58,7 @@ export function current(save, { lands = defaultLands(save), missions = null } = 
     const scope = `nature/${land}`, data = REGION_DATA[land];
     if (data) {
       const done = ((save.habitat || {})[land] || []), bio = biodiversity(save, land);
-      for (const p of data.projects) if (!done.includes(p.id) && bio >= p.needs && save.seeds >= p.cost && (save.crystals || 0) >= p.crystals) add(scope, `project:${p.id}`);
+      for (const p of data.projects) if (!done.includes(p.id) && projectOpen(save, land, p) && save.seeds >= p.cost && (save.crystals || 0) >= p.crystals) add(scope, `project:${p.id}`);
     }
     for (const t of landTrees(save, land)) if (t.open && t.slot > 0) add(scope, `tree:${t.slot}`);   // slot 0 is open from the start: not news
     for (const w of regionSpecies(land)) if (w.kind === 'animal' && (save.found || {})[w.id]) add(scope, `animal:${w.id}`);

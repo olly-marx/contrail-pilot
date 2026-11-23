@@ -26,8 +26,8 @@
   // 4. prices: x0.6 on levels 1 and 2 of each hint line, level 3 as before.
   for (const id of ['forecast', 'atc', 'ops']) {
     const lv = F.SYSTEMS.find(s => s.id === id).levels;
-    check(lv[0].cost === 15 && lv[1].cost === 33 && lv[0].crystals === 2 && lv[1].crystals === 4, `${id}: levels 1 and 2 cost 15 and 33 seeds (2 and 4 crystals): ${lv[0].cost}/${lv[1].cost} (${lv[0].crystals}/${lv[1].crystals})`);
-    check(lv[2].cost === 65 && lv[2].crystals === 8, `${id}: level 3 is unchanged at 65 seeds, 8 crystals (got ${lv[2].cost}/${lv[2].crystals})`);
+    check(lv[0].base.cost === 15 && lv[1].base.cost === 33 && lv[0].base.crystals === 2 && lv[1].base.crystals === 4,   /* (before the 0.73.0 PRICE SCALE) */ `${id}: levels 1 and 2 cost 15 and 33 seeds (2 and 4 crystals): ${lv[0].cost}/${lv[1].cost} (${lv[0].crystals}/${lv[1].crystals})`);
+    check(lv[2].base.cost === 65 && lv[2].base.crystals === 8, `${id}: level 3 is unchanged at 65 seeds, 8 crystals (got ${lv[2].cost}/${lv[2].crystals})`);
   }
   // 5. the words for the hangar bar.
   for (const id of ['forecast', 'atc', 'ops']) {

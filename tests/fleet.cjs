@@ -3,23 +3,23 @@
 // budget; levels are blocked until their era opens; bought levels combine as the spec says.
 // Run: node tests/fleet.cjs
 (async () => {
-  const F = await import('../src/fleet.js');
+  const F = await import('../src/fleet.js'), SC = await import('../src/config.js');
   const fails = [];
   const check = (c, m) => { if (!c) fails.push(m); };
   const near = (a, b) => Math.abs(a - b) < 1e-9;
 
   // Nothing bought: today's no-upgrade values (PLANE-ERAS-1-3.md section 1), flying the Comet.
   const k0 = F.fleetKit({});
-  const today = { plane: 'comet', co2: 1.1, takeoff: 1, revealPx: 50, pickup: 12, perSkip: 0.5, flare: 1, dodgeCrystals: 1, dodgesPerNight: 3, autoSecs: 8, autoChance: 0, gaps: 1, fares: 1, hintLead: 0, hintArrow: false, hintGate: 0, hintSecond: false, hintBoost: 0, hintCues: 0 };
+  const today = { plane: 'comet', co2: 1.1, takeoff: 1, revealPx: 50, pickup: 12, perSkip: 0.5, flare: 1, dodgeCrystals: 2, dodgesPerNight: 3, autoSecs: 8, autoChance: 0, gaps: 1, fares: 1, hintLead: 0, hintArrow: false, hintGate: 0, hintSecond: false, hintBoost: 0, hintCues: 0 };
   for (const [key, v] of Object.entries(today)) check(k0[key] === v, `nothing bought: ${key} = ${k0[key]}, expected ${v}`);
 
   // Prices: each era totals 1.4-1.6x its budget; crystals = seeds / 8, HALVED from the 2030s (era >= 4, 2026-10-29).
   const crys = (seeds, era) => { const c = Math.round(seeds / 8); return era >= 4 ? Math.round(c / 2) : c; };
   const tot = F.ERA_BUDGET.map(() => 0);
-  for (const p of F.PLANES) for (const l of Object.values(p.lines)) for (const lv of l) tot[p.era] += lv.cost;
-  for (const g of [...F.SYSTEMS, ...F.GADGETS]) g.levels.forEach((lv, i) => { tot[F.levelEra(i + 1)] += lv.cost; check(lv.crystals === crys(lv.cost, F.levelEra(i + 1)), `${g.id} ${i + 1}: crystals = seeds / 8 (half from the 2030s)`); });
-  for (const p of F.PLANES) for (const [line, l] of Object.entries(p.lines)) l.forEach((lv, i) => check(lv.crystals === crys(lv.cost, p.era), `${p.id}.${line} ${i + 1}: crystals = seeds / 8 (half from the 2030s): ${lv.crystals}`));
-  check(F.PLANES.find(p => p.id === 'truss').lines.engines[0].crystals === 50 && F.SYSTEMS[0].levels[8].crystals === 57, 'the 2030s crystal prices are the sim chat\'s (truss engines 1 = 50, level 9 = 57)');
+  for (const p of F.PLANES) for (const l of Object.values(p.lines)) for (const lv of l) tot[p.era] += lv.base.cost;   // (the table before the 0.73.0 PRICE SCALE: ERA_BUDGET is in the same pre-scale seeds)
+  for (const g of [...F.SYSTEMS, ...F.GADGETS]) g.levels.forEach((lv, i) => { tot[F.levelEra(i + 1)] += lv.base.cost; check(lv.base.crystals === crys(lv.base.cost, F.levelEra(i + 1)) && lv.cost === SC.scaleSeeds(lv.base.cost) && lv.crystals === SC.scaleCrystals(lv.base.crystals), `${g.id} ${i + 1}: crystals = seeds / 8 (half from the 2030s)`); });
+  for (const p of F.PLANES) for (const [line, l] of Object.entries(p.lines)) l.forEach((lv, i) => check(lv.base.crystals === crys(lv.base.cost, p.era) && lv.cost === SC.scaleSeeds(lv.base.cost) && lv.crystals === SC.scaleCrystals(lv.base.crystals), `${p.id}.${line} ${i + 1}: crystals = seeds / 8 (half from the 2030s), then the 0.73.0 PRICE SCALE: ${lv.crystals}`));
+  check(F.PLANES.find(p => p.id === 'truss').lines.engines[0].base.crystals === 50 && F.SYSTEMS[0].levels[8].base.crystals === 57, 'the 2030s crystal prices are the sim chat\'s (truss engines 1 = 50, level 9 = 57)');
   // (era 0: 1.3 not 1.4 from 2026-11-11: levels 1 and 2 of the three hint lines cost x0.6, which takes 96 seeds off the 920 of era 0, 1.53x -> 1.37x of its budget)
   tot.forEach((t, e) => check(t / F.ERA_BUDGET[e] >= (e === 0 ? 1.3 : 1.4) && t / F.ERA_BUDGET[e] <= 1.6, `era ${e} prices total ${t} = ${(t / F.ERA_BUDGET[e]).toFixed(2)}x its budget, want ~1.5x`));
   check(F.START_BONUS === 300, `start bonus 300 seeds (user, 2026-10-23): ${F.START_BONUS}`);
@@ -44,7 +44,7 @@
   // Bought levels combine: flying the 747 with engines 2, the 1950s ops level 1, magnet 2, hold 1, body 1.
   const k = F.fleetKit({ fleet: { plane: 'jumbo', planes: { comet: { engines: 2 }, jumbo: { engines: 2, body: 1 } }, systems: { ops: 1, forecast: 3 }, gadgets: { magnet: 2, hold: 1, gear: 2 } } });
   check(near(k.co2, 1.0 * 0.88 * 0.96), `747 CO2 = engines 2 (x0.88, replaces x0.93) x ops 1 (x0.96): ${k.co2}`);
-  check(k.pickup === 19 && near(k.perSkip, 0.6) && near(k.flare, 1.2) && k.revealPx === 115, `gadgets and systems apply: ${JSON.stringify(k)}`);   // (revealPx 115: the smoothed Forecasting table of this branch; main had 100)
+  check(k.pickup === 19 && near(k.perSkip, 0.7) && near(k.flare, 1.2) && k.revealPx === 115, `gadgets and systems apply: ${JSON.stringify(k)}`);   // (revealPx 115: the smoothed Forecasting table; perSkip 0.7 = Cargo hold 2 since 0.73.0, was 0.6)
   check(k.hintLead === 0.3 && k.hintGate === 3 && k.hintCues === 1 && k.hintLevel === undefined, 'one flavour per line: ops 1 + forecast 3, no ATC: a 0.3 s arrow warning (2026-11-18), the gate level 3, the cues level 1, no shared hintLevel');
   // Engines: each effect from the newest level that has it (0.11.4): Comet Engines 2 (reversers, flare only)
   // keeps Engines 1's CO2 x0.9.

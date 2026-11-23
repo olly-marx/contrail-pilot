@@ -9,7 +9,7 @@ insert into players (first_name, word, tag) values ('Fin', 'Otter', 61);
 select send_flights('[
   {"landed":true,"distance_m":21127,"shade":84.7,"heat_trapped":64,"night_dodges":10,"crystals":34,"plane_co2":1.1,"species":["oak","birch","mediterranean:olive","boreal:spruce"],"missions_done":9},
   {"landed":false,"distance_m":0,"crash":"ground"},
-  {"landed":true,"distance_m":63000,"shade":600,"heat_trapped":200,"crystals":200,"night_dodges":60,"plane_co2":0,"missions_done":20}]') as sent;
+  {"landed":true,"distance_m":63000,"shade":600,"heat_trapped":200,"crystals":1500,"night_dodges":60,"plane_co2":0,"missions_done":20}]') as sent;
 select count(*) as kept from flights where player_id = 'f6f6f6f6-0000-0000-0000-000000000006';
 \echo EXPECT 3 sent, 3 kept: real and late-game flights pass
 -- One impossible number at a time: each must be set aside with its own reason.
@@ -17,7 +17,7 @@ select send_flights('[
   {"landed":true,"distance_m":150001},
   {"landed":true,"distance_m":1000,"shade":51},
   {"landed":true,"distance_m":1000,"heat_trapped":51},
-  {"landed":true,"distance_m":1000,"crystals":31},
+  {"landed":true,"distance_m":1000,"crystals":231},
   {"landed":true,"distance_m":1000,"night_dodges":16},
   {"landed":true,"distance_m":1000,"missions_done":21},
   {"landed":true,"distance_m":1000,"plane_co2":1.6},

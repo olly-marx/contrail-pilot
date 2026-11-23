@@ -13,7 +13,7 @@ export const VIEW_HOOKS = {
   popup: nothing, burst: nothing, explainWhenClear: nothing, coolSparkle: nothing, enterIssr: nothing,
   playSound: nothing, buzz: nothing, shake: nothing,
 onSeed: nothing, onOverrun: nothing, onPower: nothing, onCrystals: nothing, onNoCrystal: nothing, onLand: nothing, onPopFake: nothing,
-  onDayHalf: nothing, onParcelMissed: nothing, onFinish: nothing, persist: nothing,
+  onDayHalf: nothing, onParcelMissed: nothing, onWaterDrop: nothing, onFinish: nothing, persist: nothing,
   showTree(tree) { tree.art = tree.kind; },
   explain() { return false; },   // a lesson pop-up would pause the game: the engine has none
   setRegion(r) { this.regionNow = r; },   // the game also fades the ground to the new land

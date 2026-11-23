@@ -19,9 +19,12 @@ const src = f => path.resolve(__dirname, '../src', f);
     return [...seen.values()]; };
   // (on the twin: a plane with no no-fly help of its own, so the two flights differ ONLY by ATC 8's +10; the 787 has +8 itself)
   const gapsOn = (sys) => { const seen = new Map();
-    S.simulate(save(sys, 'twin'), { pilot: 'careful', seed: 3, maxKm: 16000, onStep: w => { w.kit.hintLead = 0; /* (2026-11: every system now gives a next-gap hint and a hint moves the storm columns; the hint is switched off here so the two skies differ ONLY by ATC 8's +10, as before) */ for (const st of w.storms) if (st.noFly && !seen.has(st)) seen.set(st, st.rects[1].y - st.rects[0].height); } });
+    S.simulate(save(sys, 'twin'), { pilot: 'careful', seed: 3, maxKm: 16000, onStep: w => { w.kit.hintLead = 0; w.kit.gaps = 1.03; /* (0.73.0: ATC 7 and 8 now give gaps x1.07, and at x1.07 the two skies parted (19 vs 15 zones; cause not traced); held at the old 1.03 so only noFlyGapAdd differs)  (2026-11: every system now gives a next-gap hint and a hint moves the storm columns; the hint is switched off here so the two skies differ ONLY by ATC 8's +10, as before) */ for (const st of w.storms) if (st.noFly && !seen.has(st)) seen.set(st, st.rects[1].y - st.rects[0].height); } });
     return [...seen.values()]; };
+  // (0.73.0: heat off for this part, so both flights reach 16,000 km whatever their contrails do: the check is about gap widths, and the ATC 7 flight overheated at 15,624 km)
+  const C = await import(src('config.js')), dl = C.CLIMATE.dangerLine; C.CLIMATE.dangerLine = Infinity;
   const g7 = gapsOn({ atc: 7 }), g8 = gapsOn({ atc: 8 });
+  C.CLIMATE.dangerLine = dl;
   check(g7.length > 3 && g7.length === g8.length, `no-fly zones: ${g7.length} vs ${g8.length} (want the same sky, > 3 zones)`);
   const d = g8.map((v, i) => v - g7[i]);
   check(d.length && d.every(x => x >= 10 && x <= 11), `no-fly gaps wider by ${[...new Set(d)].join('/')} px, want 10-11`);

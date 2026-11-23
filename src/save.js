@@ -7,6 +7,7 @@ import { ensureGroves } from './groves.js';
 import { migrateCity } from './route.js';
 import { withRegions } from './areas.js';
 import { newFleet, migrateFleet, syncFleet } from './fleet.js';
+import { PRICE_SCALE } from './config.js';
 
 const KEY = 'contrailPilot.v2';
 // A second copy, written with every save (2026-10-22: a phone lost a save). If the main copy is
@@ -49,7 +50,7 @@ const DEFAULTS = {
   muted: false,
   musicLevel: 'middle', // the MUSIC chip's level: 'soft' | 'middle' | 'loud' (src/musicplan.js MUSIC_LEVELS); musicOff true = OFF (an old save with musicOff true stays off). Game-only: tests/sim-bank.cjs VIEW_ONLY
   musicOff: false,     // the MUSIC chip in Settings (src/music.js); the one `muted` flag still wins. A game-only field: tests/sim-bank.cjs VIEW_ONLY
-  priceVersion: 2,     // saves from before the 2026-10-21 price change are re-valued once (src/reprice.js)
+  priceVersion: 3,     // 2: the 2026-10-21 price change (src/reprice.js); 3: the 0.73.0 PRICE SCALE (rescaleBank below)
 };
 
 // How far a save has got: only things that never go down (seeds are spent, so they are not counted). One number, so two saves can be compared:
@@ -87,7 +88,21 @@ export function prepareSave(saved) {
   delete s.challenges;
   if (!saved.fleet) migrateFleet(s);   // 2026-10-23: the eras reset (plane side only)
   syncFleet(s);
+  rescaleBank(s);       // 0.73.0: the bank in the new prices (PRICE_SCALE)
   return s;
+}
+
+// 0.73.0 PRICE SCALE (src/config.js): fares now pay and prices are x8 seeds, x7 crystals, so a bank saved before it is scaled ONCE by the same factors (what it buys stays the same):
+// seeds, crystals, and the seeds locked in bonds or put in the nature fund. Automated tests' saves ('*' tips or tours) are only marked, never scaled.
+export function rescaleBank(s) {
+  if ((s.priceVersion || 1) >= PRICE_SCALE.version) return false;
+  s.priceVersion = PRICE_SCALE.version;
+  if ((s.seenTips || []).includes('*') || (s.tours || []).includes('*')) return false;
+  s.seeds = Math.round((s.seeds || 0) * PRICE_SCALE.seeds); s.crystals = Math.round((s.crystals || 0) * PRICE_SCALE.crystals);
+  const f = s.finance;
+  if (f && Array.isArray(f.bonds)) f.bonds = f.bonds.map(b => ({ ...b, seeds: Math.round((b.seeds || 0) * PRICE_SCALE.seeds) }));
+  if (f && f.fund && typeof f.fund.seeds === 'number') f.fund = { ...f.fund, seeds: Math.round(f.fund.seeds * PRICE_SCALE.seeds) };
+  return true;
 }
 
 // HELD: a save was there but could not be read (or made whole). The game starts a blank save IN MEMORY and writes NOTHING until the player says what to do

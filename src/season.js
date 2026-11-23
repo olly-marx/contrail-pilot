@@ -7,7 +7,7 @@ export const SEASON = {
   // missions; '2of3' = any two. The user has not picked; 'all3' is the coordinator's default.
   // 0.12.0 (user): until the sim capability estimate and the area missions exist, 'capability' = the BEST landed flight
   // from this area >= distanceShare of the crossing's km, and the missions condition is not asked (ctx.missionsDone undefined).
-  offer: { rule: 'all3', biodiversity: 30, distanceShare: 0.7 },
+  offer: { rule: 'all3', biodiversity: 30, distanceShare: 1 },   // distanceShare 1 since 0.73.0 (V4: the range must reach the whole crossing; 0.7 before). biodiversity: no longer asked by crossings (V4)
   // The last era whose crossings this release offers (0 = 1950s ... 2 = 1990s); later ones need era 4-6 planes.
   maxEra: 5,   // the era 6 release: the far future, the hydrogen plane and THE LAP (40,000 km, home to home): the end of the game
   // Crossing mission lengths in GAME km by era (PROPOSAL-10, all TBD-SIM: to re-size from the crashes-on player at s~0.9).
@@ -16,7 +16,8 @@ export const SEASON = {
   crossingKm: { 1: 6500, 2: 13000, 3: 18000, 4: 27000, 5: 30000, final: 40000 },
   // CROSSINGS V3 PACING LEVERS (2026-11-13; the user: 'balance is key ... the other yardsticks are too easy'): per crossing number n (0 = the first), its length and the nature meter it needs.
   // The 5th and the lap keep their lengths (the user: no shortening). crossingKm above stays for anything that is not a V3 route.
-  step: { km: [7000, 16000, 22000, 27000, 30000], bioMul: [1, 1, 1, 1, 1], natureRule: 'weakest', crossStart: true },   // PACING A2 (2026-11-18, research/PACING-2026-11-18-RESULTS.md): crossing 1 before the 1970s in 14/14 sim runs, crossing 2 a median 43 flights later. Was km[0] 9000, bioMul[0] 38/30, natureRule 'best' (P3b).   // bioMul x offer.biodiversity (30): the first crossing needs 38. (A multiplier, so offer.biodiversity stays THE base bar the tests' lever sets.)   // SHIPPED 2026-11-16 (the user: 'ship this out'): arm P3b, research/rt-P3b-report*.txt: crossings at about flights 32 / 127 / 164 / 217; bio 38 is under the weakest land's plateau (~40)
+  // 0.73.0 (V4, range only): Easy 12,000 (was 7,000), so a fresh Comet (range ~10,800 km, tests/range-truth.json) needs a few upgrades first; Medium 16,000 ~ a 747 at mid kit.
+  step: { km: [12000, 16000, 22000, 27000, 32000], bioMul: [1, 1, 1, 1, 1], natureRule: 'weakest', crossStart: true },   // PACING A2 (2026-11-18, research/PACING-2026-11-18-RESULTS.md): crossing 1 before the 1970s in 14/14 sim runs, crossing 2 a median 43 flights later. Was km[0] 9000, bioMul[0] 38/30, natureRule 'best' (P3b).   // bioMul x offer.biodiversity (30): the first crossing needs 38. (A multiplier, so offer.biodiversity stays THE base bar the tests' lever sets.)   // SHIPPED 2026-11-16 (the user: 'ship this out'): arm P3b, research/rt-P3b-report*.txt: crossings at about flights 32 / 127 / 164 / 217; bio 38 is under the weakest land's plateau (~40)
   // step.natureRule (Oliver, 2026-11-18: 'I flew the crossing to Muscat and then immediately had the crossing to Rome'): which nature a crossing reads.
   //   'best'     the best land of any land you have opened (lands a crossing just opened count at once);
   //   'weakest'  per opened REGION its best land, and the crossing reads the weakest region: after a crossing, a land in the new region must grow first. src/crossings.js natureHave.

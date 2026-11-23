@@ -19,10 +19,9 @@ const openName = id => opensName(id);   // CROSSINGS V3: the region it opens
 // state of ONE crossing: { id, from, to, km, difficulty, opens, ready, told, conds: [{ key, label, line, plain, status, done, frac, where }], nearest, crossing }. The three ticks, in order: Era, Plane, Nature.
 export function stateOf(save, c, { unlock = false } = {}) {
   const rd = readiness(save, c), pp = planeProgress(save, c), need = natureNeed(c);
+  // CROSSINGS V4 (0.73.0, Oliver 2026-11-23): ONE condition, the plane's RANGE (plane upgrades and nature) against the route. No era, no nature bar.
   const conds = [
-    { key: 'era', label: 'Era', line: 'a later era', plain: 'A later era brings it.', where: 'fly', done: rd.era, frac: rd.era ? 1 : 0, status: rd.era ? 'done' : 'later' },
-    { key: 'plane', label: 'Plane', line: 'a better plane', plain: 'Fly farther or upgrade plane', where: 'hangar', done: rd.plane, frac: pp, status: rd.plane ? 'done' : (pp >= 0.75 ? 'nearly' : 'not yet') },
-    { key: 'nature', label: `Nature ${need}`, line: `nature ${rd.natureHave} of ${need}`, plain: `Plant trees. Nature ${rd.natureHave} of ${need}`, where: 'nature', done: rd.nature, frac: Math.min(1, rd.natureHave / need), status: rd.nature ? 'done' : `${rd.natureHave}` },
+    { key: 'plane', label: 'Range', line: 'more range', plain: 'More range: upgrade plane', where: 'hangar', done: rd.plane, frac: pp, status: rd.plane ? 'done' : (pp >= 0.75 ? 'nearly' : 'not yet') },
   ];
   const open = conds.filter(x => !x.done), nearest = open.slice().sort((a, b) => b.frac - a.frac)[0] || null;
   // WHERE the player is matters only for DOING the crossing (CROSSINGS V2 step 3): at its departure airport the player crosses, elsewhere the box says 'Go to <city>' with one dot per hop left
@@ -67,7 +66,7 @@ export const endingBody = city => `From ${city} all the way round and back home.
 // THE HOME BOX and the CROSSINGS screen (CROSSINGS V2, research/DESIGN-CROSSINGS-V2.md): the next crossing, three ticks that fill in, one plain line, no distance and no number but nature's own meter.
 // boxView -> { title, route, word, ticks: [{ label, done }], line, ready, where }; screenView adds the button. Texts are budgeted (route <= 28, line <= 28) and checked by tests/crossbox.cjs.
 export const boxView = s => {
-  const ticks = [['Era', 'era'], ['Plane', 'plane'], ['Nature', 'nature']].map(([label, key]) => ({ label, done: !!(s.conds.find(c => c.key === key) || {}).done }));
+  const ticks = [['Range', 'plane']].map(([label, key]) => ({ label, done: !!(s.conds.find(c => c.key === key) || {}).done }));
   // Ready: at the departure airport 'Ready! Tap to cross.', elsewhere 'Ready! Go to <city>' with one dot per hop left (at most 6, then 'more'); a GO TO already set shows 'on' (the player may stop it).
   // (A departure the open network cannot reach, e.g. the stepping stones HONOLULU and NADI, has no way to go to: it says 'Ready! Tap to cross.' and crosses from where the player is, as before.)
   const elsewhere = s.ready && !s.atDeparture && Number.isFinite(s.hops), line = s.ready ? (elsewhere ? `Ready! Go to ${s.from}` : 'Ready! Tap to cross.') : s.nearest ? s.nearest.plain : '';
@@ -85,13 +84,13 @@ export const screenView = s => {
 // 'CROSSING TO X' tick list under it). ONE card per crossing on offer (src/crossings.js available): the route, the land it opens, three rows Era / Plane / Nature (a tick when done; else a small bar,
 // nature with its own 'have / need', the plane with a word, never a distance), and ONE plain line on what to do next for the open row nearest to done (stateOf's nearest). A ready card says so and
 // carries FLY THE CROSSING. Pure: src/ui.js crossingsHTML draws it; tests/crosscard.cjs holds it.
-export const CARD_NEXT = { era: 'A later era opens it. Keep flying.', plane: 'Land a longer flight, or upgrade your plane in HANGAR.', nature: 'Raise nature in a land you have: plant and fund in NATURE.' };
+export const CARD_NEXT = { era: 'A later era opens it. Keep flying.', plane: 'More range: upgrade your plane in HANGAR, or grow nature.', nature: 'Raise nature in a land you have: plant and fund in NATURE.' };   // (V4: only plane is asked)
 export const CARD_READY = 'Ready! One long flight with no stops.';
 export const natureNextIn = name => `Grow nature in ${name}: FLY HERE in NATURE.`;   // (natureRule 'weakest', two or more regions open)
 export function cardOf(save, c, opts = {}) {
   const s = stateOf(save, c, opts), lap = c.kind === 'lap', need = natureNeed(c);
   const wk = weakestRegion(save);   // PACING (2026-11-18): nature reads the weakest opened region; the card names it
-  const rows = s.conds.map(x => ({ key: x.key, label: { era: 'Era', plane: 'Plane', nature: 'Nature' }[x.key], done: !!x.done, frac: x.done ? 1 : Math.max(0, Math.min(1, x.frac || 0)),
+  const rows = s.conds.map(x => ({ key: x.key, label: { era: 'Era', plane: 'Range', nature: 'Nature' }[x.key], done: !!x.done, frac: x.done ? 1 : Math.max(0, Math.min(1, x.frac || 0)),
     value: x.done ? null : x.key === 'nature' ? `${Math.round(readiness(save, c).natureHave)} / ${need}` : x.key === 'plane' ? (x.status === 'nearly' ? 'nearly' : 'not yet') : 'later' }));
   return { id: c.id, lap, route: lap ? 'THE LAP OF THE EARTH' : `${s.from} > ${s.to}`, word: s.difficulty, opens: lap ? `From ${s.from} round the world and home, non-stop` : `Opens ${s.opens}`,
     ready: !!s.ready, rows, next: s.ready ? CARD_READY : s.nearest ? (s.nearest.key === 'nature' && wk ? natureNextIn(REGIONS[wk].name) : CARD_NEXT[s.nearest.key]) : '', nextKey: s.ready ? null : s.nearest ? s.nearest.key : null, state: s };

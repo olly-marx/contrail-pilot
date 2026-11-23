@@ -8,7 +8,7 @@
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf, level, nextLevel, unlocked, unlockText, needsMoreNature, canBuy, freeParcels, loadout } from './upgrades.js';
-import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject } from './nature.js';
+import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject, projectOpen } from './nature.js';
 import { treeBook, grownBook, nurseryStatus, needFromGrow } from './groves.js';
 import { penView, penHTML } from './treepen.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
@@ -220,7 +220,7 @@ export class WildScreen {
   renderNext() {
     const el = $('wNextLine'); if (!el) return;
     const s = this.save, done = this.done(), bio = this.bio(), n = nextHere(s, this.region);
-    const open = this.projects.filter(p => bio >= (TIERS.find(t => t.tier === p.tier) || { needs: 0 }).needs && !done.includes(p.id)).sort((a, b) => a.cost - b.cost || (a.crystals || 0) - (b.crystals || 0));
+    const open = this.projects.filter(p => projectOpen(this.save, this.region, p) && !done.includes(p.id)).sort((a, b) => a.cost - b.cost || (a.crystals || 0) - (b.crystals || 0));
     const free = this.freeProjectId(), can = p => p.id === free || (s.seeds >= p.cost && (s.crystals || 0) >= (p.crystals || 0));
     const pick = open.find(can) || open[0];
     if (pick) {

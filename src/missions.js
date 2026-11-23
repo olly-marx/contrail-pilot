@@ -32,7 +32,7 @@ export const MISSIONS = [
     progress: s => (s.isDay ? 'Wait for night...' : (s.night.started && s.heatTrapped - s.night.trappedAtStart < 0.5 ? 'Night: no contrail yet!' : 'Contrail made. Next night!')),
     fail: () => 'At night, fly above or below the icy air.' },
   { id: 'pass-1', icon: 'mi-airports', lesson: 'lesson-bonus', title: 'Fly past an airport, then land', sub: 'Every airport you pass makes your landing bonus bigger. Crash and you lose your seeds!',
-    check: r => r.landed && r.airportsSkipped >= 1, progress: s => (s.airportsSkipped ? `Bonus x${s.multiplier()}! Now land` : 'Fly past the next airport'),
+    check: r => r.landed && r.airportsSkipped >= 1, progress: s => (s.airportsSkipped ? `Bonus +${Math.round((s.multiplier() - 1) * 100)}%! Now land` : 'Fly past the next airport'),
     fail: r => (r.landed ? 'Fly past one airport before you land.' : 'So close! Land to keep the bonus.') },
   { id: 'plant-tree', icon: 'mi-tree', lesson: 'lesson-plot', title: 'Plant a tree', sub: 'Plant a tree onto brown ground.', needs: { line: 'trees', text: 'Plant trees (NATURE)' },
     check: r => r.planted >= 1, progress: s => (s.kit.tree ? `Trees planted: ${s.planted}/1` : 'Needs trees (NATURE)'),

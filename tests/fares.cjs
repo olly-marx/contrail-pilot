@@ -1,5 +1,5 @@
-// Passenger fares (eras, 2026-10-23): a LANDED flight pays seeds per 1,000 km by plane (Comet 2,
-// 747 3, twin 4) x the Cabin upgrades; a crash pays none. The results tally shows a fares row.
+// Passenger fares (eras, 2026-10-23; 0.73.0 values): a LANDED flight pays seeds per 1,000 GAME km by plane (Comet 20,
+// 747 24, twin 28) x the Cabin upgrades; a crash pays none. The results tally shows a fares row.
 // Run: python3 -m http.server 8000 & npm i --no-save playwright-core && node tests/fares.cjs
 const { chromium } = require('playwright-core');
 require('./lib/shipped.js');
@@ -19,7 +19,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     await p.click('#goBtn');
     await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 });
     const r = await p.evaluate(async l => { const { WORLD } = await import('/src/config.js'); const s = game.scene.getScene('game');
-      s.graceUntil = 0; s.distancePx = 5000000 * WORLD.pxPerMetre; s.landedAt = s.path[1]; s.finish(l ? { landed: true } : { reason: 'Bird strike!\nYou hit a bird.' });
+      s.graceUntil = 0; s.distancePx = 5000 * WORLD.pxPerMetre;   /* 5,000 GAME km (distance is game km: until 0.73.0 this said 5,000,000, which hid that real flights paid 0) */ s.landedAt = s.path[1]; s.finish(l ? { landed: true } : { reason: 'Bird strike!\nYou hit a bird.' });
       return s.result.earned.filter(e => e.label === 'Passenger fares').map(e => e.n); }, landed);
     let row = null;
     if (landed) { await p.waitForFunction(() => !document.getElementById('results').hidden, null, { timeout: 10000 }); await p.click('#results', { position: { x: 4, y: 4 } }); await p.waitForTimeout(800);
@@ -30,8 +30,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const comet = await fly({ plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} }, true);
   const jumbo = await fly({ plane: 'jumbo', planes: { comet: {}, jumbo: { cabin: 3 } }, systems: {}, gadgets: {} }, true);
   const crash = await fly({ plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} }, false);
-  check(JSON.stringify(comet.fares) === '[10]' && comet.row === '+10', `Comet, 5,000 km landed: 2 x 5 = 10 seeds, shown: ${JSON.stringify(comet)}`);
-  check(JSON.stringify(jumbo.fares) === '[20]', `747 with business class (x1.35): 3 x 5 x 1.35 = 20: ${JSON.stringify(jumbo)}`);
+  check(JSON.stringify(comet.fares) === '[100]' && comet.row === '+100', `Comet, 5,000 km landed: 20 x 5 = 100 seeds, shown: ${JSON.stringify(comet)}`);
+  check(JSON.stringify(jumbo.fares) === '[162]', `747 with business class (x1.35): 24 x 5 x 1.35 = 162: ${JSON.stringify(jumbo)}`);
   check(JSON.stringify(crash.fares) === '[]', `a crash pays no fares: ${JSON.stringify(crash)}`);
   console.log({ fails });
   await b.close();

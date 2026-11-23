@@ -361,7 +361,16 @@ p { margin: 0; }
 .dropbtn { position: fixed; right: 10px; bottom: 9%; z-index: 6; font-size: 11px; padding: 12px 12px; touch-action: none; }
 
 /* ---------- Wild Land meter ---------- */
-.meter { display: grid; grid-template-columns: auto 1fr auto; gap: 6px; align-items: center; font-size: 7px; }
+.meter { display: grid; grid-template-columns: 1fr; gap: 2px; font-size: 7px; }   /* 0.73.0: the name on its own line, then land / water / total bars of one width, side by side */
+.meter .mhead { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.meter .mbars { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.meter .mbars.two { grid-template-columns: repeat(2, 1fr); }
+.meter .mbar3 { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto 6px; column-gap: 4px; align-items: center; font-size: 6px; }   /* (not .mrow: that is a missions row) */
+.meter .mbar3 .mtrack { grid-column: 1 / -1; height: 6px; }
+.meter .mk { color: var(--ink); opacity: .75; }
+.meter .mv { text-align: right; white-space: nowrap; }
+.mfill-water { background: linear-gradient(90deg, #7fd3f0, #1e78b4) !important; }
+.mfill-total { background: linear-gradient(90deg, #c5e1a5, #1b5e20) !important; }
 .mlabel { color: var(--green-dark); }
 .mtrack { position: relative; height: 8px; background: #e3ddcc; display: block; }
 .mfill { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, #9ccc65, #2e7d32); }
