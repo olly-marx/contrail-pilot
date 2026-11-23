@@ -179,7 +179,7 @@ steady	src/missions2.js	s/done(save).has(key(a, t))).length >= 3;/done(save).has
 cumbadges	src/missions2.js	s/tot.gaps += r.cleanGaps || 0;/tot.gaps += r.landed ? r.cleanGaps || 0 : 0;/	crashed flights' gaps do not count
 cumbadges	src/badges.js	s/measure: (r, s) => (s.totals || {}).gaps || 0 }/measure: (r, s) => 0 }/	Gap Threader never earns
 cumbadges	src/badges.js	s/.filter(x => x.goal !== null \&\& x.value !== null)/.filter(x => x.value !== null)/	badge bars show finished badges
-steady	src/missions2.js	s/prize: { seeds: !saving(save) ? 1 : /prize: { seeds: false ? 1 : /	rich pilots get the full steady prize
+steady	src/missions2.js	s/prize: { seeds: (!saving(save) ? 1 : /prize: { seeds: (false ? 1 : /	rich pilots get the full steady prize
 steady	src/missions2.js	s/streakBonus = save => (saving(save) ? /streakBonus = save => (true ? /	rich pilots get the streak bonus
 missionlanes	src/ui.js	s/    if (FEATURES.season2 \&\& isSeason2(s)) setDaily(s, new Date/    if (false) setDaily(s, new Date/	MISSIONS does not set today's dailies
 stripclear	src/GameScene.js	s/    if (this.explaining \&\& !this.school) this.keepStripClear();/    if (false) this.keepStripClear();/	the strip is placed once only, at open
@@ -986,3 +986,4 @@ waterways	src/nature.js	s/  return combine(region, landMeter(save, region, grown
 waterways	src/nature.js	s/  if (isWaterProject(region, p.id)) return waterOpenHere(save, region) \&\& waterPart/  if (isWaterProject(region, p.id)) return true \&\& waterPart/	water projects open before the biome is full
 waterways	src/sim/rules.js	s/wb\[region\]\[id\] = (wb\[region\]\[id\] || 0) + 1;/wb[region][id] = wb[region][id] || 0;/	a water drop never counts
 waterways	src/water.js	s/  riverbeach: 'shore', fishcount: 'water', dolphins: 'water', otterwatch: 'shore', platypusbank: 'shore',/  riverbeach: 'shore', fishcount: 'water', dolphins: 'water', otterwatch: 'shore',/	a water project is drawn on dry land in NATURE
+crossreward	src/missionprize.js	s/Easy: \[4800, 384\]/Easy: [2400, 192]/	crossings pay half of 3 stories

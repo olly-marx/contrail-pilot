@@ -4,7 +4,7 @@
 // 5. the streak: +2 seeds per day, capped at +10; a missed day halves it.
 // Run: node tests/steady.cjs   (proved by planted defects)
 (async () => {
-  const M = await import('../src/missions2.js');
+  const M = await import('../src/missions2.js'), PS = await import('../src/config.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const base = done => ({ areas: ['weurope'], homeArea: 'weurope', city: 'AMSTERDAM', visited: ['AMSTERDAM'], missionsDone: done, unclaimed: [], tutorialDone: true, levels: {}, habitat: {},
     fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
@@ -35,7 +35,7 @@
   // 2b. Need-based pay: full while saving up, 1 seed (and no streak bonus) when the bank is above the cheapest upgrade.
   check(M.saving(s) && M.steadyVisible(s)[0].prize.seeds >= 3, 'a pilot saving up gets the full steady prize');
   const rich = { ...s, seeds: 1e6 };
-  check(!M.saving(rich) && M.steadyVisible(rich).every(x => x.prize.seeds === 1), `a rich pilot gets 1 seed a rung: ${M.steadyVisible(rich).map(x => x.prize.seeds)}`);
+  check(!M.saving(rich) && M.steadyVisible(rich).every(x => x.prize.seeds === PS.PRICE_SCALE.seeds), `a rich pilot gets 1 seed a rung (x the 0.73.0 PRICE SCALE): ${M.steadyVisible(rich).map(x => x.prize.seeds)}`);
   // 3.
   const lots = base(['L1', 'L2', 'L3', 'steady:weurope:st-km:0', 'steady:weurope:st-km:1', 'steady:weurope:st-seeds:0']);
   check(!M.tierOpen(lots, 'weurope', 2), 'steady goals do not open tier 2');

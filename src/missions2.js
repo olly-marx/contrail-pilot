@@ -20,7 +20,7 @@ import { LINES, nextLevel, unlocked, needsMoreNature } from './upgrades.js';
 import { missionPrize, kindOf } from './missionprize.js';
 import { CITY_IDS, ownFill, entryFor, needsOf, stopsOf, STREAK_IDS, STREAK_N, streakD, planeIdOf, ownStreak, kmWords } from './missionplan.js';
 import { DROP_ORDER } from './droporder.js';
-import { STAR_GROW3 } from './config.js';
+import { STAR_GROW3, PRICE_SCALE } from './config.js';
 import { grownIn } from './groves.js';
 import { reached as reachedLesson } from './lessons.js';
 const GROW3_N = 3;
@@ -345,10 +345,11 @@ export function dailyVisible(save) {
   if (!save.daily || !dailiesOpen(save)) return [];
   const f = fillFor(save, areaOf(save.city) || area(save)), bonus = streakBonus(save);
   return save.daily.ids.map(dailyDef).filter(Boolean)
-    .map(d => ({ key: `daily:${save.daily.date}:${d.id}`, title: d.title(f), prize: { seeds: d.prize * f.k + bonus, crystals: 0 }, def: d, fill: f, daily: true, easy: !!d.easy }))
+    .map(d => ({ key: `daily:${save.daily.date}:${d.id}`, title: d.title(f), prize: { seeds: (d.prize * f.k + bonus) * PRICE_SCALE.seeds, crystals: 0 }, def: d, fill: f, daily: true, easy: !!d.easy }))
     .filter(d => !done(save).has(d.key));
 }
 
+// (0.73.0) The daily and steady prizes are their table values x PRICE_SCALE.seeds (src/config.js), so they keep their weight next to the scaled prices.
 // ---------- (1) the STEADY lane (the user, 2026-10-29): cumulative goals with progress bars, crashes count ----------
 // Two per area are always on show after L3; each is a LADDER (done: the next rung at x1.5, the same prize). Steady goals do
 // NOT count toward opening the next tier (tierOpen reads TEMPLATES keys only), so good players' pace is unchanged.
@@ -367,7 +368,7 @@ export function steadyVisible(save, a = area(save)) {
   const turn = Object.values(st).reduce((n, x) => n + (x.rung || 0), 0);
   return [0, 1].map(i => ready[(turn + i) % ready.length]).filter((d, i, arr) => d && arr.indexOf(d) === i).map(d => {
     const x = st[d.id] || { rung: 0, n: 0 }, target = rungTarget(d, x.rung);
-    return { key: `steady:${a}:${d.id}:${x.rung}`, title: d.title(target, f), target, progress: Math.min(target, x.n), prize: { seeds: !saving(save) ? 1 : x.rung < 2 ? d.prize : 3, crystals: 0 }, def: d, steady: true };
+    return { key: `steady:${a}:${d.id}:${x.rung}`, title: d.title(target, f), target, progress: Math.min(target, x.n), prize: { seeds: (!saving(save) ? 1 : x.rung < 2 ? d.prize : 3) * PRICE_SCALE.seeds, crystals: 0 }, def: d, steady: true };
   });
 }
 // After every banked flight (landed or not): add to the steady goals on show in the flight's start area; full ones pay.

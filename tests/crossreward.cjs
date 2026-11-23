@@ -53,6 +53,11 @@ globalThis.SEASON2 = true;
   check(fa.landed === false && fa.prize === null && sa.seeds === 10 && fh.landed === true && fh.prize && fh.prize.seeds === 16000 && sh.seeds === 16010, `a lap landed away shows no prize and pays nothing; at home it shows the prize it paid: away ${JSON.stringify(fa)} bank ${sa.seeds}, home ${JSON.stringify(fh)} bank ${sh.seeds}`);
   const thr = c => { try { Z.crossingWord(c); return false; } catch (e) { return true; } };
   check(thr({ id: 'x', kind: 'long', era: 5 }) && thr({ id: 'x', kind: 'long' }) && thr({ id: 'x', kind: 'long', era: -1 }) && !thr({ id: 'x', kind: 'lap' }) && Z.crossingWord({ kind: 'long', era: 4 }) === 'Very hard', 'crossingWord throws for an unknown era of a non-lap crossing, and still names era 4 and the lap');
+  // 11. (0.73.0, Oliver 2026-11-23: 'worth about 3 stories') every crossing word pays 3 x storyPay(2 x its km) (src/storyboard.js), so story pay and crossing pay move together.
+  { const SB = await import('../src/storyboard.js'), SE = (await import('../src/season.js')).SEASON;
+    const kmOf = w => (w === 'The lap' ? SE.crossingKm.final : SE.step.km[Z.CROSSING_WORDS.indexOf(w)]);
+    const off = Z.CROSSING_WORDS.filter(w => { const sp = SB.storyPay(2 * kmOf(w)), p = Z.CROSSING_PRIZE[w]; return Math.abs(p[0] - 3 * sp.seeds) > 3 || Math.abs(p[1] - 3 * sp.crystals) > 3; });   // (within storyPay's own rounding)
+    check(!off.length, `every crossing pays 3 stories of its reach: off ${off.map(w => `${w} ${Z.CROSSING_PRIZE[w]} vs ${3 * SB.storyPay(2 * kmOf(w)).seeds}/${3 * SB.storyPay(2 * kmOf(w)).crystals}`).join(', ')}`); }
   console.log(fails.length ? `FAIL crossreward:\n - ${fails.join('\n - ')}` : 'PASS crossreward: a game of 5 crossings + the lap pay 59,600 / 4,768, paid once on landing, no back-pay, lap only at home, nothing on a crash, shown = paid, the landing card names it');
   process.exit(fails.length ? 1 : 0);
 })();
