@@ -261,7 +261,7 @@ swupdate	sw.js	s/const keep = new Set(\[CUR, META, await meta('previous')\]);/co
 releasegate	tests/PATHMAP	/^group sw-raw/d	src/updates.js no longer maps to the service-worker tests (the updater could change without swupdate running)
 flightreset	src/sim/rules.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/	the passed-airport sign survives into the next flight (the user's stale header)
 flightreset	src/GameScene.js	s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	the HUD shows a sign about another leg
-routeheader	src/sim/rules.js,src/GameScene.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/;s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	JOINT plant: both halves of the fix removed (no reset, no 'this leg only' guard): the dead flight's sign shows in the next flight [x2]
+routeheader	src/sim/rules.js	s/^    this.airportIndex = 0;$/    this.airportIndex = this.airportIndex || 0;/	the new flight keeps the dead flight's airport count: its route strip shows the old progress (2026-11-23: replaces the 'Passed X. Next: Y' joint plant; that line is gone)
 missionreach	src/aim.js	s/export const ROUTE_AIM = { on: true };/export const ROUTE_AIM = { on: false };/	the route does not aim at mission cities (today's tour)
 artsize	src/fleet.js	s/parts: parts.map(part => `assets\/ui\/upgrades\/hangar-/parts: parts.map(part => `assets\/upgrades\/plane-/	hangar layers pointed at the small flight sprites
 hangar	src/hangar.js	s/${ghosts}<\/div><div class="fpcap">/<\/div>${ghosts}<div class="fpcap">/	the ghosts outside the picture again (sized to the box)
@@ -649,7 +649,7 @@ targetbanner-ui	src/GameScene.js	s/this\.missionText\.setText(this\.bannerNow() 
 targetbanner-ui	src/GameScene.js	s/rw\.lit = lit;/rw.lit = false;/	the target runway is never lit
 targetbanner-ui	src/GameScene.js	s/const lit = isLit(tgt, rw\.name,/const lit = isLit(rw.name, rw.name,/	every runway is lit
 targetbanner-ui	src/GameScene.js	s/, city = st.why === 'chosen' || st.why === 'mission' ? st.city : null; if (!city) return null;/, city = 'AMSTERDAM';/	the banner names a city even with no destination
-targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 1)/(this.missionText.text.includes('\\n') ? 1 : 1)/	a two-line banner sits against the next-airport line (no gap)
+targetbanner-ui	src/GameScene.js	s/(this\.missionText\.text\.includes('\\n') ? 5 : 3)/(this.missionText.text.includes('\\n') ? 1 : 1)/	the line under the strip sits against the landing call (no gap)
 citytap	style.css	s/^#title\.hub \.hub-card { display: flex; }.*$//	the card's buttons stack under its text again (the row is 75 px high)
 steer	src/aim.js	s/if (STEER\.mission \&\& mode === 'mission') {/if (false) {/	a mission open and nothing chosen no longer steers to the mission city
 steer	src/aim.js	s/const mode = routeMode(save);/const mode = 'mission';/	EXPLORE is ignored: the mission still steers
@@ -977,3 +977,5 @@ landeven	src/nature.js	s/b += p.bio \* projectWeight(all, p);/b += p.bio;/	the m
 crosscard	src/crossings.js	s/SEASON.step.natureRule === 'weakest')) return natureBest(save);/false)) return natureBest(save);/	a crossing reads the best land, not the weakest region
 crosscard	src/crossingview.js	s/(s.nearest.key === 'nature' \&\& wk ? natureNextIn(REGIONS\[wk\].name) : CARD_NEXT\[s.nearest.key\])/CARD_NEXT[s.nearest.key]/	the card does not name the region to grow
 nametaken	src/online.js	s/for (; tries < 8; tries++)/for (; tries < 1; tries++)/	a taken pilot name is not retried with a new number
+
+textfit	src/Hud.js	s/fontSize: '7px', color: '#ffe15a', stroke: '#000', strokeThickness: 2 }).setOrigin(1, 0)/fontSize: '7px', color: '#ffe15a', stroke: '#000', strokeThickness: 2 }).setOrigin(0, 0)/	the route strip's city name starts at the strip's end and runs off the right edge

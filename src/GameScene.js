@@ -8,7 +8,7 @@ import * as P from './sim/physics.js';   // the flight's rules, shared with the 
 import { RULES, STORM_ART } from './sim/rules.js';   // the flight's rules as methods, shared with the sim engine
 import { mask } from './sim/masks-load.js';
 import { MASK_DATA } from './sim/masks.js';
-import { Hud } from './Hud.js';
+import { Hud, RouteStrip } from './Hud.js';
 import { sendFlight } from './online.js';
 import { loading, tripLands } from './loader.js';
 import { flightPath, city, HOME, schoolSave } from './route.js';
@@ -177,7 +177,7 @@ export class GameScene extends Phaser.Scene {
     this.distText = this.add.text(WIDTH / 2, 8, '', font).setOrigin(0.5, 0);
     this.crossGfx = this.add.graphics().setDepth(5);   // season 2: a crossing's progress bar, in place of the distance (drawCrossingBar)
     // Mission line: wraps inside the two HUD bars (about 25 characters a line) and never spills off screen.
-    this.missionText = this.add.text(WIDTH / 2, 46, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a', align: 'center',
+    this.missionText = this.add.text(WIDTH / 2, 60, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a', align: 'center',
       wordWrap: { width: 200, useAdvancedWrap: true }, maxLines: 2, lineSpacing: 2 }).setOrigin(0.5, 0);
     this.dialGfx = this.add.graphics().setDepth(5);   // day / night dial (drawDayDial)
     // Forest meter (bottom right): 10 little trees that grow as your forest soaks up CO2 this flight.
@@ -190,6 +190,7 @@ export class GameScene extends Phaser.Scene {
     this.kindsText = this.meterTrees.length ? this.add.text(126, HEIGHT - 22, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0).setDepth(5) : null;
     this.forestFull = false;
     this.nextText = this.add.text(WIDTH / 2, 58, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
+    this.strip = new RouteStrip(this);   // the route to the target (src/Hud.js, 2026-11-23): replaces the 'Flying to X' and 'Next: Y' lines
     this.hintText = this.add.text(4, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, lineSpacing: 4 }).setOrigin(0, 0);
     this.parcelText = this.add.text(4, HEIGHT - 11, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0);
 
@@ -815,7 +816,7 @@ export class GameScene extends Phaser.Scene {
     if (!g) return;
     g.clear();
     const { daySeconds: D, nightSeconds: N, blendSeconds: B } = DAYNIGHT, T = D + N;
-    const w = 60, h = 5, x0 = Math.round(WIDTH / 2 - w / 2), y0 = 36;
+    const w = 60, h = 5, x0 = Math.round(WIDTH / 2 - w / 2), y0 = 52;   // (under the route strip, 2026-11-23; was 36)
     const seg = (a, b, c) => g.fillStyle(c).fillRect(x0 + Math.round(a / T * w), y0, Math.round((b - a) / T * w), h);
     g.fillStyle(0x000000, 0.6).fillRect(x0 - 1, y0 - 1, w + 2, h + 2);
     seg(0, D - B, COLOURS.sun); seg(D - B, D, DAYNIGHT.glowLow); seg(D, T - B, 0x3a4680); seg(T - B, T, DAYNIGHT.glowHigh);
@@ -1289,6 +1290,7 @@ export class GameScene extends Phaser.Scene {
   hudTextBottom() {
     let y = this.distText && this.distText.visible && this.distText.text ? this.distText.y + this.distText.height : 0;
     for (const t of [this.missionText, this.nextText]) if (t && t.visible && t.text) y = Math.max(y, t.y + t.height);
+    if (this.strip && this.strip.shown) y = Math.max(y, this.strip.bg.y + this.strip.bg.height);   // the route strip (2026-11-23)
     return y;
   }
 
@@ -1604,9 +1606,35 @@ export class GameScene extends Phaser.Scene {
     return t;
   }
 
+  // Where the route strip points (2026-11-23): the target city if it is ahead on this flight's path, else the next
+  // airport. { name, target (true: it is the flight's target), endX (world x of its runway), ticks (world x of the airports
+  // before it, passed or not), nextIsEnd (the next airport IS it) }.
+  routeView() {
+    const tgt = this.targetCity(), from = this.airportIndex || 0;
+    let ti = -1;
+    if (tgt) for (let k = from + 1; k < this.path.length && k <= from + 12; k++) if (this.path[k] === tgt) { ti = k; break; }
+    const endK = ti > 0 ? ti : from + 1, ticks = [];
+    let x = this.nextAirport.worldX;
+    for (let k = from + 1; k < endK; k++) { ticks.push(x); x += this.legKm(k); }
+    let back = this.nextAirport.worldX;   // the airports already passed on this flight, back to the take-off
+    for (let k = from; k >= 1; k--) { back -= this.legKm(k); ticks.unshift(back); }
+    return { name: endK === from + 1 ? this.nextAirport.name : this.path[endK], target: ti > 0, endX: x, ticks, nextIsEnd: endK === from + 1 };   // (the next airport's own name: a crossing or school may set it)
+  }
+
   updateTexts(inIssr) {
+    // THE TOP OF THE SCREEN (the user, 2026-11-23: minimal and visual; "always the wrong city"): the distance flown, big;
+    // under it the route strip to the target (src/Hud.js). Close to the target the big number becomes the km still to go.
+    // The landing call only ever names the target: airports on the way are ticks on the strip, not lines of text.
+    const rv = this.crossing || this.school ? null : this.routeView();
     if (this.crossing) this.drawCrossingBar();
-    else this.distText.setText(km(this.distancePx / WORLD.pxPerMetre));
+    else {
+      const left = rv ? Math.round(rv.endX - this.distancePx) : 0, near = rv && rv.target && rv.nextIsEnd && left < AIRPORT.signFrom && left > 0 && this.state === 'playing';
+      this.distText.setText(near ? km(left) : km(this.distancePx / WORLD.pxPerMetre)).setColor(near ? '#ffe15a' : COLOURS.text);
+      const showStrip = !!rv && ['takeoff', 'playing', 'landing'].includes(this.state);
+      if (showStrip !== !!this.strip.shown) this.strip.setVisible(showStrip);
+      if (showStrip) this.strip.draw({ f: this.distancePx / Math.max(1, rv.endX), ticks: rv.ticks.map(t => t / rv.endX), name: rv.name, flag: rv.target,
+        blinkOff: near && left < 450 && Math.floor(this.gameTime / 300) % 2 === 1 });
+    }
 
     const toAirport = Math.round(this.nextAirport.worldX - this.distancePx);
     // R12 (rails): the first flight after lesson 3, before the first airport: teach flying PAST it (the user, 2026-10-27).
@@ -1619,21 +1647,23 @@ export class GameScene extends Phaser.Scene {
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
     else if (skipThis && toAirport < AIRPORT.signFrom) this.nextText.setText(`${this.nextAirport.name} ${Math.max(0, toAirport)}m: fly PAST this one!`);
     else if (this.crossing) this.nextText.setText(toAirport < 300 ? 'Glide down to land!' : '');   // a crossing is a pure flight (the user, 2026-11-06): no km, no metres, no airport count: only the last call
-    else if (toAirport <= 0) this.nextText.setText(`${this.nextAirport.name}: glide down to land!`);
-    else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText(`${this.nextAirport.name} ${toAirport}m: get LOW to land!`);   // ATC (eras): the call comes sooner
-    else if (toAirport < AIRPORT.signFrom) this.nextText.setText(`Next: ${this.nextAirport.name} ${km(toAirport)}`);
-    else if (this.missedSign && this.gameTime < this.missedSign.until && this.missedSign.to === this.nextAirport.name) this.nextText.setText(   /* only about THIS leg */`${this.missedSign.text} ${km(toAirport)}`);
+    // (2026-11-23) The call is for the TARGET only (or the next airport when the flight has no target ahead): one short line.
+    else if (rv && !rv.nextIsEnd) this.nextText.setText('');
+    else if (toAirport <= 0) this.nextText.setText('Glide down to land!');
+    else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText('GET LOW to land!');   // ATC (eras): the call comes sooner
     else this.nextText.setText('');
     this.fitText(this.nextText, WIDTH - 12);
     // The mission line: what this flight is for.
     if (this.crossing) this.missionText.setText('');   // ... and no mission line while crossing
     else if (isSeason2(this.save)) { const n = this.school ? null : s2Next(this.save);   // season 2 (S3): the NEXT goal (a scene restart keeps fields, so no cache)
-      this.missionText.setText(this.bannerNow() || (n && this.state !== 'over' ? n.title : '')); }   // (the banner replaces the mission title while a destination is set: src/targetbanner.js)
+      // With a destination the strip names it, so only the banner's SECOND part stays (the mission's condition, or 'then cross').
+      const b = this.bannerNow(), cond = b ? [b.includes(' to cross') ? 'then CROSS' : '', ...b.split('\n').slice(1)].filter(Boolean).join('\n') : null;
+      this.missionText.setText(b ? cond : (n && this.state !== 'over' ? n.title : '')); }   // (src/targetbanner.js)
     else { const mis = this.school ? null : currentMission(this.save);
       this.missionText.setText(mis && this.state !== 'over' ? mis.progress(this) : ''); }
     // The "Next: <city>" line sits UNDER the mission line, however many lines that wraps to (a player saw two HUD lines
     // drawn over each other: season 2 mission titles wrap to 2 lines, the next line was fixed at y 58).
-    this.nextText.y = this.missionText.text ? this.missionText.y + this.missionText.height + (this.missionText.text.includes('\n') ? 5 : 1) : this.missionText.y;   // (a two-line banner, 'Flying to X' + its condition, gets a clear 5 px gap above this line)
+    this.nextText.y = this.missionText.text ? this.missionText.y + this.missionText.height + (this.missionText.text.includes('\n') ? 5 : 3) : this.missionText.y;   // (a two-line banner, 'Flying to X' + its condition, gets a clear 5 px gap above this line)
 
     if (inIssr) this.hintText.setText(this.isDay ? 'ICY AIR! shade: cooler' : 'ICY AIR! heat trapped!');
     else if (this.inTurb) this.hintText.setText('TURBULENCE! tap early');
@@ -1659,6 +1689,7 @@ export class GameScene extends Phaser.Scene {
 
   // Season 2 crossing (src/crossings.js; MASTER-PLAN B3): a boss-level progress bar to the gateway, no distance meter.
   drawCrossingBar() {
+    if (this.strip && this.strip.shown) this.strip.setVisible(false);   // the crossing's bar replaces the route strip and the distance
     const c = this.crossing, f = Math.max(0, Math.min(1, this.distancePx / c.km)), w = 150, x = (WIDTH - w) / 2, y = 22;
     this.distText.setFontSize(8).setText(`TO ${c.to}`);
     this.crossGfx.clear().fillStyle(0x1b1b2f, 0.85).fillRect(x - 2, y - 2, w + 4, 10).fillStyle(0xffd34d, 1).fillRect(x, y, Math.round(w * f), 6);

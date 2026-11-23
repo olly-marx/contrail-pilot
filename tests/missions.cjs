@@ -69,13 +69,14 @@ const KEY = 'contrailPilot.v2';
   r = await scene(() => game.scene.getScene('game').result);
   check(r && r.landed && r.mission && r.mission.done, `landing past PARIS must still complete mission 1: ${JSON.stringify(r && r.mission)}`);
 
-  // 4. Passing an airport shows where the next one is (the next two on this flight's path).
+  // 4. Passing an airport shows where the flight goes next (2026-11-23: no 'Passed X. Next: Y' line any more; the route
+  // strip moves on to the next leg: the next airport is the following one on the path and the strip names where it heads).
   await setSave({ ...base, mission: 0, city: 0 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#goBtn'); await flying(); await calm();
   await scene(() => { const s = game.scene.getScene('game'); s.distancePx = s.nextAirport.worldX + 230; });
   for (let i = 0; i < 6; i++) { await hold(); await p.waitForTimeout(60); }
-  const sign = await scene(() => game.scene.getScene('game').nextText.text), two = await scene(() => game.scene.getScene('game').path.slice(1, 3));
-  check(sign.includes(`Passed ${two[0]}. Next: ${two[1]}`), `after passing ${two[0]} the sign should name ${two[1]}, got "${sign}"`);
+  const st = await scene(() => { const s = game.scene.getScene('game'), rv = s.routeView(); return { next: s.nextAirport.name, shown: s.strip.shown, name: s.strip.name.text, rv: rv.name, two: s.path.slice(1, 3), ahead: s.path.slice(s.airportIndex + 1) }; });
+  check(st.next === st.two[1] && st.shown && st.name === st.rv && st.ahead.includes(st.name), `after passing ${st.two[0]} the strip heads on (next airport ${st.two[1]}, a city ahead named): ${JSON.stringify(st)}`);
 
   // 5. A mission needing an upgrade says so on the card.
   const first5 = ['land', 'seeds-5', 'shade-10', 'clean-night', 'pass-1'];

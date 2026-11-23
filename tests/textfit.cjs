@@ -25,8 +25,13 @@ const URL = process.env.URL || 'http://localhost:8000/';
       const longest = [...CITIES].sort((a, b) => b.name.length - a.name.length)[0].name;
       // 1. the airport call, in each of its forms, with the longest city name
       s.nextAirport = { ...s.nextAirport, name: longest }; out.longest = longest;
-      const forms = [() => { s.nextAirport.worldX = s.distancePx + 200; }, () => { s.nextAirport.worldX = s.distancePx - 5; }, () => { s.nextAirport.worldX = s.distancePx + 50000; s.missedSign = { text: `Passed ${longest}. Next: ${longest}`, to: s.nextAirport.name, until: s.gameTime + 4000 }; }];   // (a real sign always names its leg: the header shows a sign only while its next airport is this one, 0.25.1)
+      // (2026-11-23: the call is short and names no city; the city's NAME is under the route strip's end instead, so that must fit too:
+      // the strip points at the next airport here.)
+      s.targetCity = () => longest;
+      const forms = [() => { s.nextAirport.worldX = s.distancePx + 200; }, () => { s.nextAirport.worldX = s.distancePx - 5; }];
       out.airport = forms.map(f => { f(); s.updateTexts(false); return { text: s.nextText.text, w: s.nextText.width, x: s.nextText.x }; });
+      s.nextAirport.worldX = s.distancePx + 1500; s.updateTexts(false);
+      const nb = s.strip.name.getBounds(); out.stripName = { text: s.strip.name.text, left: nb.left, right: nb.right, bgLeft: s.strip.bg.x };
       // 2. the biome banner for every land, and the discovery popup
       out.banners = Object.keys(REGION_NAMES).map(r => { s.regionBanner(r); const c = s.banner, t = c.list.filter(o => o.text !== undefined); const bg = c.list[0];
         return { r, texts: t.map(o => o.text), widths: t.map(o => o.width), box: bg.width, bgH: bg.height, bottom: Math.max(...t.map(o => o.y + o.height / 2)) }; });
@@ -57,6 +62,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(m.next.length >= 20 && m.next.some(q => /^Next: /.test(q.text)), `${tag}: power: ${m.next.length} labels measured (every tree name of every land plus the full grove) and they say 'Next: ...'`);
     m.airport.forEach((a, i) => check(a.w <= m.W - 8, `${tag}: airport call ${i} "${a.text}" is ${Math.round(a.w)} game-px wide, the screen is ${m.W}`));
     check(m.airport.every(a => a.text), `${tag}: every form of the airport call must have text: ${JSON.stringify(m.airport.map(a => a.text))}`);
+    check(m.stripName.text === m.longest && m.stripName.left >= m.stripName.bgLeft && m.stripName.right <= m.W, `${tag}: the longest city name fits under the route strip: ${JSON.stringify(m.stripName)}`);
     m.banners.forEach(bn => { bn.widths.forEach((w, i) => check(w <= bn.box - 6, `${tag}: banner ${bn.r} text "${bn.texts[i]}" is ${Math.round(w)} wide in a ${bn.box} box`));
       check(bn.bottom <= bn.bgH / 2, `${tag}: banner ${bn.r} text runs below its box (${bn.bottom} > ${bn.bgH / 2})`); check(bn.box <= m.W, `${tag}: banner ${bn.r} box wider than the screen`); });
     check(m.bannerUnderStrip.before && !m.bannerUnderStrip.afterTip && !m.bannerUnderStrip.reopened, `${tag}: the land banner and a top lesson strip show together: ${JSON.stringify(m.bannerUnderStrip)}`);

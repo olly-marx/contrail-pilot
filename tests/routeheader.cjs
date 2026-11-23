@@ -1,9 +1,10 @@
-// The top display after a crash (the user's report, 2026-11-02: after a crash the next flight showed the dead flight's "Passed Paris. Next: Berlin"). The REAL game, real taps:
-//   1. fly; the plane really passes an airport without landing: the game itself shows "Passed X. Next: Y" (control: the sign IS shown while it is live)
+// The top display after a crash (the user's report, 2026-11-02: after a crash the next flight showed the dead flight's "Passed Paris. Next: Berlin").
+// Since 2026-11-23 the top of the screen is the ROUTE STRIP (src/Hud.js; the "Passed X. Next: Y" line is gone): the same bug would be a strip still
+// showing the dead flight's progress. The REAL game, real taps:
+//   1. fly; the plane really passes an airport without landing: the strip shows that progress (control: its plane is well along, the passed airport's tick behind it)
 //   2. the plane crashes into the ground (the game's own physics); the results screen comes up
-//   3. FLY ON, then TAKE OFF again (taps): for the first seconds of the new flight the header must show only the NEW leg, never a "Passed" sign
-// The fix lives in two places that each cover the other (rules.js initFlight resets missedSign; GameScene's header only shows a sign about THIS leg), so only BOTH removed bring the bug
-// back: the plant is a JOINT plant (tools/prove-plants.sh, files a,b). Chrome: $CHROME or /usr/bin/google-chrome. Run: python3 -m http.server 8000 & node tests/routeheader.cjs
+//   3. FLY ON, then TAKE OFF again (taps): for the first seconds of the new flight the strip starts again from its own take-off (plane near the start, no
+//      airport behind it) and no old "Passed" words are anywhere on top. Plant: tools/plants.tsv, test routeheader. Run: python3 -m http.server 8000 & node tests/routeheader.cjs
 const { chromium } = require('playwright-core');
 require('./lib/shipped.js');
 const { ready, started } = require('./lib/ready.js');
@@ -16,14 +17,16 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ muted: true, tutorialDone: true, seenTips: ['*'], tours: ['*'], flights: 30, landings: 9, seeds: 1250, flightSeconds: 2000,
     areas: ['weurope'], homeArea: 'weurope', city: 'LONDON', fleet: { plane: 'jumbo', planes: { comet: {}, jumbo: {} }, systems: {}, gadgets: {} } })); });
   await p.goto(URL); await ready(p); await p.waitForTimeout(500);
-  const header = () => p.evaluate(() => { const s = game.scene.getScene('game'); return { text: s.nextText ? s.nextText.text : null, sign: s.missedSign ? s.missedSign.text : null, state: s.state, t: Math.round(s.gameTime) }; });
+  const header = () => p.evaluate(() => { const s = game.scene.getScene('game'), rv = s.state === 'over' || s.crossing ? null : s.routeView();
+    return { text: [s.distText, s.missionText, s.nextText].map(t => (t ? t.text : '')).join(' | '), state: s.state, t: Math.round(s.gameTime),
+      f: rv ? s.distancePx / Math.max(1, rv.endX) : null, behind: rv ? rv.ticks.filter(x => x <= s.distancePx).length : null, stripX: s.strip.plane.x }; });
   const hold = async until => { await p.mouse.move(187, 400); await p.mouse.down(); await p.waitForFunction(until, null, { timeout: 25000 }).catch(() => {}); await p.mouse.up(); };
 
   // 1. flight one: take off, fly past the first airport (distance jumped past it: the game's own spawn() then shows its sign)
   await p.click('#goBtn'); await hold(() => game.scene.getScene('game').state === 'playing');
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.nextTurbAt = s.nextBirdsAt = 1e9; s.distancePx = s.nextAirport.worldX + 260; });
-  const sawSign = await p.waitForFunction(() => /Passed/.test(game.scene.getScene('game').nextText.text), null, { timeout: 8000 }).then(() => true, () => false);
-  const h1 = await header(); check(sawSign, `control: the game shows its "Passed X. Next: Y" sign after passing an airport (header "${h1.text}")`);
+  await p.waitForTimeout(600);
+  const h1 = await header(); check(h1.behind >= 1 && h1.stripX > 120, `control: after passing an airport the strip shows it behind the plane, the plane well along (${JSON.stringify(h1)})`);
 
   // 2. the plane flies into the ground
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.plane.y = 5000; });
@@ -39,11 +42,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await hold(() => ['takeoff', 'playing'].includes(game.scene.getScene('game').state) && game.scene.getScene('game').gameTime > 100);
   const seen = [];
   for (let i = 0; i < 10; i++) { seen.push(await header()); await p.waitForTimeout(300); }
-  const stale = seen.filter(h => /Passed/.test(h.text || ''));
+  const stale = seen.filter(h => /Passed/.test(h.text || '') || (h.behind != null && h.behind > 0) || (h.f != null && h.f > 0.3));
   check(seen.some(h => ['takeoff', 'playing'].includes(h.state)), 'the second flight really started');
-  check(!stale.length, `the new flight's header never shows the old flight's sign (${stale.length} of ${seen.length} samples did: "${(stale[0] || {}).text}", game time ${(stale[0] || {}).t} ms)`);
+  check(!stale.length, `the new flight's strip starts from its own take-off, no old progress or "Passed" words (${stale.length} of ${seen.length} samples did not: ${JSON.stringify(stale[0] || {})})`);
   check(!p.errs.length, `page errors: ${p.errs.join(' | ').slice(0, 200)}`);
   await b.close();
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS routeheader (after a crash the next flight\'s header shows only its own leg; the old "Passed" sign never comes back)');
+  console.log('PASS routeheader (after a crash the next flight\'s strip starts from its own take-off; no old progress comes back)');
 })().catch(e => { console.log('FAIL\n- crashed: ' + String(e.message).split('\n')[0]); process.exit(1); });

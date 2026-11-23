@@ -20,7 +20,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(on, `${tag}: a crossing flight started (the HUD cannot be asked about otherwise)`);
     if (!on) { await p.close(); continue; }
     // The HUD at three distances from the gateway: far, inside the sign range, and the last 250 m.
-    const hud = await p.evaluate(() => { const g = game.scene.getScene('game'), out = {}; const at = (name, left) => { g.state = 'playing'; g.distancePx = Math.max(0, g.nextAirport.worldX - left); g.updateTexts(false); out[name] = { next: g.nextText.text, mission: g.missionText.text, dist: g.distText.text }; };
+    const hud = await p.evaluate(() => { const g = game.scene.getScene('game'), out = {}; const at = (name, left) => { g.state = 'playing'; g.distancePx = Math.max(0, g.nextAirport.worldX - left); g.updateTexts(false); out[name] = { next: g.nextText.text, mission: g.missionText.text, dist: g.distText.text, strip: !!(g.strip && g.strip.shown) }; };
       at('far', 4000); at('sign', 600); at('last', 250);
       const c = g.crossing; g.crossing = null; at('ctl', 600); g.crossing = c; return out; });
     for (const k of ['far', 'sign', 'last']) {
@@ -30,7 +30,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
       check(!/\d\s*(km|m)\b/i.test(h.dist), `${tag}: the top bar shows a distance (${k}): "${h.dist}"`);
     }
     check(hud.last.next === 'Glide down to land!', `${tag}: in the last 300 m the crossing says "Glide down to land!": "${hud.last.next}"`);
-    check(/\d\s*(km|m)\b/i.test(hud.ctl.next) && hud.ctl.mission !== '', `${tag}: POSITIVE CONTROL: the same HUD without the crossing shows a distance and a mission (else this test cannot fail): ${JSON.stringify(hud.ctl)}`);
+    // (2026-11-23: without a crossing the distance is the big number on top and the route strip shows; the crossing's bar replaces both)
+    check(/\d\s*(km|m)\b/i.test(hud.ctl.dist) && hud.ctl.mission !== '' && hud.ctl.strip, `${tag}: POSITIVE CONTROL: the same HUD without the crossing shows a distance, a mission and the route strip (else this test cannot fail): ${JSON.stringify(hud.ctl)}`);
+    check(['far', 'sign', 'last'].every(k => !hud[k].strip), `${tag}: the crossing's bar replaces the route strip: ${JSON.stringify(hud)}`);
     check(!p.errs.length, `${tag}: no page errors: ${p.errs.slice(0, 2)}`);
     await p.close();
   }

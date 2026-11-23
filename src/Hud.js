@@ -68,3 +68,41 @@ export class Hud {
     this.face.setTexture(`face-${mood}-${Math.floor(time / 350) % 2}`);   // two frames: the sweat runs down
   }
 }
+
+// THE ROUTE STRIP (the user, 2026-11-23: "the text at the top ... is always the wrong city and there's just too much text";
+// approved mock-up, research/../scratch hud-mock). One bar under the distance, from the city you took off from to the city the
+// flight is heading for (GameScene.targetCity: the destination, the mission's city, or the nearest unvisited one): a small
+// plane rides it, each airport on the way is a tick, the target is a gold flag (blinking when it is close), and its name sits
+// under the bar's end. Words never sit on the line: the plane and the ticks ride the line, the name sits under its end.
+// A crossing hides it (the crossing's own bar replaces both: GameScene.drawCrossingBar).
+export const STRIP = { x0: 92, x1: WIDTH - 48, y: 31, h: 19 };   // (left of x0 - 6: seeds, crystals and the x1.5 bonus)
+export class RouteStrip {
+  constructor(scene) {
+    const { x0, x1, y, h } = STRIP;
+    this.bg = scene.add.rectangle(x0 - 6, y - 4, x1 - x0 + 12, h, 0x1b1b2f, 0.72).setOrigin(0).setDepth(6);
+    this.gfx = scene.add.graphics().setDepth(7);
+    this.plane = scene.add.image(x0, y + 2, 'plane-comet').setScale(0.3).setDepth(8);
+    this.name = scene.add.text(x1 + 2, y + 6, '', { fontFamily: 'Pixel, monospace', fontSize: '7px', color: '#ffe15a', stroke: '#000', strokeThickness: 2 }).setOrigin(1, 0).setDepth(8);
+    this.parts = [this.bg, this.gfx, this.plane, this.name];
+    this.setVisible(false);
+  }
+  setVisible(on) { for (const p of this.parts) p.setVisible(on); this.shown = on; return this; }
+  // f: 0..1 from take-off to the target; ticks: [0..1] the airports on the way; name: the target; flag: draw the gold flag
+  // (false: a plain square, e.g. no destination set); blinkOff: this frame of the blink hides the flag.
+  draw({ f, ticks = [], name, flag = true, blinkOff = false }) {
+    const { x0, x1, y } = STRIP, g = this.gfx, end = x1 - 6, X = t => Math.round(x0 + Math.max(0, Math.min(1, t)) * (end - x0));
+    const px = X(f);
+    g.clear();
+    g.fillStyle(0x7ee8ff).fillRect(x0, y + 1, px - x0, 2);                       // flown
+    g.fillStyle(0xffffff, 0.8);
+    for (let x = px + 8; x < end - 3; x += 5) g.fillRect(x, y + 1, 3, 2);         // still to fly
+    g.fillStyle(0xffffff).fillRect(x0 - 2, y, 4, 4);                              // where you took off
+    for (const t of ticks) { const tx = X(t); g.fillStyle(t <= f ? 0x7ee8ff : 0xc8ccd8).fillRect(tx - 1, y - 1, 2, 6); }   // airports on the way
+    if (flag) {
+      g.fillStyle(0xffffff).fillRect(end, y - 5, 2, 11);
+      if (!blinkOff) g.fillStyle(0xffc23d).fillRect(end + 2, y - 5, 6, 4);
+    } else g.fillStyle(0xffffff).fillRect(end - 2, y - 1, 6, 6);
+    this.plane.setPosition(px, y + 2);
+    this.name.setText(name || '');
+  }
+}
