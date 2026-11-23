@@ -26,7 +26,7 @@ const KEY = 'contrailPilot.v2';
   const base = { tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], landings: 9, priceVersion: 2 , fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };   // fleet: a save from after the eras reset (src/fleet.js)
 
   // 1. Old rewilding (2 levels) became the same two projects.
-  let p = await open({ ...base, seeds: 100, crystals: 10, levels: { rewild: 2, trees: 1 }, planted: { birch: 2 } });
+  let p = await open({ ...base, seeds: 600, crystals: 50, levels: { rewild: 2, trees: 1 }, planted: { birch: 2 } });
   let s = await get(p);
   check(JSON.stringify(s.habitat.woodland) === '["meadow","hedgerow"]' && !('rewild' in s.levels), `rewild 2 -> meadow + hedgerow: ${JSON.stringify(s.habitat)} ${JSON.stringify(s.levels)}`);
 
@@ -42,7 +42,7 @@ const KEY = 'contrailPilot.v2';
   check(await p.isVisible('#wProjects') && !(await p.isVisible('#hangar')), 'NATURE opens the wild area, not the hangar');
   await p.click('[data-project="deadwood"]'); await p.waitForTimeout(200);
   s = await get(p);
-  check(s.habitat.woodland.includes('deadwood') && s.seeds === 80 && s.crystals === 8, `dead wood bought for 20 + 2: ${JSON.stringify(s.habitat)} ${s.seeds}/${s.crystals}`);
+  check(s.habitat.woodland.includes('deadwood') && s.seeds === 480 && s.crystals === 40, `dead wood bought for 120 + 10 (20 + 2 x the 0.73.0 PRICE SCALE): ${JSON.stringify(s.habitat)} ${s.seeds}/${s.crystals}`);
   check(/DONE/.test(await p.textContent('[data-pline="deadwood"]')), 'a bought project says DONE');
   // A finished tier folds to one line (with 'show'); here tier 1 is not finished, so margins is listed.
   await p.evaluate(() => document.querySelector('[data-pline="margins"] .rowc-tap').click()); await p.waitForTimeout(300);   /* the (i) lives in the preview strip now (DESIGN-HANGAR-NATURE) */

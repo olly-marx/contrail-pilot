@@ -31,7 +31,7 @@ const SOON = [];
 const eraName = i => ERAS[i].name;
 // What is still missing to buy it ('need 12 seeds and 7 crystals more'): in the strip now (the rows are one line).
 const needText = (s, l) => `need ${[Math.max(0, l.cost - s.seeds) && `${l.cost - s.seeds}<i class="seedicon"></i>`, Math.max(0, (l.crystals || 0) - (s.crystals || 0)) && `${(l.crystals || 0) - (s.crystals || 0)}<i class="crysicon"></i>`].filter(Boolean).join(' ')} more`;
-const cost = l => `${kNum(l.cost)}<i class="seedicon"></i>${l.crystals ? ` ${kNum(l.crystals)}<i class="crysicon"></i>` : ''}`;
+const cost = l => `${kNum(l.cost)}<i class="seedicon"></i>${l.crystals ? ` ${kNum(l.crystals, 1000)}<i class="crysicon"></i>` : ''}`;
 
 // Things in the fleet you could buy right now, as keys ('gadget:magnet:3'): src/fresh.js owns it (pure); re-exported for ui.js.
 export { fleetBuyable } from './fresh.js';

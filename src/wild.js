@@ -36,7 +36,7 @@ import { FW, FH, HORIZON, GROUND, WATER, homeOf, FISH, STILL, startIn, nextIn, w
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`);
-const cost = p => `${kNum(p.cost)}<i class="seedicon"></i>${p.crystals ? ` ${kNum(p.crystals)}<i class="crysicon"></i>` : ''}`;
+const cost = p => `${kNum(p.cost)}<i class="seedicon"></i>${p.crystals ? ` ${kNum(p.crystals, 1000)}<i class="crysicon"></i>` : ''}`;
 const links = src => (src || []).length
   ? `<p class="label">Find out more</p><div class="links">${src.map(([t, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} &gt;</a>`).join('')}</div>`
   : '<p class="small">Our scientists are checking where this fact comes from.</p>';

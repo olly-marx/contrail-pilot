@@ -51,7 +51,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
       s.trees.push({ sprite: { active: false, setTexture() {} }, kind: 'spruce', plantedAt: s.elapsed - 5, stage: 0 });   // 5 s old
       setTimeout(() => { res({ mult, fall, stage: s.trees[s.trees.length - 1].stage, kit: { dc: s.kit.dodgeCrystals, dpn: s.kit.dodgesPerNight } }); s.finish = () => {}; }, 100);
     }, 150); }));
-  check(Math.abs(g.mult - 2.6) < 1e-6, `Cargo hold 6 (+0.8): 2 airports passed should be x2.6, got x${g.mult}`);
+  check(Math.abs(g.mult - 3.2) < 1e-6, `Cargo hold 6 (+1.1 since 0.73.0): 2 airports passed should be x3.2 (+220%), got x${g.mult}`);
   check(Math.abs(g.fall - 900) < 60, `no upgrade changes the controls: the plane should fall at normal gravity (900) with every gadget, got ${Math.round(g.fall)} px/s^2`);
   check(g.stage >= 1, `Tree Nursery 2: a 5 s old tree should be young (stage 1), got stage ${g.stage}`);
 

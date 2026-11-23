@@ -313,4 +313,4 @@ export const PRICE_SCALE = { seeds: 6, crystals: 5, version: 3 };   // (x8 / x7 
 export const scaleSeeds = n => (n >= 50 ? Math.round(n * PRICE_SCALE.seeds / 10) * 10 : Math.round(n * PRICE_SCALE.seeds / 5) * 5);
 export const scaleCrystals = n => Math.round(n * PRICE_SCALE.crystals);
 // A price in a row: 10,000 and over as '10.8k' (0.73.0: scaled prices reach five digits and did not fit a 375 px row, tests/rowfit).
-export const kNum = n => (n >= 10000 ? `${(n / 1000).toFixed(n % 1000 ? 1 : 0)}k` : String(n));
+export const kNum = (n, from = 10000) => (n >= from ? `${(n / 1000).toFixed(n % 1000 ? 1 : 0)}k` : String(n));   // crystals shorten from 1,000 (kNum(c, 1000))

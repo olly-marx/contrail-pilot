@@ -36,11 +36,12 @@ const URL = process.env.URL || 'http://localhost:8000/';
   let s = await save();
   check(r.rewards.map(x => x.key).join() === 'mission:land', `the flight earned mission 1's prize: ${JSON.stringify(r.rewards)}`);
   check(s.seeds === 115 + (r.gained || 0) && s.crystals === 11 + (r.crystals || 0) && (s.unclaimed || []).length === 0, `paid exactly +15 +1 AT THE BANK (on top of the flight's own seeds and crystals: fares and distance crystals since 0.73.0), before any tap, and saved: ${s.seeds} / ${s.crystals}, left ${JSON.stringify(s.unclaimed)}`);
+  const paid1 = [s.seeds, s.crystals];
   await p.waitForTimeout(1200); await p.mouse.click(195, 400); await p.waitForTimeout(600);
   const line = await p.textContent('#rMission');
   check(!(await p.$('#rRewards')) && !(await p.$('.claim')) && /\+15/.test(line), `the card shows the prize on one line and no CLAIM button: "${line}"`);
   s = await save();
-  check(s.seeds === 115 && s.crystals === 11, `showing the card pays nothing more (no double pay): ${s.seeds} / ${s.crystals}`);
+  check(s.seeds === paid1[0] && s.crystals === paid1[1], `showing the card pays nothing more (no double pay): ${s.seeds} / ${s.crystals}`);
 
   // 3. An OLDER save that still holds two waiting prizes: paid ONCE at load (the migration), with a toast; a reload pays nothing more.
   // The toast lives only 5 s from the first menu, and a slow machine can take longer than that to finish loading: so RECORD every toast text from the
@@ -69,7 +70,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await setSave({ ...base, city: 'REYKJAVIK', discovered: ALL, missionsDone: MOST, badgeTiers: {} }); await reload();
   await fly(); r = await end(true);
   s = await save();
-  check(r.mission && r.mission.done && r.rewards.some(x => x.key === 'mission:world') && sumOf(r.rewards, 'seeds') > 0 && s.seeds === 100 + sumOf(r.rewards, 'seeds') && s.crystals === 10 + sumOf(r.rewards, 'crystals'), `world tour: its prize is paid at the bank: ${s.seeds} / ${s.crystals}, ${JSON.stringify(r.rewards)}`);
+  check(r.mission && r.mission.done && r.rewards.some(x => x.key === 'mission:world') && sumOf(r.rewards, 'seeds') > 0 && s.seeds === 100 + (r.gained || 0) + sumOf(r.rewards, 'seeds') && s.crystals === 10 + (r.crystals || 0) + sumOf(r.rewards, 'crystals'), `world tour: its prize is paid at the bank: ${s.seeds} / ${s.crystals}, ${JSON.stringify(r.rewards)}`);
   await p.waitForTimeout(1200);
 
   // 5. A crash earns nothing from flying; its only prize is the secret Oops! badge, PAID at once.

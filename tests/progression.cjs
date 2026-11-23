@@ -64,7 +64,7 @@ const KEY = 'contrailPilot.v2';
 
   // 3. Hangar (the fleet since the eras, 2026-10-23): systems and gadgets with prices; the next
   // era's levels are blocked. Tree species stay locked before planting a tree.
-  await setSave({ ...base, seeds: 60, crystals: 6, landings: 3 }); await p.reload(); await ready(p); await p.waitForTimeout(600);
+  await setSave({ ...base, seeds: 360, crystals: 30, landings: 3 });   // (0.73.0 PRICE SCALE: x6 seeds, x5 crystals) await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabHangar');
   check(await p.$('[data-buy="species"]') === null, 'tree species should be locked before planting a tree');
   await p.click('[data-ftab=systems]');
@@ -75,10 +75,10 @@ const KEY = 'contrailPilot.v2';
   await p.click('[data-fbuy="gadget:magnet"]');     // 25 seeds + 3 crystals
   await okPayoff();
   const save = await getSave();
-  check(save.seeds === 20 && save.crystals === 1, `60 - 15 (Forecasting 1, the x0.6 hint price) - 25 (magnet 1) should leave 20 seeds and 6 - 2 - 3 = 1 crystal, got ${save.seeds}, ${save.crystals}`);
+  check(save.seeds === 120 && save.crystals === 5, `360 - 90 (Forecasting 1, the x0.6 hint price, x6) - 150 (magnet 1) should leave 120 seeds and 30 - 10 - 15 = 5 crystals, got ${save.seeds}, ${save.crystals}`);
   check(save.fleet.systems.forecast === 1 && save.fleet.gadgets.magnet === 1, `levels not saved: ${JSON.stringify(save.fleet)}`);
-  check(await p.isDisabled('[data-fbuy="gadget:hold"]'), 'Cargo hold (25 seeds + 3 crystals) should be unaffordable with 10 seeds and no crystals');
-  check(/^55\D+7$/.test((await p.textContent('[data-fbuy="gadget:magnet"]')).trim()), 'magnet level 2 should cost 55 seeds + 7 crystals');
+  check(await p.isDisabled('[data-fbuy="gadget:hold"]'), 'Cargo hold (150 seeds + 15 crystals) should be unaffordable with 120 seeds and 5 crystals');
+  check(/^330\D+35$/.test((await p.textContent('[data-fbuy="gadget:magnet"]')).trim()), 'magnet level 2 should cost 330 seeds + 35 crystals');
 
   // 4. The flight uses them: the Comet's CO2 is x1.1; Forecasting 1 reveals icy air from 60 px; magnet 1 grabs from 16 px.
   await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);
