@@ -4,7 +4,7 @@
 // target's closest ancestor matching it. A selector that is not on the current screen is simply skipped (r-takeoff1 exists on HOME and in the hangar: its subjects list both).
 // tests/railsubjects.cjs (Node) checks that every step of every tour has an entry here; tests/spotlight.cjs (browser) checks the spotlight of each step on the real screen.
 export const COUNTS = {   // tour id -> how many steps it has (the number of entries it must declare)
-  'r-school': 1, 'r-hangar': 1, 'r-free': 2, 'r-takeoff1': 1, 'r-res1': 3, 'r-takeoff2': 1, 'r-res2': 1, 'r-nature': 5, 'r-bonus': 1, 'r-systems': 3, 'r-parcels': 1, 'r-plant1': 1, 'r-plant2': 1, 'r-map': 5, 'r-boards': 1, 'r-payoff': 1, 'r-trees': 1, 'r-practice': 1, 'r-earth': 1, 'r-crosshint': 1, 'r-cross': 5,
+  'r-school': 1, 'r-hangar': 1, 'r-free': 2, 'r-takeoff1': 1, 'r-res1': 3, 'r-takeoff2': 1, 'r-res2': 1, 'r-nature': 5, 'r-bonus': 1, 'r-systems': 3, 'r-parcels': 1, 'r-plant1': 1, 'r-plant2': 1, 'r-map': 5, 'r-boards': 1, 'r-payoff': 1, 'r-trees': 1, 'r-practice': 1, 'r-earth': 1, 'r-crosshint': 1, 'r-cross': 3,
   name: 7, new: 3,
 };
 export const SUBJECTS = {
@@ -31,8 +31,8 @@ export const SUBJECTS = {
   'r-map#4': null, 'r-map#5': '^.sheet',           // the route chip; then the FLY TO sheet (the city it names), only MISSION / EXPLORE tappable
   'r-boards#1': null,
   'r-cross#1': '^.xcard',                          // the whole crossing card (route, the land it opens, the three rows)
-  'r-cross#2': '^.xcard', 'r-cross#3': '^.xcard', 'r-cross#4': '^.xcard',   // each row, with its card kept in view round it (the plane row alone sat at the foot of the screen, its route scrolled off)
-  'r-cross#5': '^.xcard',                          // the card again: its next line with the rows above it
+  'r-cross#2': '^.xcard',                          // the Range row, with its card kept in view round it (V4, 0.73.0: one row)
+  'r-cross#3': '^.xcard',                          // the card again: its next line with the row above it
   'r-trees#1': null, 'r-practice#1': null, 'r-earth#1': null, 'r-crosshint#1': null,   // the School board's steps (src/lessons.js): each target is its own subject
   'r-payoff#1': ['.pay-frame', '#payLabel'],       // the plane and the new part on it, and the caption under it (the label sits in its own row below the picture)
   'name#1': null, 'name#2': null, 'name#3': null, 'name#4': null, 'name#5': null, 'name#6': null, 'name#7': null,
