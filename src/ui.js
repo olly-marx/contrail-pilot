@@ -73,7 +73,7 @@ import { endView } from './crossingend.js';
 import { prizeLines } from './missionprize.js';
 import { crossingState, crossingById, momentDue, markTold, sheetText, endingBody, boxView, screenView, cardsView, oneCardView, PICK_TITLE } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
-import { accept as storyAccept, pause as storyPause } from './storyboard.js';
+import { accept as storyAccept, pause as storyPause, storyPicUrl } from './storyboard.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -502,7 +502,7 @@ export class UI {
       const lock = o.missing.length ? `<span class="sneed"><i class="slock"></i>Needs ${o.missing.map(m => `<b>${esc(m.text)}</b>`).join(', ')}</span>` : '';
       const btn = o.active ? '<button class="btn" type="button" data-spause="1">PAUSE</button>' : o.missing.length ? `<button class="btn go" type="button" data-sgoto="${o.missing[0].tab}">GET IT IN ${o.missing[0].tab.toUpperCase()}</button>`
         : `<button class="btn go" type="button" data-saccept="${esc(o.id)}">${n ? 'CARRY ON' : 'ACCEPT'}</button>`;
-      return `<div class="scard${o.missing.length ? ' locked' : ''}${o.active ? ' active' : ''}"><img class="spic" alt="" src="assets/ui/portrait-${esc(o.pic)}-0.png" onerror="this.src='assets/ui/portrait-story-crate-0.png'">`
+      return `<div class="scard${o.missing.length ? ' locked' : ''}${o.active ? ' active' : ''}"><img class="spic" alt="" src="${esc(storyPicUrl(o.pic))}">`
         + `<div class="sbody">${o.active ? `<div class="shead"><span>ON THIS STORY</span><span>Stop ${n + 1} of ${o.stops.length}</span></div>` : ''}<b class="stitle">${esc(o.title)}</b><p class="stext">${esc(o.story)}</p>`
         + `<div class="schips">${chips}</div><div class="sstats"><span class="sstat"><i class="sicon-plane"></i>${km(o.km)}</span><span class="sstat">+${o.pay.seeds}<i class="seedicon"></i></span><span class="sstat">+${o.pay.crystals}<i class="crysicon"></i></span></div>`
         + `${lock}<div class="sbtns">${btn}</div></div></div>`; }).join('') : '';

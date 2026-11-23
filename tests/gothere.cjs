@@ -4,6 +4,7 @@
 // (section 4b: aimTarget ignores it), so there is no half-migrated flight; the crash-retry that used to keep skipAim now flies the default path. The mission row whose city is the destination says so. Plants: tools/plants.tsv, test `gothere`. Run: node tests/gothere.cjs
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER (its missions or its crossing stars), retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const A = await import('../src/aim.js'), M = await import('../src/missions2.js'), R = await import('../src/route.js'), H = await import('../src/hub.js'), V = await import('../src/missionsview.js');
   A.STEER.mission = false;   // this test is the 0.48.0 rule (only a chosen destination steers); tests/steer.cjs covers the mission default

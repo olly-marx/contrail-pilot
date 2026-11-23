@@ -18,6 +18,11 @@ import { pathTo, linksFor, legBetween } from './route.js';
 import { capFor } from './capability.js';
 import { fleetOf, GADGETS } from './fleet.js';
 import { LINES } from './upgrades.js';
+import { animalPortrait } from './animalart.js';
+// The card picture of a story: its own art (story-vaccine, story-crate: assets/ui, declared in src/preload.js STORY_ART), else the
+// animal's portrait through the one place that knows where it is (PixelLab when drawn: src/animalart.js).
+export const STORY_PICS = ['story-vaccine', 'story-crate'];
+export const storyPicUrl = pic => (STORY_PICS.includes(pic) ? `assets/ui/portrait-${pic}-0.png` : animalPortrait({ sprite: pic, portrait: `assets/ui/portrait-${pic}` }) || 'assets/ui/portrait-story-crate-0.png');
 
 export const STORY = { on: true, slots: 3, fit: [0.55, 0.85], stretch: [1.15, 1.35], maxStops: 4 };
 export const SEEDS_PER_KM = 500 / 15000, CRYSTALS_PER_KM = 40 / 15000;

@@ -4,6 +4,7 @@
 // PLANT=nogate zeroes the thresholds (the gate removed): the "cannot be offered early" checks must then FAIL.
 // Plain Node. Run: node tests/offer-gate.cjs
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER (its missions or its crossing stars), retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   globalThis.window = { SEASON2: true };
   const X = await import('../src/crossings.js');
   const { SEASON } = await import('../src/season.js');

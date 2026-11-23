@@ -3,6 +3,7 @@
 // Plants: tools/plants.tsv, test `droporder`. Run: node tests/droporder.cjs
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER (its missions or its crossing stars), retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const D = await import('../src/droporder.js'), L = await import('../src/landtrees.js'), N = await import('../src/nature.js'), G = await import('../src/groves.js');
   const base = () => ({ areas: ['weurope'], homeArea: 'weurope', tutorialDone: true, planted: {}, plantedIn: {}, habitat: { woodland: ['deadwood', 'meadow', 'margins', 'pond', 'hedgerow', 'woodland', 'voles'] },

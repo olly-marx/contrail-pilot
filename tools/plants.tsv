@@ -260,7 +260,6 @@ swkill	src/swreg.js	s/if (new URLSearchParams(location.search).get('nosw'))/if (
 swupdate	sw.js	s/const keep = new Set(\[CUR, META, await meta('previous')\]);/const keep = new Set([CUR, META]);/	the previous build's cache is dropped at once (a page still running old code loses its files)
 releasegate	tests/PATHMAP	/^group sw-raw/d	src/updates.js no longer maps to the service-worker tests (the updater could change without swupdate running)
 flightreset	src/sim/rules.js	s/    this.missedSign = null;          \/\/ 'Passed X. Next: Y' belongs to ONE flight/    \/\/ (reset removed) 'Passed X. Next: Y' belongs to ONE flight/	the passed-airport sign survives into the next flight (the user's stale header)
-flightreset	src/GameScene.js	s/ \&\& this.missedSign.to === this.nextAirport.name) this.nextText/) this.nextText/	the HUD shows a sign about another leg
 routeheader	src/sim/rules.js	s/^    this.airportIndex = 0;$/    this.airportIndex = this.airportIndex || 0;/	the new flight keeps the dead flight's airport count: its route strip shows the old progress (2026-11-23: replaces the 'Passed X. Next: Y' joint plant; that line is gone)
 missionreach	src/aim.js	s/export const ROUTE_AIM = { on: true };/export const ROUTE_AIM = { on: false };/	the route does not aim at mission cities (today's tour)
 artsize	src/fleet.js	s/parts: parts.map(part => `assets\/ui\/upgrades\/hangar-/parts: parts.map(part => `assets\/upgrades\/plane-/	hangar layers pointed at the small flight sprites
@@ -434,7 +433,7 @@ sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 })
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x30]
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x33]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
