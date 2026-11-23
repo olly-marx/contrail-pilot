@@ -996,3 +996,4 @@ bank	src/hangar.js	s/if (trade(s, this.finAmt(s, 'buy'))) done();/if (trade(s, 1
 bank	src/finance.js	s/maxBuy(save) ? null : `Need ${rate(save)} seeds for a crystal`/maxBuy(save) ? null : 'Buy after your next landing'/	the greyed buy button talks about landings again
 ascprune	tools/asc-prune-certs.mjs	s/export const newCerts = (certs, before) => certs.filter(c => ours(c) \&\& !before.includes(c.id));/export const newCerts = (certs, before) => certs.filter(c => ours(c));/	every CI certificate is revoked, Word Journey's too
 ascprune	tools/asc-prune-certs.mjs	s/return a.certificateType === PRUNE.type \&\& a.name === PRUNE.name; };/return a.certificateType !== 'X'; };/	any certificate counts as CI's, the distribution one too
+ascprune	.github/workflows/apps.yml	s/- name: "Signing certificates before/- name: Signing certificates before/	an unquoted step name with a colon (the ci\/rel075 YAML error) passes
