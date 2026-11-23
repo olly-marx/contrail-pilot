@@ -1,6 +1,6 @@
 // The 0.73.0 PRICE SCALE (src/config.js PRICE_SCALE; measured 2026-11-23: with real fares the sim's learning pilot banks x8.1 the seeds and x6.7 the crystals). Plain Node.
 //  1. every price is the old table x the scale: fleet levels, the tree lines, every land's projects (the finance desk is priced directly since the 2026-11-23 rework);
-//  2. a save from before it has its bank scaled ONCE (seeds x8, crystals x7, bonds and the fund x8), so what it buys stays the same; a second load does not scale again;
+//  2. a save from before it has its bank scaled ONCE (seeds x PRICE_SCALE.seeds, crystals x PRICE_SCALE.crystals, bonds and the fund x PRICE_SCALE.seeds), so what it buys stays the same; a second load does not scale again;
 //  3. a new save and an automated test's save ('*' tips) are not scaled.
 // Plants (tools/plants.tsv): the bank never scaled; scaled on every load. Run: node tests/pricescale.cjs
 (async () => {

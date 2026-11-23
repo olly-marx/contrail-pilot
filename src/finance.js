@@ -28,7 +28,7 @@ export const FINANCE = {
     { name: 'Nature dividend', cost: 8000, fund: 20000, era: 5, bond: { lock: 3000, landings: 10, perB: 4, most: 3 }, dividend: { minBio: 60, perLanding: PRICE_SCALE.crystals, cap: 3 * PRICE_SCALE.crystals } },
   ],
 };
-export const bondCrystals = (save, b) => Math.floor(natureHealth(save) * PRICE_SCALE.crystals / b.perB);   // a bond's interest in crystals (x7 since 0.73.0)
+export const bondCrystals = (save, b) => Math.floor(natureHealth(save) * PRICE_SCALE.crystals / b.perB);   // a bond's interest in crystals (x PRICE_SCALE.crystals since 0.73.0)
 export const financeLevel = save => Math.min(FINANCE.levels.length, (save.finance && save.finance.level) || 0);
 export const financeOpen = save => eraProgress(save).index >= FINANCE.era;
 
