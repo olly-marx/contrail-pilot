@@ -118,6 +118,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   p = await open(save({ landings: 12, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], tours: ['*'] }), { width: 390, height: 844 });
   await p.evaluate(async () => { const M = await import('./src/missions2.js'), s = game.registry.get('save');   // (setup on the live save: the page's localStorage is season 2's wrapper)
     for (let i = 0; i < 10 && M.visible(s).length; i++) s.missionsDone = [...s.missionsDone, ...M.visible(s).map(m => m.key)]; s.daily = null; });
+  if (await p.$('#crossUnlock')) { await p.waitForTimeout(2800); await p.click('#cuLater').catch(() => {}); await p.waitForTimeout(300); }   // (0.74.0: a crossing can be ready here: its card may come first)
   await p.click('#tabMissions'); await p.waitForTimeout(600);
   const ml = await p.evaluate(() => document.getElementById('mList').innerText);
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/missions-empty.png` });

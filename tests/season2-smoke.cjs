@@ -115,23 +115,26 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   p = await fresh();
   const PLANTED = {}; for (const id of ['spruce', 'birch', 'oak', 'beech', 'pine', 'ash', 'rowan', 'hazel', 'willow', 'alder']) PLANTED[id] = 40;
   const STARS = ['weurope:night', 'weurope:shade10', 'weurope:kinds3'];   // S3: the area's 3 starred missions are a condition too
-  const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', planted: PLANTED, habitat: { woodland: ['deadwood', 'meadow', 'margins'] }, areaBest, missionsDone });   // (3 projects: woodland meter 41 >= the first crossing's 38, CROSSINGS V3)
+  const LESSONS = ['L1', 'L2', 'L3', 'L4', 'L5'];   // (0.75.0) the first-hour lessons are done: no crossing leads UP NEXT while one is left
+  const zeroRange = () => p.evaluate(async () => { const C = await import('/src/capability.js'), s = game.registry.get('save'), key = C.capKey(s); s.capability = { km: 0, key, area: 'weurope' }; s.capArea = { weurope: { km: 0, key } }; });   // (0.75.0) a fresh zero range: HOME's estimate keeps it, so only the landed flight counts
+  const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', planted: PLANTED, habitat: { woodland: ['deadwood', 'meadow', 'margins'] }, areaBest, missionsDone: [...LESSONS, ...missionsDone] }); await zeroRange();   // (3 projects: woodland meter 41 >= the first crossing's 38, CROSSINGS V3)
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
   let c = await card({ weurope: 11999 });
   check(/ROME &gt; TUNIS/.test(c) && /data-k="plane"><span class="xc-l">Range<\/span><span class="xc-bar">/.test(c) && /class="xc-next">[^<]+</.test(c) && !/data-cross|data-ready="[a-z]/.test(c), `D: 11,999 km (just under 12,000; V4 0.73.0) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
   c = await card({ namerica: 12000 });   // (another area's flight: the Nordic area is in the home region now)
-  check(/xcard ready" data-xc="mediterranean"/.test(c), 'D: a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
+  check(!/xcard ready" data-xc="mediterranean"/.test(c), 'D: V5 (0.74.0): a long flight from ANOTHER area does not count (the plane over the departure land)');
   c = await card({ weurope: 12000 }, STARS.slice(1, 2));
   check(/xcard ready" data-xc="mediterranean"/.test(c), `D: the trial stars are no longer a gate (CROSSINGS V2): 12,000 km is offered with only 1 of the 3 starred missions: ${c.slice(0, 200)}`);
   c = await card({ weurope: 12000 });
   check(/xcard ready" data-xc="mediterranean"/.test(c), `D: 12,000 km: the crossing is offered: ${c.slice(0, 200)}`);
-  const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', areaBest: { weurope: 12000 }, missionsDone: STARS });
+  const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', areaBest: { weurope: 12000 }, missionsDone: [...LESSONS, ...STARS] }); await zeroRange();
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); })();
   check(/xcard ready" data-xc="mediterranean"/.test(noTrees), `D: a long flight with no biodiversity IS offered (V4, 0.73.0: range only): ${noTrees.slice(0, 200)}`);
   await card({ weurope: 12000 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
-  const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', crossing: document.getElementById('hubNext').classList.contains('crossing') }));
-  check(nextCard.crossing && /Cross to/i.test(nextCard.text), `D: the hub's UP NEXT leads with the ready crossing (R3: "Cross to <city>"): ${JSON.stringify(nextCard)}`);
+  const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', box: /xcard ready/.test((document.getElementById('jCross') || {}).innerHTML || '') }));
+  // (0.75.0) after the lessons the ready crossing leads HOME in its own box (ui.js boxOn), and UP NEXT does not repeat it as a gold row
+  check(nextCard.box && !/Cross to/i.test(nextCard.text), `D: the ready crossing shows in the HOME crossing box, not again in UP NEXT: ${JSON.stringify(nextCard)}`);
   // S2 hub: the crossings sit behind the route line (tap it), and a ready crossing is also the NEXT card.
   if (await p.$('#sheet')) await p.click('#sheet .sheet-ok');   // (R-A: a ready crossing announces itself once, on HOME: LATER, then the route panel)
   if (await p.evaluate(() => document.getElementById('title').classList.contains('hub') && !document.getElementById('title').classList.contains('world'))) await p.evaluate(() => game.registry.get('ui').openJourneySheet());   // (the route chip now opens the FLY TO sheet; the crossing buttons live in the journey sheet)

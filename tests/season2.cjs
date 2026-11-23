@@ -94,14 +94,15 @@ const KEY = 'contrailPilot.v2';
   // biodiversity 30 in the start city's land; a real landed flight records the area's best; MORE TO COME when all is flown.
   const seed2e = (best, stars = ['weurope:night', 'weurope:shade10', 'weurope:kinds3']) => p.evaluate(async ([best, stars]) => { const s = game.registry.get('save'); const planted = {};
     for (const id of ['spruce', 'birch', 'oak', 'beech', 'pine', 'ash', 'rowan', 'hazel', 'willow', 'alder']) planted[id] = 40;
-    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', crossed: [], planted, habitat: { woodland: ['deadwood', 'meadow', 'margins'] }, areaBest: best, bestDistance: 0, flyCrossing: null, missionsDone: stars, freeUpgrade: false, freeGiven: true });   // (0.15.2: a free part still waiting locks TAKE OFF until it is picked; this player has picked it)   // S3: the 3 starred missions are a condition too
+    Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', crossed: [], crossTierLast: -1, crossPick: null, capArea: {}, planted, habitat: { woodland: ['deadwood', 'meadow', 'margins'] }, areaBest: best, bestDistance: 0, flyCrossing: null, missionsDone: stars, freeUpgrade: false, freeGiven: true });   // (0.15.2: a free part still waiting locks TAKE OFF until it is picked; this player has picked it)   // S3: the 3 starred missions are a condition too
+    { const C = await import('/src/capability.js'), key = C.capKey(s); s.capability = { km: 0, key, area: 'weurope' }; s.capArea = { weurope: { km: 0, key } }; }   // (0.75.0) a fresh zero range, so HOME's estimate does not replace it: this block tests the landed-flight path alone
     (await import('/src/save.js')).writeSave(s); }, [best, stars]);
   const cardNow = async (best, stars) => { await seed2e(best, stars); await p.goto(URL); await ready(p); await p.evaluate(() => game.registry.get('ui').showTitle());
     return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
   let c2 = await cardNow({ weurope: 11999 });
   check(/data-k="plane"><span class="xc-l">Range<\/span><span class="xc-bar">/.test(c2) && !/xcard ready" data-xc="mediterranean"/.test(c2), `11,999 km is not enough to be offered the 12,000 km crossing (V4, 0.73.0: the whole crossing): ${c2.slice(0, 200)}`);
   c2 = await cardNow({ namerica: 12000 });   // (a long flight from another area: CROSSINGS V3, the Nordic area is in the home region)
-  check(/xcard ready" data-xc="mediterranean"/.test(c2), 'a long flight from ANOTHER area counts (0.43.1: the plane tick is status, not location)');
+  check(!/xcard ready" data-xc="mediterranean"/.test(c2), 'V5 (0.74.0): a long flight from ANOTHER area does not count (the plane over the departure land)');
   c2 = await cardNow({ weurope: 12000 }, ['weurope:shade10']);
   check(/xcard ready" data-xc="mediterranean"/.test(c2), `the trial stars are no longer a gate (CROSSINGS V2): 12,000 km is offered with only 1 of the 3 starred missions: ${c2.slice(0, 200)}`);
   c2 = await cardNow({ weurope: 12000 });

@@ -38,7 +38,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
   for (const [W, H] of [[390, 844], [320, 568]]) {
     const tag = `${W}x${H}`;
     // A. Not ready.
-    let p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], crossMomentTest: true, bestDistance: 3000 }, W, H, { ...SETUP, arg: 5 });
+    let p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], crossMomentTest: true, bestDistance: 3000, areaBest: { sasia: 3000 } }, W, H, { ...SETUP, arg: 5 });
     await p.tap('#tabMissions'); await p.waitForTimeout(600);
     let cards = await cardsOf(p), text = await list(p);
     check(cards.length === 1 && cards[0].route === 'KARACHI > MUSCAT', `${tag} A: ONE card, the one crossing on offer: ${JSON.stringify(cards.map(c => c.route))}`);
@@ -53,7 +53,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     await p.close();
 
     // B. Ready.
-    p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], crossMomentTest: true, bestDistance: 99999 }, W, H, { ...SETUP, arg: 9 });
+    p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], crossMomentTest: true, bestDistance: 99999, areaBest: { sasia: 99999 } }, W, H, { ...SETUP, arg: 9 });   // (V5: a flight from the departure area)
     if (await p.evaluate(() => !!document.getElementById('crossUnlock'))) { await p.waitForTimeout(2800); await p.tap('#cuLater'); await p.waitForTimeout(300); }   // (V4: ready on load, so the moment comes first)
     await p.tap('#tabMissions'); await p.waitForTimeout(600);
     const sheetUp = await p.evaluate(() => !!document.getElementById('sheet'));

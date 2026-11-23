@@ -90,6 +90,7 @@ export class WildScreen {
   animals() { return regionSpecies(this.region); }
   done() { return projectsDone(this.save, this.region).map(p => p.id); }
   bio() { return biodiversity(this.save, this.region); }
+  landBio() { return landMeter(this.save, this.region); }   // (0.74.0) the LAND part: the land tiers open by it
 
   render() {
     const s = this.save;
@@ -282,7 +283,7 @@ export class WildScreen {
     // In tiers (the user, 2026-10-22: all 11 at once was confusing): open tiers show their projects;
     // the next locked tier is one card saying what opens it; later tiers stay hidden.
     // (0.73.1) LAND projects in tiers by the LAND part of the meter; WATER projects in their own section below (the waterways, 0.73.0), shut until the biome is full.
-    const s = this.save, done = this.done(), bio = landMeter(s, this.region), P = this.projects.filter(p => !isWaterProject(this.region, p.id)), W = this.projects.filter(p => isWaterProject(this.region, p.id));
+    const s = this.save, done = this.done(), bio = this.landBio(), P = this.projects.filter(p => !isWaterProject(this.region, p.id)), W = this.projects.filter(p => isWaterProject(this.region, p.id));
     // R11b: season 2's first nature project is FREE (the user, 2026-10-27): the first tier-1 project, once lesson 2 is done.
     const freeId = this.freeProjectId();
     const card = p => {

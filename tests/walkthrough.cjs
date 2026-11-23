@@ -116,6 +116,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   // and the day's trio sits under "Today".
   await fly(4, { tag: '5', vals: { planted: 1 } }); await shot('results-flight5'); await p.click('#againBtn').catch(() => {}); await p.waitForTimeout(500);
   await p.evaluate(() => game.registry.get('ui').showTitle()); await p.waitForTimeout(500);
+  if (await p.$('#crossUnlock')) { await p.waitForTimeout(2800); await p.click('#cuLater').catch(() => {}); await p.waitForTimeout(300); }   // (0.74.0: a crossing can be ready here: its card may come first)
   await p.click('#tabMissions'); await p.waitForTimeout(500);
   const t1 = await p.evaluate(() => ({ tier: document.getElementById('mTier').textContent, rows: document.querySelectorAll('#mNext .rowc.goal, #mList .rowc.goal:not(.daily):not(.steady)').length, stars: document.querySelectorAll('#mNext .rowc.goal.star, #mList .rowc.goal.star').length,
     today: [...document.querySelectorAll('#mList .label')].some(e => /^TODAY/.test(e.textContent)), daily: document.querySelectorAll('#mList .rowc.goal.daily').length, lessonLeft: /Lesson \d of 5/.test(document.getElementById('missions').innerText) }));

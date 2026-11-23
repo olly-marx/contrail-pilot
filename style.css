@@ -1339,5 +1339,6 @@ h2.sub { margin-top: -4px; }
 .w-water .w-water-head { color: #1e5f8f; margin: 0 0 4px; }
 .w-water .w-water-how { margin: 0 0 6px; }
 .w-drops { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 7px; margin: 0 0 6px; }
-.rowc.project.water { border-left: 4px solid #1e78b4; background: #f2f9ff; }
+.rowc.project.water { box-shadow: inset 4px 0 0 #1e78b4; background: #f2f9ff; }   /* a drawn stripe, not a border: the name and price line up with the land rows (tests/rowfit) */
+.w-water .rowc.project.water { margin-left: -10px; margin-right: -10px; }   /* out through the box padding (8) + border (2) */
 

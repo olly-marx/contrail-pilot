@@ -46,7 +46,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
       return { ...out, names: [...out.names], prices: [...out.prices] };
     }, sel);
     for (const r of regions) {
-      await p.evaluate(r => { const ui = game.registry.get('ui'), w = ui.wild || ui.nature; const t = document.querySelector(`#wRegions [data-region="${r}"]`); if (t) t.click(); if (w) { w.bio = () => 100; w.openTiers = [1, 2, 3]; w.renderProjects && w.renderProjects(); }   /* every tier shown: all projects measured */ }, r);
+      await p.evaluate(async r => { const D = await import('/src/droporder.js'), sv = game.registry.get('save'); sv.groves = sv.groves || {};   /* (0.75.0) every tree kind at its cap, so the WATER section is open and its blue project rows are measured too */
+        for (let i = 0, t; i < 40 && (t = D.nextTree(sv, r)); i++) (sv.groves[r] = sv.groves[r] || {})[t.id] = { planted: 99, grown: 99, saplings: [] }; }, r);
+      await p.evaluate(r => { const ui = game.registry.get('ui'), w = ui.wild || ui.nature; const t = document.querySelector(`#wRegions [data-region="${r}"]`); if (t) t.click(); if (w) { w.bio = () => 100; w.landBio = () => 100; w.openTiers = [1, 2, 3]; w.renderProjects && w.renderProjects(); }   /* every tier shown: all projects measured */ }, r);
       await p.waitForTimeout(700);
       const m = await measure('#wProjects .rowc');
       if (!m.rows) continue; landsSeen++; rowsSeen += m.rows;

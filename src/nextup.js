@@ -40,6 +40,7 @@ export const itemOf = (save, m) => fitRow({ key: m.key, short: shortOf(m), full:
 export function leadOf(save, crossingReady = null, crossing = null) {
   if (!M2.isSeason2(save)) return null;   // (the screens decide whether to show it: HOME hides the strip until tutorialDone, as hub.js's chain always did)
   const mid = (M2.next(save) || {}).key;
+  if (M2.lessonsLeft(save).length) crossing = crossingReady = null;   // (0.75.0) no crossing lead during the first-hour lessons (homenature: 'Cross to ROME' led UP NEXT before L5)
   if (crossing && crossing.ready) return fitRow({ key: 'lead:cross', short: clip(`Cross to ${crossing.to}`), full: `Crossing ready: ${crossing.from} to ${crossing.to}`, where: 'fly', right: rightText(crossing), cross: true, lead: true });   // (R-A: NEW + the distance; a tap opens the sheet, never starts a flight; the title is clipped to fit beside it)
   if (crossingReady) return { key: 'lead:cross', short: clip(`Cross to ${String(crossingReady).split(' to ').pop()}`), full: `Crossing ready: ${crossingReady}`, where: 'fly', lead: true };
   if (save.freeUpgrade && M2.revealed(save, 'hangar')) return { key: 'lead:free', short: 'Pick your free part', full: 'Open the hangar: free upgrade!', where: 'hangar', pic: 'assets/ui/lesson-hangar.png', lead: true };

@@ -25,7 +25,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
           const heads = [...document.querySelectorAll('#wProjects .w-tier[data-tier]')].map(h => { const rows = []; for (let e = h.nextElementSibling; e && !e.classList.contains('w-tier'); e = e.nextElementSibling) if (e.matches('.rowc.project')) rows.push(e.dataset.pline);
             const t = h.querySelector('[data-tier-toggle]'), q = t && t.getBoundingClientRect(); return { tier: +h.dataset.tier, rows: rows.length, toggle: t ? t.textContent : null, tw: q ? Math.round(q.width) : 0, th: q ? Math.round(q.height) : 0 }; });
           return { heads, height: R.scrollHeight }; });
-        await p.evaluate(() => { const ui = game.registry.get('ui'), w = ui.wild || ui.nature; w.bio = () => 100; w.openTiers = []; w.render(); }); await p.waitForTimeout(400);
+        await p.evaluate(() => { const ui = game.registry.get('ui'), w = ui.wild || ui.nature; w.bio = () => 100; w.landBio = () => 100; w.openTiers = []; w.render(); }); await p.waitForTimeout(400);
         const a = await read(); log.push(`${tag} folded ${JSON.stringify(a)}`);
         check(a.heads.length >= 3, `FIXTURE: NATURE opens with three open tiers: ${JSON.stringify(a.heads)}`);
         const open = a.heads.filter(h => h.rows > 0), folded = a.heads.filter(h => h.rows === 0);

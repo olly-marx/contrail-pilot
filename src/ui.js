@@ -800,7 +800,7 @@ export class UI {
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).
   crossingReadyText() {
-    const s = this.save, c = s.tutorialDone ? crossingsNow(s).find(x => readiness(s, x).ready || S2_UNLOCK) : null;
+    const s = this.save, c = s.tutorialDone && !lessonsLeft(s).length ? crossingsNow(s).find(x => readiness(s, x).ready || S2_UNLOCK) : null;
     return c ? `${c.from} to ${c.to}` : null;
   }
 
