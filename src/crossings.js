@@ -145,8 +145,8 @@ export function pickCrossing(save) {
 // from any area, the longest landed flight of all (save.bestDistance: a flown crossing counts), or the hangar's estimate for the area the player is in. Today's 70 percent rule otherwise.
 const reachKm = save => Math.max(0, save.bestDistance || 0, ...Object.values(save.areaBest || {}), capFor(save, areaOf(save.city) || '') || 0);
 // V5 (Oliver, 2026-11-23: 'the unlock is for plane + rainforest nature'): a route is judged on the range FROM ITS DEPARTURE AREA (the plane over that land) or the best
-// landed flight from there. The lap keeps the overall reach.
-export const reachFrom = (save, c) => (c.kind === 'lap' ? reachKm(save) : Math.max(0, (save.areaBest || {})[areaOf(c.from)] || 0, capForArea(save, areaOf(c.from))));
+// landed flight from there. The lap is judged the same way, from its departure (your home city) area.
+export const reachFrom = (save, c) => Math.max(0, (save.areaBest || {})[areaOf(c.from)] || 0, capForArea(save, areaOf(c.from)));   // the lap too (Oliver, 2026-11-23: offered LAGOS to LAGOS while in another area, then gone on landing in LAGOS: it read the range of the area he stood in)
 // V4 (Oliver, 2026-11-23: 'when it's unlocked, you should only just be able to get there in theory'): the RANGE (src/capability.js: how far this plane and nature fly before the
 // planet overheats) or a landed flight reaches the WHOLE crossing (SEASON.offer.distanceShare is 1).
 export const reachOf = save => reachKm(save);

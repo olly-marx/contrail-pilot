@@ -62,6 +62,11 @@ globalThis.SEASON2 = true;
   w.areaBest = { nordic: 19999 }; check(!C.planeReady(w, c), 'V5: a landed flight from ANOTHER area (the Nordic area) does not cover a crossing from Rome (the plane over the departure land)');
   w.areaBest = { weurope: 19999 }; check(C.planeReady(w, c), 'V5: a landed flight from the departure area covers it');
   const w2 = base(); w2.bestDistance = 19999; check(!C.planeReady(w2, c), 'V5: the longest landed flight of all, from elsewhere, does not count');
+  // The LAP from the departure area too (Oliver, 2026-11-23: 'I JUST had the Lagos to Lagos crossing and then I flew to Lagos and now I don't have it'): it read the range of
+  // the area he stood in, so it was ready from a richer area and gone on landing at home. Its readiness must not depend on where the player is.
+  const lapC = { ...C.CROSSINGS.find(x => x.kind === 'lap'), from: 'LONDON', to: 'LONDON', km: 40000 };
+  const lapAt = city => { const s = base(); s.city = city; s.capArea = { weurope: { km: 30000 }, africa: { km: 45000 } }; s.capability = { km: city === 'LAGOS' ? 45000 : 30000 }; return C.planeReady(s, lapC); };
+  check(lapAt('LAGOS') === lapAt('LONDON') && !lapAt('LAGOS'), `the lap from LONDON: ready ${lapAt('LAGOS')} standing in LAGOS, ${lapAt('LONDON')} in LONDON (its own area's range is 30,000 of 40,000)`);
   const open = V.stateOf(base(), c).conds.find(x => x.key === 'plane');
   check(open.plain === 'More range: upgrade plane' && open.plain.length <= 28, `the open plane line says what to do and fits: "${open.plain}"`);
   console.log(fails.length ? `FAIL crossladder:\n - ${fails.join('\n - ')}` : 'PASS crossladder: 30+ routes join the 6 regions; from every start one crossing on offer, each a higher tier than the last, until every region is open; the range reads the departure land');

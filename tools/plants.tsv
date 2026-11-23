@@ -957,6 +957,7 @@ morechips	style.css	s/^\.rc-gcard { display: flex;\(.*\)min-height: 64px; paddin
 morechips	src/resultscard.js	s/full: t, name: f.short, body: t/full: t, body: t/	a first's card has no name under it
 crosscard	src/crossingview.js	s/where: 'hangar', done: rd.plane, frac: pp,/where: 'hangar', done: rd.plane, frac: 1 - pp,/	the range bar fills the wrong way
 crossladder	src/crossings.js	s/  const picked = save.crossPick \&\& here.find(c => c.id === save.crossPick);/  const picked = null;/	the picked crossing is not kept (another at its tier can take over)
+crossladder	src/crossings.js	s/^export const reachFrom = (save, c) => Math.max(0,/export const reachFrom = (save, c) => c.kind === 'lap' ? reachKm(save) : Math.max(0,/	the lap reads the range of the area you stand in (ready elsewhere, gone at home)
 crosscard	src/lessons.js	s/done: s => tour(s, 'r-cross') || (s.crossed || \[\]).length > 0/done: s => tour(s, 'r-cross') || (s.areas || []).length > 1/	a two-area home region finishes the crossings lesson again
 crosscard-ui	src/ui.js	s/(c.ready ? (c.multi ? '<button class="btn go xc-fly"/(false ? (c.multi ? '<button class="btn go xc-fly"/	a ready card has no FLY A CROSSING / FLY THE CROSSING
 crosscard-ui	src/ui.js	s/if (fly) this.flyCrossing(cs); else this.openCrossings/if (true) this.flyCrossing(cs); else this.openCrossings/	a pick on MISSIONS starts the flight with no CROSSINGS screen
