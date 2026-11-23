@@ -13,7 +13,7 @@
   const proj = n => ({ monsoon: H.REGION_DATA.monsoon.projects.slice(0, n).map(p => p.id) });   // PACING A2 (2026-11-18, LAND_EVEN on, need 30): 5 projects: nature 24 in KARACHI's land (measured), 9: 47
 
   // 1. The card. V4 (0.73.0, Oliver 2026-11-22/23): ONE crossing on offer, the shortest from the open regions; ONE row, Range (no era, no nature); no distance on the card.
-  const s1 = save({ bestDistance: 3000, habitat: proj(5) }), cards = V.cardsView(s1);
+  const s1 = save({ areaBest: { sasia: 3000 }, habitat: proj(5) }), cards = V.cardsView(s1);   // (V5: a landed flight from the DEPARTURE area)
   check(cards.length === 1 && C.available(s1).length === 1, `one card, one crossing on offer (Asia): ${cards.length}`);
   const k = cards[0] || {};
   check(k.id === 'arabian-sea' && k.route === 'KARACHI > MUSCAT' && k.opens === 'Opens Africa & the Middle East' && k.word === 'Easy', `the offer is Asia's shortest, the Arabian Sea (Easy): ${JSON.stringify([k.id, k.route, k.opens, k.word])}`);
@@ -24,9 +24,9 @@
   check(k.nextKey === 'plane' && k.next === V.CARD_NEXT.plane && /HANGAR/.test(k.next) && k.next.length <= 60, `the next line is the range's: ${k.nextKey} "${k.next}"`);
   const one = V.oneCardView(s1);
   check(one.length === 1 && !one[0].multi && JSON.stringify(one) === JSON.stringify(cards), 'oneCardView: the single card as it is (no picker)');
-  const s3 = save({ bestDistance: 12000 }), c3 = V.cardsView(s3);
+  const s3 = save({ areaBest: { sasia: 12000 } }), c3 = V.cardsView(s3);
   check(c3.length === 1 && c3[0].ready && c3[0].next === V.CARD_READY && c3[0].rows.every(r => r.done), `a 12,000 km landed flight, no nature: ready, the Ready line: ${JSON.stringify(c3.map(c => [c.id, c.ready, c.next]))}`);
-  check(!V.cardsView(save({ bestDistance: 11999 }))[0].ready, '11,999 km is not enough for a 12,000 km crossing');
+  check(!V.cardsView(save({ areaBest: { sasia: 11999 } }))[0].ready, '11,999 km is not enough for a 12,000 km crossing');
   // 2. The crossings lesson.
   const les = L.BOARD.find(l => l.id === 'crossings');
   check(les && L.BOARD[L.BOARD.length - 1].id === 'crossings', 'the crossings lesson is the last on the board');

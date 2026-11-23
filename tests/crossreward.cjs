@@ -16,9 +16,9 @@ globalThis.SEASON2 = true;
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const C = await import('../src/crossings.js'), Z = await import('../src/missionprize.js'), V = await import('../src/crossingview.js'), E = await import('../src/crossingend.js');
   // CROSSINGS V3 (2026-11-13): a player makes 5 crossings, each the next era (asNext), then the lap: these six are what a whole game pays.
-  const all = ['mediterranean', 'caribbean', 'north-pacific', 'south-atlantic', 'auckland-santiago'].map(id => C.asNext(C.crossingById(id), 0)).concat([C.crossingById('lap')])   /* V4 (0.73.0): each route has its own tier (ROUTE_TIER); one route per tier */, word = c => Z.crossingWord(c);
+  const all = ['mediterranean', 'caribbean', 'north-pacific', 'auckland-santiago', 'dublin-cape-town'].map(id => C.asNext(C.crossingById(id), 0)).concat([C.crossingById('lap')])   /* V4 (0.73.0): each route has its own tier (ROUTE_TIER); one route per tier */, word = c => Z.crossingWord(c);
   const counts = {}; for (const c of all) counts[word(c)] = (counts[word(c)] || 0) + 1;
-  check(all.length === 6 && C.CROSSINGS.length === 9 && all.every(c => Z.CROSSING_PRIZE[word(c)]), `FIXTURE: 8 routes + the lap; a game's 5 crossings + the lap, every word priced: ${all.length} ${JSON.stringify(counts)}`);
+  check(all.length === 6 && C.CROSSINGS.length > 9 && all.every(c => Z.CROSSING_PRIZE[word(c)]), `FIXTURE: 8 routes + the lap; a game's 5 crossings + the lap, every word priced: ${all.length} ${JSON.stringify(counts)}`);
   // 1
   const sum = all.reduce((a, c) => { const r = Z.crossingReward(word(c)); return [a[0] + r.seeds, a[1] + r.crystals]; }, [0, 0]);
   check(sum[0] === 59600 && sum[1] === 4768 && JSON.stringify(counts) === JSON.stringify({ Easy: 1, Medium: 1, Hard: 1, Harder: 1, 'Very hard': 1, 'The lap': 1 }), `a game's 5 crossings and the lap pay 59,600 seeds and 4,768 crystals (0.73.0), one of each word: ${sum} ${JSON.stringify(counts)}`);

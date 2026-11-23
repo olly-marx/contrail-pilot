@@ -8,7 +8,7 @@ import { SEASON } from './season.js';
 import { AREAS, OCEAN_STONES, areaOf, unlockedAreas, regionsOpen, regionOfArea, withRegions } from './areas.js';
 import { linksOf, choices, city } from './network.js';
 import { tourPath } from './route.js';
-import { capFor } from './capability.js';
+import { capFor, capForArea } from './capability.js';
 import { bestAreaBio } from './arealand.js';
 import { crossingReward, crossingWord } from './missionprize.js';
 import { payPrize } from './rewards.js';
@@ -18,31 +18,62 @@ import { projectsDone } from './nature.js';
 // CROSSINGS V3 (the user, 2026-11-13: '22 crossings is obscene ... 6 regions, 5 crossings plus the lap is perfect. Each one harder than the last'): EIGHT famous routes join the
 // six REGIONS (src/areas.js); you choose which way to go next. A route has no era of its own: the n-th crossing you make (n = regions open - 1) is era n and takes era n's length
 // (SEASON.crossingKm), so every crossing is harder than the last whichever route you take. Five crossings open the world; then the lap. Old ids (save.crossed) are kept as they were.
+// CROSSINGS V5 (Oliver, 2026-11-23: 'each crossing needs to be harder than the last ... it picks a crossing ... the first one that you unlock and the other just never
+// gets a crossing'): many routes between the six regions, each with a FIXED tier from its real great-circle distance (`real`, km; tier 0 Easy < 2,000, 1 Medium < 4,500,
+// 2 Hard < 7,500, 3 Harder < 10,000, 4 Very hard), made by scratch/balance-audit/routes.mjs from the city table (the shortest pair of each region pair in each band; the 8 named
+// routes of V3/V4 keep their ids, so old saves' save.crossed still reads). The game length of a tier is SEASON.step.km.
+const ROUTES = [
+  { id: 'mediterranean', a: 'ROME', b: 'TUNIS', real: 577, tier: 0 },
+  { id: 'arabian-sea', a: 'KARACHI', b: 'MUSCAT', real: 912, tier: 0 },
+  { id: 'miami-panama', a: 'MIAMI', b: 'PANAMA', real: 1862, tier: 0 },
+  { id: 'istanbul-tehran', a: 'ISTANBUL', b: 'TEHRAN', real: 2053, tier: 1 },
+  { id: 'karachi-riyadh', a: 'KARACHI', b: 'RIYADH', real: 2061, tier: 1 },
+  { id: 'caribbean', a: 'MIAMI', b: 'CARACAS', real: 2193, tier: 1 },
+  { id: 'reykjavik-iqaluit', a: 'REYKJAVIK', b: 'IQALUIT', real: 2202, tier: 1 },
+  { id: 'jakarta-darwin', a: 'JAKARTA', b: 'DARWIN', real: 2746, tier: 1 },
+  { id: 'singapore-perth', a: 'SINGAPORE', b: 'PERTH', real: 3912, tier: 1 },
+  { id: 'istanbul-karachi', a: 'ISTANBUL', b: 'KARACHI', real: 3972, tier: 1 },
+  { id: 'dublin-niamey', a: 'DUBLIN', b: 'NIAMEY', real: 4503, tier: 2 },
+  { id: 'new-york-quito', a: 'NEW YORK', b: 'QUITO', real: 4557, tier: 2 },
+  { id: 'hanoi-darwin', a: 'HANOI', b: 'DARWIN', real: 4635, tier: 2 },
+  { id: 'north-pacific', a: 'ANCHORAGE', b: 'SAPPORO', real: 4833, tier: 2 },
+  { id: 'iqaluit-casablanca', a: 'IQALUIT', b: 'CASABLANCA', real: 5308, tier: 2 },
+  { id: 'north-atlantic', a: 'LISBON', b: 'NEW YORK', real: 5420, tier: 2 },
+  { id: 'south-atlantic', a: 'LAGOS', b: 'BELEM', real: 5850, tier: 2 },
+  { id: 'lisbon-belem', a: 'LISBON', b: 'BELEM', real: 6006, tier: 2 },
+  { id: 'antananarivo-perth', a: 'ANTANANARIVO', b: 'PERTH', real: 6926, tier: 2 },
+  { id: 'niamey-caracas', a: 'NIAMEY', b: 'CARACAS', real: 7505, tier: 3 },
+  { id: 'london-dar-es-salaam', a: 'LONDON', b: 'DAR ES SALAAM', real: 7507, tier: 3 },
+  { id: 'atlanta-sao-paulo', a: 'ATLANTA', b: 'SAO PAULO', real: 7510, tier: 3 },
+  { id: 'bangkok-sydney', a: 'BANGKOK', b: 'SYDNEY', real: 7516, tier: 3 },
+  { id: 'anchorage-taipei', a: 'ANCHORAGE', b: 'TAIPEI', real: 7519, tier: 3 },
+  { id: 'lisbon-bogota', a: 'LISBON', b: 'BOGOTA', real: 7528, tier: 3 },
+  { id: 'maputo-perth', a: 'MAPUTO', b: 'PERTH', real: 7939, tier: 3 },
+  { id: 'auckland-santiago', a: 'SANTIAGO', b: 'AUCKLAND', real: 9653, tier: 3 },
+  { id: 'kinshasa-bogota', a: 'KINSHASA', b: 'BOGOTA', real: 10002, tier: 4 },
+  { id: 'barcelona-lima', a: 'BARCELONA', b: 'LIMA', real: 10005, tier: 4 },
+  { id: 'madrid-hanoi', a: 'MADRID', b: 'HANOI', real: 10009, tier: 4 },
+  { id: 'dublin-cape-town', a: 'DUBLIN', b: 'CAPE TOWN', real: 10009, tier: 4 },
+  { id: 'los-angeles-beijing', a: 'LOS ANGELES', b: 'BEIJING', real: 10038, tier: 4 },
+  { id: 'athens-dallas', a: 'ATHENS', b: 'DALLAS', real: 10051, tier: 4 },
+  { id: 'ulaanbaatar-sydney', a: 'ULAANBAATAR', b: 'SYDNEY', real: 10111, tier: 4 },
+  { id: 'los-angeles-rio', a: 'LOS ANGELES', b: 'RIO', real: 10139, tier: 4 },
+  { id: 'buenos-aires-auckland', a: 'BUENOS AIRES', b: 'AUCKLAND', real: 10312, tier: 4 },
+  { id: 'los-angeles-auckland', a: 'LOS ANGELES', b: 'AUCKLAND', real: 10487, tier: 4 },
+  { id: 'karachi-belem', a: 'KARACHI', b: 'BELEM', real: 12647, tier: 4 },
+];
+// A plain name for a route with no sea name of its own ('Istanbul to Tehran'; at most 22 letters: tests/pickcity.cjs).
+const title = n => n.toLowerCase().replace(/(^|[\s-])\S/g, m => m.toUpperCase());
+const routeName = r => { const a = title(r.a), b = title(r.b), n = `${a} to ${b}`; return n.length <= 22 ? n : `${a} - ${b}`.length <= 22 ? `${a} - ${b}` : b; };
 export const CROSSINGS = [
-  { id: 'mediterranean', a: 'ROME', b: 'TUNIS', kind: 'route' },             // Europe <-> Africa & the Middle East
-  { id: 'north-atlantic', a: 'LISBON', b: 'NEW YORK', kind: 'route' },       // Europe <-> North America
-  { id: 'arabian-sea', a: 'MUSCAT', b: 'KARACHI', kind: 'route' },           // Africa & the Middle East <-> Asia
-  { id: 'singapore-perth', a: 'SINGAPORE', b: 'PERTH', kind: 'route' },      // Asia <-> Oceania
-  { id: 'caribbean', a: 'MIAMI', b: 'CARACAS', kind: 'route' },              // North America <-> South America
-  { id: 'south-atlantic', a: 'LAGOS', b: 'BELEM', kind: 'route' },           // Africa & the Middle East <-> South America
-  { id: 'north-pacific', a: 'SAPPORO', b: 'ANCHORAGE', kind: 'route' },      // Asia <-> North America
-  { id: 'auckland-santiago', a: 'AUCKLAND', b: 'SANTIAGO', kind: 'route' },  // Oceania <-> South America
+  ...ROUTES.map(r => ({ ...r, kind: 'route', name: routeName(r) })),
   { id: 'lap', era: 5, kind: 'lap' },   // from = to = your home city (save.homeArea's start), filled in by available()
 ];
 export const crossingById = id => CROSSINGS.find(c => c.id === id);
 // CROSSINGS V4 (Oliver, 2026-11-22/23: 'in Africa, crossing to Rome is easy but crossing to Sao Paulo is really hard and far'; 'judge it on the distance the plane can fly
 // ... not on the era'; 'only one crossing offered at a time'): every route has its OWN difficulty, ranked by its real great-circle distance (approximate km in the comment),
 // as a tier 0-4 (the word: Easy ... Very hard) with that tier's game length (SEASON.step.km). No era gate; it is offered when your RANGE reaches its length.
-export const ROUTE_TIER = {
-  mediterranean: 0,       // Rome-Tunis, ~600 km
-  'arabian-sea': 0,       // Muscat-Karachi, ~850 km
-  caribbean: 1,           // Miami-Caracas, ~2,200 km
-  'singapore-perth': 1,   // ~3,900 km
-  'north-pacific': 2,     // Sapporo-Anchorage, ~5,000 km
-  'north-atlantic': 2,    // Lisbon-New York, ~5,400 km
-  'south-atlantic': 3,    // Lagos-Belem, ~5,900 km
-  'auckland-santiago': 4, // ~9,700 km
-};
+export const ROUTE_TIER = Object.fromEntries(ROUTES.map(r => [r.id, r.tier]));
 // A route as the n-th crossing (era n and its length): what available() hands out when n crossings are made. Tests and screens that list every route at a given step use it.
 export const asNext = (c, n) => (c.kind === 'lap' ? { ...c, km: crossingKm(c) } : { ...c, era: ROUTE_TIER[c.id] ?? n, km: crossingKm({ era: ROUTE_TIER[c.id] ?? n }) });   // (V4: a route's tier is its own; n only for an unknown id)
 // The route order (CROSSINGS V3: only a stable order for lists; difficulty comes from how many crossings you have made, crossingsMade).
@@ -59,13 +90,19 @@ export const sides = c => [areaOf(c.a) || 'ocean', areaOf(c.b) || 'ocean'];
 // Your home city: where the start choice put you (src/startchoice.js save.homeArea), else where you are.
 export const homeCity = save => (save.homeArea && AREAS[save.homeArea] ? AREAS[save.homeArea].start : save.city);
 
-// The crossings you could fly now, from your unlocked areas: one end open, the other not; its era reached. The lap only
-// when EVERY area is open (from your home city, back to it). Each comes with the direction to fly it.
+// CROSSINGS V5 (0.73.2). THE LADDER: your n-th crossing (n = crossings made, from 0) is tier n: Easy, then Medium, Hard, Harder, Very hard, then the lap; never the
+// same tier twice and never lower. When no route out of your regions has tier n, the next tier up that has one stands in.
+// upcoming(save): every route at that tier from an open region to a closed one (best chance first: range from its departure area over its length).
+// available(save): ONE: the route already picked (save.crossPick), else the first ready one, else the one with the best chance (not ready yet). pickCrossing(save) stores
+// the first ready one in save.crossPick: from then on the others at that tier are never offered (Oliver: 'the other just never gets a crossing').
 export function available(save) { return routes(save, true); }
-// Every route with one side open and the other not, WHATEVER the era (the HOME box talks about the next one before its era arrives).
 export function upcoming(save) { return routes(save, false); }
-// Each comes as the NEXT crossing: era n = crossingsMade(save) and that era's length, with the direction to fly it and the region it opens. The lap only when EVERY area is open.
-function routes(save, eraGate) {
+export function nextTier(save, all = allOpen(save).filter(c => c.kind !== 'lap')) {
+  const n = Math.max(crossingsMade(save), (save.crossTierLast ?? -1) + 1), tiers = [...new Set(all.map(c => c.era))].sort((a, b) => a - b);   // never the tier flown last, nor lower
+  const up = tiers.find(t => t >= n);
+  return up ?? (tiers.length ? tiers[tiers.length - 1] : null);
+}
+function allOpen(save) {
   const open = new Set(unlockedAreas(save));
   if ((save.areas || []).includes('ocean')) open.add('ocean');
   const allOthers = Object.keys(AREAS).every(k => open.has(k)), out = [];
@@ -74,13 +111,30 @@ function routes(save, eraGate) {
       if (allOthers && !(save.crossed || []).includes(c.id) && c.era <= SEASON.maxEra) { const h = homeCity(save); out.push({ ...c, a: h, b: h, from: h, to: h, km: crossingKm(c) }); }
       continue;
     }
-    const [sa, sb] = sides(c), x = { ...c, era: ROUTE_TIER[c.id] ?? 4 };
+    const [sa, sb] = sides(c), x = { ...c, era: c.tier };
     if (open.has(sa) && !open.has(sb)) out.push({ ...x, from: c.a, to: c.b, opens: sb, region: regionOfArea(sb), km: crossingKm(x) });
     else if (open.has(sb) && !open.has(sa)) out.push({ ...x, from: c.b, to: c.a, opens: sa, region: regionOfArea(sa), km: crossingKm(x) });
   }
-  // V4: ONE offer at a time (Oliver, 2026-11-22): the shortest route that opens a new region (a stable sort: ties keep the CROSSINGS order). upcoming() lists them all.
-  out.sort((a, b) => a.km - b.km);
-  return eraGate ? out.slice(0, 1) : out;
+  return out;
+}
+const chance = (save, c) => (c.km ? reachFrom(save, c) / c.km : 0);
+function routes(save, one) {
+  const all = allOpen(save), lap = all.filter(c => c.kind === 'lap'), rs = all.filter(c => c.kind !== 'lap');
+  if (!rs.length) return lap;
+  const t = nextTier(save, rs), here = rs.filter(c => c.era === t).sort((a, b) => chance(save, b) - chance(save, a));
+  if (!one) return here;
+  const picked = save.crossPick && here.find(c => c.id === save.crossPick);
+  if (picked) return [picked];
+  const ready = here.find(c => planeReady(save, c));
+  return ready ? [ready] : here.slice(0, 1);
+}
+// Fix the pick: the first route at the next tier that is ready. The game calls this when it shows HOME and after a landing; returns the id picked (or null).
+export function pickCrossing(save) {
+  const here = routes(save, false), valid = save.crossPick && here.some(c => c.id === save.crossPick);
+  if (valid) return save.crossPick;
+  const ready = here.find(c => c.kind !== 'lap' && planeReady(save, c));
+  save.crossPick = ready ? ready.id : null;
+  return save.crossPick;
 }
 
 // READY BY STATUS (the user, 2026-11-09, CROSSINGS V2: 'a crossing becomes available based on status, NOT where you are'): three ticks, none of them about the trial stars or where the player is.
@@ -90,11 +144,14 @@ function routes(save, eraGate) {
 // The plane's reach, FROM ANY AREA (the user, 2026-11-09: 'status, not location'; a pilot was told to upgrade a plane that only needed a longer landed flight from another land): the best landed flight
 // from any area, the longest landed flight of all (save.bestDistance: a flown crossing counts), or the hangar's estimate for the area the player is in. Today's 70 percent rule otherwise.
 const reachKm = save => Math.max(0, save.bestDistance || 0, ...Object.values(save.areaBest || {}), capFor(save, areaOf(save.city) || '') || 0);
+// V5 (Oliver, 2026-11-23: 'the unlock is for plane + rainforest nature'): a route is judged on the range FROM ITS DEPARTURE AREA (the plane over that land) or the best
+// landed flight from there. The lap keeps the overall reach.
+export const reachFrom = (save, c) => (c.kind === 'lap' ? reachKm(save) : Math.max(0, (save.areaBest || {})[areaOf(c.from)] || 0, capForArea(save, areaOf(c.from))));
 // V4 (Oliver, 2026-11-23: 'when it's unlocked, you should only just be able to get there in theory'): the RANGE (src/capability.js: how far this plane and nature fly before the
 // planet overheats) or a landed flight reaches the WHOLE crossing (SEASON.offer.distanceShare is 1).
 export const reachOf = save => reachKm(save);
-export const planeReady = (save, c) => reachKm(save) >= SEASON.offer.distanceShare * c.km;
-export const planeProgress = (save, c) => { const need = SEASON.offer.distanceShare * c.km; return need ? Math.min(1, reachKm(save) / need) : 1; };
+export const planeReady = (save, c) => reachFrom(save, c) >= SEASON.offer.distanceShare * c.km;
+export const planeProgress = (save, c) => { const need = SEASON.offer.distanceShare * c.km; return need ? Math.min(1, reachFrom(save, c) / need) : 1; };
 export const natureBest = save => Math.max(0, ...unlockedAreas(save).map(k => bestAreaBio(save, k)));
 // The nature a crossing reads (SEASON.step.natureRule, src/season.js): 'best' = natureBest; 'weakest' = the weakest opened region's best land.
 export const regionNature = save => { const by = {}; for (const k of unlockedAreas(save)) { const r = regionOfArea(k); if (r) by[r] = Math.max(by[r] ?? 0, bestAreaBio(save, k)); } return by; };
@@ -125,7 +182,7 @@ export function offerCtx(save, c) {
   const k = areaOf(c.from);
   // missionsDone (S3): the area's crossing trial, its 3 starred missions (src/missions2.js), done in THIS area.
   // capabilityKm (M4): the best landed flight OR the hangar's estimate for this area (src/capability.js), whichever is larger.
-  return { capabilityKm: reachKm(save), bio: k ? bestAreaBio(save, k) : 0 };   // V4: range from anywhere; no nature or mission condition (Oliver, 2026-11-23)
+  return { capabilityKm: reachFrom(save, c), bio: k ? bestAreaBio(save, k) : 0 };   // V4: range from anywhere; no nature or mission condition (Oliver, 2026-11-23)
 }
 
 // Why a crossing is or is not OFFERED (MASTER-PLAN B4): the conditions and the rule from src/season.js.
@@ -148,6 +205,8 @@ export function finishCrossing(save, c, landed) {
 // Landing a crossing: the area on the far side opens (and the ocean stepping stones count as 'ocean'), and the prize is paid ONCE. The sim calls this too (src/sim/progression.js), so the game and the sim pay the same.
 // Nothing here on a crash: the callers only come here after a landing. The lap pays only when you land back home.
 export function completeCrossing(save, c) {
+  save.crossPick = null;   // (V5) the next tier picks afresh
+  if (c.kind !== 'lap' && Number.isInteger(c.era)) save.crossTierLast = Math.max(save.crossTierLast ?? -1, c.era);
   const due = crossingPrizeDue(save, c);
   if (c.kind === 'lap') {   // the lap counts only when you land back HOME (the rules already moved save.city there)
     if (save.city !== c.to) return false;

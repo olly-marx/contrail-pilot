@@ -14,6 +14,7 @@ export const CROSSING_NAMES = {
   mediterranean: 'Mediterranean', 'silk-road': 'Silk Road', 'south-atlantic': 'South Atlantic', 'north-pacific': 'North Pacific', 'singapore-perth': 'Singapore',
   'indian-ocean': 'Indian Ocean', 'pacific-islands': 'Pacific Islands', 'honolulu-tokyo': 'Hawaii', 'nadi-auckland': 'Fiji', 'auckland-santiago': 'South Pacific', lap: 'Round the World',
 };
+for (const c of CROSSINGS) if (!CROSSING_NAMES[c.id] && c.name) CROSSING_NAMES[c.id] = c.name;   // (V5, 0.73.2) the new routes: their plain names
 export const MAX_DOTS = 6;   // the dots show at most six stops, then a plus (the HOME box does the same)
 
 // The crossing that opens an area: one of its crossings whose OTHER end is already open, else the first of its crossings on the ladder. null if it has none.

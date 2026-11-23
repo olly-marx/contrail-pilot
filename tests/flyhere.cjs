@@ -2,7 +2,7 @@
 //  1. away from the land, the land reachable: the land's city with the FEWEST hops from save.city (checked against every city of the land by pathTo), ties in the network's order.
 //  2. a land that spans areas (KARACHI is desert in South Asia): an Asia player gets KARACHI.
 //  3. in the land: 'here'.
-//  4. not reachable: the crossing on offer that opens a region holding one of its cities (Europe: ROME > TUNIS; North America: the route into Asia, not the first route on offer).
+//  4. not reachable: the crossing on offer that opens a region holding one of its cities (Europe: ROME > TUNIS; North America: none yet, V5: its next-tier route goes to South America).
 //  5. not reachable and no crossing on offer opens it: 'closed' with no crossing.
 // Plants: tools/plants.tsv, test `flyhere`. Run: node tests/flyhere.cjs
 globalThis.SEASON2 = true;
@@ -27,9 +27,9 @@ globalThis.SEASON2 = true;
   // 4. not reachable: the crossing that opens it
   { const ch = F.flyHereChoice(base({ city: 'ROME' }), 'desert'); check(ch && ch.kind === 'closed' && ch.from === 'ROME' && ch.to === 'TUNIS', `Europe only: cross ROME > TUNIS to reach the desert: ${JSON.stringify(ch)}`); }
   { const s = base({ homeArea: 'namerica', homeCity: 'DENVER', areas: ['namerica'], city: 'DENVER' }), up = X.upcoming(s), ch = F.flyHereChoice(s, 'desert');
-    check(up.length >= 2 && up[0].region !== 'asia', `power: North America has a route on offer before the one into Asia: ${up.map(u => u.region)}`);
-    const asia = up.find(u => u.region === 'asia');
-    check(ch && ch.kind === 'closed' && asia && ch.from === asia.from && ch.to === asia.to, `North America: the route into Asia (KARACHI is desert): ${JSON.stringify(ch)} vs ${asia && asia.from + '>' + asia.to}`); }
+    // V5 (0.73.2): only the routes at the NEXT tier count; from North America that is the Easy one into South America, so Asia's desert has no crossing yet.
+    check(up.length >= 1 && up.every(u => u.region !== 'asia'), `power: North America's next-tier routes do not go to Asia: ${up.map(u => u.region)}`);
+    check(ch && ch.kind === 'closed' && !ch.from, `North America: the desert (Asia) is closed with no crossing on offer yet: ${JSON.stringify(ch)}`); }
   // 5. nothing on offer opens it
   { const ch = F.flyHereChoice(base({ city: 'ROME' }), 'eastasia'); check(ch && ch.kind === 'closed' && ch.from === null && ch.to === null, `Europe only: no single crossing opens East Asia: ${JSON.stringify(ch)}`); }
   console.log(fails.length ? `FAIL flyhere:\n - ${fails.join('\n - ')}` : 'PASS flyhere: FLY HERE picks the land\'s nearest city by hops, says "here" in the land, and names the crossing that opens an unreachable land');

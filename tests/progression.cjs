@@ -79,7 +79,7 @@ const KEY = 'contrailPilot.v2';
   check(save.seeds === 200 && save.crystals === 10, `360 - 60 (Forecasting 1, the x0.6 hint price, x4) - 100 (magnet 1) should leave 200 seeds and 30 - 8 - 12 = 10 crystals, got ${save.seeds}, ${save.crystals}`);
   check(save.fleet.systems.forecast === 1 && save.fleet.gadgets.magnet === 1, `levels not saved: ${JSON.stringify(save.fleet)}`);
   check(await p.isDisabled('[data-fbuy="gadget:hold"]'), 'Cargo hold (100 seeds + 12 crystals) should be unaffordable with 10 crystals');
-  check(/^220\D+28$/.test((await p.textContent('[data-fbuy="gadget:magnet"]')).trim()), 'magnet level 2 should cost 220 seeds + 28 crystals');
+  check(/^220\D+30$/.test((await p.textContent('[data-fbuy="gadget:magnet"]')).trim()), 'magnet level 2 should cost 220 seeds + 30 crystals');
 
   // 4. The flight uses them: the Comet's CO2 is x1.1; Forecasting 1 reveals icy air from 60 px; magnet 1 grabs from 16 px.
   await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(2400);

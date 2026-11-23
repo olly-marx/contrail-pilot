@@ -1,10 +1,11 @@
 import { FEATURES, km, CLIMATE, FOREST, kNum } from './config.js';
 import { estimate } from './capability.js';
+import { upcoming as crossingsUpcoming, pickCrossing } from './crossings.js';
 import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
 import { routeFor, setGoto, clearGoto, arrivedGoto, gotoTarget, gotoHops, migrateAim, steerOf, activeMission, routeMode, stayLandLeft } from './aim.js';
 import { headingWord } from './network.js';
-import { AREAS, unlockedAreas, REGIONS, regionsOpen, opensName as regionOpensName } from './areas.js';
+import { AREAS, unlockedAreas, REGIONS, regionsOpen, opensName as regionOpensName, areaOf } from './areas.js';
 import { needsStartChoice, chooseStart, applyStart } from './startchoice.js';
 import { available as crossingsNow, readiness, moreToCome, laterEra } from './crossings.js';
 import { SEASON } from './season.js';
@@ -643,7 +644,13 @@ export class UI {
     this.noteOnlineReplaced();
     // (0.73.1) The plane's RANGE is what opens a crossing, so it is worked out on HOME too, not only in the hangar: a purchase, a new project or another area made the
     // saved estimate stale and the crossing card fell back to the best landed flight (Oliver, 2026-11-23: 'the crossing system seems totally broken'). Async; HOME redraws once.
-    if (FEATURES.season2 && this.save.tutorialDone && !this.capJob) { this.capJob = estimate(this.save, () => { this.capJob = false; this.persist(); if (!$('title').hidden) this.showTitle(); }); }
+    // (0.73.2, CROSSINGS V5) and from every departure area of the routes at the next tier (each route reads the plane over ITS land); one at a time, HOME redraws after each.
+    if (FEATURES.season2 && this.save.tutorialDone && !this.capJob) {
+      const again = () => { this.capJob = false; this.persist(); if (!$('title').hidden) this.showTitle(); };
+      this.capJob = estimate(this.save, again);
+      if (!this.capJob) for (const a of [...new Set(crossingsUpcoming(this.save).filter(c => c.kind !== 'lap').map(c => areaOf(c.from)).filter(Boolean))]) { if ((this.capJob = estimate(this.save, again, { area: a }))) break; }
+    }
+    if (FEATURES.season2 && this.save.tutorialDone) pickCrossing(this.save);   // the first ready route at the next tier becomes THE crossing (V5)
     $('tTrees').textContent = this.save.seeds;
     $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = km(this.save.bestDistance);

@@ -10,7 +10,7 @@
 //   estimate = the median, over every pair, of min(heat km, hazard km), rounded to 500 km.
 // Accuracy against 20 crashes-on flights: see src/cappool.js (+0.2% .. +14%; tests/capability.cjs holds it to 20%: the bare twin sits at +15%).
 //   capKey(save) / capFor(save, area) / estimate(save, onDone) / estimating() / combine(heats, pool) / estimateNow(save)
-import { areaOf } from './areas.js';
+import { areaOf, AREAS } from './areas.js';
 import { HAZARD_POOLS } from './cappool.js';
 import { fleetOf, planeById } from './fleet.js';
 export const CAP = { heatSeeds: [1, 2, 3], roundKm: 500, msPerFrame: 6, maxKm: 60000, hazards: false, v: 2 };   // v: bumped so saved estimates (capKey) are made again
@@ -21,6 +21,11 @@ export const capKey = save => hash(JSON.stringify([save.fleet || null, save.leve
 // so a crossing the plane could fly dropped back to 'More range' after any purchase. capFresh says whether it is up to date.
 export const capFor = save => { const c = save.capability; return c && Number.isFinite(c.km) ? c.km : 0; };
 export const capFresh = save => !!(save.capability && save.capability.key === capKey(save));
+// (0.73.2, CROSSINGS V5) The range FROM an area: the plane over THAT area's land (its nature cools the flight). save.capArea[area] = { km, key }; the area the player is in
+// also has save.capability. A save placed in the area's start city is what the estimate flies.
+export const atArea = (save, area) => (AREAS[area] && areaOf(save.city) !== area ? { ...save, city: AREAS[area].start } : save);
+export const capForArea = (save, area) => { const c = (save.capArea || {})[area]; return c && Number.isFinite(c.km) ? c.km : area && area === areaOf(save.city) ? capFor(save) : 0; };
+export const capAreaFresh = (save, area) => { const c = (save.capArea || {})[area]; return !!c && c.key === capKey(atArea(save, area)); };
 export const roundCap = km => Math.round(km / CAP.roundKm) * CAP.roundKm;
 // The pool for the plane you fly (an era without its own pool yet uses the nearest earlier one).
 export const poolFor = save => { const p = planeById(fleetOf(save).plane), era = p ? p.era : 0;
@@ -40,18 +45,23 @@ export async function estimateNow(save) {
 }
 
 let job = null;   // one estimate at a time; a newer save state replaces it
-const store = (save, key, heats, onDone) => { save.capability = { km: combine(heats, poolFor(save)), key, area: areaOf(save.city) || null }; onDone && onDone(save.capability.km); };
-export function estimate(save, onDone, { frame = cb => (typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame(cb) : setTimeout(cb, 16)), worker = typeof Worker !== 'undefined' } = {}) {
-  const key = capKey(save);
-  if (save.capability && save.capability.key === key) return false;   // up to date
+const store = (save, key, heats, onDone, area = null) => {
+  const km = combine(heats, poolFor(save));
+  if (area) { save.capArea = { ...(save.capArea || {}), [area]: { km, key } }; if (area === areaOf(save.city)) save.capability = { km, key, area }; }
+  else { save.capability = { km, key, area: areaOf(save.city) || null }; const a = areaOf(save.city); if (a) save.capArea = { ...(save.capArea || {}), [a]: { km, key } }; }
+  onDone && onDone(km); };
+// estimate(save, onDone, { area }): the range from `area` (default: where the player is). false when already up to date.
+export function estimate(save, onDone, { frame = cb => (typeof requestAnimationFrame !== 'undefined' ? requestAnimationFrame(cb) : setTimeout(cb, 16)), worker = typeof Worker !== 'undefined', area = null } = {}) {
+  const view = area ? atArea(save, area) : save, key = capKey(view);
+  if (area ? capAreaFresh(save, area) : save.capability && save.capability.key === key) return false;   // up to date
   if (job && job.key === key) return true;                            // already running
-  const copy = JSON.parse(JSON.stringify(save));                       // the sim never touches the real save
+  const copy = JSON.parse(JSON.stringify(view));                       // the sim never touches the real save
   const me = job = { key };
   if (worker) {
     try {
       const w = new Worker(new URL('./capworker.js', import.meta.url), { type: 'module' });
-      w.onmessage = e => { w.terminate(); if (job !== me) return; job = null; store(save, key, e.data.runs, onDone); };
-      w.onerror = () => { w.terminate(); if (job === me) { job = null; estimate(save, onDone, { frame, worker: false }); } };
+      w.onmessage = e => { w.terminate(); if (job !== me) return; job = null; store(save, key, e.data.runs, onDone, area); };
+      w.onerror = () => { w.terminate(); if (job === me) { job = null; estimate(save, onDone, { frame, worker: false, area }); } };
       w.postMessage({ save: copy, opts: heatOpts(), season2: !!globalThis.SEASON2 });
       return true;
     } catch (e) { /* no module workers here: fall back to slices */ }
@@ -64,7 +74,7 @@ export function estimate(save, onDone, { frame = cb => (typeof requestAnimationF
       if (job !== me) return;                                          // replaced by a newer estimate
       const r = run.run(CAP.msPerFrame);
       if (!r) { frame(tick); return; }
-      job = null; store(save, key, r.careful.runs, onDone);
+      job = null; store(save, key, r.careful.runs, onDone, area);
     };
     frame(tick);
   });

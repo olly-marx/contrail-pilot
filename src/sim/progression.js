@@ -14,7 +14,7 @@
 import { createWorld } from './world.js';
 import { makePlayer } from './player.js';
 import { capability } from './simulate.js';
-import { CAP, combine, poolFor, capKey } from '../capability.js';
+import { CAP, combine, poolFor, capKey, atArea } from '../capability.js';
 import { makeRng } from './rng.js';
 import { CLIMATE } from '../config.js';
 import { nextBuys, canAfford, buyFleet, fleetOf, choosePlane, PLANES } from '../fleet.js';
@@ -27,7 +27,7 @@ import { city } from '../route.js';
 import { SEASON2_ON } from '../cities.js';
 import { SEASON } from '../season.js';
 import { AREAS, areaOf } from '../areas.js';
-import { available, offerCheck, offerCtx, completeCrossing, readiness } from '../crossings.js';
+import { available, upcoming, offerCheck, offerCtx, completeCrossing, readiness, pickCrossing } from '../crossings.js';
 import { onSave as missionsOnSave } from '../missions2.js';
 
 // Test switches (tests/sim-progression-s2.cjs plants each; it must FAIL): noready = offer the first available crossing even when
@@ -105,7 +105,11 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
     // The hangar's RANGE as the game keeps it (0.73.0: crossings open on range alone): worked out on the first flight and every `every`, stored like
     // src/capability.js estimate does (save.capability, keyed; a purchase makes it stale until the next one). Season 2 only (the classic rule below has its own).
     if (s2 && (n === 1 || n % every === 0)) { const runs = capability(save, { pilots: ['careful'], seeds: CAP.heatSeeds, maxKm: CAP.maxKm }).careful.runs;
-      save.capability = { km: combine(runs, poolFor(save)), key: capKey(save), area: areaOf(save.city) || null }; }
+      save.capability = { km: combine(runs, poolFor(save)), key: capKey(save), area: areaOf(save.city) || null };
+      // V5 (0.73.2): and from each departure area of the routes at the next tier (each route reads the plane over its own land), as HOME does.
+      for (const ar of [...new Set(upcoming(save).filter(c => c.kind !== 'lap').map(c => areaOf(c.from)).filter(Boolean))]) {
+        const v = atArea(save, ar), r2 = capability(v, { pilots: ['careful'], seeds: CAP.heatSeeds, maxKm: CAP.maxKm }).careful.runs;
+        save.capArea = { ...(save.capArea || {}), [ar]: { km: combine(r2, poolFor(v)), key: capKey(v) } }; } }
     if (beforeFlight) beforeFlight(save, n);
     const home = (city(save.city) || {}).region, homeBio = REGION_DATA[home] ? biodiversity(save, home) : biodiversity(save);
     let c2 = null, crossing = 0;
@@ -119,6 +123,7 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
       if (k && k !== areaOf(save.city) && AREAS[k]) save.city = AREAS[k].start;
     }
     if (s2) {
+      pickCrossing(save);   // V5: the first ready route at the next tier is THE crossing, as HOME does
       c2 = available(save).find(c => PROG_PLANTS.noready || readiness(save, c).ready) || null;   // the game's rule (ui.js: readiness(s, c).ready): era, plane, nature; not the departure area's stars
       if (c2) { save.flyCrossing = c2; crossing = c2.km; }
     } else {

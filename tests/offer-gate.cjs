@@ -27,14 +27,14 @@
   check(!ok(base), 'a fresh save is not offered the crossing');
   check(!ok(fly(green, need - 1)), `a flight of ${need - 1} km (just under the crossing) is not enough, whatever the nature`);
   check(ok(fly(base, need)), `${need} km (the whole crossing) offers it with no nature and no starred missions`);
-  check(ok({ ...base, missionsDone: [], areaBest: { nordic: need } }), 'a long flight from ANOTHER area counts (range is status, not location)');
+  check(!ok({ ...base, missionsDone: [], areaBest: { nordic: need } }), 'V5 (0.73.2): a long flight from ANOTHER area does not count: the range is the plane over the DEPARTURE land');
   // recordAreaBest keeps the best, per area, and ignores nothing-flights
   const r = fly(fly(base, 4000), 2500); check(r.areaBest.weurope === 4000, `areaBest keeps the longest: ${JSON.stringify(r.areaBest)}`);
   check(!fly(base, 0).areaBest, 'a 0 km flight records nothing');
   // maxEra 5 (the era 6 release): every era is in; the lap is offered only once every area is open (tests/lap.cjs)...
   const na = { ...base, areas: ['namerica'], city: 'DENVER' };
   const ids = X.available(na).map(x => x.id);
-  check(ids.length === 1 && ids[0] === 'caribbean', `a North American save is offered ONE crossing, its shortest (the Caribbean, Medium): ${ids}`);
+  check(ids.length === 1 && ids[0] === 'miami-panama', `a North American save is offered ONE crossing at the first tier (V5: Miami to Panama, Easy): ${ids}`);
   check(!ids.includes('lap') && X.available(na).every(x => x.era <= SEASON.maxEra), `the lap is not offered with one area open: ${ids}`);
   check(SEASON.maxEra === 5, `the era 6 release has every era: maxEra ${SEASON.maxEra}`);
   // ...and when everything of this release is flown, a placeholder instead of an empty screen

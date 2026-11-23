@@ -311,7 +311,10 @@ export const COLOURS = {
 // is scaled by this so the pace stays as measured; existing banks are scaled once (src/save.js, priceVersion 3).
 export const PRICE_SCALE = { seeds: 4, crystals: 4, version: 3 };   // 0.73.1 (Oliver: 'everything is so expensive now'): x4 / x4. Upgrades a flight in the progression sim vs 0.72: x8/x7 about half,
 // x6/x5 (0.73.0) 0.92 / 0.76 in flights 1-25 / 26-70, x4/x4 1.04 / 0.89 (0.72: 1.08 / 1.11). Banks scaled x6/x5 at 0.73.0 are left as they are (players keep the gain).
-export const scaleSeeds = n => (n >= 50 ? Math.round(n * PRICE_SCALE.seeds / 10) * 10 : Math.round(n * PRICE_SCALE.seeds / 5) * 5);
-export const scaleCrystals = n => Math.round(n * PRICE_SCALE.crystals);
+// Clean numbers (Oliver, 2026-11-23: 'round the costs to 5s and 10s and 100s and 1000s ... it's ugly now'): under 20 as they are, under 100 to 5, under 1,000 to 10,
+// under 10,000 to 100, then to 1,000.
+export const niceRound = n => { const step = n < 20 ? 1 : n < 100 ? 5 : n < 1000 ? 10 : n < 10000 ? 100 : 1000; return Math.max(step === 1 ? 0 : step, Math.round(n / step) * step); };
+export const scaleSeeds = n => niceRound(n * PRICE_SCALE.seeds);
+export const scaleCrystals = n => niceRound(n * PRICE_SCALE.crystals);
 // A price in a row: 10,000 and over as '10.8k' (0.73.0: scaled prices reach five digits and did not fit a 375 px row, tests/rowfit).
 export const kNum = (n, from = 10000) => (n >= from ? (n >= 10000 ? `${Math.round(n / 1000)}k` : `${(n / 1000).toFixed(n % 1000 ? 1 : 0)}k`) : String(n));   // 10,800 -> '11k', crystals 1,125 -> '1.1k': a row's price must fit 375 px (tests/rowfit)   // crystals shorten from 1,000 (kNum(c, 1000))

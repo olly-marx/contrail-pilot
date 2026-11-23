@@ -895,7 +895,7 @@ cityrow	src/sim/rules.js	s/return Math.max(0, Math.min(1, 1 - (d - STORMS.spacin
 cityrow	src/sim/rules.js	s/const d = Math.min(Math.abs(ahead - this.distancePx), Math.abs(this.distancePx - behind));/const d = Math.abs(ahead - this.distancePx);/	only the next city shows its buildings
 cityrowui	src/GameScene.js	s/    this.city.setAlpha(this.cityRowAlpha());/    this.city.setAlpha(1);/	the game ignores the rule
 
-crossladder	src/crossings.js	s/  return eraGate ? out.slice(0, 1) : out;/  return out;/	every route is on offer at once again
+crossladder	src/crossings.js	s/  return ready ? \[ready\] : here.slice(0, 1);/  return here;/	every route at the tier is on offer at once again
 crossladder	src/areas.js	s/^export const withRegions = keys => .*$/export const withRegions = keys => [...(keys || [])];/	an open area no longer opens its whole region
 missions4	src/missions2.js	s/  const crossings = Math.max(0, regionsOpen(withRegions(save.areas || \[\])).length - 1);/  const crossings = Math.max(0, (save.areas || []).length - 1);/	a fresh Europe start (two areas) skips the lessons
 finance	src/finance.js	s/curve: 4,/curve: 1,/	the gap closes evenly, not steep early
@@ -907,7 +907,7 @@ badgefont	style.css	s/^\.tab\.on { grid-column: span 2; font-size: 8px;/.tab.on 
 naturefold	style.css	s#^\.wpin \.wscene { width: calc(100% - 6px); }$#@media (max-height: 760px) { .wpin .wscene { width: 70%; margin: 0 auto; } }#	the land's picture is 70 percent wide on short phones again
 keepvisible	style.css	s/^@media (max-height: 760px) { \.wpin { position: static; box-shadow: none; } }$//	NATURE's land stays pinned on short phones again (it covers half the screen at full width)
 crossladder	src/crossings.js	s/(SEASON.step \&\& SEASON.step.km\[c.era\]) || SEASON.crossingKm\[c.era + 1\]/SEASON.crossingKm[c.era + 1]/	the length lever does nothing
-crossladder	src/crossings.js	s/  out.sort((a, b) => a.km - b.km);/  out.sort((a, b) => b.km - a.km);/	the offer is the longest route, not the shortest
+crossladder	src/crossings.js	s/  const up = tiers.find(t => t >= n);/  const up = tiers[0];/	the ladder offers the lowest tier again (not higher than the last)
 stucktouch	src/main.js	s/^watchStaleTouches(game);/if (false) watchStaleTouches(game);/	stuck finger guard off
 touchfree	src/touchfree.js	s/if (!q || !q.active || on.has(q.identifier)) continue;/if (!q || !q.active) continue;/	a finger still down is released too
 touchfree	src/touchfree.js	s/for (let i = 1; i < (pointers/for (let i = 0; i < (pointers/	the mouse pointer is released too
@@ -956,7 +956,7 @@ morechips	src/wild.js	s/^    this\.speciesInfo(id);$/    void 0;/	the animal's i
 morechips	style.css	s/^\.rc-gcard { display: flex;\(.*\)min-height: 64px; padding: 6px 2px;/.rc-gcard { display: flex;\1min-height: 30px; padding: 0 2px; height: 30px; overflow: hidden;/	grid cards smaller than a tap
 morechips	src/resultscard.js	s/full: t, name: f.short, body: t/full: t, body: t/	a first's card has no name under it
 crosscard	src/crossingview.js	s/where: 'hangar', done: rd.plane, frac: pp,/where: 'hangar', done: rd.plane, frac: 1 - pp,/	the range bar fills the wrong way
-crosscard	src/crossings.js	s/  return eraGate ? out.slice(0, 1) : out;/  return out;/	every crossing on offer at once again (several cards)
+crossladder	src/crossings.js	s/  const picked = save.crossPick \&\& here.find(c => c.id === save.crossPick);/  const picked = null;/	the picked crossing is not kept (another at its tier can take over)
 crosscard	src/lessons.js	s/done: s => tour(s, 'r-cross') || (s.crossed || \[\]).length > 0/done: s => tour(s, 'r-cross') || (s.areas || []).length > 1/	a two-area home region finishes the crossings lesson again
 crosscard-ui	src/ui.js	s/(c.ready ? (c.multi ? '<button class="btn go xc-fly"/(false ? (c.multi ? '<button class="btn go xc-fly"/	a ready card has no FLY A CROSSING / FLY THE CROSSING
 crosscard-ui	src/ui.js	s/if (fly) this.flyCrossing(cs); else this.openCrossings/if (true) this.flyCrossing(cs); else this.openCrossings/	a pick on MISSIONS starts the flight with no CROSSINGS screen
