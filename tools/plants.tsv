@@ -994,5 +994,5 @@ newdot	src/fresh.js	s/if (financeOpen(save)) { add(.hangar\/bank., .bank:open.);
 bank	src/hangar.js	s/...(financeOpen(s) ? \[\['bank', 'BANK'\]\] : \[\])/...(false ? [['bank', 'BANK']] : [])/	no BANK tab: the desk is unreachable
 bank	src/hangar.js	s/if (trade(s, this.finAmt(s, 'buy'))) done();/if (trade(s, 1)) done();/	BUY ignores the amount picked
 bank	src/finance.js	s/maxBuy(save) ? null : `Need ${rate(save)} seeds for a crystal`/maxBuy(save) ? null : 'Buy after your next landing'/	the greyed buy button talks about landings again
-ascprune	tools/asc-prune-certs.mjs	s/if (a.certificateType !== PRUNE.type || a.name !== PRUNE.name) return false;/if (a.certificateType !== PRUNE.type) return false;/	any development certificate is revoked, whatever its name
-ascprune	tools/asc-prune-certs.mjs	s/now - made >= minAgeH \* 36e5/true/	a certificate made minutes ago is revoked
+ascprune	tools/asc-prune-certs.mjs	s/export const newCerts = (certs, before) => certs.filter(c => ours(c) \&\& !before.includes(c.id));/export const newCerts = (certs, before) => certs.filter(c => ours(c));/	every CI certificate is revoked, Word Journey's too
+ascprune	tools/asc-prune-certs.mjs	s/return a.certificateType === PRUNE.type \&\& a.name === PRUNE.name; };/return a.certificateType !== 'X'; };/	any certificate counts as CI's, the distribution one too
