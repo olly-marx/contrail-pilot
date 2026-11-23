@@ -98,10 +98,14 @@ export function landMeter(save, region = 'woodland', grownOnly = GROWN_METER.on,
   const out = v => (exact ? Math.min(100, v) : Math.min(100, Math.round(v)));
   let b = 0;
   const book = grownOnly ? grownBook : treeBook, landOnly = p => !WATERWAYS.on || !isWaterProject(region, p.id);
+  // The trees' share of the land part stays what it was when the meter was all land (TREES_MAX against ALL the UK's project points: ~41 of 100); the land projects fill the rest.
+  const treeShare = TREES_MAX / (TREES_MAX + PROJECTS.reduce((a, p) => a + p.bio, 0));
   if (region === 'woodland') {
-    for (const [id, n] of Object.entries(book(save, 'woodland'))) b += speciesPoints(id, n);
-    for (const p of projectsDone(save).filter(landOnly)) b += p.bio;
-    return out(b * 100 / (TREES_MAX + PROJECTS.filter(landOnly).reduce((a, p) => a + p.bio, 0)));
+    let t = 0, pr = 0;
+    for (const [id, n] of Object.entries(book(save, 'woodland'))) t += speciesPoints(id, n);
+    for (const p of projectsDone(save).filter(landOnly)) pr += p.bio;
+    const allBio = PROJECTS.filter(landOnly).reduce((a, p) => a + p.bio, 0);
+    return out(100 * (treeShare * Math.min(1, t / TREES_MAX) + (1 - treeShare) * (allBio ? Math.min(1, pr / allBio) : 0)));
   }
   if (!REGION_DATA[region]) return 0;   // the sea and the ice (src/geo.js) have no projects
   // Elsewhere: that region's trees (as the UK's: ~40 of 100) plus its land projects.
@@ -111,7 +115,7 @@ export function landMeter(save, region = 'woodland', grownOnly = GROWN_METER.on,
   for (const p of projectsDone(save, region).filter(landOnly)) pr += p.bio * projectWeight(all, p);
   // The trees' share of the land part is the UK's (TREES_MAX against the UK's land projects, ~40 of 100); the projects fill the rest. (Until 0.73.0 the trees' raw points were set
   // against TREES_MAX x the land's project points / the UK's, so a land with more project points than the UK could never fill its meter: the desert topped out at 80.)
-  const ukLand = PROJECTS.filter(p => !WATERWAYS.on || !isWaterProject('woodland', p.id)).reduce((a, p) => a + p.bio, 0), treeShare = TREES_MAX / (TREES_MAX + ukLand);
+
   const allBio = all.reduce((a, p) => a + p.bio, 0);
   return out(100 * (treeShare * Math.min(1, t / TREES_MAX) + (1 - treeShare) * (allBio ? Math.min(1, pr / allBio) : 0)));
 }
@@ -167,7 +171,8 @@ export function regionSpecies(region) {
 }
 export const canAppear = (save, id, region = 'woodland') => {
   const c = REGION_DATA[region] && REGION_DATA[region].species[id], done = projectsDone(save, region).map(p => p.id);
-  return !!c && c.needs.every(n => done.includes(n)) && biodiversity(save, region) >= c.bio && (!GROWN_METER.on || animalsAwake(save, region)); };
+  // (0.73.0) an animal's threshold reads the LAND part or the whole meter, whichever is higher: the land share must not push an animal out of reach (the waterways plan)
+  return !!c && c.needs.every(n => done.includes(n)) && Math.max(landMeter(save, region), biodiversity(save, region)) >= c.bio && (!GROWN_METER.on || animalsAwake(save, region)); };
 // GROWN_METER (step 4): a land's animals wait for its first fully grown tree; a land where an animal was already found counts as awake (the grandfather rule: nothing seen disappears).
 export const animalsAwake = (save, region) => Object.values(grownBook(save, region)).some(n => n > 0)
   || regionSpecies(region).some(w => (save.found || {})[w.id] && !['cow', 'sheep'].includes(w.id));

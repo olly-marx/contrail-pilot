@@ -65,10 +65,11 @@ const KEY = 'contrailPilot.v2';
   const rar = await p.evaluate(async () => { const n = await import('./src/nature.js'), save = game.registry.get('save');
     const rich = { ...save, habitat: { woodland: ['deadwood', 'meadow', 'margins', 'hedgerow', 'pond', 'woodland', 'voles', 'beavers', 'rewet', 'storks', 'martens'] }, planted: { oak: 40, birch: 40, rowan: 40, orchard: 40, spruce: 40 } };
     const W = n.wildlifeScene(rich), count = (km, k) => { const c = {}; for (let i = 0; i < 3000; i++) { const x = W.pickWild(km); c[x] = (c[x] || 0) + 1; } return c; };
-    return { early: count(500), far: count(20000), bio: n.biodiversity(rich), lone: n.biodiversity({ planted: { oak: 40, birch: 40, rowan: 40, orchard: 40, spruce: 40 } }) }; });
+    const wet = { ...rich, waterBook: { woodland: Object.fromEntries((await import('./src/waterways.js')).dropsOf('woodland').map(d => [d.id, 6])) } };
+    return { early: count(500), far: count(20000), bio: n.biodiversity(wet), land: n.landMeter(rich), lone: n.landMeter({ planted: { oak: 40, birch: 40, rowan: 40, orchard: 40, spruce: 40 } }) }; });
   check(!rar.early['animal-otter'] && !rar.early['animal-squirrel'] && !rar.early['animal-deer'] && rar.early['animal-rabbit'] > 0, `early in a flight: no rare animals: ${JSON.stringify(rar.early)}`);
   check(rar.far['animal-otter'] > 0 && rar.far['animal-otter'] < rar.far['animal-rabbit'] / 5, `far in a flight: rare ones appear, but much less often than common: ${JSON.stringify(rar.far)}`);
-  check(rar.bio === 100 && rar.lone >= 35 && rar.lone <= 45, `the meter: everything = 100; trees alone ~40: ${rar.bio}, ${rar.lone}`);
+  check(rar.bio === 100 && rar.land === 100 && rar.lone >= 35 && rar.lone <= 45, `the meter (0.73.0: land + water): everything with the water drops = 100, the land part 100; trees alone ~40 of the land part: ${rar.bio}, ${rar.land}, ${rar.lone}`);
 
   // 5. Found: only in a real flight, once. Then the collection counts it and shows its page with a source.
   await p.evaluate(() => game.scene.getScene('game').seen('sky-robin'));   // on the menu: not a flight

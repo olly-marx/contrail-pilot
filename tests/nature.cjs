@@ -53,7 +53,7 @@ const KEY = 'contrailPilot.v2';
   const save = await getSave();
   const after = await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(JSON.parse(localStorage.getItem('contrailPilot.v2'))));
   check(save.habitat.woodland.join() === 'meadow' && save.seeds === 1020 && save.crystals === 5, `meadow should cost 180 seeds + 20 crystals (30 + 4 x the 0.73.0 PRICE SCALE) and be bought, got ${JSON.stringify(save.habitat)} seeds ${save.seeds} crystals ${save.crystals}`);
-  check(Math.abs((after - before) - 8 * 100 / 192) <= 1, `meadow should add ~4 Biodiversity (8 of 192 points: 100 = everything), added ${after - before}`);
+  check(Math.abs((after - before) - 0.6 * (114 / 192) * 8 / 67 * 100) <= 1, `meadow should add ~4 Biodiversity (8 of the UK's 67 land-project points, the projects' 114/192 of the land part, x its land share 60%; 0.73.0), added ${after - before}`);
 
   // 4. The meadow shows up in the world as flowers in the grass.
   await p.click('#tabFly'); await p.click('#goBtn'); await started(p); await p.waitForTimeout(800);
