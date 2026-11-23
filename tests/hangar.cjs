@@ -188,11 +188,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.close();
 
   // 3. Short of crystals: the button is grey and says what is missing.
-  p = await open(1);   // 7 short of magnet 3's 8 crystals
+  p = await open(1);   // 39 short of magnet 3's 40 crystals (8 x the 0.73.0 PRICE SCALE)
   await p.click('#tabHangar'); await p.waitForTimeout(300); await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
   check(await p.isDisabled('[data-fbuy="gadget:magnet"]'), 'short of crystals: BUY should be grey');
   await p.click('[data-ftap="gadget:magnet"]'); await p.waitForTimeout(300);
-  check(/need 7 more/.test(await p.textContent('#hPreview')), `short of crystals: the strip should say "need 7 more": "${await p.textContent('#hPreview')}"`);
+  check(/need 39 more/.test(await p.textContent('#hPreview')), `short of crystals: the strip should say "need 39 more": "${await p.textContent('#hPreview')}"`);
   await p.close();
 
   await b.close();

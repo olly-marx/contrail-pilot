@@ -121,7 +121,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
   await p.click('#tabMissions'); await p.waitForTimeout(600);
   const ml = await p.evaluate(() => document.getElementById('mList').innerText);
   if (SHOTS) await p.screenshot({ path: `${SHOTS}/missions-empty.png` });
-  check(/All done here/.test(ml) && !/Fly a crossing to a new area/.test(ml) && /CROSSINGS[\s\S]*Era[\s\S]*Plane[\s\S]*Nature|Ready!|new eras|MORE TO COME/.test(ml), `an empty missions list says what a crossing still needs, not "fly a crossing" (${JSON.stringify(ml.slice(0, 160))})`);
+  check(/All done here/.test(ml) && !/Fly a crossing to a new area/.test(ml) && /CROSSINGS[\s\S]*Range|CROSSINGS[\s\S]*Era[\s\S]*Plane[\s\S]*Nature|Ready!|new eras|MORE TO COME/.test(ml), `an empty missions list says what a crossing still needs, not "fly a crossing" (${JSON.stringify(ml.slice(0, 160))})`);
   check(!p.errs.length, `missions page errors: ${p.errs}`); await p.close();
 
   // "tap to skip" on a small phone, during the results reveal.

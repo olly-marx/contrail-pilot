@@ -55,7 +55,7 @@ const KEY = 'contrailPilot.v2';
   const meters = await p.evaluate(async () => { const n = await import('./src/nature.js'), sv = game.registry.get('save');
     return { uk: n.biodiversity(sv), med: n.biodiversity(sv, 'mediterranean'), des: n.biodiversity(sv, 'desert') }; });
   check(meters.med > 0 && meters.des === 0 && meters.uk === (await p.evaluate(async () => (await import('./src/nature.js')).biodiversity(game.registry.get('save')))), `one meter per region: ${JSON.stringify(meters)}`);
-  const fill = await p.evaluate(() => document.querySelector('#wMeter .mfill').style.width);
+  const fill = await p.evaluate(() => document.querySelector('#wMeter .mfill-total').style.width);
   check(fill === `${meters.med}%`, `the meter shown is the region's own: ${fill} vs ${meters.med}%`);
   check(await p.isVisible('#wTrees'), 'the planting tools are on every land, not only the home land (the user, 2026-11-09)');
 

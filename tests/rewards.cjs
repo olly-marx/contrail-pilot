@@ -35,7 +35,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await fly(); let r = await end(true);
   let s = await save();
   check(r.rewards.map(x => x.key).join() === 'mission:land', `the flight earned mission 1's prize: ${JSON.stringify(r.rewards)}`);
-  check(s.seeds === 115 && s.crystals === 11 && (s.unclaimed || []).length === 0, `paid exactly +15 +1 AT THE BANK, before any tap, and saved: ${s.seeds} / ${s.crystals}, left ${JSON.stringify(s.unclaimed)}`);
+  check(s.seeds === 115 + (r.gained || 0) && s.crystals === 11 + (r.crystals || 0) && (s.unclaimed || []).length === 0, `paid exactly +15 +1 AT THE BANK (on top of the flight's own seeds and crystals: fares and distance crystals since 0.73.0), before any tap, and saved: ${s.seeds} / ${s.crystals}, left ${JSON.stringify(s.unclaimed)}`);
   await p.waitForTimeout(1200); await p.mouse.click(195, 400); await p.waitForTimeout(600);
   const line = await p.textContent('#rMission');
   check(!(await p.$('#rRewards')) && !(await p.$('.claim')) && /\+15/.test(line), `the card shows the prize on one line and no CLAIM button: "${line}"`);
