@@ -1,5 +1,23 @@
 [
   {
+    "id": "2026-11-23-stories-balance-waterways",
+    "version": "0.73.0",
+    "date": "2026-11-23",
+    "level": "major",
+    "notes": [
+      "Story missions: real tasks with a story, sized for your plane, that pay a lot.",
+      "A simpler flight screen: one bar shows where you are heading.",
+      "Passenger fares now pay on every landing: longer flights and bigger planes earn more.",
+      "Prices are bigger to match, and your savings were scaled up the same way.",
+      "A crash keeps your ice crystals. Running off the runway loses the fares and the bonus.",
+      "Each crossing has its own difficulty, and it opens when your plane can fly that far. Crossings pay much more.",
+      "Your plane's range now grows with every upgrade.",
+      "Each land's nature is part land and part water. Once its trees are full, drop life into its rivers and seas, and fund water projects that pay you back.",
+      "Coastlines have a beach now, fish jump in the water, and sea animals stay in the sea.",
+      "Trees no longer grow in front of runways."
+    ]
+  },
+  {
     "id": "2026-11-20-one-crossing-apps",
     "version": "0.72.0",
     "date": "2026-11-20",
