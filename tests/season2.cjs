@@ -19,7 +19,7 @@ const KEY = 'contrailPilot.v2';
   const online = []; p.on('request', r => { if (/supabase\.co/.test(r.url())) online.push(r.url()); });
   await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
   const errs = []; p.on('pageerror', e => errs.push(String(e)));
-  const REAL = { tutorialDone: true, muted: true, seenTips: ['*'], tours: ['*'], seeds: 777, crystals: 42, flights: 50, landings: 12, priceVersion: 2,
+  const REAL = { tutorialDone: true, muted: true, seenTips: ['*'], crossMomentTest: true, tours: ['*'], seeds: 777, crystals: 42, flights: 50, landings: 12, priceVersion: 2,
     fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } };
   await p.goto(URL); await ready(p);
   await p.evaluate(([k, s]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(s)); }, [KEY, REAL]);
@@ -67,7 +67,7 @@ const KEY = 'contrailPilot.v2';
   check(JSON.stringify(st.areas) === '["africa","mideast"]' && st.city === 'LAGOS' && st.gone && st.out.length === 0, `start in Lagos: Africa & the Middle East opens, and the flights stay in that region: ${JSON.stringify(st)}`);
   // 2d. M3: the crossing. Without the gates met it only says what it needs; with ?s2unlock=1 (preview debug) it can be
   // flown: one leg of 7,000 km to Tunis with a progress bar; landing it opens Africa & the Middle East.
-  await p.evaluate(async () => { const s = game.registry.get('save'); Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', tutorialDone: true, seenTips: ['*'], tours: ['*'] });
+  await p.evaluate(async () => { const s = game.registry.get('save'); Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', tutorialDone: true, seenTips: ['*'], crossMomentTest: true, tours: ['*'] });
     (await import('/src/save.js')).writeSave(s); });
   await p.goto(URL); await ready(p);
   await p.evaluate(() => game.registry.get('ui').showTitle());

@@ -13,14 +13,14 @@ export const UNLOCK_KICKER = 'CROSSING UNLOCKED!';
 export function unlockText(cs, first = false, choices = null) {
   if (choices) return {   // several crossings ready at once (Oliver, 2026-11-20): no one destination; WHERE TO? opens 'Where would you like to go?'
     kicker: UNLOCK_KICKER, title: 'You can cross to a new land!', route: [cs.from, '?'],
-    tag: `You have met every need: Era, Plane and Nature. Pick one of ${choices.choices.length} long flights with no stops.`,
+    tag: `Your plane's range reaches them. Pick one of ${choices.choices.length} long flights with no stops.`,
     note: first ? 'Missions do not count on a crossing: just get there.' : '', go: 'WHERE TO?', later: 'LATER', opens: choices.opens.replace(/^Opens /, ''),
   };
   return {
     kicker: UNLOCK_KICKER,
     title: `You can cross to ${cs.to}!`,
     route: [cs.from, cs.to],
-    tag: 'You have met every need: Era, Plane and Nature. Now one long flight with no stops.',
+    tag: 'Your plane can now fly this far. One long flight with no stops.',
     note: first ? 'Missions do not count on a crossing: just get there.' : '',
     go: 'FLY THE CROSSING', later: 'LATER',
   };

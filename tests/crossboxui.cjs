@@ -7,7 +7,7 @@
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
 const URL = process.env.URL || 'http://localhost:8000/';
-const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'ROME', city: 'ROME', visited: ['ROME'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], tours: ['*'], freeGiven: true, freeProjectGiven: true,
+const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'ROME', city: 'ROME', visited: ['ROME'], tutorialDone: true, muted: true, priceVersion: 2, seenTips: ['*'], crossMomentTest: true, tours: ['*'], freeGiven: true, freeProjectGiven: true,
   freeUpgrade: false, landings: 12, flights: 20, seeds: 0, crystals: 0, areaBest: { weurope: 99999 }, missionsDone: lessons ? ['L1', 'L2', 'L3', 'L4', 'L5'] : ['L1'], fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
 (async () => {
   const b = await chromium.launch({ executablePath: process.env.CHROME || '/usr/bin/google-chrome' });

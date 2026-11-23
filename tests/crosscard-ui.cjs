@@ -38,7 +38,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
   for (const [W, H] of [[390, 844], [320, 568]]) {
     const tag = `${W}x${H}`;
     // A. Not ready.
-    let p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], bestDistance: 3000 }, W, H, { ...SETUP, arg: 5 });
+    let p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], crossMomentTest: true, bestDistance: 3000 }, W, H, { ...SETUP, arg: 5 });
     await p.tap('#tabMissions'); await p.waitForTimeout(600);
     let cards = await cardsOf(p), text = await list(p);
     check(cards.length === 1 && cards[0].route === '3 WAYS TO CROSS', `${tag} A: ONE card for the three crossings: ${JSON.stringify(cards.map(c => c.route))}`);
@@ -53,7 +53,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     await p.close();
 
     // B. Ready.
-    p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], bestDistance: 99999 }, W, H, { ...SETUP, arg: 9 });
+    p = await open({ ...BASE, tours: ['*'], seenTips: ['*'], crossMomentTest: true, bestDistance: 99999 }, W, H, { ...SETUP, arg: 9 });
     await p.tap('#tabMissions'); await p.waitForTimeout(600);
     const sheetUp = await p.evaluate(() => !!document.getElementById('sheet'));
     if (sheetUp) { await p.tap('#sheet .sheet-ok'); await p.waitForTimeout(300); }   // (the one-time moment may come by itself: it is not this test's subject)

@@ -82,7 +82,7 @@ export const TIPS = {
   'board-results':   { say: 'After each flight, tap the Earth line to see what warmed and cooled it.', more: 'Warmed: the CO2 your plane made and any night contrails. Cooled: daytime contrail shade, and Nature, which is your grown trees and projects cooling the land below you.' },
   'board-name':      { say: 'Choose a pilot name for the boards.', more: 'Your pilot name is how other players see you on the boards. Choose it in PILOT.' },
   'board-records':   { say: 'BOARDS keeps your best flights and badges.', more: 'BOARDS shows your best distances, your badges, and how you compare with other pilots.' },
-  'board-crossings': { say: 'A crossing is one long flight that opens a new part of the world.', more: 'A crossing is one long flight with no stops. It opens a new part of the world. Each crossing card in MISSIONS has three rows: Era, Plane and Nature. When all three have a tick, fly it.' },
+  'board-crossings': { say: 'A crossing is one long flight that opens a new part of the world.', more: 'A crossing is one long flight with no stops. It opens a new part of the world. The crossing card in MISSIONS shows the range of your plane. When it reaches the crossing, fly it.' },
   // ---- the on-rails onboarding (src/tour.js railsFor; research/FLOW-FIRST-HOUR.md) ----
   'rail-school':       { say: 'You landed! Your first upgrade is FREE. Open the hangar!' },
   'rail-hangar':       { say: 'Your first upgrade is FREE. Open the hangar!' },
