@@ -3,6 +3,7 @@
 // STEER.mission = false is exactly 0.48.0 (only a chosen destination steers; routeFor = flightPath otherwise). EXPLORE persists in the save until switched back. Plants: tools/plants.tsv, test `steer`. Run: node tests/steer.cjs
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const A = await import('../src/aim.js'), R = await import('../src/route.js'), D = await import('../src/destination.js'), C = await import('../src/network.js');
   const base = () => ({ levels: {}, fuel: 'kerosene', priceVersion: 2, tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'], areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'],

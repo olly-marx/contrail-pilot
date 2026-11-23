@@ -11,6 +11,7 @@
 //   7. the RESULTS card says 'Row broken: start again' when a flight broke a row and no mission was done on it, and nothing otherwise
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const M2 = await import('../src/missions2.js'), P = await import('../src/missionplan.js'), S = await import('../src/save.js'), R = await import('../src/resultscard.js'), Z = await import('../src/missionprize.js');
   const T1 = ['shade', 'plant-tree', 'clean-gaps'], T2 = ['dodge', 'spot', 'hazard'];

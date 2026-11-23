@@ -17,7 +17,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); }, save);   // season 2 keeps its save under s2:
-    await p.goto(URL); await ready(p); await p.waitForTimeout(600);
+    await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) this checks the AREA LADDER's screens, retired by story missions but still in the code: the ladder is switched on here */ await p.waitForTimeout(600);
     return p;
   };
   const saveIn = p => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));   // (in the page the s2: prefix is already applied)

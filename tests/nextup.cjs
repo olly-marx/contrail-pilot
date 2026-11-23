@@ -6,6 +6,7 @@
 //   4. each row says where a tap leads, and a city mission says how many stops away it is.
 // Run: node tests/nextup.cjs   (plants in tools/plants.tsv)
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const N = await import('../src/nextup.js'), M = await import('../src/missions2.js'), A = await import('../src/areas.js'), W = await import('../src/wildlife.js');
   const cities = Object.values(A.AREAS).flatMap(a => a.cities || []);

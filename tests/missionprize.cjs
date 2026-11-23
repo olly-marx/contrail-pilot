@@ -5,6 +5,7 @@
 //   4. SHOWN = PAID: the prize on every visible mission equals missionPrize(kind, k), and finishing the mission banks exactly that
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const Z = await import('../src/missionprize.js'), M2 = await import('../src/missions2.js'), S = await import('../src/save.js');
   const total = (kinds, k) => kinds.reduce((a, x) => a + Z.missionPrize(x, k).seeds, 0);

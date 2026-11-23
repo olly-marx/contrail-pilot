@@ -50,7 +50,7 @@ const PERSIST = {
   check(w.gameTime === 0 && !w.missedSign, `the dead flight's sign does not survive into the next one (gameTime ${w.gameTime}, sign ${JSON.stringify(w.missedSign)})`);
   // The HUD shows a sign only about the CURRENT leg (GameScene.js): a belt to the reset's braces.
   const scene = fs.readFileSync(`${__dirname}/../src/GameScene.js`, 'utf8');
-  check(/this\.missedSign\.to === this\.nextAirport\.name/.test(scene), 'the HUD shows a passed-airport sign only while its next airport is this flight\'s');
+  check(!/missedSign\.text/.test(scene), 'the HUD never shows a passed-airport sign (2026-11-23: the route strip replaced it; the sign is still reset per flight above)');
   console.log(fails.length ? `FAIL flightreset:\n - ${fails.join('\n - ')}` : `PASS flightreset: ${reset.size} fields reset per flight, ${Object.keys(PERSIST).length} declared (${Object.values(PERSIST).filter(v => v.startsWith('SUSPECT')).length} suspects); no sign survives a restart`);
   process.exit(fails.length ? 1 : 0);
 })();

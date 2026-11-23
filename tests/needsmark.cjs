@@ -7,6 +7,7 @@
 //   4. a mission that needs nothing (land-city) never has a marker
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const P = await import('../src/missionplan.js'), M2 = await import('../src/missions2.js'), V = await import('../src/missionsview.js'), U = await import('../src/upgrades.js'), S = await import('../src/save.js');
   const trees = U.LINES.find(l => l.id === 'trees');

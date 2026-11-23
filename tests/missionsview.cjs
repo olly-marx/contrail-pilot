@@ -7,6 +7,7 @@
 // Run: node tests/missionsview.cjs   (plants in tools/plants.tsv)
 const fs = require('fs'), path = require('path');
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const V = await import('../src/missionsview.js'), M = await import('../src/missions2.js'), N = await import('../src/nextup.js'), A = await import('../src/aim.js'), T = await import('../src/tips.js');
   // 1. Static data.

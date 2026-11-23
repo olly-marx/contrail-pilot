@@ -10,6 +10,7 @@
 // Plants: tools/plants.tsv, test `rebalance`. Run: node tests/rebalance.cjs
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const M = await import('../src/missions2.js'), L = await import('../src/landtrees.js'), N = await import('../src/nature.js'), G = await import('../src/groves.js');
   const B = await import('../src/badges.js'), T = await import('../src/treecount.js'), D = await import('../src/droporder.js'), C = await import('../src/config.js');

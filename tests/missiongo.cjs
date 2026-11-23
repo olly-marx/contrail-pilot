@@ -14,7 +14,7 @@ const seed = { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city
       await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
       await p.addInitScript(s => { if (!sessionStorage.getItem('fresh')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('fresh', '1'); } }, seed);
       try {
-        await p.goto(URL); await ready(p);
+        await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) this checks the AREA LADDER's screens, retired by story missions but still in the code: the ladder is switched on here */
         await p.waitForFunction(() => !!document.getElementById('hubRoute') && document.getElementById('hubRoute').offsetParent !== null, null, { timeout: 15000 }).catch(() => null);
         const row = await p.evaluate(async () => { const V = await import('/src/missionsview.js'), ui = game.registry.get('ui'), v = V.missionsView(ui.save), r = [v.next, ...v.open].filter(Boolean).find(x => x.city && x.cityName); ui.go('missions'); return r ? { key: r.key, city: r.cityName } : null; });
         check(!!row, `${tag}: no city mission row to tap in the test save`);

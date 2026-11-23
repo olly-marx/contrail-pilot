@@ -13,6 +13,7 @@
 //   7. the chain moves on only by landing at its next leg, in order; another landing and a crash change nothing; the third leg finishes it and pays 18 seeds
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const M2 = await import('../src/missions2.js'), P = await import('../src/missionplan.js'), R = await import('../src/route.js'), S = await import('../src/save.js');
   const T1 = ['weurope:shade', 'weurope:plant-tree', 'weurope:clean-gaps'], T2 = ['weurope:dodge', 'weurope:spot', 'weurope:hazard'];

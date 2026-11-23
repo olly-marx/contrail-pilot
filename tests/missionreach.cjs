@@ -8,6 +8,7 @@
 // point: run it once red on today's behaviour). Run: node tests/missionreach.cjs   (proved by planted defects)
 globalThis.SEASON2 = true;
 (async () => {
+  (await import('../src/storyboard.js')).STORY.on = false;   // (2026-11-23) this test checks the AREA LADDER, retired by story missions (src/storyboard.js) but still in the code: it runs with the ladder on
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const A = await import('../src/areas.js'), M = await import('../src/missions2.js'), AIM = await import('../src/aim.js');
   if (process.env.AIM === 'off') AIM.ROUTE_AIM.on = false;
@@ -15,7 +16,7 @@ globalThis.SEASON2 = true;
   const SMALL_AREA = 3; let notOffered = 0;   /* declared: an area of 3 cities (Patagonia) cannot offer rescue/route from a non-home start */
   const CITY = ['land-city', 'chain', 'rescue', 'route'];
   const naming = M.TEMPLATES.filter(t => /\$\{f\.city[BC]?\}/.test(String(t.title))).map(t => t.id).sort();
-  check(JSON.stringify(naming) === JSON.stringify([...CITY].sort()) && JSON.stringify(Object.keys(AIM.CITY_TEMPLATES).sort()) === JSON.stringify([...CITY].sort()),
+  check(JSON.stringify(naming) === JSON.stringify([...CITY].sort()) && JSON.stringify(Object.keys(AIM.CITY_TEMPLATES).filter(k => k !== 'story').sort()) === JSON.stringify([...CITY].sort()),   /* ('story': the active story's next stop, src/storyboard.js, not a ladder template) */
     `the city templates are declared everywhere (missions2 names a city in: ${naming}; aim.js: ${Object.keys(AIM.CITY_TEMPLATES)})`);
   let cases = 0; const far = [], per = {};
   const at = (path, t) => path.indexOf(t, 1);

@@ -20,7 +20,7 @@ const URL = process.env.URL || 'http://localhost:8000/', SHOTS = process.env.SHO
     const p = await b.newPage({ viewport: vp, hasTouch: touch }); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
     await p.route('https://mkucbsjzbipjaiqzrlkj.supabase.co/**', r => r.abort());
     await p.addInitScript(s => { if (!sessionStorage.getItem('seeded')) { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); sessionStorage.setItem('seeded', '1'); } }, s);
-    await p.goto(URL); await ready(p); await p.waitForTimeout(1200); return p; };
+    await p.goto(URL); await ready(p); await p.evaluate(async () => { (await import('/src/storyboard.js')).STORY.on = false; });   /* (2026-11-23) this checks the AREA LADDER's screens, retired by story missions but still in the code: the ladder is switched on here */ await p.waitForTimeout(1200); return p; };
   const audit = p => p.evaluate(() => {
     const tour = document.getElementById('tour'), up = tour && !tour.hidden, reach = new Map();
     for (let y = 8; y < innerHeight; y += 16) for (let x = 8; x < innerWidth; x += 16) {
