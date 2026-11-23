@@ -307,7 +307,7 @@ export class WildScreen {
       return `<p class="w-tier" data-tier="${t.tier}">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? 'done ' : ''}${n}/${ps.length}</span>`
         + (folds ? ` <button class="btn tiny" type="button" data-tier-toggle="${t.tier}">${shown ? 'hide' : 'show'}</button>` : '') + '</p>'
         + (shown ? ps.map(card).join('') : '');
-    }).join('') + (next ? `<p class="w-tier w-tier-lock" data-tier-locked="${next.tier}">Tier ${next.tier}: ${esc(next.name)} <span class="small">Land nature ${next.needs} to open (now ${Math.floor(bio)})</span></p>` : '')
+    }).join('') + (next ? `<p class="w-tier w-tier-lock" data-tier-locked="${next.tier}">Tier ${next.tier}: ${esc(next.name)} <span class="small">Biodiversity ${next.needs} (land) to open (now ${Math.floor(bio)})</span></p>` : '')
       + this.waterHTML(W, card);
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     // Tap a card (not its buttons) to PREVIEW it: ghosted in the land, the bar's gain, the animals it brings highlighted.
