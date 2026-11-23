@@ -8,7 +8,8 @@
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf, level, nextLevel, unlocked, unlockText, needsMoreNature, canBuy, freeParcels, loadout } from './upgrades.js';
-import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject, projectOpen } from './nature.js';
+import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject, projectOpen, landMeter, waterPart, waterOpenHere } from './nature.js';
+import { isWaterProject, dropsOf, DROP_CAP, waterShare, YIELD_PER_PROJECT } from './waterways.js';
 import { treeBook, grownBook, nurseryStatus, needFromGrow } from './groves.js';
 import { penView, penHTML } from './treepen.js';
 import { TIERS, RARITY, REGION_NAMES, REGION_DATA, REGION_SOURCE } from './habitats.js';
@@ -280,7 +281,8 @@ export class WildScreen {
   renderProjects() {
     // In tiers (the user, 2026-10-22: all 11 at once was confusing): open tiers show their projects;
     // the next locked tier is one card saying what opens it; later tiers stay hidden.
-    const s = this.save, done = this.done(), bio = this.bio(), P = this.projects;
+    // (0.73.1) LAND projects in tiers by the LAND part of the meter; WATER projects in their own section below (the waterways, 0.73.0), shut until the biome is full.
+    const s = this.save, done = this.done(), bio = landMeter(s, this.region), P = this.projects.filter(p => !isWaterProject(this.region, p.id)), W = this.projects.filter(p => isWaterProject(this.region, p.id));
     // R11b: season 2's first nature project is FREE (the user, 2026-10-27): the first tier-1 project, once lesson 2 is done.
     const freeId = this.freeProjectId();
     const card = p => {
@@ -305,7 +307,8 @@ export class WildScreen {
       return `<p class="w-tier" data-tier="${t.tier}">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? 'done ' : ''}${n}/${ps.length}</span>`
         + (folds ? ` <button class="btn tiny" type="button" data-tier-toggle="${t.tier}">${shown ? 'hide' : 'show'}</button>` : '') + '</p>'
         + (shown ? ps.map(card).join('') : '');
-    }).join('') + (next ? `<p class="w-tier w-tier-lock" data-tier-locked="${next.tier}">Tier ${next.tier}: ${esc(next.name)} <span class="small">Biodiversity ${next.needs} to open (now ${Math.floor(bio)})</span></p>` : '');
+    }).join('') + (next ? `<p class="w-tier w-tier-lock" data-tier-locked="${next.tier}">Tier ${next.tier}: ${esc(next.name)} <span class="small">Land nature ${next.needs} to open (now ${Math.floor(bio)})</span></p>` : '')
+      + this.waterHTML(W, card);
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
     // Tap a card (not its buttons) to PREVIEW it: ghosted in the land, the bar's gain, the animals it brings highlighted.
     $('wProjects').querySelectorAll('.project[data-pline] .rowc-tap').forEach(   /* done ones too: their info (regions.cjs found it gone) */b => b.onclick = () => { sfx.tick(); this.preview(b.dataset.preview); });
@@ -315,6 +318,20 @@ export class WildScreen {
       const t = Number(b.dataset.tierToggle), o = this.openTiers || [];
       this.openTiers = o.includes(t) ? o.filter(x => x !== t) : [...o, t]; this.renderProjects();
     });
+  }
+
+  // THE WATER SECTION (0.73.1, Oliver 2026-11-23: 'the water patches and projects, it's hard to know what is what ... the user needs some guidance'): its own blue block
+  // under the land tiers. Shut: what opens it (every tree kind here at its cap) and what it will hold. Open: the drops you have landed on the blue river and sea
+  // patches in flight (each kind x/DROP_CAP), then the water projects (blue rows) and what they pay each landing.
+  waterHTML(W, card) {
+    const r = this.region, share = waterShare(r), drops = dropsOf(r);
+    if (!share || (!drops.length && !W.length)) return '';
+    const open = waterOpenHere(this.save, r), book = ((this.save.waterBook || {})[r]) || {};
+    const head = `<p class="w-tier w-water-head">WATER <span class="small">${Math.round(waterPart(this.save, r) * share / 100)} of ${share} nature points</span></p>`;
+    if (!open) return `<div class="w-water shut">${head}<p class="small w-water-how">Fill every kind of tree here first. Then blue river and sea patches appear in flight: drop water life on them, and the water projects open.</p></div>`;
+    const dropRows = drops.map(d => `<span class="w-drop"><b>${esc(d.name)}</b> ${Math.min(DROP_CAP, book[d.id] || 0)}/${DROP_CAP}</span>`).join('');
+    return `<div class="w-water">${head}<p class="small w-water-how">In flight, drop on the <b>blue patches</b> to bring water life back. Each water project pays ${YIELD_PER_PROJECT} seeds on every landing.</p>`
+      + `<p class="w-drops">${dropRows}</p>${W.map(p => card(p).replace('class="rowc project ', 'class="rowc project water ')).join('')}</div>`;
   }
 
   // Web of life (MASTER-PLAN Part G): the animals this project helps bring back. Found ones show their picture; the

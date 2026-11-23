@@ -17,7 +17,10 @@ export const CAP = { heatSeeds: [1, 2, 3], roundKm: 500, msPerFrame: 6, maxKm: 6
 
 const hash = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619); return (h >>> 0).toString(36); };
 export const capKey = save => hash(JSON.stringify([save.fleet || null, save.levels || null, save.fuel || null, save.habitat || null, areaOf(save.city) || null, CAP]));
-export const capFor = (save, area) => { const c = save.capability; return c && c.key === capKey(save) && c.area === area ? c.km : 0; };
+// (0.73.1) The last range worked out, even if a purchase or a move has made it stale since (it is redone on HOME and in the hangar): until 0.73.1 a stale estimate read 0,
+// so a crossing the plane could fly dropped back to 'More range' after any purchase. capFresh says whether it is up to date.
+export const capFor = save => { const c = save.capability; return c && Number.isFinite(c.km) ? c.km : 0; };
+export const capFresh = save => !!(save.capability && save.capability.key === capKey(save));
 export const roundCap = km => Math.round(km / CAP.roundKm) * CAP.roundKm;
 // The pool for the plane you fly (an era without its own pool yet uses the nearest earlier one).
 export const poolFor = save => { const p = planeById(fleetOf(save).plane), era = p ? p.era : 0;

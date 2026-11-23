@@ -35,7 +35,7 @@ const src = f => path.resolve(__dirname, '../src', f);
   const seedsLocked = bs.seeds; bs.landings = 9;
   check(M.payBonds(bs) === null && bs.seeds === seedsLocked, 'a bond paid out before 10 landings');
   bs.landings = 10; const pay = M.payBonds(bs), want = 3 * M.bondCrystals(bs, L3.bond);
-  check(want >= 18 * 5, `(0.73.0: no water done, health ~32; interest x5 crystals) nature health too low to test the interest (${M.natureHealth(bs)})`);
+  check(want >= 18 * 4, `(0.73.0: no water done, health ~32; interest x the crystal PRICE SCALE) nature health too low to test the interest (${M.natureHealth(bs)})`);
   check(pay && pay.seeds === 3 * L3.bond.lock && pay.crystals === want && bs.seeds === seedsLocked + 3 * L3.bond.lock && !M.bonds(bs).length, `bonds paid ${JSON.stringify(pay)}, want ${3 * L3.bond.lock} seeds + ${want} crystals`);
   const low = { ...bs, seeds: L3.bond.lock - 1, finance: { level: 3 } };
   check(!M.lockBond(low), 'a bond locked more seeds than you have');

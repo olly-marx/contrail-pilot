@@ -42,7 +42,7 @@ const KEY = 'contrailPilot.v2';
   check(await p.isVisible('#wProjects') && !(await p.isVisible('#hangar')), 'NATURE opens the wild area, not the hangar');
   await p.click('[data-project="deadwood"]'); await p.waitForTimeout(200);
   s = await get(p);
-  check(s.habitat.woodland.includes('deadwood') && s.seeds === 480 && s.crystals === 40, `dead wood bought for 120 + 10 (20 + 2 x the 0.73.0 PRICE SCALE): ${JSON.stringify(s.habitat)} ${s.seeds}/${s.crystals}`);
+  check(s.habitat.woodland.includes('deadwood') && s.seeds === 520 && s.crystals === 42, `dead wood bought for 80 + 8 (20 + 2 x the PRICE SCALE, x4 since 0.73.1): ${JSON.stringify(s.habitat)} ${s.seeds}/${s.crystals}`);
   check(/DONE/.test(await p.textContent('[data-pline="deadwood"]')), 'a bought project says DONE');
   // A finished tier folds to one line (with 'show'); here tier 1 is not finished, so margins is listed.
   await p.evaluate(() => document.querySelector('[data-pline="margins"] .rowc-tap').click()); await p.waitForTimeout(300);   /* the (i) lives in the preview strip now (DESIGN-HANGAR-NATURE) */

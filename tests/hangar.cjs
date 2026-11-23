@@ -24,7 +24,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const row = (p, name) => p.evaluate(n => [...document.querySelectorAll('#hFleet .rowc')].find(e => e.querySelector('.rowc-name').textContent === n).textContent.replace(/\s+/g, ' '), name);
   const saved = p => p.evaluate(() => JSON.parse(localStorage.getItem('contrailPilot.v2')));
 
-  // 1. Buy the 1970s magnet level (3): 150 x 0.43 = 65 seeds, 8 crystals, x the 0.73.0 PRICE SCALE (x6 / x5) = 390 seeds, 40 crystals.
+  // 1. Buy the 1970s magnet level (3): 150 x 0.43 = 65 seeds, 8 crystals, x the PRICE SCALE (x4 / x4 since 0.73.1) = 260 seeds, 32 crystals.
   let p = await open(150);
   await p.click('#tabHangar'); await p.waitForTimeout(300);
   await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
@@ -36,11 +36,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.waitForTimeout(200);
   check(await p.isVisible('#hFleet'), 'after the payoff OK: not in the hangar any more');
   let s = await saved(p);
-  check(s.fleet.gadgets.magnet === 3 && s.seeds === 860 && s.crystals === 110, `magnet 3 bought: ${JSON.stringify({ m: s.fleet.gadgets.magnet, seeds: s.seeds, crystals: s.crystals })}`);
+  check(s.fleet.gadgets.magnet === 3 && s.seeds === 990 && s.crystals === 118, `magnet 3 bought: ${JSON.stringify({ m: s.fleet.gadgets.magnet, seeds: s.seeds, crystals: s.crystals })}`);
   // (the redesign: the row shows 'Next: …' and the pips; the level you have shows as 3 lit pips, its name in the strip)
   const pipsOn = await p.evaluate(() => document.querySelectorAll('[data-row="gadget:magnet"] .pip.on').length);
   check(pipsOn === 3 && /Next: Stronger coil/.test(await row(p, 'Magnet')), `the row moves on: 3 pips lit (${pipsOn}), "${await row(p, 'Magnet')}"`);
-  check(await p.textContent('#hTrees') === '860', `the seed count on screen drops to 860 (1,250 - 390: magnet 3 at the 0.73.0 prices): ${await p.textContent('#hTrees')}`);
+  check(await p.textContent('#hTrees') === '990', `the seed count on screen drops to 990 (1,250 - 260: magnet 3 at the 0.73.1 prices): ${await p.textContent('#hTrees')}`);
   // Tap-to-preview (2026-10-28): a row LOW in the list is tapped -> its preview card must be on screen (it is at the top).
   await p.click('[data-ftab=plane]'); await p.waitForTimeout(200);
   const low = await p.$$('[data-ftap^="plane:"]');
@@ -188,11 +188,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.close();
 
   // 3. Short of crystals: the button is grey and says what is missing.
-  p = await open(1);   // 39 short of magnet 3's 40 crystals (8 x the 0.73.0 PRICE SCALE)
+  p = await open(1);   // 31 short of magnet 3's 32 crystals (8 x the PRICE SCALE)
   await p.click('#tabHangar'); await p.waitForTimeout(300); await p.click('[data-ftab=gadgets]'); await p.waitForTimeout(200);
   check(await p.isDisabled('[data-fbuy="gadget:magnet"]'), 'short of crystals: BUY should be grey');
   await p.click('[data-ftap="gadget:magnet"]'); await p.waitForTimeout(300);
-  check(/need 39 more/.test(await p.textContent('#hPreview')), `short of crystals: the strip should say "need 39 more": "${await p.textContent('#hPreview')}"`);
+  check(/need 31 more/.test(await p.textContent('#hPreview')), `short of crystals: the strip should say "need 31 more": "${await p.textContent('#hPreview')}"`);
   await p.close();
 
   await b.close();

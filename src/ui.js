@@ -1,4 +1,5 @@
 import { FEATURES, km, CLIMATE, FOREST, kNum } from './config.js';
+import { estimate } from './capability.js';
 import { VERSION } from './version.js';
 import { choices, city, EARTH_KM, linksFor, schoolSave } from './route.js';
 import { routeFor, setGoto, clearGoto, arrivedGoto, gotoTarget, gotoHops, migrateAim, steerOf, activeMission, routeMode, stayLandLeft } from './aim.js';
@@ -640,6 +641,9 @@ export class UI {
     if (this.migrated) { const m = this.migrated; this.migrated = null; this.toast('Prizes collected', `+${m.seeds} seeds${m.crystals ? ` and +${m.crystals} ice crystals` : ''} from your finished missions`, 'good', 5); }
     this.noteStorage();
     this.noteOnlineReplaced();
+    // (0.73.1) The plane's RANGE is what opens a crossing, so it is worked out on HOME too, not only in the hangar: a purchase, a new project or another area made the
+    // saved estimate stale and the crossing card fell back to the best landed flight (Oliver, 2026-11-23: 'the crossing system seems totally broken'). Async; HOME redraws once.
+    if (FEATURES.season2 && this.save.tutorialDone && !this.capJob) { this.capJob = estimate(this.save, () => { this.capJob = false; this.persist(); if (!$('title').hidden) this.showTitle(); }); }
     $('tTrees').textContent = this.save.seeds;
     $('tCrystals').textContent = this.save.crystals || 0;
     $('tBest').textContent = km(this.save.bestDistance);

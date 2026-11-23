@@ -26,7 +26,7 @@ const { ready } = require('./lib/ready.js');
   const fails = [], check = (c, m) => { if (!c) fails.push(m); }, S = out.saving, R = out.rich;
   check(S.shown && S.labels.some(x => /^TODAY \(streak \+3\)/.test(x.trim())), `TODAY shows after L3, with the streak: ${S.labels}`);
   check(S.labels.some(x => /^STEADY/.test(x.trim())) && !S.labels.includes('Badges') && S.bars === 2, `STEADY with 2 rows, and no Badges lane any more (R4: badges are BOARDS' now): ${S.labels} ${S.bars}`);
-  check(S.rows.some(r => /2,000 km .*1,400 \/ 2,000 \+30/.test(r)) && R.rows.some(r => /1,400 \/ 2,000 \+6/.test(r)), `steady pays 5 x6 = 30 while saving, 1 x6 = 6 when rich (0.73.0 PRICE SCALE): ${S.rows} | ${R.rows}`);
+  check(S.rows.some(r => /2,000 km .*1,400 \/ 2,000 \+20/.test(r)) && R.rows.some(r => /1,400 \/ 2,000 \+4/.test(r)), `steady pays 5 x4 = 20 while saving, 1 x4 = 4 when rich (the PRICE SCALE): ${S.rows} | ${R.rows}`);
   check(/1 seed each/.test(R.labels.join(' ')), 'a rich pilot is told why');
   check(!errs.length, `page errors: ${errs}`);
   await b.close();

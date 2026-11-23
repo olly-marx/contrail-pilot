@@ -92,6 +92,7 @@ export const TIPS = {
   'rail-map-card':     { say: 'This is that city and the way there. Tap X to close it.' },
   'rail-map-chip':     { say: 'This says where your next flight goes. Tap it.' },
   'rail-map-mode':     { say: mission => (mission ? 'MISSION flies to your mission. EXPLORE finds a city you have not seen. Pick one!' : 'EXPLORE flies to a city you have not seen. Tap it!') },   // mission: the MISSION chip is there (src/aim.js activeMission)
+  'water-1':          { say: 'Blue patch: drop water life here to bring the river back!', more: 'Your trees here are full, so your drops now help the water. Hit the blue river and sea patches.' },
   'rail-cross':        { say: 'A crossing: one long non-stop flight that opens a new part of the world.' },
   'rail-cross-era':    { say: 'Era: some crossings wait for a later era. A tick means it is done.' },
   'rail-cross-plane':  { say: 'Range: how far your plane can fly. Upgrade it in HANGAR to reach further.' },

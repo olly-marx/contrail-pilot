@@ -1333,3 +1333,11 @@ h2.sub { margin-top: -4px; }
 .slock::before { content: ''; position: absolute; left: 1px; top: -5px; width: 2px; height: 4px; border: 2px solid var(--ink); border-bottom: 0; }
 .sbtns { display: flex; gap: 6px; justify-content: flex-end; }
 .sbtns .btn { font-size: 8px; padding: 6px 10px; min-height: 40px; min-width: 64px; }   /* tests/taptargets.cjs: at least 40 px */
+/* NATURE's water section (0.73.1): a blue block under the land tiers, its rows tinted blue */
+.w-water { margin-top: 10px; padding: 6px 8px; border: 2px solid #1e78b4; background: #e6f4ff; }
+.w-water.shut { opacity: .85; }
+.w-water .w-water-head { color: #1e5f8f; margin: 0 0 4px; }
+.w-water .w-water-how { margin: 0 0 6px; }
+.w-drops { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 7px; margin: 0 0 6px; }
+.rowc.project.water { border-left: 4px solid #1e78b4; background: #f2f9ff; }
+

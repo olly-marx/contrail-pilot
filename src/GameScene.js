@@ -932,6 +932,7 @@ export class GameScene extends Phaser.Scene {
         this.add.rectangle(x - 3, SKY_H - 3, 4, 5, 0x7a5a3a).setOrigin(0), this.add.rectangle(x + w - 1, SKY_H - 3, 4, 5, 0x7a5a3a).setOrigin(0)];
       const marker = this.add.image(x + w / 2, SKY_H - 18, 'plot-arrow').setOrigin(0.5).setTint(0x6fd0ff);
       parts.push(marker); this.plotLayer.add(parts); pl.parts = parts; pl.marker = marker;
+      if (this.parcels > 0 && this.ui.tipOnce) this.ui.tipOnce('water-1', tip('water-1'), '', 'good', 4);   // (0.73.1) the first blue patch says what it is
       return;
     }
     const W = this.kit.plotW;
