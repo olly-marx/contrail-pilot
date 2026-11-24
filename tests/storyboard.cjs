@@ -30,8 +30,13 @@
   // 6. DIFFICULTY (Plan A, 2026-11-24): slot 0 easy, slot 1 medium (impossible now and then), slot 2 hard; hearts and pay from LEVELS.
   check(a.level === 'easy' && ['medium', 'impossible'].includes(b.level) && c.level === 'hard', `levels by slot: ${a.level} ${b.level} ${c.level}`);
   for (const o of s.storyBoard) { const L = B.LEVELS[o.level];
-    check(o.hearts === L.hearts && o.payMul === L.pay, `${o.title}: hearts ${o.hearts} and pay x${o.payMul} from its level ${o.level}`);
-    check(o.pay.seeds === Math.round(o.km * 1000 / 15000 * L.pay) && o.pay.crystals === Math.round(o.km * 80 / 15000 * L.pay), `${o.title}: pays 1,000 seeds / 80 crystals per 15,000 km x${L.pay} (${o.km} km: ${JSON.stringify(o.pay)})`); }
+    const H = o.oneGo ? B.ONE_GO : L;
+    check(o.hearts === H.hearts && o.payMul === H.pay, `${o.title}: hearts ${o.hearts} and pay x${o.payMul} from its level ${o.level}${o.oneGo ? ' (one go)' : ''}`);
+    check(o.pay.seeds === Math.round(o.km * 1000 / 15000 * H.pay) && o.pay.crystals === Math.round(o.km * 80 / 15000 * H.pay), `${o.title}: pays 1,000 seeds / 80 crystals per 15,000 km x${L.pay} (${o.km} km: ${JSON.stringify(o.pay)})`); }
+  // one go: some hard stories allow no crash (1 heart).
+  const g = pilot(25000); for (let q = 0; q < 6; q++) { g.storyBoard = []; B.fillBoard(g); }
+  const goes = []; { const t = pilot(25000); t.storySeq = 0; for (let q = 0; q < 9; q++) { t.storyBoard = [null, null, null]; const o3 = B.makeOffer(t, 2); if (o3) goes.push(!!o3.oneGo && o3.hearts === 1); } }
+  check(goes.filter(Boolean).length >= 2 && goes.filter(Boolean).length < goes.length, `some hard stories are one go (1 heart), not all: ${goes}`);
   const lv = []; for (let q = 1; q <= 8; q++) lv.push(B.levelFor(1, q));
   check(lv.filter(x => x === 'impossible').length === 2, `slot 1 is impossible 1 time in ${B.IMPOSSIBLE_EVERY}: ${lv}`);
   check(!B.accept(s, c.id) || !B.missing(s, c).length, 'an offer that still needs an upgrade cannot be accepted');

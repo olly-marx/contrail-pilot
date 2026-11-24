@@ -39,6 +39,9 @@ export const LEVELS = {
   impossible: { name: 'Impossible', fit: [0.9, 1.0],   hearts: 1,    pay: 3,   stops: [4] },
 };
 export const IMPOSSIBLE_EVERY = 4;
+// ONE GO (the user, 2026-11-24: "failure-free stories where you have to actually do it all in one go"): a hard story now and then
+// (1 time in ONE_GO.every, by the offer's own number) allows no crash at all: 1 heart, better pay.
+export const ONE_GO = { every: 3, hearts: 1, pay: 2.2 };
 // ONE STORY AT A TIME (the user, 2026-11-24): dropping the active story (ACCEPT on another one, or a FREE FLIGHT) costs a fee:
 // a share of what the dropped story still had to pay, at least FEE.min seeds, never more than the player has.
 export const FEE = { share: 0.1, min: 50 };
@@ -160,7 +163,7 @@ export const missing = (save, offer) => (offer.needs || []).map(needInfo).filter
 export function makeOffer(save, slot) {
   const seq = save.storySeq = (save.storySeq || 0) + 1, rnd = stream(hash(`${save.homeCity || ''}|${seq}|${slot}`));
   const reach = reachOf(save), upgrade = slot === 2, onBoard = new Set((save.storyBoard || []).filter(Boolean).map(o => o.theme));
-  const level = levelFor(slot, seq), L = LEVELS[level];
+  const level = levelFor(slot, seq), L = LEVELS[level], oneGo = level === 'hard' && seq % ONE_GO.every === 0;
   const sized = t => (t.level ? t.level === level : L.stops.includes(t.stops) || (level === 'impossible' && t.stops === 3));   // (a theme written for a level, tools/stories/generate.mjs, goes to that level; else by size; impossible: 3 long stages, or 2 when no 4-stop theme fits)
   const fits = THEMES.filter(t => !onBoard.has(t.id) && (upgrade || !t.needs) && citiesFor(save, t).length >= t.stops)
     .map(t => ({ t, w: sized(t) ? 0 : 1 }));   // (a theme of the level's size first; any other theme after, so a small map still gets an offer)
@@ -178,8 +181,8 @@ export function makeOffer(save, slot) {
     if (pass === 0 && Math.max(...got.stages) < target * 0.5) continue;
     const km = got.stages.reduce((a, b) => a + b, 0);
     return { id: `story-${seq}`, theme: theme.id, slot, made: save.flights || 0, title: theme.title, story: fillWords(theme.story, got.stops), pic: theme.pic,
-      level, hearts: L.hearts, payMul: L.pay,
-      stops: got.stops, lines: theme.lines.map(l => fillWords(l, got.stops)), stages: got.stages, km, pay: storyPay(km, L.pay),
+      level, hearts: oneGo ? ONE_GO.hearts : L.hearts, payMul: oneGo ? ONE_GO.pay : L.pay, ...(oneGo ? { oneGo: true } : {}),
+      stops: got.stops, lines: theme.lines.map(l => fillWords(l, got.stops)), stages: got.stages, km, pay: storyPay(km, oneGo ? ONE_GO.pay : L.pay),
       needs: gadget ? theme.needs : stretchNeed ? [{ reach: stretchNeed }] : [] };
   }
   return null;
@@ -221,6 +224,14 @@ export function drop(save) {
   if (!activeStory(save)) return -1;
   const fee = dropFee(save); save.seeds = (save.seeds || 0) - fee; endStory(save, 'drop'); return fee;
 }
+// LEAVING A STORY (the user, 2026-11-24: "once a story is active, it is the thing that you need to be doing"; going off on a tangent
+// fails it; free flight is always there to get out). A flight whose destination is not the story's next stop, a FREE FLIGHT, or a
+// crossing ends the story as FAILED (no fee: the story and what it still had to pay are lost). Swapping for another story (ACCEPT)
+// is the one that costs the fee.
+export const offStory = save => { const o = activeStory(save); return !!(o && save.aimCity && save.aimCity !== o.stops[o.reached || 0]); };
+export function leave(save) { return endStory(save, 'failed'); }
+// The story's next stop as the destination again (after something cleared it, or BACK TO MY STORY).
+export function reaim(save) { const o = activeStory(save); if (o) save.aimCity = o.stops[o.reached || 0]; return !!o; }
 // ACCEPT. One story at a time: with another one active, it is dropped first and the fee paid (the caller shows the fee before).
 export function accept(save, id) {
   const o = (save.storyBoard || []).find(x => x && x.id === id);

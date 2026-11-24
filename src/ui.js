@@ -75,7 +75,7 @@ import { endView } from './crossingend.js';
 import { prizeLines } from './missionprize.js';
 import { crossingState, crossingById, momentDue, markTold, sheetText, endingBody, boxView, screenView, cardsView, oneCardView, PICK_TITLE } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
-import { accept as storyAccept, drop as storyDrop, dropFee as storyDropFee, activeStory, leftPay, heartsLeft as storyHearts, LEVELS as STORY_LEVELS, storyPicUrl } from './storyboard.js';
+import { accept as storyAccept, leave as storyLeave, offStory, reaim as storyReaim, fillBoard as fillStoryBoard, dropFee as storyDropFee, activeStory, leftPay, heartsLeft as storyHearts, LEVELS as STORY_LEVELS, storyPicUrl } from './storyboard.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -106,7 +106,7 @@ const $ = id => document.getElementById(id);
 // A story's difficulty tag and its hearts (src/storyboard.js LEVELS; hearts: PixelLab art, full = left, grey = lost). Easy: no hearts.
 const storyLevelHTML = o => { const L = STORY_LEVELS[o.level]; if (!L) return '';
   const h = storyHearts(o), hearts = o.hearts ? Array.from({ length: o.hearts }, (_, i) => `<i class="sheart${i < h ? '' : ' lost'}"></i>`).join('') : '<span class="sfree">tries: any</span>';
-  return `<div class="slevel lv-${o.level}"><span class="slv">${L.name.toUpperCase()}</span><span class="shearts" aria-label="${o.hearts ? `${h} of ${o.hearts} lives` : 'unlimited tries'}">${hearts}</span></div>`; };
+  return `<div class="slevel lv-${o.level}"><span class="slv">${L.name.toUpperCase()}${o.oneGo ? ': ONE GO' : ''}</span><span class="shearts" aria-label="${o.hearts ? `${h} of ${o.hearts} lives` : 'unlimited tries'}">${hearts}</span></div>`; };
 const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;
 
 // The Biodiversity meter as HTML: a bar plus the stage name.
@@ -176,6 +176,11 @@ export class UI {
     if (FEATURES.season2 && needsStartChoice(this.save)) return this.askStart().then(() => this.start());   // season 2: choose your start first
     if (!this.save.tutorialDone) return this.startSchool();
     if (FEATURES.season2 && this.practiceDue()) return this.startPractice();   // the School board's tree practice flight is the lesson now (src/practice.js)
+    // OFF YOUR STORY (Plan A): a destination set elsewhere (a mission's GO THERE, a tapped city's FLY) would be a tangent: ask, and flying it fails the story.
+    if (offStory(this.save)) { const s = this.save, o = activeStory(s); let fly = false;
+      return showSheet({ eyebrow: 'OFF YOUR STORY', title: `Fly to ${s.aimCity}?`, body: `Your story "${o.title}" goes to ${o.stops[o.reached || 0]} next. Flying somewhere else fails the story.`, ok: 'BACK TO MY STORY',
+        onClose: () => setTimeout(() => { if (!fly && activeStory(s) && offStory(s)) { storyReaim(s); writeSave(s); this.showTitle(); } }, 0),   // (the sheet calls onClose before the action: wait a tick and see which was tapped)
+        action: { label: 'FLY THERE, FAIL THE STORY', onTap: () => { fly = true; storyLeave(s); fillStoryBoard(s); writeSave(s); this.start(); } } }); }
     unlockAudio();
     this.showOnly(null);
     if (this.tour) this.tour.abort();   // no rails step may stay up over the game (src/tour.js abort: measured 2026-11-12, a step's catcher panels swallowed the flight's taps)
@@ -431,6 +436,7 @@ export class UI {
     const crossBox = boxOn ? boxView(cs) : null, hc = $('hubCross');
     // PLAN A (the user, 2026-11-24): the box and the globe show ONE objective, the active story or the crossing, with a switch when there are both (s.hubFocus, remembered).
     const story = s.tutorialDone ? activeStory(s) : null, both = !!(story && crossBox);
+    if (story && !s.aimCity && storyReaim(s)) writeSave(s);   // (the story's next stop stays the destination)
     const storyOn = !!story && (!crossBox || s.hubFocus !== 'crossing');
     const box = storyOn ? null : crossBox;
     const sw = both ? `<div class="hc-switch" role="tablist"><button type="button" data-focus="story" class="${storyOn ? 'on' : ''}">STORY</button><button type="button" data-focus="crossing" class="${storyOn ? '' : 'on'}">CROSSING</button></div>` : '';
@@ -527,7 +533,7 @@ export class UI {
     const storyCards = v.board ? v.board.map(o => { const n = o.reached || 0;
       const chips = o.stops.map((c, i) => `${i ? '<i class="sarrow"></i>' : ''}<span class="schip ${i ? 'drop' : 'pickup'}${o.active && i < n ? ' done' : ''}${o.active && i === n ? ' next' : ''}">${esc(c)}</span>`).join('');
       const lock = o.missing.length ? `<span class="sneed"><i class="slock"></i>Needs ${o.missing.map(m => `<b>${esc(m.text)}</b>`).join(', ')}</span>` : '';
-      const btn = o.active ? '<button class="btn" type="button" data-sdrop="1">DROP</button>' : o.missing.length ? `<button class="btn go" type="button" data-sgoto="${o.missing[0].tab}">GET IT IN ${o.missing[0].tab.toUpperCase()}</button>`
+      const btn = o.active ? '<button class="btn" type="button" data-sdrop="1">GIVE UP</button>' : o.missing.length ? `<button class="btn go" type="button" data-sgoto="${o.missing[0].tab}">GET IT IN ${o.missing[0].tab.toUpperCase()}</button>`
         : `<button class="btn go" type="button" data-saccept="${esc(o.id)}">${n ? 'CARRY ON' : 'ACCEPT'}</button>`;
       return `<div class="scard${o.missing.length ? ' locked' : ''}${o.active ? ' active' : ''}"><img class="spic" alt="" src="${esc(storyPicUrl(o.pic))}">`
         + `<div class="sbody">${o.active ? `<div class="shead"><span>ON THIS STORY</span><span>Stop ${n + 1} of ${o.stops.length}</span></div>` : ''}${storyLevelHTML(o)}<b class="stitle">${esc(o.title)}</b><p class="stext">${esc(o.story)}</p>`
@@ -571,12 +577,11 @@ export class UI {
     showSheet({ eyebrow: 'ONE STORY AT A TIME', title: `Swap "${cur.title}"?`, body: `You can only fly one story at a time. "${cur.title}" ends and you lose what it had left to pay.${fee ? ` Swapping costs ${fee} seeds.` : ''}`, ok: 'KEEP MY STORY',
       action: { label: fee ? `SWAP FOR ${fee} SEEDS` : 'SWAP', onTap: go } });
   }
-  // DROP the active story (the DROP button, or FREE FLIGHT on HOME): a sheet with the fee; `then` runs after it is dropped.
-  dropStory(then, { label = 'DROP IT', why = '' } = {}) {
+  // LEAVE the active story (GIVE UP on its card, FREE FLIGHT on HOME, a crossing): asked first; the story FAILS (no fee). `then` runs after.
+  dropStory(then, { label = 'GIVE UP', why = '' } = {}) {
     const s = this.save, cur = activeStory(s); if (!cur) return then && then();
-    const fee = storyDropFee(s);
-    showSheet({ eyebrow: 'DROP YOUR STORY?', title: cur.title, body: `${why}The story ends and you lose what it had left to pay.${fee ? ` It costs ${fee} seeds.` : ''}`, ok: 'KEEP MY STORY',
-      action: { label: fee ? `${label} (${fee} SEEDS)` : label, onTap: () => { storyDrop(s); writeSave(s); then && then(); } } });
+    showSheet({ eyebrow: 'LEAVE YOUR STORY?', title: cur.title, body: `${why}The story fails and you lose what it still had to pay.`, ok: 'KEEP MY STORY',
+      action: { label, onTap: () => { storyLeave(s); fillStoryBoard(s); writeSave(s); then && then(); } } });
   }
 
   // THE SCHOOL BOARD (src/lessons.js; the user, 2026-11-16). On the MISSIONS tab while lessons remain (the tab reads SCHOOL), then folded into one REPLAY row.

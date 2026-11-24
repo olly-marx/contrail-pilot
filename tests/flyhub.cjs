@@ -5,7 +5,8 @@
 //   2. The switch: CROSSING shows the crossing box (no story text) and is remembered (save.hubFocus); STORY brings the story back.
 //   3. A crash on the story flight costs one heart: the save and the results card say so.
 //   4. ACCEPT on another story asks first (one story at a time) and names the fee; SWAP drops the old story (it leaves the board) and charges it.
-//   5. FREE FLIGHT asks first; FLY FREE drops the story, charges the fee and takes off.
+//   5. A tangent (the destination set elsewhere, as a mission's GO THERE does): TAKE OFF asks first; BACK TO MY STORY puts the story's stop back.
+//   6. FREE FLIGHT asks first; FLY FREE fails the story (it leaves the board, no fee) and takes off.
 // Plants: tools/plants.tsv, test flyhub. Run: python3 -m http.server 8000 & node tests/flyhub.cjs
 const { chromium } = require('playwright-core');
 const { ready, started } = require('./lib/ready.js');
@@ -65,21 +66,30 @@ const SAVE = { areas: ['weurope', 'africa'], homeArea: 'weurope', homeCity: 'LON
     await p.click('#sheet .sheet-action'); await p.waitForTimeout(400);
     s = await save();
     check(s.storyActive === other.id && !s.storyBoard.some(x => x && x.id === o.id) && s.seeds === seeds0 - fee, `SWAP: the new story is active, the old one left the board, ${fee} seeds paid (${seeds0} -> ${s.seeds})`);
-    // 5. FREE FLIGHT.
+    // 5. A tangent.
+    await go('fly');
+    const stop = other.stops[0], elsewhere = ['PARIS', 'MADRID', 'ROME'].find(c => c !== stop);
+    await p.evaluate(c => { const sv = game.registry.get('save'); sv.aimCity = c; game.registry.get('ui').start(); }, elsewhere); await p.waitForTimeout(400);
+    const sheet3 = await p.evaluate(() => document.getElementById('sheet') ? document.getElementById('sheet').innerText.replace(/\s+/g, ' ') : '');
+    check(/OFF YOUR STORY/.test(sheet3) && sheet3.includes(elsewhere), `a tangent asks first: ${sheet3}`);
+    await p.click('#sheet .sheet-ok'); await p.waitForTimeout(400);
+    s = await save();
+    check(s.storyActive === other.id && s.aimCity === stop, `BACK TO MY STORY: the destination is the story's stop again (${s.aimCity})`);
+    check(await p.evaluate(() => game.scene.getScene('game').state !== 'playing'), 'and nothing took off');
+    // 6. FREE FLIGHT.
     await go('fly');
     const seeds1 = (await save()).seeds;
     await p.click('#hubFly'); await p.waitForTimeout(400);
     const sheet2 = await p.evaluate(() => document.getElementById('sheet').innerText.replace(/\s+/g, ' '));
-    const fee2 = +(sheet2.match(/costs (\d+) seeds/) || [])[1];
-    check(/DROP YOUR STORY/.test(sheet2) && /free flight leaves your story/i.test(sheet2), `FREE FLIGHT asks first: ${sheet2}`);
+    check(/LEAVE YOUR STORY/.test(sheet2) && /free flight leaves your story/i.test(sheet2) && /fails/.test(sheet2), `FREE FLIGHT asks first: ${sheet2}`);
     await p.click('#sheet .sheet-action');
     await started(p);
     s = await save();
-    check(!s.storyActive && s.seeds === seeds1 - fee2 && !s.storyBoard.some(x => x && x.id === other.id), `FLY FREE drops the story and charges ${fee2} (${seeds1} -> ${s.seeds})`);
+    check(!s.storyActive && s.seeds === seeds1 && !s.storyBoard.some(x => x && x.id === other.id) && s.storiesFailed === 1, `FLY FREE fails the story, no fee (${seeds1} -> ${s.seeds}, failed ${s.storiesFailed})`);
     check(await p.evaluate(() => ['takeoff', 'playing'].includes(game.scene.getScene('game').state)), 'and the free flight takes off');
   } catch (e) { fails.push(String(e)); }
   if (errs.length) fails.push(`page errors: ${errs.join(' | ')}`);
   await b.close();
   if (fails.length) { console.log('FAIL flyhub\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS flyhub (HOME shows the story with a switch, hearts lost on a crash, one story at a time with a fee, free flight drops it)');
+  console.log('PASS flyhub (HOME shows the story with a switch, hearts lost on a crash, one story at a time with a fee, a tangent asks first, free flight fails it)');
 })();
