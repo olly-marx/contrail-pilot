@@ -272,10 +272,13 @@ export const RULES = {
     return n ? slotKind(n.slot) : null;
   },
   // WATERWAYS (0.73.0, src/waterways.js): once a land's biome is full (no tree kind has room) and it has water drops, the drops go on its WATER targets instead.
-  waterOpen(region = this.regionNow || 'woodland') { return WATERWAYS_ON.on && dropsOf(region).length > 0 && !nextTree(this.save, region, this.dropped, null, 0, false); },
+  // The WATER LESSON (Plan C, src/waterpractice.js) pins the land: its practice flight drops for that land's water wherever the plane is.
+  dropLand() { return (this.school && this.school.waterLand) || this.regionNow || 'woodland'; },
+  waterOpen(region = this.dropLand()) { return WATERWAYS_ON.on && dropsOf(region).length > 0 && !nextTree(this.save, region, this.dropped, null, 0, false); },
   // The next water drop: the land's kinds take turns, a kind at DROP_CAP is skipped (pending drops counted); null = the water is full here too.
-  nextWaterDrop(region = this.regionNow || 'woodland') {
+  nextWaterDrop(region = this.dropLand()) {
     const kinds = dropsOf(region), book = ((this.save.waterBook || {})[region]) || {}, pend = this.waterPending || {};
+    if (this.school && this.school.waterLand) return kinds[this.speciesIdx % kinds.length] || null;   // (the lesson: practice drops are never full)
     for (let k = 0; k < kinds.length; k++) { const d = kinds[(this.speciesIdx + k) % kinds.length]; if ((book[d.id] || 0) + (pend[d.id] || 0) < DROP_CAP) return d; }
     return null;
   },
@@ -286,11 +289,11 @@ export const RULES = {
   // that is the parcel's screen drift plus the scroll: it lands ahead of the plane.
   predictLanding() {
     let x = this.plane.x + PLANE.w / 2, y = this.plane.y + PLANE.h, vy = 0, vx = 0, t = 0;
-    const dt = 1 / 60;
+    const dt = 1 / 60, water = this.waterOpen && this.waterOpen();   // (Plan C: the next drop is a water drop: its own fall)
     while (y < SKY_H && t < 8) {
       t += dt;
-      vy = t < PARCEL.chuteAfter ? vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, vy + PARCEL.gravity * dt);
-      vx = -this.speed * (1 - Math.exp(-t / PARCEL.dragTime));   // on screen: drifts back as it slows
+      vy = water ? vy + WATER_PLOT.gravity * dt : t < PARCEL.chuteAfter ? vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, vy + PARCEL.gravity * dt);
+      vx = -this.speed * (1 - Math.exp(-t / (water ? WATER_PLOT.dragTime : PARCEL.dragTime)));   // on screen: drifts back as it slows
       x += (vx + this.speed) * dt; y += vy * dt;
     }
     return x;
@@ -1293,8 +1296,12 @@ export const RULES = {
   updateParcels(dt) {
     this.parcelsFalling = this.parcelsFalling.filter(p => {
       p.t += dt;
-      p.vy = p.t < PARCEL.chuteAfter ? p.vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, p.vy + PARCEL.gravity * dt);
-      p.x += -this.speed * (1 - Math.exp(-p.t / PARCEL.dragTime)) * dt;
+      if (p.water) {   // PLAN C: a water drop falls fast, no parachute, and loses the plane's speed quickly (src/waterways.js WATER_PLOT)
+        p.vy += WATER_PLOT.gravity * dt; p.x += -this.speed * (1 - Math.exp(-p.t / WATER_PLOT.dragTime)) * dt;
+      } else {
+        p.vy = p.t < PARCEL.chuteAfter ? p.vy + PARCEL.gravity * dt : Math.min(PARCEL.terminal, p.vy + PARCEL.gravity * dt);
+        p.x += -this.speed * (1 - Math.exp(-p.t / PARCEL.dragTime)) * dt;
+      }
       p.y += p.vy * dt;
       if (p.y < SKY_H) return true;
       if (p.water) this.waterLanded(p.x, p.kind, p.region); else this.parcelLanded(p.x, p.kind, p.region);
@@ -1333,7 +1340,7 @@ export const RULES = {
   waterLanded(x, id, region) {
     this.waterPending[id] = Math.max(0, (this.waterPending[id] || 0) - 1);
     const plot = this.plots.find(pl => !pl.used && pl.water && x >= pl.x - 3 && x <= pl.x + pl.w + 3);
-    if (!plot) { this.onParcelMissed(x, false); return; }
+    if (!plot) { if (this.school && this.school.practice) this.parcels++; this.onParcelMissed(x, false); return; }   // (a practice miss gives the drop back, as the tree practice does)
     plot.used = true; this.waterDrops = (this.waterDrops || 0) + 1;
     if (!this.school) { const wb = this.save.waterBook = this.save.waterBook || {}; wb[region] = wb[region] || {}; wb[region][id] = (wb[region][id] || 0) + 1; }
     const d = dropsOf(region).find(k => k.id === id);
@@ -1345,7 +1352,7 @@ export const RULES = {
     if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
     if (this.parcels <= 0) { this.playSound('nope'); return; }
     // Over the open sea and the ice nothing can be planted (user, 2026-10-24): keep the parcel.
-    if (['ocean', 'ice'].includes(this.regionNow)) {
+    if (['ocean', 'ice'].includes(this.regionNow) && !(this.school && this.school.waterLand)) {
       this.playSound('nope');
       if (!this.saidNoSoil) { this.saidNoSoil = true; this.popup(this.plane.x + 20, this.plane.y - 12, this.regionNow === 'ocean' ? 'No land to plant on!' : 'Nothing grows on the ice!', '#cfe6ff'); }
       return;
@@ -1354,7 +1361,7 @@ export const RULES = {
       const d = this.nextWaterDrop();
       if (!d) { this.playSound('nope'); if (!this.saidWaterFull) { this.saidWaterFull = true; this.popup(this.plane.x + 20, this.plane.y - 12, 'The water here is full of life!', '#cfe6ff'); } return; }
       this.parcels--; this.released++; this.waterPending[d.id] = (this.waterPending[d.id] || 0) + 1;
-      const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: d.id, region: this.regionNow || 'woodland', water: true };
+      const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: d.id, region: this.dropLand(), water: true };
       this.parcelsFalling.push(p); this.showParcel(p); this.speciesIdx++; this.playSound('flap');
       return;
     }

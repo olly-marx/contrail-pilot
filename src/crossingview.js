@@ -68,7 +68,7 @@ export const endingBody = city => `From ${city} all the way round and back home.
 // THE HOME BOX and the CROSSINGS screen (CROSSINGS V2, research/DESIGN-CROSSINGS-V2.md): the next crossing, three ticks that fill in, one plain line, no distance and no number but nature's own meter.
 // boxView -> { title, route, word, ticks: [{ label, done }], line, ready, where }; screenView adds the button. Texts are budgeted (route <= 28, line <= 28) and checked by tests/crossbox.cjs.
 export const boxView = s => {
-  const ticks = [['Range', 'plane']].map(([label, key]) => ({ label, done: !!(s.conds.find(c => c.key === key) || {}).done }));
+  const ticks = [['Range', 'plane'], ['Nature', 'nature']].map(([label, key]) => ({ label, done: !!(s.conds.find(c => c.key === key) || {}).done }));
   // Ready: at the departure airport 'Ready! Tap to cross.', elsewhere 'Ready! Go to <city>' with one dot per hop left (at most 6, then 'more'); a GO TO already set shows 'on' (the player may stop it).
   // (A departure the open network cannot reach, e.g. the stepping stones HONOLULU and NADI, has no way to go to: it says 'Ready! Tap to cross.' and crosses from where the player is, as before.)
   const elsewhere = s.ready && !s.atDeparture && Number.isFinite(s.hops), line = s.ready ? (elsewhere ? `Ready! Go to ${s.from}` : 'Ready! Tap to cross.') : s.nearest ? s.nearest.plain : '';

@@ -100,7 +100,7 @@ audiocrash	src/crash.js	s/audio device|audiocontext|NotAllowedError|AbortError/z
 audiocrash	src/sound.js	s/if (p \&\& p.catch) p.catch(() => {});/;/	sound.js no longer catches a rejected resume()
 audiocrash	src/sound.js	s/if (ctx.state !== 'running')/if (ctx.state === 'never')/	sound.js never retries the resume
 releasegate	tests/PATHMAP	s/ hubscreen saveloss/ hubscreen firsthour-real saveloss/	firsthour-real back in the always-run smoke
-releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible practice namelesson$/ tours bubblestill missionlanes pilotpreview keepvisible practice namelesson/	onboarding changes no longer run firsthour-real
+releasegate	tests/PATHMAP	s/ tours bubblestill firsthour-real missionlanes pilotpreview keepvisible practice namelesson waterlesson-ui$/ tours bubblestill missionlanes pilotpreview keepvisible practice namelesson waterlesson-ui/	onboarding changes no longer run firsthour-real
 sim-hint@PLANT=blind	-	-	the player ignores the hint
 sim-progression-s2@PLANT=noready	-	-	crossings offered before they are ready
 sim-progression-s2@PLANT=nocomplete	-	-	a landed crossing opens nothing
@@ -548,7 +548,7 @@ landlog	src/landlog.js	s/\.slice(-LANDLOG_MAX)/.slice(-1000)/	the landing log ke
 landlog	src/ui.js	s/if (r\.touchdown \&\& !r\.school) recordTouchdown(r\.touchdown);/if (false) recordTouchdown(r.touchdown);/	the results never record the touchdown
 landlogui	src/pilot.js	s/^    $('pLandCopy').onclick = () => {.*$/    $('pLandCopy').onclick = () => {};/	the COPY LANDING NUMBERS button does nothing
 crossbox	src/crossingview.js	s/route: `\${s.from} > \${s.to}`, word: s.difficulty/route: `${s.from} > ${s.to} (${s.km} km)`, word: s.difficulty/	the box shows the crossing's distance again
-crossbox	src/crossingview.js	s/const ticks = \[\['Range', 'plane'\]\]/const ticks = [['Era', 'era'], ['Range', 'plane']]/	the box shows an Era tick again
+crossbox	src/crossingview.js	s/const ticks = \[\['Range', 'plane'\], \['Nature', 'nature'\]\]/const ticks = [['Range', 'plane']]/	the box loses its Nature tick (Plan B)
 crossbox	src/crossingview.js	s/n \&\& n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' }/n \&\& n.where === 'hangar' ? { label: 'NATURE', act: 'nature' }/	an open plane tick sends the player to NATURE
 crossbox	src/crossingview.js	s/: s.nearest ? s.nearest.plain : '';/: s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
 crossboxui	src/ui.js	s/hc.hidden = !box; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
@@ -1002,3 +1002,7 @@ ascprune	.github/workflows/apps.yml	s/- name: "Signing certificates before/- nam
 crossingview	src/crossings.js	s/ready: plane \&\& nature };/ready: plane };/	a crossing opens on range alone again (the departure land's nature not asked: Plan B)
 crossladder	src/crossings.js	s/return l ? biodiversity(save, l) : 0;/return 100;/	the nature tick reads no land (always full)
 crossladder	src/crossings.js	s|^const chance = (save, c) => (c.km ? Math.min(reachFrom(save, c) / c.km, natureNeed(c) ? natureHave(save, c) / natureNeed(c) : 1) : 0);|const chance = (save, c) => (c.km ? reachFrom(save, c) / c.km : 0);|	the route offered is picked by range alone again (a land the player never grew)
+waterways	src/sim/rules.js	s/      if (p.water) {   \/\/ PLAN C:/      if (false) {   \/\/ PLAN C:/	a water drop falls under the tree parachute again (it lands 96-149 px apart by height)
+waterways	src/waterways.js	s/export const WATER_PLOT = { w: 44,/export const WATER_PLOT = { w: 28,/	the water target is 28 px again
+waterlesson	src/lessons.js	s/open: s => !!waterLessonLand(s), done:/open: s => false, done:/	the water lesson never opens
+waterlesson	src/sim/rules.js	s/    if (!plot) { if (this.school \&\& this.school.practice) this.parcels++; this.onParcelMissed(x, false); return; }/    if (!plot) { this.onParcelMissed(x, false); return; }/	a missed practice water drop is lost

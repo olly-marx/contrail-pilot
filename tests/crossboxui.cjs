@@ -25,7 +25,7 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'R
       const tag = `${W}x${H}`;
       { const { ctx, p } = await open(seed(true), W, H); const h = await home(p); log.push(`${tag} A: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-A-${W}.png` });
         check(h.shown && /NEXT CROSSING/.test(h.text) && /ROME > TUNIS/.test(h.text) && /Easy/.test(h.text), `${tag} A: the box is not on HOME with the route and the word: ${JSON.stringify(h)}`);
-        check(h.on.join() === 'false' && /More range: upgrade plane/.test(h.text), `${tag} A: the ticks or the plain line are wrong: ${JSON.stringify([h.on, h.text])}`);
+        check(h.on.join() === 'false,true' && /More range: upgrade plane/.test(h.text), `${tag} A: the ticks (Range open, Nature done: Plan B) or the plain line are wrong: ${JSON.stringify([h.on, h.text])}`);
         check(h.goVisible, `${tag} A: TAKE OFF is not fully on screen above the bar with the box showing`);
         if (!h.shown) { await ctx.close(); continue; }   // (no box to tap: the checks above already failed; a tap would only time out)
         await p.click('#hubCross'); await p.waitForTimeout(500);
@@ -42,7 +42,7 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'R
         const h = await home(p); log.push(`${tag} B: ${JSON.stringify(h)}`); if (process.env.SHOTS) await p.screenshot({ path: `${process.env.SHOTS}/home-B-${W}.png` });
         const upn = await p.evaluate(() => (document.getElementById('hubNext') || { innerText: '' }).innerText.replace(/\s+/g, ' '));
         check(!/Cross to TUNIS/.test(upn), `${tag} B: UP NEXT repeats the ready crossing under the box: ${upn}`);
-        check(h.shown && h.gold && /Ready!/.test(h.text) && h.on.join() === 'true', `${tag} B: a ready crossing is not gold with 'Ready!' and its tick: ${JSON.stringify(h)}`);
+        check(h.shown && h.gold && /Ready!/.test(h.text) && h.on.join() === 'true,true', `${tag} B: a ready crossing is not gold with 'Ready!' and its two ticks: ${JSON.stringify(h)}`);
         if (!h.shown) { await ctx.close(); continue; }
         await p.click('#hubCross'); await p.waitForTimeout(500);
         const m2 = await p.evaluate(() => { const e = document.getElementById('sheet'); return e ? { text: e.innerText.replace(/\s+/g, ' '), btn: (e.querySelector('.sheet-action') || {}).innerText || '' } : null; });
@@ -55,6 +55,6 @@ const seed = lessons => ({ areas: ['weurope'], homeArea: 'weurope', homeCity: 'R
     }
   } finally { await b.close(); }
   console.log(log.join('\n'));
-  console.log(fails.length ? `FAIL crossboxui:\n - ${fails.join('\n - ')}` : 'PASS crossboxui: the HOME box shows the Range tick and one line and keeps TAKE OFF on screen at 390 and 320; its tap opens the CROSSINGS screen; ready is gold; the first hour has no box');
+  console.log(fails.length ? `FAIL crossboxui:\n - ${fails.join('\n - ')}` : 'PASS crossboxui: the HOME box shows the Range and Nature ticks and one line and keeps TAKE OFF on screen at 390 and 320; its tap opens the CROSSINGS screen; ready is gold; the first hour has no box');
   process.exit(fails.length ? 1 : 0);
 })();

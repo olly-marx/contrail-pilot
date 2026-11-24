@@ -122,6 +122,10 @@ export const TIPS = {
   'practice-card':     { say: 'A seed falls forward, not straight down. Watch the cross on the ground.' },
   'practice-go':       { say: 'Tap <b>PLANT</b> when the green cross is on the brown soil. Plant three!' },
   'practice-done':     { say: 'Three trees! On real flights, soil comes along while you carry trees.' },
+  // THE WATER LESSON (Plan C, src/waterpractice.js): when a land's trees are full, its water opens.
+  'water-card':        { say: 'Trees full here: the water opens! Water drops fall <b>straight down</b>. Watch the ring.' },
+  'water-go':          { say: 'Tap <b>PLANT</b> when the ring is on the blue water. Three drops!' },
+  'water-done':        { say: 'The river is back! Drops and WATER projects in NATURE fill the blue meter.' },
   'rail-nature':       { say: 'Animals need places to live. Let us see yours!' },
   'rail-nat-land':     { say: 'This is your wild land. It is bare now.' },
   'rail-nat-tap':      { say: 'Projects help animals come back. Tap this one to see!' },

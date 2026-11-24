@@ -46,6 +46,16 @@
   check(((w.save.waterBook || {}).polynesia || {})[p.kind] === 1 && N.waterPart(w.save, 'polynesia') > before, `a water drop on a water target counts: ${JSON.stringify(w.save.waterBook)} water part ${before} -> ${N.waterPart(w.save, 'polynesia')}`);
   w.dropParcel(); const q = w.parcelsFalling[w.parcelsFalling.length - 1]; w.waterLanded(600, q.kind, 'polynesia');
   check(((w.save.waterBook || {}).polynesia || {})[q.kind] === (q.kind === p.kind ? 1 : undefined), 'a miss counts nothing');
+  // 5b. PLAN C (Oliver, 2026-11-24: 'the water dropping is impossible'): a water drop falls steeply, so WHERE it lands hardly moves with the plane's height. At each speed the landing
+  //     spot from 100 to 400 px up spreads less than one water target (was 53-239 px forward, a spread of ~100-160 px, onto 28 px), and the drop lands where the aim says.
+  { const spots = {}, sky = 512 - 48;
+    for (const v of [90, 140]) { spots[v] = [];
+      for (const up of [100, 200, 300, 400]) { w.speed = v; w.plane.y = sky - up; w.plane.vy = 0; const aim = w.predictLanding(); w.parcels = 5; w.dropParcel(); const d = w.parcelsFalling[w.parcelsFalling.length - 1];
+        w.parcelsFalling = [d]; let x = null; w.waterLanded = (lx) => { x = lx + v * d.t; }; for (let i = 0; i < 600 && x === null; i++) w.updateParcels(1 / 60); delete w.waterLanded;   // (x on the GROUND at release: the screen x + how far the ground scrolled while it fell)
+        spots[v].push([Math.round(aim), Math.round(x)]); } }
+    const spread = v => Math.max(...spots[v].map(s => s[1])) - Math.min(...spots[v].map(s => s[1]));
+    check(W.WATER_PLOT.w >= 40 && spread(90) < W.WATER_PLOT.w && spread(140) < W.WATER_PLOT.w, `a water drop lands within one target (${W.WATER_PLOT.w} px) from 100 to 400 px up: spread ${spread(90)} px at 90 px/s, ${spread(140)} at 140 (landing x by height: ${JSON.stringify(spots)})`);
+    check(Object.values(spots).flat().every(([a, x]) => Math.abs(a - x) <= 3), `the aim (ripple ring) shows where the water drop lands: [aim, landed] ${JSON.stringify(spots)}`); }
   // 6. yield
   const ys = { ...save, habitat: { ...save.habitat, polynesia: [...save.habitat.polynesia, wp[0].id, wp[1].id] } };
   const w2 = createWorld(ys, 6); for (let i = 0; i < 3000 && w2.state !== 'playing'; i++) w2.step(1 / 60);
@@ -57,5 +67,5 @@
   for (const [land, ids] of Object.entries(W.WATER_PROJECTS)) if (WA.WATER[land]) for (const id of ids) if (!['water', 'shore'].includes(WA.PLACE[id]) && id !== 'pond') off.push(`${land}:${id}`);
   check(!off.length, `water projects placed on dry land in the NATURE field: ${off.join(', ')}`);
   if (fails.length) { console.log(`FAIL waterways:\n - ${fails.join('\n - ')}`); process.exit(1); }
-  console.log('PASS waterways: shares by land, smaller tree caps where water dominates, drops + projects fill the water half and half, water projects wait for a full biome, water drops count only on water, projects pay a yield');
+  console.log('PASS waterways: shares by land, smaller tree caps where water dominates, drops + projects fill the water half and half, water projects wait for a full biome, water drops count only on water, a water drop lands within one target at any height and where the aim says, projects pay a yield');
 })();

@@ -44,7 +44,11 @@ export const treeCap = land => Math.max(3, Math.min(BASE_CAP, Math.round(BASE_CA
 const V = { verify: true };
 export const DROP_CAP = 6;
 // The water targets in flight: narrower and rarer than soil plots (PARCEL.plotW 48-96 px, every 180-600 px), so the water fills slower ('much harder ... fewer targets').
-export const WATER_PLOT = { w: 28, every: [600, 1400] };
+// PLAN C (Oliver, 2026-11-24: 'the water dropping is impossible ... still drop but it's steeper? Maybe a slightly bigger target'). Measured: a water drop fell under the TREE
+// parachute (src/config.js PARCEL) and drifted 53-239 px forward before landing, by height and speed (start 90 / top 140 px/s; plane 100-400 px up), onto a 28 px target: the spot
+// moved by more than four targets with the plane's height. Now it falls fast with no parachute (gravity, dragTime) and drifts 23-46 px, close under the plane at any height, onto 44 px.
+// (was: w 28, every [600, 1400], the tree parachute)
+export const WATER_PLOT = { w: 44, every: [500, 1000], gravity: 600, dragTime: 0.35 };
 export const WATER_DROPS = {
   woodland: [{ id: 'gravel', name: 'Gravel bed', fact: 'Salmon and trout lay their eggs in clean river gravel.', ...V }, { id: 'willow', name: 'Willow stakes', fact: 'Willow cuttings root in wet banks and hold the soil.', ...V }, { id: 'reeds', name: 'Reed plugs', fact: 'Reed beds clean water and shelter birds.', ...V }],
   mediterranean: [{ id: 'seagrass', name: 'Seagrass', fact: 'Posidonia seagrass meadows shelter young fish.', ...V }, { id: 'reeds', name: 'Reed plugs', fact: 'Reed beds clean water and shelter birds.', ...V }],

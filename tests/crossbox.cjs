@@ -12,14 +12,14 @@ globalThis.SEASON2 = true;
   let n = 0;
   for (const c of C.CROSSINGS.flatMap(x => (x.kind === 'lap' ? [C.asNext(x)] : [0, 1, 2, 3, 4].map(n => C.asNext(x, n))))) {   // CROSSINGS V3: every route as each of the 5 crossings (asNext), and the lap
     const cc = { ...c, from: c.a || 'LONDON', to: c.b || 'LONDON', km: C.crossingKm(c), opens: 'africa' };
-    for (let mask = 0; mask < 2; mask++) {   // V4 (0.73.0): one tick, Range
-      const st = V.stateOf(base, cc), want = [!!(mask & 1)];   // range
+    for (let mask = 0; mask < 4; mask++) {   // Plan B (2026-11-24): two ticks, Range and Nature (V4 0.73.0: Range alone)
+      const st = V.stateOf(base, cc), want = [!!(mask & 1), !!(mask & 2)];   // range, nature
       st.conds.forEach((x, i) => { x.done = want[i]; x.frac = want[i] ? 1 : 0; }); st.ready = want.every(Boolean); st.nearest = st.conds.find(x => !x.done) || null;
       const variants = st.ready ? [{ dep: false, hops: 3 }, { dep: true, hops: null }, { dep: false, hops: 9 }, { dep: false, hops: null }] : [{ dep: false, hops: null }];
       for (const vr of variants) {
         st.atDeparture = vr.dep; st.hops = vr.hops; const b = V.boxView(st), s = V.screenView(st); n++;
         const tag = `${c.id} ${want.map(x => (x ? 'x' : '.')).join('')}${st.ready ? (vr.dep ? ' at-airport' : ` hops${vr.hops}`) : ''}`;
-        check(b.ticks.map(t => t.label).join('|') === 'Range' && b.ticks.map(t => t.done).join() === want.join(), `${tag}: the box has one tick, Range, and says if it is done: ${JSON.stringify(b.ticks)}`);
+        check(b.ticks.map(t => t.label).join('|') === 'Range|Nature' && b.ticks.map(t => t.done).join() === want.join(), `${tag}: the box has two ticks, Range and Nature, and says if each is done: ${JSON.stringify(b.ticks)}`);
         check(b.route.length <= 28 && b.line.length <= 28 && b.title === 'NEXT CROSSING' && /Easy|Medium|Hard|Harder|Very hard|The lap/.test(b.word), `${tag}: route ${b.route.length}, line ${b.line.length}, word "${b.word}"`);
         for (const [k, v] of Object.entries({ route: b.route, line: b.line, word: b.word, button: s.button ? s.button.label : '', link: s.link || '' })) check(!bad(v), `${tag} ${k}: a distance or a long number reaches the player: "${v}"`);
         if (st.ready && vr.dep) check(b.line === 'Ready! Tap to cross.' && b.where === 'sheet' && b.dots === 0 && s.button && s.button.act === 'cross' && s.button.label === `CROSS TO ${cc.to}` && s.link === 'fly normally', `${tag}: at the airport: line "${b.line}", where ${b.where}, button ${JSON.stringify(s.button)}, link ${s.link}`);
@@ -33,7 +33,7 @@ globalThis.SEASON2 = true;
       }
     }
   }
-  check(V.boxView(V.stateOf(base, { ...C.asNext(C.CROSSINGS[0], 0), from: 'ROME', to: 'TUNIS', km: 6500, opens: 'mideast' })).ticks.length === 1 && !('stars' in V.boxView(V.stateOf(base, { ...C.asNext(C.CROSSINGS[0], 0), from: 'WARSAW', to: 'STOCKHOLM', km: 6500, opens: 'nordic' }))), 'three ticks, no stars');
+  check(V.boxView(V.stateOf(base, { ...C.asNext(C.CROSSINGS[0], 0), from: 'ROME', to: 'TUNIS', km: 6500, opens: 'mideast' })).ticks.length === 2 && !('stars' in V.boxView(V.stateOf(base, { ...C.asNext(C.CROSSINGS[0], 0), from: 'WARSAW', to: 'STOCKHOLM', km: 6500, opens: 'nordic' }))), 'two ticks (Range, Nature), no stars');
   console.log(fails.length ? `FAIL crossbox:\n - ${fails.slice(0, 12).join('\n - ')}${fails.length > 12 ? `\n ... and ${fails.length - 12} more` : ''}` : `PASS crossbox: ${n} box and screen states (every route at each of the 5 steps and the lap x the Range tick done or not) are within budget, say no distance, and send the player where the open tick is fixed`);
   process.exit(fails.length ? 1 : 0);
 })();

@@ -171,15 +171,17 @@ export class UI {
     if (FEATURES.season2 && this.save.freeUpgrade && hubRevealed(this.save, 'hangar') && this.save.tutorialDone) return this.go('hangar');   // locked: the free part first
     if (FEATURES.season2 && needsStartChoice(this.save)) return this.askStart().then(() => this.start());   // season 2: choose your start first
     if (!this.save.tutorialDone) return this.startSchool();
-    if (FEATURES.season2 && this.practiceDue()) return this.startPractice();   // the School board's tree practice flight is the lesson now (src/practice.js)
+    if (FEATURES.season2 && this.practiceDue()) return this.startPractice(this.practiceDue());   // the School board's tree practice flight is the lesson now (src/practice.js)
     unlockAudio();
     this.showOnly(null);
     if (this.tour) this.tour.abort();   // no rails step may stay up over the game (src/tour.js abort: measured 2026-11-12, a step's catcher panels swallowed the flight's taps)
     this.onStart();
   }
 
-  practiceDue() { const s = this.save; if (!s.school2 || !s.tutorialDone || !isSeason2(s)) return false; const l = current(s); return !!(l && l.id === 'practice'); }   // (only on a save that started with the board: CI 2026-11-16 caught an old save's TAKE OFF starting the practice)
-  startPractice() { unlockAudio(); this.showOnly(null); if (this.tour) this.tour.abort(); this.onPractice && this.onPractice(); }
+  practiceDue() { const s = this.save; if (!s.tutorialDone || !isSeason2(s)) return false; const l = current(s);
+    if (l && l.id === 'water') return 'water';   // the WATER lesson (Plan C): every save, old or new, goes back to school when its first water opens
+    if (!s.school2) return false; return l && l.id === 'practice' ? 'trees' : false; }   // (only on a save that started with the board: CI 2026-11-16 caught an old save's TAKE OFF starting the practice)
+  startPractice(mode = 'trees') { unlockAudio(); this.showOnly(null); if (this.tour) this.tour.abort(); this.onPractice && this.onPractice(mode); }   // mode: 'trees' (src/practice.js) or 'water' (src/waterpractice.js)
 
   // How to play comes first, so the lessons have something to hang on. Then flight school.
   startSchool() {

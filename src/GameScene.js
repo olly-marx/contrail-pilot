@@ -23,6 +23,7 @@ import { gateFor, iconFor, MARK, GATE_RIGHT } from './gapmarkers.js';
 import { hintFlags, URGENT_NEAR } from './hintlines.js';
 import { tip, groundTip } from './tips.js';
 import { Practice } from './practice.js';
+import { WaterPractice } from './waterpractice.js';
 import { coolCap } from './treepen.js';
 import { applyHudVar, toastTopCss } from './hudclear.js';
 const TIP_MAX = 6, TIP_MIN_TAP = 2;   // a tip bubble goes by itself after TIP_MAX s; a tap ON it closes it after TIP_MIN_TAP s (never pauses the game)
@@ -255,6 +256,7 @@ export class GameScene extends Phaser.Scene {
     this.drawSky(0);
     if (this.autostart === 'school') this.startSchool();
     else if (this.autostart === 'practice') this.startPractice();
+    else if (this.autostart === 'water') this.startPractice('water');
     else if (this.autostart) this.startFlight();
   }
 
@@ -297,9 +299,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   // The tree practice flight (src/practice.js): a school with its own steps, from your own city.
-  startPractice() {
-    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])) { this.scene.restart({ go: true, mode: 'practice' }); return; }
-    this.school = new Practice(this, this.ui);
+  startPractice(mode = 'trees') {
+    if (this.state !== 'idle' || this.builtWith !== JSON.stringify([this.save.levels, this.save.habitat, this.save.fleet])) { this.scene.restart({ go: true, mode: mode === 'water' ? 'water' : 'practice' }); return; }
+    this.school = mode === 'water' ? new WaterPractice(this, this.ui) : new Practice(this, this.ui);   // (Plan C: the water lesson)
     this.nextAirport = { worldX: 1e9, name: this.path[1], spawned: false };
     this.startFlight();
     this.school.begin();
@@ -955,6 +957,11 @@ export class GameScene extends Phaser.Scene {
     if (!this.kit.tree || this.parcels <= 0 || this.state !== 'playing') return;
     const x = Math.round(this.predictLanding());
     const onPlot = this.plots.some(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + (pl.w || this.kit.plotW) + 3);
+    if (this.waterOpen && this.waterOpen()) {   // PLAN C: over the water the aim is a RIPPLE RING where the drop will land, bright when it is over a blue target
+      g.lineStyle(2, 0x000000, 0.5).strokeEllipse(x, SKY_H - 2, 16, 6);
+      g.lineStyle(1, onPlot ? 0x8dffb0 : 0x9fe0ff, 1).strokeEllipse(x, SKY_H - 2, 14, 5).strokeEllipse(x, SKY_H - 2, 6, 2);
+      return;
+    }
     g.fillStyle(0x000000, 0.6);
     for (let i = -5; i <= 5; i++) { g.fillRect(x + i - 1, SKY_H - 6 + i, 3, 2); g.fillRect(x + i - 1, SKY_H - 6 - i, 3, 2); }
     g.fillStyle(onPlot ? 0x8dffb0 : 0xffffff, 1);
@@ -1418,6 +1425,7 @@ export class GameScene extends Phaser.Scene {
       if (night) b.view.setTintFill(0xd8def0); else b.view.clearTint();
     }
     for (const p of this.parcelsFalling) {
+      if (p.water) { p.view.setPosition(p.x, p.y); continue; }   // (Plan C: a water drop falls straight, no parachute)
       if (p.t >= PARCEL.chuteAfter) p.chute.setVisible(true);
       p.view.setPosition(p.x, p.y).setRotation(Math.sin(p.t * 6) * 0.15);   // swing under the parachute
     }
@@ -1539,6 +1547,10 @@ export class GameScene extends Phaser.Scene {
     sfx.nope();
   }
   showParcel(p) {
+    if (p.water) {   // PLAN C: a blue drop (two pixel rectangles: a body and a highlight), no crate, no parachute
+      p.view = this.add.container(p.x, p.y, [this.add.rectangle(0, 0, 6, 8, 0x3fa9e8), this.add.rectangle(0, -5, 2, 2, 0x3fa9e8), this.add.rectangle(-1, -1, 2, 2, 0xcff0ff)]);
+      this.fxLayer.add(p.view); return;
+    }
     const crate = this.add.image(0, 0, 'crate');
     p.chute = this.add.image(0, -8, 'chute').setVisible(false);
     p.view = this.add.container(p.x, p.y, [p.chute, crate]);
@@ -1748,7 +1760,7 @@ export class GameScene extends Phaser.Scene {
 
     const forest = 'FOREST FULL!';   // one short line (the meter shows the rest; longer text ran into it): FULL beats the soil hint
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
-    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? 'drop on soil!' : '') : '');
+    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? (this.waterOpen && this.waterOpen() ? 'drop on water!' : 'drop on soil!') : '') : '');   // (Plan C: over open water the hint says water)
     const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow);   // nothing to plant on (0.10.7)
     this.setDropVisible(showDrop);
     this.dropArrowGfx.clear();   // a bobbing arrow on PLANT while soil is ahead and no tree has landed yet (not in school or the automated tests)

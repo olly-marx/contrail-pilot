@@ -8,12 +8,23 @@
 import { treesPlanted } from './treecount.js';
 import { treesGrownTotal } from './groves.js';
 import { available as crossingsOnOffer } from './crossings.js';
+import { dropsOf } from './waterways.js';
+import { waterOpenHere } from './nature.js';
+import { city } from './network.js';
+import { REGION_DATA } from './habitats.js';
 
 const md = s => new Set(s.missionsDone || []);
 const tour = (s, id) => (s.tours || []).includes(id) || (s.tours || []).includes('*');
 const L = id => s => md(s).has(id);
 // What the OLD rules had already shown a player (src/missions2.js revealed before 2026-11-16), for saves without school2.
 const oldShown = { runway: L('L1'), map: L('L4'), name: s => (s.landings || 0) >= 5, records: s => (s.landings || 0) >= 5, trees: L('L4'), practice: s => treesPlanted(s) > 0 || md(s).has('L5'), results: s => (s.flights || 0) >= 1, crossings: s => (s.crossed || []).length > 0 };   // (was (s.areas || []).length > 1: a home REGION of two areas, e.g. Asia = sasia + easia, made it true for a player who had never crossed)
+
+// The land the lesson is about: the one you are in if its water is open, else the first land with open water (null: no water is open anywhere yet).
+export function waterLessonLand(save) {
+  const here = save.city && city(save.city) && city(save.city).region, open = l => dropsOf(l).length > 0 && waterOpenHere(save, l);
+  if (here && open(here)) return here;
+  return Object.keys(REGION_DATA).find(open) || null;
+}
 
 export const BOARD = [
   { id: 'school',    course: 'Flying',       title: 'Flight school',             short: 'Fly, dodge, land.',                           pic: 'lesson-tap',  kind: 'fly',    done: s => !!s.tutorialDone },
@@ -36,6 +47,8 @@ export const BOARD = [
   // Crossings (the owner, 2026-11-18: "the game teaching should never end until everything about the game you care about is understood"): a guided lesson on MISSIONS (src/tour.js 'r-cross'), at the crossing
   // card and its three rows. `open`: it waits until a crossing is listed (src/crossings.js available) so the card it points at exists. Done by the lesson, or by flying a crossing. (It used to be done by
   // (s.areas || []).length > 1, which every player of a two-area home region had from the start, so no one in Asia, Europe, Africa & the Middle East, South America or Oceania ever saw it.)
+  // WATER (Plan C, 2026-11-24; Oliver: 'back to school about it'): opens when any land's water opens (its trees full), a practice flight over three blue targets (src/waterpractice.js).
+  { id: 'water',     course: 'Water',        title: 'Water life',                short: 'Drop water life straight down on blue water.', pic: 'lesson-plot', kind: 'practice', mode: 'water', open: s => !!waterLessonLand(s), done: s => !!s.waterPractice || tour(s, '*') },   // (tours '*': a test save that has seen everything)
   { id: 'crossings', course: 'The world',    title: 'Crossings',                 short: 'How to open the next part of the world.',     pic: 'lesson-bonus', kind: 'screen', where: 'missions', open: s => !!s.tutorialDone && crossingsOnOffer(s).length > 0, done: s => tour(s, 'r-cross') || (s.crossed || []).length > 0 },
 ];
 export const lessonDone = (s, l) => !!l.done(s) || (!s.school2 && !!(oldShown[l.id] && oldShown[l.id](s)));
