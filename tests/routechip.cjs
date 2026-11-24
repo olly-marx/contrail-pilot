@@ -44,7 +44,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     p = await U.openPage(b, W, H, URL);
     await p.evaluate(() => { const s = game.registry.get('save'); s.tours = (s.tours || []).filter(t => t !== 'globe-hint' && t !== '*'); }); await home(p); await p.waitForTimeout(500);
     const g = await p.evaluate(() => { const r = document.getElementById('hubGlobe').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
-    await p.mouse.move(g.x, g.y); await p.mouse.down(); for (let i = 1; i <= 6; i++) { await p.mouse.move(g.x + 8 * i, g.y); await p.waitForTimeout(16); } await p.mouse.up(); await p.waitForTimeout(300);
+    await p.mouse.move(g.x, g.y); await p.mouse.down(); for (let i = 1; i <= 6; i++) { await p.mouse.move(g.x + 8 * i, g.y); await p.waitForTimeout(16); } await p.mouse.up();
+    // (ci/v0770-2, 2026-11-24: at 320x568 on a runner the caption went a little after a fixed 300 ms wait, once; it went on the retry. Wait up to 2 s for it instead.)
+    await p.waitForFunction(() => document.getElementById('hubHint').hidden, null, { timeout: 2000 }).catch(() => {});
     check(await p.evaluate(() => document.getElementById('hubHint').hidden), `${tag}: a drag on the globe removes the caption`);
     await p.close();
   }
