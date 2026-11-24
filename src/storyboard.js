@@ -161,7 +161,7 @@ export function makeOffer(save, slot) {
   const seq = save.storySeq = (save.storySeq || 0) + 1, rnd = stream(hash(`${save.homeCity || ''}|${seq}|${slot}`));
   const reach = reachOf(save), upgrade = slot === 2, onBoard = new Set((save.storyBoard || []).filter(Boolean).map(o => o.theme));
   const level = levelFor(slot, seq), L = LEVELS[level];
-  const sized = t => L.stops.includes(t.stops) || (level === 'impossible' && t.stops === 3);   // (impossible: 3 long stages, or 2 when no 4-stop theme fits)
+  const sized = t => (t.level ? t.level === level : L.stops.includes(t.stops) || (level === 'impossible' && t.stops === 3));   // (a theme written for a level, tools/stories/generate.mjs, goes to that level; else by size; impossible: 3 long stages, or 2 when no 4-stop theme fits)
   const fits = THEMES.filter(t => !onBoard.has(t.id) && (upgrade || !t.needs) && citiesFor(save, t).length >= t.stops)
     .map(t => ({ t, w: sized(t) ? 0 : 1 }));   // (a theme of the level's size first; any other theme after, so a small map still gets an offer)
   const order = fits.map(x => ({ ...x, r: rnd() })).sort((a, b) => a.w - b.w || a.r - b.r).map(x => x.t);
