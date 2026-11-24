@@ -1366,3 +1366,7 @@ h2.sub { margin-top: -4px; }
 #missions .panel > *, #mList > *, .scard, .scard .sbody > * { min-width: 0; }
 .scard .stitle, .scard .stext, #missions .rowc-name, #missions .m-how { overflow-wrap: anywhere; }
 .schip { max-width: 100%; box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; }
+/* THE STATUS BAR BAND (0.78.0; Oliver's iPhone screenshot, 2026-11-24: the MISSIONS title and its i button sat under the status bar and the Dynamic Island).
+   At rest each screen starts below the inset (measured with a 59 px inset: MISSIONS' head at 75 px); a SCROLLED screen ran its content up under the clock and the island.
+   In the phone app (viewport-fit=cover) an ink band now covers the inset, so scrolled text goes under it; on the web the inset is 0 and nothing shows. */
+body::after { content: ''; position: fixed; left: 0; right: 0; top: 0; height: env(safe-area-inset-top); background: var(--ink); z-index: 1000; pointer-events: none; }
