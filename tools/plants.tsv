@@ -1022,3 +1022,9 @@ crates	src/sim/crates.js	s/this.crateLanded(p.city, !!(rw \&\& p.x >= rw.x \&\& 
 crates	src/sim/rules.js	s/    if (this.dropCrate()) return;/    if (false) return;/	the drop over a crate runway is a tree, never the crate
 crates	src/storyboard.js	s/ || isCrateStop(o, o.reached || 0)) return null;/) return null;/	landing at a crate stop counts (no drop needed)
 crates	src/aim.js	s/  if (cw) return continueTour(cw, count, linksFor(save));/  if (false) return continueTour(cw, count, linksFor(save));/	a special delivery flies only to its next stop (not one flight over every crate stop)
+realterrain	src/sim/rules.js	s/i + 1]), (this.distancePx - from) \/ len, !!this.crossing \&\& i === 0);/i + 1]), (this.distancePx - from) \/ len, false);/	crossing leg reads the old boxes
+realterrain	src/sim/rules.js	s/if (this.crossing \&\& this.airportIndex === 0 \&\& this.nextAirport/if (false \&\& this.nextAirport/	crossing cooled by the land below
+realterrain	src/geo.js	s/if (!isLandOrIsland(lat, wrap(lon))) return .ocean.;/if (false) return 0;/	land mask ignored
+realterrain	src/geo.js	s/p = lap ? lapPoint(a, f) : along(a, b, f)/p = along(a, b, f)/	lap flown home to home
+realterrain	src/geo.js	s/w = cells.map(r => (r === .ocean. \&\& !real ? OCEAN_SHARE : 1))/w = cells.map(r => (r === 'ocean' ? OCEAN_SHARE : 1))/	crossing sea squeezed
+realterrain	src/geo.js	s/export const LAP_BEARING = 270;/export const LAP_BEARING = 90;/	lap leaves east
