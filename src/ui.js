@@ -75,7 +75,7 @@ import { endView } from './crossingend.js';
 import { prizeLines } from './missionprize.js';
 import { crossingState, crossingById, momentDue, markTold, sheetText, endingBody, boxView, screenView, cardsView, oneCardView, PICK_TITLE } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
-import { accept as storyAccept, leave as storyLeave, offStory, reaim as storyReaim, fillBoard as fillStoryBoard, dropFee as storyDropFee, activeStory, leftPay, heartsLeft as storyHearts, LEVELS as STORY_LEVELS, storyPicUrl } from './storyboard.js';
+import { isCrateStop, crateWay, accept as storyAccept, leave as storyLeave, offStory, reaim as storyReaim, fillBoard as fillStoryBoard, dropFee as storyDropFee, activeStory, leftPay, heartsLeft as storyHearts, LEVELS as STORY_LEVELS, storyPicUrl } from './storyboard.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -442,7 +442,7 @@ export class UI {
     const sw = both ? `<div class="hc-switch" role="tablist"><button type="button" data-focus="story" class="${storyOn ? 'on' : ''}">STORY</button><button type="button" data-focus="crossing" class="${storyOn ? '' : 'on'}">CROSSING</button></div>` : '';
     hc.hidden = !box && !storyOn; hc.classList.toggle('ready', !!(box && box.ready)); hc.classList.toggle('story', storyOn);
     if (storyOn) { const n = story.reached || 0, left = leftPay(story);
-      hc.innerHTML = `${sw}${storyLevelHTML(story)}<p class="rc-label">${esc(story.title)}</p><div class="hc-route"><span>Stop ${n + 1} of ${story.stops.length}: ${esc(story.stops[n])}</span><b><span class="hc-prize">+${left.seeds}<i class="seedicon"></i></span></b></div>`;
+      hc.innerHTML = `${sw}${storyLevelHTML(story)}<p class="rc-label">${esc(story.title)}</p><div class="hc-route"><span>${isCrateStop(story, n) ? `Stop ${n + 1} of ${story.stops.length}: drop a crate on ${esc(story.stops[n])}` : `Stop ${n + 1} of ${story.stops.length}: ${esc(story.stops[n])}`}</span><b><span class="hc-prize">+${left.seeds}<i class="seedicon"></i></span></b></div>`;
       hc.onclick = () => this.go('missions'); }
     else if (box) { hc.innerHTML = `${sw}<p class="rc-label">${esc(box.title)}</p><div class="hc-route"><span>${esc(box.route)}</span><b>${esc(box.word)} <span class="hc-prize">${esc(box.prize)}</span></b></div><div class="hc-ticks">${box.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</div><p class="hc-line">${esc(box.line)}</p>${box.where === 'goto' ? `<div class="hc-go"><span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(box.dots)}${box.moreDots ? '+' : ''}</span>${box.aimOn ? '<button id="hcStop" class="btn tiny" type="button">stop</button>' : `<button id="hcGo" class="btn tiny go" type="button">GO TO ${esc(box.city)}</button>`}</div>` : ''}`; hc.onclick = () => this.openCrossings(cs);
       const stop = $('hcStop'), go = $('hcGo'); if (stop) stop.onclick = e => { e.stopPropagation(); sfx.tick(); clearGoto(s); writeSave(s); this.showTitle(); }; if (go) go.onclick = e => { e.stopPropagation(); sfx.tick(); setGoto(s, box.city); writeSave(s); this.showTitle(); }; }
@@ -477,7 +477,7 @@ export class UI {
     $('hubRoute').innerHTML = chip.kind === 'word' ? `${chip.word}: ${esc(chip.city)} &#8250;` : chip.route.join(' &#9654; ') + (chip.tag ? ` <span class="small">(${chip.tag})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something; src/steerchip.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     this.clearRouteLabels(); if ($('hubCard')) $('hubCard').hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false;   // (the tapped city's row goes with any redraw: closeCityRow redraws on purpose)
-    const storyWay = storyOn ? routeOf(s, story.stops[story.reached || 0]) : null;   // (story mode: the gold line is the way to the next stop; the rest of the story is dashed: src/globe.js)
+    const storyWay = storyOn ? crateWay(s) || routeOf(s, story.stops[story.reached || 0]) : null;   // (a special delivery: the one flight over every crate stop)   // (story mode: the gold line is the way to the next stop; the rest of the story is dashed: src/globe.js)
     const path = storyWay && storyWay.length > 1 ? storyWay : routeFor(s, Math.max(5, gotoTarget(s) ? gotoHops(s) : 0)), here = city(path[0]), opts = v.worldChoice && !storyOn ? choices(path[0], linksFor(s)) : [];
     const pick = name => { this.globeUsed(); sfx.tick(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it

@@ -178,13 +178,13 @@ export function makeOffer(save, slot) {
   // small area cannot be stretched, the user: "it was like 4,000 meters when we're easily flying 15,000"), then anything that fits.
   for (const pass of [0, 1]) for (const theme of order) {
     const gadget = upgrade && theme.needs && missingNeeds(save, theme.needs).length > 0;   // an upgrade story by its gadget/nature need
-    const band = upgrade && !gadget ? STORY.stretch : L.fit;
-    const crateHere = crateTry && theme.stops >= 3;   // (a special delivery is ONE flight: its whole way, every stage, fits the reach)
+    const crateHere = crateTry && theme.stops >= 3;
+    const band = upgrade && !gadget && !crateHere ? STORY.stretch : L.fit;   // (a special delivery is the third slot's special: sized to fly now, no stretch)   // (a special delivery is ONE flight: its whole way, every stage, fits the reach)
     const target = Math.round(reach * (band[0] + rnd() * (band[1] - band[0])) / (crateHere ? theme.stops - 1 : 1));
     if (crateTry && pass === 0 && theme.stops < 3) continue;   // (a special delivery needs a middle stop: try the 3-4 stop themes first)
     const got = pickStops(save, theme, target, rnd); if (!got) continue;
-    const stretchNeed = upgrade && !gadget ? Math.max(...got.stages) : 0;
-    if (upgrade && !gadget && stretchNeed <= reach) continue;   // the open network could not make it longer than today's reach: try another theme
+    const stretchNeed = upgrade && !gadget && !crateHere ? Math.max(...got.stages) : 0;
+    if (upgrade && !gadget && !crateHere && stretchNeed <= reach) continue;   // the open network could not make it longer than today's reach: try another theme
     if (!upgrade && Math.max(...got.stages) > reach) continue;   // (a fit story must be flyable today)
     if (crateHere && got.stages.reduce((a, b) => a + b, 0) > reach) continue;
     if (pass === 0 && Math.max(...got.stages) < target * 0.5) continue;

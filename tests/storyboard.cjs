@@ -21,7 +21,7 @@
   s.city = 'NAIROBI'; s.bestDistance = 40000; s.areaBest = { africa: 41000 };
   check(B.fillBoard(s) === false && JSON.stringify(s.storyBoard) === frozen, 'a filled board never changes: another city and a bigger reach leave every offer as it was');
   const [a, b, c] = s.storyBoard;
-  check(B.missing(s, c).length > 0, `the third offer needs an upgrade: ${JSON.stringify(c.needs)}`);
+  check(c.crate || B.missing(s, c).length > 0, `the third offer needs an upgrade (or is a special delivery): ${JSON.stringify(c.needs)}`);
   check(!B.missing(s, a).length && !B.missing(s, b).length, 'the other two can be accepted');
   s.bestDistance = 25000; s.areaBest = {};
   for (const o of [a, b]) check(Math.max(...o.stages) <= 25000, `${o.title}: no stage longer than the 25,000 km reach (${o.stages})`);
