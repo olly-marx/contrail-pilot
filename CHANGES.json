@@ -1,5 +1,22 @@
 [
   {
+    "id": "2026-11-24-story-hub-water-terrain",
+    "version": "0.77.0",
+    "date": "2026-11-24",
+    "level": "major",
+    "notes": [
+      "The FLY screen shows your current goal: your story or the crossing, with a switch between them.",
+      "Stories have a difficulty: Easy (as many tries as you like), Medium (5 hearts), Hard (3 hearts) and Impossible (1 heart). A crash on a story flight costs a heart.",
+      "One story at a time. Swapping to another story costs seeds; a free flight, or flying anywhere off your story, ends it.",
+      "Special delivery stories: drop big crates by parachute onto the runways of the cities on the way, without landing, then land at the last one.",
+      "Crossings and the lap of the Earth now fly over the real land and sea under their route: Rome to Tunis is sea, the lap from Lagos crosses the Atlantic, South America, the Pacific, Indonesia and the Indian Ocean.",
+      "Water drops fall straight down onto bigger blue targets, and a ring shows where they will land.",
+      "A new School lesson teaches water when your first land's water opens.",
+      "NATURE opens on the land your next crossing is waiting on, and offers three projects at a time.",
+      "The crossing box on FLY shows both Range and Nature."
+    ]
+  },
+  {
     "id": "2026-11-24-crossing-nature",
     "version": "0.76.0",
     "date": "2026-11-24",
