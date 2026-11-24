@@ -1423,6 +1423,7 @@ export class GameScene extends Phaser.Scene {
       if (p.t >= PARCEL.chuteAfter) p.chute.setVisible(true);
       p.view.setPosition(p.x, p.y).setRotation(Math.sin(p.t * 6) * 0.15);   // swing under the parachute
     }
+    for (const p of this.cratesFalling || []) { if (p.t >= 0.3) p.chute.setVisible(true); p.view.setPosition(p.x, p.y).setRotation(Math.sin(p.t * 4) * 0.1); }   // the special delivery crates (src/sim/crates.js CRATE_FALL.chuteAfter)
     this.drawAim();
     this.syncContrails(time);
     this.drawRays(time);
@@ -1547,7 +1548,7 @@ export class GameScene extends Phaser.Scene {
     sfx.nope();
   }
   showParcel(p) {
-    if (p.crate) { p.view = this.add.container(p.x, p.y, [this.add.image(0, 0, 'crate').setScale(2)]); this.fxLayer.add(p.view); return; }   // a special delivery crate (src/sim/crates.js): big, no parachute
+    if (p.crate) { p.chute = this.add.image(0, -16, 'chute').setScale(2).setVisible(false); p.view = this.add.container(p.x, p.y, [p.chute, this.add.image(0, 0, 'crate').setScale(2)]); this.fxLayer.add(p.view); return; }   // a special delivery crate (src/sim/crates.js): big, under a big parachute
     const crate = this.add.image(0, 0, 'crate');
     p.chute = this.add.image(0, -8, 'chute').setVisible(false);
     p.view = this.add.container(p.x, p.y, [p.chute, crate]);

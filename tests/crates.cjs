@@ -2,7 +2,8 @@
 // 1. Some hard offers are special deliveries (crate: true, 3+ stops); the board still makes easy/medium/hard by slot.
 // 2. With one active and the pickup reached, the flight's path runs from here over every crate stop to the last stop (one flight).
 // 3. Over the crate stop's runway the drop is the crate (not a tree); it falls fast and lands a short way behind: dropped over the
-//    runway's start it lands ON the runway (delivered); dropped well before, it misses; a runway passed with no crate is a miss.
+//    runway it floats onto it (delivered) only when let go the right way before it (at 150 px/s from 150 px up: about 50-200 px early);
+//    let go over the runway it floats past (missed); far too early it falls short; a runway passed with no crate is a miss.
 // 4. onFlight: a delivered crate reaches and pays its stop (no landing there needed); a miss costs a heart; LANDING at a crate stop
 //    does not count.
 // Plants: tools/plants.tsv, test crates. Run: node tests/crates.cjs
@@ -33,14 +34,17 @@
   check(JSON.stringify(w.crates) === JSON.stringify(drops), `the flight carries a crate for each stop: ${w.crates}`);
   const runwayAt = (w, x) => { w.runways = []; w.addRunway(w.distancePx + x - CF.PLANE.x, drops[0]); return w.runways[0]; };
   const fall = w => { for (let i = 0; i < 600 && w.cratesFalling.length; i++) { for (const r of w.runways) r.x -= w.speed / 60; w.updateCrates(1 / 60); } };   // (the ground and its runway scroll by at the flight's speed)
-  w.parcels = 3; const parcels0 = w.parcels;
-  runwayAt(w, w.plane.x + 20);   // the runway starts just ahead of the plane
+  const cruise = w => { w.speed = 150; w.plane.y = 150; };
+  w.parcels = 3; const parcels0 = w.parcels; cruise(w);
+  runwayAt(w, w.plane.x + 120);   // the runway starts 120 px ahead: the floating crate carries on onto it
   check(w.crateDue(), 'over the runway a crate is due');
   w.dropParcel();
   check(w.cratesFalling.length === 1 && w.parcels === parcels0, 'the drop is the crate, not a tree');
   fall(w);
-  check(JSON.stringify(w.crateResult().delivered) === JSON.stringify([drops[0]]), `dropped over the runway's start it lands on it: ${JSON.stringify(w.crateResult())}`);
-  const w2 = fly(); runwayAt(w2, w2.plane.x + 250);   // well before the runway
+  check(JSON.stringify(w.crateResult().delivered) === JSON.stringify([drops[0]]), `let go 120 px before the runway it floats onto it: ${JSON.stringify(w.crateResult())}`);
+  const w4 = fly(); cruise(w4); runwayAt(w4, w4.plane.x - 30); w4.dropParcel(); fall(w4);
+  check(w4.crateResult().missed[0] === drops[0], `let go over the runway it floats past the end: ${JSON.stringify(w4.crateResult())}`);
+  const w2 = fly(); cruise(w2); runwayAt(w2, w2.plane.x + 450);   // far too early
   check(w2.crateDue(), 'a runway coming up is due');
   w2.dropParcel(); fall(w2);
   check(w2.crateResult().missed[0] === drops[0] && !w2.crates.length, `dropped far too early it misses, and this flight's other crates are off: ${JSON.stringify(w2.crateResult())}`);

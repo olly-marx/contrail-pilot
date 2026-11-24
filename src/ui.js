@@ -582,7 +582,7 @@ export class UI {
   // SPECIAL DELIVERY CRATES, the lesson (the user, 2026-11-24): shown the first time such a story is accepted, and from SCHOOL.
   crateLesson() {
     showSheet({ eyebrow: 'FLIGHT SCHOOL', title: 'Special delivery crates', pic: 'assets/ui/portrait-story-crate-0.png',
-      body: 'Land at the first city to pick up the crates. Then fly on WITHOUT landing: when a city\'s runway blinks orange, tap DROP CRATE so the crate falls onto the runway. Big crates fall fast, so drop just before the runway. Keep going to the last city and land there. A crate that misses costs a heart.', ok: 'GOT IT' });
+      body: 'Land at the first city to pick up the crates. Then fly on WITHOUT landing: when a city\'s runway blinks orange, tap DROP CRATE so the crate falls onto the runway. The crate floats down under a parachute and keeps flying forward, so let it go well BEFORE the runway, earlier the faster you fly. Keep going to the last city and land there. A crate that misses costs a heart.', ok: 'GOT IT' });
   }
   // LEAVE the active story (GIVE UP on its card, FREE FLIGHT on HOME, a crossing): asked first; the story FAILS (no fee). `then` runs after.
   dropStory(then, { label = 'GIVE UP', why = '' } = {}) {

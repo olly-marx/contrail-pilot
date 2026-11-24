@@ -1,14 +1,14 @@
 // SPECIAL DROP-OFF CRATES (the user, 2026-11-24: "you drop an extra large crate down onto the airstrip without landing, and ... then
 // you have to keep going after that"). Mixed into RULES (src/sim/rules.js), so the game and the Node engine fly the same crate.
 // A flight of a special drop-off story (src/storyboard.js crateStops) carries one big crate for each crate stop on its way, in order.
-// Over that stop's runway the DROP button drops it: no parachute, it falls fast and loses the plane's speed quickly (CRATE_FALL), so it
-// lands a short way behind where it was let go. On that runway: delivered. Off it, or the runway passed with no crate: missed, and the
+// Over that stop's runway, or coming up to it, the DROP button drops it: it floats down under a big parachute (the user, 12:41: "a special
+// container that'll float down"), keeping much of the plane's speed for a while (CRATE_FALL), so it must be let go BEFORE the runway. On that runway: delivered. Off it, or the runway passed with no crate: missed, and the
 // rest of this flight's crates are off (the stops must be reached in order). The flight result carries { delivered, missed } and
 // src/missions2.js onFlight pays a delivered stop (storyboard deliveredAt) or takes a heart for a miss.
 import { PLANE, AIRPORT } from '../config.js';
 import { crateStops } from '../storyboard.js';
 
-export const CRATE_FALL = { gravity: 520, terminal: 420, dragTime: 0.9 };   // px/s^2, px/s, s (a tree parcel: 320, chute at 0.25 s, 160, 3.0)
+export const CRATE_FALL = { gravity: 320, chuteAfter: 0.3, terminal: 120, dragTime: 2.2 };   // px/s^2, s, px/s under the chute, s (a tree parcel: 320, 0.25, 160, 3.0)
 const SKY_H_OF = w => w.skyH;   // (set by initCrates: the ground line the rules use)
 
 export const CRATES = {
@@ -20,7 +20,7 @@ export const CRATES = {
   // The runway the next crate is for, while it is on screen and not yet behind the plane (null: nothing to drop on now).
   crateRunway() {
     const c = this.crates && this.crates[0]; if (!c || this.cratesFalling.some(p => p.city === c)) return null;
-    return (this.runways || []).find(r => r.name === c && r.x + AIRPORT.runwayLen > this.plane.x - 40 && r.x < this.plane.x + 260) || null;
+    return (this.runways || []).find(r => r.name === c && r.x + AIRPORT.runwayLen > this.plane.x - 40 && r.x < this.plane.x + 640) || null;   // (coming up: a floating crate is let go well before)
   },
   crateDue() { return this.state === 'playing' && !this.frozen && !!this.crateRunway(); },
   dropCrate() {
@@ -33,7 +33,7 @@ export const CRATES = {
     if (!this.cratesFalling || !this.cratesFalling.length) return;
     this.cratesFalling = this.cratesFalling.filter(p => {
       p.t += dt;
-      p.vy = Math.min(CRATE_FALL.terminal, p.vy + CRATE_FALL.gravity * dt);
+      p.vy = p.t < CRATE_FALL.chuteAfter ? p.vy + CRATE_FALL.gravity * dt : Math.min(CRATE_FALL.terminal, p.vy + CRATE_FALL.gravity * dt);
       p.x += -this.speed * (1 - Math.exp(-p.t / CRATE_FALL.dragTime)) * dt;
       p.y += p.vy * dt;
       if (p.y < SKY_H_OF(this)) return true;
