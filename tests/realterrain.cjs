@@ -1,6 +1,6 @@
 // REAL TERRAIN under a crossing (Oliver, 2026-11-24: 'Tunis-Rome is nearly all sea'; the lap flew over his homeland the whole way round).
 // A crossing's own leg shows the real land and sea of its great circle (src/geo.js surfaceAt, legStrip(a, b, true)); the lap is the whole
-// circle round from home, leaving due west (lapPoint); the departure land's nature cools the crossing all the way (src/sim/rules.js coolLand).
+// circle round from home, leaving due west (lapPoint); the cooling keeps the old strip it was tuned on (src/sim/rules.js coolLand).
 // Expectations DECLARED here by hand from a map, not read back from the code. No browser. Run: node tests/realterrain.cjs
 const path = require('path');
 (async () => {
@@ -41,7 +41,9 @@ const path = require('path');
   const fake = { crossing: { from: 'LAGOS', to: 'LAGOS', km: 40000, kind: 'lap' }, airportIndex: 0, path: ['LAGOS', 'LAGOS'], nextAirport: { worldX: 40000 }, distancePx: 20000, school: null, legKm: () => 40000 };
   const mid = RULES.regionHere.call(fake);
   check(mid !== 'savanna', `halfway round the lap the plane is over ${mid}, should be the far side of the Earth`);
-  check(RULES.coolLand.call({ ...fake, regionNow: 'ocean' }) === 'savanna', 'a crossing over the sea should be cooled by its departure land (savanna)');
+  check(RULES.coolLand.call({ ...fake, regionNow: 'ocean' }) === 'savanna', 'the lap over the real sea should keep the cooling it was tuned on (home savanna all the way)');
+  const tun = { ...fake, crossing: { from: 'ROME', to: 'TUNIS', km: 12000, kind: 'route' }, path: ['ROME', 'TUNIS'], nextAirport: { worldX: 12000 }, distancePx: 6000, legKm: () => 12000, regionNow: 'ocean' };
+  check(RULES.coolLand.call(tun) === 'mediterranean', `Rome > Tunis halfway: cooled by ${RULES.coolLand.call(tun)}, should be the tuned strip's mediterranean`);
   check(RULES.coolLand.call({ ...fake, crossing: null, regionNow: 'ocean' }) === 'ocean', 'a normal flight is cooled by the land below');
   if (fails.length) { console.log('FAIL\n- ' + fails.join('\n- ')); process.exit(1); }
   console.log('PASS realterrain');

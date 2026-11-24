@@ -661,11 +661,15 @@ export const RULES = {
     const i = this.airportIndex, len = this.legKm(i), from = this.nextAirport.worldX - len;
     return regionBelow(city(this.path[i]), city(this.path[i + 1]), Math.min(1, (this.distancePx + ahead - from) / len), !!this.crossing && i === 0);   // a crossing's own leg: the real terrain (src/geo.js surfaceAt; the lap: the whole circle round)
   },
-  // The land whose nature cools the flight (BIOME_COOL): the land below, but on a crossing's own leg the DEPARTURE land all the way (REAL TERRAIN,
-  // 2026-11-24): the crossing bars are set on the departure land's nature (SEASON.step natureRule 'departure', sim-tuned), and before the real
-  // terrain a crossing flew over its departure land nearly the whole way, so its forest kept cooling; over the real sea it would cool nothing.
+  // The land whose nature cools the flight (BIOME_COOL): the land below; but on a crossing's own leg, the land the crossing's cooling was TUNED on
+  // (REAL TERRAIN, 2026-11-24): the crossing bars (SEASON.step bioMul, natureRule 'departure') were set by the sim when a crossing flew over the old
+  // coarse boxes (legStrip without `real`: mostly the departure land; the lap all home). Cooling keeps reading that strip, so the real sea shown
+  // below changes the look, not the difficulty (measured: cooling by the departure land all the way made the 22,000 km tier fail half as often).
   coolLand() {
-    if (this.crossing && this.airportIndex === 0) { const d = (city(this.crossing.from) || {}).region; if (d && d !== 'ocean' && d !== 'ice') return d; }
+    if (this.crossing && this.airportIndex === 0 && this.nextAirport && this.nextAirport.worldX < 1e8) {
+      const len = this.legKm(0), from = this.nextAirport.worldX - len;
+      return regionBelow(city(this.path[0]), city(this.path[1]), (this.distancePx - from) / len, false);
+    }
     return this.regionNow || 'woodland';
   },
   regionHere() {

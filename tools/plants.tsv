@@ -1003,7 +1003,7 @@ crossingview	src/crossings.js	s/ready: plane \&\& nature };/ready: plane };/	a c
 crossladder	src/crossings.js	s/return l ? biodiversity(save, l) : 0;/return 100;/	the nature tick reads no land (always full)
 crossladder	src/crossings.js	s|^const chance = (save, c) => (c.km ? Math.min(reachFrom(save, c) / c.km, natureNeed(c) ? natureHave(save, c) / natureNeed(c) : 1) : 0);|const chance = (save, c) => (c.km ? reachFrom(save, c) / c.km : 0);|	the route offered is picked by range alone again (a land the player never grew)
 realterrain	src/sim/rules.js	s/i + 1]), (this.distancePx - from) \/ len, !!this.crossing \&\& i === 0);/i + 1]), (this.distancePx - from) \/ len, false);/	crossing leg reads the old boxes
-realterrain	src/sim/rules.js	s/if (this.crossing \&\& this.airportIndex === 0) { const d/if (false) { const d/	crossing cooled by the land below
+realterrain	src/sim/rules.js	s/if (this.crossing \&\& this.airportIndex === 0 \&\& this.nextAirport/if (false \&\& this.nextAirport/	crossing cooled by the land below
 realterrain	src/geo.js	s/if (!isLandOrIsland(lat, wrap(lon))) return .ocean.;/if (false) return 0;/	land mask ignored
 realterrain	src/geo.js	s/p = lap ? lapPoint(a, f) : along(a, b, f)/p = along(a, b, f)/	lap flown home to home
 realterrain	src/geo.js	s/w = cells.map(r => (r === .ocean. \&\& !real ? OCEAN_SHARE : 1))/w = cells.map(r => (r === 'ocean' ? OCEAN_SHARE : 1))/	crossing sea squeezed
