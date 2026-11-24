@@ -17,6 +17,7 @@
   for (let q = 0; q < 12; q++) { s.storyBoard = [null, null, null]; const o = B.makeOffer(s, 2); if (o) offers.push(o); }
   const crates = offers.filter(o => o.crate);
   check(crates.length >= 2 && crates.every(o => o.stops.length >= 3 && o.level === 'hard' && !o.oneGo && o.payMul === B.CRATE.pay), `some hard offers are special deliveries: ${offers.map(o => `${o.stops.length}${o.crate ? 'C' : ''}`).join(' ')}`);
+  for (const c of crates) check(c.km <= B.reachOf(s), `a special delivery is one flight: its whole way ${c.km} km fits the reach ${B.reachOf(s)}`);
   const o = structuredClone(crates[0]); o.needs = [];
   // 2.
   s.storyBoard = [null, null, o]; s.city = o.stops[0]; B.accept(s, o.id);
