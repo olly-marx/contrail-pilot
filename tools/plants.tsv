@@ -1006,3 +1006,5 @@ waterways	src/sim/rules.js	s/      if (p.water) {   \/\/ PLAN C:/      if (false
 waterways	src/waterways.js	s/export const WATER_PLOT = { w: 44,/export const WATER_PLOT = { w: 28,/	the water target is 28 px again
 waterlesson	src/lessons.js	s/open: s => !!waterLessonLand(s), done:/open: s => false, done:/	the water lesson never opens
 waterlesson	src/sim/rules.js	s/    if (!plot) { if (this.school \&\& this.school.practice) this.parcels++; this.onParcelMissed(x, false); return; }/    if (!plot) { this.onParcelMissed(x, false); return; }/	a missed practice water drop is lost
+naturefocus	src/naturefocus.js	s/if (l \&\& isOpen(l) \&\& !rd.nature) return/if (false) return/	NATURE never opens on the crossing's departure land
+naturefocus	src/naturefocus.js	s/export const OFFER = 3;/export const OFFER = 99;/	a tier offers every project again

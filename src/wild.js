@@ -8,6 +8,7 @@
 import { writeSave } from './save.js';
 import { sfx } from './sound.js';
 import { LINES, tabOf, level, nextLevel, unlocked, unlockText, needsMoreNature, canBuy, freeParcels, loadout } from './upgrades.js';
+import { onOffer } from './naturefocus.js';
 import { biodiversity, projectsDone, canAppear, regionSpecies, fundProject, projectOpen, landMeter, waterPart, waterOpenHere } from './nature.js';
 import { isWaterProject, dropsOf, DROP_CAP, waterShare, YIELD_PER_PROJECT } from './waterways.js';
 import { treeBook, grownBook, nurseryStatus, needFromGrow } from './groves.js';
@@ -84,7 +85,8 @@ export class WildScreen {
     return true;
   }
 
-  home() { return homeRegion(this.save); }   // the player's home land (ui.js asks: no import cycle)
+  home() { return homeRegion(this.save); }
+  isOpen(land) { return discovered(this.save, land); }   // (Plan D: src/naturefocus.js asks which lands the player has)   // the player's home land (ui.js asks: no import cycle)
   get projects() { return REGION_DATA[this.region].projects; }
   get species() { return REGION_DATA[this.region].species; }
   animals() { return regionSpecies(this.region); }
@@ -128,6 +130,10 @@ export class WildScreen {
     // The meter, with an (i) that holds what used to be the intro paragraph and the NEXT HERE box (R6: the page says one thing, NEXT).
     $('wMeter').innerHTML = meterHTML(s, this.bio(), this.region) + '<button class="btn hp-info w-i" type="button" data-minfo aria-label="How this land works">i</button>';
     $('wMeter').querySelector('[data-minfo]').onclick = () => this.landSheet();
+    // PLAN D: when the crossing on offer waits on THIS land's nature, one line says so, so the player knows why NATURE opened here and what to grow.
+    const fx = this.focus && this.focus.why === 'crossing' && this.focus.land === this.region ? this.focus : null;
+    let fl = $('wFocus'); if (!fl) { fl = document.createElement('p'); fl.id = 'wFocus'; fl.className = 'small w-focus'; $('wMeter').after(fl); }
+    fl.hidden = !fx; fl.innerHTML = fx ? `Your next crossing, to <b>${esc(fx.to)}</b>, leaves from this land: nature <b>${Math.round(this.bio())}</b> of ${fx.need}.` : '';
     this.renderNext();
     this.renderScene();
     this.renderProjects(); this.renderStrip();
@@ -305,9 +311,12 @@ export class WildScreen {
     $('wProjects').innerHTML = open.map(t => {
       const ps = P.filter(p => p.tier === t.tier), n = ps.filter(p => done.includes(p.id)).length;
       const finished = n === ps.length, folds = t !== current, shown = !folds || (this.openTiers || []).includes(t.tier);
+      // PLAN D (2026-11-24): the CURRENT tier offers its next OFFER (3) projects, not all of them; 'show all' lists the rest (this.showAll holds the tiers unfolded this visit).
+      const off = onOffer(ps, done), all = folds || (this.showAll || []).includes(t.tier), rows = all ? ps : ps.filter(p => done.includes(p.id) || off.shown.includes(p));   // (the ones done stay, as DONE)
       return `<p class="w-tier" data-tier="${t.tier}">Tier ${t.tier}: ${esc(t.name)} <span class="small">${finished ? 'done ' : ''}${n}/${ps.length}</span>`
         + (folds ? ` <button class="btn tiny" type="button" data-tier-toggle="${t.tier}">${shown ? 'hide' : 'show'}</button>` : '') + '</p>'
-        + (shown ? ps.map(card).join('') : '');
+        + (shown ? rows.map(card).join('') : '')
+        + (shown && !all && off.more ? `<button class="btn tiny w-more" type="button" data-show-all="${t.tier}">Show all ${ps.length} projects</button>` : '');
     }).join('') + (next ? `<p class="w-tier w-tier-lock" data-tier-locked="${next.tier}">Tier ${next.tier}: ${esc(next.name)} <span class="small">Biodiversity ${next.needs} (land) to open (now ${Math.floor(bio)})</span></p>` : '')
       + this.waterHTML(W, card);
     $('wProjects').querySelectorAll('[data-project]').forEach(b => b.onclick = e => { e.stopPropagation(); this.buy(b.dataset.project); });
@@ -315,6 +324,7 @@ export class WildScreen {
     $('wProjects').querySelectorAll('.project[data-pline] .rowc-tap').forEach(   /* done ones too: their info (regions.cjs found it gone) */b => b.onclick = () => { sfx.tick(); this.preview(b.dataset.preview); });
     $('wProjects').querySelectorAll('.w-webpic[data-species]').forEach(b => b.onclick = () => { sfx.tick(); this.speciesInfo(b.dataset.species); });   // tap an animal: its card
     $('wProjects').querySelectorAll('[data-pinfo]').forEach(b => b.onclick = () => this.projectInfo(b.dataset.pinfo));
+    $('wProjects').querySelectorAll('[data-show-all]').forEach(b => b.onclick = () => { sfx.tick(); this.showAll = [...(this.showAll || []), Number(b.dataset.showAll)]; this.renderProjects(); });
     $('wProjects').querySelectorAll('[data-tier-toggle]').forEach(b => b.onclick = () => {
       const t = Number(b.dataset.tierToggle), o = this.openTiers || [];
       this.openTiers = o.includes(t) ? o.filter(x => x !== t) : [...o, t]; this.renderProjects();

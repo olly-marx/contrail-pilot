@@ -34,6 +34,7 @@ const crossingsHTML = (s, p = 'j') => {
 const areaLine = s => { const open = regionsOpen(unlockedAreas(s)), shut = Object.keys(REGIONS).filter(r => !open.includes(r));   // CROSSINGS V3: regions, not areas
   return `<p class="small" id="jAreas">Your region${open.length === 1 ? '' : 's'}: <b>${open.map(r => REGIONS[r].name).join(', ')}</b>${shut.length ? `<br>&#128274; Locked: ${shut.map(r => REGIONS[r].name).join(', ')}` : ''}</p>`; };
 import { drawGlobe } from './globe.js';
+import { focusLand } from './naturefocus.js';
 import { openLands, placeLandLabels } from './landlabels.js';
 import { rollWeek } from './records.js';
 import { showRecords } from './recordsui.js';
@@ -608,6 +609,7 @@ export class UI {
     if (tab === 'missions') return this.showMissions();
     if (tab === 'nature') { if (this.tour) this.tour.markDone('nature-lead'); this.showOnly('nature');
       if (this.wild && parcelsWanted(this.save)) this.wild.region = this.wild.home() || 'woodland';   // L5 waits for parcels: open on the tab that sells them (the home land's)
+      else if (this.wild && isSeason2(this.save)) { const f = focusLand(this.save, l => this.wild.isOpen(l)); this.wild.region = f.land || this.wild.home() || 'woodland'; this.wild.focus = f; this.wild.showAll = []; }   // PLAN D: open on the land that matters now (src/naturefocus.js)
       if (this.wild) { this.wild.rowNew = null; this.wild.hintOn = false; this.wild.render(); }   // a new visit: last visit's dots are gone; the land's own render marks it seen (R6)
       if (this.tour) this.tour.maybe('nature'); return; }
     if (tab === 'pilot') { this.showOnly('pilot'); return this.pilot && this.pilot.showPilot(); }

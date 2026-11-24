@@ -42,6 +42,10 @@ const KEY = 'contrailPilot.v2';
   // saying the meter level that opens it; Tier 3 is not shown yet.
   await setSave({ ...base, seenTips: ['*'], seeds: 1200, crystals: 25, planted: {} }); await p.reload(); await ready(p); await p.waitForTimeout(600);
   await p.click('#tabNature');   // habitat projects live on the NATURE screen
+  // PLAN D (2026-11-24): the current tier offers 3 of its 4 projects; 'Show all 4 projects' lists the fourth (hedgerow).
+  const offer = await p.evaluate(() => ({ three: document.querySelectorAll('#wProjects [data-tier="1"] ~ .project').length, hedge: !!document.querySelector('[data-project="hedgerow"]'), more: (document.querySelector('[data-show-all="1"]') || {}).textContent || '' }));
+  check(!offer.hedge && /Show all 4 projects/.test(offer.more), `Plan D: tier 1 offers 3 projects and a 'Show all 4 projects' button: ${JSON.stringify(offer)}`);
+  await p.click('[data-show-all="1"]').catch(() => {}); await p.waitForTimeout(300);
   const tiers = await p.evaluate(() => ({ t1: !!document.querySelector('[data-project="meadow"]') && !!document.querySelector('[data-project="hedgerow"]'),
     t2: !document.querySelector('[data-pline="pond"]') && /Biodiversity 12/.test(document.querySelector('[data-tier-locked="2"]')?.textContent || ''),
     t3: !document.querySelector('[data-tier-locked="3"]') && !document.querySelector('[data-pline="beavers"]') }));
