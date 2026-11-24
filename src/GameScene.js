@@ -902,6 +902,7 @@ export class GameScene extends Phaser.Scene {
       { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 0));
     this.runwayLayer.add(parts);
     rw.parts = parts; rw.strip = strip;
+    if (this.crates && this.crates[0] === name) this.popup(Math.min(x, WIDTH - 60), SKY_H - 60, `Drop the crate on ${name}!`, '#ff9f3a', 12);   // (special delivery: src/sim/crates.js)
     // The city's landmark, in the skyline (it scrolls at 0.55 x the ground): start it where it will
     // stand just behind the runway's middle as the runway passes the middle of the screen.
     const lm = LANDMARKS[name];
@@ -1402,6 +1403,7 @@ export class GameScene extends Phaser.Scene {
         rw.lit = lit;
         if (rw.strip) rw.strip.setTint(lit ? 0xffe15a : 0xffffff).setAlpha(lit && !pulse ? 0.6 : 1);
         const label = rw.parts && rw.parts[rw.parts.length - 1]; if (label && label.setColor) label.setColor(lit ? '#ffe15a' : '#ffffff');
+        if (this.crates && this.crates[0] === rw.name && rw.strip) rw.strip.setTint(pulse ? 0xff9f3a : 0xffffff).setAlpha(1);   // the special delivery's runway blinks orange
       } }
     const bob = Math.round(Math.sin(this.gameTime / 180) * 2);
     for (const pl of this.plots) { follow(pl, pl.x); pl.marker.setVisible(!pl.used && this.parcels > 0).setY(SKY_H - 18 + bob); }
@@ -1429,6 +1431,7 @@ export class GameScene extends Phaser.Scene {
       if (p.t >= PARCEL.chuteAfter) p.chute.setVisible(true);
       p.view.setPosition(p.x, p.y).setRotation(Math.sin(p.t * 6) * 0.15);   // swing under the parachute
     }
+    for (const p of this.cratesFalling || []) { if (p.t >= 0.3) p.chute.setVisible(true); p.view.setPosition(p.x, p.y).setRotation(Math.sin(p.t * 4) * 0.1); }   // the special delivery crates (src/sim/crates.js CRATE_FALL.chuteAfter)
     this.drawAim();
     this.syncContrails(time);
     this.drawRays(time);
@@ -1541,12 +1544,19 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(250, () => this.fishJump(plot.x + plot.w / 2));
     sfx.coin && sfx.coin();
   }
+  // A special delivery crate came down (src/sim/crates.js): on its runway, or not.
+  onCrate(city, hit, x) {
+    const cx = x == null ? this.plane.x : x;
+    if (hit) { this.burst(cx, SKY_H - 2, 0xffe15a, 14); this.burst(cx, SKY_H - 2, 0xff9f3a, 8); this.popup(cx, SKY_H - 24, `Crate delivered to ${city}!`, '#ffe15a', 10); sfx.done && sfx.done(); }
+    else { this.burst(cx, SKY_H, 0xc8a165, 8); this.popup(cx == null ? this.plane.x : cx, SKY_H - 24, x == null ? `No crate for ${city}!` : `Crate missed ${city}'s runway!`, '#ff8080', 10); sfx.nope(); }
+  }
   onParcelMissed(x, onRunway) {
     this.burst(x, SKY_H, 0xc8a165, 6);
     this.popup(x, SKY_H - 14, onRunway ? 'On the runway!' : 'Missed. Tap a bit earlier.', '#ff8080');   // (tutorial 1a: the miss says what to change)
     sfx.nope();
   }
   showParcel(p) {
+    if (p.crate) { p.chute = this.add.image(0, -16, 'chute').setScale(2).setVisible(false); p.view = this.add.container(p.x, p.y, [p.chute, this.add.image(0, 0, 'crate').setScale(2)]); this.fxLayer.add(p.view); return; }   // a special delivery crate (src/sim/crates.js): big, under a big parachute
     if (p.water) {   // PLAN C: a blue drop (two pixel rectangles: a body and a highlight), no crate, no parachute
       p.view = this.add.container(p.x, p.y, [this.add.rectangle(0, 0, 6, 8, 0x3fa9e8), this.add.rectangle(0, -5, 2, 2, 0x3fa9e8), this.add.rectangle(-1, -1, 2, 2, 0xcff0ff)]);
       this.fxLayer.add(p.view); return;
@@ -1761,11 +1771,13 @@ export class GameScene extends Phaser.Scene {
     const forest = 'FOREST FULL!';   // one short line (the meter shows the rest; longer text ran into it): FULL beats the soil hint
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
     this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? (this.waterOpen && this.waterOpen() ? 'drop on water!' : 'drop on soil!') : '') : '');   // (Plan C: over open water the hint says water)
-    const showDrop = this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow);   // nothing to plant on (0.10.7)
+    const crateNow = this.crateDue();   // over a special delivery's runway the button drops the crate (src/sim/crates.js)
+    const showDrop = crateNow || (this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow));   // nothing to plant on (0.10.7)
     this.setDropVisible(showDrop);
     this.dropArrowGfx.clear();   // a bobbing arrow on PLANT while soil is ahead and no tree has landed yet (not in school or the automated tests)
     if (showDrop && soilSoon && this.noTreeYet() && !this.school && !(this.save.seenTips || []).includes('*')) { const d = this.dropBox, y = d.y - 6 + Math.sin(this.time.now / 180) * 3, cx = d.x + d.w / 2; this.dropArrowGfx.fillStyle(0xffe15a, 1).fillTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y).lineStyle(1, 0x1b1b2f, 1).strokeTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y); }
-    if (showDrop) { this.fitText(this.dropLabel.setText(`PLANT\nx${this.parcels}`), this.dropBox.w - 8, 7); const nx = this.nextTreeInfo(), wd = !nx && this.waterOpen() ? this.nextWaterDrop() : null; this.fitText(this.nextTreeText.setText(nx ? `Next: ${shortName(nx.name)}` : wd ? `Next: ${shortName(wd.name)}` : BIOME_FULL_LABEL), NEXT_LABEL_W, 7); }   // (0.73.0: the water drop once the biome is full)   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
+    if (crateNow) { this.fitText(this.dropLabel.setText('DROP\nCRATE'), this.dropBox.w - 8, 7); this.nextTreeText.setText(''); }
+    else if (showDrop) { this.fitText(this.dropLabel.setText(`PLANT\nx${this.parcels}`), this.dropBox.w - 8, 7); const nx = this.nextTreeInfo(), wd = !nx && this.waterOpen() ? this.nextWaterDrop() : null; this.fitText(this.nextTreeText.setText(nx ? `Next: ${shortName(nx.name)}` : wd ? `Next: ${shortName(wd.name)}` : BIOME_FULL_LABEL), NEXT_LABEL_W, 7); }   // (0.73.0: the water drop once the biome is full)   // 0.11.3: one short fixed label (the tree's name spilled out of the button)
     this.cargoText.setText(`${this.cargo}`);
     this.crysText.setText(`${this.crystals}`);
     this.multText.setText(this.airportsSkipped ? bonusText(this.multiplier()) : '');

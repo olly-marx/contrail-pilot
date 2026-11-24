@@ -3,6 +3,7 @@
 // normal tour (src/route.js continueTour). Display and route only: no random numbers, no per-flight state (everything is
 // derived from the save, so a crash-retry aims the same way: the save's city does not move on a crash).
 // The sim chat's hooks: ROUTE_AIM.on (an A/B switch flippable in Node) and aimTarget(save) (the SAME choice routeFor uses).
+import { crateWay } from './storyboard.js';
 import { visible } from './missions2.js';
 import { flightPath, continueTour, pathTo, wayTo, linksFor, MAX_LEGS } from './route.js';
 import { choices, city as cityOf } from './network.js';
@@ -115,6 +116,8 @@ export function routeTo(save, target, tid = null, count = 60) {
 
 // What every path builder in the game uses (hub, menu, loader, GameScene, the rules): the aimed route, or today's tour.
 export function routeFor(save, count = 60) {
+  const cw = save && save.tutorialDone ? crateWay(save) : null;   // a special delivery (src/storyboard.js): one flight over every crate stop to the last stop
+  if (cw) return continueTour(cw, count, linksFor(save));
   const st = STEER.mission ? steerOf(save) : (t => ({ city: t, why: t ? 'chosen' : null }))(aimTarget(save));   // (null before the tutorial is done, and for flight school's save)
   if (st.city && (st.why === 'chosen' || st.why === 'mission' || (st.why === 'explore' && st.land))) return routeTo(save, st.city, templateOf(save, st.city), count);
   return flightPath(save, count);

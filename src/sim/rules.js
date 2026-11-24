@@ -28,6 +28,7 @@ export const FIELD_PLANTS = { scrape: false, nofly: false, trees: false, touchdo
 import { recordFlight } from '../records.js';
 import { makeRng } from './rng.js';
 import { overlaps } from './physics.js';
+import { CRATES } from './crates.js';
 import * as P from './physics.js';
 import { mask } from './masks-load.js';
 import { reach as gapReach, reference as gapReference } from './gapmodel.js';
@@ -48,6 +49,7 @@ const STORM_OVERLAP = 40;   // a tall column stacks another tower behind, overla
 export const bonusText = mult => `+${Math.round((mult - 1) * 100)}%`;
 
 export const RULES = {
+  ...CRATES,
   // Onto the runway (moved from GameScene.startFlight): the kit as bought now, a fresh random stream, take-off.
   takeOff() {
     // Upgrades may have been bought in the hangar since this scene was built.
@@ -174,6 +176,7 @@ export const RULES = {
     this.airportIndex = 0;
     this.airportsSkipped = 0;
     this.nextAirport = this.airportAhead(0);
+    this.initCrates(SKY_H);   // special drop-off crates (src/sim/crates.js): after the path and this.crossing are set
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
     this.pose = P.planePose(this);
   },
@@ -354,6 +357,7 @@ export const RULES = {
       na.spawned = true;
     }
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
+      this.crateAirportPassed(na.name);
       this.airportIndex++;
       this.airportsSkipped++;
       this.explain('x-multiplier', tip('x-multiplier'), 'lesson-bonus');
@@ -823,6 +827,7 @@ export const RULES = {
     this.updateHazards(dt, box);
     this.updateTwists(dt);
     this.updateParcels(dt);
+    this.updateCrates(dt);
     if (inIssr && !this.wasInIssr && this.state === 'playing') this.enterIssr();
     this.wasInIssr = inIssr;
     // Contrail-free cruise: held, at night, meter left -> inside icy air but no puff. Skipping a puff also skips its
@@ -975,7 +980,7 @@ export const RULES = {
     const mission = this.school || s2 ? null : currentMission(this.save);
     const partial = { landed, landedAt: this.landedAt, lap, newRegion, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
       crash, crashes: this.save.crashes || {}, distance: m, kinds: this.speciesPlanted.size, bumped: this.bumped, goldens: this.goldens,
-      onRunway: this.parcelOnRunway, forestFull: this.forestFullSaid, projects: projectsDone(this.save).map(p => p.id) };
+      onRunway: this.parcelOnRunway, forestFull: this.forestFullSaid, projects: projectsDone(this.save).map(p => p.id), crates: this.crateResult() };
     const missionDone = !!(mission && mission.check(partial, this.save));
     const missionIndex = missionDone ? missionIndexOf(mission) : null;
     if (missionDone) completeMission(this.save, mission);
@@ -1016,7 +1021,7 @@ export const RULES = {
       breakdown: { ...this.breakdown }, natureBy: { ...this.natureBy }, dropCool: this.dropCool, grewDays: this.grewDays || 0, earned, gained, newBadges, newRecord, planted: this.planted, treesDropped: this.released, treeNames: [...new Set(this.plantedNames)], treesGrown, kinds: this.speciesPlanted.size,
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
-      rewards, foundIds: [...(this.foundIds || [])],
+      rewards, foundIds: [...(this.foundIds || [])], crates: this.crateResult(),
       missions2: s2 ? { done: s2Done.map(d => d.title), next: s2Next ? s2Next.title : null } : null,
       // Mission fields (PROPOSAL-HOME-MISSIONS): trees planted this flight ('land:id', UK bare), clean storm gaps, no-fly
       // zones passed. Animals found: foundIds above (the game's 'seen' hook fills it; [] in Node).
@@ -1349,6 +1354,7 @@ export const RULES = {
   },
 
   dropParcel() {
+    if (this.dropCrate()) return;   // over a special drop-off's runway the drop is the crate (src/sim/crates.js)
     if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
     if (this.parcels <= 0) { this.playSound('nope'); return; }
     // Over the open sea and the ice nothing can be planted (user, 2026-10-24): keep the parcel.

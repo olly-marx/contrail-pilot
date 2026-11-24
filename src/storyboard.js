@@ -26,7 +26,31 @@ export const storyPicUrl = pic => (STORY_PICS.includes(pic) ? `assets/ui/portrai
 
 export const STORY = { on: true, slots: 3, fit: [0.55, 0.85], stretch: [1.15, 1.35], maxStops: 4 };
 export const SEEDS_PER_KM = 1000 / 15000, CRYSTALS_PER_KM = 80 / 15000;   // (the user, 2026-11-23: 'at least 2x' the first anchor of 500 seeds and 40 crystals per 15,000 km)
-export const storyPay = km => ({ seeds: Math.round(km * SEEDS_PER_KM), crystals: Math.round(km * CRYSTALS_PER_KM) });
+export const storyPay = (km, mul = 1) => ({ seeds: Math.round(km * SEEDS_PER_KM * mul), crystals: Math.round(km * CRYSTALS_PER_KM * mul) });
+
+// DIFFICULTY (the user, 2026-11-24, Plan A): built into each story when it is offered and stored with it.
+// `fit`: each stage as a share of the pilot's reach. `hearts`: crashes allowed on the story's flights (null: as many tries as you
+// like); at 0 the story FAILS and leaves the board. `pay`: multiplier on storyPay. `stops`: theme sizes it may use.
+// Slots: 0 easy, 1 medium (impossible instead, 1 time in IMPOSSIBLE_EVERY, seeded), 2 hard (the upgrade story: its stretch band or need).
+export const LEVELS = {
+  easy:       { name: 'Easy',       fit: [0.35, 0.55], hearts: null, pay: 1,   stops: [2] },
+  medium:     { name: 'Medium',     fit: [0.55, 0.85], hearts: 5,    pay: 1.3, stops: [2, 3] },
+  hard:       { name: 'Hard',       fit: [0.75, 0.95], hearts: 3,    pay: 1.7, stops: [3, 4] },
+  impossible: { name: 'Impossible', fit: [0.9, 1.0],   hearts: 1,    pay: 3,   stops: [4] },
+};
+export const IMPOSSIBLE_EVERY = 4;
+// ONE GO (the user, 2026-11-24: "failure-free stories where you have to actually do it all in one go"): a hard story now and then
+// (1 time in ONE_GO.every, by the offer's own number) allows no crash at all: 1 heart, better pay.
+export const ONE_GO = { every: 3, hearts: 1, pay: 2.2 };
+// SPECIAL DELIVERY (the user, 2026-11-24: "you drop an extra large crate down onto the airstrip without landing ... then you have to
+// keep going after that"): a hard story of 3+ stops now and then (1 time in CRATE.every hard offers that are not one go). Land at the
+// pickup; then ONE flight passes over every middle stop, where a big crate is dropped onto that airport's runway (src/sim/crates.js),
+// and lands at the last stop. Landing at a crate stop does not count. A missed crate costs a heart (the stop is flown again).
+export const CRATE = { every: 2, pay: 2.5 };
+export const isCrateStop = (o, i) => !!(o && o.crate && i > 0 && i < o.stops.length - 1);
+// ONE STORY AT A TIME (the user, 2026-11-24): dropping the active story (ACCEPT on another one, or a FREE FLIGHT) costs a fee:
+// a share of what the dropped story still had to pay, at least FEE.min seeds, never more than the player has.
+export const FEE = { share: 0.1, min: 50 };
 
 // THEMES: the story's words, with {0}..{3} for the stops in order (0 = the pickup). `stops`: how many cities. `areas`: where it
 // may be set (null: anywhere open). `pic`: assets/ui/portrait-<pic>-0.png. `needs`: [{ gadget | line: id, level }] makes it an
@@ -35,6 +59,9 @@ export const THEMES = [
   { id: 'vaccine', stops: 4, pic: 'story-vaccine', title: 'Vaccines for three cities',
     story: 'A new vaccine is ready in {0}. Hospitals in {1}, {2} and {3} are waiting for it.',
     lines: ['The vaccine is packed in ice. Off you go!', 'Nurses in {1} take the first box.', '{2} has its vaccine. One more stop.', '{3} has the last box. Every hospital is ready!'] },
+  { id: 'relief', stops: 4, pic: 'story-crate', title: 'Supplies after a big storm',
+    story: 'A big storm has passed. Tents, blankets and water filters from {0} are needed in {1}, {2} and {3}.',
+    lines: ['The hold is full of tents and blankets.', '{1} gets its tents first.', 'Water filters for {2}. One more stop!', '{3} has everything it needs. Well flown!'] },
   { id: 'wind', stops: 2, pic: 'story-crate', needs: [{ gadget: 'hold', level: 2 }], title: 'Parts for a wind farm',
     story: 'A wind farm near {1} needs new turbine parts from {0}. They are big, so you need a bigger hold.',
     lines: ['Turbine parts are loaded into the hold.', 'The wind farm is turning again: clean power for thousands of homes!'] },
@@ -142,26 +169,35 @@ export const missing = (save, offer) => (offer.needs || []).map(needInfo).filter
 export function makeOffer(save, slot) {
   const seq = save.storySeq = (save.storySeq || 0) + 1, rnd = stream(hash(`${save.homeCity || ''}|${seq}|${slot}`));
   const reach = reachOf(save), upgrade = slot === 2, onBoard = new Set((save.storyBoard || []).filter(Boolean).map(o => o.theme));
-  const fits = THEMES.filter(t => !onBoard.has(t.id) && (upgrade || !t.needs) && citiesFor(save, t).length >= t.stops);
-  const order = fits.map(t => ({ t, r: rnd() })).sort((a, b) => a.r - b.r).map(x => x.t);
+  const level = levelFor(slot, seq), L = LEVELS[level], oneGo = level === 'hard' && seq % ONE_GO.every === 0, crateTry = level === 'hard' && !oneGo && seq % CRATE.every === 0;
+  const sized = t => (t.level ? t.level === level : L.stops.includes(t.stops) || (level === 'impossible' && t.stops === 3));   // (a theme written for a level, tools/stories/generate.mjs, goes to that level; else by size; impossible: 3 long stages, or 2 when no 4-stop theme fits)
+  const fits = THEMES.filter(t => !onBoard.has(t.id) && (upgrade || !t.needs) && citiesFor(save, t).length >= t.stops)
+    .map(t => ({ t, w: sized(t) ? 0 : 1 }));   // (a theme of the level's size first; any other theme after, so a small map still gets an offer)
+  const order = fits.map(x => ({ ...x, r: rnd() })).sort((a, b) => a.w - b.w || a.r - b.r).map(x => x.t);
   // Two passes: first only stories that really use the pilot's range (the longest stage at least half the target: a theme set in a
   // small area cannot be stretched, the user: "it was like 4,000 meters when we're easily flying 15,000"), then anything that fits.
   for (const pass of [0, 1]) for (const theme of order) {
     const gadget = upgrade && theme.needs && missingNeeds(save, theme.needs).length > 0;   // an upgrade story by its gadget/nature need
-    const band = upgrade && !gadget ? STORY.stretch : STORY.fit;
-    const target = Math.round(reach * (band[0] + rnd() * (band[1] - band[0])));
+    const crateHere = crateTry && theme.stops >= 3;
+    const band = upgrade && !gadget && !crateHere ? STORY.stretch : L.fit;   // (a special delivery is the third slot's special: sized to fly now, no stretch)   // (a special delivery is ONE flight: its whole way, every stage, fits the reach)
+    const target = Math.round(reach * (band[0] + rnd() * (band[1] - band[0])) / (crateHere ? theme.stops - 1 : 1));
+    if (crateTry && pass === 0 && theme.stops < 3) continue;   // (a special delivery needs a middle stop: try the 3-4 stop themes first)
     const got = pickStops(save, theme, target, rnd); if (!got) continue;
-    const stretchNeed = upgrade && !gadget ? Math.max(...got.stages) : 0;
-    if (upgrade && !gadget && stretchNeed <= reach) continue;   // the open network could not make it longer than today's reach: try another theme
+    const stretchNeed = upgrade && !gadget && !crateHere ? Math.max(...got.stages) : 0;
+    if (upgrade && !gadget && !crateHere && stretchNeed <= reach) continue;   // the open network could not make it longer than today's reach: try another theme
     if (!upgrade && Math.max(...got.stages) > reach) continue;   // (a fit story must be flyable today)
+    if (crateHere && got.stages.reduce((a, b) => a + b, 0) > reach) continue;
     if (pass === 0 && Math.max(...got.stages) < target * 0.5) continue;
-    const km = got.stages.reduce((a, b) => a + b, 0);
+    const km = got.stages.reduce((a, b) => a + b, 0), crate = crateHere, payMul = crate ? CRATE.pay : oneGo ? ONE_GO.pay : L.pay;
     return { id: `story-${seq}`, theme: theme.id, slot, made: save.flights || 0, title: theme.title, story: fillWords(theme.story, got.stops), pic: theme.pic,
-      stops: got.stops, lines: theme.lines.map(l => fillWords(l, got.stops)), stages: got.stages, km, pay: storyPay(km),
+      level, hearts: oneGo ? ONE_GO.hearts : L.hearts, payMul, ...(oneGo ? { oneGo: true } : {}), ...(crate ? { crate: true } : {}),
+      stops: got.stops, lines: theme.lines.map(l => fillWords(l, got.stops)), stages: got.stages, km, pay: storyPay(km, payMul),
       needs: gadget ? theme.needs : stretchNeed ? [{ reach: stretchNeed }] : [] };
   }
   return null;
 }
+// The level of slot `slot`'s next offer: 0 easy, 1 medium (impossible 1 time in IMPOSSIBLE_EVERY, by the offer's own number), 2 hard.
+export const levelFor = (slot, seq) => (slot === 0 ? 'easy' : slot === 2 ? 'hard' : seq % IMPOSSIBLE_EVERY === 0 ? 'impossible' : 'medium');
 const missingNeeds = (save, needs) => needs.map(needInfo).filter(i => i && !has(save, i));
 
 // Fill the empty slots (idempotent; returns true when the save changed). An offer already made is never touched.
@@ -176,21 +212,83 @@ export function fillBoard(save) {
 // ---------- the active story ----------
 export const activeStory = save => (save.storyBoard || []).find(o => o && o.id === save.storyActive) || null;
 export const nextStop = save => { const o = activeStory(save); return o ? o.stops[o.reached || 0] : null; };
+// What the active story still pays (its stages not yet reached), and the fee for dropping it (0 with no active story).
+export function leftPay(o) { const n = o.reached || 0; return storyPay(o.stages.slice(Math.max(0, n - 1)).reduce((a, b) => a + b, 0), o.payMul || 1); }
+export function dropFee(save) {
+  const o = activeStory(save); if (!o) return 0;
+  return Math.min(save.seeds || 0, Math.max(FEE.min, Math.round(leftPay(o).seeds * FEE.share)));
+}
+// The hearts left on a story (null: unlimited).
+export const heartsLeft = o => (o && o.hearts ? (o.heartsLeft == null ? o.hearts : o.heartsLeft) : null);
+// End the active story without finishing it: it leaves the board (its slot is filled again by fillBoard). `why`: 'drop' | 'failed'.
+function endStory(save, why) {
+  const o = activeStory(save); if (!o) return null;
+  save.storyBoard = save.storyBoard.map(x => (x === o ? null : x));
+  delete save.storyActive; if (save.aimCity === o.stops[o.reached || 0]) delete save.aimCity;
+  if (why === 'failed') save.storiesFailed = (save.storiesFailed || 0) + 1; else save.storiesDropped = (save.storiesDropped || 0) + 1;
+  return o;
+}
+// Drop the active story (FREE FLIGHT, or replacing it): pays the fee. Returns the fee paid, or -1 with no active story.
+export function drop(save) {
+  if (!activeStory(save)) return -1;
+  const fee = dropFee(save); save.seeds = (save.seeds || 0) - fee; endStory(save, 'drop'); return fee;
+}
+// LEAVING A STORY (the user, 2026-11-24: "once a story is active, it is the thing that you need to be doing"; going off on a tangent
+// fails it; free flight is always there to get out). A flight whose destination is not the story's next stop, a FREE FLIGHT, or a
+// crossing ends the story as FAILED (no fee: the story and what it still had to pay are lost). Swapping for another story (ACCEPT)
+// is the one that costs the fee.
+export const offStory = save => { const o = activeStory(save); return !!(o && save.aimCity && save.aimCity !== o.stops[o.reached || 0]); };
+export function leave(save) { return endStory(save, 'failed'); }
+// The story's next stop as the destination again (after something cleared it, or BACK TO MY STORY).
+export function reaim(save) { const o = activeStory(save); if (o) save.aimCity = o.stops[o.reached || 0]; return !!o; }
+// ACCEPT. One story at a time: with another one active, it is dropped first and the fee paid (the caller shows the fee before).
 export function accept(save, id) {
   const o = (save.storyBoard || []).find(x => x && x.id === id);
   if (!o || missing(save, o).length) return false;
+  if (save.storyActive && save.storyActive !== o.id) drop(save);
   save.storyActive = o.id; o.reached = o.reached || 0;
+  if (o.hearts && o.heartsLeft == null) o.heartsLeft = o.hearts;
   save.aimCity = o.stops[o.reached];   // the destination (src/aim.js): the strip and the lit runway point at the next stop
   return true;
 }
-export function pause(save) { delete save.storyActive; delete save.aimCity; }
+// A crash on a story flight (src/missions2.js onFlight): one heart less; at 0 the story fails. Returns { id, title, hearts, of, failed }
+// or null (no active story, or an easy one: as many tries as you like).
+export function crashed(save) {
+  const o = activeStory(save); if (!o || !o.hearts) return null;
+  o.heartsLeft = Math.max(0, heartsLeft(o) - 1);
+  const failed = o.heartsLeft === 0, out = { id: o.id, title: o.title, hearts: o.heartsLeft, of: o.hearts, failed };
+  if (failed) endStory(save, 'failed');
+  return out;
+}
 // After a landing at `city` (src/missions2.js onFlight): the next stop reached? Pays its stage straight away. Returns
 // { title, city, line, n, of, done, pay } or null.
 export function landedAt(save, city) {
-  const o = activeStory(save); if (!o || o.stops[o.reached || 0] !== city) return null;
-  const i = o.reached || 0, stage = i === 0 ? 0 : o.stages[i - 1], pay = i === 0 ? { seeds: 0, crystals: 0 } : storyPay(stage);
+  const o = activeStory(save); if (!o || o.stops[o.reached || 0] !== city || isCrateStop(o, o.reached || 0)) return null;
+  return reach(save, o, city);
+}
+// A crate delivered onto `city`'s runway (src/sim/crates.js, read by src/missions2.js onFlight): that crate stop is reached and paid.
+export function deliveredAt(save, city) {
+  const o = activeStory(save); if (!o || o.stops[o.reached || 0] !== city || !isCrateStop(o, o.reached || 0)) return null;
+  return reach(save, o, city);
+}
+// The crate stops a flight from here should drop on, in order (the next stop on, while they are crate stops). Empty: none.
+export function crateStops(save) {
+  const o = activeStory(save); if (!o || !o.crate) return [];
+  const out = []; for (let i = o.reached || 0; isCrateStop(o, i); i++) out.push(o.stops[i]); return out;
+}
+// The way a special delivery flies in ONE flight: from here over every crate stop to the last stop (null: not a crate flight now).
+export function crateWay(save, links) {
+  const o = activeStory(save), drops = crateStops(save); if (!drops.length) return null;
+  const via = [save.city, ...drops, o.stops[o.stops.length - 1]], way = [save.city];
+  for (let i = 1; i < via.length; i++) { const p = pathTo(via[i - 1], via[i], links || linksOf(save)); if (!p) return null; way.push(...p.slice(1)); }
+  return way;
+}
+function reach(save, o, city) {
+  const i = o.reached || 0, stage = i === 0 ? 0 : o.stages[i - 1], pay = i === 0 ? { seeds: 0, crystals: 0 } : storyPay(stage, o.payMul || 1);
   o.reached = i + 1;
   const done = o.reached >= o.stops.length;
+  if (done && o.pay) { const p = o.paid || { seeds: 0, crystals: 0 }; pay.seeds = o.pay.seeds - p.seeds; pay.crystals = o.pay.crystals - p.crystals; }   // (the last stop pays the rest: the stages add up to the stored pay exactly)
+  else o.paid = { seeds: ((o.paid || {}).seeds || 0) + pay.seeds, crystals: ((o.paid || {}).crystals || 0) + pay.crystals };
   if (done) {
     save.storiesDone = (save.storiesDone || 0) + 1;
     save.storyBoard = save.storyBoard.map(x => (x === o ? null : x));
@@ -203,5 +301,5 @@ export function storyRow(save) {
   const o = activeStory(save); if (!o) return null;
   const left = o.stages.slice(Math.max(0, (o.reached || 0) - 1)).reduce((a, b) => a + b, 0);
   return { key: `story:${o.id}`, title: `${o.title}: land at ${o.stops[o.reached || 0]}`, tier: 0, star: false, kind: 'story',
-    prize: storyPay(left), def: { id: 'story' }, fill: { city: o.stops[o.reached || 0] } };
+    prize: storyPay(left, o.payMul || 1), def: { id: 'story' }, fill: { city: o.stops[o.reached || 0] } };
 }
