@@ -52,8 +52,8 @@ const SAVE = { areas: ['weurope', 'africa'], homeArea: 'weurope', homeCity: 'LON
     await p.waitForTimeout(800);
     s = await save(); const o2 = s.storyBoard.find(x => x && x.id === o.id);
     check(o2 && o2.heartsLeft === 4 && s.storyActive === o.id, `a crash costs one heart: ${o2 && o2.heartsLeft}`);
-    await p.waitForTimeout(1500); const res = await p.evaluate(() => (document.getElementById('rMission') || {}).innerText || '');
-    check(/Story: 4 of 5 hearts left/.test(res), `the results card says a heart was lost: ${res}`);
+    await p.waitForTimeout(1500); const res = await p.evaluate(() => (document.getElementById('rStory') || {}).innerText || '');   // (0.78.0: the story has its own block on the results card, #rStory)
+    check(/Lost a heart: 4 of 5 left/.test(res), `the results card says a heart was lost: ${res}`);
     // 4. ACCEPT another story: asked first, with the fee.
     await go('fly'); await go('missions');
     const other = s.storyBoard.find(x => x && x.id !== o.id && !x.needs.length);
