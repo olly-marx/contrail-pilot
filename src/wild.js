@@ -132,7 +132,7 @@ export class WildScreen {
     $('wMeter').querySelector('[data-minfo]').onclick = () => this.landSheet();
     // PLAN D: when the crossing on offer waits on THIS land's nature, one line says so, so the player knows why NATURE opened here and what to grow.
     const fx = this.focus && this.focus.why === 'crossing' && this.focus.land === this.region ? this.focus : null;
-    let fl = $('wFocus'); if (!fl) { fl = document.createElement('p'); fl.id = 'wFocus'; fl.className = 'small w-focus'; $('wMeter').after(fl); }
+    let fl = $('wFocus'); if (!fl) { fl = document.createElement('p'); fl.id = 'wFocus'; fl.className = 'small w-focus'; $('wNextLine').after(fl); }   // (UNDER the NEXT row: above it, it pushed NEXT below the bar on a 320x568 phone, tests/fitscreen in CI)
     fl.hidden = !fx; fl.innerHTML = fx ? `Your next crossing, to <b>${esc(fx.to)}</b>, leaves from this land: nature <b>${Math.round(this.bio())}</b> of ${fx.need}.` : '';
     this.renderNext();
     this.renderScene();
