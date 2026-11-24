@@ -1014,5 +1014,5 @@ storygen	tools/stories/validate.mjs	s/  else if (t.level \&\& !stopsFor(t.level)
 storygen	tools/stories/generate.mjs	s/level: { type: 'string', enum: Object.keys(LEVELS) }/level: { type: 'string' }/	the schema lets Claude invent a level
 crates	src/sim/crates.js	s/this.crateLanded(p.city, !!(rw \&\& p.x >= rw.x \&\& p.x <= rw.x + AIRPORT.runwayLen), p.x);/this.crateLanded(p.city, true, p.x);/	every crate counts as on the runway
 crates	src/sim/rules.js	s/    if (this.dropCrate()) return;/    if (false) return;/	the drop over a crate runway is a tree, never the crate
-crates	src/storyboard.js	s/ || isCrateStop(o, o.reached || 0)) return null;\n  return reach/) return null;\n  return reach/	landing at a crate stop counts (no drop needed)
+crates	src/storyboard.js	s/ || isCrateStop(o, o.reached || 0)) return null;/) return null;/	landing at a crate stop counts (no drop needed)
 crates	src/aim.js	s/  if (cw) return continueTour(cw, count, linksFor(save));/  if (false) return continueTour(cw, count, linksFor(save));/	a special delivery flies only to its next stop (not one flight over every crate stop)
