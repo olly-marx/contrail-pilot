@@ -17,7 +17,8 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.click('#startChoice [data-area="weurope"]').catch(() => {}); await p.click('#startChoice [data-city]').catch(() => {}); await p.waitForTimeout(1200);
   await p.evaluate(() => { const s = game.registry.get('save'); Object.assign(s, { tutorialDone: true, freeGiven: true, freeUpgrade: false, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'] }); game.registry.get('ui').showTitle(); });
   await p.waitForTimeout(500);
-  await p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; game.registry.get('ui').tour.busy = false; } });   /* (a hub tour's dim layer; not what this test checks) */
+  const noTour = () => p.evaluate(() => { const t = document.getElementById('tour'); if (t && !t.hidden) { t.hidden = true; game.registry.get('ui').tour.busy = false; } });   /* (a hub tour's dim layer; not what this test checks) */
+  await noTour(); await p.waitForTimeout(400); await noTour();   // (ci/v0760-2, 2026-11-24: a hub tour bubble opened AFTER the one check and took the TAKE OFF click on a slow runner, twice; it passed in the run before on the same game code)
   await p.click('#goBtn'); await started(p);
   for (let i = 0; i < 4 && await p.evaluate(() => game.scene.getScene('game').state !== 'playing'); i++) { await p.mouse.move(187, 360); await p.mouse.down(); await p.waitForTimeout(2600); await p.mouse.up(); }   /* hold to take off */
   await p.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 });
