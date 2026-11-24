@@ -75,7 +75,7 @@ import { endView } from './crossingend.js';
 import { prizeLines } from './missionprize.js';
 import { crossingState, crossingById, momentDue, markTold, sheetText, endingBody, boxView, screenView, cardsView, oneCardView, PICK_TITLE } from './crossingview.js';
 import { missionsView, missionsFreshKeys } from './missionsview.js';
-import { accept as storyAccept, pause as storyPause, storyPicUrl } from './storyboard.js';
+import { accept as storyAccept, drop as storyDrop, dropFee as storyDropFee, activeStory, leftPay, heartsLeft as storyHearts, LEVELS as STORY_LEVELS, storyPicUrl } from './storyboard.js';
 import { ERAS } from './eras.js';
 import { NATURE_LINES, partKeys, zoomBox, natureLevels } from './planeparts.js';
 import { sfx, setMuted, unlockAudio } from './sound.js';
@@ -103,6 +103,10 @@ export const FACTS = [...FACTS_BASE, ...NATURE_FACTS];
 const TOAST_MIN = 3, TOAST_END_MIN = 2.5;   // s a toast stays before another may replace it / before a flight's end may close it
 const $ = id => document.getElementById(id);
 // A prize as icons: "+40 [seed] +3 [crystal]".
+// A story's difficulty tag and its hearts (src/storyboard.js LEVELS; hearts: PixelLab art, full = left, grey = lost). Easy: no hearts.
+const storyLevelHTML = o => { const L = STORY_LEVELS[o.level]; if (!L) return '';
+  const h = storyHearts(o), hearts = o.hearts ? Array.from({ length: o.hearts }, (_, i) => `<i class="sheart${i < h ? '' : ' lost'}"></i>`).join('') : '<span class="sfree">tries: any</span>';
+  return `<div class="slevel lv-${o.level}"><span class="slv">${L.name.toUpperCase()}</span><span class="shearts" aria-label="${o.hearts ? `${h} of ${o.hearts} lives` : 'unlimited tries'}">${hearts}</span></div>`; };
 const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;
 
 // The Biodiversity meter as HTML: a bar plus the stage name.
@@ -132,7 +136,7 @@ export class UI {
     this.onPractice = onPractice;
     this.toastTimer = null;
 
-    $('goBtn').onclick = () => (this.hubCs ? this.openCrossings(this.hubCs) : this.start());
+    $('goBtn').onclick = () => (this.hubCs ? (activeStory(this.save) ? this.dropStory(() => this.openCrossings(this.hubCs), { label: 'CROSS', why: 'A crossing is not part of your story. ' }) : this.openCrossings(this.hubCs)) : this.start());
     $('againBtn').onclick = () => { const to = this.resultsLead(); return to ? this.go(to) : this.showTitle(); };   // FLY ON, or where the lesson leads
     $('schoolBtn').onclick = () => this.startSchool();
     document.querySelectorAll('#tabbar [data-go]').forEach(b => b.onclick = () => { sfx.tick(); this.go(b.dataset.go); });
@@ -424,13 +428,23 @@ export class UI {
     // the bottom bar is the navigation (its dots and the FREE! tag come from fresh.js and refreshDots).
     const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     // THE HOME BOX (CROSSINGS V2): the next crossing with its three ticks; not while lessons remain (the same rule as the quiet line it replaces).
-    const box = boxOn ? boxView(cs) : null, hc = $('hubCross');
-    hc.hidden = !box; hc.classList.toggle('ready', !!(box && box.ready));
-    if (box) { hc.innerHTML = `<p class="rc-label">${esc(box.title)}</p><div class="hc-route"><span>${esc(box.route)}</span><b>${esc(box.word)} <span class="hc-prize">${esc(box.prize)}</span></b></div><div class="hc-ticks">${box.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</div><p class="hc-line">${esc(box.line)}</p>${box.where === 'goto' ? `<div class="hc-go"><span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(box.dots)}${box.moreDots ? '+' : ''}</span>${box.aimOn ? '<button id="hcStop" class="btn tiny" type="button">stop</button>' : `<button id="hcGo" class="btn tiny go" type="button">GO TO ${esc(box.city)}</button>`}</div>` : ''}`; hc.onclick = () => this.openCrossings(cs);
+    const crossBox = boxOn ? boxView(cs) : null, hc = $('hubCross');
+    // PLAN A (the user, 2026-11-24): the box and the globe show ONE objective, the active story or the crossing, with a switch when there are both (s.hubFocus, remembered).
+    const story = s.tutorialDone ? activeStory(s) : null, both = !!(story && crossBox);
+    const storyOn = !!story && (!crossBox || s.hubFocus !== 'crossing');
+    const box = storyOn ? null : crossBox;
+    const sw = both ? `<div class="hc-switch" role="tablist"><button type="button" data-focus="story" class="${storyOn ? 'on' : ''}">STORY</button><button type="button" data-focus="crossing" class="${storyOn ? '' : 'on'}">CROSSING</button></div>` : '';
+    hc.hidden = !box && !storyOn; hc.classList.toggle('ready', !!(box && box.ready)); hc.classList.toggle('story', storyOn);
+    if (storyOn) { const n = story.reached || 0, left = leftPay(story);
+      hc.innerHTML = `${sw}${storyLevelHTML(story)}<p class="rc-label">${esc(story.title)}</p><div class="hc-route"><span>Stop ${n + 1} of ${story.stops.length}: ${esc(story.stops[n])}</span><b><span class="hc-prize">+${left.seeds}<i class="seedicon"></i></span></b></div>`;
+      hc.onclick = () => this.go('missions'); }
+    else if (box) { hc.innerHTML = `${sw}<p class="rc-label">${esc(box.title)}</p><div class="hc-route"><span>${esc(box.route)}</span><b>${esc(box.word)} <span class="hc-prize">${esc(box.prize)}</span></b></div><div class="hc-ticks">${box.ticks.map(t => `<span class="hc-tick${t.done ? ' on' : ''}">${esc(t.label)}</span>`).join('')}</div><p class="hc-line">${esc(box.line)}</p>${box.where === 'goto' ? `<div class="hc-go"><span class="hc-dots">${'<i class="hc-dot"></i>'.repeat(box.dots)}${box.moreDots ? '+' : ''}</span>${box.aimOn ? '<button id="hcStop" class="btn tiny" type="button">stop</button>' : `<button id="hcGo" class="btn tiny go" type="button">GO TO ${esc(box.city)}</button>`}</div>` : ''}`; hc.onclick = () => this.openCrossings(cs);
       const stop = $('hcStop'), go = $('hcGo'); if (stop) stop.onclick = e => { e.stopPropagation(); sfx.tick(); clearGoto(s); writeSave(s); this.showTitle(); }; if (go) go.onclick = e => { e.stopPropagation(); sfx.tick(); setGoto(s, box.city); writeSave(s); this.showTitle(); }; }
+    hc.querySelectorAll('[data-focus]').forEach(b => b.onclick = e => { e.stopPropagation(); sfx.tick(); s.hubFocus = b.dataset.focus; writeSave(s); this.renderHub(); });
     $('hubNext').hidden = !v.up.length || !s.tutorialDone;
     $('hubNext').classList.toggle('crossing', !!(v.next && v.next.crossing));
-    const rows = box ? v.up.slice(0, window.innerHeight <= 600 ? 1 : 2) : v.up[0] && v.up[0].pic ? v.up.slice(0, 2) : v.up;   // (the box takes the room of two rows: a short phone keeps one)   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
+    if (storyOn) v.up = v.up.filter(n => !String(n.key || '').startsWith('story:'));   // (the box above already shows the story)
+    const rows = box || storyOn ? v.up.slice(0, window.innerHeight <= 600 ? 1 : 2) : v.up[0] && v.up[0].pic ? v.up.slice(0, 2) : v.up;   // (the box takes the room of two rows: a short phone keeps one)   // a lead row with its lesson picture takes the room of a row: two rows then (HOME must keep TAKE OFF above the bar at 320x568)
     $('hubNext').innerHTML = `<p class="rc-label">UP NEXT</p><div id="hubUpRows">${rows.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b>${n.pic ? `<img class="next-pic" src="${n.pic}" alt="">` : ''}</button>`).join('')}</div>`;
     const act = n => { sfx.tick();
       if (n.key === 'lead:cross' && ready) this.showCrossingSheet(ready);   // (R-A: a 6,500 km flight never starts from a row tap: the sheet is the confirm)
@@ -445,7 +459,10 @@ export class UI {
     // At the departure airport of a READY crossing the big button crosses (it opens the CROSSINGS screen: a long flight is confirmed there) and a small link flies normally (CROSSINGS V2 step 3).
     this.hubCs = box && cs.ready && cs.atDeparture && !toHangar ? cs : null;
     if (this.hubCs) $('goBtn').textContent = `CROSS TO ${cs.to}`;
-    $('hubFly').hidden = !this.hubCs; $('hubFly').onclick = () => this.start();
+    // FREE FLIGHT (Plan A): while a story is active TAKE OFF flies to its next stop; the small link flies freely and drops the story first (with its fee).
+    $('hubFly').hidden = !this.hubCs && !(story && !toHangar);
+    $('hubFly').textContent = this.hubCs ? 'fly normally' : 'free flight';
+    $('hubFly').onclick = () => (story ? this.dropStory(() => this.start(), { label: 'FLY FREE', why: 'A free flight leaves your story. ' }) : this.start());
     // ROUTING V2 step 2: with nothing chosen (no GO TO, no mission aim) the chip names the default destination, 'Next: PARIS' (src/destination.js); a chosen destination keeps the route line.
     if (migrateAim(s)) writeSave(s);   // (an old 'AIM HERE' becomes a destination; the skip is dropped: src/aim.js)
     if (assignMissionCities(s)) writeSave(s);   // (HOME shows the mission's city: it is stored the first time it is shown)
@@ -454,17 +471,19 @@ export class UI {
     $('hubRoute').innerHTML = chip.kind === 'word' ? `${chip.word}: ${esc(chip.city)} &#8250;` : chip.route.join(' &#9654; ') + (chip.tag ? ` <span class="small">(${chip.tag})</span>` : '') + ' &#8250;';   // (R-B: a chip: the arrow says it opens something; src/steerchip.js)
     // The world: big, draggable and spinnable; once the route choice is revealed, tapping a way's dot picks it.
     this.clearRouteLabels(); if ($('hubCard')) $('hubCard').hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false;   // (the tapped city's row goes with any redraw: closeCityRow redraws on purpose)
-    const path = routeFor(s, Math.max(5, gotoTarget(s) ? gotoHops(s) : 0)), here = city(path[0]), opts = v.worldChoice ? choices(path[0], linksFor(s)) : [];
+    const storyWay = storyOn ? routeOf(s, story.stops[story.reached || 0]) : null;   // (story mode: the gold line is the way to the next stop; the rest of the story is dashed: src/globe.js)
+    const path = storyWay && storyWay.length > 1 ? storyWay : routeFor(s, Math.max(5, gotoTarget(s) ? gotoHops(s) : 0)), here = city(path[0]), opts = v.worldChoice && !storyOn ? choices(path[0], linksFor(s)) : [];
     const pick = name => { this.globeUsed(); sfx.tick(); s.heading = name; writeSave(s); this.renderJourney(); this.renderHub(); };
     const hint = $('hubHint'); hint.hidden = !s.tutorialDone || (s.tours || []).some(t => t === 'globe-hint' || t === '*');   // R-B: say the globe is a thing you can use, until you have used it
     hint.textContent = v.worldChoice ? 'Spin it. Tap a city to fly.' : 'Drag the world to spin it.';
     // MAP REGIONS: the lines between lands are in the picture (src/globe.js); the land names are a layer over it that follows every redraw (src/landlabels.js).
     let lands = $('hubLands'); if (!lands) { lands = document.createElement('div'); lands.id = 'hubLands'; lands.className = 'hub-lands'; document.querySelector('.hub-globe-wrap').prepend(lands); }
     const openNow = openLands(s), hubCv = $('hubGlobe');
-    this.hubGlobe = drawGlobe(hubCv, here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice ? pick : null, onCity: v.worldChoice ? name => this.showCityCard(name) : null, lit: linksFor(s),
+    this.hubGlobe = drawGlobe(hubCv, here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice && !storyOn ? pick : null, onCity: v.worldChoice && !storyOn ? name => this.showCityCard(name) : null, lit: linksFor(s),
+      story: storyOn ? { stops: story.stops.map(city), next: story.reached || 0 } : null,
       onUse: () => { this.globeDrags = (this.globeDrags || 0) + 1; this.globeUsed(); },   // (globeDrags: the map lesson's first step waits for a real drag, src/tour.js r-map)
       onPaint: out => placeLandLabels(lands, hubCv, out.lands, openNow),
-      cross: ready ? { from: city(ready.from), to: city(ready.to), onTap: () => this.showCrossingSheet(ready) } : null });   // R-A: the ready crossing's arc and its breathing ring (tap: the sheet)
+      cross: ready && !storyOn ? { from: city(ready.from), to: city(ready.to), onTap: () => this.showCrossingSheet(ready) } : null });   // R-A: the ready crossing's arc and its breathing ring (tap: the sheet)
     this.hubWords = v.words;
   }
 
@@ -508,10 +527,10 @@ export class UI {
     const storyCards = v.board ? v.board.map(o => { const n = o.reached || 0;
       const chips = o.stops.map((c, i) => `${i ? '<i class="sarrow"></i>' : ''}<span class="schip ${i ? 'drop' : 'pickup'}${o.active && i < n ? ' done' : ''}${o.active && i === n ? ' next' : ''}">${esc(c)}</span>`).join('');
       const lock = o.missing.length ? `<span class="sneed"><i class="slock"></i>Needs ${o.missing.map(m => `<b>${esc(m.text)}</b>`).join(', ')}</span>` : '';
-      const btn = o.active ? '<button class="btn" type="button" data-spause="1">PAUSE</button>' : o.missing.length ? `<button class="btn go" type="button" data-sgoto="${o.missing[0].tab}">GET IT IN ${o.missing[0].tab.toUpperCase()}</button>`
+      const btn = o.active ? '<button class="btn" type="button" data-sdrop="1">DROP</button>' : o.missing.length ? `<button class="btn go" type="button" data-sgoto="${o.missing[0].tab}">GET IT IN ${o.missing[0].tab.toUpperCase()}</button>`
         : `<button class="btn go" type="button" data-saccept="${esc(o.id)}">${n ? 'CARRY ON' : 'ACCEPT'}</button>`;
       return `<div class="scard${o.missing.length ? ' locked' : ''}${o.active ? ' active' : ''}"><img class="spic" alt="" src="${esc(storyPicUrl(o.pic))}">`
-        + `<div class="sbody">${o.active ? `<div class="shead"><span>ON THIS STORY</span><span>Stop ${n + 1} of ${o.stops.length}</span></div>` : ''}<b class="stitle">${esc(o.title)}</b><p class="stext">${esc(o.story)}</p>`
+        + `<div class="sbody">${o.active ? `<div class="shead"><span>ON THIS STORY</span><span>Stop ${n + 1} of ${o.stops.length}</span></div>` : ''}${storyLevelHTML(o)}<b class="stitle">${esc(o.title)}</b><p class="stext">${esc(o.story)}</p>`
         + `<div class="schips">${chips}</div><div class="sstats"><span class="sstat"><i class="sicon-plane"></i>${km(o.km)}</span><span class="sstat">+${o.pay.seeds}<i class="seedicon"></i></span><span class="sstat">+${o.pay.crystals}<i class="crysicon"></i></span></div>`
         + `${lock}<div class="sbtns">${btn}</div></div></div>`; }).join('') : '';
     $('mList').innerHTML = (empty && !storyCards ? `<p>All done here!</p>${xc ? '' : '<p class="small">Keep flying: new missions come with new eras.</p>'}` : '')
@@ -530,8 +549,9 @@ export class UI {
         : r.city && r.cityName ? { label: r.aimed ? 'STOP GOING' : 'GO THERE', onTap: () => { if (r.aimed) clearGoto(s); else setGoto(s, r.cityName); writeSave(s); this.toast(r.aimed ? 'Back to the suggested city' : `Going to ${r.cityName}`, '', 'good', 3); this.showMissions(); } }   // ROUTING V2 step 3: the mission's city becomes the destination (the same field as GO TO and a tapped city)
         : hop ? { label: `GO TO ${hop}`, onTap: () => this.go(r.where) } : null;
       showSheet({ eyebrow: r.daily ? 'TODAY' : r.star ? 'CROSSING TRIAL' : 'MISSION', title: r.full || r.short, body: `${r.tip || r.how}${r.prize ? ` Prize: +${r.prize} seeds${r.prizeC ? ` and +${r.prizeC} ice crystal${r.prizeC > 1 ? 's' : ''}` : ''}.` : ''}`, action }); });
-    document.querySelectorAll('#mList [data-saccept]').forEach(b => b.onclick = () => { if (storyAccept(s, b.dataset.saccept)) { sfx.tick(); writeSave(s); const o = (s.storyBoard || []).find(x => x && x.id === b.dataset.saccept); this.toast('Story accepted!', o ? `First stop: ${o.stops[o.reached || 0]}` : '', 'good', 3); this.showMissions(); } });
-    document.querySelectorAll('#mList [data-spause]').forEach(b => b.onclick = () => { sfx.tick(); storyPause(s); writeSave(s); this.showMissions(); });
+    // ONE STORY AT A TIME (the user, 2026-11-24): ACCEPT with another story active, or DROP, asks first and names the fee (src/storyboard.js dropFee).
+    document.querySelectorAll('#mList [data-saccept]').forEach(b => b.onclick = () => { sfx.tick(); this.acceptStory(b.dataset.saccept, () => this.showMissions()); });
+    document.querySelectorAll('#mList [data-sdrop]').forEach(b => b.onclick = () => { sfx.tick(); this.dropStory(() => this.showMissions()); });
     document.querySelectorAll('#mList [data-sgoto]').forEach(b => b.onclick = () => { sfx.tick(); this.go(b.dataset.sgoto); });
     $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
     document.querySelectorAll('#mCross [data-cross]').forEach(b => b.onclick = () => { const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); });
@@ -540,6 +560,23 @@ export class UI {
     this.showOnly('missions');
     if (markSeen(s, 'missions', this.freshOpts())) this.persist();   // MISSIONS is showing: its 'tier:<n>' and 'done:<key>' are seen (R2's hook)
     if (this.tour) this.tour.maybe('missions');   // the crossings lesson's rails (src/tour.js r-cross) run here
+  }
+
+  // ACCEPT a story. With another one active: a sheet first, naming the one that is dropped and its fee.
+  acceptStory(id, after) {
+    const s = this.save, o = (s.storyBoard || []).find(x => x && x.id === id), cur = activeStory(s);
+    const go = () => { if (!storyAccept(s, id)) return; writeSave(s); this.renderBank && this.renderBank(); this.toast('Story accepted!', o ? `First stop: ${o.stops[o.reached || 0]}` : '', 'good', 3); after && after(); };
+    if (!cur || cur.id === id) return go();
+    const fee = storyDropFee(s);
+    showSheet({ eyebrow: 'ONE STORY AT A TIME', title: `Swap "${cur.title}"?`, body: `You can only fly one story at a time. "${cur.title}" ends and you lose what it had left to pay.${fee ? ` Swapping costs ${fee} seeds.` : ''}`, ok: 'KEEP MY STORY',
+      action: { label: fee ? `SWAP FOR ${fee} SEEDS` : 'SWAP', onTap: go } });
+  }
+  // DROP the active story (the DROP button, or FREE FLIGHT on HOME): a sheet with the fee; `then` runs after it is dropped.
+  dropStory(then, { label = 'DROP IT', why = '' } = {}) {
+    const s = this.save, cur = activeStory(s); if (!cur) return then && then();
+    const fee = storyDropFee(s);
+    showSheet({ eyebrow: 'DROP YOUR STORY?', title: cur.title, body: `${why}The story ends and you lose what it had left to pay.${fee ? ` It costs ${fee} seeds.` : ''}`, ok: 'KEEP MY STORY',
+      action: { label: fee ? `${label} (${fee} SEEDS)` : label, onTap: () => { storyDrop(s); writeSave(s); then && then(); } } });
   }
 
   // THE SCHOOL BOARD (src/lessons.js; the user, 2026-11-16). On the MISSIONS tab while lessons remain (the tab reads SCHOOL), then folded into one REPLAY row.

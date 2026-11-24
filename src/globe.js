@@ -100,7 +100,7 @@ export function project(f, lat, lon) {
 // ---------- drawing ----------
 // Draw the globe seen through frame `f`. `path` = city objects ahead (here first). `quality` 1 = one sample per pixel (while
 // dragging), 2 = five (still): the edges of small islands and coasts come out cleaner.
-export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross = null, phase = 0) {
+export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross = null, phase = 0, story = null) {
   const g = canvas.getContext('2d'), S = canvas.width, R = S / 2 - 1, c0 = S / 2, Z = f.zoom || 1;
   const img = g.createImageData(S, S), px = img.data, landAt = new Uint8Array(S * S), rgb = new Uint8Array(S * S * 3), inDisc = new Uint8Array(S * S), rid = new Uint8Array(S * S);
   const ids = regionIdTable(), ground = regionTable();
@@ -201,6 +201,15 @@ export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross
     const d = to(cross.to.lat, cross.to.lon);
     if (d) { const r = 4 + phase; g.fillStyle = '#1b1b2f'; g.fillRect(d[0] - r - 1, d[1] - r - 1, 2 * r + 2, 2 * r + 2); g.fillStyle = '#bfeaff'; g.fillRect(d[0] - r, d[1] - r, 2 * r, 2 * r); g.fillStyle = '#1b1b2f'; g.fillRect(d[0] - r + 2, d[1] - r + 2, 2 * r - 4, 2 * r - 4); g.fillStyle = '#ffd34d'; g.fillRect(d[0] - 1, d[1] - 1, 3, 3); }
   }
+  // PLAN A (2026-11-24): the active story (story = { stops: city objects, next: index of the next stop }): the legs still to fly
+  // after the next stop dashed in orange, every stop a square (green: reached, orange: to come), the next stop a breathing ring.
+  if (story && story.stops) {
+    const st = story.stops, nx = story.next || 0;
+    for (let i = Math.max(0, nx); i + 1 < st.length; i++) for (let t = 0, j = 0; t <= 1.0001; t += 0.015, j++) { if (j % 2) continue; const p = along(st[i], st[i + 1], t), q = to(p.lat, p.lon); if (q) { g.fillStyle = '#ff9f3a'; g.fillRect(q[0] - 1, q[1] - 1, 2, 2); } }
+    st.forEach((k, i) => { const q = to(k.lat, k.lon); if (!q) return;
+      if (i === nx) { const r = 4 + phase; g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - r - 1, q[1] - r - 1, 2 * r + 2, 2 * r + 2); g.fillStyle = '#ff9f3a'; g.fillRect(q[0] - r, q[1] - r, 2 * r, 2 * r); g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - r + 2, q[1] - r + 2, 2 * r - 4, 2 * r - 4); g.fillStyle = '#ffd34d'; g.fillRect(q[0] - 1, q[1] - 1, 3, 3); return; }
+      g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - 3, q[1] - 3, 6, 6); g.fillStyle = i < nx ? '#5fd35a' : '#ff9f3a'; g.fillRect(q[0] - 2, q[1] - 2, 4, 4); });
+  }
   const h = path[0] && to(path[0].lat, path[0].lon);
   if (h) { g.fillStyle = '#1b1b2f'; g.fillRect(h[0] - 4, h[1] - 4, 8, 8); g.fillStyle = '#ff5a4d'; g.fillRect(h[0] - 3, h[1] - 3, 6, 6); }   // you are here
   return { dots, lands, lines };
@@ -213,9 +222,10 @@ function getIslands() { return islands || (islands = ISLANDS); }
 // sample a pixel while it moves, five once it settles. Returns { frame(), nudge(dx), destroy() }.
 export const TAP_PX = 6, TAP_MS = 400;
 export const CITY_PX = 11;   // canvas pixels: a finger's width on the globe (a canvas pixel is about two screen pixels)
-export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = null, lit = null, cross = null, onUse = null, onPaint = null } = {}) {
-  let f = frameRoute(cross ? [...(path.length ? path : [CITIES[0]]), cross.from, cross.to] : (path.length ? path : [CITIES[0]]));   // (a ready crossing is framed too: its destination must be on the globe)
-  let phase = 0, pulse = cross ? setInterval(() => { phase ^= 1; redraw(1); }, 700) : 0;
+export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = null, lit = null, cross = null, story = null, onUse = null, onPaint = null } = {}) {
+  const extra = () => [...(cross ? [cross.from, cross.to] : []), ...(story && story.stops ? story.stops.slice(Math.max(0, (story.next || 0) - 1)) : [])];   // (a ready crossing and the story's stops still to fly are framed too)
+  let f = frameRoute([...(path.length ? path : [CITIES[0]]), ...extra()]);
+  let phase = 0, pulse = cross || story ? setInterval(() => { phase ^= 1; redraw(1); }, 700) : 0;
   canvas.width = canvas.height = SIZE;
   canvas.style.touchAction = 'none';   // this canvas only: the page still scrolls everywhere else
   canvas.style.cursor = 'grab';
@@ -223,7 +233,7 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = n
   // One redraw a frame at most, however many events came in; the best quality asked for since the last one.
   const redraw = q => { wantQuality = Math.max(wantQuality, q); if (!raf) raf = requestAnimationFrame(() => { raf = 0; if (!alive) return; draw(wantQuality); wantQuality = 1; }); };
   // Every picture is passed on (MAP REGIONS: the land names follow the globe as it turns): onPaint({ dots, lands, lines }).
-  const draw = q => { const out = paint(canvas, f, path, q, ways, lit, cross, phase); if (onPaint) onPaint(out); return out; };
+  const draw = q => { const out = paint(canvas, f, path, q, ways, lit, cross, phase, story); if (onPaint) onPaint(out); return out; };
   const scale = () => canvas.width / (canvas.getBoundingClientRect().width || canvas.width);   // canvas pixels per screen pixel
   const R = () => canvas.width / 2 - 1;
   const hit = (ev) => {   // the way dot under the finger, if any (within 8 canvas pixels)
@@ -268,7 +278,7 @@ export function attachGlobe(canvas, path, { ways = [], onPick = null, onCity = n
   canvas.addEventListener('pointerup', onUp); canvas.addEventListener('pointercancel', onCancel);
   draw(2);
   // nudge(dx): turn by dx canvas pixels, as a drag would (the hub's spin buttons, S2 of PROPOSAL-HOME-MISSIONS.md).
-  return { frame: () => f, routePath: () => path.map(c => c.name), setPath(p) { path = p && p.length ? p : [CITIES[0]]; f = frameRoute(cross ? [...path, cross.from, cross.to] : path); redraw(2); },   // ROUTE ON THE MAP (R1): the route of a tapped city is drawn in the globe's own gold line, re-framed; routePath() is what is drawn (the tests read it)
+  return { frame: () => f, routePath: () => path.map(c => c.name), setPath(p) { path = p && p.length ? p : [CITIES[0]]; f = frameRoute([...path, ...extra()]); redraw(2); },   // ROUTE ON THE MAP (R1): the route of a tapped city is drawn in the globe's own gold line, re-framed; routePath() is what is drawn (the tests read it)
     cityPos(name) { const c = CITIES.find(x => x.name === name), q = c && project(f, c.lat, c.lon); if (!q) return null; const r = canvas.getBoundingClientRect(), k = scale(); return { x: r.left + (canvas.width / 2 + q[0] * R()) / k, y: r.top + (canvas.height / 2 + q[1] * R()) / k }; }, markPos() { const m = markXY(); if (!m) return null; const r = canvas.getBoundingClientRect(), k = scale(); return { x: r.left + m[0] / k, y: r.top + m[1] / k }; }, nudge(dx) { coast = null; f = turn(f, dx, 0, R()); redraw(2); }, destroy() { alive = false; if (pulse) clearInterval(pulse); if (raf) cancelAnimationFrame(raf); for (const [n, h] of [['pointerdown', onDown], ['pointermove', onMove], ['pointerup', onUp], ['pointercancel', onCancel]]) canvas.removeEventListener(n, h); } };
 }
 

@@ -1342,3 +1342,18 @@ h2.sub { margin-top: -4px; }
 .rowc.project.water { box-shadow: inset 4px 0 0 #1e78b4; background: #f2f9ff; }   /* a drawn stripe, not a border: the name and price line up with the land rows (tests/rowfit) */
 .w-water .rowc.project.water { margin-left: -10px; margin-right: -10px; }   /* out through the box padding (8) + border (2) */
 
+/* STORY DIFFICULTY (2026-11-24, Plan A): a tag and the hearts (src/ui.js storyLevelHTML; art assets/ui/icon-heart*.png, PixelLab). */
+.slevel { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.slv { font-size: 9px; font-weight: bold; letter-spacing: 1px; padding: 1px 5px; border: 2px solid var(--ink); background: #fff; }
+.lv-easy .slv { background: #c9f2c2; } .lv-medium .slv { background: #ffe39a; } .lv-hard .slv { background: #ffb98a; } .lv-impossible .slv { background: #3b1d4a; color: #fff; }
+.shearts { display: inline-flex; gap: 1px; align-items: center; }
+.sheart { display: inline-block; width: 14px; height: 14px; image-rendering: pixelated; background: url(assets/ui/icon-heart.png) center / 14px 14px no-repeat; }
+.sheart.lost { background-image: url(assets/ui/icon-heart-empty.png); }
+.sfree { font-size: 9px; opacity: .7; }
+/* PLAN A: the HOME box shows the active story or the crossing; a two-way switch when there are both (src/ui.js renderHub). */
+.hub-cross.story { border-color: #c2621a; background: #fff1e0; }
+.hc-switch { display: flex; gap: 0; margin: -2px 0 4px; }
+.hc-switch button { flex: 1; font: inherit; font-size: 9px; font-weight: bold; letter-spacing: 1px; padding: 2px 0; border: 2px solid var(--ink); background: #fff; color: var(--ink); cursor: pointer; }
+.hc-switch button + button { border-left: 0; }
+.hc-switch button.on { background: var(--ink); color: #fff; }
+.hub-cross .slevel { margin-bottom: 0; }

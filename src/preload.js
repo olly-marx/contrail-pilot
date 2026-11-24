@@ -25,7 +25,7 @@ const names = (pre, list) => list.map(n => `assets/ui/${pre}${n}.png`);
 export const LESSON_ART = names('lesson-', ['bars', 'biodiversity', 'birds', 'bonus', 'crystals', 'day', 'gold', 'heat', 'hot', 'land', 'night', 'nofly', 'plot', 'seed', 'storm', 'tap', 'tree-co2', 'turbulence']);
 export const MISSION_ICONS = [...names('mi-', ['airports', 'crystal', 'globe', 'land', 'night', 'seed', 'shade', 'tree']), ...names('mi32-', ['airport', 'binoculars', 'flag', 'forest', 'gear', 'goldenseed', 'moonpatch', 'natureproj', 'nonstop', 'roadkm', 'runway', 'sapling', 'seedbag', 'shade', 'shovel', 'stormgap', 'twopins'])];   // (mi32-: the MISSIONS rows' own 32 px pictograms, R4 + the mission-icons art)
 export const STYLE_ART = ['assets/ui/tour-finger.png', 'assets/ui/captain-stand.png', 'assets/ui/card-frame.png'];
-export const STORY_ART = ['assets/ui/portrait-story-vaccine-0.png', 'assets/ui/portrait-story-crate-0.png'];   // the story cards' own pictures (src/storyboard.js STORY_PICS, 2026-11-23)
+export const STORY_ART = ['assets/ui/portrait-story-vaccine-0.png', 'assets/ui/portrait-story-crate-0.png', 'assets/ui/icon-heart.png', 'assets/ui/icon-heart-empty.png'];   // (+ the story hearts, PixelLab 2026-11-24)   // the story cards' own pictures (src/storyboard.js STORY_PICS, 2026-11-23)
 export const ERA_PICS = ['1950s', '1970s', '1990s'];   // the eras with a drawn picture; the later ones show the painted gradient (src/welcome.js), so no file is asked for
 export const ERA_ART = ERA_PICS.map(id => `assets/ui/era-${id}.png`);
 // Everything under assets/ui and assets/pixellab/ui that no screen shows: kept on disk, never preloaded. A picture file in a tier, here, or covered by

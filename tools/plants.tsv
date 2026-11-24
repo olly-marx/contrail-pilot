@@ -1002,3 +1002,10 @@ ascprune	.github/workflows/apps.yml	s/- name: "Signing certificates before/- nam
 crossingview	src/crossings.js	s/ready: plane \&\& nature };/ready: plane };/	a crossing opens on range alone again (the departure land's nature not asked: Plan B)
 crossladder	src/crossings.js	s/return l ? biodiversity(save, l) : 0;/return 100;/	the nature tick reads no land (always full)
 crossladder	src/crossings.js	s|^const chance = (save, c) => (c.km ? Math.min(reachFrom(save, c) / c.km, natureNeed(c) ? natureHave(save, c) / natureNeed(c) : 1) : 0);|const chance = (save, c) => (c.km ? reachFrom(save, c) / c.km : 0);|	the route offered is picked by range alone again (a land the player never grew)
+storyboard	src/storyboard.js	s/  const fee = dropFee(save); save.seeds = (save.seeds || 0) - fee; endStory(save, 'drop'); return fee;/  const fee = 0; save.seeds = (save.seeds || 0) - fee; endStory(save, 'drop'); return fee;/	dropping a story is free (no fee)
+storyboard	src/storyboard.js	s/  if (save.storyActive \&\& save.storyActive !== o.id) drop(save);/  if (false) drop(save);/	two stories at once (ACCEPT does not drop the active one)
+storyboard	src/storyboard.js	s/  o.heartsLeft = Math.max(0, heartsLeft(o) - 1);/  o.heartsLeft = Math.max(0, heartsLeft(o));/	a crash never costs a heart
+storyboard	src/storyboard.js	s/^export const levelFor = (slot, seq) => (slot === 0 ? 'easy'/export const levelFor = (slot, seq) => (slot === 0 ? 'medium'/	no easy stories
+flyhub	src/ui.js	s/    const storyOn = !!story \&\& (!crossBox || s.hubFocus !== 'crossing');/    const storyOn = false;/	HOME never shows the story
+flyhub	src/missions2.js	s/    save.storyHurt = STORY.on \&\& !r.crossing ? storyCrashed(save) : null;/    save.storyHurt = null;/	a crash on a story flight costs no heart
+flyhub	src/ui.js	s/    \$('hubFly').onclick = () => (story ? this.dropStory(/    $('hubFly').onclick = () => (false ? this.dropStory(/	free flight keeps the story

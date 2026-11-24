@@ -8,7 +8,7 @@
 //   project): an off-flight mission completes the moment the save changes, no flight needed (the user).
 // Pure: no DOM, no random. The game (src/sim/rules.js at banking, the shop after a purchase) and the sim call it.
 // Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes are paid straight into the bank (src/rewards.js payPrize).
-import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard } from './storyboard.js';
+import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard, crashed as storyCrashed } from './storyboard.js';
 import { AREAS, areaOf, DEFAULT_AREA, regionsOpen, withRegions } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
@@ -249,7 +249,13 @@ export function onFlight(save, r) {
     return lm[cur.id] >= 2 ? [...got, { key: cur.id, title: cur.title, tier: 0, star: false, kind: 'flight', prize: cur.prize, def: cur, taught: true }] : got; };
   const steady = steadyTick(save, r);
   const easyDaily = dailyVisible(save).filter(d => d.easy && d.def.flight(r, save, d.fill) === true);
-  if (!r.landed) return finish(save, taught([...firsts, ...steady, ...easyDaily]));
+  if (!r.landed) {
+    // A crash on a story flight costs a heart (src/storyboard.js LEVELS); at 0 the story fails and its slot is filled again. Read by the results card (save.storyHurt).
+    save.storyHurt = STORY.on && !r.crossing ? storyCrashed(save) : null;
+    if (save.storyHurt && save.storyHurt.failed) fillStoryBoard(save);
+    return finish(save, taught([...firsts, ...steady, ...easyDaily]));
+  }
+  if (save.storyHurt) save.storyHurt = null;
   const startCity = save.city;
   assignMissionCities(save, startCity);   // (idempotent: the game stored them when HOME drew them; the sim, which never draws HOME, stores them here)
   advanceChains(save, r, startCity);
