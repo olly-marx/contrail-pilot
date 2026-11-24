@@ -176,7 +176,7 @@ export const RULES = {
     this.airportIndex = 0;
     this.airportsSkipped = 0;
     this.nextAirport = this.airportAhead(0);
-    this.initCrates(SKY_H);   // special delivery crates (src/sim/crates.js): after the path and this.crossing are set
+    this.initCrates(SKY_H);   // special drop-off crates (src/sim/crates.js): after the path and this.crossing are set
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
     this.pose = P.planePose(this);
   },
@@ -1347,7 +1347,7 @@ export const RULES = {
   },
 
   dropParcel() {
-    if (this.dropCrate()) return;   // over a special delivery's runway the drop is the crate (src/sim/crates.js)
+    if (this.dropCrate()) return;   // over a special drop-off's runway the drop is the crate (src/sim/crates.js)
     if (this.state !== 'playing' || !this.kit.tree || this.frozen) return;
     if (this.parcels <= 0) { this.playSound('nope'); return; }
     // Over the open sea and the ice nothing can be planted (user, 2026-10-24): keep the parcel.

@@ -1,6 +1,6 @@
-// SPECIAL DELIVERY CRATES (the user, 2026-11-24: "you drop an extra large crate down onto the airstrip without landing, and ... then
+// SPECIAL DROP-OFF CRATES (the user, 2026-11-24: "you drop an extra large crate down onto the airstrip without landing, and ... then
 // you have to keep going after that"). Mixed into RULES (src/sim/rules.js), so the game and the Node engine fly the same crate.
-// A flight of a special-delivery story (src/storyboard.js crateStops) carries one big crate for each crate stop on its way, in order.
+// A flight of a special drop-off story (src/storyboard.js crateStops) carries one big crate for each crate stop on its way, in order.
 // Over that stop's runway the DROP button drops it: no parachute, it falls fast and loses the plane's speed quickly (CRATE_FALL), so it
 // lands a short way behind where it was let go. On that runway: delivered. Off it, or the runway passed with no crate: missed, and the
 // rest of this flight's crates are off (the stops must be reached in order). The flight result carries { delivered, missed } and

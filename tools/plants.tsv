@@ -431,7 +431,7 @@ sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 })
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x34]
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x35]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
@@ -1007,7 +1007,7 @@ storyboard	src/storyboard.js	s/  if (save.storyActive \&\& save.storyActive !== 
 storyboard	src/storyboard.js	s/  o.heartsLeft = Math.max(0, heartsLeft(o) - 1);/  o.heartsLeft = Math.max(0, heartsLeft(o));/	a crash never costs a heart
 storyboard	src/storyboard.js	s/^export const levelFor = (slot, seq) => (slot === 0 ? 'easy'/export const levelFor = (slot, seq) => (slot === 0 ? 'medium'/	no easy stories
 flyhub	src/ui.js	s/    const storyOn = !!story \&\& (!crossBox || s.hubFocus !== 'crossing');/    const storyOn = false;/	HOME never shows the story
-flyhub	src/missions2.js	s/    save.storyHurt = STORY.on \&\& !r.crossing ? storyCrashed(save) : null;/    save.storyHurt = null;/	a crash on a story flight costs no heart
+flyhub	src/missions2.js	s/    const hurt = STORY.on \&\& !r.crossing ? storyCrashed(save) : null;/    const hurt = null;/	a crash on a story flight costs no heart
 flyhub	src/ui.js	s/    \$('hubFly').onclick = () => (story ? this.dropStory(/    $('hubFly').onclick = () => (false ? this.dropStory(/	free flight keeps the story
 storygen	tools/stories/validate.mjs	s/  if (typeof t.story === 'string' \&\& !slots(t.story).length) why.push/  if (false) why.push/	a story that names no stop passes
 storygen	tools/stories/validate.mjs	s/  else if (t.level \&\& !stopsFor(t.level).includes(t.stops))/  else if (false)/	a level with the wrong number of stops passes
