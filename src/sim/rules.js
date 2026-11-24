@@ -174,7 +174,7 @@ export const RULES = {
     this.startCity = 0;
     this.homeName = this.path[0];
     this.airportIndex = 0;
-    this.airportsSkipped = 0;
+    this.airportsSkipped = 0; this.passedAirports = [];   // (0.79.0: the airports flown past this flight, by name: a story stop flown past is a MISSED stop, src/missions2.js)
     this.nextAirport = this.airportAhead(0);
     this.initCrates(SKY_H);   // special drop-off crates (src/sim/crates.js): after the path and this.crossing are set
     this.plane = { x: PLANE.x, y: this.groundedY(), vy: 0 };
@@ -367,7 +367,7 @@ export const RULES = {
     if (this.distancePx > na.worldX + AIRPORT.runwayLen && this.state === 'playing') {
       this.crateAirportPassed(na.name);
       this.airportIndex++;
-      this.airportsSkipped++;
+      this.airportsSkipped++; (this.passedAirports = this.passedAirports || []).push(na.name);
       this.explain('x-multiplier', tip('x-multiplier'), 'lesson-bonus');
       this.nextAirport = this.airportAhead(this.airportIndex, na.worldX);
       this.missedSign = { text: `Passed ${na.name}. Next: ${this.nextAirport.name}`, to: this.nextAirport.name, until: this.gameTime + 4000 };
@@ -997,7 +997,7 @@ export const RULES = {
     const newRegion = !!landReg && !this.school && !(this.save.visited || []).some(n => city(n) && city(n).region === landReg);
     const s2 = isSeason2(this.save);   // season 2: many missions at once (src/missions2.js); classic: one in order
     const mission = this.school || s2 ? null : currentMission(this.save);
-    const partial = { landed, landedAt: this.landedAt, lap, newRegion, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
+    const partial = { landed, landedAt: this.landedAt, lap, newRegion, cargo: this.cargo, nightOwl: this.nightOwl, airportsSkipped: this.airportsSkipped, passed: [...(this.passedAirports || [])], sunBlocked: this.sunBlocked, planted: this.planted, crystals: this.crystals,
       crash, crashes: this.save.crashes || {}, distance: m, kinds: this.speciesPlanted.size, bumped: this.bumped, goldens: this.goldens,
       onRunway: this.parcelOnRunway, forestFull: this.forestFullSaid, projects: projectsDone(this.save).map(p => p.id), crates: this.crateResult() };
     const missionDone = !!(mission && mission.check(partial, this.save));
@@ -1038,7 +1038,7 @@ export const RULES = {
       landed, landedAt: this.landedAt, from: this.homeName, lap, reason, distance: m, heat, co2PerKm: Number(perKm),
       sunBlocked: Math.round(this.sunBlocked * 10) / 10, heatTrapped: Math.round(this.heatTrapped * 10) / 10,
       breakdown: { ...this.breakdown }, natureBy: { ...this.natureBy }, dropCool: this.dropCool, grewDays: this.grewDays || 0, earned, gained, newBadges, newRecord, planted: this.planted, treesDropped: this.released, treeNames: [...new Set(this.plantedNames)], treesGrown, kinds: this.speciesPlanted.size,
-      cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
+      cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, passed: [...(this.passedAirports || [])], nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])], crates: this.crateResult(),
       waterDropped: this.waterReleased || 0, waterDrops: this.waterDrops || 0, crystalsBy: { ...(this.crystalsBy || {}), distance: this.distanceCrystals || 0 },   // (the results card: trees and water apart; where the crystals came from)

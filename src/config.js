@@ -104,6 +104,8 @@ export const TAKEOFF = {
   climbVelocity: -120,
 };
 
+// THE APPROACH CALL (0.79.0, src/GameScene.js approachCall): the big 'LAND AT X' call starts this many px before the target's runway; red and flashing in the last `urgent` px.
+export const APPROACH = { from: 1500, urgent: 450 };
 export const AIRPORT = {
   // Which cities and how far apart: the journey in src/route.js.
   runwayLen: 220,

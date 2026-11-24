@@ -1040,3 +1040,5 @@ resultscard	src/resultscard.js	s/!firstTitles.includes(t) \&\& !storyTitles.incl
 crossingend	src/crossingend.js	s/`${CROSSING_WORDS\[c.era\].toUpperCase()} CROSSING`/null/	the crossing screens forget the ladder step
 storydone-ui	src/ui.js	s/if (storyDone) await this.storyCompleteBeat(el, v, held, count, wait); else/if (false) await this.storyCompleteBeat(el, v, held, count, wait); else/	no STORY COMPLETE beat
 storydone-ui	src/ui.js	s/seeds: Math.min(v.bank.seeds, v.story.seeds || 0), crystals:/seeds: 0, crystals:/	the story prize is not held back from the first count
+approach-ui	src/GameScene.js	s/    t.setVisible(on); if (!on) return false;/    t.setVisible(false); return false;/	the approach call never shows
+storymiss	src/missions2.js	s/(r.passed || \[\]).includes(stop) \&\& r.landedAt !== stop/false/	a story stop flown past costs nothing

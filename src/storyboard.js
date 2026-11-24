@@ -260,6 +260,14 @@ export function crashed(save) {
   if (failed) endStory(save, 'failed');
   return out;
 }
+// A MISSED STOP (0.79.0; Oliver, 2026-11-24: 'I forgot to land. I just missed the airport ... I don't know what happens to the story'): a landed story flight that flew PAST the
+// next stop (not a crate stop) costs a heart, as a crash does; at 0 the story fails. The story goes on from wherever the plane landed (the next stop stays the destination).
+// An Easy story has no hearts: nothing is lost, the results card still says so. Returns { id, title, missed, hearts, of, failed, ...shape } or null (no active story).
+export function missed(save, city) {
+  const o = activeStory(save); if (!o) return null;
+  if (!o.hearts) return { id: o.id, title: o.title, missed: city, hearts: null, of: null, failed: false, ...storyShape(o) };
+  return { ...crashed(save), missed: city };
+}
 // After a landing at `city` (src/missions2.js onFlight): the next stop reached? Pays its stage straight away. Returns
 // { title, city, line, n, of, done, pay } or null.
 export function landedAt(save, city) {

@@ -8,7 +8,7 @@
 //   project): an off-flight mission completes the moment the save changes, no flight needed (the user).
 // Pure: no DOM, no random. The game (src/sim/rules.js at banking, the shop after a purchase) and the sim call it.
 // Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes are paid straight into the bank (src/rewards.js payPrize).
-import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard, crashed as storyCrashed, deliveredAt as storyDeliveredAt } from './storyboard.js';
+import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard, crashed as storyCrashed, deliveredAt as storyDeliveredAt, missed as storyMissed, activeStory, isCrateStop } from './storyboard.js';
 import { AREAS, areaOf, DEFAULT_AREA, regionsOpen, withRegions } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
@@ -269,6 +269,9 @@ export function onFlight(save, r) {
   const story = STORY.on && r.landedAt ? storyLandedAt(save, r.landedAt) : null;
   const storyDone = story && story.pay.seeds + story.pay.crystals > 0 ? [{ key: `story:${story.id}:${story.n}`, title: `${story.title}: ${story.city}${story.done ? ' (story done!)' : ''}`, prize: story.pay, story }] : [];
   if (story && story.done) fillStoryBoard(save);
+  // A MISSED STOP (0.79.0, src/storyboard.js missed): landed, but not at the next stop, after flying past it: a heart (Easy: none), the results card says so.
+  if (STORY.on && !story && !r.crossing && !save.storyHurt) { const o = activeStory(save), n = o ? o.reached || 0 : 0, stop = o && o.stops[n];
+    if (stop && !isCrateStop(o, n) && (r.passed || []).includes(stop) && r.landedAt !== stop) { const h = storyMissed(save, stop); if (h) { save.storyHurt = h; if (h.failed) fillStoryBoard(save); } } }
   const due = [...crateRows, ...storyDone, ...visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true))];
   const daily = dailyVisible(save).filter(d => d.def.flight(r, save, d.fill) === true);
   save.prevLanded = r.landedAt;   // for "land at A, then B" (read on the NEXT flight)
