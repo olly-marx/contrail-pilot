@@ -155,7 +155,7 @@ preview	src/season2.js	s#const store = PREVIEW ? {#const store = false ? {#	prev
 tipqueue	src/GameScene.js	s#  dropTips() {#  dropTips() { return;#	unshown tips not unmarked
 tipqueue	src/GameScene.js	s#^    dropToast();$#    void 0;#;s#this.stripWatch.observe(coachEl);#void 0;#	the toast stays under the strip
 l4hint	src/GameScene.js	s#else if (skipThis && toAirport < AIRPORT.signFrom)#else if (false \&\& skipThis)#	the landing call on an L4 flight
-railwords	src/resultscard.js	s#% bonus` : ''#%` : ''#	the maths line without the word the rail says
+railwords	src/resultscard.js	s#'Bonus'\]#'Extra']#	the money line without the word the rail says
 railwords	src/tips.js	s#Forecasting shows icy air sooner. Save up for it!#Forecasting shows icy air sooner. Buy it when you can!#	the systems rail pushes a purchase
 season2	src/areas.js	s#aotearoa: { name: 'Aotearoa & Polynesia', starter: true,#aotearoa: { name: 'Aotearoa \& Polynesia', starter: false,#	NZ not a starter
 sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
@@ -1028,3 +1028,8 @@ realterrain	src/geo.js	s/if (!isLandOrIsland(lat, wrap(lon))) return .ocean.;/if
 realterrain	src/geo.js	s/p = lap ? lapPoint(a, f) : along(a, b, f)/p = along(a, b, f)/	lap flown home to home
 realterrain	src/geo.js	s/w = cells.map(r => (r === .ocean. \&\& !real ? OCEAN_SHARE : 1))/w = cells.map(r => (r === 'ocean' ? OCEAN_SHARE : 1))/	crossing sea squeezed
 realterrain	src/geo.js	s/export const LAP_BEARING = 270;/export const LAP_BEARING = 90;/	lap leaves east
+resultscard	src/resultscard.js	s/else if (hurt) { v.mood = .bad.;/else if (false) { v.mood = 'bad';/	a heart lost on a crash not shown in the story block
+resultscard	src/resultscard.js	s/(r.treesDropped || 0) - wDropped/(r.treesDropped || 0)/	water drops counted as trees again (missed trees)
+resultscard	src/resultscard.js	s/(r.crystals || 0) - dist - dodge - night/(r.crystals || 0) - dodge - night/	distance crystals counted twice in the sheet
+resultscard	src/resultscard.js	s/!firstTitles.includes(t) \&\& !storyTitles.includes(t)/!firstTitles.includes(t)/	the story stop folded back into the missions line
+crossingend	src/crossingend.js	s/`${CROSSING_WORDS\[c.era\].toUpperCase()} CROSSING`/null/	the crossing screens forget the ladder step

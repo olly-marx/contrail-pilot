@@ -206,7 +206,7 @@ export const crossingPrizeDue = (save, c) => ((save.crossed || []).includes(c.id
 // What a FINISHED crossing flight puts in result.crossing (GameScene.finish calls this; tests/crossreward.cjs reads it): landed = the crossing was completed (the lap: only at home), prize = what was paid, shown only when it was.
 export function finishCrossing(save, c, landed) {
   const due = landed ? crossingPrizeDue(save, c) : null, done = landed && completeCrossing(save, c);
-  return { id: c.id, kind: c.kind, landed: !!done, opens: c.opens, to: c.to, prize: done ? due : null };
+  return { id: c.id, kind: c.kind, landed: !!done, opens: c.opens, to: c.to, prize: done ? due : null, era: Number.isInteger(c.era) ? c.era : null };   // (era: the ladder step, for the ending screen's eyebrow)
 }
 // Landing a crossing: the area on the far side opens (and the ocean stepping stones count as 'ocean'), and the prize is paid ONCE. The sim calls this too (src/sim/progression.js), so the game and the sim pay the same.
 // Nothing here on a crash: the callers only come here after a landing. The lap pays only when you land back home.

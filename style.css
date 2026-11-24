@@ -201,6 +201,31 @@ p { margin: 0; }
 .rc-mission b { display: inline-flex; align-items: center; gap: 3px; color: var(--green-dark); }
 .rc-mission .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
 .rc-more { font-style: normal; color: var(--muted); }
+/* THE STORY BLOCK (the results redo, 2026-11-24; src/resultscard.js storyView): the level tag and hearts as on HOME (.slevel), the stop dots, the story's name, and what
+   this flight did for it. Green when a stop or crate was reached, gold when the story is complete, red when a heart was lost. */
+.rc-story { display: grid; gap: 2px; width: 100%; box-sizing: border-box; padding: 4px 6px; font-family: inherit; font-size: 8px; line-height: 1.4; text-align: left; color: var(--ink); background: #fff1e0; border: 0; box-shadow: inset 4px 0 0 #c2621a; cursor: pointer; }
+.rc-story.good { background: #d6f5d6; box-shadow: inset 4px 0 0 var(--green-dark); }
+.rc-story.done { background: var(--gold); box-shadow: inset 4px 0 0 var(--gold-dark); }
+.rc-story.bad { background: #fde2e2; box-shadow: inset 4px 0 0 var(--warm); }
+.rc-stop { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.rc-story .slevel { margin: 0; gap: 4px; }
+.rc-story .slv { font-size: 7px; padding: 0 4px; }
+.rc-story .sheart { width: 12px; height: 12px; background-size: 12px 12px; }
+.rc-sdots { display: inline-flex; align-items: center; gap: 0; flex: none; }
+.rc-sdot { display: inline-block; width: 8px; height: 8px; box-sizing: border-box; border: 2px solid var(--ink); background: #fff; }
+.rc-sdot.crate { border-style: dashed; }
+.rc-sdot.done { background: var(--green-dark); border-style: solid; }
+.rc-sdot.next { background: var(--gold); }
+.rc-sdot.failed { background: var(--warm); }
+.rc-sdot + .rc-sdot { margin-left: 6px; position: relative; }
+.rc-sdot + .rc-sdot::before { content: ''; position: absolute; left: -8px; top: 1px; width: 6px; height: 2px; background: var(--ink); }
+.rc-stitle { font-size: 8px; color: var(--ink); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.rc-sline { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.rc-sline > span:first-child { flex: 1; }
+.rc-sline b { display: inline-flex; align-items: center; gap: 3px; color: var(--green-dark); white-space: nowrap; }
+.rc-story.bad .rc-sline > span:first-child { color: var(--warm); }
+.rc-sline .seedicon { width: 10px; height: 12px; background-size: 10px 12px; }
+.rc-sline .crysicon { width: 10px; height: 10px; background-size: 10px 10px; }
 .rc-next .rc-label { margin: 0 0 2px; text-align: left; }
 #rNextRows { display: grid; gap: 3px; }
 .rc-row b { color: var(--muted); font-size: 7px; font-weight: normal; white-space: nowrap; }

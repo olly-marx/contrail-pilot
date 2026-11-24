@@ -61,6 +61,51 @@
   check(R.crashTitle('Bird strike!\nYou hit a bird.') === 'A bird' && R.crashTitle('Storm!\nYou flew into a storm.') === 'A storm' && R.crashTitle('Restricted airspace!\nFlight stopped.') === 'No-fly zone' && R.crashTitle('The planet got too hot!\nFlight grounded.') === 'Too hot', 'every real crash reason has a short title');
   const classic = R.resultsView(flight({ missions2: null, mission: { done: true, title: 'Land at PARIS', fail: '' }, rewards: [{ key: 'mission:land', kind: 'mission', id: 'land', label: 'Land at PARIS', seeds: 15, crystals: 1 }] }), { ...save, areas: undefined }, { paid: { seeds: 15, crystals: 1 }, next: [] });
   check(classic.missions && /PARIS/.test(classic.missions.line) && classic.missions.seeds === 15, `season 1: the one mission's outcome and prize on the line: ${JSON.stringify(classic.missions)}`);
+  // THE RESULTS REDO (2026-11-24): the story block, trees and water apart, the money line, crystals counted once, the fund.
+  const shape = (o = {}) => ({ id: 'story-9', title: 'Vaccines for three cities', level: 'medium', oneGo: false, crate: false, stops: ['LONDON', 'PARIS', 'BERLIN', 'ROME'], reached: 2, heartsLeft: 5, heartsOf: 5, ...o });
+  const storyPrize = (st, seeds, crystals) => ({ key: `mission:story:${st.id}:${st.n}`, kind: 'mission', id: `story:${st.id}:${st.n}`, label: `${st.title}: ${st.city}`, seeds, crystals, story: st });
+  const daily = { key: 'mission:d1', kind: 'mission', id: 'd1', label: 'Fly 1,000 km (a crash counts too)', seeds: 120, crystals: 0 };
+  const stopEv = { ...shape(), city: 'PARIS', line: 'The PARIS hospital has its vaccine.', n: 2, of: 4, done: false };
+  const vs = R.resultsView(flight({ rewards: [storyPrize(stopEv, 977, 78), daily], missions2: { done: [`${stopEv.title}: PARIS`, daily.label], next: null } }), save, { paid: { seeds: 1097, crystals: 78 }, next });
+  check(vs.story && vs.story.mood === 'good' && vs.story.line === 'Reached PARIS' && vs.story.seeds === 977 && vs.story.crystals === 78 && vs.story.tag === 'MEDIUM' && vs.story.hearts && vs.story.hearts.left === 5,
+    `a story stop is its own block (tag, hearts, 'Reached PARIS', its prize): ${JSON.stringify(vs.story)}`);
+  check(vs.story && vs.story.stops.map(x => x.state).join() === 'done,done,next,todo', `the stop dots: two done, the next, one to do: ${JSON.stringify(vs.story && vs.story.stops)}`);
+  check(vs.missions && vs.missions.line.includes('Fly 1,000 km') && vs.missions.seeds === 120, `the other missions line leaves the story out (its name and its seeds): ${JSON.stringify(vs.missions)}`);
+  const hurtSave = (h) => ({ ...save, storyHurt: { id: 'story-9', title: 'Vaccines for three cities', of: 3, failed: false, ...shape({ level: 'hard', heartsOf: 3 }), ...h } });
+  const vc = R.resultsView(flight({ landed: false, earned: [{ label: 'Seeds grabbed in the sky', n: 23, lost: true }], rewards: [daily], missions2: { done: [daily.label], next: null } }), hurtSave({ hearts: 2 }), { paid: { seeds: 120, crystals: 0 }, next });
+  check(vc.story && vc.story.mood === 'bad' && vc.story.line === 'Lost a heart: 2 of 3 left' && vc.story.hearts.left === 2 && vc.missions && vc.missions.seeds === 120,
+    `a heart lost shows even when another mission was done on the same crash (0.77.0 hid it): ${JSON.stringify([vc.story, vc.missions])}`);
+  const vm = R.resultsView(flight({ rewards: [daily], missions2: { done: [daily.label], next: null } }), hurtSave({ hearts: 2, crate: 'PARIS', crate: 'PARIS' }), { paid: { seeds: 120, crystals: 0 }, next });
+  check(vm.story && vm.story.mood === 'bad' && /Missed PARIS/.test(vm.story.line), `a missed crate shows next to another mission: ${JSON.stringify(vm.story)}`);
+  const vf = R.resultsView(flight({ landed: false, earned: [] }), hurtSave({ hearts: 0, failed: true }), { next });
+  check(vf.story && vf.story.mood === 'bad' && /failed/.test(vf.story.line) && vf.story.hearts.left === 0, `out of hearts: the story failed: ${JSON.stringify(vf.story)}`);
+  const doneEv = { ...shape({ reached: 4 }), city: 'ROME', line: 'ROME has its vaccine.', n: 4, of: 4, done: true };
+  const vd = R.resultsView(flight({ rewards: [storyPrize(doneEv, 2773, 221)] }), save, { paid: { seeds: 2773, crystals: 221 }, next });
+  check(vd.story && vd.story.mood === 'done' && vd.story.line === 'Story complete!' && vd.story.stops.every(x => x.state === 'done') && vd.story.seeds === 2773, `the last stop completes the story: ${JSON.stringify(vd.story)}`);
+  const crateEv = { ...shape({ crate: true, level: 'hard', reached: 3 }), city: 'BERLIN', line: '', n: 3, of: 4, done: false };
+  const vk = R.resultsView(flight({ rewards: [storyPrize(crateEv, 1507, 121)] }), save, { paid: { seeds: 1507, crystals: 121 }, next });
+  check(vk.story && vk.story.tag === 'SPECIAL DELIVERY' && vk.story.line === 'Crate on BERLIN' && vk.story.stops[1].crate && vk.story.stops[2].crate && !vk.story.stops[3].crate, `a crate delivered: ${JSON.stringify(vk.story)}`);
+  check(!R.resultsView(flight(), save, { next }).story, 'no story: no story block');
+  for (const x of [vs, vc, vm, vf, vd, vk]) check(x.story.title.length <= R.STORY_TITLE_MAX && x.story.line.length + (x.story.seeds ? `  +${x.story.seeds.toLocaleString('en-GB')} +${x.story.crystals}`.length : 0) <= LINE, `the story block fits 320 px: "${x.story.title}" / "${x.story.line}"`);
+  // Trees and water apart (r.treesDropped counts both; r.waterDropped / r.waterDrops are the water ones).
+  const tw = R.resultsView(flight({ treesDropped: 4, planted: 1, waterDropped: 2, waterDrops: 2, treeNames: ['Oak'] }), save, { next });
+  check(tw.trees === 'Trees 1 of 2 · Water 2 of 2' && tw.trees.length <= LINE, `water drops are not missed trees: "${tw.trees}"`);
+  const wo = R.resultsView(flight({ treesDropped: 3, planted: 0, waterDropped: 3, waterDrops: 1 }), save, { next });
+  check(wo.trees === 'Water: 1 of 3 drops landed', `water only: "${wo.trees}"`);
+  // The money line names the flight's sources, biggest first, within the row.
+  check(/^Bonus 400 · Sky 123/.test(VARIANTS.plain && R.resultsView(VARIANTS.plain, save, { next }).maths), `the money line: biggest source first: "${R.resultsView(VARIANTS.plain, save, { next }).maths}"`);
+  const fares = R.resultsView(flight({ earned: [{ label: 'Seeds grabbed in the sky', n: 46 }, { label: 'Passenger fares', n: 1234 }] }), save, { next });
+  check(fares.maths === 'Fares 1,234 · Sky 46', `fares are named: "${fares.maths}"`);
+  check(/crystals kept/.test(crash.maths), `a crash says its crystals are kept: "${crash.maths}"`);
+  // Crystals counted once in the sheet: distance crystals are already part of r.crystals.
+  const cr = R.resultsView(flight({ crystals: 11, distanceCrystals: 6, crystalsBy: { dodge: 3, cleanNight: 2, distance: 6 } }), save, { next });
+  const crySum = cr.tally.filter(t => /crystal/i.test(t[0])).reduce((a, t) => a + Number(t[1]), 0);
+  check(crySum === 11, `the sheet's crystal rows add up to the crystals earned (11): ${JSON.stringify(cr.tally.filter(t => /crystal/i.test(t[0])))}`);
+  // The nature fund: its value now and how it moved during the flight.
+  const fsave = { ...save, flightSeconds: 6000, finance: { level: 2, fund: { seeds: 1000, day: 0, paid: 1000 } } };
+  const fv = R.resultsView(flight({ flyMinutes: 30 }), fsave, { next });
+  check(fv.tally.some(t => /Nature fund/.test(t[0])), `the fund is a row of the sheet while seeds are in it: ${JSON.stringify(fv.tally.slice(-2))}`);
+  check(!R.resultsView(flight({ flyMinutes: 30 }), save, { next }).tally.some(t => /Nature fund/.test(t[0])), 'no fund row with nothing in the fund');
   console.log(fails.length ? `FAIL resultscard:\n - ${fails.join('\n - ')}` : `PASS resultscard: 7 variants, the longest city "${longest}", every line within its 320 px budget; the bank, missions-as-a-count, chips and crash rules hold`);
   process.exit(fails.length ? 1 : 0);
 })();

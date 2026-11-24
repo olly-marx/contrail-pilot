@@ -143,7 +143,7 @@ export const RULES = {
     this.landedRunway = null; this.hitBarrier = false;   // the runway landed on, and whether a bad landing has hit its barrier yet (onOverrun)
     this.overran = false;             // a BAD LANDING: the roll-out ran past the runway's end (land; AIRPORT.overrunKeep)
     this.forestFullSaid = false;
-    this.saidGroveFull = false; this.saidWaterFull = false; this.waterPending = {}; this.waterDrops = 0;   // (waterways, 0.73.0)        // BIOME_FULL_POPUP is said once PER flight (src/droporder.js: nothing left to drop)
+    this.saidGroveFull = false; this.saidWaterFull = false; this.waterPending = {}; this.waterDrops = 0; this.waterReleased = 0; this.crystalsBy = {};   // (waterways, 0.73.0)        // BIOME_FULL_POPUP is said once PER flight (src/droporder.js: nothing left to drop)
     this.landStored = 0;               // ...and rewilded land
     this.natureBy = {};                // the results card's Nature line, by land (the tree UI, 2026-11-16): bookkeeping only, nothing reads it back
     this.dropCool = 0;                 // ...and what the trees dropped in THIS flight cooled
@@ -1021,7 +1021,7 @@ export const RULES = {
     // The first safe landing earns one free upgrade, to show what the hangar is for.
     if (landed && !this.save.freeGiven) { this.save.freeGiven = true; this.save.freeUpgrade = true; }
     // Missions and badges are PAID here, the moment the flight is banked (R8; src/rewards.js addPrizes + src/missions2.js finish pay straight into the bank).
-    const rewards = this.school ? [] : [...s2Done.map(d => ({ key: `mission:${d.key}`, kind: 'mission', id: d.key, label: d.title, ...d.prize })), ...addPrizes(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, lapLanded: !!(landed && this.crossing && this.crossing.kind === 'lap' && this.save.city === this.crossing.to), dodges: this.dodgesTotal,
+    const rewards = this.school ? [] : [...s2Done.map(d => ({ key: `mission:${d.key}`, kind: 'mission', id: d.key, label: d.title, ...d.prize, ...(d.story ? { story: d.story } : {}) })), ...addPrizes(this.save, { ...partial, sunBlocked: this.sunBlocked, heat, distance: m, lap, lapLanded: !!(landed && this.crossing && this.crossing.kind === 'lap' && this.save.city === this.crossing.to), dodges: this.dodgesTotal,
       kinds: this.speciesPlanted.size, heatTrapped: this.heatTrapped }, missionDone ? mission : null, missionIndex)];
     const newBadges = rewards.filter(p => p.kind === 'badge').map(p => p.id);
     this.persist();   // the game writes the save (the engine keeps it in memory)
@@ -1033,6 +1033,7 @@ export const RULES = {
       cargo: this.cargo, crystals: this.crystals, school: !!this.school, airportsSkipped: this.airportsSkipped, nightOwl: this.nightOwl, mult,
       flyMinutes: this.school ? 0 : (this.flySeconds || 0) / 60, eraOpened, newPlane: newPlane ? newPlane.name : null,
       rewards, foundIds: [...(this.foundIds || [])], crates: this.crateResult(),
+      waterDropped: this.waterReleased || 0, waterDrops: this.waterDrops || 0, crystalsBy: { ...(this.crystalsBy || {}), distance: this.distanceCrystals || 0 },   // (the results card: trees and water apart; where the crystals came from)
       missions2: s2 ? { done: s2Done.map(d => d.title), next: s2Next ? s2Next.title : null } : null,
       // Mission fields (PROPOSAL-HOME-MISSIONS): trees planted this flight ('land:id', UK bare), clean storm gaps, no-fly
       // zones passed. Animals found: foundIds above (the game's 'seen' hook fills it; [] in Node).
@@ -1183,6 +1184,7 @@ export const RULES = {
   // Daytime contrails earn none: in real life they are not always cooling.
   earnCrystals(n, why) {
     this.crystals += n;
+    const by = this.crystalsBy = this.crystalsBy || {}, k = /dodged/.test(why) ? 'dodge' : /clean night/.test(why) ? 'cleanNight' : 'other'; by[k] = (by[k] || 0) + n;
     this.onCrystals(n, why);
   },
 
@@ -1377,7 +1379,7 @@ export const RULES = {
     if (this.waterOpen()) {   // WATERWAYS (0.73.0): the biome is full and this land has water: drop for its water instead
       const d = this.nextWaterDrop();
       if (!d) { this.playSound('nope'); if (!this.saidWaterFull) { this.saidWaterFull = true; this.popup(this.plane.x + 20, this.plane.y - 12, 'The water here is full of life!', '#cfe6ff'); } return; }
-      this.parcels--; this.released++; this.waterPending[d.id] = (this.waterPending[d.id] || 0) + 1;
+      this.parcels--; this.released++; this.waterReleased = (this.waterReleased || 0) + 1; this.waterPending[d.id] = (this.waterPending[d.id] || 0) + 1;
       const p = { x: this.plane.x + PLANE.w / 2, y: this.plane.y + PLANE.h, t: 0, vy: 0, kind: d.id, region: this.dropLand(), water: true };
       this.parcelsFalling.push(p); this.showParcel(p); this.speciesIdx++; this.playSound('flap');
       return;
