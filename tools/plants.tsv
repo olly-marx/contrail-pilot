@@ -155,7 +155,7 @@ preview	src/season2.js	s#const store = PREVIEW ? {#const store = false ? {#	prev
 tipqueue	src/GameScene.js	s#  dropTips() {#  dropTips() { return;#	unshown tips not unmarked
 tipqueue	src/GameScene.js	s#^    dropToast();$#    void 0;#;s#this.stripWatch.observe(coachEl);#void 0;#	the toast stays under the strip
 l4hint	src/GameScene.js	s#else if (skipThis && toAirport < AIRPORT.signFrom)#else if (false \&\& skipThis)#	the landing call on an L4 flight
-railwords	src/resultscard.js	s#% bonus` : ''#%` : ''#	the maths line without the word the rail says
+railwords	src/resultscard.js	s#'Bonus'\]#'Extra']#	the money line without the word the rail says
 railwords	src/tips.js	s#Forecasting shows icy air sooner. Save up for it!#Forecasting shows icy air sooner. Buy it when you can!#	the systems rail pushes a purchase
 season2	src/areas.js	s#aotearoa: { name: 'Aotearoa & Polynesia', starter: true,#aotearoa: { name: 'Aotearoa \& Polynesia', starter: false,#	NZ not a starter
 sim-l2patch@PLANT=1	-	-	the L2 patch off (env plant)
@@ -431,14 +431,14 @@ sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 })
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x35]
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x36]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
 cuesites	src/hangar.js	s/this.ui.sfx.reveal \&\& this.ui.sfx.reveal();/this.ui.sfx.buy \&\& this.ui.sfx.buy();/	the new part arrives with the plain buy sound again (no reveal)
 cuesites	src/welcome.js	s/sfx.era();/sfx.coin();/	the era welcome plays a coin, not the era cue
 cuesites	src/wild.js	s/sfx.grow();/sfx.buy();/	a funded nature project plays the plain buy, not grow
-cuesites	src/ui.js	s/sfx.softfail()/sfx.nope()/	a lost crossing plays the nope buzz again
+cuesites	src/ui.js	s/sfx.softfail()/sfx.nope()/	a lost crossing plays the nope buzz again [x2]
 cuesites	src/ui.js	s/sfx.medal();/sfx.coin();/	a badge on the results card plays no medal
 sound	src/sound.js	s/done: () => \[523, 784, 1047\]/done: () => [523, 659, 784]/	two cues are the same recipe (done sounds like dawn)
 backup	src/backup.js	s/  if (check(JSON.stringify(o.save)) !== o.check) return { ok: false, reason: 'check' };//	the checksum is not verified (a cut or edited text restores)
@@ -760,7 +760,7 @@ crossrewardui	src/crossingend.js	s/    if (c.prize) lines.push(.*$/    if (false
 crossrewardui	src/crossings.js	s/^  if (due) payPrize(save, due);$/  if (false) payPrize(save, due);/	the landing pays nothing into the bank
 crossrewardui	src/ui.js	s/showEnding(prize = null) {/showEnding(prize = null) { prize = null;/	the lap's ending shows no prize
 crossreward	src/missionprize.js	s/export const prizeLines = p => \[`+${p.seeds.toLocaleString('en-GB')} seeds`/export const prizeLines = p => [`+${p.seeds} seeds`/	the card lines lose the thousands comma
-crossreward	src/crossings.js	s/prize: done ? due : null }/prize: due }/	the card shows the prize from the landing, not from the completion
+crossreward	src/crossings.js	s/prize: done ? due : null,/prize: due,/	the card shows the prize from the landing, not from the completion
 crossreward	src/missionprize.js	s/  if (!Number.isInteger(e) || e < 0 || e > 4) throw .*$/  if (false) throw new Error('x');/	a non-lap crossing of an unknown era reads as a word
 crossrewardui	src/ui.js	s/<p class="ending-prize">/<p class="ending-prize" style="position:absolute;top:-500px">/	the ending's prize lines exist in the text but sit off the card
 lapbadge	src/sim/rules.js	s/^    this.bankFlight({ landed, reason });/    this.onFinish({ landed, reason, sound }); this.bankFlight({ landed, reason });/	finish() ends the flight (and completes the crossing) before it banks it
@@ -810,8 +810,8 @@ treewords	src/tips.js	s/say: n => `You carry ${n} trees. Take off and plant them
 treewords	src/tips.js	s/ Unplanted trees are not saved\.`/`/	the results rail forgets to say unplanted trees are not saved
 treewords	src/tips.js	s/Tap <b>PLANT<\/b> early/Tap <b>SEND A SEED<\/b> early/	the flight strip names the old button
 treewords	src/upgrades.js	s/name: 'More trees', short: 'Plant 3 trees per flight.'/name: 'More parcels', short: 'Plant 3 trees per flight.'/	a Tree Planting level is called parcels again
-treewords	src/resultscard.js	s/const dropped = r.treesDropped || 0, planted = Math.min(r.planted || 0, dropped)/const dropped = r.treesDropped || 0, planted = r.treesDropped ? 0 : 0/	the planting line never counts planted trees
-treewords	src/resultscard.js	s/v.trees = r.school || !dropped ? /v.trees = !dropped ? /	flight school gets a planting line
+treewords	src/resultscard.js	s/planted = Math.min(r.planted || 0, dropped), treeWord/planted = 0, treeWord/	the planting line never counts planted trees
+treewords	src/resultscard.js	s/v.trees = r.school ? '' : dropped \&\& wDropped/v.trees = false ? '' : dropped \&\& wDropped/	flight school gets a planting line
 treelineui	src/ui.js	s/$('rTrees').hidden = !v.trees;/$('rTrees').hidden = true;/	the planting line is never shown
 treelineui	style.css	s/^\.rc-trees { flex-direction: column;/.rc-trees { display: none; flex-direction: column;/	the planting line is hidden by the stylesheet
 treelineui	src/ui.js	s/, 'tree-grown'\]; writeSave(s);/]; writeSave(s);/	the grown-up toast is never marked told
@@ -1033,3 +1033,8 @@ waterways	src/waterways.js	s/export const DROP_CAP = 20;/export const DROP_CAP =
 landstrip	src/landstrip.js	s/done: tof > 0 \&\& tn >= tof \&\& wn >= wof };/done: tof > 0 \&\& tn >= tof };/	the strip says FULL with only the trees full
 landstrip	src/landstrip.js	s/a + Math.min(DROP_CAP, wb\[k.id\] || 0)/a + (wb[k.id] || 0)/	drops over the cap count on the water bar
 missionfit	style.css	s/^#missions .panel, #missions .sboard { grid-template-columns: minmax(0, 1fr); }/#missions .sboard { }/	the MISSIONS column is auto again: one wide piece widens every card
+resultscard	src/resultscard.js	s/else if (hurt) { v.mood = .bad.;/else if (false) { v.mood = 'bad';/	a heart lost on a crash not shown in the story block
+resultscard	src/resultscard.js	s/(r.treesDropped || 0) - wDropped/(r.treesDropped || 0)/	water drops counted as trees again (missed trees)
+resultscard	src/resultscard.js	s/(r.crystals || 0) - dist - dodge - night/(r.crystals || 0) - dodge - night/	distance crystals counted twice in the sheet
+resultscard	src/resultscard.js	s/!firstTitles.includes(t) \&\& !storyTitles.includes(t)/!firstTitles.includes(t)/	the story stop folded back into the missions line
+crossingend	src/crossingend.js	s/`${CROSSING_WORDS\[c.era\].toUpperCase()} CROSSING`/null/	the crossing screens forget the ladder step

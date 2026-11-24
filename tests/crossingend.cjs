@@ -32,6 +32,10 @@
     check(v.title.length <= E.TITLE_MAX && v.lines.every(l => l.length <= E.LINE_MAX), `${city}/${opens}: within budget (title ${v.title.length}; the budget is 26 at 320 px: longest line ${Math.max(...v.lines.map(l => l.length))}): ${t}`);
   }
   for (const c of [crash(), crash({ crystals: 12 }), crash({ cargo: 0, crystals: 0 })]) { const t = text(E.endView(c, save)); check(!/\bkm\b|distance|record|mission/i.test(t) && E.endView(c, save).lines.every(l => l.length <= E.LINE_MAX), `a crash screen has no distance, record or mission and fits: ${t}`); }
+  // The ladder step in the eyebrow (the results redo, 2026-11-24): r.crossing.era from src/crossings.js finishCrossing.
+  const hard = E.endView({ crossing: { id: 'x', kind: 'long', landed: false, era: 2 }, crystals: 3 }, {}), easyDone = E.endView({ crossing: { id: 'mediterranean', kind: 'frontier', landed: true, era: 0, opens: 'africa', to: 'TUNIS' }, landedAt: 'TUNIS' }, { crossed: ['mediterranean'] });
+  if (hard.eyebrow !== 'HARD CROSSING' || easyDone.eyebrow !== 'EASY CROSSING: DONE' || E.endView({ crossing: { kind: 'long', landed: false } }, {}).eyebrow !== 'THE CROSSING') fails.push(`the eyebrow names the ladder step: ${hard.eyebrow} / ${easyDone.eyebrow}`);
+  if (C.finishCrossing({ crossed: [] }, { id: 'x', kind: 'long', era: 3 }, false).era !== 3) fails.push('finishCrossing carries the ladder step (era)');
   console.log(fails.length ? `FAIL crossingend:\n - ${fails.join('\n - ')}` : `PASS crossingend: the landing and the crash say what happened and what you keep, with no distance and no mission, for all ${cities.length} crossing cities`);
   process.exit(fails.length ? 1 : 0);
 })();

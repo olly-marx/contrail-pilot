@@ -4,24 +4,26 @@
 import { AREAS, opensName } from './areas.js';
 import { LANDMARKS } from './landmarks.js';
 import { planeById } from './fleet.js';
-import { prizeLines } from './missionprize.js';
+import { prizeLines, CROSSING_WORDS } from './missionprize.js';
 
 export const TITLE_MAX = 26;   // "WELCOME TO " + the longest city name + "!" (the payoff card is 380 px at most; the title wraps to two lines beyond this)
 export const LINE_MAX = 26;    // a paragraph line at 10 px in the 320 px card: MEASURED ~27 characters fit (the pixel font is ~10 px a character at 10 px), so 26. (The 8 px alternative was too small for 7-10 year olds.)
 const areaName = id => opensName(id);   // CROSSINGS V3: a crossing opens a whole region (src/areas.js)
 
 // r: the flight's result (r.crossing = { id, kind, landed, opens, to }, r.landedAt, r.crystals, r.cargo); save: after the flight; first: this was the player's first crossing.
+// The ladder step in the eyebrow (the results redo, 2026-11-24: 'HARD CROSSING'; the lap is its own word). Unknown step: the old words.
+export const stepWord = c => (c.kind === 'lap' ? 'THE LAP' : Number.isInteger(c.era) && CROSSING_WORDS[c.era] ? `${CROSSING_WORDS[c.era].toUpperCase()} CROSSING` : null);
 export function endView(r, save, { first = false } = {}) {
-  const c = r.crossing || {};
+  const c = r.crossing || {}, word = stepWord(c);
   if (c.landed) {
     const city = r.landedAt || c.to, lm = LANDMARKS[city];
     const nm = areaName(c.opens), lines = [`${nm[0].toUpperCase()}${nm.slice(1)}`, 'is open to you!', first ? 'New missions are open!' : 'More cities to fly to!'];
     if (c.prize) lines.push(...prizeLines(c.prize));   // the crossing prize (src/missionprize.js), paid once
     if (save && save.crossStart && save.crossStart.name) lines.push(`A free nature project here: ${save.crossStart.name}.`);   // the head start (src/crossings.js crossingStart)
-    return { kind: 'landed', eyebrow: 'A NEW WAY OPENED', title: `WELCOME TO ${city}!`, lines, pic: lm ? `assets/${lm.key}.png` : null, buttons: [{ id: 'on', label: 'FLY ON' }] };
+    return { kind: 'landed', eyebrow: word ? `${word}: DONE` : 'A NEW WAY OPENED', title: `WELCOME TO ${city}!`, lines, pic: lm ? `assets/${lm.key}.png` : null, buttons: [{ id: 'on', label: 'FLY ON' }] };
   }
   const f = save && save.fleet ? planeById(save.fleet.plane) : null, kept = r.crystals || 0, lost = r.cargo || 0;
   const lines = ['Try again!', kept ? `You keep ${kept} ice ${kept === 1 ? 'crystal' : 'crystals'}.` : 'Plane and nature are safe.'];
   if (lost > 0) lines.push('Carried seeds are lost.');
-  return { kind: 'crash', eyebrow: 'THE CROSSING', title: 'NOT THIS TIME', lines, pic: f && f.portrait ? f.portrait : null, buttons: [{ id: 'again', label: 'TRY AGAIN' }, { id: 'home', label: 'HOME' }] };
+  return { kind: 'crash', eyebrow: word || 'THE CROSSING', title: 'NOT THIS TIME', lines, pic: f && f.portrait ? f.portrait : null, buttons: [{ id: 'again', label: 'TRY AGAIN' }, { id: 'home', label: 'HOME' }] };
 }

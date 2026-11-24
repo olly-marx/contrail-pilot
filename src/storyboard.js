@@ -256,7 +256,7 @@ export function accept(save, id) {
 export function crashed(save) {
   const o = activeStory(save); if (!o || !o.hearts) return null;
   o.heartsLeft = Math.max(0, heartsLeft(o) - 1);
-  const failed = o.heartsLeft === 0, out = { id: o.id, title: o.title, hearts: o.heartsLeft, of: o.hearts, failed };
+  const failed = o.heartsLeft === 0, out = { id: o.id, title: o.title, hearts: o.heartsLeft, of: o.hearts, failed, ...storyShape(o) };
   if (failed) endStory(save, 'failed');
   return out;
 }
@@ -294,8 +294,12 @@ function reach(save, o, city) {
     save.storyBoard = save.storyBoard.map(x => (x === o ? null : x));
     delete save.storyActive; if (save.aimCity === city) delete save.aimCity;
   } else save.aimCity = o.stops[o.reached];
-  return { id: o.id, title: o.title, city, line: o.lines[i] || '', n: i + 1, of: o.stops.length, done, pay };
+  return { id: o.id, title: o.title, city, line: o.lines[i] || '', n: i + 1, of: o.stops.length, done, pay, ...storyShape(o) };
 }
+// What the results card needs to draw a story (src/resultscard.js storyView): its level, its stops and how many are reached, its hearts.
+// Copied at the moment of the event, because a finished or failed story has already left the board.
+export const storyShape = o => ({ level: o.level || null, oneGo: !!o.oneGo, crate: !!o.crate, stops: [...(o.stops || [])], reached: o.reached || 0,
+  heartsLeft: heartsLeft(o), heartsOf: o.hearts || null });
 // The mission row the rest of the game sees (src/missions2.js visible; src/aim.js steers to its city): the active story, or null.
 export function storyRow(save) {
   const o = activeStory(save); if (!o) return null;

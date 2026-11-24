@@ -2,10 +2,10 @@
 // "Bonus!" at a results row labelled "Long flight"). Plain Node, static. Plant: the old label -> must FAIL.
 const fs = require('fs');
 const html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
-// R1: the r-bonus rail points at the results' MATHS line (#rMaths), whose text is built in src/resultscard.js: "23 grabbed × 3.4 bonus · 3 kinds".
+// R1: the r-bonus rail points at the results' MATHS line (#rMaths), whose text is built in src/resultscard.js: "Fares 74 · Sky 46 · Bonus 46" (the money line since 2026-11-24).
 const tour = fs.readFileSync(__dirname + '/../src/tour.js', 'utf8'), card = fs.readFileSync(__dirname + '/../src/resultscard.js', 'utf8');
 const target = (tour.match(/target: '(#[\w-]+)', text: tip\('rail-bonus'\)/) || [])[1] || '';
-const row = (card.match(/const mult = [^\n]*/) || [''])[0];
+const row = ' ' + ((card.match(/\[\/\^Long flight bonus\/, '([^']*)'\]/) || [])[1] || '');   // the money line's word for the long-flight bonus   // (the results redo, 2026-11-24: the money line names its sources; the long-flight bonus is 'Bonus')
 const fails = [];
 // The systems rail must not push a purchase (Coordinator, 2026-10-28: "Buy it when you can!" sent children to spend the
 // crystals the tree lesson needed).

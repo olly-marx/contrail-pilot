@@ -898,9 +898,20 @@ export class UI {
     $('rMaths').hidden = !v.maths || !v.landed; $('rMathsTxt').textContent = v.maths;
     $('rLost').hidden = !v.maths || v.landed; $('rLost').textContent = v.maths;
     $('rTrees').hidden = !v.trees; $('rTreesTxt').textContent = v.trees || ''; $('rTreesNames').textContent = v.treeNames || ''; $('rTreesNames').hidden = !v.treeNames;   // tutorial 1a: 'Planted 2 of 3 trees' and under it 'Spruce, Oak'
+    // THE STORY BLOCK (src/resultscard.js storyView): the tag and hearts as on HOME, the stop dots, the outcome; a tap opens the story's sheet.
+    const st = v.story; $('rStory').hidden = !st;
+    if (st) {
+      $('rStory').className = `step rc-story ${st.mood}`;
+      $('rStoryLevel').className = `slevel lv-${st.level || 'medium'}`;
+      $('rStoryLevel').innerHTML = `<span class="slv">${esc(st.tag)}</span>${st.hearts ? `<span class="shearts" aria-label="${st.hearts.left} of ${st.hearts.of} hearts">${Array.from({ length: st.hearts.of }, (_, i) => `<i class="sheart${i < st.hearts.left ? '' : ' lost'}"></i>`).join('')}</span>` : ''}`;
+      $('rStoryDots').innerHTML = st.stops.map(x => `<i class="rc-sdot ${x.state}${x.crate ? ' crate' : ''}" title="${esc(x.city)}"></i>`).join('');
+      $('rStoryTitle').textContent = st.title; $('rStoryLine').textContent = st.line;
+      $('rStoryPrize').innerHTML = st.seeds || st.crystals ? `+${st.seeds.toLocaleString('en-GB')}<i class="seedicon"></i>${st.crystals ? ` +${st.crystals}<i class="crysicon"></i>` : ''}` : '';
+    }
     this.grownToastDue = (r.treesGrown || 0) > 0 && !(this.save.seenTips || []).includes('tree-grown');   // shown once, on the next HOME
     const mi = v.missions; $('rMission').hidden = !mi;
     if (mi) { $('rMission').className = `step rc-line rc-mission ${mi.fail !== undefined ? 'notyet' : 'done'}`; $('rMissionTxt').textContent = mi.line; $('rMissionPrize').innerHTML = mi.seeds ? `+${mi.seeds}<i class="seedicon"></i>` : ''; }
+    if (st) v.next = v.next.filter(n => !String(n.key || '').startsWith('story:')).slice(0, 1);   // (the story block already says the next stop; one row keeps the card on a 320x568 screen)
     $('rNext').hidden = !v.next.length;
     $('rNextRows').innerHTML = v.next.map((n, i) => `<button class="rc-row${n.lead ? ' must' : ''}" type="button" data-i="${i}"><span>${esc(n.short)}</span><b>${esc(n.right)}</b></button>`).join('');
     $('rEarth').hidden = !v.earth;
@@ -916,6 +927,8 @@ export class UI {
     $('rChips').innerHTML = v.chips.map(chipHTML).join('') + (v.moreChips ? `<button class="chip rc-chip more" type="button" data-more="1" aria-label="${v.moreChips} more"><span>+${v.moreChips}${narrow ? '' : ' more'}</span></button>` : '');
     // -- the sheets behind the lines (src/sheet.js): the old tally, the missions, the four Earth bars, a chip's story
     $('rMaths').onclick = () => showSheet({ eyebrow: 'THIS FLIGHT', title: 'Where it came from', html: `<div class="rc-rows">${v.tally.map(([a, b]) => `<p><span>${esc(a)}</span><b>${esc(b)}</b></p>`).join('')}</div>` });
+    $('rStory').onclick = () => { if (!st) return; sfx.tick(); showSheet({ eyebrow: st.mood === 'bad' ? 'YOUR STORY' : st.mood === 'done' ? 'STORY COMPLETE' : 'YOUR STORY', title: st.full,
+      html: `<div class="rc-rows">${st.stops.map((x, i) => `<p><span>${i + 1}. ${esc(x.city)}${x.crate ? ' (crate)' : ''}</span><b>${{ done: 'done', next: 'next', todo: '', failed: 'failed' }[x.state]}</b></p>`).join('')}</div><p>${esc(st.body)}</p>` }); };
     $('rMission').onclick = () => showSheet({ eyebrow: mi && mi.fail !== undefined ? 'NOT THIS TIME' : 'MISSIONS DONE', title: mi ? mi.line.replace(/^✓ /, '') : '', body: mi && mi.fail ? mi.fail : (mi ? mi.titles.join('. ') : '') });
     $('rEarth').onclick = () => showSheet({ eyebrow: 'THE EARTH', title: v.earth.warm.split(' ')[0] + ' and ' + v.earth.cool.split(' ')[0].toLowerCase(),
       html: `<div class="earth-bars rc-bars">${v.earth.bars.map(([name, n, sg]) => `<div class="ebar"><span class="elabel">${name}</span><span class="etrack"><span class="efill ${{ CO2: 'co2', Night: 'night', Shade: 'sun', Nature: 'trees' }[name]}" style="width:${Math.min(100, n / Math.max(30, ...v.earth.bars.map(b => b[1])) * 100)}%"></span></span><b>${sg}${n}</b></div>`).join('')}</div>${natureSheetHTML(v.earth.nature)}` });
@@ -943,7 +956,7 @@ export class UI {
     show(bank); await count($('rGain'), v.bank.seeds, 350, x => `+${x}`);
     if (v.bank.seeds || v.bank.crystals) sfx.coin(); else if (!v.landed) sfx.nope();
     await wait(200);
-    for (const el of rest) { if (el.hidden) continue; show(el); if (el.id === 'rMission' && v.missions && v.missions.fail === undefined) sfx.done(); if (el.id === 'rChips' && (v.chips || []).some(c => c.kind === 'badge')) sfx.medal(); if (el.id === 'rEarth') v.earth && v.earth.bars[0][1] > v.earth.bars[2][1] ? sfx.warm() : sfx.cool(); await wait(110); }
+    for (const el of rest) { if (el.hidden) continue; show(el); if (el.id === 'rMission' && v.missions && v.missions.fail === undefined) sfx.done(); if (el.id === 'rStory' && v.story) (v.story.mood === 'bad' ? sfx.softfail() : v.story.mood !== 'info' && sfx.done()); if (el.id === 'rChips' && (v.chips || []).some(c => c.kind === 'badge')) sfx.medal(); if (el.id === 'rEarth') v.earth && v.earth.bars[0][1] > v.earth.bars[2][1] ? sfx.warm() : sfx.cool(); await wait(110); }
     $('results').classList.remove('revealing');
     if (r.eraOpened) {   // a new era: the big welcome, then the hangar to see what it brings
       await wait(600);

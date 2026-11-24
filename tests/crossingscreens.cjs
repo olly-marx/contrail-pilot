@@ -1,5 +1,5 @@
 // The crossing's OWN ending screens, in the real game (release 2; the user's playtest of 0.30.2). 375x667 and 320x568, real taps on the screens' buttons.
-//   LANDING: a crossing flight that lands shows the payoff-style screen (A NEW WAY OPENED / WELCOME TO <city>!, a picture that loaded, one FLY ON), NOT the results card, with no km;
+//   LANDING: a crossing flight that lands shows the payoff-style screen (<STEP> CROSSING: DONE, e.g. EASY CROSSING: DONE, since 2026-11-24 / WELCOME TO <city>!, a picture that loaded, one FLY ON), NOT the results card, with no km;
 //            FLY ON goes to HOME and the area is open in the save.
 //   CRASH:   a crossing flight that crashes shows NOT THIS TIME with TRY AGAIN + HOME, no km; TRY AGAIN flies the same crossing again at once; nothing opened.
 // The flight is started the way FLY THE CROSSING starts it (ui.flyCrossing; crossingmoment taps that button for real) and ended through the scene's own finish().
@@ -29,7 +29,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     let e = await end(p);
     check(!!e, `${tag}: a landed crossing never showed its own screen (#crossEnd)`);
     if (e) {
-      check(/A NEW WAY OPENED/.test(e.text) && /WELCOME TO/.test(e.text) && e.btns.join() === 'FLY ON', `${tag}: the landing screen reads A NEW WAY OPENED / WELCOME TO ... with one FLY ON: ${e.text} ${e.btns}`);
+      check(/(A NEW WAY OPENED|CROSSING: DONE)/.test(e.text) && /WELCOME TO/.test(e.text) && e.btns.join() === 'FLY ON', `${tag}: the landing screen reads <STEP> CROSSING: DONE (or A NEW WAY OPENED) / WELCOME TO ... with one FLY ON: ${e.text} ${e.btns}`);
       check(!/\bkm\b/i.test(e.text) && !e.results, `${tag}: the landing shows a distance or the results card: ${e.text}, results shown ${e.results}`);
       check(e.pic > 0, `${tag}: the landing picture did not load (naturalWidth ${e.pic})`);
       check(e.card.top >= 0 && e.card.bottom <= e.card.h, `${tag}: the landing card fits the screen (${Math.round(e.card.top)}-${Math.round(e.card.bottom)} of ${e.card.h})`);
