@@ -1359,3 +1359,10 @@ h2.sub { margin-top: -4px; }
 .hub-cross .slevel { margin-bottom: 0; }
 .schip.crate { background: #ffc98a; border-style: dashed; }
 .lv-hard .slv:only-child, .slevel .slv { white-space: nowrap; }
+/* MISSIONS width (0.78.0; Oliver's iPhone screenshot, 2026-11-24: every card stuck out past the panel's right edge). The panel is a grid whose one column was
+   'auto', so ONE unbreakable or nowrap piece (a long word, a city chip) widened the column, and with it every row and card. Measured with a 40-letter title planted:
+   103 elements past the panel in WebKit and Chrome. Now the column may shrink below its content (minmax(0, 1fr)), long words break, a chip ellipsises: tests/missionfit.cjs. */
+#missions .panel, #missions .sboard { grid-template-columns: minmax(0, 1fr); }
+#missions .panel > *, #mList > *, .scard, .scard .sbody > * { min-width: 0; }
+.scard .stitle, .scard .stext, #missions .rowc-name, #missions .m-how { overflow-wrap: anywhere; }
+.schip { max-width: 100%; box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; }

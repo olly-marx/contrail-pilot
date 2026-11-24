@@ -1032,3 +1032,4 @@ waterways	src/sim/rules.js	s/    if (this.school || !REGION_DATA\[region\]) retu
 waterways	src/waterways.js	s/export const DROP_CAP = 20;/export const DROP_CAP = 6;/	a water kind fills in 6 drops again
 landstrip	src/landstrip.js	s/done: tof > 0 \&\& tn >= tof \&\& wn >= wof };/done: tof > 0 \&\& tn >= tof };/	the strip says FULL with only the trees full
 landstrip	src/landstrip.js	s/a + Math.min(DROP_CAP, wb\[k.id\] || 0)/a + (wb[k.id] || 0)/	drops over the cap count on the water bar
+missionfit	style.css	s/^#missions .panel, #missions .sboard { grid-template-columns: minmax(0, 1fr); }/#missions .sboard { }/	the MISSIONS column is auto again: one wide piece widens every card

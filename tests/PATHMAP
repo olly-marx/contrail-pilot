@@ -113,4 +113,5 @@ group crossing-cards | src/crossingview.js src/crossings.js src/ui.js src/lesson
 group names-taken | src/online.js src/pilot.js | nametaken
 # phone apps (2026-11-20): the Capacitor shell; its proof is the apps workflow's iPhone and Android builds after each deploy, and the WebKit smoke job in tests.yml
 group phone-apps | native/* | NONE
-group land-strip | src/landstrip.js | landstrip hudlayout forestmeter
+group land-strip | src/landstrip.js | hudlayout forestmeter
+group missions-fit | style.css src/ui.js | missionfit
