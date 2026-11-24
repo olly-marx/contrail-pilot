@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-24-results-water-landstrip",
+    "version": "0.78.0",
+    "date": "2026-11-24",
+    "level": "minor",
+    "notes": [
+      "The results screen shows your story: its difficulty, hearts, the stops reached, crates delivered and when it is complete. It also names your fares, and counts water drops apart from trees.",
+      "Water is harder to fill: the blue targets are smaller again, and each kind of water life needs 20 drops instead of 6.",
+      "When a land's trees and water are both full, no target, aim or PLANT button shows there.",
+      "The little trees at the bottom of the flight screen are gone. In their place: the land you are over, a tree bar and a water bar that fill as your drops land, and FULL when both are full.",
+      "MISSIONS fits the screen again: a long name no longer pushes the cards past the edge.",
+      "In the phone app, a dark band covers the status bar, so a scrolled screen no longer runs under the clock."
+    ]
+  },
+  {
     "id": "2026-11-24-story-hub-water-terrain",
     "version": "0.77.0",
     "date": "2026-11-24",
