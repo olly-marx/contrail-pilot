@@ -431,7 +431,7 @@ sound	src/sound.js	s/crack: () => { noise({ dur: 0.3, vol: 0.07, cutoff: 1400 })
 sound	src/sound.js	s/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'triangle'/flap: () => tone({ freq: 520, to: 700, dur: 0.07, type: 'sawtooth'/	a harsh sawtooth tone comes back
 sound	src/sound.js	s/^  crack: () => {.*$/  crack: () => { tone({ freq: 120, to: 55, dur: 0.28, vol: 0.14 }); noise({ dur: 0.18, vol: 0.05, cutoff: 500 }); },/	two death sounds are the same recipe (a storm sounds like the ground)
 sound	src/sim/rules.js	s/sound: s.noFly ? 'nofly' : 'crack'/sound: 'crack'/	restricted airspace plays the storm sound (the rules do not pass 'nofly')
-sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x33]
+sound	src/ui.js	s/sfx\.tick()/sfx.flap()/	a menu click uses the flying flap sound again [x34]
 reducedmotion	style.css	s/linear 2; }/linear infinite; }/	the era confetti loops forever again
 reducedmotion	style.css	s/\.newtag, \.btn\.glow, /.newtag, /	a looping animation (the glowing button) is no longer stilled under reduce motion
 reducedmotion	style.css	s/\.payoff\.arrive \.pay-spark { animation: none; display: none; }/.payoff.arrive .pay-sparkle { animation: none; display: none; }/	the payoff sparkle is no longer stilled under reduce motion
@@ -551,7 +551,7 @@ crossbox	src/crossingview.js	s/route: `\${s.from} > \${s.to}`, word: s.difficult
 crossbox	src/crossingview.js	s/const ticks = \[\['Range', 'plane'\]\]/const ticks = [['Era', 'era'], ['Range', 'plane']]/	the box shows an Era tick again
 crossbox	src/crossingview.js	s/n \&\& n.where === 'hangar' ? { label: 'HANGAR', act: 'hangar' }/n \&\& n.where === 'hangar' ? { label: 'NATURE', act: 'nature' }/	an open plane tick sends the player to NATURE
 crossbox	src/crossingview.js	s/: s.nearest ? s.nearest.plain : '';/: s.nearest ? `${s.nearest.plain} ${s.km} km` : '';/	the plain line names a distance
-crossboxui	src/ui.js	s/hc.hidden = !box; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
+crossboxui	src/ui.js	s/hc.hidden = !box \&\& !storyOn; hc.classList.toggle/hc.hidden = true; hc.classList.toggle/	the HOME box is never shown
 crossboxui	src/ui.js	s/hc.onclick = () => this.openCrossings(cs);/hc.onclick = () => {};/	a tap on the HOME box does nothing
 crossboxui	src/ui.js	s/ \&\& !lessonsLeft(s).length \&\& !(mustDo \&\& mustDo.pic));/);/	the HOME box shows during the lessons
 crossingview	src/nextup.js	s/lead = leadOf(save, boxShown ? null : crossingReady, boxShown ? null : crossing), vis/lead = leadOf(save, crossingReady, crossing), vis/	the ready crossing is repeated as a gold UP NEXT row under the HOME box
@@ -569,7 +569,7 @@ gotoreach	src/areas.js	s/cities: \['SYDNEY', 'PERTH', 'DARWIN'/cities: ['SYDNEY'
 crossgoto	src/ui.js	s/setGoto(s, box.city); writeSave(s); this.showTitle(); };/writeSave(s); this.showTitle(); };/	GO TO sets no aim
 crossgoto	src/ui.js	s/  if (arrivedGoto(s)) writeSave(s);/  if (false) writeSave(s);/	the aim never clears on arrival
 crossgoto	src/ui.js	s/    if (this.hubCs) \$('goBtn').textContent = `CROSS TO ${cs.to}`;/    if (false) $('goBtn').textContent = 'TAKE OFF';/	the big button never says CROSS TO at the airport
-crossgoto	src/ui.js	s/\$('hubFly').hidden = !this.hubCs; \$('hubFly').onclick = () => this.start();/$('hubFly').hidden = true; $('hubFly').onclick = () => this.start();/	no 'fly normally' link at the airport
+crossgoto	src/ui.js	s/\$('hubFly').hidden = !this.hubCs \&\& !(story \&\& !toHangar);/$('hubFly').hidden = true;/	no 'fly normally' link at the airport
 crystalreason	src/sim/rules.js	s/if (ahead > 0 \&\& i.x < WIDTH \&\& cy >= i.y/if (ahead > 0 \&\& ahead < 120 \&\& cy >= i.y/	'in your path' counts only the last 120 px again
 crystalreason	src/sim/rules.js	s/    if (i.entered) return 'touched';//	a patch the plane flew into still pays
 crystalreason	src/sim/rules.js	s/    if (this.isDay) return 'day';//	a day patch pays
@@ -585,7 +585,7 @@ pickcity	src/pickcity.js	s/  if (area \&\& !unlockedAreas(save)\.includes(area))
 pickcity	src/pickcity.js	s/const stops = path\.length - 1;/const stops = path.length;/	the stops count is one too many
 pickcity	src/pickcity.js	s/dots: Math\.min(stops, MAX_DOTS), moreDots: stops > MAX_DOTS/dots: stops, moreDots: false/	the dots are not capped at six
 pickcity	src/pickcity.js	s/if (e < bd) { bd = e; best = d; }/if (e < r \&\& !best) { bd = e; best = d; }/	the tap picks the first dot in range, not the nearest
-citytap	src/ui.js	s/ onCity: v\.worldChoice ? name => this\.showCityCard(name) : null,//	a tap on a city opens no card
+citytap	src/ui.js	s/ onCity: v\.worldChoice \&\& !storyOn ? name => this\.showCityCard(name) : null,//	a tap on a city opens no card
 citytap	src/ui.js	s/setGoto(s, card\.name); delete s\.heading; writeSave(s); this\.start();/delete s.heading; writeSave(s); this.start();/	FLY sets no aim
 citytap	src/ui.js	s/canFly = card\.canFly \&\& !locked;/canFly = true;/	a closed or no-route city offers FLY
 citytap	style.css	s/^\.hub-card \.hc-dot { width: 6px; height: 6px; }/.hub-card .hc-dot { width: 3px; height: 3px; }/	the stop dots are tiny again
