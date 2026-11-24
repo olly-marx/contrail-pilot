@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-24-crossing-nature",
+    "version": "0.76.0",
+    "date": "2026-11-24",
+    "level": "major",
+    "notes": [
+      "Each crossing now needs nature in the land it leaves from, as well as range. Each one asks for more, so crossings spread across the eras.",
+      "The crossing on offer is the one leaving from the land you have grown most.",
+      "The two hardest crossings are longer.",
+      "Passenger fares are halved, and each dodge of icy air pays 1 crystal times your Sensors.",
+      "The seeds and crystals at the top of the hangar update straight away when you buy, sell or invest in the BANK.",
+      "The lap of the Earth judges your range from your home land, so it no longer appears and disappears as you fly between lands."
+    ]
+  },
+  {
     "id": "2026-11-23-crossing-ladder",
     "version": "0.75.0",
     "date": "2026-11-23",
