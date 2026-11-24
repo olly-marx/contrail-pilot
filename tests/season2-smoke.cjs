@@ -117,7 +117,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   const STARS = ['weurope:night', 'weurope:shade10', 'weurope:kinds3'];   // S3: the area's 3 starred missions are a condition too
   const LESSONS = ['L1', 'L2', 'L3', 'L4', 'L5'];   // (0.75.0) the first-hour lessons are done: no crossing leads UP NEXT while one is left
   const zeroRange = () => p.evaluate(async () => { const C = await import('/src/capability.js'), s = game.registry.get('save'), key = C.capKey(s); s.capability = { km: 0, key, area: 'weurope' }; s.capArea = { weurope: { km: 0, key } }; });   // (0.75.0) a fresh zero range: HOME's estimate keeps it, so only the landed flight counts
-  const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', planted: PLANTED, habitat: { woodland: ['deadwood', 'meadow', 'margins'] }, areaBest, missionsDone: [...LESSONS, ...missionsDone] }); await zeroRange();   // (3 projects: woodland meter 41 >= the first crossing's 38, CROSSINGS V3)
+  const card = async (areaBest, missionsDone = STARS) => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', planted: PLANTED, habitat: { woodland: ['deadwood', 'meadow', 'margins'], mediterranean: ['olives', 'firegraze', 'dehesa', 'turtlebeach'] }, areaBest, missionsDone: [...LESSONS, ...missionsDone] }); await zeroRange();   // (3 projects: woodland meter 41 >= the first crossing's 38, CROSSINGS V3)
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); };
   let c = await card({ weurope: 11999 });
   check(/ROME &gt; TUNIS/.test(c) && /data-k="plane"><span class="xc-l">Range<\/span><span class="xc-bar">/.test(c) && /class="xc-next">[^<]+</.test(c) && !/data-cross|data-ready="[a-z]/.test(c), `D: 11,999 km (just under 12,000; V4 0.73.0) is not offered, the card says what it needs: ${c.slice(0, 200)}`);
@@ -129,7 +129,7 @@ setTimeout(() => { console.log('FAIL: the smoke suite did not finish in 4 minute
   check(/xcard ready" data-xc="mediterranean"/.test(c), `D: 12,000 km: the crossing is offered: ${c.slice(0, 200)}`);
   const noTrees = await (async () => { await seed(p, { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', areaBest: { weurope: 12000 }, missionsDone: [...LESSONS, ...STARS] }); await zeroRange();
     await p.evaluate(() => game.registry.get('ui').showTitle()); return p.evaluate(() => (document.getElementById('jCross') || {}).innerHTML || ''); })();
-  check(/xcard ready" data-xc="mediterranean"/.test(noTrees), `D: a long flight with no biodiversity IS offered (V4, 0.73.0: range only): ${noTrees.slice(0, 200)}`);
+  check(!/xcard ready" data-xc="mediterranean"/.test(noTrees) && /data-k="nature"/.test(noTrees), `D: a long flight with no nature in ROME's land is NOT offered (Plan B 2026-11-24; V4 0.73.0 was range only): ${noTrees.slice(0, 200)}`);
   await card({ weurope: 12000 });
   await p.evaluate(() => game.registry.get('ui').showTitle());
   const nextCard = await p.evaluate(() => ({ text: (document.getElementById('hubNext') || {}).innerText || '', box: /xcard ready/.test((document.getElementById('jCross') || {}).innerHTML || '') }));
