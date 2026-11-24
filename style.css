@@ -1357,3 +1357,5 @@ h2.sub { margin-top: -4px; }
 .hc-switch button + button { border-left: 0; }
 .hc-switch button.on { background: var(--ink); color: #fff; }
 .hub-cross .slevel { margin-bottom: 0; }
+.schip.crate { background: #ffc98a; border-style: dashed; }
+.lv-hard .slv:only-child, .slevel .slv { white-space: nowrap; }

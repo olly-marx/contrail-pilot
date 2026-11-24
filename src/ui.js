@@ -106,7 +106,7 @@ const $ = id => document.getElementById(id);
 // A story's difficulty tag and its hearts (src/storyboard.js LEVELS; hearts: PixelLab art, full = left, grey = lost). Easy: no hearts.
 const storyLevelHTML = o => { const L = STORY_LEVELS[o.level]; if (!L) return '';
   const h = storyHearts(o), hearts = o.hearts ? Array.from({ length: o.hearts }, (_, i) => `<i class="sheart${i < h ? '' : ' lost'}"></i>`).join('') : '<span class="sfree">tries: any</span>';
-  return `<div class="slevel lv-${o.level}"><span class="slv">${L.name.toUpperCase()}${o.oneGo ? ': ONE GO' : ''}</span><span class="shearts" aria-label="${o.hearts ? `${h} of ${o.hearts} lives` : 'unlimited tries'}">${hearts}</span></div>`; };
+  return `<div class="slevel lv-${o.level}"><span class="slv">${o.crate ? 'SPECIAL DELIVERY' : `${L.name.toUpperCase()}${o.oneGo ? ': ONE GO' : ''}`}</span><span class="shearts" aria-label="${o.hearts ? `${h} of ${o.hearts} lives` : 'unlimited tries'}">${hearts}</span></div>`; };
 const prize = x => `<span class="prize">+${x.seeds}<i class="seedicon"></i>${x.crystals ? ` +${x.crystals}<i class="crysicon"></i>` : ''}</span>`;
 
 // The Biodiversity meter as HTML: a bar plus the stage name.
@@ -531,7 +531,7 @@ export class UI {
     // drop-off green), distance, seeds and crystals as icons; ACCEPT (or, on the one that needs an upgrade, what to buy and the button to it); the active
     // one shows its stops done and the next one blinking.
     const storyCards = v.board ? v.board.map(o => { const n = o.reached || 0;
-      const chips = o.stops.map((c, i) => `${i ? '<i class="sarrow"></i>' : ''}<span class="schip ${i ? 'drop' : 'pickup'}${o.active && i < n ? ' done' : ''}${o.active && i === n ? ' next' : ''}">${esc(c)}</span>`).join('');
+      const chips = o.stops.map((c, i) => `${i ? '<i class="sarrow"></i>' : ''}<span class="schip ${i ? (o.crate && i < o.stops.length - 1 ? 'drop crate' : 'drop') : 'pickup'}${o.active && i < n ? ' done' : ''}${o.active && i === n ? ' next' : ''}">${esc(c)}</span>`).join('');
       const lock = o.missing.length ? `<span class="sneed"><i class="slock"></i>Needs ${o.missing.map(m => `<b>${esc(m.text)}</b>`).join(', ')}</span>` : '';
       const btn = o.active ? '<button class="btn" type="button" data-sdrop="1">GIVE UP</button>' : o.missing.length ? `<button class="btn go" type="button" data-sgoto="${o.missing[0].tab}">GET IT IN ${o.missing[0].tab.toUpperCase()}</button>`
         : `<button class="btn go" type="button" data-saccept="${esc(o.id)}">${n ? 'CARRY ON' : 'ACCEPT'}</button>`;
@@ -540,7 +540,7 @@ export class UI {
         + `<div class="schips">${chips}</div><div class="sstats"><span class="sstat"><i class="sicon-plane"></i>${km(o.km)}</span><span class="sstat">+${o.pay.seeds}<i class="seedicon"></i></span><span class="sstat">+${o.pay.crystals}<i class="crysicon"></i></span></div>`
         + `${lock}<div class="sbtns">${btn}</div></div></div>`; }).join('') : '';
     $('mList').innerHTML = (empty && !storyCards ? `<p>All done here!</p>${xc ? '' : '<p class="small">Keep flying: new missions come with new eras.</p>'}` : '')
-      + (storyCards ? `<p class="label">STORIES</p><div class="sboard">${storyCards}</div>` : '')
+      + (storyCards ? `<p class="label">STORIES</p><div class="sboard">${storyCards}</div>${(s.tours || []).includes('crate-lesson') || v.board.some(o => o.crate) ? '<button id="mCrateLesson" class="chip m-school" type="button">HOW: SPECIAL DELIVERY CRATES ›</button>' : ''}` : '')
       + group('OPEN', v.open.map(r => rowHTML(r)))
       + group('TODAY', v.today.rows.map(r => rowHTML(r, 'daily')), v.today.streak ? ` <span class="small">(streak +${v.today.streak})</span>` : '')
       + (v.comingUp ? `<p class="label">COMING UP</p><p class="m-coming">${esc(v.comingUp)}</p>` : '')
@@ -558,6 +558,7 @@ export class UI {
     // ONE STORY AT A TIME (the user, 2026-11-24): ACCEPT with another story active, or DROP, asks first and names the fee (src/storyboard.js dropFee).
     document.querySelectorAll('#mList [data-saccept]').forEach(b => b.onclick = () => { sfx.tick(); this.acceptStory(b.dataset.saccept, () => this.showMissions()); });
     document.querySelectorAll('#mList [data-sdrop]').forEach(b => b.onclick = () => { sfx.tick(); this.dropStory(() => this.showMissions()); });
+    if ($('mCrateLesson')) $('mCrateLesson').onclick = () => { sfx.tick(); this.crateLesson(); };
     document.querySelectorAll('#mList [data-sgoto]').forEach(b => b.onclick = () => { sfx.tick(); this.go(b.dataset.sgoto); });
     $('mInfo').onclick = () => { sfx.tick(); showSheet({ eyebrow: v.area, title: v.info.title, body: v.info.body }); };
     document.querySelectorAll('#mCross [data-cross]').forEach(b => b.onclick = () => { const cs = crossingById(s, b.dataset.cross, { unlock: S2_UNLOCK }); if (cs) this.openCrossings(cs); });
@@ -571,11 +572,17 @@ export class UI {
   // ACCEPT a story. With another one active: a sheet first, naming the one that is dropped and its fee.
   acceptStory(id, after) {
     const s = this.save, o = (s.storyBoard || []).find(x => x && x.id === id), cur = activeStory(s);
-    const go = () => { if (!storyAccept(s, id)) return; writeSave(s); this.renderBank && this.renderBank(); this.toast('Story accepted!', o ? `First stop: ${o.stops[o.reached || 0]}` : '', 'good', 3); after && after(); };
+    const go = () => { if (!storyAccept(s, id)) return; writeSave(s);
+      if (o && o.crate && !(s.tours || []).some(t => t === 'crate-lesson' || t === '*')) { s.tours = [...(s.tours || []), 'crate-lesson']; writeSave(s); this.crateLesson(); } this.renderBank && this.renderBank(); this.toast('Story accepted!', o ? `First stop: ${o.stops[o.reached || 0]}` : '', 'good', 3); after && after(); };
     if (!cur || cur.id === id) return go();
     const fee = storyDropFee(s);
     showSheet({ eyebrow: 'ONE STORY AT A TIME', title: `Swap "${cur.title}"?`, body: `You can only fly one story at a time. "${cur.title}" ends and you lose what it had left to pay.${fee ? ` Swapping costs ${fee} seeds.` : ''}`, ok: 'KEEP MY STORY',
       action: { label: fee ? `SWAP FOR ${fee} SEEDS` : 'SWAP', onTap: go } });
+  }
+  // SPECIAL DELIVERY CRATES, the lesson (the user, 2026-11-24): shown the first time such a story is accepted, and from SCHOOL.
+  crateLesson() {
+    showSheet({ eyebrow: 'FLIGHT SCHOOL', title: 'Special delivery crates', pic: 'assets/ui/portrait-story-crate-0.png',
+      body: 'Land at the first city to pick up the crates. Then fly on WITHOUT landing: when a city\'s runway blinks orange, tap DROP CRATE so the crate falls onto the runway. Big crates fall fast, so drop just before the runway. Keep going to the last city and land there. A crate that misses costs a heart.', ok: 'GOT IT' });
   }
   // LEAVE the active story (GIVE UP on its card, FREE FLIGHT on HOME, a crossing): asked first; the story FAILS (no fee). `then` runs after.
   dropStory(then, { label = 'GIVE UP', why = '' } = {}) {

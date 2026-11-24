@@ -42,6 +42,12 @@ export const IMPOSSIBLE_EVERY = 4;
 // ONE GO (the user, 2026-11-24: "failure-free stories where you have to actually do it all in one go"): a hard story now and then
 // (1 time in ONE_GO.every, by the offer's own number) allows no crash at all: 1 heart, better pay.
 export const ONE_GO = { every: 3, hearts: 1, pay: 2.2 };
+// SPECIAL DELIVERY (the user, 2026-11-24: "you drop an extra large crate down onto the airstrip without landing ... then you have to
+// keep going after that"): a hard story of 3+ stops now and then (1 time in CRATE.every hard offers that are not one go). Land at the
+// pickup; then ONE flight passes over every middle stop, where a big crate is dropped onto that airport's runway (src/sim/crates.js),
+// and lands at the last stop. Landing at a crate stop does not count. A missed crate costs a heart (the stop is flown again).
+export const CRATE = { every: 2, pay: 2.5 };
+export const isCrateStop = (o, i) => !!(o && o.crate && i > 0 && i < o.stops.length - 1);
 // ONE STORY AT A TIME (the user, 2026-11-24): dropping the active story (ACCEPT on another one, or a FREE FLIGHT) costs a fee:
 // a share of what the dropped story still had to pay, at least FEE.min seeds, never more than the player has.
 export const FEE = { share: 0.1, min: 50 };
@@ -163,7 +169,7 @@ export const missing = (save, offer) => (offer.needs || []).map(needInfo).filter
 export function makeOffer(save, slot) {
   const seq = save.storySeq = (save.storySeq || 0) + 1, rnd = stream(hash(`${save.homeCity || ''}|${seq}|${slot}`));
   const reach = reachOf(save), upgrade = slot === 2, onBoard = new Set((save.storyBoard || []).filter(Boolean).map(o => o.theme));
-  const level = levelFor(slot, seq), L = LEVELS[level], oneGo = level === 'hard' && seq % ONE_GO.every === 0;
+  const level = levelFor(slot, seq), L = LEVELS[level], oneGo = level === 'hard' && seq % ONE_GO.every === 0, crateTry = level === 'hard' && !oneGo && seq % CRATE.every === 0;
   const sized = t => (t.level ? t.level === level : L.stops.includes(t.stops) || (level === 'impossible' && t.stops === 3));   // (a theme written for a level, tools/stories/generate.mjs, goes to that level; else by size; impossible: 3 long stages, or 2 when no 4-stop theme fits)
   const fits = THEMES.filter(t => !onBoard.has(t.id) && (upgrade || !t.needs) && citiesFor(save, t).length >= t.stops)
     .map(t => ({ t, w: sized(t) ? 0 : 1 }));   // (a theme of the level's size first; any other theme after, so a small map still gets an offer)
@@ -174,15 +180,16 @@ export function makeOffer(save, slot) {
     const gadget = upgrade && theme.needs && missingNeeds(save, theme.needs).length > 0;   // an upgrade story by its gadget/nature need
     const band = upgrade && !gadget ? STORY.stretch : L.fit;
     const target = Math.round(reach * (band[0] + rnd() * (band[1] - band[0])));
+    if (crateTry && pass === 0 && theme.stops < 3) continue;   // (a special delivery needs a middle stop: try the 3-4 stop themes first)
     const got = pickStops(save, theme, target, rnd); if (!got) continue;
     const stretchNeed = upgrade && !gadget ? Math.max(...got.stages) : 0;
     if (upgrade && !gadget && stretchNeed <= reach) continue;   // the open network could not make it longer than today's reach: try another theme
     if (!upgrade && Math.max(...got.stages) > reach) continue;   // (a fit story must be flyable today)
     if (pass === 0 && Math.max(...got.stages) < target * 0.5) continue;
-    const km = got.stages.reduce((a, b) => a + b, 0);
+    const km = got.stages.reduce((a, b) => a + b, 0), crate = crateTry && got.stops.length >= 3, payMul = crate ? CRATE.pay : oneGo ? ONE_GO.pay : L.pay;
     return { id: `story-${seq}`, theme: theme.id, slot, made: save.flights || 0, title: theme.title, story: fillWords(theme.story, got.stops), pic: theme.pic,
-      level, hearts: oneGo ? ONE_GO.hearts : L.hearts, payMul: oneGo ? ONE_GO.pay : L.pay, ...(oneGo ? { oneGo: true } : {}),
-      stops: got.stops, lines: theme.lines.map(l => fillWords(l, got.stops)), stages: got.stages, km, pay: storyPay(km, oneGo ? ONE_GO.pay : L.pay),
+      level, hearts: oneGo ? ONE_GO.hearts : L.hearts, payMul, ...(oneGo ? { oneGo: true } : {}), ...(crate ? { crate: true } : {}),
+      stops: got.stops, lines: theme.lines.map(l => fillWords(l, got.stops)), stages: got.stages, km, pay: storyPay(km, payMul),
       needs: gadget ? theme.needs : stretchNeed ? [{ reach: stretchNeed }] : [] };
   }
   return null;
@@ -254,7 +261,27 @@ export function crashed(save) {
 // After a landing at `city` (src/missions2.js onFlight): the next stop reached? Pays its stage straight away. Returns
 // { title, city, line, n, of, done, pay } or null.
 export function landedAt(save, city) {
-  const o = activeStory(save); if (!o || o.stops[o.reached || 0] !== city) return null;
+  const o = activeStory(save); if (!o || o.stops[o.reached || 0] !== city || isCrateStop(o, o.reached || 0)) return null;
+  return reach(save, o, city);
+}
+// A crate delivered onto `city`'s runway (src/sim/crates.js, read by src/missions2.js onFlight): that crate stop is reached and paid.
+export function deliveredAt(save, city) {
+  const o = activeStory(save); if (!o || o.stops[o.reached || 0] !== city || !isCrateStop(o, o.reached || 0)) return null;
+  return reach(save, o, city);
+}
+// The crate stops a flight from here should drop on, in order (the next stop on, while they are crate stops). Empty: none.
+export function crateStops(save) {
+  const o = activeStory(save); if (!o || !o.crate) return [];
+  const out = []; for (let i = o.reached || 0; isCrateStop(o, i); i++) out.push(o.stops[i]); return out;
+}
+// The way a special delivery flies in ONE flight: from here over every crate stop to the last stop (null: not a crate flight now).
+export function crateWay(save, links) {
+  const o = activeStory(save), drops = crateStops(save); if (!drops.length) return null;
+  const via = [save.city, ...drops, o.stops[o.stops.length - 1]], way = [save.city];
+  for (let i = 1; i < via.length; i++) { const p = pathTo(via[i - 1], via[i], links || linksOf(save)); if (!p) return null; way.push(...p.slice(1)); }
+  return way;
+}
+function reach(save, o, city) {
   const i = o.reached || 0, stage = i === 0 ? 0 : o.stages[i - 1], pay = i === 0 ? { seeds: 0, crystals: 0 } : storyPay(stage, o.payMul || 1);
   o.reached = i + 1;
   const done = o.reached >= o.stops.length;

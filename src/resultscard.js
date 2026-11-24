@@ -53,6 +53,7 @@ export function resultsView(r, save, { paid = { seeds: 0, crystals: 0 }, next = 
     const n = missionTitles.length;
     // 'Row broken' (release B): a flight that broke a streak row (save.streakBroken, set by missions2.onFlight) says so when no mission was done on it; the 'notyet' style, no done sound.
     v.missions = n ? { line: n === 1 ? `✓ ${clip(missionTitles[0], 20)}` : `✓ ${n} missions done`, seeds: prizeSeeds, titles: missionTitles }
+      : save && save.storyHurt && save.storyHurt.crate && !save.storyHurt.failed ? { line: `Crate missed: ${save.storyHurt.hearts} of ${save.storyHurt.of} hearts`, seeds: 0, titles: [`${save.storyHurt.title}: the crate missed ${save.storyHurt.crate}'s runway. Fly over it again.`], fail: 'story' }
       : save && save.storyHurt ? (save.storyHurt.failed ? { line: 'Story failed: no hearts left', seeds: 0, titles: [`${save.storyHurt.title}: out of hearts. Pick a new story in MISSIONS.`], fail: 'story' }
         : { line: `Story: ${save.storyHurt.hearts} of ${save.storyHurt.of} hearts left`, seeds: 0, titles: [`${save.storyHurt.title}: you lost a heart. ${save.storyHurt.hearts} left.`], fail: 'story' })   // (PLAN A: a crash on a story flight, src/storyboard.js crashed)
       : (save && save.streakBroken > 0 ? { line: 'Row broken: start again', seeds: 0, titles: ['Your row of long flights was broken. Start again!'], fail: 'row' } : null);

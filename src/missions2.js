@@ -8,7 +8,7 @@
 //   project): an off-flight mission completes the moment the save changes, no flight needed (the user).
 // Pure: no DOM, no random. The game (src/sim/rules.js at banking, the shop after a purchase) and the sim call it.
 // Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes are paid straight into the bank (src/rewards.js payPrize).
-import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard, crashed as storyCrashed } from './storyboard.js';
+import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard, crashed as storyCrashed, deliveredAt as storyDeliveredAt } from './storyboard.js';
 import { AREAS, areaOf, DEFAULT_AREA, regionsOpen, withRegions } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
@@ -249,13 +249,19 @@ export function onFlight(save, r) {
     return lm[cur.id] >= 2 ? [...got, { key: cur.id, title: cur.title, tier: 0, star: false, kind: 'flight', prize: cur.prize, def: cur, taught: true }] : got; };
   const steady = steadyTick(save, r);
   const easyDaily = dailyVisible(save).filter(d => d.easy && d.def.flight(r, save, d.fill) === true);
+  // SPECIAL DELIVERY (src/sim/crates.js): each crate delivered reaches and pays its stop, landed or not; a missed crate costs a heart.
+  const crateRows = []; if (save.storyHurt) save.storyHurt = null;   // (save.storyHurt: what this flight cost the story, for the results card)
+  if (STORY.on && r.crates) {
+    for (const c of r.crates.delivered || []) { const st = storyDeliveredAt(save, c); if (st) crateRows.push({ key: `story:${st.id}:${st.n}`, title: `${st.title}: crate for ${c}`, prize: st.pay, story: st }); }
+    if ((r.crates.missed || []).length) { const h = storyCrashed(save); if (h) { save.storyHurt = { ...h, crate: r.crates.missed[0] }; if (h.failed) fillStoryBoard(save); } }
+  }
   if (!r.landed) {
     // A crash on a story flight costs a heart (src/storyboard.js LEVELS); at 0 the story fails and its slot is filled again. Read by the results card (save.storyHurt).
-    save.storyHurt = STORY.on && !r.crossing ? storyCrashed(save) : null;
-    if (save.storyHurt && save.storyHurt.failed) fillStoryBoard(save);
-    return finish(save, taught([...firsts, ...steady, ...easyDaily]));
+    const hurt = STORY.on && !r.crossing ? storyCrashed(save) : null;
+    if (hurt) save.storyHurt = hurt;
+    if (hurt && hurt.failed) fillStoryBoard(save);
+    return finish(save, taught([...firsts, ...steady, ...easyDaily, ...crateRows]));
   }
-  if (save.storyHurt) save.storyHurt = null;
   const startCity = save.city;
   assignMissionCities(save, startCity);   // (idempotent: the game stored them when HOME drew them; the sim, which never draws HOME, stores them here)
   advanceChains(save, r, startCity);
@@ -263,7 +269,7 @@ export function onFlight(save, r) {
   const story = STORY.on && r.landedAt ? storyLandedAt(save, r.landedAt) : null;
   const storyDone = story && story.pay.seeds + story.pay.crystals > 0 ? [{ key: `story:${story.id}:${story.n}`, title: `${story.title}: ${story.city}${story.done ? ' (story done!)' : ''}`, prize: story.pay, story }] : [];
   if (story && story.done) fillStoryBoard(save);
-  const due = [...storyDone, ...visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true))];
+  const due = [...crateRows, ...storyDone, ...visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true))];
   const daily = dailyVisible(save).filter(d => d.def.flight(r, save, d.fill) === true);
   save.prevLanded = r.landedAt;   // for "land at A, then B" (read on the NEXT flight)
   return finish(save, taught([...firsts, ...steady, ...due, ...daily]));

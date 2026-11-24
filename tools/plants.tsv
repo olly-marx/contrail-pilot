@@ -1012,3 +1012,7 @@ flyhub	src/ui.js	s/    \$('hubFly').onclick = () => (story ? this.dropStory(/   
 storygen	tools/stories/validate.mjs	s/  if (typeof t.story === 'string' \&\& !slots(t.story).length) why.push/  if (false) why.push/	a story that names no stop passes
 storygen	tools/stories/validate.mjs	s/  else if (t.level \&\& !stopsFor(t.level).includes(t.stops))/  else if (false)/	a level with the wrong number of stops passes
 storygen	tools/stories/generate.mjs	s/level: { type: 'string', enum: Object.keys(LEVELS) }/level: { type: 'string' }/	the schema lets Claude invent a level
+crates	src/sim/crates.js	s/this.crateLanded(p.city, !!(rw \&\& p.x >= rw.x \&\& p.x <= rw.x + AIRPORT.runwayLen), p.x);/this.crateLanded(p.city, true, p.x);/	every crate counts as on the runway
+crates	src/sim/rules.js	s/    if (this.dropCrate()) return;/    if (false) return;/	the drop over a crate runway is a tree, never the crate
+crates	src/storyboard.js	s/ || isCrateStop(o, o.reached || 0)) return null;\n  return reach/) return null;\n  return reach/	landing at a crate stop counts (no drop needed)
+crates	src/aim.js	s/  if (cw) return continueTour(cw, count, linksFor(save));/  if (false) return continueTour(cw, count, linksFor(save));/	a special delivery flies only to its next stop (not one flight over every crate stop)
