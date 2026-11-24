@@ -54,8 +54,24 @@
         w.parcelsFalling = [d]; let x = null; w.waterLanded = (lx) => { x = lx + v * d.t; }; for (let i = 0; i < 600 && x === null; i++) w.updateParcels(1 / 60); delete w.waterLanded;   // (x on the GROUND at release: the screen x + how far the ground scrolled while it fell)
         spots[v].push([Math.round(aim), Math.round(x)]); } }
     const spread = v => Math.max(...spots[v].map(s => s[1])) - Math.min(...spots[v].map(s => s[1]));
-    check(W.WATER_PLOT.w >= 40 && spread(90) < W.WATER_PLOT.w && spread(140) < W.WATER_PLOT.w, `a water drop lands within one target (${W.WATER_PLOT.w} px) from 100 to 400 px up: spread ${spread(90)} px at 90 px/s, ${spread(140)} at 140 (landing x by height: ${JSON.stringify(spots)})`);
+    check(W.WATER_PLOT.w === 27 && spread(90) < W.WATER_PLOT.w && spread(140) < W.WATER_PLOT.w, `a water drop lands within one target (${W.WATER_PLOT.w} px) from 100 to 400 px up: spread ${spread(90)} px at 90 px/s, ${spread(140)} at 140 (landing x by height: ${JSON.stringify(spots)})`);
     check(Object.values(spots).flat().every(([a, x]) => Math.abs(a - x) <= 3), `the aim (ripple ring) shows where the water drop lands: [aim, landed] ${JSON.stringify(spots)}`); }
+  // 5c. 0.78.0 (Oliver, 2026-11-24): 'much harder for the water requirement to fulfil ... a lot more drops' (DROP_CAP 6 -> 20), and 'when a biome is full of both water and
+  //     tree drops I shouldn't see any marker or button': landDone() is true only with the trees AND the water full; then the schedule lays no target.
+  check(W.DROP_CAP >= 20, `filling a water kind takes at least 20 drops: DROP_CAP ${W.DROP_CAP}`);
+  { w.parcelsFalling = []; w.waterPending = {}; w.save.waterBook = { polynesia: {} };
+    check(!w.landDone(), 'trees full, water not: the land is not done (the water targets still come)');
+    w.save.waterBook = { polynesia: Object.fromEntries(kinds.map(k => [k.id, W.DROP_CAP - 1])) };
+    check(!w.landDone(), 'one drop short of the cap: not done');
+    w.save.waterBook = { polynesia: Object.fromEntries(kinds.map(k => [k.id, W.DROP_CAP])) };
+    check(w.landDone(), 'trees and water full: the land is done');
+    w.plots = []; w.nextPlotAt = w.distancePx; w.parcels = 5; const rw = w.runways; w.runways = []; const na = w.nextAirport.worldX; w.nextAirport.worldX = w.distancePx + 1e6;
+    Object.defineProperty(w, 'regionNow', { configurable: true, get: () => 'polynesia', set: () => {} });   // (pinned: the flight's own route would move it)
+    const laid = () => { w.plots = []; for (let i = 0; i < 900; i++) { w.state = 'playing'; w.parcels = 5; w.step(1 / 60); } return w.plots.length; };
+    const doneLaid = laid(); w.save.waterBook = { polynesia: {} }; const openLaid = laid();
+    check(doneLaid === 0 && openLaid > 0, `a done land lays no targets, an open one does: done ${doneLaid}, open ${openLaid}`);
+    delete w.regionNow; w.regionNow = 'polynesia'; w.runways = rw; w.nextAirport.worldX = na;
+    const sv = w.save; w.save = { habitat: {}, areas: [] }; check(!w.landDone(), 'an empty land is not done'); w.save = sv; }
   // 6. yield
   const ys = { ...save, habitat: { ...save.habitat, polynesia: [...save.habitat.polynesia, wp[0].id, wp[1].id] } };
   const w2 = createWorld(ys, 6); for (let i = 0; i < 3000 && w2.state !== 'playing'; i++) w2.step(1 / 60);

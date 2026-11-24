@@ -1003,7 +1003,7 @@ crossingview	src/crossings.js	s/ready: plane \&\& nature };/ready: plane };/	a c
 crossladder	src/crossings.js	s/return l ? biodiversity(save, l) : 0;/return 100;/	the nature tick reads no land (always full)
 crossladder	src/crossings.js	s|^const chance = (save, c) => (c.km ? Math.min(reachFrom(save, c) / c.km, natureNeed(c) ? natureHave(save, c) / natureNeed(c) : 1) : 0);|const chance = (save, c) => (c.km ? reachFrom(save, c) / c.km : 0);|	the route offered is picked by range alone again (a land the player never grew)
 waterways	src/sim/rules.js	s/      if (p.water) {   \/\/ PLAN C:/      if (false) {   \/\/ PLAN C:/	a water drop falls under the tree parachute again (it lands 96-149 px apart by height)
-waterways	src/waterways.js	s/export const WATER_PLOT = { w: 44,/export const WATER_PLOT = { w: 28,/	the water target is 28 px again
+waterways	src/waterways.js	s/export const WATER_PLOT = { w: 27,/export const WATER_PLOT = { w: 44,/	the water target is 44 px again (Oliver 2026-11-24: 27 px)
 waterlesson	src/lessons.js	s/open: s => !!waterLessonLand(s), done:/open: s => false, done:/	the water lesson never opens
 waterlesson	src/sim/rules.js	s/    if (!plot) { if (this.school \&\& this.school.practice) this.parcels++; this.onParcelMissed(x, false); return; }/    if (!plot) { this.onParcelMissed(x, false); return; }/	a missed practice water drop is lost
 naturefocus	src/naturefocus.js	s/if (l \&\& isOpen(l) \&\& !rd.nature) return/if (false) return/	NATURE never opens on the crossing's departure land
@@ -1028,3 +1028,5 @@ realterrain	src/geo.js	s/if (!isLandOrIsland(lat, wrap(lon))) return .ocean.;/if
 realterrain	src/geo.js	s/p = lap ? lapPoint(a, f) : along(a, b, f)/p = along(a, b, f)/	lap flown home to home
 realterrain	src/geo.js	s/w = cells.map(r => (r === .ocean. \&\& !real ? OCEAN_SHARE : 1))/w = cells.map(r => (r === 'ocean' ? OCEAN_SHARE : 1))/	crossing sea squeezed
 realterrain	src/geo.js	s/export const LAP_BEARING = 270;/export const LAP_BEARING = 90;/	lap leaves east
+waterways	src/sim/rules.js	s/    if (this.school || !REGION_DATA\[region\]) return false;/    return false;/	a land with trees and water full still lays targets and shows PLANT
+waterways	src/waterways.js	s/export const DROP_CAP = 20;/export const DROP_CAP = 6;/	a water kind fills in 6 drops again

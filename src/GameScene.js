@@ -955,7 +955,7 @@ export class GameScene extends Phaser.Scene {
   drawAim() {
     const g = this.aimGfx;
     g.clear();
-    if (!this.kit.tree || this.parcels <= 0 || this.state !== 'playing') return;
+    if (!this.kit.tree || this.parcels <= 0 || this.state !== 'playing' || this.landDone()) return;   // (a land with nothing left to drop: no aim)
     const x = Math.round(this.predictLanding());
     const onPlot = this.plots.some(pl => !pl.used && x >= pl.x - 3 && x <= pl.x + (pl.w || this.kit.plotW) + 3);
     if (this.waterOpen && this.waterOpen()) {   // PLAN C: over the water the aim is a RIPPLE RING where the drop will land, bright when it is over a blue target
@@ -1770,9 +1770,9 @@ export class GameScene extends Phaser.Scene {
 
     const forest = 'FOREST FULL!';   // one short line (the meter shows the rest; longer text ran into it): FULL beats the soil hint
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
-    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon ? (this.waterOpen && this.waterOpen() ? 'drop on water!' : 'drop on soil!') : '') : '');   // (Plan C: over open water the hint says water)
+    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon && !this.landDone() ? (this.waterOpen && this.waterOpen() ? 'drop on water!' : 'drop on soil!') : '') : '');   // (Plan C: over open water the hint says water)
     const crateNow = this.crateDue();   // over a special delivery's runway the button drops the crate (src/sim/crates.js)
-    const showDrop = crateNow || (this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow));   // nothing to plant on (0.10.7)
+    const showDrop = crateNow || (this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow) && !this.landDone());   // nothing to plant on (0.10.7), or nothing left to drop here (trees and water full)
     this.setDropVisible(showDrop);
     this.dropArrowGfx.clear();   // a bobbing arrow on PLANT while soil is ahead and no tree has landed yet (not in school or the automated tests)
     if (showDrop && soilSoon && this.noTreeYet() && !this.school && !(this.save.seenTips || []).includes('*')) { const d = this.dropBox, y = d.y - 6 + Math.sin(this.time.now / 180) * 3, cx = d.x + d.w / 2; this.dropArrowGfx.fillStyle(0xffe15a, 1).fillTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y).lineStyle(1, 0x1b1b2f, 1).strokeTriangle(cx - 7, y - 11, cx + 7, y - 11, cx, y); }

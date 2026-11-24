@@ -285,6 +285,14 @@ export const RULES = {
     for (let k = 0; k < kinds.length; k++) { const d = kinds[(this.speciesIdx + k) % kinds.length]; if ((book[d.id] || 0) + (pend[d.id] || 0) < DROP_CAP) return d; }
     return null;
   },
+  // BIOME DONE (Oliver, 2026-11-24: 'when a biome is full of both water and tree drops I shouldn't see any marker or button'): nothing left to drop in this land, its trees at
+  // their caps AND its water drops at DROP_CAP (or it has no water drops). Then no soil or water target is laid, no aim is drawn and the PLANT button hides (src/GameScene.js).
+  // Drops still falling count (as nextTree and nextWaterDrop count them), so the last one in the air already hides the button; a miss gives it back. Never in a school flight.
+  landDone(region = this.dropLand()) {
+    if (this.school || !REGION_DATA[region]) return false;
+    if (nextTree(this.save, region, this.dropped, null, 0, false)) return false;
+    return !(WATERWAYS_ON.on && dropsOf(region).length > 0 && this.nextWaterDrop(region));
+  },
   nextTreeInfo() { return nextTree(this.save, this.regionNow || 'woodland', this.dropped, this.preferTag, this.speciesIdx, this.released === 0); },   // the tree the NEXT drop will plant: the label above the PLANT button and treeKind() ask the same function
   // Parcels keep the plane's forward speed and drift down under a parachute, so you have to
   // drop them before you reach a soil plot. This works out which bit of ground (in today's screen
@@ -376,7 +384,7 @@ export const RULES = {
       const onRunway = this.runways.some(r => x + this.kit.plotW > r.x - 10 && x < r.x + AIRPORT.runwayLen + 10)
         || this.nextAirport.worldX - this.distancePx < WIDTH - PLANE.x + 40 && this.nextAirport.worldX + AIRPORT.runwayLen - this.distancePx > WIDTH - PLANE.x - this.kit.plotW - 40;
       const water = this.waterOpen();   // (0.73.0: the land's biome is full: its WATER targets, narrower and rarer than soil: WATER_PLOT)
-      if (this.parcels > 0 && !onRunway && REGION_DATA[this.regionNow || 'woodland']) this.addPlot(x, water);   // no parcels, the sea or the ice: no soil
+      if (this.parcels > 0 && !onRunway && REGION_DATA[this.regionNow || 'woodland'] && !this.landDone()) this.addPlot(x, water);   // no parcels, the sea or the ice, or a land with nothing left to drop: no target
       this.nextPlotAt += water ? this.between(WATER_PLOT.every[0], WATER_PLOT.every[1]) : this.between(PARCEL.plotEvery[0], PARCEL.plotEvery[1]);
     }
     if (this.school) return;   // flight school places everything itself
