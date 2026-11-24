@@ -852,6 +852,24 @@ export class UI {
   }
 
   // The crossing that is ready to fly, as text ("LONDON to NEW YORK"), or null: the lead of the next-up rows (src/nextup.js).
+  // The STORY COMPLETE beat on the results card (showResults): the banner flashes over the story block with the large burst and its cue (src/celebrate.js 'story-complete'),
+  // a '+N' copy of the prize flies from the block to the bank line, then the bank counts the held prize in. A tap that skips the reveal lands on the final numbers.
+  async storyCompleteBeat(el, v, held, count, wait) {
+    const banner = document.createElement('span'); banner.className = 'rc-sbanner'; banner.textContent = 'STORY COMPLETE!';
+    el.appendChild(banner); el.classList.add('flash');
+    celebrateEvent(el, 'story-complete');
+    await wait(900);
+    const from = $('rStoryPrize').getBoundingClientRect(), to = $('rGain').getBoundingClientRect(), fly = document.createElement('b');
+    fly.className = 'rc-fly'; fly.innerHTML = $('rStoryPrize').innerHTML || `+${held.seeds}`;
+    fly.style.left = `${from.left}px`; fly.style.top = `${from.top}px`; fly.style.setProperty('--dx', `${to.left - from.left}px`); fly.style.setProperty('--dy', `${to.top - from.top}px`);
+    document.body.appendChild(fly); await wait(650); fly.remove();
+    sfx.coin();
+    const s0 = v.bank.seeds - held.seeds, c0 = v.bank.crystals - held.crystals;   // (count() runs 0 -> to: the held prize is counted ON TOP of what shows)
+    await Promise.all([count($('rGain'), held.seeds, 600, x => `+${s0 + x}`), held.crystals ? count($('rCrys'), held.crystals, 600, x => `+${c0 + x}`) : null]);
+    $('rBank').classList.add('pop'); setTimeout(() => $('rBank').classList.remove('pop'), 500);
+    el.classList.remove('flash');
+  }
+
   crossingReadyText() {
     const s = this.save, c = s.tutorialDone && !lessonsLeft(s).length ? crossingsNow(s).find(x => readiness(s, x).ready || S2_UNLOCK) : null;
     return c ? `${c.from} to ${c.to}` : null;
@@ -953,10 +971,14 @@ export class UI {
     show(head); await wait(300);
     show(dist); await count($('rDist'), r.distance, 500, km);
     if (v.record) sfx.buy();
-    show(bank); await count($('rGain'), v.bank.seeds, 350, x => `+${x}`);
+    // STORY COMPLETE (0.79.0; Oliver, 2026-11-24: 'it flashes the story complete, and then it basically adds the amount to the top sum so that you can sort of see what rewards you got'):
+    // the bank first counts WITHOUT the story's prize; when the story block shows, a STORY COMPLETE banner flashes on it with a burst, '+N' flies up to the bank, and the bank counts on.
+    const storyDone = !!(v.story && v.story.mood === 'done' && (v.story.seeds || v.story.crystals) && v.landed), held = storyDone ? { seeds: Math.min(v.bank.seeds, v.story.seeds || 0), crystals: Math.min(v.bank.crystals, v.story.crystals || 0) } : { seeds: 0, crystals: 0 };
+    if (held.crystals) $('rCrys').textContent = `+${v.bank.crystals - held.crystals}`;
+    show(bank); await count($('rGain'), v.bank.seeds - held.seeds, 350, x => `+${x}`);
     if (v.bank.seeds || v.bank.crystals) sfx.coin(); else if (!v.landed) sfx.nope();
     await wait(200);
-    for (const el of rest) { if (el.hidden) continue; show(el); if (el.id === 'rMission' && v.missions && v.missions.fail === undefined) sfx.done(); if (el.id === 'rStory' && v.story) (v.story.mood === 'bad' ? sfx.softfail() : v.story.mood !== 'info' && sfx.done()); if (el.id === 'rChips' && (v.chips || []).some(c => c.kind === 'badge')) sfx.medal(); if (el.id === 'rEarth') v.earth && v.earth.bars[0][1] > v.earth.bars[2][1] ? sfx.warm() : sfx.cool(); await wait(110); }
+    for (const el of rest) { if (el.hidden) continue; show(el); if (el.id === 'rMission' && v.missions && v.missions.fail === undefined) sfx.done(); if (el.id === 'rStory' && v.story) { if (storyDone) await this.storyCompleteBeat(el, v, held, count, wait); else (v.story.mood === 'bad' ? sfx.softfail() : v.story.mood !== 'info' && sfx.done()); } if (el.id === 'rChips' && (v.chips || []).some(c => c.kind === 'badge')) sfx.medal(); if (el.id === 'rEarth') v.earth && v.earth.bars[0][1] > v.earth.bars[2][1] ? sfx.warm() : sfx.cool(); await wait(110); }
     $('results').classList.remove('revealing');
     if (r.eraOpened) {   // a new era: the big welcome, then the hangar to see what it brings
       await wait(600);

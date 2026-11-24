@@ -20,6 +20,7 @@ export const CELEBRATIONS = {
   'mission-done': { size: 'medium', cue: 'done' },
   'badge-earned': { size: 'medium', cue: 'medal' },
   'nature-funded': { size: 'small', cue: 'grow' },
+  'story-complete': { size: 'large', cue: 'done' },   // (0.79.0: the results card's STORY COMPLETE beat, src/ui.js storyCompleteBeat)
 };
 
 // n sparkles on a deterministic spiral (no random numbers: the same burst every time, testable): angle by the golden angle, distance growing with the index, a small stagger.

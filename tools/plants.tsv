@@ -1038,3 +1038,5 @@ resultscard	src/resultscard.js	s/(r.treesDropped || 0) - wDropped/(r.treesDroppe
 resultscard	src/resultscard.js	s/(r.crystals || 0) - dist - dodge - night/(r.crystals || 0) - dodge - night/	distance crystals counted twice in the sheet
 resultscard	src/resultscard.js	s/!firstTitles.includes(t) \&\& !storyTitles.includes(t)/!firstTitles.includes(t)/	the story stop folded back into the missions line
 crossingend	src/crossingend.js	s/`${CROSSING_WORDS\[c.era\].toUpperCase()} CROSSING`/null/	the crossing screens forget the ladder step
+storydone-ui	src/ui.js	s/if (storyDone) await this.storyCompleteBeat(el, v, held, count, wait); else/if (false) await this.storyCompleteBeat(el, v, held, count, wait); else/	no STORY COMPLETE beat
+storydone-ui	src/ui.js	s/seeds: Math.min(v.bank.seeds, v.story.seeds || 0), crystals:/seeds: 0, crystals:/	the story prize is not held back from the first count

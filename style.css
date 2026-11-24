@@ -1395,3 +1395,16 @@ h2.sub { margin-top: -4px; }
    At rest each screen starts below the inset (measured with a 59 px inset: MISSIONS' head at 75 px); a SCROLLED screen ran its content up under the clock and the island.
    In the phone app (viewport-fit=cover) an ink band now covers the inset, so scrolled text goes under it; on the web the inset is 0 and nothing shows. */
 body::after { content: ''; position: fixed; left: 0; right: 0; top: 0; height: env(safe-area-inset-top); background: var(--ink); z-index: 1000; pointer-events: none; }
+/* STORY COMPLETE on the results card (0.79.0, src/ui.js storyCompleteBeat): the banner flashes over the story block, '+N' flies up to the bank, the bank pops. */
+.rc-story { position: relative; }
+.rc-sbanner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; letter-spacing: 1px; color: #fff; background: var(--ink);
+  text-shadow: 2px 2px 0 #b8860b; animation: sbanner 0.9s steps(1) 1 forwards; pointer-events: none; z-index: 2; }
+@keyframes sbanner { 0% { opacity: 1; color: #ffe15a; } 20% { color: #fff; } 40% { color: #ffe15a; } 60% { color: #fff; } 80% { color: #ffe15a; opacity: 1; } 100% { opacity: 0; } }
+.rc-story.flash { outline: 3px solid #ffe15a; }
+.rc-fly { position: fixed; z-index: 70; display: inline-flex; align-items: center; gap: 2px; font-size: 10px; color: var(--green-dark); background: #fffbe8; padding: 1px 4px; border: 2px solid var(--ink);
+  pointer-events: none; animation: rcfly 0.65s ease-in forwards; }
+.rc-fly .seedicon, .rc-fly .crysicon { width: 10px; height: 12px; background-size: 10px 12px; }
+@keyframes rcfly { to { transform: translate(var(--dx), var(--dy)) scale(1.3); opacity: 0.2; } }
+.rc-bank.pop { animation: rcpop 0.5s steps(3) 1; }
+@keyframes rcpop { 50% { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .rc-sbanner { animation: none; opacity: 0; } .rc-fly { animation: none; opacity: 0; } .rc-bank.pop { animation: none; } }
