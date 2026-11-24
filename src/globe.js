@@ -2,7 +2,9 @@
 // made by tools/art/make_landmask.py), turned and tilted so the WHOLE route ahead is in view and centred, every airport a dot, the
 // route in gold, and you can DRAG it round. Drawn per pixel into a small canvas that the page shows crisp (image-rendering:
 // pixelated): for each pixel, undo the projection to a latitude and longitude and look the land up in the mask.
-import { LAND_W, LAND_H, LAND_RLE, ISLANDS } from './landmask.js';
+import { LAND_W, LAND_H, ISLANDS } from './landmask.js';
+import { isLand } from './landsea.js';
+export { isLand };
 import { regionAt, along } from './geo.js';
 import { CITIES } from './cities.js';
 import { nearestDot } from './pickcity.js';
@@ -14,14 +16,7 @@ const FALLBACK = [122, 154, 106], SEA = [43, 95, 158], SHALLOW = [74, 130, 190],
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
 
 // ---------- the land ----------
-let mask = null, islands = null, regions = null;
-function getMask() {
-  if (mask) return mask;
-  mask = new Uint8Array(LAND_W * LAND_H);
-  LAND_RLE.split('|').forEach((row, j) => { let i = 0, v = 0; for (const t of row.split(',')) { const n = parseInt(t, 36); if (v) mask.fill(1, j * LAND_W + i, j * LAND_W + i + n); i += n; v ^= 1; } });
-  return mask;
-}
-export const isLand = (lat, lon) => getMask()[Math.min(LAND_H - 1, Math.max(0, Math.floor((90 - lat) / 180 * LAND_H))) * LAND_W + (((Math.floor((lon + 180) / 360 * LAND_W) % LAND_W) + LAND_W) % LAND_W)] === 1;
+let islands = null, regions = null;
 // The colour of the ground: the declared regions (src/geo.js) at one-degree cells, blurred over about 6 degrees so the
 // ground fades from one region to the next instead of showing the boxes' straight edges.
 function regionTable() {

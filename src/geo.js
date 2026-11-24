@@ -58,6 +58,8 @@ export const LAND = [
   ['polynesia', -23, -12, -176, -149],          // Tonga, Samoa, the Cook Islands, Tahiti (cities declare it too: the mask reads them as sea)
 ];
 
+import { isLandOrIsland } from './landsea.js';
+
 const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
 // Great-circle distance in km (haversine).
 export function realKm(a, b) {
@@ -73,6 +75,33 @@ export function regionAt(lat, lon) {
   for (const [r, s, n, w, e] of LAND) if (lat >= s && lat <= n && lon >= w && lon <= e) return r;
   return 'ocean';
 }
+
+// REAL TERRAIN (Oliver, 2026-11-24: 'Tunis-Rome is nearly all sea'; the lap flew over his homeland the whole way round): the boxes above
+// are coarse and swallow the sea next to a coast, so a crossing asks the Natural Earth land mask first (src/landsea.js): sea there is sea.
+// Land the mask has but no box declares (Hawaii, the Caribbean, Fiji...) takes the nearest box within ISLE_REACH degrees, else 'polynesia'
+// in the tropics (the island art), else the sea.
+const ISLE_REACH = 6;
+export function surfaceAt(lat, lon) {
+  if (!isLandOrIsland(lat, wrap(lon))) return 'ocean';
+  const r = regionAt(lat, lon);
+  if (r !== 'ocean') return r;
+  for (let d = 1; d <= ISLE_REACH; d++) for (const [dl, dn] of [[0, d], [0, -d], [d, 0], [-d, 0], [d, d], [-d, -d], [d, -d], [-d, d]]) {
+    const q = regionAt(lat + dl, lon + dn); if (q !== 'ocean' && q !== 'ice') return q;
+  }
+  return Math.abs(lat) < 30 ? 'polynesia' : 'ocean';
+}
+
+// The point `km` along the great circle that leaves p on compass bearing `brg` (degrees).
+export function travel(p, brg, km) {
+  const d = km / 6371, p1 = rad(p.lat), l1 = rad(p.lon), t = rad(brg);
+  const p2 = Math.asin(Math.sin(p1) * Math.cos(d) + Math.cos(p1) * Math.sin(d) * Math.cos(t));
+  const l2 = l1 + Math.atan2(Math.sin(t) * Math.sin(d) * Math.cos(p1), Math.cos(d) - Math.sin(p1) * Math.sin(p2));
+  return { lat: deg(p2), lon: wrap(deg(l2)) };
+}
+// THE LAP's real path: the whole great circle through home, leaving due WEST (from Lagos: the Atlantic, South America, the Pacific,
+// the islands, Indonesia, the Indian Ocean, Africa). It is 40,030 km round, the lap's own length (SEASON.crossingKm.final 40,000).
+export const LAP_BEARING = 270;
+export const lapPoint = (home, f) => travel(home, LAP_BEARING, f * 2 * Math.PI * 6371);
 
 // The point a fraction f (0..1) of the way along the great circle from a to b ({ lat, lon }).
 export function along(a, b, f) {
@@ -90,17 +119,22 @@ export function along(a, b, f) {
 // is): a stretch of ocean takes OCEAN_SHARE of the game distance it would take over land.
 export const OCEAN_SHARE = 0.35;
 const SAMPLES = 200;
-const MIN_RUN = 0.04;   // shorter runs merge into a neighbour
+const LEG_MIN_RUN = 0.04;   // shorter runs merge into a neighbour (a crossing: REAL_MIN_RUN)
 
 // A leg's strip: what is below from take-off to landing, as runs [{ region, from, to }] in GAME
 // fractions (0..1), with the ocean squeezed. Cached per pair of airports.
+// real: a crossing (REAL TERRAIN above): the land mask decides land or sea (surfaceAt), the sea is NOT squeezed (a crossing's game length is
+// set by its tier, not by the map, so the strip only shares it out), slivers are shorter (REAL_MIN_RUN) so islands show, and a leg from a
+// place to itself is the lap: the whole great circle round (lapPoint).
+const REAL_SAMPLES = 800, REAL_MIN_RUN = 0.01;
 const cache = new Map();
-export function legStrip(a, b) {
-  const key = `${a.lat},${a.lon}>${b.lat},${b.lon}`;
+export function legStrip(a, b, real = false) {
+  const key = `${a.lat},${a.lon}>${b.lat},${b.lon}${real ? ' real' : ''}`;
   if (cache.has(key)) return cache.get(key);
-  const cells = [];
-  for (let i = 0; i < SAMPLES; i++) { const p = along(a, b, (i + 0.5) / SAMPLES); cells.push(regionAt(p.lat, p.lon)); }
-  const w = cells.map(r => (r === 'ocean' ? OCEAN_SHARE : 1)), total = w.reduce((x, y) => x + y, 0);
+  const lap = real && a.lat === b.lat && a.lon === b.lon, N = real ? REAL_SAMPLES : SAMPLES, MIN_RUN = real ? REAL_MIN_RUN : LEG_MIN_RUN;
+  const look = real ? surfaceAt : regionAt, cells = [];
+  for (let i = 0; i < N; i++) { const f = (i + 0.5) / N, p = lap ? lapPoint(a, f) : along(a, b, f); cells.push(look(p.lat, p.lon)); }
+  const w = cells.map(r => (r === 'ocean' && !real ? OCEAN_SHARE : 1)), total = w.reduce((x, y) => x + y, 0);
   const runs = []; let at = 0;
   cells.forEach((r, i) => {
     const to = at + w[i] / total, last = runs[runs.length - 1];
@@ -122,7 +156,7 @@ export function legStrip(a, b) {
 }
 
 // The region below at game fraction f (0..1) of the leg from a to b.
-export function regionBelow(a, b, f) {
-  const runs = legStrip(a, b), x = Math.min(1, Math.max(0, f));
+export function regionBelow(a, b, f, real = false) {
+  const runs = legStrip(a, b, real), x = Math.min(1, Math.max(0, f));
   return (runs.find(r => x >= r.from && x <= r.to) || runs[runs.length - 1]).region;
 }

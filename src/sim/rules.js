@@ -659,7 +659,14 @@ export const RULES = {
   regionAt(ahead = 0) {
     if (this.school || !this.nextAirport || this.nextAirport.worldX > 1e8) return this.regionHere();
     const i = this.airportIndex, len = this.legKm(i), from = this.nextAirport.worldX - len;
-    return regionBelow(city(this.path[i]), city(this.path[i + 1]), Math.min(1, (this.distancePx + ahead - from) / len));
+    return regionBelow(city(this.path[i]), city(this.path[i + 1]), Math.min(1, (this.distancePx + ahead - from) / len), !!this.crossing && i === 0);   // a crossing's own leg: the real terrain (src/geo.js surfaceAt; the lap: the whole circle round)
+  },
+  // The land whose nature cools the flight (BIOME_COOL): the land below, but on a crossing's own leg the DEPARTURE land all the way (REAL TERRAIN,
+  // 2026-11-24): the crossing bars are set on the departure land's nature (SEASON.step natureRule 'departure', sim-tuned), and before the real
+  // terrain a crossing flew over its departure land nearly the whole way, so its forest kept cooling; over the real sea it would cool nothing.
+  coolLand() {
+    if (this.crossing && this.airportIndex === 0) { const d = (city(this.crossing.from) || {}).region; if (d && d !== 'ocean' && d !== 'ice') return d; }
+    return this.regionNow || 'woodland';
   },
   regionHere() {
     // Flight school flies over your START city's land (season 2 starts anywhere; the user flew a Johannesburg start over UK woodland).
@@ -667,7 +674,7 @@ export const RULES = {
     if (this.school) { const r = (city(this.save.city) || {}).region; return r && !['ocean', 'ice'].includes(r) ? r : 'woodland'; }
     if (!this.nextAirport || this.nextAirport.worldX > 1e8) return 'woodland';   // the never-landing test/sim pilots: unchanged (sim baselines)
     const i = this.airportIndex, len = this.legKm(i), from = this.nextAirport.worldX - len;
-    return regionBelow(city(this.path[i]), city(this.path[i + 1]), (this.distancePx - from) / len);
+    return regionBelow(city(this.path[i]), city(this.path[i + 1]), (this.distancePx - from) / len, !!this.crossing && i === 0);
   },
 
   // Physics random numbers (sim engine, 2026-10-25): everything that changes what can happen in a flight
@@ -772,7 +779,7 @@ export const RULES = {
     }
     let land;
     if (BIOME_COOL.on) {   // the biome under the plane cools by its meter (grown trees by variety + projects), until the flight's biome store is full
-      const r = this.regionNow || 'woodland';
+      const r = this.coolLand();
       if (!(r in this.biomeMeters)) this.biomeMeters[r] = biomeMeter(this.save, r) / 100;   // 0..1
       const m = this.biomeMeters[r];
       land = this.landStored >= BIOME_COOL.store * m ? 0 : BIOME_COOL.rate * m * dt;
@@ -782,8 +789,8 @@ export const RULES = {
     }
     this.landStored += land;
     this.heat -= land; this.breakdown.trees += land;
-    if (land > 0) { const r = this.regionNow || 'woodland'; this.natureBy[r] = (this.natureBy[r] || 0) + land; }
-    else if (BIOME_COOL.on && !this.landFullSaid && this.landStored > 0 && (this.natureBy[this.regionNow || 'woodland'] || 0) > 0) { this.landFullSaid = true; this.popup(WIDTH / 2, SKY_H / 2 - 30, 'Nature here is full for this flight', '#8dffb0'); }   // (the tree UI, 2026-11-16: the cooling stops, and the player is told why)
+    if (land > 0) { const r = this.coolLand(); this.natureBy[r] = (this.natureBy[r] || 0) + land; }
+    else if (BIOME_COOL.on && !this.landFullSaid && this.landStored > 0 && (this.natureBy[this.coolLand()] || 0) > 0) { this.landFullSaid = true; this.popup(WIDTH / 2, SKY_H / 2 - 30, 'Nature here is full for this flight', '#8dffb0'); }   // (the tree UI, 2026-11-16: the cooling stops, and the player is told why)
     if (this.treeFeedback >= 1) {
       this.popup(WIDTH / 2, SKY_H - 12, `-${this.treeFeedback.toFixed(1)} from your forest`, '#8dffb0');
       this.coolSparkle();
