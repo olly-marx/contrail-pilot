@@ -121,7 +121,7 @@ capability	src/capability.js	s/hazards: false, v: 2 }/hazards: true, v: 2 }/	the
 twistdraw	src/GameScene.js	s/for (const st of this.storms) if (st.drift || st.pulse) this.followGap(st);/if (false) this.followGap(null);/	moving gaps drawn once
 finance	src/finance.js	s/Math.pow(1 - b, MARKET.curve)/Math.pow(1 - 0, MARKET.curve)/	the rate ignores nature
 hangar	src/hangar.js	s/if (pv \&\& pv.scrollIntoView) pv.scrollIntoView/if (false) pv.scrollIntoView/	a tapped row previews off screen
-hudlayout	src/GameScene.js	s/if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);/if (false) this.kindsText.setX(cx - 4);/	the kinds meter under CLEAN
+hudlayout	src/GameScene.js	s/if (this.landStrip) { this.landStrip.x = 4; this.landStrip.y = SKY_H; }/if (false) { }/	the land strip under CLEAN
 season2	src/areas.js	s/\.filter(k => AREAS\[k\])/.filter(k => k)/	save.areas holds ocean (Pacific stepping stones): the title crashed on AREAS[ocean]
 postrails	src/GameScene.js	s/const dropToast = () => { if (this.explaining/const dropToast = () => { if (false \&\& this.explaining/	a toast is not dropped below a teaching strip (persistent overlap)
 era5-knobs	src/sim/physics.js	s/wobble: false }/wobble: true }/	bird detection ignored
@@ -841,7 +841,7 @@ tourflight	src/tour.js	s/if (hudShowing()) { this.exited = 'flight'; return true
 tourflight	src/GameScene.js	s/    if (this.ui \&\& this.ui.tour) this.ui.tour.abort();   \/\/ a flight starting by any route/    \/\/ (abort removed)   \/\/ a flight starting by any route/	scene.startFlight() does not end a rails step that is up
 hudclear	src/hudclear.js	s/export const HUD_BOTTOM = 110;/export const HUD_BOTTOM = 90;/	the toast opens on the land's card again (HUD_BOTTOM back to 90, L-37)
 hudlayout	src/GameScene.js	s/ay = above >= hudLow ? above :/ay = true ? Math.max(10, above) :/	the autopilot label follows the plane onto the distance counter again
-hudlayout	src/GameScene.js	s/this.kindsText.setVisible(!(h \&\& /this.kindsText.setVisible(true || !(h \&\& /	the long ground-strip hint is drawn over 'kinds n/5' again
+hudlayout	src/GameScene.js	s/on = !!L.info \&\& !clash;/on = !!L.info;/	the long ground-strip hint is drawn over the land strip
 crossrewardui	style.css	s/^\.ending \.payoff-card p { line-height: 1\.5; }$//	the ending card's lines sit tight again (no line height)
 hudclear	src/GameScene.js	s/^    this\.tidyToast();   \/\/ a toast already up (opened at the title).*$//	a toast that opened at the title stays at 16 percent for the first flight frame (L-43)
 celebrate	src/celebrate.js	s/waves: 3, waveMs: 700/waves: 1, waveMs: 700/	the lap's burst is a single wave (no longer than a crossing's)
@@ -1030,3 +1030,5 @@ realterrain	src/geo.js	s/w = cells.map(r => (r === .ocean. \&\& !real ? OCEAN_SH
 realterrain	src/geo.js	s/export const LAP_BEARING = 270;/export const LAP_BEARING = 90;/	lap leaves east
 waterways	src/sim/rules.js	s/    if (this.school || !REGION_DATA\[region\]) return false;/    return false;/	a land with trees and water full still lays targets and shows PLANT
 waterways	src/waterways.js	s/export const DROP_CAP = 20;/export const DROP_CAP = 6;/	a water kind fills in 6 drops again
+landstrip	src/landstrip.js	s/done: tof > 0 \&\& tn >= tof \&\& wn >= wof };/done: tof > 0 \&\& tn >= tof };/	the strip says FULL with only the trees full
+landstrip	src/landstrip.js	s/a + Math.min(DROP_CAP, wb\[k.id\] || 0)/a + (wb[k.id] || 0)/	drops over the cap count on the water bar

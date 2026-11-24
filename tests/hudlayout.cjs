@@ -26,7 +26,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.evaluate(() => { const s = game.scene.getScene('game'); s.popup(144, 84, 'No-fly zone ahead!', '#ff8080'); s.popup(144, 60, 'NIGHT OWL!', '#ffe15a', 16); });
   const overlaps = () => p.evaluate(() => {
     const s = game.scene.getScene('game'); s.stripBg = s.strip.bg;   // (+ the route strip, 2026-11-23)
-    const names = ['missionText', 'nextText', 'cargoText', 'multText', 'hintText', 'parcelText', 'autoText', 'kindsText', 'cleanBg', 'dropBg', 'stripBg'];   // (+ the CLEAN and DROP buttons, 2026-10-28)
+    const names = ['missionText', 'nextText', 'cargoText', 'multText', 'hintText', 'parcelText', 'autoText', 'cleanBg', 'dropBg', 'stripBg'];   // (+ the CLEAN and DROP buttons, 2026-10-28)
     const boxes = names.map(n => [n, s[n]]).filter(([n, t]) => t && t.visible && (t.text || n.endsWith('Bg')) && t.alpha > 0).map(([n, t]) => { const b = t.getBounds(); return { n, text: t.text || n, x: b.x, y: b.y, w: b.width, h: b.height }; })
       .concat((s.popups || []).map((q, i) => { const b = q.t.getBounds(); return { n: `popup${i}`, text: q.t.text, x: b.x, y: b.y, w: b.width, h: b.height, pop: true }; }));
     const hits = [];
@@ -67,11 +67,11 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // (B) the longest hint with the forest meter's kinds line (a Comet with tree planting: 'kinds' sits at x 126, no CLEAN button).
   await p.evaluate(() => { const s = game.scene.getScene('game'), t = s.hintText, set = t.setText.bind(t); t.setText = () => set('ICY AIR! heat trapped!'); s.plane.y = 200; });
   await p.waitForTimeout(150);
-  const gs = await p.evaluate(() => { const s = game.scene.getScene('game'), h = s.hintText, k = s.kindsText;
-    if (!k) return { kinds: false }; const A = h.getBounds(), C = k.getBounds();
-    return { kinds: true, hint: h.visible ? h.text : '', kindsShown: k.visible && !!k.text, touch: k.visible && A.x < C.x + C.width && C.x < A.x + A.width && A.y < C.y + C.height && C.y < A.y + A.height }; });
-  check(gs.kinds && gs.hint === 'ICY AIR! heat trapped!', `FIXTURE (B): the kinds meter exists and the long hint is on screen: ${JSON.stringify(gs)}`);
-  check(!gs.touch, `(B) the ground-strip hint is never drawn over 'kinds n/5': ${JSON.stringify(gs)}`);
+  const gs = await p.evaluate(() => { const s = game.scene.getScene('game'), h = s.hintText, L = s.landStrip;   // (0.78.0: the land strip in place of 'kinds n/5')
+    if (!L) return { kinds: false }; const A = h.getBounds(), C = s.landStripBounds();
+    return { kinds: true, hint: h.visible ? h.text : '', kindsShown: !!L.shown, touch: !!L.shown && A.x < C.x + C.w && C.x < A.x + A.width && A.y < C.y + C.h && C.y < A.y + A.height }; });
+  check(gs.kinds && gs.hint === 'ICY AIR! heat trapped!', `FIXTURE (B): the land strip exists and the long hint is on screen: ${JSON.stringify(gs)}`);
+  check(!gs.touch, `(B) the ground-strip hint is never drawn over the land strip: ${JSON.stringify(gs)}`);
   // A 2010s plane with Ops 8 (the CLEAN button beside DROP) and the forest meter's 'kinds n/3' showing: nothing in the
   // ground strip overlaps (the screenshot, 2026-10-28: 'kinds' ran under CLEAN).
   const q = await b.newPage({ viewport: { width: 390, height: 844 } }); q.errs = []; q.on('pageerror', e => q.errs.push(String(e)));
@@ -82,13 +82,14 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await q.waitForFunction(() => game.scene.getScene('game').state === 'playing', null, { timeout: 20000 }).catch(() => {});
   await q.evaluate(() => { const s = game.scene.getScene('game'); s.graceUntil = 1e12; s.setDropVisible && s.setDropVisible(true); s.dropBg.setVisible(true); s.dropLabel.setVisible(true); });
   await q.waitForTimeout(600);
-  const g = await q.evaluate(() => { const s = game.scene.getScene('game'), list = ['kindsText', 'parcelText', 'hintText', 'cleanBg', 'dropBg'].map(n => [n, s[n]])
-      .filter(([n, t]) => t && t.visible && (t.text || t.width)).map(([n, t]) => { const r = t.getBounds(); return { n, x: r.x, y: r.y, w: r.width, h: r.height, text: t.text }; });
+  const g = await q.evaluate(() => { const s = game.scene.getScene('game'); s.landStripBox = s.landStrip && s.landStrip.shown ? s.landStripBounds() : null;
+    const list = ['landStripBox', 'parcelText', 'hintText', 'cleanBg', 'dropBg'].map(n => [n, s[n]])
+      .filter(([n, t]) => t && (t.visible || n === 'landStripBox') && (t.text || t.width || t.w)).map(([n, t]) => { if (n === 'landStripBox') return { n, x: t.x, y: t.y, w: t.w, h: t.h, text: s.landStrip.text.text }; const r = t.getBounds(); return { n, x: r.x, y: r.y, w: r.width, h: r.height, text: t.text }; });
     const hits = []; for (let i = 0; i < list.length; i++) for (let j = i + 1; j < list.length; j++) { const a = list[i], c = list[j];
       if (a.x < c.x + c.w && c.x < a.x + a.w && a.y < c.y + c.h && c.y < a.y + a.h) hits.push(`${a.n} "${a.text || ''}" over ${c.n} "${c.text || ''}"`); }
-    return { hits, has: list.map(x => x.n), kinds: s.kindsText && s.kindsText.text };
+    return { hits, has: list.map(x => x.n), kinds: s.landStrip && s.landStrip.text.text };
   });
-  check(g.has.includes('cleanBg') && g.has.includes('kindsText') && /kinds/.test(g.kinds || ''), `the ground-strip check did not see CLEAN and the kinds meter: ${JSON.stringify(g)}`);
+  check(g.has.includes('cleanBg') && g.has.includes('landStripBox') && !!g.kinds, `the ground-strip check did not see CLEAN and the land strip: ${JSON.stringify(g)}`);
   check(!g.hits.length, `the ground strip overlaps: ${g.hits.join('; ')}`);
   check(!q.errs.length, `page errors (CLEAN flight): ${q.errs}`);
   await b.close();

@@ -44,6 +44,8 @@ import { REGION_DATA, REGION_NAMES } from './habitats.js';
 import { treesPlanted } from './treecount.js';
 import { CRYSTAL_WHY } from './tips.js';
 import { shortName, BIOME_FULL_LABEL } from './droporder.js';
+import { landProgress, frac } from './landstrip.js';
+const LAND_STRIP_W = 88;   // the land strip's width: from x 126 to just left of PLANT (x 218)
 const NEXT_LABEL_W = 110;   // the widest 'Next: <TREE>' label above the PLANT button, game px: it grows to the LEFT of the button's right edge (tests/textfit.cjs checks every tree name)
 
 const SKY_H = HEIGHT - GROUND_H;
@@ -183,14 +185,14 @@ export class GameScene extends Phaser.Scene {
     this.missionText = this.add.text(WIDTH / 2, 60, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffe15a', align: 'center',
       wordWrap: { width: 200, useAdvancedWrap: true }, maxLines: 2, lineSpacing: 2 }).setOrigin(0.5, 0);
     this.dialGfx = this.add.graphics().setDepth(5);   // day / night dial (drawDayDial)
-    // Forest meter (bottom right): 10 little trees that grow as your forest soaks up CO2 this flight.
-    // Measured against the biggest forest (FOREST.store, all kinds planted); slots past what your
-    // kinds can hold are dimmed, so planting early, and more kinds, both show.
-    // Between the bottom-left text (which names it) and the DROP button.
-    this.meterTrees = this.kit && this.kit.tree ? Array.from({ length: 10 }, (_, i) =>
-      this.add.image(130 + i * 9, HEIGHT - 2, 'meter-tree-0').setOrigin(0.5, 1).setDepth(5)) : [];
-    // "kinds 3/5": cooling, the old-wood boost and the forest store all grow with the kinds planted THIS flight.
-    this.kindsText = this.meterTrees.length ? this.add.text(126, HEIGHT - 22, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#8dffb0' }).setOrigin(0, 0).setDepth(5) : null;
+    // THE LAND STRIP (0.78.0, src/landstrip.js; Oliver, 2026-11-24: the forest meter's little trees and 'kinds n/5' 'don't do anything'): between the bottom-left text and the
+    // PLANT button, the land under the plane, a TREE bar and a WATER bar that fill as drops land there, and 'FULL' when both are (then no target or button shows: landDone).
+    // (Until 0.78.0: this.meterTrees, 10 trees for the CO2 this flight's trees stored, and this.kindsText, the kinds planted this flight.)
+    this.meterTrees = [];
+    this.landStrip = this.kit && this.kit.tree ? { x: 126, y: SKY_H + 12, gfx: this.add.graphics().setDepth(5),
+      text: this.add.text(126, SKY_H + 12, '', { ...font, fontSize: '8px', strokeThickness: 3, color: '#ffffff' }).setOrigin(0, 0).setDepth(5),
+      tree: this.add.image(0, 0, 'meter-tree-3').setOrigin(0, 1).setDepth(5), at: -1e9, key: '' } : null;
+    this.kindsText = null;
     this.forestFull = false;
     this.nextText = this.add.text(WIDTH / 2, 58, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
     this.strip = new RouteStrip(this);   // the route to the target (src/Hud.js, 2026-11-23): replaces the 'Flying to X' and 'Next: Y' lines
@@ -241,8 +243,8 @@ export class GameScene extends Phaser.Scene {
       this.input.on('pointerup', off); this.input.on('pointerupoutside', off);
       this.input.keyboard.on('keydown-C', () => { this.cleanHeld = true; }); this.input.keyboard.on('keyup-C', off);
       this.inCleanBox = inClean;
-      // The forest meter's 'kinds n/3' sat at x 126, under CLEAN (the screenshot, 2026-10-28): it ends just left of the button.
-      if (this.kindsText) this.kindsText.setOrigin(1, 0).setX(cx - 4);
+      // The strip would sit under CLEAN (as the old 'kinds n/3' did, the screenshot, 2026-10-28): it moves to the top left of the ground strip, above the hint.
+      if (this.landStrip) { this.landStrip.x = 4; this.landStrip.y = SKY_H; }
     }
 
     // Pause when the tab is hidden, so a phone in a pocket doesn't crash the plane.
@@ -851,16 +853,35 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar.setAlpha(0.55 - 0.35 * n);
   }
 
-  updateForestMeter() {
-    if (!this.meterTrees.length) return;
-    const fill = this.forestStored / FOREST.store * 10, cap = this.forestStore() / FOREST.store * 10;
-    this.meterTrees.forEach((im, i) => {
-      const k = Phaser.Math.Clamp(fill - i, 0, 1);
-      im.setTexture(`meter-tree-${k <= 0.02 ? 0 : k < 0.34 ? 1 : k < 0.67 ? 2 : 3}`).setAlpha(i < Math.ceil(cap - 0.001) ? 1 : 0.3);
-    });
-    this.forestFull = this.trees.length > 0 && this.forestStored >= this.forestStore();   // named in parcelText
-    if (this.kindsText) this.kindsText.setText(`kinds ${Math.min(this.speciesPlanted.size, FOREST.kinds)}/${FOREST.kinds}`);
+  updateForestMeter() { this.drawLandStrip(); }   // (the forest meter's pictures went in 0.78.0: the land strip is drawn in their place)
+
+  // The land strip (src/landstrip.js): redrawn when what it shows changes, read at most every 0.2 s (it walks the land's book). Hidden over the sea and the ice, or a land with
+  // no trees, and while the ground-strip hint would touch it (the hint is about now: updateTexts).
+  drawLandStrip() {
+    const L = this.landStrip; if (!L) return;
+    if (this.time.now - L.at < 200 && !L.dirty) return;
+    L.at = this.time.now; L.dirty = false;
+    const P = this.state === 'over' ? null : landProgress(this.save, this.dropLand ? this.dropLand() : this.regionNow);
+    L.info = P;
+    const key = P ? `${P.land}|${P.trees}|${P.water}|${P.done}|${L.x}` : '';
+    if (key === L.key) return; L.key = key;
+    const g = L.gfx.clear(); L.tree.setVisible(!!P); L.text.setVisible(!!P);
+    if (!P) return;
+    L.text.setPosition(L.x, L.y).setColor(P.done ? '#8dffb0' : '#ffffff');
+    this.fitText(L.text.setText(P.done ? `${P.name} FULL` : P.name), LAND_STRIP_W, 8);
+    const by = L.y + 17, bw = P.water[1] ? 28 : 66;
+    L.tree.setPosition(L.x, by + 5);
+    const bar = (x, f, col) => { g.fillStyle(0x1b1b2f, 0.9).fillRect(x - 1, by - 1, bw + 2, 7).fillStyle(0x3a3f55, 1).fillRect(x, by, bw, 5);
+      if (f > 0) g.fillStyle(col, 1).fillRect(x, by, Math.max(1, Math.round(bw * f)), 5); };
+    bar(L.x + 14, frac(P.trees), 0x8dffb0);
+    if (P.water[1]) {   // a water drop (as showParcel draws one) and its bar
+      const wx = L.x + 14 + bw + 6;
+      g.fillStyle(0x1b1b2f, 1).fillRect(wx - 1, by - 3, 8, 10).fillStyle(0x3fa9e8, 1).fillRect(wx, by - 1, 6, 7).fillRect(wx + 2, by - 2, 2, 1).fillStyle(0xcff0ff, 1).fillRect(wx + 1, by + 1, 2, 2);
+      bar(wx + 10, frac(P.water), 0x3fa9e8);
+    }
   }
+  // The strip's box on screen (the ground-strip hint gives way to it: updateTexts; tests/hudlayout).
+  landStripBounds() { const L = this.landStrip; return L ? { x: L.x, y: L.y, w: LAND_STRIP_W, h: 22 } : null; }
 
   // Day / night dial under the distance: one whole cycle as a strip (day, sunset, night, sunrise)
   // with a marker for now, so you can see night coming.
@@ -1765,12 +1786,13 @@ export class GameScene extends Phaser.Scene {
     else this.hintText.setText('');
     // The hint and the forest meter's 'kinds n/5' share the ground strip: a long hint ran into it (the Coordinator's screenshot, 2026-11-12,
     // 'ICY AIR! shade: cooler' over 'kinds 0/5'). While they would touch, the hint wins (it is about now) and 'kinds' waits.
-    if (this.kindsText) { const h = this.hintText.text ? this.hintText.getBounds() : null, k = this.kindsText.getBounds();
-      this.kindsText.setVisible(!(h && h.right + 4 > k.left && h.left < k.right + 4 && h.bottom > k.top && h.top < k.bottom)); }
+    if (this.landStrip) { const h = this.hintText.text ? this.hintText.getBounds() : null, k = this.landStripBounds(), L = this.landStrip;
+      const clash = !!(h && h.right + 4 > k.x && h.left < k.x + k.w + 4 && h.bottom > k.y && h.top < k.y + k.h), on = !!L.info && !clash;   // (the land strip gives way the same way, 0.78.0)
+      L.gfx.setVisible(on); L.text.setVisible(on); L.tree.setVisible(on); L.shown = on; }
 
-    const forest = 'FOREST FULL!';   // one short line (the meter shows the rest; longer text ran into it): FULL beats the soil hint
+    // ('FOREST FULL!' named the forest meter's last tree; it went with the meter in 0.78.0: the land strip says FULL for the land)
     const soilSoon = this.plots.length > 0 || this.distancePx >= PARCEL.firstAt - WIDTH;   // no hint before any soil can appear
-    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.forestFull ? forest : this.parcels && soilSoon && !this.landDone() ? (this.waterOpen && this.waterOpen() ? 'drop on water!' : 'drop on soil!') : '') : '');   // (Plan C: over open water the hint says water)
+    this.parcelText.setText(this.kit.tree && this.state !== 'over' ? (this.parcels && soilSoon && !this.landDone() ? (this.waterOpen && this.waterOpen() ? 'drop on water!' : 'drop on soil!') : '') : '');   // (Plan C: over open water the hint says water)
     const crateNow = this.crateDue();   // over a special delivery's runway the button drops the crate (src/sim/crates.js)
     const showDrop = crateNow || (this.kit.tree && this.parcels > 0 && this.state === 'playing' && !this.frozen && !['ocean', 'ice'].includes(this.regionNow) && !this.landDone());   // nothing to plant on (0.10.7), or nothing left to drop here (trees and water full)
     this.setDropVisible(showDrop);
