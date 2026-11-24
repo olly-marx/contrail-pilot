@@ -29,7 +29,7 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
   // Every mission of both areas done and N monsoon projects funded (pacing A2, LAND_EVEN on: 5 = nature 24 of 30, 9 = 47).
   const SETUP = { arg: 0, fn: async n => { const M2 = await import('./src/missions2.js'), H = await import('./src/habitats.js'), s = game.registry.get('save');
     for (const a of ['sasia', 'easia']) for (const t of M2.TEMPLATES) s.missionsDone.push(`${a}:${t.id}`);
-    s.habitat = { monsoon: H.REGION_DATA.monsoon.projects.slice(0, n).map(p => p.id) }; } };
+    s.habitat = { desert: H.REGION_DATA.desert.projects.slice(0, n).map(p => p.id) }; } };   // Plan B (2026-11-24): KARACHI's desert, the departure land (5 projects: 25 of Easy's 15)
   const cardsOf = p => p.evaluate(() => [...document.querySelectorAll('#mCross .xcard')].map(c => ({ text: c.innerText.replace(/\s+/g, ' ').trim(), route: c.querySelector('.xc-route').textContent, opens: c.querySelector('.xc-opens').textContent,
     rows: [...c.querySelectorAll('.xc-row')].map(r => ({ k: r.dataset.k, tick: !!r.querySelector('.xc-tick'), bar: !!r.querySelector('.xc-bar'), v: (r.querySelector('.xc-v') || {}).textContent || '' })),
     next: (c.querySelector('.xc-next') || {}).textContent || '', fly: !!c.querySelector('[data-cross], [data-pick]'), right: c.getBoundingClientRect().right, left: c.getBoundingClientRect().left })));
@@ -43,8 +43,8 @@ const BASE = { tutorialDone: true, muted: true, priceVersion: 99, fleet, freeGiv
     let cards = await cardsOf(p), text = await list(p);
     check(cards.length === 1 && cards[0].route === 'KARACHI > MUSCAT', `${tag} A: ONE card, the one crossing on offer: ${JSON.stringify(cards.map(c => c.route))}`);
     check(cards.length && cards[0].opens === 'Opens Africa & the Middle East', `${tag} A: the card names the land it opens: ${cards.length && cards[0].opens}`);
-    check(cards.length && cards.every(c => c.rows.map(r => r.k).join() === 'plane' && c.rows[0].bar && !c.rows[0].tick),
-      `${tag} A: the one Range row with a bar: ${JSON.stringify(cards.map(c => c.rows))}`);
+    check(cards.length && cards.every(c => c.rows.map(r => r.k).join() === 'plane,nature' && c.rows[0].bar && !c.rows[0].tick && c.rows[1].tick),
+      `${tag} A: the Range row with a bar, the Nature row ticked (Plan B): ${JSON.stringify(cards.map(c => c.rows))}`);
     check(cards.length && cards.every(c => /HANGAR/.test(c.next) && !c.fly), `${tag} A: one next line naming where to go, no FLY button: ${JSON.stringify(cards.map(c => [c.next, c.fly]))}`);
     check(!/CROSSING:|Needs:|CROSSING TO/.test(text), `${tag} A: none of the old crossing text on MISSIONS: ${JSON.stringify(text.match(/.{0,30}(CROSSING:|Needs:|CROSSING TO).{0,30}/))}`);
     check(cards.every(c => c.left >= 0 && c.right <= W), `${tag} A: every card fits the screen: ${JSON.stringify(cards.map(c => [c.left, c.right]))}`);

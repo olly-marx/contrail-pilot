@@ -26,8 +26,8 @@
     return { crystals: w.crystals, reasons, contrails: most };
   }
   const early = pass({ mode: 'early', farX: 200 }), near = pass({ mode: 'near' }), day = pass({ night: false, mode: 'dive' }), through = pass({ mode: 'through' }), fake = pass({ mode: 'dive', fake: true }), capped = pass({ mode: 'dive', capUsed: true }), dive = pass({ mode: 'dive' });
-  check(dive.crystals === 2 && dive.reasons.length === 0, `control: a patch level with the plane that it dives under at the last moment pays CRYSTALS.dodge (2) and tells nothing: ${JSON.stringify(dive)}`);
-  check(early.crystals === 2 && early.reasons.length === 0, `a patch level with the plane while still far and then avoided pays 2: ${JSON.stringify(early)}`);
+  check(dive.crystals === 1 && dive.reasons.length === 0, `control: a patch level with the plane that it dives under at the last moment pays CRYSTALS.dodge (1, Plan B 2026-11-24) and tells nothing: ${JSON.stringify(dive)}`);
+  check(early.crystals === 1 && early.reasons.length === 0, `a patch level with the plane while still far and then avoided pays 1: ${JSON.stringify(early)}`);
   check(near.crystals === 0 && near.reasons.join() === 'notheading', `a patch that never lined up: no crystal, reason notheading: ${JSON.stringify(near)}`);
   check(day.crystals === 0 && day.reasons.join() === 'day', `by day: no crystal, reason day: ${JSON.stringify(day)}`);
   check(through.crystals === 0 && through.contrails > 0 && through.reasons.join() === 'touched', `flown into: a contrail, no crystal, reason touched: ${JSON.stringify(through)}`);

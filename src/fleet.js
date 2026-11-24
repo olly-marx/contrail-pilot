@@ -40,7 +40,7 @@ export const FORECAST = { popPx: 30 };
 // tune against measured income ~39 seeds a flight). Bigger planes carry more people.
 // 0.73.0 (Oliver, 2026-11-23: 'the fares should take care of' income; a 15,000 km flight ~500 seeds): real seeds per 1,000 game km. Until 0.73.0 the
 // bank divided by 1e6 as if km were metres and every real flight paid 0 (2, 3, 4, 5, 6, 7 then).
-export const FARES = { comet: 20, jumbo: 24, twin: 28, dreamliner: 32, truss: 36, hydrogen: 40 };
+export const FARES = { comet: 10, jumbo: 12, twin: 14, dreamliner: 16, truss: 18, hydrogen: 20 };   // PLAN B (Oliver, 2026-11-24: 'fares are now the dominant source of funds'): half of 0.73.0's 20-40
 export const CONTRAIL_MARGIN = { deep: 0.75, inside: 1, edge: 1.12, edge2: 1.16, edge3: 1.2, edge4: 1.3 };   // edge3: the 2030s; edge4: hydrogen (more water, +46% formation: PROPOSAL-10)   // edge2: the 2010s (the efficiency trap goes on)
 export const PLANES = [
   { id: 'comet', era: 0, name: 'Comet 4', co2: 1.1, margin: 'deep', sprite: 'plane-comet', portrait: 'assets/ui/plane-hangar-comet.png',

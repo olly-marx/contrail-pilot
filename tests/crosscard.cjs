@@ -10,23 +10,25 @@
   const V = await import('../src/crossingview.js'), C = await import('../src/crossings.js'), L = await import('../src/lessons.js'), H = await import('../src/habitats.js');
   const base = { areas: ['sasia', 'easia'], homeArea: 'sasia', city: 'KARACHI', tutorialDone: true };
   const save = (o = {}) => JSON.parse(JSON.stringify({ ...base, ...o }));
-  const proj = n => ({ monsoon: H.REGION_DATA.monsoon.projects.slice(0, n).map(p => p.id) });   // PACING A2 (2026-11-18, LAND_EVEN on, need 30): 5 projects: nature 24 in KARACHI's land (measured), 9: 47
+  const proj = n => ({ desert: H.REGION_DATA.desert.projects.slice(0, n).map(p => p.id) });   // Plan B (2026-11-24): the crossing reads its DEPARTURE land, KARACHI's desert: 2 projects 9, 5 projects 25, 8 projects 44 (measured); Easy needs 15   // PACING A2 (2026-11-18, LAND_EVEN on, need 30): 5 projects: nature 24 in KARACHI's land (measured), 9: 47
 
   // 1. The card. V4 (0.73.0, Oliver 2026-11-22/23): ONE crossing on offer, the shortest from the open regions; ONE row, Range (no era, no nature); no distance on the card.
-  const s1 = save({ areaBest: { sasia: 3000 }, habitat: proj(5) }), cards = V.cardsView(s1);   // (V5: a landed flight from the DEPARTURE area)
+  const s1 = save({ areaBest: { sasia: 3000 }, habitat: proj(8) }), cards = V.cardsView(s1);   // (V5: a landed flight from the DEPARTURE area)
   check(cards.length === 1 && C.available(s1).length === 1, `one card, one crossing on offer (Asia): ${cards.length}`);
   const k = cards[0] || {};
   check(k.id === 'arabian-sea' && k.route === 'KARACHI > MUSCAT' && k.opens === 'Opens Africa & the Middle East' && k.word === 'Easy', `the offer is Asia's shortest, the Arabian Sea (Easy): ${JSON.stringify([k.id, k.route, k.opens, k.word])}`);
-  check(JSON.stringify((k.rows || []).map(r => [r.key, r.label])) === '[["plane","Range"]]', `one row, Range: ${JSON.stringify(k.rows)}`);
+  check(JSON.stringify((k.rows || []).map(r => [r.key, r.label])) === '[["plane","Range"],["nature","Nature"]]' && (k.rows || [])[1].done, `Plan B (2026-11-24): two rows, Range and Nature (KARACHI's desert at 44 of 15: done): ${JSON.stringify(k.rows)}`);
   const plane = (k.rows || [])[0];
   check(plane && !plane.done && /^(nearly|not yet)$/.test(plane.value) && Math.abs(plane.frac - 3000 / 12000) < 1e-9, `the range row: a bar (3,000 of 12,000) and a word: ${JSON.stringify(plane)}`);
   check(cards.every(c => c.rows.every(r => !/km|\d,\d{3}/.test(String(r.value)))), 'no distance anywhere on a card');
   check(k.nextKey === 'plane' && k.next === V.CARD_NEXT.plane && /HANGAR/.test(k.next) && k.next.length <= 60, `the next line is the range's: ${k.nextKey} "${k.next}"`);
   const one = V.oneCardView(s1);
   check(one.length === 1 && !one[0].multi && JSON.stringify(one) === JSON.stringify(cards), 'oneCardView: the single card as it is (no picker)');
-  const s3 = save({ areaBest: { sasia: 12000 } }), c3 = V.cardsView(s3);
-  check(c3.length === 1 && c3[0].ready && c3[0].next === V.CARD_READY && c3[0].rows.every(r => r.done), `a 12,000 km landed flight, no nature: ready, the Ready line: ${JSON.stringify(c3.map(c => [c.id, c.ready, c.next]))}`);
-  check(!V.cardsView(save({ areaBest: { sasia: 11999 } }))[0].ready, '11,999 km is not enough for a 12,000 km crossing');
+  const s5 = save({ areaBest: { sasia: 12000 }, habitat: proj(2) }), c5 = V.cardsView(s5)[0];
+  check(!c5.ready && c5.nextKey === 'nature' && c5.rows[1].value === '9 / 15', `Plan B: 12,000 km but KARACHI's desert at 9 of 15: not ready, the nature line: ${JSON.stringify([c5.ready, c5.nextKey, c5.rows[1]])}`);
+  const s3 = save({ areaBest: { sasia: 12000 }, habitat: proj(8) }), c3 = V.cardsView(s3);
+  check(c3.length === 1 && c3[0].ready && c3[0].next === V.CARD_READY && c3[0].rows.every(r => r.done), `a 12,000 km landed flight and nature 44 of 15: ready, the Ready line: ${JSON.stringify(c3.map(c => [c.id, c.ready, c.next]))}`);
+  check(!V.cardsView(save({ areaBest: { sasia: 11999 }, habitat: proj(8) }))[0].ready, '11,999 km is not enough for a 12,000 km crossing');
   // 2. The crossings lesson.
   const les = L.BOARD.find(l => l.id === 'crossings');
   check(les && L.BOARD[L.BOARD.length - 1].id === 'crossings', 'the crossings lesson is the last on the board');
@@ -42,5 +44,5 @@
   check(!L.lessonOpen({ ...g, tutorialDone: false }, les), 'before flight school is done the lesson is not open');
 
   if (fails.length) { console.log('FAIL crosscard\n' + fails.map(f => '  - ' + f).join('\n')); process.exit(1); }
-  console.log('PASS crosscard: one card, the shortest crossing (route, land, a Range row, one next line, Ready when the range reaches it); the crossings lesson is not done by a two-area region');
+  console.log('PASS crosscard: one card, the shortest crossing (route, land, Range and Nature rows, one next line, Ready when the range reaches it); the crossings lesson is not done by a two-area region');
 })();

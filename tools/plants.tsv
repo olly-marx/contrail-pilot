@@ -64,7 +64,7 @@ hazards	src/sim/rules.js	s/Bird strike!/Oops!/	bird reason text changed
 pickupgates	src/sim/rules.js	s/!this.school \&\& this.kit.safCans \&\& safHelps/!this.school \&\& safHelps/	SAF cans before SAF exists
 pickupgates	src/sim/rules.js	s/else if (!this.school \&\& this.kit.autoChance \&\& r > 1 - this.kit.autoChance)/else if (!this.school \&\& r > 0.5)/	autopilot pick-up without the gadget
 fares	src/sim/rules.js	s/const fares = landed \&\& !this.school ?/const fares = !this.school ?/	a crash pays fares
-fares	src/fleet.js	s/export const FARES = { comet: 20,/export const FARES = { comet: 21,/	Comet fare changed
+fares	src/fleet.js	s/export const FARES = { comet: 10,/export const FARES = { comet: 11,/	Comet fare changed
 fares	src/sim/rules.js	s/\* km \* this.kit.fares)/* km)/	Cabin upgrades ignored
 eras	src/eras.js	s/ERA_BASE_MIN = 20;/ERA_BASE_MIN = 30;/	era base minutes changed
 eras	src/eras.js	s/Math.pow(n, 1.5)/Math.pow(n, 2)/	era growth exponent changed
@@ -723,7 +723,7 @@ needsmark	src/missionplan.js	s/return i < 0 ? lv.length : i + 1;/return i < 0 ? 
 needsmark	src/missionplan.js	s/if (((save.levels || {}).trees || 0) >= lv) return null;/if (((save.levels || {}).trees || 0) > lv) return null;/	the marker stays when the player owns exactly the level
 needsmark	src/missionsview.js	s/const need = m \&\& def \&\& def.needs ? def.needs(m.fill, save) : null;/const need = null;/	the row never shows the asterisk
 missionprize	src/missionprize.js	s/shade: \[10, 0\], 'plant-tree'/shade: [11, 0], 'plant-tree'/	a tier-1 kind pays one seed more (the tier total moves)
-missionprize	src/missionprize.js	s/'Very hard': \[12800, 1024\]/'Very hard': [12801, 1024]/	a crossing word pays one seed more
+missionprize	src/missionprize.js	s/'Very hard': \[14400, 1152\]/'Very hard': [14401, 1152]/	a crossing word pays one seed more
 missionprize	src/missionprize.js	s/  if (!b) throw new Error(.missionPrize: unknown mission kind .*$/  if (!b) return { seeds: 0, crystals: 0 };/	an unknown mission kind pays nothing instead of throwing
 missionprize	src/missions2.js	s/prize: missionPrize(kindOf(t.id), f.k), def: t, fill: own/prize: { seeds: t.prize * f.k, crystals: 0 }, def: t, fill: own/	the prize shown is the old flat one, not the table's
 needsmark-ui	src/missionsview.js	s/short: need ? [^:]* : n.short,/short: n.short,/	the row never shows the asterisk
@@ -751,7 +751,7 @@ missionstreak	src/missions2.js	s/    if (!k.startsWith(`${a}:`)) continue;.*$/  
 crossreward	src/crossings.js	s/^  if (due) payPrize(save, due);$/  if (false) payPrize(save, due);/	the crossing pays nothing
 crossreward	src/crossings.js	s/export const crossingPrizeDue = (save, c) => ((save.crossed || \[\]).includes(c.id) ? null : /export const crossingPrizeDue = (save, c) => (false ? null : /	a crossing already crossed pays again (back-pay)
 crossreward	src/crossings.js	s/    if (save.city !== c.to) return false;/    if (save.city !== c.to) { if (due) payPrize(save, due); return false; }/	the lap pays even when not landed at home
-crossreward	src/missionprize.js	s/Harder: \[10800, 864\]/Harder: [10800, 865]/	a crossing word pays one crystal more (the sum moves)
+crossreward	src/missionprize.js	s/Harder: \[12000, 960\]/Harder: [12000, 961]/	a crossing word pays one crystal more (the sum moves)
 crossreward	src/crossingend.js	s/    if (c.prize) lines.push(.*$/    if (false) lines.push(...prizeLines(c.prize));/	the landing card names no prize
 crossreward	src/crossingview.js	s/word: s.difficulty, prize: prizeText(s.prize), ticks,/word: s.difficulty, prize: prizeText({ seeds: 1 }), ticks,/	the box shows a prize that is not the one paid
 crossrewardui	src/ui.js	s/ <span class=[^>]*hc-prize[^>]*>${esc(box.prize)}<\/span>//	the HOME box shows no prize
@@ -999,3 +999,6 @@ bank	src/hangar.js	s/if (ht) ht.textContent = s.seeds; if (hc) hc.textContent = 
 ascprune	tools/asc-prune-certs.mjs	s/export const newCerts = (certs, before) => certs.filter(c => ours(c) \&\& !before.includes(c.id));/export const newCerts = (certs, before) => certs.filter(c => ours(c));/	every CI certificate is revoked, Word Journey's too
 ascprune	tools/asc-prune-certs.mjs	s/return a.certificateType === PRUNE.type \&\& a.name === PRUNE.name; };/return a.certificateType !== 'X'; };/	any certificate counts as CI's, the distribution one too
 ascprune	.github/workflows/apps.yml	s/- name: "Signing certificates before/- name: Signing certificates before/	an unquoted step name with a colon (the ci\/rel075 YAML error) passes
+crossingview	src/crossings.js	s/ready: plane \&\& nature };/ready: plane };/	a crossing opens on range alone again (the departure land's nature not asked: Plan B)
+crossladder	src/crossings.js	s/return l ? biodiversity(save, l) : 0;/return 100;/	the nature tick reads no land (always full)
+crossladder	src/crossings.js	s|^const chance = (save, c) => (c.km ? Math.min(reachFrom(save, c) / c.km, natureNeed(c) ? natureHave(save, c) / natureNeed(c) : 1) : 0);|const chance = (save, c) => (c.km ? reachFrom(save, c) / c.km : 0);|	the route offered is picked by range alone again (a land the player never grew)

@@ -13,7 +13,7 @@ import { bestAreaBio } from './arealand.js';
 import { crossingReward, crossingWord } from './missionprize.js';
 import { payPrize } from './rewards.js';
 import { REGION_DATA } from './habitats.js';
-import { projectsDone } from './nature.js';
+import { projectsDone, biodiversity } from './nature.js';
 
 // CROSSINGS V3 (the user, 2026-11-13: '22 crossings is obscene ... 6 regions, 5 crossings plus the lap is perfect. Each one harder than the last'): EIGHT famous routes join the
 // six REGIONS (src/areas.js); you choose which way to go next. A route has no era of its own: the n-th crossing you make (n = regions open - 1) is era n and takes era n's length
@@ -84,7 +84,8 @@ export const crossingsMade = save => Math.max(0, regionsOpen(unlockedAreas(save)
 export const topRung = save => crossingsMade(save) - 1;
 export const crossingKm = c => (c.kind === 'lap' ? SEASON.crossingKm.final : (SEASON.step && SEASON.step.km[c.era]) || SEASON.crossingKm[c.era + 1]);
 // The nature meter a crossing needs: offer.biodiversity x SEASON.step.bioMul by crossing number (the lap and anything else: offer.biodiversity).
-export const natureNeed = c => Math.round(SEASON.offer.biodiversity * (c && c.kind !== 'lap' && SEASON.step && Number.isFinite(SEASON.step.bioMul[c.era]) ? SEASON.step.bioMul[c.era] : 1));
+export const natureNeed = c => { const m = SEASON.step && SEASON.step.bioMul, k = c && c.kind === 'lap' ? (m ? m.length - 1 : -1) : c && c.era;   // the lap asks what the hardest tier asks (Plan B)
+  return Math.round(SEASON.offer.biodiversity * (m && Number.isFinite(m[k]) ? m[k] : 1)); };
 // The two areas a crossing joins ('ocean' for Honolulu/Nadi, which belong to no area).
 export const sides = c => [areaOf(c.a) || 'ocean', areaOf(c.b) || 'ocean'];
 // Your home city: where the start choice put you (src/startchoice.js save.homeArea), else where you are.
@@ -117,7 +118,9 @@ function allOpen(save) {
   }
   return out;
 }
-const chance = (save, c) => (c.km ? reachFrom(save, c) / c.km : 0);
+// How near a route is (Plan B, 2026-11-24): the LOWER of its range and its departure land's nature, each as a share of what it needs, so the route offered is the one whose land
+// the player has grown (measured: by range alone the sim was offered KARACHI > RIYADH, a desert it never flew over, for 160 flights while its range was 2.5 times the route).
+const chance = (save, c) => (c.km ? Math.min(reachFrom(save, c) / c.km, natureNeed(c) ? natureHave(save, c) / natureNeed(c) : 1) : 0);
 function routes(save, one) {
   const all = allOpen(save), lap = all.filter(c => c.kind === 'lap'), rs = all.filter(c => c.kind !== 'lap');
   if (!rs.length) return lap;
@@ -125,14 +128,14 @@ function routes(save, one) {
   if (!one) return here;
   const picked = save.crossPick && here.find(c => c.id === save.crossPick);
   if (picked) return [picked];
-  const ready = here.find(c => planeReady(save, c));
+  const ready = here.find(c => readiness(save, c).ready);
   return ready ? [ready] : here.slice(0, 1);
 }
 // Fix the pick: the first route at the next tier that is ready. The game calls this when it shows HOME and after a landing; returns the id picked (or null).
 export function pickCrossing(save) {
   const here = routes(save, false), valid = save.crossPick && here.some(c => c.id === save.crossPick);
   if (valid) return save.crossPick;
-  const ready = here.find(c => c.kind !== 'lap' && planeReady(save, c));
+  const ready = here.find(c => c.kind !== 'lap' && readiness(save, c).ready);   // (Plan B: range and nature)
   save.crossPick = ready ? ready.id : null;
   return save.crossPick;
 }
@@ -157,11 +160,14 @@ export const natureBest = save => Math.max(0, ...unlockedAreas(save).map(k => be
 export const regionNature = save => { const by = {}; for (const k of unlockedAreas(save)) { const r = regionOfArea(k); if (r) by[r] = Math.max(by[r] ?? 0, bestAreaBio(save, k)); } return by; };
 // The region a 'weakest' crossing waits on (null under 'best', or with one region open): the opened region whose best land is lowest (src/crossingview.js names it on the card).
 export const weakestRegion = save => { if (!(SEASON.step && SEASON.step.natureRule === 'weakest')) return null; const by = regionNature(save), ks = Object.keys(by); return ks.length > 1 ? ks.reduce((a, b) => (by[b] < by[a] ? b : a)) : null; };
-export const natureHave = save => { if (!(SEASON.step && SEASON.step.natureRule === 'weakest')) return natureBest(save); const v = Object.values(regionNature(save)); return v.length ? Math.min(...v) : natureBest(save); };
+// 'departure' (Plan B): the departure city's land (src/nature.js biodiversity, land + water parts).
+export const departureLand = c => (c && c.from && city(c.from) ? city(c.from).region : null);
+export const natureHave = (save, c) => { if (SEASON.step && SEASON.step.natureRule === 'departure') { const l = departureLand(c); return l ? biodiversity(save, l) : 0; }
+  if (!(SEASON.step && SEASON.step.natureRule === 'weakest')) return natureBest(save); const v = Object.values(regionNature(save)); return v.length ? Math.min(...v) : natureBest(save); };
 export function readiness(save, c) {
-  // V4: the plane's range only. era and nature stay in the answer (always true) so the screens that tick them still read.
-  const plane = planeReady(save, c), nb = natureHave(save);
-  return { era: true, plane, nature: true, natureHave: Math.round(nb), ready: plane };
+  // PLAN B (Oliver, 2026-11-24): the range AND the nature of the departure land (no era: always true, so the screens that tick it still read). V4 (0.73.0) asked the range only.
+  const plane = planeReady(save, c), nb = natureHave(save, c), nature = nb >= natureNeed(c);
+  return { era: true, plane, nature, natureHave: Math.round(nb), ready: plane && nature };
 }
 
 // The era (index) in which the next crossing you could fly opens, when it is later than yours and this release has it; else null.

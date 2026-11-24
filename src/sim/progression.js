@@ -27,7 +27,7 @@ import { city } from '../route.js';
 import { SEASON2_ON } from '../cities.js';
 import { SEASON } from '../season.js';
 import { AREAS, areaOf } from '../areas.js';
-import { available, upcoming, offerCheck, offerCtx, completeCrossing, readiness, pickCrossing } from '../crossings.js';
+import { available, upcoming, offerCheck, offerCtx, completeCrossing, readiness, pickCrossing, departureLand } from '../crossings.js';
 import { onSave as missionsOnSave } from '../missions2.js';
 
 // Test switches (tests/sim-progression-s2.cjs plants each; it must FAIL): noready = offer the first available crossing even when
@@ -92,7 +92,7 @@ export function shop(save, region) {
 }
 
 export function progression({ careful = true, skill = LEARNING, flights = 100, seed = 1, tiers = [7000, 9000, 11000, 14000, 17000],
-  every = 10, maxSkip = 3, capSeeds = [1, 2, 3], start = {}, beforeFlight = null, useHint = false, chaseGate = false, pursue = false, late = 0 } = {}) {
+  every = 10, maxSkip = 3, capSeeds = [1, 2, 3], start = {}, beforeFlight = null, aimNature = false, useHint = false, chaseGate = false, pursue = false, late = 0 } = {}) {
   let save = { tutorialDone: true, muted: true, seenTips: ['*'], landings: 0, missionCities: {}, ...start };   // (missionCities {}: a new player's save: the first city missions are stored by the NEW rules, not as an old save's)
   const rnd = makeRng(seed * 7919 + 13), rows = [], events = [];
   let tier = 0, cap = null, eraWas = 0;
@@ -152,6 +152,8 @@ export function progression({ careful = true, skill = LEARNING, flights = 100, s
     }
     const prizes = sumPrizes((w.result || {}).rewards);   // R8: prizes are PAID at the bank (RULES.bankFlight): the flight's prize total, for the row below
     const bought = shop(save, here);
+    // aimNature (Plan B, 2026-11-24): a player who follows the crossing card ('Grow nature in the land it leaves from') also funds that land's projects.
+    if (aimNature && s2) { const c = available(save)[0], l = c && departureLand(c); if (l && l !== here && !readiness(save, c).nature) bought.push(...shop(save, l)); }
     if (s2) missionsOnSave(save);   // save-event missions (a purchase, a project) pay at the buy itself (R8), as the game checks after a buy
     const era = eraProgress(save).index;
     if (era > eraWas) { events.push({ flight: n, minutes: +(save.flightSeconds / 60).toFixed(1), what: `era ${era} opens (${fleetOf(save).plane})` }); eraWas = era; }

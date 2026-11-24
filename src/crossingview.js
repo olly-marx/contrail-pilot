@@ -22,6 +22,8 @@ export function stateOf(save, c, { unlock = false } = {}) {
   // CROSSINGS V4 (0.73.0, Oliver 2026-11-23): ONE condition, the plane's RANGE (plane upgrades and nature) against the route. No era, no nature bar.
   const conds = [
     { key: 'plane', label: 'Range', line: 'more range', plain: 'More range: upgrade plane', where: 'hangar', done: rd.plane, frac: pp, status: rd.plane ? 'done' : (pp >= 0.75 ? 'nearly' : 'not yet') },
+    // PLAN B (2026-11-24): the departure land's nature, rising per tier.
+    { key: 'nature', label: 'Nature', line: 'more nature', plain: 'Grow nature where it starts', where: 'nature', done: rd.nature, frac: need ? Math.min(1, rd.natureHave / need) : 1, status: rd.nature ? 'done' : (rd.natureHave >= 0.75 * need ? 'nearly' : 'not yet') },
   ];
   const open = conds.filter(x => !x.done), nearest = open.slice().sort((a, b) => b.frac - a.frac)[0] || null;
   // WHERE the player is matters only for DOING the crossing (CROSSINGS V2 step 3): at its departure airport the player crosses, elsewhere the box says 'Go to <city>' with one dot per hop left
@@ -84,7 +86,7 @@ export const screenView = s => {
 // 'CROSSING TO X' tick list under it). ONE card per crossing on offer (src/crossings.js available): the route, the land it opens, three rows Era / Plane / Nature (a tick when done; else a small bar,
 // nature with its own 'have / need', the plane with a word, never a distance), and ONE plain line on what to do next for the open row nearest to done (stateOf's nearest). A ready card says so and
 // carries FLY THE CROSSING. Pure: src/ui.js crossingsHTML draws it; tests/crosscard.cjs holds it.
-export const CARD_NEXT = { era: 'A later era opens it. Keep flying.', plane: 'More range: upgrade your plane in HANGAR, or grow nature.', nature: 'Raise nature in a land you have: plant and fund in NATURE.' };   // (V4: only plane is asked)
+export const CARD_NEXT = { era: 'A later era opens it. Keep flying.', plane: 'More range: upgrade your plane in HANGAR, or grow nature.', nature: 'Grow nature in the land it leaves from, in NATURE.' };   // (Plan B 2026-11-24: plane and the departure land's nature)
 export const CARD_READY = 'Ready! One long flight with no stops.';
 export const natureNextIn = name => `Grow nature in ${name}: FLY HERE in NATURE.`;   // (natureRule 'weakest', two or more regions open)
 export function cardOf(save, c, opts = {}) {

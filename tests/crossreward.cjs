@@ -1,7 +1,7 @@
 // RELEASE C: the crossing prize (src/missionprize.js crossingReward / crossingWord; src/crossings.js crossingPrizeDue, completeCrossing; src/crossingend.js endView; src/crossingview.js stateOf / boxView). Plain Node, no browser.
 // The prize is paid in completeCrossing, which the game (GameScene.finish) and the sim (src/sim/progression.js) both call. Named lines, in order:
 //   FIXTURE  8 routes + the lap (CROSSINGS V3, 2026-11-13); a game is 5 crossings (eras 0-4, asNext) + the lap, each with a word the price table knows
-//   1. they pay 59,600 seeds and 4,768 ice crystals together (0.73.0; 4,500 and 561 before) (Easy, Medium, Hard, Harder, Very hard, the lap: one each)
+//   1. they pay 62,400 seeds and 4,992 ice crystals together (Plan B 2026-11-24; 59,600 and 4,768 in 0.73.0; 4,500 and 561 before) (Easy, Medium, Hard, Harder, Very hard, the lap: one each)
 //   2. a landed crossing pays its word's prize ONCE: the first completeCrossing adds exactly crossingReward(word) to the bank
 //   3. NO BACK-PAY: a crossing already in save.crossed pays nothing (a second landing, and an old save that crossed it before this release)
 //   4. the lap pays only when it is landed back HOME (the player is elsewhere: nothing, not marked crossed); landed at home it pays 16,000 seeds and 1,280 crystals
@@ -21,7 +21,7 @@ globalThis.SEASON2 = true;
   check(all.length === 6 && C.CROSSINGS.length > 9 && all.every(c => Z.CROSSING_PRIZE[word(c)]), `FIXTURE: 8 routes + the lap; a game's 5 crossings + the lap, every word priced: ${all.length} ${JSON.stringify(counts)}`);
   // 1
   const sum = all.reduce((a, c) => { const r = Z.crossingReward(word(c)); return [a[0] + r.seeds, a[1] + r.crystals]; }, [0, 0]);
-  check(sum[0] === 59600 && sum[1] === 4768 && JSON.stringify(counts) === JSON.stringify({ Easy: 1, Medium: 1, Hard: 1, Harder: 1, 'Very hard': 1, 'The lap': 1 }), `a game's 5 crossings and the lap pay 59,600 seeds and 4,768 crystals (0.73.0), one of each word: ${sum} ${JSON.stringify(counts)}`);
+  check(sum[0] === 62400 && sum[1] === 4992 && JSON.stringify(counts) === JSON.stringify({ Easy: 1, Medium: 1, Hard: 1, Harder: 1, 'Very hard': 1, 'The lap': 1 }), `a game's 5 crossings and the lap pay 62,400 seeds and 4,992 crystals (0.73.0), one of each word: ${sum} ${JSON.stringify(counts)}`);
   const S = await import('../src/save.js');
   const mk = (extra = {}) => Object.assign(S.prepareSave(null), { areas: ['weurope'], homeArea: 'weurope', homeCity: 'ROME', city: 'ROME', visited: ['ROME'], tutorialDone: true, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], seeds: 10, crystals: 3, crossed: [] }, extra);
   const c0 = C.available(mk()).find(x => x.id === 'mediterranean');   // the real offered crossing (from, to, opens, km filled in)
@@ -58,6 +58,6 @@ globalThis.SEASON2 = true;
     const kmOf = w => (w === 'The lap' ? SE.crossingKm.final : SE.step.km[Z.CROSSING_WORDS.indexOf(w)]);
     const off = Z.CROSSING_WORDS.filter(w => { const sp = SB.storyPay(2 * kmOf(w)), p = Z.CROSSING_PRIZE[w]; return Math.abs(p[0] - 3 * sp.seeds) > 3 || Math.abs(p[1] - 3 * sp.crystals) > 3; });   // (within storyPay's own rounding)
     check(!off.length, `every crossing pays 3 stories of its reach: off ${off.map(w => `${w} ${Z.CROSSING_PRIZE[w]} vs ${3 * SB.storyPay(2 * kmOf(w)).seeds}/${3 * SB.storyPay(2 * kmOf(w)).crystals}`).join(', ')}`); }
-  console.log(fails.length ? `FAIL crossreward:\n - ${fails.join('\n - ')}` : 'PASS crossreward: a game of 5 crossings + the lap pay 59,600 / 4,768, paid once on landing, no back-pay, lap only at home, nothing on a crash, shown = paid, the landing card names it');
+  console.log(fails.length ? `FAIL crossreward:\n - ${fails.join('\n - ')}` : 'PASS crossreward: a game of 5 crossings + the lap pay 62,400 / 4,992, paid once on landing, no back-pay, lap only at home, nothing on a crash, shown = paid, the landing card names it');
   process.exit(fails.length ? 1 : 0);
 })();

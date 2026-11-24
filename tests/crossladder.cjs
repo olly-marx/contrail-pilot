@@ -41,20 +41,32 @@ globalThis.SEASON2 = true;
       const climbs = seq.every((t, i) => i === 0 || t > seq[i - 1] || (t === top && seq[i - 1] === top));
       check(climbs && C.upcoming(sv).some(c => c.kind === 'lap'), `${start}: the ladder climbs and ends at the lap: ${seq}`); } }
   // 2c. V5: THE PICK STICKS. Two routes at the next tier; the first to be ready is picked, and when the other becomes ready too, the pick stays (Oliver: 'the other just never gets a crossing').
-  { const sv = { areas: ['weurope', 'nordic', 'mideast', 'africa'], homeArea: 'weurope', city: 'ROME', crossed: ['mediterranean'], crossTierLast: 0, areaBest: { weurope: 16000 } };
+  { const HD = (await import('../src/habitats.js')).REGION_DATA, allNature = Object.fromEntries(Object.entries(HD).map(([l, r]) => [l, (r.projects || []).map(p => p.id)]));   // every land's projects: each land part over Medium's 45 (Plan B), so range decides here
+    const sv = { areas: ['weurope', 'nordic', 'mideast', 'africa'], homeArea: 'weurope', city: 'ROME', crossed: ['mediterranean'], crossTierLast: 0, areaBest: { weurope: 16000 }, habitat: allNature };
     const first = C.pickCrossing(sv), upNow = C.upcoming(sv).map(c => c.id);
     sv.areaBest = { weurope: 16000, mideast: 16000, nordic: 16000, africa: 16000 };
     const after = C.pickCrossing(sv), off = C.available(sv).map(c => c.id);
     check(first && upNow.length >= 2 && after === first && off.length === 1 && off[0] === first, `the first ready route is picked and kept: picked ${first} of ${upNow}, then ${after}, offered ${off}`); }
   // 2b. THE PACING LEVERS (SEASON.step, 2026-11-13): the n-th crossing's length and nature need come from step.km[n] / step.bioMul[n] x offer.biodiversity; the 5th and the lap keep their lengths
   { const SS = (await import('../src/season.js')).SEASON, km0 = SS.step.km[0], bio0 = SS.step.bioMul[0];
-    check(JSON.stringify(SS.step.km.slice(3)) === '[27000,32000]' && SS.crossingKm.final === 40000, `the 4th, 5th and the lap are 27,000 / 32,000 (Oliver, 2026-11-23) / 40,000: ${SS.step.km}, ${SS.crossingKm.final}`);
+    check(JSON.stringify(SS.step.km.slice(3)) === '[30000,36000]' && SS.crossingKm.final === 40000, `the 4th, 5th and the lap are 30,000 / 36,000 (Plan B 2026-11-24; 27,000 / 32,000 before) / 40,000: ${SS.step.km}, ${SS.crossingKm.final}`);
     try {
       SS.step.km[0] = 12000; SS.step.bioMul[0] = 40 / 30;
       const sv = { areas: ['weurope'], homeArea: 'weurope', city: 'ROME', tutorialDone: true, flightSeconds: 0, bestDistance: 99999 };
       const first = C.available(sv).find(c => c.kind !== 'lap');
-      check(first && first.km === 12000 && C.readiness(sv, first).nature === true, `a lever moves the Easy tier's length (V4: nature is not asked): ${first && [first.km, C.readiness(sv, first).nature]}`);
+      const H = await import('../src/habitats.js'), rich = { ...sv, habitat: { mediterranean: H.REGION_DATA.mediterranean.projects.map(p => p.id) } };   // ROME's land at 56
+      check(first && first.km === 12000 && C.natureNeed(first) === 40 && C.readiness(sv, first).nature === false && C.readiness(rich, first).nature === true,
+        `the levers move the Easy tier's length and its nature need, read on ROME's land (Plan B): ${first && [first.km, C.natureNeed(first), C.readiness(sv, first).nature, C.readiness(rich, first).nature]}`);
+      const lapC = { ...C.CROSSINGS.find(x => x.kind === 'lap') };
+      check(C.natureNeed(lapC) === Math.round(SS.offer.biodiversity * SS.step.bioMul[SS.step.bioMul.length - 1]), `the lap asks what the hardest tier asks: ${C.natureNeed(lapC)}`);
     } finally { SS.step.km[0] = km0; SS.step.bioMul[0] = bio0; } }
+  // 2d. PLAN B (2026-11-24): with the range there for every route, the one OFFERED is the one whose departure land has grown most (by range alone the sim was offered a desert it never flew over for 160 flights).
+  { const HD = (await import('../src/habitats.js')).REGION_DATA, sv = { areas: ['weurope', 'nordic', 'mideast', 'africa'], homeArea: 'weurope', city: 'ROME', crossed: ['mediterranean'], crossTierLast: 0,
+      areaBest: { weurope: 60000, nordic: 60000, mideast: 60000, africa: 60000 } };
+    const ups = C.upcoming(sv).filter(c => c.kind !== 'lap'), lands = [...new Set(ups.map(c => C.departureLand(c)))], grow = lands[lands.length - 1];
+    sv.habitat = { [grow]: HD[grow].projects.slice(0, 6).map(p => p.id) };
+    const off = C.available(sv)[0];
+    check(lands.length >= 2 && off && C.departureLand(off) === grow, `the route offered leaves from the land with the most nature (${grow}): offered ${off && off.id} from ${off && C.departureLand(off)}; lands ${lands}`); }
   // 3
   const base = () => ({ fuel: 'kerosene', priceVersion: 2, tutorialDone: true, areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], areaBest: {}, crossed: [], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'], levels: {}, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
   const w = base(), c = { ...C.asNext(C.crossingById('mediterranean'), 0), from: 'ROME', to: 'TUNIS' };

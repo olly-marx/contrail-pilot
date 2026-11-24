@@ -237,7 +237,7 @@ export const FOREST = {
 };
 
 export const CRYSTALS = {
-  dodge: 2,            // icy air that was in your path at night, flown around (x the Sensors multiplier, kit.dodgeMul; balance 2026-11-23: was 1, Sensors set 1-3)
+  dodge: 1,            // PLAN B (Oliver, 2026-11-24: '8 crystals per dodge'): back to 1 (2 from 0.73.0). icy air that was in your path at night, flown around (x the Sensors multiplier, kit.dodgeMul; balance 2026-11-23: was 1, Sensors set 1-3)
   dodgesPerNight: 3,   // at most this many dodge crystals each night
   cleanNight: 6,       // a whole night with no heat trapped (Night Owl; 2 until the 2026-11-23 balance)
   perKm: 1,            // crystals per 1,000 km of a clean landing (the crystal side of the fares; Oliver's anchor 2026-11-23: a 15,000 km flight ~40 crystals)

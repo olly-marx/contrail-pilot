@@ -12,15 +12,18 @@
   // 1. The three ticks: Era, Plane, Nature (CROSSINGS V2: ready by status; the trial stars and where the player is do not matter).
   const s0 = base(), c0 = V.crossingState(s0);
   check(c0 && c0.id === 'mediterranean' && c0.to === 'TUNIS' && c0.km === 12000 && !c0.ready, `a fresh weurope pilot: the first crossing is near, not ready: ${JSON.stringify(c0 && [c0.id, c0.ready])}`);
-  // V4 (0.73.0, Oliver 2026-11-23): ONE tick, Range (the plane's range or a landed flight reaches the whole crossing); no era, no nature.
-  check(c0.conds.map(x => x.label).join('|') === 'Range', `one tick, Range: ${c0.conds.map(x => x.label)}`);
-  check(c0.conds.map(x => x.done).join() === 'false' && c0.nearest && c0.nearest.key === 'plane', `a fresh pilot: the range is not there yet: ${c0.conds.map(x => [x.key, x.done])}`);
+  // PLAN B (Oliver, 2026-11-24): TWO ticks, Range (the plane's range or a landed flight reaches the whole crossing) and Nature (the departure land's meter, rising per tier); no era.
+  check(c0.conds.map(x => x.label).join('|') === 'Range|Nature', `two ticks, Range and Nature: ${c0.conds.map(x => x.label)}`);
+  check(c0.conds.map(x => x.done).join() === 'false,false' && c0.nearest && c0.nearest.key === 'plane', `a fresh pilot: the range is not there yet: ${c0.conds.map(x => [x.key, x.done])}`);
   check(V.boxView(c0).line === 'More range: upgrade plane', `the box's plain line: "${V.boxView(c0).line}"`);
-  const sShort = base(); sShort.areaBest = { weurope: 11999 };
+  const H = await import('../src/habitats.js'), medAll = H.REGION_DATA.mediterranean.projects.map(p => p.id);   // every Mediterranean land project: its meter 56, over Easy's 15
+  const sShort = base(); sShort.areaBest = { weurope: 11999 }; sShort.habitat = { mediterranean: medAll };   // (nature met, so only the range holds it back)
   check(!V.crossingState(sShort).ready, 'an 11,999 km flight does not open a 12,000 km crossing (V4: the whole crossing, not 70%)');
-  const s1 = base(); s1.areaBest = { weurope: 12000 };
+  const sNoNat = base(); sNoNat.areaBest = { weurope: 12000 };
+  check(!V.crossingState(sNoNat).ready, 'Plan B: a 12,000 km landed flight alone does not open it: ROME\'s land has no nature');
+  const s1 = base(); s1.areaBest = { weurope: 12000 }; s1.habitat = { mediterranean: medAll };
   const c2 = V.crossingState(s1);
-  check(c2.ready && !c2.told, `a 12,000 km landed flight: ready, not told, with no nature and no trial stars: ${JSON.stringify([c2.ready, c2.told])}`);
+  check(c2.ready && !c2.told, `a 12,000 km landed flight and nature in ROME's land: ready, not told, no trial stars: ${JSON.stringify([c2.ready, c2.told])}`);
   { const far = { ...s1, city: 'OSLO', visited: ['OSLO'] };
     check(JSON.stringify(V.crossingState(s1).conds) === JSON.stringify(V.crossingState(far).conds), 'the tick does not depend on the city the player is in'); }
   // 2. The moment fires once.
@@ -49,6 +52,6 @@
     check(V.ticksTitle(st).length <= 28 && V.rightText(st).length <= 13, `${c.id}: ticks title ${V.ticksTitle(st).length}, right ${V.rightText(st).length}`);
     const row = N.fitRow({ short: `Cross to ${st.to}`, where: 'fly', right: V.rightText(st) }); check(row.short.length + row.right.length <= N.ROW_MAX, `${c.id}: the lead row fits one line: "${row.short}" + "${row.right}"`);
   }
-  console.log(fails.length ? `FAIL crossingview:\n - ${fails.join('\n - ')}` : `PASS crossingview: one Range condition (the whole crossing), nearest, the moment once and only once, UP NEXT rows, and the sheet and rows of all ${C.CROSSINGS.length - 1} crossings within budget`);
+  console.log(fails.length ? `FAIL crossingview:\n - ${fails.join('\n - ')}` : `PASS crossingview: Range and Nature (the departure land) conditions, nearest, the moment once and only once, UP NEXT rows, and the sheet and rows of all ${C.CROSSINGS.length - 1} crossings within budget`);
   process.exit(fails.length ? 1 : 0);
 })();

@@ -34,8 +34,8 @@ export function missionPrize(kind, k = 1, plane = null) {
 // The crossing prize by difficulty word (the full scale; paid once, in completeCrossing, only when the crossing is not yet in save.crossed: release C wires it; no back-pay).
 // 0.73.0 (Oliver, 2026-11-22: 'current crossing rewards are weak'; 2026-11-23: 'the crossings ... should be worth about 3 stories'). A story at the reach a crossing needs pays
 // storyPay(2 x that km) (src/storyboard.js: 1,000 seeds and 80 crystals per 15,000 km of paid stages; its stages total about twice the reach), so a crossing pays
-// 3 x storyPay(2 x km) = 400 seeds and 32 crystals per 1,000 km of the crossing: Easy 12,000 ... Very hard 32,000 km; the lap 40,000.
-export const CROSSING_PRIZE = { Easy: [4800, 384], Medium: [6400, 512], Hard: [8800, 704], Harder: [10800, 864], 'Very hard': [12800, 1024], 'The lap': [16000, 1280] };
+// 3 x storyPay(2 x km) = 400 seeds and 32 crystals per 1,000 km of the crossing: Easy 12,000 ... Harder 30,000, Very hard 36,000 km (Plan B 2026-11-24; were 27,000 / 32,000); the lap 40,000.
+export const CROSSING_PRIZE = { Easy: [4800, 384], Medium: [6400, 512], Hard: [8800, 704], Harder: [12000, 960], 'Very hard': [14400, 1152], 'The lap': [16000, 1280] };
 // HOW HARD a crossing is, as a word (the ONE list: src/crossingview.js DIFFICULTY and difficultyOf are these two). The ladder follows the eras; the lap is the last.
 export const CROSSING_WORDS = ['Easy', 'Medium', 'Hard', 'Harder', 'Very hard', 'The lap'];
 export const crossingWord = c => {

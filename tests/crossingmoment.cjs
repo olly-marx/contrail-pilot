@@ -12,7 +12,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const SETUP = () => { const s = game.registry.get('save'), ui = game.registry.get('ui');
     Object.assign(s, { areas: ['weurope'], homeArea: 'weurope', homeCity: 'LONDON', city: 'LONDON', visited: ['LONDON'], missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5', 'weurope:night', 'weurope:shade10'], areaBest: { weurope: 11000 }, bestDistance: 11000, crossMomentTest: true,
-      crossed: [], crossingTold: [], unclaimed: [], seeds: 500, crystals: 50, discovered: { woodland: 1 }, freeProjectGiven: false, freeUpgrade: false, found: {}, habitat: {} });
+      crossed: [], crossingTold: [], unclaimed: [], seeds: 500, crystals: 50, discovered: { woodland: 1 }, freeProjectGiven: false, freeUpgrade: false, found: {}, habitat: { mediterranean: ['olives', 'firegraze', 'dehesa', 'turtlebeach'] } });   // Plan B (2026-11-24): ROME's land at 20 of Easy's 15, so the range is the last condition
     ui.tour.busy = true; ui.showTitle(); };
   const sheet = p => p.evaluate(() => { const e = document.getElementById('sheet'); return e ? e.innerText.replace(/\s+/g, ' ') : null; });
   // THE MOMENT is the full-screen 'Crossing unlocked!' card since 2026-11-18 (src/crossunlock.js; Oliver: a big celebration, not the small sheet). A tap elsewhere still opens the small sheet.
@@ -26,7 +26,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(home0.rows.some(r => /NEXT CROSSING.*More range/.test(r)) && !home0.dot && !(await sheet(p)), `${tag}: before the moment the HOME box says which tick is open, no dot, no sheet: ${JSON.stringify(home0)}`);
     await p.click('#tabMissions'); await p.waitForTimeout(500);
     const ticks = await p.evaluate(() => ({ label: [...document.querySelectorAll('#mList .label')].map(e => e.textContent.trim()).find(t => /^CROSSINGS/.test(t)), route: (document.querySelector('#mCross .xcard .xc-route') || {}).textContent, rows: [...document.querySelectorAll('#mCross .xcard:first-child .xc-row')].map(e => e.innerText.replace(/\s+/g, ' ').trim()) }));   // (the crossing CARD, 2026-11-18: it replaced the 'CROSSING TO X' tick list)
-    check(ticks.label === 'CROSSINGS' && ticks.route === 'ROME > TUNIS' && ticks.rows.length === 1 && /Range/.test(ticks.rows[0]) && !/done/.test(ticks.rows[0]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
+    check(ticks.label === 'CROSSINGS' && ticks.route === 'ROME > TUNIS' && ticks.rows.length === 2 && /Range/.test(ticks.rows[0]) && !/done/.test(ticks.rows[0]) && /Nature/.test(ticks.rows[1]), `${tag}: MISSIONS shows the crossing's three conditions: ${JSON.stringify(ticks)}`);
     // 2. THE MOMENT: the range reaches the crossing (a 12,000 km landed flight is on the record) and the next screen change shows the card.
     await p.click('#tabFly'); await p.waitForTimeout(400);
     await p.evaluate(() => { const s = game.registry.get('save'); s.areaBest = { weurope: 12000 }; s.bestDistance = 12000; game.registry.get('ui').refreshDots(); }); await p.waitForTimeout(900);
