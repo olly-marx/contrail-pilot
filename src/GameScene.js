@@ -195,11 +195,10 @@ export class GameScene extends Phaser.Scene {
     this.kindsText = null;
     this.forestFull = false;
     this.nextText = this.add.text(WIDTH / 2, 58, '', { ...font, fontSize: '8px', strokeThickness: 3 }).setOrigin(0.5, 0);
-    // THE APPROACH CALL (0.79.0; Oliver, 2026-11-24: 'I forgot to land. I just missed the airport ... the countdown to an airport should be much more bold when you're getting
-    // close'): from APPROACH.from px before the TARGET's runway (a story stop, a GO TO city), a big two-line call in the sky, 'LAND AT PARIS' over the metres left, that turns red
-    // and flashes in the last APPROACH.urgent px, and a bobbing arrow over the runway itself. (The old call was one 8 px line, 'GET LOW to land!', from 300 px.) Low in the sky: the
-    // top half holds the land's card and the tip bubbles (a first try at y 96 sat under the card, screenshot 2026-11-25).
-    this.approachText = this.add.text(WIDTH / 2, SKY_H - 170, '', { ...font, fontSize: '16px', strokeThickness: 4, align: 'center', lineSpacing: 6, color: '#ffe15a' }).setOrigin(0.5, 0).setDepth(12).setVisible(false);
+    // THE APPROACH MARKER (0.79.1; Oliver, 2026-11-25, on 0.79.0's full-width 'LAND AT WINDHOEK': 'make it more obvious that an airport you want to land at is coming up, don't
+    // block the whole view. Also on explore mode no airport gets highlighted'): from APPROACH.from px out, the NEXT airport (the target when it is the next one; in free flight
+    // the next airport) gets a small bobbing arrow over its runway, and the small line under the route bar counts down ('WINDHOEK 979 m'), red in the last APPROACH.urgent px.
+    // The sky stays clear. (0.79.0 drew a 16 px two-line call across the middle of the screen.)
     this.approachGfx = this.add.graphics().setDepth(12);
     this.strip = new RouteStrip(this);   // the route to the target (src/Hud.js, 2026-11-23): replaces the 'Flying to X' and 'Next: Y' lines
     this.hintText = this.add.text(4, SKY_H + 22, '', { ...font, fontSize: '8px', strokeThickness: 3, lineSpacing: 4 }).setOrigin(0, 0);
@@ -241,7 +240,8 @@ export class GameScene extends Phaser.Scene {
       const cx = bx - 70;
       this.cleanBox = { x: cx, y: by, w: 64, h: 32 };
       this.cleanBg = this.add.rectangle(cx, by, 64, 32, 0x5a6b80).setOrigin(0).setStrokeStyle(2, 0x1b1b2f).setDepth(20);
-      this.cleanLabel = this.add.text(cx + 32, by + 13, 'HOLD:\nCLEAN', { ...font, fontSize: '7px', strokeThickness: 3, align: 'center', lineSpacing: 2 }).setOrigin(0.5).setDepth(20);
+      // (0.79.1; Oliver, 2026-11-25: 'what is HOLD at the bottom??'): the label says what holding does. It is Ops' Contrail-free cruise: held, the plane makes no contrail, for cleanSecs a night (the bar).
+      this.cleanLabel = this.add.text(cx + 32, by + 13, 'HOLD:\nNO TRAIL', { ...font, fontSize: '7px', strokeThickness: 3, align: 'center', lineSpacing: 2 }).setOrigin(0.5).setDepth(20);
       this.cleanMeter = this.add.rectangle(cx + 4, by + 27, 56, 3, 0x9fe0ff).setOrigin(0).setDepth(21);
       const inClean = p => { const c = this.cleanBox; return p.x >= c.x && p.x <= c.x + c.w && p.y >= c.y && p.y <= c.y + c.h; };
       this.input.on('pointerdown', p => { if (inClean(p)) this.cleanHeld = true; });
@@ -859,19 +859,18 @@ export class GameScene extends Phaser.Scene {
     this.cloudsFar.setAlpha(0.55 - 0.35 * n);
   }
 
-  // The approach call for the flight's TARGET (see create): true while it shows. Not for a crossing, the school, or an airport that is not the target.
+  // The approach marker (see create): the airport to land at next, or null. The TARGET when it is the next airport; with no target ahead (free flight), the next airport.
+  // Not while the next airport is one to fly PAST on the way to the target, a crossing, the school, or after landing. Draws the runway arrow; the caller writes the line.
   approachCall(rv, toAirport) {
-    const t = this.approachText, g = this.approachGfx; g.clear();
-    const on = !!(rv && rv.target && rv.nextIsEnd && this.state === 'playing' && !this.crossing && !this.school && toAirport < APPROACH.from && toAirport > -AIRPORT.runwayLen);
-    t.setVisible(on); if (!on) return false;
-    const urgent = toAirport < APPROACH.urgent, flash = urgent && Math.floor(this.gameTime / 250) % 2 === 1;
-    t.setText(toAirport > 0 ? `LAND AT ${rv.name}\n${Math.max(0, Math.round(toAirport)).toLocaleString('en-GB')} m` : `LAND AT ${rv.name}\nGET DOWN NOW!`).setColor(urgent ? (flash ? '#ffffff' : '#ff6b5a') : '#ffe15a');
-    this.fitText(t, WIDTH - 16, 16, 8);
+    const g = this.approachGfx; g.clear();
+    const on = !!(rv && rv.nextIsEnd && this.state === 'playing' && !this.crossing && !this.school && toAirport < APPROACH.from && toAirport > -AIRPORT.runwayLen);
+    this.approachOn = on ? { name: rv.name, m: Math.max(0, Math.round(toAirport)), urgent: toAirport < APPROACH.urgent } : null;
+    if (!on) return null;
     const rx = PLANE.x + this.nextAirport.worldX - this.distancePx + AIRPORT.runwayLen / 2;   // the runway's middle on screen
-    if (rx > 0 && rx < WIDTH) { const y = SKY_H - 46 + Math.sin(this.gameTime / 160) * 5, c = urgent ? 0xff6b5a : 0xffe15a;
-      g.fillStyle(0x1b1b2f, 1).fillTriangle(rx - 11, y - 14, rx + 11, y - 14, rx, y + 2).fillRect(rx - 5, y - 26, 10, 13)
-        .fillStyle(c, 1).fillTriangle(rx - 8, y - 12, rx + 8, y - 12, rx, y - 1).fillRect(rx - 3, y - 24, 6, 12); }
-    return true;
+    if (rx > 0 && rx < WIDTH) { const y = SKY_H - 34 + Math.sin(this.gameTime / 160) * 3, c = this.approachOn.urgent ? 0xff6b5a : 0xffe15a;   // a small arrow (13 px wide) over the runway
+      g.fillStyle(0x1b1b2f, 1).fillTriangle(rx - 7, y - 9, rx + 7, y - 9, rx, y + 1).fillRect(rx - 3, y - 17, 7, 9)
+        .fillStyle(c, 1).fillTriangle(rx - 5, y - 8, rx + 5, y - 8, rx, y - 1).fillRect(rx - 1, y - 16, 3, 8); }
+    return this.approachOn;
   }
 
   updateForestMeter() { this.drawLandStrip(); }   // (the forest meter's pictures went in 0.78.0: the land strip is drawn in their place)
@@ -1781,8 +1780,8 @@ export class GameScene extends Phaser.Scene {
     }
     // Lesson L4 ("skip one airport, land at the next"): no landing call at the FIRST airport, it would contradict the lesson (the audit, 2026-10-28).
     const skipThis = isSeason2(this.save) && !this.school && this.airportsSkipped === 0 && (this.save.missionsDone || []).includes('L3') && !(this.save.missionsDone || []).includes('L4');
-    this.approachText.setVisible(false); this.approachGfx.clear();   // (approachCall shows them again while the target is near)
-    if (!this.crossing && this.state !== 'landing') this.approachCall(rv, toAirport);   // (0.79.0: the big call; the small landing line below keeps its own rules: ATC brings it sooner, tests/atc.cjs, tests/l4hint.cjs)
+    this.approachGfx.clear(); this.approachOn = null; this.nextText.setColor(COLOURS.text);
+    const ap = !this.crossing && this.state !== 'landing' ? this.approachCall(rv, toAirport) : null;   // (0.79.1: the runway arrow; the line below)
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
     else if (skipThis && toAirport < AIRPORT.signFrom) this.nextText.setText(`${this.nextAirport.name} ${Math.max(0, toAirport)}m: fly PAST this one!`);
     else if (this.crossing) this.nextText.setText(toAirport < 300 ? 'Glide down to land!' : '');   // a crossing is a pure flight (the user, 2026-11-06): no km, no metres, no airport count: only the last call
@@ -1790,6 +1789,7 @@ export class GameScene extends Phaser.Scene {
     else if (rv && !rv.nextIsEnd) this.nextText.setText('');
     else if (toAirport <= 0) this.nextText.setText('Glide down to land!');
     else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText('GET LOW to land!');   // ATC (eras): the call comes sooner
+    else if (ap) this.nextText.setText(`${ap.name} ${ap.m.toLocaleString('en-GB')} m`).setColor(ap.urgent && Math.floor(this.gameTime / 250) % 2 ? '#ff6b5a' : '#ffe15a');   // (0.79.1: the countdown to the airport to land at)
     else this.nextText.setText('');
     this.fitText(this.nextText, WIDTH - 12);
     // The mission line: what this flight is for.

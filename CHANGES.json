@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-25-small-approach-marker",
+    "version": "0.79.1",
+    "date": "2026-11-25",
+    "level": "minor",
+    "notes": [
+      "The big LAND AT call is gone. Now a small countdown under the route bar and an arrow over the runway show the airport to land at.",
+      "In free flight the next airport gets the same countdown and arrow.",
+      "A long destination name fits inside the route bar.",
+      "The CLEAN button now says what it does: HOLD: NO TRAIL."
+    ]
+  },
+  {
     "id": "2026-11-25-tall-font-story-landing",
     "version": "0.79.0",
     "date": "2026-11-25",
