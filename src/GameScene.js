@@ -1782,12 +1782,12 @@ export class GameScene extends Phaser.Scene {
     // Lesson L4 ("skip one airport, land at the next"): no landing call at the FIRST airport, it would contradict the lesson (the audit, 2026-10-28).
     const skipThis = isSeason2(this.save) && !this.school && this.airportsSkipped === 0 && (this.save.missionsDone || []).includes('L3') && !(this.save.missionsDone || []).includes('L4');
     this.approachText.setVisible(false); this.approachGfx.clear();   // (approachCall shows them again while the target is near)
+    if (!this.crossing && this.state !== 'landing') this.approachCall(rv, toAirport);   // (0.79.0: the big call; the small landing line below keeps its own rules: ATC brings it sooner, tests/atc.cjs, tests/l4hint.cjs)
     if (this.state === 'landing') this.nextText.setText(`Welcome to ${this.landedAt}!`);
     else if (skipThis && toAirport < AIRPORT.signFrom) this.nextText.setText(`${this.nextAirport.name} ${Math.max(0, toAirport)}m: fly PAST this one!`);
     else if (this.crossing) this.nextText.setText(toAirport < 300 ? 'Glide down to land!' : '');   // a crossing is a pure flight (the user, 2026-11-06): no km, no metres, no airport count: only the last call
     // (2026-11-23) The call is for the TARGET only (or the next airport when the flight has no target ahead): one short line.
     else if (rv && !rv.nextIsEnd) this.nextText.setText('');
-    else if (this.approachCall(rv, toAirport)) this.nextText.setText('');   // (0.79.0: the big call says it)
     else if (toAirport <= 0) this.nextText.setText('Glide down to land!');
     else if (toAirport < (this.kit.airportEarly ? 450 : 300)) this.nextText.setText('GET LOW to land!');   // ATC (eras): the call comes sooner
     else this.nextText.setText('');

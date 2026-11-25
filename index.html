@@ -12,6 +12,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="style.css">
+  <!-- (0.79.0) the loading screen's PixelLab sheets (src/loader.js): fetched first, and named here so the offline worker keeps them in its shell (tools/make-sw-manifest.py) -->
+  <link rel="preload" as="image" href="assets/loader/loader-sky.png">
+  <link rel="preload" as="image" href="assets/loader/loader-plane.png">
 </head>
 <body>
   <div id="game"></div>
