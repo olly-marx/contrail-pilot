@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25-tall-font-story-landing",
+    "version": "0.79.0",
+    "date": "2026-11-25",
+    "level": "minor",
+    "notes": [
+      "The game's letters are taller and easier to read, in the same retro style.",
+      "Completing a story flashes STORY COMPLETE on the results, and its prize is counted into your total at the end.",
+      "Near a story stop or the city you are flying to, a big LAND AT call counts down the metres and turns red when you are close.",
+      "Flying past your story's next stop and landing somewhere else now costs a heart (Easy stories have none). The results say so, and that stop stays your next one.",
+      "A new loading screen with animated pixel art, and a new app icon.",
+      "Help and privacy pages for the app stores."
+    ]
+  },
+  {
     "id": "2026-11-24-results-water-landstrip",
     "version": "0.78.0",
     "date": "2026-11-24",
