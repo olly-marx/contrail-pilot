@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT=${1:?out dir}; V=${2:?build}
 rm -rf "$OUT"; mkdir -p "$OUT"
-cp -r index.html style.css .nojekyll src assets vendor sw.js manifest.webmanifest "$OUT/"
+cp -r index.html privacy.html support.html style.css .nojekyll src assets vendor sw.js manifest.webmanifest "$OUT/"   # (0.79.0: the privacy and help pages the app stores link to)
 # Stamp every script/style URL with this build. Pages lets browsers keep files for 10 min,
 # so without this a phone could run a new index.html with OLD scripts (new buttons, dead).
 # EVERY relative module URL in EVERY file under src/ (0.67.1: the old rule stamped only './name.js' in src/*.js, so './sim/rules.js', '../config.js'

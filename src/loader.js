@@ -3,7 +3,9 @@
 // Two steps count: the game's own art (Phaser: GameScene.preload) and tier 1 of src/preload.js (the pictures this save's menus show).
 // When both are done and the scene is built the screen goes: it stops catching taps at once (pointer-events) and is removed after a short fade.
 // Tier 2 (every other land's menu art) is fetched afterwards, one picture at a time, only when the game is idle (never while flying).
-// All drawing is code (a small canvas, no pictures); the canvas is 96 x 54 game pixels scaled up with image-rendering: pixelated.
+// 0.79.0 (Oliver, 2026-11-24: 'the loading screen ... needs some proper pixel lab animation'): the canvas is 192 x 108 game pixels, scaled up with image-rendering: pixelated.
+// Its art is PixelLab's (assets/loader/: an 8-frame night-to-dawn sky over a runway, stars twinkling and lights blinking; a 4-frame airliner, bobbing, its light blinking),
+// two small sheets fetched first; until they arrive (and if they never do) the old code drawing stands in: flat sky bands and a 12 x 6 pixel plane.
 import { tier1, tier2, regionArt, everything } from './preload.js';
 import { startServiceWorker } from './swreg.js';
 import { city, schoolSave } from './route.js';
@@ -13,7 +15,9 @@ import { FACTS } from './ui.js';   // (already in the module graph: main.js load
 
 export const FACT_AFTER_MS = 2000, FACT_MAX_WORDS = 15;   // UX plan decision 4: one fact only on a load that takes longer than 2 s; it never takes a tap
 const words = t => t.trim().split(/\s+/).length;
-const W = 96, H = 54;
+const W = 192, H = 108;
+const SKY_SHEET = 'assets/loader/loader-sky.png', PLANE_SHEET = 'assets/loader/loader-plane.png', SKY_FRAMES = 8, PLANE_FRAMES = 4, PLANE_W = 64, PLANE_H = 32;
+const sheet = url => { const im = new Image(); im.decoding = 'async'; im.src = url; return im; };
 const SPRITE_FRAME = /^assets\/(pixellab\/)?(animal|sky)-[^/]*\.png$/;   // the in-flight frames of an animal (not the menu portraits under ui/)
 const SKY = ['#10142b', '#16204a', '#1d2f66', '#264080', '#3a5a9c', '#5b82b8'];   // night to dawn, flat bands
 const FLYING = ['takeoff', 'playing', 'landing'];
@@ -47,7 +51,8 @@ export const loading = {
     this.earlyDone = fetchAll(this.early, () => { this.menus.done++; });
     const box = document.getElementById('loader'); if (!box) return;
     this.cv = box.querySelector('canvas'); this.txt = box.querySelector('.loader-count');
-    this.ctx = this.cv.getContext('2d');
+    this.ctx = this.cv.getContext('2d'); this.ctx.imageSmoothingEnabled = false;
+    this.skyImg = sheet(SKY_SHEET); this.planeImg = sheet(PLANE_SHEET);
     this.t0 = performance.now(); this.factTimer = setTimeout(() => this.showFact(), FACT_AFTER_MS);
     this.reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     const frame = t => { if (this.finished) return; this.draw(t); requestAnimationFrame(frame); };
@@ -89,21 +94,26 @@ export const loading = {
   draw(t) {
     const c = this.ctx, f = this.fraction();
     this.shown += (f - this.shown) * (this.reduce ? 1 : 0.12);   // eases toward the real fraction, never backwards
-    for (let b = 0; b < SKY.length; b++) { c.fillStyle = SKY[b]; c.fillRect(0, Math.floor(b * H / SKY.length), W, Math.ceil(H / SKY.length)); }
-    c.fillStyle = '#ffffff'; for (const [x, y] of [[8, 6], [27, 12], [60, 5], [83, 14], [44, 9]]) { if ((Math.floor(t / 400) + x) % 5) c.fillRect(x, y, 1, 1); }   // twinkling stars
+    const art = this.skyImg && this.skyImg.complete && this.skyImg.naturalWidth > 0, plane = this.planeImg && this.planeImg.complete && this.planeImg.naturalWidth > 0;
+    if (art) c.drawImage(this.skyImg, (this.reduce ? 0 : Math.floor(t / 160) % SKY_FRAMES) * W, 0, W, H, 0, 0, W, H);   // the PixelLab sky, about 6 frames a second
+    else {
+      for (let b = 0; b < SKY.length; b++) { c.fillStyle = SKY[b]; c.fillRect(0, Math.floor(b * H / SKY.length), W, Math.ceil(H / SKY.length)); }
+      c.fillStyle = '#ffffff'; for (const [x, y] of [[16, 12], [54, 24], [120, 10], [166, 28], [88, 18]]) { if ((Math.floor(t / 400) + x) % 5) c.fillRect(x, y, 1, 1); }   // twinkling stars
+    }
     // The plane: x follows the progress, y rides a gentle wave; the contrail is the path it has flown.
-    const px = Math.round(6 + this.shown * (W - 22)), py = Math.round(26 + Math.sin(this.shown * 9) * 5);
+    const px = Math.round(4 + this.shown * (W - (plane ? PLANE_W - 8 : 22))), py = Math.round(34 + Math.sin(this.shown * 9) * 8);
     if (!this.trail.length || this.trail[this.trail.length - 1][0] !== px) this.trail.push([px, py]);
     for (let i = 0; i < this.trail.length; i++) {
       const [x, y] = this.trail[i], age = this.trail.length - i;
-      c.fillStyle = age < 14 ? '#ffffff' : age < 40 ? '#dbe8f7' : '#a9c1de';
-      c.fillRect(x, y + 1, 1, 1); if (age < 60) c.fillRect(x, y + 2, 1, 1); if (age < 18) c.fillRect(x, y + 3, 1, 1);   // fat near the plane, thin behind
-      if (age > 20 && age % 7 === 0) c.fillRect(x, y + 4 + (age % 3), 1, 1);   // the trail puffs out and drifts down as it ages
+      c.fillStyle = age < 28 ? '#ffffff' : age < 80 ? '#dbe8f7' : '#a9c1de';
+      c.fillRect(x, y, 1, 2); if (age < 120) c.fillRect(x, y + 2, 1, 1); if (age < 36) c.fillRect(x, y - 1, 1, 1);   // fat near the plane, thin behind (0.79.0: 2 px base on the 192 px canvas)
+      if (age > 40 && age % 7 === 0) c.fillRect(x, y + 4 + (age % 3), 1, 1);   // the trail puffs out and drifts down as it ages
     }
     // A pixel plane, 12 x 6: white body, grey wing, red tail, a lit window.
     const sp = ['....wwwwww..', '.rrwwwwwwwww', 'rrrwwbwwwwww', '.rrwwwwwwwwg', '....gggggg..', '....g.......'];
     const col = { w: '#f4f4f4', r: '#e0463c', g: '#8c97a8', b: '#ffd34d' };
-    sp.forEach((row, yy) => [...row].forEach((ch, xx) => { if (col[ch]) { c.fillStyle = col[ch]; c.fillRect(px + xx, py + yy - 1, 1, 1); } }));
+    if (plane) c.drawImage(this.planeImg, (this.reduce ? 0 : Math.floor(t / 140) % PLANE_FRAMES) * PLANE_W, 0, PLANE_W, PLANE_H, px - 10, py - 13, PLANE_W, PLANE_H);   // its tail (left, rows ~10-14 of the sprite) on the trail
+    else sp.forEach((row, yy) => [...row].forEach((ch, xx) => { if (col[ch]) { c.fillStyle = col[ch]; c.fillRect(px + xx, py + yy - 1, 1, 1); } }));
     if (this.txt) this.txt.textContent = this.phaser.total ?   // (the counter waits for Phaser's total: M is then fixed, it never turns '0 / 264' into 'N / 714')
        `${this.phaser.done + this.menus.done} / ${this.phaser.total + this.menus.total}` : '';
   },
