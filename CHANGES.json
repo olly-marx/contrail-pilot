@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-25-launch-fix-strict-stories",
+    "version": "0.79.2",
+    "date": "2026-11-25",
+    "level": "minor",
+    "notes": [
+      "Fixed: the game could stop with an error on HOME at launch during a special delivery story.",
+      "Story hearts fit inside their card on every phone.",
+      "Stories are stricter: after the pickup, landing anywhere but the next stop costs a heart (Easy stories excepted).",
+      "Special deliveries are one flight: take off from the pickup, drop the crate on the way, land at the end. A miss costs a heart and sends you back to the pickup.",
+      "Stories about one place keep their stops close together."
+    ]
+  },
+  {
     "id": "2026-11-25-small-approach-marker",
     "version": "0.79.1",
     "date": "2026-11-25",

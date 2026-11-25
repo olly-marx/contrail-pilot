@@ -80,7 +80,7 @@ releasegate	tools/gate-plan.py	s/if path.startswith('tests\/') and path.endswith
 releasegate	tests/PATHMAP	s/^group sim-node-only | \(.*\) | NONE$/group sim-node-only | \1 | flight/	Node-only sim files wrongly pull browser tests
 releasegate	tests/PATHMAP	s/ walkthrough postrails school flightregion/ walkthrough school flightregion/	rules.js no longer pulls postrails
 releasegate	tests/PATHMAP	s/| sim-bank fares flight$/| fares flight/	imports of rules.js no longer pull the contract test [x2]
-releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails twistdraw stripclear foundgate cityrowui approach-ui$/| onrails tipqueue l4hint twistdraw stripclear foundgate cityrowui approach-ui/	GameScene no longer pulls postrails
+releasegate	tests/PATHMAP	s/| onrails tipqueue l4hint postrails twistdraw stripclear foundgate cityrowui approach-ui popupearly$/| onrails tipqueue l4hint twistdraw stripclear foundgate cityrowui approach-ui popupearly/	GameScene no longer pulls postrails
 releasegate	tests/PATHMAP	s/ onrails onrails@VP=375x667 rails2 tipqueue l4hint walkthrough school/ onrails rails2 tipqueue l4hint walkthrough school/	the short-phone onrails run dropped
 season2-smoke@PART=Bweurope,Bnamerica,Bsasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B1)
 season2-smoke@PART=Bafrica,Bsamerica,Beasia	src/route.js	s/(SEASON2_ON ? save : { city: HOME })/({ city: HOME })/	B: flight school starts in London (pieces B2)
@@ -979,7 +979,7 @@ nametaken	src/online.js	s/for (; tries < 8; tries++)/for (; tries < 1; tries++)/
 textfit	src/Hud.js	s/fontSize: '7px', color: '#ffe15a', stroke: '#000', strokeThickness: 2 }).setOrigin(1, 0)/fontSize: '7px', color: '#ffe15a', stroke: '#000', strokeThickness: 2 }).setOrigin(0, 0)/	the route strip's city name starts at the strip's end and runs off the right edge
 storyboard	src/storyboard.js	s/  for (let i = 0; i < STORY.slots; i++) if (!b\[i\]) {/  for (let i = 0; i < STORY.slots; i++) if (true) {/	a filled board is made again (offers change when the pilot moves or flies further)
 storyboard	src/storyboard.js	s/^export const SEEDS_PER_KM = 1000 \/ 15000/export const SEEDS_PER_KM = 30 \/ 15000/	stories pay the old measly prize (30 seeds)
-stories-ui	src/missions2.js	s/const story = STORY.on \&\& r.landedAt ? storyLandedAt(save, r.landedAt) : null;/const story = null;/	a landing at the story's stop is never scored (no pay, the destination never moves on)
+stories-ui	src/missions2.js	s/const story = STORY.on \&\& r.landedAt \&\& !run ? storyLandedAt(save, r.landedAt) : null;/const story = null;/	a landing at the story's stop is never scored (no pay, the destination never moves on)
 stories-ui	src/storyboard.js	s/^export const missing = (save, offer) => (offer.needs || \[\]).map(needInfo).filter(i => i \&\& !has(save, i));/export const missing = () => [];/	the upgrade story is not locked (it can be accepted without the upgrade)
 crossingview	src/season.js	s/distanceShare: 1 }/distanceShare: 0.7 }/	a 70% flight opens the crossing again (V4: the whole crossing)
 runwayclear	src/sim/rules.js	s/    if (na \&\& !na.spawned) spans.push(PLANE.x + na.worldX - this.distancePx);/    if (false) spans.push(0);/	the runway not drawn yet is ignored (trees grow in front of it)
@@ -1013,7 +1013,7 @@ storyboard	src/storyboard.js	s/  if (save.storyActive \&\& save.storyActive !== 
 storyboard	src/storyboard.js	s/  o.heartsLeft = Math.max(0, heartsLeft(o) - 1);/  o.heartsLeft = Math.max(0, heartsLeft(o));/	a crash never costs a heart
 storyboard	src/storyboard.js	s/^export const levelFor = (slot, seq) => (slot === 0 ? 'easy'/export const levelFor = (slot, seq) => (slot === 0 ? 'medium'/	no easy stories
 flyhub	src/ui.js	s/    const storyOn = !!story \&\& (!crossBox || s.hubFocus !== 'crossing');/    const storyOn = false;/	HOME never shows the story
-flyhub	src/missions2.js	s/    const hurt = STORY.on \&\& !r.crossing ? storyCrashed(save) : null;/    const hurt = null;/	a crash on a story flight costs no heart
+flyhub	src/missions2.js	s/    const hurt = STORY.on \&\& !r.crossing \&\& !run ? storyCrashed(save) : null;/    const hurt = null;/	a crash on a story flight costs no heart
 flyhub	src/ui.js	s/    \$('hubFly').onclick = () => (story ? this.dropStory(/    $('hubFly').onclick = () => (false ? this.dropStory(/	free flight keeps the story
 storygen	tools/stories/validate.mjs	s/  if (typeof t.story === 'string' \&\& !slots(t.story).length) why.push/  if (false) why.push/	a story that names no stop passes
 storygen	tools/stories/validate.mjs	s/  else if (t.level \&\& !stopsFor(t.level).includes(t.stops))/  else if (false)/	a level with the wrong number of stops passes
