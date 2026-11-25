@@ -13,9 +13,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify({ areas: ['namerica'], homeArea: 'namerica', homeCity: 'DENVER', city: 'DENVER', visited: ['DENVER'], tutorialDone: true, muted: true, seenTips: ['*'], tours: ['*'], freeGiven: true, landings: 40, flights: 60, missionsDone: ['L1', 'L2', 'L3', 'L4', 'L5'] })); });
   await p.goto(URL); await ready(p); await p.waitForTimeout(500);
   const r = await p.evaluate(() => { const g = game.scene.getScene('game'), out = {};
-    const fx = g.fxLayer; g.fxLayer = undefined; g.crates = ['DENVER'];
+    const fx = g.fxLayer, st = g.state; g.fxLayer = undefined; g.crates = ['DENVER']; g.state = 'playing';   // (state 'playing': only the popup's own guard stands between this and the crash)
     try { g.addRunway(-60, 'DENVER'); out.early = 'ok'; } catch (e) { out.early = String(e); }
-    g.fxLayer = fx; const st = g.state; g.state = 'playing'; const n0 = fx.list.length;
+    g.fxLayer = fx; const n0 = fx.list.length;
     try { g.addRunway(400, 'DENVER'); out.late = fx.list.length > n0 ? 'shown' : 'not shown'; } catch (e) { out.late = String(e); }
     g.state = st; g.crates = []; return out; });
   check(r.early === 'ok', `1. a crate popup for a runway made before the scene's layers exist: no error (${r.early})`);
