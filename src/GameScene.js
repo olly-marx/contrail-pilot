@@ -943,7 +943,7 @@ export class GameScene extends Phaser.Scene {
       { fontFamily: FONT, fontSize: '8px', color: '#ffffff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5, 0));
     this.runwayLayer.add(parts);
     rw.parts = parts; rw.strip = strip;
-    if (this.crates && this.crates[0] === name) this.popup(Math.min(x, WIDTH - 60), SKY_H - 60, `Drop the crate on ${name}!`, '#ff9f3a', 12);   // (special delivery: src/sim/crates.js)
+    if (this.crates && this.crates[0] === name && this.state === 'playing') this.popup(Math.min(x, WIDTH - 60), SKY_H - 60, `Drop the crate on ${name}!`, '#ff9f3a', 12);   // (special delivery: src/sim/crates.js)
     // The city's landmark, in the skyline (it scrolls at 0.55 x the ground): start it where it will
     // stand just behind the runway's middle as the runway passes the middle of the screen.
     const lm = LANDMARKS[name];
@@ -1686,6 +1686,7 @@ export class GameScene extends Phaser.Scene {
   // ---------- juice ----------
 
   popup(x, y, text, colour = '#ffffff', size = 8) {
+    if (!this.fxLayer) return null;   // (0.79.2: the scene is still being built: a popup before its layer exists crashed the app at launch, Oliver's iPhone 2026-11-25, 'this.fxLayer.add' via showRunway <- addRunway <- create)
     const t = this.add.text(Math.round(x), Math.round(y), text,
       { fontFamily: FONT, fontSize: `${size}px`, color: colour, stroke: '#000', strokeThickness: 3, align: 'center' }).setOrigin(0.5);
     for (let fs = size; t.width > WIDTH - 16 && fs > 6;) t.setFontSize(--fs);   // 0.11.3: a long line (a biome name) shrinks to fit the screen

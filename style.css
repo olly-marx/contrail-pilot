@@ -1410,3 +1410,6 @@ body::after { content: ''; position: fixed; left: 0; right: 0; top: 0; height: e
 .rc-bank.pop { animation: rcpop 0.5s steps(3) 1; }
 @keyframes rcpop { 50% { transform: scale(1.12); } }
 @media (prefers-reduced-motion: reduce) { .rc-sbanner { animation: none; opacity: 0; } .rc-fly { animation: none; opacity: 0; } .rc-bank.pop { animation: none; } }
+/* (0.79.2; Oliver, 2026-11-25: 'the hearts on the stories screen overflow off their box'): measured, a SPECIAL DELIVERY tag with 3 hearts ran 36-40 px past a story card at
+   320-390 px wide (the taller font made the tag wider). The difficulty row wraps: the hearts go under the tag when they do not fit beside it. tests/missionfit.cjs line 6. */
+.slevel { flex-wrap: wrap; row-gap: 3px; }

@@ -1,7 +1,8 @@
 // MISSIONS FITS ITS PANEL (0.78.0; Oliver's iPhone screenshot, 2026-11-24: the FLIGHT SCHOOL row, the NEXT card and every story card stuck out past the panel's right edge).
 // Mechanism: the panel is a grid with one column; while that column was 'auto', ONE unbreakable or nowrap piece widened it, and every row and card with it.
 // 393x852 (an iPhone 15). Each line plants one wide piece in the real MISSIONS screen and requires that nothing ends past the panel's right edge:
-//   1. nothing sticks out as drawn;  2. a 40-letter story title;  3. a long unbroken word in a story's text;  4. a very long city chip;  5. a long NEXT row name.
+//   1. nothing sticks out as drawn;  2. a 40-letter story title;  3. a long unbroken word in a story's text;  4. a very long city chip;  5. a long NEXT row name;
+//   6. (0.79.2, Oliver: 'the hearts ... overflow off their box') the longest difficulty row, SPECIAL DELIVERY with 5 hearts.
 // Plants (tools/plants.tsv): the column back to 'auto'. Run: python3 -m http.server 8000 & node tests/missionfit.cjs
 const { chromium } = require('playwright-core');
 const { ready } = require('./lib/ready.js');
@@ -20,10 +21,12 @@ const SAVE = { areas: ['weurope', 'africa'], homeArea: 'weurope', homeCity: 'LON
     const sticks = () => { const pr = panel.getBoundingClientRect().right; return [...panel.querySelectorAll('*')].filter(e => { const q = e.getBoundingClientRect(); return q.width && q.right > pr + 0.5; }).length; };
     out.drawn = sticks();
     const plants = { title: ['.scard .stitle', 'W'.repeat(40)], word: ['.scard .stext', 'ANTANANARIVO'.repeat(3)], chip: ['.scard .schip', 'ANTANANARIVO ANTANANARIVO ANTANANARIVO'], next: ['#mNext .rowc-name, #mList .rowc-name', 'M'.repeat(40)] };
+    { const lv = document.querySelector('.scard .slevel'); if (!lv) out.hearts = 'missing'; else { const old = lv.innerHTML;
+        lv.innerHTML = '<span class="slv">SPECIAL DELIVERY</span><span class="shearts">' + '<i class="sheart"></i>'.repeat(5) + '</span>'; out.hearts = sticks(); lv.innerHTML = old; } }
     for (const [k, [sel, txt]] of Object.entries(plants)) { const e = document.querySelector(sel); if (!e) { out[k] = 'missing'; continue; } const old = e.textContent; e.textContent = txt; out[k] = sticks(); e.textContent = old; }
     return out; });
   check(r.drawn === 0, `1. as drawn, ${r.drawn} elements end past the panel`);
-  for (const k of ['title', 'word', 'chip', 'next']) check(r[k] === 0, `${k}: with a wide ${k} planted, ${r[k]} elements end past the panel (one wide piece must not widen the column)`);
+  for (const k of ['title', 'word', 'chip', 'next', 'hearts']) check(r[k] === 0, `${k}: with a wide ${k} planted, ${r[k]} elements end past the panel (one wide piece must not widen the column)`);
   check(!errs.length, `page errors: ${errs}`);
   await b.close();
   console.log(fails.length ? `FAIL missionfit:\n - ${fails.join('\n - ')}` : 'PASS missionfit: MISSIONS stays inside its panel at 393 px with a long title, word, city chip or NEXT name planted');

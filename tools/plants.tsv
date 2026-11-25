@@ -1052,3 +1052,5 @@ crates	src/storyboard.js	s/  if (!h.failed \&\& r.landed \&\& r.landedAt !== o.s
 storymiss	src/storyboard.js	s/, flewPast = passed.includes(aim);/, flewPast = false;/	a story stop flown past costs nothing
 storygen	tools/stories/validate.mjs	s/  if (!t.near \&\& \[t.title, t.story\]/  if (false \&\& [t.title, t.story]/	a storm story whose stops may be far apart passes
 storygen	tools/stories/generate.mjs	s/required: \[.id., .level., .stops., .near., /required: [/	the schema lets Claude leave out near
+popupearly	src/GameScene.js	s/    if (!this.fxLayer) return null;/    if (false) return null;/	a popup before the scene is built crashes (the 0.79.0 launch crash)
+missionfit	style.css	s/^.slevel { flex-wrap: wrap; row-gap: 3px; }$/.slevel { }/	the story difficulty row does not wrap: hearts run past the card
