@@ -1755,7 +1755,11 @@ export class GameScene extends Phaser.Scene {
     for (let k = from + 1; k < endK; k++) { ticks.push(x); x += this.legKm(k); }
     let back = this.nextAirport.worldX;   // the airports already passed on this flight, back to the take-off
     for (let k = from; k >= 1; k--) { back -= this.legKm(k); ticks.unshift(back); }
-    return { name: endK === from + 1 ? this.nextAirport.name : this.path[endK], target: ti > 0, endX: x, ticks, nextIsEnd: endK === from + 1 };   // (the next airport's own name: a crossing or school may set it)
+    // A SPECIAL DELIVERY's crate stops (Oliver, 2026-11-25: 'show that city on the top bar in the middle, and then the final city'): each
+    // one's runway on the way, with its name; done once its crate is on the runway. ticks[i] is path[i + 1]'s runway (path[0]: the take-off).
+    const drops = [];
+    for (const c of [...(this.crateDone || []), ...(this.crates || [])]) { const k = this.path.indexOf(c, 1); if (k >= 1 && k - 1 < ticks.length) drops.push({ x: ticks[k - 1], name: c, done: (this.crateDone || []).includes(c) }); }
+    return { name: endK === from + 1 ? this.nextAirport.name : this.path[endK], target: ti > 0, endX: x, ticks, drops, nextIsEnd: endK === from + 1 };   // (the next airport's own name: a crossing or school may set it)
   }
 
   updateTexts(inIssr) {
@@ -1769,7 +1773,7 @@ export class GameScene extends Phaser.Scene {
       this.distText.setText(near ? km(left) : km(this.distancePx / WORLD.pxPerMetre)).setColor(near ? '#ffe15a' : COLOURS.text);
       const showStrip = !!rv && ['takeoff', 'playing', 'landing'].includes(this.state);
       if (showStrip !== !!this.strip.shown) this.strip.setVisible(showStrip);
-      if (showStrip) this.strip.draw({ f: this.distancePx / Math.max(1, rv.endX), ticks: rv.ticks.map(t => t / rv.endX), name: rv.name, flag: rv.target,
+      if (showStrip) this.strip.draw({ f: this.distancePx / Math.max(1, rv.endX), ticks: rv.ticks.map(t => t / rv.endX), drops: rv.drops.map(d => ({ ...d, t: d.x / rv.endX })), name: rv.name, flag: rv.target,
         blinkOff: near && left < 450 && Math.floor(this.gameTime / 300) % 2 === 1 });
     }
 
