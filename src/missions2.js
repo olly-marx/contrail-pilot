@@ -8,7 +8,7 @@
 //   project): an off-flight mission completes the moment the save changes, no flight needed (the user).
 // Pure: no DOM, no random. The game (src/sim/rules.js at banking, the shop after a purchase) and the sim call it.
 // Done ids live in save.missionsDone ('L1'..'L5', '<area>:<template>'); prizes are paid straight into the bank (src/rewards.js payPrize).
-import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard, crashed as storyCrashed, deliveredAt as storyDeliveredAt, missed as storyMissed, activeStory, isCrateStop } from './storyboard.js';
+import { STORY, storyRow, landedAt as storyLandedAt, fillBoard as fillStoryBoard, crashed as storyCrashed, crateRun as storyCrateRun, offPlan as storyOffPlan, landedBack as storyLandedBack, settle as storySettle } from './storyboard.js';
 import { AREAS, areaOf, DEFAULT_AREA, regionsOpen, withRegions } from './areas.js';
 import { projectsDone, biodiversity, regionSpecies, canAppear } from './nature.js';
 import { landTrees } from './landtrees.js';
@@ -249,15 +249,17 @@ export function onFlight(save, r) {
     return lm[cur.id] >= 2 ? [...got, { key: cur.id, title: cur.title, tier: 0, star: false, kind: 'flight', prize: cur.prize, def: cur, taught: true }] : got; };
   const steady = steadyTick(save, r);
   const easyDaily = dailyVisible(save).filter(d => d.easy && d.def.flight(r, save, d.fill) === true);
-  // SPECIAL DELIVERY (src/sim/crates.js): each crate delivered reaches and pays its stop, landed or not; a missed crate costs a heart.
+  // SPECIAL DELIVERY (src/sim/crates.js, src/storyboard.js crateRun): a flight from the pickup with the crates counts only whole: every
+  // crate on its runway and the landing at the last stop reach and pay every stop together; anything else is one heart, and back to the pickup.
   const crateRows = []; if (save.storyHurt) save.storyHurt = null;   // (save.storyHurt: what this flight cost the story, for the results card)
-  if (STORY.on && r.crates) {
-    for (const c of r.crates.delivered || []) { const st = storyDeliveredAt(save, c); if (st) crateRows.push({ key: `story:${st.id}:${st.n}`, title: `${st.title}: crate for ${c}`, prize: st.pay, story: st }); }
-    if ((r.crates.missed || []).length) { const h = storyCrashed(save); if (h) { save.storyHurt = { ...h, crate: r.crates.missed[0] }; if (h.failed) fillStoryBoard(save); } }
-  }
+  if (STORY.on) storySettle(save);
+  const run = STORY.on && !r.crossing ? storyCrateRun(save, r) : null;
+  if (run && run.events) { for (const st of run.events) crateRows.push({ key: `story:${st.id}:${st.n}`, title: st.done ? `${st.title}: ${st.city} (story done!)` : `${st.title}: crate for ${st.city}`, prize: st.pay, story: st });
+    if (run.events.some(e => e.done)) fillStoryBoard(save); }
+  if (run && run.hurt) { save.storyHurt = run.hurt; if (run.hurt.failed) fillStoryBoard(save); }
   if (!r.landed) {
     // A crash on a story flight costs a heart (src/storyboard.js LEVELS); at 0 the story fails and its slot is filled again. Read by the results card (save.storyHurt).
-    const hurt = STORY.on && !r.crossing ? storyCrashed(save) : null;
+    const hurt = STORY.on && !r.crossing && !run ? storyCrashed(save) : null;
     if (hurt) save.storyHurt = hurt;
     if (hurt && hurt.failed) fillStoryBoard(save);
     return finish(save, taught([...firsts, ...steady, ...easyDaily, ...crateRows]));
@@ -266,12 +268,13 @@ export function onFlight(save, r) {
   assignMissionCities(save, startCity);   // (idempotent: the game stored them when HOME drew them; the sim, which never draws HOME, stores them here)
   advanceChains(save, r, startCity);
   // A story stop: landing at the active story's next stop pays that stage now (src/storyboard.js), and the board refills a finished slot.
-  const story = STORY.on && r.landedAt ? storyLandedAt(save, r.landedAt) : null;
+  const story = STORY.on && r.landedAt && !run ? storyLandedAt(save, r.landedAt) : null;
+  const back = STORY.on && r.landedAt && !run && storyLandedBack(save, r.landedAt);   // (back at the pickup after a failed special delivery: the next flight tries it again)
   const storyDone = story && story.pay.seeds + story.pay.crystals > 0 ? [{ key: `story:${story.id}:${story.n}`, title: `${story.title}: ${story.city}${story.done ? ' (story done!)' : ''}`, prize: story.pay, story }] : [];
   if (story && story.done) fillStoryBoard(save);
-  // A MISSED STOP (0.79.0, src/storyboard.js missed): landed, but not at the next stop, after flying past it: a heart (Easy: none), the results card says so.
-  if (STORY.on && !story && !r.crossing && !save.storyHurt) { const o = activeStory(save), n = o ? o.reached || 0 : 0, stop = o && o.stops[n];
-    if (stop && !isCrateStop(o, n) && (r.passed || []).includes(stop) && r.landedAt !== stop) { const h = storyMissed(save, stop); if (h) { save.storyHurt = h; if (h.failed) fillStoryBoard(save); } } }
+  // A WRONG LANDING (src/storyboard.js offPlan): after the pickup, landing anywhere but the next stop costs a heart; before it (and flying
+  // back to it), flying PAST it does (0.79.0). Easy: no heart, the card says a passed stop was missed.
+  if (STORY.on && !story && !run && !back && !r.crossing && !save.storyHurt) { const h = storyOffPlan(save, r.landedAt, r.passed || []); if (h) { save.storyHurt = h; if (h.failed) fillStoryBoard(save); } }
   const due = [...crateRows, ...storyDone, ...visible(save, startCity).filter(m => m.kind === 'flight' && (m.def.flight(r, save, m.fill) === true))];
   const daily = dailyVisible(save).filter(d => d.def.flight(r, save, d.fill) === true);
   save.prevLanded = r.landedAt;   // for "land at A, then B" (read on the NEXT flight)

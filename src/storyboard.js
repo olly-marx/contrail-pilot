@@ -14,7 +14,7 @@
 // leaves the board and its slot is filled again, sized at that moment.
 import { CITIES } from './cities.js';
 import { AREAS, areaOf, unlockedAreas, citiesOf } from './areas.js';
-import { pathTo, linksFor, legBetween } from './route.js';
+import { pathTo, linksFor, legBetween, city as cityAt, realKm } from './route.js';
 import { capFor } from './capability.js';
 import { fleetOf, GADGETS } from './fleet.js';
 import { LINES } from './upgrades.js';
@@ -51,15 +51,21 @@ export const isCrateStop = (o, i) => !!(o && o.crate && i > 0 && i < o.stops.len
 // ONE STORY AT A TIME (the user, 2026-11-24): dropping the active story (ACCEPT on another one, or a FREE FLIGHT) costs a fee:
 // a share of what the dropped story still had to pay, at least FEE.min seeds, never more than the player has.
 export const FEE = { share: 0.1, min: 50 };
+// ONE PLACE (Oliver, 2026-11-25: 'a big storm ... affected London, Oslo, and Papeete ... Papeete is not even close'): a theme about one
+// event or one place (`near: true`: a storm, an outbreak, reserves near each other) keeps its delivery stops ({1}..{n}) within NEAR_KM
+// real km of each other. The pickup {0} may be far away (help is flown in). A theme without `near` is a tour and chains as before.
+export const NEAR_KM = 1500;
+const realBetween = (a, b) => { const A = cityAt(a), B = cityAt(b); return A && B ? realKm(A, B) : Infinity; };
+export const nearAll = (c, others) => others.every(o => realBetween(c, o) <= NEAR_KM);
 
 // THEMES: the story's words, with {0}..{3} for the stops in order (0 = the pickup). `stops`: how many cities. `areas`: where it
 // may be set (null: anywhere open). `pic`: assets/ui/portrait-<pic>-0.png. `needs`: [{ gadget | line: id, level }] makes it an
 // upgrade story (it is offered in the third slot). Words: plain, kind, for children; facts kept general (no numbers or names).
 export const THEMES = [
-  { id: 'vaccine', stops: 4, pic: 'story-vaccine', title: 'Vaccines for three cities',
+  { id: 'vaccine', near: true, stops: 4, pic: 'story-vaccine', title: 'Vaccines for three cities',
     story: 'A new vaccine is ready in {0}. Hospitals in {1}, {2} and {3} are waiting for it.',
     lines: ['The vaccine is packed in ice. Off you go!', 'Nurses in {1} take the first box.', '{2} has its vaccine. One more stop.', '{3} has the last box. Every hospital is ready!'] },
-  { id: 'relief', stops: 4, pic: 'story-crate', title: 'Supplies after a big storm',
+  { id: 'relief', near: true, stops: 4, pic: 'story-crate', title: 'Supplies after a big storm',
     story: 'A big storm has passed. Tents, blankets and water filters from {0} are needed in {1}, {2} and {3}.',
     lines: ['The hold is full of tents and blankets.', '{1} gets its tents first.', 'Water filters for {2}. One more stop!', '{3} has everything it needs. Well flown!'] },
   { id: 'wind', stops: 2, pic: 'story-crate', needs: [{ gadget: 'hold', level: 2 }], title: 'Parts for a wind farm',
@@ -86,16 +92,16 @@ export const THEMES = [
   { id: 'tigers', stops: 2, pic: 'animal-tiger', areas: ['sasia'], title: 'Cameras for tigers',
     story: 'Rangers count tigers with cameras hidden in the forest. They need new memory cards from {0} in {1}.',
     lines: ['A box of memory cards and batteries.', 'The first photo: a tiger walking past!'] },
-  { id: 'orangutans', stops: 3, pic: 'animal-orangutan', areas: ['sasia'], title: 'Trees for orangutans',
+  { id: 'orangutans', near: true, stops: 3, pic: 'animal-orangutan', areas: ['sasia'], title: 'Trees for orangutans',
     story: 'Orangutans live high in the rainforest trees. Teams in {1} and {2} are replanting forest so they can move between patches.',
     lines: ['Young rainforest trees on board.', 'The team in {1} starts planting.', 'The new trees join two patches of forest!'] },
   { id: 'pandas', stops: 2, pic: 'animal-panda', areas: ['easia'], title: 'Bamboo for pandas',
     story: 'Giant pandas eat bamboo almost all day. A panda centre near {1} needs a new kind of bamboo from {0}.',
     lines: ['Bamboo shoots, carefully wrapped.', 'The pandas sniff the new bamboo.'] },
-  { id: 'elephants', stops: 3, pic: 'animal-africanelephant', areas: ['africa'], title: 'Water for elephants',
+  { id: 'elephants', near: true, stops: 3, pic: 'animal-africanelephant', areas: ['africa'], title: 'Water for elephants',
     story: 'In the dry season elephants walk far to find water. Reserves near {1} and {2} need pump parts from {0}.',
     lines: ['Pump parts are loaded.', 'The waterhole near {1} is full again.', 'Elephants drink at {2}!'] },
-  { id: 'salmon', stops: 3, pic: 'animal-cohosalmon', areas: ['namerica'], title: 'Salmon river',
+  { id: 'salmon', near: true, stops: 3, pic: 'animal-cohosalmon', areas: ['namerica'], title: 'Salmon river',
     story: 'Salmon swim up rivers to lay their eggs. A river team from {0} is clearing old dams near {1} and {2}.',
     lines: ['The river team packs their tools.', 'One river runs free near {1}.', 'And another near {2}: the salmon can swim up!'] },
   { id: 'bison', stops: 2, pic: 'animal-bison', areas: ['namerica'], title: 'Bison on the prairie',
@@ -104,7 +110,7 @@ export const THEMES = [
   { id: 'dolphins', stops: 2, pic: 'animal-riverdolphin', areas: ['samerica'], title: 'Pink river dolphins',
     story: 'Pink river dolphins live in the Amazon. Scientists in {1} listen to them with underwater microphones from {0}.',
     lines: ['Underwater microphones on board.', 'Clicks and whistles: the dolphins are here!'] },
-  { id: 'puffins', stops: 3, pic: 'sky-puffin', areas: ['nordic', 'weurope'], title: 'Puffins on the cliffs',
+  { id: 'puffins', near: true, stops: 3, pic: 'sky-puffin', areas: ['nordic', 'weurope'], title: 'Puffins on the cliffs',
     story: 'Puffins nest in burrows on sea cliffs. Bird scientists from {0} count them near {1} and {2}.',
     lines: ['The bird scientists are on board.', 'Puffins with orange beaks fly past {1}.', 'The puffin count is done!'] },
   { id: 'koalas', stops: 2, pic: 'story-crate', areas: ['oceania'], title: 'Trees for koalas',
@@ -140,8 +146,10 @@ function pickStops(save, theme, target, rnd) {
   const pool = citiesFor(save, theme); if (pool.length < theme.stops) return null;
   const start = pool[Math.floor(rnd() * pool.length)], stops = [start], stages = [];
   while (stops.length < theme.stops) {
-    const from = stops[stops.length - 1];
-    const cand = pool.filter(c => !stops.includes(c)).map(c => ({ c, km: wayKm(save, from, c) })).filter(o => o.km);
+    const from = stops[stops.length - 1], drops = stops.slice(1), more = theme.stops - stops.length - 1;
+    // (ONE PLACE: every delivery stop near the ones already chosen; the first one only where enough cities are near it)
+    const ok = c => !theme.near || (drops.length ? nearAll(c, drops) : pool.filter(x => x !== c && x !== start && nearAll(x, [c])).length >= more);
+    const cand = pool.filter(c => !stops.includes(c) && ok(c)).map(c => ({ c, km: wayKm(save, from, c) })).filter(o => o.km);
     if (!cand.length) return null;
     cand.sort((x, y) => Math.abs(x.km - target) - Math.abs(y.km - target) || (x.c < y.c ? -1 : 1));
     const best = cand.slice(0, 3)[Math.floor(rnd() * Math.min(3, cand.length))];   // one of the three closest: variety
@@ -211,7 +219,11 @@ export function fillBoard(save) {
 
 // ---------- the active story ----------
 export const activeStory = save => (save.storyBoard || []).find(o => o && o.id === save.storyActive) || null;
-export const nextStop = save => { const o = activeStory(save); return o ? o.stops[o.reached || 0] : null; };
+// WHERE THE STORY GOES NOW (its destination, save.aimCity): the next stop; on a special delivery ready to fly (at the pickup) the LAST
+// stop, the crate stops being dropped on the way; after a failed delivery the pickup again (o.back: 'fly back to the first place').
+export const crateRunReady = o => !!(o && o.crate && !o.back && isCrateStop(o, o.reached || 0));
+export const storyAim = o => (!o ? null : o.back ? o.stops[0] : crateRunReady(o) ? o.stops[o.stops.length - 1] : o.stops[o.reached || 0]);
+export const nextStop = save => storyAim(activeStory(save));
 // What the active story still pays (its stages not yet reached), and the fee for dropping it (0 with no active story).
 export function leftPay(o) { const n = o.reached || 0; return storyPay(o.stages.slice(Math.max(0, n - 1)).reduce((a, b) => a + b, 0), o.payMul || 1); }
 export function dropFee(save) {
@@ -224,7 +236,7 @@ export const heartsLeft = o => (o && o.hearts ? (o.heartsLeft == null ? o.hearts
 function endStory(save, why) {
   const o = activeStory(save); if (!o) return null;
   save.storyBoard = save.storyBoard.map(x => (x === o ? null : x));
-  delete save.storyActive; if (save.aimCity === o.stops[o.reached || 0]) delete save.aimCity;
+  delete save.storyActive; if (save.aimCity === storyAim(o)) delete save.aimCity;
   if (why === 'failed') save.storiesFailed = (save.storiesFailed || 0) + 1; else save.storiesDropped = (save.storiesDropped || 0) + 1;
   return o;
 }
@@ -237,10 +249,13 @@ export function drop(save) {
 // fails it; free flight is always there to get out). A flight whose destination is not the story's next stop, a FREE FLIGHT, or a
 // crossing ends the story as FAILED (no fee: the story and what it still had to pay are lost). Swapping for another story (ACCEPT)
 // is the one that costs the fee.
-export const offStory = save => { const o = activeStory(save); return !!(o && save.aimCity && save.aimCity !== o.stops[o.reached || 0]); };
+export const offStory = save => { const o = activeStory(save); return !!(o && save.aimCity && save.aimCity !== storyAim(o)); };
 export function leave(save) { return endStory(save, 'failed'); }
 // The story's next stop as the destination again (after something cleared it, or BACK TO MY STORY).
-export function reaim(save) { const o = activeStory(save); if (o) save.aimCity = o.stops[o.reached || 0]; return !!o; }
+export function reaim(save) { const o = activeStory(save); if (o) { settle(save); save.aimCity = storyAim(o); } return !!o; }
+// A special delivery ready to fly while the plane is somewhere else (a save from 0.79, which let a delivery go on over several flights):
+// it flies back to the pickup first. Idempotent.
+export function settle(save) { const o = activeStory(save); if (crateRunReady(o) && save.city !== o.stops[0]) { o.back = true; if (save.aimCity) save.aimCity = storyAim(o); } }
 // ACCEPT. One story at a time: with another one active, it is dropped first and the fee paid (the caller shows the fee before).
 export function accept(save, id) {
   const o = (save.storyBoard || []).find(x => x && x.id === id);
@@ -248,7 +263,7 @@ export function accept(save, id) {
   if (save.storyActive && save.storyActive !== o.id) drop(save);
   save.storyActive = o.id; o.reached = o.reached || 0;
   if (o.hearts && o.heartsLeft == null) o.heartsLeft = o.hearts;
-  save.aimCity = o.stops[o.reached];   // the destination (src/aim.js): the strip and the lit runway point at the next stop
+  save.aimCity = storyAim(o);   // the destination (src/aim.js): the strip and the lit runway point at the next stop
   return true;
 }
 // A crash on a story flight (src/missions2.js onFlight): one heart less; at 0 the story fails. Returns { id, title, hearts, of, failed }
@@ -271,8 +286,42 @@ export function missed(save, city) {
 // After a landing at `city` (src/missions2.js onFlight): the next stop reached? Pays its stage straight away. Returns
 // { title, city, line, n, of, done, pay } or null.
 export function landedAt(save, city) {
-  const o = activeStory(save); if (!o || o.stops[o.reached || 0] !== city || isCrateStop(o, o.reached || 0)) return null;
+  const o = activeStory(save); if (!o || o.back || o.stops[o.reached || 0] !== city || isCrateStop(o, o.reached || 0)) return null;
   return reach(save, o, city);
+}
+// BACK AT THE PICKUP after a failed special delivery: the next flight from here is the one-flight delivery again. True when it was.
+export function landedBack(save, city) {
+  const o = activeStory(save); if (!o || !o.back || city !== o.stops[0]) return false;
+  delete o.back; save.aimCity = storyAim(o); return true;
+}
+// A SPECIAL DELIVERY FLIGHT (Oliver, 2026-11-25: 'one singular flight that gets you through all three. You start on the first one ... make
+// the drop, then you land at the end'). Called by src/missions2.js onFlight for a flight that took off from the pickup with the crates on
+// board (save.city is still the start). It counts only WHOLE: every crate on its runway AND the landing at the last stop; then every crate
+// stop and the last stop are reached and paid together. Anything else (a crash, a missed crate, a landing anywhere else, a crate stop
+// too) costs ONE heart and nothing is reached; the flight's own crystals are kept as on any flight; a plane that landed away from the
+// pickup must fly back to it (o.back) for the next try. Returns { events: [reach results] } or { hurt } (null: not a delivery flight).
+export function crateRun(save, r) {
+  const o = activeStory(save), drops = crateStops(save); if (!o || !drops.length) return null;
+  const last = o.stops[o.stops.length - 1], got = (r.crates && r.crates.delivered) || [], miss = (r.crates && r.crates.missed) || [];
+  if (r.landed && r.landedAt === last && drops.every(c => got.includes(c)) && !miss.length)
+    return { events: [...drops.map(c => reach(save, o, c)), reach(save, o, last)] };
+  const why = miss.length ? { crate: miss[0] } : r.landed ? { early: r.landedAt, last } : {};   // (a crash: the plain heart)
+  const h = crashed(save); if (!h) return null;
+  if (!h.failed && r.landed && r.landedAt !== o.stops[0]) { o.back = true; save.aimCity = storyAim(o); }
+  return { hurt: { ...h, ...storyShape(o), back: !h.failed && r.landed && r.landedAt !== o.stops[0] ? o.stops[0] : null, ...why } };   // (why last: its `crate` is the city, storyShape's is a flag)
+}
+// STRICT STOPS (Oliver, 2026-11-25: 'you have to land at the requisite places, unless it's one of those ... as many tries as you want
+// stories. But you should lose a life if you land somewhere that's not predetermined'). Once the pickup is reached, a landing anywhere
+// but the story's next stop costs a heart (src/storyboard.js crashed). Before the pickup, and flying back to it after a failed delivery,
+// only flying PAST it costs one (0.79.0 missed: those trips may need several flights). Easy (no hearts): nothing is lost; the card still
+// says a passed stop was missed. Returns the heart record ({ ..., off | missed }) or null (nothing to say).
+export function offPlan(save, city, passed = []) {
+  const o = activeStory(save); if (!o || !city) return null;
+  const aim = storyAim(o); if (city === aim) return null;
+  const strict = (o.reached || 0) >= 1 && !o.back, flewPast = passed.includes(aim);
+  if (!strict && !flewPast) return null;
+  if (!o.hearts) return flewPast ? missed(save, aim) : null;
+  return flewPast ? missed(save, aim) : { ...crashed(save), off: city, aim };
 }
 // A crate delivered onto `city`'s runway (src/sim/crates.js, read by src/missions2.js onFlight): that crate stop is reached and paid.
 export function deliveredAt(save, city) {
@@ -281,7 +330,7 @@ export function deliveredAt(save, city) {
 }
 // The crate stops a flight from here should drop on, in order (the next stop on, while they are crate stops). Empty: none.
 export function crateStops(save) {
-  const o = activeStory(save); if (!o || !o.crate) return [];
+  const o = activeStory(save); if (!crateRunReady(o) || save.city !== o.stops[0]) return [];   // (the one flight starts at the pickup)
   const out = []; for (let i = o.reached || 0; isCrateStop(o, i); i++) out.push(o.stops[i]); return out;
 }
 // The way a special delivery flies in ONE flight: from here over every crate stop to the last stop (null: not a crate flight now).
@@ -301,7 +350,7 @@ function reach(save, o, city) {
     save.storiesDone = (save.storiesDone || 0) + 1;
     save.storyBoard = save.storyBoard.map(x => (x === o ? null : x));
     delete save.storyActive; if (save.aimCity === city) delete save.aimCity;
-  } else save.aimCity = o.stops[o.reached];
+  } else save.aimCity = storyAim(o);
   return { id: o.id, title: o.title, city, line: o.lines[i] || '', n: i + 1, of: o.stops.length, done, pay, ...storyShape(o) };
 }
 // What the results card needs to draw a story (src/resultscard.js storyView): its level, its stops and how many are reached, its hearts.
@@ -312,6 +361,9 @@ export const storyShape = o => ({ level: o.level || null, oneGo: !!o.oneGo, crat
 export function storyRow(save) {
   const o = activeStory(save); if (!o) return null;
   const left = o.stages.slice(Math.max(0, (o.reached || 0) - 1)).reduce((a, b) => a + b, 0);
-  return { key: `story:${o.id}`, title: `${o.title}: land at ${o.stops[o.reached || 0]}`, tier: 0, star: false, kind: 'story',
-    prize: storyPay(left, o.payMul || 1), def: { id: 'story' }, fill: { city: o.stops[o.reached || 0] } };
+  const aim = storyAim(o), what = o.back ? `fly back to ${aim}` : crateRunReady(o) ? `drop on ${crateStopsOf(o).join(', ')}, land at ${aim}` : `land at ${aim}`;
+  return { key: `story:${o.id}`, title: `${o.title}: ${what}`, tier: 0, star: false, kind: 'story',
+    prize: storyPay(left, o.payMul || 1), def: { id: 'story' }, fill: { city: aim } };
+}
+export function crateStopsOf(o) { const out = []; for (let i = o.reached || 0; isCrateStop(o, i); i++) out.push(o.stops[i]); return out;
 }

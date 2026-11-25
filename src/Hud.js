@@ -83,13 +83,15 @@ export class RouteStrip {
     this.gfx = scene.add.graphics().setDepth(7);
     this.plane = scene.add.image(x0, y + 2, 'plane-comet').setScale(0.3).setDepth(8);
     this.name = scene.add.text(x1 + 2, y + 5, '', { fontFamily: 'Pixel, monospace', fontSize: '7px', color: '#ffe15a', stroke: '#000', strokeThickness: 2 }).setOrigin(1, 0).setDepth(8);
-    this.parts = [this.bg, this.gfx, this.plane, this.name];
+    this.dropName = scene.add.text(x0, y + 5, '', { fontFamily: 'Pixel, monospace', fontSize: '7px', color: '#ff9f3a', stroke: '#000', strokeThickness: 2 }).setOrigin(0.5, 0).setDepth(8);   // a special delivery's crate stop
+    this.parts = [this.bg, this.gfx, this.plane, this.name, this.dropName];
     this.setVisible(false);
   }
   setVisible(on) { for (const p of this.parts) p.setVisible(on); this.shown = on; return this; }
   // f: 0..1 from take-off to the target; ticks: [0..1] the airports on the way; name: the target; flag: draw the gold flag
   // (false: a plain square, e.g. no destination set); blinkOff: this frame of the blink hides the flag.
-  draw({ f, ticks = [], name, flag = true, blinkOff = false }) {
+  // drops: [{ t, name, done }] a special delivery's crate stops (an orange crate mark and the name under it; green once delivered).
+  draw({ f, ticks = [], drops = [], name, flag = true, blinkOff = false }) {
     const { x0, x1, y } = STRIP, g = this.gfx, end = x1 - 6, X = t => Math.round(x0 + Math.max(0, Math.min(1, t)) * (end - x0));
     const px = X(f);
     g.clear();
@@ -102,8 +104,12 @@ export class RouteStrip {
       g.fillStyle(0xffffff).fillRect(end, y - 5, 2, 11);
       if (!blinkOff) g.fillStyle(0xffc23d).fillRect(end + 2, y - 5, 6, 4);
     } else g.fillStyle(0xffffff).fillRect(end - 2, y - 1, 6, 6);
-    this.plane.setPosition(px, y + 2);
     this.name.setText(name || '').setFontSize(7);   // a long name ('WINDHOEK', 'ANTANANARIVO') shrinks to fit inside the bar (to 5 px): it never runs past the box
     for (let fs = 7; this.name.width > x1 - x0 - 10 && fs > 5;) this.name.setFontSize(--fs);
+    for (const d of drops) { const dx = X(d.t); g.fillStyle(0x000000).fillRect(dx - 4, y - 4, 8, 8); g.fillStyle(d.done ? 0x7ee87e : 0xff9f3a).fillRect(dx - 3, y - 3, 6, 6); }
+    const d0 = drops.find(d => !d.done) || drops[drops.length - 1];   // (the name of the crate stop still to come, else the last one done)
+    this.dropName.setText(d0 ? d0.name : '').setColor(d0 && d0.done ? '#7ee87e' : '#ff9f3a');
+    if (d0) { const w = this.dropName.width / 2, end2 = x1 - 6 - this.name.width - 4; this.dropName.setX(Math.max(x0 + w, Math.min(end2 - w, X(d0.t)))); }   // (kept clear of the end name)
+    this.plane.setPosition(px, y + 2);
   }
 }

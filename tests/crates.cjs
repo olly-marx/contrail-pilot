@@ -4,8 +4,9 @@
 // 3. Over the crate stop's runway the drop is the crate (not a tree); it falls fast and lands a short way behind: dropped over the
 //    runway it floats onto it (delivered) only when let go the right way before it (at 150 px/s from 150 px up: about 50-200 px early);
 //    let go over the runway it floats past (missed); far too early it falls short; a runway passed with no crate is a miss.
-// 4. onFlight: a delivered crate reaches and pays its stop (no landing there needed); a miss costs a heart; LANDING at a crate stop
-//    does not count.
+// 4. onFlight (Oliver, 2026-11-25): the delivery is ONE flight from the pickup: every crate on its runway AND the landing at the last stop
+//    reach and pay every stop together. A missed crate, a crash, or a landing anywhere else costs one heart, reaches nothing, and a
+//    plane that landed away must fly back to the pickup (no heart on the way back) before the crates are loaded again.
 // Plants: tools/plants.tsv, test crates. Run: node tests/crates.cjs
 (async () => {
   const B = await import('../src/storyboard.js'), M2 = await import('../src/missions2.js'), { routeFor } = await import('../src/aim.js');
@@ -50,13 +51,29 @@
   check(w2.crateResult().missed[0] === drops[0] && !w2.crates.length, `dropped far too early it misses, and this flight's other crates are off: ${JSON.stringify(w2.crateResult())}`);
   const w3 = fly(); w3.crateAirportPassed(drops[0]);
   check(w3.crateResult().missed[0] === drops[0], 'a runway passed with no crate is a miss');
-  // 4. onFlight.
-  const h0 = B.heartsLeft(B.activeStory(s)), seeds0 = s.seeds;
-  M2.onFlight(s, { landed: true, landedAt: 'NOWHERE', crates: { delivered: [], missed: [drops[0]] }, distance: 1000 });
-  check(B.heartsLeft(B.activeStory(s)) === h0 - 1 && s.storyHurt && s.storyHurt.crate === drops[0], `a missed crate costs a heart: ${h0} -> ${B.heartsLeft(B.activeStory(s))}`);
-  M2.onFlight(s, { landed: true, landedAt: 'NOWHERE', crates: { delivered: [drops[0]], missed: [] }, distance: 1000 });
-  const a = B.activeStory(s);
-  check(a && a.reached === 2 && s.seeds > seeds0, `a delivered crate reaches and pays its stop: reached ${a && a.reached}, seeds ${seeds0} -> ${s.seeds}`);
+  // 4. onFlight: the delivery is ONE flight (Oliver, 2026-11-25). Each failure is one heart, reaches nothing, and the plane flies back to the pickup.
+  const A = o.stops[0], other = ['PARIS', 'MADRID', 'ROME', 'BERLIN', 'CAIRO'].find(c => !o.stops.includes(c)), story = () => B.activeStory(s), hearts = () => B.heartsLeft(story());
+  story().hearts = story().heartsLeft = 9;   // (enough hearts for every case below)
+  let got = [];
+  const storySeeds = () => got.filter(m => /^story:/.test(m.key)).reduce((a, m) => a + (m.prize.seeds || 0), 0);
+  const flyFrom = (from, r) => { s.city = from; got = M2.onFlight(s, { distance: 1000, crates: { delivered: [], missed: [] }, ...r }); if (r.landed) s.city = r.landedAt; };
+  let h0 = hearts();
+  flyFrom(A, { landed: true, landedAt: other, crates: { delivered: [], missed: [drops[0]] } });
+  check(hearts() === h0 - 1 && s.storyHurt && s.storyHurt.crate === drops[0] && story().reached === 1 && story().back && s.aimCity === A, `a missed crate costs a heart and sends the plane back to ${A}: ${h0} -> ${hearts()}, ${JSON.stringify(s.storyHurt && s.storyHurt.crate)}, back ${story().back}, aim ${s.aimCity}`);
+  check(!B.crateStops(s).length, 'away from the pickup the flight carries no crates');
+  h0 = hearts(); flyFrom(other, { landed: true, landedAt: other === 'PARIS' ? 'MADRID' : 'PARIS' });
+  check(hearts() === h0, 'flying back to the pickup may take a landing on the way (no heart)');
+  flyFrom(s.city, { landed: true, landedAt: A });
+  check(!story().back && !s.storyHurt && hearts() === h0 && JSON.stringify(B.crateStops(s)) === JSON.stringify(drops) && s.aimCity === last, `back at ${A}: the crates are on board again and the destination is ${last} (${s.aimCity})`);
+  h0 = hearts();
+  flyFrom(A, { landed: true, landedAt: drops[0], crates: { delivered: drops, missed: [] } });
+  check(hearts() === h0 - 1 && story().reached === 1 && storySeeds() === 0 && s.storyHurt && s.storyHurt.early === drops[0], `crates delivered but a landing before ${last} costs a heart and pays nothing: ${h0} -> ${hearts()}, reached ${story().reached}, story seeds ${storySeeds()}`);
+  flyFrom(s.city, { landed: true, landedAt: A });
+  h0 = hearts(); flyFrom(A, { landed: false, crates: { delivered: drops.slice(0, 1), missed: [] } });
+  check(hearts() === h0 - 1 && story().reached === 1 && !story().back, `a crash on the delivery costs one heart (not two) and the plane is still at ${A}: ${h0} -> ${hearts()}`);
+  const pay = o.pay.seeds;
+  flyFrom(A, { landed: true, landedAt: last, crates: { delivered: drops, missed: [] } });
+  check(!s.storyActive && storySeeds() === pay && got.filter(m => /^story:/.test(m.key)).length === o.stops.length - 1 && (s.storiesDone || 0) === 1, `every crate on its runway and the landing at ${last}: the whole story is done and paid at once (${storySeeds()} of ${pay} seeds)`);
   if (fails.length) { console.log('FAIL crates\n- ' + fails.join('\n- ')); process.exit(1); }
-  console.log('PASS crates (special delivery offers, one flight over every crate stop, the crate falls onto the runway or misses, delivered stops pay, misses cost a heart)');
+  console.log('PASS crates (special delivery offers, one flight over every crate stop, the crate falls onto the runway or misses, the delivery counts only whole, any failure is one heart and back to the pickup)');
 })();

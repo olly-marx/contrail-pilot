@@ -1042,7 +1042,13 @@ storydone-ui	src/ui.js	s/if (storyDone) await this.storyCompleteBeat(el, v, held
 storydone-ui	src/ui.js	s/seeds: Math.min(v.bank.seeds, v.story.seeds || 0), crystals:/seeds: 0, crystals:/	the story prize is not held back from the first count
 approach-ui	src/GameScene.js	s/    if (!on) return null;/    if (true) return null;/	the approach marker never shows
 approach-ui	src/GameScene.js	s/const on = !!(rv \&\& rv.nextIsEnd \&\&/const on = !!(rv \&\& rv.target \&\& rv.nextIsEnd \&\&/	free flight gets no marker
-storymiss	src/missions2.js	s/(r.passed || \[\]).includes(stop) \&\& r.landedAt !== stop/false/	a story stop flown past costs nothing
 loaderart	src/loader.js	s/SKY_FRAMES = 8,/SKY_FRAMES = 6,/	the sky sheet counted as 6 frames (torn frames)
 storepages	tools/make-site.sh	s/cp -r index.html privacy.html support.html style.css/cp -r index.html style.css/	the privacy and help pages are not published
 ascwhatsnew	tools/asc-whatsnew.mjs	s/const top = (changes || \[\])\[0\];/const top = (changes || [])[1];/	What to Test takes an older CHANGES entry
+storynear	src/storyboard.js	s/^export const nearAll = (c, others) => others.every(o => realBetween(c, o) <= NEAR_KM);/export const nearAll = () => true;/	the one-place rule off (a storm in London, Oslo and Papeete)
+storymiss	src/storyboard.js	s/  const strict = (o.reached || 0) >= 1 \&\& !o.back, flewPast/  const strict = false, flewPast/	a wrong landing after the pickup costs nothing
+crates	src/storyboard.js	s/  if (r.landed \&\& r.landedAt === last \&\& drops.every/  if (drops.every/	a delivery counts without landing at the last stop
+crates	src/storyboard.js	s/  if (!h.failed \&\& r.landed \&\& r.landedAt !== o.stops\[0\]) { o.back = true;/  if (false) { o.back = true;/	a failed delivery does not send the plane back to the pickup
+storymiss	src/storyboard.js	s/, flewPast = passed.includes(aim);/, flewPast = false;/	a story stop flown past costs nothing
+storygen	tools/stories/validate.mjs	s/  if (!t.near \&\& \[t.title, t.story\]/  if (false \&\& [t.title, t.story]/	a storm story whose stops may be far apart passes
+storygen	tools/stories/generate.mjs	s/required: \[.id., .level., .stops., .near., /required: [/	the schema lets Claude leave out near
