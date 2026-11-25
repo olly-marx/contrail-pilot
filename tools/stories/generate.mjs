@@ -43,15 +43,19 @@ Rules:
 - lines: exactly one sentence per stop (at most ${LIMITS.line} characters each), shown when the plane lands there; the first is the pickup.
 - pic: one of ${PICS.join(', ')}. Use an animal's picture only when the story is about that animal.
 - areas: the area key given, so the story is set there.
+- near: true when the stops after the pickup share ONE event or ONE place (a storm, a flood, a drought, an outbreak, reserves or villages
+  near each other); the game then picks delivery cities close together, and the pickup may be far away. false for a journey or a tour
+  (scientists on a tour, a migration route), where the cities may be far apart. A story about one storm or flood MUST be near: true.
+- Never describe the places themselves (islands, mountains, the coast, the desert, cold or hot): the game picks the cities, so such words may be wrong.
 - id: a short lower-case slug, unique in your answer.
 - Every story must be different from the others: different cargo, different people or animals.`;
 
 const schema = {
   type: 'object', additionalProperties: false, required: ['themes'],
   properties: { themes: { type: 'array', items: {
-    type: 'object', additionalProperties: false, required: ['id', 'level', 'stops', 'title', 'story', 'lines', 'pic'],
+    type: 'object', additionalProperties: false, required: ['id', 'level', 'stops', 'near', 'title', 'story', 'lines', 'pic'],
     properties: {
-      id: { type: 'string' }, level: { type: 'string', enum: Object.keys(LEVELS) }, stops: { type: 'integer', enum: [2, 3, 4] },
+      id: { type: 'string' }, level: { type: 'string', enum: Object.keys(LEVELS) }, stops: { type: 'integer', enum: [2, 3, 4] }, near: { type: 'boolean' },
       title: { type: 'string' }, story: { type: 'string' }, lines: { type: 'array', items: { type: 'string' } }, pic: { type: 'string', enum: PICS },
     } } } },
 };
