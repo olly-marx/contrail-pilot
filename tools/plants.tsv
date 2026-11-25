@@ -1044,3 +1044,4 @@ approach-ui	src/GameScene.js	s/    t.setVisible(on); if (!on) return false;/    
 storymiss	src/missions2.js	s/(r.passed || \[\]).includes(stop) \&\& r.landedAt !== stop/false/	a story stop flown past costs nothing
 loaderart	src/loader.js	s/SKY_FRAMES = 8,/SKY_FRAMES = 6,/	the sky sheet counted as 6 frames (torn frames)
 storepages	tools/make-site.sh	s/cp -r index.html privacy.html support.html style.css/cp -r index.html style.css/	the privacy and help pages are not published
+ascwhatsnew	tools/asc-whatsnew.mjs	s/const top = (changes || \[\])\[0\];/const top = (changes || [])[1];/	What to Test takes an older CHANGES entry

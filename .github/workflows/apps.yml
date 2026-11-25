@@ -98,6 +98,14 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/asc/AuthKey.p8" \
             -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
             -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}"
+      - name: "TestFlight What to Test from CHANGES.json (tools/asc-whatsnew.mjs; never fails the job)"
+        continue-on-error: true
+        timeout-minutes: 17
+        env:
+          ASC_KEY_PATH: ${{ runner.temp }}/asc/AuthKey.p8
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: node tools/asc-whatsnew.mjs "${{ github.run_number }}"
       - name: "Revoke the signing certificate this run made (automatic signing makes one each run; the account's limit stopped the 0.73.0 archive)"
         if: always()
         env:

@@ -117,3 +117,4 @@ group land-strip | src/landstrip.js | hudlayout forestmeter
 group missions-fit | style.css src/ui.js | missionfit
 group story-done | src/celebrate.js | storydone-ui
 group store-pages | privacy.html support.html tools/make-site.sh | NONE
+group app-store | tools/asc-whatsnew.mjs .github/workflows/apps.yml | NONE
