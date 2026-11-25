@@ -464,6 +464,7 @@ p { margin: 0; }
 .name-input { font-family: 'Pixel', monospace; font-size: 14px; padding: 8px; border: 3px solid var(--ink); width: 100%; box-sizing: border-box; text-transform: none; }
 .word-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .word-grid .btn { font-size: 8px; padding: 8px 2px; }
+@media (max-height: 600px) { .word-grid { gap: 4px; } .word-grid .btn { padding: 6px 2px; } }   /* (0.79.0: the taller font made the name form 383 px at 320x568, and the tour bubble under it covered its last row: tests/spotlight name#2) */
 .word-grid .btn.on, .board-pick .btn.on { background: var(--cool); }
 .msg { min-height: 12px; color: #c0392b; }
 .pilot-stats { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 9px; }

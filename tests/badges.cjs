@@ -106,7 +106,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     s.missionText.setText(long); const bx = s.missionText.getBounds();
     return { m, left: bx.left, right: bx.right, height: bx.height, W: s.scale.gameSize.width }; });
   check(hud.m === 3.1, `multiplier 1 + 0.7 x 3 should show 3.1, got ${hud.m}`);
-  check(hud.left >= 0 && hud.right <= hud.W && hud.height <= 28, `mission line stays on screen, at most 2 lines drawn (8 px font): ${JSON.stringify(hud)}`);
+  check(hud.left >= 0 && hud.right <= hud.W && hud.height <= 34, `mission line stays on screen, at most 2 lines drawn (8 px font, 10 rows tall since 0.79.0: was <= 28): ${JSON.stringify(hud)}`);
 
   console.log({ fails, errs });
   await b.close();
