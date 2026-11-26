@@ -1054,3 +1054,10 @@ storygen	tools/stories/validate.mjs	s/  if (!t.near \&\& \[t.title, t.story\]/  
 storygen	tools/stories/generate.mjs	s/required: \[.id., .level., .stops., .near., /required: [/	the schema lets Claude leave out near
 popupearly	src/GameScene.js	s/    if (!this.fxLayer) return null;/    if (false) return null;/	a popup before the scene is built crashes (the 0.79.0 launch crash)
 missionfit	style.css	s/^.slevel { flex-wrap: wrap; row-gap: 3px; }$/.slevel { }/	the story difficulty row does not wrap: hearts run past the card
+autotiers	src/sim/rules.js	s/&& y < r.y + r.height + POWERUPS.autoClearAbove &&/\&\& y < r.y + r.height + 6 \&\&/	autopilot storm clearance back to 6 px
+autotiers	src/sim/rules.js	s/if (this.autoUntil - this.gameTime < POWERUPS.autoSettleMs) return this.autopilotTarget();/if (false) return this.autopilotTarget();/	no mid-gap settle before the hand-back
+autotiers	src/sim/rules.js	s/if (skill < T.dayIce) return this.autopilotTarget();/if (false) return this.autopilotTarget();/	level 1-2 autopilot gets the full planner
+autotiers	src/sim/rules.js	s/const iceCost = want ? -40 : avoid ? 600 : 0;/const iceCost = want ? -40 : 600;/	night icy-air avoidance before its level
+autotiers	src/sim/rules.js	s/const crop = this.tokens.filter(t => !t.power \&\& seeds \&\&/const crop = this.tokens.filter(t => !t.power \&\&/	seeds before their level
+autotiers	src/sim/rules.js	s/const lineUp = skill >= T.crystals \&\&/const lineUp = false \&\&/	no crystal line-up
+autotiers	src/sim/rules.js	s/const route = forecast ? this.autopilotRoute() : null;/const route = null;/	no forecast route
