@@ -1749,7 +1749,11 @@ export class GameScene extends Phaser.Scene {
   routeView() {
     const tgt = this.targetCity(), from = this.airportIndex || 0;
     let ti = -1;
-    if (tgt) for (let k = from + 1; k < this.path.length && k <= from + 12; k++) if (this.path[k] === tgt) { ti = k; break; }
+    // (A special delivery is ONE flight to its last stop, however many airports it passes: the strip spans the whole plan, crate
+    // stops and the landing, Oliver 2026-11-26: 'my destination bar just says the next city like I'm in explore mode'. It used to look
+    // 12 airports ahead only, so a long delivery showed the next airport.)
+    const span = (this.crates || []).length || (this.crateDone || []).length ? this.path.length : 12;
+    if (tgt) for (let k = from + 1; k < this.path.length && k <= from + span; k++) if (this.path[k] === tgt) { ti = k; break; }
     const endK = ti > 0 ? ti : from + 1, ticks = [];
     let x = this.nextAirport.worldX;
     for (let k = from + 1; k < endK; k++) { ticks.push(x); x += this.legKm(k); }

@@ -209,10 +209,29 @@ export const levelFor = (slot, seq) => (slot === 0 ? 'easy' : slot === 2 ? 'hard
 const missingNeeds = (save, needs) => needs.map(needInfo).filter(i => i && !has(save, i));
 
 // Fill the empty slots (idempotent; returns true when the save changed). An offer already made is never touched.
+// AN OFFER THAT BREAKS THE ONE-PLACE RULE (Oliver, 2026-11-26: 'Vaccines for three cities: drop on DENVER, MUMBAI, land at MANAUS',
+// about 48,800 km over 23 airports in one flight): offers are frozen when made, so one made before 0.79.2 kept its far-apart stops.
+// A one-place theme whose delivery stops are not all within NEAR_KM of each other is taken off the board (its slot is made again).
+// The active one goes too when it is a special delivery (nothing is paid before the whole run) or no delivery stop is reached yet;
+// a stop-by-stop story already under way is left to finish. No fee, no heart, not counted as dropped or failed. Returns the titles.
+export const brokenNear = o => { const t = o && THEMES.find(x => x.id === o.theme); if (!t || !t.near) return false;
+  const d = o.stops.slice(1); return d.some((c, i) => !nearAll(c, d.slice(i + 1))); };
+export function retireBroken(save) {
+  const out = [];
+  save.storyBoard = (save.storyBoard || []).map(o => {
+    if (!brokenNear(o)) return o;
+    const active = o.id === save.storyActive;
+    if (active && !o.crate && (o.reached || 0) > 1) return o;
+    if (active) { delete save.storyActive; if (save.aimCity === storyAim(o)) delete save.aimCity; }
+    out.push(o.title); return null;
+  });
+  return out;
+}
 export function fillBoard(save) {
   if (!STORY.on) return false;
+  const gone = retireBroken(save); if (gone.length) save.storyRetired = gone;
   const b = save.storyBoard = Array.isArray(save.storyBoard) ? save.storyBoard : [];
-  let changed = false;
+  let changed = gone.length > 0;
   for (let i = 0; i < STORY.slots; i++) if (!b[i]) { const o = makeOffer(save, i); if (o) { b[i] = o; changed = true; } }
   return changed;
 }

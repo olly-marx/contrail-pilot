@@ -178,16 +178,19 @@ export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross
     g.fillStyle = !lit || k.name in lit ? 'rgba(255,255,255,0.9)' : 'rgba(40,40,60,0.75)';
     g.fillRect(dx, dy, 2, 2); dots.push({ name: k.name, x: dx, y: dy, onLand: on });
   }
-  // The way ahead: gold, drawn in whole pixels (no smoothing), a square at each airport.
+  // The way ahead: gold, drawn in whole pixels (no smoothing), a square at each airport. (Not with a story: the story's plan below
+  // replaces it, Oliver 2026-11-26: the airports on the way and the network's turns made 'an ugly mess of lines'.)
   g.fillStyle = '#ffd34d';
   let prev = null;
-  for (let i = 0; i + 1 < path.length; i++) for (let t = 0; t <= 1.0001; t += 0.02) {
+  const goldLine = (a, b) => { let pv = null; for (let t = 0; t <= 1.0001; t += 0.02) { const p = along(a, b, t), q = to(p.lat, p.lon); if (!q) { pv = null; continue; }
+    if (pv) for (let s = 0; s <= 4; s++) g.fillRect(Math.round(pv[0] + (q[0] - pv[0]) * s / 4) - 1, Math.round(pv[1] + (q[1] - pv[1]) * s / 4) - 1, 2, 2); pv = q; } };
+  if (!(story && story.stops)) for (let i = 0; i + 1 < path.length; i++) for (let t = 0; t <= 1.0001; t += 0.02) {
     const p = along(path[i], path[i + 1], t), q = to(p.lat, p.lon);
     if (!q) { prev = null; continue; }
     if (prev) for (let s = 0; s <= 4; s++) g.fillRect(Math.round(prev[0] + (q[0] - prev[0]) * s / 4) - 1, Math.round(prev[1] + (q[1] - prev[1]) * s / 4) - 1, 2, 2);
     prev = q;
   }
-  for (const k of path.slice(1)) { const q = to(k.lat, k.lon); if (q) { g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - 3, q[1] - 3, 6, 6); g.fillStyle = '#ffd34d'; g.fillRect(q[0] - 2, q[1] - 2, 4, 4); } }
+  if (!(story && story.stops)) for (const k of path.slice(1)) { const q = to(k.lat, k.lon); if (q) { g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - 3, q[1] - 3, 6, 6); g.fillStyle = '#ffd34d'; g.fillRect(q[0] - 2, q[1] - 2, 4, 4); } }
   // The other ways you could choose: their first airport as a light square (tap it to go that way).
   for (const w of ways) { if (path[1] && w.name === path[1].name) continue; const q = to(w.lat, w.lon); if (q) { g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - 3, q[1] - 3, 6, 6); g.fillStyle = '#eaf6ff'; g.fillRect(q[0] - 2, q[1] - 2, 4, 4); } }
   // R-A: a crossing that is ready (cross = { from, to }): its arc in light blue (dashed) and a ring round its destination that breathes (phase 0 / 1), tap it for the sheet.
@@ -196,13 +199,17 @@ export function paint(canvas, f, path, quality = 2, ways = [], lit = null, cross
     const d = to(cross.to.lat, cross.to.lon);
     if (d) { const r = 4 + phase; g.fillStyle = '#1b1b2f'; g.fillRect(d[0] - r - 1, d[1] - r - 1, 2 * r + 2, 2 * r + 2); g.fillStyle = '#bfeaff'; g.fillRect(d[0] - r, d[1] - r, 2 * r, 2 * r); g.fillStyle = '#1b1b2f'; g.fillRect(d[0] - r + 2, d[1] - r + 2, 2 * r - 4, 2 * r - 4); g.fillStyle = '#ffd34d'; g.fillRect(d[0] - 1, d[1] - 1, 3, 3); }
   }
-  // PLAN A (2026-11-24): the active story (story = { stops: city objects, next: index of the next stop }): the legs still to fly
-  // after the next stop dashed in orange, every stop a square (green: reached, orange: to come), the next stop a breathing ring.
+  // THE STORY'S PLAN (Plan A 2026-11-24; plain since 2026-11-26): story = { stops: city objects, next: index of the next stop,
+  // oneFlight: true for a special delivery }. This flight's legs straight and gold, from here through the stops it flies to (one
+  // stop, or every crate stop and the last one on a special delivery); later flights' legs dashed orange. Every stop a square
+  // (green: reached, orange: a stop to come), the place to LAND a breathing ring. No airports on the way: they are not the plan.
   if (story && story.stops) {
-    const st = story.stops, nx = story.next || 0;
-    for (let i = Math.max(0, nx); i + 1 < st.length; i++) for (let t = 0, j = 0; t <= 1.0001; t += 0.015, j++) { if (j % 2) continue; const p = along(st[i], st[i + 1], t), q = to(p.lat, p.lon); if (q) { g.fillStyle = '#ff9f3a'; g.fillRect(q[0] - 1, q[1] - 1, 2, 2); } }
+    const st = story.stops, nx = story.next || 0, here = path[0], last = story.oneFlight ? st.length - 1 : nx;
+    g.fillStyle = '#ffd34d';
+    for (let i = nx, a = here; i <= last && i < st.length; a = st[i], i++) if (a && a.name !== st[i].name) goldLine(a, st[i]);
+    for (let i = Math.max(0, last); i + 1 < st.length; i++) for (let t = 0, j = 0; t <= 1.0001; t += 0.015, j++) { if (j % 2) continue; const p = along(st[i], st[i + 1], t), q = to(p.lat, p.lon); if (q) { g.fillStyle = '#ff9f3a'; g.fillRect(q[0] - 1, q[1] - 1, 2, 2); } }
     st.forEach((k, i) => { const q = to(k.lat, k.lon); if (!q) return;
-      if (i === nx) { const r = 4 + phase; g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - r - 1, q[1] - r - 1, 2 * r + 2, 2 * r + 2); g.fillStyle = '#ff9f3a'; g.fillRect(q[0] - r, q[1] - r, 2 * r, 2 * r); g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - r + 2, q[1] - r + 2, 2 * r - 4, 2 * r - 4); g.fillStyle = '#ffd34d'; g.fillRect(q[0] - 1, q[1] - 1, 3, 3); return; }
+      if (i === last) { const r = 4 + phase; g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - r - 1, q[1] - r - 1, 2 * r + 2, 2 * r + 2); g.fillStyle = '#ff9f3a'; g.fillRect(q[0] - r, q[1] - r, 2 * r, 2 * r); g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - r + 2, q[1] - r + 2, 2 * r - 4, 2 * r - 4); g.fillStyle = '#ffd34d'; g.fillRect(q[0] - 1, q[1] - 1, 3, 3); return; }
       g.fillStyle = '#1b1b2f'; g.fillRect(q[0] - 3, q[1] - 3, 6, 6); g.fillStyle = i < nx ? '#5fd35a' : '#ff9f3a'; g.fillRect(q[0] - 2, q[1] - 2, 4, 4); });
   }
   const h = path[0] && to(path[0].lat, path[0].lon);

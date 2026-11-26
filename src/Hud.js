@@ -108,8 +108,13 @@ export class RouteStrip {
     for (let fs = 7; this.name.width > x1 - x0 - 10 && fs > 5;) this.name.setFontSize(--fs);
     for (const d of drops) { const dx = X(d.t); g.fillStyle(0x000000).fillRect(dx - 4, y - 4, 8, 8); g.fillStyle(d.done ? 0x7ee87e : 0xff9f3a).fillRect(dx - 3, y - 3, 6, 6); }
     const d0 = drops.find(d => !d.done) || drops[drops.length - 1];   // (the name of the crate stop still to come, else the last one done)
-    this.dropName.setText(d0 ? d0.name : '').setColor(d0 && d0.done ? '#7ee87e' : '#ff9f3a');
-    if (d0) { const w = this.dropName.width / 2, end2 = x1 - 6 - this.name.width - 4; this.dropName.setX(Math.max(x0 + w, Math.min(end2 - w, X(d0.t)))); }   // (kept clear of the end name)
+    const n = drops.length, k = d0 ? drops.indexOf(d0) + 1 : 0;   // (several crate stops: which one this is, 'DENVER 1/2')
+    this.dropName.setText(d0 ? (n > 1 ? `${d0.name} ${k}/${n}` : d0.name) : '').setColor(d0 && d0.done ? '#7ee87e' : '#ff9f3a');
+    this.dropName.setFontSize(7);   // (the crate stop's name and the landing's must both fit the bar: 'SAO PAULO 1/2' then 'BRASILIA' ran together)
+    const room = () => x1 - x0 - 10 - this.name.width - 6;
+    for (let fs = 7; d0 && this.dropName.width > room() && fs > 5;) this.dropName.setFontSize(--fs);
+    if (d0 && this.dropName.width > room()) this.dropName.setText(d0.name);
+    if (d0) { const w = this.dropName.width / 2, end2 = x1 - 6 - this.name.width - 6; this.dropName.setX(Math.max(x0 + w, Math.min(end2 - w, X(d0.t)))); }   // (kept clear of the end name)
     this.plane.setPosition(px, y + 2);
   }
 }

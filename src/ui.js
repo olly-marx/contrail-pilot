@@ -427,6 +427,8 @@ export class UI {
     const cs = crossingState(s, { unlock: S2_UNLOCK }), ready = cs && cs.ready ? cs : null;   // (R-A: src/crossingview.js: the state, the 3 conditions, told once)
     const mustDo = leadOf(s);   // a pictured must-do lead row (the free part, the tree parcels): TAKE OFF is locked to it and the first hour shows one new thing at a time, so the box waits (measured: with it HOME was 20 px (390x667) and 26 px (320x568) too tall, tests/fitscreen.cjs)
     if (arrivedGoto(s)) writeSave(s);   // GO TO: the player is at the city it aimed for
+    if (s.tutorialDone && fillStoryBoard(s)) writeSave(s);   // (an old offer that breaks the one-place rule leaves the board first: src/storyboard.js retireBroken)
+    if (s.storyRetired) { const t = s.storyRetired; delete s.storyRetired; writeSave(s); setTimeout(() => this.toast('A story was too spread out', `${t[0]} is off the board. A new one is waiting.`, 'good', 4), 400); }
     if (this.grownToastDue) { this.grownToastDue = false; s.seenTips = [...(s.seenTips || []), 'tree-grown']; writeSave(s); setTimeout(() => this.toast('A tree you planted has grown up!', '', 'good', 3.5), 500); }   // tutorial 1a, step 7: once, the first time a sapling grows up (ui.showResults sets grownToastDue from result.treesGrown)
     const boxOn = !!(cs && s.tutorialDone && !lessonsLeft(s).length && !(mustDo && mustDo.pic));   // the HOME box (CROSSINGS V2) shows this crossing; a READY one is then not repeated as a gold UP NEXT row
     const v = hubView(s, { crossingReady: ready ? `${ready.from} to ${ready.to}` : null, crossing: cs, boxShown: boxOn && !!ready });
@@ -488,12 +490,14 @@ export class UI {
     // MAP REGIONS: the lines between lands are in the picture (src/globe.js); the land names are a layer over it that follows every redraw (src/landlabels.js).
     let lands = $('hubLands'); if (!lands) { lands = document.createElement('div'); lands.id = 'hubLands'; lands.className = 'hub-lands'; document.querySelector('.hub-globe-wrap').prepend(lands); }
     const openNow = openLands(s), hubCv = $('hubGlobe');
+    const plan = storyOn ? { stops: story.stops.map(city), next: story.back ? 0 : story.reached || 0, oneFlight: crateRunReady(story) } : null;   // (the story's plan, not the airports on the way: src/globe.js)
     this.hubGlobe = drawGlobe(hubCv, here, path.map(city), { ways: opts.map(o => city(o.name)), onPick: v.worldChoice && !storyOn ? pick : null, onCity: v.worldChoice && !storyOn ? name => this.showCityCard(name) : null, lit: linksFor(s),
-      story: storyOn ? { stops: story.stops.map(city), next: story.reached || 0 } : null,
+      story: plan,
       onUse: () => { this.globeDrags = (this.globeDrags || 0) + 1; this.globeUsed(); },   // (globeDrags: the map lesson's first step waits for a real drag, src/tour.js r-map)
       onPaint: out => placeLandLabels(lands, hubCv, out.lands, openNow),
       cross: ready && !storyOn ? { from: city(ready.from), to: city(ready.to), onTap: () => this.showCrossingSheet(ready) } : null });   // R-A: the ready crossing's arc and its breathing ring (tap: the sheet)
     this.hubWords = v.words;
+    if (plan) requestAnimationFrame(() => this.drawRouteLabels([here.name, ...story.stops.slice(plan.next)]));   // (the plan's cities named: the last one, where you land, in gold)
   }
 
   // Where the results lead (season 2): a free part waiting → the HANGAR; NATURE just opened and not yet seen → NATURE.
@@ -806,11 +810,14 @@ export class UI {
     for (const nm of names) {
       const q = g.cityPos(nm); if (!q) continue;
       const x = q.x - wr.left, y = q.y - wr.top, el = document.createElement('span'); el.className = `globe-label${nm === dest ? ' dest' : ''}`; el.textContent = nm; box.appendChild(el);
-      const w = el.offsetWidth, h = el.offsetHeight; let left = x > wr.width / 2 ? x - 5 - w : x + 5; const top = Math.max(0, Math.min(y - h / 2, wr.height - h));
-      if (nm === dest) left = Math.max(0, Math.min(left, wr.width - w));
-      const r = { l: left, t: top, r: left + w, b: top + h };
-      if (nm !== dest && (placed.some(p => r.l < p.r && r.r > p.l && r.t < p.b && r.b > p.t) || r.l < 0 || r.r > wr.width)) { el.remove(); continue; }
-      el.style.left = `${Math.round(left)}px`; el.style.top = `${Math.round(top)}px`; placed.push(r);
+      const w = el.offsetWidth, h = el.offsetHeight, side = x > wr.width / 2 ? x - 5 - w : x + 5, other = x > wr.width / 2 ? x + 5 : x - 5 - w, mid = y - h / 2;
+      const clampT = t => Math.max(0, Math.min(t, wr.height - h)), rect = (l, t) => ({ l, t, r: l + w, b: t + h });
+      const free = r => !placed.some(p => r.l < p.r && r.r > p.l && r.t < p.b && r.b > p.t) && r.l >= 0 && r.r <= wr.width;
+      // (a name that would sit on another one tries the other side, then above and below its dot: two close stops of a story, SAO PAULO and RIO, are both named)
+      let r = [rect(side, clampT(mid)), rect(other, clampT(mid)), rect(side, clampT(y - h - 3)), rect(side, clampT(y + 3))].find(free);
+      if (nm === dest && !r) r = rect(Math.max(0, Math.min(side, wr.width - w)), clampT(mid));
+      if (!r) { el.remove(); continue; }
+      el.style.left = `${Math.round(r.l)}px`; el.style.top = `${Math.round(r.t)}px`; placed.push(r);
     }
   }
   closeCityRow() { this.clearRouteLabels(); const row = $('hubCard'); if (row) row.hidden = true; if ($('hubRoute')) $('hubRoute').hidden = false; if (this.hubGlobe) this.renderHub(); }

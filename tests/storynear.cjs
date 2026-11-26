@@ -18,6 +18,23 @@
   check(near >= 50, `1. FIXTURE: enough one-place offers to judge (${near})`);
   check(worst.km <= B.NEAR_KM, `1. one-place delivery stops within ${B.NEAR_KM} km: worst ${JSON.stringify(worst)}`);
   check(empty === 0, `2. every slot filled (${empty} empty)`);
+  // 3. an offer made before the rule (Oliver's board, 2026-11-26: DENVER, MUMBAI, MANAUS as one flight) leaves the board, the active
+  //    special delivery with it (no fee, nothing counted), and its slot is made again within the rule; a valid offer is untouched; a
+  //    stop-by-stop story already past its first delivery stays.
+  {
+    const s = prepareSave({ areas: all, homeArea: 'weurope', homeCity: 'LONDON', city: 'NAIROBI', tutorialDone: true, bestDistance: 60000, storySeq: 40, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: {} } });
+    s.storyBoard = [null, null, null]; B.fillBoard(s); const keep = JSON.stringify(s.storyBoard[0]);
+    const old = { id: 'story-9', theme: 'vaccine', title: 'Vaccines for three cities', crate: true, hearts: 3, heartsLeft: 1, reached: 1, stops: ['NAIROBI', 'DENVER', 'MUMBAI', 'MANAUS'], stages: [1, 1, 1], km: 3, pay: { seeds: 1, crystals: 1 }, lines: [], needs: [] };
+    s.storyBoard[1] = old; s.storyActive = 'story-9'; s.aimCity = 'MANAUS'; const seeds0 = s.seeds;
+    const changed = B.fillBoard(s), now = s.storyBoard[1];
+    check(changed && !s.storyBoard.some(o => o && o.id === 'story-9'), '3. the far-apart vaccine offer leaves the board');
+    check(!s.storyActive && !s.aimCity && s.seeds === seeds0 && !s.storiesFailed && !s.storiesDropped, `3. the active one goes with no fee and nothing counted (${s.storyActive}, ${s.aimCity}, ${s.seeds})`);
+    check(now && !B.brokenNear(now), '3. its slot is made again within the rule');
+    check(JSON.stringify(s.storyBoard[0]) === keep, '3. a valid offer is untouched');
+    check(Array.isArray(s.storyRetired) && s.storyRetired[0] === 'Vaccines for three cities', '3. the title is kept for the HOME notice');
+    const mid = { ...old, id: 'story-10', crate: false, reached: 2 }; s.storyBoard[1] = mid; s.storyActive = 'story-10';
+    B.fillBoard(s); check(s.storyActive === 'story-10' && s.storyBoard[1] === mid, '3. a stop-by-stop story past its first delivery stop stays');
+  }
   if (fails.length) { console.log(`FAIL storynear:\n - ${fails.join('\n - ')}`); process.exit(1); }
   console.log(`PASS storynear: ${near} one-place offers keep their delivery stops within ${B.NEAR_KM} km (worst ${worst.km} km, ${worst.theme}); no slot empty`);
 })();

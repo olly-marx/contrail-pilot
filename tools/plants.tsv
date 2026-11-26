@@ -1046,6 +1046,7 @@ loaderart	src/loader.js	s/SKY_FRAMES = 8,/SKY_FRAMES = 6,/	the sky sheet counted
 storepages	tools/make-site.sh	s/cp -r index.html privacy.html support.html style.css/cp -r index.html style.css/	the privacy and help pages are not published
 ascwhatsnew	tools/asc-whatsnew.mjs	s/const top = (changes || \[\])\[0\];/const top = (changes || [])[1];/	What to Test takes an older CHANGES entry
 storynear	src/storyboard.js	s/^export const nearAll = (c, others) => others.every(o => realBetween(c, o) <= NEAR_KM);/export const nearAll = () => true;/	the one-place rule off (a storm in London, Oslo and Papeete)
+storynear	src/storyboard.js	s/^  const gone = retireBroken(save); if (gone.length) save.storyRetired = gone;/  const gone = [];/	an offer made before the one-place rule stays on the board (DENVER, MUMBAI, MANAUS)
 storymiss	src/storyboard.js	s/  const strict = (o.reached || 0) >= 1 \&\& !o.back, flewPast/  const strict = false, flewPast/	a wrong landing after the pickup costs nothing
 crates	src/storyboard.js	s/  if (r.landed \&\& r.landedAt === last \&\& drops.every/  if (drops.every/	a delivery counts without landing at the last stop
 crates	src/storyboard.js	s/  if (!h.failed \&\& r.landed \&\& r.landedAt !== o.stops\[0\]) { o.back = true;/  if (false) { o.back = true;/	a failed delivery does not send the plane back to the pickup
@@ -1054,3 +1055,6 @@ storygen	tools/stories/validate.mjs	s/  if (!t.near \&\& \[t.title, t.story\]/  
 storygen	tools/stories/generate.mjs	s/required: \[.id., .level., .stops., .near., /required: [/	the schema lets Claude leave out near
 popupearly	src/GameScene.js	s/    if (!this.fxLayer) return null;/    if (false) return null;/	a popup before the scene is built crashes (the 0.79.0 launch crash)
 missionfit	style.css	s/^.slevel { flex-wrap: wrap; row-gap: 3px; }$/.slevel { }/	the story difficulty row does not wrap: hearts run past the card
+storyplan-ui	src/globe.js	s/  if (!(story \&\& story.stops)) for (const k of path.slice(1))/  if (true) for (const k of path.slice(1))/	the story globe puts a gold square on every airport the flight passes again
+storyplan-ui	src/GameScene.js	s/const span = (this.crates || \[\]).length || (this.crateDone || \[\]).length ? this.path.length : 12;/const span = 12;/	the route strip looks only 12 airports ahead on a special delivery
+storyplan-ui	src/storyboard.js	s/^  const gone = retireBroken(save); if (gone.length) save.storyRetired = gone;/  const gone = [];/	HOME keeps an offer made before the one-place rule (DENVER, MUMBAI, MANAUS)
