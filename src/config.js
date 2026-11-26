@@ -156,6 +156,12 @@ export const POWERUPS = {
   autoSeconds: 8,
   autoLockMs: 1500,    // taps are ignored this long after grabbing it (you are usually mid-tap)
   autoClimb: 480,      // px/s the autopilot may climb or dive (a tap gives 260)
+  // Storm clearance of the autopilot's path (px between the plane's hitbox and a storm cloud). Was 6 both ways: it skimmed the cloud above,
+  // and when it handed back, the nose-down tilt of the first fall put the tail into that cloud (Oliver, 2026-11-26). More room above than
+  // below, because the hand-over always starts with a fall (tail up) or a tap (nose up).
+  autoClearAbove: 20,
+  autoClearBelow: 12,
+  autoSettleMs: 1000,   // its last second: it flies to the middle of the gap it is in or the next one (rules.js autopilotPlan)
 };
 
 // Hazards that join the storms as the flight gets longer (distances in m = px).

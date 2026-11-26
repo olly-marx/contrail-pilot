@@ -179,12 +179,13 @@ export const GADGETS = [
     // Far future: bird-aware routing, fewer flocks (x the spawn chance, with ATC's advisories: kit.gapBirds, no new rule).
     S(10, 'Bird-aware routing', { dodge: 5, perNight: 10, birdWarnPx: 400, birdWobble: 0.35, birdChance: 0.85 }),
     S(11, 'Better bird-aware routing', { dodge: 6, perNight: 11, birdWarnPx: 400, birdWobble: 0.35, birdChance: 0.7 })] },
-  { id: 'autopilot', name: 'Autopilot', levels: [S(0, 'Height hold', { autoSecs: 8, autoChance: 0.06 }), S(1, 'Better height hold', { autoSecs: 9, autoChance: 0.06 }),
-    S(2, 'Autothrottle', { autoSecs: 10, autoChance: 0.07 }), S(3, 'Better autothrottle', { autoSecs: 11, autoChance: 0.07 }),
-    S(4, 'Flight management computer', { autoSecs: 12, autoChance: 0.08 }), S(5, 'Better flight computer', { autoSecs: 13, autoChance: 0.09 }),
-    S(6, 'Gap-tracking autopilot', { autoSecs: 14, autoChance: 0.09 }), S(7, 'Better gap tracking', { autoSecs: 15, autoChance: 0.1 }),
-    S(8, 'Autopilot that sees birds', { autoSecs: 16, autoChance: 0.11 }), S(9, 'Better bird-aware autopilot', { autoSecs: 17, autoChance: 0.12 }),
-    S(10, 'Autopilot that sees the whole sky', { autoSecs: 18, autoChance: 0.13 }), S(11, 'Best autopilot', { autoSecs: 19, autoChance: 0.14 })] },
+  // autoChance cut by about a fifth (Oliver, 2026-11-26: 'slightly too common'; was 0.06 ... 0.14); autoSecs unchanged.
+  { id: 'autopilot', name: 'Autopilot', levels: [S(0, 'Height hold', { autoSecs: 8, autoChance: 0.05 }), S(1, 'Better height hold', { autoSecs: 9, autoChance: 0.05 }),
+    S(2, 'Autothrottle', { autoSecs: 10, autoChance: 0.055 }), S(3, 'Better autothrottle', { autoSecs: 11, autoChance: 0.055 }),
+    S(4, 'Flight management computer', { autoSecs: 12, autoChance: 0.065 }), S(5, 'Better flight computer', { autoSecs: 13, autoChance: 0.07 }),
+    S(6, 'Gap-tracking autopilot', { autoSecs: 14, autoChance: 0.07 }), S(7, 'Better gap tracking', { autoSecs: 15, autoChance: 0.08 }),
+    S(8, 'Autopilot that sees birds', { autoSecs: 16, autoChance: 0.09 }), S(9, 'Better bird-aware autopilot', { autoSecs: 17, autoChance: 0.095 }),
+    S(10, 'Autopilot that sees the whole sky', { autoSecs: 18, autoChance: 0.1 }), S(11, 'Best autopilot', { autoSecs: 19, autoChance: 0.11 })] },
 ];
 
 for (const lv of GADGETS.flatMap(g => g.levels)) { lv.base = { cost: lv.cost, crystals: lv.crystals || 0 }; lv.cost = scaleSeeds(lv.cost); lv.crystals = scaleCrystals(lv.crystals || 0); }   // (the PRICE SCALE, as the systems above)

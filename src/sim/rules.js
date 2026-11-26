@@ -204,6 +204,9 @@ export const RULES = {
     return toWarm > this.kit.contrailLife / 1000 + 1;
   },
   autopilotPlan() {
+    // The last moments: settle in the middle of the storm gap it is in (or the next one), so the hand-back starts with room above and
+    // below for the first fall or tap (a tap climbs ~37 px; Oliver, 2026-11-26: the tilt after it ended put him into the cloud above).
+    if (this.autoUntil - this.gameTime < POWERUPS.autoSettleMs) return this.autopilotTarget();
     const H = PLANE.h, W = PLANE.w, want = this.wantContrails();
     const ahead = [0, 12, 24, 40, 60, 85, 115, 150];
     let best = this.plane.y, bestCost = Infinity;
@@ -213,7 +216,7 @@ export const RULES = {
         const w = 1 / (1 + k * 0.35);                                       // nearer matters more
         const box = { x: this.plane.x + d, y, w: W, h: H };
         for (const st of this.storms) for (const r of st.rects) {
-          if (box.x < r.x + r.width + 4 && box.x + W > r.x - 4 && y < r.y + r.height + 6 && y + H > r.y - 6) cost += 1000 * w;
+          if (box.x < r.x + r.width + 4 && box.x + W > r.x - 4 && y < r.y + r.height + POWERUPS.autoClearAbove && y + H > r.y - POWERUPS.autoClearBelow) cost += 1000 * w;
         }
         const pad = { x: box.x - 8, y: y - 10, w: W + 16, h: H + 20 };          // every bird's picture, with room to spare
         for (const f of this.birds) for (const bd of f.birds) if (overlaps(pad, P.birdBox(bd))) cost += 1000 * w;
