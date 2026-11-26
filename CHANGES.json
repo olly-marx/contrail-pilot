@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-26-autopilot-skills",
+    "version": "0.80.0",
+    "date": "2026-11-26",
+    "level": "major",
+    "notes": [
+      "Your autopilot learns new skills as you upgrade it: storm gaps first, then icy air, seeds, crystals, and at last planning ahead.",
+      "The autopilot keeps more room from storm clouds and settles in the middle of a gap before it hands back to you.",
+      "Autopilot pick-ups turn up a little less often. They still last as long as before."
+    ]
+  },
+  {
     "id": "2026-11-26-story-plan",
     "version": "0.79.3",
     "date": "2026-11-26",
