@@ -39,9 +39,10 @@ const URL = process.env.URL || 'http://localhost:8000/';
       // 3. the DROP button label
       s.parcels = 12; s.kit.tree = s.kit.tree || { parcels: 12 }; s.state = 'playing'; s.regionNow = 'woodland'; s.updateTexts(false);
       out.drop = { text: s.dropLabel.text, w: s.dropLabel.width, h: s.dropLabel.height, box: s.dropBox, shown: s.dropShown };
-      // 3b. the 'Next: <TREE>' label above the PLANT button, for every tree name of every land (it must stay on the screen)
+      // 3b. the next tree's name on the PLANT button's lower line, for every tree name of every land: it stays INSIDE the button, so it never covers the ground ahead where soil mounds scroll in
+      //     (0.79.3; Oliver, 2026-11-26: the 'Next: OAK' line above the button hid the soil patches coming; the mounds reach down to SKY_H + 6, the button starts at SKY_H + 12)
       const { REGION_TREES } = await import('./src/habitat/trees.js'), { shortName } = await import('./src/droporder.js'), names = [...new Set(Object.values(REGION_TREES).flat().map(t => t.name))];
-      out.next = names.concat(['Biome full']).map(n => { s.nextTreeInfo = () => (n === 'Biome full' ? null : { name: n }); s.updateTexts(false); const b = s.nextTreeText.getBounds(); return { n, text: s.nextTreeText.text, left: b.x, right: b.x + b.width }; });
+      out.next = names.concat(['Biome full']).map(n => { s.nextTreeInfo = () => (n === 'Biome full' ? null : { name: n }); s.updateTexts(false); const b = s.nextTreeText.getBounds(); return { n, text: s.nextTreeText.text, left: b.x, right: b.x + b.width, top: b.y, bottom: b.y + b.height }; });
       out.W = W; out.canvas = (() => { const r = document.querySelector('canvas').getBoundingClientRect(); return { w: r.width, vw: innerWidth }; })();
       // 3. pop-ups never stack on each other (polish, 2026-11-17): the same words twice show once; two different ones at one spot do not overlap
       s.popups.forEach(q => q.t.destroy()); s.popups.length = 0;
@@ -58,8 +59,9 @@ const URL = process.env.URL || 'http://localhost:8000/';
     });
     const tag = `${width}px`;
     check(m.canvas.w <= width + 1, `${tag}: the canvas is ${m.canvas.w} px wide`);
-    m.next.forEach(q => check(q.left >= 0 && q.right <= m.W && q.text.length > 0, `${tag}: the label above the PLANT button for "${q.n}" ("${q.text}") spans ${Math.round(q.left)}..${Math.round(q.right)} of ${m.W}`));
-    check(m.next.length >= 20 && m.next.some(q => /^Next: /.test(q.text)), `${tag}: power: ${m.next.length} labels measured (every tree name of every land plus the full grove) and they say 'Next: ...'`);
+    const db = m.drop.box;
+    m.next.forEach(q => check(q.text.length > 0 && q.left >= db.x && q.right <= db.x + db.w && q.top >= db.y && q.bottom <= db.y + db.h, `${tag}: the next-tree name on the PLANT button for "${q.n}" ("${q.text}") spans x ${Math.round(q.left)}..${Math.round(q.right)}, y ${Math.round(q.top)}..${Math.round(q.bottom)}; the button is x ${db.x}..${db.x + db.w}, y ${db.y}..${db.y + db.h} (outside it, it covers the ground ahead)`));
+    check(m.next.length >= 20 && m.next.some(q => /^[A-Z]+$/.test(q.text)), `${tag}: power: ${m.next.length} labels measured (every tree name of every land plus the full grove) and they name a tree`);
     m.airport.forEach((a, i) => check(a.w <= m.W - 8, `${tag}: airport call ${i} "${a.text}" is ${Math.round(a.w)} game-px wide, the screen is ${m.W}`));
     check(m.airport.every(a => a.text), `${tag}: every form of the airport call must have text: ${JSON.stringify(m.airport.map(a => a.text))}`);
     check(m.stripName.text === m.longest && m.stripName.left >= m.stripName.bgLeft && m.stripName.right <= m.W, `${tag}: the longest city name fits under the route strip: ${JSON.stringify(m.stripName)}`);
@@ -69,7 +71,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     check(m.stackTexts.filter(t => t === 'CONTRAIL!').length === 1, `${tag}: the same pop-up twice shows once: ${JSON.stringify(m.stackTexts)}`);
     if (m.stack.length === 2) { const [a, c] = m.stack; check(a.y + a.h <= c.y + 1 || c.y + c.h <= a.y + 1, `${tag}: two pop-ups overlap: ${JSON.stringify(m.stack)}`); } else check(false, `${tag}: expected 2 pop-ups, got ${m.stack.length}`);
     m.popup.forEach(q => check(q.left >= 0 && q.right <= m.W, `${tag}: the discovery popup for ${q.r} spans ${Math.round(q.left)}..${Math.round(q.right)} of ${m.W}`));
-    check(m.drop.shown && m.drop.text === `PLANT\nx12`, `${tag}: the DROP button label should be "PLANT / x12", is ${JSON.stringify(m.drop.text)} (shown ${m.drop.shown})`);
+    check(m.drop.shown && m.drop.text === `PLANT x12`, `${tag}: the DROP button label should be "PLANT x12", is ${JSON.stringify(m.drop.text)} (shown ${m.drop.shown})`);
     check(m.drop.w <= m.drop.box.w - 6 && m.drop.h <= m.drop.box.h - 4, `${tag}: the DROP label is ${Math.round(m.drop.w)}x${Math.round(m.drop.h)} in a ${m.drop.box.w}x${m.drop.box.h} button`);
     check(p.errs.length === 0, `${tag}: page errors: ${p.errs.join(' | ')}`);
     await p.close();
