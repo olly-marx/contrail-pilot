@@ -20,7 +20,9 @@ const offer = (id, theme, stops) => ({ id, theme, slot: 2, made: 0, title: 'Test
   const fails = [], check = (c, m) => { if (!c) fails.push(m); };
   const open = async (save) => {
     const p = await b.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); p.errs = []; p.on('pageerror', e => p.errs.push(String(e)));
-    await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s)); }, save);
+    await p.addInitScript(s => { localStorage.clear(); localStorage.setItem('s2:contrailPilot.v2', JSON.stringify(s));
+      // every toast that is ever shown, kept (the HOME notice shows for 4 s from the first HOME render, which can be over before ready() returns)
+      window.__toasts = []; new MutationObserver(() => { const t = document.getElementById('toast'); if (t && !t.hidden && !window.__toasts.includes(t.innerText)) window.__toasts.push(t.innerText); }).observe(document, { subtree: true, childList: true, attributes: true, characterData: true }); }, save);
     await p.goto(URL); await ready(p); await p.waitForTimeout(800); return p;
   };
   const base = { muted: true, tutorialDone: true, visited: ['LONDON', 'NAIROBI'], priceVersion: 2, freeGiven: true, freeProjectGiven: true, autoTakeoff: true, seenTips: ['*'], tours: ['*'], flights: 60, landings: 40, seeds: 5000, crystals: 100, flightSeconds: 9000, bestDistance: 60000,
@@ -71,7 +73,7 @@ const offer = (id, theme, stops) => ({ id, theme, slot: 2, made: 0, title: 'Test
     const o = offer('story-9', 'vaccine', ['NAIROBI', 'DENVER', 'MUMBAI', 'MANAUS']);
     const p = await open({ ...base, city: 'NAIROBI', storyBoard: [null, null, o], storyActive: o.id, aimCity: 'MANAUS', storySeq: 9 });
     await p.waitForTimeout(600);
-    const r = await p.evaluate(() => { const s = game.registry.get('save'); return { active: s.storyActive || null, aim: s.aimCity || null, ids: (s.storyBoard || []).map(x => x && x.id), seeds: s.seeds, toast: document.body.innerText.includes('too spread out') }; });
+    const r = await p.evaluate(() => { const s = game.registry.get('save'); return { active: s.storyActive || null, aim: s.aimCity || null, ids: (s.storyBoard || []).map(x => x && x.id), seeds: s.seeds, toast: window.__toasts.some(t => t.includes('too spread out')) }; });
     check(!r.active && !r.ids.includes('story-9') && r.seeds === 5000, `3. the far-apart delivery is off the board, nothing active, no fee (${JSON.stringify(r)})`);
     check(r.toast, `3. HOME says why (${JSON.stringify(r)})`);
     await p.close();

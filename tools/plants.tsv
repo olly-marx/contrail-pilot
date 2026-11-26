@@ -1065,3 +1065,4 @@ autotiers	src/sim/rules.js	s/const iceCost = want ? -40 : avoid ? 600 : 0;/const
 autotiers	src/sim/rules.js	s/const crop = this.tokens.filter(t => !t.power \&\& seeds \&\&/const crop = this.tokens.filter(t => !t.power \&\&/	seeds before their level
 autotiers	src/sim/rules.js	s/const lineUp = skill >= T.crystals \&\&/const lineUp = false \&\&/	no crystal line-up
 autotiers	src/sim/rules.js	s/const route = forecast ? this.autopilotRoute() : null;/const route = null;/	no forecast route
+storyplan-ui	src/ui.js	s/    if (s.storyRetired) { const t = s.storyRetired;/    if (false) { const t = s.storyRetired;/	HOME says nothing when a far-apart story leaves the board
