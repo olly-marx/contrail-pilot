@@ -188,6 +188,15 @@ export const GADGETS = [
     S(10, 'Autopilot that sees the whole sky', { autoSecs: 18, autoChance: 0.1 }), S(11, 'Best autopilot', { autoSecs: 19, autoChance: 0.11 })] },
 ];
 
+// What each Autopilot level's pick-up DOES (POWERUPS.autoTiers, rules.js autopilotPlan), for the hangar's effect line. 'new' marks the level that adds it.
+export function autoDoText(level) {
+  const T = POWERUPS.autoTiers, steps = [[1, 'flies mid-gap'], [T.dayIce, 'flies into icy air by day'], [T.nightIce, 'avoids icy air at night'],
+    [T.seeds, 'grabs seeds'], [T.crystals, 'dodges for crystals'], [T.forecast, 'plans ahead through gaps']];
+  const got = steps.filter(([from]) => level >= from), last = got[got.length - 1];
+  return last[0] === level && level > 1 ? `new: ${last[1]}` : got.length > 1 ? 'all it knows, for longer' : last[1];   // (the hangar line's limit: 70 characters, tests/upgradetext.cjs)
+}
+GADGETS.find(g => g.id === 'autopilot').levels.forEach((lv, k) => { lv.autoDo = autoDoText(k + 1); });
+
 for (const lv of GADGETS.flatMap(g => g.levels)) { lv.base = { cost: lv.cost, crystals: lv.crystals || 0 }; lv.cost = scaleSeeds(lv.cost); lv.crystals = scaleCrystals(lv.crystals || 0); }   // (the PRICE SCALE, as the systems above)
 
 // Short names for the one-line hangar row (DESIGN-HANGAR-NATURE: 'Next: <name>' fits at 375 px, <= 30 characters, no ellipsis).
@@ -300,6 +309,7 @@ export function fleetKit(save) {
     dodgeCrystals: CRYSTALS.dodge * (sen.dodge || 1), dodgesPerNight: sen.perNight || CRYSTALS.dodgesPerNight,   // Sensors' dodge: a whole multiplier on CRYSTALS.dodge (0.73.0)
     // Autopilot pick-ups only once the Autopilot gadget is bought (0.10.2: they used to come for everyone).
     autoSecs: ap.autoSecs || POWERUPS.autoSeconds, autoChance: ap.autoChance || 0,
+    autoSkill: f.gadgets.autopilot || 0,   // what the pick-up's pilot does: each level adds a behaviour (POWERUPS.autoTiers, rules.js autopilotPlan)
     // Eras 4-6 (PROPOSAL-ERAS-4-6-SYSTEMS): kit fields the 2010s levels set; each is 0 / 1 / false before, so eras 1-3 fly as before.
     // noFlyGapAdd: ATC 8+ AND the plane's own (the era step, 2026-10-28: the sim chat measured a BARE 787 worse than a full twin
     // past 21k, the drift costing more than its CO2 gain; a newer plane handles no-fly gaps a little better). TBD-SIM.
@@ -448,7 +458,7 @@ export function effectText(fx) {
   if (fx.gapBirds) out.push(`${Math.round((1 - fx.gapBirds) * 100)}% fewer bird flocks`);
   if (fx.pickup) out.push(`grab seeds from ${fx.pickup} px`);
   if (fx.dodge) out.push(`Night clouds you avoid: x${fx.dodge} crystals (${fx.dodge * CRYSTALS.dodge} each)`);
-  if (fx.autoSecs) out.push(`autopilot ${fx.autoSecs} s, found ${Math.round(fx.autoChance * 100)}% of the time`);
+  if (fx.autoSecs) out.push(`autopilot ${fx.autoSecs} s, found ${Math.round(fx.autoChance * 100)}% of the time${fx.autoDo ? `; ${fx.autoDo}` : ''}`);
   return out.join(', ');
 }
 

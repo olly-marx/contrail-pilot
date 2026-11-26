@@ -18,7 +18,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   const check = (c, m) => { if (!c) fails.push(m); };
   await p.addInitScript(() => { localStorage.clear(); localStorage.setItem('contrailPilot.v2', JSON.stringify({ tutorialDone: true, autoTakeoff: true, muted: true, seenTips: ['*'],
     tours: ['name', 'hangar', 'nature', 'wild'], freeGiven: true, priceVersion: 2, missionsDone: [], badgeTiers: {},
-    flightSeconds: 4 * 3600, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: { autopilot: 1 } } })); });   // 0.10.2: SAF cans from the 2010s, autopilot pick-ups with the gadget
+    flightSeconds: 4 * 3600, fleet: { plane: 'comet', planes: { comet: {} }, systems: {}, gadgets: { autopilot: 4 } } })); });   // (level 4: the pick-up seeks and avoids icy air, src/config.js POWERUPS.autoTiers) 0.10.2: SAF cans from the 2010s, autopilot pick-ups with the gadget
   await p.goto(URL); await ready(p); await p.waitForTimeout(400);
   await p.click('#goBtn');
   await p.waitForFunction(() => { const s = game.scene.getScene('game'); return s.sys.isActive() && s.state === 'playing'; }, null, { timeout: 20000 });
@@ -45,6 +45,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
   // that the contrail would last into the dark, it keeps out. Birds in the way: it goes round.
   const plan = await p.evaluate(() => { const s = game.scene.getScene('game'); const { daySeconds: D } = { daySeconds: 15 };
     s.plane.y = 200; s.issrs.forEach(i => { i.x = -999; });
+    s.autoUntil = s.gameTime + 60000;   // a pick-up with time left (in its last second it only settles mid-gap)
     s.addIssrAt(s.plane.x + 10, 180, 220, 60); const ice = s.issrs[s.issrs.length - 1];
     const inIce = y => s.inIssrShape(ice, { x: s.plane.x + 40, y, w: 50, h: 12 });
     const at = clock => { s.clock = clock; s.updateDayNight(0); return inIce(s.autopilotPlan()); };
@@ -54,7 +55,7 @@ const URL = process.env.URL || 'http://localhost:8000/';
     const y = s.autopilotPlan();
     r.bird = f.birds.some(b => y < b.y + s.alphaMask(b.key).h + 4 && y + 12 > b.y - 4);
     s.birds = s.birds.filter(x => x !== f); f.birds.forEach(b => b.view.destroy());
-    s.clock = 2; s.updateDayNight(0);
+    s.clock = 2; s.updateDayNight(0); s.autoUntil = 0;
     return r; });
   check(plan.day && !plan.lateDay && !plan.night, `autopilot seeks icy air only by day with time for the contrail to fade before dark: ${JSON.stringify(plan)}`);
   check(!plan.bird, `autopilot goes round birds: ${JSON.stringify(plan)}`);

@@ -203,28 +203,68 @@ export const RULES = {
     const toWarm = D - B / 2 - this.clock % (D + N);   // contrails start to warm halfway through dusk
     return toWarm > this.kit.contrailLife / 1000 + 1;
   },
+  // What it does grows with the Autopilot level (POWERUPS.autoTiers; Oliver, 2026-11-26), each on top of the ones before:
+  //   1-2  the middle of each storm gap, and nothing else (autopilotTarget);
+  //   3    + flies through icy air by day when the contrail will fade before dark (a cooling contrail);
+  //   4    + keeps out of icy air that would warm: at night, or so late in the day the contrail lasts into the dark;
+  //   5    + steers for seeds;
+  //   7    + crystals: at night it lines up with icy air far ahead (so it is 'in your path', crystalReason) and dodges it close up;
+  //   9    + forecast: it plans through the next gaps, the ones not yet on screen too, not only the next 150 px.
+  // Storms and birds are off limits at every level, with the clearance above. No random draws.
   autopilotPlan() {
     // The last moments: settle in the middle of the storm gap it is in (or the next one), so the hand-back starts with room above and
     // below for the first fall or tap (a tap climbs ~37 px; Oliver, 2026-11-26: the tilt after it ended put him into the cloud above).
     if (this.autoUntil - this.gameTime < POWERUPS.autoSettleMs) return this.autopilotTarget();
-    const H = PLANE.h, W = PLANE.w, want = this.wantContrails();
+    const T = POWERUPS.autoTiers, skill = this.kit.autoSkill || 1;
+    if (skill < T.dayIce) return this.autopilotTarget();
+    const H = PLANE.h, W = PLANE.w, want = this.wantContrails(), avoid = skill >= T.nightIce;
+    const forecast = skill >= T.forecast, seeds = skill >= T.seeds;
+    const lineUp = skill >= T.crystals && !this.isDay && this.nightDodges < this.kit.dodgesPerNight;
     const ahead = [0, 12, 24, 40, 60, 85, 115, 150];
+    const storms = this.storms.filter(st => st.rects[0].x < WIDTH);
+    const route = forecast ? this.autopilotRoute() : null;
+    const iceCost = want ? -40 : avoid ? 600 : 0;
+    const crop = this.tokens.filter(t => !t.power && seeds && t.x > this.plane.x - 10);
+    const toLineUp = lineUp ? this.issrs.filter(i => !i.popped && !i.entered && !i.inPath && i.x < WIDTH && i.x > this.plane.x + W + POWERUPS.autoLineUpPx) : [];
+    const lining = new Set(toLineUp);
     let best = this.plane.y, bestCost = Infinity;
     for (let y = 34; y <= SKY_H - 80; y += 3) {
-      let cost = Math.abs(y - this.plane.y) * 0.15;
+      let cost = Math.abs(y - (route ?? this.plane.y)) * (route == null ? 0.15 : POWERUPS.autoRoutePull);
+      const seedW = new Map();
       ahead.forEach((d, k) => {
         const w = 1 / (1 + k * 0.35);                                       // nearer matters more
         const box = { x: this.plane.x + d, y, w: W, h: H };
-        for (const st of this.storms) for (const r of st.rects) {
+        for (const st of storms) for (const r of st.rects) {
           if (box.x < r.x + r.width + 4 && box.x + W > r.x - 4 && y < r.y + r.height + POWERUPS.autoClearAbove && y + H > r.y - POWERUPS.autoClearBelow) cost += 1000 * w;
         }
         const pad = { x: box.x - 8, y: y - 10, w: W + 16, h: H + 20 };          // every bird's picture, with room to spare
         for (const f of this.birds) for (const bd of f.birds) if (overlaps(pad, P.birdBox(bd))) cost += 1000 * w;
-        for (const i of this.issrs) if (this.inIssrShape(i, box)) cost += (want ? -40 : 600) * w;
+        if (iceCost) for (const i of this.issrs) if (!i.popped && !lining.has(i) && this.inIssrShape(i, box)) cost += iceCost * w;   // (a patch it is lining up with: no dodge yet)
+        for (const t of crop) {   // a seed this box would pick up (the pick-up rule of updateTokens); each counts once, at its nearest
+          const tx = t.x + 7, ty = t.y + 7, dxB = Math.max(box.x - tx, 0, tx - (box.x + W)), dyB = Math.max(y - ty, 0, ty - (y + H));
+          if (Math.hypot(dxB, dyB) <= this.kit.pickup - 6) seedW.set(t, Math.max(seedW.get(t) || 0, w));
+        }
       });
+      for (const [t, w] of seedW) cost -= POWERUPS.autoSeedPull * (t.value || 1) * w;
+      const cy = y + H / 2;
+      for (const i of toLineUp) if (cy >= i.y && cy <= i.y + i.height) cost -= POWERUPS.autoLineUp;
       if (cost < bestCost) { bestCost = cost; best = y; }
     }
     return best;
+  },
+  // The forecast autopilot's route (level 9+): the height to be at through the next storm gap, chosen with the gaps after it in
+  // mind, those not yet on screen too (the next-gap hint's columns). Backwards from the last gap known: its middle, then each
+  // earlier gap's safe band (the clearance above) clamps the height after it. So it keeps the height it will need next
+  // instead of climbing to the top of one gap and diving through the next. null: no gap ahead.
+  autopilotRoute() {
+    const cols = this.storms.filter(st => st.rects[0].x + st.rects[0].width > this.plane.x)
+      .sort((a, b) => a.rects[0].x - b.rects[0].x).slice(0, POWERUPS.autoRouteGaps);
+    if (!cols.length) return null;
+    const band = st => [st.rects[0].height + POWERUPS.autoClearAbove, st.rects[1].y - POWERUPS.autoClearBelow - PLANE.h];
+    const [lo, hi] = band(cols[cols.length - 1]);
+    let y = (lo + hi) / 2;
+    for (let k = cols.length - 2; k >= 0; k--) { const [a, b] = band(cols[k]); y = a > b ? (a + b) / 2 : clamp(y, a, b); }
+    return clamp(y, 34, SKY_H - 80);
   },
   // Bigger Hold: grows faster. Rounded to 1 decimal so 1 + 0.6 * n never shows as 3.4000000000000004.
   multiplier() { return Math.round((1 + this.kit.perSkip * this.airportsSkipped) * 10) / 10; },

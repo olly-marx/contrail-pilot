@@ -161,6 +161,14 @@ export const POWERUPS = {
   // below, because the hand-over always starts with a fall (tail up) or a tap (nose up).
   autoClearAbove: 20,
   autoClearBelow: 12,
+  // WHAT IT DOES by Autopilot level (Oliver, 2026-11-26: 'the upgrades should more come in what the autopilot actually does'). Each is the level
+  // from which that behaviour is added on top of the ones before: below dayIce it only flies the middle of each storm gap.
+  autoTiers: { dayIce: 3, nightIce: 4, seeds: 5, crystals: 7, forecast: 9 },
+  autoSeedPull: 150,   // cost points for a seed on the path (a storm is 1000, warm icy air 600)
+  autoLineUp: 800,     // cost points for lining up with night icy air far ahead (so it is 'in your path'), before dodging it
+  autoLineUpPx: 90,   // px ahead of the nose: nearer than this, it stops lining up and dodges
+  autoRouteGaps: 3,    // forecast (level 9+): how many gaps ahead its route looks at
+  autoRoutePull: 0.3,  // cost points per px away from that route (without it: 0.15 per px away from where it is now)
   autoSettleMs: 1000,   // its last second: it flies to the middle of the gap it is in or the next one (rules.js autopilotPlan)
 };
 

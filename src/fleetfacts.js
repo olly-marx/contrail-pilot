@@ -19,7 +19,7 @@ export const LINE_INFO = {
   hold: { what: 'The hold under the floor carries bags and cargo.', why: 'Fly past airports and your landing bonus grows. A bigger hold makes it grow faster. Crash, and you lose it all!' },
   gear: { what: 'Help with landing: radio beams and computers that line you up with the runway.', why: 'A wider landing window, harder brakes and a steeper way down: fewer runs off the end of the runway.' },
   sensors: { what: 'Instruments on the plane that measure the air around it.', why: 'Knowing the air helps you dodge warming contrails at night, for more ice crystals.' },
-  autopilot: { what: 'The autopilot can fly the plane for a while. Grab its pick-up in the sky!', why: 'A better autopilot lasts longer and turns up more often.' },
+  autopilot: { what: 'The autopilot can fly the plane for a while. Grab its pick-up in the sky!', why: 'Each level teaches it something new: storm gaps first, then icy air, seeds, crystals and at last planning ahead. It also lasts longer.' },
 };
 
 const F = (fact, status, src) => ({ fact, status, src });
