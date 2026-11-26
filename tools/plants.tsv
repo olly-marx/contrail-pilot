@@ -1058,3 +1058,4 @@ missionfit	style.css	s/^.slevel { flex-wrap: wrap; row-gap: 3px; }$/.slevel { }/
 storyplan-ui	src/globe.js	s/  if (!(story \&\& story.stops)) for (const k of path.slice(1))/  if (true) for (const k of path.slice(1))/	the story globe puts a gold square on every airport the flight passes again
 storyplan-ui	src/GameScene.js	s/const span = (this.crates || \[\]).length || (this.crateDone || \[\]).length ? this.path.length : 12;/const span = 12;/	the route strip looks only 12 airports ahead on a special delivery
 storyplan-ui	src/storyboard.js	s/^  const gone = retireBroken(save); if (gone.length) save.storyRetired = gone;/  const gone = [];/	HOME keeps an offer made before the one-place rule (DENVER, MUMBAI, MANAUS)
+storyplan-ui	src/ui.js	s/    if (s.storyRetired) { const t = s.storyRetired;/    if (false) { const t = s.storyRetired;/	HOME says nothing when a far-apart story leaves the board
