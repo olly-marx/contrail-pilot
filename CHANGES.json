@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-26-story-plan",
+    "version": "0.79.3",
+    "date": "2026-11-26",
+    "level": "minor",
+    "notes": [
+      "On HOME, the map of a story now shows just its plan: where you are, the drops, and where to land.",
+      "In flight, the bar at the top shows the whole special delivery: every drop and the city to land at.",
+      "A special delivery with cities far apart is taken off the board, free, and a new story takes its place."
+    ]
+  },
+  {
     "id": "2026-11-25-launch-fix-strict-stories",
     "version": "0.79.2",
     "date": "2026-11-25",
