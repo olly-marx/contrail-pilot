@@ -418,6 +418,7 @@ export const STAT_BARS = [
   { id: 'dodge', label: 'Crystals per night', keys: ['dodgeCrystals', 'dodgesPerNight'], v: k => k.dodgeCrystals * k.dodgesPerNight, min: 0, max: 110, better: 'higher' },
   { id: 'autoSecs', label: 'Autopilot time', keys: ['autoSecs'], v: k => k.autoSecs, min: 0, max: 13, better: 'higher' },
   { id: 'autoChance', label: 'Autopilot pick-ups', keys: ['autoChance'], v: k => k.autoChance, min: 0, max: 0.1, better: 'higher' },
+  { id: 'autoSkill', label: 'Autopilot skills', keys: ['autoSkill'], v: k => k.autoSkill ? 1 + Object.values(POWERUPS.autoTiers).filter(l => k.autoSkill >= l).length : 0, min: 0, max: 6, better: 'higher' },   // what it does (POWERUPS.autoTiers): 1 = mid-gap only, 6 = all
 ];
 // Kit fields that are pictures, not stats (the plane picture shows them).
 export const PICTURE_KEYS = ['plane', 'sprite'];
