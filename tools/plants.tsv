@@ -819,7 +819,7 @@ treelineui	src/ui.js	s/this.grownToastDue = (r.treesGrown || 0) > 0 \&\& /this.g
 treewords	src/resultscard.js	s/v.treeNames = v.trees \&\& planted \&\& names ? clip(names, LINE_MAX) : '';/v.treeNames = '';/	the second line (the kinds) is never given
 treewords	src/resultscard.js	s/? clip(names, LINE_MAX) : /? names : /	a long list of kinds is not clipped to the row
 treelineui	style.css	s/^\.rc-trees \.rc-treenames { flex: none; font-size: 7px;/.rc-trees .rc-treenames { display: none; flex: none; font-size: 7px;/	the kinds line is hidden by the stylesheet
-textfit	src/GameScene.js	s/text(bx + 64, by - 3/text(bx + 32, by - 3/;s/\.setOrigin(1, 1);   \/\/ right-aligned/.setOrigin(0.5, 1);   \/\/ right-aligned/	the Next label is centred on the button again and runs off the right edge
+textfit	src/GameScene.js	s/text(bx + 32, by + 23, '', { ...font, fontSize: '7px', strokeThickness: 3, color: '#ffe9a8' }).setOrigin(0.5)/text(bx + 64, by - 3, '', { ...font, fontSize: '7px', strokeThickness: 3, color: '#ffe9a8' }).setOrigin(1, 1)/	the next-tree name sits above the PLANT button again, over the ground ahead
 hintdraw	src/GameScene.js	s/    if (h.gate) for (let i = 0; i < gates.length \&\& i < (h.second ? 2 : 1); i++) {/    if (true) for (let i = 0; i < gates.length \&\& i < (h.second ? 2 : 1); i++) {/	a gate is drawn below Forecasting 3
 hintdraw	src/GameScene.js	s/gates.length \&\& i < (h.second ? 2 : 1); i++) {/gates.length \&\& i < 1; i++) {/	the second gate is never drawn
 hintdraw	src/GameScene.js	s/const ic = iconFor(h, first);/const ic = null;/	the forecast-on icon is never drawn
